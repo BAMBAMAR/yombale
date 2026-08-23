@@ -182,13 +182,13 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
     });
 
     test('gère le fallback intelligemment si la requête échoue', async () => {
-      axios.get.mockRejectedValueOnce(new Error('Network error'));
+      axios.get.mockRejectedValue(new Error('Network error'));
 
       const result = await scrapeProductFromUrl('https://fr.aliexpress.com/item/10050099999.html');
       expect(result.titre).toContain('AliExpress');
       expect(result.prix).toBeGreaterThan(0);
-      expect(result.images.length).toBeGreaterThan(0);
-      expect(result.categorie).toBe('mode');
+      expect(result.prix_achat).toBeGreaterThan(0);
+      expect(result.prix_barre).toBeGreaterThan(result.prix);
     });
   });
 

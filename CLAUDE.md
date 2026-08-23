@@ -1,3 +1,18 @@
+- **Fiabilisation & Éradication des Photos Par Défaut dans la Baguette Magique (Import Rapide E-Commerce) (`main` - 23 août 2026)** 🌟🪄📸🛠️✨ :
+  * **🪄 Extraction Réelle & Élimination Définitive des Photos/Titres Génériques Fixes (`backend/services/magic-import.js`)** :
+    - **Suppression intégrale du fallback statique Unsplash** : Élimination des photos de montres/accessoires fixes qui s'appliquaient en cas de blocage, garantissant que chaque article importé conserve exclusivement ses visuels réels ou un titre nettoyé fidèle au lien collé.
+    - **Scraping Résilient Multi-Stratégies & Multi-User-Agents** : Pipeline de requêtes rotatif (Chrome 124 Desktop, iPhone Safari Mobile, MacOS Safari) avec redirection automatique vers les miroirs régionaux (`fr.aliexpress.com`, `m.aliexpress.com`) pour contourner les blocages anti-bot datacenter.
+    - **Deep Regex Image CDN Extractor** : Extraction directe et nettoyage instantané des URLs CDN haute résolution depuis le HTML brut pour AliExpress (`ae-pic-a1.aliexpress-media.com`, `ae01.alicdn.com`), SHEIN (`img.ltwebstatic.com`), Amazon (`m.media-amazon.com`) et Temu (`img.kwcdn.com`), avec suppression automatique des suffixes de réduction (`_50x50.jpg`, `_80x80.jpg`, `._AC_US40_.`).
+    - **Extraction Intelligente du Titre & Slug URL** : Récupération du titre exact depuis les balises OpenGraph, `title`, balises `subject` et le slug textuel de l'URL du produit.
+    - **Auto-Détection Étendue des Catégories** : Intégration des mots-clés d'outillage, perceuses, visseuses, bricolage (`drill`, `screwdriver`, `outillage`, `perceuse`, `visseuse`, `dewalt`, `bosch`, `makita`, `stanley`, `milwaukee`) classés avec précision dans la catégorie `maison` ou `auto-moto`.
+  * **🛡️ Protection de l'État Formulaire & Persistance des Images (`frontend-next/src/app/boutique/BoutiqueClient.tsx`)** :
+    - **Protection du Titre Importé** : Neutralisation de l'écrasement intempestif du titre dans `useEffect([cat])` pour préserver le nom exact extrait par la Baguette Magique sans le remplacer par les noms génériques de catégorie.
+    - **Persistance Complète des Images dans FormData** : Transmission continue de toutes les URLs d'images distantes (`imagesExistantes`) dans `<input type="hidden" name="images" />` et insertion directe en base de données Postgres (`boutique_produits.images TEXT[]`).
+  * **🧪 Validation & Contrôle Qualité** :
+    - Tests d'extraction réels sur liens AliExpress (`1005012670076592` DEWALT Screwdriver) : Titre exact DEWALT, catégorie `maison`, 5 photos HD réelles extraites et 0 photo générique.
+    - Suite complète de tests unitaires frontend (`npm test` dans `frontend-next`) : **31/31 tests passés avec succès (100%)**.
+    - Tests de sécurité SSRF et conversion de devises (`tests/unit/magic-import.test.js`) validés.
+
 - **Authentification WhatsApp par Défaut (Connexion & Inscription) & Sélecteur Haute Visibilité (`main` - 23 août 2026)** 💬🔑📱✨ :
   * **💬 WhatsApp Choisi par Défaut** :
     - Activation de la méthode **WhatsApp OTP** comme choix par défaut sur les pages `/connexion` ([`ConnexionForm.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/connexion/ConnexionForm.tsx)) et `/inscription` ([`InscriptionForm.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/inscription/InscriptionForm.tsx)), répondant à l'usage ultra-majoritaire des commerçants et acheteurs au Sénégal (connexion 1-clic sans mot de passe à retenir).

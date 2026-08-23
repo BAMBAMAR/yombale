@@ -102,31 +102,31 @@ function detectCategory(text) {
   if (!text || typeof text !== 'string') return 'divers';
   const norm = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  if (/\b(robe|chemise|pantalon|t-shirt|tshirt|veste|manteau|chaussure|basket|sneaker|sac|sacoche|montre|bijou|boucle|collier|bague|lunette|perruque|lingerie|boxer|ceinture|talon|sandale|abaya|boubou|wax|costume|jean|jogging|sweat|hoodie|polo)\b/i.test(norm)) {
+  if (/\b(robe|chemise|pantalon|t-shirt|tshirt|veste|manteau|chaussure|basket|sneaker|sac|sacoche|montre|bijou|boucle|collier|bague|lunette|perruque|lingerie|boxer|ceinture|talon|sandale|abaya|boubou|wax|costume|jean|jogging|sweat|hoodie|polo|dress|shirt|pants|shoes|hoodie|jacket|jewelry)\b/i.test(norm)) {
     return 'mode';
   }
-  if (/\b(iphone|samsung|galaxy|redmi|xiaomi|tecno|infinix|oppo|huawei|smartphone|telephone|coque|chargeur|ecouteur|airpod|earbud|verre trempe|cable usb|powerbank|smartwatch)\b/i.test(norm)) {
+  if (/\b(iphone|samsung|galaxy|redmi|xiaomi|tecno|infinix|oppo|huawei|smartphone|telephone|coque|chargeur|ecouteur|airpod|earbud|verre trempe|cable usb|powerbank|smartwatch|phone|case|charger)\b/i.test(norm)) {
     return 'smartphones';
   }
-  if (/\b(ordinateur|laptop|pc|macbook|dell|hp|lenovo|asus|acer|clavier|souris|ecran|moniteur|disque dur|ssd|ram|processeur|carte graphique|imprimante|routeur|wifi|cle usb)\b/i.test(norm)) {
+  if (/\b(ordinateur|laptop|pc|macbook|dell|hp|lenovo|asus|acer|clavier|souris|ecran|moniteur|disque dur|ssd|ram|processeur|carte graphique|imprimante|routeur|wifi|cle usb|keyboard|mouse|monitor|gpu|cpu)\b/i.test(norm)) {
     return 'informatique';
   }
   if (/\b(television|tv|frigo|refrigerateur|congelateur|climatiseur|split|ventilateur|lave-linge|machine a laver|micro-onde|four|air fryer|friteuse|blender|mixeur|fer a repasser|aspirateur|gaziniere|plaque induction)\b/i.test(norm)) {
     return 'tv-electro';
   }
-  if (/\b(canape|salon|lit|matelas|armoire|table|chaise|meuble|rideau|tapis|lampe|coussin|couette|drap|casserole|poele|vaisselle|ustensile|rangement|decoration|miroir)\b/i.test(norm)) {
+  if (/\b(canape|salon|lit|matelas|armoire|table|chaise|meuble|rideau|tapis|lampe|coussin|couette|drap|casserole|poele|vaisselle|ustensile|rangement|decoration|miroir|perceuse|visseuse|tournevis|marteau|scie|bricolage|outillage|drill|screwdriver|wrench|pliers|dewalt|bosch|makita|stanley|milwaukee|tool|tools|cordless)\b/i.test(norm)) {
     return 'maison';
   }
-  if (/\b(creme|serum|savon|lotion|shampoing|masque|maquillage|rouge a levres|parfum|eau de toilette|rasoir|tondeuse|lisseur|epilateur|soin visage|brosse)\b/i.test(norm)) {
+  if (/\b(creme|serum|savon|lotion|shampoing|masque|maquillage|rouge a levres|parfum|eau de toilette|rasoir|tondeuse|lisseur|epilateur|soin visage|brosse|beauty|hair|skin|perfume)\b/i.test(norm)) {
     return 'beaute-sante';
   }
-  if (/\b(voiture|moto|scooter|casque|pneu|jante|alarme auto|support telephone voiture|camera de recul|housse de siege|gps)\b/i.test(norm)) {
+  if (/\b(voiture|moto|scooter|casque|pneu|jante|alarme auto|support telephone voiture|camera de recul|housse de siege|gps|car|motorcycle|helmet)\b/i.test(norm)) {
     return 'auto-moto';
   }
-  if (/\b(bebe|enfant|poussette|biberon|couche|jouet|doudou|peluche|lego|trottinette enfant|bavoir)\b/i.test(norm)) {
+  if (/\b(bebe|enfant|poussette|biberon|couche|jouet|doudou|peluche|lego|trottinette enfant|bavoir|baby|kids|toy)\b/i.test(norm)) {
     return 'enfants-bebes';
   }
-  if (/\b(sport|fitness|velo|musculation|ballon|haltere|gourde|tapis de course|tente|camping|yoga)\b/i.test(norm)) {
+  if (/\b(sport|fitness|velo|musculation|ballon|haltere|gourde|tapis de course|tente|camping|yoga|gym|cycling)\b/i.test(norm)) {
     return 'sports-loisirs';
   }
 
@@ -139,7 +139,7 @@ function detectCategory(text) {
 function cleanTitle(rawTitle) {
   if (!rawTitle) return '';
   return rawTitle
-    .replace(/\s*[-–|•]\s*(AliExpress|SHEIN|Amazon|Alibaba|Temu|Jumia|eBay|Wish|Taobao|1688).*$/i, '')
+    .replace(/\s*[-–|•]\s*(AliExpress|SHEIN|Amazon|Alibaba|Temu|Jumia|eBay|Wish|Taobao|1688|\d+).*$/i, '')
     .replace(/\b(202[4-9]|Newest|Hot Sale|High Quality|Free Shipping|Livraison Gratuite|Wholesale|Gros|Nouveau|Tendance 202[4-9])\b/gi, '')
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
@@ -161,13 +161,19 @@ function cleanImageUrls(imageArray) {
     if (url.startsWith('//')) url = 'https:' + url;
     if (!url.startsWith('http://') && !url.startsWith('https://')) continue;
 
-    // Suppression des paramètres de réduction de taille (AliExpress / Shein / Amazon)
+    // Suppression des paramètres de réduction de taille (AliExpress / Shein / Amazon / Temu)
     url = url
-      .replace(/_[0-9]+x[0-9]+(\.[a-zA-Z0-9]+)$/i, '$1') // AliExpress thumbnail to full: S1_50x50.jpg -> S1.jpg
+      .replace(/_[0-9]+x[0-9]+(\.[a-zA-Z0-9]+)$/i, '$1') // AliExpress: S1_50x50.jpg -> S1.jpg
       .replace(/_[0-9]+x[0-9]+$/i, '')
+      .replace(/\.jpg_[0-9]+x[0-9]+[a-zA-Z0-9._-]*$/i, '.jpg')
       .replace(/\._AC_US[0-9]+_\./i, '._AC_SL1500_.') // Amazon thumbnail to HD
       .replace(/\._AC_SR[0-9]+,[0-9]+_\./i, '._AC_SL1500_.')
       .replace(/_thumbnail_[0-9]+x[0-9]+\.webp/i, '.webp');
+
+    // Ne pas inclure d'icônes ou de logos génériques
+    if (url.includes('avatar') || url.includes('icon') || url.includes('logo') || url.includes('HTB18eCBQXXXXXXfXXXX760XFXXXa')) {
+      continue;
+    }
 
     if (!cleanList.includes(url) && cleanList.length < 5) {
       cleanList.push(url);
@@ -178,7 +184,7 @@ function cleanImageUrls(imageArray) {
 }
 
 /**
- * Scrapeur principal tout-en-un avec fallback résilient
+ * Scrapeur principal tout-en-un avec stratégie multi-tentatives résiliente
  */
 async function scrapeProductFromUrl(rawUrl) {
   const safeUrl = validateSafeUrl(rawUrl);
@@ -199,31 +205,53 @@ async function scrapeProductFromUrl(rawUrl) {
     original_url: safeUrl
   };
 
+  // Extraire l'ID du produit si AliExpress
+  let aliItemId = null;
+  if (host.includes('aliexpress')) {
+    aliItemId = safeUrl.match(/item\/(\d+)/)?.[1] || safeUrl.match(/\/(\d+)\.html/)?.[1];
+  }
+
+  const userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+  ];
+
+  const urlsToTry = [safeUrl];
+  if (aliItemId && host.includes('aliexpress')) {
+    urlsToTry.push(`https://fr.aliexpress.com/item/${aliItemId}.html`);
+    urlsToTry.push(`https://m.aliexpress.com/item/${aliItemId}.html`);
+  }
+
   let html = '';
 
-  try {
-    const response = await axios.get(safeUrl, {
-      timeout: 7500,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1',
-      },
-      maxRedirects: 5,
-    });
+  for (const targetUrl of urlsToTry) {
+    for (const ua of userAgents) {
+      try {
+        const response = await axios.get(targetUrl, {
+          timeout: 6000,
+          headers: {
+            'User-Agent': ua,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Upgrade-Insecure-Requests': '1',
+          },
+          maxRedirects: 5,
+        });
 
-    if (response.data && typeof response.data === 'string') {
-      html = response.data;
+        if (response.data && typeof response.data === 'string' && response.data.length > 2500) {
+          html = response.data;
+          break;
+        }
+      } catch (err) {
+        // Essayer le prochain User-Agent ou URL
+      }
     }
-  } catch (err) {
-    // Si la requête HTTP échoue (bloqué par anti-bot ou timeout), on bascule sur heuristiques
-    console.log(`[MAGIC IMPORT] Requête HTTP directe non aboutie (${err.message}), bascule sur parser URL & heuristiques.`);
+    if (html) break;
   }
 
   if (html) {
@@ -239,13 +267,11 @@ async function scrapeProductFromUrl(rawUrl) {
 
         for (const item of items) {
           if (!item) continue;
-          // Vérifier si c'est un Product ou a un mainEntity Product
           const target = (item['@type'] === 'Product') ? item : (item.mainEntity && item.mainEntity['@type'] === 'Product' ? item.mainEntity : null);
           if (target) {
             if (!extracted.titre && target.name) extracted.titre = String(target.name);
             if (!extracted.description && target.description) extracted.description = String(target.description);
 
-            // Images
             if (target.image) {
               const imgArray = Array.isArray(target.image) ? target.image : [target.image];
               imgArray.forEach(img => {
@@ -254,7 +280,6 @@ async function scrapeProductFromUrl(rawUrl) {
               });
             }
 
-            // Offres / Prix
             const offer = Array.isArray(target.offers) ? target.offers[0] : target.offers;
             if (offer) {
               const rawP = offer.price || offer.lowPrice || offer.highPrice;
@@ -289,7 +314,6 @@ async function scrapeProductFromUrl(rawUrl) {
                               $('meta[name="description"]').attr('content') || '';
     }
 
-    // Extraction images OpenGraph & Twitter
     const ogImg = $('meta[property="og:image"]').attr('content') || $('meta[name="twitter:image"]').attr('content');
     if (ogImg) extracted.images.push(ogImg);
     $('meta[property="og:image:secure_url"]').each((_, el) => {
@@ -297,7 +321,6 @@ async function scrapeProductFromUrl(rawUrl) {
       if (src) extracted.images.push(src);
     });
 
-    // Extraction prix OpenGraph
     if (!extracted.prix || extracted.prix === 0) {
       const ogPrice = $('meta[property="product:price:amount"]').attr('content') ||
                       $('meta[property="og:price:amount"]').attr('content');
@@ -315,43 +338,38 @@ async function scrapeProductFromUrl(rawUrl) {
       }
     }
 
-    // ── 3. Spécificités AliExpress (runParams) ──
+    // ── 3. Spécificités AliExpress (Deep Regex Extraction) ──
     if (host.includes('aliexpress')) {
-      const scriptText = $('script:contains("runParams")').html() || '';
-      const titleMatch = scriptText.match(/"subject":"([^"]+)"/);
-      if (titleMatch && !extracted.titre) extracted.titre = titleMatch[1];
+      // Extraire toutes les images réelles du CDN AliExpress
+      const cdnMatches = html.match(/https:\/\/(?:ae-pic-a1|ae01|ae-pic|ae02|ae03|ae04)\.(?:aliexpress-media\.com|alicdn\.com)\/kf\/[A-Za-z0-9_-]+(?:\.[a-zA-Z0-9]+)?/gi) || [];
+      cdnMatches.forEach(img => {
+        if (!extracted.images.includes(img) && !img.includes('avatar') && !img.includes('logo')) {
+          extracted.images.push(img);
+        }
+      });
 
-      const priceMatch = scriptText.match(/"formatedActivityPrice":"([^"]+)"/) || scriptText.match(/"formatedPrice":"([^"]+)"/);
-      if (priceMatch && (!extracted.prix || extracted.prix === 0)) {
-        const conv = convertCurrencyToFcfa(priceMatch[1], 'USD');
-        extracted.prix = conv.prix_vente_suggere_fcfa;
-        extracted.prix_achat = conv.prix_achat_fcfa;
-        extracted.prix_barre = conv.prix_barre_suggere_fcfa;
-        extracted.devise_source = 'USD';
-      }
-
-      const imgMatches = scriptText.match(/"imagePathList":\[([^\]]+)\]/);
-      if (imgMatches) {
-        try {
-          const imgs = JSON.parse(`[${imgMatches[1]}]`);
-          imgs.forEach(i => extracted.images.push(i));
-        } catch (e) {}
+      // Extraire le titre depuis les balises ou scripts si manquant
+      if (!extracted.titre || extracted.titre.includes('AliExpress') || extracted.titre.length < 5) {
+        const subjectMatch = html.match(/"subject":"([^"]+)"/) || html.match(/"title":"([^"]+)"/);
+        if (subjectMatch) extracted.titre = subjectMatch[1];
       }
     }
 
     // ── 4. Spécificités SHEIN ──
     if (host.includes('shein')) {
-      const scriptGoods = $('script:contains("goodsDetail")').html() || $('script:contains("gbProductDetailData")').html() || '';
-      const nameMatch = scriptGoods.match(/"goods_name":"([^"]+)"/);
+      const nameMatch = html.match(/"goods_name":"([^"]+)"/);
       if (nameMatch && !extracted.titre) extracted.titre = nameMatch[1];
 
-      const priceMatch = scriptGoods.match(/"retailPrice":{"amountWithSymbol":"([^"]+)"/) || scriptGoods.match(/"salePrice":{"amountWithSymbol":"([^"]+)"/);
+      const priceMatch = html.match(/"retailPrice":{"amountWithSymbol":"([^"]+)"/) || html.match(/"salePrice":{"amountWithSymbol":"([^"]+)"/);
       if (priceMatch && (!extracted.prix || extracted.prix === 0)) {
         const conv = convertCurrencyToFcfa(priceMatch[1], 'USD');
         extracted.prix = conv.prix_vente_suggere_fcfa;
         extracted.prix_achat = conv.prix_achat_fcfa;
         extracted.prix_barre = conv.prix_barre_suggere_fcfa;
       }
+
+      const sheinImgs = html.match(/https:\/\/img\.ltwebstatic\.com\/images[^\s"'<>]+\.(?:jpg|png|webp)/gi) || [];
+      sheinImgs.forEach(img => extracted.images.push(img));
     }
 
     // ── 5. Spécificités Amazon ──
@@ -373,54 +391,33 @@ async function scrapeProductFromUrl(rawUrl) {
   extracted.titre = cleanTitle(extracted.titre);
   extracted.images = cleanImageUrls(extracted.images);
 
-  // ── Fallbacks intelligents et réalistes si le site bloque l'extraction directe ──
+  // ── Extraction intelligente depuis le slug URL si le titre est encore vide ──
   if (!extracted.titre || extracted.titre.length < 3) {
-    if (host.includes('aliexpress')) {
-      const itemId = safeUrl.match(/item\/(\d+)/)?.[1] || safeUrl.match(/\/(\d+)\.html/)?.[1] || 'Sourcing';
-      extracted.titre = `Produit Tendance AliExpress (#${itemId})`;
-      extracted.prix = 14500;
-      extracted.prix_achat = 8500;
-      extracted.prix_barre = 19500;
-      extracted.description = "Produit importé directement depuis AliExpress. Article de haute qualité, sélectionné pour sa fiabilité et prêt pour la vente.";
-      extracted.images = ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'];
-      extracted.categorie = 'mode';
-    } else if (host.includes('shein')) {
-      extracted.titre = "Article de Mode Tendance (SHEIN)";
-      extracted.prix = 12500;
-      extracted.prix_achat = 7500;
-      extracted.prix_barre = 17500;
-      extracted.description = "Article de prêt-à-porter importé depuis SHEIN. Coupe moderne, finitions soignées et matière agréable.";
-      extracted.images = ['https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=800&q=80'];
-      extracted.categorie = 'mode';
-    } else if (host.includes('amazon')) {
-      extracted.titre = "Produit Sélectionné (Amazon)";
-      extracted.prix = 18500;
-      extracted.prix_achat = 11500;
-      extracted.prix_barre = 24500;
-      extracted.description = "Article sélectionné et importé depuis Amazon. Qualité certifiée conforme aux normes internationales.";
-      extracted.images = ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'];
-      extracted.categorie = 'informatique';
-    } else if (host.includes('alibaba') || host.includes('1688')) {
-      extracted.titre = "Arrivage de Gros (Alibaba / 1688)";
-      extracted.prix = 15000;
-      extracted.prix_achat = 9000;
-      extracted.prix_barre = 20000;
-      extracted.description = "Lot de marchandises commandé en gros sur Alibaba / 1688. Idéal pour la revente au Sénégal.";
-      extracted.images = ['https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=800&q=80'];
-      extracted.categorie = 'divers';
-    } else {
-      const cleanHost = host.replace('www.', '');
-      extracted.titre = `Produit Importé (${cleanHost})`;
-      extracted.prix = 15000;
-      extracted.prix_achat = 9500;
-      extracted.prix_barre = 20000;
-      extracted.description = `Article importé depuis ${cleanHost}. Sélection de qualité supérieure.`;
-      extracted.images = ['https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=800&q=80'];
-      extracted.categorie = 'divers';
+    const pathname = parsedUrl.pathname;
+    const slugSegments = pathname.split('/').filter(s => s && !s.endsWith('.html') && isNaN(Number(s)));
+    if (slugSegments.length > 0) {
+      const candidate = slugSegments[slugSegments.length - 1].replace(/[-_]+/g, ' ').trim();
+      if (candidate.length > 3) {
+        extracted.titre = cleanTitle(candidate);
+      }
     }
   }
 
-  // Si pas de prix détecté mais titre présent
+  // ── Fallback structuré selon la plateforme sans images génériques trompeuses ──
+  if (!extracted.titre || extracted.titre.length < 3) {
+    if (host.includes('aliexpress')) {
+      const itemId = aliItemId || 'Article';
+      extracted.titre = `Article Importé AliExpress (#${itemId})`;
+    } else if (host.includes('shein')) {
+      extracted.titre = "Article de Mode SHEIN";
+    } else if (host.includes('amazon')) {
+      extracted.titre = "Produit Importé Amazon";
+    } else {
+      extracted.titre = `Produit Importé (${extracted.source_name})`;
+    }
+  }
+
+  // Prix de secours par défaut si non extrait
   if (!extracted.prix || extracted.prix === 0) {
     extracted.prix = 15000;
     extracted.prix_achat = 9000;
@@ -428,7 +425,7 @@ async function scrapeProductFromUrl(rawUrl) {
   }
 
   if (!extracted.description) {
-    extracted.description = `Importé via la Baguette Magique depuis ${extracted.source_name}. Produit de qualité prêt à être commandé.`;
+    extracted.description = `${extracted.titre} — Importé via la Baguette Magique depuis ${extracted.source_name}. Produit de qualité disponible à la commande.`;
   }
 
   // Détection de catégorie automatique
@@ -446,3 +443,4 @@ module.exports = {
   scrapeProductFromUrl,
   TAUX_CHANGE_FCFA
 };
+

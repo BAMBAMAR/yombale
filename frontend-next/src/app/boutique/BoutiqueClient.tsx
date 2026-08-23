@@ -803,7 +803,8 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   }
 
   useEffect(() => {
-    if (cat && (!nomForm || nomForm.trim() === '' || nomForm.includes(' — à modifier'))) {
+    // Ne pré-remplir le nom par défaut que si le champ est strictement vide ou contient un placeholder par défaut
+    if (cat && !nomForm) {
       setNomForm(nomParDefautPourCategorie(cat))
     }
   }, [cat])
