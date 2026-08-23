@@ -689,6 +689,7 @@ module.exports = async function migrateInline() {
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS tiktok_pixel_id VARCHAR(50)`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS ga4_id VARCHAR(50)`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS devise_defaut VARCHAR(10) DEFAULT 'XOF'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS code_pin VARCHAR(10) DEFAULT '1234'`,
   ];
   for (const sql of colonnesBoutiqueAvancees) {
     try { await pool.query(sql); }

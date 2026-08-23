@@ -49,7 +49,7 @@ router.get('/leads', adminOnly, async (req, res) => {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    const [resLeads, resTotal, resStats] = await Promise.all([
+    const [resLeads, resTotal, resStats, resBlacklist] = await Promise.all([
       pool.query(
         `SELECT * FROM prospection_leads ${whereClause} ORDER BY created_at DESC LIMIT $${pIdx} OFFSET $${pIdx + 1}`,
         [...params, parseInt(limit, 10), offset]
@@ -60,9 +60,11 @@ router.get('/leads', adminOnly, async (req, res) => {
           COUNT(*) AS total,
           COUNT(*) FILTER (WHERE statut = 'nouveau') AS nouveaux,
           COUNT(*) FILTER (WHERE statut LIKE 'contacte%') AS contactes,
-          COUNT(*) FILTER (WHERE statut = 'converti') AS convertis
+          COUNT(*) FILTER (WHERE statut = 'converti') AS convertis,
+          COUNT(*) FILTER (WHERE statut = 'desinscrit') AS desinscrits
         FROM prospection_leads
       `),
+      pool.query(`SELECT COUNT(*) AS total_blacklist FROM whatsapp_blacklist`),
     ]);
 
     res.json({
@@ -75,6 +77,8 @@ router.get('/leads', adminOnly, async (req, res) => {
         nouveaux: parseInt(resStats.rows[0].nouveaux, 10) || 0,
         contactes: parseInt(resStats.rows[0].contactes, 10) || 0,
         convertis: parseInt(resStats.rows[0].convertis, 10) || 0,
+        desinscrits: parseInt(resStats.rows[0].desinscrits, 10) || 0,
+        blacklist: parseInt(resBlacklist.rows[0]?.total_blacklist, 10) || 0,
       }
     });
   } catch (err) {
@@ -133,30 +137,79 @@ router.post('/leads', adminOnly, async (req, res) => {
 });
 
 // ── PUT /api/prospection/leads/:id ────────────────────────────────────────────
-// Modification d'un lead
+// Modification complète d'un lead
 router.put('/leads/:id', adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nom_boutique, contact_nom, statut, notes, categorie, ville, quartier } = req.body;
+    const {
+      nom_boutique,
+      contact_nom,
+      statut,
+      notes,
+      categorie,
+      ville,
+      quartier,
+      telephone,
+      email,
+    } = req.body;
+
+    let normTel = null;
+    if (telephone !== undefined && telephone !== null && String(telephone).trim() !== '') {
+      const norm = normaliserTelephoneSenegal(telephone);
+      if (!norm.valide) {
+        return res.status(400).json({ error: `Numéro invalide: ${norm.erreur}` });
+      }
+      normTel = norm;
+    }
 
     const query = `
       UPDATE prospection_leads
       SET
-        nom_boutique = COALESCE($1, nom_boutique),
-        contact_nom = COALESCE($2, contact_nom),
-        statut = COALESCE($3, statut),
-        notes = COALESCE($4, notes),
-        categorie = COALESCE($5, categorie),
-        ville = COALESCE($6, ville),
-        quartier = COALESCE($7, quartier),
-        updated_at = NOW()
-      WHERE id = $8
+        nom_boutique   = COALESCE($1, nom_boutique),
+        contact_nom    = COALESCE($2, contact_nom),
+        statut         = COALESCE($3, statut),
+        notes          = COALESCE($4, notes),
+        categorie      = COALESCE($5, categorie),
+        ville          = COALESCE($6, ville),
+        quartier       = COALESCE($7, quartier),
+        telephone      = COALESCE($8, telephone),
+        telephone_brut = COALESCE($9, telephone_brut),
+        operateur      = COALESCE($10, operateur),
+        email          = COALESCE($11, email),
+        updated_at     = NOW()
+      WHERE id = $12
       RETURNING *
     `;
-    const result = await pool.query(query, [nom_boutique, contact_nom, statut, notes, categorie, ville, quartier, id]);
+
+    const values = [
+      nom_boutique !== undefined ? nom_boutique : null,
+      contact_nom !== undefined ? contact_nom : null,
+      statut !== undefined ? statut : null,
+      notes !== undefined ? notes : null,
+      categorie !== undefined ? categorie : null,
+      ville !== undefined ? ville : null,
+      quartier !== undefined ? quartier : null,
+      normTel ? normTel.national : (telephone !== undefined ? telephone : null),
+      normTel ? normTel.brut : null,
+      normTel ? normTel.operateur : null,
+      email !== undefined ? email : null,
+      id,
+    ];
+
+    const result = await pool.query(query, values);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Lead introuvable' });
-    res.json(result.rows[0]);
+
+    const updatedLead = result.rows[0];
+
+    // Si le statut passe en désinscrit, synchronisation automatique avec whatsapp_blacklist
+    if (statut === 'desinscrit' && updatedLead.telephone) {
+      const { ajouterBlacklist } = require('../services/whatsapp');
+      await ajouterBlacklist(updatedLead.telephone, 'optout_crm');
+    }
+
+    res.json(updatedLead);
   } catch (err) {
+    console.error('[PROSPECTION PUT LEAD ERR]:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -428,6 +481,109 @@ router.get('/crons/status', adminOnly, async (_req, res) => {
       marchesDisponibles: DIRECTOIRE_MARCHES_DAKAR.map(m => m.zone),
     });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/prospection/blacklist ────────────────────────────────────────────
+// Liste des numéros blacklistés avec enrichissement des infos prospect/lead
+router.get('/blacklist', adminOnly, async (req, res) => {
+  try {
+    const { search } = req.query;
+    let query = `
+      SELECT 
+        b.phone,
+        b.reason,
+        b.created_at,
+        l.id AS lead_id,
+        l.nom_boutique,
+        l.contact_nom,
+        l.categorie,
+        l.ville,
+        l.quartier,
+        l.operateur,
+        l.statut AS lead_statut
+      FROM whatsapp_blacklist b
+      LEFT JOIN prospection_leads l ON b.phone = l.telephone
+    `;
+    const params = [];
+    if (search && search.trim()) {
+      query += ` WHERE (b.phone ILIKE $1 OR b.reason ILIKE $1 OR l.nom_boutique ILIKE $1 OR l.contact_nom ILIKE $1 OR l.quartier ILIKE $1)`;
+      params.push(`%${search.trim()}%`);
+    }
+    query += ` ORDER BY b.created_at DESC LIMIT 500`;
+
+    const { rows } = await pool.query(query, params);
+    res.json({ blacklist: rows, total: rows.length });
+  } catch (err) {
+    console.error('[PROSPECTION GET BLACKLIST ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/prospection/blacklist ───────────────────────────────────────────
+// Ajouter manuellement un numéro à la blacklist
+router.post('/blacklist', adminOnly, async (req, res) => {
+  try {
+    const { phone, reason = 'manuel_admin' } = req.body;
+    if (!phone) {
+      return res.status(400).json({ error: 'Numéro de téléphone requis' });
+    }
+    const { normalisePhone, ajouterBlacklist } = require('../services/whatsapp');
+    const norm = normalisePhone(phone);
+    await ajouterBlacklist(norm, reason);
+
+    // Mettre à jour le lead en 'desinscrit' s'il existe dans la table des prospects
+    await pool.query(
+      "UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE telephone = $1",
+      [norm]
+    );
+
+    res.json({ success: true, phone: norm, reason });
+  } catch (err) {
+    console.error('[PROSPECTION POST BLACKLIST ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /api/prospection/blacklist/:phone ──────────────────────────────────
+// Retirer un numéro de la blacklist (déblocage)
+router.delete('/blacklist/:phone', adminOnly, async (req, res) => {
+  try {
+    const { phone } = req.params;
+    const { normalisePhone, retirerBlacklist } = require('../services/whatsapp');
+    const norm = normalisePhone(phone);
+    await retirerBlacklist(norm);
+
+    res.json({ success: true, phone: norm });
+  } catch (err) {
+    console.error('[PROSPECTION DELETE BLACKLIST ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/prospection/logs ─────────────────────────────────────────────────
+// Historique des messages envoyés
+router.get('/logs', adminOnly, async (req, res) => {
+  try {
+    const { limit = 100 } = req.query;
+    const { rows } = await pool.query(`
+      SELECT 
+        l.*,
+        p.nom_boutique,
+        p.contact_nom,
+        p.telephone,
+        p.categorie,
+        p.quartier
+      FROM prospection_messages_log l
+      LEFT JOIN prospection_leads p ON l.lead_id = p.id
+      ORDER BY l.created_at DESC
+      LIMIT $1
+    `, [parseInt(limit, 10) || 100]);
+
+    res.json({ logs: rows });
+  } catch (err) {
+    console.error('[PROSPECTION GET LOGS ERR]:', err);
     res.status(500).json({ error: err.message });
   }
 });

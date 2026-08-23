@@ -205,6 +205,364 @@ async function estProprietaireBoutique(phone, boutique) {
   }
 }
 
+// Tampon en mémoire pour l'association automatique des photos multiples (batch d'images WhatsApp)
+const _recentsProduitsCrees = new Map();
+// Cache des codes OTP pour la réinitialisation de Code PIN marchand (valable 10 min)
+const _otpCodesMarchand = new Map();
+
+// ── Extraction et détection de numéro de téléphone sénégalais ─────────────────
+function extraireNumeroTelephone(texte) {
+  if (!texte) return null;
+  const clean = texte.replace(/[\s\.\-\(\)]/g, '');
+  const match = clean.match(/(?:(?:\+|00)?221)?(7[05678]\d{7}|33\d{7})/);
+  if (match) {
+    const raw9 = match[1];
+    return {
+      national: raw9,
+      international: `221${raw9}`,
+    };
+  }
+  return null;
+}
+
+// Recherche d'une boutique active par son numéro de contact (ou numéro du gérant)
+async function trouverBoutiqueParTelephone(phoneStr) {
+  const telInfo = extraireNumeroTelephone(phoneStr);
+  if (!telInfo) return null;
+  const { rows } = await pool.query(
+    `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
+            b.couleur_theme, b.logo_url, u.nom AS proprietaire_nom
+     FROM boutiques b
+     LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+     WHERE b.actif = true
+       AND (
+         b.telephone LIKE '%' || $1
+         OR b.whatsapp LIKE '%' || $1
+         OR b.telephone = $2
+         OR b.whatsapp = $2
+         OR u.telephone LIKE '%' || $1
+         OR u.telephone = $2
+       )
+     ORDER BY b.created_at DESC
+     LIMIT 1`,
+    [telInfo.national, telInfo.international]
+  );
+  return rows[0] || null;
+}
+
+// Recherche de la boutique dont ce numéro est propriétaire/marchand
+async function trouverBoutiqueMarchand(phone) {
+  const normPh = normalisePhone(phone);
+  const shortPh = phone.replace(/\D/g, '').slice(-9);
+  const { rows } = await pool.query(
+    `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
+            b.couleur_theme, b.logo_url, u.nom AS proprietaire_nom
+     FROM boutiques b
+     LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+     WHERE b.actif = true
+       AND (
+         b.telephone = $1 OR b.whatsapp = $1
+         OR b.telephone LIKE '%' || $2 OR b.whatsapp LIKE '%' || $2
+         OR u.telephone = $1 OR u.telephone LIKE '%' || $2
+       )
+     ORDER BY b.created_at DESC
+     LIMIT 1`,
+    [normPh, shortPh]
+  );
+  return rows[0] || null;
+}
+
+// Vérification du Code PIN marchand (PIN de la boutique ou code d'un caissier actif)
+async function verifierCodePin(boutique, pinSaisi) {
+  if (!boutique || !pinSaisi) return false;
+  const pinNettoye = String(pinSaisi).trim();
+  const pinAttendu = String(boutique.code_pin || '1234').trim();
+  if (pinNettoye === pinAttendu) return true;
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE LIMIT 1`,
+      [boutique.id, pinNettoye]
+    );
+    if (rows.length > 0) return true;
+  } catch (_) {}
+
+  return false;
+}
+
+// ── Envoi du Menu Marchand Dédié & Authentifié ─────────────────────────────────
+async function envoyerMenuMarchand(phone, boutique) {
+  const header =
+    `🏪 *Espace Marchand — ${boutique.nom}*\n` +
+    `✅ Accès sécurisé déverrouillé\n\n` +
+    `Bienvenue dans votre tableau de bord WhatsApp ! Choisissez une option ci-dessous :`;
+
+  await sendWhatsAppText(phone, header);
+
+  await sendWhatsAppInteractive(
+    phone,
+    boutique.nom,
+    'Que souhaitez-vous faire ?',
+    [
+      {
+        title: '📦 Produits & Commandes',
+        rows: [
+          { id: 'marchand_commandes', title: '📋 Mes Commandes', description: 'Suivi et statut des commandes clients' },
+          { id: 'marchand_ajout_produit', title: '➕ Ajouter un produit', description: 'Envoi express ou guidé' },
+          { id: 'marchand_stock', title: '📦 Mes Produits & Stock', description: 'Consulter et gérer vos articles' },
+          { id: 'marchand_caisse', title: '💰 Bilan Caisse du jour', description: 'Ventes du jour Wave, OM, Cash' },
+        ],
+      },
+      {
+        title: '📒 Gestion & Vitrine',
+        rows: [
+          { id: 'marchand_dettes', title: '📒 Carnet de Dettes ("Bor")', description: 'Clients débiteurs & relances' },
+          { id: 'marchand_vitrine', title: '🔗 Statut WhatsApp & Lien', description: 'Message à partager pour vendre' },
+          { id: 'marchand_changer_pin', title: '⚙️ Changer mon Code PIN', description: 'Modifier votre code secret' },
+          { id: 'menu', title: '⬅️ Menu Général', description: 'Retourner au menu Nopalou' },
+        ],
+      },
+    ]
+  );
+  await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+}
+
+// ── Consultation et suivi des commandes par le marchand ───────────────────────
+async function envoyerCommandesMarchand(phone, boutique) {
+  const { rows: commandes } = await pool.query(
+    `SELECT 
+       id, reference, nom_produit, quantite, prix_unitaire, montant_total,
+       client_nom, client_telephone, client_adresse, methode_paiement, statut, created_at
+     FROM commandes_boutique
+     WHERE boutique_id = $1
+     ORDER BY created_at DESC
+     LIMIT 5`,
+    [boutique.id]
+  );
+
+  if (!commandes.length) {
+    await sendWhatsAppText(
+      phone,
+      `📋 *Commandes — ${boutique.nom}*\n\n` +
+      `Vous n'avez pas encore reçu de commande en ligne.\n\n` +
+      `👉 Partagez votre vitrine sur vos Statuts WhatsApp pour recevoir vos premières commandes : ${SITE}/boutiques/${boutique.slug}`
+    );
+  } else {
+    const STATUT_LABELS = {
+      'en_attente': '🟡 En attente',
+      'payee': '🟢 Payée',
+      'confirmee': '🔵 Confirmée',
+      'en_livraison': '🚚 En cours de livraison',
+      'livree': '🎉 Livrée',
+      'annulee': '❌ Annulée',
+    };
+
+    const METHODES = {
+      'wave': '🌊 Wave',
+      'orange_money': '🟠 Orange Money',
+      'cash': '💵 Espèces à la livraison',
+      'especes': '💵 Espèces',
+    };
+
+    const fiches = commandes.map((c, i) => {
+      const dateFmt = new Date(c.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const statutTxt = STATUT_LABELS[c.statut] || `🔹 ${c.statut}`;
+      const methodeTxt = METHODES[c.methode_paiement] || c.methode_paiement;
+      const telClientNorm = normalisePhone(c.client_telephone);
+      const waClientLink = `https://wa.me/${telClientNorm}?text=${encodeURIComponent(`Bonjour ${c.client_nom}, c'est ${boutique.nom} concernant votre commande ${c.reference} (${c.nom_produit}).`)}`;
+
+      return (
+        `*${i + 1}. Réf : ${c.reference}* (${statutTxt})\n` +
+        `🛍️ *${c.nom_produit}* × ${c.quantite} — *${prixFmt(c.montant_total)}*\n` +
+        `👤 Client : *${c.client_nom}* (📞 +${telClientNorm})\n` +
+        `📍 Lieu : ${c.client_adresse || 'Non précisé'}\n` +
+        `💳 Paiement : ${methodeTxt}\n` +
+        `📅 Date : ${dateFmt}\n` +
+        `💬 Contact Client : ${waClientLink}`
+      );
+    });
+
+    await sendWhatsAppText(
+      phone,
+      `📋 *Dernières Commandes — ${boutique.nom} :*\n\n` +
+      `${fiches.join('\n\n─────────────────────\n\n')}\n\n` +
+      `👉 *Gérer en direct sur le web :* ${SITE}/boutique?tab=commandes`
+    );
+
+    // Si la commande la plus récente est en attente ou confirmée, proposer des boutons d'action rapide
+    const derniere = commandes[0];
+    if (derniere && (derniere.statut === 'en_attente' || derniere.statut === 'payee' || derniere.statut === 'confirmee')) {
+      const buttons = [];
+      if (derniere.statut === 'en_attente' || derniere.statut === 'payee') {
+        buttons.push({ id: `cmd_statut_${derniere.id}_confirmee`, title: '✅ Confirmer' });
+      }
+      buttons.push({ id: `cmd_statut_${derniere.id}_en_livraison`, title: '🚚 En livraison' });
+      buttons.push({ id: `cmd_statut_${derniere.id}_livree`, title: '🎉 Livrée' });
+
+      await sendWhatsAppButtons3(
+        phone,
+        `Action rapide pour la commande *${derniere.reference}* (${derniere.client_nom}) :`,
+        buttons.slice(0, 3)
+      ).catch(() => {});
+    }
+  }
+
+  await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+}
+
+// ── Consultation des produits & état de stock par le marchand ─────────────────
+async function envoyerStockMarchand(phone, boutique) {
+  const { rows: produits } = await pool.query(
+    `SELECT id, nom, prix, en_stock, stock_quantite, array_length(images, 1) AS nb_photos
+     FROM boutique_produits
+     WHERE boutique_id = $1
+     ORDER BY created_at DESC
+     LIMIT 6`,
+    [boutique.id]
+  );
+
+  if (!produits.length) {
+    await sendWhatsAppText(
+      phone,
+      `📦 *Catalogue — ${boutique.nom}*\n\n` +
+      `Votre catalogue est actuellement vide.\n\n` +
+      `👉 Pour publier votre premier article, envoyez simplement une photo avec le nom et le prix en légende (ex: *Sac cuir 5000*) ou tapez *+produit* !`
+    );
+  } else {
+    const lines = produits.map((p, i) => {
+      const stockStr = (p.stock_quantite !== null && p.stock_quantite !== undefined)
+        ? (p.stock_quantite > 0 ? `✅ ${p.stock_quantite} en stock` : '❌ Rupture')
+        : (p.en_stock !== false ? '✅ En stock' : '❌ Rupture');
+      return `${i + 1}. *${p.nom}* — ${prixFmt(p.prix)} (${stockStr})`;
+    });
+
+    await sendWhatsAppText(
+      phone,
+      `📦 *Vos derniers produits — ${boutique.nom} :*\n\n` +
+      `${lines.join('\n\n')}\n\n` +
+      `🔗 Vitrine : ${SITE}/boutiques/${boutique.slug}`
+    );
+  }
+
+  await sendWhatsAppButton(
+    phone,
+    'Souhaitez-vous ajouter un nouvel article ?',
+    'marchand_ajout_produit',
+    '➕ Ajouter un produit'
+  ).catch(() => {});
+  await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+}
+
+// ── Bilan de caisse & ventes du jour en direct ─────────────────────────────────
+async function envoyerBilanCaisseMarchand(phone, boutique) {
+  const { rows: [stats] } = await pool.query(
+    `SELECT 
+       COUNT(*) AS nb_ventes,
+       COALESCE(SUM(montant_total), 0) AS total_ca,
+       COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement ILIKE '%wave%'), 0) AS ca_wave,
+       COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement ILIKE '%orange%' OR methode_paiement ILIKE '%om%'), 0) AS ca_om,
+       COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement ILIKE '%cash%' OR methode_paiement ILIKE '%espece%'), 0) AS ca_cash
+     FROM commandes_boutique
+     WHERE boutique_id = $1
+       AND created_at >= CURRENT_DATE
+       AND (statut IS NULL OR statut != 'annulee')`,
+    [boutique.id]
+  );
+
+  const nbVentes = parseInt(stats.nb_ventes || 0, 10);
+  const totalCa = Number(stats.total_ca || 0);
+  const caWave = Number(stats.ca_wave || 0);
+  const caOm = Number(stats.ca_om || 0);
+  const caCash = Number(stats.ca_cash || 0);
+
+  const dateStr = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
+  const msg =
+    `💰 *Bilan Caisse du Jour — ${boutique.nom}*\n` +
+    `📅 *${dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}*\n\n` +
+    `💵 *Chiffre d'Affaires : ${prixFmt(totalCa)}*\n` +
+    `📦 *Ventes / Commandes : ${nbVentes}*\n\n` +
+    `📊 *Répartition par mode d'encaissement :*\n` +
+    `• 🌊 Wave : *${prixFmt(caWave)}*\n` +
+    `• 🟠 Orange Money : *${prixFmt(caOm)}*\n` +
+    `• 💵 Espèces (Cash) : *${prixFmt(caCash)}*\n\n` +
+    `👉 *Accéder à votre Caisse Tactile POS en direct :*\n` +
+    `${SITE}/boutique/caisse`;
+
+  await sendWhatsAppText(phone, msg);
+  await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+}
+
+// ── Carnet de Dettes ("Bor") & Relances WhatsApp en 1 clic ─────────────────────
+async function envoyerCarnetDettesMarchand(phone, boutique) {
+  let clientsDettes = [];
+  try {
+    const r = await pool.query(
+      `SELECT nom, telephone, solde_dette
+       FROM caisse_clients_credits
+       WHERE boutique_id = $1 AND solde_dette > 0
+       ORDER BY solde_dette DESC
+       LIMIT 5`,
+      [boutique.id]
+    );
+    clientsDettes = r.rows;
+  } catch (e) {}
+
+  if (!clientsDettes.length) {
+    await sendWhatsAppText(
+      phone,
+      `📒 *Carnet de Dettes ("Bor") — ${boutique.nom}*\n\n` +
+      `✅ *Excellente nouvelle !* Aucun client n'a de dette impayée enregistrée pour le moment.`
+    );
+  } else {
+    const totalDettes = clientsDettes.reduce((sum, c) => sum + Number(c.solde_dette || 0), 0);
+    const lines = clientsDettes.map((c, i) => {
+      let line = `${i + 1}. *${c.nom}* : *${prixFmt(c.solde_dette)}*`;
+      if (c.telephone) {
+        const telNorm = normalisePhone(c.telephone);
+        const waRelanceMsg = encodeURIComponent(
+          `Bonjour ${c.nom}, ceci est un rappel amical de votre solde de ${prixFmt(c.solde_dette)} chez ${boutique.nom}. Merci de nous contacter pour convenir du règlement. Cordialement.`
+        );
+        line += `\n   👉 Relancer sur WhatsApp : https://wa.me/${telNorm}?text=${waRelanceMsg}`;
+      }
+      return line;
+    });
+
+    await sendWhatsAppText(
+      phone,
+      `📒 *Carnet de Dettes ("Bor") — ${boutique.nom}*\n\n` +
+      `💰 *Total des dettes dehors : ${prixFmt(totalDettes)}*\n\n` +
+      `📋 *Clients Débiteurs :*\n` +
+      `${lines.join('\n\n')}\n\n` +
+      `💡 _Cliquez sur un lien ci-dessus pour envoyer instantanément un rappel poli WhatsApp au client !_`
+    );
+  }
+  await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+}
+
+// ── Message prêt pour le Statut WhatsApp du commerçant ────────────────────────
+async function envoyerVitrineStatutMarchand(phone, boutique) {
+  const msgStatut =
+    `✨ *${boutique.nom}* vous souhaite la bienvenue ! 🛍️\n\n` +
+    `Découvrez nos nouveaux articles disponibles et commandez en ligne en 1 clic avec livraison rapide :\n` +
+    `👉 ${SITE}/boutiques/${boutique.slug}\n\n` +
+    `🚚 Livraison rapide & Paiement direct Wave / Orange Money / Espèces.`;
+
+  await sendWhatsAppText(
+    phone,
+    `📲 *Message prêt pour votre Statut WhatsApp :*\n\n` +
+    `Copiez ou transférez le message ci-dessous dans votre *Statut WhatsApp* pour attirer vos clients !\n` +
+    `─────────────────────\n` +
+    `${msgStatut}\n` +
+    `─────────────────────`
+  );
+  await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+}
+
 // ── Menu principal ────────────────────────────────────────────────────────────
 async function sendMenu(phone) {
   await sendWhatsAppInteractive(
@@ -1045,6 +1403,181 @@ async function handleIncoming(msg) {
   // ── 2. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─
   const normTxtLower = normaliserTexte(text).trim();
 
+  // ── GESTION MULTI-PHOTOS WHATSAPP (Photos additionnelles sans légende) ──────
+  if (msg.type === 'image') {
+    const normPh = normalisePhone(phone);
+    const recentProd = _recentsProduitsCrees.get(normPh);
+    const caption = (msg.image?.caption || '').trim();
+
+    // Si c'est une image additionnelle sans légende envoyée dans les 30s après la création d'un article
+    if (recentProd && !caption && (Date.now() - recentProd.timestamp < 30000) && state !== 'AJOUT_PRODUIT_PHOTO') {
+      if (msg.image?.id) {
+        const imageUrl = await telechargerMediaWhatsApp(msg.image.id);
+        if (imageUrl) {
+          await pool.query(
+            `UPDATE boutique_produits SET images = array_append(images, $1) WHERE id = $2`,
+            [imageUrl, recentProd.produitId]
+          );
+          recentProd.totalPhotos = (recentProd.totalPhotos || 1) + 1;
+          recentProd.timestamp = Date.now();
+          await sendWhatsAppText(
+            phone,
+            `📸 *Photo supplémentaire (${recentProd.totalPhotos}) ajoutée* à votre article *${recentProd.nom}* !`
+          );
+          return;
+        }
+      }
+    }
+  }
+
+  // ── DÉTECTION D'UN NUMÉRO DE TÉLÉPHONE DANS LE MESSAGE (Accès Direct Boutique) ─
+  const etatsExclusNum = [
+    'COMMANDE_NOM', 'COMMANDE_TELEPHONE', 'COMMANDE_ADRESSE', 'COMMANDE_ZONE', 'COMMANDE_QUANTITE',
+    'AJOUT_PRODUIT_NOM', 'AJOUT_PRODUIT_PRIX', 'AJOUT_PRODUIT_PHOTO', 'CREER_BOUTIQUE_NOM', 'CREER_BOUTIQUE_QUARTIER',
+    'MARCHAND_CHANGE_PIN_ACTUEL', 'MARCHAND_CHANGE_PIN_NOUVEAU', 'MARCHAND_RESET_OTP', 'MARCHAND_RESET_NOUVEAU_PIN',
+    'MARCHAND_PIN'
+  ];
+  if (!etatsExclusNum.includes(state)) {
+    const numDetecte = extraireNumeroTelephone(text);
+    if (numDetecte) {
+      const bqTrouvee = await trouverBoutiqueParTelephone(text);
+      if (bqTrouvee) {
+        const isOwner = await estProprietaireBoutique(phone, bqTrouvee);
+        if (isOwner) {
+          if (context?.isMarchandAuth) {
+            await envoyerMenuMarchand(phone, bqTrouvee);
+            return;
+          } else {
+            await setSession(phone, 'MARCHAND_PIN', { boutique: bqTrouvee });
+            await sendWhatsAppText(
+              phone,
+              `👋 Bonjour *${bqTrouvee.proprietaire_nom || bqTrouvee.nom}* !\n\n` +
+              `🔐 *Espace Marchand — ${bqTrouvee.nom}*\n` +
+              `Veuillez saisir votre **Code PIN** (par défaut : 1234) pour accéder à vos outils de gestion :`
+            );
+            return;
+          }
+        } else {
+          // Client / Visiteur qui envoie ou recherche le numéro d'une boutique
+          await sendWhatsAppText(
+            phone,
+            `🏪 *${bqTrouvee.nom}*\n` +
+            `📍 ${bqTrouvee.categorie || 'Commerce'}${bqTrouvee.ville ? ` — ${bqTrouvee.ville}` : ''}\n` +
+            `${bqTrouvee.description ? `${bqTrouvee.description}\n` : ''}\n` +
+            `👉 *Vitrine en ligne :* ${SITE}/boutiques/${bqTrouvee.slug}`
+          );
+          await envoyerMenuBoutique(phone, bqTrouvee);
+          return;
+        }
+      }
+    }
+  }
+
+  // ── MISE À JOUR DE STATUT DE COMMANDE PAR LE MARCHAND (1-Clic) ─────────────
+  const matchStatutCmd = interactiveId.match(/^cmd_statut_([a-f0-9\-]+)_(confirmee|en_livraison|livree|annulee)$/i);
+  if (matchStatutCmd) {
+    const [_, cmdId, targetStatut] = matchStatutCmd;
+    const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bqMarchand) {
+      try {
+        const { rows } = await pool.query(
+          `UPDATE commandes_boutique 
+           SET statut = $1, updated_at = NOW() 
+           WHERE id = $2 AND boutique_id = $3 
+           RETURNING *`,
+          [targetStatut, cmdId, bqMarchand.id]
+        );
+        if (rows.length > 0) {
+          const cmd = rows[0];
+          const STATUT_LABELS = {
+            'confirmee': 'Confirmée',
+            'en_livraison': 'En cours de livraison',
+            'livree': 'Livrée avec succès',
+            'annulee': 'Annulée',
+          };
+          const label = STATUT_LABELS[targetStatut] || targetStatut;
+          await sendWhatsAppText(
+            phone,
+            `✅ Commande *${cmd.reference}* (${cmd.client_nom}) mise à jour : *${label}* !`
+          );
+
+          // Notification WhatsApp automatique au client si numéro disponible
+          if (cmd.client_telephone) {
+            const telClientNorm = normalisePhone(cmd.client_telephone);
+            const msgClient =
+              `🔔 *Mise à jour de votre commande chez ${bqMarchand.nom}*\n\n` +
+              `Votre commande *${cmd.reference}* (${cmd.nom_produit}) est passée au statut : *${label}* !\n\n` +
+              `Merci de votre confiance. Pour toute question, répondez directement à ce message.`;
+            sendWhatsAppText(telClientNorm, msgClient).catch(() => {});
+          }
+
+          await envoyerCommandesMarchand(phone, bqMarchand);
+          return;
+        }
+      } catch (errUpCmd) {
+        console.error('[UPDATE STATUT COMMANDE WA ERR]:', errUpCmd);
+      }
+    }
+  }
+
+  // ── DÉCLENCHEURS COMMERÇANT & ESPACE MARCHAND SÉCURISÉ ───────────────────────
+  const MOTS_MARCHAND = [
+    'marchand', 'gestion', 'espace marchand', 'mon espace', 'gerer', 'gerer boutique',
+    'ma boutique', 'caisse', 'ventes', 'bor', 'dette', 'dettes', 'mon stock', 'mes produits',
+    'changer pin', 'code pin', 'pin', 'menu marchand', 'commandes', 'mes commandes', 'suivi commandes'
+  ];
+  const estDeclencheurMarchand =
+    MOTS_MARCHAND.includes(normTxtLower) ||
+    interactiveId === 'menu_marchand' ||
+    interactiveId.startsWith('marchand_') ||
+    state === 'MARCHAND_PIN' ||
+    state === 'MARCHAND_MENU';
+
+  if (estDeclencheurMarchand) {
+    const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bqMarchand) {
+      // Si l'utilisateur envoie son PIN pour déverrouiller
+      if (state === 'MARCHAND_PIN' || /^\d{4,6}$/.test(text.trim())) {
+        const pinValide = await verifierCodePin(bqMarchand, text.trim());
+        if (pinValide) {
+          await envoyerMenuMarchand(phone, bqMarchand);
+          return;
+        } else if (state === 'MARCHAND_PIN') {
+          // Si demande de réinitialisation OTP
+          if (normTxtLower === 'pin oublie' || normTxtLower === 'pin oublié' || normTxtLower === 'reinitialiser pin') {
+            const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+            _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: bqMarchand.id, expiresAt: Date.now() + 10 * 60 * 1000 });
+            await setSession(phone, 'MARCHAND_RESET_OTP', { boutique: bqMarchand, otpCode });
+            await sendWhatsAppText(
+              phone,
+              `🔒 *Code de Sécurité Nopalou — Réinitialisation PIN*\n\n` +
+              `Votre code de vérification temporaire est : *${otpCode}*\n\n` +
+              `👉 Renvoyez simplement ce code *${otpCode}* pour autoriser la création de votre nouveau Code PIN.`
+            );
+            return;
+          }
+          await sendWhatsAppText(
+            phone,
+            `❌ *Code PIN incorrect*.\n\nVeuillez réessayer votre Code PIN (par défaut : 1234) ou tapez *pin oublié* pour le réinitialiser :`
+          );
+          return;
+        }
+      }
+
+      // Si pas encore authentifié sur cette session
+      if (!context?.isMarchandAuth && state !== 'MARCHAND_PIN') {
+        await setSession(phone, 'MARCHAND_PIN', { boutique: bqMarchand });
+        await sendWhatsAppText(
+          phone,
+          `👋 Bonjour *${bqMarchand.proprietaire_nom || bqMarchand.nom}* !\n\n` +
+          `🔐 *Espace Marchand — ${bqMarchand.nom}*\n` +
+          `Veuillez saisir votre **Code PIN** (par défaut : 1234) pour accéder à votre espace de gestion :`
+        );
+        return;
+      }
+    }
+  }
+
   // Déclencheur Création de Boutique Taf-Taf
   if (
     interactiveId === 'creer_boutique' ||
@@ -1164,6 +1697,16 @@ async function handleIncoming(msg) {
           );
 
           const prodCree = resProd.rows[0];
+
+          // Enregistrer dans le tampon pour recevoir d'éventuelles photos supplémentaires du batch
+          _recentsProduitsCrees.set(normPh, {
+            produitId: prodCree.id,
+            boutiqueId: maBoutique.id,
+            nom: prodCree.nom,
+            totalPhotos: imageUrl ? 1 : 0,
+            timestamp: Date.now(),
+          });
+
           await sendWhatsAppText(
             phone,
             `⚡ *Ajout Express Réussi en 1 Clic !* ⚡\n\n` +
@@ -1172,7 +1715,7 @@ async function handleIncoming(msg) {
             `📸 Photo : *${imageUrl ? 'Photo enregistrée avec succès' : 'Sans photo'}*\n` +
             `🏪 Boutique : *${maBoutique.nom}*\n\n` +
             `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${maBoutique.slug}\n\n` +
-            `👉 *Pour publier le prochain produit :*\nEnvoyez simplement la photo avec le nom et le prix en légende !`
+            `👉 *Astuce multi-photos :* Vous pouvez envoyer les photos suivantes directement !`
           );
           await setSession(phone, 'IDLE', {});
           return;
@@ -2321,6 +2864,217 @@ async function handleIncoming(msg) {
     }
   }
 
+  // ── MARCHAND_MENU → Actions du Menu Marchand ─────────────────────────────────
+  if (state === 'MARCHAND_MENU') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'IDLE', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    const action = interactiveId || normTxtLower;
+
+    if (action === 'marchand_commandes' || action === 'commandes' || action === 'commande' || action === 'mes commandes' || action === 'suivi commandes') {
+      await envoyerCommandesMarchand(phone, boutique);
+      return;
+    }
+
+    if (action === 'marchand_ajout_produit' || action === '1' || action === '+produit' || action === 'ajouter produit') {
+      await setSession(phone, 'AJOUT_PRODUIT_NOM', { boutique });
+      await sendWhatsAppText(
+        phone,
+        `🛍️ *Ajout de Produit — ${boutique.nom}*\n\n` +
+        `⚡ *Option 1 (Express)* : Envoyez directement une photo de l'article avec le *Nom et le Prix* en légende (ex: *Robe Bazin 15000*) !\n\n` +
+        `💬 *Option 2 (Guidé)* : Quel est le *nom ou titre du produit* ? (ex: Sandales Cuir, Sac à main...)`
+      );
+      return;
+    }
+
+    if (action === 'marchand_stock' || action === '2' || action === 'stock' || action === 'mes produits') {
+      await envoyerStockMarchand(phone, boutique);
+      return;
+    }
+
+    if (action === 'marchand_caisse' || action === '3' || action === 'caisse' || action === 'ventes') {
+      await envoyerBilanCaisseMarchand(phone, boutique);
+      return;
+    }
+
+    if (action === 'marchand_dettes' || action === '4' || action === 'bor' || action === 'dette' || action === 'dettes') {
+      await envoyerCarnetDettesMarchand(phone, boutique);
+      return;
+    }
+
+    if (action === 'marchand_vitrine' || action === '5' || action === 'vitrine' || action === 'statut') {
+      await envoyerVitrineStatutMarchand(phone, boutique);
+      return;
+    }
+
+    if (action === 'marchand_changer_pin' || action === '6' || action === 'changer pin' || action === 'code pin' || action === 'pin') {
+      await setSession(phone, 'MARCHAND_CHANGE_PIN_ACTUEL', { boutique, isMarchandAuth: true });
+      await sendWhatsAppText(
+        phone,
+        `🔐 *Modification du Code PIN — ${boutique.nom}*\n\n` +
+        `Veuillez saisir votre *Code PIN ACTUEL* (par défaut : 1234) :\n\n` +
+        `*(Si vous l'avez oublié, tapez simplement : pin oublié)*`
+      );
+      return;
+    }
+
+    if (action === 'menu' || action === 'retour' || action === 'boutique_quitter') {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    // Ré-afficher le menu marchand
+    await envoyerMenuMarchand(phone, boutique);
+    return;
+  }
+
+  // ── MARCHAND_CHANGE_PIN_ACTUEL → Saisie du PIN actuel ─────────────────────────
+  if (state === 'MARCHAND_CHANGE_PIN_ACTUEL') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'IDLE', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    // Demande de réinitialisation si PIN oublié
+    if (normTxtLower === 'pin oublie' || normTxtLower === 'pin oublié' || normTxtLower === 'reinitialiser pin') {
+      const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+      _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: boutique.id, expiresAt: Date.now() + 10 * 60 * 1000 });
+      await setSession(phone, 'MARCHAND_RESET_OTP', { boutique, otpCode });
+      await sendWhatsAppText(
+        phone,
+        `🔒 *Code de Sécurité Nopalou — Réinitialisation PIN*\n\n` +
+        `Votre code de vérification temporaire est : *${otpCode}*\n\n` +
+        `👉 Renvoyez simplement ce code *${otpCode}* pour autoriser la création de votre nouveau Code PIN.`
+      );
+      return;
+    }
+
+    const pinValide = await verifierCodePin(boutique, text.trim());
+    if (pinValide) {
+      await setSession(phone, 'MARCHAND_CHANGE_PIN_NOUVEAU', { boutique, isMarchandAuth: true });
+      await sendWhatsAppText(
+        phone,
+        `✨ *Code PIN actuel validé !*\n\nVeuillez entrer votre *NOUVEAU Code PIN* (4 à 6 chiffres, ex: 5678) :`
+      );
+      return;
+    } else {
+      await sendWhatsAppText(
+        phone,
+        `❌ *Code PIN actuel incorrect*.\n\nVeuillez réessayer ou tapez *pin oublié* pour le réinitialiser par code de sécurité.`
+      );
+      return;
+    }
+  }
+
+  // ── MARCHAND_CHANGE_PIN_NOUVEAU → Enregistrement du nouveau PIN ───────────────
+  if (state === 'MARCHAND_CHANGE_PIN_NOUVEAU') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'IDLE', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    const nouveauPin = text.trim().replace(/\D/g, '');
+    if (nouveauPin.length < 4 || nouveauPin.length > 6) {
+      await sendWhatsAppText(
+        phone,
+        `⚠️ Le Code PIN doit contenir entre 4 et 6 chiffres (ex: 5678). Veuillez réessayer :`
+      );
+      return;
+    }
+
+    try {
+      await pool.query('UPDATE boutiques SET code_pin = $1, updated_at = NOW() WHERE id = $2', [nouveauPin, boutique.id]);
+      boutique.code_pin = nouveauPin;
+
+      await sendWhatsAppText(
+        phone,
+        `✅ *Code PIN modifié avec succès !* 🎉\n\nVotre nouveau code secret (*${nouveauPin}*) est bien enregistré et sécurise l'accès à votre boutique *${boutique.nom}*.`
+      );
+      await envoyerMenuMarchand(phone, boutique);
+      return;
+    } catch (errPin) {
+      console.error('[CHANGER PIN ERR]:', errPin);
+      await sendWhatsAppText(phone, '😕 Erreur lors de la mise à jour du PIN. Veuillez réessayer.');
+      await envoyerMenuMarchand(phone, boutique);
+      return;
+    }
+  }
+
+  // ── MARCHAND_RESET_OTP → Validation du code de sécurité ───────────────────────
+  if (state === 'MARCHAND_RESET_OTP') {
+    const boutique = context?.boutique;
+    const expectedOtp = context?.otpCode;
+    const otpData = _otpCodesMarchand.get(phone);
+
+    if (!boutique) {
+      await setSession(phone, 'IDLE', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    const inputCode = text.trim().replace(/\D/g, '');
+    if ((expectedOtp && inputCode === expectedOtp) || (otpData && otpData.code === inputCode && Date.now() < otpData.expiresAt)) {
+      await setSession(phone, 'MARCHAND_RESET_NOUVEAU_PIN', { boutique, isMarchandAuth: true });
+      await sendWhatsAppText(
+        phone,
+        `✅ *Identité vérifiée avec succès !*\n\nVeuillez maintenant saisir votre *NOUVEAU Code PIN* (4 à 6 chiffres, ex: 5678) :`
+      );
+      return;
+    } else {
+      await sendWhatsAppText(
+        phone,
+        `❌ *Code de vérification incorrect ou expiré*.\n\nRenvoyez le code de 4 chiffres reçu ou tapez *menu*.`
+      );
+      return;
+    }
+  }
+
+  // ── MARCHAND_RESET_NOUVEAU_PIN → Enregistrement du nouveau PIN après OTP ──────
+  if (state === 'MARCHAND_RESET_NOUVEAU_PIN') {
+    const boutique = context?.boutique;
+    if (!boutique) {
+      await setSession(phone, 'IDLE', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    const nouveauPin = text.trim().replace(/\D/g, '');
+    if (nouveauPin.length < 4 || nouveauPin.length > 6) {
+      await sendWhatsAppText(
+        phone,
+        `⚠️ Le Code PIN doit contenir entre 4 et 6 chiffres (ex: 5678). Veuillez réessayer :`
+      );
+      return;
+    }
+
+    try {
+      await pool.query('UPDATE boutiques SET code_pin = $1, updated_at = NOW() WHERE id = $2', [nouveauPin, boutique.id]);
+      boutique.code_pin = nouveauPin;
+      _otpCodesMarchand.delete(phone);
+
+      await sendWhatsAppText(
+        phone,
+        `✅ *Nouveau Code PIN enregistré avec succès !* 🎉\n\nVotre code secret a été réinitialisé avec succès (*${nouveauPin}*).`
+      );
+      await envoyerMenuMarchand(phone, boutique);
+      return;
+    } catch (errPinReset) {
+      console.error('[RESET PIN ERR]:', errPinReset);
+      await sendWhatsAppText(phone, '😕 Erreur lors de l\'enregistrement. Veuillez réessayer.');
+      await envoyerMenuMarchand(phone, boutique);
+      return;
+    }
+  }
+
   // ── AJOUT_PRODUIT_NOM → Nom du produit ──────────────────────────────────────
   if (state === 'AJOUT_PRODUIT_NOM') {
     if (!text || text.trim().length < 2) {
@@ -2348,21 +3102,23 @@ async function handleIncoming(msg) {
 
     const boutique = context?.boutique;
     const prodNom = context?.produit_nom;
-    await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum });
+    await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, photos: [] });
 
     await sendWhatsAppText(
       phone,
-      `📸 *Photo du produit :*\n\n` +
-      `Envoyez la photo de votre article ou tapez *passer* pour publier sans photo.`
+      `📸 *Photos du produit :*\n\n` +
+      `Envoyez 1 ou plusieurs photos de votre article *${prodNom}*.\n` +
+      `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
     );
     return;
   }
 
-  // ── AJOUT_PRODUIT_PHOTO → Finalisation Ajout Produit ─────────────────────────
+  // ── AJOUT_PRODUIT_PHOTO → Collecte Multi-Photos & Finalisation ──────────────
   if (state === 'AJOUT_PRODUIT_PHOTO') {
     const boutique = context?.boutique;
     const prodNom = context?.produit_nom;
     const prix = context?.prix || 0;
+    let photos = Array.isArray(context?.photos) ? [...context.photos] : [];
 
     if (!boutique || !prodNom) {
       await setSession(phone, 'IDLE', {});
@@ -2370,43 +3126,73 @@ async function handleIncoming(msg) {
       return;
     }
 
-    try {
-      let imageUrl = null;
-      if (mediaId) {
-        imageUrl = await telechargerMediaWhatsApp(mediaId);
-      } else if (text && text.toLowerCase() !== 'passer' && (text.startsWith('http://') || text.startsWith('https://'))) {
-        imageUrl = text.trim();
+    // 1. Si une image arrive
+    if (mediaId) {
+      const imageUrl = await telechargerMediaWhatsApp(mediaId);
+      if (imageUrl) {
+        photos.push(imageUrl);
+        await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix, photos });
+        await sendWhatsAppText(
+          phone,
+          `📸 *Photo ${photos.length} enregistrée !*\n\n` +
+          `Vous pouvez envoyer une autre photo pour cet article, ou taper *OK* (ou *terminer*) pour publier le produit !`
+        );
+        return;
+      }
+    }
+
+    // 2. Si validation par texte (OK, valider, terminer, passer, URL)
+    const txtLow = (text || '').toLowerCase().trim();
+    if (txtLow === 'ok' || txtLow === 'terminer' || txtLow === 'valider' || txtLow === 'passer' || txtLow === 'fin' || txtLow.startsWith('http')) {
+      if (txtLow.startsWith('http')) {
+        photos.push(text.trim());
       }
 
-      const imagesArray = imageUrl ? [imageUrl] : [];
+      try {
+        const resProd = await pool.query(
+          `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock)
+           VALUES ($1, $2, $3, $4, true)
+           RETURNING id, nom, prix`,
+          [boutique.id, prodNom, prix, photos]
+        );
 
-      const resProd = await pool.query(
-        `INSERT INTO boutique_produits (boutique_id, nom, prix, images, en_stock)
-         VALUES ($1, $2, $3, $4, true)
-         RETURNING id, nom, prix`,
-        [boutique.id, prodNom, prix, imagesArray]
-      );
+        const prodCree = resProd.rows[0];
 
-      const prodCree = resProd.rows[0];
+        // Enregistrer dans le tampon multi-photos
+        const normPh = normalisePhone(phone);
+        _recentsProduitsCrees.set(normPh, {
+          produitId: prodCree.id,
+          boutiqueId: boutique.id,
+          nom: prodCree.nom,
+          totalPhotos: photos.length,
+          timestamp: Date.now(),
+        });
 
-      const msgProdSucces =
-        `✅ *Article ajouté avec succès à votre catalogue !*\n\n` +
-        `🛍️ *${prodCree.nom}*\n` +
-        `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
-        `📸 Photo : *${imageUrl ? 'Photo enregistrée avec succès' : 'Sans photo'}*\n` +
-        `🏪 Boutique : *${boutique.nom}*\n\n` +
-        `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${boutique.slug}\n\n` +
-        `👉 *Pour ajouter le prochain article plus vite :*\nEnvoyez simplement la photo avec le nom et le prix en légende (ex: *Sac cuir 5000*) !`;
+        const msgProdSucces =
+          `✅ *Article publié avec succès sur votre boutique !* 🎉\n\n` +
+          `🛍️ *${prodCree.nom}*\n` +
+          `💰 Prix : *${prixFmt(prodCree.prix)}*\n` +
+          `📸 Photos : *${photos.length} photo(s) enregistrée(s)*\n` +
+          `🏪 Boutique : *${boutique.nom}*\n\n` +
+          `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${boutique.slug}\n\n` +
+          `👉 *Pour ajouter le prochain article :*\nEnvoyez simplement la photo avec le nom et le prix en légende (ex: *Sac cuir 5000*) !`;
 
-      await sendWhatsAppText(phone, msgProdSucces);
-      await setSession(phone, 'IDLE', {});
-      return;
-    } catch (errAddProd) {
-      console.error('[AJOUT PRODUIT WA ERR]:', errAddProd);
-      await sendWhatsAppText(phone, '😕 Impossible d\'enregistrer le produit pour le moment. Réessayez avec *+produit*.');
-      await setSession(phone, 'IDLE', {});
-      return;
+        await sendWhatsAppText(phone, msgProdSucces);
+        await envoyerMenuMarchand(phone, boutique);
+        return;
+      } catch (errAddProd) {
+        console.error('[AJOUT PRODUIT WA ERR]:', errAddProd);
+        await sendWhatsAppText(phone, '😕 Impossible d\'enregistrer le produit pour le moment. Réessayez avec *+produit*.');
+        await envoyerMenuMarchand(phone, boutique);
+        return;
+      }
     }
+
+    await sendWhatsAppText(
+      phone,
+      `📸 Envoyez une photo pour *${prodNom}*, ou tapez *OK* pour valider (${photos.length} photo(s) reçue(s)), ou *passer* pour publier sans photo.`
+    );
+    return;
   }
 
   // ── Fallback ──────────────────────────────────────────────────────────────
@@ -2512,5 +3298,15 @@ module.exports = {
   envoyerFicheProduitBoutique,
   envoyerProduitsBoutique,
   envoyerToutesLesBoutiques,
+  extraireNumeroTelephone,
+  trouverBoutiqueParTelephone,
+  trouverBoutiqueMarchand,
+  verifierCodePin,
+  envoyerMenuMarchand,
+  envoyerCommandesMarchand,
+  envoyerStockMarchand,
+  envoyerBilanCaisseMarchand,
+  envoyerCarnetDettesMarchand,
+  envoyerVitrineStatutMarchand,
 };
 

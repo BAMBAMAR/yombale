@@ -141,6 +141,109 @@ async function runAsyncTests() {
     assert.ok(mockWhatsAppCalls.text.some(t => t.text.includes('Aucune boutique trouvée pour *"IntrouvableXYZ"*')));
   });
 
+  // Test 5: Détection de numéros de téléphone sénégalais
+  console.log('\n📦 4. Extraction & Normalisation de numéros de téléphone');
+  it('extraireNumeroTelephone: détecte +221771234567', () => {
+    const res = chatbot.extraireNumeroTelephone('+221771234567');
+    assert.equal(res?.national, '771234567');
+    assert.equal(res?.international, '221771234567');
+  });
+  it('extraireNumeroTelephone: détecte 78 555 44 33 avec espaces', () => {
+    const res = chatbot.extraireNumeroTelephone('Mon numéro est le 78 555 44 33');
+    assert.equal(res?.national, '785554433');
+    assert.equal(res?.international, '221785554433');
+  });
+  it('extraireNumeroTelephone: détecte 00221761112233', () => {
+    const res = chatbot.extraireNumeroTelephone('00221761112233');
+    assert.equal(res?.national, '761112233');
+  });
+
+  // Test 6: Vérification du Code PIN marchand
+  console.log('\n📦 5. Sécurité Code PIN marchand');
+  it('verifierCodePin: accepte le code PIN par défaut (1234) si non défini', async () => {
+    const ok = await chatbot.verifierCodePin({ id: 'bq-1', code_pin: null }, '1234');
+    assert.equal(ok, true);
+  });
+  it('verifierCodePin: accepte le code PIN personnalisé (5678)', async () => {
+    const ok = await chatbot.verifierCodePin({ id: 'bq-1', code_pin: '5678' }, '5678');
+    assert.equal(ok, true);
+  });
+  it('verifierCodePin: rejette un code PIN incorrect', async () => {
+    const ok = await chatbot.verifierCodePin({ id: 'bq-1', code_pin: '5678' }, '0000');
+    assert.equal(ok, false);
+  });
+
+  // Test 7: Menu Marchand Interactif
+  console.log('\n📦 6. Menu Marchand Interactif');
+  mockWhatsAppCalls.text = [];
+  mockWhatsAppCalls.interactive = [];
+  await chatbot.envoyerMenuMarchand('221770000000', { id: 'bq-1', nom: 'Dakar Couture' });
+  it('envoyerMenuMarchand: envoie les sections et options marchandes (Ajout, Stock, Caisse, Dettes, Vitrine, PIN)', () => {
+    assert.equal(mockWhatsAppCalls.interactive.length, 1);
+    const sections = mockWhatsAppCalls.interactive[0].sections;
+    const allRows = sections.flatMap(s => s.rows);
+    assert.ok(allRows.some(r => r.id === 'marchand_ajout_produit'));
+    assert.ok(allRows.some(r => r.id === 'marchand_stock'));
+    assert.ok(allRows.some(r => r.id === 'marchand_caisse'));
+    assert.ok(allRows.some(r => r.id === 'marchand_dettes'));
+    assert.ok(allRows.some(r => r.id === 'marchand_vitrine'));
+    assert.ok(allRows.some(r => r.id === 'marchand_changer_pin'));
+  });
+
+  // Test 8: Rapport Bilan Caisse Marchand
+  console.log('\n📦 7. Rapport Bilan Caisse Marchand du Jour');
+  mockWhatsAppCalls.text = [];
+  mockQueryResult = {
+    rows: [{
+      nb_ventes: '3',
+      total_ca: '45000',
+      ca_wave: '30000',
+      ca_om: '10000',
+      ca_cash: '5000'
+    }]
+  };
+  await chatbot.envoyerBilanCaisseMarchand('221770000000', { id: 'bq-1', nom: 'Dakar Couture' });
+  it('envoyerBilanCaisseMarchand: formate le rapport avec les montants Wave, OM et Cash', () => {
+    assert.equal(mockWhatsAppCalls.text.length, 1);
+    const msg = mockWhatsAppCalls.text[0].text;
+    assert.ok(msg.includes('Bilan Caisse du Jour — Dakar Couture'));
+    assert.ok(msg.includes('45\u202F000 FCFA') || msg.includes('45 000 FCFA'));
+    assert.ok(msg.includes('Wave'));
+  });
+
+  // Test 9: Suivi des Commandes Marchand
+  console.log('\n📦 8. Consultation et Suivi des Commandes Marchand');
+  mockWhatsAppCalls.text = [];
+  mockWhatsAppCalls.buttons3 = [];
+  mockQueryResult = {
+    rows: [{
+      id: 'cmd-999',
+      reference: 'CMD-12345',
+      nom_produit: 'Robe Bazin',
+      quantite: 2,
+      prix_unitaire: 15000,
+      montant_total: 30000,
+      client_nom: 'Fatou Ndiaye',
+      client_telephone: '221771234567',
+      client_adresse: 'HLM Grand Médine',
+      methode_paiement: 'wave',
+      statut: 'en_attente',
+      created_at: new Date().toISOString()
+    }]
+  };
+  await chatbot.envoyerCommandesMarchand('221770000000', { id: 'bq-1', nom: 'Dakar Couture', slug: 'dakar-couture' });
+  it('envoyerCommandesMarchand: affiche la liste des commandes avec détails et boutons d action 1-clic', () => {
+    assert.equal(mockWhatsAppCalls.text.length, 1);
+    const msg = mockWhatsAppCalls.text[0].text;
+    assert.ok(msg.includes('CMD-12345'));
+    assert.ok(msg.includes('Fatou Ndiaye'));
+    assert.ok(msg.includes('Robe Bazin'));
+    assert.ok(msg.includes('30\u202F000 FCFA') || msg.includes('30 000 FCFA'));
+    assert.equal(mockWhatsAppCalls.buttons3.length, 1);
+    const btns = mockWhatsAppCalls.buttons3[0].buttons;
+    assert.ok(btns.some(b => b.id.includes('confirmee')));
+  });
+
   console.log('\n──────────────────────────────────────────────────────────');
   console.log(`Résultats: ${passed} passés, ${failed} échoués (Total: ${passed + failed})`);
   if (failed > 0) process.exit(1);

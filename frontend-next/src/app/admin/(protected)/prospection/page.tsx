@@ -27,6 +27,22 @@ export interface StatsLeads {
   nouveaux: number
   contactes: number
   convertis: number
+  desinscrits?: number
+  blacklist?: number
+}
+
+export interface BlacklistItem {
+  phone: string
+  reason: string
+  created_at: string
+  lead_id?: string | null
+  nom_boutique?: string | null
+  contact_nom?: string | null
+  categorie?: string | null
+  ville?: string | null
+  quartier?: string | null
+  operateur?: string | null
+  lead_statut?: string | null
 }
 
 export interface TemplateMsg {

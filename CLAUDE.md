@@ -1,3 +1,51 @@
+- **Accès Boutique par Numéro de Téléphone, Authentification Marchand par Code PIN, Multi-Photos & Tableau de Bord WhatsApp (`main` - 23 août 2026)** 📞🔐📸🏪⚡ :
+  * **📞 Accès Simplifié & Détection Instantanée par Numéro de Téléphone** :
+    - Détection automatique et extraction des numéros mobiles sénégalais (`77...`, `78...`, `76...`, `70...`, `75...`, `33...`, avec ou sans `+221`/espaces/tirets) dans tous les messages envoyés au bot.
+    - **Pour un Client / Acheteur** : Le bot identifie immédiatement la boutique correspondante et envoie sa fiche complète (nom, quartier, catégorie, description, lien vitrine web `${SITE}/boutiques/${slug}` et les 3 premiers produits avec photos et prix pour commander en 1 clic).
+    - **Pour le Propriétaire / Gérant** : Le bot le reconnaît automatiquement et propose le déverrouillage sécurisé de son Espace Marchand.
+  * **🔐 Espace Marchand Sécurisé par Code PIN & Réinitialisation OTP** :
+    - Ajout de la colonne `code_pin VARCHAR(10) DEFAULT '1234'` à la table `boutiques` (et support des codes PIN caissiers de `boutique_caissiers`).
+    - Authentification par Code PIN (saisie directe du PIN à 4-6 chiffres ou déclenchée par mot-clé *marchand, caisse, ventes, bor, dettes, stock, pin*).
+    - **Modification classique de PIN** : Entrée du PIN actuel puis saisie du nouveau code secret à 4 chiffres.
+    - **Réinitialisation en cas d'oubli (OTP)** : Envoi d'un code de sécurité temporaire à 4 chiffres sur son propre numéro WhatsApp, validation instantanée et définition d'un nouveau PIN.
+  * **📸 Gestion Intelligente des Multi-Photos (Batch WhatsApp & Guidé)** :
+    - **Ajout Express Multi-Photos** : Quand un commerçant sélectionne plusieurs photos d'un article et met une légende sur la première photo (ex: *Robe Bazin 15000*), le produit est créé et les photos suivantes envoyées par WhatsApp sans légende sont **automatiquement rattachées au même article** via un tampon d'association en mémoire (30 secondes).
+    - **Ajout Guidé** : Possibilité d'envoyer 1 ou plusieurs photos d'affilée pour un produit puis de taper *OK / Terminer* ou *Passer*.
+  * **🏪 Menu Marchand Dédié sur WhatsApp (`MARCHAND_MENU`)** :
+    - 📋 **Gestion des Commandes Clients** : Consultation des dernières commandes avec détails (articles, client, téléphone avec lien WhatsApp direct, adresse de livraison, mode de paiement Wave/OM/Cash) et boutons d'action rapide 1-clic (*Confirmer*, *En cours de livraison*, *Livrée*) avec notification WhatsApp automatique au client.
+    - ➕ **Ajout de Produit** : Envoi express photo+légende ou formulaire guidé en 2 questions.
+    - 📦 **Mes Produits & Stock** : Affichage des 6 derniers produits avec statut du stock (`✅ En stock` ou `❌ Rupture`).
+    - 💰 **Bilan Caisse & Ventes du jour** : Chiffre d'affaires en direct, nombre de commandes, répartition Wave, Orange Money et Espèces (Cash) avec lien vers la caisse tactile POS.
+    - 📒 **Carnet de Dettes ("Bor")** : Suivi des débiteurs et lien direct WhatsApp pour relancer chaque client en 1 clic avec un message poli pré-rempli.
+    - 🔗 **Vitrine & Statut WhatsApp** : Message promotionnel prêt à l'emploi à transférer en Statut WhatsApp.
+    - ⚙️ **Gestion du Code PIN** : Modification et sécurisation du code d'accès.
+  * **Validation & Contrôle Qualité** :
+    - Tests unitaires complets chatbot WhatsApp (`scripts/test-chatbot-boutique.js`) : **100% validés (14/14 tests passés avec succès)**.
+    - Vérification syntaxique Node.js (`backend/services/whatsapp-chatbot.js`, `backend/migrate-inline.js`) : **0 erreur**.
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
+- **Édition Complète des Prospects en Base, Pagination Dynamique CRM & Gestion Avancée de la Blacklist (`main` - 23 août 2026)** ✏️📋🚫⚡ :
+  * **✏️ Modification Complète des Prospects en Base de Données (`PUT /api/prospection/leads/:id`)** :
+    - Mise à jour de l'endpoint backend `PUT /api/prospection/leads/:id` pour supporter la modification intégrale de tous les champs d'un prospect : nom de la boutique, nom du contact responsable, numéro de téléphone (avec validation et re-normalisation automatique Orange/Free/Expresso), email, catégorie, ville, quartier, statut CRM et notes internes.
+    - Synchronisation automatique avec la table `whatsapp_blacklist` lors du passage d'un lead au statut `desinscrit`.
+    - Bouton `✏️ Modifier` sur chaque ligne de prospect dans le tableau CRM.
+    - Modale d'édition ergonomique avec formulaire pré-rempli, validation en direct et mise à jour dynamique du tableau sans rechargement de page.
+  * **📋 Résolution & Explication du Volume (200) et Sélecteur de Limite Dynamique** :
+    - Remplacement du simple comptage mémoire `filteredLeads.length` par le total réel de la base de données dans l'onglet : `📋 1. Base CRM Leads (Total en BDD)`.
+    - Sélecteur de volume dans la barre d'outils CRM (`50`, `100`, `200`, `500`, `1000`, `Tous / Base complète`) pour charger à la demande le nombre souhaité de prospects.
+    - Indicateur dynamique de synthèse : `Affichage de X prospects sur Y au total dans la base` et décompte des contacts désinscrits.
+  * **🚫 Module & Onglet Dédié Liste Noire / Blacklist (`/admin/prospection` — Onglet 6)** :
+    - Endpoints backend complets dédiés à la blacklist :
+      - `GET /api/prospection/blacklist` : Liste des numéros inscrits dans `whatsapp_blacklist` avec jointure `LEFT JOIN prospection_leads` pour afficher la boutique, le contact et la zone géographique liés, avec recherche plein texte (`?search=...`).
+      - `POST /api/prospection/blacklist` : Inscription manuelle d'un numéro avec motif paramétrable (`STOP WhatsApp`, `Plainte / Refus`, `Numéro erroné`, `Manuel Admin`, `Hors Cible`) et synchronisation du lead en `desinscrit`.
+      - `DELETE /api/prospection/blacklist/:phone` : Déblocage et retrait instantané de la liste noire avec mise à jour du cache mémoire.
+      - `GET /api/prospection/logs` : Historique des messages envoyés avec informations prospect associées.
+    - Interface utilisateur complète : tableau enrichi des numéros protégés, bouton d'ajout manuel rapide, bouton de déblocage 1-clic avec confirmation, filtre de recherche instantané et export CSV.
+  * **Validation & Contrôle Qualité** :
+    - Test de syntaxe Node.js backend (`node -c backend/routes/prospection.js`) : **validé avec succès**.
+    - Build complet Next.js (`npm run build`) : **100% des routes compilées sans aucune erreur (code 0)**.
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Centre de Contrôle Admin, Assistant Marchand WhatsApp Taf-Taf, Ajout Produit Sécurisé & Moteur de Relances Crons (`main` - 22 août 2026)** 🎛️🤖📱⚡ :
   * **🎛️ Centre de Contrôle & Monitoring des Crons (`/admin/prospection` — Onglet 5)** :
     - **Pilotage du Scraping en 1 Clic** : Sélecteur de zones et marchés de Dakar (*Sandaga, HLM, Centenaire, Colobane, Maristes, Plateau, Tilène, Thiès, Touba*), limite paramétrable et injection directe dans le CRM avec rapport en direct.

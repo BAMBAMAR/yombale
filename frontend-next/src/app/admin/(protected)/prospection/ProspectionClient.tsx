@@ -4,9 +4,10 @@ import { useState } from 'react'
 import {
   Users, UserPlus, Send, History, Sparkles, Filter, Search,
   Download, Trash2, Phone, MessageSquare, ExternalLink, CheckCircle2,
-  Copy, RefreshCw, Layers, ShieldCheck, Zap
+  Copy, RefreshCw, Layers, ShieldCheck, Zap, Pencil, Ban, ShieldAlert,
+  Check, X, Lock, Unlock
 } from 'lucide-react'
-import type { Lead, StatsLeads, TemplateMsg, DorkingRequete } from './page'
+import type { Lead, StatsLeads, TemplateMsg, DorkingRequete, BlacklistItem } from './page'
 
 interface Props {
   initialLeads: Lead[]
@@ -16,7 +17,7 @@ interface Props {
   secret: string
 }
 
-type TabType = 'crm' | 'import' | 'campagnes' | 'logs' | 'control'
+type TabType = 'crm' | 'import' | 'campagnes' | 'logs' | 'control' | 'blacklist'
 
 const STATUT_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   nouveau: { label: 'Nouveau', color: '#2563EB', bg: '#EFF6FF' },
@@ -46,6 +47,37 @@ export default function ProspectionClient({
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [stats, setStats] = useState<StatsLeads>(initialStats)
   const [toast, setToast] = useState<string | null>(null)
+
+  // Limite d'affichage CRM (Origine des 200) & Pagination
+  const [limit, setLimit] = useState<number | string>(200)
+  const [loadingLeads, setLoadingLeads] = useState(false)
+
+  // Modal Modification / Édition Lead en Base
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [editForm, setEditForm] = useState({
+    id: '',
+    nom_boutique: '',
+    contact_nom: '',
+    telephone: '',
+    email: '',
+    categorie: 'mode',
+    ville: 'Dakar',
+    quartier: 'Dakar',
+    statut: 'nouveau',
+    notes: '',
+  })
+
+  // Blacklist (Liste Noire) & Désinscriptions
+  const [blacklist, setBlacklist] = useState<BlacklistItem[]>([])
+  const [loadingBlacklist, setLoadingBlacklist] = useState(false)
+  const [blacklistSearch, setBlacklistSearch] = useState('')
+  const [showAddBlacklistModal, setShowAddBlacklistModal] = useState(false)
+  const [isAddingBlacklist, setIsAddingBlacklist] = useState(false)
+  const [blacklistAddForm, setBlacklistAddForm] = useState({
+    phone: '',
+    reason: 'STOP / Opt-Out (WhatsApp)',
+  })
 
   // Filtres CRM
   const [search, setSearch] = useState('')
@@ -176,9 +208,14 @@ export default function ProspectionClient({
     }
   }
 
-  const reloadLeads = async () => {
+  const reloadLeads = async (customLimit?: number | string) => {
+    setLoadingLeads(true)
+    const currentLimit = customLimit !== undefined ? customLimit : limit
     try {
-      const res = await fetch(`/api/prospection/leads?limit=200`, {
+      const url = currentLimit === 'tout'
+        ? `/api/prospection/leads?limit=5000`
+        : `/api/prospection/leads?limit=${currentLimit}`
+      const res = await fetch(url, {
         headers: { 'x-admin-secret': secret },
       })
       if (res.ok) {
@@ -187,6 +224,156 @@ export default function ProspectionClient({
         setStats(data.stats || stats)
       }
     } catch (_) {}
+    finally {
+      setLoadingLeads(false)
+    }
+  }
+
+  // Ouverture de la modale de modification d'un prospect
+  const handleOpenEditModal = (lead: Lead) => {
+    setEditForm({
+      id: lead.id,
+      nom_boutique: lead.nom_boutique || '',
+      contact_nom: lead.contact_nom || '',
+      telephone: lead.telephone || '',
+      email: lead.email || '',
+      categorie: lead.categorie || 'mode',
+      ville: lead.ville || 'Dakar',
+      quartier: lead.quartier || 'Dakar',
+      statut: lead.statut || 'nouveau',
+      notes: lead.notes || '',
+    })
+    setShowEditModal(true)
+  }
+
+  // Sauvegarde des modifications d'un lead en base
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editForm.id) return
+    setIsSavingEdit(true)
+    try {
+      const res = await fetch(`/api/prospection/leads/${editForm.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify(editForm),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setLeads((prev) => prev.map((l) => (l.id === editForm.id ? { ...l, ...data } : l)))
+        showToast('✅ Prospect mis à jour avec succès dans la base !')
+        setShowEditModal(false)
+        await reloadLeads()
+      } else {
+        showToast(`❌ ${data.error}`)
+      }
+    } catch (err: any) {
+      showToast(`❌ Erreur: ${err.message}`)
+    } finally {
+      setIsSavingEdit(false)
+    }
+  }
+
+  // Chargement de la liste noire
+  const loadBlacklist = async () => {
+    setLoadingBlacklist(true)
+    try {
+      const res = await fetch('/api/prospection/blacklist', {
+        headers: { 'x-admin-secret': secret },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setBlacklist(data.blacklist || [])
+      }
+    } catch (_) {}
+    finally {
+      setLoadingBlacklist(false)
+    }
+  }
+
+  // Ajout manuel d'un numéro à la blacklist
+  const handleAddBlacklist = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!blacklistAddForm.phone.trim()) {
+      showToast('⚠️ Numéro de téléphone requis')
+      return
+    }
+    setIsAddingBlacklist(true)
+    try {
+      const res = await fetch('/api/prospection/blacklist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify(blacklistAddForm),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast(`🚫 Numéro ${data.phone} inscrit sur la Blacklist`)
+        setShowAddBlacklistModal(false)
+        setBlacklistAddForm({ phone: '', reason: 'STOP / Opt-Out (WhatsApp)' })
+        await loadBlacklist()
+        await reloadLeads()
+      } else {
+        showToast(`❌ ${data.error}`)
+      }
+    } catch (err: any) {
+      showToast(`❌ Erreur: ${err.message}`)
+    } finally {
+      setIsAddingBlacklist(false)
+    }
+  }
+
+  // Retrait / Déblocage d'un numéro de la blacklist
+  const handleRemoveBlacklist = async (phone: string) => {
+    if (!confirm(`Débloquer et retirer le numéro +${phone} de la liste noire ?`)) return
+    try {
+      const res = await fetch(`/api/prospection/blacklist/${phone}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-secret': secret },
+      })
+      if (res.ok) {
+        setBlacklist((prev) => prev.filter((b) => b.phone !== phone))
+        showToast(`🔓 Numéro +${phone} débloqué et retiré de la liste noire`)
+        await reloadLeads()
+      } else {
+        showToast('❌ Erreur lors du déblocage')
+      }
+    } catch (_) {
+      showToast('❌ Erreur réseau')
+    }
+  }
+
+  // Filtrage local de la blacklist
+  const filteredBlacklist = blacklist.filter((b) => {
+    if (!blacklistSearch.trim()) return true
+    const q = blacklistSearch.toLowerCase()
+    return (
+      (b.phone || '').includes(q) ||
+      (b.reason || '').toLowerCase().includes(q) ||
+      (b.nom_boutique || '').toLowerCase().includes(q) ||
+      (b.contact_nom || '').toLowerCase().includes(q) ||
+      (b.quartier || '').toLowerCase().includes(q)
+    )
+  })
+
+  // Export CSV de la blacklist
+  const exportBlacklistCSV = () => {
+    const headers = ['Numéro Téléphone', 'Raison / Motif', 'Date Ajout', 'Boutique Associée', 'Contact', 'Catégorie', 'Quartier']
+    const rows = filteredBlacklist.map((b) => [
+      `"+${b.phone}"`,
+      `"${b.reason || 'optout'}"`,
+      `"${new Date(b.created_at).toLocaleString('fr-FR')}"`,
+      `"${b.nom_boutique || 'Inconnu'}"`,
+      `"${b.contact_nom || ''}"`,
+      `"${b.categorie || ''}"`,
+      `"${b.quartier || b.ville || ''}"`,
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `blacklist_nopalou_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   // Filtrage local
@@ -555,17 +742,18 @@ export default function ProspectionClient({
         })}
       </div>
 
-      {/* Onglets Navigation (5 Tabs) */}
+      {/* Onglets Navigation (6 Tabs) */}
       <div style={{
         display: 'flex', gap: 8, overflowX: 'auto', borderBottom: '2px solid #E2E8F0',
         paddingBottom: 2, marginBottom: 28,
       }}>
         {[
-          { id: 'crm', label: `📋 1. Base CRM Leads (${filteredLeads.length})`, icon: Users },
+          { id: 'crm', label: `📋 1. Base CRM Leads (${stats.total || filteredLeads.length})`, icon: Users },
           { id: 'import', label: '📥 2. Collecteur & Import Vrac', icon: Layers },
           { id: 'campagnes', label: '💬 3. Dispatcher & Campagnes', icon: Send },
           { id: 'logs', label: '📊 4. Historique d\'Envois', icon: History },
           { id: 'control', label: '🎛️ 5. Centre de Contrôle & Crons', icon: ShieldCheck },
+          { id: 'blacklist', label: `🚫 6. Liste Noire / Blacklist (${stats.blacklist !== undefined ? stats.blacklist : blacklist.length})`, icon: Ban },
         ].map((t) => {
           const Icon = t.icon
           const isActive = activeTab === t.id
@@ -576,6 +764,7 @@ export default function ProspectionClient({
                 setActiveTab(t.id as TabType)
                 if (t.id === 'logs') loadLogs()
                 if (t.id === 'control') fetchCronStatus()
+                if (t.id === 'blacklist') loadBlacklist()
               }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px',
@@ -617,7 +806,27 @@ export default function ProspectionClient({
               />
             </div>
 
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Afficher :</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    const val = e.target.value === 'tout' ? 'tout' : Number(e.target.value)
+                    setLimit(val)
+                    reloadLeads(val)
+                  }}
+                  style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 700, background: '#fff' }}
+                >
+                  <option value={50}>50 leads</option>
+                  <option value={100}>100 leads</option>
+                  <option value={200}>200 leads</option>
+                  <option value={500}>500 leads</option>
+                  <option value={1000}>1000 leads</option>
+                  <option value="tout">Tous (Base complète)</option>
+                </select>
+              </div>
+
               <select
                 value={catFilter}
                 onChange={(e) => setCatFilter(e.target.value)}
@@ -669,6 +878,22 @@ export default function ProspectionClient({
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Indicateur de volume et pagination */}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10,
+            padding: '4px 8px', fontSize: 12, color: '#64748B',
+          }}>
+            <div>
+              Affichage de <strong>{filteredLeads.length}</strong> prospect{filteredLeads.length > 1 ? 's' : ''} sur <strong>{stats.total || leads.length}</strong> au total dans la base.
+              {loadingLeads && <span style={{ marginLeft: 8, color: '#2563EB', fontWeight: 700 }}>Chargement...</span>}
+            </div>
+            {stats.desinscrits ? (
+              <span style={{ color: '#DC2626', fontWeight: 700, background: '#FEE2E2', padding: '2px 8px', borderRadius: 6 }}>
+                🚫 {stats.desinscrits} désinscrit{stats.desinscrits > 1 ? 's' : ''} (exclus des envois)
+              </span>
+            ) : null}
           </div>
 
           {/* Tableau des Prospects */}
@@ -733,6 +958,11 @@ export default function ProspectionClient({
                             {lead.contact_nom && (
                               <span style={{ fontSize: 12, color: '#64748B' }}>👤 {lead.contact_nom}</span>
                             )}
+                            {lead.notes && (
+                              <span style={{ fontSize: 11, color: '#94A3B8', display: 'block', fontStyle: 'italic', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                📝 {lead.notes}
+                              </span>
+                            )}
                           </td>
                           <td style={{ padding: '14px 16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -779,6 +1009,16 @@ export default function ProspectionClient({
                           </td>
                           <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                             <div style={{ display: 'inline-flex', gap: 6 }}>
+                              <button
+                                onClick={() => handleOpenEditModal(lead)}
+                                title="Modifier ce prospect dans la base"
+                                style={{
+                                  padding: '6px 10px', background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE',
+                                  borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                                }}
+                              >
+                                <Pencil size={13} /> Modifier
+                              </button>
                               <a
                                 href={waDirectUrl}
                                 target="_blank"
@@ -792,6 +1032,7 @@ export default function ProspectionClient({
                               </a>
                               <button
                                 onClick={() => handleDeleteLead(lead.id)}
+                                title="Supprimer ce prospect"
                                 style={{
                                   padding: '6px 8px', background: '#FEE2E2', color: '#DC2626', border: 'none',
                                   borderRadius: 8, cursor: 'pointer',
@@ -1434,6 +1675,441 @@ Boutique Parcelles, 70 111 22 33`}
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          ONGLET 6 : LISTE NOIRE & BLACKLIST WHATSAPP
+      ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === 'blacklist' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* En-tête & Actions Blacklist */}
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '20px 24px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16,
+          }}>
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Ban size={22} color="#DC2626" /> Gestion de la Liste Noire &amp; Conformité Anti-Spam
+              </h2>
+              <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>
+                Tous les numéros ayant répondu <code>STOP</code> sur WhatsApp ou désinscrits manuellement sont enregistrés ici.
+                Le système vérifie cette liste et <strong>bloque tout envoi automatique ou relance</strong> vers ces contacts.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                onClick={loadBlacklist}
+                disabled={loadingBlacklist}
+                style={{
+                  background: '#F8FAFC', border: '1px solid #CBD5E1', padding: '10px 16px',
+                  borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#334155', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}
+              >
+                <RefreshCw size={16} className={loadingBlacklist ? 'animate-spin' : ''} />
+                <span>{loadingBlacklist ? 'Actualisation...' : 'Actualiser'}</span>
+              </button>
+
+              <button
+                onClick={exportBlacklistCSV}
+                style={{
+                  background: '#F8FAFC', border: '1px solid #CBD5E1', padding: '10px 16px',
+                  borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#334155', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}
+              >
+                <Download size={16} />
+                <span>Export CSV</span>
+              </button>
+
+              <button
+                onClick={() => setShowAddBlacklistModal(true)}
+                style={{
+                  background: '#DC2626', color: '#fff', border: 'none', padding: '10px 18px',
+                  borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(220,38,38,0.25)',
+                }}
+              >
+                <ShieldAlert size={16} />
+                <span>+ Ajouter à la Blacklist</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Barre de Recherche Blacklist */}
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '14px 20px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
+              <Search size={18} color="#94A3B8" />
+              <input
+                type="text"
+                placeholder="Rechercher par numéro de téléphone, motif, nom de boutique ou contact..."
+                value={blacklistSearch}
+                onChange={(e) => setBlacklistSearch(e.target.value)}
+                style={{
+                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1',
+                  fontSize: 14, outline: 'none',
+                }}
+              />
+            </div>
+
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#64748B' }}>
+              <strong>{filteredBlacklist.length}</strong> numéro{filteredBlacklist.length > 1 ? 's' : ''} sur liste noire
+            </span>
+          </div>
+
+          {/* Tableau Blacklist */}
+          <div style={{
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, overflow: 'hidden',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+          }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569' }}>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Numéro Blacklisté</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Boutique / Contact Lié</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Motif du Blocage</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Date d&apos;Inscription</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800 }}>Statut Sécurité</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800, textAlign: 'right' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBlacklist.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '40px 20px', textAlign: 'center', color: '#94A3B8' }}>
+                        {loadingBlacklist ? 'Chargement de la liste noire...' : 'Aucun numéro sur la liste noire.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredBlacklist.map((item) => (
+                      <tr key={item.phone} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <strong style={{ fontSize: 14, color: '#DC2626' }}>+{item.phone}</strong>
+                            {item.operateur && (
+                              <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 6, background: '#FEE2E2', color: '#DC2626' }}>
+                                {item.operateur}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          {item.nom_boutique ? (
+                            <div>
+                              <strong style={{ color: '#1C2B4A' }}>{item.nom_boutique}</strong>
+                              {item.contact_nom && <span style={{ fontSize: 12, color: '#64748B', display: 'block' }}>👤 {item.contact_nom}</span>}
+                              {item.quartier && <span style={{ fontSize: 11, color: '#94A3B8' }}>📍 {item.quartier}</span>}
+                            </div>
+                          ) : (
+                            <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Non renseigné dans le CRM</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{
+                            fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 8,
+                            background: '#FEF2F2', color: '#B91C1C', border: '1px solid #FECACA',
+                            display: 'inline-block',
+                          }}>
+                            {item.reason === 'optout' ? 'STOP WhatsApp (Opt-Out)' : item.reason}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', fontSize: 12, color: '#64748B' }}>
+                          {new Date(item.created_at).toLocaleString('fr-FR')}
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
+                            background: '#FEE2E2', color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: 4,
+                          }}>
+                            <Lock size={12} /> Bloqué (0 envoi)
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                          <button
+                            onClick={() => handleRemoveBlacklist(item.phone)}
+                            title="Débloquer et retirer de la liste noire"
+                            style={{
+                              padding: '6px 12px', background: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0',
+                              borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                            }}
+                          >
+                            <Unlock size={13} /> Débloquer
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL MODIFICATION PROSPECT EN BASE */}
+      {showEditModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 20, padding: '28px', maxWidth: 560, width: '100%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 20, fontWeight: 900, color: '#1C2B4A', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Pencil size={20} color="#2563EB" /> Modifier le Prospect en Base
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#64748B' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  Nom de la boutique *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.nom_boutique}
+                  onChange={(e) => setEditForm({ ...editForm, nom_boutique: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Numéro WhatsApp / Tel *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.telephone}
+                    onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Contact Responsable
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.contact_nom}
+                    onChange={(e) => setEditForm({ ...editForm, contact_nom: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Statut CRM
+                  </label>
+                  <select
+                    value={editForm.statut}
+                    onChange={(e) => setEditForm({ ...editForm, statut: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 700 }}
+                  >
+                    <option value="nouveau">Nouveau</option>
+                    <option value="contacte_wa">Contacté WhatsApp</option>
+                    <option value="contacte_email">Contacté Email</option>
+                    <option value="en_discussion">En discussion</option>
+                    <option value="converti">Converti (Boutique Active)</option>
+                    <option value="desinscrit">Désinscrit / Refus</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Catégorie
+                  </label>
+                  <select
+                    value={editForm.categorie}
+                    onChange={(e) => setEditForm({ ...editForm, categorie: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  >
+                    <option value="mode">Mode &amp; Habits</option>
+                    <option value="tech">Téléphonie &amp; Tech</option>
+                    <option value="superette">Alimentation</option>
+                    <option value="quincaillerie">Quincaillerie</option>
+                    <option value="cosmetique">Cosmétique</option>
+                    <option value="grossiste">Grossiste Chine</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Ville
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.ville}
+                    onChange={(e) => setEditForm({ ...editForm, ville: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                    Quartier / Marché
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.quartier}
+                    onChange={(e) => setEditForm({ ...editForm, quartier: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  Notes CRM internes
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Notes de prospection, rappels, détails boutique..."
+                  value={editForm.notes}
+                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  style={{ padding: '10px 16px', background: '#F1F5F9', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  style={{
+                    padding: '10px 18px', background: '#2563EB', color: '#fff', border: 'none',
+                    borderRadius: 8, fontWeight: 800, cursor: isSavingEdit ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isSavingEdit ? 'Sauvegarde...' : '💾 Mettre à jour en Base'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL AJOUT NUMÉRO BLACKLIST */}
+      {showAddBlacklistModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 20, padding: '28px', maxWidth: 480, width: '100%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 20, fontWeight: 900, color: '#DC2626', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ShieldAlert size={22} /> Inscrire un Numéro sur la Blacklist
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddBlacklistModal(false)}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#64748B' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddBlacklist} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  Numéro de Téléphone *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: 77 123 45 67 ou 221771234567"
+                  value={blacklistAddForm.phone}
+                  onChange={(e) => setBlacklistAddForm({ ...blacklistAddForm, phone: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13 }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 4 }}>
+                  Motif / Raison du blocage
+                </label>
+                <select
+                  value={blacklistAddForm.reason}
+                  onChange={(e) => setBlacklistAddForm({ ...blacklistAddForm, reason: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 600 }}
+                >
+                  <option value="STOP / Opt-Out (WhatsApp)">STOP / Opt-Out (Demande WhatsApp)</option>
+                  <option value="Plainte / Refus explicite">Plainte / Refus explicite</option>
+                  <option value="Numéro erroné / Invalide">Numéro erroné / Invalide</option>
+                  <option value="Désinscription manuelle Admin">Désinscription manuelle Admin</option>
+                  <option value="Hors Cible">Hors Cible / Particulier</option>
+                </select>
+              </div>
+
+              <p style={{ fontSize: 12, color: '#64748B', margin: 0, lineHeight: 1.5 }}>
+                ℹ️ Ce numéro sera immédiatement exclu de toutes les campagnes futures, relances et notifications WhatsApp.
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddBlacklistModal(false)}
+                  style={{ padding: '10px 16px', background: '#F1F5F9', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAddingBlacklist}
+                  style={{
+                    padding: '10px 18px', background: '#DC2626', color: '#fff', border: 'none',
+                    borderRadius: 8, fontWeight: 800, cursor: isAddingBlacklist ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isAddingBlacklist ? 'Ajout...' : '🚫 Inscrire en Blacklist'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
