@@ -1,3 +1,14 @@
+- **Correction Ergonomie & Responsive Navbar & Hero Tablette (iPad Air / iPad Pro / Mobile) (`layout.tsx`, `globals.css`, `CLAUDE.md`) (`main` - 23 août 2026)** 🎨📱📐⚡ :
+  * **🧭 Regroupement & Alignement Propre de l'En-tête Mobile/Tablette (`layout.tsx`, `globals.css`)** :
+    - Élimination des grands espaces vides (trous) et du décalage entre le logo, les icônes d'action et le bouton hamburger sur tablette (iPad Air 820px, iPad Pro 1024px).
+    - Encapsulation des actions dans `.navbar-mobile-group` avec alignement strict à droite (`margin-left: auto; display: flex; align-items: center; gap: 8px;`).
+    - Masquage strict de `.navbar-actions` sur mobile/tablette (`display: none !important; <= 1040px`), supprimant le bouton résiduel desktop « ⚡ Boutique Taf Taf » qui créait un doublon avec la pilule « 🏪 Boutique ».
+    - Conservation de la lisibilité du logo complet *Nopalou* sur formats tablettes (`display: inline !important;`).
+  * **📐 Aération et Pleine Largeur du Hero Comparateur sur Tablette & Écrans Moyens (`globals.css`)** :
+    - Relèvement du breakpoint de masquage des cartes latérales (`.hero-side-card`) à `1240px` (au lieu de 1023px).
+    - Sur iPad Pro (1024px) et écrans < 1240px, la colonne centrale (titre comparateur, sous-titre et barre de recherche) n'est plus comprimée dans ~316px : elle bénéficie désormais de 100% de la largeur centrale (jusqu'à 760px) pour un centrage et une clarté typographique parfaits.
+  * **🧪 Validation Technique** : TypeScript `tsc --noEmit` exécuté avec succès (0 erreur, EXIT 0).
+
 - **Mise à Jour Forfaits & Fonctionnalités (`/compte?tab=fonctionnalites`), Refonte Design & Redirection « Mon compte » (`BoutiqueClient.tsx`, `FonctionnalitesClient.tsx`, `fonctionnalites-data.ts`, `globals.css`) (`main` - 23 août 2026)** 🎨💳⚡🏠🚀 :
   * **📖 Refonte Intégrale de la Page Forfaits & Fonctionnalités (`/compte?tab=fonctionnalites`)** :
     - **Tarifs Actualisés en Direct** : Intégration complète des 4 formules officielles (Gratuit à vie, Boutique Taf Taf à 2 500 FCFA/mois, Boutique Pro à 5 000 FCFA/mois, Business VIP à 10 000 FCFA/mois).

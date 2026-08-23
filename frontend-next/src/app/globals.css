@@ -43,12 +43,12 @@ img, video, iframe {
   display: none;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1240px) {
   .hero-side-card { display: none !important; }
   .hero-mobile-carousel-wrap {
     display: block;
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     margin: 16px auto 8px;
     padding: 0 4px;
   }
@@ -10645,11 +10645,15 @@ span.ripple {
   display: none;
 }
 
-/* ── Mobile icon buttons (Comparer / Favoris) ─────────────────── */
-.navbar-icon-actions {
+/* ── Mobile icon buttons (Comparer / Favoris / Profil) ─────────── */
+.navbar-mobile-group {
   display: none;
+}
+
+.navbar-icon-actions {
+  display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .navbar-pill-btn {
@@ -10658,9 +10662,9 @@ span.ripple {
   gap: 4px;
   background: var(--navy);
   color: #fff;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 800;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 20px;
   text-decoration: none;
   white-space: nowrap;
@@ -10761,11 +10765,23 @@ span.ripple {
 
   .navbar-top-row {
     height: auto;
-    gap: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
   }
 
   .navbar-search-desktop {
-    display: none;
+    display: none !important;
+  }
+
+  .navbar-links {
+    display: none !important;
+  }
+
+  .navbar-actions {
+    display: none !important;
   }
 
   .navbar-search-mobile {
@@ -10774,12 +10790,24 @@ span.ripple {
   }
 
   .logo-name {
-    display: none !important;
+    display: inline !important;
+    font-size: 20px;
+    font-weight: 800;
   }
 
-  /* Show icon actions, hide text-based deposer */
+  /* Show grouped icon actions + burger aligned on the right */
+  .navbar-mobile-group {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
   .navbar-icon-actions {
-    display: flex;
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
   }
 
   .navbar-deposer {
@@ -10788,6 +10816,21 @@ span.ripple {
 
   .navbar-comparer {
     display: none !important;
+  }
+}
+
+@media (max-width: 580px) {
+  .logo-name {
+    display: none !important;
+  }
+  .navbar-top-row {
+    gap: 6px;
+  }
+  .navbar-mobile-group {
+    gap: 4px;
+  }
+  .navbar-icon-actions {
+    gap: 4px;
   }
 }
 
