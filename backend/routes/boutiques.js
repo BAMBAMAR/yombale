@@ -4,8 +4,9 @@ const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../middlewares/auth');
 const { checkAbonnement, requireAbonnement, requireBusiness } = require('../middlewares/checkAbonnement');
-const { limiterPublication } = require('../middlewares/rateLimit');
+const { limiterPublication, limiterImport } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
+const { scrapeProductFromUrl } = require('../services/magic-import');
 const multer = require('multer');
 const { syncProduit, deleteProduit } = require('../services/whatsapp-catalog');
 const cfg = require('../lib/settingsCache');
@@ -402,103 +403,19 @@ router.post('/taf-taf', async (req, res) => {
   }
 });
 
-// POST /api/boutiques/magic-import - Scraper un produit depuis URL (Dropshipping)
-router.post('/magic-import', async (req, res) => {
+// POST /api/boutiques/magic-import - Scraper un produit depuis URL (Dropshipping / Sourcing)
+router.post('/magic-import', limiterImport, async (req, res) => {
   try {
     const { url } = req.body;
-    if (!url) return res.status(400).json({ error: 'URL requise' });
-
-    let rawUrl = url.trim();
-    if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
-      rawUrl = 'https://' + rawUrl;
+    if (!url || typeof url !== 'string' || !url.trim()) {
+      return res.status(400).json({ error: 'URL du produit requise' });
     }
 
-    let titre = "";
-    let prix = 0;
-    let description = "";
-    let images = [];
-
-    // Tentative d'extraction HTML en direct
-    try {
-      const response = await fetch(rawUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-        },
-        signal: AbortSignal.timeout(6000)
-      });
-
-      if (response.ok) {
-        const html = await response.text();
-
-        // 1. Titre
-        const titleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
-                           html.match(/<meta[^>]*name=["']title["'][^>]*content=["']([^"']+)["']/i) ||
-                           html.match(/<title[^>]*>([^<]+)<\/title>/i);
-        if (titleMatch && titleMatch[1]) {
-          titre = titleMatch[1]
-            .replace(/ - AliExpress.*| \| SHEIN.*| - Amazon.*/i, '')
-            .replace(/&amp;/g, '&')
-            .replace(/&quot;/g, '"')
-            .trim();
-        }
-
-        // 2. Description
-        const descMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i) ||
-                          html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
-        if (descMatch && descMatch[1]) {
-          description = descMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').trim();
-        }
-
-        // 3. Image
-        const imgMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ||
-                         html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i);
-        if (imgMatch && imgMatch[1]) {
-          let imgUrl = imgMatch[1];
-          if (imgUrl.startsWith('//')) imgUrl = 'https:' + imgUrl;
-          images.push(imgUrl);
-        }
-      }
-    } catch (e) {
-      // Ignorer l'échec de la requête externe et basculer sur l'extraction intelligente par URL
-    }
-
-    // Fallbacks intelligents si le site bloque le scraping direct
-    const host = new URL(rawUrl).hostname.toLowerCase();
-
-    if (!titre || titre.length < 3) {
-      if (host.includes('aliexpress')) {
-        const itemId = rawUrl.match(/item\/(\d+)/)?.[1] || '1005010767280963';
-        titre = `Produit d'Importation AliExpress #${itemId}`;
-        prix = 14500;
-        description = "Article importé directement depuis AliExpress. Haute qualité, prêt pour expédition.";
-        images = ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'];
-      } else if (host.includes('shein')) {
-        titre = "Article de Mode Tendance (SHEIN)";
-        prix = 12500;
-        description = "Produit mode importé depuis SHEIN. Coupe moderne et finition soignée.";
-        images = ['https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=800&q=80'];
-      } else if (host.includes('amazon')) {
-        titre = "Produit Sélectionné (Amazon)";
-        prix = 18000;
-        description = "Article importé depuis Amazon. Qualité certifiée et livraison rapide.";
-        images = ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'];
-      } else {
-        const cleanHost = host.replace('www.', '');
-        titre = `Produit Importé (${cleanHost})`;
-        prix = 15000;
-        description = `Article importé depuis ${cleanHost}.`;
-        images = ['https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=800&q=80'];
-      }
-    }
-
-    if (!prix) prix = 15000;
-    if (!description) description = `Importé via la Baguette Magique depuis ${host}.`;
-
-    res.json({ titre, description, prix, images, original_url: rawUrl });
+    const data = await scrapeProductFromUrl(url);
+    res.json(data);
   } catch (err) {
-    res.status(500).json({ error: 'Erreur lors du traitement du lien' });
+    console.error('[MAGIC IMPORT ERROR]', err.message);
+    res.status(400).json({ error: err.message || 'Impossible d\'importer ce produit depuis le lien fourni' });
   }
 });
 

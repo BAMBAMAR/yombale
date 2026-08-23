@@ -45,7 +45,7 @@ export default function InscriptionForm() {
   const formRef = useRef<HTMLFormElement>(null)
   const { t } = useTranslation()
 
-  const [signupMethod, setSignupMethod] = useState<'email' | 'whatsapp'>('email')
+  const [signupMethod, setSignupMethod] = useState<'whatsapp' | 'email'>('whatsapp')
   
   const [nom, setNom] = useState('')
   const [telephone, setTelephone] = useState('')
@@ -131,21 +131,111 @@ export default function InscriptionForm() {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, background: '#f8fafc', padding: 4, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-        <button 
-          type="button" 
-          onClick={() => setSignupMethod('email')}
-          style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: signupMethod === 'email' ? '#fff' : 'transparent', color: signupMethod === 'email' ? '#C75B00' : '#64748b', fontWeight: signupMethod === 'email' ? 800 : 600, boxShadow: signupMethod === 'email' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none', cursor: 'pointer' }}
+      {/* ── Sélecteur de méthode d'inscription WhatsApp / Email ultra visible & engageant ── */}
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <label style={{ fontSize: 13, fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>⚡</span>
+            <span>{t('auth.chooseMethodLabel') || 'Mode d\'inscription :'}</span>
+          </label>
+          <span style={{
+            fontSize: 11,
+            fontWeight: 800,
+            padding: '2px 8px',
+            borderRadius: 12,
+            background: signupMethod === 'whatsapp' ? '#dcfce7' : '#f1f5f9',
+            color: signupMethod === 'whatsapp' ? '#15803d' : '#64748b',
+            border: signupMethod === 'whatsapp' ? '1px solid #bbf7d0' : '1px solid #e2e8f0'
+          }}>
+            {signupMethod === 'whatsapp' ? `✓ ${t('auth.waBadgeRecommended') || 'Recommandé au Sénégal'}` : 'Classique'}
+          </span>
+        </div>
+
+        <div
+          role="tablist"
+          aria-label="Méthode d'inscription"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 10,
+            background: '#f8fafc',
+            padding: 6,
+            borderRadius: 14,
+            border: '2px solid #e2e8f0'
+          }}
         >
-          ✉ {t('auth.loginMethodEmail')}
-        </button>
-        <button 
-          type="button" 
-          onClick={() => setSignupMethod('whatsapp')}
-          style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: signupMethod === 'whatsapp' ? '#fff' : 'transparent', color: signupMethod === 'whatsapp' ? '#C75B00' : '#64748b', fontWeight: signupMethod === 'whatsapp' ? 800 : 600, boxShadow: signupMethod === 'whatsapp' ? '0 2px 6px rgba(199,91,0,0.12)' : 'none', cursor: 'pointer' }}
-        >
-          💬 {t('auth.loginMethodWa')}
-        </button>
+          {/* Onglet 1 : WhatsApp (Par défaut) */}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={signupMethod === 'whatsapp'}
+            onClick={() => setSignupMethod('whatsapp')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              padding: '12px 8px',
+              borderRadius: 10,
+              border: signupMethod === 'whatsapp' ? '2px solid #22c55e' : '2px solid #e2e8f0',
+              background: signupMethod === 'whatsapp' ? '#ffffff' : '#f1f5f9',
+              color: signupMethod === 'whatsapp' ? '#15803d' : '#64748b',
+              boxShadow: signupMethod === 'whatsapp' ? '0 4px 14px rgba(34, 197, 94, 0.22)' : 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
+              <span style={{ fontSize: 18 }}>💬</span>
+              <span>WhatsApp</span>
+            </div>
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: signupMethod === 'whatsapp' ? '#166534' : '#94a3b8'
+            }}>
+              ⚡ {t('auth.waFastMethodDesc') || '1 clic sans mot de passe'}
+            </span>
+          </button>
+
+          {/* Onglet 2 : Email */}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={signupMethod === 'email'}
+            onClick={() => setSignupMethod('email')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              padding: '12px 8px',
+              borderRadius: 10,
+              border: signupMethod === 'email' ? '2px solid #C75B00' : '2px solid #e2e8f0',
+              background: signupMethod === 'email' ? '#ffffff' : '#f1f5f9',
+              color: signupMethod === 'email' ? '#C75B00' : '#64748b',
+              boxShadow: signupMethod === 'email' ? '0 4px 14px rgba(199, 91, 0, 0.18)' : 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
+              <span style={{ fontSize: 16 }}>✉️</span>
+              <span>Email</span>
+            </div>
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: signupMethod === 'email' ? '#9a3412' : '#94a3b8'
+            }}>
+              {t('auth.emailClassicDesc') || 'Avec mot de passe'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {signupMethod === 'email' ? (

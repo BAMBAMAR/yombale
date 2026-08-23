@@ -74,6 +74,13 @@ const limiterEcriture = rateLimit({
   message: { error: 'Trop de requêtes — réessayez dans quelques minutes' }
 });
 
+const limiterImport = rateLimit({
+  windowMs: 5 * 60 * 1000, max: 25,
+  keyGenerator: realIp,
+  skip: skipInDevOrSsr,
+  message: { error: 'Trop de demandes d\'import rapide — réessayez dans 5 minutes' }
+});
+
 // Limite les accès bulk (listes produits/immo/annonces) pour freiner le scraping
 // Exclut les IPs internes (serveur Next.js → Express en SSR) et les utilisateurs authentifiés
 const INTERNAL_IPS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
@@ -95,4 +102,4 @@ const limiterBulk = rateLimit({
   },
 });
 
-module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImmo, limiterBulk, blockScraperUA };
+module.exports = { limiterGeneral, limiterAuth, limiterRecherche, limiterPublication, limiterEcriture, limiterImport, limiterImmo, limiterBulk, blockScraperUA };

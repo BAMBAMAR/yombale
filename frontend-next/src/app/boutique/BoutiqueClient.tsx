@@ -741,11 +741,66 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   const fileRef = useRef<HTMLInputElement>(null)
   const [nomForm, setNomForm] = useState<string>(produit?.nom ?? (modeInitial === 'rapide' ? nomParDefautPourCategorie(cat) : ''))
   const [codeBarreForm, setCodeBarreForm] = useState<string>((produit as any)?.code_barre || '')
+  const [prixForm, setPrixForm] = useState<string>(produit?.prix != null ? String(produit.prix) : '')
+  const [prixAchatForm, setPrixAchatForm] = useState<string>((produit as any)?.prix_achat != null ? String((produit as any).prix_achat) : '')
+  const [prixBarreForm, setPrixBarreForm] = useState<string>(produit?.prix_barre != null ? String(produit.prix_barre) : '')
+  const [descForm, setDescForm] = useState<string>(produit?.description ?? '')
+
+  // Baguette Magique (Import Rapide)
+  const [magicUrl, setMagicUrl] = useState<string>('')
+  const [magicLoading, setMagicLoading] = useState<boolean>(false)
+  const [magicResult, setMagicResult] = useState<any>(null)
+  const [magicFeedback, setMagicFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     if (produit?.nom) setNomForm(produit.nom)
     setCodeBarreForm((produit as any)?.code_barre || '')
+    if (produit?.prix != null) setPrixForm(String(produit.prix))
+    if ((produit as any)?.prix_achat != null) setPrixAchatForm(String((produit as any).prix_achat))
+    if (produit?.prix_barre != null) setPrixBarreForm(String(produit.prix_barre))
+    if (produit?.description != null) setDescForm(produit.description)
   }, [produit])
+
+  async function executerMagicImport() {
+    const url = magicUrl.trim();
+    if (!url) {
+      setMagicFeedback({ type: 'error', text: 'Veuillez coller un lien de produit (AliExpress, Shein, Amazon, etc.)' });
+      return;
+    }
+    setMagicLoading(true);
+    setMagicFeedback(null);
+    try {
+      const res = await fetch('/api/boutiques/magic-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (res.ok && data) {
+        if (data.titre) setNomForm(data.titre);
+        if (data.prix > 0) setPrixForm(String(data.prix));
+        if (data.prix_achat > 0) setPrixAchatForm(String(data.prix_achat));
+        if (data.prix_barre > 0) setPrixBarreForm(String(data.prix_barre));
+        if (data.description) setDescForm(data.description);
+        if (data.categorie && data.categorie !== 'divers') setCat(data.categorie);
+        if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+          setImagesExistantes(data.images);
+        }
+        setMagicResult(data);
+        setMagicFeedback({
+          type: 'success',
+          text: `✨ Produit importé avec succès ! ${data.images?.length || 0} photo(s) ajoutée(s).`
+        });
+        setModeRapide(false); // Basculer pour afficher description et photos
+      } else {
+        setMagicFeedback({ type: 'error', text: data.error || 'Impossible d\'importer les détails depuis ce lien.' });
+      }
+    } catch (e) {
+      setMagicFeedback({ type: 'error', text: 'Erreur réseau lors de la communication avec le serveur.' });
+    } finally {
+      setMagicLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (cat && (!nomForm || nomForm.trim() === '' || nomForm.includes(' — à modifier'))) {
@@ -1057,71 +1112,110 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       )}
 
       {!produit && (
-        <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 12, border: '1.5px dashed #4ade80', marginBottom: 10, boxSizing: 'border-box' }}>
-          <label style={{ fontSize: 13, fontWeight: 800, color: '#166534', display: 'block', marginBottom: 8 }}>
-            🌟 Baguette Magique (Import Rapide)
-          </label>
+        <div style={{ background: '#f0fdf4', padding: 18, borderRadius: 14, border: '1.5px dashed #22c55e', marginBottom: 16, boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <label style={{ fontSize: 13.5, fontWeight: 800, color: '#15803d', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>🌟</span>
+              <span>Baguette Magique (Import Rapide)</span>
+            </label>
+            <span style={{ fontSize: 11, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
+              AliExpress • SHEIN • Amazon • Shopify
+            </span>
+          </div>
+
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: '100%' }}>
             <input
               id="magic-url"
               type="url"
-              placeholder="Collez le lien AliExpress, Shein, Amazon..."
+              value={magicUrl}
+              onChange={e => setMagicUrl(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); executerMagicImport(); } }}
+              placeholder="Collez le lien du produit (AliExpress, Shein, Amazon, Alibaba, etc.)..."
               style={{
-                flex: '1 1 200px',
+                flex: '1 1 220px',
                 width: '100%',
                 boxSizing: 'border-box',
-                padding: '10px 14px',
-                borderRadius: 8,
-                border: '1px solid #bbf7d0',
+                padding: '11px 14px',
+                borderRadius: 10,
+                border: '1px solid #86efac',
                 fontSize: 13.5,
                 background: '#ffffff',
-                outline: 'none'
+                outline: 'none',
+                color: '#0f172a'
               }}
             />
             <button
               type="button"
-              onClick={async (e) => {
-                const btn = e.currentTarget;
-                const inputEl = document.getElementById('magic-url') as HTMLInputElement;
-                const url = inputEl?.value?.trim();
-                if (!url) return;
-                btn.innerText = '⏳ Analyse...';
-                btn.disabled = true;
-                try {
-                  const res = await fetch('/api/boutiques/magic-import', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ url }) });
-                  if (res.ok) {
-                    const data = await res.json();
-                    const nomInput = document.querySelector('input[name="nom"]') as HTMLInputElement;
-                    const prixInput = document.querySelector('input[name="prix"]') as HTMLInputElement;
-                    const descInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
-                    if (nomInput && data.titre) {
-                      nomInput.value = data.titre;
-                      setNomForm(data.titre);
-                    }
-                    if (prixInput && data.prix > 0) prixInput.value = data.prix;
-                    if (descInput && data.description) descInput.value = data.description;
-                    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-                      setImagesExistantes(data.images);
-                    }
-                    btn.innerText = '✅ Importé !';
-                  } else {
-                    btn.innerText = '❌ Lien invalide';
-                  }
-                } catch(e) {
-                  btn.innerText = '❌ Erreur réseau';
-                } finally {
-                  btn.disabled = false;
-                  setTimeout(() => { btn.innerText = 'Importer' }, 2500);
-                }
-              }}
+              onClick={executerMagicImport}
+              disabled={magicLoading}
               className="npl-btn npl-btn-success npl-btn-md"
-              style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 20px' }}
+              style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 20px', borderRadius: 10, fontWeight: 800 }}
             >
-              Importer
+              {magicLoading ? '⏳ Analyse en cours...' : '🪄 Importer'}
             </button>
           </div>
+
+          {magicFeedback && (
+            <div style={{
+              marginTop: 10,
+              padding: '8px 12px',
+              borderRadius: 8,
+              fontSize: 12.5,
+              fontWeight: 600,
+              background: magicFeedback.type === 'success' ? '#dcfce7' : '#fef2f2',
+              color: magicFeedback.type === 'success' ? '#166534' : '#dc2626',
+              border: `1px solid ${magicFeedback.type === 'success' ? '#bbf7d0' : '#fecaca'}`
+            }}>
+              {magicFeedback.text}
+            </div>
+          )}
+
+          {magicResult && (
+            <div style={{
+              marginTop: 12,
+              background: '#ffffff',
+              padding: 12,
+              borderRadius: 10,
+              border: '1px solid #bbf7d0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, color: '#64748b' }}>
+                <span>Source détectée : <strong style={{ color: '#0f172a' }}>{magicResult.source_name || 'E-commerce'}</strong></span>
+                {magicResult.categorie && magicResult.categorie !== 'divers' && (
+                  <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, color: '#334155', fontWeight: 700 }}>
+                    Catégorie : {magicResult.categorie}
+                  </span>
+                )}
+              </div>
+
+              {magicResult.images && magicResult.images.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+                  {magicResult.images.map((imgUrl: string, idx: number) => (
+                    <img
+                      key={idx}
+                      src={imgUrl}
+                      alt={`Aperçu ${idx + 1}`}
+                      style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', border: '1px solid #e2e8f0', flexShrink: 0 }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div style={{ fontSize: 12, color: '#15803d', fontWeight: 700 }}>
+                💡 Prix de vente suggéré : {magicResult.prix?.toLocaleString('fr-FR')} FCFA
+                {magicResult.prix_achat > 0 && (
+                  <span style={{ color: '#64748b', fontWeight: 500, marginLeft: 6 }}>
+                    (Coût d'achat estimé : {magicResult.prix_achat?.toLocaleString('fr-FR')} FCFA)
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           <p style={{ fontSize: 11.5, color: '#15803d', margin: '8px 0 0', lineHeight: 1.4 }}>
-            Récupère automatiquement le titre, le prix estimé, la description et les photos depuis le lien collé.
+            Récupère automatiquement le titre nettoyé, le prix converti en FCFA, la description et jusqu&apos;à 5 photos haute résolution.
           </p>
         </div>
       )}
@@ -1399,7 +1493,14 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       {!modeRapide && (
         <div>
           <label style={labelStyle}>{t('shop.descriptionLabel')}</label>
-          <textarea name="description" rows={3} defaultValue={produit?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Détails supplémentaires, accessoires inclus, garantie…" />
+          <textarea
+            name="description"
+            rows={3}
+            value={descForm}
+            onChange={e => setDescForm(e.target.value)}
+            style={{ ...inputStyle, resize: 'vertical' }}
+            placeholder="Détails supplémentaires, accessoires inclus, garantie…"
+          />
         </div>
       )}
 
@@ -1407,16 +1508,41 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       <div className={modeRapide ? '' : 'bq-form-grid-2'} style={{ display: 'grid', gridTemplateColumns: modeRapide ? '1fr 1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         <div>
           <label style={labelStyle}>{t('shop.productPrice')} (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></label>
-          <input name="prix" type="number" min={0} defaultValue={produit?.prix ?? ''} style={inputStyle} placeholder="Ex: 15 000 (Vente)" />
+          <input
+            name="prix"
+            type="number"
+            min={0}
+            value={prixForm}
+            onChange={e => setPrixForm(e.target.value)}
+            style={inputStyle}
+            placeholder="Ex: 15 000 (Vente)"
+          />
         </div>
         <div>
           <label style={labelStyle}>Prix d&apos;achat / Coût (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></label>
-          <input name="prix_achat" type="number" min={0} defaultValue={(produit as any)?.prix_achat ?? ''} style={inputStyle} placeholder="Ex: 10 000 (Coût)" title="Utilisé pour calculer vos marges et la valeur de votre stock" />
+          <input
+            name="prix_achat"
+            type="number"
+            min={0}
+            value={prixAchatForm}
+            onChange={e => setPrixAchatForm(e.target.value)}
+            style={inputStyle}
+            placeholder="Ex: 10 000 (Coût)"
+            title="Utilisé pour calculer vos marges et la valeur de votre stock"
+          />
         </div>
         {!modeRapide && (
           <div>
             <label style={labelStyle}>{t('shop.productPriceStrikethrough')}</label>
-            <input name="prix_barre" type="number" min={0} defaultValue={produit?.prix_barre ?? ''} style={inputStyle} placeholder="Ex: 20 000" />
+            <input
+              name="prix_barre"
+              type="number"
+              min={0}
+              value={prixBarreForm}
+              onChange={e => setPrixBarreForm(e.target.value)}
+              style={inputStyle}
+              placeholder="Ex: 20 000"
+            />
           </div>
         )}
       </div>

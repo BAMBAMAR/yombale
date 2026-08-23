@@ -1,3 +1,34 @@
+- **Authentification WhatsApp par Défaut (Connexion & Inscription) & Sélecteur Haute Visibilité (`main` - 23 août 2026)** 💬🔑📱✨ :
+  * **💬 WhatsApp Choisi par Défaut** :
+    - Activation de la méthode **WhatsApp OTP** comme choix par défaut sur les pages `/connexion` ([`ConnexionForm.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/connexion/ConnexionForm.tsx)) et `/inscription` ([`InscriptionForm.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/inscription/InscriptionForm.tsx)), répondant à l'usage ultra-majoritaire des commerçants et acheteurs au Sénégal (connexion 1-clic sans mot de passe à retenir).
+  * **✨ Sélecteur d'Onglets Ultra-Visible & Interactif** :
+    - Remplacement du simple bandeau gris par un sélecteur à cartes cliquables avec titre explicite (`⚡ Mode de connexion :` / `⚡ Mode d'inscription :`).
+    - Badge contextuel dynamique : `✓ Recommandé au Sénégal` pour WhatsApp vs `Classique` pour Email.
+    - Tuiles cliquables contrastées : bordure verte nette (`#22c55e`), ombre portée et sous-titre explicite `⚡ 1 clic sans mot de passe` pour WhatsApp ; tuile distincte orange avec sous-titre `Avec mot de passe` pour Email.
+    - Support complet de l'accessibilité avec rôles ARIA (`role="tablist"`, `role="tab"`, `aria-selected`).
+  * **🌐 Parité i18n FR / EN / AR** :
+    - Ajout des nouvelles clés (`chooseMethodLabel`, `waFastMethodDesc`, `emailClassicDesc`, `waBadgeRecommended`) dans les dictionnaires français, anglais et arabe.
+    - 100% de parité validée par les tests unitaires i18n (`31/31 tests passés avec succès`).
+
+- **Refonte & Optimisation Intelligente de la Baguette Magique (Import Rapide Multi-Plateformes) (`main` - 23 août 2026)** 🌟🪄📦🛡️⚡ :
+  * **🪄 Moteur d'Extraction E-Commerce Multi-Sources (`backend/services/magic-import.js`)** :
+    - **Extraction Réelle des Prix & Devises** : Remplacement des prix fixes de repli par l'extraction des données réelles du produit (JSON-LD Schema.org `Product` / `offers`, OpenGraph `product:price:amount`, `twitter:data1`, balises HTML spécifiques AliExpress `runParams`, SHEIN `goodsDetail`, Amazon `#productTitle` & `.a-price`).
+    - **Convertisseur Multi-Devises vers FCFA** : Conversion automatique des devises sources (`USD`, `EUR`, `CNY`, `GBP`, `AED`, `TRY`) en FCFA avec estimation du coût d'achat et calcul d'un prix de vente conseillé et prix barré arrondis aux 500 FCFA supérieurs.
+    - **Galerie Multi-Photos HD (Jusqu'à 5 photos)** : Récupération de plusieurs visuels haute résolution et nettoyage automatique des paramètres de réduction de taille (vignettes AliExpress `_50x50.jpg` ou Amazon `._AC_US40_.jpg` transformées en images plein format).
+    - **Auto-Détection de la Catégorie** : Analyse automatique des mots-clés du titre et de la description pour pré-sélectionner la catégorie Nopalou adéquate (`mode`, `smartphones`, `informatique`, `tv-electro`, `maison`, `beaute-sante`, `auto-moto`, `enfants-bebes`, `sports-loisirs`).
+    - **Nettoyage Intelligent du Titre & Description** : Élimination du bourrage de mots-clés SEO et des mentions de plateformes (*"2026 Hot Sale Dropshipping High Quality..."*) pour un titre vendeur et lisible.
+  * **🛡️ Sécurité & Protection Réseau (Anti-SSRF & Rate Limiter Dédié)** :
+    - **Filtrage Anti-SSRF** (`validateSafeUrl`) : Validation stricte des protocoles (uniquement `http:` et `https:`) et blocage systématique des adresses IP locales, privées (RFC 1918), loopback (`127.0.0.1`, `localhost`, `0.0.0.0`) et métadonnées cloud (`169.254.169.254`).
+    - **Rate Limiter Dédié (`limiterImport`)** : Limitation à 25 imports par tranche de 5 minutes par IP avec bypass propre en dev/SSR.
+  * **⚡ Interface Marchand Réactive & Carte d'Aperçu Visuel (`frontend-next/src/app/boutique/BoutiqueClient.tsx`)** :
+    - Formulaire d'ajout de produit 100% contrôlé par l'état React (`nomForm`, `prixForm`, `prixAchatForm`, `prixBarreForm`, `descForm`, `cat`, `imagesExistantes`) sans mutation DOM directe fragile.
+    - **Carte d'Aperçu Instantanée** : Affichage d'un panneau récapitulatif dès l'analyse (miniatures des photos, nom de la plateforme source, prix de vente suggéré et coût d'achat estimé).
+    - Mise à jour de `next.config.js` (`remotePatterns`) pour autoriser les CDN d'images AliExpress (`*.alicdn.com`), SHEIN (`*.shein.com`, `*.ltwebstatic.com`), Amazon (`*.media-amazon.com`, `*.ssl-images-amazon.com`), Unsplash et Temu.
+  * **🧪 Validation & Contrôle Qualité** :
+    - Tests unitaires complets (`tests/unit/magic-import.test.js`) : **100% des tests passés avec succès** (sécurité SSRF, conversion de devises, détection de catégories, nettoyage de titre, galerie HD et scraper intégré).
+    - Suite de tests unitaires frontend (`npm test` dans `frontend-next`) : **31/31 tests validés (100%)**.
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Accès Boutique par Numéro de Téléphone, Authentification Marchand par Code PIN, Multi-Photos & Tableau de Bord WhatsApp (`main` - 23 août 2026)** 📞🔐📸🏪⚡ :
   * **📞 Accès Simplifié & Détection Instantanée par Numéro de Téléphone** :
     - Détection automatique et extraction résiliente des numéros mobiles sénégalais (`77...`, `78...`, `76...`, `70...`, `75...`, `33...`, avec ou sans `+221`/espaces/tirets) dans tous les messages envoyés au bot, dans la recherche de boutiques (`BOUTIQUE_SEARCH_SHOP`) et la liste (`BOUTIQUE_LISTE`).
