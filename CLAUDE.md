@@ -1,7 +1,16 @@
 - **Refonte Graphique & Optimisation Responsive des Tableaux de Bord (Boutique, POS, Analytics & Admin) (`main` - 23 août 2026)** 🎨📊📱⚡✨ :
-  * **🏪 Équilibrage & Finition du Tableau de Bord Marchand (`BoutiqueClient.tsx`, `globals.css`)** :
+  * **🏪 Équilibrage & Finition du Tableau de Bord Marchand (`BoutiqueClient.tsx`, `globals.css`, `i18n`)** :
     - **Grille d'Actions Rapides 3x2 Harmonieuse** : Remplacement de la grille asymétrique par une disposition équilibrée en 3 colonnes desktop (`grid-template-columns: repeat(3, 1fr)`) et 2 colonnes mobile/tablette, éliminant tout vide visuel et allouant +40% de largeur utile à chaque carte.
-    - **Éradication Totale des Troncatures de Texte (`...`)** : Optimisation concise des libellés et descriptions dans les dictionnaires i18n (`fr`, `en`, `ar`) permettant à tous les textes d'actions (*Vente Express*, *Carnet de Dettes*, *Ajouter un produit*, *Factures & Devis*, *Caisse Tactile*, *QR Code & Vitrine*) d'être affichés intégralement sans coupure.
+    - **Éradication Totale des Troncatures de Texte (`...`)** : Optimisation concise de l'ensemble des libellés dans les dictionnaires i18n (`fr`, `en`, `ar`) :
+      * *Documents Clients (Factures, Devis, Proformas)* ➔ **Factures & Devis**
+      * *Fournisseurs & Réapprovisionnement* ➔ **Fournisseurs**
+      * *Configuration Fiscalité & Taxes* ➔ **Fiscalité & Taxes**
+      * *Journal d'Audit & Historique* ➔ **Journal d'Audit**
+      * *Portail Développeur API & Webhooks* ➔ **Portail Développeur**
+      * *Saisie Express Ventes* ➔ **Vente Express**
+      * *Carnet de Dettes Client* ➔ **Carnet de Dettes**
+      * *Ouvrir la Caisse Tactile* ➔ **Caisse Tactile**
+      * *Mon QR Code & Lien* ➔ **QR Code & Vitrine**
     - **Harmonisation Typographique & Micro-Interactions** : Remplacement des liens soulignés bruts par des boutons interactifs discrets avec transitions fluides (`transform: translateY(-2px)`, ombres portées douces `rgba(199, 91, 0, 0.12)` au survol).
     - **Nettoyage Iconographique Vectoriel** : Remplacement des doubles émojis dans les titres par des icônes SVG natives Lucide (`<Zap />`, `<TrendingUp />`, etc.) pour un rendu net et homogène sur tous les OS.
   * **📈 Refonte Visuelle du Dashboard Analytics (`AnalyticsClient.tsx`)** :
