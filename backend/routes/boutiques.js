@@ -1476,12 +1476,15 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       }
     }
 
-    const { nom, description, prix, prix_barre, prix_achat, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
+    const { nom, description, prix, prix_barre, prix_achat, en_stock, stock_quantite, quantite_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     const safePrix = (prix !== undefined && prix !== null && String(prix).trim() !== '' && !isNaN(Number(prix))) ? Number(prix) : null;
     const safePrixBarre = (prix_barre !== undefined && prix_barre !== null && String(prix_barre).trim() !== '' && !isNaN(Number(prix_barre))) ? Number(prix_barre) : null;
     const safePrixAchat = (prix_achat !== undefined && prix_achat !== null && String(prix_achat).trim() !== '' && !isNaN(Number(prix_achat))) ? Number(prix_achat) : null;
+    const rawStock = stock_quantite !== undefined ? stock_quantite : quantite_stock;
+    const safeStock = (rawStock !== undefined && rawStock !== null && String(rawStock).trim() !== '' && !isNaN(Number(rawStock))) ? Number(rawStock) : null;
+    const finalEnStock = safeStock !== null ? (safeStock > 0) : (en_stock !== 'false');
 
     let images = [];
     if (req.body.images) {
@@ -1518,14 +1521,14 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     const codeBarrePostVal = rawCodeBarrePost && typeof rawCodeBarrePost === 'string' && rawCodeBarrePost.trim() ? rawCodeBarrePost.trim() : null;
 
     const r = await pool.query(
-      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, prix_achat, images, en_stock, categorie, caracteristiques, variantes, code_barre)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, prix_achat, images, en_stock, stock_quantite, categorie, caracteristiques, variantes, code_barre)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
       [id, nom.trim(), description||null, safePrix, safePrixBarre, safePrixAchat,
-       images, en_stock !== 'false', categorie||null, caracJson, JSON.stringify(variantesJson), codeBarrePostVal]
+       images, finalEnStock, safeStock, categorie||null, caracJson, JSON.stringify(variantesJson), codeBarrePostVal]
     );
     res.status(201).json({ success: true, produit: r.rows[0] });
     // Audit Log Creation
-    enregistrerAuditLog(id, req.user.userId, req.user.nom || 'Marchand', 'produit_cree', `Création du produit "${r.rows[0].nom}"`, { produit_id: r.rows[0].id, prix: r.rows[0].prix }, req);
+    enregistrerAuditLog(id, req.user.userId, req.user.nom || 'Marchand', 'produit_cree', `Création du produit "${r.rows[0].nom}"`, { produit_id: r.rows[0].id, prix: r.rows[0].prix, stock_quantite: r.rows[0].stock_quantite }, req);
 
     // Sync catalogue Meta — hors du try/catch pour éviter double-réponse
     const produitCree = r.rows[0];
@@ -1552,7 +1555,7 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
 
-    const { nom, description, prix, prix_barre, prix_achat, en_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
+    const { nom, description, prix, prix_barre, prix_achat, en_stock, stock_quantite, quantite_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
     let images = existing.rows[0].images;
     if (req.files && req.files.length) {
       images = [];
@@ -1581,12 +1584,18 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const safePrixBarre = (prix_barre !== undefined && prix_barre !== null && String(prix_barre).trim() !== '' && !isNaN(Number(prix_barre))) ? Number(prix_barre) : (prix_barre === '' ? null : existing.rows[0].prix_barre);
     const safePrixAchat = (prix_achat !== undefined && prix_achat !== null && String(prix_achat).trim() !== '' && !isNaN(Number(prix_achat))) ? Number(prix_achat) : (prix_achat === '' ? null : existing.rows[0].prix_achat);
 
+    const rawStock = stock_quantite !== undefined ? stock_quantite : quantite_stock;
+    const safeStock = (rawStock !== undefined && rawStock !== null && String(rawStock).trim() !== '' && !isNaN(Number(rawStock)))
+      ? Number(rawStock)
+      : (rawStock === '' ? null : existing.rows[0].stock_quantite);
+    const finalEnStock = safeStock !== null ? (safeStock > 0) : (en_stock !== 'false');
+
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4, prix_achat=$5,
-       images=$6, en_stock=$7, categorie=$8, caracteristiques=$9, variantes=$10, code_barre=$11, updated_at=NOW()
-       WHERE id=$12 AND boutique_id=$13 RETURNING *`,
+       images=$6, en_stock=$7, stock_quantite=$8, categorie=$9, caracteristiques=$10, variantes=$11, code_barre=$12, updated_at=NOW()
+       WHERE id=$13 AND boutique_id=$14 RETURNING *`,
       [nom||existing.rows[0].nom, description||null, safePrix, safePrixBarre, safePrixAchat,
-       images, en_stock !== 'false', categorie||existing.rows[0].categorie||null,
+       images, finalEnStock, safeStock, categorie||existing.rows[0].categorie||null,
        caracJson, JSON.stringify(variantesJson), codeBarreVal, prodId, id]
     );
     res.json({ success: true, produit: r.rows[0] });

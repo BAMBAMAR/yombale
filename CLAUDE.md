@@ -1,3 +1,15 @@
+- **Ajout et Persistance Complète du Champ « 📦 Quantité en stock » dans le Formulaire Produit (`BoutiqueClient.tsx`, `backend/routes/boutiques.js`, `CLAUDE.md`) (`main` - 23 août 2026)** 📦⚡🏷️🛒 :
+  * **📝 Formulaire Produit Haute Visibilité (`BoutiqueClient.tsx` - `ProduitForm`)** :
+    - **Champ Quantité en Stock Dédié** : Intégration d'un champ numérique `stock_quantite` (avec fallback `quantite_stock`) dans la grille de prix, visible immédiatement aussi bien en **Ajout Rapide** qu'en **Mode Détaillé**.
+    - **Synchronisation Dynamique du Statut Stock** : La saisie d'un stock > 0 active automatiquement le statut `En stock` avec indicateur visuel vert (`📦 En stock (X pcs)`), tandis qu'un stock à 0 bascule automatiquement en rupture.
+    - **Persistance & Compatibilité Totale** : Transmission transparente des valeurs de stock lors de la création et modification de produit avec pré-remplissage automatique lors de l'édition d'un article existant.
+  * **⚙️ Backend & API Routes (`backend/routes/boutiques.js`)** :
+    - **Prise en Compte dans `POST /api/boutiques/:id/produits`** : Extraction de `stock_quantite` / `quantite_stock` et insertion directe dans la colonne `stock_quantite` de `boutique_produits` avec mise à jour du statut `en_stock`.
+    - **Prise en Compte dans `PUT /api/boutiques/:id/produits/:prodId`** : Mise à jour sécurisée du stock en base de données avec historisation dans les journaux d'audit (`enregistrerAuditLog`).
+  * **🧪 Validation Technique** :
+    - TypeScript `tsc --noEmit` : 0 erreur (EXIT 0).
+    - Build Next.js 14 Production : validé avec succès (EXIT 0).
+
 - **Refonte Haute Performance du Système de Scan (EAN & OCR Nom) sur Toute l'Application — Zéro Tâtonnement, Viseur Synchronisé au Pixel Près, Auto-Remplissage OpenFoodFacts, Mode Rafale POS & Retour Multisensoriel (`scanner-helper.ts`, `CaisseClient.tsx`, `BoutiqueClient.tsx`, `Comptabilite.tsx`, `GestionDocuments.tsx`, `GestionFournisseurs.tsx`, `CarnetDettes.tsx`, `CLAUDE.md`) (`main` - 23 août 2026)** 📷⚡🎯✨🔊 :
   * **🛠️ Module Centralisé Haute Performance (`scanner-helper.ts`)** :
     - **Synchronisation Géométrique Exacte (`capturerZoneViseurExacte`)** : Calcul trigonométrique temps réel compensant le ratio `objectFit: cover` entre la résolution capteur (1080x1920) et le conteneur écran (360x260). 100% de ce qui se trouve à l'intérieur du rectangle en pointillés sur l'écran est ce qui est envoyé à l'OCR, éliminant tout décalage, débordement ou texte parasite hors-champ.

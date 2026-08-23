@@ -743,6 +743,13 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
   const [codeBarreForm, setCodeBarreForm] = useState<string>((produit as any)?.code_barre || '')
   const [prixForm, setPrixForm] = useState<string>(produit?.prix != null ? String(produit.prix) : '')
   const [prixAchatForm, setPrixAchatForm] = useState<string>((produit as any)?.prix_achat != null ? String((produit as any).prix_achat) : '')
+  const [stockQuantiteForm, setStockQuantiteForm] = useState<string>(
+    (produit as any)?.quantite_stock != null
+      ? String((produit as any).quantite_stock)
+      : produit?.stock_quantite != null
+      ? String(produit.stock_quantite)
+      : ''
+  )
   const [prixBarreForm, setPrixBarreForm] = useState<string>(produit?.prix_barre != null ? String(produit.prix_barre) : '')
   const [descForm, setDescForm] = useState<string>(produit?.description ?? '')
 
@@ -757,6 +764,9 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
     setCodeBarreForm((produit as any)?.code_barre || '')
     if (produit?.prix != null) setPrixForm(String(produit.prix))
     if ((produit as any)?.prix_achat != null) setPrixAchatForm(String((produit as any).prix_achat))
+    if ((produit as any)?.quantite_stock != null) setStockQuantiteForm(String((produit as any).quantite_stock))
+    else if (produit?.stock_quantite != null) setStockQuantiteForm(String(produit.stock_quantite))
+    else setStockQuantiteForm('')
     if (produit?.prix_barre != null) setPrixBarreForm(String(produit.prix_barre))
     if (produit?.description != null) setDescForm(produit.description)
   }, [produit])
@@ -1218,6 +1228,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
       <input type="hidden" name="images" value={JSON.stringify(imagesExistantes)} />
       <input type="hidden" name="categorie" value={cat} />
       <input type="hidden" name="code_barre" value={codeBarreForm} />
+      <input type="hidden" name="quantite_stock" value={stockQuantiteForm} />
       <input type="hidden" name="caracteristiques" value={JSON.stringify(carac)} />
       <input type="hidden" name="variantes" value={JSON.stringify(variantes.filter(v => v.nom.trim() && v.valeurs.length > 0))} />
 
@@ -1515,8 +1526,8 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         </div>
       )}
 
-      {/* Prix de Vente, Prix d'Achat (Coût) & Prix Barré */}
-      <div className={modeRapide ? '' : 'bq-form-grid-2'} style={{ display: 'grid', gridTemplateColumns: modeRapide ? '1fr 1fr' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, alignItems: 'end' }}>
+      {/* Prix de Vente, Quantité en stock, Prix d'Achat (Coût) & Prix Barré */}
+      <div className={modeRapide ? '' : 'bq-form-grid-2'} style={{ display: 'grid', gridTemplateColumns: modeRapide ? 'repeat(auto-fit, minmax(130px, 1fr))' : 'repeat(auto-fit, minmax(135px, 1fr))', gap: 10, alignItems: 'end' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
             <span>{t('shop.productPrice')} (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></span>
@@ -1529,6 +1540,30 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
             onChange={e => setPrixForm(e.target.value)}
             style={inputStyle}
             placeholder="Ex: 15 000 (Vente)"
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
+            <span>📦 Quantité en stock <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></span>
+          </label>
+          <input
+            name="stock_quantite"
+            type="number"
+            min={0}
+            value={stockQuantiteForm}
+            onChange={e => {
+              setStockQuantiteForm(e.target.value)
+              if (Number(e.target.value) > 0) setEnStock(true)
+              else if (e.target.value === '0') setEnStock(false)
+            }}
+            style={{
+              ...inputStyle,
+              borderColor: stockQuantiteForm && Number(stockQuantiteForm) > 0 ? '#86efac' : undefined,
+              background: stockQuantiteForm && Number(stockQuantiteForm) > 0 ? '#f0fdf4' : undefined,
+              fontWeight: 700
+            }}
+            placeholder="Ex: 50 (Unités)"
+            title="Nombre d'unités disponibles en stock (utilisé pour les alertes et l'inventaire)"
           />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1634,8 +1669,10 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
               transition: 'left .2s', display: 'block',
             }} />
           </button>
-          <span style={{ fontSize: 13, color: '#374151' }}>
-            {enStock ? `✅ ${t('shop.inStock')}` : `❌ ${t('shop.outOfStock')}`}
+          <span style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>
+            {enStock
+              ? (stockQuantiteForm && Number(stockQuantiteForm) > 0 ? `✅ En stock (${stockQuantiteForm} pcs)` : `✅ ${t('shop.inStock')}`)
+              : `❌ ${t('shop.outOfStock')}`}
           </span>
         </div>
       )}
