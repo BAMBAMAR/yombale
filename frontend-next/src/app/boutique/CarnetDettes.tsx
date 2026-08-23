@@ -905,11 +905,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #FFF3E8 0%, #FED7AA 100%)',
+                border: '1px solid #FDBA74',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -918,18 +918,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               }}>
                 📒
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h1 style={{ margin: 0, fontSize: isMobile ? 17 : 20, fontWeight: 800, color: 'var(--navy)', letterSpacing: '-0.02em' }}>
-                  {t('shop.debtBookTitle')}
+              <div>
+                <h1 style={{ margin: 0, fontSize: isMobile ? 18 : 21, fontWeight: 800, color: 'var(--navy, #1C2B4A)', letterSpacing: '-0.02em' }}>
+                  Carnet de dettes &amp; Crédits
                 </h1>
-                <span className="npl-badge npl-badge-brand" style={{ fontSize: 11 }}>
-                  {t('common.all')}
-                </span>
+                <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--text2, #6B7280)', fontWeight: 600 }}>
+                  {clients.length} client{clients.length > 1 ? 's' : ''} · {nbClientsDebiteurs} endetté{nbClientsDebiteurs > 1 ? 's' : ''} ({fcfa(totalDettesAEncaisser)})
+                </p>
               </div>
             </div>
-            <p style={{ margin: '6px 0 0 48px', fontSize: 12.5, color: 'var(--text2)', fontWeight: 500 }}>
-              {clients.length} {t('shop.debts')} · {nbClientsDebiteurs} {t('shop.debtorsCount')}
-            </p>
           </div>
 
           {/* Barre d'outils responsive fluide (Hiérarchie visuelle Stripe / Square) */}
@@ -940,24 +937,57 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             width: isMobile ? '100%' : 'auto',
             minWidth: 0
           }}>
-            {/* Ligne 1 : Bouton Principal d'Ajout */}
-            <div style={{ display: 'flex', gap: 8, width: '100%', flexWrap: 'wrap' }}>
+            {/* Ligne 1 : Boutons d'Action Principaux (Grandes cibles tactiles 44px, texte complet) */}
+            <div style={{ display: 'flex', gap: 8, width: '100%', flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
               <button
-                onClick={() => setShowModalNouveauClient(true)}
-                className="npl-btn npl-btn-primary npl-btn-md"
-                style={{ flex: '1 1 135px', minWidth: 0, color: '#ffffff', justifyContent: 'center' }}
+                onClick={() => ouvrirModalTransaction('vente_credit')}
+                className="npl-btn npl-btn-primary"
+                style={{
+                  flex: isMobile ? 1.2 : 'initial',
+                  minHeight: 44,
+                  padding: '10px 16px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  boxShadow: '0 3px 10px rgba(199, 91, 0, 0.25)',
+                  cursor: 'pointer'
+                }}
               >
-                <span style={{ filter: 'brightness(0) invert(1)' }}>👤</span>
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>+ {t('shop.newCustomerBtn')}</span>
+                <span>⚡</span>
+                <span>+ Vente crédit</span>
               </button>
 
               <button
-                onClick={() => ouvrirModalTransaction('vente_credit')}
-                className="npl-btn npl-btn-accent npl-btn-md"
-                style={{ flex: '1 1 135px', minWidth: 0, justifyContent: 'center' }}
+                onClick={() => setShowModalNouveauClient(true)}
+                className="npl-btn npl-btn-secondary"
+                style={{
+                  flex: isMobile ? 1 : 'initial',
+                  minHeight: 44,
+                  padding: '10px 16px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  background: 'var(--navy, #1C2B4A)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
               >
-                <span>⚡</span>
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>+ {t('shop.transactionCreditSale')}</span>
+                <span>👤</span>
+                <span>+ Client</span>
               </button>
             </div>
 
@@ -966,13 +996,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               display: 'flex',
               gap: 6,
               width: '100%',
-              flexWrap: 'wrap'
             }}>
               <button
                 onClick={() => setShowQrModalComptoir(true)}
-                className="npl-btn npl-btn-secondary npl-btn-sm"
+                className="npl-btn npl-btn-secondary"
                 title="QR Code Client"
-                style={{ flex: '1 1 85px', minWidth: 0, padding: '6px 8px', justifyContent: 'center', minHeight: 34 }}
+                style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', cursor: 'pointer' }}
               >
                 <span>📱</span>
                 <span style={{ whiteSpace: 'nowrap' }}>QR Client</span>
@@ -980,9 +1009,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
               <button
                 onClick={handleExportCSV}
-                className="npl-btn npl-btn-secondary npl-btn-sm"
+                className="npl-btn npl-btn-secondary"
                 title={t('common.exportCsv')}
-                style={{ flex: '1 1 70px', minWidth: 0, padding: '6px 8px', justifyContent: 'center', minHeight: 34 }}
+                style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', cursor: 'pointer' }}
               >
                 <span>📥</span>
                 <span style={{ whiteSpace: 'nowrap' }}>CSV</span>
@@ -990,9 +1019,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
               <button
                 onClick={handleExportPDF}
-                className="npl-btn npl-btn-secondary npl-btn-sm"
+                className="npl-btn npl-btn-secondary"
                 title={t('common.exportPdf')}
-                style={{ flex: '1 1 70px', minWidth: 0, padding: '6px 8px', justifyContent: 'center', minHeight: 34 }}
+                style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', cursor: 'pointer' }}
               >
                 <span>🖨️</span>
                 <span style={{ whiteSpace: 'nowrap' }}>PDF</span>

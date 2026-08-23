@@ -3232,24 +3232,112 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
           )}
         </div>
 
-        {/* Actions Financières et Principales (Bas de carte) */}
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Link href={`/payer-sponsoring-boutique/${boutique.id}`} className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#b45309', borderColor: '#fcd34d', backgroundColor: '#fffbeb', fontWeight: 700, textAlign: 'center', textDecoration: 'none' }}>
-              ⭐ Mettre en avant
+        {/* Actions Principales et Liens de Gestion (Bas de carte) */}
+        <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Rangée 1 : Services Boutique (Mise en avant & Offre) */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Link
+              href={`/payer-sponsoring-boutique/${boutique.id}`}
+              style={{
+                flex: 1,
+                minWidth: 110,
+                padding: '7px 10px',
+                fontSize: 12,
+                color: '#475569',
+                border: '1px solid #e2e8f0',
+                backgroundColor: '#f8fafc',
+                fontWeight: 700,
+                textAlign: 'center',
+                textDecoration: 'none',
+                borderRadius: 8,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>⭐</span>
+              <span>Mettre en avant</span>
             </Link>
-            <Link href="/boutique/abonnement" className="btn-premium" style={{ flex: 1, minWidth: 120, padding: '8px 12px', fontSize: 13, color: '#1e3a8a', borderColor: '#bfdbfe', backgroundColor: '#eff6ff', fontWeight: 700, textAlign: 'center', textDecoration: 'none' }}>
-              📖 {t('shop.subscription')}
+            <Link
+              href="/boutique/abonnement"
+              style={{
+                flex: 1,
+                minWidth: 110,
+                padding: '7px 10px',
+                fontSize: 12,
+                color: '#475569',
+                border: '1px solid #e2e8f0',
+                backgroundColor: '#f8fafc',
+                fontWeight: 700,
+                textAlign: 'center',
+                textDecoration: 'none',
+                borderRadius: 8,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>💳</span>
+              <span>{t('shop.subscription')}</span>
             </Link>
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+
+          {/* Rangée 2 : CTA Dominant */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {boutique.mode_fonctionnement !== 'pure_player' && (
-              <a href="/boutique/caisse" className="btn-premium btn-premium-success" style={{ flex: 1, minWidth: 120, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }} onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}>
-                <Monitor size={16} /> {t('shop.pos')}
+              <a
+                href="/boutique/caisse"
+                style={{
+                  flex: 1,
+                  minWidth: 110,
+                  minHeight: 42,
+                  padding: '9px 14px',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 6,
+                  alignItems: 'center',
+                  background: '#f0fdf4',
+                  border: '1.5px solid #bbf7d0',
+                  color: '#16a34a',
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                  boxShadow: '0 1px 3px rgba(22,163,74,0.08)'
+                }}
+                onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
+              >
+                <Monitor size={15} />
+                <span>{t('shop.pos')}</span>
               </a>
             )}
-            <button onClick={onManage} className="btn-premium btn-premium-primary" style={{ flex: boutique.mode_fonctionnement !== 'pure_player' ? 1.5 : 1, minWidth: 140, padding: '10px 16px', fontSize: 14, display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }}>
-              {t('shop.manageShop')} →
+            <button
+              onClick={onManage}
+              style={{
+                flex: boutique.mode_fonctionnement !== 'pure_player' ? 1.5 : 1,
+                minWidth: 130,
+                minHeight: 42,
+                padding: '9px 14px',
+                fontSize: 13.5,
+                fontWeight: 800,
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 6,
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 10,
+                cursor: 'pointer',
+                boxShadow: '0 3px 10px rgba(199,91,0,0.22)'
+              }}
+            >
+              <span>{t('shop.manageShop')}</span>
+              <span>→</span>
             </button>
           </div>
         </div>
@@ -3634,23 +3722,26 @@ function BoutiqueMobileBottomSheet({
           </svg>
         </button>
 
-        <div className="mobile-nav-compact-current">
-          <span className="mobile-nav-compact-current-icon">{currentIcon}</span>
-          <span className="mobile-nav-compact-current-label">{currentLabel}</span>
-          {nbEnAttente > 0 && (
-            <span className="mobile-bs-item-badge mobile-bs-item-badge--count" style={{ fontSize: 10, padding: '1px 6px' }}>
-              {formatNumber(nbEnAttente)}
-            </span>
-          )}
-        </div>
-
         <button
           type="button"
-          className="mobile-nav-compact-toggle"
+          className="mobile-nav-compact-dropdown"
           onClick={openSheet}
-          aria-label="Ouvrir la navigation"
+          aria-label={`Menu boutique: ${currentLabel}`}
+          aria-haspopup="true"
+          aria-expanded={isOpen}
         >
-          ☰
+          <div className="mobile-nav-compact-dropdown-content">
+            <span className="mobile-nav-compact-current-icon">{currentIcon}</span>
+            <span className="mobile-nav-compact-current-label">{currentLabel}</span>
+            {nbEnAttente > 0 && (
+              <span className="mobile-bs-item-badge mobile-bs-item-badge--count" style={{ fontSize: 10, padding: '1px 6px' }}>
+                {formatNumber(nbEnAttente)}
+              </span>
+            )}
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mobile-nav-compact-chevron">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </button>
       </div>
 
@@ -4031,6 +4122,33 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                     <span>{planActif.toUpperCase()}</span>
                   </span>
                 )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const nouveauStatut = !boutique.actif
+                    const msg = nouveauStatut 
+                      ? 'Voulez-vous réactiver votre boutique et la rendre visible dans l’annuaire public Nopalou ?' 
+                      : 'Voulez-vous désactiver (masquer) votre boutique du catalogue public Nopalou ?'
+                    if (!confirm(msg)) return
+                    try {
+                      const res = await fetch(`/api/boutiques/${boutique.id}/statut`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ actif: nouveauStatut }),
+                      })
+                      if (res.ok) router.refresh()
+                      else alert('Erreur lors de la modification du statut.')
+                    } catch {
+                      alert('Erreur réseau')
+                    }
+                  }}
+                  className={boutique.actif !== false ? 'npl-badge npl-badge-success' : 'npl-badge npl-badge-neutral'}
+                  style={{ fontSize: 10, padding: '2px 7px', cursor: 'pointer', border: 'none' }}
+                  title={boutique.actif !== false ? 'Boutique en ligne (cliquez pour masquer)' : 'Boutique masquée (cliquez pour activer)'}
+                >
+                  <span className="npl-badge-dot" style={{ backgroundColor: boutique.actif !== false ? '#16a34a' : '#94a3b8' }} />
+                  <span>{boutique.actif !== false ? 'En ligne' : 'Masquée'}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -4268,66 +4386,14 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           </div>
         )}
 
-        {/* Titre de section & Statut Visibilité Boutique */}
-        <div className="bq-main-tab-header" style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        {/* Titre de section Desktop */}
+        <div className="bq-main-tab-header" style={{ marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h2 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 20, margin: 0, color: '#111', fontWeight: 900 }}>
+            <h2 style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontSize: 19, margin: 0, color: '#0f172a', fontWeight: 800 }}>
               {currentTabInfo.icon} {currentTabInfo.title}
             </h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{currentTabInfo.desc}</p>
+            <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b' }}>{currentTabInfo.desc}</p>
           </div>
-
-          <button
-            type="button"
-            onClick={async () => {
-              const nouveauStatut = !boutique.actif
-              const msg = nouveauStatut 
-                ? 'Voulez-vous réactiver votre boutique et la rendre visible dans l’annuaire public Nopalou ?' 
-                : 'Voulez-vous désactiver (masquer) votre boutique du catalogue public Nopalou ?'
-              if (!confirm(msg)) return
-              try {
-                const res = await fetch(`/api/boutiques/${boutique.id}/statut`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ actif: nouveauStatut }),
-                })
-                if (res.ok) {
-                  router.refresh()
-                } else {
-                  alert('Erreur lors de la modification du statut.')
-                }
-              } catch (e) {
-                alert('Erreur réseau')
-              }
-            }}
-            title={boutique.actif !== false ? 'Cliquez pour désactiver et masquer votre boutique du catalogue public' : 'Cliquez pour réactiver votre boutique'}
-            style={{
-              background: boutique.actif !== false ? '#F0FDF4' : '#FFF1F2',
-              border: `1.5px solid ${boutique.actif !== false ? '#BBF7D0' : '#FECDD3'}`,
-              color: boutique.actif !== false ? '#166534' : '#991B1B',
-              fontSize: 12.5,
-              fontWeight: 800,
-              padding: '6px 14px',
-              borderRadius: 20,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 1px 3px rgba(26,22,18,0.04)'
-            }}
-          >
-            {boutique.actif !== false ? (
-              <>
-                <CheckCircle2 size={15} style={{ color: '#166534' }} />
-                <span>{t('shop.shopActive')}</span>
-              </>
-            ) : (
-              <>
-                <XCircle size={15} style={{ color: '#991B1B' }} />
-                <span>{t('shop.shopInactive')}</span>
-              </>
-            )}
-          </button>
         </div>
 
         {!tabAllowed ? (

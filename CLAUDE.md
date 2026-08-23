@@ -1,3 +1,31 @@
+- **Refonte UX/UI Globale OpenSpec : Dé-duplication Mobile, Éradication du Double Burger, Carnet de Dettes & Hiérarchisation 3 Niveaux (`main` - 23 août 2026)** 🎨📱✨⚡🚀 :
+  * **🍔 Élimination du Double Menu Burger sur Mobile & Sélecteur Pill Unifié (`BoutiqueClient.tsx`, `AccountNavLinks.tsx`, `globals.css`)** :
+    - **Suppression du Burger Conflictuel** : Élimination du bouton burger carré navy `[ ☰ ]` qui entrait en conflit avec le burger supérieur du header global sur les écrans smartphones (< 768px).
+    - **Nouveau Sélecteur Déroulant Pill (`.mobile-nav-compact-dropdown`)** : Fusion de l'icône de navigation, du titre de l'onglet courant, du badge de notification et d'un chevron `▾` dans un bouton tactile unique haute précision (`min-height: 42px`, fond `#FAF8F5`, bordure subtile `#E8DDD2`), ouvrant le bottom-sheet de navigation au toucher.
+    - **Épuration de la Navbar Mobile (`globals.css`, `layout.tsx`)** : Disposition aérée préservant les actions clés avec cibles tactiles $\ge 40\text{px}$.
+  * **📒 Refonte Ergonomique & Épuration du Carnet de Dettes (`CarnetDettes.tsx`)** :
+    - **Suppression des 5 Doublons du mot « Carnet »** : Suppression de l'empilement non coordonné des titres, fil d'Ariane et badges redondants.
+    - **Éradication Définitive des Libellés Tronqués (`...`)** : Remplacement de `+ Nouveau client` et `+ Vente à crédit (Dette)` (qui débordaient en `cli...` et `cré...`) par des CTA concis et percutants :
+      * `[ ⚡ + Vente crédit ]` (CTA principal gradient brand `#C75B00`, cible tactile 44px, ombre douce)
+      * `[ 👤 + Client ]` (CTA secondaire navy `#1C2B4A`, cible tactile 44px)
+    - **Barre d'Outils Secondaire Fluide** : Boutons `[ 📱 QR Client ]`, `[ 📥 CSV ]` et `[ 🖨️ PDF ]` avec cibles tactiles de 38px, bordures douces et affichage propre sur tous formats d'écran.
+  * **🏪 Hiérarchisation 3 Niveaux de la Gestion Boutique & Mes Boutiques (`BoutiqueClient.tsx`, `globals.css`)** :
+    - **Déplacement du Bouton de Statut Invasif** : Suppression du gros bouton toggle `Boutique Désactivée (Masquée)` qui polluait l'en-tête de l'ensemble des 17 onglets de gestion. Remplacement par une pastille interactive discrète `🟢 En ligne` / `⚪ Masquée` dans la carte d'identité de la boutique et dans l'onglet Paramètres.
+    - **Refonte de `BoutiqueCard` (Liste Mes Boutiques)** :
+      * 1 seul CTA principal dominant clair : `[ Gérer ma boutique → ]` ou `[ 🛒 Caisse POS ]`.
+      * Actions de services unifiées en boutons neutres épurés : `[ ⭐ Mettre en avant ]` et `[ 💳 Abonnement ]`.
+      * Actions contextuelles d'administration (Voir, Modifier, Supprimer) discrètes et alignées.
+    - **Masquage Automatique du Sous-Titre Dupliqué sur Mobile (`.bq-main-tab-header`)** : Masquage en CSS sous 768px pour libérer 70px d'espace vertical utile sur smartphone sans perte d'information.
+  * **📱 Conversion des Modales en Bottom-Sheets Tactiles Mobiles (`globals.css`)** :
+    - Sur smartphone (< 640px), `.modal-overlay` bascule en ancrage bas (`align-items: flex-end`) et `.modal-content` se transforme en bottom-sheet glissant vers le haut (`border-radius: 20px 20px 0 0`) pour une validation facile et naturelle au pouce.
+  * **🎨 Harmonisation Chromatique & Recherche (`ShowcaseTabs.tsx`, `RechercheClient.tsx`)** :
+    - Élimination des fonds jaunes/oranges sur-saturés au profit de teintes neutres chaudes et sobres (`var(--bg, #FAF8F5)` et bordures `var(--border, #E8DDD2)`).
+    - Élargissement de l'espace de recherche à `maxWidth: 960px` avec champ et bouton de recherche tactiles 44px.
+  * **🧪 Validation Complète, Zéro Dépendance Externe & Tests** :
+    - **Vérification TypeScript (`npx tsc --noEmit --incremental`)** : 0 erreur de typage ou de compilation.
+    - **Suite de Tests Unitaires (`npm test`)** : 31/31 tests validés avec 100% de réussite.
+    - **Conformité `AGENTS.md`** : 100% polices système natives (`system-ui, -apple-system...`), 0 `fetch` ou `@import` de polices dynamiques tierces.
+
 - **Refonte Graphique & Optimisation Responsive des Tableaux de Bord (Boutique, POS, Analytics & Admin) (`main` - 23 août 2026)** 🎨📊📱⚡✨ :
   * **🏪 Équilibrage & Finition du Tableau de Bord Marchand (`BoutiqueClient.tsx`, `globals.css`, `i18n`)** :
     - **Grille d'Actions Rapides 3x2 Harmonieuse** : Remplacement de la grille asymétrique par une disposition équilibrée en 3 colonnes desktop (`grid-template-columns: repeat(3, 1fr)`) et 2 colonnes mobile/tablette, éliminant tout vide visuel et allouant +40% de largeur utile à chaque carte.

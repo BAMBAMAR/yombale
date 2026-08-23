@@ -90,11 +90,11 @@ export default function ShowcaseTabs({
 
         {/* ── FRISE DU CYCLE COMPLET : RECHERCHE → LIVRAISON ─────────── */}
         <div style={{
-          background: '#fff7ed', borderRadius: 16, border: '1px solid #fed7aa',
-          padding: '20px 16px', textAlign: 'center', boxShadow: '0 4px 12px rgba(199,91,0,0.05)'
+          background: 'var(--bg, #FAF8F5)', borderRadius: 16, border: '1px solid var(--border, #E8DDD2)',
+          padding: '20px 16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(28,43,74,0.03)'
         }}>
           <div style={{ textAlign: 'center', marginBottom: 14 }}>
-            <span style={{ fontSize: 12, fontWeight: 900, color: '#c75b00', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--accent, #C75B00)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               ⚡ Chaîne de Valeur Complète Vendeurs &amp; Client
             </span>
             <h4 style={{ margin: '4px 0 0', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
@@ -106,24 +106,24 @@ export default function ShowcaseTabs({
             display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12,
             alignItems: 'center', textAlign: 'center'
           }}>
-            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
-              <div style={{ fontSize: 20 }}>🔎 1. Recherche</div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>🔎 1. Recherche</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Comparateur &amp; WhatsApp Bot</div>
             </div>
-            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
-              <div style={{ fontSize: 20 }}>🛒 2. Commande</div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>🛒 2. Commande</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Panier Web, WhatsApp &amp; POS</div>
             </div>
-            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
-              <div style={{ fontSize: 20 }}>💳 3. Paiement</div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>💳 3. Paiement</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Wave, Cash, Crédit ou Manuel</div>
             </div>
-            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
-              <div style={{ fontSize: 20 }}>📦 4. Préparation</div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>📦 4. Préparation</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Gestion des statuts de stock</div>
             </div>
-            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #ffedd5' }}>
-              <div style={{ fontSize: 20 }}>🚚 5. Livraison</div>
+            <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>🚚 5. Livraison</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Suivi &amp; Alerte client WhatsApp</div>
             </div>
           </div>

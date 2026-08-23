@@ -396,18 +396,21 @@ function MobileBottomSheetNav({
           </Link>
         )}
 
-        <div className="mobile-nav-compact-current">
-          <span className="mobile-nav-compact-current-icon">{currentIcon}</span>
-          <span className="mobile-nav-compact-current-label">{currentLabel}</span>
-        </div>
-
         <button
           type="button"
-          className="mobile-nav-compact-toggle"
+          className="mobile-nav-compact-dropdown"
           onClick={openSheet}
-          aria-label="Ouvrir la navigation"
+          aria-label={`Menu compte: ${currentLabel}`}
+          aria-haspopup="true"
+          aria-expanded={isOpen}
         >
-          ☰
+          <div className="mobile-nav-compact-dropdown-content">
+            <span className="mobile-nav-compact-current-icon">{currentIcon}</span>
+            <span className="mobile-nav-compact-current-label">{currentLabel}</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mobile-nav-compact-chevron">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </button>
       </div>
 

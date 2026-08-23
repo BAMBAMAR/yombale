@@ -92,7 +92,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
   ]
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 16px' }}>
+    <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 16px', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
 
       {/* Barre de recherche */}
       <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
@@ -103,14 +103,15 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
           onChange={e => setInputVal(e.target.value)}
           placeholder="Rechercher produits, boutiques, annonces, immo…"
           style={{
-            flex: 1, padding: '12px 16px', border: '2px solid #e5e7eb', borderRadius: 10,
-            fontSize: 15, outline: 'none', background: '#fff',
+            flex: 1, padding: '12px 16px', border: '1.5px solid #cbd5e1', borderRadius: 12,
+            fontSize: 15, outline: 'none', background: '#fff', minHeight: 44, boxSizing: 'border-box',
           }}
           autoFocus={!query}
         />
         <button type="submit" style={{
-          padding: '0 20px', background: '#C75B00', color: '#fff',
-          border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          padding: '0 22px', background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)', color: '#fff',
+          border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: 'pointer', minHeight: 44,
+          boxShadow: '0 2px 8px rgba(199,91,0,0.22)', whiteSpace: 'nowrap'
         }}>
           Rechercher
         </button>
