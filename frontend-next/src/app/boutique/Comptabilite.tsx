@@ -9,7 +9,7 @@ import {
 } from './actions'
 import { fcfa, formatNombre, fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport, printBilanComptablePDF, printInventairePDF, printPosSessionRapportZ_PDF } from '@/lib/export'
-import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
+import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
 
@@ -1483,7 +1483,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
     const p = produits.find(p => p.id === id)
     if (p?.nom) setNomLibre(p.nom)
     if (p?.prix) setPrix(p.prix)
-    jouerBipScan('succes')
+    jouerBipEtVibrer('succes')
   }
 
   // ── Scanner EAN ──
@@ -1505,19 +1505,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         const scanner = new Html5Qrcode('vente-ean-scanner-reader')
         html5ScannerRef.current = scanner
 
-        const config = {
-          fps: 15,
-          qrbox: { width: 260, height: 160 },
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.QR_CODE
-          ]
-        }
+        const config = CONFIG_SCANNER_EAN_PRO(Html5QrcodeSupportedFormats, { fps: 24 })
 
         const onScanSuccess = (decodedText: string) => {
           const code = decodedText.trim().toLowerCase()
@@ -1525,15 +1513,17 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
             (p: any) =>
               p.barcode?.trim().toLowerCase() === code ||
               p.sku?.trim().toLowerCase() === code ||
-              p.id?.trim().toLowerCase() === code
+              p.id?.trim().toLowerCase() === code ||
+              p.code_barre?.trim().toLowerCase() === code
           )
 
           if (prodTrouve) {
             handleProduit(prodTrouve.id)
+            jouerBipEtVibrer('succes')
             setScannerEanStatus(`✅ Produit trouvé : "${prodTrouve.nom}"`)
-            setTimeout(() => arreterScannerEan(), 800)
+            setTimeout(() => arreterScannerEan(), 600)
           } else {
-            jouerBipScan('alerte')
+            jouerBipEtVibrer('alerte')
             setScannerEanStatus(`⚠️ Code "${decodedText}" inconnu dans le catalogue.`)
             if (confirm(`Code-barres "${decodedText}" non trouvé. L'ajouter comme article libre ?`)) {
               setProduitId('')
@@ -1548,13 +1538,17 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
           setScannerEanStatus('📷 Cadrez le code-barres dans le rectangle.')
         } catch (errEnv) {
-          await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-          setScannerEanStatus('📷 Cadrez le code-barres dans le rectangle.')
+          try {
+            await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {})
+            setScannerEanStatus('📷 Caméra active ! Placez le code-barres.')
+          } catch (errUser) {
+            setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+          }
         }
       } catch (err) {
-        setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+        setScannerEanStatus('❌ Erreur de chargement du module de scan.')
       }
-    }, 200)
+    }, 250)
   }
 
   const arreterScannerEan = () => {
@@ -1596,12 +1590,13 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
   const capturerNomOCR = async () => {
     if (!videoNomRef.current) return
     setOcrLoading(true)
-    setStatusScannerNom('🔍 Optimisation & lecture OCR en cours…')
+    setStatusScannerNom('🔍 Analyse OCR en cours…')
 
-    const imageBase64 = capturerEtOptimiserImageOCR(videoNomRef.current, {
-      cropRatioWidth: 0.85,
-      cropRatioHeight: 0.60,
-      rehausserContraste: true
+    const imageBase64 = capturerZoneViseurExacte(videoNomRef.current, {
+      boxTopRatio: 0.15,
+      boxLeftRatio: 0.05,
+      boxWidthRatio: 0.90,
+      boxHeightRatio: 0.70
     })
 
     if (!imageBase64) {
@@ -1624,16 +1619,16 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         if (data.detections && data.detections.length > 0) {
           setOcrDetections(data.detections)
         }
-        jouerBipScan('succes')
+        jouerBipEtVibrer('succes')
         setStatusScannerNom(`✅ Nom capturé : "${data.nom}"`)
         setTimeout(() => arreterScannerNom(), 1000)
       } else {
-        jouerBipScan('alerte')
+        jouerBipEtVibrer('alerte')
         setStatusScannerNom(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
-      jouerBipScan('alerte')
+      jouerBipEtVibrer('alerte')
       setStatusScannerNom('❌ Erreur de lecture OCR.')
     }
   }
@@ -2350,10 +2345,11 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
     setOcrLoadingTicket(true)
     setStatusScannerTicket('🔍 Lecture OCR du ticket / facturette…')
 
-    const imageBase64 = capturerEtOptimiserImageOCR(videoTicketRef.current, {
-      cropRatioWidth: 0.90,
-      cropRatioHeight: 0.70,
-      rehausserContraste: true
+    const imageBase64 = capturerZoneViseurExacte(videoTicketRef.current, {
+      boxTopRatio: 0.15,
+      boxLeftRatio: 0.05,
+      boxWidthRatio: 0.90,
+      boxHeightRatio: 0.70
     })
 
     if (!imageBase64) {
@@ -2376,16 +2372,16 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
         if (data.detections && data.detections.length > 0) {
           setOcrDetectionsTicket(data.detections)
         }
-        jouerBipScan('succes')
+        jouerBipEtVibrer('succes')
         setStatusScannerTicket(`✅ Texte extrait : "${data.nom}"`)
         setTimeout(() => arreterScannerTicket(), 1000)
       } else {
-        jouerBipScan('alerte')
+        jouerBipEtVibrer('alerte')
         setStatusScannerTicket(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
       }
     } catch (err) {
       setOcrLoadingTicket(false)
-      jouerBipScan('alerte')
+      jouerBipEtVibrer('alerte')
       setStatusScannerTicket('❌ Erreur de lecture OCR.')
     }
   }
@@ -2784,6 +2780,9 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
     getBoutiqueProduits(boutiqueId).then(p => setProduits(p || [])).catch(() => {})
   }, [boutiqueId])
 
+  const [imageFligeeComptaNom, setImageFligeeComptaNom] = useState<string | null>(null)
+  const dernierScanComptaRef = useRef<{ code: string; time: number }>({ code: '', time: 0 })
+
   // ── Actions Panier Catalogue ──────────────────────────────────────────────
   const handleAjouterProduitCatalogue = (p: any, delta = 1) => {
     setPanierProduits(prev => {
@@ -2797,7 +2796,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
       }
       return copy
     })
-    jouerBipScan('succes')
+    jouerBipEtVibrer('succes')
   }
 
   // ── Actions Panier Saisie Libre ───────────────────────────────────────────
@@ -2825,7 +2824,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
       }
     ])
 
-    jouerBipScan('succes')
+    jouerBipEtVibrer('succes')
     setLibelleCustomInput('')
     setPrixCustomInput('')
     setQteCustomInput(1)
@@ -2842,7 +2841,8 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   // ── Scanner EAN Caméra ───────────────────────────────────────────────────
   const demarrerScannerEan = async () => {
     setModalScannerEan(true)
-    setScannerEanStatus('📷 Initialisation du scanner EAN…')
+    setScannerEanStatus('📷 Scanner EAN prêt (Mode Continu)…')
+    dernierScanComptaRef.current = { code: '', time: 0 }
 
     setTimeout(async () => {
       try {
@@ -2861,37 +2861,35 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
         const scanner = new Html5Qrcode('compta-ean-scanner-reader')
         html5ScannerRef.current = scanner
 
-        const config = {
-          fps: 15,
-          qrbox: { width: 260, height: 160 },
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.QR_CODE
-          ]
-        }
+        const config = CONFIG_SCANNER_EAN_PRO(Html5QrcodeSupportedFormats, { fps: 24 })
 
         const onScanSuccess = (decodedText: string) => {
           const code = decodedText.trim().toLowerCase()
+          const now = Date.now()
+
+          // Anti-rebond intelligent en mode continu : 1.2s
+          if (scanContinu && dernierScanComptaRef.current.code === code && (now - dernierScanComptaRef.current.time < 1200)) {
+            return
+          }
+          dernierScanComptaRef.current = { code, time: now }
+
           const prodTrouve = produits.find(
             (p: any) =>
               p.barcode?.trim().toLowerCase() === code ||
               p.sku?.trim().toLowerCase() === code ||
-              p.id?.trim().toLowerCase() === code
+              p.id?.trim().toLowerCase() === code ||
+              p.code_barre?.trim().toLowerCase() === code
           )
 
           if (prodTrouve) {
             handleAjouterProduitCatalogue(prodTrouve, 1)
-            setScannerEanStatus(`✅ Produit ajouté : "${prodTrouve.nom}" (${fcfa(prodTrouve.prix_promo || prodTrouve.prix || 0)})`)
+            jouerBipEtVibrer('succes')
+            setScannerEanStatus(`✅ +1 "${prodTrouve.nom}" (${fcfa(prodTrouve.prix_promo || prodTrouve.prix || 0)})`)
             if (!scanContinu) {
-              setTimeout(() => arreterScannerEan(), 800)
+              setTimeout(() => arreterScannerEan(), 600)
             }
           } else {
-            jouerBipScan('alerte')
+            jouerBipEtVibrer('alerte')
             setScannerEanStatus(`⚠️ Code "${decodedText}" inconnu dans le catalogue.`)
             if (confirm(`Code-barres "${decodedText}" non trouvé. L'ajouter comme article libre ?`)) {
               setLibelleCustomInput(`Article EAN-${decodedText}`)
@@ -2905,8 +2903,12 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
           setScannerEanStatus('📷 Caméra active ! Placez le code-barres dans le cadre.')
         } catch (errEnv) {
-          await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-          setScannerEanStatus('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          try {
+            await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
+            setScannerEanStatus('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          } catch (errUser) {
+            setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+          }
         }
       } catch (err) {
         setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
@@ -2929,9 +2931,12 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   const demarrerScannerNom = async () => {
     setModalScannerNom(true)
     setOcrDetections([])
+    setImageFligeeComptaNom(null)
     setStatusScannerNom('📷 Cadrez le nom sur l’emballage du produit…')
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+      })
       streamNomRef.current = stream
       if (videoNomRef.current) {
         videoNomRef.current.srcObject = stream
@@ -2943,6 +2948,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   }
 
   const arreterScannerNom = () => {
+    setImageFligeeComptaNom(null)
     if (streamNomRef.current) {
       streamNomRef.current.getTracks().forEach(t => t.stop())
       streamNomRef.current = null
@@ -2953,12 +2959,13 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   const capturerNomOCR = async () => {
     if (!videoNomRef.current) return
     setOcrLoading(true)
-    setStatusScannerNom('🔍 Optimisation de l’image & lecture OCR…')
+    setStatusScannerNom('🔍 Analyse OCR en cours…')
 
-    const imageBase64 = capturerEtOptimiserImageOCR(videoNomRef.current, {
-      cropRatioWidth: 0.85,
-      cropRatioHeight: 0.60,
-      rehausserContraste: true
+    const imageBase64 = capturerZoneViseurExacte(videoNomRef.current, {
+      boxTopRatio: 0.15,
+      boxLeftRatio: 0.05,
+      boxWidthRatio: 0.90,
+      boxHeightRatio: 0.70
     })
 
     if (!imageBase64) {
@@ -2966,6 +2973,9 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
       setStatusScannerNom('❌ Échec de la capture d’image.')
       return
     }
+
+    // Freeze frame
+    setImageFligeeComptaNom(imageBase64)
 
     try {
       const res = await fetch('/api/boutiques/scan-ocr', {
@@ -2981,16 +2991,15 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
         if (data.detections && data.detections.length > 0) {
           setOcrDetections(data.detections)
         }
-        jouerBipScan('succes')
+        jouerBipEtVibrer('succes')
         setStatusScannerNom(`✅ Nom capturé : "${data.nom}"`)
-        setTimeout(() => arreterScannerNom(), 1000)
       } else {
-        jouerBipScan('alerte')
-        setStatusScannerNom(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
+        jouerBipEtVibrer('alerte')
+        setStatusScannerNom(`⚠️ ${data.error || 'Aucun texte lisible détecté. Réessayez.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
-      jouerBipScan('alerte')
+      jouerBipEtVibrer('alerte')
       setStatusScannerNom('❌ Erreur de lecture OCR. Réessayez.')
     }
   }
@@ -3769,7 +3778,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
       {/* ── Modal Scanner Nom OCR Caméra Compta ──────────────────────────── */}
       {modalScannerNom && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 3000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanProductNameModalTitle')}</h4>
@@ -3777,21 +3786,38 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNom}</p>
             <div style={{ width: '100%', height: 260, background: '#000', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
-              <video ref={videoNomRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', top: '20%', left: '7.5%', width: '85%', height: '60%', border: '2px dashed #38bdf8', borderRadius: 8, boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>
-                  {t('shop.centerNamePrompt')}
-                </span>
-              </div>
+              {imageFligeeComptaNom ? (
+                <img src={imageFligeeComptaNom} alt="Capture" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0f172a' }} />
+              ) : (
+                <>
+                  <video ref={videoNomRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', top: '15%', left: '5%', width: '90%', height: '70%', border: '2px dashed #38bdf8', borderRadius: 12, boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
+                      {t('shop.centerNamePrompt')}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
-            <button
-              type="button"
-              disabled={ocrLoading}
-              onClick={capturerNomOCR}
-              style={{ width: '100%', padding: '12px', background: ocrLoading ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: ocrLoading ? 'not-allowed' : 'pointer' }}
-            >
-              {ocrLoading ? t('common.loading') : t('shop.captureAndExtractNameBtn')}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                disabled={ocrLoading}
+                onClick={capturerNomOCR}
+                style={{ flex: 1, padding: '11px', background: ocrLoading ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: ocrLoading ? 'not-allowed' : 'pointer' }}
+              >
+                {ocrLoading ? t('common.loading') : (imageFligeeComptaNom ? '🔄 Reprendre la photo' : t('shop.captureAndExtractNameBtn'))}
+              </button>
+              {imageFligeeComptaNom && (
+                <button
+                  type="button"
+                  onClick={arreterScannerNom}
+                  style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                >
+                  ✅ Valider
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

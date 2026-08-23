@@ -28,7 +28,7 @@ import { Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, Map
 import { useTranslation } from '@/i18n/context'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
-import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
+import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer, rechercherInfosProduitEan, toggleTorcheCamera } from '@/lib/scanner-helper'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
 import { CaracChips } from '@/components/CaracChips'
@@ -835,45 +835,30 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
     setCodeBarreForm(base12 + check)
   }
 
+  const [imageFligeeNom, setImageFligeeNom] = useState<string | null>(null)
+
   async function demarrerFormScanner(target: 'nom' | 'ean' = 'nom') {
     setScannerTarget(target)
     setModalFormScanner(true)
     setOcrDetections([])
     setOcrLoading(false)
-    setScannerStatus(target === 'nom' ? '📷 Cadrez le texte du produit...' : '📷 Placez le code-barres dans le cadre...')
+    setImageFligeeNom(null)
+    setScannerStatus(target === 'nom' ? '📷 Cadrez le nom sur l’emballage puis cliquez sur Capturer' : '📷 Placez le code-barres dans le cadre...')
 
     if (target === 'nom') {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+        })
         streamFormRef.current = stream
         if (videoFormRef.current) {
           videoFormRef.current.srcObject = stream
           await videoFormRef.current.play().catch(() => {})
         }
-
-        // Tenter la détection native de texte ou de code si disponible
-        if (typeof window !== 'undefined' && 'TextDetector' in window) {
-          const detector = new (window as any).TextDetector()
-          const timer = setInterval(async () => {
-            if (videoFormRef.current && videoFormRef.current.readyState === 4) {
-              try {
-                const texts = await detector.detect(videoFormRef.current)
-                if (texts && texts.length > 0) {
-                  const extraits = texts.map((t: any) => t.rawValue).filter((t: string) => t && t.length > 2)
-                  if (extraits.length > 0) {
-                    setOcrDetections(prev => Array.from(new Set([...extraits, ...prev])).slice(0, 6))
-                  }
-                }
-              } catch (e) {}
-            }
-          }, 600)
-          ;(videoFormRef.current as any)._textTimer = timer
-        }
       } catch (e) {
-        setScannerStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur.')
+        setScannerStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions.')
       }
     } else {
-      // Scanner EAN avec Html5Qrcode
       setTimeout(async () => {
         try {
           const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
@@ -891,56 +876,64 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
           const scanner = new Html5Qrcode('produit-form-scanner-reader')
           html5ScannerFormRef.current = scanner
 
-          const config = {
-            fps: 15,
-            qrbox: { width: 250, height: 160 },
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.CODE_39,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E,
-              Html5QrcodeSupportedFormats.QR_CODE
-            ]
-          }
+          const config = CONFIG_SCANNER_EAN_PRO(Html5QrcodeSupportedFormats, { fps: 24 })
 
-          const onScanSuccess = (decodedText: string) => {
-            setCodeBarreForm(decodedText)
-            setScannerStatus(`✅ Code scanné : ${decodedText}`)
+          const onScanSuccess = async (decodedText: string) => {
+            const cleanCode = decodedText.trim()
+            setCodeBarreForm(cleanCode)
+            jouerBipEtVibrer('succes')
+            setScannerStatus(`✅ Code scanné : ${cleanCode} — Recherche produit…`)
+
+            // Lookup automatique OpenFoodFacts / base mondiale
+            const info = await rechercherInfosProduitEan(cleanCode)
+            if (info && info.nom) {
+              if (!nomForm || nomForm.trim() === '') {
+                setNomForm(info.nom)
+              }
+              setScannerStatus(`✅ Produit reconnu : "${info.nom}"`)
+            } else {
+              setScannerStatus(`✅ Code validé : ${cleanCode}`)
+            }
+
             setTimeout(() => {
               arreterFormScanner()
-            }, 600)
+            }, 800)
           }
 
           try {
             await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
           } catch (errEnv) {
-            await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
+            try {
+              await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
+            } catch (e) {}
           }
         } catch (err) {
-          setScannerStatus('❌ Erreur de chargement du module de scan.')
+          setScannerStatus('❌ Erreur d’initialisation du scanner.')
         }
-      }, 300)
+      }, 250)
     }
   }
 
   async function capturerEtLireNomTexte() {
     if (!videoFormRef.current) return
     setOcrLoading(true)
-    setScannerStatus('🔍 Optimisation de l’image & lecture OCR…')
+    setScannerStatus('🔍 Analyse OCR en cours…')
 
-    const imageBase64 = capturerEtOptimiserImageOCR(videoFormRef.current, {
-      cropRatioWidth: 0.85,
-      cropRatioHeight: 0.60,
-      rehausserContraste: true
+    const imageBase64 = capturerZoneViseurExacte(videoFormRef.current, {
+      boxTopRatio: 0.15,
+      boxLeftRatio: 0.05,
+      boxWidthRatio: 0.90,
+      boxHeightRatio: 0.70
     })
 
     if (!imageBase64) {
       setOcrLoading(false)
-      setScannerStatus('❌ Échec de la capture d’image.')
+      setScannerStatus('❌ Échec de capture d’image.')
       return
     }
+
+    // Geler l'image dans le viseur pour reposer les mains
+    setImageFligeeNom(imageBase64)
 
     try {
       const res = await fetch('/api/boutiques/scan-ocr', {
@@ -956,24 +949,21 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
         if (data.detections && data.detections.length > 0) {
           setOcrDetections(data.detections)
         }
-        jouerBipScan('succes')
-        setScannerStatus(`✅ Nom capturé : "${data.nom}"`)
-        setTimeout(() => {
-          arreterFormScanner()
-        }, 1200)
+        jouerBipEtVibrer('succes')
+        setScannerStatus(`✅ Nom capturé : "${data.nom}" (cliquez sur une suggestion ci-dessous si besoin)`)
       } else {
-        jouerBipScan('alerte')
-        setScannerStatus(`⚠️ ${data.error || 'Aucun texte lisible capturé. Veuillez réessayer.'}`)
+        jouerBipEtVibrer('alerte')
+        setScannerStatus(`⚠️ ${data.error || 'Aucun texte lisible détecté. Cliquez sur Reprendre pour réessayer.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
-      jouerBipScan('alerte')
-      setScannerStatus('❌ Erreur lors de l’analyse OCR. Réessayez.')
+      jouerBipEtVibrer('alerte')
+      setScannerStatus('❌ Erreur lors de l’analyse OCR.')
     }
   }
 
-
   function arreterFormScanner() {
+    setImageFligeeNom(null)
     if (videoFormRef.current && (videoFormRef.current as any)._textTimer) {
       clearInterval((videoFormRef.current as any)._textTimer)
     }
@@ -1305,46 +1295,63 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
       {/* Modale scanner caméra (Scan Nom ou Scan EAN) */}
       {modalFormScanner && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 440, border: '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(4px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: 20, width: '100%', maxWidth: 460, border: '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
-                {scannerTarget === 'nom' ? '📷 Scan du Nom écrit sur le produit' : '📷 Scanner Code-Barres EAN'}
+                {scannerTarget === 'nom' ? '📷 Scan Nom Produit (Face avant emballage)' : '📷 Scanner Code-Barres EAN'}
               </h4>
               <button onClick={arreterFormScanner} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
 
-            <p style={{ margin: 0, fontSize: 13, color: '#475569', fontWeight: 600 }}>{scannerStatus}</p>
+            <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{scannerStatus}</p>
 
             {scannerTarget === 'nom' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ width: '100%', height: 220, borderRadius: 12, overflow: 'hidden', background: '#000', position: 'relative' }}>
-                  <video ref={videoFormRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', inset: 30, border: '2px dashed #38bdf8', borderRadius: 12, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ background: 'rgba(15,23,42,0.7)', color: '#fff', fontSize: 11, padding: '4px 8px', borderRadius: 6, fontWeight: 700 }}>
-                      Placez l'écriture du produit ici
-                    </span>
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ width: '100%', height: 260, borderRadius: 14, overflow: 'hidden', background: '#000', position: 'relative', border: '1px solid #1e293b' }}>
+                  {imageFligeeNom ? (
+                    <img src={imageFligeeNom} alt="Capture" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0f172a' }} />
+                  ) : (
+                    <>
+                      <video ref={videoFormRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', top: '15%', left: '5%', width: '90%', height: '70%', border: '2px dashed #38bdf8', borderRadius: 12, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 0 9999px rgba(0,0,0,0.35)' }}>
+                        <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, padding: '4px 10px', borderRadius: 20, fontWeight: 700 }}>
+                          Placez l&apos;écriture du produit ici
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={capturerEtLireNomTexte}
-                  disabled={ocrLoading}
-                  style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                >
-                  {ocrLoading ? '⏳ Lecture du texte...' : '📸 Capturer & Lire le Nom sur l\'emballage'}
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={capturerEtLireNomTexte}
+                    disabled={ocrLoading}
+                    style={{ flex: 1, background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 800, cursor: ocrLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  >
+                    {ocrLoading ? '⏳ Analyse OCR en cours...' : (imageFligeeNom ? '🔄 Reprendre la photo' : '📸 Capturer le nom du produit')}
+                  </button>
+                  {imageFligeeNom && (
+                    <button
+                      type="button"
+                      onClick={() => setImageFligeeNom(null)}
+                      style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Caméra active
+                    </button>
+                  )}
+                </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left' }}>
-                  <label style={{ fontSize: 11, fontWeight: 800, color: '#475569' }}>Nom du produit capturé / à valider :</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'left' }}>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#475569' }}>Nom extrait à enregistrer :</label>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input
                       type="text"
                       value={nomForm}
                       onChange={e => setNomForm(e.target.value)}
                       placeholder="Nom du produit..."
-                      style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #0284c7', fontSize: 13, fontWeight: 700, outline: 'none' }}
+                      style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1.5px solid #0284c7', fontSize: 13, fontWeight: 700, outline: 'none' }}
                     />
                     <button
                       type="button"
@@ -1357,15 +1364,15 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
                 </div>
 
                 {ocrDetections.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', background: '#f8fafc', padding: 10, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>Mots / Textes détectés à l'image (cliquez pour choisir) :</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', background: '#f8fafc', padding: 8, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>💡 Suggestions détectées (cliquez pour choisir) :</span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {ocrDetections.map((txt, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => setNomForm(txt)}
-                          style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                          style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 6, padding: '4px 8px', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}
                         >
                           {txt}
                         </button>
@@ -1375,12 +1382,12 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
                 )}
               </div>
             ) : (
-              <div style={{ width: '100%', height: 220, borderRadius: 12, overflow: 'hidden', background: '#000' }}>
+              <div style={{ width: '100%', height: 260, borderRadius: 14, overflow: 'hidden', background: '#000', border: '1px solid #1e293b' }}>
                 <div id="produit-form-scanner-reader" style={{ width: '100%', height: '100%' }} />
               </div>
             )}
 
-            <button onClick={arreterFormScanner} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 10, padding: '10px', fontWeight: 800, cursor: 'pointer' }}>
+            <button onClick={arreterFormScanner} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 10, padding: '9px', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>
               Fermer
             </button>
           </div>

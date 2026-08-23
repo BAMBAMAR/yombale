@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { getBoutiqueDocuments, creerBoutiqueDocument, modifierBoutiqueDocument, supprimerBoutiqueDocument, getBoutiqueProduits } from './actions'
 import { fcfa } from '@/lib/format'
 import SearchableClientSelect from '@/components/SearchableClientSelect'
-import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
+import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
 
@@ -148,7 +148,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       }
       return prev
     })
-    jouerBipScan('succes')
+    jouerBipEtVibrer('succes')
     afficherToast(`✅ ${prod.nom} ajouté`)
   }
 
@@ -191,7 +191,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       }
     ])
 
-    jouerBipScan('succes')
+    jouerBipEtVibrer('succes')
     afficherToast(`✅ Article libre "${libelle}" ajouté`)
     setLibelleLibreInput('')
     setPrixLibreInput('')
@@ -219,10 +219,14 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     }
   }
 
+  const [imageFligeeDocNom, setImageFligeeDocNom] = useState<string | null>(null)
+  const dernierScanDocRef = useRef<{ code: string; time: number }>({ code: '', time: 0 })
+
   // ── Scanner EAN Caméra (Html5Qrcode) ─────────────────────────────────────
   const demarrerScannerEan = async () => {
     setModalScannerEan(true)
-    setScannerEanStatus('📷 Initialisation de la caméra pour le scan EAN…')
+    setScannerEanStatus('📷 Scanner EAN prêt (Mode Continu)…')
+    dernierScanDocRef.current = { code: '', time: 0 }
 
     setTimeout(async () => {
       try {
@@ -241,19 +245,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
         const scanner = new Html5Qrcode('doc-ean-scanner-reader')
         html5ScannerRef.current = scanner
 
-        const config = {
-          fps: 15,
-          qrbox: { width: 260, height: 160 },
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.QR_CODE
-          ]
-        }
+        const config = CONFIG_SCANNER_EAN_PRO(Html5QrcodeSupportedFormats, { fps: 24 })
 
         const onScanSuccess = (decodedText: string) => {
           handleEanDetecte(decodedText)
@@ -263,8 +255,12 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
           setScannerEanStatus('📷 Caméra active ! Placez le code-barres (EAN) dans le cadre.')
         } catch (errEnv) {
-          await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-          setScannerEanStatus('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          try {
+            await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
+            setScannerEanStatus('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          } catch (errUser) {
+            setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+          }
         }
       } catch (err) {
         setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
@@ -285,21 +281,30 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
 
   const handleEanDetecte = (barcodeStr: string) => {
     const code = barcodeStr.trim().toLowerCase()
+    const now = Date.now()
+
+    if (scanContinu && dernierScanDocRef.current.code === code && (now - dernierScanDocRef.current.time < 1200)) {
+      return
+    }
+    dernierScanDocRef.current = { code, time: now }
+
     const prodTrouve = produits.find(
       (p: any) =>
         p.barcode?.trim().toLowerCase() === code ||
         p.sku?.trim().toLowerCase() === code ||
-        p.id?.trim().toLowerCase() === code
+        p.id?.trim().toLowerCase() === code ||
+        p.code_barre?.trim().toLowerCase() === code
     )
 
     if (prodTrouve) {
       handleAjouterProduitCatalogue(prodTrouve, 1)
-      setScannerEanStatus(`✅ Produit trouvé : "${prodTrouve.nom}" (${fcfa(prodTrouve.prix_promo || prodTrouve.prix)})`)
+      jouerBipEtVibrer('succes')
+      setScannerEanStatus(`✅ +1 "${prodTrouve.nom}" (${fcfa(prodTrouve.prix_promo || prodTrouve.prix)})`)
       if (!scanContinu) {
-        setTimeout(() => arreterScannerEan(), 800)
+        setTimeout(() => arreterScannerEan(), 600)
       }
     } else {
-      jouerBipScan('alerte')
+      jouerBipEtVibrer('alerte')
       setScannerEanStatus(`⚠️ Code "${barcodeStr}" inconnu dans le catalogue.`)
       // Proposer d'ajouter en libre
       if (confirm(`Le code-barres "${barcodeStr}" n'existe pas dans votre catalogue. Voulez-vous l'ajouter comme article libre ?`)) {
@@ -314,9 +319,12 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   const demarrerScannerNom = async () => {
     setModalScannerNom(true)
     setOcrDetections([])
+    setImageFligeeDocNom(null)
     setStatusScannerNom('📷 Cadrez le nom sur l’emballage du produit…')
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+      })
       streamNomRef.current = stream
       if (videoNomRef.current) {
         videoNomRef.current.srcObject = stream
@@ -328,6 +336,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   }
 
   const arreterScannerNom = () => {
+    setImageFligeeDocNom(null)
     if (streamNomRef.current) {
       streamNomRef.current.getTracks().forEach(t => t.stop())
       streamNomRef.current = null
@@ -338,12 +347,13 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   const capturerNomOCR = async () => {
     if (!videoNomRef.current) return
     setOcrLoading(true)
-    setStatusScannerNom('🔍 Optimisation de l’image & lecture OCR…')
+    setStatusScannerNom('🔍 Analyse OCR en cours…')
 
-    const imageBase64 = capturerEtOptimiserImageOCR(videoNomRef.current, {
-      cropRatioWidth: 0.85,
-      cropRatioHeight: 0.60,
-      rehausserContraste: true
+    const imageBase64 = capturerZoneViseurExacte(videoNomRef.current, {
+      boxTopRatio: 0.15,
+      boxLeftRatio: 0.05,
+      boxWidthRatio: 0.90,
+      boxHeightRatio: 0.70
     })
 
     if (!imageBase64) {
@@ -351,6 +361,9 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       setStatusScannerNom('❌ Échec de la capture d’image.')
       return
     }
+
+    // Freeze frame
+    setImageFligeeDocNom(imageBase64)
 
     try {
       const res = await fetch('/api/boutiques/scan-ocr', {
@@ -366,16 +379,15 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
         if (data.detections && data.detections.length > 0) {
           setOcrDetections(data.detections)
         }
-        jouerBipScan('succes')
+        jouerBipEtVibrer('succes')
         setStatusScannerNom(`✅ Nom capturé : "${data.nom}"`)
-        setTimeout(() => arreterScannerNom(), 1000)
       } else {
-        jouerBipScan('alerte')
+        jouerBipEtVibrer('alerte')
         setStatusScannerNom(`⚠️ ${data.error || 'Aucun nom lisible détecté. Réessayez avec un meilleur éclairage.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
-      jouerBipScan('alerte')
+      jouerBipEtVibrer('alerte')
       setStatusScannerNom('❌ Erreur de lecture OCR. Réessayez.')
     }
   }
@@ -1335,7 +1347,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
 
       {/* ── Modal Scanner Nom OCR ────────────────────────────────────────── */}
       {modalScannerNom && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanProductNameModalTitle')}</h4>
@@ -1345,52 +1357,68 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNom}</p>
 
             <div style={{ width: '100%', height: 260, background: '#000', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
-              <video
-                ref={videoNomRef}
-                autoPlay
-                playsInline
-                muted
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              {/* Cadre de ciblage central (ROI) */}
-              <div style={{
-                position: 'absolute',
-                top: '20%',
-                left: '7.5%',
-                width: '85%',
-                height: '60%',
-                border: '2px dashed #38bdf8',
-                borderRadius: 8,
-                boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
-                pointerEvents: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>
-                  {t('shop.frameNameCenterDoc')}
-                </span>
-              </div>
+              {imageFligeeDocNom ? (
+                <img src={imageFligeeDocNom} alt="Capture" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0f172a' }} />
+              ) : (
+                <>
+                  <video
+                    ref={videoNomRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: '15%',
+                    left: '5%',
+                    width: '90%',
+                    height: '70%',
+                    border: '2px dashed #38bdf8',
+                    borderRadius: 12,
+                    boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
+                      {t('shop.frameNameCenterDoc')}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
-            <button
-              type="button"
-              disabled={ocrLoading}
-              onClick={capturerNomOCR}
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: ocrLoading ? '#94a3b8' : '#0284c7',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 10,
-                fontWeight: 800,
-                fontSize: 14,
-                cursor: ocrLoading ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {ocrLoading ? t('shop.ocrAnalyzingDoc') : t('shop.extractNameDocBtn')}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                disabled={ocrLoading}
+                onClick={capturerNomOCR}
+                style={{
+                  flex: 1,
+                  padding: '11px',
+                  background: ocrLoading ? '#94a3b8' : '#0284c7',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontWeight: 800,
+                  fontSize: 13,
+                  cursor: ocrLoading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {ocrLoading ? t('shop.ocrAnalyzingDoc') : (imageFligeeDocNom ? '🔄 Reprendre la photo' : t('shop.extractNameDocBtn'))}
+              </button>
+              {imageFligeeDocNom && (
+                <button
+                  type="button"
+                  onClick={arreterScannerNom}
+                  style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                >
+                  ✅ Valider
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

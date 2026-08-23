@@ -18,6 +18,7 @@ import {
 } from '@/lib/db-offline'
 import { useSyncOffline } from '@/lib/sync-manager'
 import { useTranslation } from '@/i18n/context'
+import { CONFIG_SCANNER_EAN_PRO, jouerBipEtVibrer, toggleTorcheCamera } from '@/lib/scanner-helper'
 
 interface ProduitCaisse {
   id: string
@@ -296,8 +297,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [modalScannerCamera, setModalScannerCamera] = useState<boolean>(false)
   const [modalPairageSmartphone, setModalPairageSmartphone] = useState<boolean>(false)
   const [sessionScannerId] = useState<string>(() => `SCAN-${Math.floor(100000 + Math.random() * 900000)}`)
-  const [scannerCameraStatus, setScannerCameraStatus] = useState<string>('Initialisation...')
+  const [scannerCameraStatus, setScannerCameraStatus] = useState<string>('📷 Prêt pour le scan continu...')
   const [formatTicketThermique, setFormatTicketThermique] = useState<'80mm' | '58mm'>('80mm')
+  const [scannerTorcheActive, setScannerTorcheActive] = useState<boolean>(false)
+  const [scannerDernierItem, setScannerDernierItem] = useState<{ nom: string; prix: number } | null>(null)
+  const [scannerFlashActif, setScannerFlashActif] = useState<boolean>(false)
+  const dernierCodeScanneRef = useRef<string>('')
+  const dernierTempsScanRef = useRef<number>(0)
   const html5QrcodeScannerRef = useRef<any>(null)
 
   // Polling automatique de la douchette smartphone distante sur PC Caisse
@@ -349,7 +355,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   async function demarrerScannerCamera() {
     setModalScannerCamera(true)
-    setScannerCameraStatus('Initialisation du scanner EAN/Code-Barres…')
+    setScannerCameraStatus('📷 Mode Rafale Continu actif. Présentez les articles…')
+    setScannerDernierItem(null)
+    setScannerTorcheActive(false)
+    dernierCodeScanneRef.current = ''
+    dernierTempsScanRef.current = 0
 
     setTimeout(async () => {
       try {
@@ -369,19 +379,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         const scanner = new Html5Qrcode('nopalou-reader-scanner')
         html5QrcodeScannerRef.current = scanner
 
-        const config = {
-          fps: 15,
-          qrbox: { width: 250, height: 160 },
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.QR_CODE
-          ]
-        }
+        const config = CONFIG_SCANNER_EAN_PRO(Html5QrcodeSupportedFormats, { fps: 24 })
 
         const onScanSuccess = (decodedText: string) => {
           traiterCodeBarreCamera(decodedText)
@@ -389,22 +387,19 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
         try {
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
-          setScannerCameraStatus('📷 Caméra active ! Placez le code-barres (EAN-13, etc.) dans le cadre')
         } catch (errEnv) {
-          console.warn('Bascule caméra arrière -> caméra standard...', errEnv)
           try {
             await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {})
-            setScannerCameraStatus('📷 Caméra active ! Placez le code-barres dans le cadre')
           } catch (errUser: any) {
             console.error('Erreur lancement caméra:', errUser)
-            setScannerCameraStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur ou utilisez la Douchette Smartphone.')
+            setScannerCameraStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur.')
           }
         }
       } catch (err: any) {
         console.error('Erreur module scanner:', err)
-        setScannerCameraStatus('❌ Impossible d’initialiser le scanner. Utilisez la Douchette Smartphone.')
+        setScannerCameraStatus('❌ Impossible d’initialiser le scanner.')
       }
-    }, 300)
+    }, 250)
   }
 
   async function arreterScannerCamera() {
@@ -416,6 +411,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       html5QrcodeScannerRef.current = null
     }
     setModalScannerCamera(false)
+    setScannerTorcheActive(false)
   }
 
   const [btDeviceName, setBtDeviceName] = useState<string | null>(null)
@@ -469,14 +465,30 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   }
 
   function traiterCodeBarreCamera(code: string) {
-    const pFound = produits.find(p => p.code_barre === code || p.id === code)
+    const codeClean = (code || '').trim()
+    if (!codeClean) return
+    const now = Date.now()
+
+    // Anti-rebond intelligent : 1.2s de délai si même code, 0ms si code différent
+    if (dernierCodeScanneRef.current === codeClean && (now - dernierTempsScanRef.current < 1200)) {
+      return
+    }
+    dernierCodeScanneRef.current = codeClean
+    dernierTempsScanRef.current = now
+
+    const pFound = produits.find(p => p.code_barre === codeClean || p.id === codeClean)
     if (pFound) {
       ajouterAuPanier(pFound)
-      alert(`✅ Produit scanné et ajouté : ${pFound.nom} (${fcfa(pFound.prix)})`)
-      arreterScannerCamera()
+      jouerBipEtVibrer('succes')
+      setScannerDernierItem({ nom: pFound.nom, prix: pFound.prix })
+      setScannerFlashActif(true)
+      setTimeout(() => setScannerFlashActif(false), 450)
+      setScannerCameraStatus(`✅ +1 ${pFound.nom} (${fcfa(pFound.prix)})`)
+      // La caméra reste ouverte pour scanner les articles suivants en continu !
     } else {
-      setRecherche(code)
-      setScannerCameraStatus(`Code scanné : ${code} (Recherche filtrée)`)
+      jouerBipEtVibrer('alerte')
+      setScannerCameraStatus(`⚠️ Code inconnu : "${codeClean}"`)
+      setRecherche(codeClean)
     }
   }
 
@@ -3748,30 +3760,82 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
       {/* Modale Scanner Code-Barres par Caméra Smartphone */}
       {modalScannerCamera && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.8)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 440, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)', textAlign: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(4px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: '20px 20px 16px', width: '100%', maxWidth: 460, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Camera size={20} style={{ color: '#C75B00' }} /> Scanner Code-Barres (Caméra)
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Camera size={18} style={{ color: '#C75B00' }} /> Scanner Caisse (Mode Rafale)
               </h3>
-              <button onClick={arreterScannerCamera} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const next = !scannerTorcheActive
+                    setScannerTorcheActive(next)
+                    if (html5QrcodeScannerRef.current) {
+                      try {
+                        const stream = (html5QrcodeScannerRef.current as any)?.localMediaStream
+                        await toggleTorcheCamera(stream, next)
+                      } catch (e) {}
+                    }
+                  }}
+                  style={{ background: scannerTorcheActive ? '#fef08a' : '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 8, padding: '4px 8px', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                  title="Allumer la lampe torche"
+                >
+                  <span>🔦</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#0f172a' }}>{scannerTorcheActive ? 'ON' : 'OFF'}</span>
+                </button>
+                <button onClick={arreterScannerCamera} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer', padding: '0 4px' }}>✕</button>
+              </div>
             </div>
 
-            <div style={{ position: 'relative', width: '100%', minHeight: 250, borderRadius: 14, overflow: 'hidden', background: '#000' }}>
+            {/* Viseur Caméra avec Laser et Flash de confirmation */}
+            <div style={{ position: 'relative', width: '100%', minHeight: 250, height: 260, borderRadius: 14, overflow: 'hidden', background: '#000', border: scannerFlashActif ? '3px solid #22c55e' : '1px solid #1e293b', transition: 'border 0.15s ease' }}>
               <div id="nopalou-reader-scanner" style={{ width: '100%', height: '100%' }} />
+              {scannerFlashActif && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(34, 197, 94, 0.18)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ background: '#15803d', color: '#fff', padding: '6px 14px', borderRadius: 20, fontWeight: 900, fontSize: 13, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                    ✓ BIP VALIDÉ
+                  </span>
+                </div>
+              )}
             </div>
 
-            <p style={{ margin: 0, fontSize: 13, color: '#475569', fontWeight: 700 }}>{scannerCameraStatus}</p>
+            {/* Statut & Dernier article scanné */}
+            <div style={{ background: '#f8fafc', borderRadius: 10, padding: '8px 12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left' }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: scannerFlashActif ? '#16a34a' : '#0f172a' }}>
+                {scannerCameraStatus}
+              </span>
+              {scannerDernierItem && (
+                <span style={{ fontSize: 11.5, color: '#475569', fontWeight: 600 }}>
+                  Dernier ajout : <strong>{scannerDernierItem.nom}</strong> ({fcfa(scannerDernierItem.prix)})
+                </span>
+              )}
+            </div>
 
-            <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
-              <button onClick={demarrerScannerCamera} style={{ background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>
-                🔄 Réessayer d&apos;activer la Caméra
+            {/* Résumé Panier en direct */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 10, padding: '8px 14px' }}>
+              <div style={{ textAlign: 'left' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#065f46', textTransform: 'uppercase' }}>Panier actuel</span>
+                <div style={{ fontSize: 14, fontWeight: 900, color: '#047857' }}>
+                  {panier.reduce((sum, item) => sum + item.quantite, 0)} article(s) • {fcfa(panier.reduce((sum, item) => sum + item.quantite * item.prixUnitaire, 0))}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={arreterScannerCamera}
+                style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 6px rgba(5,150,105,0.3)' }}
+              >
+                <span>✅ Encaisser</span>
               </button>
-              <button onClick={() => { arreterScannerCamera(); setModalPairageSmartphone(true); }} style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>
-                📱 Passer en Douchette Smartphone Distante
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => { arreterScannerCamera(); setModalPairageSmartphone(true); }} style={{ flex: 1, background: '#f1f5f9', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 8, padding: '8px 10px', fontWeight: 700, fontSize: 11.5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                <span>📱</span> Douchette sans fil
               </button>
-              <button onClick={arreterScannerCamera} style={{ background: '#e2e8f0', color: '#0f172a', border: 'none', borderRadius: 10, padding: 10, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
-                Fermer le scanner
+              <button onClick={arreterScannerCamera} style={{ background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 8, padding: '8px 14px', fontWeight: 700, fontSize: 11.5, cursor: 'pointer' }}>
+                Fermer
               </button>
             </div>
           </div>

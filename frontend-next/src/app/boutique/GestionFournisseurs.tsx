@@ -17,7 +17,7 @@ import {
 import { fcfa } from '@/lib/format'
 import { StockView } from './Comptabilite'
 import SearchableProductSelect from '@/components/SearchableProductSelect'
-import { capturerEtOptimiserImageOCR, jouerBipScan } from '@/lib/ocr-helper'
+import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
 
@@ -60,12 +60,15 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const [statusScannerNomCmd, setStatusScannerNomCmd] = useState('')
   const [ocrLoadingCmd, setOcrLoadingCmd] = useState(false)
   const [idxLigneScanNom, setIdxLigneScanNom] = useState<number | null>(null)
+  const [imageFligeeFournisseurNom, setImageFligeeFournisseurNom] = useState<string | null>(null)
+  const dernierScanFouRef = useRef<{ code: string; time: number }>({ code: '', time: 0 })
   const videoNomCmdRef = useRef<HTMLVideoElement | null>(null)
   const streamNomCmdRef = useRef<MediaStream | null>(null)
 
   const demarrerScannerEanCmd = async () => {
     setModalScannerEanCmd(true)
-    setScannerEanStatusCmd('📷 Initialisation du scanner EAN…')
+    setScannerEanStatusCmd('📷 Scanner EAN prêt (Mode Continu)…')
+    dernierScanFouRef.current = { code: '', time: 0 }
     setTimeout(async () => {
       try {
         const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
@@ -80,26 +83,22 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         if (!container) return
         const scanner = new Html5Qrcode('fou-ean-scanner-reader')
         html5ScannerCmdRef.current = scanner
-        const config = {
-          fps: 15,
-          qrbox: { width: 260, height: 160 },
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.QR_CODE
-          ]
-        }
+        const config = CONFIG_SCANNER_EAN_PRO(Html5QrcodeSupportedFormats, { fps: 24 })
         const onScanSuccess = (decodedText: string) => {
           const code = decodedText.trim().toLowerCase()
+          const now = Date.now()
+
+          if (dernierScanFouRef.current.code === code && (now - dernierScanFouRef.current.time < 1200)) {
+            return
+          }
+          dernierScanFouRef.current = { code, time: now }
+
           const prodTrouve = produits.find(
             (p: any) =>
               p.barcode?.trim().toLowerCase() === code ||
               p.sku?.trim().toLowerCase() === code ||
-              p.id?.trim().toLowerCase() === code
+              p.id?.trim().toLowerCase() === code ||
+              p.code_barre?.trim().toLowerCase() === code
           )
           if (prodTrouve) {
             setCmdLignes(prev => {
@@ -111,10 +110,10 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               }
               return [...prev, { produitId: prodTrouve.id, quantite: 1, prixAchat: Number(prodTrouve.prix || 0) }]
             })
-            jouerBipScan('succes')
-            setScannerEanStatusCmd(`✅ Produit ajouté : "${prodTrouve.nom}"`)
+            jouerBipEtVibrer('succes')
+            setScannerEanStatusCmd(`✅ +1 "${prodTrouve.nom}"`)
           } else {
-            jouerBipScan('alerte')
+            jouerBipEtVibrer('alerte')
             setScannerEanStatusCmd(`⚠️ Code "${decodedText}" non trouvé.`)
             if (confirm(`Code "${decodedText}" inconnu dans le catalogue. Ajouter en article libre ?`)) {
               setCmdLignes(prev => [...prev, { produitId: 'custom', nomLibre: `Article EAN-${decodedText}`, quantite: 1, prixAchat: 0 }])
@@ -126,8 +125,12 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
           setScannerEanStatusCmd('📷 Caméra active ! Placez le code-barres dans le cadre.')
         } catch (errEnv) {
-          await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-          setScannerEanStatusCmd('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          try {
+            await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
+            setScannerEanStatusCmd('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          } catch (errUser) {
+            setScannerEanStatusCmd('❌ Impossible d’accéder à la caméra.')
+          }
         }
       } catch (err) {
         setScannerEanStatusCmd('❌ Impossible d’accéder à la caméra.')
@@ -149,9 +152,12 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const demarrerScannerNomCmd = async (ligneIdx: number) => {
     setIdxLigneScanNom(ligneIdx)
     setModalScannerNomCmd(true)
+    setImageFligeeFournisseurNom(null)
     setStatusScannerNomCmd('📷 Cadrez le nom sur l’emballage…')
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+      })
       streamNomCmdRef.current = stream
       if (videoNomCmdRef.current) {
         videoNomCmdRef.current.srcObject = stream
@@ -163,6 +169,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   }
 
   const arreterScannerNomCmd = () => {
+    setImageFligeeFournisseurNom(null)
     if (streamNomCmdRef.current) {
       streamNomCmdRef.current.getTracks().forEach(t => t.stop())
       streamNomCmdRef.current = null
@@ -173,17 +180,22 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const capturerNomOCRCmd = async () => {
     if (!videoNomCmdRef.current) return
     setOcrLoadingCmd(true)
-    setStatusScannerNomCmd('🔍 Optimisation de l’image & lecture OCR…')
-    const imageBase64 = capturerEtOptimiserImageOCR(videoNomCmdRef.current, {
-      cropRatioWidth: 0.85,
-      cropRatioHeight: 0.60,
-      rehausserContraste: true
+    setStatusScannerNomCmd('🔍 Analyse OCR en cours…')
+    const imageBase64 = capturerZoneViseurExacte(videoNomCmdRef.current, {
+      boxTopRatio: 0.15,
+      boxLeftRatio: 0.05,
+      boxWidthRatio: 0.90,
+      boxHeightRatio: 0.70
     })
     if (!imageBase64) {
       setOcrLoadingCmd(false)
       setStatusScannerNomCmd('❌ Échec de la capture.')
       return
     }
+
+    // Freeze frame
+    setImageFligeeFournisseurNom(imageBase64)
+
     try {
       const res = await fetch('/api/boutiques/scan-ocr', {
         method: 'POST',
@@ -196,16 +208,15 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         if (idxLigneScanNom !== null) {
           handleModifierLigneCmd(idxLigneScanNom, 'nomLibre', data.nom)
         }
-        jouerBipScan('succes')
+        jouerBipEtVibrer('succes')
         setStatusScannerNomCmd(`✅ Nom capturé : "${data.nom}"`)
-        setTimeout(() => arreterScannerNomCmd(), 1000)
       } else {
-        jouerBipScan('alerte')
+        jouerBipEtVibrer('alerte')
         setStatusScannerNomCmd(`⚠️ ${data.error || 'Aucun nom lisible détecté.'}`)
       }
     } catch (err) {
       setOcrLoadingCmd(false)
-      jouerBipScan('alerte')
+      jouerBipEtVibrer('alerte')
       setStatusScannerNomCmd('❌ Erreur de lecture OCR. Réessayez.')
     }
   }
@@ -1131,7 +1142,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
 
       {/* Modal Scanner Nom OCR Fournisseur */}
       {modalScannerNomCmd && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>{t('shop.scanProductNameModalTitle')}</h4>
@@ -1139,21 +1150,38 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             </div>
             <p style={{ margin: 0, fontSize: 12.5, color: '#475569', fontWeight: 600 }}>{statusScannerNomCmd}</p>
             <div style={{ width: '100%', height: 260, background: '#000', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
-              <video ref={videoNomCmdRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', top: '20%', left: '7.5%', width: '85%', height: '60%', border: '2px dashed #38bdf8', borderRadius: 8, boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>
-                  {t('shop.frameNameCenterDoc')}
-                </span>
-              </div>
+              {imageFligeeFournisseurNom ? (
+                <img src={imageFligeeFournisseurNom} alt="Capture" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0f172a' }} />
+              ) : (
+                <>
+                  <video ref={videoNomCmdRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', top: '15%', left: '5%', width: '90%', height: '70%', border: '2px dashed #38bdf8', borderRadius: 12, boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ background: 'rgba(15,23,42,0.75)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
+                      {t('shop.frameNameCenterDoc')}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
-            <button
-              type="button"
-              disabled={ocrLoadingCmd}
-              onClick={capturerNomOCRCmd}
-              style={{ width: '100%', padding: '12px', background: ocrLoadingCmd ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: ocrLoadingCmd ? 'not-allowed' : 'pointer' }}
-            >
-              {ocrLoadingCmd ? t('shop.ocrAnalyzingDoc') : t('shop.extractNameDocBtn')}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                disabled={ocrLoadingCmd}
+                onClick={capturerNomOCRCmd}
+                style={{ flex: 1, padding: '11px', background: ocrLoadingCmd ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: ocrLoadingCmd ? 'not-allowed' : 'pointer' }}
+              >
+                {ocrLoadingCmd ? t('shop.ocrAnalyzingDoc') : (imageFligeeFournisseurNom ? '🔄 Reprendre la photo' : t('shop.extractNameDocBtn'))}
+              </button>
+              {imageFligeeFournisseurNom && (
+                <button
+                  type="button"
+                  onClick={arreterScannerNomCmd}
+                  style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                >
+                  ✅ Valider
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
