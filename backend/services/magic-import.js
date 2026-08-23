@@ -105,6 +105,9 @@ function detectCategory(text) {
   if (/\b(perceuse|visseuse|tournevis|marteau|scie|bricolage|outillage|drill|screwdriver|wrench|pliers|dewalt|bosch|makita|stanley|milwaukee|tool|tools|cordless|quincaillerie|cle a molette)\b/i.test(norm)) {
     return 'quincaillerie';
   }
+  if (/\b(storage|organizer|rangement|shoe bag|shoe bags|packing bag|housse|pochette|boite de rangement|panier de rangement|cintre|valise voyage|travel bag|travel storage)\b/i.test(norm)) {
+    return 'maison';
+  }
   if (/\b(robe|chemise|pantalon|t-shirt|tshirt|veste|manteau|chaussure|basket|sneaker|sac|sacoche|montre|bijou|boucle|collier|bague|lunette|perruque|lingerie|boxer|ceinture|talon|sandale|abaya|boubou|wax|costume|jean|jogging|sweat|hoodie|polo|dress|shirt|pants|shoes|hoodie|jacket|jewelry)\b/i.test(norm)) {
     return 'mode';
   }
@@ -117,7 +120,7 @@ function detectCategory(text) {
   if (/\b(television|tv|frigo|refrigerateur|congelateur|climatiseur|split|ventilateur|lave-linge|machine a laver|micro-onde|four|air fryer|friteuse|blender|mixeur|fer a repasser|aspirateur|gaziniere|plaque induction)\b/i.test(norm)) {
     return 'tv-electro';
   }
-  if (/\b(canape|salon|lit|matelas|armoire|table|chaise|meuble|rideau|tapis|lampe|coussin|couette|drap|casserole|poele|vaisselle|ustensile|rangement|decoration|miroir)\b/i.test(norm)) {
+  if (/\b(canape|salon|lit|matelas|armoire|table|chaise|meuble|rideau|tapis|lampe|coussin|couette|drap|casserole|poele|vaisselle|ustensile|decoration|miroir)\b/i.test(norm)) {
     return 'maison';
   }
   if (/\b(creme|serum|savon|lotion|shampoing|masque|maquillage|rouge a levres|parfum|eau de toilette|rasoir|tondeuse|lisseur|epilateur|soin visage|brosse|beauty|hair|skin|perfume)\b/i.test(norm)) {
@@ -137,13 +140,14 @@ function detectCategory(text) {
 }
 
 const GENERIC_SLUGS = new Set(['item', 'items', 'product', 'products', 'goods', 'detail', 'dp', 'p', 'articles', 'article', 'catalog', 'shop', 'en', 'fr', 'es', 'pt', 'de', 'it', 'us', 'id']);
+const GENERIC_SLOGANS_REGEX = /(vêtements homme & femme|shoppez la mode en ligne|toute l'inspiration mode|des chaussures aux vêtements|passion shouldn't cost a fortune|affordable chinese stores|online shopping for|free shipping on millions of items|find the latest trends|404 page|page not found|maintaining|aliexpress\.com)/i;
 
 /**
  * Nettoie le titre pour retirer le bourrage de mots-clés SEO et les mentions de plateformes
  */
 function cleanTitle(rawTitle) {
   if (!rawTitle || typeof rawTitle !== 'string') return '';
-  if (/^(404 page|page not found|maintaining|aliexpress\.com)$/i.test(rawTitle.trim())) return '';
+  if (GENERIC_SLOGANS_REGEX.test(rawTitle.trim())) return '';
   return rawTitle
     .replace(/\s*[-–|•]\s*(AliExpress|SHEIN|Amazon|Alibaba|Temu|Jumia|eBay|Wish|Taobao|1688|\d+).*$/i, '')
     .replace(/\b(202[4-9]|Newest|Hot Sale|High Quality|Free Shipping|Livraison Gratuite|Wholesale|Gros|Nouveau|Tendance 202[4-9])\b/gi, '')
@@ -411,14 +415,30 @@ async function scrapeProductFromUrl(rawUrl) {
   // ── Extraction intelligente depuis le slug URL si le titre est encore vide ──
   if (!extracted.titre || extracted.titre.length < 3) {
     const pathname = parsedUrl.pathname;
-    const slugSegments = pathname.split('/').filter(s => {
-      const clean = s.replace(/\.html?$/i, '').toLowerCase().trim();
-      return clean && !GENERIC_SLUGS.has(clean) && isNaN(Number(clean)) && clean.length > 2;
-    });
-    if (slugSegments.length > 0) {
-      const candidate = slugSegments[slugSegments.length - 1].replace(/[-_]+/g, ' ').trim();
-      if (candidate.length > 3) {
-        extracted.titre = cleanTitle(candidate);
+
+    // Pour SHEIN : extraire le titre avant -p-12345.html
+    const sheinMatch = pathname.match(/\/([^\/]+)-p-\d+\.html/i);
+    if (sheinMatch && sheinMatch[1]) {
+      const cleanCandidate = sheinMatch[1]
+        .replace(/[-_]+/g, ' ')
+        .replace(/\bwomen s\b/gi, "Women's")
+        .replace(/\bmen s\b/gi, "Men's")
+        .trim();
+      if (cleanCandidate.length > 3) {
+        extracted.titre = cleanTitle(cleanCandidate);
+      }
+    }
+
+    if (!extracted.titre) {
+      const slugSegments = pathname.split('/').filter(s => {
+        const clean = s.replace(/\.html?$/i, '').toLowerCase().trim();
+        return clean && !GENERIC_SLUGS.has(clean) && isNaN(Number(clean)) && clean.length > 2;
+      });
+      if (slugSegments.length > 0) {
+        const candidate = slugSegments[slugSegments.length - 1].replace(/[-_]+/g, ' ').trim();
+        if (candidate.length > 3) {
+          extracted.titre = cleanTitle(candidate);
+        }
       }
     }
   }
@@ -444,7 +464,7 @@ async function scrapeProductFromUrl(rawUrl) {
     extracted.prix_barre = 20000;
   }
 
-  if (!extracted.description) {
+  if (!extracted.description || GENERIC_SLOGANS_REGEX.test(extracted.description)) {
     extracted.description = `${extracted.titre} — Importé via la Baguette Magique depuis ${extracted.source_name}. Produit de qualité disponible à la commande.`;
   }
 
