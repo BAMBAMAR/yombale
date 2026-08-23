@@ -140,7 +140,7 @@ function detectCategory(text) {
 }
 
 const GENERIC_SLUGS = new Set(['item', 'items', 'product', 'products', 'goods', 'detail', 'dp', 'p', 'articles', 'article', 'catalog', 'shop', 'en', 'fr', 'es', 'pt', 'de', 'it', 'us', 'id']);
-const GENERIC_SLOGANS_REGEX = /(vêtements homme & femme|shoppez la mode en ligne|toute l'inspiration mode|des chaussures aux vêtements|passion shouldn't cost a fortune|affordable chinese stores|online shopping for|free shipping on millions of items|find the latest trends|404 page|page not found|maintaining|aliexpress\.com)/i;
+const GENERIC_SLOGANS_REGEX = /(vêtements homme & femme|shoppez la mode en ligne|toute l'inspiration mode|des chaussures aux vêtements|passion shouldn't cost a fortune|affordable chinese stores|online shopping for|free shipping on millions of items|find the latest trends|404 page|page not found|maintaining|aliexpress\.com|is mainly design and produce|site de conception et production|women's clothing \| fashion clothes|shop for latest women)/i;
 
 /**
  * Nettoie le titre pour retirer le bourrage de mots-clés SEO et les mentions de plateformes
@@ -240,16 +240,16 @@ async function scrapeProductFromUrl(rawUrl) {
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
   ];
 
-  const urlsToTry = [safeUrl];
-  if (aliItemId && host.includes('aliexpress')) {
+  const urlsToTry = [];
+  if (sheinGoodsId && host.includes('shein')) {
+    urlsToTry.push(`https://m.shein.com/fr/goods-p-${sheinGoodsId}.html`);
+    urlsToTry.push(`https://www.shein.com/fr/goods-p-${sheinGoodsId}.html`);
+  } else if (aliItemId && host.includes('aliexpress')) {
     urlsToTry.push(`https://fr.aliexpress.com/item/${aliItemId}.html`);
     urlsToTry.push(`https://www.aliexpress.com/item/${aliItemId}.html`);
     urlsToTry.push(`https://m.aliexpress.com/item/${aliItemId}.html`);
   }
-  if (sheinGoodsId && host.includes('shein')) {
-    urlsToTry.push(`https://m.shein.com/fr/goods-p-${sheinGoodsId}.html`);
-    urlsToTry.push(`https://www.shein.com/fr/goods-p-${sheinGoodsId}.html`);
-  }
+  urlsToTry.push(safeUrl);
 
   let html = '';
 
@@ -406,7 +406,7 @@ async function scrapeProductFromUrl(rawUrl) {
         extracted.prix_barre = conv.prix_barre_suggere_fcfa;
       }
 
-      const sheinImgs = html.match(/https:\/\/img\.ltwebstatic\.com\/images[^\s"'<>]+\.(?:jpg|png|webp)/gi) || [];
+      const sheinImgs = html.match(/https?:\/\/(?:img\.ltwebstatic\.com|img\.shein\.com)[^\s"'<>]+\.(?:jpg|png|webp|jpeg)/gi) || [];
       sheinImgs.forEach(img => extracted.images.push(img));
     }
 
