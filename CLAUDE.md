@@ -1,7 +1,7 @@
 - **Fiabilisation & Éradication des Photos Par Défaut dans la Baguette Magique (Import Rapide E-Commerce) (`main` - 23 août 2026)** 🌟🪄📸🛠️✨ :
   * **🪄 Extraction Réelle & Élimination Définitive des Photos/Titres Génériques Fixes (`backend/services/magic-import.js`)** :
     - **Suppression intégrale du fallback statique Unsplash** : Élimination des photos de montres/accessoires fixes qui s'appliquaient en cas de blocage, garantissant que chaque article importé conserve exclusivement ses visuels réels ou un titre nettoyé fidèle au lien collé.
-    - **Éradication Totale des Logos de Cartes & Moyens de Paiement (`BAD_IMAGE_PATTERNS`)** : Exclusion stricte de tous les logos de cartes bancaires et paiements (*Visa, MasterCard, American Express, UnionPay, Maestro, Discover, Interac, Cartes Bancaires, Google Pay, Apple Pay, PayPal, Klarna, Gift, Wallet, InPost, Poste Italiane*) afin qu'aucun logo de paiement ne soit injecté comme photo de produit.
+    - **Éradication Totale des Icônes UI, Logos PWA & Cartes (`BAD_IMAGE_PATTERNS`)** : Exclusion stricte de toutes les icônes d'interface (*flèches, loupe, maison, logo PWA 48/72/96px, Visa, MasterCard, American Express, UnionPay, Maestro, Interac, CB, PayPal, Klarna, InPost, Poste Italiane*) afin qu'aucune icône de navigation ne soit injectée comme photo de produit.
     - **Rejet des Slogans Portails & Extraction Réelle SHEIN (`GENERIC_SLOGANS_REGEX`)** : Filtrage et rejet automatique des slogans marketing génériques de page d'accueil SHEIN (*« Vêtements homme & femme, shoppez la mode en ligne »*, *« Des chaussures aux vêtements... »*, *« is mainly design and produce... »*) au profit de l'extraction intégrale du vrai nom produit dans le slug URL (`1-5-10-15pcs-Transparent-Plastic-Storage-Bags...`).
     - **Cookies de Session Globale Résilients (Anti-Bot Bypass)** : Injection des en-têtes de session et cookies de localisation (`aep_usuc_f=site=glo&c_tp=USD&region=FR&b_locale=fr_FR; intl_locale=fr_FR;`) pour AliExpress et SHEIN, éliminant les redirections 404/challenge et garantissant le chargement du HTML complet même depuis les serveurs cloud/datacenter.
     - **Éradication des Faux Titres Slugs Génériques** : Filtrage strict par liste noire (`GENERIC_SLUGS` : *item, goods, product, detail, dp, p...*) empêchant d'extraire des morceaux d'URL comme titre de produit (ex: `item`).
@@ -12,7 +12,7 @@
     - **Persistance Complète des Images dans FormData** : Transmission continue de toutes les URLs d'images distantes (`imagesExistantes`) dans `<input type="hidden" name="images" />` et insertion directe en base de données Postgres (`boutique_produits.images TEXT[]`).
   * **🧪 Validation & Contrôle Qualité** :
     - Tests d'extraction réels sur liens AliExpress (`1005012670076592` DEWALT Screwdriver) : Titre exact DEWALT, catégorie `quincaillerie`, 5 photos HD réelles extraites et 0 photo générique.
-    - Tests d'extraction réels sur liens SHEIN (`17722752` Sacs de rangement transparents voyage) : Titre exact, catégorie `maison`, 0 logo de paiement ou carte bancaire.
+    - Tests d'extraction réels sur liens SHEIN (`17722752` Sacs de rangement transparents voyage) : Titre exact, catégorie `maison`, 0 icône UI ni logo parasite.
     - Suite complète de tests unitaires frontend (`npm test` dans `frontend-next`) : **31/31 tests passés avec succès (100%)**.
     - Tests de sécurité SSRF et conversion de devises (`tests/unit/magic-import.test.js`) validés.
 

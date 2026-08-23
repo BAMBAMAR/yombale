@@ -158,7 +158,7 @@ function cleanTitle(rawTitle) {
     .trim();
 }
 
-const BAD_IMAGE_PATTERNS = /(images[23]_ccc|images[23]_acp|images[23]_ach|_ccc\/|_acp\/|_ach\/|inpost|posteitaliane|paypal|klarna|gift|wallet|avatar|icon|logo|badge|banner|visa|mastercard|amex|unionpay|maestro|discover|interac|cartesbancaires|google_pay|applepay|apple_pay|diners|jcb|payment|checkout|HTB18eCBQ|19538f0e235f47a48da5d2a00d03045dn|1528273|1615283|1629269|1725432007)/i;
+const BAD_IMAGE_PATTERNS = /(images[23]_ccc|images[23]_acp|images[23]_ach|_ccc\/|_acp\/|_ach\/|\/logo\/|\/logos\/|\/icon\/|\/icons\/|\/nav\/|\/header\/|\/footer\/|\/static\/|\/assets\/|inpost|posteitaliane|paypal|klarna|gift|wallet|avatar|icon|logo|badge|banner|arrow|search|home|visa|mastercard|amex|unionpay|maestro|discover|interac|cartesbancaires|google_pay|applepay|apple_pay|diners|jcb|payment|checkout|HTB18eCBQ|19538f0e235f47a48da5d2a00d03045dn|1528273|1615283|1629269|1725432007|\b(16|24|32|48|64|72|96|128|144|192|256|512)\.(?:png|jpg|webp|svg))/i;
 
 /**
  * Nettoie et déduplique les URLs d'images (transforme les vignettes en images HD)
@@ -173,7 +173,7 @@ function cleanImageUrls(imageArray) {
     if (url.startsWith('//')) url = 'https:' + url;
     if (!url.startsWith('http://') && !url.startsWith('https://')) continue;
 
-    // Suppression des images parasites, logos de cartes bancaires, livraison et partenaires
+    // Suppression des images parasites, icônes d'interface, logos PWA et cartes bancaires
     if (BAD_IMAGE_PATTERNS.test(url)) {
       continue;
     }
@@ -406,8 +406,12 @@ async function scrapeProductFromUrl(rawUrl) {
         extracted.prix_barre = conv.prix_barre_suggere_fcfa;
       }
 
-      const sheinImgs = html.match(/https?:\/\/(?:img\.ltwebstatic\.com|img\.shein\.com)[^\s"'<>]+\.(?:jpg|png|webp|jpeg)/gi) || [];
-      sheinImgs.forEach(img => extracted.images.push(img));
+      const sheinImgs = html.match(/https?:\/\/img\.ltwebstatic\.com\/images[23]_pi\/[^\s"'<>]+\.(?:jpg|png|webp|jpeg)/gi) || [];
+      sheinImgs.forEach(img => {
+        if (!BAD_IMAGE_PATTERNS.test(img)) {
+          extracted.images.push(img);
+        }
+      });
     }
 
     // ── 5. Spécificités Amazon ──
