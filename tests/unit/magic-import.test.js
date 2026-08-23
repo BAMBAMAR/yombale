@@ -6,6 +6,7 @@ const {
   cleanTitle,
   cleanImageUrls,
   scrapeProductFromUrl,
+  translateProductTitleToFrench,
 } = require('../../backend/services/magic-import');
 
 jest.mock('axios');
@@ -117,6 +118,21 @@ describe('🌟 Baguette Magique (Import Rapide) — Tests Unitaires', () => {
     test('nettoie les entités HTML', () => {
       const raw = 'T-Shirt Coton Homme &amp; Femme &quot;Édition Limitée&quot;';
       expect(cleanTitle(raw)).toBe('T-Shirt Coton Homme & Femme "Édition Limitée"');
+    });
+  });
+
+  describe('4b. Traduction Automatique en Français (translateProductTitleToFrench)', () => {
+    test('traduit les termes de mode anglais en français', async () => {
+      const titleEn = "Women's Plain Casual Elegant Asymmetric Short Sleeve Top And Casual Wide Leg Pants";
+      const fr = await translateProductTitleToFrench(titleEn);
+      expect(fr.toLowerCase()).toContain('pantalon');
+      expect(fr.toLowerCase()).toContain('femme');
+    });
+
+    test('préserve les titres déjà en français', async () => {
+      const titleFr = "Robe de soirée élégante en satin";
+      const res = await translateProductTitleToFrench(titleFr);
+      expect(res).toBe(titleFr);
     });
   });
 

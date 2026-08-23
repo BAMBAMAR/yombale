@@ -1,4 +1,8 @@
-- **Optimisation & Dé-échappement Multi-Plateformes de la Baguette Magique (SHEIN, Amazon, AliExpress) (`main` - 23 août 2026)** 🌟🪄📸👗⚡ :
+- **Traduction Automatique en Français & Optimisation Multi-Plateformes de la Baguette Magique (SHEIN, Amazon, AliExpress) (`main` - 23 août 2026)** 🌟🪄🇫🇷👗⚡ :
+  * **🇫🇷 Traduction Automatique des Fiches Produits en Français (`backend/services/magic-import.js`)** :
+    - **Moteur Hybride de Traduction E-Commerce (`translateProductTitleToFrench`)** : Traduction automatique de tous les titres et descriptions de produits anglais provenant de SHEIN, AliExpress ou Amazon vers un français naturel et vendeur.
+    - **API MyMemory & Dictionnaire E-Commerce Résilient** : Traduction en ligne ultra-rapide combinée à un lexique e-commerce complet de plus de 150 termes métiers (mode, électronique, outillage, maison) garantissant une traduction instantanée même hors-ligne.
+    - **Préservation des Titres Déjà Français** : Détection intelligente de la langue évitant toute altération des fiches déjà rédigées en français.
   * **👗 Dé-échappement JSON & CDN Photos SHEIN (`backend/services/magic-import.js`)** :
     - Traitement automatique des URLs de photos encodées en JSON (`\/` ➔ `/`) permettant d'extraire toutes les images réelles du CDN SHEIN (`img.ltwebstatic.com`, `shein.com`, `images2_pi`, `images3_pi`, `images3_sp`).
     - Élimination des suffixes miniatures (`_thumbnail_900x.webp`, `_thumbnail_600x.jpg`) pour convertir les images en HD plein format.
@@ -13,7 +17,7 @@
   * **✨ Feedback Utilisateur Transparent & Mode Guidé (`frontend-next/src/app/boutique/BoutiqueClient.tsx`)** :
     - Message contextuel clair indiquant lorsque la fiche est importée avec succès même en cas de protection d'images par la plateforme source (*« ✨ Fiche importée avec succès ! (Titre, Prix & Description remplis — ajoutez vos photos ci-dessous). »*).
   * **🧪 Tests Unitaires Automatisés (`tests/unit/magic-import.test.js`)** :
-    - 20/20 tests unitaires Jest validés avec succès (100% de réussite) couvrant la sécurité SSRF, conversions de prix/devises, catégorisation mode/outillage/maison, nettoyage de titre, galeries multi-photos HD et scraping AliExpress, SHEIN et Amazon.
+    - 22/22 tests unitaires Jest validés avec succès (100% de réussite) couvrant la traduction automatique FR, la sécurité SSRF, conversions de prix/devises, catégorisation mode/outillage/maison, nettoyage de titre, galeries multi-photos HD et scraping AliExpress, SHEIN et Amazon.
 
 - **Support Multi-Photos Intégral & Gestion du Stock pour l'Ajout de Produits par WhatsApp (`main` - 23 août 2026)** 📸📦⚡💬✨ :
   * **📸 Fiabilisation Multi-Photos & Élimination des Race Conditions (`backend/services/whatsapp-chatbot.js`, `backend/routes/whatsapp.js`)** :

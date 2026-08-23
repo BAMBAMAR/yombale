@@ -143,6 +143,152 @@ function detectCategory(text) {
 const GENERIC_SLUGS = new Set(['item', 'items', 'product', 'products', 'goods', 'detail', 'dp', 'p', 'articles', 'article', 'catalog', 'shop', 'en', 'fr', 'es', 'pt', 'de', 'it', 'us', 'id']);
 const GENERIC_SLOGANS_REGEX = /(vêtements homme & femme|shoppez la mode en ligne|toute l'inspiration mode|des chaussures aux vêtements|passion shouldn't cost a fortune|affordable chinese stores|online shopping for|free shipping on millions of items|find the latest trends|404 page|page not found|maintaining|aliexpress\.com|is mainly design and produce|site de conception et production|women's clothing \| fashion clothes|shop for latest women)/i;
 
+// ── Dictionnaire e-commerce Anglais -> Français (traduction instantanée hors-ligne) ──
+const DICTIONNAIRE_ECOMMERCE = [
+  // Vêtements & Mode
+  [/\bwomen'?s\b/gi, 'pour femme'],
+  [/\bmen'?s\b/gi, 'pour homme'],
+  [/\bgirls?'?\b/gi, 'fille'],
+  [/\bboys?'?\b/gi, 'garçon'],
+  [/\bkids?\b/gi, 'enfant'],
+  [/\bshort sleeve\b/gi, 'manches courtes'],
+  [/\blong sleeve\b/gi, 'manches longues'],
+  [/\bsleeveless\b/gi, 'sans manches'],
+  [/\bwide leg pants\b/gi, 'pantalon large'],
+  [/\bwide leg\b/gi, 'coupe large'],
+  [/\bpants\b/gi, 'pantalon'],
+  [/\btrousers\b/gi, 'pantalon'],
+  [/\btop and pants\b/gi, 'ensemble haut et pantalon'],
+  [/\btwo piece set\b/gi, 'ensemble 2 pièces'],
+  [/\b2 piece set\b/gi, 'ensemble 2 pièces'],
+  [/\bset\b/gi, 'ensemble'],
+  [/\btop\b/gi, 'haut'],
+  [/\bdress\b/gi, 'robe'],
+  [/\bskirt\b/gi, 'jupe'],
+  [/\bshirt\b/gi, 'chemise'],
+  [/\bt-shirt\b/gi, 't-shirt'],
+  [/\bhoodie\b/gi, 'sweat à capuche'],
+  [/\bsweater\b/gi, 'pull'],
+  [/\bjacket\b/gi, 'veste'],
+  [/\bcoat\b/gi, 'manteau'],
+  [/\bsneakers?\b/gi, 'baskets'],
+  [/\bshoes\b/gi, 'chaussures'],
+  [/\bboots\b/gi, 'bottes'],
+  [/\bsandals\b/gi, 'sandales'],
+  [/\bheels\b/gi, 'talons'],
+  [/\bbag\b/gi, 'sac'],
+  [/\bhandbag\b/gi, 'sac à main'],
+  [/\bbackpack\b/gi, 'sac à dos'],
+  [/\bwallet\b/gi, 'portefeuille'],
+  [/\bjewelry\b/gi, 'bijoux'],
+  [/\bnecklace\b/gi, 'collier'],
+  [/\bring\b/gi, 'bague'],
+  [/\bearrings\b/gi, 'boucles d\'oreilles'],
+  [/\bbracelet\b/gi, 'bracelet'],
+  [/\bwatch\b/gi, 'montre'],
+  [/\bsunglasses\b/gi, 'lunettes de soleil'],
+  [/\bswimwear\b/gi, 'maillot de bain'],
+  [/\bbikini\b/gi, 'bikini'],
+  [/\bunderwear\b/gi, 'sous-vêtements'],
+  [/\bpajamas\b/gi, 'pyjama'],
+
+  // Caractéristiques & Qualificatifs
+  [/\bplain\b/gi, 'uni'],
+  [/\bsolid color\b/gi, 'couleur unie'],
+  [/\bcasual\b/gi, 'décontracté'],
+  [/\belegant\b/gi, 'élégant'],
+  [/\basymmetric\b/gi, 'asymétrique'],
+  [/\bsummer\b/gi, 'été'],
+  [/\bwinter\b/gi, 'hiver'],
+  [/\bspring\b/gi, 'printemps'],
+  [/\bautumn\b/gi, 'automne'],
+  [/\bfloral\b/gi, 'fleuri'],
+  [/\bprinted\b/gi, 'imprimé'],
+  [/\bstriped\b/gi, 'rayé'],
+  [/\bvintage\b/gi, 'vintage'],
+  [/\bsexy\b/gi, 'sexy'],
+  [/\bcomfortable\b/gi, 'confortable'],
+  [/\bbreathable\b/gi, 'respirant'],
+  [/\bwaterproof\b/gi, 'étanche'],
+  [/\bluxury\b/gi, 'luxe'],
+  [/\bstainless steel\b/gi, 'acier inoxydable'],
+  [/\bleather\b/gi, 'cuir'],
+  [/\bcotton\b/gi, 'coton'],
+  [/\bsilk\b/gi, 'soie'],
+  [/\bsatin\b/gi, 'satin'],
+  [/\bdenim\b/gi, 'jean'],
+
+  // High-Tech & Électronique
+  [/\bwireless\b/gi, 'sans fil'],
+  [/\bbluetooth\b/gi, 'Bluetooth'],
+  [/\bheadphones\b/gi, 'casque audio'],
+  [/\bearbuds\b/gi, 'écouteurs sans fil'],
+  [/\bnoise cancelling\b/gi, 'réduction de bruit'],
+  [/\bphone case\b/gi, 'coque pour téléphone'],
+  [/\bsmartphone\b/gi, 'smartphone'],
+  [/\bcharger\b/gi, 'chargeur'],
+  [/\bfast charging\b/gi, 'charge rapide'],
+  [/\bpower bank\b/gi, 'batterie externe'],
+  [/\bsmart watch\b/gi, 'montre connectée'],
+  [/\bscreen protector\b/gi, 'verre trempé'],
+  [/\bholder\b/gi, 'support'],
+  [/\bcar mount\b/gi, 'support voiture'],
+
+  // Bricolage & Maison
+  [/\bcordless drill\b/gi, 'perceuse sans fil'],
+  [/\bdrill driver\b/gi, 'visseuse perceuse'],
+  [/\bscrewdriver\b/gi, 'tournevis'],
+  [/\btoolkit\b/gi, 'boîte à outils'],
+  [/\bstorage bag\b/gi, 'sac de rangement'],
+  [/\borganizer\b/gi, 'organisateur'],
+  [/\blamp\b/gi, 'lampe'],
+  [/\bair fryer\b/gi, 'friteuse sans huile'],
+  [/\bblender\b/gi, 'mixeur plongeant'],
+];
+
+function isPrimarilyEnglish(text) {
+  if (!text || typeof text !== 'string') return false;
+  const englishWords = /\b(women|men|casual|plain|wide|pants|dress|shoes|shirt|drill|screwdriver|storage|wireless|watch|bag|sleeve|summer|winter|black|white|blue|red|green|yellow|pink|gold|silver|piece|kit|high|performance|quality|set|top|suit|neck|collar|long|short)\b/i;
+  const frenchAccents = /[éèêàâùûôîçÉÈÊÀÂÙÛÔÎÇ]/;
+  return englishWords.test(text) && !frenchAccents.test(text);
+}
+
+/**
+ * Traduit automatiquement un titre e-commerce de l'Anglais vers le Français
+ */
+async function translateProductTitleToFrench(title) {
+  if (!title || typeof title !== 'string' || title.trim().length < 3) return title;
+  
+  const clean = title.trim();
+  if (!isPrimarilyEnglish(clean)) {
+    return clean;
+  }
+
+  // 1. Essayer MyMemory API en premier (avec timeout court de 3s)
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(clean)}&langpair=en|fr`;
+    const resp = await axios.get(url, { timeout: 3000 });
+    const trans = resp.data?.responseData?.translatedText;
+    if (trans && typeof trans === 'string' && trans.trim().length > 3 && !trans.includes('MYMEMORY WARNING')) {
+      let result = trans.trim();
+      result = result.charAt(0).toUpperCase() + result.slice(1);
+      return result;
+    }
+  } catch (e) {
+    // Poursuivre vers fallback dictionnaire
+  }
+
+  // 2. Fallback Dictionnaire E-Commerce local intelligent
+  let translated = clean;
+  for (const [regex, replacement] of DICTIONNAIRE_ECOMMERCE) {
+    translated = translated.replace(regex, replacement);
+  }
+  translated = translated.replace(/\s{2,}/g, ' ').trim();
+  translated = translated.charAt(0).toUpperCase() + translated.slice(1);
+
+  return translated;
+}
+
 /**
  * Nettoie le titre pour retirer le bourrage de mots-clés SEO et les mentions de plateformes
  */
@@ -557,6 +703,9 @@ async function scrapeProductFromUrl(rawUrl) {
     }
   }
 
+  // ── Traduction automatique en Français si le titre est en Anglais ──
+  extracted.titre = await translateProductTitleToFrench(extracted.titre);
+
   // Prix de secours par défaut si non extrait
   if (!extracted.prix || extracted.prix === 0) {
     extracted.prix = 15000;
@@ -581,6 +730,7 @@ module.exports = {
   cleanTitle,
   cleanImageUrls,
   scrapeProductFromUrl,
+  translateProductTitleToFrench,
   TAUX_CHANGE_FCFA
 };
 
