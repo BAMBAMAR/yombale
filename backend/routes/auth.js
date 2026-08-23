@@ -240,13 +240,44 @@ const otps = new Map();
 // Si le template n'existe pas encore côté Meta, fallback sur texte libre.
 router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
   try {
-    let { telephone } = req.body;
+    let { telephone, type } = req.body;
     telephone = normalisePhone(telephone);
     if (!telephone) return res.status(400).json({ error: 'Numéro invalide' });
 
+    // ── Vérification préalable selon le flux (login vs inscription) ──
+    const cleanPhone = telephone;
+    const withPlus = '+' + cleanPhone;
+    const raw9Digits = cleanPhone.startsWith('221') ? cleanPhone.slice(3) : cleanPhone;
+
+    if (type === 'login') {
+      const { rows } = await pool.query(
+        `SELECT id, suspendu, supprime_le FROM utilisateurs 
+         WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1`,
+        [cleanPhone, withPlus, raw9Digits]
+      );
+      if (!rows.length) {
+        return res.status(404).json({ error: 'Aucun compte associé à ce numéro WhatsApp. Veuillez d\'abord vous inscrire.' });
+      }
+      if (rows[0].suspendu) {
+        return res.status(403).json({ error: 'Ce compte est suspendu.' });
+      }
+      if (rows[0].supprime_le) {
+        return res.status(403).json({ error: 'Ce compte est en cours de suppression.' });
+      }
+    } else if (type === 'register') {
+      const { rows } = await pool.query(
+        `SELECT id FROM utilisateurs 
+         WHERE telephone=$1 OR telephone=$2 OR telephone=$3 OR REPLACE(telephone, '+', '')=$1`,
+        [cleanPhone, withPlus, raw9Digits]
+      );
+      if (rows.length) {
+        return res.status(409).json({ error: 'Un compte existe déjà avec ce numéro WhatsApp. Veuillez vous connecter.' });
+      }
+    }
+
     const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
     otps.set(telephone, { code, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min
-    console.log(`[OTP] Code généré pour ${telephone} : ${code}`);
+    console.log(`[OTP] Code généré pour ${telephone} (${type || 'standard'}) : ${code}`);
 
     // ── Tentative 1 : Template Meta certifié (fonctionne même à froid) ──
     try {

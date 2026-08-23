@@ -46,7 +46,7 @@ export default function ConnexionForm() {
       const res = await fetch(`${BACKEND}/api/auth/whatsapp-otp-send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telephone })
+        body: JSON.stringify({ telephone, type: 'login' })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || t('errors.serverError'))

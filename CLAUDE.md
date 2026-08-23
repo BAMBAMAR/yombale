@@ -1,3 +1,15 @@
+- **Vérification Préalable de l'Existence du Compte sur l'OTP WhatsApp (Connexion & Inscription) (`main` - 23 août 2026)** 💬🛡️⚡✨ :
+  * **🛡️ Vérification Amont & Économie d'OTP (`backend/routes/auth.js`)** :
+    - Mise à jour de l'endpoint `POST /api/auth/whatsapp-otp-send` avec prise en charge du paramètre de flux `type` (`login` vs `register`).
+    - **En mode Connexion (`type: 'login'`)** : Contrôle immédiat en base de données Postgres (`utilisateurs`). Si le numéro n'a pas de compte existant, retour direct d'une erreur 404 (*« Aucun compte associé à ce numéro WhatsApp. Veuillez d'abord vous inscrire. »*) sans générer ni envoyer d'OTP WhatsApp, économisant les requêtes Meta API et guidant immédiatement l'utilisateur. Vérifie également le statut suspendu ou supprimé.
+    - **En mode Inscription (`type: 'register'`)** : Contrôle de non-existence du numéro. Si un compte existe déjà, retour immédiat d'une erreur 409 (*« Un compte existe déjà avec ce numéro WhatsApp. Veuillez vous connecter. »*) sans déclencher d'OTP superflu.
+  * **⚡ Intégration Formulaires Frontend (`frontend-next/src/app`)** :
+    - [`ConnexionForm.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/connexion/ConnexionForm.tsx) : Transmission systématique de `type: 'login'` pour un retour d'erreur instantané sans passer à l'étape du code si le compte est inexistant.
+    - [`InscriptionForm.tsx`](file:///c:/Users/bamba/Downloads/yombale-CLAUDE/frontend-next/src/app/inscription/InscriptionForm.tsx) : Transmission de `type: 'register'` avec feedback immédiat si le compte est déjà présent.
+  * **🧪 Validation & Contrôle Qualité** :
+    - Suite de tests unitaires frontend (`npm test` dans `frontend-next`) : **31/31 tests validés avec succès (100%)**.
+    - Vérification du typage TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+
 - **Fiabilisation & Éradication des Photos Par Défaut dans la Baguette Magique (Import Rapide E-Commerce) (`main` - 23 août 2026)** 🌟🪄📸🛠️✨ :
   * **🪄 Extraction Réelle & Élimination Définitive des Photos/Titres Génériques Fixes (`backend/services/magic-import.js`)** :
     - **Suppression intégrale du fallback statique Unsplash** : Élimination des photos de montres/accessoires fixes qui s'appliquaient en cas de blocage, garantissant que chaque article importé conserve exclusivement ses visuels réels ou un titre nettoyé fidèle au lien collé.
