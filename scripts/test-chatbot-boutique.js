@@ -244,6 +244,26 @@ async function runAsyncTests() {
     assert.ok(btns.some(b => b.id.includes('confirmee')));
   });
 
+  // Test 10: Recherche de Boutique par Numéro de Téléphone
+  console.log('\n📦 9. Recherche de Boutique par Téléphone dans le Chat');
+  mockWhatsAppCalls.text = [];
+  mockWhatsAppCalls.interactive = [];
+  mockQueryResult = {
+    rows: [{
+      id: 'bq-tel-1',
+      nom: 'Amar Store',
+      slug: 'amar-store',
+      categorie: 'High-Tech',
+      ville: 'Dakar',
+      telephone: '+221 77 720 20 86',
+      whatsapp: '777202086'
+    }]
+  };
+  await chatbot.rechercherBoutiquesParNom('221770000000', '777202086');
+  it('rechercherBoutiquesParNom: trouve directement la boutique lors de la saisie d un numéro de téléphone', () => {
+    assert.ok(mockWhatsAppCalls.text.some(t => t.text.includes('Amar Store')));
+  });
+
   console.log('\n──────────────────────────────────────────────────────────');
   console.log(`Résultats: ${passed} passés, ${failed} échoués (Total: ${passed + failed})`);
   if (failed > 0) process.exit(1);

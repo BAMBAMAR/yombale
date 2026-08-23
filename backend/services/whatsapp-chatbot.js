@@ -213,10 +213,10 @@ const _otpCodesMarchand = new Map();
 // ── Extraction et détection de numéro de téléphone sénégalais ─────────────────
 function extraireNumeroTelephone(texte) {
   if (!texte) return null;
-  const clean = texte.replace(/[\s\.\-\(\)]/g, '');
-  const match = clean.match(/(?:(?:\+|00)?221)?(7[05678]\d{7}|33\d{7})/);
+  const clean = String(texte).replace(/[\s\.\-\(\)\+]/g, '');
+  const match = clean.match(/(?:(?:00)?221)?(7[05678]\d{7}|33\d{7}|\d{9})/);
   if (match) {
-    const raw9 = match[1];
+    const raw9 = match[1].slice(-9);
     return {
       national: raw9,
       international: `221${raw9}`,
@@ -228,46 +228,50 @@ function extraireNumeroTelephone(texte) {
 // Recherche d'une boutique active par son numéro de contact (ou numéro du gérant)
 async function trouverBoutiqueParTelephone(phoneStr) {
   const telInfo = extraireNumeroTelephone(phoneStr);
-  if (!telInfo) return null;
+  const rawDigits = phoneStr ? String(phoneStr).replace(/\D/g, '') : '';
+  const short9 = telInfo ? telInfo.national : (rawDigits.length >= 9 ? rawDigits.slice(-9) : (rawDigits.length >= 7 ? rawDigits : null));
+  if (!short9) return null;
+
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
             b.couleur_theme, b.logo_url, u.nom AS proprietaire_nom
      FROM boutiques b
      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-     WHERE b.actif = true
+     WHERE (b.actif IS NULL OR b.actif = true)
        AND (
-         b.telephone LIKE '%' || $1
-         OR b.whatsapp LIKE '%' || $1
-         OR b.telephone = $2
-         OR b.whatsapp = $2
-         OR u.telephone LIKE '%' || $1
-         OR u.telephone = $2
+         REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(u.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
        )
      ORDER BY b.created_at DESC
      LIMIT 1`,
-    [telInfo.national, telInfo.international]
+    [short9]
   );
   return rows[0] || null;
 }
 
 // Recherche de la boutique dont ce numéro est propriétaire/marchand
 async function trouverBoutiqueMarchand(phone) {
-  const normPh = normalisePhone(phone);
-  const shortPh = phone.replace(/\D/g, '').slice(-9);
+  const rawDigits = String(phone).replace(/\D/g, '');
+  const short9 = rawDigits.slice(-9);
+  if (!short9) return null;
+
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
             b.couleur_theme, b.logo_url, u.nom AS proprietaire_nom
      FROM boutiques b
      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
-     WHERE b.actif = true
+     WHERE (b.actif IS NULL OR b.actif = true)
        AND (
-         b.telephone = $1 OR b.whatsapp = $1
-         OR b.telephone LIKE '%' || $2 OR b.whatsapp LIKE '%' || $2
-         OR u.telephone = $1 OR u.telephone LIKE '%' || $2
+         REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(u.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
        )
      ORDER BY b.created_at DESC
      LIMIT 1`,
-    [normPh, shortPh]
+    [short9]
   );
   return rows[0] || null;
 }
@@ -866,7 +870,7 @@ async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
   await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres boutiques, ou choisissez-en une ci-dessus :').catch(() => {});
 }
 
-// ── Recherche de boutiques par nom (mot-clé) ─────────────────────────────────
+// ── Recherche de boutiques par nom (mot-clé ou téléphone) ────────────────────
 async function rechercherBoutiquesParNom(phone, query, excludeIds = []) {
   const cleanQ = (query || '').trim();
   if (!cleanQ || cleanQ.length < 2) {
@@ -875,19 +879,32 @@ async function rechercherBoutiquesParNom(phone, query, excludeIds = []) {
     return;
   }
 
+  // 1. Si la recherche correspond directement à un numéro de téléphone
+  const bqTel = await trouverBoutiqueParTelephone(cleanQ);
+  if (bqTel && excludeIds.length === 0) {
+    await sendWhatsAppText(phone, `🏪 J'ai trouvé la boutique *${bqTel.nom}* (${bqTel.categorie || 'Commerce'}${bqTel.ville ? ` — ${bqTel.ville}` : ''}) !`);
+    await envoyerMenuBoutique(phone, bqTel);
+    return;
+  }
+
+  const rawDigits = cleanQ.replace(/\D/g, '');
+  const phonePattern = rawDigits.length >= 6 ? rawDigits.slice(-9) : '___AUCUN___';
+
   const r = await pool.query(
     `SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp
      FROM boutiques
-     WHERE actif=true
+     WHERE (actif IS NULL OR actif = true)
        AND (
          nom ILIKE $1
          OR slug ILIKE $1
          OR COALESCE(description, '') ILIKE $1
          OR COALESCE(categorie, '') ILIKE $1
+         OR REGEXP_REPLACE(COALESCE(telephone, ''), '\\D', '', 'g') LIKE '%' || $2
+         OR REGEXP_REPLACE(COALESCE(whatsapp, ''), '\\D', '', 'g') LIKE '%' || $2
        )
-       AND id::text <> ALL($2::text[])
+       AND id::text <> ALL($3::text[])
      ORDER BY created_at DESC LIMIT 7`,
-    [`%${cleanQ}%`, excludeIds]
+    [`%${cleanQ}%`, phonePattern, excludeIds]
   );
 
   if (!r.rows.length) {
@@ -895,7 +912,7 @@ async function rechercherBoutiquesParNom(phone, query, excludeIds = []) {
       phone,
       excludeIds.length
         ? `✅ Vous avez vu toutes les boutiques correspondant à *"${cleanQ}"*. Tapez *menu* pour revenir.`
-        : `😕 Aucune boutique trouvée pour *"${cleanQ}"*.\n\nVous pouvez entrer un autre nom, ou taper *menu*.`
+        : `😕 Aucune boutique trouvée pour *"${cleanQ}"*.\n\nVous pouvez entrer un autre nom, un numéro de téléphone, ou taper *menu*.`
     );
     await sendWhatsAppMenuOuFin(phone, 'Tapez un autre nom de boutique ou :').catch(() => {});
     await setSession(phone, 'BOUTIQUE_SEARCH_SHOP', {});
@@ -1469,6 +1486,21 @@ async function handleIncoming(msg) {
           await envoyerMenuBoutique(phone, bqTrouvee);
           return;
         }
+      } else if (/^(?:\+?221)?(?:7[05678]\d{7}|33\d{7}|\d{9})$/.test(text.replace(/[\s\.\-\(\)]/g, ''))) {
+        // Numéro de téléphone tapé explicitement mais aucune boutique encore rattachée
+        await sendWhatsAppText(
+          phone,
+          `🏪 *Aucune boutique Nopalou n'est actuellement associée au numéro +221 ${numDetecte.national}*.\n\n` +
+          `👉 *Vous êtes le gérant de ce commerce ?*\n` +
+          `Créez votre vitrine en 30 secondes chrono (avec *30 jours offerts*) en tapant *créer boutique* !`
+        );
+        await sendWhatsAppButton(
+          phone,
+          'Souhaitez-vous créer votre boutique en ligne maintenant ?',
+          'creer_boutique',
+          '🛍️ Créer ma boutique'
+        ).catch(() => {});
+        return;
       }
     }
   }
@@ -2124,6 +2156,12 @@ async function handleIncoming(msg) {
       if (!isNaN(num) && num >= 1 && num <= boutiques.length) {
         targetBoutiqueId = boutiques[num - 1].id;
       } else {
+        const bqTel = await trouverBoutiqueParTelephone(text.trim());
+        if (bqTel) {
+          await sendWhatsAppText(phone, `🏪 J'ai trouvé la boutique *${bqTel.nom}* (${bqTel.categorie || 'Commerce'}${bqTel.ville ? ` — ${bqTel.ville}` : ''}) !`);
+          await envoyerMenuBoutique(phone, bqTel);
+          return;
+        }
         // Recherche automatique par nom tapé
         await rechercherBoutiquesParNom(phone, text.trim());
         return;
@@ -2136,7 +2174,7 @@ async function handleIncoming(msg) {
     }
 
     const r = await pool.query(
-      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE id=$1 AND actif=true',
+      'SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp FROM boutiques WHERE id=$1 AND (actif IS NULL OR actif=true)',
       [targetBoutiqueId]
     );
     if (!r.rows[0]) {
@@ -2149,10 +2187,16 @@ async function handleIncoming(msg) {
     return;
   }
 
-  // ── BOUTIQUE_SEARCH_SHOP → recherche textuelle de boutique par nom ──────────
+  // ── BOUTIQUE_SEARCH_SHOP → recherche textuelle de boutique par nom ou téléphone ─
   if (state === 'BOUTIQUE_SEARCH_SHOP') {
     if (!text || text.trim().length < 2) {
-      await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 lettres pour le nom de la boutique (ou tapez *menu*).');
+      await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 lettres ou le numéro de téléphone de la boutique (ou tapez *menu*).');
+      return;
+    }
+    const bqTel = await trouverBoutiqueParTelephone(text.trim());
+    if (bqTel) {
+      await sendWhatsAppText(phone, `🏪 J'ai trouvé la boutique *${bqTel.nom}* (${bqTel.categorie || 'Commerce'}${bqTel.ville ? ` — ${bqTel.ville}` : ''}) !`);
+      await envoyerMenuBoutique(phone, bqTel);
       return;
     }
     await rechercherBoutiquesParNom(phone, text.trim());

@@ -1,7 +1,9 @@
 - **Accès Boutique par Numéro de Téléphone, Authentification Marchand par Code PIN, Multi-Photos & Tableau de Bord WhatsApp (`main` - 23 août 2026)** 📞🔐📸🏪⚡ :
   * **📞 Accès Simplifié & Détection Instantanée par Numéro de Téléphone** :
-    - Détection automatique et extraction des numéros mobiles sénégalais (`77...`, `78...`, `76...`, `70...`, `75...`, `33...`, avec ou sans `+221`/espaces/tirets) dans tous les messages envoyés au bot.
+    - Détection automatique et extraction résiliente des numéros mobiles sénégalais (`77...`, `78...`, `76...`, `70...`, `75...`, `33...`, avec ou sans `+221`/espaces/tirets) dans tous les messages envoyés au bot, dans la recherche de boutiques (`BOUTIQUE_SEARCH_SHOP`) et la liste (`BOUTIQUE_LISTE`).
+    - Normalisation avec `REGEXP_REPLACE(telephone, '\D', '', 'g')` pour matcher indépendamment des espaces ou formats stockés en base.
     - **Pour un Client / Acheteur** : Le bot identifie immédiatement la boutique correspondante et envoie sa fiche complète (nom, quartier, catégorie, description, lien vitrine web `${SITE}/boutiques/${slug}` et les 3 premiers produits avec photos et prix pour commander en 1 clic).
+    - **Pour un Numéro sans Boutique** : Message clair informant qu'aucune boutique n'est encore liée à ce numéro avec bouton 1-clic pour créer sa boutique en 30s.
     - **Pour le Propriétaire / Gérant** : Le bot le reconnaît automatiquement et propose le déverrouillage sécurisé de son Espace Marchand.
   * **🔐 Espace Marchand Sécurisé par Code PIN & Réinitialisation OTP** :
     - Ajout de la colonne `code_pin VARCHAR(10) DEFAULT '1234'` à la table `boutiques` (et support des codes PIN caissiers de `boutique_caissiers`).
@@ -20,7 +22,7 @@
     - 🔗 **Vitrine & Statut WhatsApp** : Message promotionnel prêt à l'emploi à transférer en Statut WhatsApp.
     - ⚙️ **Gestion du Code PIN** : Modification et sécurisation du code d'accès.
   * **Validation & Contrôle Qualité** :
-    - Tests unitaires complets chatbot WhatsApp (`scripts/test-chatbot-boutique.js`) : **100% validés (14/14 tests passés avec succès)**.
+    - Tests unitaires complets chatbot WhatsApp (`scripts/test-chatbot-boutique.js`) : **100% validés (15/15 tests passés avec succès)**.
     - Vérification syntaxique Node.js (`backend/services/whatsapp-chatbot.js`, `backend/migrate-inline.js`) : **0 erreur**.
     - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
 
