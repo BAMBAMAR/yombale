@@ -963,39 +963,39 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
             {/* Ligne 2 : Actions secondaires et Utilitaires */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              display: 'flex',
               gap: 6,
-              width: '100%'
+              width: '100%',
+              flexWrap: 'wrap'
             }}>
               <button
                 onClick={() => setShowQrModalComptoir(true)}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
-                title="QR Code"
-                style={{ minWidth: 0, padding: '6px 4px', justifyContent: 'center' }}
+                title="QR Code Client"
+                style={{ flex: '1 1 85px', minWidth: 0, padding: '6px 8px', justifyContent: 'center', minHeight: 34 }}
               >
                 <span>📱</span>
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>QR Client</span>
+                <span style={{ whiteSpace: 'nowrap' }}>QR Client</span>
               </button>
 
               <button
                 onClick={handleExportCSV}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
                 title={t('common.exportCsv')}
-                style={{ minWidth: 0, padding: '6px 4px', justifyContent: 'center' }}
+                style={{ flex: '1 1 70px', minWidth: 0, padding: '6px 8px', justifyContent: 'center', minHeight: 34 }}
               >
                 <span>📥</span>
-                <span>CSV</span>
+                <span style={{ whiteSpace: 'nowrap' }}>CSV</span>
               </button>
 
               <button
                 onClick={handleExportPDF}
                 className="npl-btn npl-btn-secondary npl-btn-sm"
                 title={t('common.exportPdf')}
-                style={{ minWidth: 0, padding: '6px 4px', justifyContent: 'center' }}
+                style={{ flex: '1 1 70px', minWidth: 0, padding: '6px 8px', justifyContent: 'center', minHeight: 34 }}
               >
                 <span>🖨️</span>
-                <span>PDF</span>
+                <span style={{ whiteSpace: 'nowrap' }}>PDF</span>
               </button>
             </div>
           </div>

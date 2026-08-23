@@ -3360,8 +3360,8 @@ function BoutiqueDashboard({
             </div>
             <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>{formatNumber(nbEnAttente)}</p>
           </div>
-          <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 8, textDecoration: 'underline', textAlign: 'left' }}>
-            {t('shop.viewOrders')}
+          <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--accent, #C75B00)', fontSize: 11.5, fontWeight: 750, cursor: 'pointer', padding: 0, marginTop: 10, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span>{t('shop.viewOrders')}</span>
           </button>
         </div>
 
@@ -3375,8 +3375,8 @@ function BoutiqueDashboard({
             </div>
             <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: 'var(--navy)' }}>{loading ? '...' : formatNumber(produitsCount ?? 0)}</p>
           </div>
-          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: 'var(--navy)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 8, textDecoration: 'underline', textAlign: 'left' }}>
-            {t('shop.manageCatalogBtn')}
+          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: 'var(--accent, #C75B00)', fontSize: 11.5, fontWeight: 750, cursor: 'pointer', padding: 0, marginTop: 10, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span>{t('shop.manageCatalogBtn')}</span>
           </button>
         </div>
 
@@ -3390,8 +3390,8 @@ function BoutiqueDashboard({
             </div>
             <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>{loading ? '...' : formatNumber(stockAlertsCount ?? 0)}</p>
           </div>
-          <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer', padding: 0, marginTop: 8, textDecoration: 'underline', textAlign: 'left' }}>
-            {t('shop.restockBtn')}
+          <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--accent, #C75B00)', fontSize: 11.5, fontWeight: 750, cursor: 'pointer', padding: 0, marginTop: 10, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span>{t('shop.restockBtn')}</span>
           </button>
         </div>
 
@@ -3407,15 +3407,21 @@ function BoutiqueDashboard({
               {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf' : 'Gratuit'}
             </p>
           </div>
-          <Link href="/boutique/abonnement" style={{ color: 'var(--navy)', fontSize: 11.5, fontWeight: 700, textDecoration: 'underline', display: 'inline-block', marginTop: 8 }}>
-            {t('shop.manageTierBtn')}
+          <Link href="/boutique/abonnement" style={{ color: 'var(--accent, #C75B00)', fontSize: 11.5, fontWeight: 750, display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 10, textDecoration: 'none' }}>
+            <span>{t('shop.manageTierBtn')}</span>
           </Link>
         </div>
       </div>
 
-      {/* Raccourcis d'action rapide — Grille fluide 2 colonnes sans conteneur lourd */}
-      <div className="bq-actions-container" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 18, boxShadow: '0 4px 16px rgba(26,22,18,0.03)' }}>
-        <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 900, color: 'var(--navy)', letterSpacing: '-0.01em' }}>⚡ {t('shop.quickActions')}</h3>
+      {/* Raccourcis d'action rapide — Grille 3 colonnes Desktop / 2 colonnes Mobile */}
+      <div className="bq-actions-container" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: '18px 20px', boxShadow: '0 4px 16px rgba(26,22,18,0.03)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <Zap size={18} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: 'var(--navy)', letterSpacing: '-0.01em' }}>
+            {t('shop.quickActions')}
+          </h3>
+        </div>
+        
         <div className="bq-actions-grid">
           
           <button
@@ -3425,15 +3431,15 @@ function BoutiqueDashboard({
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
               borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)',
             }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 10, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Zap size={19} style={{ color: 'var(--price)' }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickSalesExpenses')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickSalesExpensesDesc')}</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickSalesExpenses')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickSalesExpensesDesc')}</p>
             </div>
           </button>
 
@@ -3444,15 +3450,15 @@ function BoutiqueDashboard({
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
               borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)',
             }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <BookOpen size={19} style={{ color: 'var(--red)' }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickDebtBook')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickDebtBookDesc')}</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickDebtBook')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickDebtBookDesc')}</p>
             </div>
           </button>
 
@@ -3463,15 +3469,15 @@ function BoutiqueDashboard({
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
               borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)',
             }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <PlusCircle size={19} style={{ color: 'var(--accent)' }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.newProduct')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Photos, prix & détails</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.newProduct')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Photos, prix & détails</p>
             </div>
           </button>
 
@@ -3482,15 +3488,15 @@ function BoutiqueDashboard({
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
               borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)',
             }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 10, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <FileText size={19} style={{ color: 'var(--navy)' }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.documents')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Document client PDF</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.documents')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Factures & Devis PDF</p>
             </div>
           </button>
 
@@ -3502,7 +3508,7 @@ function BoutiqueDashboard({
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
                 borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
                 textDecoration: 'none', WebkitFontSmoothing: 'antialiased',
-                boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
+                boxShadow: '0 2px 6px rgba(26,22,18,0.03)',
               }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
             >
@@ -3510,8 +3516,8 @@ function BoutiqueDashboard({
                 <ShoppingCart size={19} style={{ color: 'var(--navy)' }} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickPos')}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickPosDesc')}</p>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickPos')}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickPosDesc')}</p>
               </div>
             </a>
           )}
@@ -3523,15 +3529,15 @@ function BoutiqueDashboard({
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
               borderRadius: 12, background: 'var(--card)', border: '1.5px solid var(--border)',
               cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: '0 2px 6px rgba(26,22,18,0.03)', transition: 'all 0.15s ease',
+              boxShadow: '0 2px 6px rgba(26,22,18,0.03)',
             }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 10, background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Share2 size={19} style={{ color: 'var(--accent)' }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 12.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickQr')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickQrDesc')}</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickQr')}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text2)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickQrDesc')}</p>
             </div>
           </button>
         </div>

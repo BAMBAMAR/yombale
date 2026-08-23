@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTranslation } from '@/i18n/context'
+import { BarChart3, DollarSign, ShoppingCart, Eye, Tag, Activity, CheckCircle2, HelpCircle, TrendingUp, Zap, Store } from 'lucide-react'
 
 interface Stats {
   vues_total: string
@@ -72,7 +73,7 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
   if (boutiques.length === 0) {
     return (
       <div style={{ maxWidth: 700, margin: '40px auto', padding: '0 20px', textAlign: 'center' }}>
-        <p style={{ fontSize: 32 }}>📊</p>
+        <BarChart3 size={40} style={{ color: 'var(--navy)', margin: '0 auto 12px' }} />
         <p>Vous n&apos;avez pas encore de boutique.</p>
       </div>
     )
@@ -102,14 +103,16 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
       {stats && !loading && (
         <>
           {/* Mode d'exploitation badge */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>{stats.mode_fonctionnement === 'pure_player' ? '⚡' : '🏪'}</span>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: '#fff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {stats.mode_fonctionnement === 'pure_player' ? <Zap size={18} style={{ color: '#C75B00' }} /> : <Store size={18} style={{ color: '#1e3a5f' }} />}
+              </div>
               <div>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1f2937' }}>
+                <span style={{ fontSize: 13, fontWeight: 750, color: '#1f2937' }}>
                   Mode actif : {stats.mode_fonctionnement === 'pure_player' ? 'Pure Player E-Commerce (100% Web)' : 'Hybride POS (Commerce Physique + Web)'}
                 </span>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b' }}>
+                <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#64748b' }}>
                   {stats.mode_fonctionnement === 'pure_player' ? 'Interface optimisée pour la vente en ligne sans caisse physique' : 'Interface complète avec caisse enregistreuse POS'}
                 </p>
               </div>
@@ -117,47 +120,59 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
           </div>
 
           {/* KPIs Trafic & Conversions — Grille 4 colonnes Desktop / 2 colonnes Mobile */}
-          <h3 style={{ fontSize: 14, fontWeight: 800, margin: '0 0 10px', color: '#1f2937' }}>📊 Performances Trafic & Ventes</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px' }}>
+            <TrendingUp size={16} style={{ color: 'var(--accent, #C75B00)' }} />
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, color: '#1f2937' }}>Performances Trafic & Ventes</h3>
+          </div>
+          
           <div className="bq-kpi-grid" style={{ marginBottom: 20 }}>
             {[
-              { label: 'Chiffre d\'Affaires Total', value: `${n(stats.total_ventes || 0)} FCFA`, sub: `Comptabilité globale (POS + Web)`, emoji: '💰' },
-              { label: 'Ventes Web 1-Page', value: `${n(stats.total_ventes_web ?? stats.total_ventes ?? 0)} FCFA`, sub: `${n(stats.nb_commandes || 0)} commandes web actives`, emoji: '🛒' },
-              { label: 'Vues Boutique', value: n(stats.vues_total), sub: `${n(stats.vues_7j)} cette semaine · ${n(stats.clics_tel_total || 0)} clics contact`, emoji: '👁️' },
-              { label: 'Coupons Réductions', value: n(stats.utilisations_promo || 0), sub: `${n(stats.nb_promotions || 0)} codes promo créés`, emoji: '🏷️' },
-            ].map(({ label, value, sub, emoji }) => (
-              <div key={label} className="bq-kpi-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              { label: 'Chiffre d\'Affaires Total', value: `${n(stats.total_ventes || 0)} FCFA`, sub: `Comptabilité globale (POS + Web)`, icon: <DollarSign size={18} style={{ color: '#16a34a' }} />, iconBg: '#f0fdf4' },
+              { label: 'Ventes Web 1-Page', value: `${n(stats.total_ventes_web ?? stats.total_ventes ?? 0)} FCFA`, sub: `${n(stats.nb_commandes || 0)} commandes web actives`, icon: <ShoppingCart size={18} style={{ color: '#2563eb' }} />, iconBg: '#eff6ff' },
+              { label: 'Vues Boutique', value: n(stats.vues_total), sub: `${n(stats.vues_7j)} cette semaine · ${n(stats.clics_tel_total || 0)} clics contact`, icon: <Eye size={18} style={{ color: '#C75B00' }} />, iconBg: '#fff7ed' },
+              { label: 'Coupons Réductions', value: n(stats.utilisations_promo || 0), sub: `${n(stats.nb_promotions || 0)} codes promo créés`, icon: <Tag size={18} style={{ color: '#9333ea' }} />, iconBg: '#faf5ff' },
+            ].map(({ label, value, sub, icon, iconBg }) => (
+              <div key={label} className="bq-kpi-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 2px 8px rgba(15,23,42,0.03)' }}>
                 <div>
-                  <div style={{ fontSize: 20 }}>{emoji}</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, margin: '4px 0 2px', color: '#111827', wordBreak: 'break-word' }}>{value}</div>
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {icon}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#111827', wordBreak: 'break-word', letterSpacing: '-0.02em' }}>{value}</div>
                 </div>
-                <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 4 }}>{sub}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8, fontWeight: 500 }}>{sub}</div>
               </div>
             ))}
           </div>
 
           {/* Santé des Pixels Publicitaires */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px', marginBottom: 24 }}>
-            <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 700, color: '#1f2937' }}>
-              🎯 Santé des Pixels de Tracking Publicitaire (ROAS)
-            </h3>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px 20px', marginBottom: 24, boxShadow: '0 2px 8px rgba(15,23,42,0.03)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px' }}>
+              <Activity size={16} style={{ color: 'var(--accent, #C75B00)' }} />
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 750, color: '#1f2937' }}>
+                Santé des Pixels de Tracking Publicitaire (ROAS)
+              </h3>
+            </div>
+            
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1f2937' }}>🔵 Meta Facebook Pixel</span>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: stats.meta_pixel_active ? '#dcfce7' : '#f3f4f6', color: stats.meta_pixel_active ? '#166534' : '#6b7280' }}>
-                  {stats.meta_pixel_active ? '✅ Actif' : '⚪ Non configuré'}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 13, fontWeight: 650, color: '#1f2937' }}>Meta Facebook Pixel</span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 12, display: 'inline-flex', alignItems: 'center', gap: 4, background: stats.meta_pixel_active ? '#dcfce7' : '#f3f4f6', color: stats.meta_pixel_active ? '#166534' : '#6b7280' }}>
+                  {stats.meta_pixel_active ? <><CheckCircle2 size={12} /> Actif</> : <><HelpCircle size={12} /> Inactif</>}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1f2937' }}>🎵 TikTok Pixel</span>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: stats.tiktok_pixel_active ? '#dcfce7' : '#f3f4f6', color: stats.tiktok_pixel_active ? '#166534' : '#6b7280' }}>
-                  {stats.tiktok_pixel_active ? '✅ Actif' : '⚪ Non configuré'}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 13, fontWeight: 650, color: '#1f2937' }}>TikTok Pixel</span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 12, display: 'inline-flex', alignItems: 'center', gap: 4, background: stats.tiktok_pixel_active ? '#dcfce7' : '#f3f4f6', color: stats.tiktok_pixel_active ? '#166534' : '#6b7280' }}>
+                  {stats.tiktok_pixel_active ? <><CheckCircle2 size={12} /> Actif</> : <><HelpCircle size={12} /> Inactif</>}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1f2937' }}>📈 Google Analytics GA4</span>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 12, background: stats.ga4_active ? '#dcfce7' : '#f3f4f6', color: stats.ga4_active ? '#166534' : '#6b7280' }}>
-                  {stats.ga4_active ? '✅ Actif' : '⚪ Non configuré'}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 13, fontWeight: 650, color: '#1f2937' }}>Google Analytics GA4</span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 12, display: 'inline-flex', alignItems: 'center', gap: 4, background: stats.ga4_active ? '#dcfce7' : '#f3f4f6', color: stats.ga4_active ? '#166534' : '#6b7280' }}>
+                  {stats.ga4_active ? <><CheckCircle2 size={12} /> Actif</> : <><HelpCircle size={12} /> Inactif</>}
                 </span>
               </div>
             </div>

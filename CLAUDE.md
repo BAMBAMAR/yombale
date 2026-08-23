@@ -1,3 +1,21 @@
+- **Refonte Graphique & Optimisation Responsive des Tableaux de Bord (Boutique, POS, Analytics & Admin) (`main` - 23 août 2026)** 🎨📊📱⚡✨ :
+  * **🏪 Équilibrage & Finition du Tableau de Bord Marchand (`BoutiqueClient.tsx`, `globals.css`)** :
+    - **Grille d'Actions Rapides 3x2 Harmonieuse** : Remplacement de la grille asymétrique par une disposition équilibrée en 3 colonnes desktop (`grid-template-columns: repeat(3, 1fr)`) et 2 colonnes mobile/tablette, éliminant tout vide visuel et allouant +40% de largeur utile à chaque carte.
+    - **Éradication Totale des Troncatures de Texte (`...`)** : Optimisation concise des libellés et descriptions dans les dictionnaires i18n (`fr`, `en`, `ar`) permettant à tous les textes d'actions (*Vente Express*, *Carnet de Dettes*, *Ajouter un produit*, *Factures & Devis*, *Caisse Tactile*, *QR Code & Vitrine*) d'être affichés intégralement sans coupure.
+    - **Harmonisation Typographique & Micro-Interactions** : Remplacement des liens soulignés bruts par des boutons interactifs discrets avec transitions fluides (`transform: translateY(-2px)`, ombres portées douces `rgba(199, 91, 0, 0.12)` au survol).
+    - **Nettoyage Iconographique Vectoriel** : Remplacement des doubles émojis dans les titres par des icônes SVG natives Lucide (`<Zap />`, `<TrendingUp />`, etc.) pour un rendu net et homogène sur tous les OS.
+  * **📈 Refonte Visuelle du Dashboard Analytics (`AnalyticsClient.tsx`)** :
+    - Remplacement des émojis statiques par des icônes Lucide modernes (`BarChart3`, `DollarSign`, `ShoppingCart`, `Eye`, `Tag`, `Activity`, `TrendingUp`).
+    - Nouveaux badges d'état pour les pixels publicitaires (Meta, TikTok, GA4) avec indicateurs d'activation nets (`CheckCircle2` / `HelpCircle`).
+  * **📒 Optimisation Tactile Mobile du Carnet de Dettes (`CarnetDettes.tsx`)** :
+    - Flexibilisation de la barre d'outils secondaire (`flex: 1 1 auto` avec `minHeight: 34px`) pour les boutons *QR Client*, *CSV* et *PDF*, garantissant l'absence de chevauchement sur petits écrans de smartphones (iPhone SE / Android 360px).
+  * **🛡️ Tiroir de Navigation Mobile pour le Dashboard Admin (`AdminSidebarClient.tsx`, `globals.css`)** :
+    - Création du composant client `AdminSidebarClient` avec en-tête sticky et bouton d'ouverture/fermeture rétractable (`[ ☰ Menu Admin ]` / `[ ✕ Fermer ]`).
+    - Élimine l'affichage en vrac de plus de 20 liens au sommet de la page mobile de l'administrateur, permettant un accès direct et instantané aux KPIs et alertes de modération.
+  * **🧪 Validation & Contrôle Qualité** :
+    - Respect strict des directives `AGENTS.md` (100% polices système natives `var(--font-inter)` / `system-ui`, 0 font-fetch externe).
+    - Tests de build et validation responsive multi-résolutions (Desktop, Tablette, Mobile).
+
 - **Traduction Automatique en Français & Optimisation Multi-Plateformes de la Baguette Magique (SHEIN, Amazon, AliExpress) (`main` - 23 août 2026)** 🌟🪄🇫🇷👗⚡ :
   * **🇫🇷 Traduction Automatique des Fiches Produits en Français (`backend/services/magic-import.js`)** :
     - **Moteur Hybride de Traduction E-Commerce (`translateProductTitleToFrench`)** : Traduction automatique de tous les titres et descriptions de produits anglais provenant de SHEIN, AliExpress ou Amazon vers un français naturel et vendeur.
