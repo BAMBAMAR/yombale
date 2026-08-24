@@ -3037,7 +3037,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                           onClick={() => { setMenuActionsOuvertId(null); setMode({ editing: p }); }}
                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
-                          🏷️ {t('shop.scanBarcodeModalTitle')}
+                          {t('shop.scanBarcodeModalTitle')}
                         </button>
                         <button
                           onClick={(e) => {

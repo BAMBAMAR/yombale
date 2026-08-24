@@ -88,16 +88,20 @@ export default function RegisterSW() {
     }
   }, [])
 
+  const [toastDismissed, setToastDismissed] = useState(false)
+
   // Détecter les transitions offline → online pour afficher le toast
   useEffect(() => {
     if (!isOnline) {
       setWasOffline(true)
       setShowOnlineToast(false)
+      setToastDismissed(false)
       console.warn('🔴 [RegisterSW] Hors-ligne confirmé par ping applicatif.')
     } else if (wasOffline && isOnline) {
       console.log('🟢 [RegisterSW] Connexion rétablie confirmée par ping applicatif.')
       setShowOnlineToast(true)
       setWasOffline(false)
+      setToastDismissed(false)
 
       // Mettre à jour le SW en arrière-plan
       if ('serviceWorker' in navigator) {
@@ -151,42 +155,68 @@ export default function RegisterSW() {
 
   return (
     <>
-      {/* Bandeau offline / online */}
-      {(isOffline || showOnlineToast) && (
+      {/* Bandeau offline / online — positionné au sommet pour ne jamais masquer les boutons d'encaissement */}
+      {((isOffline && !toastDismissed) || showOnlineToast) && (
         <div
           style={{
             position: 'fixed',
-            bottom: '24px',
+            top: '12px',
             left: '50%',
             transform: 'translateX(-50%)',
             backgroundColor: isOffline ? '#c2410c' : '#15803d',
             color: '#ffffff',
-            padding: '10px 22px',
+            padding: '8px 14px 8px 16px',
             borderRadius: '30px',
-            fontSize: '13px',
+            fontSize: '12.5px',
             fontWeight: 'bold',
             boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
             zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
+            gap: '8px',
             border: '1px solid rgba(255,255,255,0.25)',
             backdropFilter: 'blur(8px)',
             pointerEvents: 'auto',
             transition: 'all 0.3s ease-in-out',
             width: 'max-content',
-            maxWidth: '90vw',
+            maxWidth: '92vw',
             textAlign: 'center',
-            lineHeight: '1.4',
+            lineHeight: '1.3',
           }}
         >
-          <span>{isOffline ? '📡' : '✅'}</span>
+          <span style={{ fontSize: '14px' }}>{isOffline ? '📡' : '✅'}</span>
           <span>
             {isOffline
               ? 'Mode Hors-Ligne — Consultation des données locales en cache'
               : 'Connexion Internet rétablie'}
           </span>
+          {isOffline && (
+            <button
+              type="button"
+              onClick={() => setToastDismissed(true)}
+              aria-label="Fermer la notification hors-ligne"
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: '#ffffff',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 'bold',
+                marginLeft: '4px',
+                padding: 0,
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          )}
         </div>
       )}
 

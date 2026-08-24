@@ -2,35 +2,50 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/dal'
+import { apiFetch } from '@/lib/api'
 import { backendAuthFetch } from '@/lib/backendFetch'
 import PageHeader from '@/components/PageHeader'
 import PaiementSponsoringBoutiqueClient from './PaiementSponsoringBoutiqueClient'
 
 export const metadata: Metadata = {
-  title: 'Sponsoriser ma boutique',
+  title: 'Mettre en avant ma boutique',
 }
 
 interface Boutique {
   id: string
   nom: string
-  sponsorise: boolean | null
+  sponsorise?: boolean | null
 }
 
 export default async function PayerSponsoringBoutiquePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const session = await getOptionalSession()
-  if (!session) redirect('/connexion?redirect=/boutique')
+  if (!session) redirect(`/connexion?redirect=/payer-sponsoring-boutique/${id}`)
 
   let boutique: Boutique | null = null
 
+  // 1. Tenter la route authentifiée /boutiques/mine
   try {
-    const res = await backendAuthFetch('/boutiques/mes-boutiques')
+    const res = await backendAuthFetch('/boutiques/mine')
     if (res.ok) {
-      const boutiques: Boutique[] = await res.json()
-      boutique = boutiques.find((b: any) => b.id === id) ?? null
+      const data = await res.json()
+      const list: Boutique[] = Array.isArray(data) ? data : (data.boutiques || [])
+      boutique = list.find((b: any) => b.id === id || b.slug === id) ?? null
     }
   } catch {
     // handled below
+  }
+
+  // 2. Repli vers apiFetch public (/boutiques/${id})
+  if (!boutique) {
+    try {
+      const bq = await apiFetch<Boutique>(`/boutiques/${id}`)
+      if (bq && bq.id) {
+        boutique = bq
+      }
+    } catch {
+      // handled below
+    }
   }
 
   if (!boutique) {
@@ -65,15 +80,15 @@ export default async function PayerSponsoringBoutiquePage({ params }: { params: 
       <PageHeader
         breadcrumb={[
           { label: 'Ma boutique', href: '/boutique' },
-          { label: 'Sponsoriser' }
+          { label: 'Mettre en avant' }
         ]}
         emoji="⭐"
-        titre="Sponsoriser votre boutique"
+        titre="Mettre en avant votre boutique"
         compteur={`Mettez votre boutique "${nomCourt}" en vedette pour 30 jours (Apparaîtra dans la section Boutiques Pro).`}
       />
 
       <PaiementSponsoringBoutiqueClient
-        boutiqueId={id}
+        boutiqueId={boutique.id}
         nomCourt={nomCourt}
         settings={settings}
         userId={session.userId}

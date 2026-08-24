@@ -10351,10 +10351,11 @@ button:focus-visible,
     justify-content: flex-start !important;
   }
 
-  /* Positionnement intelligent du menu déroulant Actions pour éviter les débordements à gauche sur mobile */
+  /* Positionnement du menu déroulant Actions : aligné à droite pour ne jamais déborder hors de l'écran */
   .bq-actions-dropdown {
-    right: auto !important;
-    left: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    max-width: calc(100vw - 24px) !important;
   }
 
   /* Actions pro */
@@ -12825,5 +12826,176 @@ label,
   .comp-fiche-btn {
     font-size: 11px;
     padding: 6px 10px;
+  }
+}
+
+/* ── 13. Vitrine Boutique Publique (/boutiques/[id]) ─────────────── */
+.bq-public-cover {
+  width: 100%;
+  height: 200px;
+  background: #f1f5f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.bq-public-header-card {
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 20px 16px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 5;
+}
+
+.bq-public-logo {
+  width: 84px;
+  height: 84px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 4px solid #fff;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  position: relative;
+  z-index: 10;
+  margin-top: -42px;
+}
+
+.bq-public-actions-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.bq-public-btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #25D366;
+  color: #ffffff !important;
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13.5px;
+  height: 38px;
+  box-shadow: 0 1px 3px rgba(37, 211, 102, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bq-public-btn-whatsapp:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(37, 211, 102, 0.35);
+}
+
+.bq-public-btn-tel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #f8fafc;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  height: 38px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.bq-public-btn-tel:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.bq-public-btn-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  height: 38px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.bq-public-btn-share:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.bq-public-btn-site {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #f8fafc;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  height: 38px;
+  transition: background 0.15s ease;
+}
+
+.bq-public-btn-site:hover {
+  background: #f1f5f9;
+}
+
+.bq-breadcrumb-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin: 8px 0 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .bq-public-cover {
+    height: 140px;
+  }
+  .bq-public-header-card {
+    padding: 0 14px 12px;
+    margin-bottom: 8px;
+  }
+  .bq-public-logo {
+    width: 68px;
+    height: 68px;
+    border-radius: 12px;
+    margin-top: -34px;
+    border-width: 3px;
+  }
+  .bq-public-actions-bar {
+    margin-top: 10px;
+    gap: 6px;
+  }
+  .bq-public-btn-whatsapp,
+  .bq-public-btn-tel,
+  .bq-public-btn-share,
+  .bq-public-btn-site {
+    flex: 1 1 auto;
+    font-size: 12.5px;
+    padding: 6px 10px;
+    height: 36px;
   }
 }

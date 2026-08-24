@@ -5,7 +5,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { notFound, redirect } from 'next/navigation'
-import PageHeader from '@/components/PageHeader'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
@@ -115,11 +114,8 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
   return (
     <div className="page-container" style={{ maxWidth: 1440, paddingTop: 0, paddingBottom: '3rem' }}>
 
-      {/* Cover photo HD */}
-      <div style={{
-        width: '100%', height: 220, background: '#f1f5f9',
-        position: 'relative', overflow: 'hidden', marginBottom: 0,
-      }}>
+      {/* Cover photo HD responsive */}
+      <div className="bq-public-cover">
         <ExternalImg
           src={b.cover_url ? cloudinaryHQ(b.cover_url, { width: 1200 }) : getCategoryCoverPhoto(b.nom, b.categorie)}
           alt={b.nom}
@@ -132,28 +128,18 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
         }} />
       </div>
 
-      {/* Header boutique */}
-      <div style={{
-        background: '#fff', borderBottom: '1px solid #e5e7eb',
-        padding: '0 20px 20px', marginBottom: 24,
-        position: 'relative', zIndex: 5,
-      }}>
+      {/* Header boutique compact */}
+      <div className="bq-public-header-card">
         <div style={{ maxWidth: 1350, margin: '0 auto' }}>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginTop: -44 }}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end' }}>
             {/* Logo */}
-            <div style={{
-              width: 88, height: 88, borderRadius: 14, overflow: 'hidden', flexShrink: 0,
-              border: '4px solid #fff', background: '#f8fafc',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(0,0,0,.18)',
-              position: 'relative', zIndex: 10,
-            }}>
+            <div className="bq-public-logo">
               <ExternalImg src={b.logo_url} alt={b.nom} fallback={CAT_ICONS[b.categorie ?? ''] ?? '🏪'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
 
-            <div style={{ flex: 1, paddingBottom: 4 }}>
+            <div style={{ flex: 1, minWidth: 0, paddingBottom: 2 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 22, fontWeight: 800, margin: 0 }}>
+                <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 800, margin: 0, color: '#0f172a' }}>
                   {b.nom}
                 </h1>
                 {b.plan_actif === 'business' && (
@@ -167,23 +153,19 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                   </span>
                 )}
               </div>
-              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>
+              <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {[b.categorie, b.adresse, b.ville].filter(Boolean).join(' · ')}
               </p>
             </div>
           </div>
 
-          {/* Boutons d'action */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
+          {/* Boutons d'action harmonisés */}
+          <div className="bq-public-actions-bar">
             {whatsappUrl && (
               <a
                 href={whatsappUrl}
                 target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  background: '#25d366', color: '#fff', padding: '9px 18px',
-                  borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14,
-                }}
+                className="bq-public-btn-whatsapp"
               >
                 💬 WhatsApp
               </a>
@@ -191,48 +173,43 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
             {b.telephone && (
               <a
                 href={`tel:${b.telephone}`}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  background: '#f0f9ff', color: '#1d4ed8', border: '1px solid #bfdbfe',
-                  padding: '9px 18px', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14,
-                }}
+                className="bq-public-btn-tel"
               >
                 📞 {b.telephone}
               </a>
             )}
+            <BoutonPartager
+              variant="unified"
+              className="bq-public-btn-share"
+              lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${b.slug || b.id}`}
+              message={`Découvrez la boutique officielle de ${b.nom} sur Nopalou :\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${b.slug || b.id}`}
+              lienVisuel={`/assets/boutique/${b.id}/story`}
+            />
             {b.site_web && (
               <a
                 href={b.site_web}
                 target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  background: '#f8fafc', color: '#374151', border: '1px solid #e5e7eb',
-                  padding: '9px 18px', borderRadius: 10, textDecoration: 'none', fontWeight: 600, fontSize: 14,
-                }}
+                className="bq-public-btn-site"
               >
                 🌐 Site web
               </a>
             )}
-            <BoutonPartager
-              lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${b.slug || b.id}`}
-              message={`Découvrez notre vitrine officielle chez ${b.nom} !\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${b.slug || b.id}`}
-              lienVisuel={`/assets/boutique/${b.id}/story`}
-            />
           </div>
         </div>
       </div>
 
       {/* Contenu avec onglets */}
-      <div style={{ maxWidth: 1350, margin: '0 auto', padding: '0 20px' }}>
-        <div style={{ marginTop: 32, marginBottom: 16 }}>
-          <PageHeader
-            breadcrumb={[
-              { label: 'Toutes les boutiques', href: '/boutiques' },
-              { label: b.nom }
-            ]}
-            titre=""
-          />
-        </div>
+      <div style={{ maxWidth: 1350, margin: '0 auto', padding: '0 16px' }}>
+        {/* Fil d'Ariane ultra-compact */}
+        <nav aria-label="Fil d'Ariane" className="bq-breadcrumb-compact">
+          <Link href="/boutiques" style={{ color: 'var(--text2, #6B5E52)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span>🏪 Toutes les boutiques</span>
+          </Link>
+          <span style={{ color: '#cbd5e1' }}>›</span>
+          <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 700 }}>
+            {b.nom}
+          </span>
+        </nav>
 
         <BoutiqueDetailClient
           boutique={{

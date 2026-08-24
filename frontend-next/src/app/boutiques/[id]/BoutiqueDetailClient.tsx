@@ -400,29 +400,29 @@ export default function BoutiqueDetailClient({
 
       {/* 🧭 NAVIGATION PAR ONGLETS MODERNE (FLUIDE & RESPONSIVE MOBILE) */}
       <div className="nopalou-scroll-tabs" style={{
-        display: 'flex', gap: 6, padding: 6, background: '#f1f5f9', borderRadius: 16,
-        marginBottom: 24, overflowX: 'auto', border: '1px solid #e2e8f0', scrollbarWidth: 'none',
+        display: 'flex', gap: 4, padding: 4, background: '#f1f5f9', borderRadius: 14,
+        marginBottom: 12, overflowX: 'auto', border: '1px solid #e2e8f0', scrollbarWidth: 'none',
         WebkitOverflowScrolling: 'touch'
       }}>
         <button
           onClick={() => setTab('produits')}
           style={{
-            flex: '1 0 auto', minWidth: 110, padding: '10px 14px', borderRadius: 12, border: 'none',
+            flex: '1 0 auto', minWidth: 100, padding: '8px 12px', borderRadius: 10, border: 'none',
             background: tab === 'produits' ? '#fff' : 'transparent',
             color: tab === 'produits' ? '#C75B00' : '#64748b',
-            fontWeight: tab === 'produits' ? 900 : 600, fontSize: 13, cursor: 'pointer',
-            boxShadow: tab === 'produits' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontWeight: tab === 'produits' ? 900 : 600, fontSize: 12.5, cursor: 'pointer',
+            boxShadow: tab === 'produits' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             transition: 'all 0.15s ease', whiteSpace: 'nowrap',
           }}
         >
-          <Tag size={17} style={{ color: tab === 'produits' ? '#C75B00' : '#94a3b8' }} />
+          <Tag size={15} style={{ color: tab === 'produits' ? '#C75B00' : '#94a3b8' }} />
           <span>Catalogue produits</span>
           {produits.length > 0 && (
             <span style={{
               background: tab === 'produits' ? '#fff7f0' : '#e2e8f0',
               color: tab === 'produits' ? '#C75B00' : '#475569',
-              padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+              padding: '1px 6px', borderRadius: 10, fontSize: 11, fontWeight: 800,
             }}>
               {produits.length}
             </span>
@@ -433,21 +433,21 @@ export default function BoutiqueDetailClient({
           <button
             onClick={() => setTab('annonces')}
             style={{
-              flex: '1 0 auto', minWidth: 110, padding: '10px 14px', borderRadius: 12, border: 'none',
+              flex: '1 0 auto', minWidth: 100, padding: '8px 12px', borderRadius: 10, border: 'none',
               background: tab === 'annonces' ? '#fff' : 'transparent',
               color: tab === 'annonces' ? '#1e3a5f' : '#64748b',
-              fontWeight: tab === 'annonces' ? 900 : 600, fontSize: 13, cursor: 'pointer',
-              boxShadow: tab === 'annonces' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              fontWeight: tab === 'annonces' ? 900 : 600, fontSize: 12.5, cursor: 'pointer',
+              boxShadow: tab === 'annonces' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               transition: 'all 0.15s ease', whiteSpace: 'nowrap',
             }}
           >
-            <Sparkles size={17} style={{ color: tab === 'annonces' ? '#1e3a5f' : '#94a3b8' }} />
+            <Sparkles size={15} style={{ color: tab === 'annonces' ? '#1e3a5f' : '#94a3b8' }} />
             <span>Annonces</span>
             <span style={{
               background: tab === 'annonces' ? '#eff6ff' : '#e2e8f0',
               color: tab === 'annonces' ? '#1d4ed8' : '#475569',
-              padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+              padding: '1px 6px', borderRadius: 10, fontSize: 11, fontWeight: 800,
             }}>
               {annonces.length}
             </span>
@@ -457,16 +457,16 @@ export default function BoutiqueDetailClient({
         <button
           onClick={() => setTab('infos')}
           style={{
-            flex: '1 0 auto', minWidth: 110, padding: '10px 14px', borderRadius: 12, border: 'none',
+            flex: '1 0 auto', minWidth: 100, padding: '8px 12px', borderRadius: 10, border: 'none',
             background: tab === 'infos' ? '#fff' : 'transparent',
             color: tab === 'infos' ? '#0f172a' : '#64748b',
-            fontWeight: tab === 'infos' ? 900 : 600, fontSize: 13, cursor: 'pointer',
-            boxShadow: tab === 'infos' ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontWeight: tab === 'infos' ? 900 : 600, fontSize: 12.5, cursor: 'pointer',
+            boxShadow: tab === 'infos' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             transition: 'all 0.15s ease', whiteSpace: 'nowrap',
           }}
         >
-          <Info size={17} style={{ color: tab === 'infos' ? '#0f172a' : '#94a3b8' }} />
+          <Info size={15} style={{ color: tab === 'infos' ? '#0f172a' : '#94a3b8' }} />
           <span>Infos & Contact</span>
         </button>
       </div>
@@ -477,50 +477,50 @@ export default function BoutiqueDetailClient({
 
           {/* 🔍 OUTILS DE RECHERCHE, FILTRES ET TRI INTERNE BOUTIQUE */}
           {produits.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 14, padding: '16px', border: '1px solid #e5e7eb', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: '#fff', borderRadius: 12, padding: '12px 14px', border: '1px solid #e5e7eb', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
               
               {/* Barre de Recherche Intérieure */}
               <div style={{ position: 'relative', width: '100%' }}>
-                <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder={`Rechercher un article chez ${boutique.nom}...`}
+                  placeholder={`Rechercher chez ${boutique.nom}...`}
                   style={{
-                    width: '100%', paddingLeft: 42, paddingRight: searchQuery ? 40 : 14, height: 44,
-                    borderRadius: 10, border: '1px solid #d1d5db', fontSize: 14, outline: 'none', background: '#f8fafc',
+                    width: '100%', paddingLeft: 38, paddingRight: searchQuery ? 36 : 12, height: 38,
+                    borderRadius: 8, border: '1px solid #d1d5db', fontSize: 13.5, outline: 'none', background: '#f8fafc',
                   }}
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer' }}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer' }}
                   >
-                    <X size={16} />
+                    <X size={15} />
                   </button>
                 )}
               </div>
 
               {/* Filtres par Catégorie Internes (Pastilles) */}
               {categoriesInternes.length > 0 && (
-                <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+                <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 2 }}>
                   <button
                     onClick={() => setCatFilter('')}
                     style={{
-                      padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: !catFilter ? 800 : 600,
+                      padding: '4px 10px', borderRadius: 16, fontSize: 11.5, fontWeight: !catFilter ? 800 : 600,
                       background: !catFilter ? '#1e3a5f' : '#f1f5f9', color: !catFilter ? '#fff' : '#374151',
                       border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                     }}
                   >
-                    Tous les articles ({produits.length})
+                    Tous ({produits.length})
                   </button>
                   {categoriesInternes.map(c => (
                     <button
                       key={c}
                       onClick={() => setCatFilter(catFilter === c ? '' : c)}
                       style={{
-                        padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: catFilter === c ? 800 : 600,
+                        padding: '4px 10px', borderRadius: 16, fontSize: 11.5, fontWeight: catFilter === c ? 800 : 600,
                         background: catFilter === c ? '#1e3a5f' : '#f1f5f9', color: catFilter === c ? '#fff' : '#374151',
                         border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                       }}
@@ -532,21 +532,21 @@ export default function BoutiqueDetailClient({
               )}
 
               {/* Tranche de Prix & Badges de Tri */}
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid #f3f4f6' }}>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280' }}>Prix :</span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid #f3f4f6' }}>
+                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: '#6b7280' }}>Prix :</span>
                   {[
                     { id: '', label: 'Tous' },
-                    { id: '<10k', label: '< 10 000 F' },
-                    { id: '10k-50k', label: '10k - 50k F' },
-                    { id: '50k-100k', label: '50k - 100k F' },
-                    { id: '>100k', label: '> 100 000 F' },
+                    { id: '<10k', label: '< 10k F' },
+                    { id: '10k-50k', label: '10k-50k F' },
+                    { id: '50k-100k', label: '50k-100k F' },
+                    { id: '>100k', label: '> 100k F' },
                   ].map(p => (
                     <button
                       key={p.id}
                       onClick={() => setPriceFilter(priceFilter === p.id ? '' : p.id)}
                       style={{
-                        padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: priceFilter === p.id ? 800 : 600,
+                        padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: priceFilter === p.id ? 800 : 600,
                         background: priceFilter === p.id ? '#fff7f0' : '#fff', color: priceFilter === p.id ? '#C75B00' : '#4b5563',
                         border: priceFilter === p.id ? '1.5px solid #C75B00' : '1px solid #e5e7eb', cursor: 'pointer',
                       }}
@@ -558,22 +558,22 @@ export default function BoutiqueDetailClient({
                   <button
                     onClick={() => setStockOnly(!stockOnly)}
                     style={{
-                      padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: stockOnly ? 800 : 600,
+                      padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: stockOnly ? 800 : 600,
                       background: stockOnly ? '#f0fdf4' : '#fff', color: stockOnly ? '#16a34a' : '#4b5563',
                       border: stockOnly ? '1.5px solid #16a34a' : '1px solid #e5e7eb', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 4,
+                      display: 'flex', alignItems: 'center', gap: 3,
                     }}
                   >
-                    ⚡ En stock uniquement
+                    ⚡ En stock
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   {/* Option Tri */}
                   <select
                     value={sortOption}
                     onChange={e => setSortOption(e.target.value)}
-                    style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 12, fontWeight: 600, background: '#fff' }}
+                    style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 11.5, fontWeight: 600, background: '#fff' }}
                   >
                     <option value="recent">Plus récents</option>
                     <option value="prix_asc">Prix croissant</option>
@@ -585,17 +585,17 @@ export default function BoutiqueDetailClient({
                   <div style={{ display: 'flex', border: '1px solid #d1d5db', borderRadius: 6, overflow: 'hidden' }}>
                     <button
                       onClick={() => setViewMode('grid')}
-                      style={{ padding: '5px 8px', background: viewMode === 'grid' ? '#1e3a5f' : '#fff', color: viewMode === 'grid' ? '#fff' : '#6b7280', border: 'none', cursor: 'pointer' }}
+                      style={{ padding: '4px 6px', background: viewMode === 'grid' ? '#1e3a5f' : '#fff', color: viewMode === 'grid' ? '#fff' : '#6b7280', border: 'none', cursor: 'pointer' }}
                       title="Vue Grille"
                     >
-                      <Grid size={15} />
+                      <Grid size={14} />
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      style={{ padding: '5px 8px', background: viewMode === 'list' ? '#1e3a5f' : '#fff', color: viewMode === 'list' ? '#fff' : '#6b7280', border: 'none', cursor: 'pointer' }}
+                      style={{ padding: '4px 6px', background: viewMode === 'list' ? '#1e3a5f' : '#fff', color: viewMode === 'list' ? '#fff' : '#6b7280', border: 'none', cursor: 'pointer' }}
                       title="Vue Liste"
                     >
-                      <List size={15} />
+                      <List size={14} />
                     </button>
                   </div>
                 </div>

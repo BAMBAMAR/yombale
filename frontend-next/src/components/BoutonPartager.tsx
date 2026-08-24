@@ -1,15 +1,28 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { Share2 } from 'lucide-react'
 
 interface Props {
   lien: string
   message: string
-  lienVisuel: string
+  lienVisuel?: string
   onPartage?: () => void
   onOpenFullModal?: () => void
+  variant?: 'split' | 'unified'
+  className?: string
+  style?: React.CSSProperties
 }
 
-export default function BoutonPartager({ lien, message, lienVisuel, onPartage, onOpenFullModal }: Props) {
+export default function BoutonPartager({
+  lien,
+  message,
+  lienVisuel,
+  onPartage,
+  onOpenFullModal,
+  variant = 'split',
+  className,
+  style,
+}: Props) {
   const [ouvert, setOuvert] = useState(false)
   const [copie, setCopie] = useState(false)
   const [canWebShare, setCanWebShare] = useState(false)
@@ -50,9 +63,91 @@ export default function BoutonPartager({ lien, message, lienVisuel, onPartage, o
     setOuvert(false)
   }
 
+  const menuContent = (
+    <div className="bq-actions-dropdown" style={{
+      position: 'absolute', top: '110%', right: 0, zIndex: 9999,
+      background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10,
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)', padding: 8, minWidth: 210, maxWidth: 'calc(100vw - 32px)',
+      display: 'flex', flexDirection: 'column', gap: 4,
+    }}>
+      {variant === 'unified' && (
+        <button
+          type="button"
+          onClick={() => { setOuvert(false); partagerWhatsApp(); }}
+          style={{ padding: '8px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', textAlign: 'left', fontSize: 13, fontWeight: 700, cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          💬 Partager sur WhatsApp
+        </button>
+      )}
+      {onOpenFullModal && (
+        <button
+          type="button"
+          onClick={() => { setOuvert(false); onOpenFullModal() }}
+          style={{ padding: '8px 12px', background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0284c7', textAlign: 'left', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', borderRadius: 6 }}
+        >
+          🚀 Partage Rapide (4 modèles)
+        </button>
+      )}
+      {canWebShare && (
+        <button
+          type="button"
+          onClick={partagerWebShare}
+          style={{ padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6, color: '#0f172a' }}
+        >
+          📲 Autres applications…
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={copierLien}
+        style={{ padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6, color: '#0f172a' }}
+      >
+        {copie ? '✓ Copié !' : '📋 Copier le lien'}
+      </button>
+      {lienVisuel && (
+        <a
+          href={lienVisuel}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setOuvert(false)}
+          style={{ padding: '8px 12px', textDecoration: 'none', color: '#111827', fontSize: 13, fontWeight: 600, borderRadius: 6 }}
+        >
+          🖼 Télécharger le visuel
+        </a>
+      )}
+    </div>
+  )
+
+  if (variant === 'unified') {
+    return (
+      <div style={{ position: 'relative', display: 'inline-flex' }}>
+        <button
+          type="button"
+          onClick={() => setOuvert(o => !o)}
+          aria-label="Partager"
+          className={className || 'bq-public-btn-share'}
+          style={style}
+        >
+          <Share2 size={15} />
+          <span>Partager</span>
+        </button>
+        {ouvert && (
+          <>
+            <div
+              onClick={() => setOuvert(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+            />
+            {menuContent}
+          </>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div style={{ position: 'relative', display: 'inline-flex', gap: 4 }}>
       <button
+        type="button"
         onClick={partagerWhatsApp}
         style={{
           padding: '8px 16px', background: '#25D366', color: '#fff',
@@ -63,6 +158,7 @@ export default function BoutonPartager({ lien, message, lienVisuel, onPartage, o
         💬 Partager
       </button>
       <button
+        type="button"
         onClick={() => setOuvert(o => !o)}
         aria-label="Plus d'options de partage"
         style={{
@@ -78,44 +174,7 @@ export default function BoutonPartager({ lien, message, lienVisuel, onPartage, o
             onClick={() => setOuvert(false)}
             style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
           />
-          <div className="bq-actions-dropdown" style={{
-            position: 'absolute', top: '110%', right: 0, zIndex: 9999,
-            background: '#fff', border: '1px solid #cbd5e1', borderRadius: 10,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.15)', padding: 8, minWidth: 210, maxWidth: 'calc(100vw - 32px)',
-            display: 'flex', flexDirection: 'column', gap: 4,
-          }}>
-            {onOpenFullModal && (
-              <button
-                onClick={() => { setOuvert(false); onOpenFullModal() }}
-                style={{ padding: '8px 12px', background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0284c7', textAlign: 'left', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', borderRadius: 6 }}
-              >
-                🚀 Partage Rapide (4 modèles)
-              </button>
-            )}
-            {canWebShare && (
-              <button
-                onClick={partagerWebShare}
-                style={{ padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6, color: '#0f172a' }}
-              >
-                📲 Autres applications…
-              </button>
-            )}
-            <button
-              onClick={copierLien}
-              style={{ padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6, color: '#0f172a' }}
-            >
-              {copie ? '✓ Copié' : '📋 Copier le lien'}
-            </button>
-            <a
-              href={lienVisuel}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOuvert(false)}
-              style={{ padding: '8px 12px', textDecoration: 'none', color: '#111827', fontSize: 13, fontWeight: 600, borderRadius: 6 }}
-            >
-              🖼 Télécharger le visuel
-            </a>
-          </div>
+          {menuContent}
         </>
       )}
     </div>

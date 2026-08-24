@@ -1,3 +1,56 @@
+- **Déblocage du Bouton « Encaisser » & Audit Complet de la Comptabilité Hors-Ligne (`RegisterSW.tsx`, `Comptabilite.tsx`, `CaisseClient.tsx`) (`main` - 24 août 2026)** 📶💳🧾📦✨ :
+  * **🎯 Résolution du Masquage du Bouton Encaisser (`RegisterSW.tsx`)** :
+    - Déplacement du bandeau toast hors-ligne (`Mode Hors-Ligne — Consultation des données locales en cache`) depuis le bas de l'écran (`bottom: 24px`) vers le haut de l'écran (`top: 12px`).
+    - Élimination complète de l'obstruction qui masquait le bouton prépondérant `[ ➔ ENCAISSER · XX FCFA ]` sur la Caisse POS et les actions mobiles en bas de page.
+    - Ajout d'un bouton de fermeture `✕` permettant au commerçant de masquer manuellement la notification s'il souhaite un écran 100% épuré.
+  * **📊 Audit & Robustesse 100% Hors-Ligne de la Comptabilité (`Comptabilite.tsx`)** :
+    - **📈 Bilan & Rentabilité** : Cache local persistant `nopalou_offline_bilan_${boutiqueId}_${preset}` avec conservation de l'historique et affichage instantané hors-ligne.
+    - **💰 Journal des Ventes** : Cache local persistant `nopalou_offline_compta_ventes_${boutiqueId}` et déclaration hors-ligne.
+    - **📉 Dépenses** : Cache local persistant `nopalou_offline_compta_depenses_${boutiqueId}` et archivage hors-ligne.
+    - **🧾 Clôtures & Rapports Z** : Ajout du cache local `nopalou_offline_pos_sessions_${boutiqueId}` permettant de consulter les rapports de clôture et états de caisse passés sans connexion.
+    - **📦 Inventaire & Valorisation** : Cache local `nopalou_inventaire_${boutiqueId}` avec calculs automatiques des marges, coûts d'achat et alertes de rupture.
+    - **👤 Performances Caissiers** : Ajout du cache local `nopalou_caissiers_bilan_${boutiqueId}_${preset}` pour le suivi des ventes par vendeur sans Internet.
+    - **🚚 Zones de Livraison** : Cache local `nopalou_offline_compta_zones_${boutiqueId}` pour le calcul des frais de livraison hors-ligne.
+  * **🧪 Validation Technique** :
+    - 31/31 tests unitaires validés avec 100% de succès (`npm test`).
+
+- **Correction de la Page de Sponsoring / Mise en avant Boutique (`/payer-sponsoring-boutique/[id]`, `page.tsx`) (`main` - 24 août 2026)** ⭐🏪💳⚡ :
+  * **🐛 Origine du Bug Résolue** :
+    - La page `/payer-sponsoring-boutique/[id]` tentait d'appeler l'endpoint backend inexistant `/boutiques/mes-boutiques` au lieu de `/boutiques/mine`.
+    - La réponse backend retournait `{ boutiques: [...] }`, provoquant une erreur de parsing ou un état `boutique = null` affichant l'erreur *« Boutique introuvable »*.
+  * **🛠️ Correctifs Apportés** :
+    - Remplacement de l'appel backend par `/boutiques/mine` avec extraction sécurisée `Array.isArray(data) ? data : data.boutiques`.
+    - Ajout d'un repli automatique vers l'API publique `/boutiques/${id}` (`apiFetch`) si la boutique n'est pas trouvée dans la liste propriétaire directe (ex: gestionnaire délégué, slug au lieu d'UUID).
+    - Transmission correcte de `boutique.id` à `PaiementSponsoringBoutiqueClient` et harmonisation du fil d'Ariane et des titres.
+  * **🧪 Validation Technique** :
+    - 31/31 tests unitaires validés avec 100% de succès (`npm test`).
+
+- **Optimisation Majeure de l'Espace Vertical & Refonte Ergonomique des Boutons d'Action sur la Vitrine Boutique Publique (`/boutiques/[id]`, `page.tsx`, `BoutiqueDetailClient.tsx`, `BoutonPartager.tsx`, `globals.css`) (`main` - 24 août 2026)** 📱🎨⚡🛒✨ :
+  * **📐 Élimination Massive de l'Espace Vertical (~380px économisés)** :
+    - **Bannière cover adaptative (`.bq-public-cover`)** : Hauteur passée de 220px fixes à 140px sur mobile ($\le 640\text{px}$) et 200px sur desktop, libérant 80px d'espace d'affichage.
+    - **Suppression du bloc `PageHeader` lourd** : Élimination de plus de 110px d'espaces vides et de la balise `<h1>` vide superflue au profit d'un fil d'Ariane compact et sémantique (`.bq-breadcrumb-compact`, hauteur ~24px).
+    - **En-tête et logo compacts (`.bq-public-header-card`, `.bq-public-logo`)** : Logo ajusté à 68×68px sur mobile (overlap -34px), typographie resserrée et marges de transition nettoyées.
+    - **Barre d'onglets condensée (`.nopalou-scroll-tabs`)** : Marge inférieure réduite à 12px (au lieu de 24px), boutons à 36px de haut.
+    - **Boîte de Recherche & Filtres resserrée** : Padding interne à 12px 14px, champ de recherche à 38px de haut, pastilles de catégories et prix compactes en défilement fluide.
+    - **Gain Global** : Sur smartphone, les premiers produits du catalogue sont désormais **immédiatement visibles dès le premier écran sans défilement**.
+  * **✨ Refonte Harmonieuse des Boutons d'Action (`.bq-public-actions-bar`, `BoutonPartager.tsx`)** :
+    - **Bouton WhatsApp Primaire (`.bq-public-btn-whatsapp`)** : Vert officiel `#25D366`, texte blanc, ombrage subtil, hauteur standardisée 38px (36px mobile).
+    - **Bouton Téléphone (`.bq-public-btn-tel`)** : Style épuré fond `#f8fafc`, bordure `#cbd5e1`, texte navy `#0f172a`.
+    - **Bouton Partager Unifié (`.bq-public-btn-share`)** : Élimination de la fragmentation (`💬 Partager` + `⋯`). Nouveau bouton unique avec icône `Share2` de Lucide, ouvrant un menu popover soigné (Partager WhatsApp, Copier le lien, Télécharger le visuel, Partage rapide, WebShare).
+    - **Bouton Site Web (`.bq-public-btn-site`)** : Bouton compact discret parfaitement aligné.
+    - **Disposition Responsive** : Distribution équilibrée `flex: 1 1 auto` sur mobile évitant tout bouton orphelin.
+  * **🧪 Validation Technique** :
+    - 31/31 tests unitaires validés avec 100% de succès (`npm test`).
+
+- **Correction du Positionnement Responsive & Débordement du Menu Déroulant « Actions » (`BoutiqueClient.tsx`, `globals.css`) (`main` - 24 août 2026)** 📱🔧🏷️✨ :
+  * **🎯 Résolution du Débordement Hors-Écran du Menu « Actions ▾ » (`globals.css`)** :
+    - Élimination de la règle CSS conflictuelle `.bq-actions-dropdown { right: auto !important; left: 0 !important; }` qui forçait le menu déroulant à s'étendre vers la droite hors du viewport sur écran mobile / étroit.
+    - Application du positionnement strict aligné à droite (`right: 0 !important; left: auto !important; max-width: calc(100vw - 24px) !important;`), permettant au menu de s'étendre vers l'intérieur de la carte produit avec 100% de visibilité sans aucune coupure ou troncature de texte.
+  * **🏷️ Nettoyage Typographique & Émojis (`BoutiqueClient.tsx`)** :
+    - Suppression de l'émoji redondant `🏷️` devant `{t('shop.scanBarcodeModalTitle')}` qui créait une double icône superflue (`🏷️ 📷 Scanner Code-barres (EAN)`).
+  * **🧪 Validation Technique** :
+    - 31 tests unitaires validés avec 100% de succès (`npm test`).
+
 - **Ajout et Persistance Complète du Champ « 📦 Quantité en stock » dans le Formulaire Produit (`BoutiqueClient.tsx`, `backend/routes/boutiques.js`, `CLAUDE.md`) (`main` - 23 août 2026)** 📦⚡🏷️🛒 :
   * **📝 Formulaire Produit Haute Visibilité (`BoutiqueClient.tsx` - `ProduitForm`)** :
     - **Champ Quantité en Stock Dédié** : Intégration d'un champ numérique `stock_quantite` (avec fallback `quantite_stock`) dans la grille de prix, visible immédiatement aussi bien en **Ajout Rapide** qu'en **Mode Détaillé**.

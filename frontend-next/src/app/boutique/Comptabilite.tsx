@@ -767,8 +767,24 @@ function PerformancesCaissiersView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: 
 
   useEffect(() => {
     setLoading(true)
+    const cacheKey = `nopalou_caissiers_bilan_${boutiqueId}_${preset}`
+    const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null
+    if (cached) {
+      try {
+        setBilan(JSON.parse(cached))
+        setLoading(false)
+      } catch (e) {}
+    }
+
     getBilanComptable(boutiqueId, { from: activeRange.from, to: activeRange.to })
-      .then(data => { if (data && !data.error) setBilan(data) })
+      .then(data => {
+        if (data && !data.error) {
+          setBilan(data)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(cacheKey, JSON.stringify(data))
+          }
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [boutiqueId, preset])
@@ -937,6 +953,15 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
 
   const loadSessions = async () => {
     setLoading(true)
+    const cacheKey = `nopalou_offline_pos_sessions_${boutiqueId}`
+    const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null
+    if (cached) {
+      try {
+        setSessions(JSON.parse(cached))
+        setLoading(false)
+      } catch (e) {}
+    }
+
     try {
       const res = await getPosSessions(boutiqueId, {
         from: activeRange.from || undefined,
@@ -944,13 +969,14 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
         caissier: selectedCaissier || undefined,
         statut: selectedStatut !== 'tous' ? selectedStatut : undefined,
       })
-      if (res && res.sessions) {
+      if (res && Array.isArray(res.sessions)) {
         setSessions(res.sessions)
-      } else {
-        setSessions([])
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(cacheKey, JSON.stringify(res.sessions))
+        }
       }
     } catch (e) {
-      console.error(e)
+      console.warn(`📊 [Clôtures Z] Mode hors-ligne : utilisation du cache (${cached ? 'disponible' : 'vide'}).`)
     } finally {
       setLoading(false)
     }
@@ -3902,7 +3928,31 @@ export function ZonesView({ boutiqueId }: { boutiqueId: string }) {
   const [showForm, setShowForm] = useState(false)
   const [, startTransition] = useTransition()
 
-  async function load() { setLoading(true); const z = await listZones(boutiqueId); setZones(z); setLoading(false) }
+  async function load() {
+    setLoading(true)
+    const cacheKeyZ = `nopalou_offline_compta_zones_${boutiqueId}`
+    const cachedZ = typeof window !== 'undefined' ? localStorage.getItem(cacheKeyZ) : null
+    if (cachedZ) {
+      try {
+        setZones(JSON.parse(cachedZ))
+        setLoading(false)
+      } catch (e) {}
+    }
+
+    try {
+      const z = await listZones(boutiqueId)
+      if (Array.isArray(z)) {
+        setZones(z)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(cacheKeyZ, JSON.stringify(z))
+        }
+      }
+    } catch (err) {
+      console.warn('🚚 [Zones] Mode hors-ligne : utilisation du cache local.')
+    } finally {
+      setLoading(false)
+    }
+  }
   useEffect(() => { load() }, [boutiqueId])
 
   function submit() {
