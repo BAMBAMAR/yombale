@@ -88,20 +88,22 @@ export default function RegisterSW() {
     }
   }, [])
 
-  const [toastDismissed, setToastDismissed] = useState(false)
+  const [showOfflineToast, setShowOfflineToast] = useState(false)
 
-  // Détecter les transitions offline → online pour afficher le toast
+  // Détecter les transitions offline / online pour afficher des toasts discrets et temporaires
   useEffect(() => {
     if (!isOnline) {
-      setWasOffline(true)
-      setShowOnlineToast(false)
-      setToastDismissed(false)
-      console.warn('🔴 [RegisterSW] Hors-ligne confirmé par ping applicatif.')
+      if (!wasOffline) {
+        setWasOffline(true)
+        setShowOfflineToast(true)
+        setShowOnlineToast(false)
+        console.warn('🔴 [RegisterSW] Hors-ligne confirmé par ping applicatif.')
+      }
     } else if (wasOffline && isOnline) {
       console.log('🟢 [RegisterSW] Connexion rétablie confirmée par ping applicatif.')
       setShowOnlineToast(true)
+      setShowOfflineToast(false)
       setWasOffline(false)
-      setToastDismissed(false)
 
       // Mettre à jour le SW en arrière-plan
       if ('serviceWorker' in navigator) {
@@ -111,6 +113,14 @@ export default function RegisterSW() {
       }
     }
   }, [isOnline, wasOffline])
+
+  // Masquage automatique du toast hors-ligne après 4.5 secondes
+  useEffect(() => {
+    if (showOfflineToast) {
+      const timer = setTimeout(() => setShowOfflineToast(false), 4500)
+      return () => clearTimeout(timer)
+    }
+  }, [showOfflineToast])
 
   // Masquage garanti du toast "Connexion Internet rétablie" après 3.5 secondes
   useEffect(() => {
@@ -151,25 +161,23 @@ export default function RegisterSW() {
 
   if (!mounted) return null
 
-  const isOffline = !isOnline
-
   return (
     <>
-      {/* Bandeau offline / online — positionné au sommet pour ne jamais masquer les boutons d'encaissement */}
-      {((isOffline && !toastDismissed) || showOnlineToast) && (
+      {/* Notification Toast Réseau — Discrète, temporaire, ne bloque pas l'interface */}
+      {(showOfflineToast || showOnlineToast) && (
         <div
           style={{
             position: 'fixed',
             top: '12px',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: isOffline ? '#c2410c' : '#15803d',
+            backgroundColor: showOfflineToast ? '#c2410c' : '#15803d',
             color: '#ffffff',
-            padding: '8px 14px 8px 16px',
-            borderRadius: '30px',
-            fontSize: '12.5px',
+            padding: '7px 14px 7px 16px',
+            borderRadius: '24px',
+            fontSize: '12px',
             fontWeight: 'bold',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
             zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
@@ -183,40 +191,39 @@ export default function RegisterSW() {
             maxWidth: '92vw',
             textAlign: 'center',
             lineHeight: '1.3',
+            animation: 'fadeInDown 0.25s ease',
           }}
         >
-          <span style={{ fontSize: '14px' }}>{isOffline ? '📡' : '✅'}</span>
+          <span style={{ fontSize: '13px' }}>{showOfflineToast ? '📡' : '✅'}</span>
           <span>
-            {isOffline
-              ? 'Mode Hors-Ligne — Consultation des données locales en cache'
+            {showOfflineToast
+              ? 'Mode Hors-Ligne activé — Données en cache local'
               : 'Connexion Internet rétablie'}
           </span>
-          {isOffline && (
-            <button
-              type="button"
-              onClick={() => setToastDismissed(true)}
-              aria-label="Fermer la notification hors-ligne"
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                border: 'none',
-                color: '#ffffff',
-                borderRadius: '50%',
-                width: '20px',
-                height: '20px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 'bold',
-                marginLeft: '4px',
-                padding: 0,
-                flexShrink: 0,
-              }}
-            >
-              ✕
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => { setShowOfflineToast(false); setShowOnlineToast(false); }}
+            aria-label="Fermer la notification réseau"
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              color: '#ffffff',
+              borderRadius: '50%',
+              width: '18px',
+              height: '18px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              marginLeft: '4px',
+              padding: 0,
+              flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
 

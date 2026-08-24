@@ -2274,32 +2274,33 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
           {/* Badge Hors-Ligne (affiché uniquement si hors ligne) */}
           {offlineModeActive && (
-            <div className="caisse-status-badge" style={{
+            <div className="caisse-status-badge" title={`${ventesHorsLigneCount} vente(s) enregistrée(s) localement en attente de synchronisation`} style={{
               background: '#dc2626',
               color: '#fff',
-              padding: '4px 7px',
+              padding: '4px 8px',
               borderRadius: 6,
               fontWeight: 800,
-              fontSize: 10,
+              fontSize: 10.5,
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
               flexShrink: 0,
+              whiteSpace: 'nowrap',
               animation: 'pulse 1.5s infinite'
             }}>
-              ⚠️ HORS-LIGNE
+              <span>⚠️ Hors-Ligne</span>
               {ventesHorsLigneCount > 0 && (
-                <span style={{ background: '#991b1b', padding: '2px 5px', borderRadius: 4, fontSize: 9 }}>
-                  {ventesHorsLigneCount} {ventesHorsLigneCount > 1 ? 'ventes' : 'vente'} en attente
+                <span style={{ background: '#991b1b', padding: '1px 5px', borderRadius: 4, fontSize: 9.5, fontWeight: 900 }}>
+                  {ventesHorsLigneCount} en attente
                 </span>
               )}
             </div>
           )}
 
-          {/* Sélecteur de boutique — masqué en mode terminal dédié */}
+          {/* Sélecteur de boutique — nom toujours visible et prioritaire */}
           {boutiques.length > 0 && (
-            initialToken ? (
-              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--pos-navy)', background: '#eff6ff', padding: '5px 10px', borderRadius: 6, border: '1px solid #bfdbfe', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            initialToken || boutiques.length === 1 ? (
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--pos-navy)', background: '#eff6ff', padding: '5px 10px', borderRadius: 6, border: '1px solid #bfdbfe', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 🏪 {activeBoutiqueObj?.nom || boutiques[0]?.nom}
               </span>
             ) : (
@@ -2307,7 +2308,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 value={boutiqueActiveId}
                 onChange={e => changerBoutiqueActive(e.target.value)}
                 className="caisse-boutique-select"
-                style={{ padding: '4px 6px', borderRadius: 6, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 700, fontSize: 11, cursor: 'pointer', outline: 'none', maxWidth: 140, minWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                style={{ padding: '5px 8px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 800, fontSize: 11.5, cursor: 'pointer', outline: 'none', maxWidth: 180, minWidth: 110, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
               >
                 {boutiques.map(b => {
                   const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';

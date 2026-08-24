@@ -1,4 +1,11 @@
-- **Déblocage du Bouton « Encaisser » & Audit Complet de la Comptabilité Hors-Ligne (`RegisterSW.tsx`, `Comptabilite.tsx`, `CaisseClient.tsx`) (`main` - 24 août 2026)** 📶💳🧾📦✨ :
+- **Optimisation Non-Intrusive du Toast Hors-Ligne & Visibilité Garantie de la Boutique dans l'En-tête Caisse (`RegisterSW.tsx`, `CaisseClient.tsx`) (`main` - 24 août 2026)** 📶🏪⚡✨ :
+  * **🎯 Toast Hors-Ligne Non Intrusif & Auto-Masquant (`RegisterSW.tsx`)** :
+    - Remplacement du bandeau statique par un toast informatif temporaire s'estompant automatiquement après 4,5 secondes lors du passage hors-ligne (et 3,5s au retour de connexion).
+    - Aucun blocage visuel des barres d'en-tête (sélecteur de boutique, profil caissier) ni des boutons d'actions inférieurs (encaissement, devis/proforma).
+  * **🏪 Visibilité du Nom de Boutique & Badge Hors-Ligne Compact (`CaisseClient.tsx`)** :
+    - Formatage compact du badge hors-ligne de la caisse (`⚠️ Hors-Ligne (17 en attente)`).
+    - Priorité flex et largeur optimisée accordées au sélecteur de boutique (`🏪 Boutique AMAR`) garantissant sa pleine visibilité sur mobile et tablette.
+    - Explication du mécanisme de synchronisation : les 17 ventes en attente correspondent aux encaissements enregistrés en local dans IndexedDB pendant les tests hors-ligne, qui se synchronisent automatiquement dès le rétablissement de la connexion.
   * **🎯 Résolution du Masquage du Bouton Encaisser (`RegisterSW.tsx`)** :
     - Déplacement du bandeau toast hors-ligne (`Mode Hors-Ligne — Consultation des données locales en cache`) depuis le bas de l'écran (`bottom: 24px`) vers le haut de l'écran (`top: 12px`).
     - Élimination complète de l'obstruction qui masquait le bouton prépondérant `[ ➔ ENCAISSER · XX FCFA ]` sur la Caisse POS et les actions mobiles en bas de page.
