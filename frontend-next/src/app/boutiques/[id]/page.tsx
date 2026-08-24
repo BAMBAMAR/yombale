@@ -132,9 +132,18 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
       <div className="bq-public-header-card">
         <div style={{ maxWidth: 1350, margin: '0 auto' }}>
           <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end' }}>
-            {/* Logo */}
-            <div className="bq-public-logo">
-              <ExternalImg src={b.logo_url} alt={b.nom} fallback={CAT_ICONS[b.categorie ?? ''] ?? '🏪'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {/* Logo avec monogramme vectoriel élégant si absent */}
+            <div className="bq-public-logo" style={{
+              background: b.logo_url ? '#fff' : `linear-gradient(135deg, ${b.couleur_theme || '#C75B00'}, #0f172a)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#ffffff', fontWeight: 900, fontSize: 'clamp(20px, 4vw, 24px)', letterSpacing: '0.05em',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+            }}>
+              {b.logo_url ? (
+                <ExternalImg src={b.logo_url} alt={b.nom} fallback={(b.nom || 'B').slice(0, 2).toUpperCase()} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span>{(b.nom || 'Boutique').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('')}</span>
+              )}
             </div>
 
             <div style={{ flex: 1, minWidth: 0, paddingBottom: 2 }}>

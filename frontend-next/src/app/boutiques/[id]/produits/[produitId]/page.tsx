@@ -22,6 +22,10 @@ interface ProduitDetail {
   categorie: string | null
   caracteristiques: Record<string, string> | null
   variantes: { nom: string; valeurs: string[] }[] | null
+  variantes_skus?: { id: string; sku?: string; code_barre?: string; attributs: Record<string, string>; prix: number; prix_barre?: number; stock_quantite?: number; image_url?: string }[] | null
+  unite_vente?: string | null
+  has_variants?: boolean
+  date_expiration?: string | null
   boutique_nom: string
   boutique_telephone: string | null
   boutique_whatsapp: string | null
@@ -38,6 +42,8 @@ const CARAC_LABELS: Record<string, string> = {
   editeur: 'Éditeur', poids_quantite: 'Poids / Quantité',
   conditionnement: 'Conditionnement', date_peremption: 'Date de péremption',
   type_produit: 'Type', pour_qui: 'Pour qui', contenance: 'Contenance',
+  concentration: 'Concentration', famille_olfactive: 'Famille olfactive',
+  forme_monture: 'Forme monture', protection_uv: 'Protection verres',
   type_service: 'Type de service', zone_intervention: 'Zone d\'intervention',
   duree: 'Durée', disponibilite: 'Disponibilité',
 }
@@ -244,11 +250,14 @@ export default async function FicheProduitPage(
           {/* CTA */}
           <ProduitCTA
             boutiqueId={id}
-            produit={{ id: p.id, nom: p.nom, prix: p.prix }}
+            boutiqueNom={p.boutique_nom}
+            produit={{ id: p.id, nom: p.nom, prix: p.prix, images: p.images, prix_barre: p.prix_barre }}
             enStock={p.en_stock}
             waUrl={waUrl}
             telUrl={telUrl}
             variantes={p.variantes ?? []}
+            variantesSkus={p.variantes_skus ?? []}
+            uniteVente={p.unite_vente}
           />
 
           <BoutonPartager

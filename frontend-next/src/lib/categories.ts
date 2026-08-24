@@ -9,6 +9,8 @@ export const CATEGORIES = [
   { value: 'jeux',         label: '🎮 Jeux & Consoles' },
   { value: 'alimentation', label: '🍚 Alimentation & Épicerie' },
   { value: 'beaute',       label: '💄 Beauté & Soins' },
+  { value: 'parfum',       label: '🌸 Parfumerie & Fragrances' },
+  { value: 'optique',      label: '👓 Lunettes & Optique' },
   { value: 'sport',        label: '⚽ Sport & Fitness' },
   { value: 'fournitures',  label: '📚 Fournitures & Bureautique' },
   { value: 'quincaillerie',label: '🧱 Quincaillerie & BTP' },

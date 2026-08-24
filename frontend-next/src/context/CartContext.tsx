@@ -3,10 +3,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 
 export interface CartItem {
   id: string
+  produitId?: string
+  varianteId?: string | null
   nom: string
+  detailsVariante?: string | null
   prix: number
   images?: string[]
   quantite: number
+  uniteVente?: string | null
 }
 
 export interface BoutiqueCart {
@@ -22,7 +26,21 @@ interface CartContextType {
   isCartOpen: boolean
   openCart: (boutiqueId: string) => void
   closeCart: () => void
-  addToCart: (boutiqueId: string, boutiqueNom: string, produit: { id: string; nom: string; prix: number | null; images?: string[] }, whatsapp?: string | null) => void
+  addToCart: (
+    boutiqueId: string,
+    boutiqueNom: string,
+    produit: {
+      id: string
+      nom: string
+      prix: number | null
+      images?: string[]
+      varianteId?: string | null
+      detailsVariante?: string | null
+      uniteVente?: string | null
+    },
+    whatsapp?: string | null,
+    autoOpen?: boolean
+  ) => void
   removeFromCart: (boutiqueId: string, productId: string) => void
   updateQuantity: (boutiqueId: string, productId: string, delta: number) => void
   clearCart: (boutiqueId: string) => void
@@ -66,14 +84,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   function addToCart(
     boutiqueId: string,
     boutiqueNom: string,
-    produit: { id: string; nom: string; prix: number | null; images?: string[] },
+    produit: {
+      id: string
+      nom: string
+      prix: number | null
+      images?: string[]
+      varianteId?: string | null
+      detailsVariante?: string | null
+      uniteVente?: string | null
+    },
     whatsapp?: string | null,
     autoOpen: boolean = false
   ) {
     const prix = produit.prix || 0
+    const itemKey = produit.varianteId
+      ? `${produit.id}_var_${produit.varianteId}`
+      : (produit.detailsVariante ? `${produit.id}_det_${encodeURIComponent(produit.detailsVariante)}` : produit.id)
+
     setCarts(prev => {
       const existingCart = prev[boutiqueId] || { boutiqueId, boutiqueNom, whatsapp, items: [] }
-      const itemIndex = existingCart.items.findIndex(i => i.id === produit.id)
+      const itemIndex = existingCart.items.findIndex(i => i.id === itemKey)
 
       let newItems = [...existingCart.items]
       if (itemIndex >= 0) {
@@ -83,11 +113,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         newItems.push({
-          id: produit.id,
+          id: itemKey,
+          produitId: produit.id,
+          varianteId: produit.varianteId || null,
           nom: produit.nom,
+          detailsVariante: produit.detailsVariante || null,
           prix,
           images: produit.images,
           quantite: 1,
+          uniteVente: produit.uniteVente || 'piece',
         })
       }
 

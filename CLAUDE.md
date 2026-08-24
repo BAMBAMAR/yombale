@@ -1,3 +1,25 @@
+- **Refonte Architecturale E-Commerce Majeure — Variantes SKU Réelles, Décomposition des Commandes Multi-Produits avec Décrément de Stock, Catégories Parfumerie & Optique et Monogrammes Vectoriels (`backend/migrate-inline.js`, `comptabilite.js`, `boutiques.js`, `CartContext.tsx`, `DrawerCart.tsx`, `ProduitCTA.tsx`, `BoutiqueDetailClient.tsx`, `categories.ts`, `CLAUDE.md`) (`main` - 24 août 2026)** 🛒📦💎✨🌸 :
+  * **🗄️ Modèle de Données & Migrations SQL (`backend/migrate-inline.js`)** :
+    - **Table `boutique_produit_variantes`** : Stocke chaque combinaison SKU avec son propre prix, prix barré, prix d'achat, stock unitaire (`stock_quantite`), code-barres et image dédiée.
+    - **Table `commandes_boutique_items`** : Normalise chaque ligne d'article commandée (panier web ou commande directe) avec liaison vers le produit ou la variante spécifique.
+    - **Enrichissement de `boutique_produits`** : Ajout des colonnes `unite_vente` (`'piece'`, `'kg'`, `'litre'`, `'sac'`, `'carton'`, etc.), `has_variants` (`BOOLEAN`) et `date_expiration` (`DATE`).
+  * **⚙️ Backend & API Routes (`backend/routes/comptabilite.js`, `backend/routes/boutiques.js`)** :
+    - **Décrémentation Multi-Articles Exacte (`creerCommandeBoutique`)** : L'API `POST /api/comptabilite/:boutiqueId/commandes` accepte désormais un tableau d'articles structuré `items: [...]` et décrémente automatiquement le stock dans `boutique_produit_variantes` et `boutique_produits`.
+    - **Catalogue avec SKUs Actifs** : Les endpoints `/api/boutiques/:id/produits` et `/api/boutiques/:id/produits/:prodId` renvoient la liste agrégée des variantes actives `variantes_skus`.
+  * **🛍️ Panier & Tunnel d'Achat Multi-Variantes (`CartContext.tsx`, `DrawerCart.tsx`)** :
+    - **Lignes de Panier Uniques par Option** : Deux tailles/couleurs distinctes d'un même produit créent deux entrées de panier distinctes avec badge descriptif (*ex: Taille: XL, Couleur: Noir*).
+    - **Envoi Structuré `items[]`** : Les commandes en ligne ou via WhatsApp transmettent désormais la charge utile normalisée avec calcul exact des sous-totaux.
+  * **✨ Fiche Produit & Vitrine Contextuelle (`ProduitCTA.tsx`, `page.tsx`, `BoutiqueDetailClient.tsx`)** :
+    - **Résolution Dynamique SKU** : La sélection d'une option met immédiatement à jour le prix, le stock et l'état de disponibilité en temps réel.
+    - **Affichage Variable en Vitrine** : Détection des fourchettes de prix (*« Dès X FCFA / kg »*) et affichage des pastilles de tailles (*Mode*) ou puces techniques (*RAM/Stockage*).
+    - **Monogrammes de Logo Stylisés** : Génération d'avatars vectoriels avec initiales sur dégradé de marque en remplacement des émojis génériques.
+  * **🌸👓 Nouvelles Catégories Métiers (`lib/categories.ts`, `boutique-covers.ts`, `BoutiqueClient.tsx`)** :
+    - **Parfumerie & Fragrances** : Catégorie officielle, bannières HD Unsplash dédiées et attributs métier (*Concentration EDP/EDT/Extrait, Famille olfactive, Contenance, Genre*).
+    - **Lunettes & Optique** : Catégorie officielle, bannières HD et attributs (*Type solaire/vue, Forme monture, Protection UV400/Polarisé, Matière monture*).
+  * **🧪 Validation Technique** :
+    - 34/34 tests unitaires validés avec 100% de succès (`npm test`).
+    - Build de production Next.js 14 : validé avec succès (EXIT 0).
+
 - **Optimisation Non-Intrusive du Toast Hors-Ligne & Visibilité Garantie de la Boutique dans l'En-tête Caisse (`RegisterSW.tsx`, `CaisseClient.tsx`) (`main` - 24 août 2026)** 📶🏪⚡✨ :
   * **🎯 Toast Hors-Ligne Non Intrusif & Auto-Masquant (`RegisterSW.tsx`)** :
     - Remplacement du bandeau statique par un toast informatif temporaire s'estompant automatiquement après 4,5 secondes lors du passage hors-ligne (et 3,5s au retour de connexion).

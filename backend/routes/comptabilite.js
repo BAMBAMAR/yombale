@@ -535,7 +535,7 @@ async function notifierVendeurCommande(boutique, {
 async function creerCommandeBoutique({
   boutiqueId, produitId, quantite = 1, clientNom, clientTelephone, clientAdresse,
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
-  nomProduitManuel, prixUnitaireManuel, groupeCommande,
+  nomProduitManuel, prixUnitaireManuel, groupeCommande, items = [], varianteId,
 }) {
   const bQuery = 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
@@ -546,12 +546,11 @@ async function creerCommandeBoutique({
   }
 
   const actualBoutiqueId = boutique.id;
-  let nomProduit = nomProduitManuel || 'Produit';
-  let prixUnitaire = Number(prixUnitaireManuel) || 0;
   let fraisLivraison = 0;
 
   const validZoneId = (zoneLivraisonId && String(zoneLivraisonId).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(zoneLivraisonId)) ? zoneLivraisonId : null;
   const validProduitId = (produitId && String(produitId).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(produitId)) ? produitId : null;
+  const validVarianteId = (varianteId && String(varianteId).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(varianteId)) ? varianteId : null;
 
   if (validZoneId) {
     const { rows: [zone] } = await pool.query(
@@ -561,20 +560,38 @@ async function creerCommandeBoutique({
     if (zone) fraisLivraison = Number(zone.prix);
   }
 
-  if (validProduitId) {
-    const { rows: [p] } = await pool.query(
-      'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
-      [validProduitId, actualBoutiqueId]
-    );
-    if (p) {
-      if (!nomProduitManuel && p.nom) nomProduit = p.nom;
-      if (!prixUnitaire && p.prix) prixUnitaire = Number(p.prix);
-      if (p.stock_quantite !== null && p.stock_quantite < quantite) {
-        const e = new Error('Stock insuffisant');
-        e.status = 400;
-        throw e;
+  // Normalisation des articles de commande (multi-articles ou article unique)
+  let normalizedItems = [];
+  if (Array.isArray(items) && items.length > 0) {
+    normalizedItems = items.map(it => ({
+      produit_id: (it.produit_id && String(it.produit_id).length === 36) ? it.produit_id : (it.id && String(it.id).length === 36 ? it.id : null),
+      variante_id: (it.variante_id && String(it.variante_id).length === 36) ? it.variante_id : null,
+      nom_produit: String(it.nom_produit || it.nom || 'Produit').slice(0, 300),
+      details_variante: it.details_variante ? String(it.details_variante).slice(0, 255) : null,
+      prix_unitaire: Number(it.prix_unitaire || it.prix || 0),
+      quantite: Math.max(1, parseInt(it.quantite, 10) || 1),
+    }));
+  } else {
+    let nomP = nomProduitManuel || 'Produit';
+    let pxU = Number(prixUnitaireManuel) || 0;
+    if (validProduitId) {
+      const { rows: [p] } = await pool.query(
+        'SELECT nom, prix, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
+        [validProduitId, actualBoutiqueId]
+      );
+      if (p) {
+        if (!nomProduitManuel && p.nom) nomP = p.nom;
+        if (!prixUnitaireManuel && p.prix) pxU = Number(p.prix);
       }
     }
+    normalizedItems = [{
+      produit_id: validProduitId,
+      variante_id: validVarianteId,
+      nom_produit: nomP,
+      details_variante: null,
+      prix_unitaire: pxU,
+      quantite: Math.max(1, parseInt(quantite, 10) || 1),
+    }];
   }
 
   // Vérification si le client est blacklisté pour les achats à crédit
@@ -601,7 +618,10 @@ async function creerCommandeBoutique({
     }
   }
 
-  const montantTotal = prixUnitaire * quantite + fraisLivraison;
+  const sousTotal = normalizedItems.reduce((acc, it) => acc + (it.prix_unitaire * it.quantite), 0);
+  const totalQuantite = normalizedItems.reduce((acc, it) => acc + it.quantite, 0);
+  const montantTotal = sousTotal + fraisLivraison;
+  const nomProduitGlobal = normalizedItems.map(it => `${it.quantite}x ${it.nom_produit}${it.details_variante ? ` (${it.details_variante})` : ''}`).join(', ');
   const ref = genRefCommande();
 
   const { rows: [commande] } = await pool.query(
@@ -609,19 +629,46 @@ async function creerCommandeBoutique({
        (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
         client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-    [ref, actualBoutiqueId, validProduitId, nomProduit, quantite, prixUnitaire, montantTotal,
+    [ref, actualBoutiqueId, normalizedItems[0]?.produit_id || null, nomProduitGlobal.slice(0, 300), totalQuantite, sousTotal, montantTotal,
      clientNom, clientTelephone, clientAdresse || null, note || null, source,
      methodePaiement, validZoneId, fraisLivraison, groupeCommande || null]
   );
 
-  if (validProduitId) {
+  // Insertion détaillée de chaque article et décrémentation des stocks
+  for (const it of normalizedItems) {
+    let prixAchat = null;
+    if (it.produit_id) {
+      const pData = await pool.query('SELECT prix_achat FROM boutique_produits WHERE id=$1', [it.produit_id]);
+      prixAchat = pData.rows[0]?.prix_achat ? Number(pData.rows[0].prix_achat) : null;
+    }
+
     await pool.query(
-      `UPDATE boutique_produits
-       SET stock_quantite = GREATEST(0, stock_quantite - $1),
-           en_stock = CASE WHEN (stock_quantite - $1) <= 0 THEN false ELSE en_stock END
-       WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
-      [quantite, validProduitId, actualBoutiqueId]
+      `INSERT INTO commandes_boutique_items
+         (commande_id, boutique_id, produit_id, variante_id, nom_produit, details_variante, prix_unitaire, prix_achat, quantite, montant_total)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [commande.id, actualBoutiqueId, it.produit_id, it.variante_id, it.nom_produit, it.details_variante, it.prix_unitaire, prixAchat, it.quantite, it.prix_unitaire * it.quantite]
     ).catch(() => {});
+
+    // Décrémentation du stock sur la variante
+    if (it.variante_id) {
+      await pool.query(
+        `UPDATE boutique_produit_variantes
+         SET stock_quantite = GREATEST(0, stock_quantite - $1)
+         WHERE id = $2 AND boutique_id = $3`,
+        [it.quantite, it.variante_id, actualBoutiqueId]
+      ).catch(() => {});
+    }
+
+    // Décrémentation du stock sur le produit parent
+    if (it.produit_id) {
+      await pool.query(
+        `UPDATE boutique_produits
+         SET stock_quantite = GREATEST(0, stock_quantite - $1),
+             en_stock = CASE WHEN (stock_quantite - $1) <= 0 THEN false ELSE en_stock END
+         WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
+        [it.quantite, it.produit_id, actualBoutiqueId]
+      ).catch(() => {});
+    }
   }
 
   await pool.query(
@@ -644,11 +691,12 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
     try {
-      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id } = req.body;
+      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id } = req.body;
 
       const { commande, boutique } = await creerCommandeBoutique({
         boutiqueId: req.params.boutiqueId,
         produitId: produit_id,
+        varianteId: variante_id,
         quantite,
         clientNom: client_nom,
         clientTelephone: client_telephone,
@@ -659,6 +707,7 @@ router.post(
         zoneLivraisonId: zone_livraison_id,
         nomProduitManuel: req.body.nom_produit,
         prixUnitaireManuel: req.body.prix_unitaire,
+        items: Array.isArray(items) ? items : [],
       });
 
       await notifierVendeurCommande(boutique, {

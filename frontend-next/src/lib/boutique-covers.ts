@@ -59,10 +59,22 @@ export const CATEGORY_COVER_PHOTOS: Record<string, string[]> = {
   ],
   // 9. Beauté & Soins
   beaute: [
-    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80', // Cosmétiques & parfums
+    'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80', // Cosmétiques & soins
     'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80', // Soins visage & esthétique
     'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?auto=format&fit=crop&w=800&q=80', // Salon de beauté
     'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80', // Maquillage
+  ],
+  // 9b. Parfums & Fragrances
+  parfum: [
+    'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=800&q=80', // Flacons de parfum luxe
+    'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80', // Fragrance élégante
+    'https://images.unsplash.com/photo-1523293182086-7651a899d37f?auto=format&fit=crop&w=800&q=80', // Parfumerie
+  ],
+  // 9c. Lunettes & Optique
+  optique: [
+    'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=80', // Lunettes de soleil chic
+    'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=800&q=80', // Montures optiques
+    'https://images.unsplash.com/photo-1508296695146-257a814070b4?auto=format&fit=crop&w=800&q=80', // Lunettes tendance
   ],
   // 10. Sport & Fitness
   sport: [

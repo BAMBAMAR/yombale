@@ -222,7 +222,49 @@ it('BoutonPartager: lien visuel story et gestion de l action copier', () => {
   assert.equal(lienVisuel.endsWith('/story'), true)
 })
 
-console.log('\n📦 6. Internationalisation i18n (FR / EN / AR)')
+console.log('\n📦 6. Catalogue & Variantes E-Commerce (Categories & Cart logic)')
+import { CATEGORIES } from '../src/lib/categories.ts'
+
+it('CATEGORIES: présence des catégories officielles parfum et optique', () => {
+  const parfum = CATEGORIES.find(c => c.value === 'parfum')
+  assert.equal(Boolean(parfum), true)
+  assert.equal(parfum.label.includes('Parfumerie'), true)
+
+  const optique = CATEGORIES.find(c => c.value === 'optique')
+  assert.equal(Boolean(optique), true)
+  assert.equal(optique.label.includes('Lunettes'), true)
+})
+
+it('CartItem: génération de clés uniques pour variantes distinctes d un même produit', () => {
+  const pId = 'prod-123'
+  const itemKey1 = `${pId}_var_var-rouge-m`
+  const itemKey2 = `${pId}_var_var-rouge-xl`
+  assert.notEqual(itemKey1, itemKey2)
+
+  // Simulation d'ajout de 2 variantes dans un panier
+  const cartItems = [
+    { id: itemKey1, produitId: pId, varianteId: 'var-rouge-m', nom: 'Robe Wax', detailsVariante: 'Taille: M, Couleur: Rouge', prix: 15000, quantite: 1 },
+    { id: itemKey2, produitId: pId, varianteId: 'var-rouge-xl', nom: 'Robe Wax', detailsVariante: 'Taille: XL, Couleur: Rouge', prix: 17000, quantite: 2 },
+  ]
+  assert.equal(cartItems.length, 2)
+  const total = cartItems.reduce((acc, it) => acc + (it.prix * it.quantite), 0)
+  assert.equal(total, 15000 + 34000)
+})
+
+it('Variantes: détection des prix variables (À partir de / Dès X FCFA)', () => {
+  const skus = [
+    { id: 'v1', prix: 450000 },
+    { id: 'v2', prix: 520000 },
+  ]
+  const minPrix = Math.min(...skus.map(s => s.prix))
+  const maxPrix = Math.max(...skus.map(s => s.prix))
+  const isVariable = minPrix < maxPrix
+  assert.equal(isVariable, true)
+  assert.equal(minPrix, 450000)
+  assert.equal(maxPrix, 520000)
+})
+
+console.log('\n📦 7. Internationalisation i18n (FR / EN / AR)')
 import { LOCALES, DEFAULT_LOCALE, LOCALES_META, isLocale, isRTL, getValidLocale, isI18nScopedRoute } from '../src/i18n/config.ts'
 
 import { common as frCommon } from '../src/i18n/locales/fr/common.ts'

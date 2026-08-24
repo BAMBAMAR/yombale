@@ -1417,11 +1417,23 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
 
 // ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand
 router.get('/:id/produits', tokenOptional, async (req, res) => {
+// ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand
+router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre,
-              p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le
+              p.unite_vente, p.has_variants, p.date_expiration,
+              p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le,
+              COALESCE(
+                (SELECT json_agg(json_build_object(
+                  'id', v.id, 'sku', v.sku, 'code_barre', v.code_barre, 'attributs', v.attributs,
+                  'prix', v.prix, 'prix_barre', v.prix_barre, 'stock_quantite', v.stock_quantite, 'image_url', v.image_url
+                ) ORDER BY v.ordre ASC, v.prix ASC)
+                FROM boutique_produit_variantes v
+                WHERE v.produit_id = p.id AND v.actif = true),
+                '[]'::json
+              ) AS variantes_skus
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        WHERE (b.id::text = $1 OR b.slug = $1)
@@ -1439,13 +1451,22 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
     const idParam = req.params.id;
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const boutiqueCondition = isUUID ? 'b.id=$2' : 'b.slug=$2';
-    const userId = req.user?.userId || null;
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.code_barre,
+              p.unite_vente, p.has_variants, p.date_expiration,
               p.categorie, p.caracteristiques, p.variantes, p.ordre, p.created_at,
               b.nom AS boutique_nom, b.telephone AS boutique_telephone,
               b.whatsapp AS boutique_whatsapp, b.ville AS boutique_ville,
-              b.logo_url AS boutique_logo, b.actif AS boutique_actif
+              b.logo_url AS boutique_logo, b.actif AS boutique_actif,
+              COALESCE(
+                (SELECT json_agg(json_build_object(
+                  'id', v.id, 'sku', v.sku, 'code_barre', v.code_barre, 'attributs', v.attributs,
+                  'prix', v.prix, 'prix_barre', v.prix_barre, 'stock_quantite', v.stock_quantite, 'image_url', v.image_url
+                ) ORDER BY v.ordre ASC, v.prix ASC)
+                FROM boutique_produit_variantes v
+                WHERE v.produit_id = p.id AND v.actif = true),
+                '[]'::json
+              ) AS variantes_skus
        FROM boutique_produits p
        JOIN boutiques b ON b.id = p.boutique_id
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
@@ -1476,7 +1497,7 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       }
     }
 
-    const { nom, description, prix, prix_barre, prix_achat, en_stock, stock_quantite, quantite_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
+    const { nom, description, prix, prix_barre, prix_achat, en_stock, stock_quantite, quantite_stock, categorie, caracteristiques, variantes, code_barre, unite_vente, date_expiration, variantes_skus } = req.body;
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     const safePrix = (prix !== undefined && prix !== null && String(prix).trim() !== '' && !isNaN(Number(prix))) ? Number(prix) : null;
@@ -1517,16 +1538,44 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
       } catch {}
     }
 
+    let skusArray = [];
+    if (variantes_skus) {
+      try {
+        const parsed = typeof variantes_skus === 'string' ? JSON.parse(variantes_skus) : variantes_skus;
+        if (Array.isArray(parsed)) skusArray = parsed;
+      } catch {}
+    }
+
+    const hasVariants = skusArray.length > 0 || (variantesJson.length > 0 && variantesJson.some(v => v.valeurs && v.valeurs.length > 0));
     const rawCodeBarrePost = Array.isArray(code_barre) ? code_barre[0] : code_barre;
     const codeBarrePostVal = rawCodeBarrePost && typeof rawCodeBarrePost === 'string' && rawCodeBarrePost.trim() ? rawCodeBarrePost.trim() : null;
 
     const r = await pool.query(
-      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, prix_achat, images, en_stock, stock_quantite, categorie, caracteristiques, variantes, code_barre)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+      `INSERT INTO boutique_produits (boutique_id, nom, description, prix, prix_barre, prix_achat, images, en_stock, stock_quantite, categorie, caracteristiques, variantes, code_barre, unite_vente, has_variants, date_expiration)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
       [id, nom.trim(), description||null, safePrix, safePrixBarre, safePrixAchat,
-       images, finalEnStock, safeStock, categorie||null, caracJson, JSON.stringify(variantesJson), codeBarrePostVal]
+       images, finalEnStock, safeStock, categorie||null, caracJson, JSON.stringify(variantesJson), codeBarrePostVal,
+       unite_vente || 'piece', hasVariants, date_expiration || null]
     );
-    res.status(201).json({ success: true, produit: r.rows[0] });
+    const newProduit = r.rows[0];
+
+    // Insertion des variantes SKUs si présentes
+    if (skusArray.length > 0) {
+      for (let idx = 0; idx < skusArray.length; idx++) {
+        const v = skusArray[idx];
+        const vPrix = Number(v.prix) || safePrix || 0;
+        const vPrixBarre = v.prix_barre ? Number(v.prix_barre) : null;
+        const vPrixAchat = v.prix_achat ? Number(v.prix_achat) : null;
+        const vStock = v.stock_quantite !== undefined ? Number(v.stock_quantite) : 0;
+        await pool.query(
+          `INSERT INTO boutique_produit_variantes (boutique_id, produit_id, sku, code_barre, attributs, prix, prix_barre, prix_achat, stock_quantite, image_url, actif, ordre)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true,$11)`,
+          [id, newProduit.id, v.sku || null, v.code_barre || null, JSON.stringify(v.attributs || {}), vPrix, vPrixBarre, vPrixAchat, vStock, v.image_url || null, idx]
+        ).catch(() => {});
+      }
+    }
+
+    res.status(201).json({ success: true, produit: newProduit });
     // Audit Log Creation
     enregistrerAuditLog(id, req.user.userId, req.user.nom || 'Marchand', 'produit_cree', `Création du produit "${r.rows[0].nom}"`, { produit_id: r.rows[0].id, prix: r.rows[0].prix, stock_quantite: r.rows[0].stock_quantite }, req);
 
@@ -1555,7 +1604,7 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
 
-    const { nom, description, prix, prix_barre, prix_achat, en_stock, stock_quantite, quantite_stock, categorie, caracteristiques, variantes, code_barre } = req.body;
+    const { nom, description, prix, prix_barre, prix_achat, en_stock, stock_quantite, quantite_stock, categorie, caracteristiques, variantes, code_barre, unite_vente, date_expiration, variantes_skus } = req.body;
     let images = existing.rows[0].images;
     if (req.files && req.files.length) {
       images = [];
@@ -1577,6 +1626,14 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
       } catch {}
     }
 
+    let skusArray = null;
+    if (variantes_skus) {
+      try {
+        const parsed = typeof variantes_skus === 'string' ? JSON.parse(variantes_skus) : variantes_skus;
+        if (Array.isArray(parsed)) skusArray = parsed;
+      } catch {}
+    }
+
     const rawCodeBarre = Array.isArray(code_barre) ? code_barre[0] : code_barre;
     const codeBarreVal = rawCodeBarre !== undefined ? (rawCodeBarre && typeof rawCodeBarre === 'string' && rawCodeBarre.trim() ? rawCodeBarre.trim() : null) : existing.rows[0].code_barre;
 
@@ -1590,14 +1647,36 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
       : (rawStock === '' ? null : existing.rows[0].stock_quantite);
     const finalEnStock = safeStock !== null ? (safeStock > 0) : (en_stock !== 'false');
 
+    const hasVariants = (skusArray && skusArray.length > 0) || (variantesJson.length > 0 && variantesJson.some(v => v.valeurs && v.valeurs.length > 0));
+
     const r = await pool.query(
       `UPDATE boutique_produits SET nom=$1, description=$2, prix=$3, prix_barre=$4, prix_achat=$5,
-       images=$6, en_stock=$7, stock_quantite=$8, categorie=$9, caracteristiques=$10, variantes=$11, code_barre=$12, updated_at=NOW()
-       WHERE id=$13 AND boutique_id=$14 RETURNING *`,
+       images=$6, en_stock=$7, stock_quantite=$8, categorie=$9, caracteristiques=$10, variantes=$11, code_barre=$12,
+       unite_vente=$13, has_variants=$14, date_expiration=$15, updated_at=NOW()
+       WHERE id=$16 AND boutique_id=$17 RETURNING *`,
       [nom||existing.rows[0].nom, description||null, safePrix, safePrixBarre, safePrixAchat,
        images, finalEnStock, safeStock, categorie||existing.rows[0].categorie||null,
-       caracJson, JSON.stringify(variantesJson), codeBarreVal, prodId, id]
+       caracJson, JSON.stringify(variantesJson), codeBarreVal,
+       unite_vente || existing.rows[0].unite_vente || 'piece', hasVariants, date_expiration || existing.rows[0].date_expiration || null, prodId, id]
     );
+
+    // Mise à jour des variantes SKUs si transmises
+    if (skusArray && Array.isArray(skusArray)) {
+      await pool.query('DELETE FROM boutique_produit_variantes WHERE produit_id=$1 AND boutique_id=$2', [prodId, id]);
+      for (let idx = 0; idx < skusArray.length; idx++) {
+        const v = skusArray[idx];
+        const vPrix = Number(v.prix) || safePrix || 0;
+        const vPrixBarre = v.prix_barre ? Number(v.prix_barre) : null;
+        const vPrixAchat = v.prix_achat ? Number(v.prix_achat) : null;
+        const vStock = v.stock_quantite !== undefined ? Number(v.stock_quantite) : 0;
+        await pool.query(
+          `INSERT INTO boutique_produit_variantes (boutique_id, produit_id, sku, code_barre, attributs, prix, prix_barre, prix_achat, stock_quantite, image_url, actif, ordre)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true,$11)`,
+          [id, prodId, v.sku || null, v.code_barre || null, JSON.stringify(v.attributs || {}), vPrix, vPrixBarre, vPrixAchat, vStock, v.image_url || null, idx]
+        ).catch(() => {});
+      }
+    }
+
     res.json({ success: true, produit: r.rows[0] });
     
     // Audit Log Modification

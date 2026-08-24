@@ -26,6 +26,11 @@ export interface Produit {
   en_stock: boolean
   categorie: string | null
   caracteristiques: Record<string, string> | null
+  variantes?: { nom: string; valeurs: string[] }[] | null
+  variantes_skus?: { id: string; sku?: string; code_barre?: string; attributs: Record<string, string>; prix: number; prix_barre?: number; stock_quantite?: number; image_url?: string }[] | null
+  unite_vente?: string | null
+  has_variants?: boolean
+  date_expiration?: string | null
 }
 
 export interface Annonce {
@@ -65,6 +70,17 @@ function ProduitCard({
   const remise = p.prix && p.prix_barre && p.prix_barre > p.prix
     ? Math.round((1 - p.prix / p.prix_barre) * 100) : null
 
+  const hasSkus = p.variantes_skus && p.variantes_skus.length > 0
+  const minSkuPrix = hasSkus ? Math.min(...p.variantes_skus!.map(v => v.prix)) : (p.prix ?? null)
+  const maxSkuPrix = hasSkus ? Math.max(...p.variantes_skus!.map(v => v.prix)) : (p.prix ?? null)
+  const isVariablePrice = hasSkus && minSkuPrix !== null && maxSkuPrix !== null && minSkuPrix < maxSkuPrix
+  const displayPrice = isVariablePrice ? minSkuPrix : (p.prix ?? minSkuPrix)
+  const uniteSuffix = p.unite_vente && p.unite_vente !== 'piece' ? ` / ${p.unite_vente}` : ''
+
+  // Puces sectorielles (Mode tailles, Tech RAM/Stockage)
+  const taillesDispo = p.variantes?.find(v => v.nom.toLowerCase().includes('taille'))?.valeurs || []
+  const techSpecs = [p.caracteristiques?.stockage, p.caracteristiques?.ram].filter(Boolean).join(' · ')
+
   if (viewMode === 'list') {
     return (
       <div className="card-premium" style={{ display: 'flex', gap: 16, padding: 14, alignItems: 'center' }}>
@@ -85,19 +101,34 @@ function ProduitCard({
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <Link href={`/boutiques/${boutiqueId}/produits/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <h4 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: 'var(--navy)' }}>{p.nom}</h4>
-            {p.caracteristiques?.marque && (
-              <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase' }}>{p.caracteristiques.marque}</span>
-            )}
-            {p.description && (
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text2)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                {p.description}
-              </p>
-            )}
+            <h3 style={{ fontWeight: 700, fontSize: 15, margin: '0 0 4px', color: 'var(--navy)' }}>{p.nom}</h3>
           </Link>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-            {p.prix && <span style={{ fontWeight: 900, fontSize: 17, color: 'var(--accent)' }}>{fcfa(p.prix)}</span>}
+          {p.caracteristiques?.marque && (
+            <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase' }}>{p.caracteristiques.marque}</span>
+          )}
+          {techSpecs && (
+            <span style={{ fontSize: 11, background: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: 4, fontWeight: 600, marginLeft: 6 }}>
+              {techSpecs}
+            </span>
+          )}
+          {taillesDispo.length > 0 && (
+            <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+              {taillesDispo.slice(0, 4).map(t => (
+                <span key={t} style={{ fontSize: 10, border: '1px solid #cbd5e1', padding: '1px 5px', borderRadius: 4, color: '#334155', fontWeight: 600 }}>
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
+            {displayPrice ? (
+              <span style={{ fontWeight: 900, fontSize: 17, color: 'var(--accent)' }}>
+                {isVariablePrice ? `Dès ${fcfa(displayPrice)}` : fcfa(displayPrice)}
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)' }}>{uniteSuffix}</span>
+              </span>
+            ) : (
+              <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 600 }}>Prix à négocier</span>
+            )}
             {p.prix_barre && <span style={{ fontSize: 12, color: 'var(--text3)', textDecoration: 'line-through' }}>{fcfa(p.prix_barre)}</span>}
           </div>
         </div>
@@ -111,15 +142,19 @@ function ProduitCard({
           </button>
           <button
             onClick={() => {
-              addToCart(boutiqueId, boutiqueNom, p, whatsapp)
-              setAddedCart(true)
-              setTimeout(() => setAddedCart(false), 1800)
+              if (p.variantes && p.variantes.length > 0) {
+                onQuickView(p)
+              } else {
+                addToCart(boutiqueId, boutiqueNom, p, whatsapp)
+                setAddedCart(true)
+                setTimeout(() => setAddedCart(false), 1800)
+              }
             }}
             disabled={!p.en_stock}
             className={`btn-premium ${addedCart ? 'btn-premium-success' : 'btn-premium-primary'}`}
             style={{ padding: '8px 14px', fontSize: 12, opacity: p.en_stock ? 1 : 0.6 }}
           >
-            {addedCart ? '✅ Ajouté' : (p.en_stock ? <><ShoppingCart size={14} /> Ajouter</> : 'Rupture')}
+            {addedCart ? '✅ Ajouté' : (p.en_stock ? (p.variantes && p.variantes.length > 0 ? 'Choisir options' : <><ShoppingCart size={14} /> Ajouter</>) : 'Rupture')}
           </button>
         </div>
       </div>
@@ -157,7 +192,6 @@ function ProduitCard({
           </div>
         </Link>
 
-        {/* Bouton Aperçu Rapide au survol */}
         <button
           type="button"
           onClick={() => onQuickView(p)}
@@ -177,8 +211,24 @@ function ProduitCard({
         <Link href={`/boutiques/${boutiqueId}/produits/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
           <p style={{ fontWeight: 700, fontSize: 14, margin: 0, lineHeight: 1.4, color: 'var(--navy)' }}>{p.nom}</p>
         </Link>
-        {p.caracteristiques?.marque && (
-          <p style={{ fontSize: 11, color: 'var(--text3)', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{p.caracteristiques.marque}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {p.caracteristiques?.marque && (
+            <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{p.caracteristiques.marque}</span>
+          )}
+          {techSpecs && (
+            <span style={{ fontSize: 10.5, background: '#f1f5f9', color: '#475569', padding: '1px 5px', borderRadius: 4, fontWeight: 600 }}>
+              {techSpecs}
+            </span>
+          )}
+        </div>
+        {taillesDispo.length > 0 && (
+          <div style={{ display: 'flex', gap: 4, marginTop: 2, flexWrap: 'wrap' }}>
+            {taillesDispo.slice(0, 4).map(t => (
+              <span key={t} style={{ fontSize: 10, background: '#f8fafc', border: '1px solid #e2e8f0', padding: '1px 5px', borderRadius: 4, color: '#475569', fontWeight: 600 }}>
+                {t}
+              </span>
+            ))}
+          </div>
         )}
         {p.description && (
           <p style={{ fontSize: 12, color: 'var(--text2)', margin: '4px 0 0', lineHeight: 1.4,
@@ -186,10 +236,16 @@ function ProduitCard({
             {p.description}
           </p>
         )}
-        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          {p.prix && <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--accent)' }}>{fcfa(p.prix)}</span>}
+        <div style={{ paddingTop: 8, display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+          {displayPrice ? (
+            <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--accent)' }}>
+              {isVariablePrice ? `Dès ${fcfa(displayPrice)}` : fcfa(displayPrice)}
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text3)' }}>{uniteSuffix}</span>
+            </span>
+          ) : (
+            <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 600 }}>Prix à négocier</span>
+          )}
           {p.prix_barre && <span style={{ fontSize: 12, color: 'var(--text3)', textDecoration: 'line-through' }}>{fcfa(p.prix_barre)}</span>}
-          {!p.prix && <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 600 }}>Prix à négocier</span>}
         </div>
       </div>
 
@@ -197,15 +253,19 @@ function ProduitCard({
         <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={boutiqueId} />
         <button
           onClick={() => {
-            addToCart(boutiqueId, boutiqueNom, p, whatsapp)
-            setAddedCart(true)
-            setTimeout(() => setAddedCart(false), 1800)
+            if (p.variantes && p.variantes.length > 0) {
+              onQuickView(p)
+            } else {
+              addToCart(boutiqueId, boutiqueNom, p, whatsapp)
+              setAddedCart(true)
+              setTimeout(() => setAddedCart(false), 1800)
+            }
           }}
           disabled={!p.en_stock}
           className={`btn-premium ${addedCart ? 'btn-premium-success' : 'btn-premium-primary'}`}
           style={{ width: '100%', padding: '9px', fontSize: 13, opacity: p.en_stock ? 1 : 0.6 }}
         >
-          {addedCart ? '✅ Ajouté !' : (p.en_stock ? <><ShoppingCart size={15} /> Ajouter au panier</> : 'Rupture de stock')}
+          {addedCart ? '✅ Ajouté !' : (p.en_stock ? (p.variantes && p.variantes.length > 0 ? 'Choisir mes options' : <><ShoppingCart size={15} /> Ajouter au panier</>) : 'Rupture de stock')}
         </button>
       </div>
     </div>

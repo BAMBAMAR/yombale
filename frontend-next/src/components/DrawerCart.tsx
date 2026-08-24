@@ -73,7 +73,7 @@ export default function DrawerCart() {
   }
 
   // Construire le message WhatsApp complet multi-produits
-  const lignedDetailles = items.map(i => `• ${i.quantite}x ${i.nom} (${fcfa(i.prix * i.quantite)})`).join('\n')
+  const lignedDetailles = items.map(i => `• ${i.quantite}x ${i.nom}${i.detailsVariante ? ` [${i.detailsVariante}]` : ''} (${fcfa(i.prix * i.quantite)})`).join('\n')
   const messageWhatsappGrouped = `Bonjour ${activeCart.boutiqueNom} ! Je souhaite passer la commande suivante :\n\n${lignedDetailles}\n\n` +
     `Sous-total: ${fcfa(sousTotal)}\n` +
     `${fraisLivraison > 0 ? `Livraison (${zoneSelectionnee?.nom}): ${fcfa(fraisLivraison)}\n` : ''}` +
@@ -96,12 +96,21 @@ export default function DrawerCart() {
     setLoadingCheckout(true)
 
     try {
-      // Envoyer chaque article ou la commande globale à la boutique
+      // Envoyer la commande détaillée avec décomposition des articles
+      const formattedItems = items.map(i => ({
+        produit_id: (i.produitId || i.id.split('_')[0]).length === 36 ? (i.produitId || i.id.split('_')[0]) : null,
+        variante_id: i.varianteId || null,
+        nom_produit: i.nom,
+        details_variante: i.detailsVariante || null,
+        prix_unitaire: i.prix,
+        quantite: i.quantite,
+      }))
+
       const res = await fetch(`${backendUrl}/api/comptabilite/${activeBoutiqueId}/commandes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nom_produit: items.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+          nom_produit: items.map(i => `${i.quantite}x ${i.nom}${i.detailsVariante ? ` (${i.detailsVariante})` : ''}`).join(', '),
           prix_unitaire: sousTotal,
           quantite: 1,
           client_nom: clientNom.trim(),
@@ -111,6 +120,7 @@ export default function DrawerCart() {
           zone_livraison_id: (zoneId && zoneId.length === 36) ? zoneId : undefined,
           frais_livraison: fraisLivraison,
           source: 'web_panier',
+          items: formattedItems,
         }),
       })
 
@@ -139,11 +149,20 @@ export default function DrawerCart() {
   async function handleCommanderViaWhatsappDirect() {
     setLoadingCheckout(true)
     try {
+      const formattedItems = items.map(i => ({
+        produit_id: (i.produitId || i.id.split('_')[0]).length === 36 ? (i.produitId || i.id.split('_')[0]) : null,
+        variante_id: i.varianteId || null,
+        nom_produit: i.nom,
+        details_variante: i.detailsVariante || null,
+        prix_unitaire: i.prix,
+        quantite: i.quantite,
+      }))
+
       await fetch(`${backendUrl}/api/comptabilite/${activeBoutiqueId}/commandes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nom_produit: items.map(i => `${i.quantite}x ${i.nom}`).join(', '),
+          nom_produit: items.map(i => `${i.quantite}x ${i.nom}${i.detailsVariante ? ` (${i.detailsVariante})` : ''}`).join(', '),
           prix_unitaire: sousTotal,
           quantite: 1,
           client_nom: clientNom.trim() || 'Client WhatsApp',
@@ -153,6 +172,7 @@ export default function DrawerCart() {
           zone_livraison_id: (zoneId && zoneId.length === 36) ? zoneId : undefined,
           frais_livraison: fraisLivraison,
           source: 'whatsapp_panier',
+          items: formattedItems,
         }),
       }).catch(() => {})
     } finally {
@@ -315,8 +335,15 @@ export default function DrawerCart() {
                     </div>
   
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 14, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nom}</p>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#C75B00' }}>{fcfa(item.prix)}</span>
+                      <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: 14, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nom}</p>
+                      {item.detailsVariante && (
+                        <span style={{ display: 'inline-block', fontSize: 11, background: '#f1f5f9', color: '#475569', padding: '1px 6px', borderRadius: 4, fontWeight: 600, marginBottom: 4 }}>
+                          {item.detailsVariante}
+                        </span>
+                      )}
+                      <div>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#C75B00' }}>{fcfa(item.prix)}</span>
+                      </div>
                     </div>
   
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f3f4f6', padding: '2px 6px', borderRadius: 8 }}>

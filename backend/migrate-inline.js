@@ -755,8 +755,38 @@ module.exports = async function migrateInline() {
   // Variantes simples produit (options + valeurs, ex: Couleur/Taille) – 17 juillet 2026
   try {
     await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS variantes JSONB DEFAULT '[]'`);
-    console.log('[MIGRATE] ✅ Colonne boutique_produits.variantes OK');
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS unite_vente VARCHAR(30) DEFAULT 'piece'`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS has_variants BOOLEAN DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS date_expiration DATE DEFAULT NULL`);
+    console.log('[MIGRATE] ✅ Colonnes boutique_produits (variantes, unite_vente, has_variants, date_expiration) OK');
   } catch (e) { console.warn('[MIGRATE] bp_variantes:', e.message); }
+
+  // Table Matrice de Variantes & SKUs (Prix, stock et code-barres par variante)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS boutique_produit_variantes (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id    UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id     UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        sku            VARCHAR(100),
+        code_barre     VARCHAR(100),
+        attributs      JSONB NOT NULL DEFAULT '{}',
+        prix           NUMERIC(12,2) NOT NULL,
+        prix_barre     NUMERIC(12,2) DEFAULT NULL,
+        prix_achat     NUMERIC(12,2) DEFAULT NULL,
+        stock_quantite INT DEFAULT 0,
+        image_url      TEXT DEFAULT NULL,
+        actif          BOOLEAN DEFAULT TRUE,
+        ordre          INT DEFAULT 0,
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        updated_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_bpv_produit ON boutique_produit_variantes(produit_id);
+      CREATE INDEX IF NOT EXISTS idx_bpv_boutique ON boutique_produit_variantes(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_bpv_code_barre ON boutique_produit_variantes(code_barre) WHERE code_barre IS NOT NULL;
+    `);
+    console.log('[MIGRATE] ✅ Table boutique_produit_variantes OK');
+  } catch (e) { console.warn('[MIGRATE] boutique_produit_variantes:', e.message); }
 
   // Traçage du partage produit (marketing boutique) – 18 juillet 2026
   try {
@@ -838,7 +868,28 @@ module.exports = async function migrateInline() {
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS groupe_commande UUID`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS paiement_recu BOOLEAN DEFAULT false`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_commandes_groupe ON commandes_boutique(groupe_commande) WHERE groupe_commande IS NOT NULL`);
-    console.log('[MIGRATE] ✅ Table commandes_boutique OK');
+    
+    // Table des lignes d'articles par commande (Panier multi-produits avec stock et marges)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS commandes_boutique_items (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        commande_id       UUID NOT NULL REFERENCES commandes_boutique(id) ON DELETE CASCADE,
+        boutique_id       UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id        UUID REFERENCES boutique_produits(id) ON DELETE SET NULL,
+        variante_id       UUID REFERENCES boutique_produit_variantes(id) ON DELETE SET NULL,
+        nom_produit       VARCHAR(300) NOT NULL,
+        details_variante  VARCHAR(255),
+        prix_unitaire     NUMERIC(12,2) NOT NULL DEFAULT 0,
+        prix_achat        NUMERIC(12,2) DEFAULT NULL,
+        quantite          INT NOT NULL DEFAULT 1,
+        montant_total     NUMERIC(12,2) NOT NULL DEFAULT 0,
+        created_at        TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_cbi_commande ON commandes_boutique_items(commande_id);
+      CREATE INDEX IF NOT EXISTS idx_cbi_produit ON commandes_boutique_items(produit_id);
+      CREATE INDEX IF NOT EXISTS idx_cbi_boutique ON commandes_boutique_items(boutique_id);
+    `);
+    console.log('[MIGRATE] ✅ Tables commandes_boutique & commandes_boutique_items OK');
   } catch (e) { console.warn('[MIGRATE] commandes_boutique:', e.message); }
 
   // Spec 03 : Table boutique_promotions (Codes Promo & Coupons)

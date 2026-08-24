@@ -183,6 +183,13 @@ const TYPES_ARTICLE_TV_ELECTRO = ['TV', 'Frigo', 'Clim', 'Machine à laver', 'Co
 const CARBURANTS = ['Essence', 'Diesel', 'Hybride', 'Électrique']
 const CONDITIONNEMENTS = ['Sachet', 'Boîte', 'Vrac', 'Bouteille']
 const TYPES_BEAUTE = ['Crème', 'Parfum', 'Shampoing', 'Savon', 'Maquillage']
+const MARQUES_PARFUM = ['Dior', 'Chanel', 'Lattafa', 'Tom Ford', 'YSL', 'Armani', 'Guerlain', 'Hugo Boss']
+const CONCENTRATIONS_PARFUM = ['Extrait de Parfum', 'Eau de Parfum (EDP)', 'Eau de Toilette (EDT)', 'Eau de Cologne', 'Brume']
+const FAMILLES_OLFACTIVES = ['Boisé / Oud', 'Floral', 'Ambré / Oriental', 'Frais / Hespéridé', 'Gourmand / Vanillé', 'Épicé']
+const MARQUES_OPTIQUE = ['Ray-Ban', 'Oakley', 'Gucci', 'Prada', 'Tom Ford', 'Persol', 'Dior']
+const TYPES_LUNETTES = ['Lunettes de soleil', 'Lunettes de vue / Repos', 'Anti-lumière bleue', 'Monture créateur']
+const FORMES_MONTURE = ['Aviateur', 'Ronde', 'Carrée / Rectangulaire', 'Papillon / Cat-Eye', 'Wayfarer', 'Hexagonale']
+const PROTECTIONS_UV = ['UV400 (Catégorie 3)', 'Polarisé UV400', 'Verres Photochromiques', 'Sans protection']
 
 function CaracteristiquesFields({ slug, values, onChange, typesVarianteActifs }: {
   slug: string; values: Record<string, string>; onChange: (k: string, v: string) => void
@@ -288,6 +295,28 @@ function CaracteristiquesFields({ slug, values, onChange, typesVarianteActifs }:
       <CaracChips  label="Type"         name="type_produit" value={f('type_produit')} onChange={onChange} suggestions={TYPES_BEAUTE} />
       <CaracChips  label="Pour qui"     name="pour_qui"     value={f('pour_qui')}     onChange={onChange} suggestions={POUR_QUI} allowAutre={false} />
       <CaracField  label="Contenance"   name="contenance"   value={f('contenance')}   onChange={onChange} placeholder="200 ml, 50 g…" />
+    </div>
+  )
+
+  if (slug === 'parfum') return (
+    <div className="bq-form-grid-2">
+      <CaracChips  label="Marque"            name="marque"            value={f('marque')}            onChange={onChange} suggestions={MARQUES_PARFUM} />
+      <CaracChips  label="Concentration"     name="concentration"     value={f('concentration')}     onChange={onChange} suggestions={CONCENTRATIONS_PARFUM} />
+      <CaracChips  label="Famille olfactive" name="famille_olfactive" value={f('famille_olfactive')} onChange={onChange} suggestions={FAMILLES_OLFACTIVES} />
+      <CaracChips  label="Genre"             name="pour_qui"          value={f('pour_qui')}          onChange={onChange} suggestions={POUR_QUI} allowAutre={false} />
+      <CaracField  label="Contenance"        name="contenance"        value={f('contenance')}        onChange={onChange} placeholder="100 ml, 50 ml, 200 ml…" />
+      <CaracSelect label="État"              name="etat"              value={f('etat')}              onChange={onChange} options={ETATS_PRODUIT} />
+    </div>
+  )
+
+  if (slug === 'optique') return (
+    <div className="bq-form-grid-2">
+      <CaracChips  label="Marque"            name="marque"            value={f('marque')}            onChange={onChange} suggestions={MARQUES_OPTIQUE} />
+      <CaracChips  label="Type de lunettes"  name="type_article"      value={f('type_article')}      onChange={onChange} suggestions={TYPES_LUNETTES} />
+      <CaracChips  label="Forme monture"     name="forme_monture"     value={f('forme_monture')}     onChange={onChange} suggestions={FORMES_MONTURE} />
+      <CaracChips  label="Protection verres" name="protection_uv"     value={f('protection_uv')}     onChange={onChange} suggestions={PROTECTIONS_UV} />
+      <CaracChips  label="Matière monture"   name="matiere"           value={f('matiere')}           onChange={onChange} suggestions={['Acétate', 'Métal', 'Titane', 'Plastique injecté', 'Bois']} />
+      <CaracSelect label="État"              name="etat"              value={f('etat')}              onChange={onChange} options={ETATS_PRODUIT} />
     </div>
   )
 
