@@ -128,7 +128,7 @@ const FAQ = [
   },
   {
     motsCles: ['comment ça marche', 'comment ca marche', 'comment utiliser', 'aide site', 'utiliser nopalou', 'utiliser le site'],
-    reponse: '📖 *Comment utiliser Nopalou*\n\n🔍 Comparez les prix produits\n🏆 Guide d\'achat personnalisé\n🏡 Trouvez un logement\n📶 Comparez les forfaits télécom\n⚖️ Comparez côte à côte\n❤️ Sauvegardez vos favoris\n🔔 Créez des alertes de prix\n📢 Publiez une annonce\n\nGuide complet : ' + SITE + '/guide-emploi',
+    reponse: '📖 *Comment utiliser Nopalou*\n\n🔍 Comparez les prix produits\n🏆 Guide d\'achat personnalisé\n🏡 Trouvez un logement\n📶 Comparez les forfaits télécom\n⚖️ Comparez côte à côte\n❤️ Sauvegardez vos favoris\n🔔 Créez des alertes de prix\n📢 Publiez une annonce\n\nGuide complet : ' + SITE + '/guide-utilisation',
   },
   {
     motsCles: ['supprimer', 'retirer', 'effacer', 'desinscrire', 'stop', 'droit a l oubli', 'supprimer numero', 'retirer annonce'],
@@ -2385,7 +2385,8 @@ async function handleIncomingInternal(msg) {
       return;
     }
     if (action === 'guide') {
-      await sendWhatsAppText(phone, FAQ[FAQ.length - 1].reponse);
+      const faqGuide = detecterFAQ('comment ca marche') || detecterFAQ('comment utiliser');
+      await sendWhatsAppText(phone, faqGuide ? faqGuide.reponse : `📖 *Comment utiliser Nopalou*\n\n🔍 Comparez les prix produits\n🏠 Trouvez un logement\n📶 Comparez les forfaits télécom\n❤️ Sauvegardez vos favoris\n🔔 Créez des alertes de prix\n📢 Publiez une annonce\n\nGuide complet : ${SITE}/guide-utilisation`);
       await sendWhatsAppMenuOuFin(phone, 'Une autre question ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
