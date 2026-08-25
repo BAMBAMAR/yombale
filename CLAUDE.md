@@ -1,24 +1,18 @@
-- **Audit, Fiabilisation des Données & Moteur Anti-Ban de Prospection WhatsApp — Normalisation Unicode, TitleCase, Dictionnaire de Quartiers Trié, Moteur Spintax & Temporisation Dynamique (`backend/services/prospection.js`, `scraper-prospection.js`, `backend/migrate-inline.js`, `ProspectionClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🛡️🧼📍💬⚡🇸🇳 :
-  * **🧼 Normalisation Téléphonique Robuste (`normaliserTelephoneSenegal`)** :
-    - Élimination des caractères invisibles Unicode (Zero-Width Space, marqueurs RTL `\u200E`, espaces insécables `\u00A0`).
-    - Validation stricte des 9 chiffres et détection précise des opérateurs mobiles et fixes sénégalais (`Orange` 77/78, `Free` 76, `Expresso` 70, `Promobile` 75, `Fixe` 30/33).
-  * **🏪 Nettoyage TitleCase & Anti-Pollution des Noms (`nettoyerNomBoutique`)** :
-    - Élimination automatique des prix résiduels (`15000 FCFA`, `5000 f`), URLs et numéros collés dans les titres d'annonces.
-    - Formatage TitleCase intelligent préservant les acronymes (`"POS"`, `"GSM"`, `"VIP"`, `"BTP"`, `"TV"`, `"HLM"`).
-    - Fallback contextuel propre (*"Boutique Mode aux HLM"*, *"votre boutique"*).
-  * **📍 Dictionnaire & Détection Avancée des Quartiers (`detecterQuartier`)** :
-    - Dictionnaire enrichi avec tri par longueur décroissante pour prioriser les noms composés (*Grand Yoff* avant *Yoff*, *Nord Foire* avant *Foire*, *Zone de Captage*, *Parcelles Assainies*, *Keur Gorgui*, *Guédiawaye*, etc.).
-    - Formatage grammatical naturel dans les messages (*"aux HLM"*, *"aux Almadies"*, *"à Sandaga"*, *"à Dakar"*).
-  * **🔀 Moteur Spintax Anti-Spam & Anti-Ban (`traiterSpintax`, `ProspectionClient.tsx`)** :
-    - Support de la syntaxe `{Option 1|Option 2|Option 3}` dans les modèles de messages et l'éditeur pour varier les formulations et contourner les filtres de répétition Meta.
-    - Résolution Spintax instantanée en direct dans la prévisualisation client.
-  * **⏱️ Cadence Dynamique & Jitter Humain Anti-Ban (`lancerCampagne`)** :
-    - Remplacement du délai fixe de 1.5s par un délai aléatoire dynamique (2.5s à 4.5s) simulant un comportement humain réel.
-    - Pause de sécurité de 12 secondes toutes les 25 communications pour préserver le numéro WhatsApp.
-  * **🗄️ Indexation BDD Composite (`backend/migrate-inline.js`)** :
-    - Ajout de l'index composite `idx_prospection_target` sur `prospection_leads(statut, categorie, quartier)` et `idx_prospection_log_camp_date` sur `prospection_messages_log(campagne_id, created_at DESC)`.
-  * **🧪 Validation Technique** :
-    - Tests unitaires de normalisation, détection de quartier, Spintax et interpolation exécutés avec 100% de succès.
+- **Moteur de Salutations Intelligentes, Templates Métiers (Auto, Immo, Supérettes) & Auto-Guérison des Tables de Prospection (`backend/services/prospection.js`, `backend/routes/prospection.js`, `ProspectionClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🛡️✨💬🎯🇸🇳 :
+  * **🤝 Moteur de Salutations Naturelles (`estNomPropreAuthentique` & `interpolerMessage`)** :
+    - Élimination formelle de toute salutation bancale ou robotique (ex: *"Salam Agence Immobilière !"*, *"Bonjour Véhicules !"*, *"Bonjour votre boutique !"*, *"Salam 70 473 90 54... !"*).
+    - Détection stricte des noms authentiques : si le prénom ou le nom d'enseigne est réel (*"Fatou"*, *"Alanso Koumbiry Baldé"*, *"Brook Laye"*, *"Dakar Chic"*), le message s'adresse poliment à la personne (*"Salam Fatou !"*). Si le prospect a un nom générique ou pollué, la formule s'épure élégamment en salutation naturelle (*"Salam ! 👋"* ou *"Bonjour ! 👋"*).
+    - Support de la variable dynamique `{salutation}` dans tous les templates et aperçus temps réel.
+  * **🎯 Nouveaux Templates Métiers Dédiés (`TEMPLATES_PAR_DEFAUT`)** :
+    - **🚗 Véhicules & Concessionnaires** : Fiches techniques auto (kilométrage, carburant, transmission), liens WhatsApp et vitrine de parc automobile.
+    - **🏠 Immobilier & Agences** : Diffusion d'appartements et terrains, visites qualifiées sans commission.
+    - **🛒 Commerce Général & Supérettes** : Encaissement Wave/OM, caisse POS magasin et carnet de dettes clients.
+  * **🛡️ Auto-Guérison et Résilience BDD (`ensureProspectionTables`)** :
+    - Vérification et création préventive des tables `prospection_campagnes`, `prospection_messages_log`, `whatsapp_blacklist` et extensions `pgcrypto`/`uuid-ossp` avant tout envoi de campagne pour prévenir toute erreur 500.
+    - Sécurisation des requêtes SQL sur `id::text = ANY($1::text[])` pour éliminer tout risque d'échec de cast UUID.
+  * **🧪 Validation & Tests** :
+    - 35/35 tests unitaires validés avec 100% de succès.
+    - Validation unitaire des salutations réelles et épurées sur 100% des cas d'usage CRM.
 
 - **Enrichissement du Catalogue d'Importation par Lot (Batch Intake) — Ajout Intégral des Produits Modèles Parfumerie & Fragrances et Lunettes & Optique (`generate-catalog.js`, `catalogues-standards.json`, `BatchImportModal.tsx`, `run-unit-tests.mjs`, `CLAUDE.md`) (`main` - 25 août 2026)** 🌸👓💎📦⚡ :
   * **🌸 121 Modèles pour « Parfumerie & Fragrances » (`parfum`)** :

@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly: adminOnly } = require('../middlewares/auth');
 const {
+  ensureProspectionTables,
   normaliserTelephoneSenegal,
   TEMPLATES_PAR_DEFAUT,
   extraireLeadsDepuisTexte,
@@ -262,9 +263,11 @@ router.post('/leads/batch-delete', adminOnly, async (req, res) => {
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'ids[] requis' });
     }
-    await pool.query('DELETE FROM prospection_leads WHERE id = ANY($1::uuid[])', [ids]);
-    res.json({ success: true, count: ids.length });
+    const cleanIds = ids.map(String).filter(Boolean);
+    await pool.query('DELETE FROM prospection_leads WHERE id::text = ANY($1::text[])', [cleanIds]);
+    res.json({ success: true, count: cleanIds.length });
   } catch (err) {
+    console.error('[PROSPECTION BATCH DELETE ERR]:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -377,19 +380,27 @@ router.post('/campagnes/lancer', adminOnly, async (req, res) => {
   try {
     const { titre, canal = 'whatsapp', templateMessage, sujetEmail, leadIds, simulation = true } = req.body;
 
-    if (!templateMessage || !leadIds || leadIds.length === 0) {
+    if (!templateMessage || !leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
       return res.status(400).json({ error: 'Message et leadIds[] requis' });
     }
 
-    // Création de la campagne en BDD
-    const resCampagne = await pool.query(`
-      INSERT INTO prospection_campagnes (
-        titre, canal, statut, template_message, sujet_email, nb_total
-      ) VALUES ($1, $2, 'en_cours', $3, $4, $5)
-      RETURNING id
-    `, [titre || `Campagne ${canal} - ${new Date().toLocaleDateString('fr-FR')}`, canal, templateMessage, sujetEmail || null, leadIds.length]);
+    // Auto-guérison du schéma BDD
+    await ensureProspectionTables();
 
-    const campagneId = resCampagne.rows[0].id;
+    let campagneId = null;
+    try {
+      // Création de la campagne en BDD
+      const resCampagne = await pool.query(`
+        INSERT INTO prospection_campagnes (
+          titre, canal, statut, template_message, sujet_email, nb_total
+        ) VALUES ($1, $2, 'en_cours', $3, $4, $5)
+        RETURNING id
+      `, [titre || `Campagne ${canal} - ${new Date().toLocaleDateString('fr-FR')}`, canal, templateMessage, sujetEmail || null, leadIds.length]);
+
+      campagneId = resCampagne.rows[0]?.id;
+    } catch (cmpInsertErr) {
+      console.warn('[PROSPECTION] Insert campagne table warning (continuation en mode direct):', cmpInsertErr.message);
+    }
 
     // Lancer la campagne
     const resultat = await lancerCampagne({
@@ -406,7 +417,8 @@ router.post('/campagnes/lancer', adminOnly, async (req, res) => {
       resultat,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[PROSPECTION CAMPAGNES LANCER ERR]:', err);
+    res.status(500).json({ error: err.message || 'Erreur interne lors du lancement de la campagne' });
   }
 });
 

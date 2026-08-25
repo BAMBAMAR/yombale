@@ -746,8 +746,33 @@ export default function ProspectionClient({
     setLoadingLogs(false)
   }
 
+  // Vérification de la légitimité d'un nom pour éviter le spam générique ("Salam Mode !")
+  const estNomPropreAuthentique = (nom?: string | null) => {
+    if (!nom || typeof nom !== 'string') return false
+    const str = nom.trim()
+    if (str.length < 2 || str.length > 35) return false
+    const low = str.toLowerCase()
+    const GENERIQUES = [
+      'votre boutique', 'boutique', 'commerce & boutique', 'commerce', 'vendeur', 'vendeuse',
+      'responsable', 'partenaire', 'cher commerçant', 'client', 'particulier', 'prospect',
+      'mode', 'boutique mode', 'vendeur mode', 'véhicules', 'vehicules', 'vendeur véhicules',
+      'agence immobilière', 'agence immobiliere', 'immo', 'immobilier', 'téléphonie & tech',
+      'telephonie & tech', 'tech', 'téléphonie', 'telephonie', 'informatique', 'boutique informatique',
+      'électroménager', 'electromenager', 'boutique électroménager', 'maison & ameublement',
+      'maison', 'ameublement', 'alimentation & supérette', 'alimentation', 'superette',
+      'beauté & cosmétique', 'beaute & cosmetique', 'grossiste arrivages', 'grossiste',
+      'services', 'service', 'de livraison', 'enseigne', 'divers', 'mixte', 'général', 'general'
+    ]
+    if (GENERIQUES.includes(low)) return false
+    if (/^(boutique|vendeur|commerce|magasin|agence|groupe|grossiste)\s+(mode|tech|informatique|auto|immo|véhicules|vehicules|electromenager|beaute|maison|alimentation)$/i.test(str)) return false
+    if (/\d{3,}/.test(str) || /\//.test(str) || /wa\.me/i.test(str) || /@/.test(str)) return false
+    if (/^(dakar|senegal|thies|mbour|touba)[,\s]/i.test(str)) return false
+    if (/\b(disponible|disponibi|livraison|groupée|groupee|arrivage|promo|hyundai|tucson|lite\s*5g|galaxy|iphone|peugeot|terrain|appartement|chambre)\b/i.test(str)) return false
+    return true
+  }
+
   // Formatage grammatical naturel du quartier
-  const formatQuartierStr = (q?: string) => {
+  const formatQuartierStr = (q?: string | null) => {
     if (!q || q === 'Dakar' || q === 'Tout Dakar & Régions') return 'à Dakar'
     const qLow = q.toLowerCase()
     if (qLow.startsWith('hlm') || qLow.includes('almadies') || qLow.includes('mamelles') || qLow.includes('maristes') || qLow.includes('parcelles')) {
@@ -770,7 +795,7 @@ export default function ProspectionClient({
         if (
           lower === 'nom_boutique' || lower === 'prenom' || lower === 'quartier' ||
           lower === 'secteur' || lower === 'telephone' || lower === 'lien_demo' ||
-          lower === 'lien_boutique' || lower === 'lien_tarifs'
+          lower === 'lien_boutique' || lower === 'lien_tarifs' || lower === 'salutation'
         ) {
           return match
         }
@@ -783,7 +808,7 @@ export default function ProspectionClient({
     return res
   }
 
-  // Interpolation de prévisualisation
+  // Interpolation de prévisualisation naturelle et humaine
   const previewLead = filteredLeads[0] || {
     nom_boutique: 'Dakar Chic Boutique',
     contact_nom: 'Fatou',
@@ -791,15 +816,43 @@ export default function ProspectionClient({
     categorie: 'mode',
     telephone: '221771234567',
   }
-  const previewText = parseClientSpintax(campagneMessage)
-    .replace(/\{nom_boutique\}/gi, previewLead.nom_boutique || 'votre boutique')
-    .replace(/\{prenom\}/gi, previewLead.contact_nom || previewLead.nom_boutique || 'Cher commerçant')
+
+  const rawNom = (previewLead.nom_boutique || '').trim()
+  const rawPrenom = (previewLead.contact_nom || '').trim()
+  const estNomAuth = estNomPropreAuthentique(rawNom)
+  const estPrenomAuth = estNomPropreAuthentique(rawPrenom)
+  const salutationTarget = estPrenomAuth ? rawPrenom : (estNomAuth ? rawNom : null)
+
+  let previewText = parseClientSpintax(campagneMessage)
+
+  // Salutation intelligente
+  if (/\{salutation\}/i.test(previewText)) {
+    previewText = previewText.replace(/\{salutation\}/gi, salutationTarget ? `Salam ${salutationTarget} ! 👋` : 'Salam ! 👋')
+  }
+
+  previewText = previewText
+    .replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{prenom\}\s*\(\s*\{nom_boutique\}\s*\)\s*!/gi, (_m, salut) => {
+      if (estPrenomAuth && estNomAuth) return `${salut} ${rawPrenom} (${rawNom}) !`
+      if (salutationTarget) return `${salut} ${salutationTarget} !`
+      return `${salut} !`
+    })
+    .replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{nom_boutique\}\s*!/gi, (_m, salut) => {
+      return salutationTarget ? `${salut} ${salutationTarget} !` : `${salut} !`
+    })
+    .replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{prenom\}\s*!/gi, (_m, salut) => {
+      return salutationTarget ? `${salut} ${salutationTarget} !` : `${salut} !`
+    })
+    .replace(/\{nom_boutique\}/gi, estNomAuth ? rawNom : 'votre boutique')
+    .replace(/\{prenom\}/gi, estPrenomAuth ? rawPrenom : 'cher commerçant')
     .replace(/\{quartier\}/gi, formatQuartierStr(previewLead.quartier))
     .replace(/\{secteur\}/gi, previewLead.categorie || 'commerce')
     .replace(/\{telephone\}/gi, previewLead.telephone ? `+${previewLead.telephone}` : '')
     .replace(/\{lien_demo\}/gi, 'https://nopalou.com/guide-creer-boutique')
     .replace(/\{lien_boutique\}/gi, 'https://nopalou.com/creer-boutique')
     .replace(/\{lien_tarifs\}/gi, 'https://nopalou.com/tarifs-boutique')
+    .replace(/\(\s*\)/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim()
 
   // Export CSV
   const exportLeadsCSV = () => {

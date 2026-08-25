@@ -64,7 +64,7 @@ const TEMPLATES_PAR_DEFAUT = [
     categorie: 'mode',
     texte: `{Salam|Bonjour} {nom_boutique} ! 👋
 
-{J'ai vu vos magnifiques modèles|J'ai découvert vos collections|Je suis tombé sur vos superbes articles}. Vous perdez sûrement beaucoup de temps à envoyer les photos, tailles et prix un par un à chaque client sur WhatsApp.
+{J'ai vu vos magnifiques modèles|J'ai découvert vos collections|Je suis tombé sur vos superbes articles} {quartier}. Vous perdez sûrement beaucoup de temps à envoyer les photos, tailles et prix un par un à chaque client sur WhatsApp.
 
 Avec Nopalou (https://nopalou.com), vous avez votre boutique en ligne prête en 2 minutes :
 ✅ Vos clients voient vos collections et commandent seuls en 1 clic
@@ -83,7 +83,7 @@ Voulez-vous que je vous active votre lien test gratuit aujourd'hui ?` + FOOTER_O
     categorie: 'tech',
     texte: `{Salam alaykoum|Bonjour} {nom_boutique} ! 📱
 
-Dans la téléphonie à Dakar, les prix changent vite et les clients comparent tout.
+Dans la téléphonie & tech à Dakar, les prix changent vite et les clients comparent tout.
 
 Avec Nopalou, votre boutique est référencée sur le comparateur N°1 au Sénégal :
 ✅ Visibilité directe auprès de milliers d'acheteurs à Dakar
@@ -96,11 +96,68 @@ Lien d'inscription gratuite : https://nopalou.com/creer-boutique?plan=pro
 Pouvons-nous configurer vos 3 premiers téléphones ensemble ?` + FOOTER_OPTOUT
   },
   {
+    id: 'auto_vehicules',
+    titre: '🚗 Véhicules & Concessionnaires — Vitrine Auto & Fiches WhatsApp',
+    canal: 'whatsapp',
+    categorie: 'auto-moto',
+    texte: `{Salam|Bonjour} {nom_boutique} ! 🚗
+
+Vous vendez des véhicules à Dakar ? Les clients demandent sans cesse le kilométrage, l'année, les photos et le prix net par message.
+
+Avec Nopalou (https://nopalou.com), partagez votre parc auto en 1 seul lien pro :
+✅ Fiches véhicules complètes (photos HD, transmission, carburant, prix)
+✅ Prise de rendez-vous et contact direct sur votre WhatsApp
+✅ Référencement sur le portail auto n°1 au Sénégal
+🎁 1er mois 100% OFFERT sans aucun engagement !
+
+Découvrez la vitrine démo : https://nopalou.com/annonces
+
+Pouvons-nous ajouter votre 1er véhicule disponible aujourd'hui ?` + FOOTER_OPTOUT
+  },
+  {
+    id: 'immo_agences',
+    titre: '🏠 Immobilier & Agences — Fiches Biens & Visites WhatsApp',
+    canal: 'whatsapp',
+    categorie: 'immo',
+    texte: `{Salam|Bonjour} {nom_boutique} ! 🏠
+
+Gérer les demandes de location et de vente d'appartements à Dakar demande un temps fou sur WhatsApp.
+
+Nopalou Immo (https://nopalou.com/immo) simplifie la diffusion de vos biens :
+✅ Vos fiches appartements & terrains prêtes à partager en 1 clic
+✅ Réception des demandes de visite qualifiées sur votre WhatsApp
+✅ 0% de commission sur vos transactions
+🎁 30 jours d'essai gratuit pour booster vos mandats !
+
+Lien d'accès pro : https://nopalou.com/guide-creer-boutique
+
+Avez-vous un bien disponible que nous pouvons mettre en avant cette semaine ?` + FOOTER_OPTOUT
+  },
+  {
+    id: 'commerce_general',
+    titre: '🛒 Commerce Général & Supérette — Caisse POS & Commandes WhatsApp',
+    canal: 'whatsapp',
+    categorie: 'general',
+    texte: `{Salam|Bonjour} {nom_boutique} ! 👋
+
+{J'ai découvert votre activité commerciale|Je suis tombé sur vos offres} {quartier}. Fini la perte de temps à calculer les totaux et gérer les crédits à la main.
+
+Nopalou équipe votre commerce d'une solution tout-en-un simple et rapide :
+✅ Caisse enregistreuse tactile sur téléphone (gestion de stock & ventes)
+✅ Carnet de dettes client avec rappels WhatsApp en 1 clic
+✅ Paiements Wave & Orange Money directs sans intermédiaire
+🎁 1 mois d'essai offert pour équiper votre magasin !
+
+Testez sans engagement : https://nopalou.com/tarifs-boutique
+
+Souhaitez-vous faire un essai rapide de 5 minutes ?` + FOOTER_OPTOUT
+  },
+  {
     id: 'carnet_dettes',
     titre: '📒 Carnet de Dettes ("Bor") — Relances Polies WhatsApp Automatiques',
     canal: 'whatsapp',
     categorie: 'general',
-    texte: `{Salam|Bonjour} {prenom} ({nom_boutique}) ! 👋
+    texte: `{Salam|Bonjour} {nom_boutique} ! 👋
 
 Combien d'argent dort dehors dans des dettes clients oubliées sur des cahiers papier ?
 
@@ -498,35 +555,112 @@ function traiterSpintax(texte) {
   return resultat;
 }
 
-// ── Interpolation dynamique et résiliente de message ────────────────────────
+// ── Vérification si un nom est un nom propre / enseigne authentique ─────────
+function estNomPropreAuthentique(nom) {
+  if (!nom || typeof nom !== 'string') return false;
+  const str = nom.trim();
+  if (str.length < 2 || str.length > 35) return false;
+
+  const low = str.toLowerCase();
+
+  // Noms et placeholders génériques bannis des salutations
+  const GENERIQUES = [
+    'votre boutique', 'boutique', 'commerce & boutique', 'commerce', 'vendeur', 'vendeuse',
+    'responsable', 'partenaire', 'cher commerçant', 'client', 'particulier', 'prospect',
+    'mode', 'boutique mode', 'vendeur mode', 'véhicules', 'vehicules', 'vendeur véhicules',
+    'agence immobilière', 'agence immobiliere', 'immo', 'immobilier', 'téléphonie & tech',
+    'telephonie & tech', 'tech', 'téléphonie', 'telephonie', 'informatique', 'boutique informatique',
+    'électroménager', 'electromenager', 'boutique électroménager', 'maison & ameublement',
+    'maison', 'ameublement', 'alimentation & supérette', 'alimentation', 'superette',
+    'beauté & cosmétique', 'beaute & cosmetique', 'grossiste arrivages', 'grossiste',
+    'services', 'service', 'de livraison', 'enseigne', 'divers', 'mixte', 'général', 'general'
+  ];
+
+  if (GENERIQUES.includes(low)) return false;
+
+  // Détection de catégories pures ou expressions génériques
+  if (
+    /^(boutique|vendeur|commerce|magasin|agence|groupe|grossiste)\s+(mode|tech|informatique|auto|immo|véhicules|vehicules|electromenager|beaute|maison|alimentation)$/i.test(str) ||
+    /^(agence\s+immobilière|vendeur\s+véhicules|boutique\s+mode|commerce\s+&\s+boutique)/i.test(str)
+  ) {
+    return false;
+  }
+
+  // Pollutions techniques : numéros de téléphone, indicatifs, slashs, emails, urls
+  if (/\d{3,}/.test(str) || /\//.test(str) || /wa\.me/i.test(str) || /@/.test(str)) {
+    return false;
+  }
+
+  // Pollutions de petites annonces et titres d'articles
+  if (
+    /^(dakar|senegal|thies|mbour|touba)[,\s]/i.test(str) ||
+    /\b(disponible|disponibi|livraison|groupée|groupee|arrivage|promo|hyundai|tucson|lite\s*5g|galaxy|iphone|peugeot|terrain|appartement|chambre)\b/i.test(str)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+// ── Interpolation dynamique, humaine et naturelle de message ────────────────
 function interpolerMessage(template, lead) {
   if (!template) return '';
 
-  // 1. Résolution préalable du Spintax pour variabilité anti-spam
+  // 1. Résolution préalable du Spintax ({Salam|Bonjour|Hello})
   let message = traiterSpintax(template);
 
-  let nomBoutique = lead.nom_boutique || '';
-  let prenom = lead.contact_nom || '';
+  const rawNom = (lead.nom_boutique || '').trim();
+  const rawPrenom = (lead.contact_nom || '').trim();
 
-  // Si nom de boutique est générique ou un placeholder
-  if (
-    !nomBoutique ||
-    /^vendeur/i.test(nomBoutique) ||
-    /^(boutique|commerce|responsable|partenaire)/i.test(nomBoutique) ||
-    nomBoutique.includes('·') ||
-    nomBoutique.length > 35
-  ) {
-    nomBoutique = 'votre boutique';
-    if (!prenom || prenom.toLowerCase() === 'responsable' || prenom.toLowerCase() === 'vendeur') {
-      prenom = 'Cher commerçant';
+  const estNomBoutiqueAuth = estNomPropreAuthentique(rawNom);
+  const estPrenomAuth = estNomPropreAuthentique(rawPrenom);
+
+  // Nom ou prénom cible pour les salutations
+  let salutationTarget = null;
+  if (estPrenomAuth) {
+    salutationTarget = toTitleCase(rawPrenom);
+  } else if (estNomBoutiqueAuth) {
+    salutationTarget = toTitleCase(rawNom);
+  }
+
+  // 2. Remplacement intelligent de {salutation}
+  if (/\{salutation\}/i.test(message)) {
+    message = message.replace(/\{salutation\}/gi, () => {
+      const formule = Math.random() > 0.5 ? 'Salam' : 'Bonjour';
+      if (salutationTarget) {
+        return `${formule} ${salutationTarget} ! 👋`;
+      }
+      return `${formule} ! 👋`;
+    });
+  }
+
+  // 3. Remplacement des formules de salutation directes contenant {nom_boutique} ou {prenom}
+  // Supprime proprement le nom s'il est générique (ex: "Salam Mode !" -> "Salam !")
+  message = message.replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{prenom\}\s*\(\s*\{nom_boutique\}\s*\)\s*!/gi, (match, salut) => {
+    if (estPrenomAuth && estNomBoutiqueAuth) {
+      return `${salut} ${salutationTarget} (${toTitleCase(rawNom)}) !`;
     }
-  }
+    if (salutationTarget) {
+      return `${salut} ${salutationTarget} !`;
+    }
+    return `${salut} !`;
+  });
 
-  if (!prenom || prenom.toLowerCase() === 'responsable' || prenom.toLowerCase() === 'vendeur') {
-    prenom = (nomBoutique && nomBoutique !== 'votre boutique') ? nomBoutique : 'Cher commerçant';
-  }
+  message = message.replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{nom_boutique\}\s*!/gi, (match, salut) => {
+    if (salutationTarget) {
+      return `${salut} ${salutationTarget} !`;
+    }
+    return `${salut} !`;
+  });
 
-  // Préposition de lieu naturelle adaptée au quartier
+  message = message.replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{prenom\}\s*!/gi, (match, salut) => {
+    if (salutationTarget) {
+      return `${salut} ${salutationTarget} !`;
+    }
+    return `${salut} !`;
+  });
+
+  // 4. Préposition de lieu naturelle adaptée au quartier
   let quartierStr = 'à Dakar';
   if (lead.quartier && lead.quartier !== 'Dakar' && lead.quartier !== 'Tout Dakar & Régions') {
     const qLow = lead.quartier.toLowerCase();
@@ -537,12 +671,15 @@ function interpolerMessage(template, lead) {
     }
   }
 
+  // 5. Variables contextuelles dans le corps du texte
+  const nomBoutiqueCorps = estNomBoutiqueAuth ? toTitleCase(rawNom) : 'votre boutique';
+  const prenomCorps = estPrenomAuth ? toTitleCase(rawPrenom) : 'cher commerçant';
   const secteur = lead.categorie || 'commerce';
   const tel = lead.telephone ? `+${lead.telephone}` : '';
 
   message = message
-    .replace(/\{nom_boutique\}/gi, nomBoutique)
-    .replace(/\{prenom\}/gi, prenom)
+    .replace(/\{nom_boutique\}/gi, nomBoutiqueCorps)
+    .replace(/\{prenom\}/gi, prenomCorps)
     .replace(/\{quartier\}/gi, quartierStr)
     .replace(/\{secteur\}/gi, secteur)
     .replace(/\{telephone\}/gi, tel)
@@ -550,8 +687,13 @@ function interpolerMessage(template, lead) {
     .replace(/\{lien_boutique\}/gi, 'https://nopalou.com/creer-boutique')
     .replace(/\{lien_tarifs\}/gi, 'https://nopalou.com/tarifs-boutique');
 
-  // Nettoyage des espaces multiples
-  return message.replace(/[ \t]{2,}/g, ' ').trim();
+  // Nettoyage des parenthèses vides ou espaces multiples résiduels
+  message = message
+    .replace(/\(\s*\)/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+
+  return message;
 }
 
 // ── Génération de lien WhatsApp direct (wa.me) ──────────────────────────────
@@ -708,16 +850,97 @@ function genererRequetesDorking(categorie = 'tous', quartier = 'Dakar') {
   ];
 }
 
+// ── Auto-Guérison et Création Préventive des Tables de Prospection ───────────
+async function ensureProspectionTables() {
+  try {
+    await pool.query(`
+      CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+      CREATE TABLE IF NOT EXISTS prospection_leads (
+        id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nom_boutique       VARCHAR(255) NOT NULL,
+        contact_nom        VARCHAR(150),
+        telephone          VARCHAR(50) NOT NULL UNIQUE,
+        telephone_brut     VARCHAR(100),
+        operateur          VARCHAR(50) DEFAULT 'Orange',
+        email              VARCHAR(255),
+        categorie          VARCHAR(100) DEFAULT 'mode',
+        ville              VARCHAR(100) DEFAULT 'Dakar',
+        quartier           VARCHAR(150),
+        source             VARCHAR(100) DEFAULT 'manuel',
+        statut             VARCHAR(50) DEFAULT 'nouveau',
+        score              INT DEFAULT 0,
+        notes              TEXT,
+        derniere_action_at TIMESTAMPTZ,
+        created_at         TIMESTAMPTZ DEFAULT NOW(),
+        updated_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS prospection_campagnes (
+        id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        titre              VARCHAR(255) NOT NULL,
+        canal              VARCHAR(50) NOT NULL DEFAULT 'whatsapp',
+        statut             VARCHAR(50) NOT NULL DEFAULT 'brouillon',
+        template_message   TEXT NOT NULL,
+        sujet_email        VARCHAR(255),
+        nb_total           INT DEFAULT 0,
+        nb_envoyes         INT DEFAULT 0,
+        nb_succes          INT DEFAULT 0,
+        nb_echecs          INT DEFAULT 0,
+        metadonnees        JSONB DEFAULT '{}',
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS prospection_messages_log (
+        id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        campagne_id        UUID,
+        lead_id            UUID,
+        canal              VARCHAR(50) NOT NULL,
+        destinataire       VARCHAR(255) NOT NULL,
+        message_envoye     TEXT NOT NULL,
+        statut             VARCHAR(50) DEFAULT 'envoye',
+        erreur             TEXT,
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS whatsapp_blacklist (
+        phone              VARCHAR(50) PRIMARY KEY,
+        reason             VARCHAR(255) DEFAULT 'optout',
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_tel ON prospection_leads(telephone);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_statut ON prospection_leads(statut);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_cat ON prospection_leads(categorie);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_date ON prospection_leads(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_target ON prospection_leads(statut, categorie, quartier);
+      CREATE INDEX IF NOT EXISTS idx_prospection_campagnes_date ON prospection_campagnes(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_log_campagne ON prospection_messages_log(campagne_id);
+      CREATE INDEX IF NOT EXISTS idx_prospection_log_lead ON prospection_messages_log(lead_id);
+      CREATE INDEX IF NOT EXISTS idx_prospection_log_date ON prospection_messages_log(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_log_camp_date ON prospection_messages_log(campagne_id, created_at DESC);
+    `);
+  } catch (err) {
+    console.warn('[PROSPECTION] ensureProspectionTables warning:', err.message);
+  }
+}
+
 // ── Exécution de Campagne de Prospection Automatisée avec Jitter Humain ───────
 async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, simulation = false }) {
   if (!leadIds || leadIds.length === 0) {
     throw new Error('Aucun lead sélectionné');
   }
 
-  // Récupérer les leads
+  // Garantir l'existence des tables
+  await ensureProspectionTables();
+
+  const validIds = (Array.isArray(leadIds) ? leadIds : [leadIds]).map(String).filter(Boolean);
+
+  // Récupérer les leads de manière sécurisée (compatible id::text pour éviter tout bug de cast)
   const { rows: leads } = await pool.query(
-    'SELECT * FROM prospection_leads WHERE id = ANY($1::uuid[])',
-    [leadIds]
+    'SELECT * FROM prospection_leads WHERE id::text = ANY($1::text[])',
+    [validIds]
   );
 
   let nbSucces = 0;
@@ -790,11 +1013,15 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
 
   // Mettre à jour la campagne si présente
   if (campagneId) {
-    await pool.query(`
-      UPDATE prospection_campagnes
-      SET nb_envoyes = nb_envoyes + $1, nb_succes = nb_succes + $2, nb_echecs = nb_echecs + $3, statut = 'terminee'
-      WHERE id = $4
-    `, [leads.length, nbSucces, nbEchecs, campagneId]);
+    try {
+      await pool.query(`
+        UPDATE prospection_campagnes
+        SET nb_envoyes = nb_envoyes + $1, nb_succes = nb_succes + $2, nb_echecs = nb_echecs + $3, statut = 'terminee'
+        WHERE id::text = $4::text
+      `, [leads.length, nbSucces, nbEchecs, String(campagneId)]);
+    } catch (cmpErr) {
+      console.warn('[PROSPECTION] Update campagne warning:', cmpErr.message);
+    }
   }
 
   return {
@@ -806,6 +1033,8 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
 }
 
 module.exports = {
+  ensureProspectionTables,
+  estNomPropreAuthentique,
   normaliserTelephoneSenegal,
   toTitleCase,
   traiterSpintax,
