@@ -1,22 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1C2B4A"/>
-      <stop offset="100%" style="stop-color:#14203A"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#E06A00"/>
-      <stop offset="100%" style="stop-color:#C75B00"/>
-    </linearGradient>
-  </defs>
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
-  <!-- Magnifying glass body -->
-  <circle cx="220" cy="210" r="100" fill="none" stroke="#ffffff" stroke-width="28" opacity="0.95"/>
-  <!-- Magnifying glass handle -->
-  <line x1="295" y1="285" x2="380" y2="370" stroke="#ffffff" stroke-width="28" stroke-linecap="round" opacity="0.95"/>
-  <!-- Price tag accent -->
-  <circle cx="220" cy="210" r="40" fill="url(#accent)" opacity="0.9"/>
-  <!-- FCFA symbol simplified -->
-  <text x="220" y="222" text-anchor="middle" fill="#ffffff" font-family="system-ui, sans-serif" font-size="36" font-weight="900">₣</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#C75B00"/>
+  <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#fff"/>
 </svg>

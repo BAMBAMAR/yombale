@@ -3946,7 +3946,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   ]
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
-  const [subTabCompta, setSubTabCompta] = useState<'dashboard' | 'express' | 'ventes' | 'depenses'>('express')
+  const [subTabCompta, setSubTabCompta] = useState<'bilan' | 'dashboard' | 'express' | 'ventes' | 'depenses'>('bilan')
   const [showQrModal, setShowQrModal] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
@@ -4323,7 +4323,10 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                   return (
                     <button
                       key={item.key}
-                      onClick={() => setTab(item.key)}
+                      onClick={() => {
+                        if (item.key === 'compta') setSubTabCompta('bilan')
+                        setTab(item.key)
+                      }}
                       className={`bq-nav-item${isActive ? ' active' : ''}`}
                       style={{
                         opacity: allowed ? 1 : 0.85,
@@ -4373,7 +4376,10 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
         <BoutiqueMobileBottomSheet
           navGroups={NAV_GROUPS}
           activeTab={tab}
-          onSetTab={setTab}
+          onSetTab={(newTab) => {
+            if (newTab === 'compta') setSubTabCompta('bilan')
+            setTab(newTab)
+          }}
           isAllowed={isAllowed}
           nbEnAttente={nbEnAttente}
           formatNumber={formatNumber}

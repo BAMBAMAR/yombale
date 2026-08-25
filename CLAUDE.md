@@ -1,3 +1,12 @@
+- **Restauration Intégrale du Logo Officiel Orange Nopalou (PWA Desktop / Manifest) & Correction de l'Onglet Comptabilité (`icon-512.svg`, `manifest.json`, `layout.tsx`, `BoutiqueClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🟧✨💰🛡️ :
+  * **🟧 Remplacement Définitif du Logo PWA Desktop (`icon-512.svg`, `manifest.json`, `layout.tsx`)** :
+    - Remplacement de l'ancien visuel circulaire sombre par le **véritable logo officiel Nopalou** (carré orange `#C75B00` aux angles arrondis avec la lettre « N » blanche vectorielle stylisée).
+    - Mise à jour du manifeste PWA (`manifest.json`) et des métadonnées de layout (`layout.tsx`) avec incrément de version de cache (`?v=4`) pour actualiser instantanément l'icône dans l'onglet du navigateur, les fenêtres PWA desktop et l'écran d'accueil.
+  * **💰 Redirection Immédiate vers le Bilan Comptable (`BoutiqueClient.tsx`)** :
+    - Correction de l'état `subTabCompta` (qui ouvrait par défaut la "Saisie Express / Dépense") pour ouvrir systématiquement le **Grand Bilan Financier** (Chiffre d'Affaires, Marge Nette, Répartition des Ventes et Graphiques).
+  * **🧪 Validation** :
+    - `npx tsc --noEmit` validé avec 100% de succès (Code 0, 0 erreur).
+
 - **Audit de Cohérence & Renforcement Robuste du Triptyque Boutique ↔ Session ↔ Caissier — Sécurité PIN Superviseur, Clé Étrangère `session_id`, Clôture Z Réconciliée en SQL et Auto-Verrouillage d'Inactivité (`CaisseClient.tsx`, `boutiques.js`, `migrate-inline.js`, `db-offline.ts`, `sync-manager.ts`, `CLAUDE.md`) (`main` - 25 août 2026)** 🏪🔒👥📊⚡ :
   * **🔒 Sécurité & Contrôle d'Accès du Point de Vente POS** :
     - Verrouillage systématique du sélecteur multi-boutiques et du bouton retour `⬅ Boutique` par le **PIN Superviseur/Gérant** pour les caissiers standard afin d'empêcher toute sortie ou permutation non autorisée.
