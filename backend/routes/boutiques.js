@@ -1417,8 +1417,6 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
 
 // ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand
 router.get('/:id/produits', tokenOptional, async (req, res) => {
-// ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand
-router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
     const { rows } = await pool.query(

@@ -16,8 +16,10 @@
   * **🌸👓 Nouvelles Catégories Métiers (`lib/categories.ts`, `boutique-covers.ts`, `BoutiqueClient.tsx`)** :
     - **Parfumerie & Fragrances** : Catégorie officielle, bannières HD Unsplash dédiées et attributs métier (*Concentration EDP/EDT/Extrait, Famille olfactive, Contenance, Genre*).
     - **Lunettes & Optique** : Catégorie officielle, bannières HD et attributs (*Type solaire/vue, Forme monture, Protection UV400/Polarisé, Matière monture*).
+    - **Correction Syntaxe Route (`backend/routes/boutiques.js`)** : Élimination d'une duplication de déclaration sur `GET /api/boutiques/:id/produits` causant une ouverture de bloc sans fermeture. Validation syntaxique `node -c` réussie sur l'ensemble des 35 fichiers du backend.
   * **🧪 Validation Technique** :
     - 34/34 tests unitaires validés avec 100% de succès (`npm test`).
+    - Validation de syntaxe Node.js sur 100% des fichiers backend (`node -c`).
     - Build de production Next.js 14 : validé avec succès (EXIT 0).
 
 - **Optimisation Non-Intrusive du Toast Hors-Ligne & Visibilité Garantie de la Boutique dans l'En-tête Caisse (`RegisterSW.tsx`, `CaisseClient.tsx`) (`main` - 24 août 2026)** 📶🏪⚡✨ :
