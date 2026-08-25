@@ -1197,6 +1197,52 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_cat ON prospection_leads(categorie);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_date ON prospection_leads(created_at DESC);
 
+      -- Migration additive des colonnes prospection_leads (si table préexistante)
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS nom_boutique VARCHAR(255);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS contact_nom VARCHAR(150);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone VARCHAR(50);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone_brut VARCHAR(100);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS operateur VARCHAR(50) DEFAULT 'Orange';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS categorie VARCHAR(100) DEFAULT 'mode';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS ville VARCHAR(100) DEFAULT 'Dakar';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS quartier VARCHAR(150);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'manuel';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS statut VARCHAR(50) DEFAULT 'nouveau';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS score INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS notes TEXT;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+      -- Nettoyage automatique des leads hors-cible (demandes/offres d'emploi)
+      UPDATE prospection_leads
+      SET statut = 'invalide', notes = 'Hors-cible (Emploi/Recrutement)', updated_at = NOW()
+      WHERE (
+        categorie IN ('emploi', 'recrutement', 'stage')
+        OR nom_boutique ILIKE '%cherche travail%'
+        OR nom_boutique ILIKE '%cherche emploi%'
+        OR nom_boutique ILIKE '%agent de securite%'
+        OR nom_boutique ILIKE '%agents de séc%'
+        OR nom_boutique ILIKE '%recrutement%'
+        OR nom_boutique ILIKE '%call center%'
+      ) AND statut != 'invalide';
+
+      -- Nettoyage des fuites de formatage CSV dans les noms de boutiques
+      UPDATE prospection_leads
+      SET nom_boutique = split_part(nom_boutique, '"', 1), updated_at = NOW()
+      WHERE nom_boutique LIKE '%"%';
+
+      -- Harmonisation des intitulés génériques en noms de commerces professionnels
+      UPDATE prospection_leads SET nom_boutique = 'Boutique Mode' WHERE TRIM(nom_boutique) IN ('Vendeur mode', 'vendeur mode', 'Vendeur Mode');
+      UPDATE prospection_leads SET nom_boutique = 'Vendeur Véhicules' WHERE TRIM(nom_boutique) IN ('Vendeur auto-moto', 'vendeur auto-moto');
+      UPDATE prospection_leads SET nom_boutique = 'Agence Immobilière' WHERE TRIM(nom_boutique) IN ('Vendeur immo', 'vendeur immo');
+      UPDATE prospection_leads SET nom_boutique = 'Boutique Téléphonie & Tech' WHERE TRIM(nom_boutique) IN ('Vendeur smartphones', 'vendeur smartphones');
+      UPDATE prospection_leads SET nom_boutique = 'Boutique Électroménager' WHERE TRIM(nom_boutique) IN ('Vendeur tv-electro', 'vendeur tv-electro');
+      UPDATE prospection_leads SET nom_boutique = 'Boutique Informatique' WHERE TRIM(nom_boutique) IN ('Vendeur informatique', 'vendeur informatique');
+      UPDATE prospection_leads SET nom_boutique = 'Boutique Beauté & Cosmétique' WHERE TRIM(nom_boutique) IN ('Vendeur beaute', 'vendeur beaute');
+      UPDATE prospection_leads SET nom_boutique = 'Maison & Ameublement' WHERE TRIM(nom_boutique) IN ('Vendeur maison', 'vendeur maison');
+      UPDATE prospection_leads SET nom_boutique = 'Commerce Général' WHERE TRIM(nom_boutique) IN ('Vendeur divers', 'vendeur divers', 'Vendeur mixte', 'vendeur mixte');
+
       CREATE TABLE IF NOT EXISTS prospection_campagnes (
         id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         titre              VARCHAR(255) NOT NULL,

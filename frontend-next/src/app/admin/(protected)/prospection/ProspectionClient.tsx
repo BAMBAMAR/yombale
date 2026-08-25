@@ -26,6 +26,7 @@ const STATUT_LABELS: Record<string, { label: string; color: string; bg: string }
   en_discussion: { label: 'En Discussion', color: '#D97706', bg: '#FFFBEB' },
   converti: { label: 'Converti (Boutique Active)', color: '#059669', bg: '#ECFDF5' },
   desinscrit: { label: 'Désinscrit / Refus', color: '#DC2626', bg: '#FEF2F2' },
+  invalide: { label: 'Invalide / Emploi (Hors Cible)', color: '#64748B', bg: '#F1F5F9' },
 }
 
 const OPERATEUR_COLORS: Record<string, { color: string; bg: string }> = {
@@ -105,8 +106,9 @@ export default function ProspectionClient({
   const [importQuartier, setImportQuartier] = useState('Dakar')
   const [isImporting, setIsImporting] = useState(false)
 
-  // Auto-Sourcing
+  // Auto-Sourcing & Nettoyage IA
   const [isAutoSourcing, setIsAutoSourcing] = useState(false)
+  const [isCleaningLeads, setIsCleaningLeads] = useState(false)
 
   // Campagne Dispatcher
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateMsg>(templates[0] || {
@@ -257,17 +259,17 @@ export default function ProspectionClient({
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
         body: JSON.stringify(editForm),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setLeads((prev) => prev.map((l) => (l.id === editForm.id ? { ...l, ...data } : l)))
         showToast('✅ Prospect mis à jour avec succès dans la base !')
         setShowEditModal(false)
         await reloadLeads()
       } else {
-        showToast(`❌ ${data.error}`)
+        showToast(`❌ ${data.error || `Erreur de modification (${res.status})`}`)
       }
     } catch (err: any) {
-      showToast(`❌ Erreur: ${err.message}`)
+      showToast(`❌ Erreur: ${err.message || 'Erreur de connexion'}`)
     } finally {
       setIsSavingEdit(false)
     }
@@ -414,14 +416,17 @@ export default function ProspectionClient({
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
         body: JSON.stringify({ statut: newStatut }),
       })
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setLeads((prev) =>
           prev.map((l) => (l.id === leadId ? { ...l, statut: newStatut } : l))
         )
         showToast('✅ Statut du prospect mis à jour')
+      } else {
+        showToast(`❌ ${data.error || 'Erreur lors de la mise à jour'}`)
       }
-    } catch (_) {
-      showToast('❌ Erreur lors de la mise à jour')
+    } catch (err: any) {
+      showToast(`❌ Erreur: ${err.message || 'Erreur de connexion'}`)
     }
   }
 
@@ -433,11 +438,17 @@ export default function ProspectionClient({
         method: 'DELETE',
         headers: { 'x-admin-secret': secret },
       })
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setLeads((prev) => prev.filter((l) => l.id !== leadId))
         showToast('✅ Prospect supprimé')
+        await reloadLeads()
+      } else {
+        showToast(`❌ ${data.error || 'Erreur lors de la suppression'}`)
       }
-    } catch (_) {}
+    } catch (err: any) {
+      showToast(`❌ Erreur: ${err.message || 'Erreur de connexion'}`)
+    }
   }
 
   // Suppression groupée
@@ -512,6 +523,28 @@ export default function ProspectionClient({
       showToast(`❌ Erreur d'importation: ${e.message}`)
     } finally {
       setIsImporting(false)
+    }
+  }
+
+  // Nettoyage et Enrichissement IA de la base CRM
+  const handleNettoyerLeads = async () => {
+    setIsCleaningLeads(true)
+    try {
+      const res = await fetch('/api/prospection/leads/nettoyer', {
+        method: 'POST',
+        headers: { 'x-admin-secret': secret },
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        showToast(data.message || '🎉 Base de leads nettoyée et enrichie avec succès !')
+        await reloadLeads()
+      } else {
+        showToast(`❌ ${data.error || 'Erreur lors du nettoyage'}`)
+      }
+    } catch (e: any) {
+      showToast(`❌ Échec du nettoyage: ${e.message}`)
+    } finally {
+      setIsCleaningLeads(false)
     }
   }
 
@@ -683,7 +716,20 @@ export default function ProspectionClient({
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={handleNettoyerLeads}
+              disabled={isCleaningLeads}
+              style={{
+                background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)', color: '#fff', border: 'none', padding: '12px 18px',
+                borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: isCleaningLeads ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(124,58,237,0.35)',
+              }}
+            >
+              <Sparkles size={18} />
+              <span>{isCleaningLeads ? 'Nettoyage en cours...' : '✨ Nettoyer & Enrichir Base'}</span>
+            </button>
+
             <button
               onClick={handleAutoSource}
               disabled={isAutoSourcing}
@@ -694,7 +740,7 @@ export default function ProspectionClient({
               }}
             >
               <Sparkles size={18} />
-              <span>{isAutoSourcing ? 'Auto-Sourcing en cours...' : '⚡ Auto-Sourcing Annonces'}</span>
+              <span>{isAutoSourcing ? 'Auto-Sourcing...' : '⚡ Auto-Sourcing'}</span>
             </button>
 
             <button
@@ -852,6 +898,7 @@ export default function ProspectionClient({
                 <option value="en_discussion">En discussion</option>
                 <option value="converti">Converti (Actif)</option>
                 <option value="desinscrit">Désinscrit</option>
+                <option value="invalide">Invalide (Emploi / Hors Cible)</option>
               </select>
 
               <button
@@ -1000,6 +1047,7 @@ export default function ProspectionClient({
                               <option value="en_discussion">En discussion</option>
                               <option value="converti">Converti</option>
                               <option value="desinscrit">Désinscrit</option>
+                              <option value="invalide">Invalide</option>
                             </select>
                           </td>
                           <td style={{ padding: '14px 16px' }}>
@@ -1945,6 +1993,7 @@ Boutique Parcelles, 70 111 22 33`}
                     <option value="en_discussion">En discussion</option>
                     <option value="converti">Converti (Boutique Active)</option>
                     <option value="desinscrit">Désinscrit / Refus</option>
+                    <option value="invalide">Invalide / Emploi (Hors Cible)</option>
                   </select>
                 </div>
               </div>

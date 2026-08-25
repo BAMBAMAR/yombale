@@ -10,6 +10,7 @@ const {
   genererRequetesDorking,
   lancerCampagne,
   genererLienWhatsApp,
+  nettoyerTousLesLeadsBdd,
 } = require('../services/prospection');
 
 // ── GET /api/prospection/leads ────────────────────────────────────────────────
@@ -136,11 +137,15 @@ router.post('/leads', adminOnly, async (req, res) => {
   }
 });
 
-// ── PUT /api/prospection/leads/:id ────────────────────────────────────────────
-// Modification complète d'un lead
-router.put('/leads/:id', adminOnly, async (req, res) => {
+// ── PUT & PATCH /api/prospection/leads/:id ────────────────────────────────────
+// Modification complète ou partielle d'un lead
+const updateLeadHandler = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: 'Identifiant lead requis' });
+    }
+
     const {
       nom_boutique,
       contact_nom,
@@ -160,6 +165,15 @@ router.put('/leads/:id', adminOnly, async (req, res) => {
         return res.status(400).json({ error: `Numéro invalide: ${norm.erreur}` });
       }
       normTel = norm;
+
+      // Vérifier si le nouveau numéro est déjà pris par un autre prospect
+      const checkDoublon = await pool.query(
+        'SELECT id FROM prospection_leads WHERE (telephone = $1 OR telephone = $2) AND id != $3',
+        [normTel.national, normTel.local, id]
+      );
+      if (checkDoublon.rows.length > 0) {
+        return res.status(409).json({ error: 'Ce numéro de téléphone est déjà associé à un autre prospect dans la base' });
+      }
     }
 
     const query = `
@@ -203,16 +217,29 @@ router.put('/leads/:id', adminOnly, async (req, res) => {
 
     // Si le statut passe en désinscrit, synchronisation automatique avec whatsapp_blacklist
     if (statut === 'desinscrit' && updatedLead.telephone) {
-      const { ajouterBlacklist } = require('../services/whatsapp');
-      await ajouterBlacklist(updatedLead.telephone, 'optout_crm');
+      try {
+        const { ajouterBlacklist } = require('../services/whatsapp');
+        await ajouterBlacklist(updatedLead.telephone, 'optout_crm');
+      } catch (errBlacklist) {
+        console.warn('[PROSPECTION] Sync blacklist warning:', errBlacklist.message);
+      }
     }
 
     res.json(updatedLead);
   } catch (err) {
     console.error('[PROSPECTION PUT LEAD ERR]:', err);
-    res.status(500).json({ error: err.message });
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Ce numéro de téléphone existe déjà pour un autre prospect dans la base' });
+    }
+    if (err.code === '22P02') {
+      return res.status(400).json({ error: "Format d'identifiant prospect invalide (UUID attendu)" });
+    }
+    res.status(500).json({ error: err.message || 'Erreur serveur lors de la mise à jour' });
   }
-});
+};
+
+router.put('/leads/:id', adminOnly, updateLeadHandler);
+router.patch('/leads/:id', adminOnly, updateLeadHandler);
 
 // ── DELETE /api/prospection/leads/:id ─────────────────────────────────────────
 // Suppression d'un lead
@@ -238,6 +265,22 @@ router.post('/leads/batch-delete', adminOnly, async (req, res) => {
     res.json({ success: true, count: ids.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/prospection/leads/nettoyer ─────────────────────────────────────
+// Nettoyage intelligent des noms, enrichissement des quartiers et filtrage des leads invalides (emploi/particuliers)
+router.post('/leads/nettoyer', adminOnly, async (req, res) => {
+  try {
+    const stats = await nettoyerTousLesLeadsBdd();
+    res.json({
+      success: true,
+      message: `Nettoyage terminé : ${stats.nettoyes} prospects mis à jour, ${stats.invalidesEmploi} profils hors-cible classés, ${stats.quartiersEnrichis} quartiers identifiés.`,
+      stats,
+    });
+  } catch (err) {
+    console.error('[PROSPECTION NETTOYER ERR]:', err);
+    res.status(500).json({ error: err.message || 'Erreur lors du nettoyage de la base de prospects' });
   }
 });
 

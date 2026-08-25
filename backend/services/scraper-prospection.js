@@ -1,6 +1,11 @@
 // backend/services/scraper-prospection.js — Moteur de scraping et sourcing continu pour Dakar & Sénégal
 const { pool } = require('../models/db');
-const { normaliserTelephoneSenegal } = require('./prospection');
+const {
+  normaliserTelephoneSenegal,
+  nettoyerNomBoutique,
+  detecterQuartier,
+  estLeadEmploiOuInvalide,
+} = require('./prospection');
 let estDesinscrit;
 try {
   const ws = require('./whatsapp');
@@ -42,6 +47,8 @@ async function lancerScrapingProspection(options = {}) {
       WHERE contact_tel IS NOT NULL 
         AND contact_tel <> ''
         AND contact_tel <> 'Voir sur Facebook'
+        AND categorie_slug <> 'emploi'
+        AND categorie_slug <> 'recrutement'
         AND (supprimee IS NULL OR supprimee = false)
     `;
     const paramsAnnonces = [];
@@ -58,6 +65,12 @@ async function lancerScrapingProspection(options = {}) {
     totalTraites += resAnnonces.rows.length;
 
     for (const row of resAnnonces.rows) {
+      // Filtrer les annonces emploi / recrutement
+      if (estLeadEmploiOuInvalide({ nom_boutique: row.titre, notes: row.nom_vendeur, categorie: row.categorie })) {
+        ignores++;
+        continue;
+      }
+
       const norm = normaliserTelephoneSenegal(row.telephone);
       if (!norm.valide) {
         ignores++;
@@ -69,17 +82,22 @@ async function lancerScrapingProspection(options = {}) {
         continue;
       }
 
-      const nomBq = row.nom_vendeur || row.titre?.slice(0, 40) || `Vendeur ${row.quartier || 'Dakar'}`;
       const cat = row.categorie || categorie || 'commerce';
-      const quart = row.quartier || row.ville || 'Dakar';
+      const quartDetecte = detecterQuartier(`${row.titre || ''} ${row.quartier || ''} ${row.ville || ''}`) || row.quartier || row.ville || 'Dakar';
+      const nomBq = row.nom_vendeur || nettoyerNomBoutique(row.titre, cat, quartDetecte);
+
+      let contactNom = row.nom_vendeur;
+      if (!contactNom || contactNom.toLowerCase() === 'responsable' || contactNom.length < 2 || contactNom.includes('"')) {
+        contactNom = null;
+      }
 
       const ins = await pool.query(
         `INSERT INTO prospection_leads (
           nom_boutique, contact_nom, telephone, telephone_brut, operateur, categorie, ville, quartier, source, statut, score
-        ) VALUES ($1, $2, $3, $4, $5, $6, 'Dakar', $7, 'scraper_auto', 'nouveau', 65)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'scraper_auto', 'nouveau', 65)
         ON CONFLICT (telephone) DO NOTHING
         RETURNING id`,
-        [nomBq, row.nom_vendeur || 'Responsable', norm.national, norm.brut, norm.operateur, cat, quart]
+        [nomBq, contactNom, norm.national, norm.brut, norm.operateur, cat, row.ville || 'Dakar', quartDetecte]
       );
 
       if (ins.rows.length > 0) {
@@ -125,16 +143,21 @@ async function lancerScrapingProspection(options = {}) {
           continue;
         }
 
-        const nomBq = row.nom_vendeur || `Agence Immo ${row.quartier || 'Dakar'}`;
-        const quart = row.quartier || row.ville || 'Dakar';
+        const quartDetecte = detecterQuartier(`${row.titre || ''} ${row.quartier || ''} ${row.ville || ''}`) || row.quartier || row.ville || 'Dakar';
+        const nomBq = row.nom_vendeur || nettoyerNomBoutique(row.titre, 'immo', quartDetecte);
+
+        let contactNom = row.nom_vendeur;
+        if (!contactNom || contactNom.toLowerCase() === 'responsable' || contactNom.length < 2 || contactNom.includes('"')) {
+          contactNom = null;
+        }
 
         const ins = await pool.query(
           `INSERT INTO prospection_leads (
             nom_boutique, contact_nom, telephone, telephone_brut, operateur, categorie, ville, quartier, source, statut, score
-          ) VALUES ($1, $2, $3, $4, $5, 'immo', 'Dakar', $6, 'scraper_immo', 'nouveau', 70)
+          ) VALUES ($1, $2, $3, $4, $5, 'immo', $6, $7, 'scraper_immo', 'nouveau', 70)
           ON CONFLICT (telephone) DO NOTHING
           RETURNING id`,
-          [nomBq, row.nom_vendeur || 'Responsable', norm.national, norm.brut, norm.operateur, quart]
+          [nomBq, contactNom, norm.national, norm.brut, norm.operateur, row.ville || 'Dakar', quartDetecte]
         );
 
         if (ins.rows.length > 0) {

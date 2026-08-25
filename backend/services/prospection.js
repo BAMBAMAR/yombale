@@ -152,28 +152,238 @@ L'équipe Déploiement Nopalou Sénégal
   }
 ];
 
+// ── Dictionnaire des Quartiers et Marchés de Dakar & Régions ───────────────
+const DICTIONNAIRE_QUARTIERS = [
+  'Sandaga', 'HLM', 'Colobane', 'Petersen', 'Centenaire', 'Maristes', 'Plateau',
+  'Almadies', 'Ngor', 'Ouakam', 'Pikine', 'Guédiawaye', 'Guediawaye', 'Keur Massar',
+  'Parcelles Assainies', 'Parcelles', 'Tilène', 'Tilene', 'Yoff', 'Fann', 'Mermoz',
+  'Grand Yoff', 'Grandyoff', 'Grand Dakar', 'Médina', 'Medina', 'Fass', 'Fann Hock',
+  'Point E', 'Sacré-Cœur', 'Sacre Coeur', 'Liberté 6', 'Liberte 6', 'Mamelles',
+  'Hann Maristes', 'Hann', 'Bel Air', 'Gibraltar', 'Castors', 'Dieuppeul', 'Derklé',
+  'Derkle', 'Bène Tally', 'Bene Tally', 'Geultape', 'Gueule Tapée', 'Lambay', 'Sea Plaza',
+  'Thiès', 'Thies', 'Touba', 'Mbour', 'Saint-Louis', 'Ziguinchor', 'Diourbel', 'Kaolack',
+  'Rufisque', 'Bargny', 'Diamniadio', 'Saly', 'Somone', 'Fatick', 'Kolda', 'Tambacounda'
+];
+
+function detecterQuartier(texte) {
+  if (!texte || typeof texte !== 'string') return null;
+  for (const q of DICTIONNAIRE_QUARTIERS) {
+    const reg = new RegExp(`\\b${q.replace(/[-]/g, '[- ]')}\\b`, 'i');
+    if (reg.test(texte)) {
+      if (q.toLowerCase() === 'guediawaye') return 'Guédiawaye';
+      if (q.toLowerCase() === 'thies') return 'Thiès';
+      if (q.toLowerCase() === 'medina') return 'Médina';
+      if (q.toLowerCase() === 'tilene') return 'Tilène';
+      if (q.toLowerCase() === 'grandyoff') return 'Grand Yoff';
+      return q;
+    }
+  }
+  return null;
+}
+
+function genererNomBoutiqueParDefaut(categorie, quartier) {
+  const qStr = (quartier && quartier !== 'Dakar' && quartier !== 'Tout Dakar & Régions') ? ` ${quartier}` : '';
+  switch (String(categorie || '').toLowerCase()) {
+    case 'mode':
+      return `Boutique Mode${qStr}`;
+    case 'tech':
+    case 'telephonie':
+    case 'smartphones':
+      return `Boutique Téléphonie & Tech${qStr}`;
+    case 'informatique':
+      return `Boutique Informatique${qStr}`;
+    case 'tv-electro':
+      return `Boutique Électroménager${qStr}`;
+    case 'beaute':
+    case 'cosmetique':
+      return `Boutique Beauté & Cosmétique${qStr}`;
+    case 'maison':
+      return `Maison & Ameublement${qStr}`;
+    case 'auto-moto':
+      return `Vendeur Véhicules${qStr}`;
+    case 'immo':
+      return `Agence Immobilière${qStr}`;
+    case 'grossiste':
+      return `Grossiste Arrivages${qStr}`;
+    case 'superette':
+    case 'alimentation':
+      return `Alimentation & Supérette${qStr}`;
+    default:
+      return `Commerce & Boutique${qStr}`;
+  }
+}
+
+function nettoyerNomBoutique(rawNom, categorie = 'mode', quartier = '') {
+  if (!rawNom || typeof rawNom !== 'string') {
+    return genererNomBoutiqueParDefaut(categorie, quartier);
+  }
+
+  let clean = rawNom.trim();
+
+  // Nettoyer les fuites CSV (ex: Vendeur mode " 221782823518" "Orange" ...)
+  if (clean.includes('"') || clean.includes('""')) {
+    clean = clean.split('"')[0].trim();
+  }
+
+  // Enlever les préfixes d'annonces
+  clean = clean.replace(/^(vendeur\s+|annonce\s+|boutique\s+de\s+|contact\s*:?\s*)/i, '').trim();
+
+  // Détection de marques ou magasins authentiques connus dans le texte
+  const matchBoutique = clean.match(/(?:chez|boutique|store|shop|bar à parfum|service)\s+([A-Za-z0-9À-ÿ\s&'-]{3,30})/i);
+  if (matchBoutique && matchBoutique[1]) {
+    const nomExtrait = matchBoutique[1].trim();
+    if (!/^\d+/.test(nomExtrait) && nomExtrait.length > 2 && nomExtrait.length < 35) {
+      return nomExtrait.charAt(0).toUpperCase() + nomExtrait.slice(1);
+    }
+  }
+
+  // Si le nom est un titre d'annonce descriptive ou trop long
+  const estTitreAnnonce = (
+    clean.length > 35 ||
+    /^(prix|disponible|à vendre|a vendre|cherche|contact|suivre|recrutement|appartement|peugeot|mercedes|hyundai|kia|daewoo|service de livraison|10 h|terrains|chambre|bana bana|tout nickel|débardeur|dentelle|tablette|télévision|lg|machine|cover|summer scents|parfum dakar|faites vos|new arrival|livraison|n'hésitez|ouvert|ferme|wax|terrain)/i.test(clean) ||
+    clean.includes('·') ||
+    clean.includes('http') ||
+    /\d{5,}/.test(clean) ||
+    clean.length < 3
+  );
+
+  if (estTitreAnnonce) {
+    const matchNomCourt = clean.match(/^([A-Za-zÀ-ÿ]{3,20}\s+(?:Store|Shop|Boutique|Services?|Business|Couture|Tech|Auto|Immo|Design))/i);
+    if (matchNomCourt) {
+      return matchNomCourt[1].trim();
+    }
+    return genererNomBoutiqueParDefaut(categorie, quartier);
+  }
+
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
+function estLeadEmploiOuInvalide(lead) {
+  const cat = String(lead.categorie || '').toLowerCase();
+  if (cat === 'emploi' || cat === 'recrutement' || cat === 'stage') return true;
+
+  const texte = `${lead.nom_boutique || ''} ${lead.notes || ''} ${lead.contact_nom || ''}`.toLowerCase();
+  if (
+    texte.includes('cherche travail') ||
+    texte.includes('cherche emploi') ||
+    texte.includes('cherche un travail') ||
+    texte.includes('agent de securite') ||
+    texte.includes('agents de séc') ||
+    texte.includes('recrutement femmes') ||
+    texte.includes('chauffeur cherche') ||
+    texte.includes('cherche stage') ||
+    texte.includes('recherche d\'emploi') ||
+    texte.includes('recherche emploi') ||
+    texte.includes('call center')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function nettoyerEtEnrichirLead(lead) {
+  const rawNom = lead.nom_boutique || '';
+  const rawQuartier = lead.quartier || lead.ville || 'Dakar';
+  const rawCat = lead.categorie || 'mode';
+
+  const estInvalide = estLeadEmploiOuInvalide(lead);
+  
+  // Détection du quartier dans le nom, notes, quartier brut
+  const qDetecte = detecterQuartier(`${rawNom} ${lead.notes || ''} ${rawQuartier}`);
+  const quartierFinal = qDetecte || (rawQuartier !== 'Dakar' ? rawQuartier : 'Dakar');
+  
+  const nomPropre = nettoyerNomBoutique(rawNom, rawCat, quartierFinal);
+  
+  let contactNom = lead.contact_nom;
+  if (!contactNom || contactNom.toLowerCase() === 'responsable' || contactNom.length < 2 || contactNom.includes('"') || contactNom.length > 30) {
+    contactNom = null;
+  }
+
+  return {
+    nom_boutique: nomPropre,
+    contact_nom: contactNom,
+    quartier: quartierFinal,
+    categorie: rawCat,
+    statut: estInvalide ? 'invalide' : (lead.statut === 'invalide' ? 'nouveau' : (lead.statut || 'nouveau')),
+    notes: estInvalide ? (lead.notes ? `${lead.notes} | Hors-cible (Emploi/Recrutement)` : 'Hors-cible (Emploi/Recrutement)') : lead.notes,
+  };
+}
+
+async function nettoyerTousLesLeadsBdd() {
+  const { rows: leads } = await pool.query('SELECT * FROM prospection_leads');
+  let nettoyes = 0;
+  let invalidesEmploi = 0;
+  let quartiersEnrichis = 0;
+
+  for (const lead of leads) {
+    const enrichi = nettoyerEtEnrichirLead(lead);
+
+    let changed = false;
+    if (enrichi.nom_boutique !== lead.nom_boutique) changed = true;
+    if (enrichi.contact_nom !== lead.contact_nom) changed = true;
+    if (enrichi.quartier !== lead.quartier) {
+      changed = true;
+      if (lead.quartier === 'Dakar' && enrichi.quartier !== 'Dakar') {
+        quartiersEnrichis++;
+      }
+    }
+    if (enrichi.statut !== lead.statut) {
+      changed = true;
+      if (enrichi.statut === 'invalide') {
+        invalidesEmploi++;
+      }
+    }
+
+    if (changed) {
+      await pool.query(`
+        UPDATE prospection_leads
+        SET
+          nom_boutique = $1,
+          contact_nom = $2,
+          quartier = $3,
+          statut = $4,
+          notes = $5,
+          updated_at = NOW()
+        WHERE id = $6
+      `, [enrichi.nom_boutique, enrichi.contact_nom, enrichi.quartier, enrichi.statut, enrichi.notes, lead.id]);
+      nettoyes++;
+    }
+  }
+
+  return {
+    total: leads.length,
+    nettoyes,
+    invalidesEmploi,
+    quartiersEnrichis,
+  };
+}
+
 // ── Interpolation dynamique de message ───────────────────────────────────────
 function interpolerMessage(template, lead) {
   if (!template) return '';
-  let nomBoutique = lead.nom_boutique || 'votre boutique';
+  let nomBoutique = lead.nom_boutique || '';
   let prenom = lead.contact_nom || '';
 
-  // Nettoyage intelligent si le nom de boutique est un fragment d'annonce scrapée
+  // Si nom de boutique est générique ou un placeholder
   if (
-    /^vendeur\s+/i.test(nomBoutique) ||
-    /^\.\.\./.test(nomBoutique) ||
-    /^(prix|disponible|à vendre|a vendre|cherche|contact|suivre|recrutement|appartement|peugeot|mercedes|hyundai|kia|daewoo|service de livraison|10 h|terrains|chambre|bana bana|tout nickel)/i.test(nomBoutique) ||
+    !nomBoutique ||
+    /^vendeur/i.test(nomBoutique) ||
+    /^(boutique|commerce|responsable|partenaire)/i.test(nomBoutique) ||
     nomBoutique.includes('·') ||
-    nomBoutique.includes('http') ||
-    /\d{6,}/.test(nomBoutique)
+    nomBoutique.length > 35
   ) {
     nomBoutique = 'votre boutique';
-    if (!prenom) prenom = 'Cher commerçant';
+    if (!prenom || prenom.toLowerCase() === 'responsable') {
+      prenom = 'Cher commerçant';
+    }
   }
 
-  if (!prenom) prenom = nomBoutique !== 'votre boutique' ? nomBoutique : 'Cher commerçant';
+  if (!prenom || prenom.toLowerCase() === 'responsable') {
+    prenom = (nomBoutique && nomBoutique !== 'votre boutique') ? nomBoutique : 'Cher commerçant';
+  }
 
-  const quartier = lead.quartier || lead.ville || 'Dakar';
+  const quartier = lead.quartier && lead.quartier !== 'Dakar' ? `à ${lead.quartier}` : 'à Dakar';
   const secteur = lead.categorie || 'commerce';
   const tel = lead.telephone || '';
 
@@ -219,20 +429,20 @@ function extraireLeadsDepuisTexte(rawText, defauts = {}) {
       if (norm.valide && !telVus.has(norm.national) && norm.operateur !== 'Fixe') {
         telVus.add(norm.national);
 
-        // Extraction du nom de boutique (nettoyage de la ligne)
-        let nomBoutique = txt
+        // Détection et enrichissement automatique
+        const quartierDetecte = detecterQuartier(txt) || defauts.quartier || 'Dakar';
+        const rawNom = txt
           .replace(rawNum, '')
           .replace(email || '', '')
           .replace(/[-:–—|•*#~,;|\t\/\\]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
 
-        if (!nomBoutique || nomBoutique.length < 2) {
-          nomBoutique = defauts.nom_boutique || `Boutique ${norm.formate}`;
-        }
+        const nomNettoye = nettoyerNomBoutique(rawNom, defauts.categorie || 'mode', quartierDetecte);
+        const estInvalide = estLeadEmploiOuInvalide({ nom_boutique: rawNom, notes: txt, categorie: defauts.categorie });
 
         leadsTrouves.push({
-          nom_boutique: nomBoutique.slice(0, 255),
+          nom_boutique: nomNettoye.slice(0, 255),
           contact_nom: defauts.contact_nom || null,
           telephone: norm.national,
           telephone_brut: norm.brut,
@@ -240,9 +450,10 @@ function extraireLeadsDepuisTexte(rawText, defauts = {}) {
           email: email,
           categorie: defauts.categorie || 'mode',
           ville: defauts.ville || 'Dakar',
-          quartier: defauts.quartier || 'Dakar',
+          quartier: quartierDetecte,
           source: defauts.source || 'import_texte',
-          statut: 'nouveau',
+          statut: estInvalide ? 'invalide' : 'nouveau',
+          notes: estInvalide ? 'Hors cible (Emploi/Recrutement)' : (defauts.notes || null),
         });
       }
     }
@@ -271,9 +482,12 @@ async function autoSourcerDepuisAnnonces() {
 
       if (estDesinscrit && (await estDesinscrit(norm.national))) continue;
 
-      const nomBoutique = a.contact_nom || `Vendeur ${a.categorie_slug || 'Annonce'}`;
+      // Filtrer les annonces d'emploi
+      if (a.categorie_slug === 'emploi' || a.categorie_slug === 'recrutement') continue;
+
+      const quartierDetecte = detecterQuartier(`${a.titre || ''} ${a.quartier || ''} ${a.ville || ''}`) || a.quartier || a.ville || 'Dakar';
+      const nomNettoye = a.contact_nom || nettoyerNomBoutique(a.titre, a.categorie_slug || 'mode', quartierDetecte);
       const categorie = a.categorie_slug || 'mode';
-      const quartier = a.quartier || a.ville || 'Dakar';
       const source = 'annonces_classifiees';
 
       try {
@@ -285,7 +499,7 @@ async function autoSourcerDepuisAnnonces() {
           ON CONFLICT (telephone) DO NOTHING
           RETURNING id
         `;
-        const values = [nomBoutique, a.contact_nom, norm.national, norm.brut, norm.operateur, categorie, a.ville || 'Dakar', quartier, source];
+        const values = [nomNettoye, a.contact_nom || null, norm.national, norm.brut, norm.operateur, categorie, a.ville || 'Dakar', quartierDetecte, source];
         const resDb = await pool.query(query, values);
         if (resDb.rows.length > 0) inseres++;
         else doublons++;
@@ -429,6 +643,12 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
 module.exports = {
   normaliserTelephoneSenegal,
   TEMPLATES_PAR_DEFAUT,
+  DICTIONNAIRE_QUARTIERS,
+  detecterQuartier,
+  nettoyerNomBoutique,
+  estLeadEmploiOuInvalide,
+  nettoyerEtEnrichirLead,
+  nettoyerTousLesLeadsBdd,
   interpolerMessage,
   genererLienWhatsApp,
   extraireLeadsDepuisTexte,

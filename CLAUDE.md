@@ -388,6 +388,39 @@
     - Vérification syntaxique Node.js (`backend/services/whatsapp-chatbot.js`, `backend/migrate-inline.js`) : **0 erreur**.
     - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
 
+- **Moteur de Nettoyage Intelligent, Enrichissement Géographique & Filtrage Anti-Emploi CRM (`main` - 25 août 2026)** 🧹✨🎯 :
+  * **🧹 Nettoyage Automatique des Noms de Boutiques & Suppression des Fuites CSV** :
+    - **Algorithme de Nettoyage Sémantique (`backend/services/prospection.js`)** : Détection et extraction des véritables enseignes commerciales (*Yaay Fatou, LAM Dakar, CMS Apple Store, Ndiaye Ameublement, Néné Service, Bana Bana*), suppression des fragments de texte d'annonces tronqués (*"Ordinateur ASUS en très bon état...", "Prix : 12 000 FCFA...", "Salam..."*), et remplacement des labels génériques (*"Vendeur mode"*, *"Vendeur auto-moto"*, *"Vendeur immo"*) par des appellations commerciales professionnelles (*"Boutique Mode"*, *"Vendeur Véhicules"*, *"Agence Immobilière"*).
+    - Éradication des guillemets et fuites de colonnes CSV dans les champs de texte.
+  * **🚫 Détection & Exclusion Automatique des Profils Hors-Cible (Demandes / Offres d'Emploi)** :
+    - Classification automatique des annonces de recrutement, demandes d'emploi (*"j cherche du travail...", "cherche travail", "agent de securite", "recrutement femmes"*) sous le statut `invalide` avec note interne explicite, afin d'éviter tout gaspillage de quota WhatsApp et éliminer le risque de signalement pour spam.
+    - Filtre d'exclusion natif lors de l'auto-sourcing et du scraping continu.
+  * **📍 Dictionnaire & Enrichissement Géographique Automatique (Quartiers & Marchés)** :
+    - Intégration d'un dictionnaire des marchés et communes (*Sandaga, HLM, Colobane, Petersen, Centenaire, Maristes, Plateau, Almadies, Ngor, Ouakam, Pikine, Guédiawaye, Keur Massar, Parcelles Assainies, Tilène, Thiès, Touba, Mbour, Saint-Louis, etc.*).
+    - Détection et attribution automatique du quartier précis à partir du titre ou de la description pour enrichir les leads précédemment enregistrés simplement en `"Dakar"`.
+  * **💬 Interpolation Chaleureuse & Anti-Robot pour WhatsApp** :
+    - Refonte de la fonction d'interpolation des templates pour garantir que le destinataire reçoive une formule naturelle (*"Salam Chère Boutique !"* ou *"Salam Cher commerçant !"*) au lieu de fragments robotiques.
+  * **⚡ Action 1-Clic Admin & Bouton "Nettoyer & Enrichir Base" (`ProspectionClient.tsx`)** :
+    - Nouvel endpoint `POST /api/prospection/leads/nettoyer` (réservé admin) accessible via le bouton dédié `✨ Nettoyer & Enrichir Base` dans l'interface CRM, avec notification toast du nombre de leads nettoyés, quartiers identifiés et profils hors-cible classés.
+    - Migration SQL automatique dans `backend/migrate-inline.js` pour assainir instantanément la base de données existante.
+  * **Validation & Contrôle Qualité** :
+    - Vérification syntaxique Node.js (`backend/services/prospection.js`, `backend/services/scraper-prospection.js`, `backend/routes/prospection.js`, `backend/migrate-inline.js`) : **0 erreur**.
+    - Build Next.js de production (`npm run build`) : **100% des 92 routes compilées avec succès (code 0)**.
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
+- **Correction & Fiabilisation de la Modification des Prospects CRM (`PUT/PATCH /api/prospection/leads/:id`) (`main` - 25 août 2026)** 🛠️⚡ :
+  * **🛠️ Résolution de l'Erreur 500 sur la Modification de Prospect** :
+    - **Migration Additive SQL (`backend/migrate-inline.js`)** : Ajout systématique des instructions idempotentes `ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS ...` pour garantir la présence de toutes les colonnes (`contact_nom`, `telephone_brut`, `operateur`, `email`, `quartier`, `statut`, `notes`, `updated_at`, etc.) sur les bases de données existantes où la table avait été créée initialement avec un schéma restreint.
+    - **Gestion Robuste des Méthodes HTTP & Déduplication Téléphonique (`backend/routes/prospection.js`)** :
+      - Support simultané des verbes `PUT` et `PATCH` sur `/api/prospection/leads/:id`.
+      - Vérification proactive anti-doublon téléphonique : si le numéro modifié appartient déjà à un autre prospect existant, l'API renvoie un statut `409 Conflict` avec un message explicite au lieu d'une erreur 500 PostgreSQL non gérée (`23505`).
+      - Gestion sécurisée des identifiants UUID invalides (`22P02`) et isolation des exceptions de synchronisation avec la liste noire WhatsApp.
+    - **Expérience Utilisateur & Alertes Toasts (`frontend-next`)** : Gestion propre des retours d'erreur HTTP et affichage des messages d'erreur détaillés renvoyés par l'API sur l'ensemble des actions CRM (`handleSaveEdit`, `handleStatutChange`, `handleDeleteLead`).
+  * **Validation & Contrôle Qualité** :
+    - Vérification syntaxique Node.js (`backend/routes/prospection.js`, `backend/migrate-inline.js`) : **0 erreur**.
+    - Compilation & build complet Next.js (`npm run build`) : **100% des 92 routes statiques et dynamiques compilées avec succès (code 0)**.
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Édition Complète des Prospects en Base, Pagination Dynamique CRM & Gestion Avancée de la Blacklist (`main` - 23 août 2026)** ✏️📋🚫⚡ :
   * **✏️ Modification Complète des Prospects en Base de Données (`PUT /api/prospection/leads/:id`)** :
     - Mise à jour de l'endpoint backend `PUT /api/prospection/leads/:id` pour supporter la modification intégrale de tous les champs d'un prospect : nom de la boutique, nom du contact responsable, numéro de téléphone (avec validation et re-normalisation automatique Orange/Free/Expresso), email, catégorie, ville, quartier, statut CRM et notes internes.
