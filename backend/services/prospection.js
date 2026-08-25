@@ -6,16 +6,22 @@ const { sendWhatsAppText, normalisePhone, estDesinscrit } = require('./whatsapp'
 function normaliserTelephoneSenegal(rawPhone) {
   if (!rawPhone) return { valide: false, erreur: 'Numéro vide' };
 
-  let brut = String(rawPhone).trim();
+  // Nettoyage Unicode (Zero-width spaces, espaces insécables, RTL markers)
+  let brut = String(rawPhone)
+    .replace(/[\u200B-\u200D\uFEFF\u00A0\u202F\u200E]/g, '')
+    .trim();
+
   let num = brut.replace(/[^\d+]/g, '');
 
   if (num.startsWith('+221')) num = num.slice(4);
   else if (num.startsWith('00221')) num = num.slice(5);
   else if (num.startsWith('221') && num.length >= 11) num = num.slice(3);
-  
+
   num = num.replace(/[^\d]/g, '');
 
-  // Au Sénégal, les numéros mobiles font 9 chiffres et commencent par 70, 75, 76, 77, 78
+  // Au Sénégal, les numéros mobiles/fixes font 9 chiffres
+  // Mobiles : 70 (Expresso), 75 (Promobile), 76 (Free/Yas), 77 & 78 (Orange)
+  // Fixes : 30, 33 (Sonatel / Expresso Fixe)
   if (num.length !== 9) {
     return {
       valide: false,
@@ -30,7 +36,7 @@ function normaliserTelephoneSenegal(rawPhone) {
   else if (prefix === '76') operateur = 'Free (Yas)';
   else if (prefix === '70') operateur = 'Expresso';
   else if (prefix === '75') operateur = 'Promobile';
-  else if (num.startsWith('33') || num.startsWith('30')) operateur = 'Fixe';
+  else if (prefix === '33' || prefix === '30') operateur = 'Fixe';
 
   const national = '221' + num;
   const e164 = '+221' + num;
@@ -56,9 +62,9 @@ const TEMPLATES_PAR_DEFAUT = [
     titre: '👗 Mode & Prêt-à-Porter — WhatsApp 1-Clic & 0% Commission',
     canal: 'whatsapp',
     categorie: 'mode',
-    texte: `Salam {nom_boutique} ! 👋
+    texte: `{Salam|Bonjour} {nom_boutique} ! 👋
 
-J'ai vu vos magnifiques modèles. Vous perdez sûrement beaucoup de temps à envoyer les photos, tailles et prix un par un à chaque client sur WhatsApp.
+{J'ai vu vos magnifiques modèles|J'ai découvert vos collections|Je suis tombé sur vos superbes articles}. Vous perdez sûrement beaucoup de temps à envoyer les photos, tailles et prix un par un à chaque client sur WhatsApp.
 
 Avec Nopalou (https://nopalou.com), vous avez votre boutique en ligne prête en 2 minutes :
 ✅ Vos clients voient vos collections et commandent seuls en 1 clic
@@ -75,7 +81,7 @@ Voulez-vous que je vous active votre lien test gratuit aujourd'hui ?` + FOOTER_O
     titre: '📱 Téléphonie & High-Tech — Comparateur & Scanner Codes-barres',
     canal: 'whatsapp',
     categorie: 'tech',
-    texte: `Salam alaykoum {nom_boutique} ! 📱
+    texte: `{Salam alaykoum|Bonjour} {nom_boutique} ! 📱
 
 Dans la téléphonie à Dakar, les prix changent vite et les clients comparent tout.
 
@@ -94,7 +100,7 @@ Pouvons-nous configurer vos 3 premiers téléphones ensemble ?` + FOOTER_OPTOUT
     titre: '📒 Carnet de Dettes ("Bor") — Relances Polies WhatsApp Automatiques',
     canal: 'whatsapp',
     categorie: 'general',
-    texte: `Salam {prenom} ({nom_boutique}) ! 👋
+    texte: `{Salam|Bonjour} {prenom} ({nom_boutique}) ! 👋
 
 Combien d'argent dort dehors dans des dettes clients oubliées sur des cahiers papier ?
 
@@ -111,7 +117,7 @@ Testez gratuitement dès maintenant : https://nopalou.com/tarifs-boutique` + FOO
     titre: '📦 Arrivages Chine & Grossistes — Vente Flash sur WhatsApp',
     canal: 'whatsapp',
     categorie: 'grossiste',
-    texte: `Bonjour {nom_boutique} ! 📦
+    texte: `{Bonjour|Salam} {nom_boutique} ! 📦
 
 Vous vendez des arrivages de Chine (Alibaba, AliExpress, Shein, 1688) ou Turquie ?
 
@@ -131,7 +137,7 @@ Lien direct : https://nopalou.com/creer-boutique` + FOOTER_OPTOUT
     sujet: `Solution de Caisse POS & Commandes WhatsApp pour {nom_boutique}`,
     texte: `Bonjour [Madame/Monsieur le Responsable],
 
-Je me permets de vous contacter car je suis de près le développement de {nom_boutique} à {quartier}.
+Je me permets de vous contacter car je suis de près le développement de {nom_boutique} {quartier}.
 
 Contrairement aux plateformes étrangères comme Shopify qui exigent une carte bancaire en devises ($29/mois) et ne gèrent pas nativement le paiement Wave, Nopalou est la solution e-commerce et caisse magasin conçue pour le Sénégal :
 
@@ -156,29 +162,65 @@ L'équipe Déploiement Nopalou Sénégal
 const DICTIONNAIRE_QUARTIERS = [
   'Sandaga', 'HLM', 'Colobane', 'Petersen', 'Centenaire', 'Maristes', 'Plateau',
   'Almadies', 'Ngor', 'Ouakam', 'Pikine', 'Guédiawaye', 'Guediawaye', 'Keur Massar',
-  'Parcelles Assainies', 'Parcelles', 'Tilène', 'Tilene', 'Yoff', 'Fann', 'Mermoz',
+  'Parcelles Assainies', 'Parcelles', 'PA', 'Tilène', 'Tilene', 'Yoff', 'Fann', 'Mermoz',
   'Grand Yoff', 'Grandyoff', 'Grand Dakar', 'Médina', 'Medina', 'Fass', 'Fann Hock',
-  'Point E', 'Sacré-Cœur', 'Sacre Coeur', 'Liberté 6', 'Liberte 6', 'Mamelles',
+  'Point E', 'Sacré-Cœur', 'Sacre Coeur', 'Liberté 6', 'Liberte 6', 'Liberté 1', 'Liberté 2', 'Liberté 3', 'Liberté 4', 'Liberté 5', 'Mamelles',
   'Hann Maristes', 'Hann', 'Bel Air', 'Gibraltar', 'Castors', 'Dieuppeul', 'Derklé',
   'Derkle', 'Bène Tally', 'Bene Tally', 'Geultape', 'Gueule Tapée', 'Lambay', 'Sea Plaza',
+  'Nord Foire', 'Ouest Foire', 'Sud Foire', 'Foire', 'Zone de Captage', 'Keur Gorgui', 'Sipres',
+  'Hamo', 'Hamo 4', 'Hamo 5', 'Hamo 6', 'Cambérène', 'Camberene', 'Malika', 'Yeumbeul', 'Thiaroye',
   'Thiès', 'Thies', 'Touba', 'Mbour', 'Saint-Louis', 'Ziguinchor', 'Diourbel', 'Kaolack',
-  'Rufisque', 'Bargny', 'Diamniadio', 'Saly', 'Somone', 'Fatick', 'Kolda', 'Tambacounda'
+  'Rufisque', 'Bargny', 'Diamniadio', 'Saly', 'Somone', 'Fatick', 'Kolda', 'Tambacounda', 'Louga', 'Richard-Toll', 'Matam'
 ];
+
+// Quartiers triés par longueur décroissante pour prioriser les noms composés (ex: Grand Yoff avant Yoff, Nord Foire avant Foire)
+const QUARTIERS_SORTED = [...DICTIONNAIRE_QUARTIERS].sort((a, b) => b.length - a.length);
 
 function detecterQuartier(texte) {
   if (!texte || typeof texte !== 'string') return null;
-  for (const q of DICTIONNAIRE_QUARTIERS) {
+
+  for (const q of QUARTIERS_SORTED) {
     const reg = new RegExp(`\\b${q.replace(/[-]/g, '[- ]')}\\b`, 'i');
     if (reg.test(texte)) {
-      if (q.toLowerCase() === 'guediawaye') return 'Guédiawaye';
-      if (q.toLowerCase() === 'thies') return 'Thiès';
-      if (q.toLowerCase() === 'medina') return 'Médina';
-      if (q.toLowerCase() === 'tilene') return 'Tilène';
-      if (q.toLowerCase() === 'grandyoff') return 'Grand Yoff';
+      const qLow = q.toLowerCase();
+      if (qLow === 'pa' || qLow === 'parcelles' || qLow === 'parcelles assainies') return 'Parcelles Assainies';
+      if (qLow === 'nord foire') return 'Nord Foire';
+      if (qLow === 'ouest foire') return 'Ouest Foire';
+      if (qLow === 'sud foire') return 'Sud Foire';
+      if (qLow === 'zone de captage') return 'Zone de Captage';
+      if (qLow === 'keur gorgui') return 'Keur Gorgui';
+      if (qLow === 'guediawaye') return 'Guédiawaye';
+      if (qLow === 'thies') return 'Thiès';
+      if (qLow === 'medina') return 'Médina';
+      if (qLow === 'tilene') return 'Tilène';
+      if (qLow === 'grandyoff' || qLow === 'grand yoff') return 'Grand Yoff';
+      if (qLow === 'grand dakar') return 'Grand Dakar';
+      if (qLow === 'sacre coeur' || qLow === 'sacré-cœur') return 'Sacré-Cœur';
+      if (qLow.startsWith('liberte')) return q.replace(/liberte/i, 'Liberté');
+      if (qLow === 'hann maristes' || qLow === 'maristes') return 'Maristes';
+      if (qLow === 'camberene') return 'Cambérène';
       return q;
     }
   }
   return null;
+}
+
+// ── Convertisseur TitleCase intelligent ──────────────────────────────────────
+function toTitleCase(str) {
+  if (!str || typeof str !== 'string') return '';
+  const ACRONYMES = new Set(['POS', 'GSM', 'VIP', 'BTP', 'TV', 'PC', 'SAV', 'SARL', 'SUARL', 'OHADA', 'USA', 'HLM', 'PA']);
+  const MOTS_MINUSCULES = new Set(['de', 'du', 'des', 'le', 'la', 'les', 'et', 'à', 'en', 'au', 'aux', 'd\'', 'l\'']);
+
+  return str
+    .toLowerCase()
+    .split(/\s+/)
+    .map((mot, idx) => {
+      const upper = mot.toUpperCase();
+      if (ACRONYMES.has(upper)) return upper;
+      if (idx > 0 && MOTS_MINUSCULES.has(mot)) return mot;
+      return mot.charAt(0).toUpperCase() + mot.slice(1);
+    })
+    .join(' ');
 }
 
 function genererNomBoutiqueParDefaut(categorie, quartier) {
@@ -220,42 +262,55 @@ function nettoyerNomBoutique(rawNom, categorie = 'mode', quartier = '') {
 
   let clean = rawNom.trim();
 
-  // Nettoyer les fuites CSV (ex: Vendeur mode " 221782823518" "Orange" ...)
+  // Nettoyer les fuites CSV / guillemets
   if (clean.includes('"') || clean.includes('""')) {
     clean = clean.split('"')[0].trim();
   }
 
-  // Enlever les préfixes d'annonces
-  clean = clean.replace(/^(vendeur\s+|annonce\s+|boutique\s+de\s+|contact\s*:?\s*)/i, '').trim();
+  // Enlever les URLs, emails et numéros de téléphone résiduels
+  clean = clean
+    .replace(/https?:\/\/\S+/gi, '')
+    .replace(/wa\.me\/\S+/gi, '')
+    .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
+    .replace(/(?:\+?221\s?)?(?:7[05678]|3[03])[\s.-]?[0-9]{3}[\s.-]?[0-9]{2}[\s.-]?[0-9]{2}/g, '')
+    .replace(/\b\d{6,}\b/g, '')
+    .trim();
+
+  // Supprimer les mentions de prix (ex: 15000 FCFA, 5000 f, 25.000 cfa)
+  clean = clean.replace(/\b\d+[\s.]*(?:fcfa|cfa|frs|fr|f)\b/gi, '').trim();
+
+  // Enlever les préfixes de petites annonces et pollution
+  clean = clean.replace(/^(?:vendeur\s+|annonce\s+|boutique\s+de\s+|contact\s*:?\s*|urgence\s*:?\s*|disponible\s*:?\s*|promo\s*:?\s*|arrivage\s*:?\s*|vente\s+de\s+|vente\s+d'|vente\s+)/i, '').trim();
+
+  // Enlever les emojis et caractères spéciaux de mise en avant
+  clean = clean.replace(/[✨🔥⚡⭐️🌟💎🛒📦👗📱🎁🎉✅👉📍🔹🔸•*~_#|\/\\()\[\]{}]/g, ' ').replace(/\s+/g, ' ').trim();
 
   // Détection de marques ou magasins authentiques connus dans le texte
-  const matchBoutique = clean.match(/(?:chez|boutique|store|shop|bar à parfum|service)\s+([A-Za-z0-9À-ÿ\s&'-]{3,30})/i);
+  const matchBoutique = clean.match(/(?:chez|boutique|store|shop|bar à parfum|atelier|couture|services?|maison|groupe|agence)\s+([A-Za-z0-9À-ÿ\s&'-]{3,30})/i);
   if (matchBoutique && matchBoutique[1]) {
     const nomExtrait = matchBoutique[1].trim();
     if (!/^\d+/.test(nomExtrait) && nomExtrait.length > 2 && nomExtrait.length < 35) {
-      return nomExtrait.charAt(0).toUpperCase() + nomExtrait.slice(1);
+      return toTitleCase(nomExtrait);
     }
   }
 
   // Si le nom est un titre d'annonce descriptive ou trop long
   const estTitreAnnonce = (
     clean.length > 35 ||
-    /^(prix|disponible|à vendre|a vendre|cherche|contact|suivre|recrutement|appartement|peugeot|mercedes|hyundai|kia|daewoo|service de livraison|10 h|terrains|chambre|bana bana|tout nickel|débardeur|dentelle|tablette|télévision|lg|machine|cover|summer scents|parfum dakar|faites vos|new arrival|livraison|n'hésitez|ouvert|ferme|wax|terrain)/i.test(clean) ||
+    /^(prix|disponible|à vendre|a vendre|cherche|contact|suivre|recrutement|appartement|peugeot|mercedes|hyundai|kia|daewoo|service de livraison|10 h|terrains|chambre|bana bana|tout nickel|débardeur|dentelle|tablette|télévision|lg|machine|cover|summer scents|parfum dakar|faites vos|new arrival|livraison|n'hésitez|ouvert|ferme|wax|terrain|robe|costume|sac|chaussure|montre|perruque|mèche)/i.test(clean) ||
     clean.includes('·') ||
-    clean.includes('http') ||
-    /\d{5,}/.test(clean) ||
     clean.length < 3
   );
 
   if (estTitreAnnonce) {
-    const matchNomCourt = clean.match(/^([A-Za-zÀ-ÿ]{3,20}\s+(?:Store|Shop|Boutique|Services?|Business|Couture|Tech|Auto|Immo|Design))/i);
+    const matchNomCourt = clean.match(/^([A-Za-zÀ-ÿ]{3,20}\s+(?:Store|Shop|Boutique|Services?|Business|Couture|Tech|Auto|Immo|Design|Chic|Look|Mode))/i);
     if (matchNomCourt) {
-      return matchNomCourt[1].trim();
+      return toTitleCase(matchNomCourt[1].trim());
     }
     return genererNomBoutiqueParDefaut(categorie, quartier);
   }
 
-  return clean.charAt(0).toUpperCase() + clean.slice(1);
+  return toTitleCase(clean);
 }
 
 function estLeadEmploiOuInvalide(lead) {
@@ -267,6 +322,8 @@ function estLeadEmploiOuInvalide(lead) {
     texte.includes('cherche travail') ||
     texte.includes('cherche emploi') ||
     texte.includes('cherche un travail') ||
+    texte.includes('chercheuse d\'emploi') ||
+    texte.includes('demande d\'emploi') ||
     texte.includes('agent de securite') ||
     texte.includes('agents de séc') ||
     texte.includes('recrutement femmes') ||
@@ -274,7 +331,11 @@ function estLeadEmploiOuInvalide(lead) {
     texte.includes('cherche stage') ||
     texte.includes('recherche d\'emploi') ||
     texte.includes('recherche emploi') ||
-    texte.includes('call center')
+    texte.includes('call center') ||
+    texte.includes('avis de recherche') ||
+    texte.includes('perte de piece') ||
+    texte.includes('perdu cle') ||
+    texte.includes('donne contre bon soin')
   ) {
     return true;
   }
@@ -296,8 +357,10 @@ function nettoyerEtEnrichirLead(lead) {
   const nomPropre = nettoyerNomBoutique(rawNom, rawCat, quartierFinal);
   
   let contactNom = lead.contact_nom;
-  if (!contactNom || contactNom.toLowerCase() === 'responsable' || contactNom.length < 2 || contactNom.includes('"') || contactNom.length > 30) {
+  if (!contactNom || contactNom.toLowerCase() === 'responsable' || contactNom.toLowerCase() === 'vendeur' || contactNom.length < 2 || contactNom.includes('"') || contactNom.length > 30) {
     contactNom = null;
+  } else {
+    contactNom = toTitleCase(contactNom);
   }
 
   return {
@@ -404,9 +467,44 @@ async function nettoyerTousLesLeadsBdd() {
   };
 }
 
-// ── Interpolation dynamique de message ───────────────────────────────────────
+// ── Support Spintax anti-spam ({Option 1|Option 2|Option 3}) ─────────────────
+function traiterSpintax(texte) {
+  if (!texte || typeof texte !== 'string') return '';
+  let resultat = texte;
+  let hasSpintax = true;
+  let iterations = 0;
+
+  // Traitement itératif pour supporter le Spintax imbriqué sans boucle infinie de RegExp
+  while (hasSpintax && iterations < 10) {
+    iterations++;
+    hasSpintax = false;
+    resultat = resultat.replace(/\{([^{}]+)\}/g, (match, choices) => {
+      const lower = choices.toLowerCase().trim();
+      if (
+        lower === 'nom_boutique' || lower === 'prenom' || lower === 'quartier' ||
+        lower === 'secteur' || lower === 'telephone' || lower === 'lien_demo' ||
+        lower === 'lien_boutique' || lower === 'lien_tarifs'
+      ) {
+        return match;
+      }
+      if (!choices.includes('|')) return match;
+      hasSpintax = true;
+      const options = choices.split('|');
+      const idx = Math.floor(Math.random() * options.length);
+      return options[idx].trim();
+    });
+  }
+
+  return resultat;
+}
+
+// ── Interpolation dynamique et résiliente de message ────────────────────────
 function interpolerMessage(template, lead) {
   if (!template) return '';
+
+  // 1. Résolution préalable du Spintax pour variabilité anti-spam
+  let message = traiterSpintax(template);
+
   let nomBoutique = lead.nom_boutique || '';
   let prenom = lead.contact_nom || '';
 
@@ -419,28 +517,41 @@ function interpolerMessage(template, lead) {
     nomBoutique.length > 35
   ) {
     nomBoutique = 'votre boutique';
-    if (!prenom || prenom.toLowerCase() === 'responsable') {
+    if (!prenom || prenom.toLowerCase() === 'responsable' || prenom.toLowerCase() === 'vendeur') {
       prenom = 'Cher commerçant';
     }
   }
 
-  if (!prenom || prenom.toLowerCase() === 'responsable') {
+  if (!prenom || prenom.toLowerCase() === 'responsable' || prenom.toLowerCase() === 'vendeur') {
     prenom = (nomBoutique && nomBoutique !== 'votre boutique') ? nomBoutique : 'Cher commerçant';
   }
 
-  const quartier = lead.quartier && lead.quartier !== 'Dakar' ? `à ${lead.quartier}` : 'à Dakar';
-  const secteur = lead.categorie || 'commerce';
-  const tel = lead.telephone || '';
+  // Préposition de lieu naturelle adaptée au quartier
+  let quartierStr = 'à Dakar';
+  if (lead.quartier && lead.quartier !== 'Dakar' && lead.quartier !== 'Tout Dakar & Régions') {
+    const qLow = lead.quartier.toLowerCase();
+    if (qLow.startsWith('hlm') || qLow.includes('almadies') || qLow.includes('mamelles') || qLow.includes('maristes') || qLow.includes('parcelles')) {
+      quartierStr = `aux ${lead.quartier}`;
+    } else {
+      quartierStr = `à ${lead.quartier}`;
+    }
+  }
 
-  return template
+  const secteur = lead.categorie || 'commerce';
+  const tel = lead.telephone ? `+${lead.telephone}` : '';
+
+  message = message
     .replace(/\{nom_boutique\}/gi, nomBoutique)
     .replace(/\{prenom\}/gi, prenom)
-    .replace(/\{quartier\}/gi, quartier)
+    .replace(/\{quartier\}/gi, quartierStr)
     .replace(/\{secteur\}/gi, secteur)
     .replace(/\{telephone\}/gi, tel)
     .replace(/\{lien_demo\}/gi, 'https://nopalou.com/guide-creer-boutique')
     .replace(/\{lien_boutique\}/gi, 'https://nopalou.com/creer-boutique')
     .replace(/\{lien_tarifs\}/gi, 'https://nopalou.com/tarifs-boutique');
+
+  // Nettoyage des espaces multiples
+  return message.replace(/[ \t]{2,}/g, ' ').trim();
 }
 
 // ── Génération de lien WhatsApp direct (wa.me) ──────────────────────────────
@@ -488,7 +599,7 @@ function extraireLeadsDepuisTexte(rawText, defauts = {}) {
 
         leadsTrouves.push({
           nom_boutique: nomNettoye.slice(0, 255),
-          contact_nom: defauts.contact_nom || null,
+          contact_nom: defauts.contact_nom ? toTitleCase(defauts.contact_nom) : null,
           telephone: norm.national,
           telephone_brut: norm.brut,
           operateur: norm.operateur,
@@ -531,7 +642,7 @@ async function autoSourcerDepuisAnnonces() {
       if (a.categorie_slug === 'emploi' || a.categorie_slug === 'recrutement') continue;
 
       const quartierDetecte = detecterQuartier(`${a.titre || ''} ${a.quartier || ''} ${a.ville || ''}`) || a.quartier || a.ville || 'Dakar';
-      const nomNettoye = a.contact_nom || nettoyerNomBoutique(a.titre, a.categorie_slug || 'mode', quartierDetecte);
+      const nomNettoye = a.contact_nom ? toTitleCase(a.contact_nom) : nettoyerNomBoutique(a.titre, a.categorie_slug || 'mode', quartierDetecte);
       const categorie = a.categorie_slug || 'mode';
       const source = 'annonces_classifiees';
 
@@ -544,7 +655,7 @@ async function autoSourcerDepuisAnnonces() {
           ON CONFLICT (telephone) DO NOTHING
           RETURNING id
         `;
-        const values = [nomNettoye, a.contact_nom || null, norm.national, norm.brut, norm.operateur, categorie, a.ville || 'Dakar', quartierDetecte, source];
+        const values = [nomNettoye, a.contact_nom ? toTitleCase(a.contact_nom) : null, norm.national, norm.brut, norm.operateur, categorie, a.ville || 'Dakar', quartierDetecte, source];
         const resDb = await pool.query(query, values);
         if (resDb.rows.length > 0) inseres++;
         else doublons++;
@@ -597,7 +708,7 @@ function genererRequetesDorking(categorie = 'tous', quartier = 'Dakar') {
   ];
 }
 
-// ── Exécution de Campagne de Prospection Automatisée ─────────────────────────
+// ── Exécution de Campagne de Prospection Automatisée avec Jitter Humain ───────
 async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, simulation = false }) {
   if (!leadIds || leadIds.length === 0) {
     throw new Error('Aucun lead sélectionné');
@@ -611,8 +722,11 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
 
   let nbSucces = 0;
   let nbEchecs = 0;
+  let index = 0;
 
   for (const lead of leads) {
+    index++;
+
     // Vérification stricte de désinscription / Blacklist
     if (lead.telephone && (await estDesinscrit(lead.telephone))) {
       await pool.query("UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE id = $1", [lead.id]);
@@ -662,9 +776,15 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       console.error('[PROSPECTION LOG ERR]:', dbErr.message);
     }
 
-    // Pause anti-ban (1.5s entre les envois si réel)
+    // Cadence Anti-Ban intelligente (Jitter aléatoire entre 2.5s et 4.5s si envoi réel)
     if (!simulation) {
-      await new Promise((r) => setTimeout(r, 1500));
+      // Pause de respiration de 12s tous les 25 envois
+      if (index > 0 && index % 25 === 0) {
+        await new Promise((r) => setTimeout(r, 12000));
+      } else {
+        const jitterMs = Math.floor(Math.random() * (4500 - 2500 + 1)) + 2500;
+        await new Promise((r) => setTimeout(r, jitterMs));
+      }
     }
   }
 
@@ -687,6 +807,8 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
 
 module.exports = {
   normaliserTelephoneSenegal,
+  toTitleCase,
+  traiterSpintax,
   TEMPLATES_PAR_DEFAUT,
   DICTIONNAIRE_QUARTIERS,
   detecterQuartier,

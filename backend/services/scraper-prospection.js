@@ -5,6 +5,7 @@ const {
   nettoyerNomBoutique,
   detecterQuartier,
   estLeadEmploiOuInvalide,
+  toTitleCase,
 } = require('./prospection');
 let estDesinscrit;
 try {
@@ -84,11 +85,13 @@ async function lancerScrapingProspection(options = {}) {
 
       const cat = row.categorie || categorie || 'commerce';
       const quartDetecte = detecterQuartier(`${row.titre || ''} ${row.quartier || ''} ${row.ville || ''}`) || row.quartier || row.ville || 'Dakar';
-      const nomBq = row.nom_vendeur || nettoyerNomBoutique(row.titre, cat, quartDetecte);
+      const nomBq = row.nom_vendeur ? toTitleCase(row.nom_vendeur) : nettoyerNomBoutique(row.titre, cat, quartDetecte);
 
       let contactNom = row.nom_vendeur;
       if (!contactNom || contactNom.toLowerCase() === 'responsable' || contactNom.length < 2 || contactNom.includes('"')) {
         contactNom = null;
+      } else {
+        contactNom = toTitleCase(contactNom);
       }
 
       const ins = await pool.query(
@@ -144,11 +147,13 @@ async function lancerScrapingProspection(options = {}) {
         }
 
         const quartDetecte = detecterQuartier(`${row.titre || ''} ${row.quartier || ''} ${row.ville || ''}`) || row.quartier || row.ville || 'Dakar';
-        const nomBq = row.nom_vendeur || nettoyerNomBoutique(row.titre, 'immo', quartDetecte);
+        const nomBq = row.nom_vendeur ? toTitleCase(row.nom_vendeur) : nettoyerNomBoutique(row.titre, 'immo', quartDetecte);
 
         let contactNom = row.nom_vendeur;
         if (!contactNom || contactNom.toLowerCase() === 'responsable' || contactNom.length < 2 || contactNom.includes('"')) {
           contactNom = null;
+        } else {
+          contactNom = toTitleCase(contactNom);
         }
 
         const ins = await pool.query(

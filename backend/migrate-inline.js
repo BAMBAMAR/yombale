@@ -1196,6 +1196,8 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_statut ON prospection_leads(statut);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_cat ON prospection_leads(categorie);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_date ON prospection_leads(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_target ON prospection_leads(statut, categorie, quartier);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_quartier ON prospection_leads(quartier);
 
       -- Migration additive des colonnes prospection_leads (si table préexistante)
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS nom_boutique VARCHAR(255);
@@ -1285,6 +1287,7 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_prospection_log_campagne ON prospection_messages_log(campagne_id);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_lead ON prospection_messages_log(lead_id);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_date ON prospection_messages_log(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_log_camp_date ON prospection_messages_log(campagne_id, created_at DESC);
     `);
 
     console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection OK');

@@ -746,6 +746,43 @@ export default function ProspectionClient({
     setLoadingLogs(false)
   }
 
+  // Formatage grammatical naturel du quartier
+  const formatQuartierStr = (q?: string) => {
+    if (!q || q === 'Dakar' || q === 'Tout Dakar & Régions') return 'à Dakar'
+    const qLow = q.toLowerCase()
+    if (qLow.startsWith('hlm') || qLow.includes('almadies') || qLow.includes('mamelles') || qLow.includes('maristes') || qLow.includes('parcelles')) {
+      return `aux ${q}`
+    }
+    return `à ${q}`
+  }
+
+  // Résolution Spintax pour la prévisualisation temps réel
+  const parseClientSpintax = (texte: string) => {
+    if (!texte) return ''
+    let res = texte
+    let hasSpintax = true
+    let iterations = 0
+    while (hasSpintax && iterations < 10) {
+      iterations++
+      hasSpintax = false
+      res = res.replace(/\{([^{}]+)\}/g, (match, choices) => {
+        const lower = choices.toLowerCase().trim()
+        if (
+          lower === 'nom_boutique' || lower === 'prenom' || lower === 'quartier' ||
+          lower === 'secteur' || lower === 'telephone' || lower === 'lien_demo' ||
+          lower === 'lien_boutique' || lower === 'lien_tarifs'
+        ) {
+          return match
+        }
+        if (!choices.includes('|')) return match
+        hasSpintax = true
+        const options = choices.split('|')
+        return options[0].trim()
+      })
+    }
+    return res
+  }
+
   // Interpolation de prévisualisation
   const previewLead = filteredLeads[0] || {
     nom_boutique: 'Dakar Chic Boutique',
@@ -754,11 +791,12 @@ export default function ProspectionClient({
     categorie: 'mode',
     telephone: '221771234567',
   }
-  const previewText = campagneMessage
+  const previewText = parseClientSpintax(campagneMessage)
     .replace(/\{nom_boutique\}/gi, previewLead.nom_boutique || 'votre boutique')
     .replace(/\{prenom\}/gi, previewLead.contact_nom || previewLead.nom_boutique || 'Cher commerçant')
-    .replace(/\{quartier\}/gi, previewLead.quartier || 'Dakar')
+    .replace(/\{quartier\}/gi, formatQuartierStr(previewLead.quartier))
     .replace(/\{secteur\}/gi, previewLead.categorie || 'commerce')
+    .replace(/\{telephone\}/gi, previewLead.telephone ? `+${previewLead.telephone}` : '')
     .replace(/\{lien_demo\}/gi, 'https://nopalou.com/guide-creer-boutique')
     .replace(/\{lien_boutique\}/gi, 'https://nopalou.com/creer-boutique')
     .replace(/\{lien_tarifs\}/gi, 'https://nopalou.com/tarifs-boutique')
@@ -1623,7 +1661,7 @@ Boutique Parcelles, 70 111 22 33`}
 
               <div>
                 <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 6 }}>
-                  4. Corps du Message (Variables : {'{nom_boutique}'}, {'{prenom}'}, {'{quartier}'}, {'{lien_boutique}'})
+                  4. Corps du Message (Variables : {'{nom_boutique}'}, {'{prenom}'}, {'{quartier}'}, {'{lien_boutique}'} | Spintax Anti-Spam : {'{Salam|Bonjour|Hello}'})
                 </label>
                 <textarea
                   rows={9}
