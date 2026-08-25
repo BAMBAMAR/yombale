@@ -1,3 +1,15 @@
+- **Correctif Liens 404 Annonces/Immo & Ordonnancement Chronologique des Messages WhatsApp (`whatsapp-chatbot.js`, `whatsapp.js`, `annonces/[id]/page.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🔗⏱️🛡️✨ :
+  * **🔗 Élimination des 404 sur les Boutons WhatsApp « Voir le lien »** :
+    - `sendWhatsAppCarousel` supporte désormais un `templateName` propre à chaque carte (`nopalou_carousel_immo` pour l'immo, `nopalou_carousel_annonce` pour les annonces classifiées).
+    - Empêche l'inversion de template où un ID d'annonce classifiée était envoyé avec le template immo dont le bouton Meta pointe vers `/immo/{{1}}`.
+    - Ajout d'une redirection de secours transparente dans `annonces/[id]/page.tsx` vers `/immo/${id}` si un identifiant immobilier est ouvert sous `/annonces/${id}`.
+  * **⏱️ Correction de l'Ordre d'Affichage (« Envie de continuer ? »)** :
+    - Ajustement du délai d'attente à 2200ms après la distribution des templates/cartes WhatsApp pour garantir que le téléphone du client reçoive et affiche les annonces **avant** le menu interactif de relance.
+    - Ajout d'un délai d'espacement de 350ms entre chaque carte dans `sendWhatsAppCarousel` pour respecter la file de rendu Meta.
+  * **🧪 Validation** :
+    - 6/6 tests de robustesse chatbot validés avec succès.
+    - 35/35 tests unitaires métier validés avec succès.
+
 - **Audit de Cohérence & Renforcement Robuste du Chatbot WhatsApp — Handover Support Humain, Protection Anti-Rupture de Tunnel de Commande, Dynamisation des Paramètres de Caisse et Lexique Wolof (`whatsapp-chatbot.js`, `whatsapp.js`, `migrate-inline.js`, `WhatsAppClient.tsx`, `whatsapp/page.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 💬🛡️📞⚡🇸🇳 :
   * **🛡️ Protection Anti-Rupture du Tunnel de Commande (`detecterIntentionInterrogative`)** :
     - Détection intelligente des questions ouvertes ou d'hésitation pendant les étapes `COMMANDE_NOM` et `COMMANDE_ADRESSE` (ex: *"vous livrez à Ouakam ?"*, *"c'est combien ?"*, *"amna couleur noir"*).

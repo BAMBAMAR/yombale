@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import AnnonceGallery from './AnnonceGallery'
 import MaskedContactPhone from '@/components/MaskedContactPhone'
@@ -115,8 +115,16 @@ function buildAnnonceJsonLd(annonce: Annonce): string {
 
 export default async function AnnonceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const annonce = await fetchAnnonce(id)
-  if (!annonce) notFound()
+  let annonce = await fetchAnnonce(id)
+  if (!annonce) {
+    // Redirection de secours si c'est un bien immobilier
+    try {
+      await apiFetch(`/immo/${id}`)
+      redirect(`/immo/${id}`)
+    } catch {
+      notFound()
+    }
+  }
 
   const photos = Array.isArray(annonce.photos) ? annonce.photos : []
   const car = annonce.caracteristiques ?? {}

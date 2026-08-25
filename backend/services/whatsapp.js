@@ -138,16 +138,17 @@ async function sendWhatsAppTemplate(phone, templateName, components = []) {
 const CAROUSEL_LANG = { nopalou_carousel_immo: 'en' };
 
 async function sendWhatsAppCarousel(phone, templateName, cards) {
-  const lang = CAROUSEL_LANG[templateName] || 'fr';
   let dernier;
   for (const c of cards) {
+    const tName = c.templateName || templateName;
+    const lang = CAROUSEL_LANG[tName] || 'fr';
     dernier = await post({
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       to: normalisePhone(phone),
       type: 'template',
       template: {
-        name: templateName,
+        name: tName,
         language: { code: lang },
         components: [
           {
@@ -167,6 +168,9 @@ async function sendWhatsAppCarousel(phone, templateName, cards) {
         ],
       },
     });
+    if (cards.length > 1) {
+      await new Promise(r => setTimeout(r, 350));
+    }
   }
   return dernier;
 }

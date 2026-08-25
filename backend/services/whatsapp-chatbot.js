@@ -955,6 +955,7 @@ async function envoyerListeImmo(phone, excludeIds = []) {
     return;
   }
   const cards = r.rows.map(a => ({
+    templateName: 'nopalou_carousel_immo',
     imageUrl: a.photo || null,
     title: a.titre,
     detail: prixFmt(a.prix),
@@ -963,7 +964,7 @@ async function envoyerListeImmo(phone, excludeIds = []) {
   await sendWhatsAppCarousel(phone, 'nopalou_carousel_immo', cards).catch(() =>
     sendWhatsAppText(phone, cards.map(c => `• ${c.title} — ${c.detail}\n${c.pageUrl}`).join('\n\n'))
   );
-  await attendre(1200); // laisse le temps aux messages du carousel de s'afficher avant le bouton
+  await attendre(2200); // laisse le temps aux messages du carousel de s'afficher avant le bouton
   await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ? Tapez *plus* pour d\'autres annonces, ou :').catch(() => {});
   await setSession(phone, 'MENU', {
     last: { type: 'immo', shownIds: excludeIds.concat(r.rows.map(a => String(a.id))) },
@@ -4057,21 +4058,20 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
   // Carousel pour annonces/immo
   if (autres.length) {
     const cards = autres.map(a => ({
+      templateName: a.type === 'immo' ? 'nopalou_carousel_immo' : 'nopalou_carousel_annonce',
       imageUrl: a.photo || null,
       title:    a.titre,
       detail:   prixFmt(a.prix),
       pageUrl:  `${SITE}/${a.type === 'immo' ? 'immo' : 'annonces'}/${a.id}`,
     }));
-    const template = autres[0]?.type === 'immo' ? 'nopalou_carousel_immo' : 'nopalou_carousel_annonce';
-    await sendWhatsAppCarousel(phone, template, cards).catch(async () => {
+    await sendWhatsAppCarousel(phone, 'nopalou_carousel_annonce', cards).catch(async () => {
       const lines = cards.map(c => `• *${c.title}* — ${c.detail}\n${c.pageUrl}`);
       await sendWhatsAppText(phone, lines.join('\n\n'));
     });
   }
 
-  if (produits.length + autres.length > 1) {
-    await attendre(1200); // laisse le temps aux messages précédents de s'afficher avant le bouton
-  }
+  const delaiAttente = (produits.length > 0 || autres.length > 0) ? 2200 : 800;
+  await attendre(delaiAttente); // laisse le temps aux messages précédents de s'afficher avant le bouton
   await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres résultats, faites une nouvelle recherche, ou :').catch(() => {});
   await setSession(phone, 'MENU', {
     last: { type: 'search', query: cleanQ, shownIds: excludeIds.concat(results.map(r => String(r.id))) },
