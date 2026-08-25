@@ -311,13 +311,37 @@ function nettoyerEtEnrichirLead(lead) {
 }
 
 async function nettoyerTousLesLeadsBdd() {
-  // 1. Dédoublonnage préalable des numéros existants (garde la ligne la plus récente/complète)
+  // 1. Garantir l'existence de toutes les colonnes requises
+  try {
+    await pool.query(`
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS nom_boutique VARCHAR(255);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS contact_nom VARCHAR(150);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone VARCHAR(50);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone_brut VARCHAR(100);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS operateur VARCHAR(50) DEFAULT 'Orange';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS categorie VARCHAR(100) DEFAULT 'mode';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS ville VARCHAR(100) DEFAULT 'Dakar';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS quartier VARCHAR(150);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'manuel';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS statut VARCHAR(50) DEFAULT 'nouveau';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS score INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS notes TEXT;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+    `);
+  } catch (errAlter) {
+    console.warn('[PROSPECTION] ALTER TABLE inline warning:', errAlter.message);
+  }
+
+  // 2. Dédoublonnage préalable universel des numéros existants
   try {
     await pool.query(`
       DELETE FROM prospection_leads
       WHERE id IN (
         SELECT id FROM (
-          SELECT id, ROW_NUMBER() OVER (PARTITION BY telephone ORDER BY updated_at DESC, created_at DESC) as rnum
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY telephone ORDER BY id) as rnum
           FROM prospection_leads
           WHERE telephone IS NOT NULL AND telephone != ''
         ) t
@@ -334,37 +358,41 @@ async function nettoyerTousLesLeadsBdd() {
   let quartiersEnrichis = 0;
 
   for (const lead of leads) {
-    const enrichi = nettoyerEtEnrichirLead(lead);
+    try {
+      const enrichi = nettoyerEtEnrichirLead(lead);
 
-    let changed = false;
-    if (enrichi.nom_boutique !== lead.nom_boutique) changed = true;
-    if (enrichi.contact_nom !== lead.contact_nom) changed = true;
-    if (enrichi.quartier !== lead.quartier) {
-      changed = true;
-      if (lead.quartier === 'Dakar' && enrichi.quartier !== 'Dakar') {
-        quartiersEnrichis++;
+      let changed = false;
+      if (enrichi.nom_boutique !== lead.nom_boutique) changed = true;
+      if (enrichi.contact_nom !== lead.contact_nom) changed = true;
+      if (enrichi.quartier !== lead.quartier) {
+        changed = true;
+        if (lead.quartier === 'Dakar' && enrichi.quartier !== 'Dakar') {
+          quartiersEnrichis++;
+        }
       }
-    }
-    if (enrichi.statut !== lead.statut) {
-      changed = true;
-      if (enrichi.statut === 'invalide') {
-        invalidesEmploi++;
+      if (enrichi.statut !== lead.statut) {
+        changed = true;
+        if (enrichi.statut === 'invalide') {
+          invalidesEmploi++;
+        }
       }
-    }
 
-    if (changed) {
-      await pool.query(`
-        UPDATE prospection_leads
-        SET
-          nom_boutique = $1,
-          contact_nom = $2,
-          quartier = $3,
-          statut = $4,
-          notes = $5,
-          updated_at = NOW()
-        WHERE id = $6
-      `, [enrichi.nom_boutique, enrichi.contact_nom, enrichi.quartier, enrichi.statut, enrichi.notes, lead.id]);
-      nettoyes++;
+      if (changed) {
+        await pool.query(`
+          UPDATE prospection_leads
+          SET
+            nom_boutique = $1,
+            contact_nom = $2,
+            quartier = $3,
+            statut = $4,
+            notes = $5,
+            updated_at = NOW()
+          WHERE id = $6
+        `, [enrichi.nom_boutique, enrichi.contact_nom, enrichi.quartier, enrichi.statut, enrichi.notes, lead.id]);
+        nettoyes++;
+      }
+    } catch (rowErr) {
+      console.warn('[PROSPECTION] Lead row update warning:', rowErr.message);
     }
   }
 

@@ -1212,13 +1212,14 @@ module.exports = async function migrateInline() {
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS score INT DEFAULT 0;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS notes TEXT;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
       -- Dédoublonnage automatique préalable des numéros existants
       DELETE FROM prospection_leads
       WHERE id IN (
         SELECT id FROM (
-          SELECT id, ROW_NUMBER() OVER (PARTITION BY telephone ORDER BY updated_at DESC, created_at DESC) as rnum
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY telephone ORDER BY id) as rnum
           FROM prospection_leads
           WHERE telephone IS NOT NULL AND telephone != ''
         ) t

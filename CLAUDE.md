@@ -388,6 +388,15 @@
     - Vérification syntaxique Node.js (`backend/services/whatsapp-chatbot.js`, `backend/migrate-inline.js`) : **0 erreur**.
     - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
 
+- **Fiabilisation & Résolution Erreur 500 sur le Nettoyage CRM (`POST /api/prospection/leads/nettoyer`) (`main` - 25 août 2026)** 🛡️⚡ :
+  * **🛡️ Schéma Additif & Résilience du Nettoyage en Masse** :
+    - Ajout d'instructions `ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS ...` inline avant exécution du nettoyage pour garantir la présence des colonnes (`created_at`, `updated_at`, etc.) sur toutes les bases distantes.
+    - Sécurisation du dédoublonnage SQL via `ORDER BY id` (insensible aux colonnes temporelles manquantes).
+    - Encapsulation des mises à jour individuelles par ligne dans un bloc `try/catch` pour assurer la résilience complète du traitement en masse.
+  * **Validation & Contrôle Qualité** :
+    - Vérification syntaxique Node.js (`backend/services/prospection.js`, `backend/migrate-inline.js`) : **0 erreur**.
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Dédoublonnage Automatique Transparent & Résolution des Conflits 409 (`main` - 25 août 2026)** 🔄⚡ :
   * **🔄 Dédoublonnage Transparent lors de la Modification de Prospect (`PUT/PATCH /api/prospection/leads/:id`)** :
     - Élimination des blocages `409 Conflict` lors de la modification d'un prospect : lorsqu'un numéro de téléphone est modifié ou confirmé, toute ancienne ligne orpheline en doublon sur ce même numéro est automatiquement purgée en base pour garantir la réussite immédiate de la mise à jour.
