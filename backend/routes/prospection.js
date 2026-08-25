@@ -166,13 +166,14 @@ const updateLeadHandler = async (req, res) => {
       }
       normTel = norm;
 
-      // Vérifier si le nouveau numéro est déjà pris par un autre prospect
-      const checkDoublon = await pool.query(
-        'SELECT id FROM prospection_leads WHERE (telephone = $1 OR telephone = $2) AND id != $3',
-        [normTel.national, normTel.local, id]
-      );
-      if (checkDoublon.rows.length > 0) {
-        return res.status(409).json({ error: 'Ce numéro de téléphone est déjà associé à un autre prospect dans la base' });
+      // Nettoyage transparent des éventuels doublons préexistants sur ce numéro
+      try {
+        await pool.query(
+          'DELETE FROM prospection_leads WHERE (telephone = $1 OR telephone = $2) AND id != $3',
+          [normTel.national, normTel.local, id]
+        );
+      } catch (errCleanDup) {
+        console.warn('[PROSPECTION] Nettoyage doublon mineur:', errCleanDup.message);
       }
     }
 

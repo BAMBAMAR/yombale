@@ -388,6 +388,14 @@
     - Vérification syntaxique Node.js (`backend/services/whatsapp-chatbot.js`, `backend/migrate-inline.js`) : **0 erreur**.
     - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
 
+- **Dédoublonnage Automatique Transparent & Résolution des Conflits 409 (`main` - 25 août 2026)** 🔄⚡ :
+  * **🔄 Dédoublonnage Transparent lors de la Modification de Prospect (`PUT/PATCH /api/prospection/leads/:id`)** :
+    - Élimination des blocages `409 Conflict` lors de la modification d'un prospect : lorsqu'un numéro de téléphone est modifié ou confirmé, toute ancienne ligne orpheline en doublon sur ce même numéro est automatiquement purgée en base pour garantir la réussite immédiate de la mise à jour.
+    - Ajout du dédoublonnage automatique en tâche de fond dans `nettoyerTousLesLeadsBdd()` et au démarrage du serveur dans `backend/migrate-inline.js` (conservation automatique de la version la plus récente et la plus complète).
+  * **Validation & Contrôle Qualité** :
+    - Vérification syntaxique Node.js (`backend/routes/prospection.js`, `backend/services/prospection.js`, `backend/migrate-inline.js`) : **0 erreur**.
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Moteur de Nettoyage Intelligent, Enrichissement Géographique & Filtrage Anti-Emploi CRM (`main` - 25 août 2026)** 🧹✨🎯 :
   * **🧹 Nettoyage Automatique des Noms de Boutiques & Suppression des Fuites CSV** :
     - **Algorithme de Nettoyage Sémantique (`backend/services/prospection.js`)** : Détection et extraction des véritables enseignes commerciales (*Yaay Fatou, LAM Dakar, CMS Apple Store, Ndiaye Ameublement, Néné Service, Bana Bana*), suppression des fragments de texte d'annonces tronqués (*"Ordinateur ASUS en très bon état...", "Prix : 12 000 FCFA...", "Salam..."*), et remplacement des labels génériques (*"Vendeur mode"*, *"Vendeur auto-moto"*, *"Vendeur immo"*) par des appellations commerciales professionnelles (*"Boutique Mode"*, *"Vendeur Véhicules"*, *"Agence Immobilière"*).

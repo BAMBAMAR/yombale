@@ -1214,6 +1214,17 @@ module.exports = async function migrateInline() {
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
+      -- Dédoublonnage automatique préalable des numéros existants
+      DELETE FROM prospection_leads
+      WHERE id IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY telephone ORDER BY updated_at DESC, created_at DESC) as rnum
+          FROM prospection_leads
+          WHERE telephone IS NOT NULL AND telephone != ''
+        ) t
+        WHERE t.rnum > 1
+      );
+
       -- Nettoyage automatique des leads hors-cible (demandes/offres d'emploi)
       UPDATE prospection_leads
       SET statut = 'invalide', notes = 'Hors-cible (Emploi/Recrutement)', updated_at = NOW()

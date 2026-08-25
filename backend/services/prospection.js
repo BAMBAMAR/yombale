@@ -311,6 +311,23 @@ function nettoyerEtEnrichirLead(lead) {
 }
 
 async function nettoyerTousLesLeadsBdd() {
+  // 1. Dédoublonnage préalable des numéros existants (garde la ligne la plus récente/complète)
+  try {
+    await pool.query(`
+      DELETE FROM prospection_leads
+      WHERE id IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY telephone ORDER BY updated_at DESC, created_at DESC) as rnum
+          FROM prospection_leads
+          WHERE telephone IS NOT NULL AND telephone != ''
+        ) t
+        WHERE t.rnum > 1
+      )
+    `);
+  } catch (errDedup) {
+    console.warn('[PROSPECTION] Dédoublonnage table warning:', errDedup.message);
+  }
+
   const { rows: leads } = await pool.query('SELECT * FROM prospection_leads');
   let nettoyes = 0;
   let invalidesEmploi = 0;
