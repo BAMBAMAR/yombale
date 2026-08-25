@@ -379,23 +379,20 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
   const [modeSelect, setModeSelect] = useState<'hybride_pos' | 'pure_player'>(boutique?.mode_fonctionnement || 'hybride_pos')
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const formTopRef = useRef<HTMLDivElement>(null)
+  const handledRef = useRef<any>(null)
 
   useEffect(() => {
-    if (state.success) {
+    if (state.success && handledRef.current !== state) {
+      handledRef.current = state
       setSuccessMsg(boutique ? '✅ Paramètres de la boutique enregistrés avec succès !' : '✅ Boutique créée avec succès !')
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
       if (formTopRef.current) {
         formTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
       onSuccess()
       const t = setTimeout(() => setSuccessMsg(null), 6000)
       return () => clearTimeout(t)
-    } else if (state.error) {
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
+    } else if (state.error && handledRef.current !== state) {
+      handledRef.current = state
       if (formTopRef.current) {
         formTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
@@ -1087,23 +1084,20 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille
 
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const produitFormTopRef = useRef<HTMLDivElement>(null)
+  const handledRef = useRef<any>(null)
 
   useEffect(() => {
-    if (state.success) {
+    if (state.success && handledRef.current !== state) {
+      handledRef.current = state
       setSuccessMsg(produit ? '✅ Produit modifié avec succès !' : '✅ Produit ajouté au catalogue avec succès !')
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
       if (produitFormTopRef.current) {
         produitFormTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
       onSuccess((state as any)?.produit)
       const t = setTimeout(() => setSuccessMsg(null), 6000)
       return () => clearTimeout(t)
-    } else if (state.error) {
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
+    } else if (state.error && handledRef.current !== state) {
+      handledRef.current = state
       if (produitFormTopRef.current) {
         produitFormTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
@@ -3955,6 +3949,10 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   const [showQrModal, setShowQrModal] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
+  const handleBoutiqueSaved = useCallback(() => {
+    router.refresh()
+  }, [router])
+
   const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
     if (targetTab === 'compta') {
       setSubTabCompta((subTab as any) || 'bilan')
@@ -4499,7 +4497,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
             {tab === 'infos'       && (
               <div style={{ maxWidth: 580 }}>
-                <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={() => router.refresh()} />
+                <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={handleBoutiqueSaved} />
               </div>
             )}
             {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} onOpenQrModal={() => setShowQrModal(true)} onNavigate={(t) => setTab(t)} planActif={planActif} />}
