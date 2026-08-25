@@ -6,7 +6,6 @@ import ExternalImg from '@/components/ExternalImg'
 import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import CommanderModal from './CommanderModal'
 import AvisClients from '@/components/AvisClients'
-import DrawerCart from '@/components/DrawerCart'
 import CrossSelling from '@/components/CrossSelling'
 import { useCart } from '@/context/CartContext'
 import CardActions from '@/app/CardActions'
@@ -926,9 +925,6 @@ export default function BoutiqueDetailClient({
           </div>
         </div>
       )}
-
-      {/* Drawer Cart Multi-produits */}
-      <DrawerCart />
 
       {/* Modal commande */}
       {commanderProduit && (

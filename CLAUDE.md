@@ -6,9 +6,11 @@
   * **⚙️ Backend & API Routes (`backend/routes/comptabilite.js`, `backend/routes/boutiques.js`)** :
     - **Décrémentation Multi-Articles Exacte (`creerCommandeBoutique`)** : L'API `POST /api/comptabilite/:boutiqueId/commandes` accepte désormais un tableau d'articles structuré `items: [...]` et décrémente automatiquement le stock dans `boutique_produit_variantes` et `boutique_produits`.
     - **Catalogue avec SKUs Actifs** : Les endpoints `/api/boutiques/:id/produits` et `/api/boutiques/:id/produits/:prodId` renvoient la liste agrégée des variantes actives `variantes_skus`.
-  * **🛍️ Panier & Tunnel d'Achat Multi-Variantes (`CartContext.tsx`, `DrawerCart.tsx`)** :
+  * **🛍️ Panier & Tunnel d'Achat Multi-Variantes (`CartContext.tsx`, `DrawerCart.tsx`, `layout.tsx`)** :
+    - **Intégration Globale de `DrawerCart` (`layout.tsx`)** : Montage de `DrawerCart` au niveau racine dans `CartProvider`, garantissant l'ouverture immédiate du tiroir panier lors du clic sur *« Ajouter au panier »* depuis n'importe quelle fiche produit individuelle (`/boutiques/[id]/produits/[produitId]`) ou vue rapide.
     - **Lignes de Panier Uniques par Option** : Deux tailles/couleurs distinctes d'un même produit créent deux entrées de panier distinctes avec badge descriptif (*ex: Taille: XL, Couleur: Noir*).
     - **Envoi Structuré `items[]`** : Les commandes en ligne ou via WhatsApp transmettent désormais la charge utile normalisée avec calcul exact des sous-totaux.
+    - **Nettoyage Paramètres Boutique (`BoutiqueClient.tsx`)** : Suppression du sélecteur de statut de visibilité dupliqué dans les paramètres de la boutique et enrichissement du champ de catégorie avec texte d'aide contextuel.
   * **✨ Fiche Produit & Vitrine Contextuelle (`ProduitCTA.tsx`, `page.tsx`, `BoutiqueDetailClient.tsx`)** :
     - **Résolution Dynamique SKU** : La sélection d'une option met immédiatement à jour le prix, le stock et l'état de disponibilité en temps réel.
     - **Affichage Variable en Vitrine** : Détection des fourchettes de prix (*« Dès X FCFA / kg »*) et affichage des pastilles de tailles (*Mode*) ou puces techniques (*RAM/Stockage*).

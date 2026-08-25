@@ -36,6 +36,7 @@ import RegisterSW from './RegisterSW';
 import PwaInstallPrompt from '@/components/PwaInstallPrompt';
 import FavToast from './FavToast';
 import VerifyEmailToast from './VerifyEmailToast';
+import DrawerCart from '@/components/DrawerCart';
 import { CartProvider } from '@/context/CartContext';
 import { Suspense } from 'react';
 
@@ -304,6 +305,7 @@ export default async function RootLayout({
 
         <main id="app-main" tabIndex={-1}>{children}</main>
 
+        <DrawerCart />
         <BottomBars />
         <RegisterSW />
         <PwaInstallPrompt />

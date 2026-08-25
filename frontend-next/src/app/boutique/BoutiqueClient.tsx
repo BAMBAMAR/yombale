@@ -468,18 +468,6 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       </div>
 
-      <SectionTitle>👁️ Visibilité sur Nopalou</SectionTitle>
-      <div>
-        <label style={labelStyle}>Statut de la boutique</label>
-        <select name="actif" defaultValue={boutique?.actif !== false ? 'true' : 'false'} style={inputStyle}>
-          <option value="true">🟢 Active (En ligne & visible dans la liste des boutiques)</option>
-          <option value="false">🔴 Désactivée (Masquée & retirée du catalogue Nopalou)</option>
-        </select>
-        <p style={{ fontSize: 11, color: '#64748b', margin: '4px 0 0' }}>
-          En désactivant votre boutique, elle n&apos;apparaîtra plus dans le catalogue public. Vous seul pourrez continuer à y accéder.
-        </p>
-      </div>
-
       <SectionTitle>📋 Informations</SectionTitle>
 
       <div>
@@ -497,11 +485,14 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         <textarea name="description" rows={3} defaultValue={boutique?.description ?? ''} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Décrivez votre boutique…" />
       </div>
       <div>
-        <label style={labelStyle}>Catégorie</label>
+        <label style={labelStyle}>Catégorie principale</label>
         <select name="categorie" defaultValue={boutique?.categorie ?? ''} style={inputStyle}>
           <option value="">— Sélectionner —</option>
           {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
+        <p style={{ fontSize: 11, color: '#64748b', margin: '4px 0 0' }}>
+          💡 Définit votre rayon principal dans l&apos;annuaire Nopalou et adapte automatiquement les attributs suggérés lors de l&apos;ajout de nouveaux produits.
+        </p>
       </div>
       <div className="bq-form-grid-2">
         <div>
