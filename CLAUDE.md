@@ -1,7 +1,7 @@
-- **Restauration Intégrale du Logo Officiel Orange Nopalou (PWA Desktop / Manifest) & Correction de l'Onglet Comptabilité (`icon-512.svg`, `manifest.json`, `layout.tsx`, `BoutiqueClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🟧✨💰🛡️ :
-  * **🟧 Remplacement Définitif du Logo PWA Desktop (`icon-512.svg`, `manifest.json`, `layout.tsx`)** :
-    - Remplacement de l'ancien visuel circulaire sombre par le **véritable logo officiel Nopalou** (carré orange `#C75B00` aux angles arrondis avec la lettre « N » blanche vectorielle stylisée).
-    - Mise à jour du manifeste PWA (`manifest.json`) et des métadonnées de layout (`layout.tsx`) avec incrément de version de cache (`?v=4`) pour actualiser instantanément l'icône dans l'onglet du navigateur, les fenêtres PWA desktop et l'écran d'accueil.
+- **Restauration Intégrale du Logo Officiel Orange Nopalou (PWA Desktop / Manifest) & Correction de l'Onglet Comptabilité (`icon-512.svg`, `apple-icon.tsx`, `manifest.json`, `layout.tsx`, `BoutiqueClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🟧✨💰🛡️ :
+  * **🟧 Remplacement Définitif du Logo PWA Desktop (`icon-512.svg`, `apple-icon.tsx`, `manifest.json`, `layout.tsx`)** :
+    - Remplacement de l'ancien visuel circulaire sombre par le **véritable logo officiel Nopalou** (carré orange `#C75B00` aux angles arrondis squircle modernes avec la lettre « N » blanche vectorielle stylisée).
+    - Ajout de la route dynamique `apple-icon.tsx` (180x180) et mise à jour du manifeste PWA (`manifest.json`) et des métadonnées de layout (`layout.tsx`) avec incrément de version de cache (`?v=4`) pour actualiser instantanément l'icône dans l'onglet du navigateur, les fenêtres PWA desktop et l'écran d'accueil.
   * **💰 Redirection Immédiate vers le Bilan Comptable (`BoutiqueClient.tsx`)** :
     - Correction de l'état `subTabCompta` (qui ouvrait par défaut la "Saisie Express / Dépense") pour ouvrir systématiquement le **Grand Bilan Financier** (Chiffre d'Affaires, Marge Nette, Répartition des Ventes et Graphiques).
   * **🧪 Validation** :
