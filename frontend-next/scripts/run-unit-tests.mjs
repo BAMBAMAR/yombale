@@ -2,6 +2,8 @@
  * Tests Unitaires Métier Nopalou — Suite Complète (34 tests)
  */
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
 import { formatPhone, formatNomPropre, fcfa, formatNombre, decodeHtml, escapeHtml } from '../src/lib/format.ts'
 import {
   calculerKpisCarnet,
@@ -233,6 +235,21 @@ it('CATEGORIES: présence des catégories officielles parfum et optique', () => 
   const optique = CATEGORIES.find(c => c.value === 'optique')
   assert.equal(Boolean(optique), true)
   assert.equal(optique.label.includes('Lunettes'), true)
+})
+
+it('Catalogues Standards Batch: présence des modèles parfum et optique avec photos HD', () => {
+  const currentDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([a-zA-Z]:)/, '$1'))
+  const catalogPath = path.resolve(currentDir, '..', '..', 'backend', 'data', 'catalogues-standards.json')
+  assert.equal(fs.existsSync(catalogPath), true)
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'))
+  
+  assert.equal(Array.isArray(catalog.parfum), true)
+  assert.equal(catalog.parfum.length >= 100, true)
+  assert.equal(catalog.parfum.every(p => p.nom && p.photo_defaut && p.categorie === 'parfum'), true)
+
+  assert.equal(Array.isArray(catalog.optique), true)
+  assert.equal(catalog.optique.length >= 100, true)
+  assert.equal(catalog.optique.every(p => p.nom && p.photo_defaut && p.categorie === 'optique'), true)
 })
 
 it('CartItem: génération de clés uniques pour variantes distinctes d un même produit', () => {

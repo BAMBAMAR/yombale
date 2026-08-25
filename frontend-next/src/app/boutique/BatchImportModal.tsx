@@ -164,6 +164,9 @@ export default function BatchImportModal({
     mode: ['mode', 'vetements', 'chaussures'],
     elevage: ['elevage', 'animaux', 'agriculture'],
     sante: ['beaute', 'sante', 'hygiene'],
+    parfum: ['parfum', 'parfumerie', 'fragrances'],
+    optique: ['optique', 'lunettes'],
+    services: ['services', 'prestation'],
   }
 
   const getTemplatesForCategory = (catKey: string): TemplateProduit[] => {

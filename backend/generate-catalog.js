@@ -238,6 +238,50 @@ function getPhotoForProduct(nom, cat) {
     return "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400";
   }
 
+  // 19. PARFUMERIE & FRAGRANCES
+  if (cat === "parfum") {
+    if (n.includes("sauvage") || n.includes("dior")) return "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400";
+    if (n.includes("chanel") || n.includes("coco") || n.includes("n°5") || n.includes("allure") || n.includes("chance")) return "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400";
+    if (n.includes("tom ford") || n.includes("tobacco") || n.includes("orchid") || n.includes("lost cherry")) return "https://images.unsplash.com/photo-1615397349754-cfa2066a298e?w=400";
+    if (n.includes("oud") || n.includes("lattafa") || n.includes("asad") || n.includes("khamrah") || n.includes("armaf") || n.includes("afnan") || n.includes("rasasi") || n.includes("alhambra")) return "https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?w=400";
+    if (n.includes("ysl") || n.includes("saint laurent") || n.includes("black opium") || n.includes("libre")) return "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400";
+    if (n.includes("gaultier") || n.includes("scandal") || n.includes("le male") || n.includes("paco rabanne") || n.includes("million") || n.includes("invictus")) return "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=400";
+    if (n.includes("guerlain") || n.includes("armani") || n.includes("versace") || n.includes("hermès") || n.includes("lancôme") || n.includes("creed") || n.includes("marly") || n.includes("baccarat") || n.includes("kilian")) return "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=400";
+    if (n.includes("brume") || n.includes("victoria") || n.includes("cheirosa") || n.includes("janeiro")) return "https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=400";
+    if (n.includes("thiouraye") || n.includes("bakhour") || n.includes("encens") || n.includes("gongo") || n.includes("djeck") || n.includes("diguidje")) return "https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=400";
+    if (n.includes("musc") || n.includes("huile")) return "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400";
+    return "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=400";
+  }
+
+  // 20. LUNETTES & OPTIQUE
+  if (cat === "optique") {
+    if (n.includes("aviator") || n.includes("pilote") || n.includes("rb3025")) return "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=400";
+    if (n.includes("wayfarer") || n.includes("justin") || n.includes("rb2140") || n.includes("erika")) return "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400";
+    if (n.includes("oakley") || n.includes("sport") || n.includes("radar") || n.includes("gascan") || n.includes("polarisé")) return "https://images.unsplash.com/photo-1582142839970-2b9da0c32b5d?w=400";
+    if (n.includes("gucci") || n.includes("prada") || n.includes("dior") || n.includes("versace") || n.includes("cartier") || n.includes("persol") || n.includes("tom ford") || n.includes("soleil")) return "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400";
+    if (n.includes("vue") || n.includes("monture") || n.includes("acétate") || n.includes("titane") || n.includes("correctrices")) return "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=400";
+    if (n.includes("lumière bleue") || n.includes("anti-lumière") || n.includes("repos") || n.includes("lecture") || n.includes("loupe")) return "https://images.unsplash.com/photo-1508296695146-257a814070b4?w=400";
+    if (n.includes("étui") || n.includes("boîtier") || n.includes("cordon") || n.includes("nettoyant") || n.includes("chiffon") || n.includes("microfibre") || n.includes("lingettes") || n.includes("tournevis")) return "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400";
+    return "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400";
+  }
+
+  // 21. SERVICES
+  if (cat === "services") {
+    if (n.includes("plomberie") || n.includes("fuite") || n.includes("sanitaire")) return "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400";
+    if (n.includes("électric") || n.includes("panneau") || n.includes("solaire")) return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400";
+    if (n.includes("clim") || n.includes("climatiseur")) return "https://images.unsplash.com/photo-1631545804899-c90a18eb5245?w=400";
+    if (n.includes("peinture") || n.includes("carrelage") || n.includes("menuiserie")) return "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400";
+    if (n.includes("auto") || n.includes("mécanique") || n.includes("vidange") || n.includes("lavage")) return "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=400";
+    if (n.includes("nettoyage") || n.includes("ménage") || n.includes("pressing") || n.includes("désinsectisation")) return "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400";
+    if (n.includes("déménagement") || n.includes("transport") || n.includes("chauffeur") || n.includes("camion")) return "https://images.unsplash.com/photo-1586191582151-f74632387766?w=400";
+    if (n.includes("cours") || n.includes("anglais") || n.includes("math")) return "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400";
+    if (n.includes("web") || n.includes("logo") || n.includes("social") || n.includes("ordinateur") || n.includes("pc")) return "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400";
+    if (n.includes("photo") || n.includes("vidéo") || n.includes("shooting")) return "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400";
+    if (n.includes("traiteur") || n.includes("cocktail") || n.includes("fête")) return "https://images.unsplash.com/photo-1555244162-803834f70033?w=400";
+    if (n.includes("coiffure") || n.includes("maquillage") || n.includes("ongles") || n.includes("massage")) return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400";
+    return "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400";
+  }
+
   return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400";
 }
 
@@ -265,6 +309,268 @@ const baseCatalogues = {
     "Jus Pressea Mangue 1L", "Jus Pressea Orange 1L", "Jus Pressea Ananas-Gingembre 1L", "Nectar de Bissap Kirène 1L", "Eau Kirène 1.5L (Pack de 6)", "Eau Kirène Bidon 5L", "Eau Oulmès Pétillante 1L", "Eau Casamançaise 1.5L (Pack de 6)", "Canette Gazelle 33cl", "Canette Coca-Cola 33cl (Pack de 6)", "Canette Fanta Orange 33cl", "Canette Sprite 33cl", "Energy Drink Cody's 250ml", "Energy Drink Monster 500ml",
     "Thiakry Frais 500g", "Araw de Petit Millet 1kg", "Couscous de Millet (Souna) 1kg", "Sankhal de Millet 1kg", "Sirop de Bissap 1L", "Sirop de Bouye 1L", "Sirop de Gingembre (Gnamakoudji) 1L", "Fleurs de Bissap Séchées 500g", "Poudre de Bouye (Baobab) 500g",
     "Sac d'Oignons 25kg", "Sac d'Oignons Importés 25kg", "Sac de Pommes de Terre 25kg", "Sac d'Ail Frais 5kg", "Sac de Gingembre Frais 5kg", "Pâte d'Arachide Mafé 1kg", "Kethiakh (Poisson Salé Séché) 1kg", "Guedj (Poisson Séché Artisanal) 500g", "Yeet (Mollusque Séché) 250g", "Crevettes Séchées Moulières 200g", "Sardines Titus à l'Huile (Boîte 125g)", "Thon Entier au Naturel 160g", "Corned Beef Hereford 340g"
+  ],
+
+  parfum: [
+    "Parfum Sauvage Dior Eau de Parfum 100ml",
+    "Parfum Sauvage Dior Elixir 60ml",
+    "Parfum Sauvage Dior Eau de Toilette 100ml",
+    "Parfum Bleu de Chanel Eau de Parfum 100ml",
+    "Parfum Bleu de Chanel Parfum 100ml",
+    "Parfum Coco Mademoiselle Chanel EDP 100ml",
+    "Parfum Chanel N°5 Eau de Parfum 100ml",
+    "Parfum Chanel Allure Homme Sport EDT 100ml",
+    "Parfum Chanel Chance Eau Tendre 100ml",
+    "Parfum Libre Yves Saint Laurent EDP 90ml",
+    "Parfum Black Opium Yves Saint Laurent EDP 90ml",
+    "Parfum Y Yves Saint Laurent Eau de Parfum 100ml",
+    "Parfum La Nuit de L'Homme Yves Saint Laurent 100ml",
+    "Parfum Mon Paris Yves Saint Laurent EDP 90ml",
+    "Parfum Tom Ford Tobacco Vanille EDP 100ml",
+    "Parfum Tom Ford Oud Wood EDP 100ml",
+    "Parfum Tom Ford Black Orchid EDP 100ml",
+    "Parfum Tom Ford Lost Cherry EDP 50ml",
+    "Parfum Tom Ford Ombré Leather EDP 100ml",
+    "Parfum Acqua Di Gio Giorgio Armani EDP 100ml",
+    "Parfum Acqua Di Gio Profondo Armani 100ml",
+    "Parfum Armani Si Passione EDP 100ml",
+    "Parfum Stronger With You Intensely Armani 100ml",
+    "Parfum One Million Paco Rabanne 100ml",
+    "Parfum 1 Million Parfum Paco Rabanne 100ml",
+    "Parfum Invictus Victory Paco Rabanne EDP 100ml",
+    "Parfum Olympéa Paco Rabanne EDP 80ml",
+    "Parfum Phantom Paco Rabanne EDT 100ml",
+    "Parfum Fame Paco Rabanne EDP 80ml",
+    "Parfum Le Male Jean Paul Gaultier EDT 125ml",
+    "Parfum Le Male Le Parfum Jean Paul Gaultier 125ml",
+    "Parfum Ultra Male Jean Paul Gaultier 125ml",
+    "Parfum Scandal Pour Homme Jean Paul Gaultier 100ml",
+    "Parfum Scandal Pour Femme Jean Paul Gaultier 80ml",
+    "Parfum La Belle Le Parfum Jean Paul Gaultier 100ml",
+    "Parfum Terre d'Hermès Pure Perfume 75ml",
+    "Parfum Terre d'Hermès Eau de Toilette 100ml",
+    "Parfum Twilly d'Hermès EDP 85ml",
+    "Parfum H24 Hermès Eau de Parfum 100ml",
+    "Parfum Mon Guerlain EDP 100ml",
+    "Parfum Guerlain Shalimar Eau de Parfum 90ml",
+    "Parfum Guerlain Habit Rouge EDT 100ml",
+    "Parfum Guerlain Santal Royal 125ml",
+    "Parfum Guerlain L'Homme Idéal EDP 100ml",
+    "Parfum La Vie Est Belle Lancôme EDP 100ml",
+    "Parfum Idôle Lancôme Le Parfum 75ml",
+    "Parfum Trésor Lancôme EDP 100ml",
+    "Parfum Boss Bottled Hugo Boss EDP 100ml",
+    "Parfum Boss Bottled Infinite Hugo Boss 100ml",
+    "Parfum The Scent For Him Hugo Boss 100ml",
+    "Parfum Versace Eros EDP 100ml",
+    "Parfum Versace Dylan Blue Pour Homme 100ml",
+    "Parfum Versace Bright Crystal EDT 90ml",
+    "Parfum Versace Crystal Noir EDP 90ml",
+    "Parfum Creed Aventus Eau de Parfum 100ml",
+    "Parfum Creed Silver Mountain Water 100ml",
+    "Parfum Baccarat Rouge 540 Maison Francis Kurkdjian Extrait 70ml",
+    "Parfum Baccarat Rouge 540 EDP 70ml",
+    "Parfum Delina Parfums de Marly EDP 75ml",
+    "Parfum Layton Parfums de Marly EDP 125ml",
+    "Parfum Angels' Share By Kilian EDP 50ml",
+    "Parfum Narciso Rodriguez For Her EDP 100ml",
+    "Parfum Givenchy L'Interdit EDP 80ml",
+    "Parfum Givenchy Gentleman EDP Boisée 100ml",
+    "Parfum Carolina Herrera Good Girl EDP 80ml",
+    "Parfum Carolina Herrera Bad Boy EDT 100ml",
+    "Parfum Valentino Born In Roma Donna EDP 100ml",
+    "Parfum Valentino Born In Roma Uomo EDT 100ml",
+    "Parfum Lattafa Khamrah EDP 100ml",
+    "Parfum Lattafa Asad EDP 100ml",
+    "Parfum Lattafa Yara Rose EDP 100ml",
+    "Parfum Lattafa Yara Tous Jaune EDP 100ml",
+    "Parfum Lattafa Yara Moi Blanc EDP 100ml",
+    "Parfum Lattafa Bade'e Al Oud (Oud for Glory) 100ml",
+    "Parfum Lattafa Bade'e Al Oud Honor & Glory 100ml",
+    "Parfum Lattafa Nebras Pride EDP 100ml",
+    "Parfum Lattafa Fakhar Black Pour Homme 100ml",
+    "Parfum Lattafa Fakhar Rose Pour Femme 100ml",
+    "Parfum Lattafa Ameer Al Oudh Intense Oud 100ml",
+    "Parfum Lattafa Ejaazi EDP 100ml",
+    "Parfum Maison Alhambra Kismet Magic EDP 100ml",
+    "Parfum Maison Alhambra Woody Oud EDP 80ml",
+    "Parfum Maison Alhambra Tabac EDP 100ml",
+    "Parfum Maison Alhambra Baroque Rouge 540 (100ml)",
+    "Parfum Maison Alhambra Jorge Di Profondo 100ml",
+    "Parfum Armaf Club de Nuit Intense Man EDT 105ml",
+    "Parfum Armaf Club de Nuit Intense Man EDP 200ml",
+    "Parfum Armaf Club de Nuit Sillage EDP 105ml",
+    "Parfum Armaf Club de Nuit Milestone EDP 105ml",
+    "Parfum Armaf Club de Nuit Untold EDP 105ml",
+    "Parfum Armaf Odyssey Homme White Edition 100ml",
+    "Parfum Afnan 9 PM Pour Homme EDP 100ml",
+    "Parfum Afnan 9 AM Pour Femme EDP 100ml",
+    "Parfum Afnan Supremacy Not Only Intense 100ml",
+    "Parfum Afnan Supremacy Silver 100ml",
+    "Parfum Rasasi Hawas Pour Homme EDP 100ml",
+    "Parfum Rasasi Hawas Black EDP 100ml",
+    "Parfum Swiss Arabian Shaghaf Oud EDP 75ml",
+    "Parfum Swiss Arabian Casablanca EDP 100ml",
+    "Parfum Ajmal Wisal Dahab EDP 50ml",
+    "Parfum Al Haramain Amber Oud Gold Edition 120ml",
+    "Parfum Al Haramain Amber Oud Rouge 60ml",
+    "Musc Tahara Blanc Pur Concentré 12ml",
+    "Musc Intime Rose Musc Pur 12ml",
+    "Huile de Parfum Oud Pur Précieux 15ml",
+    "Huile de Parfum Ambre & Bois de Santal 12ml",
+    "Bakhour Oud Royal Émirats 70g",
+    "Bakhour Naseem Al Arab Boîte 80g",
+    "Thiouraye Sénégalais Artisanal Gongo 250g",
+    "Thiouraye Sénégalais Djeck Parfumé 250g",
+    "Thiouraye Sénégalais Diguidje Supérieur 200g",
+    "Thiouraye Sénégalais Tiep Tiep Traditionnel 250g",
+    "Brume Corporelle Victoria's Secret Pure Seduction 250ml",
+    "Brume Corporelle Victoria's Secret Velvet Petals 250ml",
+    "Brume Corporelle Victoria's Secret Bare Vanilla 250ml",
+    "Brume Corporelle Victoria's Secret Coconut Passion 250ml",
+    "Brume Corporelle Sol de Janeiro Brazilian Crush Cheirosa 68 (240ml)",
+    "Brume Corporelle Sol de Janeiro Brazilian Crush Cheirosa 62 (240ml)",
+    "Brume Corporelle Sol de Janeiro Cheirosa 59 (240ml)",
+    "Brume Corporelle Bath & Body Works In The Stars 236ml",
+    "Brume Corporelle Bath & Body Works Warm Vanilla Sugar 236ml"
+  ],
+
+  optique: [
+    "Lunettes de Soleil Ray-Ban Aviator Classic RB3025",
+    "Lunettes de Soleil Ray-Ban Wayfarer Classic RB2140",
+    "Lunettes de Soleil Ray-Ban Clubmaster Classic RB3016",
+    "Lunettes de Soleil Ray-Ban Hexagonal Flat Lenses RB3548N",
+    "Lunettes de Soleil Ray-Ban Round Metal RB3447",
+    "Lunettes de Soleil Ray-Ban Justin Noir Mat RB4165",
+    "Lunettes de Soleil Ray-Ban Erika RB4171",
+    "Lunettes de Soleil Ray-Ban Meteor RB2168",
+    "Lunettes de Soleil Ray-Ban State Street RB2186",
+    "Lunettes de Soleil Ray-Ban Predator 2 RB2027",
+    "Lunettes de Soleil Oakley Holbrook Noir Mat Polarisé",
+    "Lunettes de Soleil Oakley Gascan Noir",
+    "Lunettes de Soleil Oakley Radar EV Path Sport",
+    "Lunettes de Soleil Oakley Frogskins Classic",
+    "Lunettes de Soleil Oakley Sutro Prizm Road",
+    "Lunettes de Soleil Oakley Flak 2.0 XL Sport",
+    "Lunettes de Soleil Oakley Jawbreaker Prizm",
+    "Lunettes de Soleil Gucci Oversize Carrées Noires",
+    "Lunettes de Soleil Gucci Cat-Eye Écaille de Tortue",
+    "Lunettes de Soleil Gucci Aviateur Métal Doré",
+    "Lunettes de Soleil Gucci GG Logo Branches Épaisses",
+    "Lunettes de Soleil Gucci Rectangle Acétate Noir",
+    "Lunettes de Soleil Prada Symbole Géométrique Noir",
+    "Lunettes de Soleil Prada Linea Rossa Sport Polarisé",
+    "Lunettes de Soleil Prada Cinema Papillon",
+    "Lunettes de Soleil Prada Monochrome Rectangulaire",
+    "Lunettes de Soleil Tom Ford Snowdon Noir Brillant",
+    "Lunettes de Soleil Tom Ford FT0237 Henry Clubmaster",
+    "Lunettes de Soleil Tom Ford Marko Aviator Métal",
+    "Lunettes de Soleil Tom Ford FT0008 Jennifer Papillon",
+    "Lunettes de Soleil Persol 714 Pliable Steve McQueen",
+    "Lunettes de Soleil Persol 649 Original Écaille",
+    "Lunettes de Soleil Persol 3019S Rectangle Acétate",
+    "Lunettes de Soleil Dior CD Diamond S1U Noir",
+    "Lunettes de Soleil Dior Midnight Papillon Femme",
+    "Lunettes de Soleil Dior Club Visière Logo",
+    "Lunettes de Soleil Dior BlackSuit Rectangulaire",
+    "Lunettes de Soleil Cartier Santos Métal Doré & Cuir",
+    "Lunettes de Soleil Cartier Panthère Métal Doré",
+    "Lunettes de Soleil Cartier Première Bois & Métal",
+    "Lunettes de Soleil Versace Medusa Biggie Noires",
+    "Lunettes de Soleil Versace VE2155 Aviator Gold",
+    "Lunettes de Soleil Versace VE4361 Hexagonales",
+    "Lunettes de Soleil Carrera Maverick Pilote",
+    "Lunettes de Soleil Carrera Champion Rétro",
+    "Lunettes de Soleil Carrera 1001/S Grand Format",
+    "Lunettes de Soleil Polaroid Polarisées Rectangulaires",
+    "Lunettes de Soleil Polaroid Verres Miroir Sport",
+    "Lunettes de Soleil Polaroid PLD 2053/S Métal",
+    "Lunettes de Soleil Lacoste Pilote Métal Vert",
+    "Lunettes de Soleil Lacoste Sport Rectangulaire",
+    "Lunettes de Soleil Armani Exchange Noir Mat",
+    "Lunettes de Soleil Michael Kors Adrianna Cat-Eye",
+    "Lunettes de Soleil Police Horizon Pilote",
+    "Lunettes de Soleil Guess Papillon Strass",
+    "Monture Optique Vue Ray-Ban Clubmaster RB5154",
+    "Monture Optique Vue Ray-Ban Rectangle Acétate Noir RB5228",
+    "Monture Optique Vue Ray-Ban Ronde Métal Doré RB3447V",
+    "Monture Optique Vue Ray-Ban Wayfarer Optique RX4340V",
+    "Monture Optique Vue Tom Ford FT5401 Ronde Écaille",
+    "Monture Optique Vue Tom Ford FT5542 Rectangulaire",
+    "Monture Optique Vue Gucci Carrée Noire & Or GG0025O",
+    "Monture Optique Vue Gucci Ronde Métal GG0608OK",
+    "Monture Optique Vue Prada Minimaliste Acétate",
+    "Monture Optique Vue Prada Cat-Eye Femme Chic",
+    "Monture Optique Vue Cartier Métal Sans Cerclage (Rimless)",
+    "Monture Optique Vue Boss Titane Ultra-Légère",
+    "Monture Optique Vue Silhouette Sans Vis Titane Minimal",
+    "Monture Optique Vue Vogue Cat-Eye Femme Rose Gold",
+    "Monture Optique Vue Emporio Armani Métal Bleu Nuit",
+    "Monture Optique Vue Lacoste Sportive Acétate Noir/Vert",
+    "Monture Optique Vue Oakley Socket 5.0 Métal",
+    "Monture Optique Vue Carrera 8826 Rectangulaire",
+    "Lunettes Anti-Lumière Bleue Écran Ordinateur Verres Neutres",
+    "Lunettes Repos Anti-Fatigue Visuelle Ronde Noire",
+    "Lunettes Anti-Lumière Bleue Gaming Monture Carrée",
+    "Lunettes Anti-Lumière Bleue Métal Doré Hexagonale",
+    "Lunettes Loupe de Lecture Précision +1.00",
+    "Lunettes Loupe de Lecture Précision +1.50",
+    "Lunettes Loupe de Lecture Précision +2.00",
+    "Lunettes Loupe de Lecture Précision +2.50",
+    "Lunettes Loupe de Lecture Précision +3.00",
+    "Lunettes Loupe de Lecture Précision +3.50",
+    "Lunettes Solaires Clipsables Magnétiques Clip-On (5 en 1)",
+    "Étui à Lunettes Rigide Cuir Magnétique Luxe",
+    "Boîtier de Protection Lunettes Fermeture Éclair Antichoc",
+    "Pochette Souple Microfibre pour Lunettes",
+    "Cordon Chaîne à Lunettes Dorée Tendance",
+    "Cordon Cordelette Lunettes Sport Néoprène Flottant",
+    "Spray Nettoyant Verres Optiques Anti-Buée 100ml",
+    "Spray Nettoyant Écran & Verres 50ml avec Microfibre",
+    "Chiffons Microfibres Nettoyage Verres (Pack de 5)",
+    "Kit Tournevis de Précision Réparation Lunettes avec Vis",
+    "Plaquettes de Nez en Silicone pour Lunettes (Lot de 10)",
+    "Lingettes Nettoyantes Lunettes Individuelles (Boîte de 50)",
+    "Support Présentoir à Lunettes 5 Niveaux Plexiglas"
+  ],
+
+  services: [
+    "Dépannage Plomberie & Réparation Fuites d'Eau",
+    "Installation Sanitaire & Chauffe-eau",
+    "Dépannage Électrique Résidentiel & Bâtiment",
+    "Installation Panneaux Solaires & Onduleur",
+    "Installation & Recharge Climatiseur Split",
+    "Entretien & Nettoyage Climatisation",
+    "Peinture Intérieure & Extérieure Bâtiment",
+    "Pose Carrelage & Faïence Sol et Mur",
+    "Menuiserie Aluminium & Baies Vitrées",
+    "Menuiserie Bois & Fabrication Meubles",
+    "Mécanique Auto & Vidange Express à Domicile",
+    "Diagnostic Automobile Valise OBD2",
+    "Lavage Auto Intégral & Polissage à Domicile",
+    "Nettoyage Résidentiel & Grand Ménage Fin de Chantier",
+    "Pressing & Nettoyage à Sec Draps et Rideaux",
+    "Déménagement Résidentiel avec Camion & Porteurs",
+    "Location Camion Benne & Transport Matériaux",
+    "Location Véhicule avec Chauffeur Journée",
+    "Service de Gardiennage & Sécurité Privée",
+    "Désinsectisation & Dératisation Locaux",
+    "Cours Particuliers Mathématiques & Physiques (Mois)",
+    "Cours Particuliers Français & Philosophie (Mois)",
+    "Cours d'Anglais Professionnel & Conversation",
+    "Création Logo & Charte Graphique Complète",
+    "Création & Développement Site Web E-Commerce",
+    "Gestion Réseaux Sociaux & Community Management",
+    "Shooting Photo Professionnel & Portrait Studio",
+    "Couverture Vidéo & Photo Événement (Mariage/Baptême)",
+    "Service Traiteur Événementiel & Cocktails (50 Pers)",
+    "Décoration Salle de Fête & Cérémonie",
+    "Coiffure & Tresses Traditionnelles à Domicile",
+    "Maquillage Professionnel Soirée & Mariée",
+    "Manucure & Pédicure Soin des Ongles à Domicile",
+    "Massage Relaxant & Soins Corporels",
+    "Réparation Smartphone & Écran Cassé",
+    "Réparation Ordinateur Portable & Formatage PC"
   ],
 
   smartphones: [

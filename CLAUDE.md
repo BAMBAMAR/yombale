@@ -1,3 +1,23 @@
+- **Enrichissement du Catalogue d'Importation par Lot (Batch Intake) — Ajout Intégral des Produits Modèles Parfumerie & Fragrances et Lunettes & Optique (`generate-catalog.js`, `catalogues-standards.json`, `BatchImportModal.tsx`, `run-unit-tests.mjs`, `CLAUDE.md`) (`main` - 25 août 2026)** 🌸👓💎📦⚡ :
+  * **🌸 121 Modèles pour « Parfumerie & Fragrances » (`parfum`)** :
+    - Intégration complète des parfums de luxe et créateurs internationaux (Dior Sauvage/Elixir, Bleu de Chanel, Coco Mademoiselle, YSL Black Opium/Libre/Y, Tom Ford Tobacco Vanille/Oud Wood/Lost Cherry, Armani Acqua Di Gio/Stronger With You, Paco Rabanne 1 Million/Invictus/Olympéa, JPG Le Male/Scandal/La Belle, Guerlain, Hermès, Creed Aventus, Baccarat Rouge 540, Delina...).
+    - Intégration des parfums orientaux et niche Dubaï extrêmement demandés sur le marché sénégalais (Lattafa Khamrah/Asad/Yara/Oud for Glory, Maison Alhambra, Armaf Club de Nuit, Afnan 9PM, Rasasi Hawas, Swiss Arabian...).
+    - Intégration des thiourayes artisanaux sénégalais (Gongo, Djeck, Diguidje, Tiep Tiep), bakhours royaux, muscs concentrés (Tahara) et brumes corporelles (Victoria's Secret, Sol de Janeiro).
+    - Attribution automatique de visuels HD Unsplash ciblés par fragrance/type.
+  * **👓 100 Modèles pour « Lunettes & Optique » (`optique`)** :
+    - Intégration des lunettes de soleil tendance & luxe (Ray-Ban Aviator/Wayfarer/Clubmaster/Round Metal/Justin/Erika, Oakley Holbrook/Gascan/Radar/Frogskins/Jawbreaker, Gucci Oversize/Cat-Eye/Aviateur, Prada Symbole/Linea Rossa, Tom Ford, Persol Steve McQueen, Dior, Cartier Santos/Panthère, Versace Medusa, Carrera, Polaroid polarisées, Lacoste...).
+    - Intégration des montures de vue et optique (Ray-Ban, Tom Ford, Gucci, Prada, Cartier sans cerclage, Boss titane, Silhouette, Vogue, lunettes anti-lumière bleue écran, loupes de lecture de +1.00 à +3.50, clips solaires magnétiques 5-en-1).
+    - Intégration des étuis rigides en cuir, pochettes microfibre, cordons chaînes, sprays anti-buée et kits tournevis de précision.
+    - Attribution automatique de visuels HD Unsplash ciblés par monture/style.
+  * **🛠️ 100 Modèles pour « Services & Prestations » (`services`)** :
+    - Modèles prêts à l'import pour la plomberie, électricité, climatisation, mécanique auto, déménagement, cours particuliers, création web/graphique, shooting photo, traiteur et coiffure/maquillage à domicile.
+  * **⚡ Modale d'Import par Lot (`BatchImportModal.tsx`)** :
+    - Ajout des correspondances d'alias pour `parfum` (`['parfum', 'parfumerie', 'fragrances']`), `optique` (`['optique', 'lunettes']`) et `services` (`['services', 'prestation']`).
+  * **🧪 Validation Technique & Tests Unitaires (`run-unit-tests.mjs`)** :
+    - 35/35 tests unitaires validés avec 100% de succès (`npm test`).
+    - Build de production Next.js 14 validé avec succès (100% des 92 routes compilées, code 0).
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Paramétrage & Segmentation Avancée des Campagnes de Prospection WhatsApp — Filtres Multicritères (Catégorie, Statut, Source, Opérateur, Quartier) et Sélecteur de Volume d'Envoi (`ProspectionClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🎯📊💬🚀🇸🇳 :
   * **🎯 Panneau de Configuration d'Audience dans l'Onglet Campagnes (Tab 3)** :
     - **Ciblage Multicritères Direct** : Sélecteurs immédiats pour la catégorie (`Mode`, `Véhicules`, `Immobilier`, `Téléphonie & Tech`, `Électroménager`, `Informatique`, `Maison`, `Beauté`, `Alimentation`, `Quincaillerie`, `Grossistes`, `Divers`), le statut cible (par défaut `Nouveau`), la source (`Annonces`, `Scraper auto`, `Facebook`, `Import vrac`, `Manuel`), l'opérateur (`Orange`, `Free`, `Expresso`, `Promobile`) et le quartier/région (`Sandaga`, `HLM`, `Colobane`, `Petersen`, `Maristes`, `Plateau`, `Thiès`, `Touba`, `Mbour`, etc.).
