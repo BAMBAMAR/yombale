@@ -3898,6 +3898,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   prixPro: number
   initialTab?: string
 }) {
+  const router = useRouter()
   const { t, formatNumber } = useTranslation()
   const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
@@ -3983,7 +3984,6 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
-  const router = useRouter()
   const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : planActif === 'decouverte' || planActif === 'taf_taf' ? '#16a34a' : '#6b7280'
   const planLabel = planActif === 'business' ? '💼 Business' : planActif === 'pro' ? '⭐ Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? '⚡ Taf Taf' : 'Gratuit'
 
