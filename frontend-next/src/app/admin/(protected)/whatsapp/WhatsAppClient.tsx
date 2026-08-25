@@ -24,17 +24,31 @@ interface Session {
   updated_at: string
 }
 
+interface SupportDemande {
+  id: string
+  telephone: string
+  nom: string | null
+  sujet: string | null
+  message: string | null
+  statut: string
+  canal: string
+  created_at: string
+}
+
 export default function WhatsAppClient({
   status: initialStatus,
   sessions: initialSessions,
+  initialSupport = [],
   secret,
 }: {
   status: WaStatus
   sessions: Session[]
+  initialSupport?: SupportDemande[]
   secret: string
 }) {
   const [status, setStatus] = useState(initialStatus)
   const [sessions, setSessions] = useState(initialSessions)
+  const [supportList, setSupportList] = useState<SupportDemande[]>(initialSupport)
   const [testPhone, setTestPhone] = useState('')
   const [testMsg, setTestMsg] = useState('Bonjour depuis Nopalou ! 👋')
   const [busy, setBusy] = useState(false)
@@ -43,6 +57,25 @@ export default function WhatsAppClient({
   function show(type: 'ok' | 'err', text: string) {
     setFlash({ type, text })
     setTimeout(() => setFlash(null), 4000)
+  }
+
+  async function updateSupportStatut(id: string, newStatut: string) {
+    try {
+      const r = await fetch(`${BACKEND}/api/whatsapp/admin/support/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
+        body: JSON.stringify({ statut: newStatut }),
+      })
+      if (r.ok) {
+        setSupportList(prev => prev.map(s => s.id === id ? { ...s, statut: newStatut } : s))
+        show('ok', `Statut mis à jour : ${newStatut}`)
+      } else {
+        const d = await r.json()
+        show('err', d.error || 'Erreur lors de la mise à jour')
+      }
+    } catch (_) {
+      show('err', 'Erreur réseau')
+    }
   }
 
   async function toggle(key: 'whatsapp_enabled' | 'whatsapp_chatbot') {
@@ -211,6 +244,89 @@ export default function WhatsAppClient({
         <button onClick={clearSessions} style={{ marginTop: 14, padding: '8px 18px', background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', borderRadius: 6, fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
           🗑 Vider toutes les sessions
         </button>
+      </>)}
+
+      {card(`📞 Demandes de Rappel & Support Client (${supportList.filter(s => s.statut === 'en_attente').length} en attente)`, <>
+        {supportList.length === 0 ? (
+          <p style={{ color: '#6b7280', fontSize: 14 }}>Aucune demande de rappel en attente.</p>
+        ) : (
+          <div style={{ maxHeight: 340, overflowY: 'auto' }}>
+            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f9fafb' }}>
+                  {['Date', 'Téléphone', 'Nom / Objet', 'Statut', 'Actions'].map(h => (
+                    <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '1px solid #e5e7eb' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {supportList.map((sup) => {
+                  const isPending = sup.statut === 'en_attente'
+                  const cleanPh = sup.telephone.replace(/\D/g, '')
+                  return (
+                    <tr key={sup.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '8px 12px', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                        {new Date(sup.created_at).toLocaleDateString('fr-SN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontWeight: 600 }}>
+                        +{sup.telephone}
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <div style={{ fontWeight: 600, color: '#111827' }}>{sup.nom || 'Client Nopalou'}</div>
+                        <div style={{ fontSize: 11, color: '#6b7280' }}>{sup.message || 'Demande de rappel'}</div>
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span style={{
+                          background: isPending ? '#fef3c7' : '#dcfce7',
+                          color: isPending ? '#92400e' : '#166534',
+                          borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700,
+                        }}>
+                          {isPending ? '🟡 En attente' : '🟢 Traité'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <a
+                            href={`https://wa.me/${cleanPh}?text=${encodeURIComponent(`Bonjour ${sup.nom || ''}, suite à votre demande de rappel sur Nopalou, je suis à votre écoute.`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: '#25D366', color: '#fff', padding: '4px 10px',
+                              borderRadius: 4, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                            }}
+                          >
+                            💬 Rappeler
+                          </a>
+                          {isPending ? (
+                            <button
+                              onClick={() => updateSupportStatut(sup.id, 'traite')}
+                              style={{
+                                background: '#e5e7eb', color: '#374151', border: 'none',
+                                padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                              }}
+                            >
+                              ✓ Marquer traité
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => updateSupportStatut(sup.id, 'en_attente')}
+                              style={{
+                                background: '#fef3c7', color: '#92400e', border: 'none',
+                                padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                              }}
+                            >
+                              ↩ Rouvrir
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </>)}
 
       {card('📋 Checklist mise en production Meta', <>

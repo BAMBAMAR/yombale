@@ -196,4 +196,35 @@ router.get('/admin/sessions', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/whatsapp/admin/support — liste des demandes de rappel / support
+router.get('/admin/support', adminSecretOnly, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, telephone, nom, sujet, message, statut, canal, contexte_session, notes_admin, created_at, updated_at
+       FROM support_demandes
+       ORDER BY created_at DESC LIMIT 100`
+    );
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PATCH /api/whatsapp/admin/support/:id — mise à jour du statut d'une demande de support
+router.patch('/admin/support/:id', adminSecretOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { statut, notes_admin } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE support_demandes
+       SET statut = COALESCE($1, statut),
+           notes_admin = COALESCE($2, notes_admin),
+           updated_at = NOW()
+       WHERE id = $3
+       RETURNING *`,
+      [statut, notes_admin, id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Demande introuvable' });
+    res.json(rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;

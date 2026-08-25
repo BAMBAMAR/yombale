@@ -1,3 +1,21 @@
+- **Audit de Cohérence & Renforcement Robuste du Chatbot WhatsApp — Handover Support Humain, Protection Anti-Rupture de Tunnel de Commande, Dynamisation des Paramètres de Caisse et Lexique Wolof (`whatsapp-chatbot.js`, `whatsapp.js`, `migrate-inline.js`, `WhatsAppClient.tsx`, `whatsapp/page.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 💬🛡️📞⚡🇸🇳 :
+  * **🛡️ Protection Anti-Rupture du Tunnel de Commande (`detecterIntentionInterrogative`)** :
+    - Détection intelligente des questions ouvertes ou d'hésitation pendant les étapes `COMMANDE_NOM` et `COMMANDE_ADRESSE` (ex: *"vous livrez à Ouakam ?"*, *"c'est combien ?"*, *"amna couleur noir"*).
+    - Empêche 100% des erreurs où la question du client était stockée comme son nom/adresse.
+    - Propose des boutons d'action clairs : `[💬 Parler au Vendeur]`, `[✏️ Annuler]`, `[🌐 Menu]`.
+  * **📞 Système de Support Client & Handover Humain (`support_demandes`)** :
+    - Nouvelle table PostgreSQL `support_demandes` créée automatiquement pour historiser les demandes d'assistance et de rappel.
+    - Traitement immédiat des clics sur *"📞 Demander un rappel"* (`supp_rappel`) et *"📧 Contact Email"* (`supp_email`) ou mots-clés (*"rappel"*, *"service client"*, *"parler à un humain"*).
+    - Confirmation instantanée au client et notification WhatsApp automatique de l'administrateur.
+    - Gestion et suivi des tickets de rappel directement dans le panneau admin sous `/admin/whatsapp` avec bouton d'appel 1-clic WhatsApp et bouton de résolution.
+  * **💰 Dynamisation Complète des Numéros de Dépôt Manuel Wave & Orange Money** :
+    - Remplacement de la chaîne de caractères codée en dur (`77 720 20 86`) par la lecture dynamique depuis `settingsCache` (`paiement_manuel_numero_wave` et `paiement_manuel_numero_om`).
+  * **🇸🇳 Enrichissement NLU, Lexique Wolof & FAQ Élargie** :
+    - Intégration du vocabulaire Wolof courant dans les salutations (*nanga def*, *naka mou mel*, *salaam*, *jaam rek*), clôtures (*jerejef*, *dieuredieuf*, *sant yallah*), pagination (*waaw*, *yeneen*) et FAQ (livraisons, paiements Wave/OM, contact).
+  * **🧪 Tests & Validation** :
+    - 6/6 tests de robustesse chatbot validés avec 100% de succès (`node scripts/test-chatbot-fast.js`).
+    - 35/35 tests unitaires métier validés avec 100% de succès (`run-unit-tests.mjs`).
+
 - **Garantie Anti-Doublon / Anti-Harcèlement & Avertissement Explicite de Relance (`ProspectionClient.tsx`, `backend/services/prospection.js`, `CLAUDE.md`) (`main` - 25 août 2026)** 🛡️🔒💬✨🎯🇸🇳 :
   * **🔒 Exclusion Automatique et Garantie des Marchands Déjà Contactés** :
     - Dès qu'un message WhatsApp est envoyé avec succès à un prospect, son statut en BDD passe immédiatement à `contacte_wa` avec `derniere_action_at = NOW()`.

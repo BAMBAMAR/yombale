@@ -1288,9 +1288,27 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_prospection_log_lead ON prospection_messages_log(lead_id);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_date ON prospection_messages_log(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_camp_date ON prospection_messages_log(campagne_id, created_at DESC);
+
+      -- Table pour l'historique et le suivi des demandes de support / handover humain
+      CREATE TABLE IF NOT EXISTS support_demandes (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        telephone          VARCHAR(50) NOT NULL,
+        nom                VARCHAR(150),
+        sujet              VARCHAR(255),
+        message            TEXT,
+        statut             VARCHAR(50) DEFAULT 'en_attente', -- en_attente, rappele, resolu, annule
+        canal              VARCHAR(50) DEFAULT 'whatsapp',
+        contexte_session   JSONB DEFAULT '{}',
+        notes_admin        TEXT,
+        created_at         TIMESTAMPTZ DEFAULT NOW(),
+        updated_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_support_demandes_date ON support_demandes(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_support_demandes_statut ON support_demandes(statut);
+      CREATE INDEX IF NOT EXISTS idx_support_demandes_tel ON support_demandes(telephone);
     `);
 
-    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection OK');
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support OK');
   } catch (err) {
     console.warn('[MIGRATE] POS Avancé & Recherches échec:', err.message);
   }

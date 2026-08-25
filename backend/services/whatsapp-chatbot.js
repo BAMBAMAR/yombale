@@ -83,7 +83,7 @@ async function telechargerMediaWhatsApp(mediaId) {
 // Testée avant la recherche produit/annonce pour éviter des requêtes SQL inutiles.
 const FAQ = [
   {
-    motsCles: ['gratuit', 'payant', 'coute', 'couter', 'prix nopalou'],
+    motsCles: ['gratuit', 'payant', 'coute', 'couter', 'prix nopalou', 'naata la'],
     reponse: '✅ *Nopalou est 100% gratuit* pour comparer les prix, chercher une annonce ou un bien immo.\n\nSeuls certains services optionnels sont payants : publier une annonce (à partir de 1 500 FCFA), booster une annonce, ou créer une boutique en ligne (abonnement Pro/Business).',
   },
   {
@@ -95,7 +95,7 @@ const FAQ = [
     reponse: '🏠 *Publier un bien immobilier*\n\nSur le site, cliquez "+ Déposer" puis "Publier un bien immo". Ajoutez photos, prix, ville et description — visible après validation.\n👉 ' + SITE + '/deposer-immo',
   },
   {
-    motsCles: ['boutique', 'vendre en ligne'],
+    motsCles: ['boutique', 'vendre en ligne', 'creer shop', 'ouvrir shop'],
     reponse: '🛍️ *Créer votre boutique*\n\nVendez directement sur Nopalou : catalogue produits, statistiques, encaissements Wave & Orange Money 1-Clic. 1er mois 100% OFFERT sur tous nos forfaits !\n👉 ' + SITE + '/creer-boutique',
   },
   {
@@ -115,6 +115,18 @@ const FAQ = [
     reponse: '📱 *Comparer les forfaits télécom*\n\nSur le site, comparez tous les forfaits mobiles Orange, Free, Expresso et Wave : data, appels, SMS, prix.\n👉 ' + SITE + '/telecom',
   },
   {
+    motsCles: ['livraison', 'livrer', 'frais livraison', 'zone livraison', 'livraison dakar', 'livrez vous'],
+    reponse: '🚚 *Livraison sur Nopalou*\n\n• Pour les produits en boutique : chaque commerçant assure la livraison rapide (Dakar Intra-Muros, Banlieue, Régions).\n• Le tarif et le mode de livraison (Wave ou Cash) sont précisés lors de la commande.\n• Vous pouvez aussi convenir directement de la livraison avec le vendeur par WhatsApp.',
+  },
+  {
+    motsCles: ['payer', 'paiement', 'moyen de paiement', 'wave', 'orange money'],
+    reponse: '💳 *Moyens de paiement acceptés*\n\n🌊 Wave (Paiement 1-Clic sécurisé)\n🟠 Orange Money\n💵 Espèces / Cash à la livraison\n🏦 Virement bancaire\n\nVos paiements sont 100% sécurisés.',
+  },
+  {
+    motsCles: ['support', 'contact', 'contacter', 'parler', 'humain', 'conseiller', 'service client', 'telephone nopalou', 'appeler nopalou', 'joindre', 'reclamation'],
+    reponse: '💬 *Service Client & Support Nopalou*\n\n📞 Téléphone / WhatsApp : +221 70 871 79 42\n📧 Email : contact@nopalou.com\n🌐 Site : nopalou.com\n\n👉 Vous pouvez aussi taper *rappel* pour demander qu\'un conseiller vous rappelle directement !',
+  },
+  {
     motsCles: ['comment ça marche', 'comment ca marche', 'comment utiliser', 'aide site', 'utiliser nopalou', 'utiliser le site'],
     reponse: '📖 *Comment utiliser Nopalou*\n\n🔍 Comparez les prix produits\n🏆 Guide d\'achat personnalisé\n🏡 Trouvez un logement\n📶 Comparez les forfaits télécom\n⚖️ Comparez côte à côte\n❤️ Sauvegardez vos favoris\n🔔 Créez des alertes de prix\n📢 Publiez une annonce\n\nGuide complet : ' + SITE + '/guide-emploi',
   },
@@ -125,12 +137,61 @@ const FAQ = [
 ];
 
 function normaliserTexte(s) {
+  if (!s || typeof s !== 'string') return '';
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
 function detecterFAQ(texte) {
   const normalise = normaliserTexte(texte);
   return FAQ.find(f => f.motsCles.some(mot => normalise.includes(normaliserTexte(mot))));
+}
+
+// Détection intelligente si un message ressemble à une question (pour éviter de le prendre comme un nom ou une adresse)
+function detecterIntentionInterrogative(texte) {
+  if (!texte || typeof texte !== 'string') return false;
+  const raw = texte.trim();
+  if (raw.includes('?') || raw.includes('؟')) return true;
+  const norm = normaliserTexte(raw);
+  const MOTS_QUESTIONS = [
+    'combien', 'c est combien', 'cest combien', 'est ce que', 'est-ce que', 'estce que',
+    'pourquoi', 'comment', 'ou se trouve', 'ou est', 'c est ou', 'cest ou',
+    'livrez vous', 'vous livrez', 'livraison possible', 'disponible', 'dispo',
+    'en stock', 'naata la', 'amna', 'jaay ma', 'taille', 'couleur', 'prix'
+  ];
+  return MOTS_QUESTIONS.some(m => norm.includes(m));
+}
+
+// ── Enregistrement d'une demande de rappel / support (Handover humain) ─────────
+async function enregistrerDemandeSupport(phone, { nom = null, message = 'Demande de rappel client', contexte = {} } = {}) {
+  const normPh = normalisePhone(phone);
+  try {
+    const res = await pool.query(
+      `INSERT INTO support_demandes (telephone, nom, message, contexte_session, statut)
+       VALUES ($1, $2, $3, $4, 'en_attente')
+       RETURNING id, created_at`,
+      [normPh, nom, message, JSON.stringify(contexte)]
+    );
+
+    // Tentative de notification WhatsApp de l'administrateur si configuré
+    try {
+      const adminTel = await cfg.get('admin_notification_phone');
+      if (adminTel) {
+        const msgAdmin =
+          `🔔 *Nouvelle demande de rappel client Nopalou*\n\n` +
+          `📞 Téléphone : *+${normPh}*\n` +
+          `👤 Nom : *${nom || 'Non renseigné'}*\n` +
+          `💬 Objet : ${message}\n` +
+          `📅 Date : ${new Date().toLocaleString('fr-FR')}\n\n` +
+          `👉 Rappeler le client : https://wa.me/${normPh}`;
+        sendWhatsAppText(normalisePhone(adminTel), msgAdmin).catch(() => {});
+      }
+    } catch (_) {}
+
+    return res.rows[0] || { id: null };
+  } catch (err) {
+    console.error('[ENREGISTRER DEMANDE SUPPORT ERR]:', err.message);
+    return null;
+  }
 }
 
 // ── Session DB ────────────────────────────────────────────────────────────────
@@ -2081,9 +2142,19 @@ async function handleIncomingInternal(msg) {
     return;
   }
 
-  const SALUTATIONS = ['menu', 'aide', 'help', '0', 'bonjour', 'bonsoir', 'salut', 'slt', 'hello', 'coucou'];
-  const CLOTURE = ['merci', 'merci beaucoup', 'ok merci', 'c\'est bon', 'cest bon', 'au revoir', 'bye', 'a bientot', 'à bientôt', 'non merci', 'ça ira', 'ca ira', 'c\'est tout', 'cest tout'];
-  const MOTS_PLUS = ['plus', 'encore', 'd\'autres', 'dautres', 'autres', 'autre', 'voir plus', 'la suite', 'suivant', 'suivante', 'next', 'suite', 'ok', 'oui'];
+  const SALUTATIONS = [
+    'menu', 'aide', 'help', '0', 'bonjour', 'bonsoir', 'salut', 'slt', 'hello', 'coucou',
+    'nanga def', 'nanga def?', 'naka mou mel', 'salaam', 'salam', 'jaam rek', 'kassoumey', 'nannga def'
+  ];
+  const CLOTURE = [
+    'merci', 'merci beaucoup', 'ok merci', 'c\'est bon', 'cest bon', 'au revoir', 'bye',
+    'a bientot', 'à bientôt', 'non merci', 'ça ira', 'ca ira', 'c\'est tout', 'cest tout',
+    'jerejef', 'dieuredieuf', 'jërëjëf', 'sant yallah'
+  ];
+  const MOTS_PLUS = [
+    'plus', 'encore', 'd\'autres', 'dautres', 'autres', 'autre', 'voir plus', 'la suite',
+    'suivant', 'suivante', 'next', 'suite', 'ok', 'oui', 'waaw', 'waw', 'yeneen', 'yenen'
+  ];
 
   // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
   if (state === 'IDLE') {
@@ -2287,6 +2358,29 @@ async function handleIncomingInternal(msg) {
       ).catch(async () => {
         await sendWhatsAppText(phone, '💬 *Support Nopalou*\n\nPour nous contacter :\n📧 contact@nopalou.com\n🌐 nopalou.com\n\nNous répondons sous 24h. Merci !');
       });
+      await setSession(phone, 'MENU', {});
+      return;
+    }
+    if (action === 'supp_rappel' || normTxtLower === 'demander un rappel' || normTxtLower === 'rappel' || normTxtLower === 'rappelez moi') {
+      await enregistrerDemandeSupport(phone, {
+        nom: context?.nom || null,
+        message: 'Demande de rappel téléphonique depuis le chatbot WhatsApp',
+        contexte: { dernier_etat: state, context_prec: context }
+      });
+      await sendWhatsAppText(
+        phone,
+        `✅ *Demande de rappel enregistrée avec succès !* 🎉\n\nUn conseiller Nopalou a bien reçu votre demande et vous recontactera très prochainement au **+${phone}**.\n\nPour toute question urgente, vous pouvez également nous écrire directement à ✉️ contact@nopalou.com.`
+      );
+      await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
+    if (action === 'supp_email' || normTxtLower === 'contact email') {
+      await sendWhatsAppText(
+        phone,
+        `📧 *Contact Email Nopalou*\n\nVous pouvez écrire à notre équipe à l'adresse suivante :\n👉 *contact@nopalou.com*\n\nNous traitons l'ensemble des demandes sous 24h ouvrées.`
+      );
+      await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -2742,6 +2836,27 @@ async function handleIncomingInternal(msg) {
       await envoyerMenuBoutique(phone, boutique);
       return;
     }
+
+    // Protection anti-rupture : Si l'utilisateur pose une question ou demande le vendeur au lieu de donner son nom
+    if (detecterIntentionInterrogative(text)) {
+      const itm = context?.commande?.items?.[0];
+      const nomP = itm?.nom_produit || 'cet article';
+      const contactV = boutique.whatsapp || boutique.telephone;
+      await sendWhatsAppText(
+        phone,
+        `💡 *Vous êtes en train de passer une commande pour : ${nomP}*\n\n` +
+        `Pour finaliser votre achat par chat, merci d'indiquer votre **Nom et Adresse** (ex: *Amar, Sacré-Cœur 3*).\n\n` +
+        `👉 Pour poser directement votre question au vendeur ou annuler :`
+      );
+      const btns = [{ id: 'cmd_annuler', title: '✏️ Annuler commande' }];
+      if (contactV) {
+        btns.unshift({ id: `contact_vendeur_${itm?.produit_id || ''}`, title: '💬 Vendeur' });
+      }
+      btns.push({ id: 'menu', title: '🌐 Menu' });
+      await sendWhatsAppButtons3(phone, 'Que souhaitez-vous faire ?', btns.slice(0, 3)).catch(() => {});
+      return;
+    }
+
     if (!text || text.trim().length < 2) {
       await sendWhatsAppText(phone, '⚠️ Entrez votre Nom et Adresse de livraison (ex: Amar, Sacré-Cœur 3).');
       return;
@@ -2804,6 +2919,16 @@ async function handleIncomingInternal(msg) {
       await envoyerMenuBoutique(phone, boutique);
       return;
     }
+
+    if (detecterIntentionInterrogative(text)) {
+      await sendWhatsAppText(
+        phone,
+        `💡 Merci d'indiquer votre **quartier ou adresse de livraison** (ex: *Maristes, Dakar*).\n\n` +
+        `Tapez *annuler* si vous souhaitez revenir au menu.`
+      );
+      return;
+    }
+
     if (!text || text.trim().length < 3) {
       await sendWhatsAppText(phone, '⚠️ Entrez une adresse de livraison.');
       return;
@@ -2990,8 +3115,11 @@ async function handleIncomingInternal(msg) {
         if (hasWaveSession) {
           msgFinal += `\n\n🌊 *Réglez directement votre commande par Wave en 1 Clic :*\n👉 ${wavePayUrl}`;
         } else {
+          const numWaveManuel = (await cfg.get('paiement_manuel_numero_wave')) || '77 720 20 86';
+          const numOmManuel = (await cfg.get('paiement_manuel_numero_om')) || numWaveManuel;
           const totalMontantFmt = new Intl.NumberFormat('fr-FR').format(creees.reduce((sum, c) => sum + Number(c.montant_total || 0), 0));
-          msgFinal += `\n\n💡 *Paiement par Dépôt Manuel :*\nVous pouvez effectuer votre transfert de *${totalMontantFmt} FCFA* au *77 720 20 86* (Wave / Orange Money) puis nous envoyer la capture de votre reçu.`;
+          const numAffichage = numWaveManuel === numOmManuel ? numWaveManuel : `${numWaveManuel} (Wave) / ${numOmManuel} (Orange Money)`;
+          msgFinal += `\n\n💡 *Paiement par Dépôt Manuel :*\nVous pouvez effectuer votre transfert de *${totalMontantFmt} FCFA* au *${numAffichage}* puis nous envoyer la capture de votre reçu.`;
         }
       }
       if (echecs.length > 0) {
@@ -3970,5 +4098,7 @@ module.exports = {
   envoyerBilanCaisseMarchand,
   envoyerCarnetDettesMarchand,
   envoyerVitrineStatutMarchand,
+  detecterIntentionInterrogative,
+  enregistrerDemandeSupport,
 };
 

@@ -128,3 +128,42 @@ describe('resetInactiveSessions', () => {
     expect(sql).toMatch(/state\s*!=\s*'IDLE'/i);
   });
 });
+
+describe('detecterIntentionInterrogative', () => {
+  const { detecterIntentionInterrogative } = require('../../backend/services/whatsapp-chatbot');
+
+  test('détecte un point d interrogation', () => {
+    expect(detecterIntentionInterrogative('vous livrez ?')).toBe(true);
+    expect(detecterIntentionInterrogative('c est disponible ?')).toBe(true);
+  });
+
+  test('détecte les mots-clés interrogatifs sans point d interrogation', () => {
+    expect(detecterIntentionInterrogative('est ce que vous livrez à Rufisque')).toBe(true);
+    expect(detecterIntentionInterrogative('c est combien le prix')).toBe(true);
+    expect(detecterIntentionInterrogative('naata la')).toBe(true);
+    expect(detecterIntentionInterrogative('amna couleur bleu')).toBe(true);
+  });
+
+  test('ne détecte pas une adresse ou un nom classique', () => {
+    expect(detecterIntentionInterrogative('Bamba Mar, Sacré-Cœur 3')).toBe(false);
+    expect(detecterIntentionInterrogative('Fatou Diop, Maristes')).toBe(false);
+  });
+});
+
+describe('enregistrerDemandeSupport', () => {
+  const { enregistrerDemandeSupport } = require('../../backend/services/whatsapp-chatbot');
+
+  test('insère une nouvelle demande de support en base', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ id: 'sup-uuid-1', created_at: new Date() }] });
+    const res = await enregistrerDemandeSupport('221708717942', {
+      nom: 'Moussa',
+      message: 'Demande de rappel',
+    });
+    expect(res).toBeDefined();
+    expect(res.id).toBe('sup-uuid-1');
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+    const sql = mockQuery.mock.calls[0][0];
+    expect(sql).toMatch(/INSERT INTO support_demandes/i);
+    expect(mockQuery.mock.calls[0][1][0]).toBe('221708717942');
+  });
+});
