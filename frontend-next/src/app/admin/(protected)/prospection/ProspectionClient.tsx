@@ -122,7 +122,7 @@ export default function ProspectionClient({
   const [sourceFilter, setSourceFilter] = useState('tous')
   const [operateurFilter, setOperateurFilter] = useState('tous')
   const [quartierFilter, setQuartierFilter] = useState('tous')
-  const [campagneLimit, setCampagneLimit] = useState<number | 'tous'>('tous')
+  const [campagneLimit, setCampagneLimit] = useState<number | 'tous'>(50)
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([])
 
   // Modal Ajout Unique
@@ -1079,6 +1079,19 @@ export default function ProspectionClient({
                 </div>
 
                 <button
+                  onClick={handleNettoyerLeads}
+                  disabled={isCleaningLeads}
+                  style={{
+                    padding: '8px 14px', background: '#F0FDF4', border: '1px solid #86EFAC',
+                    borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: isCleaningLeads ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6, color: '#166534',
+                  }}
+                  title="Reclassement automatique des véhicules, immobilier, tech, suppression des faux noms et annonces emploi"
+                >
+                  <Sparkles size={15} color="#16A34A" /> {isCleaningLeads ? 'Nettoyage en cours...' : '🧹 Nettoyer & Reclasser CRM'}
+                </button>
+
+                <button
                   onClick={exportLeadsCSV}
                   style={{
                     padding: '8px 14px', background: '#F8FAFC', border: '1px solid #CBD5E1',
@@ -1564,14 +1577,39 @@ Boutique Parcelles, 70 111 22 33`}
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
-                  {/* Catégorie */}
+                  {/* Catégorie avec Auto-Sélection de Template */}
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 3 }}>
-                      Catégorie
+                      Catégorie Métier
                     </label>
                     <select
                       value={catFilter}
-                      onChange={(e) => setCatFilter(e.target.value)}
+                      onChange={(e) => {
+                        const newCat = e.target.value
+                        setCatFilter(newCat)
+                        // Auto-sélection du template métier le plus adapté
+                        let matching = templates.find((t) => t.categorie === newCat)
+                        if (!matching) {
+                          if (newCat === 'tous' || newCat === 'general' || newCat === 'divers') {
+                            matching = templates.find((t) => t.id === 'commerce_general' || t.id === 'carnet_dettes')
+                          } else if (newCat === 'auto-moto') {
+                            matching = templates.find((t) => t.id === 'auto_vehicules')
+                          } else if (newCat === 'immo') {
+                            matching = templates.find((t) => t.id === 'immo_agences')
+                          } else if (newCat === 'tech' || newCat === 'smartphones' || newCat === 'informatique' || newCat === 'tv-electro') {
+                            matching = templates.find((t) => t.id === 'tech_telephonie')
+                          } else if (newCat === 'grossiste') {
+                            matching = templates.find((t) => t.id === 'sourcing_alibaba')
+                          } else if (newCat === 'mode') {
+                            matching = templates.find((t) => t.id === 'mode_pret_a_porter')
+                          }
+                        }
+                        if (matching) {
+                          setSelectedTemplate(matching)
+                          setCampagneMessage(matching.texte)
+                          setCampagneCanal(matching.canal as any)
+                        }
+                      }}
                       style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
                     >
                       {CATEGORIES_OPTIONS.map((opt) => (
@@ -1711,6 +1749,59 @@ Boutique Parcelles, 70 111 22 33`}
                   ))}
                 </div>
               </div>
+
+              {/* Alerte de cohérence Métier vs Template */}
+              {catFilter === 'auto-moto' && /tailles|modèles|collections|robes|vêtements/i.test(campagneMessage) && (
+                <div style={{
+                  background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 10, padding: '10px 14px',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+                }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>
+                    ⚠️ Vous ciblez les <strong>Véhicules</strong> mais le message sélectionné parle de <strong>Mode / Vêtements</strong>.
+                  </span>
+                  <button
+                    onClick={() => {
+                      const autoTpl = templates.find((t) => t.id === 'auto_vehicules')
+                      if (autoTpl) {
+                        setSelectedTemplate(autoTpl)
+                        setCampagneMessage(autoTpl.texte)
+                      }
+                    }}
+                    style={{
+                      padding: '4px 12px', background: '#fff', border: '1px solid #F59E0B',
+                      borderRadius: 6, fontSize: 11, fontWeight: 800, color: '#B45309', cursor: 'pointer', whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Appliquer le template Véhicules 🚗
+                  </button>
+                </div>
+              )}
+
+              {catFilter === 'immo' && /tailles|modèles|collections|robes|vêtements/i.test(campagneMessage) && (
+                <div style={{
+                  background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 10, padding: '10px 14px',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+                }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>
+                    ⚠️ Vous ciblez l'<strong>Immobilier</strong> mais le message sélectionné parle de <strong>Mode / Vêtements</strong>.
+                  </span>
+                  <button
+                    onClick={() => {
+                      const immoTpl = templates.find((t) => t.id === 'immo_agences')
+                      if (immoTpl) {
+                        setSelectedTemplate(immoTpl)
+                        setCampagneMessage(immoTpl.texte)
+                      }
+                    }}
+                    style={{
+                      padding: '4px 12px', background: '#fff', border: '1px solid #F59E0B',
+                      borderRadius: 6, fontSize: 11, fontWeight: 800, color: '#B45309', cursor: 'pointer', whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Appliquer le template Immobilier 🏠
+                  </button>
+                </div>
+              )}
 
               <div>
                 <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 6 }}>

@@ -1,18 +1,17 @@
-- **Moteur de Salutations Intelligentes, Templates Métiers (Auto, Immo, Supérettes) & Auto-Guérison des Tables de Prospection (`backend/services/prospection.js`, `backend/routes/prospection.js`, `ProspectionClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🛡️✨💬🎯🇸🇳 :
+- **Reclassement Automatique des Métiers (Auto/Immo/Tech), Auto-Sélection de Template & Bandeau de Cohérence Métier (`backend/services/prospection.js`, `ProspectionClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🎯🛡️🚗🏠✨🇸🇳 :
+  * **🤖 Reclassement Intelligent des Données CRM (`detecterCategorieAutoEtImmo` & `nettoyerEtEnrichirLead`)** :
+    - Détection et reclassement automatique des leads mal étiquetés : les annonces de voitures (*Hyundai Tucson*, *Peugeot*, *Toyota*...) basculent automatiquement en `auto-moto`, les annonces d'appartements et terrains en `immo`, et les smartphones en `tech`.
+    - Élimination automatique des résidus de numéros multiples et faux titres d'annonces au profit d'enseignes propres.
+  * **⚡ Auto-Chargement de Template par Catégorie Métier (`ProspectionClient.tsx`)** :
+    - Lors de la sélection d'une catégorie dans l'audience de campagne, l'interface bascule et charge automatiquement le modèle adapté (*Véhicules ➔ 🚗 Template Auto*, *Immobilier ➔ 🏠 Template Immo*, *Mode ➔ 👗 Template Mode*, *Général ➔ 🛒 Commerce POS & Carnet*).
+  * **⚠️ Bandeau Intelligent de Cohérence Métier** :
+    - Détection automatique et alerte en cas de décalage thématique (ex: ciblage *Véhicules* avec un message parlant de *tailles de vêtements*), avec bouton 1-clic pour appliquer le template harmonisé.
+  * **🧹 Bouton « Nettoyer & Reclasser CRM »** :
+    - Intégration d'un bouton d'action directe dans la barre d'outils CRM pour exécuter le nettoyage et le reclassement complet de la base en 1 clic.
   * **🤝 Moteur de Salutations Naturelles (`estNomPropreAuthentique` & `interpolerMessage`)** :
-    - Élimination formelle de toute salutation bancale ou robotique (ex: *"Salam Agence Immobilière !"*, *"Bonjour Véhicules !"*, *"Bonjour votre boutique !"*, *"Salam 70 473 90 54... !"*).
-    - Détection stricte des noms authentiques : si le prénom ou le nom d'enseigne est réel (*"Fatou"*, *"Alanso Koumbiry Baldé"*, *"Brook Laye"*, *"Dakar Chic"*), le message s'adresse poliment à la personne (*"Salam Fatou !"*). Si le prospect a un nom générique ou pollué, la formule s'épure élégamment en salutation naturelle (*"Salam ! 👋"* ou *"Bonjour ! 👋"*).
-    - Support de la variable dynamique `{salutation}` dans tous les templates et aperçus temps réel.
-  * **🎯 Nouveaux Templates Métiers Dédiés (`TEMPLATES_PAR_DEFAUT`)** :
-    - **🚗 Véhicules & Concessionnaires** : Fiches techniques auto (kilométrage, carburant, transmission), liens WhatsApp et vitrine de parc automobile.
-    - **🏠 Immobilier & Agences** : Diffusion d'appartements et terrains, visites qualifiées sans commission.
-    - **🛒 Commerce Général & Supérettes** : Encaissement Wave/OM, caisse POS magasin et carnet de dettes clients.
-  * **🛡️ Auto-Guérison et Résilience BDD (`ensureProspectionTables`)** :
-    - Vérification et création préventive des tables `prospection_campagnes`, `prospection_messages_log`, `whatsapp_blacklist` et extensions `pgcrypto`/`uuid-ossp` avant tout envoi de campagne pour prévenir toute erreur 500.
-    - Sécurisation des requêtes SQL sur `id::text = ANY($1::text[])` pour éliminer tout risque d'échec de cast UUID.
-  * **🧪 Validation & Tests** :
-    - 35/35 tests unitaires validés avec 100% de succès.
-    - Validation unitaire des salutations réelles et épurées sur 100% des cas d'usage CRM.
+    - Élimination formelle de toute salutation bancale ou robotique (*"Salam Agence Immobilière !"*, *"Bonjour Véhicules !"*, *"Bonjour votre boutique !"*). Salutation sur vrai nom (*"Salam Fatou !"*) ou formule naturelle sobre (*"Salam ! 👋"*).
+  * **🧪 Tests & Validation** :
+    - 35/35 tests unitaires validés avec 100% de succès (`npm test`). Validation du reclassement auto/immo/tech sur 100% des cas d'usage.
 
 - **Enrichissement du Catalogue d'Importation par Lot (Batch Intake) — Ajout Intégral des Produits Modèles Parfumerie & Fragrances et Lunettes & Optique (`generate-catalog.js`, `catalogues-standards.json`, `BatchImportModal.tsx`, `run-unit-tests.mjs`, `CLAUDE.md`) (`main` - 25 août 2026)** 🌸👓💎📦⚡ :
   * **🌸 121 Modèles pour « Parfumerie & Fragrances » (`parfum`)** :

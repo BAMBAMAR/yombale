@@ -312,6 +312,57 @@ function genererNomBoutiqueParDefaut(categorie, quartier) {
   }
 }
 
+// ── Détecteur automatique de catégorie métier (Auto, Immo, Tech, Mode, Beauté)
+function detecterCategorieAutoEtImmo(texte) {
+  if (!texte || typeof texte !== 'string') return null;
+  const t = texte.toLowerCase();
+
+  // 1. Véhicules / Auto-Moto
+  if (
+    /\b(hyundai|tucson|santa fe|peugeot|mercedes|toyota|corolla|rav4|prado|kia|sportage|picanto|ford|focus|ranger|nissan|qashqai|juke|range rover|evoque|citroen|renault|clio|duster|bmw|audi|volkswagen|golf|passat|voiture|véhicule|vehicule|concessionnaire|parc auto|auto dakar|moto|scooter|tmax|yamaha|honda|berline|suv|4x4|pickup|automatique|manuelle|essence|diesel|climatisation d'origine)\b/i.test(t)
+  ) {
+    return 'auto-moto';
+  }
+
+  // 2. Immobilier
+  if (
+    /\b(appartement|studio|villa|terrain|parcelle|immeuble|chambre|meublé|meuble|a louer|à louer|en location|en vente|vente terrain|bailleur|courtier|f4|f3|f2|f5|titre foncier|bail)\b/i.test(t) &&
+    /\b(louer|location|vente|appartement|villa|terrain|chambre|studio|immeuble|bailleur)\b/i.test(t)
+  ) {
+    return 'immo';
+  }
+
+  // 3. Téléphonie & High-Tech
+  if (
+    /\b(iphone|samsung|galaxy|redmi|xiaomi|tecno|infinix|huawei|oppo|macbook|laptop|ordinateur|pc portable|dell|hp|lenovo|asus|ps5|ps4|playstation|xbox|smart tv|télévision|airpods|montre connectée|smartwatch|lite 5g|pro max|ultra)\b/i.test(t)
+  ) {
+    return 'tech';
+  }
+
+  // 4. Parfumerie & Cosmétique
+  if (
+    /\b(parfum|parfumerie|fragrance|eau de parfum|thiouraye|gongo|musk|musc|brume|victoria secret|bakhour|soin de visage|gamme éclaircissante|crème|savon kójic|lotion|fond de teint)\b/i.test(t)
+  ) {
+    return 'beaute';
+  }
+
+  // 5. Mode & Vêtements
+  if (
+    /\b(robe|robes|abaya|bazin|getzner|wax|boubou|couture|tailleur|costume|chemise|pantalon|chaussure|talons|escarpins|sneakers|sac à main|perruque|mèche|tissage|dentelle|voile|bijoux)\b/i.test(t)
+  ) {
+    return 'mode';
+  }
+
+  // 6. Électroménager & Maison
+  if (
+    /\b(frigo|réfrigérateur|refrigerateur|congélateur|congelateur|machine à laver|gazinière|four|micro-onde|climatiseur|split|salon|canapé|canape|table à manger|matelas|lit)\b/i.test(t)
+  ) {
+    return 'maison';
+  }
+
+  return null;
+}
+
 function nettoyerNomBoutique(rawNom, categorie = 'mode', quartier = '') {
   if (!rawNom || typeof rawNom !== 'string') {
     return genererNomBoutiqueParDefaut(categorie, quartier);
@@ -336,8 +387,13 @@ function nettoyerNomBoutique(rawNom, categorie = 'mode', quartier = '') {
   // Supprimer les mentions de prix (ex: 15000 FCFA, 5000 f, 25.000 cfa)
   clean = clean.replace(/\b\d+[\s.]*(?:fcfa|cfa|frs|fr|f)\b/gi, '').trim();
 
+  // Supprimer les résidus de téléphones multiples et slashs (ex: 70 473 90 54/ 78 650 7272)
+  if (/^(?:\+?221\s?)?(?:7[05678]|3[03])[\s./\d-]{6,}/.test(clean) || /^\d{2,}[\s./-]+\d{2,}/.test(clean)) {
+    return genererNomBoutiqueParDefaut(categorie, quartier);
+  }
+
   // Enlever les préfixes de petites annonces et pollution
-  clean = clean.replace(/^(?:vendeur\s+|annonce\s+|boutique\s+de\s+|contact\s*:?\s*|urgence\s*:?\s*|disponible\s*:?\s*|promo\s*:?\s*|arrivage\s*:?\s*|vente\s+de\s+|vente\s+d'|vente\s+)/i, '').trim();
+  clean = clean.replace(/^(?:vendeur\s+|annonce\s+|boutique\s+de\s+|contact\s*:?\s*|urgence\s*:?\s*|disponible\s*:?\s*|promo\s*:?\s*|arrivage\s*:?\s*|vente\s+de\s+|vente\s+d'|vente\s+|de\s+livraison\s+)/i, '').trim();
 
   // Enlever les emojis et caractères spéciaux de mise en avant
   clean = clean.replace(/[✨🔥⚡⭐️🌟💎🛒📦👗📱🎁🎉✅👉📍🔹🔸•*~_#|\/\\()\[\]{}]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -346,7 +402,7 @@ function nettoyerNomBoutique(rawNom, categorie = 'mode', quartier = '') {
   const matchBoutique = clean.match(/(?:chez|boutique|store|shop|bar à parfum|atelier|couture|services?|maison|groupe|agence)\s+([A-Za-z0-9À-ÿ\s&'-]{3,30})/i);
   if (matchBoutique && matchBoutique[1]) {
     const nomExtrait = matchBoutique[1].trim();
-    if (!/^\d+/.test(nomExtrait) && nomExtrait.length > 2 && nomExtrait.length < 35) {
+    if (!/^\d+/.test(nomExtrait) && nomExtrait.length > 2 && nomExtrait.length < 35 && !/livraison/i.test(nomExtrait)) {
       return toTitleCase(nomExtrait);
     }
   }
@@ -354,7 +410,7 @@ function nettoyerNomBoutique(rawNom, categorie = 'mode', quartier = '') {
   // Si le nom est un titre d'annonce descriptive ou trop long
   const estTitreAnnonce = (
     clean.length > 35 ||
-    /^(prix|disponible|à vendre|a vendre|cherche|contact|suivre|recrutement|appartement|peugeot|mercedes|hyundai|kia|daewoo|service de livraison|10 h|terrains|chambre|bana bana|tout nickel|débardeur|dentelle|tablette|télévision|lg|machine|cover|summer scents|parfum dakar|faites vos|new arrival|livraison|n'hésitez|ouvert|ferme|wax|terrain|robe|costume|sac|chaussure|montre|perruque|mèche)/i.test(clean) ||
+    /^(prix|disponible|disponibi|à vendre|a vendre|cherche|contact|suivre|recrutement|appartement|peugeot|mercedes|hyundai|kia|daewoo|service de livraison|livraison|10 h|terrains|chambre|bana bana|tout nickel|débardeur|dentelle|tablette|télévision|lg|machine|cover|summer scents|parfum dakar|faites vos|new arrival|n'hésitez|ouvert|ferme|wax|terrain|robe|costume|sac|chaussure|montre|perruque|mèche)/i.test(clean) ||
     clean.includes('·') ||
     clean.length < 3
   );
@@ -403,11 +459,17 @@ function estLeadEmploiOuInvalide(lead) {
 function nettoyerEtEnrichirLead(lead) {
   const rawNom = lead.nom_boutique || '';
   const rawQuartier = lead.quartier || lead.ville || 'Dakar';
-  const rawCat = lead.categorie || 'mode';
+  let rawCat = lead.categorie || 'mode';
+
+  // 1. Détection automatique et reclassement intelligent de la catégorie (Auto, Immo, Tech...)
+  const catDetectee = detecterCategorieAutoEtImmo(`${rawNom} ${lead.notes || ''}`);
+  if (catDetectee) {
+    rawCat = catDetectee;
+  }
 
   const estInvalide = estLeadEmploiOuInvalide(lead);
   
-  // Détection du quartier dans le nom, notes, quartier brut
+  // 2. Détection du quartier dans le nom, notes, quartier brut
   const qDetecte = detecterQuartier(`${rawNom} ${lead.notes || ''} ${rawQuartier}`);
   const quartierFinal = qDetecte || (rawQuartier !== 'Dakar' ? rawQuartier : 'Dakar');
   
@@ -476,6 +538,7 @@ async function nettoyerTousLesLeadsBdd() {
   let nettoyes = 0;
   let invalidesEmploi = 0;
   let quartiersEnrichis = 0;
+  let categoriesReclassees = 0;
 
   for (const lead of leads) {
     try {
@@ -484,6 +547,10 @@ async function nettoyerTousLesLeadsBdd() {
       let changed = false;
       if (enrichi.nom_boutique !== lead.nom_boutique) changed = true;
       if (enrichi.contact_nom !== lead.contact_nom) changed = true;
+      if (enrichi.categorie !== lead.categorie) {
+        changed = true;
+        categoriesReclassees++;
+      }
       if (enrichi.quartier !== lead.quartier) {
         changed = true;
         if (lead.quartier === 'Dakar' && enrichi.quartier !== 'Dakar') {
@@ -504,11 +571,12 @@ async function nettoyerTousLesLeadsBdd() {
             nom_boutique = $1,
             contact_nom = $2,
             quartier = $3,
-            statut = $4,
-            notes = $5,
+            categorie = $4,
+            statut = $5,
+            notes = $6,
             updated_at = NOW()
-          WHERE id = $6
-        `, [enrichi.nom_boutique, enrichi.contact_nom, enrichi.quartier, enrichi.statut, enrichi.notes, lead.id]);
+          WHERE id = $7
+        `, [enrichi.nom_boutique, enrichi.contact_nom, enrichi.quartier, enrichi.categorie, enrichi.statut, enrichi.notes, lead.id]);
         nettoyes++;
       }
     } catch (rowErr) {
@@ -521,6 +589,7 @@ async function nettoyerTousLesLeadsBdd() {
     nettoyes,
     invalidesEmploi,
     quartiersEnrichis,
+    categoriesReclassees,
   };
 }
 
