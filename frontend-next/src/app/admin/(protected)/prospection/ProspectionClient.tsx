@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Users, UserPlus, Send, History, Sparkles, Filter, Search,
   Download, Trash2, Phone, MessageSquare, ExternalLink, CheckCircle2,
   Copy, RefreshCw, Layers, ShieldCheck, Zap, Pencil, Ban, ShieldAlert,
-  Check, X, Lock, Unlock
+  Check, X, Lock, Unlock, SlidersHorizontal, RotateCcw
 } from 'lucide-react'
 import type { Lead, StatsLeads, TemplateMsg, DorkingRequete, BlacklistItem } from './page'
 
@@ -36,6 +36,41 @@ const OPERATEUR_COLORS: Record<string, { color: string; bg: string }> = {
   Promobile: { color: '#16A34A', bg: '#F0FDF4' },
   Autre: { color: '#64748B', bg: '#F1F5F9' },
 }
+
+const CATEGORIES_OPTIONS = [
+  { value: 'tous', label: 'Toutes les catégories' },
+  { value: 'mode', label: '👗 Mode & Prêt-à-porter' },
+  { value: 'auto-moto', label: '🚗 Véhicules & Auto-Moto' },
+  { value: 'immo', label: '🏠 Immobilier & Terrains' },
+  { value: 'smartphones', label: '📱 Téléphonie & Tech' },
+  { value: 'tv-electro', label: '📺 Électroménager & TV' },
+  { value: 'informatique', label: '💻 Informatique & Ordis' },
+  { value: 'maison', label: '🛋️ Maison & Ameublement' },
+  { value: 'beaute', label: '💄 Cosmétique & Beauté' },
+  { value: 'superette', label: '🛒 Alimentation & Supérette' },
+  { value: 'quincaillerie', label: '🔨 Quincaillerie & BTP' },
+  { value: 'grossiste', label: '📦 Grossistes & Import Chine' },
+  { value: 'services', label: '🛠️ Services & Prestations' },
+  { value: 'divers', label: '🛍️ Commerce Général / Mixte' },
+  { value: 'emploi', label: '💼 Offres & Demandes d\'Emploi' },
+]
+
+const SOURCES_OPTIONS = [
+  { value: 'tous', label: 'Toutes les sources' },
+  { value: 'annonces_classifiees', label: '🏷️ Annonces Nopalou' },
+  { value: 'scraper_auto', label: '🤖 Scraper Automatisé' },
+  { value: 'facebook', label: '👥 Groupes Facebook Dakar' },
+  { value: 'import_vrac', label: '📥 Import Vrac' },
+  { value: 'manuel', label: '✍️ Ajout Manuel' },
+]
+
+const OPERATEURS_OPTIONS = [
+  { value: 'tous', label: 'Tous les opérateurs' },
+  { value: 'Orange', label: '🟠 Orange' },
+  { value: 'Free (Yas)', label: '🔴 Free (Yas)' },
+  { value: 'Expresso', label: '🟣 Expresso' },
+  { value: 'Promobile', label: '🟢 Promobile' },
+]
 
 export default function ProspectionClient({
   initialLeads,
@@ -80,10 +115,14 @@ export default function ProspectionClient({
     reason: 'STOP / Opt-Out (WhatsApp)',
   })
 
-  // Filtres CRM
+  // Filtres CRM & Campagnes
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('tous')
   const [statutFilter, setStatutFilter] = useState('tous')
+  const [sourceFilter, setSourceFilter] = useState('tous')
+  const [operateurFilter, setOperateurFilter] = useState('tous')
+  const [quartierFilter, setQuartierFilter] = useState('tous')
+  const [campagneLimit, setCampagneLimit] = useState<number | 'tous'>('tous')
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([])
 
   // Modal Ajout Unique
@@ -378,20 +417,93 @@ export default function ProspectionClient({
     document.body.removeChild(link)
   }
 
-  // Filtrage local
-  const filteredLeads = leads.filter((l) => {
-    if (catFilter !== 'tous' && l.categorie !== catFilter) return false
-    if (statutFilter !== 'tous' && l.statut !== statutFilter) return false
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      const matchNom = (l.nom_boutique || '').toLowerCase().includes(q)
-      const matchContact = (l.contact_nom || '').toLowerCase().includes(q)
-      const matchTel = (l.telephone || '').includes(q)
-      const matchQuartier = (l.quartier || '').toLowerCase().includes(q)
-      if (!matchNom && !matchContact && !matchTel && !matchQuartier) return false
+  // Listes dynamiques des quartiers et sources détectés dans la base
+  const uniqueQuartiers = useMemo(() => {
+    const setQ = new Set<string>()
+    leads.forEach((l) => {
+      if (l.quartier && l.quartier.trim() && l.quartier !== 'Dakar') {
+        setQ.add(l.quartier.trim())
+      }
+    })
+    return ['Dakar', ...Array.from(setQ).sort()]
+  }, [leads])
+
+  const uniqueSources = useMemo(() => {
+    const setS = new Set<string>()
+    leads.forEach((l) => {
+      if (l.source && l.source.trim()) {
+        if (l.source.startsWith('annonce_facebook')) {
+          setS.add('facebook')
+        } else {
+          setS.add(l.source.trim())
+        }
+      }
+    })
+    return Array.from(setS).sort()
+  }, [leads])
+
+  // Filtrage local multicritère (Catégorie, Statut, Source, Opérateur, Quartier, Recherche texte)
+  const filteredLeads = useMemo(() => {
+    return leads.filter((l) => {
+      // Catégorie
+      if (catFilter !== 'tous') {
+        if (catFilter === 'smartphones' && l.categorie !== 'smartphones' && l.categorie !== 'tech') return false
+        else if (catFilter === 'beaute' && l.categorie !== 'beaute' && l.categorie !== 'cosmetique') return false
+        else if (catFilter === 'divers' && l.categorie !== 'divers' && l.categorie !== 'mixte') return false
+        else if (l.categorie !== catFilter) return false
+      }
+      // Statut
+      if (statutFilter !== 'tous' && l.statut !== statutFilter) return false
+      // Source
+      if (sourceFilter !== 'tous') {
+        if (sourceFilter === 'facebook' && !(l.source || '').startsWith('annonce_facebook')) return false
+        else if (sourceFilter !== 'facebook' && l.source !== sourceFilter) return false
+      }
+      // Opérateur
+      if (operateurFilter !== 'tous' && l.operateur !== operateurFilter) return false
+      // Quartier
+      if (quartierFilter !== 'tous' && (l.quartier || '').toLowerCase() !== quartierFilter.toLowerCase()) return false
+
+      // Recherche libre (nom, contact, téléphone, quartier, note, etc.)
+      if (search.trim()) {
+        const q = search.toLowerCase()
+        const matchNom = (l.nom_boutique || '').toLowerCase().includes(q)
+        const matchContact = (l.contact_nom || '').toLowerCase().includes(q)
+        const matchTel = (l.telephone || '').includes(q)
+        const matchQuartier = (l.quartier || '').toLowerCase().includes(q)
+        const matchNotes = (l.notes || '').toLowerCase().includes(q)
+        const matchSource = (l.source || '').toLowerCase().includes(q)
+        if (!matchNom && !matchContact && !matchTel && !matchQuartier && !matchNotes && !matchSource) return false
+      }
+      return true
+    })
+  }, [leads, catFilter, statutFilter, sourceFilter, operateurFilter, quartierFilter, search])
+
+  // Audience cible réelle pour la campagne (prend en compte la sélection manuelle OU les filtres, avec limite)
+  const campaignTargetLeads = useMemo(() => {
+    let base = selectedLeadIds.length > 0
+      ? leads.filter((l) => selectedLeadIds.includes(l.id))
+      : filteredLeads
+    
+    // Exclure systématiquement les désinscrits et invalides des campagnes
+    base = base.filter((l) => l.statut !== 'desinscrit' && l.statut !== 'invalide')
+
+    if (campagneLimit !== 'tous' && typeof campagneLimit === 'number') {
+      return base.slice(0, campagneLimit)
     }
-    return true
-  })
+    return base
+  }, [leads, selectedLeadIds, filteredLeads, campagneLimit])
+
+  // Réinitialisation de tous les filtres
+  const handleResetFilters = () => {
+    setSearch('')
+    setCatFilter('tous')
+    setStatutFilter('tous')
+    setSourceFilter('tous')
+    setOperateurFilter('tous')
+    setQuartierFilter('tous')
+    setSelectedLeadIds([])
+  }
 
   // Sélections
   const handleSelectAll = (checked: boolean) => {
@@ -582,13 +694,13 @@ export default function ProspectionClient({
 
   // Lancement de Campagne
   const handleLancerCampagne = async (simulation: boolean) => {
-    const targetIds = selectedLeadIds.length > 0 ? selectedLeadIds : filteredLeads.map((l) => l.id)
+    const targetIds = campaignTargetLeads.map((l) => l.id)
     if (!targetIds.length) {
-      showToast('⚠️ Aucun prospect sélectionné pour cette campagne')
+      showToast('⚠️ Aucun prospect valide ciblé pour cette campagne')
       return
     }
 
-    if (!confirm(`${simulation ? 'Simuler' : 'LANCER EN RÉEL'} l'envoi de la campagne sur ${targetIds.length} prospects ?`)) {
+    if (!confirm(`${simulation ? '🧪 Simuler' : '🚀 LANCER EN RÉEL'} l'envoi de la campagne sur ${targetIds.length} prospects ciblés ?`)) {
       return
     }
 
@@ -833,95 +945,174 @@ export default function ProspectionClient({
       ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'crm' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Barre de Filtres & Actions */}
+          {/* Barre de Filtres & Actions Avancées */}
           <div style={{
-            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '16px 20px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
+            background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '18px 20px',
+            display: 'flex', flexDirection: 'column', gap: 14,
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
-              <Search size={18} color="#94A3B8" />
-              <input
-                type="text"
-                placeholder="Rechercher par nom de boutique, contact, téléphone ou quartier..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{
-                  width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1',
-                  fontSize: 14, outline: 'none',
-                }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Afficher :</span>
-                <select
-                  value={limit}
-                  onChange={(e) => {
-                    const val = e.target.value === 'tout' ? 'tout' : Number(e.target.value)
-                    setLimit(val)
-                    reloadLeads(val)
+            {/* Ligne 1 : Recherche & Boutons d'Action */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 280 }}>
+                <Search size={18} color="#94A3B8" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par nom, contact, téléphone, quartier, mot-clé..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #CBD5E1',
+                    fontSize: 14, outline: 'none',
                   }}
-                  style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 700, background: '#fff' }}
-                >
-                  <option value={50}>50 leads</option>
-                  <option value={100}>100 leads</option>
-                  <option value={200}>200 leads</option>
-                  <option value={500}>500 leads</option>
-                  <option value={1000}>1000 leads</option>
-                  <option value="tout">Tous (Base complète)</option>
-                </select>
+                />
               </div>
 
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>Charger :</span>
+                  <select
+                    value={limit}
+                    onChange={(e) => {
+                      const val = e.target.value === 'tout' ? 'tout' : Number(e.target.value)
+                      setLimit(val)
+                      reloadLeads(val)
+                    }}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 700, background: '#fff' }}
+                  >
+                    <option value={50}>50 leads</option>
+                    <option value={100}>100 leads</option>
+                    <option value={200}>200 leads</option>
+                    <option value={500}>500 leads</option>
+                    <option value={1000}>1000 leads</option>
+                    <option value="tout">Tous (Base complète)</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={exportLeadsCSV}
+                  style={{
+                    padding: '8px 14px', background: '#F8FAFC', border: '1px solid #CBD5E1',
+                    borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6, color: '#334155',
+                  }}
+                >
+                  <Download size={15} /> Export CSV ({filteredLeads.length})
+                </button>
+
+                {selectedLeadIds.length > 0 && (
+                  <button
+                    onClick={handleBatchDelete}
+                    style={{
+                      padding: '8px 14px', background: '#FEE2E2', border: '1px solid #F87171',
+                      borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6, color: '#DC2626',
+                    }}
+                  >
+                    <Trash2 size={15} /> Supprimer ({selectedLeadIds.length})
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Ligne 2 : Sélecteurs de Segmentation Fine */}
+            <div style={{
+              display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center',
+              paddingTop: 12, borderTop: '1px solid #F1F5F9',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569', fontSize: 13, fontWeight: 700 }}>
+                <SlidersHorizontal size={15} color="#16A34A" /> Filtres :
+              </div>
+
+              {/* Catégorie */}
               <select
                 value={catFilter}
                 onChange={(e) => setCatFilter(e.target.value)}
-                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 600 }}
+                style={{
+                  padding: '7px 10px', borderRadius: 8, border: '1px solid #CBD5E1',
+                  fontSize: 12, fontWeight: 700, background: catFilter !== 'tous' ? '#EFF6FF' : '#fff',
+                  color: catFilter !== 'tous' ? '#1D4ED8' : '#1E293B',
+                }}
               >
-                <option value="tous">Toutes les catégories</option>
-                <option value="mode">Mode &amp; Prêt-à-porter</option>
-                <option value="tech">Téléphonie &amp; Tech</option>
-                <option value="superette">Alimentation &amp; Supérette</option>
-                <option value="quincaillerie">Quincaillerie &amp; BTP</option>
-                <option value="cosmetique">Cosmétique &amp; Beauté</option>
-                <option value="grossiste">Grossistes &amp; Chine</option>
+                {CATEGORIES_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
               </select>
 
+              {/* Statut */}
               <select
                 value={statutFilter}
                 onChange={(e) => setStatutFilter(e.target.value)}
-                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, fontWeight: 600 }}
-              >
-                <option value="tous">Tous les statuts</option>
-                <option value="nouveau">Nouveau</option>
-                <option value="contacte_wa">Contacté WhatsApp</option>
-                <option value="en_discussion">En discussion</option>
-                <option value="converti">Converti (Actif)</option>
-                <option value="desinscrit">Désinscrit</option>
-                <option value="invalide">Invalide (Emploi / Hors Cible)</option>
-              </select>
-
-              <button
-                onClick={exportLeadsCSV}
                 style={{
-                  padding: '8px 14px', background: '#F8FAFC', border: '1px solid #CBD5E1',
-                  borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6, color: '#334155',
+                  padding: '7px 10px', borderRadius: 8, border: '1px solid #CBD5E1',
+                  fontSize: 12, fontWeight: 700, background: statutFilter !== 'tous' ? '#EFF6FF' : '#fff',
+                  color: statutFilter !== 'tous' ? '#1D4ED8' : '#1E293B',
                 }}
               >
-                <Download size={15} /> Export CSV
-              </button>
+                <option value="tous">🎯 Tous les statuts</option>
+                <option value="nouveau">🔹 Nouveau</option>
+                <option value="contacte_wa">🟢 Contacté WhatsApp</option>
+                <option value="en_discussion">🟠 En discussion</option>
+                <option value="converti">✅ Converti (Actif)</option>
+                <option value="desinscrit">⛔ Désinscrit</option>
+                <option value="invalide">⚪ Invalide (Emploi / Hors Cible)</option>
+              </select>
 
-              {selectedLeadIds.length > 0 && (
+              {/* Source */}
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                style={{
+                  padding: '7px 10px', borderRadius: 8, border: '1px solid #CBD5E1',
+                  fontSize: 12, fontWeight: 700, background: sourceFilter !== 'tous' ? '#EFF6FF' : '#fff',
+                  color: sourceFilter !== 'tous' ? '#1D4ED8' : '#1E293B',
+                }}
+              >
+                {SOURCES_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+
+              {/* Opérateur */}
+              <select
+                value={operateurFilter}
+                onChange={(e) => setOperateurFilter(e.target.value)}
+                style={{
+                  padding: '7px 10px', borderRadius: 8, border: '1px solid #CBD5E1',
+                  fontSize: 12, fontWeight: 700, background: operateurFilter !== 'tous' ? '#EFF6FF' : '#fff',
+                  color: operateurFilter !== 'tous' ? '#1D4ED8' : '#1E293B',
+                }}
+              >
+                {OPERATEURS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+
+              {/* Quartier */}
+              <select
+                value={quartierFilter}
+                onChange={(e) => setQuartierFilter(e.target.value)}
+                style={{
+                  padding: '7px 10px', borderRadius: 8, border: '1px solid #CBD5E1',
+                  fontSize: 12, fontWeight: 700, background: quartierFilter !== 'tous' ? '#EFF6FF' : '#fff',
+                  color: quartierFilter !== 'tous' ? '#1D4ED8' : '#1E293B',
+                }}
+              >
+                <option value="tous">📍 Tous les quartiers ({uniqueQuartiers.length})</option>
+                {uniqueQuartiers.map((q) => (
+                  <option key={q} value={q}>{q}</option>
+                ))}
+              </select>
+
+              {/* Bouton Réinitialiser si filtres actifs */}
+              {(search || catFilter !== 'tous' || statutFilter !== 'tous' || sourceFilter !== 'tous' || operateurFilter !== 'tous' || quartierFilter !== 'tous') && (
                 <button
-                  onClick={handleBatchDelete}
+                  onClick={handleResetFilters}
                   style={{
-                    padding: '8px 14px', background: '#FEE2E2', border: '1px solid #F87171',
-                    borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: 6, color: '#DC2626',
+                    padding: '6px 12px', background: '#F1F5F9', border: '1px solid #CBD5E1',
+                    borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#DC2626', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 4,
                   }}
                 >
-                  <Trash2 size={15} /> Supprimer ({selectedLeadIds.length})
+                  <RotateCcw size={13} /> Réinitialiser
                 </button>
               )}
             </div>
@@ -1243,10 +1434,157 @@ Boutique Parcelles, 70 111 22 33`}
               <Send size={20} color="#16A34A" /> Configuration de la Campagne de Prospection
             </h2>
 
+            {/* Bloc de Paramétrage du Ciblage & Audience */}
+            <div style={{
+              background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: '16px',
+              marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 12,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: '#1C2B4A', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Filter size={15} color="#16A34A" /> 1. Paramétrer l&apos;Audience Cible :
+                </span>
+                
+                <span style={{
+                  fontSize: 12, fontWeight: 800, padding: '4px 10px', borderRadius: 20,
+                  background: campaignTargetLeads.length > 0 ? '#DCFCE7' : '#FEE2E2',
+                  color: campaignTargetLeads.length > 0 ? '#166534' : '#991B1B',
+                }}>
+                  🎯 {campaignTargetLeads.length} prospect{campaignTargetLeads.length > 1 ? 's' : ''} ciblé{campaignTargetLeads.length > 1 ? 's' : ''}
+                </span>
+              </div>
+
+              {selectedLeadIds.length > 0 ? (
+                <div style={{
+                  padding: '10px 14px', background: '#EFF6FF', border: '1px solid #BFDBFE',
+                  borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
+                }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#1E40AF' }}>
+                    📌 Mode Sélection Manuelle : <strong>{selectedLeadIds.length}</strong> prospect{selectedLeadIds.length > 1 ? 's' : ''} coché{selectedLeadIds.length > 1 ? 's' : ''} dans la table.
+                  </span>
+                  <button
+                    onClick={() => setSelectedLeadIds([])}
+                    style={{
+                      padding: '4px 10px', background: '#fff', border: '1px solid #93C5FD',
+                      borderRadius: 6, fontSize: 11, fontWeight: 800, color: '#2563EB', cursor: 'pointer',
+                    }}
+                  >
+                    Basculer sur les filtres
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
+                  {/* Catégorie */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 3 }}>
+                      Catégorie
+                    </label>
+                    <select
+                      value={catFilter}
+                      onChange={(e) => setCatFilter(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
+                    >
+                      {CATEGORIES_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Statut */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 3 }}>
+                      Statut
+                    </label>
+                    <select
+                      value={statutFilter}
+                      onChange={(e) => setStatutFilter(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
+                    >
+                      <option value="nouveau">🔹 Nouveau (Recommandé)</option>
+                      <option value="tous">🎯 Tous les statuts</option>
+                      <option value="contacte_wa">🟢 Contacté WhatsApp</option>
+                      <option value="en_discussion">🟠 En discussion</option>
+                      <option value="converti">✅ Converti</option>
+                    </select>
+                  </div>
+
+                  {/* Source */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 3 }}>
+                      Source
+                    </label>
+                    <select
+                      value={sourceFilter}
+                      onChange={(e) => setSourceFilter(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
+                    >
+                      {SOURCES_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Opérateur */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 3 }}>
+                      Opérateur
+                    </label>
+                    <select
+                      value={operateurFilter}
+                      onChange={(e) => setOperateurFilter(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
+                    >
+                      {OPERATEURS_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Quartier */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 3 }}>
+                      Quartier / Marché
+                    </label>
+                    <select
+                      value={quartierFilter}
+                      onChange={(e) => setQuartierFilter(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
+                    >
+                      <option value="tous">📍 Tous les quartiers</option>
+                      {uniqueQuartiers.map((q) => (
+                        <option key={q} value={q}>{q}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Limite d'envoi / Volume */}
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 3 }}>
+                      Volume à envoyer
+                    </label>
+                    <select
+                      value={campagneLimit}
+                      onChange={(e) => setCampagneLimit(e.target.value === 'tous' ? 'tous' : Number(e.target.value))}
+                      style={{
+                        width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1',
+                        fontSize: 12, fontWeight: 800, color: '#166534', background: '#F0FDF4',
+                      }}
+                    >
+                      <option value="tous">Tous les ciblés ({filteredLeads.filter(l => l.statut !== 'desinscrit' && l.statut !== 'invalide').length})</option>
+                      <option value={10}>10 prospects</option>
+                      <option value={25}>25 prospects</option>
+                      <option value={50}>50 prospects (Recommandé / jour)</option>
+                      <option value={100}>100 prospects</option>
+                      <option value={200}>200 prospects</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 6 }}>
-                  1. Titre de la Campagne
+                  2. Titre de la Campagne
                 </label>
                 <input
                   type="text"
@@ -1258,7 +1596,7 @@ Boutique Parcelles, 70 111 22 33`}
 
               <div>
                 <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 6 }}>
-                  2. Choisir un Modèle Pré-Rédigé Adapté au Marché Sénégalais
+                  3. Choisir un Modèle Pré-Rédigé Adapté au Marché Sénégalais
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {templates.map((tpl) => (
@@ -1285,7 +1623,7 @@ Boutique Parcelles, 70 111 22 33`}
 
               <div>
                 <label style={{ fontSize: 12, fontWeight: 800, color: '#64748B', display: 'block', marginBottom: 6 }}>
-                  3. Corps du Message (Variables : {'{nom_boutique}'}, {'{prenom}'}, {'{quartier}'}, {'{lien_boutique}'})
+                  4. Corps du Message (Variables : {'{nom_boutique}'}, {'{prenom}'}, {'{quartier}'}, {'{lien_boutique}'})
                 </label>
                 <textarea
                   rows={9}

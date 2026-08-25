@@ -1,3 +1,16 @@
+- **Paramétrage & Segmentation Avancée des Campagnes de Prospection WhatsApp — Filtres Multicritères (Catégorie, Statut, Source, Opérateur, Quartier) et Sélecteur de Volume d'Envoi (`ProspectionClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🎯📊💬🚀🇸🇳 :
+  * **🎯 Panneau de Configuration d'Audience dans l'Onglet Campagnes (Tab 3)** :
+    - **Ciblage Multicritères Direct** : Sélecteurs immédiats pour la catégorie (`Mode`, `Véhicules`, `Immobilier`, `Téléphonie & Tech`, `Électroménager`, `Informatique`, `Maison`, `Beauté`, `Alimentation`, `Quincaillerie`, `Grossistes`, `Divers`), le statut cible (par défaut `Nouveau`), la source (`Annonces`, `Scraper auto`, `Facebook`, `Import vrac`, `Manuel`), l'opérateur (`Orange`, `Free`, `Expresso`, `Promobile`) et le quartier/région (`Sandaga`, `HLM`, `Colobane`, `Petersen`, `Maristes`, `Plateau`, `Thiès`, `Touba`, `Mbour`, etc.).
+    - **Sélecteur de Volume & Limite d'Envoi** : Possibilité de limiter l'envoi à `10`, `25`, `50 (Recommandé / jour)`, `100`, `200` ou `Tous les prospects ciblés`.
+    - **Compteur Dynamique d'Audience** : Badge temps réel indiquant le nombre exact de marchands prêts à recevoir le message avec exclusion automatique des numéros invalides et désinscrits (`🎯 X prospects ciblés`).
+    - **Compatibilité Sélection Manuelle** : Détection des leads cochés au cas par cas dans la table CRM avec option de basculer en un clic sur le ciblage par filtres automatiques.
+  * **🔍 Barre de Filtres Complète dans l'Onglet CRM Leads (Tab 1)** :
+    - Déploiement des menus déroulants pour l'ensemble des catégories métiers, sources de prospection, opérateurs télécom sénégalais et quartiers dynamiques.
+    - Bouton de réinitialisation instantanée des filtres avec indicateur de recherche active.
+  * **🧪 Validation Technique** :
+    - Build de production Next.js 14 validé avec succès (100% des 92 routes compilées, code 0).
+    - Respect strict des directives AGENTS.md : 100% polices système natives, 0 font-fetch externe.
+
 - **Refonte Architecturale E-Commerce Majeure — Variantes SKU Réelles, Décomposition des Commandes Multi-Produits avec Décrément de Stock, Catégories Parfumerie & Optique et Monogrammes Vectoriels (`backend/migrate-inline.js`, `comptabilite.js`, `boutiques.js`, `CartContext.tsx`, `DrawerCart.tsx`, `ProduitCTA.tsx`, `BoutiqueDetailClient.tsx`, `categories.ts`, `CLAUDE.md`) (`main` - 24 août 2026)** 🛒📦💎✨🌸 :
   * **🗄️ Modèle de Données & Migrations SQL (`backend/migrate-inline.js`)** :
     - **Table `boutique_produit_variantes`** : Stocke chaque combinaison SKU avec son propre prix, prix barré, prix d'achat, stock unitaire (`stock_quantite`), code-barres et image dédiée.
