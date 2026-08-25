@@ -1,17 +1,19 @@
-- **Reclassement Automatique des Métiers (Auto/Immo/Tech), Auto-Sélection de Template & Bandeau de Cohérence Métier (`backend/services/prospection.js`, `ProspectionClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🎯🛡️🚗🏠✨🇸🇳 :
+- **Garantie Anti-Doublon / Anti-Harcèlement & Avertissement Explicite de Relance (`ProspectionClient.tsx`, `backend/services/prospection.js`, `CLAUDE.md`) (`main` - 25 août 2026)** 🛡️🔒💬✨🎯🇸🇳 :
+  * **🔒 Exclusion Automatique et Garantie des Marchands Déjà Contactés** :
+    - Dès qu'un message WhatsApp est envoyé avec succès à un prospect, son statut en BDD passe immédiatement à `contacte_wa` avec `derniere_action_at = NOW()`.
+    - Les campagnes ciblent désormais **exclusivement et par défaut le statut `nouveau`**.
+    - Un marchand contacté est donc **100% automatiquement exclu de toutes les campagnes suivantes** sans action manuelle.
+  * **⚠️ Détection & Avertissement Explicite de Relance** :
+    - Si l'administrateur décide manuellement de cocher des prospects déjà contactés ou de basculer le filtre de statut sur `tous` ou `contacte_wa`, un bandeau d'alerte rouge `⚠️ X prospect(s) DÉJÀ CONTACTÉ(S)` s'affiche immédiatement.
+    - Le dialogue de validation avant envoi bloque et avertit clairement l'administrateur avec le nombre exact de marchands déjà contactés à relancer.
   * **🤖 Reclassement Intelligent des Données CRM (`detecterCategorieAutoEtImmo` & `nettoyerEtEnrichirLead`)** :
-    - Détection et reclassement automatique des leads mal étiquetés : les annonces de voitures (*Hyundai Tucson*, *Peugeot*, *Toyota*...) basculent automatiquement en `auto-moto`, les annonces d'appartements et terrains en `immo`, et les smartphones en `tech`.
-    - Élimination automatique des résidus de numéros multiples et faux titres d'annonces au profit d'enseignes propres.
-  * **⚡ Auto-Chargement de Template par Catégorie Métier (`ProspectionClient.tsx`)** :
-    - Lors de la sélection d'une catégorie dans l'audience de campagne, l'interface bascule et charge automatiquement le modèle adapté (*Véhicules ➔ 🚗 Template Auto*, *Immobilier ➔ 🏠 Template Immo*, *Mode ➔ 👗 Template Mode*, *Général ➔ 🛒 Commerce POS & Carnet*).
-  * **⚠️ Bandeau Intelligent de Cohérence Métier** :
-    - Détection automatique et alerte en cas de décalage thématique (ex: ciblage *Véhicules* avec un message parlant de *tailles de vêtements*), avec bouton 1-clic pour appliquer le template harmonisé.
+    - Détection et reclassement automatique des leads mal étiquetés (*Hyundai Tucson* ➔ `auto-moto`, appartements ➔ `immo`, smartphones ➔ `tech`).
+  * **⚡ Auto-Chargement de Template & Bandeau de Cohérence Métier** :
+    - Auto-sélection immédiate du bon template selon la catégorie choisie et bandeau d'alerte avec bouton 1-clic en cas de texte inadapté.
   * **🧹 Bouton « Nettoyer & Reclasser CRM »** :
-    - Intégration d'un bouton d'action directe dans la barre d'outils CRM pour exécuter le nettoyage et le reclassement complet de la base en 1 clic.
-  * **🤝 Moteur de Salutations Naturelles (`estNomPropreAuthentique` & `interpolerMessage`)** :
-    - Élimination formelle de toute salutation bancale ou robotique (*"Salam Agence Immobilière !"*, *"Bonjour Véhicules !"*, *"Bonjour votre boutique !"*). Salutation sur vrai nom (*"Salam Fatou !"*) ou formule naturelle sobre (*"Salam ! 👋"*).
+    - Nettoyage et reclassement en 1 clic de l'intégralité de la base dans la barre d'outils CRM.
   * **🧪 Tests & Validation** :
-    - 35/35 tests unitaires validés avec 100% de succès (`npm test`). Validation du reclassement auto/immo/tech sur 100% des cas d'usage.
+    - 35/35 tests unitaires validés avec 100% de succès (`npm test`).
 
 - **Enrichissement du Catalogue d'Importation par Lot (Batch Intake) — Ajout Intégral des Produits Modèles Parfumerie & Fragrances et Lunettes & Optique (`generate-catalog.js`, `catalogues-standards.json`, `BatchImportModal.tsx`, `run-unit-tests.mjs`, `CLAUDE.md`) (`main` - 25 août 2026)** 🌸👓💎📦⚡ :
   * **🌸 121 Modèles pour « Parfumerie & Fragrances » (`parfum`)** :

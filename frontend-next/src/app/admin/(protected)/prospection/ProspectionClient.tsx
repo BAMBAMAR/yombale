@@ -5,7 +5,7 @@ import {
   Users, UserPlus, Send, History, Sparkles, Filter, Search,
   Download, Trash2, Phone, MessageSquare, ExternalLink, CheckCircle2,
   Copy, RefreshCw, Layers, ShieldCheck, Zap, Pencil, Ban, ShieldAlert,
-  Check, X, Lock, Unlock, SlidersHorizontal, RotateCcw
+  Check, X, Lock, Unlock, SlidersHorizontal, RotateCcw, AlertTriangle
 } from 'lucide-react'
 import type { Lead, StatsLeads, TemplateMsg, DorkingRequete, BlacklistItem } from './page'
 
@@ -118,7 +118,7 @@ export default function ProspectionClient({
   // Filtres CRM & Campagnes
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('tous')
-  const [statutFilter, setStatutFilter] = useState('tous')
+  const [statutFilter, setStatutFilter] = useState('nouveau')
   const [sourceFilter, setSourceFilter] = useState('tous')
   const [operateurFilter, setOperateurFilter] = useState('tous')
   const [quartierFilter, setQuartierFilter] = useState('tous')
@@ -494,11 +494,20 @@ export default function ProspectionClient({
     return base
   }, [leads, selectedLeadIds, filteredLeads, campagneLimit])
 
+  // Compteurs de sécurité Anti-Doublon / Anti-Harcèlement
+  const nbDejaContactes = useMemo(() => {
+    return campaignTargetLeads.filter((l) => l.statut !== 'nouveau').length
+  }, [campaignTargetLeads])
+
+  const nbNouveaux = useMemo(() => {
+    return campaignTargetLeads.filter((l) => l.statut === 'nouveau').length
+  }, [campaignTargetLeads])
+
   // Réinitialisation de tous les filtres
   const handleResetFilters = () => {
     setSearch('')
     setCatFilter('tous')
-    setStatutFilter('tous')
+    setStatutFilter('nouveau')
     setSourceFilter('tous')
     setOperateurFilter('tous')
     setQuartierFilter('tous')
@@ -700,7 +709,16 @@ export default function ProspectionClient({
       return
     }
 
-    if (!confirm(`${simulation ? '🧪 Simuler' : '🚀 LANCER EN RÉEL'} l'envoi de la campagne sur ${targetIds.length} prospects ciblés ?`)) {
+    let confirmMsg = ''
+    if (simulation) {
+      confirmMsg = `🧪 Simuler l'envoi de la campagne sur ${targetIds.length} prospects ciblés ?`
+    } else if (nbDejaContactes > 0) {
+      confirmMsg = `⚠️ ATTENTION RELANCE :\n\nCette campagne cible ${targetIds.length} prospects, dont ${nbDejaContactes} DÉJÀ CONTACTÉS auparavant !\n\nConfirmez-vous l'envoi de ce nouveau message à ces ${nbDejaContactes} marchands déjà prospectés ?`
+    } else {
+      confirmMsg = `🚀 LANCER EN RÉEL l'envoi de la campagne sur ${targetIds.length} NOUVEAUX prospects (100% jamais contactés auparavant) ?`
+    }
+
+    if (!confirm(confirmMsg)) {
       return
     }
 
@@ -1556,6 +1574,34 @@ Boutique Parcelles, 70 111 22 33`}
                   🎯 {campaignTargetLeads.length} prospect{campaignTargetLeads.length > 1 ? 's' : ''} ciblé{campaignTargetLeads.length > 1 ? 's' : ''}
                 </span>
               </div>
+
+              {/* Statut de Protection Anti-Doublon & Déjà Contactés */}
+              {nbDejaContactes > 0 ? (
+                <div style={{
+                  background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, padding: '10px 14px',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <AlertTriangle size={20} color="#DC2626" style={{ flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: '#991B1B' }}>
+                      ⚠️ {nbDejaContactes} prospect{nbDejaContactes > 1 ? 's' : ''} DÉJÀ CONTACTÉ{nbDejaContactes > 1 ? 'S' : ''} dans cette sélection
+                    </div>
+                    <div style={{ fontSize: 11, color: '#B91C1C', marginTop: 1 }}>
+                      Ils ont déjà reçu un message WhatsApp lors d&apos;une campagne précédente. Ils ne sont inclus que parce que vous avez explicitement élargi le filtre de statut ou coché leurs cases.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 10, padding: '8px 12px',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <ShieldCheck size={16} color="#16A34A" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#166534' }}>
+                    🛡️ <strong>Protection Anti-Doublon Active :</strong> 100% des {campaignTargetLeads.length} prospects ciblés sont <strong>NOUVEAUX</strong> (jamais contactés). Aucun marchand déjà prospecté ne sera relancé sans votre accord.
+                  </span>
+                </div>
+              )}
 
               {selectedLeadIds.length > 0 ? (
                 <div style={{
