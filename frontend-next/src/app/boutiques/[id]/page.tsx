@@ -29,6 +29,7 @@ interface Boutique {
   horaires: Record<string, string> | null
   utilisateur_id: string
   plan_actif: 'pro' | 'business' | null
+  couleur_theme?: string | null
   created_at: string
 }
 

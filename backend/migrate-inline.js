@@ -834,7 +834,9 @@ module.exports = async function migrateInline() {
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS justificatif_url TEXT`);
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS caissier_id UUID REFERENCES boutique_caissiers(id) ON DELETE SET NULL`);
     await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS caissier_nom VARCHAR(150)`);
-    console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, prix_achat, zones_livraison, ventes, caissiers) OK');
+    await pool.query(`ALTER TABLE ventes ADD COLUMN IF NOT EXISTS session_id UUID REFERENCES boutique_pos_sessions(id) ON DELETE SET NULL`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ventes_session_id ON ventes(session_id)`);
+    console.log('[MIGRATE] ✅ Tables comptabilité boutique (stock, prix_achat, zones_livraison, ventes, caissiers, sessions) OK');
   } catch (e) { console.warn('[MIGRATE] comptabilite_boutique:', e.message); }
 
   // Commandes boutique
@@ -1079,6 +1081,8 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_caisse_docs_bq ON caisse_documents(boutique_id, type, created_at DESC);
       ALTER TABLE caisse_documents ALTER COLUMN reference TYPE VARCHAR(100);
+      ALTER TABLE caisse_documents ADD COLUMN IF NOT EXISTS session_id UUID REFERENCES boutique_pos_sessions(id) ON DELETE SET NULL;
+      CREATE INDEX IF NOT EXISTS idx_caisse_docs_session ON caisse_documents(session_id);
     `);
 
     // 4. Bons d'achat (Avoirs)

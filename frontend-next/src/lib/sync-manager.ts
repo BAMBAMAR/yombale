@@ -48,6 +48,8 @@ async function syncVente(
         idempotency_key: vente.id_temporaire,
         items: vente.items,
         caissier: vente.caissier,
+        caissier_id: vente.caissier_id || undefined,
+        session_id: vente.session_id || undefined,
         modePaiement: vente.modePaiement,
         client_id: vente.client_id,
         total: vente.total,

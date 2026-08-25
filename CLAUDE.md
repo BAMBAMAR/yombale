@@ -1,3 +1,18 @@
+- **Audit de Cohérence & Renforcement Robuste du Triptyque Boutique ↔ Session ↔ Caissier — Sécurité PIN Superviseur, Clé Étrangère `session_id`, Clôture Z Réconciliée en SQL et Auto-Verrouillage d'Inactivité (`CaisseClient.tsx`, `boutiques.js`, `migrate-inline.js`, `db-offline.ts`, `sync-manager.ts`, `CLAUDE.md`) (`main` - 25 août 2026)** 🏪🔒👥📊⚡ :
+  * **🔒 Sécurité & Contrôle d'Accès du Point de Vente POS** :
+    - Verrouillage systématique du sélecteur multi-boutiques et du bouton retour `⬅ Boutique` par le **PIN Superviseur/Gérant** pour les caissiers standard afin d'empêcher toute sortie ou permutation non autorisée.
+    - Ajout d'un minuteur d'**auto-verrouillage par inactivité (5 minutes)** réinitialisé à chaque frappe/clic pour protéger la caisse physique laissée sans surveillance.
+  * **🗄️ Intégrité Relationnelle SQL & Base de Données** :
+    - Ajout de la clé étrangère `session_id UUID REFERENCES boutique_pos_sessions(id) ON DELETE SET NULL` et de ses index sur les tables `ventes` et `caisse_documents`.
+    - Association directe et atomique de chaque vente POS à sa session de caisse active et à son caissier vérifié (`validCaissierId`) au sein du `BEGIN ... COMMIT`.
+  * **📊 Clôture Z & Réconciliation Comptable Automatique** :
+    - Recalcul direct côté PostgreSQL des montants par moyen de paiement (`SUM(montant_total) GROUP BY methode_paiement`) lors de la clôture pour éliminer tout risque d'écart ou de manipulation.
+    - Mise à jour de `GET /api/boutiques/:id/pos-sessions/:sessionId` pour joindre prioritairement par `session_id`.
+  * **📲 Résilience Hors-Ligne (Offline PWA & IndexedDB)** :
+    - Transmission et persistance du `session_id` et `caissier_id` dans `db-offline.ts` et `sync-manager.ts` lors des encaissements hors-ligne et de la synchronisation réconciliée au retour du réseau.
+  * **🧪 Validation** :
+    - `npx tsc --noEmit` validé avec 100% de succès (Code 0, 0 erreur).
+
 - **Correctif Liens 404 Annonces/Immo & Ordonnancement Chronologique des Messages WhatsApp (`whatsapp-chatbot.js`, `whatsapp.js`, `annonces/[id]/page.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🔗⏱️🛡️✨ :
   * **🔗 Élimination des 404 sur les Boutons WhatsApp « Voir le lien »** :
     - `sendWhatsAppCarousel` supporte désormais un `templateName` propre à chaque carte (`nopalou_carousel_immo` pour l'immo, `nopalou_carousel_annonce` pour les annonces classifiées).

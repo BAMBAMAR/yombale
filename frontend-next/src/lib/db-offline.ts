@@ -15,6 +15,8 @@ export interface OfflineSale {
   id_temporaire: string;    // UUID unique généré côté client — utilisé comme idempotency_key
   boutique_id: string;
   user_id: string;          // Isolation par utilisateur
+  session_id?: string | null; // ID de la session de caisse POS
+  caissier_id?: string | null; // ID du caissier
   items: Array<{
     id: string | null;
     nom: string;

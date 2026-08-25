@@ -1106,6 +1106,54 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     setConflitSessionMessage(null)
   }
 
+  function demanderChangementBoutique(newBId: string) {
+    if (newBId === boutiqueActiveId) return;
+    if (session) {
+      alert("⚠️ Vous avez une session de caisse (Fonds de caisse) en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.");
+      return;
+    }
+    if (roleActif === 'superviseur') {
+      changerBoutiqueActive(newBId);
+    } else {
+      demanderValidationSuperviseur('Autorisation Changement de Boutique POS', () => {
+        changerBoutiqueActive(newBId);
+      });
+    }
+  }
+
+  function quitterVersDashboard(e: React.MouseEvent) {
+    if (roleActif !== 'superviseur') {
+      e.preventDefault();
+      demanderValidationSuperviseur('Quitter le Point de Vente', () => {
+        window.location.href = boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique';
+      });
+    }
+  }
+
+  // ── Auto-Verrouillage de la Caisse par Inactivité (5 minutes) ───────────────
+  useEffect(() => {
+    if (typeof window === 'undefined' || verrouille) return;
+    let timer: NodeJS.Timeout;
+
+    const resetInactivityTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        console.info('🔒 [POS Inactivité] Verrouillage automatique après 5 minutes sans interaction.');
+        verrouillerCaisseManuellement();
+      }, 5 * 60 * 1000); // 5 minutes
+    };
+
+    resetInactivityTimer();
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'touchstart', 'scroll', 'click'];
+    events.forEach(ev => window.addEventListener(ev, resetInactivityTimer, { passive: true }));
+
+    return () => {
+      clearTimeout(timer);
+      events.forEach(ev => window.removeEventListener(ev, resetInactivityTimer));
+    };
+  }, [verrouille, boutiqueActiveId]);
+
   // ── Listener Douchette Code-barres USB/Bluetooth ────────────────────────────
   const bufferScan = useRef<string>('')
   const dernierTempsScan = useRef<number>(Date.now())
@@ -1624,6 +1672,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           idempotency_key: uniquePosRef,
           items: panier.map(i => ({ id: i.produit.id, quantite: i.quantite, nom: i.produit.nom, prix: i.prixUnitaire })),
           caissier: caissierNom,
+          caissier_id: caissierSelectionneId || null,
+          session_id: session?.id || null,
           modePaiement,
           client_id: clientCreditIdPOS || null,
           total: netAPayer,
@@ -1639,6 +1689,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               id_temporaire: temporaryId,
               boutique_id: boutiqueActiveId,
               user_id: userId,
+              session_id: session?.id || null,
+              caissier_id: caissierSelectionneId || null,
               items: payloadVente.items,
               caissier: payloadVente.caissier,
               modePaiement: payloadVente.modePaiement,
@@ -1664,6 +1716,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 id_temporaire: temporaryId,
                 boutique_id: boutiqueActiveId,
                 user_id: userId,
+                session_id: session?.id || null,
+                caissier_id: caissierSelectionneId || null,
                 items: payloadVente.items,
                 caissier: payloadVente.caissier,
                 modePaiement: payloadVente.modePaiement,
@@ -2250,6 +2304,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           ) : (
             <Link
               href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
+              onClick={quitterVersDashboard}
               className="caisse-btn-retour"
               style={{
                 padding: '6px 12px',
@@ -2297,7 +2352,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </div>
           )}
 
-          {/* Sélecteur de boutique — nom toujours visible et prioritaire */}
+          {/* Sélecteur de boutique — sécurisé par PIN Superviseur */}
           {boutiques.length > 0 && (
             initialToken || boutiques.length === 1 ? (
               <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--pos-navy)', background: '#eff6ff', padding: '5px 10px', borderRadius: 6, border: '1px solid #bfdbfe', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -2306,7 +2361,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             ) : (
               <select
                 value={boutiqueActiveId}
-                onChange={e => changerBoutiqueActive(e.target.value)}
+                onChange={e => demanderChangementBoutique(e.target.value)}
                 className="caisse-boutique-select"
                 style={{ padding: '5px 8px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 800, fontSize: 11.5, cursor: 'pointer', outline: 'none', maxWidth: 180, minWidth: 110, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
               >

@@ -2250,8 +2250,8 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
   try {
     await ensureRefColSize();
     const idParam = req.params.id;
-    const { items, caissier, modePaiement, client_id, idempotency_key } = req.body;
-    console.log('[POS VENTE] ▶ Requête reçue:', { idParam, nbItems: items?.length, caissier, modePaiement, hasIdempotency: !!idempotency_key });
+    const { items, caissier, caissier_id, session_id, modePaiement, client_id, idempotency_key } = req.body;
+    console.log('[POS VENTE] ▶ Requête reçue:', { idParam, nbItems: items?.length, caissier, caissier_id, session_id, modePaiement, hasIdempotency: !!idempotency_key });
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(
@@ -2266,6 +2266,19 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
       ? idempotency_key
       : null;
 
+    // Validation multi-tenant du caissier_id
+    let validCaissierId = null;
+    let nomCaissierFinal = caissier || 'Caissier Principal';
+    if (caissier_id && /^[0-9a-f-]{36}$/i.test(String(caissier_id))) {
+      const cCheck = await pool.query(
+        `SELECT id, nom, prenom FROM boutique_caissiers WHERE id = $1 AND boutique_id = $2 AND actif = TRUE LIMIT 1`,
+        [caissier_id, boutiqueId]
+      );
+      if (cCheck.rows[0]) {
+        validCaissierId = cCheck.rows[0].id;
+        nomCaissierFinal = `${cCheck.rows[0].prenom || ''} ${cCheck.rows[0].nom || ''}`.trim() || nomCaissierFinal;
+      }
+    }
 
     // Une réponse peut être perdue après l'enregistrement d'une vente offline.
     // La même clé doit alors être reconnue avant toute nouvelle déduction de stock.
@@ -2313,6 +2326,27 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         await dbClient.query('BEGIN');
         console.log('[POS VENTE] ✓ BEGIN transaction');
 
+        // Résolution de la session active de la boutique
+        let targetSessionId = null;
+        if (session_id && /^[0-9a-f-]{36}$/i.test(String(session_id))) {
+          const sCheck = await dbClient.query(
+            `SELECT id FROM boutique_pos_sessions WHERE id = $1 AND boutique_id = $2 AND statut = 'ouverte' LIMIT 1`,
+            [session_id, boutiqueId]
+          );
+          if (sCheck.rows[0]) {
+            targetSessionId = sCheck.rows[0].id;
+          }
+        }
+        if (!targetSessionId) {
+          const activeSessionRes = await dbClient.query(
+            `SELECT id FROM boutique_pos_sessions WHERE boutique_id = $1 AND statut = 'ouverte' ORDER BY date_ouverture DESC LIMIT 1`,
+            [boutiqueId]
+          );
+          if (activeSessionRes.rows[0]) {
+            targetSessionId = activeSessionRes.rows[0].id;
+          }
+        }
+
         for (let idx = 0; idx < calculation.items.length; idx++) {
           const item = calculation.items[idx];
           const qte = Number(item.quantite || 1);
@@ -2348,8 +2382,8 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           const itemRef = calculation.items.length > 1 ? `${refVente}-${idx + 1}` : refVente;
 
           await dbClient.query(
-            `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, caissier_nom, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, $10, NOW())`,
+            `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, caissier_nom, caissier_id, session_id, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, $10, $11, $12, NOW())`,
             [
               itemRef,
               boutiqueId,
@@ -2358,9 +2392,11 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
               qte,
               prixUnitaire,
               totalLigne,
-              caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
+              nomCaissierFinal ? `Caisse POS (${nomCaissierFinal})` : 'Caisse POS',
               modePaiement || 'cash',
-              caissier || 'Caissier Principal'
+              nomCaissierFinal,
+              validCaissierId,
+              targetSessionId
             ]
           );
         }
@@ -2376,7 +2412,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           [
             refVente,
             boutiqueId,
-            caissier ? `Caisse POS (${caissier})` : 'Caisse POS',
+            nomCaissierFinal ? `Caisse POS (${nomCaissierFinal})` : 'Caisse POS',
             client?.telephone || 'POS',
             resumeNoms.slice(0, 200),
             totalQteGlobale,
@@ -2389,25 +2425,20 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
 
         await dbClient.query(
           `INSERT INTO caisse_documents (
-            boutique_id, client_id, caissier_id, type, reference, statut,
+            boutique_id, client_id, caissier_id, session_id, type, reference, statut,
             total_ht, total_tva, timbre_fiscal, retenue_brs, total_ttc, net_a_payer,
             mode_paiement, notes, items, created_at, updated_at
-          ) VALUES ($1, $2, null, 'facture', $3, 'paye', $4, $5, $6, $7, $8, $9, $10, 'Vente directe caisse POS', $11, NOW(), NOW())
+          ) VALUES ($1, $2, $3, $4, 'facture', $5, 'paye', $6, $7, $8, $9, $10, $11, $12, 'Vente directe caisse POS', $13, NOW(), NOW())
           ON CONFLICT (reference) DO NOTHING`,
           [
-            boutiqueId, validClientId, refVente,
+            boutiqueId, validClientId, validCaissierId, targetSessionId, refVente,
             calculation.total_ht, calculation.total_tva, timbre, retenueBRS, calculation.total_ttc, netAPayer,
             modePaiement || 'cash', JSON.stringify(calculation.items)
           ]
         );
 
         console.log('[POS VENTE] ✓ INSERT commandes_boutique + caisse_documents OK');
-        const activeSessionRes = await dbClient.query(
-          `SELECT id FROM boutique_pos_sessions WHERE boutique_id = $1 AND statut = 'ouverte' ORDER BY date_ouverture DESC LIMIT 1`,
-          [boutiqueId]
-        );
-        if (activeSessionRes.rows[0]) {
-          const activeSessionId = activeSessionRes.rows[0].id;
+        if (targetSessionId) {
           const mode = (modePaiement || 'cash').toLowerCase();
           let espAmt = 0;
           let waveAmt = 0;
@@ -2448,7 +2479,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
               waveAmt,
               omAmt,
               carteAmt,
-              activeSessionId
+              targetSessionId
             ]
           );
         }
@@ -2843,16 +2874,18 @@ router.get('/:id/pos-sessions/:sessionId', tokenOptional, async (req, res) => {
     if (!sRes.rows[0]) return res.status(404).json({ error: 'Session introuvable' });
     const session = sRes.rows[0];
 
-    // Récupérer les ventes enregistrées durant cette session
+    // Récupérer les ventes enregistrées durant cette session (par session_id direct ou bornes temporelles)
     const dateFin = session.date_cloture || new Date();
     const vRes = await pool.query(
       `SELECT * FROM ventes 
        WHERE boutique_id = $1 
-         AND created_at >= $2 
-         AND created_at <= $3
+         AND (
+           session_id = $2 
+           OR (session_id IS NULL AND created_at >= $3 AND created_at <= $4)
+         )
          AND archivee IS NOT TRUE
        ORDER BY created_at ASC`,
-      [boutiqueId, session.date_ouverture, dateFin]
+      [boutiqueId, sessionId, session.date_ouverture, dateFin]
     );
 
     res.json({ session, ventes: vRes.rows });
@@ -2890,21 +2923,35 @@ router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
       return res.status(403).json({ error: 'Un abonnement Pro ou Business actif est requis pour ouvrir la caisse POS.' });
     }
 
+    // Validation multi-tenant du caissier_id si fourni
+    let validCaissierId = null;
+    let nomCaissierFinal = caissierNom || 'Caissier';
+    if (caissierId && /^[0-9a-f-]{36}$/i.test(String(caissierId))) {
+      const cCheck = await pool.query(
+        `SELECT id, nom, prenom FROM boutique_caissiers WHERE id = $1 AND boutique_id = $2 AND actif = TRUE LIMIT 1`,
+        [caissierId, boutiqueId]
+      );
+      if (cCheck.rows[0]) {
+        validCaissierId = cCheck.rows[0].id;
+        nomCaissierFinal = `${cCheck.rows[0].prenom || ''} ${cCheck.rows[0].nom || ''}`.trim() || nomCaissierFinal;
+      }
+    }
+
     const r = await pool.query(
       `INSERT INTO boutique_pos_sessions (boutique_id, caissier_id, caissier_nom, fond_caisse_initial, date_ouverture, statut)
        VALUES ($1, $2, $3, $4, NOW(), 'ouverte')
        RETURNING *`,
-      [boutiqueId, caissierId || null, caissierNom || 'Caissier', Number(fondDeCaisse || 0)]
+      [boutiqueId, validCaissierId, nomCaissierFinal, Number(fondDeCaisse || 0)]
     );
 
     // Enregistrement dans le Journal d'Audit & Sécurité
     await enregistrerAuditLog(
       boutiqueId,
       req.user?.userId,
-      caissierNom || 'Caissier',
+      nomCaissierFinal,
       'pos_session',
-      `Ouverture de session de caisse POS par ${caissierNom || 'Caissier'} (Fond initial: ${fondDeCaisse || 0} FCFA)`,
-      { fondDeCaisse, caissierNom, caissierId, sessionId: r.rows[0]?.id },
+      `Ouverture de session de caisse POS par ${nomCaissierFinal} (Fond initial: ${fondDeCaisse || 0} FCFA)`,
+      { fondDeCaisse, caissierNom: nomCaissierFinal, caissierId: validCaissierId, sessionId: r.rows[0]?.id },
       req
     );
 
@@ -2926,7 +2973,28 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
     const boutiqueId = bRes.rows[0].id;
 
     if (sessionId && /^[0-9a-f-]{36}$/i.test(sessionId)) {
-      await pool.query(
+      // Réconciliation comptable SQL directe sur la session
+      const aggRes = await pool.query(
+        `SELECT 
+           COALESCE(SUM(montant_total), 0) AS sql_total,
+           COUNT(*) AS sql_nb,
+           COALESCE(SUM(CASE WHEN LOWER(methode_paiement) IN ('cash', 'especes', 'espece') THEN montant_total ELSE 0 END), 0) AS sql_especes,
+           COALESCE(SUM(CASE WHEN LOWER(methode_paiement) = 'wave' THEN montant_total ELSE 0 END), 0) AS sql_wave,
+           COALESCE(SUM(CASE WHEN LOWER(methode_paiement) IN ('om', 'orange_money', 'orange') THEN montant_total ELSE 0 END), 0) AS sql_om,
+           COALESCE(SUM(CASE WHEN LOWER(methode_paiement) IN ('carte', 'cb') THEN montant_total ELSE 0 END), 0) AS sql_carte
+         FROM ventes
+         WHERE boutique_id = $1 AND session_id = $2 AND archivee IS NOT TRUE`,
+        [boutiqueId, sessionId]
+      );
+      const agg = aggRes.rows[0] || {};
+      const finalTotal = Number(agg.sql_nb) > 0 ? Number(agg.sql_total) : Number(ventesTotal || 0);
+      const finalNb = Number(agg.sql_nb) > 0 ? Number(agg.sql_nb) : Number(nbVentes || 0);
+      const finalEspeces = Number(agg.sql_nb) > 0 ? Number(agg.sql_especes) : Number(ventesEspeces || 0);
+      const finalWave = Number(agg.sql_nb) > 0 ? Number(agg.sql_wave) : Number(ventesWave || 0);
+      const finalOM = Number(agg.sql_nb) > 0 ? Number(agg.sql_om) : Number(ventesOrangeMoney || 0);
+      const finalCarte = Number(agg.sql_nb) > 0 ? Number(agg.sql_carte) : Number(ventesCarte || 0);
+
+      const updRes = await pool.query(
         `UPDATE boutique_pos_sessions
          SET date_cloture = NOW(),
              statut = 'cloturee',
@@ -2938,16 +3006,18 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
              ventes_total = $6,
              nb_ventes = $7,
              ecart_caisse = ($1 - (fond_caisse_initial + $2))
-         WHERE id = $8`,
+         WHERE id = $8 AND boutique_id = $9
+         RETURNING *`,
         [
           Number(especesComptees || 0),
-          Number(ventesEspeces || 0),
-          Number(ventesWave || 0),
-          Number(ventesOrangeMoney || 0),
-          Number(ventesCarte || 0),
-          Number(ventesTotal || 0),
-          Number(nbVentes || 0),
-          sessionId
+          finalEspeces,
+          finalWave,
+          finalOM,
+          finalCarte,
+          finalTotal,
+          finalNb,
+          sessionId,
+          boutiqueId
         ]
       );
 
@@ -2955,10 +3025,10 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
       await enregistrerAuditLog(
         boutiqueId,
         req.user?.userId,
-        caissierNom || 'Caissier',
+        caissierNom || updRes.rows[0]?.caissier_nom || 'Caissier',
         'pos_session',
-        `Clôture Z de la session de caisse POS par ${caissierNom || 'Caissier'} (Espèces comptées: ${especesComptees || 0} FCFA, Ventes totales: ${ventesTotal || 0} FCFA, Tickets: ${nbVentes || 0})`,
-        { sessionId, especesComptees, ventesTotal, nbVentes, caissierNom },
+        `Clôture Z de la session de caisse POS par ${caissierNom || updRes.rows[0]?.caissier_nom || 'Caissier'} (Espèces comptées: ${especesComptees || 0} FCFA, Ventes totales: ${finalTotal} FCFA, Tickets: ${finalNb})`,
+        { sessionId, especesComptees, ventesTotal: finalTotal, nbVentes: finalNb, ecart: updRes.rows[0]?.ecart_caisse, caissierNom },
         req
       );
     }
