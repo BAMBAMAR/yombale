@@ -32,6 +32,8 @@ export const shop = {
   suppliersDesc: 'Gérez vos fournisseurs et vos commandes de réapprovisionnement de stock.',
   taxSettings: 'Fiscalité & Taxes',
   taxSettingsDesc: 'Configurez le régime de TVA de votre commerce et la fiscalité de la caisse POS.',
+  fidelitePromos: 'Fidélité & Promotions',
+  fidelitePromosDesc: 'Configurez le programme de fidélité, le cashback, les plafonds de remise caisse et les codes promo.',
   auditLog: 'Journal d’Audit',
   auditLogDesc: 'Consultez l’historique des opérations de la boutique et exportez le registre au format CSV (Excel).',
   developer: 'Portail Développeur',

@@ -34,6 +34,8 @@ export const shop: LocaleTranslations['shop'] = {
   suppliersDesc: 'إدارة الموردين وطلبات إعادة تزويد المخزون.',
   taxSettings: 'الضرائب والفواتير',
   taxSettingsDesc: 'تهيئة نظام ضريبة القيمة المضافة وضرائب نقطة البيع.',
+  fidelitePromos: 'الولاء والعروض الترويجية',
+  fidelitePromosDesc: 'تهيئة برنامج الولاء واسترداد النقود وقواعد الخصم وأكواد الكوبونات.',
   auditLog: 'سجل العمليات',
   auditLogDesc: 'مراجعة سجل عمليات المتجر وتصدير البيانات بصيغة CSV (Excel).',
   developer: 'بوابة المطورين',

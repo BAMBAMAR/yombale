@@ -34,6 +34,8 @@ export const shop: LocaleTranslations['shop'] = {
   suppliersDesc: 'Manage your suppliers and replenishment orders.',
   taxSettings: 'Tax & VAT',
   taxSettingsDesc: 'Configure your VAT regime and POS tax settings.',
+  fidelitePromos: 'Loyalty & Promotions',
+  fidelitePromosDesc: 'Configure customer loyalty cashback, POS discount rules, and promo codes.',
   auditLog: 'Audit Log',
   auditLogDesc: 'Review shop operations history and export records to CSV (Excel).',
   developer: 'Developer Portal',

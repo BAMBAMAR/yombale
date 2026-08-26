@@ -509,6 +509,11 @@ router.get('/mine', verifierToken, async (req, res) => {
               COALESCE(b.pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
               COALESCE(b.pos_remise_seuil_auto_pct, 0) AS pos_remise_seuil_auto_pct,
               COALESCE(b.pos_remise_motifs, '[{"id":"anti_gaspi","nom":"🍌 Date courte / Anti-gaspi","pct":30},{"id":"defaut","nom":"📦 Défaut emballage","pct":15},{"id":"personnel","nom":"👥 Personnel / Employé","pct":10},{"id":"geste","nom":"👑 Geste commercial","pct":5}]'::jsonb) AS pos_remise_motifs,
+              COALESCE(b.fidelite_actif, true) AS fidelite_actif,
+              COALESCE(b.fidelite_type, 'cagnotte') AS fidelite_type,
+              COALESCE(b.fidelite_taux_cashback, 3.00) AS fidelite_taux_cashback,
+              COALESCE(b.fidelite_tampons_max, 10) AS fidelite_tampons_max,
+              COALESCE(b.fidelite_seuil_tampon, 2000) AS fidelite_seuil_tampon,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               (b.utilisateur_id = $1) AS is_owner,
               (
@@ -650,6 +655,11 @@ router.get('/:id', async (req, res) => {
               COALESCE(b.pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
               COALESCE(b.pos_remise_seuil_auto_pct, 0) AS pos_remise_seuil_auto_pct,
               COALESCE(b.pos_remise_motifs, '[{"id":"anti_gaspi","nom":"🍌 Date courte / Anti-gaspi","pct":30},{"id":"defaut","nom":"📦 Défaut emballage","pct":15},{"id":"personnel","nom":"👥 Personnel / Employé","pct":10},{"id":"geste","nom":"👑 Geste commercial","pct":5}]'::jsonb) AS pos_remise_motifs,
+              COALESCE(b.fidelite_actif, true) AS fidelite_actif,
+              COALESCE(b.fidelite_type, 'cagnotte') AS fidelite_type,
+              COALESCE(b.fidelite_taux_cashback, 3.00) AS fidelite_taux_cashback,
+              COALESCE(b.fidelite_tampons_max, 10) AS fidelite_tampons_max,
+              COALESCE(b.fidelite_seuil_tampon, 2000) AS fidelite_seuil_tampon,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               a.plan AS plan_actif
        FROM boutiques b
@@ -2012,6 +2022,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
       const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
               rccm, ninea, forme_juridique, capital_social, compte_bancaire, conditions_vente, pied_de_page_document,
               message_bas_ticket, pos_remise_max_caissier, pos_remise_seuil_auto_montant, pos_remise_seuil_auto_pct, pos_remise_motifs,
+              fidelite_actif, fidelite_type, fidelite_taux_cashback, fidelite_tampons_max, fidelite_seuil_tampon,
               mode_fonctionnement, meta_pixel_id, tiktok_pixel_id, ga4_id, actif } = req.body;
 
       const parseBoolVal = (v) => {
@@ -2047,8 +2058,13 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
          pos_remise_max_caissier=COALESCE($25, pos_remise_max_caissier),
          pos_remise_seuil_auto_montant=COALESCE($26, pos_remise_seuil_auto_montant),
          pos_remise_seuil_auto_pct=COALESCE($27, pos_remise_seuil_auto_pct),
-         pos_remise_motifs=COALESCE($28, pos_remise_motifs)
-         WHERE id=$29`,
+         pos_remise_motifs=COALESCE($28, pos_remise_motifs),
+         fidelite_actif=CASE WHEN $29::boolean IS NOT NULL THEN $29::boolean ELSE fidelite_actif END,
+         fidelite_type=COALESCE($30, fidelite_type),
+         fidelite_taux_cashback=COALESCE($31, fidelite_taux_cashback),
+         fidelite_tampons_max=COALESCE($32, fidelite_tampons_max),
+         fidelite_seuil_tampon=COALESCE($33, fidelite_seuil_tampon)
+         WHERE id=$34`,
         [
           cover_url||null, whatsapp||null, site_web||null, facebook||null,
           instagram||null, horairesJson, newSlug,
@@ -2068,6 +2084,11 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
           pos_remise_seuil_auto_montant !== undefined && pos_remise_seuil_auto_montant !== '' ? Number(pos_remise_seuil_auto_montant) : null,
           pos_remise_seuil_auto_pct !== undefined && pos_remise_seuil_auto_pct !== '' ? Number(pos_remise_seuil_auto_pct) : null,
           pos_remise_motifs ? (typeof pos_remise_motifs === 'string' ? pos_remise_motifs : JSON.stringify(pos_remise_motifs)) : null,
+          parseBoolVal(fidelite_actif),
+          fidelite_type || null,
+          fidelite_taux_cashback !== undefined && fidelite_taux_cashback !== '' ? Number(fidelite_taux_cashback) : null,
+          fidelite_tampons_max !== undefined && fidelite_tampons_max !== '' ? Number(fidelite_tampons_max) : null,
+          fidelite_seuil_tampon !== undefined && fidelite_seuil_tampon !== '' ? Number(fidelite_seuil_tampon) : null,
           req.params.id
         ]
       );

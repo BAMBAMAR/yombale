@@ -753,5 +753,71 @@ export async function getPosSessionDetail(boutiqueId: string, sessionId: string)
   }
 }
 
+// ── Spec 03 : Codes Promo & Coupons ──
+
+export async function getBoutiquePromotions(boutiqueId: string): Promise<{ promotions?: any[]; error?: string }> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/promotions`)
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      return { error: d.error ?? 'Impossible de charger les promotions' }
+    }
+    return await res.json()
+  } catch (err) {
+    console.error('[GET_BOUTIQUE_PROMOTIONS_ERR]', err)
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function createPromotion(
+  boutiqueId: string,
+  prevState: ActionState,
+  formData: FormData
+): Promise<ActionState & { promotion?: any }> {
+  try {
+    const rawData = {
+      code: formData.get('code'),
+      type_remise: formData.get('type_remise'),
+      valeur: formData.get('valeur'),
+      min_achat: formData.get('min_achat'),
+      limite_utilisation: formData.get('limite_utilisation') || null,
+      fin: formData.get('fin') || null,
+    }
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/promotions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rawData),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      return { error: data.error ?? 'Impossible de créer le code promo' }
+    }
+    revalidatePath('/boutique')
+    return { success: true, promotion: data.promotion }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+export async function deletePromotion(
+  boutiqueId: string,
+  promoId: string
+): Promise<ActionState> {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/promotions/${promoId}`, {
+      method: 'DELETE',
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return { error: data.error ?? 'Impossible de supprimer le code promo' }
+    }
+    revalidatePath('/boutique')
+    return { success: true }
+  } catch {
+    return { error: 'Erreur de connexion au serveur' }
+  }
+}
+
+
 
 

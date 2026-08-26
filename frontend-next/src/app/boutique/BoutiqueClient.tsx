@@ -19,6 +19,7 @@ import BatchImportModal from './BatchImportModal'
 import BoutiqueAdmins from './BoutiqueAdmins'
 import BoutiqueCaissiers from './BoutiqueCaissiers'
 import ParametresFiscalite from './ParametresFiscalite'
+import ParametresFidelitePromos from './ParametresFidelitePromos'
 import GestionDocuments from './GestionDocuments'
 import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
@@ -63,6 +64,15 @@ interface Boutique {
   actif: boolean
   sponsorise: boolean | null
   sponsor_jusqu_au: string | null
+  fidelite_actif?: boolean
+  fidelite_type?: 'cagnotte' | 'tampons'
+  fidelite_taux_cashback?: number
+  fidelite_tampons_max?: number
+  fidelite_seuil_tampon?: number
+  pos_remise_max_caissier?: number
+  pos_remise_seuil_auto_montant?: number
+  pos_remise_seuil_auto_pct?: number
+  pos_remise_motifs?: any
   created_at: string
 }
 
@@ -3445,7 +3455,7 @@ function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
   )
 }
 
-type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer'
+type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite'
 
 function BoutiqueDashboard({
   boutique,
@@ -3900,7 +3910,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
 }) {
   const router = useRouter()
   const { t, formatNumber } = useTranslation()
-  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer']
+  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   const NAV_GROUPS: NavGroup[] = [
@@ -3937,6 +3947,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
       title: t('shop.navGroupSettingsTeam'),
       items: [
         { key: 'equipe',      icon: '👥', label: t('shop.team'), minPlan: 'business' },
+        { key: 'fidelite',    icon: '🎁', label: t('shop.fidelitePromos') || 'Fidélité & Promos' },
         { key: 'journal',     icon: '📜', label: t('shop.auditLog'), minPlan: 'business' },
         { key: 'developer',   icon: '🔌', label: t('shop.developer'), minPlan: 'business' },
         { key: 'marketing',   icon: '📣', label: t('shop.marketing') },
@@ -4045,6 +4056,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     documents:   { icon: '📄', title: t('shop.documents'), desc: t('shop.documentsDesc') },
     fournisseurs: { icon: '📦', title: t('shop.suppliers'), desc: t('shop.suppliersDesc') },
     fiscalite:   { icon: '⚖️', title: t('shop.taxSettings'), desc: t('shop.taxSettingsDesc') },
+    fidelite:    { icon: '🎁', title: t('shop.fidelitePromos') || 'Fidélité & Promotions', desc: t('shop.fidelitePromosDesc') || 'Configurez le programme de fidélité, le cashback, les plafonds de remise caisse et les codes promo.' },
     journal:     { icon: '📜', title: t('shop.auditLog'), desc: t('shop.auditLogDesc') },
     developer:   { icon: '🔌', title: t('shop.developer'), desc: t('shop.developerDesc') },
   }
@@ -4513,6 +4525,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             {tab === 'documents'   && <GestionDocuments boutiqueId={boutique.id} />}
             {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
             {tab === 'fiscalite'   && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
+            {tab === 'fidelite'    && <ParametresFidelitePromos boutique={boutique} onUpdate={() => router.refresh()} />}
             {tab === 'journal'     && <BoutiqueLogs boutiqueId={boutique.id} />}
             {tab === 'developer'   && <PortailDeveloppeurBoutique boutiqueId={boutique.id} planActif={planActif || 'decouverte'} />}
           </>

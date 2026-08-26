@@ -1,3 +1,25 @@
+- **Écran de Paramétrage Dédié "Fidélité & Promotions", Moteur de Coupons & Séparation des Rôles Gérant / Caissier (`ParametresFidelitePromos.tsx`, `BoutiqueClient.tsx`, `actions.ts`, `boutiques.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🎁🏷️🛡️🎟️🇸🇳✨ :
+  * **🏛️ Séparation Stricte des Responsabilités POS / Back-Office** :
+    - La caisse POS est un poste 100% opérationnel pour les caissiers (recherche/enrôlement client, scan de carte, application rapide de réduction autorisée, déduction de cagnotte).
+    - Tout le paramétrage commercial stratégique (taux de cashback, système de tampons, plafond d'autonomie caissier, motifs autorisés, codes promotionnels) est regroupé dans un nouvel écran d'administration dédié dans **Ma Boutique > Paramètres > 🎁 Fidélité & Promos**.
+  * **🎁 1. Programme de Fidélité Client Personnalisable** :
+    - **Activation/Désactivation** : Basculement en 1 clic de l'état du programme (`fidelite_actif`).
+    - **Choix du modèle de fidélité (`fidelite_type`)** :
+      1. *💰 Cagnotte Cashback en %* : Taux de retour en FCFA sur chaque vente (`fidelite_taux_cashback`, ex: 3%, 5%, 10%) crédité automatiquement sur le compte client et calcul d'exemple en direct.
+      2. *🎟️ Carte à Tampons (Vignettes)* : Configuration du seuil d'achat par tampon (`fidelite_seuil_tampon`, ex: 2 000 FCFA) et nombre de tampons pour décrocher un avantage (`fidelite_tampons_max`, ex: 10 tampons).
+  * **🛡️ 2. Règles de Caisse & Sécurité des Remises (Auchan Standard)** :
+    - **Plafond caissier** : Définition du taux maximum autorisé sans accord superviseur (`pos_remise_max_caissier`, ex: 10%).
+    - **Motifs personnalisables** : Ajout et suppression dynamique des motifs de réduction rapide (*Anti-gaspi, Défaut d'emballage, Personnel, Geste commercial, Client VIP*).
+  * **🎟️ 3. Moteur de Codes Promo & Coupons Marchand** :
+    - Formulaire de création rapide de coupons avec code majuscule unique, type de réduction (% pourcentage, montant fixe FCFA, livraison offerte), montant minimum d'achat (`min_achat`), limite d'utilisations et date d'expiration.
+    - Tableau de bord des coupons avec boutons de copie rapide, indicateurs de statut (Actif, Expiré) et suppression en 1 clic.
+  * **🌐 Backend & API REST** :
+    - Mise à jour des routes `GET /api/boutiques/mine`, `GET /api/boutiques/:id` et `PUT /api/boutiques/:id` avec persistance intégrale des colonnes de fidélité et remises.
+    - Endpoints de gestion des promotions (`GET`, `POST`, `DELETE /api/boutiques/:id/promotions`).
+  * **🧪 Validation & Tests** :
+    - Tests unitaires Jest promotions (`spec-03-promotions.test.js`) : 100% validés (6/6 tests passés).
+    - Build de production Next.js (`npm run build`) : 100% réussi sans aucune erreur.
+
 - **Moteur de Remises Automatiques, Plafond d'Autonomie Caissier & Motifs Métiers Standard Retail Auchan (`CaisseClient.tsx`, `PosRemiseModal.tsx`, `ParametresFiscalite.tsx`, `boutiques.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🏷️⚡🏬🍌👥📦🇸🇳✨ :
   * **🏬 Standard Retail & Grande Distribution Auchan / Carrefour** :
     - Fini les blocages systématiques demandant un superviseur à chaque client ou le caissier qui saisit n'importe quel montant librement.
