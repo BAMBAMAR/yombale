@@ -2560,6 +2560,138 @@ router.post('/:id/pos-incident', tokenOptional, async (req, res) => {
   }
 });
 
+// ── GET /api/boutiques/:id/fidelite/rechercher — Recherche client fidélité par téléphone ou nom
+router.get('/:id/fidelite/rechercher', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { q } = req.query;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id, fidelite_actif, fidelite_type, fidelite_taux_cashback, fidelite_tampons_max, fidelite_seuil_tampon FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutique = bRes.rows[0];
+
+    const cleanQ = (q || '').trim();
+    if (!cleanQ) {
+      const topClients = await pool.query(
+        `SELECT id, telephone, nom, points_solde, cagnotte_fcfa, nb_visites, total_depense, tampons_actuels, rang_fidelite, derniere_visite
+         FROM boutique_clients_fidelite
+         WHERE boutique_id = $1
+         ORDER BY total_depense DESC LIMIT 20`,
+        [boutique.id]
+      );
+      return res.json({ clients: topClients.rows, parametres: boutique });
+    }
+
+    const searchNum = cleanQ.replace(/\D/g, '');
+    const r = await pool.query(
+      `SELECT id, telephone, nom, points_solde, cagnotte_fcfa, nb_visites, total_depense, tampons_actuels, rang_fidelite, derniere_visite
+       FROM boutique_clients_fidelite
+       WHERE boutique_id = $1 AND (
+         LOWER(nom) LIKE LOWER($2) OR
+         telephone LIKE $3 OR
+         ($4 <> '' AND REPLACE(telephone, ' ', '') LIKE '%' || $4 || '%')
+       )
+       ORDER BY total_depense DESC LIMIT 15`,
+      [boutique.id, `%${cleanQ}%`, `%${cleanQ}%`, searchNum]
+    );
+
+    res.json({ clients: r.rows, parametres: boutique });
+  } catch (err) {
+    console.error('[FIDELITE RECHERCHER ERR]', err);
+    res.status(500).json({ error: 'Erreur recherche fidélité' });
+  }
+});
+
+// ── POST /api/boutiques/:id/fidelite/enroler — Créer ou mettre à jour un client fidélité
+router.post('/:id/fidelite/enroler', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { telephone, nom, client_id } = req.body;
+    if (!telephone || !nom) return res.status(400).json({ error: 'Nom et Téléphone requis' });
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const cleanTel = telephone.trim();
+    const cleanNom = nom.trim();
+
+    const upsertRes = await pool.query(
+      `INSERT INTO boutique_clients_fidelite (boutique_id, client_id, telephone, nom)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (boutique_id, telephone)
+       DO UPDATE SET nom = EXCLUDED.nom, updated_at = NOW()
+       RETURNING *`,
+      [boutiqueId, client_id || null, cleanTel, cleanNom]
+    );
+
+    res.status(201).json({ success: true, client: upsertRes.rows[0] });
+  } catch (err) {
+    console.error('[FIDELITE ENROLER ERR]', err);
+    res.status(500).json({ error: 'Erreur enrôlement fidélité' });
+  }
+});
+
+// ── GET /api/boutiques/:id/avoirs/valider/:code — Vérifier la validité d'un bon d'avoir
+router.get('/:id/avoirs/valider/:code', tokenOptional, async (req, res) => {
+  try {
+    const { id, code } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [id]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const avRes = await pool.query(
+      `SELECT * FROM caisse_avoirs
+       WHERE boutique_id = $1 AND UPPER(code) = UPPER($2) AND statut = 'actif'
+       AND (date_expiration IS NULL OR date_expiration >= CURRENT_DATE) LIMIT 1`,
+      [boutiqueId, code.trim()]
+    );
+
+    if (!avRes.rows[0]) {
+      return res.status(404).json({ valide: false, error: 'Bon d’avoir introuvable, déjà utilisé ou expiré' });
+    }
+
+    res.json({ valide: true, avoir: avRes.rows[0] });
+  } catch (err) {
+    console.error('[AVOIR VALIDER ERR]', err);
+    res.status(500).json({ error: 'Erreur vérification bon d’avoir' });
+  }
+});
+
+// ── POST /api/boutiques/:id/avoirs/creer — Émettre un bon d'avoir suite à un retour
+router.post('/:id/avoirs/creer', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { montant, client_nom, client_telephone, ticket_origine_ref, jours_validite } = req.body;
+    if (!montant || Number(montant) <= 0) return res.status(400).json({ error: 'Montant invalide' });
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+
+    const codeAvoir = `AV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const jours = Number(jours_validite) || 90;
+
+    const avRes = await pool.query(
+      `INSERT INTO caisse_avoirs (
+         boutique_id, code, montant_initial, montant_restant,
+         client_nom, client_telephone, ticket_origine_ref,
+         statut, date_expiration, created_at, updated_at
+       ) VALUES ($1, $2, $3, $3, $4, $5, $6, 'actif', CURRENT_DATE + ($7 || ' days')::INTERVAL, NOW(), NOW())
+       RETURNING *`,
+      [boutiqueId, codeAvoir, Number(montant), client_nom || null, client_telephone || null, ticket_origine_ref || null, jours]
+    );
+
+    res.status(201).json({ success: true, avoir: avRes.rows[0] });
+  } catch (err) {
+    console.error('[AVOIR CREER ERR]', err);
+    res.status(500).json({ error: 'Erreur création bon d’avoir' });
+  }
+});
+
 // ── GET /api/boutiques/:id/pos-historique — Récupérer l'historique des ventes POS
 router.get('/:id/pos-historique', tokenOptional, param('id').isUUID(), async (req, res) => {
   try {

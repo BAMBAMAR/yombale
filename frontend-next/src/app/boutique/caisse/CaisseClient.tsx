@@ -19,6 +19,12 @@ import {
 import { useSyncOffline } from '@/lib/sync-manager'
 import { useTranslation } from '@/i18n/context'
 import { CONFIG_SCANNER_EAN_PRO, jouerBipEtVibrer, toggleTorcheCamera } from '@/lib/scanner-helper'
+import PosFastTender from './components/PosFastTender'
+import PosNumpad from './components/PosNumpad'
+import PosRemiseModal from './components/PosRemiseModal'
+import PosBlindCloseModal from './components/PosBlindCloseModal'
+import PosFideliteModal, { ClientFidelite } from './components/PosFideliteModal'
+import { usePosShortcuts } from './hooks/usePosShortcuts'
 
 interface ProduitCaisse {
   id: string
@@ -193,6 +199,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [categorieFiltre, setCategorieFiltre] = useState<string>('tous')
   const [panier, setPanier] = useState<LignePanier[]>([])
   const [remisePourcentage, setRemisePourcentage] = useState<number>(0)
+  const [modalRemise, setModalRemise] = useState<boolean>(false)
+  const [showNumpad, setShowNumpad] = useState<boolean>(false)
+  const [modalFidelite, setModalFidelite] = useState<boolean>(false)
+  const [clientFidelite, setClientFidelite] = useState<ClientFidelite | null>(null)
+  const [cagnotteDeduite, setCagnotteDeduite] = useState<number>(0)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   const [modePaiement, setModePaiement] = useState<'especes' | 'wave' | 'orange_money' | 'carte' | 'credit_client' | 'mixte'>('especes')
   const [montantRecu, setMontantRecu] = useState<string>('')
@@ -1501,6 +1513,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     setMontantRecu('')
     setMontantEspecesMixte('')
     setRemisePourcentage(0)
+    setClientFidelite(null)
+    setCagnotteDeduite(0)
     setEncaissementEnCours(false)
   }
 
@@ -1563,13 +1577,35 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     timbreFiscal = Math.min(5000, Number((totalPanier * 0.01).toFixed(2)))
   }
 
-  const netAPayer = totalPanier + timbreFiscal
+  const netAPayer = Math.max(0, totalPanier + timbreFiscal - cagnotteDeduite)
 
   const especesMixteNum = Number(montantEspecesMixte) || 0
   const resteAPayerMixte = Math.max(0, netAPayer - especesMixteNum)
 
   const recu = Number(montantRecu) || netAPayer
   const monnaieARendre = Math.max(0, recu - netAPayer)
+
+  // ── Raccourcis Clavier Physiques F2 / F4 / F8 / Échap ────────────────────────
+  usePosShortcuts({
+    onFocusSearch: () => searchInputRef.current?.focus(),
+    onTriggerCheckout: () => {
+      setTabMobile('ticket')
+      if (panier.length > 0) encaisserVente()
+    },
+    onHoldTicket: mettrePanierEnAttente,
+    onClearCartOrDismiss: () => {
+      if (modalRemise) { setModalRemise(false); return }
+      if (modalFidelite) { setModalFidelite(false); return }
+      if (showNumpad) { setShowNumpad(false); return }
+      if (modalClotureZ) { setModalClotureZ(false); return }
+      if (modalSessionOuverture) { setModalSessionOuverture(false); return }
+      if (modalBilanSession) { setModalBilanSession(false); return }
+      if (modalHistorique) { setModalHistorique(false); return }
+      if (modalCarnet) { setModalCarnet(false); return }
+      if (panier.length > 0) viderPanier()
+    },
+    enabled: !verrouille && !modalSuperviseur && !modalConfigPin,
+  })
 
   async function enregistrerDocumentCaisse(typeDocument: 'devis' | 'proforma') {
     if (netAPayer === 0) return
@@ -1676,6 +1712,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           session_id: session?.id || null,
           modePaiement,
           client_id: clientCreditIdPOS || null,
+          fidelite_client_id: clientFidelite?.id || null,
+          deduction_cagnotte_fcfa: cagnotteDeduite || 0,
+          remise_pourcentage: remisePourcentage || 0,
           total: netAPayer,
           especes_mixte: modePaiement === 'mixte' ? especesMixteNum : undefined,
           second_mode_mixte: modePaiement === 'mixte' ? secondModeMixte : undefined,
@@ -2569,6 +2608,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           <div className="caisse-search-row">
             <div style={{ flex: 1, position: 'relative' }}>
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder={t('caisse.searchPlaceholder')}
                 value={recherche}
@@ -2583,9 +2623,39 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 onFocus={e => { e.target.style.borderColor = 'var(--pos-primary)'; }}
                 onBlur={e => { e.target.style.borderColor = 'var(--pos-border)'; }}
               />
+
+              {/* Pavé Numérique Numpad Tactile Escamotable */}
+              {showNumpad && (
+                <div style={{ position: 'absolute', top: 52, left: 0, zIndex: 150 }}>
+                  <PosNumpad
+                    onSearchOrAddBarcode={(code) => {
+                      ajouterParCodeBarre(code)
+                    }}
+                    onClose={() => setShowNumpad(false)}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="caisse-search-row-btns" style={{ flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setShowNumpad(prev => !prev)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', borderRadius: 10,
+                  background: showNumpad ? 'var(--pos-primary)' : 'var(--pos-surface)',
+                  color: showNumpad ? '#ffffff' : 'var(--pos-text)',
+                  border: '1.5px solid var(--pos-border)',
+                  fontWeight: 800, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+                  boxShadow: 'var(--pos-shadow)',
+                  transition: 'all 0.15s ease',
+                  flex: '1 1 auto', justifyContent: 'center'
+                }}
+                title="Ouvrir le pavé numérique tactile express (sans ouvrir le clavier système)"
+              >
+                <span>🔢 Clavier</span>
+              </button>
+
               <button
                 onClick={demarrerScannerCamera}
                 style={{
@@ -2883,24 +2953,74 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
           {/* Mode de Paiement */}
           <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', flexShrink: 0 }}>{t('caisse.paymentModeTitle')}</label>
-              {panier.length > 0 && (
+              
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                {/* Bouton Fidélité */}
                 <button
                   type="button"
-                  onClick={() => {
-                    demanderValidationSuperviseur('Application d’une Remise Client Exceptionnelle', () => {
-                      const pourcent = prompt('Pourcentage de remise exceptionnel (ex: 5, 10, 15 %) :')
-                      const val = Number(pourcent)
-                      if (val > 0 && val <= 50) setRemisePourcentage(val)
-                    })
+                  onClick={() => setModalFidelite(true)}
+                  style={{
+                    background: clientFidelite ? '#eff6ff' : '#f8fafc',
+                    border: clientFidelite ? '1px solid #93c5fd' : '1px solid #cbd5e1',
+                    color: clientFidelite ? '#1d4ed8' : '#475569',
+                    borderRadius: 6,
+                    padding: '3px 8px',
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
                   }}
-                  style={{ background: 'none', border: 'none', color: '#C75B00', fontSize: 10, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
-                  🏷️ {t('caisse.discount')} ({remisePourcentage}%)
+                  <span>⭐</span>
+                  <span>{clientFidelite ? clientFidelite.nom.split(' ')[0] : 'Fidélité'}</span>
+                  {cagnotteDeduite > 0 && <span style={{ color: '#16a34a' }}>(-{fcfa(cagnotteDeduite)})</span>}
                 </button>
-              )}
+
+                {/* Bouton Remise */}
+                {panier.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      demanderValidationSuperviseur('Application d’une Remise Client Exceptionnelle', () => {
+                        setModalRemise(true)
+                      })
+                    }}
+                    style={{
+                      background: remisePourcentage > 0 ? '#fff7ed' : '#f8fafc',
+                      border: remisePourcentage > 0 ? '1px solid #fdba74' : '1px solid #cbd5e1',
+                      color: remisePourcentage > 0 ? '#C75B00' : '#475569',
+                      borderRadius: 6,
+                      padding: '3px 8px',
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <span>🏷️</span>
+                    <span>{remisePourcentage > 0 ? `Remise (${remisePourcentage}%)` : 'Remise'}</span>
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Badge Fidélité Actif si client rattaché */}
+            {clientFidelite && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '4px 8px', borderRadius: 6, fontSize: 11 }}>
+                <span style={{ color: '#166534', fontWeight: 700 }}>
+                  👤 {clientFidelite.nom} ({clientFidelite.telephone})
+                </span>
+                <span style={{ color: '#15803d', fontWeight: 800 }}>
+                  Cagnotte: {fcfa(clientFidelite.cagnotte_fcfa)}
+                </span>
+              </div>
+            )}
 
             <div className="paiement-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
               {[
@@ -2933,20 +3053,29 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               ))}
             </div>
 
-            {/* Saisie Espèces Standard */}
+            {/* Saisie Espèces Standard + Fast Tender */}
             {modePaiement === 'especes' && totalPanier > 0 && (
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', padding: 8, borderRadius: 8 }}>
-                <input
-                  type="number"
-                  placeholder="Montant reçu (Espèces)..."
-                  value={montantRecu}
-                  onChange={e => setMontantRecu(e.target.value)}
-                  style={{ flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 13, fontWeight: 700 }}
-                />
-                <div style={{ fontSize: 12, textAlign: 'right' }}>
-                  <span style={{ color: '#64748b', display: 'block' }}>{t('caisse.changeToReturn')}</span>
-                  <span style={{ fontWeight: 900, color: '#16a34a', fontSize: 14 }}>{fcfa(monnaieARendre)}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', padding: 8, borderRadius: 8 }}>
+                  <input
+                    type="number"
+                    placeholder="Montant reçu (Espèces)..."
+                    value={montantRecu}
+                    onChange={e => setMontantRecu(e.target.value)}
+                    style={{ flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 13, fontWeight: 700 }}
+                  />
+                  <div style={{ fontSize: 12, textAlign: 'right' }}>
+                    <span style={{ color: '#64748b', display: 'block' }}>{t('caisse.changeToReturn')}</span>
+                    <span style={{ fontWeight: 900, color: '#16a34a', fontSize: 14 }}>{fcfa(monnaieARendre)}</span>
+                  </div>
                 </div>
+
+                {/* Boutons d'appoints automatiques Fast Tender */}
+                <PosFastTender
+                  totalNet={netAPayer}
+                  montantRecu={montantRecu}
+                  onSelectMontant={m => setMontantRecu(String(m))}
+                />
               </div>
             )}
 
@@ -3696,122 +3825,63 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
       )}
 
-      {/* Modale Clôture Z */}
+      {/* Modale Clôture Z à l'Aveugle */}
       {modalClotureZ && session && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', position: 'relative' }}>
-            
-            {/* Bouton de Fermeture Top-Right Fixe */}
-            <button
-              onClick={() => setModalClotureZ(false)}
-              style={{
-                position: 'absolute',
-                top: 14,
-                right: 14,
-                background: '#f1f5f9',
-                border: 'none',
-                color: '#0f172a',
-                borderRadius: '50%',
-                width: 32,
-                height: 32,
-                fontSize: 16,
-                fontWeight: 900,
-                cursor: 'pointer',
-                zIndex: 10,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              title="Fermer la fenêtre"
-            >
-              ✕
-            </button>
+        <PosBlindCloseModal
+          sessionId={session.id}
+          caissierNom={session.caissierNom}
+          onClose={() => setModalClotureZ(false)}
+          onValiderCloture={async (especesCompteesVal, detailBillets) => {
+            exporterCloturePDF()
+            try {
+              await fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/cloturer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sessionId: session.id,
+                  especesComptees: especesCompteesVal,
+                  detailBillets,
+                  ventesEspeces: session.ventes.especes,
+                  ventesWave: session.ventes.wave,
+                  ventesOrangeMoney: session.ventes.orangeMoney,
+                  ventesCarte: session.ventes.carte,
+                  ventesTotal: session.ventes.total,
+                  nbVentes: session.ventes.nbVentes,
+                  caissierNom: session.caissierNom,
+                })
+              })
+            } catch (e) {
+              console.error('Erreur cloture backend:', e)
+            }
+            alert('Session de caisse fermée avec succès ! Rapport Z imprimé.')
+            setSession(null)
+            setEspecesComptees('')
+            setModalClotureZ(false)
+          }}
+        />
+      )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingRight: 34 }}>
-              <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>🔒 Clôture Z — Fin de Journée</h2>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={exporterClotureCSV} title="Exporter Excel" style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-                  📥 Excel
-                </button>
-                <button onClick={exporterCloturePDF} title="Imprimer Rapport PDF" style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
-                  📄 PDF
-                </button>
-              </div>
-            </div>
-            <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b' }}>Session {session.id} • Caissier: {session.caissierNom}</p>
+      {/* Modale Remise Exceptionnelle Tactile */}
+      {modalRemise && (
+        <PosRemiseModal
+          sousTotal={sousTotalPanier}
+          remiseActuelle={remisePourcentage}
+          onApplyRemise={(pct) => setRemisePourcentage(pct)}
+          onClose={() => setModalRemise(false)}
+        />
+      )}
 
-            <div style={{ background: '#f8fafc', borderRadius: 10, padding: 14, border: '1px solid #e2e8f0', marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Fond de Caisse Départ:</span>
-                <span style={{ fontWeight: 700, color: '#0f172a' }}>{fcfa(session.fondDeCaisse)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Ventes Espèces:</span>
-                <span style={{ fontWeight: 700, color: '#16a34a' }}>{fcfa(session.ventes.especes)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Ventes Wave:</span>
-                <span style={{ fontWeight: 700, color: '#0284c7' }}>{fcfa(session.ventes.wave)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Ventes Orange Money:</span>
-                <span style={{ fontWeight: 700, color: '#ea580c' }}>{fcfa(session.ventes.orangeMoney)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #cbd5e1', paddingTop: 8, fontWeight: 800, fontSize: 15 }}>
-                <span>Total Théorique Espèces:</span>
-                <span style={{ color: '#C75B00' }}>{fcfa(session.fondDeCaisse + session.ventes.especes)}</span>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 12, color: '#475569', display: 'block', marginBottom: 4, fontWeight: 600 }}>Comptage Espèces Réel Tiroir-Caisse</label>
-              <input
-                type="number"
-                placeholder={String(session.fondDeCaisse + session.ventes.especes)}
-                value={especesComptees}
-                onChange={e => setEspecesComptees(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 15, fontWeight: 700, boxSizing: 'border-box' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setModalClotureZ(false)} style={{ flex: 1, padding: '12px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 10, fontWeight: 600, cursor: 'pointer' }}>
-                Annuler
-              </button>
-              <button
-                onClick={async () => {
-                  exporterCloturePDF()
-                  const espComptees = Number(especesComptees) || 0
-                  try {
-                    await fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/cloturer`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        sessionId: session.id,
-                        especesComptees: espComptees,
-                        ventesEspeces: session.ventes.especes,
-                        ventesWave: session.ventes.wave,
-                        ventesOrangeMoney: session.ventes.orangeMoney,
-                        ventesCarte: session.ventes.carte,
-                        ventesTotal: session.ventes.total,
-                        nbVentes: session.ventes.nbVentes
-                      })
-                    });
-                  } catch (e) {
-                    console.error('Erreur cloture backend:', e);
-                  }
-                  alert('Session de caisse fermée avec succès ! Rapport imprimé.')
-                  setSession(null)
-                  setEspecesComptees('')
-                  setModalClotureZ(false)
-                }}
-                style={{ flex: 1, padding: '12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}
-              >
-                Clôturer la session
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Modale Fidélité & Cagnotte Client WhatsApp */}
+      {modalFidelite && (
+        <PosFideliteModal
+          boutiqueId={boutiqueActiveId}
+          clientSelectionne={clientFidelite}
+          totalPanier={totalPanier}
+          cagnotteDeduite={cagnotteDeduite}
+          onSelectClient={(c) => setClientFidelite(c)}
+          onDeduireCagnotte={(m) => setCagnotteDeduite(m)}
+          onClose={() => setModalFidelite(false)}
+        />
       )}
 
       {/* Modale Scanner Code-Barres par Caméra Smartphone */}

@@ -317,6 +317,67 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_boutique_sessions_bq ON boutique_pos_sessions(boutique_id);
 
+      ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS detail_billets JSONB DEFAULT '{}';
+      ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS total_remises NUMERIC(12,2) DEFAULT 0;
+
+      -- ── TABLES FIDÉLISATION CLIENT & RÉCOMPENSES POS ─────────────────────────
+      CREATE TABLE IF NOT EXISTS boutique_clients_fidelite (
+        id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id         UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_id           UUID REFERENCES caisse_clients_credits(id) ON DELETE SET NULL,
+        telephone           VARCHAR(30) NOT NULL,
+        nom                 VARCHAR(100) NOT NULL,
+        points_solde        INT DEFAULT 0,
+        cagnotte_fcfa       NUMERIC(12,2) DEFAULT 0,
+        nb_visites          INT DEFAULT 0,
+        total_depense       NUMERIC(12,2) DEFAULT 0,
+        tampons_actuels     INT DEFAULT 0,
+        rang_fidelite       VARCHAR(30) DEFAULT 'bronze',
+        derniere_visite     TIMESTAMPTZ DEFAULT NOW(),
+        created_at          TIMESTAMPTZ DEFAULT NOW(),
+        updated_at          TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS uidx_bq_client_fidelite_tel ON boutique_clients_fidelite(boutique_id, telephone);
+      CREATE INDEX IF NOT EXISTS idx_bq_client_fidelite_bq ON boutique_clients_fidelite(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_fidelite_mouvements (
+        id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id         UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_fidelite_id  UUID NOT NULL REFERENCES boutique_clients_fidelite(id) ON DELETE CASCADE,
+        vente_reference     VARCHAR(100),
+        type_mouvement      VARCHAR(30) NOT NULL,
+        valeur_fcfa         NUMERIC(12,2) NOT NULL DEFAULT 0,
+        points              INT DEFAULT 0,
+        description         TEXT,
+        created_at          TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_bq_fidelite_mouv_client ON boutique_fidelite_mouvements(client_fidelite_id);
+
+      -- ── TABLE BONS D'AVOIR & STORE CREDIT ────────────────────────────────────
+      CREATE TABLE IF NOT EXISTS caisse_avoirs (
+        id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id         UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        code                VARCHAR(50) NOT NULL,
+        montant_initial     NUMERIC(12,2) NOT NULL,
+        montant_restant     NUMERIC(12,2) NOT NULL,
+        client_nom          VARCHAR(100),
+        client_telephone    VARCHAR(30),
+        ticket_origine_ref  VARCHAR(100),
+        statut              VARCHAR(20) DEFAULT 'actif',
+        date_expiration     DATE,
+        created_at          TIMESTAMPTZ DEFAULT NOW(),
+        updated_at          TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS uidx_caisse_avoirs_code ON caisse_avoirs(boutique_id, code);
+
+      -- Colonnes de personnalisation des reçus et fidélité dans boutiques
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_actif BOOLEAN DEFAULT TRUE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_type VARCHAR(30) DEFAULT 'cagnotte';
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_taux_cashback NUMERIC(5,2) DEFAULT 3.00;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_tampons_max INT DEFAULT 10;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_seuil_tampon NUMERIC(12,2) DEFAULT 2000;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS message_bas_ticket TEXT DEFAULT '';
+
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS caracteristiques JSONB DEFAULT '{}';
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS rejete BOOLEAN DEFAULT FALSE;
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'manuel';

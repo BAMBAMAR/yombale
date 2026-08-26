@@ -1,3 +1,23 @@
+- **Perfectionnement Industriel de la Caisse POS Nopalou — Fast Tender 2 Clics, Numpad Tactile Code-Barres, Clôture Z à l'Aveugle, Programme de Fidélité WhatsApp & Cagnottes Cashback, Remises Sécurisées et Raccourcis Clavier (`CaisseClient.tsx`, `PosFastTender.tsx`, `PosNumpad.tsx`, `PosBlindCloseModal.tsx`, `PosFideliteModal.tsx`, `PosRemiseModal.tsx`, `usePosShortcuts.ts`, `fast-tender.ts`, `boutiques.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 26 août 2026)** ⚡🛒🔢🔒⭐🏷️⌨️🇸🇳 :
+  * **⚡ Encaissement Éclair "Fast Tender" en Espèces (2 Clics Chrono)** :
+    - Algorithme intelligent de suggestion des billets FCFA d'Afrique de l'Ouest (BCEAO) : `[Exact]`, `[Arrondi Supérieur]`, `[Billet 1 000 / 2 000 / 5 000 / 10 000 / 20 000 F]` avec calcul instantané du rendu monnaie.
+  * **🔢 Pavé Numérique Numpad Tactile Express (`PosNumpad.tsx`)** :
+    - Mini-clavier tactile escamotable pour saisir les codes-barres abîmés, EAN ou SKU sans jamais ouvrir le clavier virtuel Android/Windows encombrant sur tablette.
+  * **🔒 Clôture Z de Caisse à l'Aveugle ("Blind Cash Close" — `PosBlindCloseModal.tsx`)** :
+    - Standard bancaire anti-fraude : le caissier compte les espèces physiques sans voir le total théorique calculé.
+    - Saisie assistée par coupures : billets de 10 000, 5 000, 2 000, 1 000, 500 FCFA et pièces de 500, 200, 100, 50, 25 FCFA avec calcul automatique et justification des écarts.
+  * **⭐ Programme de Fidélisation & CRM Client WhatsApp (`PosFideliteModal.tsx`)** :
+    - Recherche instantanée par numéro WhatsApp (77/78/76/70...) ou par nom.
+    - Enrôlement express en 10 secondes (Prénom + Nom + Téléphone).
+    - Déduction en 1 clic de la cagnotte cashback disponible sur le panier (`-X FCFA`).
+    - Tables PostgreSQL `boutique_clients_fidelite`, `boutique_fidelite_mouvements` et `caisse_avoirs`.
+  * **🏷️ Modale Tactile de Remises Sécurisée (`PosRemiseModal.tsx`)** :
+    - Remplacement du `prompt()` natif par une modale tactile dédiée : choix pourcentage (% avec présélections 5, 10, 15, 20, 30%) ou montant fixe en FCFA, sous validation par code PIN du Superviseur/Gérant.
+  * **⌨️ Raccourcis Clavier Physiques Universels (`usePosShortcuts.ts`)** :
+    - `F2` pour focus recherche produit, `F4` pour règlement direct, `F8` pour mise en attente du ticket, `Échap` pour fermer les modales ou vider le panier.
+  * **🧪 Validation** :
+    - Architecture modulaire validée, tables migrées et zéro régression.
+
 - **Restauration Intégrale du Logo Officiel Orange Nopalou (PWA Android / iOS / Desktop / Splash Screen / Manifest) & Correction de l'Onglet Comptabilité (`icon-512.png`, `icon-192.png`, `icon-maskable-512.png`, `icon-512.svg`, `logo-mark.svg`, `apple-icon.tsx`, `manifest.json`, `layout.tsx`, `BoutiqueClient.tsx`, `CLAUDE.md`) (`main` - 26 août 2026)** 🟧✨📱💰🛡️ :
   * **🟧 Remplacement Définitif & Rendu Inset Squircle des Icônes PNG & SVG (`icon-512.png`, `icon-192.png`, `icon-512.svg`, `logo-mark.svg`)** :
     - Remplacement des anciens visuels par les **véritables icônes officielles Nopalou** générées avec marge d'inset de 4% et coins arrondis squircle (`rx = 24%`) pour que les 4 rebords arrondis soient **100% visibles et nets sur l'écran de démarrage (splash screen)** et sur l'écran d'accueil, éliminant tout bloc carré à 90°.

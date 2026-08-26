@@ -2,6 +2,11 @@
 process.env.JWT_SECRET = 'test-secret';
 
 jest.mock('../../backend/models/db', () => ({ pool: { query: jest.fn() } }));
+jest.mock('../../backend/lib/settingsCache', () => ({
+  get: jest.fn().mockResolvedValue(''),
+  getBool: jest.fn().mockResolvedValue(false),
+  getNum: jest.fn().mockResolvedValue(0),
+}));
 
 const jwt = require('jsonwebtoken');
 const request = require('supertest');

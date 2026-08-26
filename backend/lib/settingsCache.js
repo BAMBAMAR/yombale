@@ -50,9 +50,15 @@ const DEFAULTS = {
 };
 
 async function loadSettings() {
-  const { rows } = await pool.query('SELECT key, value FROM settings');
-  cache = { ...DEFAULTS };
-  for (const row of rows) cache[row.key] = row.value;
+  try {
+    const res = await pool.query('SELECT key, value FROM settings');
+    cache = { ...DEFAULTS };
+    if (res?.rows) {
+      for (const row of res.rows) cache[row.key] = row.value;
+    }
+  } catch (e) {
+    cache = { ...DEFAULTS };
+  }
   lastLoaded = Date.now();
 }
 
