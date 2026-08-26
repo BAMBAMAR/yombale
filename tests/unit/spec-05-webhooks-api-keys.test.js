@@ -27,6 +27,7 @@ beforeEach(() => {
 describe('Clés API Marchand — POST & GET & DELETE /api/boutiques/:id/api-keys (Spec 05)', () => {
   test('génère une clé API marchand avec préfixe nopalou_sk_live_ (HTTP 201)', async () => {
     pool.query
+      .mockResolvedValueOnce({ rows: [{ plan: 'business', statut: 'actif' }] }) // checkAbonnement
       .mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] }) // checkBoutiqueAccess
       .mockResolvedValueOnce({
         rows: [{ id: keyId, nom: 'Clé Zapier', key_prefix: 'nopalou_sk_live_abc', created_at: new Date() }]
@@ -45,6 +46,7 @@ describe('Clés API Marchand — POST & GET & DELETE /api/boutiques/:id/api-keys
 
   test('révoque une clé API marchand avec succès (HTTP 200)', async () => {
     pool.query
+      .mockResolvedValueOnce({ rows: [{ plan: 'business', statut: 'actif' }] }) // checkAbonnement
       .mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] })
       .mockResolvedValueOnce({ rows: [] });
 
@@ -60,6 +62,7 @@ describe('Clés API Marchand — POST & GET & DELETE /api/boutiques/:id/api-keys
 describe('Webhooks — POST & GET & DELETE /api/boutiques/:id/webhooks (Spec 05)', () => {
   test('enregistre un webhook endpoint avec secret whsec_ (HTTP 201)', async () => {
     pool.query
+      .mockResolvedValueOnce({ rows: [{ plan: 'business', statut: 'actif' }] }) // checkAbonnement
       .mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] })
       .mockResolvedValueOnce({
         rows: [{
@@ -80,7 +83,9 @@ describe('Webhooks — POST & GET & DELETE /api/boutiques/:id/webhooks (Spec 05)
   });
 
   test('refuse la création sans URL valide (HTTP 400)', async () => {
-    pool.query.mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] });
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ plan: 'business', statut: 'actif' }] }) // checkAbonnement
+      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] });
 
     const res = await request(app)
       .post(`/api/boutiques/${boutiqueId}/webhooks`)

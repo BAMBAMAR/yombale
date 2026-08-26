@@ -85,3 +85,27 @@ describe('POST /api/comptabilite/:boutiqueId/zones', () => {
     expect(res.body.nom).toBe('Dakar');
   });
 });
+
+describe('PATCH /api/comptabilite/:boutiqueId/stock/:produitId', () => {
+  test('réalimente le produit et met à jour en_stock à true', async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, nom: 'Ma boutique' }] }) // ownsBoutique
+      .mockResolvedValueOnce({ rows: [{ id: produitId, nom: 'Produit Test', stock_quantite: 0 }] }) // oldRes
+      .mockResolvedValueOnce({ rows: [{ id: produitId, nom: 'Produit Test', stock_quantite: 15, en_stock: true }] }) // UPDATE
+      .mockResolvedValueOnce({ rows: [] }) // audit log
+      .mockResolvedValueOnce({ rows: [{ slug: 'ma-boutique', whatsapp_catalog_id: null }] }); // boutique query for sync
+
+    const res = await request(app)
+      .patch(`/api/comptabilite/${boutiqueId}/stock/${produitId}`)
+      .set('Authorization', auth)
+      .send({ stock_quantite: 15 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.stock_quantite).toBe(15);
+    expect(res.body.en_stock).toBe(true);
+
+    const updateQuery = pool.query.mock.calls[2];
+    expect(updateQuery[0]).toMatch(/en_stock = \(\$1 > 0\)/);
+    expect(updateQuery[1][0]).toBe(15);
+  });
+});

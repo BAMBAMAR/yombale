@@ -65,6 +65,10 @@ function ProduitCard({
 }) {
   const { addToCart } = useCart()
   const [addedCart, setAddedCart] = useState(false)
+  const isEnStock = (p.quantite_stock ?? p.stock_quantite) != null
+    ? Number(p.quantite_stock ?? p.stock_quantite) > 0
+    : (p.en_stock !== false)
+
   const img = p.images?.[0] ?? null
   const remise = p.prix && p.prix_barre && p.prix_barre > p.prix
     ? Math.round((1 - p.prix / p.prix_barre) * 100) : null
@@ -149,11 +153,11 @@ function ProduitCard({
                 setTimeout(() => setAddedCart(false), 1800)
               }
             }}
-            disabled={!p.en_stock}
+            disabled={!isEnStock}
             className={`btn-premium ${addedCart ? 'btn-premium-success' : 'btn-premium-primary'}`}
-            style={{ padding: '8px 14px', fontSize: 12, opacity: p.en_stock ? 1 : 0.6 }}
+            style={{ padding: '8px 14px', fontSize: 12, opacity: isEnStock ? 1 : 0.6 }}
           >
-            {addedCart ? '✅ Ajouté' : (p.en_stock ? (p.variantes && p.variantes.length > 0 ? 'Choisir options' : <><ShoppingCart size={14} /> Ajouter</>) : 'Rupture')}
+            {addedCart ? '✅ Ajouté' : (isEnStock ? (p.variantes && p.variantes.length > 0 ? 'Choisir options' : <><ShoppingCart size={14} /> Ajouter</>) : 'Rupture')}
           </button>
         </div>
       </div>
@@ -178,7 +182,7 @@ function ProduitCard({
               </div>
             )}
 
-            {!p.en_stock && (
+            {!isEnStock && (
               <span style={{ position: 'absolute', top: 8, right: 8, background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
                 Rupture
               </span>
@@ -260,11 +264,11 @@ function ProduitCard({
               setTimeout(() => setAddedCart(false), 1800)
             }
           }}
-          disabled={!p.en_stock}
+          disabled={!isEnStock}
           className={`btn-premium ${addedCart ? 'btn-premium-success' : 'btn-premium-primary'}`}
-          style={{ width: '100%', padding: '9px', fontSize: 13, opacity: p.en_stock ? 1 : 0.6 }}
+          style={{ width: '100%', padding: '9px', fontSize: 13, opacity: isEnStock ? 1 : 0.6 }}
         >
-          {addedCart ? '✅ Ajouté !' : (p.en_stock ? (p.variantes && p.variantes.length > 0 ? 'Choisir mes options' : <><ShoppingCart size={15} /> Ajouter au panier</>) : 'Rupture de stock')}
+          {addedCart ? '✅ Ajouté !' : (isEnStock ? (p.variantes && p.variantes.length > 0 ? 'Choisir mes options' : <><ShoppingCart size={15} /> Ajouter au panier</>) : 'Rupture de stock')}
         </button>
       </div>
     </div>
@@ -353,7 +357,7 @@ export default function BoutiqueDetailClient({
     }
 
     if (stockOnly) {
-      result = result.filter(p => p.en_stock)
+      result = result.filter(p => ((p.quantite_stock ?? p.stock_quantite) != null ? Number(p.quantite_stock ?? p.stock_quantite) > 0 : p.en_stock !== false))
     }
 
     if (priceFilter) {
@@ -909,7 +913,7 @@ export default function BoutiqueDetailClient({
                     addToCart(boutiqueKey, boutique.nom, quickViewProduct, boutique.whatsapp)
                     setQuickViewProduct(null)
                   }}
-                  disabled={!quickViewProduct.en_stock}
+                  disabled={!((quickViewProduct.quantite_stock ?? quickViewProduct.stock_quantite) != null ? Number(quickViewProduct.quantite_stock ?? quickViewProduct.stock_quantite) > 0 : quickViewProduct.en_stock !== false)}
                   style={{ flex: 1, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   <ShoppingCart size={16} /> Ajouter au panier

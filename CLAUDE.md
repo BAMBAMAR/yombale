@@ -1,3 +1,33 @@
+- **Audit Exhaustif des Relations de Mise à Jour Boutique, Persistance Couleur & Sécurisation des Codes Promo (`boutiques.js`, `prospection.js`, `spec-master-exhaustive.test.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🔍🎨🎟️🔄🇸🇳✨ :
+  * **🎨 Persistance & Récupération de `couleur_theme` & `devise_defaut`** :
+    - Ajout de `couleur_theme` dans `PUT /api/boutiques/:id` pour permettre aux commerçants de sauvegarder la couleur personnalisée de leur vitrine.
+    - Ajout de `couleur_theme` et `devise_defaut` dans les requêtes `GET /api/boutiques/mine` et `GET /api/boutiques/:id`.
+  * **🎟️ Déblocage des Codes Promo Propres aux Boutiques** :
+    - Suppression du filtre hardcodé `SOLDE20` qui empêchait les marchands de créer un code promo portant le même nom sans activer les promotions globales de la plateforme.
+  * **📦 Correction Décrémentation Stock Checkout Express & Vente Variantes** :
+    - Mise à jour de `en_stock = ($1 > 0)` dans le tunnel de commande rapide `POST /api/boutiques/commandes/express`.
+  * **🧪 Validation & Tests** :
+    - 16 suites de tests Jest (130 tests unitaires) : 100% validés avec succès.
+    - Build de production Next.js (`npm run build`) : 100% réussi sans aucune erreur.
+
+- **Correction Intégrale de la Réalimentation de Stock, Réconciliation Automatique `en_stock` & Synchronisation Temps Réel Boutique (`comptabilite.js`, `boutiques.js`, `migrate-inline.js`, `BoutiqueDetailClient.tsx`, `page.tsx`, `actions.ts`, `BoutiqueClient.tsx`, `CLAUDE.md`) (`main` - 26 août 2026)** 📦⚡🔄🛡️🇸🇳✨ :
+  * **🔍 Diagnostic de la Rupture & Problème Identifié** :
+    - Lorsqu'un produit tombait en rupture de stock, son statut `en_stock` passait à `false` dans PostgreSQL.
+    - Lors de la réalimentation du produit via le pointage inventaire, l'édition rapide de stock dans le catalogue ou la réception d'un bon de commande fournisseur, seule la colonne `stock_quantite` était incrémentée (`SET stock_quantite = $1`), laissant `en_stock = false`.
+    - Les vitrines publiques (`BoutiqueDetailClient.tsx`, fiche produit `page.tsx`, `ProduitCTA.tsx`) se basaient sur `p.en_stock`, maintenant ainsi le badge "Rupture de stock" et désactivant le bouton d'ajout au panier même avec des unités réelles en rayon.
+  * **⚡ Résolution Backend & Réconciliation Automatique** :
+    - **Mise à jour automatique de `en_stock`** dans toutes les requêtes SQL de mise à jour de stock (`PATCH /api/comptabilite/:boutiqueId/stock/:produitId`, réception commandes fournisseurs, facturation caisse, ventes directes) : `SET stock_quantite = $1, en_stock = ($1 > 0)`.
+    - **Sécurisation des requêtes de catalogue** (`GET /api/boutiques/:id/produits` et `GET /api/boutiques/:id/produits/:prodId`) avec calcul dynamique : `COALESCE(CASE WHEN p.stock_quantite IS NOT NULL THEN (p.stock_quantite > 0) ELSE p.en_stock END, true) AS en_stock` et ajout de `p.stock_quantite` dans la fiche produit.
+    - **Migration automatique au démarrage (`migrate-inline.js`)** : Réconciliation instantanée de tous les produits existants de la base de données (`SET en_stock = (stock_quantite > 0) WHERE stock_quantite IS NOT NULL`).
+    - **Synchronisation WhatsApp / Meta Commerce Catalog** : Déclenchement automatique de `syncProduit` lors de chaque ajustement de stock pour mettre à jour la disponibilité en direct sur les catalogues WhatsApp et Facebook.
+  * **🛍️ Fiabilisation Vitrine Client & Actions Server** :
+    - **Vitrines Web (`BoutiqueDetailClient.tsx`, `page.tsx`, `ProduitCTA.tsx`)** : Évaluation stricte de la disponibilité `isEnStock = (p.quantite_stock ?? p.stock_quantite) != null ? Number(p.quantite_stock ?? p.stock_quantite) > 0 : (p.en_stock !== false)`.
+    - **Revalidation Instantanée du Cache Next.js (`actions.ts`)** : Invalidation immédiate des caches de pages (`revalidatePath('/boutique')`, `revalidatePath('/boutiques/[id]')`, `revalidatePath('/boutiques/[id]/produits/[produitId]')`) dès qu'un produit est ajouté, modifié, supprimé ou réapprovisionné.
+    - **Mise à jour optimiste dans `BoutiqueClient.tsx`** : Le badge et la quantité en stock se mettent à jour instantanément sans nécessiter de rafraîchissement manuel de la page.
+  * **🧪 Validation & Tests** :
+    - Tests unitaires Jest (`tests/unit/comptabilite.test.js`, `tests/unit/spec-master-exhaustive.test.js`) : 100% de réussite (128/128 tests passés).
+    - Build de production Next.js (`npm run build`) : 100% réussi avec génération de 61 pages statiques sans erreur.
+
 - **Écran de Paramétrage Dédié "Fidélité & Promotions", Moteur de Coupons & Séparation des Rôles Gérant / Caissier (`ParametresFidelitePromos.tsx`, `BoutiqueClient.tsx`, `actions.ts`, `boutiques.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🎁🏷️🛡️🎟️🇸🇳✨ :
   * **🏛️ Séparation Stricte des Responsabilités POS / Back-Office** :
     - La caisse POS est un poste 100% opérationnel pour les caissiers (recherche/enrôlement client, scan de carte, application rapide de réduction autorisée, déduction de cagnotte).

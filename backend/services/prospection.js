@@ -662,7 +662,8 @@ function estNomPropreAuthentique(nom) {
 
   // Pollutions de petites annonces et titres d'articles
   if (
-    /^(dakar|senegal|thies|mbour|touba)[,\s]/i.test(str) ||
+    /^(dakar|senegal|thies|mbour|touba)\s*,\s*/i.test(str) ||
+    /^(dakar|senegal|thies|mbour|touba)\s+(ville|région|region|sn|senegal)\b/i.test(str) ||
     /\b(disponible|disponibi|livraison|groupée|groupee|arrivage|promo|hyundai|tucson|lite\s*5g|galaxy|iphone|peugeot|terrain|appartement|chambre)\b/i.test(str)
   ) {
     return false;
@@ -749,6 +750,7 @@ function interpolerMessage(template, lead) {
   message = message
     .replace(/\{nom_boutique\}/gi, nomBoutiqueCorps)
     .replace(/\{prenom\}/gi, prenomCorps)
+    .replace(/(?:à|aux|en)\s*\{quartier\}/gi, quartierStr)
     .replace(/\{quartier\}/gi, quartierStr)
     .replace(/\{secteur\}/gi, secteur)
     .replace(/\{telephone\}/gi, tel)
@@ -756,8 +758,10 @@ function interpolerMessage(template, lead) {
     .replace(/\{lien_boutique\}/gi, 'https://nopalou.com/creer-boutique')
     .replace(/\{lien_tarifs\}/gi, 'https://nopalou.com/tarifs-boutique');
 
-  // Nettoyage des parenthèses vides ou espaces multiples résiduels
+  // Nettoyage des parenthèses vides, doublons de prépositions ou espaces multiples résiduels
   message = message
+    .replace(/à\s+à\s+/g, 'à ')
+    .replace(/à\s+aux\s+/g, 'aux ')
     .replace(/\(\s*\)/g, '')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();

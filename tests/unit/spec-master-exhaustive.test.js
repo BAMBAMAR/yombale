@@ -2,6 +2,11 @@
 process.env.JWT_SECRET = 'test-secret';
 
 jest.mock('../../backend/models/db', () => ({ pool: { query: jest.fn() } }));
+jest.mock('../../backend/lib/settingsCache', () => ({
+  get: jest.fn().mockResolvedValue(''),
+  getBool: jest.fn().mockResolvedValue(false),
+  getNum: jest.fn().mockResolvedValue(0),
+}));
 
 const jwt = require('jsonwebtoken');
 const request = require('supertest');
@@ -24,6 +29,7 @@ const prodId = '8ed84b7a-54e3-4f16-876b-632c83c89bf4';
 
 beforeEach(() => {
   pool.query.mockReset();
+  pool.query.mockResolvedValue({ rows: [] });
 });
 
 // ── SPEC 01 : MODE SWITCHER (PURE PLAYER VS HYBRIDE POS) ────────────────────
@@ -265,7 +271,8 @@ describe('SPEC 04 — Pixels de Tracking ROAS (Meta, TikTok, GA4)', () => {
 describe('SPEC 05 — Portail Développeur, Clés API & Webhooks HMAC-SHA256', () => {
   test('5.1 Génération de clé API marchand nopalou_sk_live_ (HTTP 201)', async () => {
     pool.query
-      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] })
+      .mockResolvedValueOnce({ rows: [{ plan: 'business', statut: 'actif' }] }) // checkAbonnement
+      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] }) // own
       .mockResolvedValueOnce({
         rows: [{ id: 'key-1', nom: 'ERP Dakar', key_prefix: 'nopalou_sk_live_123', created_at: new Date() }]
       });
@@ -281,7 +288,8 @@ describe('SPEC 05 — Portail Développeur, Clés API & Webhooks HMAC-SHA256', (
 
   test('5.2 Enregistrement Webhook & Génération Secret whsec_ (HTTP 201)', async () => {
     pool.query
-      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] })
+      .mockResolvedValueOnce({ rows: [{ plan: 'business', statut: 'actif' }] }) // checkAbonnement
+      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, utilisateur_id: 'user-123' }] }) // own
       .mockResolvedValueOnce({
         rows: [{
           id: 'wh-1', boutique_id: boutiqueId, url: 'https://mon-crm.sn/webhook',

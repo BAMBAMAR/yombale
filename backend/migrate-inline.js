@@ -1372,12 +1372,18 @@ module.exports = async function migrateInline() {
         created_at         TIMESTAMPTZ DEFAULT NOW(),
         updated_at         TIMESTAMPTZ DEFAULT NOW()
       );
-      CREATE INDEX IF NOT EXISTS idx_support_demandes_date ON support_demandes(created_at DESC);
-      CREATE INDEX IF NOT EXISTS idx_support_demandes_statut ON support_demandes(statut);
-      CREATE INDEX IF NOT EXISTS idx_support_demandes_tel ON support_demandes(telephone);
+      -- Synchronisation et réparation automatique du statut en_stock selon stock_quantite
+      UPDATE boutique_produits
+      SET en_stock = (stock_quantite > 0)
+      WHERE stock_quantite IS NOT NULL AND (
+        (stock_quantite > 0 AND (en_stock = false OR en_stock IS NULL))
+        OR
+        (stock_quantite = 0 AND (en_stock = true OR en_stock IS NULL))
+      );
+      UPDATE boutique_produits SET en_stock = true WHERE stock_quantite IS NULL AND en_stock IS NULL;
     `);
 
-    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support OK');
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support et réconciliation de stock OK');
   } catch (err) {
     console.warn('[MIGRATE] POS Avancé & Recherches échec:', err.message);
   }

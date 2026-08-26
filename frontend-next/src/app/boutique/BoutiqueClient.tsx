@@ -2485,10 +2485,12 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
   async function saveStock(produitId: string) {
     const val = Number(stockInputVal)
     if (isNaN(val) || val < 0) return
+    setProduits(prev => prev.map(item => item.id === produitId ? { ...item, stock_quantite: val, quantite_stock: val, en_stock: val > 0 } : item))
     startTransition(async () => {
       const res = await updateStock(boutique.id, produitId, val)
       if (res.error) {
         alert(res.error)
+        loadProduits()
       } else {
         setEditingStockId(null)
         loadProduits()
@@ -2969,7 +2971,16 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                     ) : (
                       <span
                         onClick={(e) => { e.stopPropagation(); setEditingStockId(p.id); setStockInputVal(String(p.quantite_stock ?? p.stock_quantite ?? 0)) }}
-                        style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: p.en_stock ? '#f0fdf4' : '#fef2f2', color: p.en_stock ? '#15803d' : '#dc2626', fontWeight: 800, cursor: 'pointer', border: p.en_stock ? '1px solid #bbf7d0' : '1px solid #fecaca' }}
+                        style={{
+                          fontSize: 11,
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                          background: ((p.quantite_stock ?? p.stock_quantite) != null ? (p.quantite_stock ?? p.stock_quantite)! > 0 : p.en_stock !== false) ? '#f0fdf4' : '#fef2f2',
+                          color: ((p.quantite_stock ?? p.stock_quantite) != null ? (p.quantite_stock ?? p.stock_quantite)! > 0 : p.en_stock !== false) ? '#15803d' : '#dc2626',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          border: ((p.quantite_stock ?? p.stock_quantite) != null ? (p.quantite_stock ?? p.stock_quantite)! > 0 : p.en_stock !== false) ? '1px solid #bbf7d0' : '1px solid #fecaca'
+                        }}
                         title="Cliquez pour modifier le stock"
                       >
                         📦 {t('shop.stockQty')}: {formatNumber(p.quantite_stock ?? p.stock_quantite ?? 0)} ✏️

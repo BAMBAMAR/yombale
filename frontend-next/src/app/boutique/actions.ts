@@ -73,6 +73,8 @@ export async function createProduit(
     if (!res.ok) {
       return { error: data.error ?? 'Impossible d\'ajouter le produit' }
     }
+    revalidatePath('/boutique')
+    revalidatePath(`/boutiques/${boutiqueId}`)
     return { success: true, produit: data.produit }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
@@ -91,6 +93,9 @@ export async function updateProduit(
     if (!res.ok) {
       return { error: data.error ?? 'Impossible de modifier le produit' }
     }
+    revalidatePath('/boutique')
+    revalidatePath(`/boutiques/${boutiqueId}`)
+    revalidatePath(`/boutiques/${boutiqueId}/produits/${produitId}`)
     return { success: true, produit: data.produit }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
@@ -104,6 +109,8 @@ export async function deleteProduit(boutiqueId: string, produitId: string): Prom
       const data = await res.json().catch(() => ({}))
       return { error: data.error ?? 'Impossible de supprimer le produit' }
     }
+    revalidatePath('/boutique')
+    revalidatePath(`/boutiques/${boutiqueId}`)
     return { success: true }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
@@ -362,6 +369,9 @@ export async function updateStock(boutiqueId: string, produitId: string, stock_q
       const d = await res.json().catch(() => ({}))
       return { error: d.error ?? 'Impossible de mettre à jour le stock' }
     }
+    revalidatePath('/boutique')
+    revalidatePath(`/boutiques/${boutiqueId}`)
+    revalidatePath(`/boutiques/${boutiqueId}/produits/${produitId}`)
     return { success: true }
   } catch {
     return { error: 'Erreur de connexion au serveur' }
@@ -621,6 +631,8 @@ export async function recevoirCommandeFournisseur(boutiqueId: string, cmdId: str
       const d = await res.json().catch(() => ({}))
       return { error: d.error ?? 'Impossible de mettre à jour la commande fournisseur' }
     }
+    revalidatePath('/boutique')
+    revalidatePath(`/boutiques/${boutiqueId}`)
     return { success: true }
   } catch (err) {
     console.error('[RECEVOIR_COMMANDE_FOURNISSEUR_ERR]', err)

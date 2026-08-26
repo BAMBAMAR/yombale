@@ -497,7 +497,7 @@ router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
-              b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.slug,
+              b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.slug, b.couleur_theme,
               COALESCE(b.actif, true) AS actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
               COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
@@ -645,8 +645,9 @@ router.get('/:id', async (req, res) => {
     const r = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
-              b.horaires, b.slug, b.utilisateur_id, b.created_at, b.actif,
+              b.horaires, b.slug, b.utilisateur_id, b.created_at, b.actif, b.couleur_theme,
               COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
+              COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
@@ -1440,7 +1441,9 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
     const { rows } = await pool.query(
-      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre,
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images,
+              COALESCE(CASE WHEN p.stock_quantite IS NOT NULL THEN (p.stock_quantite > 0) ELSE p.en_stock END, true) AS en_stock,
+              p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre,
               p.unite_vente, p.has_variants, p.date_expiration,
               p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le,
               COALESCE(
@@ -1470,7 +1473,9 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const boutiqueCondition = isUUID ? 'b.id=$2' : 'b.slug=$2';
     const { rows } = await pool.query(
-      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images, p.en_stock, p.code_barre,
+      `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images,
+              COALESCE(CASE WHEN p.stock_quantite IS NOT NULL THEN (p.stock_quantite > 0) ELSE p.en_stock END, true) AS en_stock,
+              p.stock_quantite, p.code_barre,
               p.unite_vente, p.has_variants, p.date_expiration,
               p.categorie, p.caracteristiques, p.variantes, p.ordre, p.created_at,
               b.nom AS boutique_nom, b.telephone AS boutique_telephone,
@@ -1985,7 +1990,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
     const existingRows = [boutique];
     const existing = { rows: existingRows };
 
-    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, horaires, slug: slugInput } = req.body;
+    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, horaires, couleur_theme, slug: slugInput } = req.body;
 
     let logo_url = existing.rows[0].logo_url;
     if (req.files?.logo?.[0]) {
@@ -2004,11 +2009,11 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
     // UPDATE colonnes de base (toujours présentes)
     await pool.query(
       `UPDATE boutiques SET nom=$1, description=$2, categorie=$3, telephone=$4, adresse=$5,
-       ville=$6, logo_url=$7, updated_at=NOW()
-       WHERE id=$8 AND utilisateur_id=$9`,
+       ville=$6, logo_url=$7, couleur_theme=COALESCE($8, couleur_theme), updated_at=NOW()
+       WHERE id=$9 AND utilisateur_id=$10`,
       [nom||existing.rows[0].nom, description||null, categorie||null,
        telephone||null, adresse||null, ville||'Dakar', logo_url,
-       req.params.id, req.user.userId]
+       couleur_theme||null, req.params.id, req.user.userId]
     );
     // Slug : garder l'existant si aucun input, sinon re-générer
     let newSlug = existing.rows[0].slug;
@@ -3393,7 +3398,10 @@ router.post('/:id/documents', tokenOptional, param('id').isUUID(), async (req, r
       for (const item of calculation.items) {
         if (item.id && /^[0-9a-f-]{36}$/i.test(String(item.id))) {
           await pool.query(
-            `UPDATE boutique_produits SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1) WHERE id = $2`,
+            `UPDATE boutique_produits
+             SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1),
+                 en_stock = (GREATEST(0, COALESCE(stock_quantite, 0) - $1) > 0)
+             WHERE id = $2`,
             [Number(item.quantite), item.id]
           );
         }
@@ -3483,7 +3491,10 @@ router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('
       for (const item of calculation.items) {
         if (item.id && /^[0-9a-f-]{36}$/i.test(String(item.id))) {
           await pool.query(
-            `UPDATE boutique_produits SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1) WHERE id = $2`,
+            `UPDATE boutique_produits
+             SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 0) - $1),
+                 en_stock = (GREATEST(0, COALESCE(stock_quantite, 0) - $1) > 0)
+             WHERE id = $2`,
             [Number(item.quantite), item.id]
           );
         }
@@ -3521,7 +3532,10 @@ router.delete('/:id/documents/:docId', tokenOptional, param('id').isUUID(), para
       for (const item of items) {
         if (item.id && /^[0-9a-f-]{36}$/i.test(String(item.id))) {
           await pool.query(
-            `UPDATE boutique_produits SET stock_quantite = COALESCE(stock_quantite, 0) + $1 WHERE id = $2`,
+            `UPDATE boutique_produits
+             SET stock_quantite = COALESCE(stock_quantite, 0) + $1,
+                 en_stock = ((COALESCE(stock_quantite, 0) + $1) > 0)
+             WHERE id = $2`,
             [Number(item.quantite), item.id]
           );
         }
@@ -3719,20 +3733,38 @@ router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID
     if (!isAlreadyRecu && isTargetRecu) {
       const activeItems = itemsArray || (typeof cmd.items === 'string' ? JSON.parse(cmd.items) : cmd.items);
       for (const item of activeItems) {
+        let pMaj = null;
         if (item.id) {
-          await pool.query(
+          const upRes = await pool.query(
             `UPDATE boutique_produits
-             SET stock_quantite = COALESCE(stock_quantite, 0) + $1, en_stock = true
-             WHERE id = $2 AND boutique_id = $3`,
+             SET stock_quantite = COALESCE(stock_quantite, 0) + $1,
+                 en_stock = ((COALESCE(stock_quantite, 0) + $1) > 0),
+                 updated_at = NOW()
+             WHERE id = $2 AND boutique_id = $3
+             RETURNING *`,
             [Number(item.quantite), item.id, boutiqueId]
           );
+          pMaj = upRes.rows[0];
         } else if (item.nom) {
-          await pool.query(
+          const upRes = await pool.query(
             `UPDATE boutique_produits
-             SET stock_quantite = COALESCE(stock_quantite, 0) + $1, en_stock = true
-             WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3`,
+             SET stock_quantite = COALESCE(stock_quantite, 0) + $1,
+                 en_stock = ((COALESCE(stock_quantite, 0) + $1) > 0),
+                 updated_at = NOW()
+             WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3
+             RETURNING *`,
             [Number(item.quantite), item.nom.trim(), boutiqueId]
           );
+          pMaj = upRes.rows[0];
+        }
+
+        if (pMaj) {
+          setImmediate(async () => {
+            try {
+              const b = await pool.query('SELECT slug, whatsapp_catalog_id FROM boutiques WHERE id=$1', [boutiqueId]);
+              await syncProduit({ ...pMaj, boutique_slug: b.rows[0]?.slug, whatsapp_catalog_id: b.rows[0]?.whatsapp_catalog_id });
+            } catch {}
+          });
         }
       }
 
@@ -4483,11 +4515,6 @@ router.post(['/promotions/valider', '/valider', '/:id/promotions/valider'], asyn
         nouveau_total: nouveauTotal,
         message: 'Code promo plateforme appliqué avec succès !'
       });
-    }
-
-    // Si la promotion globale est désactivée et qu'il n'y a pas d'autre code
-    if (cleanCode === 'SOLDE20' && !platformPromoActive) {
-      return res.status(400).json({ valide: false, error: 'Le code promo SOLDE20 a été désactivé par l\'administration.' });
     }
 
     // 2. Vérification dans les promotions propres à la boutique

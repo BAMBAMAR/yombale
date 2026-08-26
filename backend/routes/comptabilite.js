@@ -8,6 +8,7 @@ const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly } = require('../middlewares/auth');
 const { uploadBuffer } = require('../services/cloudinary');
 const { enregistrerAuditLog } = require('../lib/auditLogger');
+const { syncProduit } = require('../services/whatsapp-catalog');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -199,7 +200,9 @@ router.post(
 
       if (produit_id) {
         await pool.query(
-          `UPDATE boutique_produits SET stock_quantite = GREATEST(stock_quantite - $1, 0)
+          `UPDATE boutique_produits
+           SET stock_quantite = GREATEST(stock_quantite - $1, 0),
+               en_stock = (GREATEST(stock_quantite - $1, 0) > 0)
            WHERE id=$2 AND stock_quantite IS NOT NULL`,
           [quantite, produit_id]
         );
@@ -1376,7 +1379,12 @@ router.patch(
       const nouveauStock = parseInt(req.body.stock_quantite, 10);
 
       const { rows } = await pool.query(
-        `UPDATE boutique_produits SET stock_quantite=$1 WHERE id=$2 AND boutique_id=$3 RETURNING id, nom, stock_quantite`,
+        `UPDATE boutique_produits
+         SET stock_quantite = $1,
+             en_stock = ($1 > 0),
+             updated_at = NOW()
+         WHERE id = $2 AND boutique_id = $3
+         RETURNING id, nom, stock_quantite, en_stock, prix, images, categorie, description`,
         [nouveauStock, req.params.produitId, req.params.boutiqueId]
       );
 
@@ -1390,6 +1398,17 @@ router.patch(
         { produit_id: req.params.produitId, ancien_stock: ancienStock, nouveau_stock: nouveauStock },
         req
       );
+
+      // Synchronisation temps réel vers le catalogue Meta Commerce / WhatsApp
+      const produitMaj = rows[0];
+      if (produitMaj) {
+        setImmediate(async () => {
+          try {
+            const b = await pool.query('SELECT slug, whatsapp_catalog_id FROM boutiques WHERE id=$1', [req.params.boutiqueId]);
+            await syncProduit({ ...produitMaj, boutique_slug: b.rows[0]?.slug, whatsapp_catalog_id: b.rows[0]?.whatsapp_catalog_id });
+          } catch {}
+        });
+      }
 
       res.json(rows[0]);
     } catch (err) {

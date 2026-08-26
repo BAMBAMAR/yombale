@@ -19,6 +19,7 @@ interface ProduitDetail {
   prix_barre: number | null
   images: string[]
   en_stock: boolean
+  stock_quantite?: number | null
   categorie: string | null
   caracteristiques: Record<string, string> | null
   variantes: { nom: string; valeurs: string[] }[] | null
@@ -114,6 +115,8 @@ export default async function FicheProduitPage(
     : null
   const telUrl = p.boutique_telephone ? `tel:${p.boutique_telephone}` : null
 
+  const isEnStock = (p.stock_quantite != null) ? Number(p.stock_quantite) > 0 : (p.en_stock !== false)
+
   const remise = p.prix && p.prix_barre && p.prix_barre > p.prix
     ? Math.round((1 - p.prix / p.prix_barre) * 100)
     : null
@@ -140,7 +143,7 @@ export default async function FicheProduitPage(
       <div className="boutique-produit-layout">
 
         {/* ── Galerie ────────────────────────── */}
-        <GalerieClient images={p.images} nom={p.nom} enStock={p.en_stock} />
+        <GalerieClient images={p.images} nom={p.nom} enStock={isEnStock} />
 
         {/* ── Infos produit ──────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -161,10 +164,10 @@ export default async function FicheProduitPage(
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
               <span style={{
                 fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                background: p.en_stock ? '#dcfce7' : '#fee2e2',
-                color: p.en_stock ? '#16a34a' : '#dc2626',
+                background: isEnStock ? '#dcfce7' : '#fee2e2',
+                color: isEnStock ? '#16a34a' : '#dc2626',
               }}>
-                {p.en_stock ? '✅ En stock' : '❌ Rupture de stock'}
+                {isEnStock ? '✅ En stock' : '❌ Rupture de stock'}
               </span>
               {p.categorie && (
                 <span style={{ fontSize: 12, color: '#9ca3af', background: '#f1f5f9', padding: '3px 10px', borderRadius: 20 }}>
@@ -252,7 +255,7 @@ export default async function FicheProduitPage(
             boutiqueId={id}
             boutiqueNom={p.boutique_nom}
             produit={{ id: p.id, nom: p.nom, prix: p.prix, images: p.images, prix_barre: p.prix_barre }}
-            enStock={p.en_stock}
+            enStock={isEnStock}
             waUrl={waUrl}
             telUrl={telUrl}
             variantes={p.variantes ?? []}
