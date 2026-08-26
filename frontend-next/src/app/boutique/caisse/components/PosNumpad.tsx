@@ -81,9 +81,9 @@ export default function PosNumpad({ onSearchOrAddBarcode, onClose, isDocked = fa
             width: '100%',
             padding: '11px 12px',
             borderRadius: 10,
-            border: '2px solid var(--pos-primary, #C75B00)',
-            background: 'var(--pos-primary-bg, #fff7ed)',
-            color: 'var(--pos-text, #0f172a)',
+            border: '2px solid var(--pos-primary, #f97316)',
+            background: 'var(--pos-surface2, #1e293b)',
+            color: 'var(--pos-primary, #f97316)',
             fontSize: 17,
             fontWeight: 900,
             textAlign: 'center',
@@ -133,18 +133,18 @@ export default function PosNumpad({ onSearchOrAddBarcode, onClose, isDocked = fa
               style={{
                 padding: isDocked ? '13px 0' : '15px 0',
                 borderRadius: 10,
-                border: '1px solid var(--pos-border, #e2e8f0)',
+                border: '1px solid var(--pos-border, #334155)',
                 background: isClear
-                  ? '#fee2e2'
+                  ? 'rgba(239, 68, 68, 0.18)'
                   : isBack
-                  ? 'var(--pos-surface2, #f1f5f9)'
-                  : 'var(--pos-surface, #ffffff)',
-                color: isClear ? '#dc2626' : 'var(--pos-text, #0f172a)',
+                  ? 'var(--pos-surface2, #334155)'
+                  : 'var(--pos-surface, #1e293b)',
+                color: isClear ? '#f87171' : 'var(--pos-text, #ffffff)',
                 fontSize: 17,
                 fontWeight: 900,
                 cursor: 'pointer',
                 userSelect: 'none',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                 transition: 'all 0.1s ease',
               }}
               onMouseDown={(e) => {

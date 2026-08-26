@@ -3293,7 +3293,7 @@ async function handleIncomingInternal(msg) {
       if (userRes.rows.length > 0) {
         userId = userRes.rows[0].id;
       } else {
-        const emailTemp = `marchand_${normPh.replace(/\D/g, '')}_${Date.now().toString(36)}@nopalou.sn`;
+        const emailTemp = `marchand_${normPh.replace(/\D/g, '')}_${Date.now().toString(36)}@nopalou.com`;
         const newUser = await pool.query(
           `INSERT INTO utilisateurs (nom, email, telephone, email_verifie, mot_de_passe_hash)
            VALUES ($1, $2, $3, true, 'wa_autocreated')

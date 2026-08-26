@@ -1,3 +1,31 @@
+- **Harmonisation Complète du Mode Nuit POS, Format Thermique Standard Auchan Sénégal & Sécurisation Stricte des Accès Caissier (`CaisseClient.tsx`, `PosNumpad.tsx`, `whatsapp-chatbot.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🌙🇸🇳🧾🔒🎨✨ :
+  * **🌙 Refonte Complète du Mode Nuit & Contraste Éclairé POS** :
+    - Nouveaux tokens CSS `.pos-theme-dark` avec surfaces profondes (`--pos-bg: #090d16`, `--pos-surface: #131b2e`, `--pos-surface2: #1e293b`, `--pos-text: #ffffff`, `--pos-primary: #f97316`).
+    - Élimination systématique des fonds blancs et textes sombres codés en dur (`#0f172a`, `#fff7ed`, `#f8fafc`, `#475569`) qui créaient des ruptures de contraste.
+    - Bannière de file d'attente multi-clients harmonisée en mode sombre avec texte orange vif.
+    - Cartes catalogue : titres en blanc pur, prix en orange BCEAO percutant, badges de stock colorés haute visibilité (vert stock / orange faible / rouge épuisé) et boutons d'impression d'étiquettes EAN.
+    - Pavé numérique tactile Pro (`PosNumpad.tsx`) : écran LCD digital et touches 3x4 avec contraste et retour haptique parfaits.
+    - Bloc récapitulatif fiscal (Total HT, TVA 18%, Timbre, Remise) et grand bandeau total net à payer stylés avec lisibilité immédiate.
+  * **🇸🇳 Ticket Thermique Standard Auchan Sénégal Réel (80mm)** :
+    - Restructuration intégrale de la mise en page selon le modèle authentique Auchan Yoff / Sénégal :
+      1. En-tête centré avec logo officiel, `. [NOM BOUTIQUE] .`, adresse, téléphone, et formule d'accueil *"MERCI DE VOTRE VISITE - A BIENTOT"*.
+      2. Mention caissier : `[NOM] VOUS A SERVI :`.
+      3. Colonnes d'articles avec code EAN, nom produit, décomposition `[Quantité] x [Prix]` et total de ligne.
+      4. Grand `TOTAL : [MONTANT] CFA` en caractères gras dominants.
+      5. Détail du paiement et monnaie rendue (`REÇU` / `RENDU`).
+      6. Tableau de conformité fiscale sénégalaise : `. TAUX | VAL. TVA | MONTANT HT` (TVA 18% CGI).
+      7. Décompte d'articles : `NOMBRE DE PRODUITS : [N]`.
+      8. Code-barres transactionnel 1D, horodatage précis et remerciement wolof *"Dieureudieuf ! A bientôt chez nous."*.
+  * **🔒 Sécurisation & Isolation Stricte du Rôle Caissier** :
+    - Retrait complet des liens de paramétrage de l'interface POS : toute la configuration reste sous la responsabilité exclusive du gérant dans `/boutique`.
+    - Menu Outils restreint : les caissiers standards accèdent uniquement à leurs ventes récentes et au carnet de dettes.
+    - Accès au Rapport X, à l'importation de catalogue et aux codes PIN strictement réservé au Superviseur après saisie du PIN gérant.
+    - Protection par PIN Superviseur sur le bouton retour boutique `⬅ Boutique`.
+  * **🌐 Domaine Officiel Unique `nopalou.com`** :
+    - Suppression et remplacement systématique de toutes les occurrences `nopalou.sn` par `nopalou.com` dans le chatbot WhatsApp et les modèles de tickets.
+  * **🧪 Validation** :
+    - `npx tsc --noEmit` validé avec succès (0 erreur).
+
 - **Perfectionnement Industriel de la Caisse POS Nopalou — Logo & Identité Boutique, Pupitre Tactile 3 Colonnes, Mode Nuit / Jour, Fast Tender 2 Clics, Numpad Pro Docké, Clôture Z à l'Aveugle, Programme de Fidélité WhatsApp & Cagnottes Cashback, Remises Sécurisées et Accès Paramétrage Direct (`CaisseClient.tsx`, `PosFastTender.tsx`, `PosNumpad.tsx`, `PosBlindCloseModal.tsx`, `PosFideliteModal.tsx`, `PosRemiseModal.tsx`, `usePosShortcuts.ts`, `fast-tender.ts`, `boutiques.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🏪📱🌙📐⚡🛒🔢🔒⭐🏷️⌨️🇸🇳 :
   * **🏪 Logo & Image de Marque Boutique Intégrés** :
     - Affichage de l'avatar/logo officiel de la boutique dans la barre d'en-tête, sur l'écran de verrouillage PIN, en en-tête des tickets thermiques 80mm/58mm et sur les étiquettes code-barres adhésives (50x30mm).
