@@ -1,4 +1,10 @@
-- **Perfectionnement Industriel de la Caisse POS Nopalou — Pupitre Tactile 3 Colonnes, Mode Nuit / Jour, Fast Tender 2 Clics, Numpad Pro Docké, Clôture Z à l'Aveugle, Programme de Fidélité WhatsApp & Cagnottes Cashback, Remises Sécurisées et Accès Paramétrage Direct (`CaisseClient.tsx`, `PosFastTender.tsx`, `PosNumpad.tsx`, `PosBlindCloseModal.tsx`, `PosFideliteModal.tsx`, `PosRemiseModal.tsx`, `usePosShortcuts.ts`, `fast-tender.ts`, `boutiques.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🌙📐⚡🛒🔢🔒⭐🏷️⌨️🇸🇳 :
+- **Perfectionnement Industriel de la Caisse POS Nopalou — Logo & Identité Boutique, Pupitre Tactile 3 Colonnes, Mode Nuit / Jour, Fast Tender 2 Clics, Numpad Pro Docké, Clôture Z à l'Aveugle, Programme de Fidélité WhatsApp & Cagnottes Cashback, Remises Sécurisées et Accès Paramétrage Direct (`CaisseClient.tsx`, `PosFastTender.tsx`, `PosNumpad.tsx`, `PosBlindCloseModal.tsx`, `PosFideliteModal.tsx`, `PosRemiseModal.tsx`, `usePosShortcuts.ts`, `fast-tender.ts`, `boutiques.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🏪📱🌙📐⚡🛒🔢🔒⭐🏷️⌨️🇸🇳 :
+  * **🏪 Logo & Image de Marque Boutique Intégrés** :
+    - Affichage de l'avatar/logo officiel de la boutique dans la barre d'en-tête, sur l'écran de verrouillage PIN, en en-tête des tickets thermiques 80mm/58mm et sur les étiquettes code-barres adhésives (50x30mm).
+  * **📱 Adaptation Mobile & Tablette Ultime** :
+    - Navigation par onglets `[🛍️ Catalogue]` et `[🛒 Ticket]` avec pastille dynamique du panier.
+    - Barre flottante sticky bas d'écran `[🛒 VOIR TICKET & ENCAISSER →]` pour un passage au paiement en 1 appui sans scroll.
+    - Boutons ergonomiques "sous le pouce" (hauteur minimale 48px) pour les suggestions de billets Fast Tender et l'encaissement direct.
   * **📐 Disposition Ergonomique 3 Colonnes (Col 1 Catalogue | Col 2 Pupitre Tactile Pro | Col 3 Ticket & Encaissement)** :
     - Élimination des popups intrusifs masquant le catalogue : le pavé tactile haute qualité et les raccourcis métiers (`🏷️ Remise`, `⭐ Fidélité`, `👥 Attente (F8)`, `📖 Dettes`) sont intégrés dans une colonne centrale dédiée.
     - Bouton bascule direct `[📐 3 Colonnes / 2 Colonnes]` dans l'en-tête pour adapter l'affichage sur écrans larges ou tablettes.
