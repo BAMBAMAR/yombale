@@ -206,6 +206,43 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [cagnotteDeduite, setCagnotteDeduite] = useState<number>(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
+  // ── Mode Nuit & Disposition 3 Colonnes ────────────────────────────────────────
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
+  const [layoutColCentrale, setLayoutColCentrale] = useState<boolean>(true)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('nopalou_pos_theme')
+      if (savedTheme === 'dark') {
+        setIsDarkMode(true)
+      }
+      const savedLayout = localStorage.getItem('nopalou_pos_3col')
+      if (savedLayout === 'false') {
+        setLayoutColCentrale(false)
+      }
+    }
+  }, [])
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const next = !prev
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nopalou_pos_theme', next ? 'dark' : 'light')
+      }
+      return next
+    })
+  }
+
+  const toggleLayoutColCentrale = () => {
+    setLayoutColCentrale(prev => {
+      const next = !prev
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nopalou_pos_3col', next ? 'true' : 'false')
+      }
+      return next
+    })
+  }
+
   const [modePaiement, setModePaiement] = useState<'especes' | 'wave' | 'orange_money' | 'carte' | 'credit_client' | 'mixte'>('especes')
   const [montantRecu, setMontantRecu] = useState<string>('')
   const [montantEspecesMixte, setMontantEspecesMixte] = useState<string>('')
@@ -1200,9 +1237,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   }, [produits, verrouille, modalSuperviseur, modalConfigPin])
 
   function ajouterParCodeBarre(code: string) {
-    const p = produits.find(item => item.code_barre === code || item.id === code)
+    if (!code || !code.trim()) return
+    const clean = code.trim().toLowerCase()
+    const p = produits.find(item =>
+      (item.code_barre && item.code_barre.toLowerCase() === clean) ||
+      (item.id && item.id.toLowerCase() === clean) ||
+      (item.nom && item.nom.toLowerCase().includes(clean))
+    )
     if (p) {
       ajouterAuPanier(p)
+      showToast(`✅ ${p.nom} ajouté`, 'success')
+    } else {
+      showToast(`⚠️ Produit introuvable pour "${code}"`, 'warning')
     }
   }
 
@@ -2184,7 +2230,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
 
   return (
-    <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div className={`caisse-root ${isDarkMode ? 'pos-theme-dark' : 'pos-theme-light'}`} style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
 
       {/* Toast Notification (Offline/Online) */}
       {toastMsg && (
@@ -2225,7 +2271,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
       )}
 
-      {/* Styles Globaux Caisse POS (Plein Écran & Layout Standard 50/50) */}
+      {/* Styles Globaux Caisse POS (Plein Écran, 3 Colonnes & Thèmes) */}
       <style jsx global>{`
         @media screen {
           body header[role="banner"],
@@ -2238,16 +2284,34 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             display: none !important;
           }
 
-          .caisse-main-layout {
+          .caisse-main-layout.has-3-cols {
             display: grid !important;
-            grid-template-columns: minmax(0, 1.1fr) minmax(460px, 1fr) !important;
+            grid-template-columns: minmax(0, 1.35fr) 280px minmax(420px, 1fr) !important;
             height: calc(100vh - 52px) !important;
             max-height: calc(100vh - 52px) !important;
             overflow: hidden !important;
           }
 
+          .caisse-main-layout.has-2-cols {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1.15fr) minmax(460px, 1fr) !important;
+            height: calc(100vh - 52px) !important;
+            max-height: calc(100vh - 52px) !important;
+            overflow: hidden !important;
+          }
+
+          @media (max-width: 1200px) {
+            .caisse-main-layout.has-3-cols {
+              grid-template-columns: minmax(0, 1.15fr) minmax(460px, 1fr) !important;
+            }
+            .caisse-center-dock {
+              display: none !important;
+            }
+          }
+
           @media (max-width: 1024px) {
-            .caisse-main-layout {
+            .caisse-main-layout.has-3-cols,
+            .caisse-main-layout.has-2-cols {
               grid-template-columns: 1fr !important;
               height: auto !important;
               max-height: none !important;
@@ -2255,9 +2319,42 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             }
           }
 
-          .hover-bg-slate:hover {
-            background-color: #f1f5f9 !important;
+          /* Mode Nuit & Mode Jour Variables */
+          .pos-theme-dark {
+            --pos-bg: #0b0f19 !important;
+            --pos-surface: #1e293b !important;
+            --pos-surface2: #0f172a !important;
+            --pos-text: #f8fafc !important;
+            --pos-text2: #94a3b8 !important;
+            --pos-text3: #64748b !important;
+            --pos-navy: #ffffff !important;
+            --pos-border: #334155 !important;
+            --pos-primary: #f97316 !important;
+            --pos-primary-bg: rgba(249, 115, 22, 0.15) !important;
+            --pos-shadow: 0 4px 14px rgba(0,0,0,0.4) !important;
           }
+
+          .pos-theme-light {
+            --pos-bg: #f8fafc !important;
+            --pos-surface: #ffffff !important;
+            --pos-surface2: #f1f5f9 !important;
+            --pos-text: #0f172a !important;
+            --pos-text2: #475569 !important;
+            --pos-text3: #94a3b8 !important;
+            --pos-navy: #1e3a5f !important;
+            --pos-border: #e2e8f0 !important;
+            --pos-primary: #C75B00 !important;
+            --pos-primary-bg: #fff7ed !important;
+            --pos-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+          }
+
+          .hover-bg-slate:hover {
+            background-color: var(--pos-surface2) !important;
+          }
+          .ticket-print-container {
+            display: none !important;
+          }
+        }
           .ticket-print-container {
             display: none !important;
           }
@@ -2443,6 +2540,40 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </button>
           </div>
 
+          {/* Bouton Bascule Mode Nuit / Jour */}
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            title={isDarkMode ? "Passer en mode jour" : "Passer en mode nuit (sombre)"}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 8,
+              border: '1.5px solid var(--pos-border)', background: 'var(--pos-surface)',
+              color: 'var(--pos-text)', fontWeight: 800, fontSize: 12, cursor: 'pointer',
+              boxShadow: 'var(--pos-shadow)', flexShrink: 0
+            }}
+          >
+            <span>{isDarkMode ? '☀️' : '🌙'}</span>
+            <span className="caisse-label-desktop">{isDarkMode ? 'Jour' : 'Nuit'}</span>
+          </button>
+
+          {/* Bouton Bascule 3 Colonnes (Pupitre Tactile Central) */}
+          <button
+            type="button"
+            onClick={toggleLayoutColCentrale}
+            title="Afficher ou masquer la colonne centrale (pupitre tactile express)"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 8,
+              border: '1.5px solid var(--pos-border)',
+              background: layoutColCentrale ? 'var(--pos-primary-bg)' : 'var(--pos-surface)',
+              color: layoutColCentrale ? 'var(--pos-primary)' : 'var(--pos-text)',
+              fontWeight: 800, fontSize: 12, cursor: 'pointer',
+              boxShadow: 'var(--pos-shadow)', flexShrink: 0
+            }}
+          >
+            <span>📐</span>
+            <span className="caisse-label-desktop">{layoutColCentrale ? '3 Colonnes' : '2 Colonnes'}</span>
+          </button>
+
           {/* Menu Dropdown Outils */}
           <div style={{ position: 'relative' }}>
             <button
@@ -2465,20 +2596,32 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   position: 'fixed',
                   top: 58,
                   right: 14,
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
+                  background: 'var(--pos-surface, #ffffff)',
+                  border: '1px solid var(--pos-border, #e2e8f0)',
                   borderRadius: 12,
                   padding: 8,
                   zIndex: 9999,
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 2,
-                  minWidth: 185,
+                  minWidth: 205,
                 }}>
-                  <div style={{ padding: '4px 12px 6px', borderBottom: '1px solid #f1f5f9', marginBottom: 2 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('caisse.toolsTitle')}</span>
+                  <div style={{ padding: '4px 12px 6px', borderBottom: '1px solid var(--pos-border, #f1f5f9)', marginBottom: 2 }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--pos-text2, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('caisse.toolsTitle')}</span>
                   </div>
+                  <Link
+                    href={boutiqueActiveId ? `/boutique` : '/boutique'}
+                    target="_blank"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%',
+                      background: 'var(--pos-primary-bg, #fff7ed)', border: '1px solid var(--pos-border, #ffedd5)',
+                      color: 'var(--pos-primary, #c2410c)', fontSize: 13, fontWeight: 800, textDecoration: 'none',
+                      textAlign: 'left', borderRadius: 8, marginBottom: 4, boxSizing: 'border-box'
+                    }}
+                  >
+                    <Settings size={14} color="var(--pos-primary)" /> ⚙️ Paramètres Boutique
+                  </Link>
                   <button
                     onClick={() => {
                       setModalBilanSession(true);
@@ -2491,31 +2634,31 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                         }).catch(() => {})
                       }
                     }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: '#fff7ed', border: '1px solid #ffedd5', color: '#c2410c', fontSize: 13, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text, #334155)', fontSize: 13, fontWeight: 700, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
                     <BarChart3 size={14} color="#ea580c" /> {t('caisse.reportX')}
                   </button>
                   <button
                     onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text, #334155)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
                     <Download size={14} /> {t('caisse.importBatch')}
                   </button>
                   <button
                     onClick={() => { setModalHistorique(true); setMenuOutilsOuvert(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text, #334155)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
                     <History size={14} /> {t('caisse.history')} ({historiqueVentes.length})
                   </button>
                   <button
                     onClick={() => { setModalCarnet(true); setMenuOutilsOuvert(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text, #334155)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
                     <Book size={14} /> {t('caisse.debts')} ({clientsCredits.length})
                   </button>
                   <button
                     onClick={() => { ouvrirConfigPin(); setMenuOutilsOuvert(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: '#334155', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text, #334155)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
                     <Settings size={14} /> {t('caisse.configPins')}
                   </button>
@@ -2596,8 +2739,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
       )}
 
-      {/* Main Grid Caisse */}
-      <div className="caisse-main-layout">
+      {/* Main Grid Caisse (2 Colonnes ou 3 Colonnes avec Pupitre Tactile Pro) */}
+      <div className={`caisse-main-layout ${layoutColCentrale ? 'has-3-cols' : 'has-2-cols'}`}>
 
         {/* Côté Gauche : Recherche & Catalogue Produits Réel avec Décrémentation Dynamique du Stock */}
         <div className={`caisse-catalogue-section ${tabMobile === 'catalogue' ? 'mobile-active' : 'mobile-hidden'}`} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', background: 'var(--pos-surface2)', borderRight: '1px solid var(--pos-border)' }}>
@@ -2845,6 +2988,107 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </div>
           )}
         </div>
+
+        {/* Colonne Centrale : Pupitre Tactile Numpad Pro & Quick Actions (Mode 3 Colonnes Desktop/Tablette) */}
+        {layoutColCentrale && (
+          <div
+            className="caisse-center-dock no-print"
+            style={{
+              padding: '12px 10px',
+              background: 'var(--pos-surface)',
+              borderRight: '1px solid var(--pos-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              overflowY: 'auto',
+              boxSizing: 'border-box',
+              minWidth: 260,
+              maxWidth: 300,
+            }}
+          >
+            {/* Pavé Numérique Pro Docké */}
+            <PosNumpad
+              isDocked={true}
+              onSearchOrAddBarcode={(code) => {
+                ajouterParCodeBarre(code)
+              }}
+            />
+
+            {/* Raccourcis et Actions Métier Rapides */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 'auto' }}>
+              <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--pos-text2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                ⚡ Raccourcis Opérations
+              </span>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setModalRemise(true)}
+                  style={{
+                    padding: '9px 6px', borderRadius: 8, border: '1px solid var(--pos-border)',
+                    background: remisePourcentage > 0 ? 'var(--pos-primary-bg)' : 'var(--pos-surface2)',
+                    color: remisePourcentage > 0 ? 'var(--pos-primary)' : 'var(--pos-text)',
+                    fontWeight: 800, fontSize: 11.5,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    boxShadow: 'var(--pos-shadow)'
+                  }}
+                  title="Appliquer une remise en % ou FCFA"
+                >
+                  <span>🏷️</span> Remise
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setModalFidelite(true)}
+                  style={{
+                    padding: '9px 6px', borderRadius: 8, border: '1px solid var(--pos-border)',
+                    background: clientFidelite ? 'var(--pos-primary-bg)' : 'var(--pos-surface2)',
+                    color: clientFidelite ? 'var(--pos-primary)' : 'var(--pos-text)',
+                    fontWeight: 800, fontSize: 11.5,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    boxShadow: 'var(--pos-shadow)'
+                  }}
+                  title="Identifier un client fidélité par numéro WhatsApp"
+                >
+                  <span>⭐</span> Fidélité
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={mettrePanierEnAttente}
+                  disabled={panier.length === 0}
+                  style={{
+                    padding: '9px 6px', borderRadius: 8, border: '1px solid var(--pos-border)',
+                    background: 'var(--pos-surface2)', color: 'var(--pos-text)', fontWeight: 800, fontSize: 11.5,
+                    cursor: panier.length === 0 ? 'not-allowed' : 'pointer',
+                    opacity: panier.length === 0 ? 0.5 : 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    boxShadow: 'var(--pos-shadow)'
+                  }}
+                  title="Mettre le panier en attente pour servir le client suivant (F8)"
+                >
+                  <span>👥</span> Attente (F8)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setModalCarnet(true)}
+                  style={{
+                    padding: '9px 6px', borderRadius: 8, border: '1px solid var(--pos-border)',
+                    background: 'var(--pos-surface2)', color: 'var(--pos-text)', fontWeight: 800, fontSize: 11.5,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    boxShadow: 'var(--pos-shadow)'
+                  }}
+                  title="Ouvrir le carnet de dettes et crédits clients"
+                >
+                  <span>📖</span> Dettes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
         <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: 'var(--pos-surface)', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', height: '100%', minHeight: 0, overflowY: 'auto' }}>

@@ -5,9 +5,10 @@ import React, { useState } from 'react'
 interface PosNumpadProps {
   onSearchOrAddBarcode: (code: string) => void
   onClose?: () => void
+  isDocked?: boolean
 }
 
-export default function PosNumpad({ onSearchOrAddBarcode, onClose }: PosNumpadProps) {
+export default function PosNumpad({ onSearchOrAddBarcode, onClose, isDocked = false }: PosNumpadProps) {
   const [valeur, setValeur] = useState('')
 
   const handleKey = (char: string) => {
@@ -29,94 +30,162 @@ export default function PosNumpad({ onSearchOrAddBarcode, onClose }: PosNumpadPr
   return (
     <div
       style={{
-        background: '#ffffff',
-        border: '1.5px solid var(--pos-border, #cbd5e1)',
-        borderRadius: 14,
-        padding: 12,
-        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15)',
-        width: 220,
+        background: 'var(--pos-surface, #ffffff)',
+        border: isDocked ? 'none' : '1.5px solid var(--pos-border, #cbd5e1)',
+        borderRadius: isDocked ? 0 : 16,
+        padding: isDocked ? '10px 12px' : 16,
+        boxShadow: isDocked ? 'none' : '0 15px 35px -5px rgba(0,0,0,0.25)',
+        width: isDocked ? '100%' : 260,
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 10,
+        boxSizing: 'border-box',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
-          🔢 Pavé Code-barres
+        <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--pos-text2, #64748b)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>🔢</span> {isDocked ? 'Pavé Tactile EAN / SKU' : 'Pavé Numérique'}
         </span>
-        {onClose && (
+        {onClose && !isDocked && (
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', padding: 0 }}
+            style={{
+              background: 'var(--pos-surface2, #f1f5f9)',
+              border: 'none',
+              borderRadius: 6,
+              color: 'var(--pos-text2, #94a3b8)',
+              width: 26,
+              height: 26,
+              fontSize: 14,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             ✕
           </button>
         )}
       </div>
 
-      <input
-        type="text"
-        readOnly
-        placeholder="Code EAN / SKU..."
-        value={valeur}
-        style={{
-          width: '100%',
-          padding: '8px 10px',
-          borderRadius: 8,
-          border: '1.5px solid var(--pos-primary, #C75B00)',
-          background: '#fff7ed',
-          color: '#0f172a',
-          fontSize: 16,
-          fontWeight: 900,
-          textAlign: 'center',
-          letterSpacing: '0.1em',
-          boxSizing: 'border-box',
-        }}
-      />
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-        {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map((k) => (
+      {/* Écran Digital LCD */}
+      <div style={{ position: 'relative' }}>
+        <input
+          type="text"
+          readOnly
+          placeholder="Code-barres / SKU..."
+          value={valeur}
+          style={{
+            width: '100%',
+            padding: '11px 12px',
+            borderRadius: 10,
+            border: '2px solid var(--pos-primary, #C75B00)',
+            background: 'var(--pos-primary-bg, #fff7ed)',
+            color: 'var(--pos-text, #0f172a)',
+            fontSize: 17,
+            fontWeight: 900,
+            textAlign: 'center',
+            letterSpacing: '0.12em',
+            boxSizing: 'border-box',
+            outline: 'none',
+          }}
+        />
+        {valeur && (
           <button
-            key={k}
             type="button"
-            onClick={() => handleKey(k)}
+            onClick={() => setValeur('')}
             style={{
-              padding: '12px 0',
-              borderRadius: 8,
-              border: '1px solid #e2e8f0',
-              background: k === 'C' ? '#fee2e2' : k === '⌫' ? '#f1f5f9' : '#f8fafc',
-              color: k === 'C' ? '#dc2626' : '#0f172a',
-              fontSize: 15,
-              fontWeight: 800,
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: '#ef4444',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              width: 20,
+              height: 20,
+              fontSize: 10,
+              fontWeight: 900,
               cursor: 'pointer',
-              userSelect: 'none',
-              transition: 'background 0.1s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {k}
+            ✕
           </button>
-        ))}
+        )}
       </div>
 
+      {/* Grille des Touches Tactiles 3x4 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map((k) => {
+          const isClear = k === 'C'
+          const isBack = k === '⌫'
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => handleKey(k)}
+              style={{
+                padding: isDocked ? '13px 0' : '15px 0',
+                borderRadius: 10,
+                border: '1px solid var(--pos-border, #e2e8f0)',
+                background: isClear
+                  ? '#fee2e2'
+                  : isBack
+                  ? 'var(--pos-surface2, #f1f5f9)'
+                  : 'var(--pos-surface, #ffffff)',
+                color: isClear ? '#dc2626' : 'var(--pos-text, #0f172a)',
+                fontSize: 17,
+                fontWeight: 900,
+                cursor: 'pointer',
+                userSelect: 'none',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                transition: 'all 0.1s ease',
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'scale(0.96)'
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'scale(1)'
+              }}
+            >
+              {k}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Bouton de Validation / Ajout */}
       <button
         type="button"
         onClick={() => handleKey('OK')}
         disabled={!valeur.trim()}
         style={{
           width: '100%',
-          padding: '10px',
-          borderRadius: 8,
+          padding: '12px',
+          borderRadius: 10,
           border: 'none',
-          background: valeur.trim() ? 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)' : '#cbd5e1',
-          color: '#ffffff',
-          fontSize: 13,
+          background: valeur.trim()
+            ? 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)'
+            : 'var(--pos-surface2, #cbd5e1)',
+          color: valeur.trim() ? '#ffffff' : 'var(--pos-text2, #94a3b8)',
+          fontSize: 14,
           fontWeight: 900,
           cursor: valeur.trim() ? 'pointer' : 'not-allowed',
-          boxShadow: valeur.trim() ? '0 3px 8px rgba(199,91,0,0.3)' : 'none',
+          boxShadow: valeur.trim() ? '0 4px 12px rgba(199,91,0,0.35)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          transition: 'all 0.15s ease',
         }}
       >
-        ✓ Ajouter au panier
+        <span>✓</span> Ajouter au Panier
       </button>
     </div>
   )

@@ -1,8 +1,16 @@
-- **Perfectionnement Industriel de la Caisse POS Nopalou — Fast Tender 2 Clics, Numpad Tactile Code-Barres, Clôture Z à l'Aveugle, Programme de Fidélité WhatsApp & Cagnottes Cashback, Remises Sécurisées et Raccourcis Clavier (`CaisseClient.tsx`, `PosFastTender.tsx`, `PosNumpad.tsx`, `PosBlindCloseModal.tsx`, `PosFideliteModal.tsx`, `PosRemiseModal.tsx`, `usePosShortcuts.ts`, `fast-tender.ts`, `boutiques.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 26 août 2026)** ⚡🛒🔢🔒⭐🏷️⌨️🇸🇳 :
+- **Perfectionnement Industriel de la Caisse POS Nopalou — Pupitre Tactile 3 Colonnes, Mode Nuit / Jour, Fast Tender 2 Clics, Numpad Pro Docké, Clôture Z à l'Aveugle, Programme de Fidélité WhatsApp & Cagnottes Cashback, Remises Sécurisées et Accès Paramétrage Direct (`CaisseClient.tsx`, `PosFastTender.tsx`, `PosNumpad.tsx`, `PosBlindCloseModal.tsx`, `PosFideliteModal.tsx`, `PosRemiseModal.tsx`, `usePosShortcuts.ts`, `fast-tender.ts`, `boutiques.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🌙📐⚡🛒🔢🔒⭐🏷️⌨️🇸🇳 :
+  * **📐 Disposition Ergonomique 3 Colonnes (Col 1 Catalogue | Col 2 Pupitre Tactile Pro | Col 3 Ticket & Encaissement)** :
+    - Élimination des popups intrusifs masquant le catalogue : le pavé tactile haute qualité et les raccourcis métiers (`🏷️ Remise`, `⭐ Fidélité`, `👥 Attente (F8)`, `📖 Dettes`) sont intégrés dans une colonne centrale dédiée.
+    - Bouton bascule direct `[📐 3 Colonnes / 2 Colonnes]` dans l'en-tête pour adapter l'affichage sur écrans larges ou tablettes.
+  * **🌙 Mode Nuit / Mode Sombre (Dark Mode Pro) & Persistance Locale** :
+    - Bouton dédié `[🌙 Nuit / ☀️ Jour]` dans la barre d'en-tête POS.
+    - Palette de couleurs sombre haute lisibilité (`#0b0f19`, surfaces `#1e293b`, bordures `#334155`, texte contrasté `#f8fafc`) réduisant la fatigue visuelle des caissiers lors des longues journées ou en soirée.
+  * **⚙️ Accès Direct au Paramétrage Boutique** :
+    - Ajout du lien `⚙️ Paramètres Boutique` dans le menu Outils pour configurer instantanément la fidélité, le régime fiscal (TVA, Timbre 1%), les caissiers et les mentions de bas de ticket.
   * **⚡ Encaissement Éclair "Fast Tender" en Espèces (2 Clics Chrono)** :
     - Algorithme intelligent de suggestion des billets FCFA d'Afrique de l'Ouest (BCEAO) : `[Exact]`, `[Arrondi Supérieur]`, `[Billet 1 000 / 2 000 / 5 000 / 10 000 / 20 000 F]` avec calcul instantané du rendu monnaie.
-  * **🔢 Pavé Numérique Numpad Tactile Express (`PosNumpad.tsx`)** :
-    - Mini-clavier tactile escamotable pour saisir les codes-barres abîmés, EAN ou SKU sans jamais ouvrir le clavier virtuel Android/Windows encombrant sur tablette.
+  * **🔢 Pavé Numérique Numpad Tactile Pro Docké & Flottant (`PosNumpad.tsx`)** :
+    - Saisie fluide des codes-barres, EAN ou SKU sans jamais ouvrir le clavier virtuel Android/Windows encombrant sur tablette.
   * **🔒 Clôture Z de Caisse à l'Aveugle ("Blind Cash Close" — `PosBlindCloseModal.tsx`)** :
     - Standard bancaire anti-fraude : le caissier compte les espèces physiques sans voir le total théorique calculé.
     - Saisie assistée par coupures : billets de 10 000, 5 000, 2 000, 1 000, 500 FCFA et pièces de 500, 200, 100, 50, 25 FCFA avec calcul automatique et justification des écarts.
