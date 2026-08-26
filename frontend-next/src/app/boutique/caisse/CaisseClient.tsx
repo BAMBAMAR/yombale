@@ -2139,7 +2139,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     return (
       <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
         <div style={{ background: 'var(--pos-surface)', border: '2px solid var(--pos-primary)', borderRadius: 24, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center', boxShadow: 'var(--pos-shadow-lg)' }}>
-          <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
+          {activeBoutiqueObj?.logo ? (
+            <img
+              src={activeBoutiqueObj.logo}
+              alt={bqName}
+              style={{ width: 64, height: 64, borderRadius: 16, objectFit: 'cover', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'block' }}
+            />
+          ) : (
+            <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: 26, fontWeight: 900, boxShadow: '0 4px 12px rgba(199,91,0,0.3)' }}>
+              {bqName ? bqName.charAt(0).toUpperCase() : '🏪'}
+            </div>
+          )}
           <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: 'var(--pos-navy)' }}>
             Caisse POS {bqName ? `· ${bqName}` : 'Nopalou'}
           </h2>
@@ -2355,10 +2365,6 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             display: none !important;
           }
         }
-          .ticket-print-container {
-            display: none !important;
-          }
-        }
         @media print {
           html, body {
             background: #ffffff !important;
@@ -2488,29 +2494,42 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </div>
           )}
 
-          {/* Sélecteur de boutique — sécurisé par PIN Superviseur */}
+          {/* Sélecteur de boutique & Logo — sécurisé par PIN Superviseur */}
           {boutiques.length > 0 && (
-            initialToken || boutiques.length === 1 ? (
-              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--pos-navy)', background: '#eff6ff', padding: '5px 10px', borderRadius: 6, border: '1px solid #bfdbfe', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                🏪 {activeBoutiqueObj?.nom || boutiques[0]?.nom}
-              </span>
-            ) : (
-              <select
-                value={boutiqueActiveId}
-                onChange={e => demanderChangementBoutique(e.target.value)}
-                className="caisse-boutique-select"
-                style={{ padding: '5px 8px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#ffffff', color: 'var(--text1)', fontWeight: 800, fontSize: 11.5, cursor: 'pointer', outline: 'none', maxWidth: 180, minWidth: 110, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
-              >
-                {boutiques.map(b => {
-                  const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
-                  return (
-                    <option key={b.id} value={b.id}>
-                      {isAuth ? '🟢' : '🔒'} {b.nom}
-                    </option>
-                  );
-                })}
-              </select>
-            )
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              {activeBoutiqueObj?.logo ? (
+                <img
+                  src={activeBoutiqueObj.logo}
+                  alt={activeBoutiqueObj.nom}
+                  style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--pos-border)' }}
+                />
+              ) : (
+                <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--pos-primary)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900, flexShrink: 0 }}>
+                  {activeBoutiqueObj?.nom ? activeBoutiqueObj.nom.charAt(0).toUpperCase() : '🏪'}
+                </span>
+              )}
+              {initialToken || boutiques.length === 1 ? (
+                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--pos-navy)', background: 'var(--pos-primary-bg)', padding: '5px 10px', borderRadius: 6, border: '1px solid var(--pos-border)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  {activeBoutiqueObj?.nom || boutiques[0]?.nom}
+                </span>
+              ) : (
+                <select
+                  value={boutiqueActiveId}
+                  onChange={e => demanderChangementBoutique(e.target.value)}
+                  className="caisse-boutique-select"
+                  style={{ padding: '5px 8px', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--pos-surface)', color: 'var(--pos-text)', fontWeight: 800, fontSize: 11.5, cursor: 'pointer', outline: 'none', maxWidth: 180, minWidth: 110, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  {boutiques.map(b => {
+                    const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
+                    return (
+                      <option key={b.id} value={b.id}>
+                        {isAuth ? '🟢' : '🔒'} {b.nom}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+            </div>
           )}
         </div>
 
@@ -3666,6 +3685,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       {derniereVente && (
         <div className="ticket-print-container">
           <div style={{ textAlign: 'center', borderBottom: '1px dashed #000', paddingBottom: 6, marginBottom: 8 }}>
+            {activeBoutiqueObj?.logo && (
+              <img
+                src={activeBoutiqueObj.logo}
+                alt="Logo Boutique"
+                style={{ maxWidth: 100, maxHeight: 50, objectFit: 'contain', margin: '0 auto 4px', display: 'block' }}
+              />
+            )}
             <h3 style={{ margin: 0, fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase' }}>
               {boutiqueActive ? boutiqueActive.nom : 'NOPALOU POS'}
             </h3>
