@@ -1317,6 +1317,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     }
   }, [pinSuperviseurSaisi, modalSuperviseur])
 
+  // ── Autorisation Remise Sécurisée Superviseur ───────────────────────────────
+  function ouvrirModalRemise() {
+    if (roleActif === 'superviseur') {
+      setModalRemise(true)
+    } else {
+      demanderValidationSuperviseur('Autorisation Remise Commerciale (Superviseur Requis)', () => {
+        setModalRemise(true)
+      })
+    }
+  }
+
   // ── Authentification et Déverrouillage Automatique par Rôle ──────────────────
   function deverrouillerPin(codeToTest?: string) {
     const codeSaisi = codeToTest !== undefined ? codeToTest : codePinSaisi
@@ -2792,8 +2803,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
 
           {/* Barre de Recherche Code-Barres & Nom + Scanner Caméra (Responsive Mobile 2 Lignes) */}
-          <div className="caisse-search-row">
+          {/* Barre de Recherche Code-Barres & Nom + Scanner Caméra (Agrandie & Épurée) */}
+          <div className="caisse-search-row" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <div style={{ flex: 1, position: 'relative' }}>
+              <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--pos-text3)' }}>
+                <Search size={18} />
+              </div>
               <input
                 ref={searchInputRef}
                 type="text"
@@ -2801,8 +2816,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 value={recherche}
                 onChange={e => setRecherche(e.target.value)}
                 style={{
-                  width: '100%', padding: '13px 16px', borderRadius: 10, border: '1.5px solid var(--pos-border)',
-                  background: 'var(--pos-surface)', color: 'var(--pos-text)', fontSize: 14, fontWeight: 600, boxSizing: 'border-box',
+                  width: '100%', padding: '13px 16px 13px 42px', borderRadius: 12, border: '1.5px solid var(--pos-border)',
+                  background: 'var(--pos-surface)', color: 'var(--pos-text)', fontSize: 14.5, fontWeight: 600, boxSizing: 'border-box',
                   boxShadow: 'var(--pos-shadow)',
                   outline: 'none',
                   transition: 'border-color 0.15s',
@@ -2810,65 +2825,50 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 onFocus={e => { e.target.style.borderColor = 'var(--pos-primary)'; }}
                 onBlur={e => { e.target.style.borderColor = 'var(--pos-border)'; }}
               />
-
-              {/* Pavé Numérique Numpad Tactile Escamotable */}
-              {showNumpad && (
-                <div style={{ position: 'absolute', top: 52, left: 0, zIndex: 150 }}>
-                  <PosNumpad
-                    onSearchOrAddBarcode={(code) => {
-                      ajouterParCodeBarre(code)
-                    }}
-                    onClose={() => setShowNumpad(false)}
-                  />
-                </div>
+              {recherche && (
+                <button
+                  type="button"
+                  onClick={() => setRecherche('')}
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'var(--pos-surface2)', border: 'none', borderRadius: '50%',
+                    width: 22, height: 22, color: 'var(--pos-text2)', fontSize: 12, fontWeight: 800,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  ✕
+                </button>
               )}
             </div>
 
-            <div className="caisse-search-row-btns" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className="caisse-search-row-btns" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
               <button
                 type="button"
-                onClick={() => setShowNumpad(prev => !prev)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', borderRadius: 10,
-                  background: showNumpad ? 'var(--pos-primary)' : 'var(--pos-surface)',
-                  color: showNumpad ? '#ffffff' : 'var(--pos-text)',
-                  border: '1.5px solid var(--pos-border)',
-                  fontWeight: 800, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
-                  boxShadow: 'var(--pos-shadow)',
-                  transition: 'all 0.15s ease',
-                  flex: '1 1 auto', justifyContent: 'center'
-                }}
-                title="Ouvrir le pavé numérique tactile express"
-              >
-                <span>🔢 Clavier</span>
-              </button>
-
-              <button
                 onClick={demarrerScannerCamera}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRadius: 10,
+                  display: 'inline-flex', alignItems: 'center', gap: 7, padding: '0 14px', height: 46, borderRadius: 12,
                   background: '#0284c7', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
                   cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(2,132,199,0.3)',
-                  transition: 'all 0.15s ease',
-                  flex: '1 1 auto', justifyContent: 'center'
+                  transition: 'all 0.15s ease', flexShrink: 0
                 }}
+                title="Scanner avec la caméra"
               >
                 <Camera size={18} />
-                <span>📷 {t('caisse.scannerCamera')}</span>
+                <span>📷 Scanner</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => setModalPairageSmartphone(true)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', borderRadius: 10,
-                  background: 'var(--pos-surface3)', color: '#ffffff', border: 'none', fontWeight: 800, fontSize: 13,
+                  display: 'inline-flex', alignItems: 'center', gap: 7, padding: '0 14px', height: 46, borderRadius: 12,
+                  background: 'var(--pos-surface)', color: 'var(--pos-text)', border: '1.5px solid var(--pos-border)', fontWeight: 800, fontSize: 13,
                   cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: 'var(--pos-shadow)',
-                  transition: 'all 0.15s ease',
-                  flex: '1 1 auto', justifyContent: 'center'
+                  transition: 'all 0.15s ease', flexShrink: 0
                 }}
                 title="Connecter la caméra de votre smartphone comme douchette sans fil"
               >
-                <span>📱 {t('caisse.scannerSmartphone')}</span>
+                <span>📱 Douchette</span>
               </button>
             </div>
           </div>
@@ -3069,7 +3069,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <button
                   type="button"
-                  onClick={() => setModalRemise(true)}
+                  onClick={ouvrirModalRemise}
                   style={{
                     padding: '9px 6px', borderRadius: 8, border: '1px solid var(--pos-border)',
                     background: remisePourcentage > 0 ? 'var(--pos-primary-bg)' : 'var(--pos-surface2)',
@@ -3078,7 +3078,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                     boxShadow: 'var(--pos-shadow)'
                   }}
-                  title="Appliquer une remise en % ou FCFA"
+                  title="Appliquer une remise commerciale (Superviseur)"
                 >
                   <span>🏷️</span> Remise
                 </button>
@@ -3272,15 +3272,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 {panier.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => {
-                      demanderValidationSuperviseur('Application d’une Remise Client Exceptionnelle', () => {
-                        setModalRemise(true)
-                      })
-                    }}
+                    onClick={ouvrirModalRemise}
                     style={{
-                      background: remisePourcentage > 0 ? '#fff7ed' : '#f8fafc',
-                      border: remisePourcentage > 0 ? '1px solid #fdba74' : '1px solid #cbd5e1',
-                      color: remisePourcentage > 0 ? '#C75B00' : '#475569',
+                      background: remisePourcentage > 0 ? 'var(--pos-primary-bg)' : 'var(--pos-surface2)',
+                      border: remisePourcentage > 0 ? '1px solid var(--pos-primary)' : '1px solid var(--pos-border)',
+                      color: remisePourcentage > 0 ? 'var(--pos-primary)' : 'var(--pos-text2)',
                       borderRadius: 6,
                       padding: '3px 8px',
                       fontSize: 10.5,

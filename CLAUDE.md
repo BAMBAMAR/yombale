@@ -1,3 +1,15 @@
+- **Élargissement de la Barre de Recherche, Élimination du Bouton Clavier Superflu & Verrouillage PIN Superviseur des Remises Commerciales (`CaisseClient.tsx`, `PosRemiseModal.tsx`, `CLAUDE.md`) (`main` - 26 août 2026)** 🔍🏷️🔒📱✨ :
+  * **🔍 Élargissement Maximal de la Barre de Recherche Produits & EAN** :
+    - Retrait définitif du bouton `[🔢 Clavier]` qui comprimait la barre de recherche.
+    - La barre de recherche occupe désormais tout l'espace disponible (`flex: 1`, icône loupe intégrée et bouton effacer `✕` rapide).
+    - Boutons d'actions `[📷 Scanner]` et `[📱 Douchette]` compacts et alignés à droite sans réduire le champ de saisie.
+  * **🔒 Verrouillage Strict des Remises par Code PIN Superviseur** :
+    - Interdiction formelle pour un caissier d'accorder librement des remises ou de choisir un pourcentage non autorisé.
+    - Tout clic sur `🏷️ Remise` (pupitre central ou panneau ticket) déclenche immédiatement le dialogue de validation par code PIN du Superviseur/Gérant si l'utilisateur actif est un caissier standard.
+    - Modale `PosRemiseModal.tsx` sécurisée avec badge visuel d'autorisation superviseur et support complet du thème sombre.
+  * **🧪 Validation** :
+    - `npx tsc --noEmit` validé avec 100% de succès (0 erreur).
+
 - **Harmonisation Complète du Mode Nuit POS, Format Thermique Standard Auchan Sénégal & Sécurisation Stricte des Accès Caissier (`CaisseClient.tsx`, `PosNumpad.tsx`, `whatsapp-chatbot.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🌙🇸🇳🧾🔒🎨✨ :
   * **🌙 Refonte Complète du Mode Nuit & Contraste Éclairé POS** :
     - Nouveaux tokens CSS `.pos-theme-dark` avec surfaces profondes (`--pos-bg: #090d16`, `--pos-surface: #131b2e`, `--pos-surface2: #1e293b`, `--pos-text: #ffffff`, `--pos-primary: #f97316`).
