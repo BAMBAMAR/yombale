@@ -370,13 +370,17 @@ module.exports = async function migrateInline() {
       );
       CREATE UNIQUE INDEX IF NOT EXISTS uidx_caisse_avoirs_code ON caisse_avoirs(boutique_id, code);
 
-      -- Colonnes de personnalisation des reçus et fidélité dans boutiques
+      -- Colonnes de personnalisation des reçus, fidélité et règles de remises dans boutiques
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_actif BOOLEAN DEFAULT TRUE;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_type VARCHAR(30) DEFAULT 'cagnotte';
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_taux_cashback NUMERIC(5,2) DEFAULT 3.00;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_tampons_max INT DEFAULT 10;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS fidelite_seuil_tampon NUMERIC(12,2) DEFAULT 2000;
       ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS message_bas_ticket TEXT DEFAULT '';
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS pos_remise_max_caissier NUMERIC(5,2) DEFAULT 10.00;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS pos_remise_seuil_auto_montant NUMERIC(12,2) DEFAULT 0;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS pos_remise_seuil_auto_pct NUMERIC(5,2) DEFAULT 0;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS pos_remise_motifs JSONB DEFAULT '[{"id":"anti_gaspi","nom":"🍌 Date courte / Anti-gaspi","pct":30},{"id":"defaut","nom":"📦 Défaut emballage","pct":15},{"id":"personnel","nom":"👥 Personnel / Employé","pct":10},{"id":"geste","nom":"👑 Geste commercial","pct":5}]';
 
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS caracteristiques JSONB DEFAULT '{}';
       ALTER TABLE annonces_classifiees ADD COLUMN IF NOT EXISTS rejete BOOLEAN DEFAULT FALSE;

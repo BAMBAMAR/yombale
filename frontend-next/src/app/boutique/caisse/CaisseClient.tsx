@@ -88,7 +88,24 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [terminalPlan, setTerminalPlan] = useState<string | null>('pro')
 
   // ── État Boutiques du Marchand & Synchronisation Catalogue ───────────────────
-  const [boutiques, setBoutiques] = useState<{ id: string; nom: string; plan_actif?: string | null; regime_fiscal?: string; prix_tva_incluse?: boolean; timbre_fiscal_applicable?: boolean; tva_taux_defaut?: number; actif?: boolean; adresse?: string | null; telephone?: string | null; message_bas_ticket?: string | null; logo?: string | null }[]>([])
+  const [boutiques, setBoutiques] = useState<{
+    id: string;
+    nom: string;
+    plan_actif?: string | null;
+    regime_fiscal?: string;
+    prix_tva_incluse?: boolean;
+    timbre_fiscal_applicable?: boolean;
+    tva_taux_defaut?: number;
+    actif?: boolean;
+    adresse?: string | null;
+    telephone?: string | null;
+    message_bas_ticket?: string | null;
+    logo?: string | null;
+    pos_remise_max_caissier?: number;
+    pos_remise_seuil_auto_montant?: number;
+    pos_remise_seuil_auto_pct?: number;
+    pos_remise_motifs?: Array<{ id: string; nom: string; pct: number }>;
+  }[]>([])
   const [boutiqueActiveId, setBoutiqueActiveId] = useState<string>('')
   const [loadingProduits, setLoadingProduits] = useState<boolean>(true)
   const [modalImportBatch, setModalImportBatch] = useState<boolean>(false)
@@ -199,6 +216,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [categorieFiltre, setCategorieFiltre] = useState<string>('tous')
   const [panier, setPanier] = useState<LignePanier[]>([])
   const [remisePourcentage, setRemisePourcentage] = useState<number>(0)
+  const [remiseMotif, setRemiseMotif] = useState<string>('')
   const [modalRemise, setModalRemise] = useState<boolean>(false)
   const [showNumpad, setShowNumpad] = useState<boolean>(false)
   const [modalFidelite, setModalFidelite] = useState<boolean>(false)
@@ -865,6 +883,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             await chargerCaissiersEtSession(bqObj.id)
             await chargerProduitsBoutique(bqObj.id)
             await chargerClientsCredits(bqObj.id)
+            await chargerReglesRemises(bqObj.id)
             setLoadingProduits(false)
             return
           }
@@ -890,6 +909,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           await chargerCaissiersEtSession(bId)
           await chargerProduitsBoutique(bId)
           await chargerClientsCredits(bId)
+          await chargerReglesRemises(bId)
         } else {
           // Fallback hors-ligne : restaurer depuis le cache local si la requête réseau a échoué
           const cachedStr = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_user_boutiques') : null
@@ -905,6 +925,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 await chargerCaissiersEtSession(bId)
                 await chargerProduitsBoutique(bId)
                 await chargerClientsCredits(bId)
+                await chargerReglesRemises(bId)
                 return
               }
             } catch (eCache) {}
@@ -919,6 +940,21 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     }
     chargerBoutiquesEtProduits()
   }, [initialToken])
+
+  async function chargerReglesRemises(bId: string) {
+    if (!bId) return
+    try {
+      const res = await fetch(`/api/boutiques/${bId}/pos-regles-remises`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.regles) {
+          setBoutiques(prev => prev.map(b => b.id === bId ? { ...b, ...data.regles } : b))
+        }
+      }
+    } catch (e) {
+      console.warn('[chargerReglesRemises warn]', e)
+    }
+  }
 
   async function chargerClientsCredits(bId: string) {
     if (!bId) return
@@ -1317,15 +1353,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     }
   }, [pinSuperviseurSaisi, modalSuperviseur])
 
-  // ── Autorisation Remise Sécurisée Superviseur ───────────────────────────────
+  // ── Autorisation Remise Sécurisée & Motifs Métiers (Standard Auchan) ────────
   function ouvrirModalRemise() {
-    if (roleActif === 'superviseur') {
-      setModalRemise(true)
-    } else {
-      demanderValidationSuperviseur('Autorisation Remise Commerciale (Superviseur Requis)', () => {
-        setModalRemise(true)
-      })
-    }
+    setModalRemise(true)
   }
 
   // ── Authentification et Déverrouillage Automatique par Rôle ──────────────────
@@ -1479,53 +1509,59 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           fondDeCaisse: fond,
           caissierNom,
           statut: 'ouverte',
-          ventes: { total: 0, especes: 0, wave: 0, orangeMoney: 0, carte: 0, mixte: 0, nbVentes: 0 },
+          ventes: {
+            total: 0,
+            especes: 0,
+            wave: 0,
+            orangeMoney: 0,
+            carte: 0,
+            mixte: 0,
+            nbVentes: 0
+          }
         });
+        setModalSessionOuverture(false);
       } else {
-        throw new Error();
+        alert(data.error || 'Erreur lors de l’ouverture de la session.');
       }
-    } catch {
-      // Fallback local
+    } catch (e) {
+      console.error('Erreur ouverture session:', e);
       setSession({
-        id: `SES-${Date.now().toString().slice(-6)}`,
+        id: `SESS-LOCALE-${Date.now()}`,
         dateOuverture: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         fondDeCaisse: fond,
         caissierNom,
         statut: 'ouverte',
-        ventes: { total: 0, especes: 0, wave: 0, orangeMoney: 0, carte: 0, mixte: 0, nbVentes: 0 },
+        ventes: {
+          total: 0,
+          especes: 0,
+          wave: 0,
+          orangeMoney: 0,
+          carte: 0,
+          mixte: 0,
+          nbVentes: 0
+        }
       });
+      setModalSessionOuverture(false);
     }
-    setModalSessionOuverture(false)
   }
 
   // AJOUT AU PANIER AVEC VÉRIFICATION DE SESSION ET CONTRÔLE STOCK
   function ajouterAuPanier(p: ProduitCaisse) {
-    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      try { navigator.vibrate(35) } catch {}
-    }
-
-    if (!session) {
-      setModalSessionOuverture(true)
-      return
-    }
-
-    const itemExist = panier.find(item => item.produit.id === p.id)
-    const qteActuelle = itemExist ? itemExist.quantite : 0
-
-    // Vérifier si la quantité dans le panier atteint ou dépasse le stock physique
-    if (qteActuelle >= p.stock) {
-      demanderValidationSuperviseur(`Autoriser Vente Hors-Stock (${p.nom} : Stock disponible ${p.stock})`, () => {
-        setPanier(prev => {
-          const index = prev.findIndex(item => item.produit.id === p.id)
-          if (index >= 0) {
-            const copi = [...prev]
-            copi[index].quantite += 1
-            return copi
-          }
-          return [...prev, { produit: p, quantite: 1, prixUnitaire: p.prix }]
+    if (typeof p.stock === 'number' && !isNaN(p.stock)) {
+      const itemExistant = panier.find(i => i.produit.id === p.id)
+      const qteActuelle = itemExistant ? itemExistant.quantite : 0
+      if (qteActuelle >= p.stock) {
+        demanderValidationSuperviseur(`Autoriser Vente Hors-Stock (${p.nom} : Stock disponible ${p.stock})`, () => {
+          setPanier(prev => {
+            const ex = prev.find(i => i.produit.id === p.id)
+            if (ex) {
+              return prev.map(i => i.produit.id === p.id ? { ...i, quantite: i.quantite + 1 } : i)
+            }
+            return [...prev, { produit: p, quantite: 1, prixUnitaire: p.prix }]
+          })
         })
-      })
-      return
+        return
+      }
     }
 
     setPanier(prev => {
@@ -1622,6 +1658,22 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   const sousTotalPanier = panier.reduce((acc, item) => acc + (item.prixUnitaire * item.quantite), 0)
   const montantRemise = Math.round((sousTotalPanier * remisePourcentage) / 100)
+
+  // ── MOTEUR DE REMISE AUTOMATIQUE PAR SEUIL DE PANIER (STANDARD AUCHAN) ──
+  useEffect(() => {
+    const seuilMontant = Number(boutiqueActive?.pos_remise_seuil_auto_montant || 0)
+    const seuilPct = Number(boutiqueActive?.pos_remise_seuil_auto_pct || 0)
+
+    if (seuilMontant > 0 && seuilPct > 0 && sousTotalPanier >= seuilMontant) {
+      if (remisePourcentage < seuilPct && (!remiseMotif || remiseMotif.includes('Auto'))) {
+        setRemisePourcentage(seuilPct)
+        setRemiseMotif(`⚡ Remise Seuil Panier Auto (≥ ${fcfa(seuilMontant)})`)
+      }
+    } else if (seuilMontant > 0 && sousTotalPanier < seuilMontant && remiseMotif.includes('Auto')) {
+      setRemisePourcentage(0)
+      setRemiseMotif('')
+    }
+  }, [sousTotalPanier, boutiqueActive?.pos_remise_seuil_auto_montant, boutiqueActive?.pos_remise_seuil_auto_pct])
   
   const totalPanierCalculatedRaw = regimeFiscal === 'non_assujetti' || regimeFiscal === 'exonere' || estExonereClient
     ? sousTotalPanier
@@ -1874,6 +1926,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         heure: heureStr,
         total: totalPanier,
         remise: montantRemise,
+        remiseMotif: remiseMotif || '',
         recu,
         monnaie: monnaieARendre,
         ticket: [...panier],
@@ -3748,7 +3801,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 11, borderBottom: '1px dashed #000', padding: '5px 0' }}>
             {derniereVente.remise > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>REMISE :</span>
+                <span>REMISE {(derniereVente as any).remiseMotif ? `(${(derniereVente as any).remiseMotif.slice(0, 20)})` : ''} :</span>
                 <span>-{fcfa(derniereVente.remise)}</span>
               </div>
             )}
@@ -4216,12 +4269,20 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         />
       )}
 
-      {/* Modale Remise Exceptionnelle Tactile */}
+      {/* Modale Remise Commerciale & Motifs Métiers (Standard Auchan) */}
       {modalRemise && (
         <PosRemiseModal
           sousTotal={sousTotalPanier}
           remiseActuelle={remisePourcentage}
-          onApplyRemise={(pct) => setRemisePourcentage(pct)}
+          motifActuel={remiseMotif}
+          plafondCaissierPct={Number(boutiqueActive?.pos_remise_max_caissier ?? 10)}
+          motifsBoutique={boutiqueActive?.pos_remise_motifs}
+          isSuperviseur={roleActif === 'superviseur'}
+          onApplyRemise={(pct, motif) => {
+            setRemisePourcentage(pct)
+            setRemiseMotif(motif || '')
+          }}
+          onRequestSupervisor={(titre, onValide) => demanderValidationSuperviseur(titre, onValide)}
           onClose={() => setModalRemise(false)}
         />
       )}

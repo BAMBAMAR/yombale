@@ -1,3 +1,29 @@
+- **Moteur de Remises Automatiques, Plafond d'Autonomie Caissier & Motifs Métiers Standard Retail Auchan (`CaisseClient.tsx`, `PosRemiseModal.tsx`, `ParametresFiscalite.tsx`, `boutiques.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🏷️⚡🏬🍌👥📦🇸🇳✨ :
+  * **🏬 Standard Retail & Grande Distribution Auchan / Carrefour** :
+    - Fini les blocages systématiques demandant un superviseur à chaque client ou le caissier qui saisit n'importe quel montant librement.
+    - Le gérant/administrateur paramètre directement dans **Gestion Boutique ➔ Paramètres** les règles précises de politique commerciale.
+  * **⚡ Remises 100% Automatiques par Seuil Panier** :
+    - Dès que le sous-total du panier atteint le seuil configuré (ex: `≥ 25 000 FCFA`), le POS applique instantanément le pourcentage de réduction automatique (ex: `5%`) sans aucune action manuelle du caissier.
+    - Repassage automatique à 0% si des articles sont retirés du panier sous le seuil.
+  * **🍌 Motifs Métiers Pré-Autorisés (1 Clic)** :
+    - Onglet rapide dans la modale de remise avec boutons prédéfinis :
+      1. `[🍌 Date courte / Anti-gaspi -30%]`
+      2. `[📦 Défaut emballage / Boîte abîmée -15%]`
+      3. `[👥 Personnel / Employé du magasin -10%]`
+      4. `[👑 Geste commercial / Fidélité client -5%]`
+    - Application instantanée en 1 clic sans bloquer la file d'attente client.
+  * **🔒 Plafond d'Autonomie Caissier Paramétrable** :
+    - Le commerçant définit le taux maximum autorisé pour les caissiers (ex: `10%`).
+    - Toute remise standard ≤ au plafond est validée sans interruption.
+    - Au-delà du plafond, la validation par code PIN Superviseur est automatiquement sollicitée.
+  * **⚙️ Back-Office Marchand Dédié (`ParametresFiscalite.tsx`)** :
+    - Section 5 : Configuration du plafond d'autonomie caissier, seuil de panier automatique, taux promotionnel et message personnalisé de bas de reçu thermique.
+  * **🇸🇳 Ticket Thermique & Persistance** :
+    - Impression du motif de remise sur le reçu thermique 80mm/58mm : `REMISE (Date courte) : -X FCFA`.
+    - Colonnes PostgreSQL dédiées : `pos_remise_max_caissier`, `pos_remise_seuil_auto_montant`, `pos_remise_seuil_auto_pct`, `pos_remise_motifs` dans la table `boutiques`.
+  * **🧪 Validation** :
+    - `npx tsc --noEmit` validé avec 100% de succès (0 erreur).
+
 - **Élargissement de la Barre de Recherche, Élimination du Bouton Clavier Superflu & Verrouillage PIN Superviseur des Remises Commerciales (`CaisseClient.tsx`, `PosRemiseModal.tsx`, `CLAUDE.md`) (`main` - 26 août 2026)** 🔍🏷️🔒📱✨ :
   * **🔍 Élargissement Maximal de la Barre de Recherche Produits & EAN** :
     - Retrait définitif du bouton `[🔢 Clavier]` qui comprimait la barre de recherche.

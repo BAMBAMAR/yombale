@@ -504,6 +504,11 @@ router.get('/mine', verifierToken, async (req, res) => {
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
+              b.message_bas_ticket,
+              COALESCE(b.pos_remise_max_caissier, 10.00) AS pos_remise_max_caissier,
+              COALESCE(b.pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
+              COALESCE(b.pos_remise_seuil_auto_pct, 0) AS pos_remise_seuil_auto_pct,
+              COALESCE(b.pos_remise_motifs, '[{"id":"anti_gaspi","nom":"🍌 Date courte / Anti-gaspi","pct":30},{"id":"defaut","nom":"📦 Défaut emballage","pct":15},{"id":"personnel","nom":"👥 Personnel / Employé","pct":10},{"id":"geste","nom":"👑 Geste commercial","pct":5}]'::jsonb) AS pos_remise_motifs,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               (b.utilisateur_id = $1) AS is_owner,
               (
@@ -640,6 +645,11 @@ router.get('/:id', async (req, res) => {
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               b.regime_fiscal, b.prix_tva_incluse, b.timbre_fiscal_applicable, b.tva_taux_defaut,
               b.rccm, b.ninea, b.forme_juridique, b.capital_social, b.compte_bancaire, b.conditions_vente, b.pied_de_page_document,
+              b.message_bas_ticket,
+              COALESCE(b.pos_remise_max_caissier, 10.00) AS pos_remise_max_caissier,
+              COALESCE(b.pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
+              COALESCE(b.pos_remise_seuil_auto_pct, 0) AS pos_remise_seuil_auto_pct,
+              COALESCE(b.pos_remise_motifs, '[{"id":"anti_gaspi","nom":"🍌 Date courte / Anti-gaspi","pct":30},{"id":"defaut","nom":"📦 Défaut emballage","pct":15},{"id":"personnel","nom":"👥 Personnel / Employé","pct":10},{"id":"geste","nom":"👑 Geste commercial","pct":5}]'::jsonb) AS pos_remise_motifs,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               a.plan AS plan_actif
        FROM boutiques b
@@ -1997,10 +2007,11 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
       newSlug = await uniqueSlug(slugBase, req.params.id);
     }
 
-    // UPDATE colonnes avancées & fiscales
+    // UPDATE colonnes avancées & fiscales & remises POS
     try {
       const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
               rccm, ninea, forme_juridique, capital_social, compte_bancaire, conditions_vente, pied_de_page_document,
+              message_bas_ticket, pos_remise_max_caissier, pos_remise_seuil_auto_montant, pos_remise_seuil_auto_pct, pos_remise_motifs,
               mode_fonctionnement, meta_pixel_id, tiktok_pixel_id, ga4_id, actif } = req.body;
 
       const parseBoolVal = (v) => {
@@ -2031,8 +2042,13 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
          meta_pixel_id=COALESCE($20, meta_pixel_id),
          tiktok_pixel_id=COALESCE($21, tiktok_pixel_id),
          ga4_id=COALESCE($22, ga4_id),
-         actif=CASE WHEN $23::boolean IS NOT NULL THEN $23::boolean ELSE actif END
-         WHERE id=$24`,
+         actif=CASE WHEN $23::boolean IS NOT NULL THEN $23::boolean ELSE actif END,
+         message_bas_ticket=COALESCE($24, message_bas_ticket),
+         pos_remise_max_caissier=COALESCE($25, pos_remise_max_caissier),
+         pos_remise_seuil_auto_montant=COALESCE($26, pos_remise_seuil_auto_montant),
+         pos_remise_seuil_auto_pct=COALESCE($27, pos_remise_seuil_auto_pct),
+         pos_remise_motifs=COALESCE($28, pos_remise_motifs)
+         WHERE id=$29`,
         [
           cover_url||null, whatsapp||null, site_web||null, facebook||null,
           instagram||null, horairesJson, newSlug,
@@ -2047,6 +2063,11 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
           tiktok_pixel_id?.trim() || null,
           ga4_id?.trim() || null,
           parseBoolVal(actif),
+          message_bas_ticket || null,
+          pos_remise_max_caissier !== undefined && pos_remise_max_caissier !== '' ? Number(pos_remise_max_caissier) : null,
+          pos_remise_seuil_auto_montant !== undefined && pos_remise_seuil_auto_montant !== '' ? Number(pos_remise_seuil_auto_montant) : null,
+          pos_remise_seuil_auto_pct !== undefined && pos_remise_seuil_auto_pct !== '' ? Number(pos_remise_seuil_auto_pct) : null,
+          pos_remise_motifs ? (typeof pos_remise_motifs === 'string' ? pos_remise_motifs : JSON.stringify(pos_remise_motifs)) : null,
           req.params.id
         ]
       );
@@ -5050,6 +5071,66 @@ router.post('/scan-ocr', async (req, res) => {
   } catch (err) {
     console.error('[OCR SCAN NOM ERR]', err);
     return res.status(500).json({ error: 'Erreur lors de la lecture OCR du produit' });
+  }
+});
+
+// ── GET /api/boutiques/:id/pos-regles-remises — Lecture des règles de remises POS (Auchan Standard)
+router.get('/:id/pos-regles-remises', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, nom, 
+              COALESCE(pos_remise_max_caissier, 10.00) AS pos_remise_max_caissier,
+              COALESCE(pos_remise_seuil_auto_montant, 0) AS pos_remise_seuil_auto_montant,
+              COALESCE(pos_remise_seuil_auto_pct, 0) AS pos_remise_seuil_auto_pct,
+              COALESCE(pos_remise_motifs, '[{"id":"anti_gaspi","nom":"🍌 Date courte / Anti-gaspi","pct":30},{"id":"defaut","nom":"📦 Défaut emballage","pct":15},{"id":"personnel","nom":"👥 Personnel / Employé","pct":10},{"id":"geste","nom":"👑 Geste commercial","pct":5}]'::jsonb) AS pos_remise_motifs,
+              COALESCE(fidelite_actif, true) AS fidelite_actif,
+              COALESCE(fidelite_taux_cashback, 3.00) AS fidelite_taux_cashback
+       FROM boutiques WHERE id = $1`,
+      [req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    res.json({ ok: true, regles: rows[0] });
+  } catch (err) {
+    console.error('[GET POS REGLES REMISES ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des règles de remises' });
+  }
+});
+
+// ── PUT /api/boutiques/:id/pos-regles-remises — Mise à jour des règles de remises POS
+router.put('/:id/pos-regles-remises', verifierToken, async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const {
+      pos_remise_max_caissier,
+      pos_remise_seuil_auto_montant,
+      pos_remise_seuil_auto_pct,
+      pos_remise_motifs
+    } = req.body;
+
+    const { rows } = await pool.query(
+      `UPDATE boutiques
+       SET pos_remise_max_caissier = COALESCE($1, pos_remise_max_caissier, 10.00),
+           pos_remise_seuil_auto_montant = COALESCE($2, pos_remise_seuil_auto_montant, 0),
+           pos_remise_seuil_auto_pct = COALESCE($3, pos_remise_seuil_auto_pct, 0),
+           pos_remise_motifs = COALESCE($4, pos_remise_motifs),
+           updated_at = NOW()
+       WHERE id = $5
+       RETURNING id, pos_remise_max_caissier, pos_remise_seuil_auto_montant, pos_remise_seuil_auto_pct, pos_remise_motifs`,
+      [
+        pos_remise_max_caissier !== undefined ? Number(pos_remise_max_caissier) : null,
+        pos_remise_seuil_auto_montant !== undefined ? Number(pos_remise_seuil_auto_montant) : null,
+        pos_remise_seuil_auto_pct !== undefined ? Number(pos_remise_seuil_auto_pct) : null,
+        pos_remise_motifs ? JSON.stringify(pos_remise_motifs) : null,
+        bq.id
+      ]
+    );
+
+    res.json({ ok: true, regles: rows[0], message: 'Règles de remises enregistrées avec succès.' });
+  } catch (err) {
+    console.error('[PUT POS REGLES REMISES ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l’enregistrement des règles de remises' });
   }
 });
 

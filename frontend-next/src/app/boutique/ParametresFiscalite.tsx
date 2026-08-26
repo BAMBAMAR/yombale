@@ -305,6 +305,80 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
           </div>
         </div>
 
+        {/* ══════════ SECTION 5 — RÈGLES DE REMISES & PROMOTIONS CAISSE (STANDARD AUCHAN) ══════════ */}
+        <div style={sectionStyle}>
+          <h4 style={sectionTitleStyle}>🏷️ Règles de Remises & Promotions Caisse (Standard Auchan)</h4>
+          <p style={{ ...helpText, margin: '-6px 0 4px 0' }}>
+            Configurez l&apos;autonomie de vos caissiers, les seuils automatiques de réduction et les motifs métiers prédéfinis sans bloquer la caisse à chaque client.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+            <div>
+              <label style={labelStyle}>Plafond d&apos;autonomie Caissier (% max) *</label>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="number" 
+                  name="pos_remise_max_caissier" 
+                  defaultValue={boutique.pos_remise_max_caissier ?? 10} 
+                  min="0"
+                  max="100"
+                  step="1"
+                  style={inputStyle} 
+                />
+                <span style={{ position: 'absolute', right: 12, top: 10, fontWeight: 800, color: '#64748b' }}>%</span>
+              </div>
+              <p style={helpText}>Jusqu&apos;à ce pourcentage, le caissier applique la remise instantanément. Au-delà, le PIN Superviseur est requis.</p>
+            </div>
+
+            <div>
+              <label style={labelStyle}>Seuil Panier Remise Automatique</label>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="number" 
+                  name="pos_remise_seuil_auto_montant" 
+                  defaultValue={boutique.pos_remise_seuil_auto_montant ?? 0} 
+                  min="0"
+                  step="1000"
+                  style={inputStyle} 
+                  placeholder="0 (Désactivé) ou ex: 25000"
+                />
+                <span style={{ position: 'absolute', right: 12, top: 10, fontWeight: 800, color: '#64748b' }}>FCFA</span>
+              </div>
+              <p style={helpText}>Montant minimum du panier pour appliquer automatiquement la remise (ex: 25 000 FCFA).</p>
+            </div>
+
+            <div>
+              <label style={labelStyle}>Pourcentage Remise Panier Auto</label>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="number" 
+                  name="pos_remise_seuil_auto_pct" 
+                  defaultValue={boutique.pos_remise_seuil_auto_pct ?? 0} 
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  style={inputStyle} 
+                  placeholder="Ex: 5%"
+                />
+                <span style={{ position: 'absolute', right: 12, top: 10, fontWeight: 800, color: '#64748b' }}>%</span>
+              </div>
+              <p style={helpText}>Pourcentage appliqué automatiquement dès que le seuil de montant est atteint.</p>
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Message de Bas de Reçu Thermique (Ticket Caisse 80mm / 58mm)</label>
+            <input 
+              type="text" 
+              name="message_bas_ticket" 
+              defaultValue={boutique.message_bas_ticket || 'Merci de votre visite et à très bientôt !'} 
+              style={inputStyle} 
+              placeholder="Ex: Les articles soldés ne sont ni repris ni échangés. Merci de votre fidélité !"
+            />
+            <p style={helpText}>Imprimé tout en bas du reçu thermique remis au client.</p>
+          </div>
+        </div>
+
         <div style={{
           position: 'sticky',
           bottom: 12,
