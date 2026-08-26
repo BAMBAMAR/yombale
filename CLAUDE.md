@@ -1,7 +1,8 @@
-- **Restauration Intégrale du Logo Officiel Orange Nopalou (PWA Desktop / Manifest) & Correction de l'Onglet Comptabilité (`icon-512.svg`, `apple-icon.tsx`, `manifest.json`, `layout.tsx`, `BoutiqueClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🟧✨💰🛡️ :
-  * **🟧 Remplacement Définitif du Logo PWA Desktop (`icon-512.svg`, `apple-icon.tsx`, `manifest.json`, `layout.tsx`)** :
-    - Remplacement de l'ancien visuel circulaire sombre par le **véritable logo officiel Nopalou** (carré orange `#C75B00` aux angles arrondis squircle modernes avec la lettre « N » blanche vectorielle stylisée).
-    - Ajout de la route dynamique `apple-icon.tsx` (180x180) et mise à jour du manifeste PWA (`manifest.json`) et des métadonnées de layout (`layout.tsx`) avec incrément de version de cache (`?v=4`) pour actualiser instantanément l'icône dans l'onglet du navigateur, les fenêtres PWA desktop et l'écran d'accueil.
+- **Restauration Intégrale du Logo Officiel Orange Nopalou (PWA Android / iOS / Desktop / Manifest) & Correction de l'Onglet Comptabilité (`icon-512.png`, `icon-192.png`, `icon-maskable-512.png`, `icon-512.svg`, `apple-icon.tsx`, `manifest.json`, `layout.tsx`, `BoutiqueClient.tsx`, `CLAUDE.md`) (`main` - 25 août 2026)** 🟧✨📱💰🛡️ :
+  * **🟧 Remplacement Définitif & Rendu Haute Définition des Icônes PNG & SVG (`icon-512.png`, `icon-192.png`, `icon-maskable-512.png`, `icon-512.svg`, `apple-icon.tsx`)** :
+    - Remplacement des anciens fichiers binaires PNG (qui contenaient encore l'ancienne loupe bleue) par les **véritables icônes officielles Nopalou au format PNG haute résolution** générées avec bords arrondis « squircle » (`rx = 22%`) et le monogramme « N » blanc vectoriel.
+    - Ajout de la variante plein fond `icon-maskable-512.png` pour que le lanceur d'applications Android découpe l'icône proprement dans le rond/carré système sans marges blanches.
+    - Mise à jour du manifeste PWA (`manifest.json`) et des métadonnées de layout (`layout.tsx`) avec incrément de version de cache (`?v=5`) et priorité aux PNGs pour garantir la création immédiate du bon WebAPK lors de l'installation sur smartphone.
   * **💰 Redirection Immédiate vers le Bilan Comptable (`BoutiqueClient.tsx`)** :
     - Correction de l'état `subTabCompta` (qui ouvrait par défaut la "Saisie Express / Dépense") pour ouvrir systématiquement le **Grand Bilan Financier** (Chiffre d'Affaires, Marge Nette, Répartition des Ventes et Graphiques).
   * **🧪 Validation** :
