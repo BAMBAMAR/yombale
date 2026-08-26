@@ -18,7 +18,7 @@ public class NopalouIconGenerator
         return path;
     }
 
-    public static void Generate(int size, string outputPath, bool isMaskable, float cornerRadiusRatio)
+    public static void Generate(int size, string outputPath, bool isMaskable)
     {
         using (Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb))
         using (Graphics g = Graphics.FromImage(bmp))
@@ -31,68 +31,79 @@ public class NopalouIconGenerator
             Color orange = ColorTranslator.FromHtml("#C75B00");
             Color white = Color.White;
 
-            float scale;
-            float offsetX;
-            float offsetY;
-
             if (isMaskable)
             {
+                // Maskable: Full background orange with N inside safe zone (60%)
                 using (SolidBrush orangeBrush = new SolidBrush(orange))
                 {
                     g.FillRectangle(orangeBrush, 0, 0, size, size);
                 }
-                scale = 0.6f * ((float)size / 512.0f);
-                offsetX = 102.4f * ((float)size / 512.0f);
-                offsetY = 102.4f * ((float)size / 512.0f);
+
+                float scale = 0.6f * ((float)size / 512.0f);
+                float offsetX = 102.4f * ((float)size / 512.0f);
+                float offsetY = 102.4f * ((float)size / 512.0f);
+
+                DrawNMonogram(g, offsetX, offsetY, scale, white);
             }
             else
             {
-                float radius = (float)size * cornerRadiusRatio;
-                using (GraphicsPath rectPath = CreateRoundedRectPath(0, 0, size, size, radius))
+                // App & Splash Icon: Beautiful Inset Squircle with 100% visible rounded corners
+                float padding = (float)size * 0.04f; // 4% padding
+                float w = (float)size - (padding * 2.0f);
+                float h = (float)size - (padding * 2.0f);
+                float radius = w * 0.24f; // 24% squircle radius
+
+                using (GraphicsPath rectPath = CreateRoundedRectPath(padding, padding, w, h, radius))
                 using (SolidBrush orangeBrush = new SolidBrush(orange))
                 {
                     g.FillPath(orangeBrush, rectPath);
                 }
-                scale = (float)size / 512.0f;
-                offsetX = 0.0f;
-                offsetY = 0.0f;
-            }
 
-            using (GraphicsPath nPath = new GraphicsPath(FillMode.Alternate))
-            {
-                // Rectangle
-                float rx = offsetX + (120.0f * scale);
-                float ry = offsetY + (108.0f * scale);
-                float rw = 272.0f * scale;
-                float rh = 296.0f * scale;
-                nPath.AddRectangle(new RectangleF(rx, ry, rw, rh));
+                float scale = w / 512.0f;
+                float offsetX = padding;
+                float offsetY = padding;
 
-                // Cutout Triangle 1
-                PointF[] pts1 = new PointF[]
-                {
-                    new PointF(offsetX + (324.0f * scale), offsetY + (108.0f * scale)),
-                    new PointF(offsetX + (188.0f * scale), offsetY + (108.0f * scale)),
-                    new PointF(offsetX + (324.0f * scale), offsetY + (306.0f * scale))
-                };
-                nPath.AddPolygon(pts1);
-
-                // Cutout Triangle 2
-                PointF[] pts2 = new PointF[]
-                {
-                    new PointF(offsetX + (188.0f * scale), offsetY + (404.0f * scale)),
-                    new PointF(offsetX + (324.0f * scale), offsetY + (404.0f * scale)),
-                    new PointF(offsetX + (188.0f * scale), offsetY + (206.0f * scale))
-                };
-                nPath.AddPolygon(pts2);
-
-                using (SolidBrush whiteBrush = new SolidBrush(white))
-                {
-                    g.FillPath(whiteBrush, nPath);
-                }
+                DrawNMonogram(g, offsetX, offsetY, scale, white);
             }
 
             bmp.Save(outputPath, ImageFormat.Png);
-            Console.WriteLine("Pixel-perfect generated: " + outputPath + " (" + size + "x" + size + ")");
+            Console.WriteLine("Generated: " + outputPath + " (" + size + "x" + size + ")");
+        }
+    }
+
+    private static void DrawNMonogram(Graphics g, float offsetX, float offsetY, float scale, Color color)
+    {
+        using (GraphicsPath nPath = new GraphicsPath(FillMode.Alternate))
+        {
+            // Rectangle
+            float rx = offsetX + (120.0f * scale);
+            float ry = offsetY + (108.0f * scale);
+            float rw = 272.0f * scale;
+            float rh = 296.0f * scale;
+            nPath.AddRectangle(new RectangleF(rx, ry, rw, rh));
+
+            // Cutout Triangle 1
+            PointF[] pts1 = new PointF[]
+            {
+                new PointF(offsetX + (324.0f * scale), offsetY + (108.0f * scale)),
+                new PointF(offsetX + (188.0f * scale), offsetY + (108.0f * scale)),
+                new PointF(offsetX + (324.0f * scale), offsetY + (306.0f * scale))
+            };
+            nPath.AddPolygon(pts1);
+
+            // Cutout Triangle 2
+            PointF[] pts2 = new PointF[]
+            {
+                new PointF(offsetX + (188.0f * scale), offsetY + (404.0f * scale)),
+                new PointF(offsetX + (324.0f * scale), offsetY + (404.0f * scale)),
+                new PointF(offsetX + (188.0f * scale), offsetY + (206.0f * scale))
+            };
+            nPath.AddPolygon(pts2);
+
+            using (SolidBrush brush = new SolidBrush(color))
+            {
+                g.FillPath(brush, nPath);
+            }
         }
     }
 }
@@ -104,9 +115,9 @@ $baseDir = Split-Path -Parent $PSScriptRoot
 $iconsDir = Join-Path $baseDir "frontend-next\public\icons"
 $publicDir = Join-Path $baseDir "frontend-next\public"
 
-[NopalouIconGenerator]::Generate(512, (Join-Path $iconsDir "icon-512.png"), $false, 0.22)
-[NopalouIconGenerator]::Generate(192, (Join-Path $iconsDir "icon-192.png"), $false, 0.22)
-[NopalouIconGenerator]::Generate(512, (Join-Path $iconsDir "icon-maskable-512.png"), $true, 0.0)
-[NopalouIconGenerator]::Generate(180, (Join-Path $publicDir "apple-icon.png"), $false, 0.22)
+[NopalouIconGenerator]::Generate(512, (Join-Path $iconsDir "icon-512.png"), $false)
+[NopalouIconGenerator]::Generate(192, (Join-Path $iconsDir "icon-192.png"), $false)
+[NopalouIconGenerator]::Generate(512, (Join-Path $iconsDir "icon-maskable-512.png"), $true)
+[NopalouIconGenerator]::Generate(180, (Join-Path $publicDir "apple-icon.png"), $false)
 
-Write-Output "ALL 4 PNG ICONS GENERATED WITH 100% SUCCESS!"
+Write-Output "ALL SQUIRCLE PNG ICONS SUCCESSFULLY GENERATED!"
