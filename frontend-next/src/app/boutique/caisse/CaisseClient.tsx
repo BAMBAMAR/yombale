@@ -88,7 +88,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [terminalPlan, setTerminalPlan] = useState<string | null>('pro')
 
   // ── État Boutiques du Marchand & Synchronisation Catalogue ───────────────────
-  const [boutiques, setBoutiques] = useState<{ id: string; nom: string; plan_actif?: string | null; regime_fiscal?: string; prix_tva_incluse?: boolean; timbre_fiscal_applicable?: boolean; tva_taux_defaut?: number; actif?: boolean; adresse?: string | null; telephone?: string | null }[]>([])
+  const [boutiques, setBoutiques] = useState<{ id: string; nom: string; plan_actif?: string | null; regime_fiscal?: string; prix_tva_incluse?: boolean; timbre_fiscal_applicable?: boolean; tva_taux_defaut?: number; actif?: boolean; adresse?: string | null; telephone?: string | null; message_bas_ticket?: string | null; logo?: string | null }[]>([])
   const [boutiqueActiveId, setBoutiqueActiveId] = useState<string>('')
   const [loadingProduits, setLoadingProduits] = useState<boolean>(true)
   const [modalImportBatch, setModalImportBatch] = useState<boolean>(false)
@@ -3484,8 +3484,29 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             ) : null}
           </div>
 
+          {/* Section Fidélité Reçu */}
+          {clientFidelite && (
+            <div style={{ borderBottom: '1px dashed #000', paddingBottom: 6, marginBottom: 6, fontSize: 10.5 }}>
+              <p style={{ margin: '0 0 3px', fontWeight: 'bold', textTransform: 'uppercase' }}>⭐ AVANTAGES FIDÉLITÉ CLIENT :</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Client :</span>
+                <span>{clientFidelite.nom}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Solde Cagnotte :</span>
+                <span style={{ fontWeight: 'bold' }}>{fcfa(clientFidelite.cagnotte_fcfa)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Tampons récompensés :</span>
+                <span style={{ fontWeight: 'bold' }}>{clientFidelite.tampons_actuels} / 10 🎫</span>
+              </div>
+            </div>
+          )}
+
           <div style={{ textAlign: 'center', marginTop: 8, fontSize: 10 }}>
-            <p style={{ margin: 0, fontWeight: 'bold' }}>Merci de votre confiance !</p>
+            <p style={{ margin: 0, fontWeight: 'bold' }}>
+              {activeBoutiqueObj?.message_bas_ticket || 'Merci de votre confiance !'}
+            </p>
             <p style={{ margin: '2px 0 0' }}>Nopalou POS • www.nopalou.sn</p>
           </div>
         </div>
