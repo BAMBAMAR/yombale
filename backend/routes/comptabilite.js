@@ -539,6 +539,7 @@ async function creerCommandeBoutique({
   boutiqueId, produitId, quantite = 1, clientNom, clientTelephone, clientAdresse,
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
   nomProduitManuel, prixUnitaireManuel, groupeCommande, items = [], varianteId,
+  codePromo, montantReduction,
 }) {
   const bQuery = 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
@@ -623,9 +624,24 @@ async function creerCommandeBoutique({
 
   const sousTotal = normalizedItems.reduce((acc, it) => acc + (it.prix_unitaire * it.quantite), 0);
   const totalQuantite = normalizedItems.reduce((acc, it) => acc + it.quantite, 0);
-  const montantTotal = sousTotal + fraisLivraison;
+  const reductionVal = Math.max(0, Number(montantReduction) || 0);
+  const montantTotal = Math.max(0, sousTotal + fraisLivraison - reductionVal);
   const nomProduitGlobal = normalizedItems.map(it => `${it.quantite}x ${it.nom_produit}${it.details_variante ? ` (${it.details_variante})` : ''}`).join(', ');
   const ref = genRefCommande();
+
+  let finalNote = note || '';
+  if (codePromo && String(codePromo).trim()) {
+    const promoNote = `[Code Promo: ${String(codePromo).trim().toUpperCase()}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
+    finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
+
+    // Incrémentation du compteur d'utilisation
+    await pool.query(
+      `UPDATE boutique_promotions 
+       SET fois_utilise = fois_utilise + 1 
+       WHERE boutique_id = $1 AND UPPER(code) = $2`,
+      [actualBoutiqueId, String(codePromo).trim().toUpperCase()]
+    ).catch(() => {});
+  }
 
   const { rows: [commande] } = await pool.query(
     `INSERT INTO commandes_boutique
@@ -633,7 +649,7 @@ async function creerCommandeBoutique({
         client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
     [ref, actualBoutiqueId, normalizedItems[0]?.produit_id || null, nomProduitGlobal.slice(0, 300), totalQuantite, sousTotal, montantTotal,
-     clientNom, clientTelephone, clientAdresse || null, note || null, source,
+     clientNom, clientTelephone, clientAdresse || null, finalNote || null, source,
      methodePaiement, validZoneId, fraisLivraison, groupeCommande || null]
   );
 
@@ -694,7 +710,7 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
     try {
-      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id } = req.body;
+      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id, code_promo, montant_reduction, remise } = req.body;
 
       const { commande, boutique } = await creerCommandeBoutique({
         boutiqueId: req.params.boutiqueId,
@@ -711,6 +727,8 @@ router.post(
         nomProduitManuel: req.body.nom_produit,
         prixUnitaireManuel: req.body.prix_unitaire,
         items: Array.isArray(items) ? items : [],
+        codePromo: code_promo,
+        montantReduction: montant_reduction || remise,
       });
 
       await notifierVendeurCommande(boutique, {

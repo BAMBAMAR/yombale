@@ -1,3 +1,54 @@
+- **Refonte Ultra-Premium des Formulaires de Commande & Panier : Sélecteurs de Modes par Grandes Cartes Visuelles, Clarification Totale de l'Expérience d'Achat & Code Promo Intégré (`CommanderModal.tsx`, `DrawerCart.tsx`, `CLAUDE.md`) (`main` - 27 août 2026)** 💎✨🛒📋💬⚡🇸🇳 :
+  * **🔍 Diagnostic des Problèmes d'Ergonomie et de Lisibilité** :
+    - **Sélecteur d'onglets trop discret** : Les onglets de commande (WhatsApp vs Formulaire/Paiement direct) consistaient en deux petits boutons gris peu contrastés en haut de la fenêtre. Les acheteurs ne distinguaient pas immédiatement le choix du mode de commande ni où cliquer.
+    - **Formulaire de commande perçu comme peu premium** : Champs de saisie standards sans hiérarchie visuelle marquée, étapes peu identifiées et absence de cartes visuelles pour les modes de paiement.
+  * **💎 1. Refonte Haute Gamme de la Modale de Commande Express (`CommanderModal.tsx`)** :
+    - **Sélecteur de Modes par Grandes Cartes Interactives Côte-à-Côte** :
+      - *Texte guide explicatif* : `👉 Choisissez comment vous souhaitez commander :`
+      - *Carte 1 : 💬 WhatsApp Direct* : Badge vert `⚡ 1-CLIC RAPIDE`, sous-titre `Sans formulaire, échangez en direct`, contouring actif vert vif (`2px solid #22c55e`), pastille de sélection check `✓` et fond vert clair ultra-propre (`#f0fdf4`).
+      - *Carte 2 : 📋 Formulaire & Paiement* : Badge orange `💳 PAIEMENT DIRECT`, sous-titre `Wave, OM, Espèces ou Crédit`, contouring actif orange chaud (`2px solid #C75B00`), pastille de sélection check `✓` et fond doux (`#fff7ed`).
+    - **Tunnel de Saisie Structuré & Numéroté** :
+      - `👤 1. Vos Coordonnées` (Nom et Téléphone avec inputs arrondis `12px` et halo de focus moderne).
+      - `📍 2. Quantité & Livraison` (Sélecteur de quantité `+`/`-`, adresse et sélecteur de zone avec frais dynamiques).
+      - `💳 3. Mode de Paiement` (Puces visuelles modernes avec icônes : 🌊 Wave, 💵 Espèces, 💳 Achat à Crédit, 🧾 Dépôt Manuel, 🏦 Virement, 💳 Carte Bancaire).
+      - `🏷️ 4. Code Promo` (Champ de coupon avec bouton `Appliquer`, feedback immédiat et déduction du montant).
+    - **Bouton d'Action Grand Format** : Bouton d'action contrasté avec prix dynamique (`Confirmer ma commande • X FCFA →` / `Commander sur WhatsApp →`) et pastille de réassurance "Paiement 100% sécurisé".
+  * **🛒 2. Refonte Haute Gamme du Tiroir Panier (`DrawerCart.tsx`)** :
+    - **Sélecteur Segmenté Haute Lisibilité** : Intégration du même système de cartes interactives (💬 WhatsApp 1-Clic vs 📋 Formulaire en Ligne) au-dessus du récapitulatif du panier.
+    - **Mode WhatsApp Panier** : Bouton d'envoi vert grand format avec calcul du montant total, icône WhatsApp et sous-titre explicatif.
+    - **Mode Formulaire Panier** : Formulaire fluide avec saisie des coordonnées, grille de sélection de mode de règlement et bouton de commande grand format (`Valider ma commande • X FCFA →`).
+    - **Persistance de l'Écran de Confirmation** : La notification de commande (`orderSuccessData`) reste affichée après vidage du panier avec référence, récapitulatif et bouton de contact direct.
+  * **🧪 3. Validation & Tests** :
+    - 18 suites de tests unitaires Jest (`142/142 tests passés à 100%`).
+    - Tests unitaires frontend (35/35 tests validés avec succès).
+    - Build de production Next.js (`npm run build`) validé.
+
+- **Intégration du Moteur de Codes Promo dans le Panier (`DrawerCart.tsx`), Notification de Confirmation Persistante & Déduction Automatique Backend (`DrawerCart.tsx`, `comptabilite.js`, `boutiques.js`, `spec-03-promotions.test.js`, `CLAUDE.md`) (`main` - 27 août 2026)** 🛒🏷️🎉⚡🛡️🇸🇳✨ :
+  * **🔍 Diagnostic des Deux Anomalies Signalées sur le Panier** :
+    - **Absence de Code Promo dans le Panier (`DrawerCart.tsx`)** : Contrairement à la modale de commande d'article individuel, le panier global d'achat ne proposait aucun champ de saisie ni de validation de coupon promotionnel.
+    - **Disparition Instantanée de la Notification après Envoi** : Lors de la soumission de commande, `clearCart()` supprimait immédiatement les articles du panier, entraînant la condition de garde `if (!activeCart || items.length === 0) return null` qui démontait instantanément tout le composant `DrawerCart`, rendant la confirmation de commande invisible pour l'acheteur.
+  * **🛒 1. Moteur de Codes Promo Intégré au Panier (`DrawerCart.tsx`)** :
+    - **Saisie & Validation Dynamique** : Champ de saisie avec auto-majuscules, bouton « Appliquer » et validation en temps réel avec `/api/boutiques/promotions/valider` (support des codes globaux plateforme et des coupons marchands).
+    - **Feedback Visuel Clair** : Badge de confirmation vert indiquant le code et la remise (`✅ SOLDE20 (-5 000 FCFA)`), bouton `Retirer ✕` pour annuler/changer de coupon, et message d'erreur explicite si le code est expiré ou le montant minimum non atteint.
+    - **Déduction Automatique du Prix** : Déduction immédiate dans la ligne récapitulative et sur le montant total de la commande.
+    - **Transmission Complète** : Transmission du code promo et du montant de réduction dans le payload HTTP (`code_promo`, `montant_reduction`) et dans le texte du message pré-rempli WhatsApp.
+  * **🎉 2. Modale de Notification de Confirmation Persistante (`DrawerCart.tsx`)** :
+    - **État de Confirmation Dédié (`orderSuccessData`)** : Maintien de l'affichage de la notification de confirmation même après vidage complet du panier par `clearCart()`.
+    - **Interface de Célébration Complète** :
+      - Icônes adaptées (`🎉` commande standard / Wave / espèces, `💳` demande de crédit, `💬` transmission WhatsApp).
+      - Badge de référence bien visible (`RÉF : CMD-2026-XXXX`).
+      - Récapitulatif structuré (Nom de la boutique, Réduction promo, Montant total à régler ou à inscrire au carnet).
+      - Bouton d'action directe : `💬 Notifier le commerçant sur WhatsApp` (pré-rempli avec la référence).
+      - Bouton `✕ Fermer` pour réinitialiser les états et fermer proprement le tiroir.
+  * **⚙️ 3. Backend : Déduction Automatique & Suivi Promo (`comptabilite.js`, `boutiques.js`)** :
+    - Prise en compte de `code_promo`, `montant_reduction` et `remise` dans `creerCommandeBoutique` (`comptabilite.js`) et `/commandes/express` (`boutiques.js`).
+    - Déduction sécurisée du montant de la réduction sur le `montant_total` de la commande.
+    - Ajout automatique du libellé du code promo dans la note de commande pour le commerçant.
+    - Incrémentation automatique du compteur `fois_utilise` dans `boutique_promotions`.
+  * **🧪 4. Validation & Tests** :
+    - 18 suites de tests unitaires Jest validées avec succès (`141/141 tests passés`) incluant le nouveau test de commande avec code promo dans `spec-03-promotions.test.js`.
+    - Build de production Next.js (`npm run build`) : 100% réussi sans aucune erreur.
+
 - **Éradication Complète des Erreurs 404 sur les Boutons « Voir les détails », Boutons Meta WhatsApp & Basculement Multi-Boutiques (`entites.js`, `app.js`, `comptabilite.js`, `BoutiqueClient.tsx`, `immo/[id]/page.tsx`, `annonces/[id]/page.tsx`, `produit/[id]/page.tsx`, `boutiques/[id]/page.tsx`, `mes-annonces/page.tsx`, `mes-annonces-immo/page.tsx`, `entites-resolver.test.js`, `CLAUDE.md`) (`main` - 27 août 2026)** 🔗⚡🛡️🏪📱✨ :
   * **🔍 Diagnostic des 404 sur les Liens et Boutons « Voir les détails »** :
     - **Bouton Dynamique Meta WhatsApp `nopalou_fiche_texte`** : Câblé en dur côté Meta Cloud API sur `https://nopalou.com/immo/{{1}}`. Lorsque ce template envoyait un ID de boutique (`dievo-style`), un produit de boutique (`uuid`), une commande (`CMD-XXX` ou `boutique?tab=commandes`) ou une annonce classifiée, Next.js renvoyait une 404.

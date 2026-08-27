@@ -4245,7 +4245,7 @@ router.post('/:id/regenere-caisse-token', verifierToken, async (req, res) => {
 // ── Spec 02 : POST /api/boutiques/commandes/express — Checkout Web 1-Page Unifié
 router.post('/commandes/express', async (req, res) => {
   try {
-    const { boutique_id, client_nom, client_telephone, client_adresse, methode_paiement, note, frais_livraison, articles } = req.body;
+    const { boutique_id, client_nom, client_telephone, client_adresse, methode_paiement, note, frais_livraison, articles, code_promo, montant_reduction, remise } = req.body;
 
     if (!boutique_id) {
       return res.status(400).json({ error: 'Boutique introuvable ou ID requis.' });
@@ -4266,7 +4266,21 @@ router.post('/commandes/express', async (req, res) => {
     const actualBoutiqueId = bqRes.rows[0].id;
     const ref = 'CMD-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
     const fraisLiv = Number(frais_livraison) || 0;
+    const reductionVal = Math.max(0, Number(montant_reduction || remise) || 0);
     let totalArticles = 0;
+
+    let finalNote = note || '';
+    if (code_promo && String(code_promo).trim()) {
+      const promoNote = `[Code Promo: ${String(code_promo).trim().toUpperCase()}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
+      finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
+
+      await pool.query(
+        `UPDATE boutique_promotions 
+         SET fois_utilise = fois_utilise + 1 
+         WHERE boutique_id = $1 AND UPPER(code) = $2`,
+        [actualBoutiqueId, String(code_promo).trim().toUpperCase()]
+      ).catch(() => {});
+    }
 
     for (const art of articles) {
       let prix = Number(art.prix_unitaire);
@@ -4300,13 +4314,13 @@ router.post('/commandes/express', async (req, res) => {
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, NOW())`,
         [
           ref, actualBoutiqueId, validProdId, nomProd, qte, prix || 0,
-          totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, note || null,
+          totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, finalNote || null,
           methode_paiement || 'wave', fraisLiv,
         ]
       );
     }
 
-    const totalGeneral = totalArticles + fraisLiv;
+    const totalGeneral = Math.max(0, totalArticles + fraisLiv - reductionVal);
 
     pool.query(`INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`, [actualBoutiqueId]).catch(() => {});
 
@@ -4323,7 +4337,7 @@ router.post('/commandes/express', async (req, res) => {
         clientNom: client_nom.trim(),
         clientTelephone: client_telephone.trim(),
         clientAdresse: client_adresse || null,
-        note: note || null,
+        note: finalNote || null,
       }).catch(err => console.error('[EXPRESS NOTIF VENDEUR ERR]:', err.message));
     } catch (eNotif) {
       console.error('[EXPRESS NOTIF ERR]:', eNotif.message);

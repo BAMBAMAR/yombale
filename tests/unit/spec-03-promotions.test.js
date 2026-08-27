@@ -130,3 +130,35 @@ describe('POST /api/boutiques/promotions/valider (Spec 03)', () => {
     expect(res.body.error).toMatch(/Code promo expiré ou invalide/);
   });
 });
+
+describe('POST /api/comptabilite/:boutiqueId/commandes avec Code Promo (Spec 03)', () => {
+  test('applique la déduction du code promo et met à jour les promotions', async () => {
+    const comptabiliteRouter = require('../../backend/routes/comptabilite');
+    app.use('/api/comptabilite', comptabiliteRouter);
+
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, nom: 'Ma Boutique', telephone: '771234567', whatsapp: '771234567', utilisateur_id: 'user-123' }] }) // boutique lookup
+      .mockResolvedValueOnce({ rows: [] }) // update boutique_promotions
+      .mockResolvedValueOnce({ rows: [{ id: 'cmd-promo-1', reference: 'CMD-2026-PROMO', nom_produit: 'Article Test', quantite: 1, montant_total: 18000, note: '[Code Promo: SOLDE2000 (-2000 FCFA)]' }] }) // insert commande
+      .mockResolvedValueOnce({ rows: [{ prix_achat: 10000 }] }) // item prix achat
+      .mockResolvedValueOnce({ rows: [] }) // insert item
+      .mockResolvedValueOnce({ rows: [] }) // analytics
+
+    const res = await request(app)
+      .post(`/api/comptabilite/${boutiqueId}/commandes`)
+      .send({
+        client_nom: 'Moussa Diop',
+        client_telephone: '770001122',
+        nom_produit: 'Chaussures Sport',
+        prix_unitaire: 20000,
+        quantite: 1,
+        code_promo: 'SOLDE2000',
+        montant_reduction: 2000,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.commande).toBeDefined();
+    expect(res.body.commande.montant_total).toBe(18000);
+  });
+});
+
