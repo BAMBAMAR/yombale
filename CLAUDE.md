@@ -1,3 +1,37 @@
+- **Éradication Complète des Erreurs 404 sur les Boutons « Voir les détails », Boutons Meta WhatsApp & Basculement Multi-Boutiques (`entites.js`, `app.js`, `comptabilite.js`, `BoutiqueClient.tsx`, `immo/[id]/page.tsx`, `annonces/[id]/page.tsx`, `produit/[id]/page.tsx`, `boutiques/[id]/page.tsx`, `mes-annonces/page.tsx`, `mes-annonces-immo/page.tsx`, `entites-resolver.test.js`, `CLAUDE.md`) (`main` - 27 août 2026)** 🔗⚡🛡️🏪📱✨ :
+  * **🔍 Diagnostic des 404 sur les Liens et Boutons « Voir les détails »** :
+    - **Bouton Dynamique Meta WhatsApp `nopalou_fiche_texte`** : Câblé en dur côté Meta Cloud API sur `https://nopalou.com/immo/{{1}}`. Lorsque ce template envoyait un ID de boutique (`dievo-style`), un produit de boutique (`uuid`), une commande (`CMD-XXX` ou `boutique?tab=commandes`) ou une annonce classifiée, Next.js renvoyait une 404.
+    - **Navigation Multi-Boutiques** : Les notifications de commande vendeur envoyaient un lien générique sans `&id=...`, laissant le navigateur sur une boutique précédente en cas de multi-commerces.
+    - **Routes Compte Historiques (`/mes-annonces`, `/mes-annonces-immo`)** : Absence de `page.tsx` provoquant des 404 lors des redirections de fin de paiement ou des formulaires de modification.
+    - **Préfixes de Référence (`/paiement/succes`)** : Bouton « Voir l'annonce » cassé par le préfixe `immo_`.
+  * **⚡ Architecture du Résolveur Universel d'Entités (`backend/routes/entites.js`)** :
+    - **Nouveau endpoint `GET /api/entites/resoudre/:id`** : Identifie en une seule requête SQL le type et l'URL canonique exacte de toute ressource (`annonces_immo`, `annonces_classifiees`, `boutique_produits`, `boutiques`, `commandes_boutique`, `forfaits_telecom`, `produits`, alias statiques).
+  * **🛡️ Redirections Inter-Pages Fluides Sans 404 (Frontend Next.js)** :
+    - **`/immo/[id]`** : Résolution automatique des boutiques, produits marchands, annonces et commandes si l'ID n'est pas un bien immobilier.
+    - **`/annonces/[id]`** & **`/produit/[id]`** & **`/boutiques/[id]`** : Résolution automatique et redirection vers la bonne fiche si un identifiant croisé est reçu.
+    - **Basculement Prioritaire Multi-Boutiques (`BoutiqueClient.tsx`)** : Prise en compte prioritaire du paramètre `?id=...` ou `?manage=...` dans l'URL pour basculer instantanément sur la boutique de la commande.
+    - **Pages de Redirection Dédiées (`/mes-annonces/page.tsx`, `/mes-annonces-immo/page.tsx`)** : Redirection transparente vers `/compte?tab=mes-annonces` et `/compte?tab=mes-annonces-immo` en conservant tous les paramètres d'URL (`created=1`, `updated=1`).
+    - **Nettoyage des Préfixes (`/paiement/succes/page.tsx`)** : Élimination des préfixes `immo_` / `ann_` sur les boutons de consultation.
+  * **🧪 Validation & Tests** :
+    - 18 suites de tests unitaires Jest (`141/141 tests réussis à 100%`) incluant `tests/unit/entites-resolver.test.js`.
+    - Build de production Next.js (`npm run build`) : 100% réussi sans aucune erreur.
+
+- **Résolution Définitive de la Restriction Meta 24H (Code 131047) sur les Notifications Statuts & Commandes Client/Marchand (`whatsapp.js`, `comptabilite.js`, `boutiques.js`, `paiement.js`, `notifications.js`, `auth.js`, `whatsapp-notification.test.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 💬⚡🛡️📱📦🇸🇳✨ :
+  * **🔍 Diagnostic de l'Erreur Meta 131047 (Re-engagement message)** :
+    - Meta WhatsApp Cloud API bloque la livraison des messages en texte libre (`type: "text"`) si plus de 24 heures se sont écoulées depuis le dernier message envoyé par l'utilisateur au numéro WhatsApp de l'entreprise.
+    - Lors des mises à jour de statut de commande (`PATCH /api/comptabilite/:id/commandes/:cmdId` ex: `confirmee`), des confirmations de commande client (`comptabilite.js`, `boutiques.js`) et des paiements Wave (`paiement.js`), les envois en texte libre échouaient silencieusement avec `status: "failed"` et code `131047`.
+  * **⚡ Solution & Envoi Garanti 24H (`sendWhatsAppNotification`)** :
+    - **Nouveau helper unifié `sendWhatsAppNotification(phone, { textMessage, title, detail, url, buttonParam })`** dans `backend/services/whatsapp.js` :
+      1. Envoie le message texte complet enrichi (affiché instantanément si le destinataire a une conversation ouverte < 24h).
+      2. Envoie systématiquement le **Template Meta certifié `nopalou_fiche_texte`**, qui passe outre la restriction des 24h de Meta et garantit la délivrance 24h/24 et 7j/7 au client et au marchand avec bouton d'action vers le site/suivi.
+    - **Mise à jour de statut de commande (`comptabilite.js`)** : Notification client et marchand garanties lors de toute transition de statut (`confirmee`, `en_preparation`, `expediee`, `livree`, `annulee`).
+    - **Création de commande standard et Express (`comptabilite.js`, `boutiques.js`)** : Confirmation WhatsApp immédiate à l'acheteur sans risque de rejet 24h.
+    - **Webhook de Paiement Wave (`paiement.js`)** : Notifications de confirmation de règlement Wave délivrées au client et au marchand avec Template certifié.
+    - **Rappels du carnet de dettes & Alertes prix (`boutiques.js`, `notifications.js`, `auth.js`)** : Intégration de la livraison garantie 24h.
+  * **🧪 Validation & Tests** :
+    - 17 suites de tests unitaires Jest (`133/133 tests réussis`) avec nouvelle suite `tests/unit/whatsapp-notification.test.js`.
+    - Build de production Next.js (`npm run build`) : 100% réussi sans aucune erreur.
+
 - **Audit Exhaustif des Relations de Mise à Jour Boutique, Persistance Couleur & Sécurisation des Codes Promo (`boutiques.js`, `prospection.js`, `spec-master-exhaustive.test.js`, `CLAUDE.md`) (`main` - 26 août 2026)** 🔍🎨🎟️🔄🇸🇳✨ :
   * **🎨 Persistance & Récupération de `couleur_theme` & `devise_defaut`** :
     - Ajout de `couleur_theme` dans `PUT /api/boutiques/:id` pour permettre aux commerçants de sauvegarder la couleur personnalisée de leur vitrine.

@@ -115,15 +115,22 @@ function buildAnnonceJsonLd(annonce: Annonce): string {
 
 export default async function AnnonceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  if (!id) redirect('/annonces')
+
   let annonce = await fetchAnnonce(id)
   if (!annonce) {
-    // Redirection de secours si c'est un bien immobilier
+    // Redirection automatique via résolveur d'entités (immo, boutique, produit marchand, commande)
     try {
-      await apiFetch(`/immo/${id}`)
-      redirect(`/immo/${id}`)
-    } catch {
-      notFound()
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/annonces/${id}`) {
+        redirect(resolved.url);
+      }
+    } catch (rErr) {
+      if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
     }
+
+    // Redirection de repli sans 404
+    redirect('/annonces')
   }
 
   const photos = Array.isArray(annonce.photos) ? annonce.photos : []

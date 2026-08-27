@@ -51,12 +51,13 @@ function getContent(type: PayType, ref: string) {
         ),
       }
     case 'immo-sponsoring':
+      const cleanImmoId = ref.replace(/^immo_/, '');
       return {
         desc: 'Votre annonce immobilière est maintenant mise en avant pendant 30 jours. Elle apparaît en tête des résultats.',
         actions: (
           <>
             <Link href="/mes-annonces-immo" className="paiement-cta-btn">Voir mes annonces immo</Link>
-            <Link href={`/immo/${ref}`} className="paiement-cta-btn paiement-cta-btn--outline">Voir l&apos;annonce</Link>
+            <Link href={cleanImmoId ? `/immo/${cleanImmoId}` : '/immo'} className="paiement-cta-btn paiement-cta-btn--outline">Voir l&apos;annonce</Link>
           </>
         ),
       }

@@ -1,6 +1,6 @@
 // backend/services/notifications.js
 const { envoyerEmail }    = require('./email');
-const { sendWhatsAppText, sendWhatsAppCarousel, sendWhatsAppTemplate } = require('./whatsapp');
+const { sendWhatsAppText, sendWhatsAppCarousel, sendWhatsAppTemplate, sendWhatsAppNotification } = require('./whatsapp');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 
@@ -21,10 +21,14 @@ async function envoyerAlertePrix(alerte, nouveauPrix) {
   }
 
   if (alerte.telephone) {
-    await sendWhatsAppText(
-      alerte.telephone,
-      `📉 *Baisse de prix — Nopalou*\n\n*${alerte.produit_nom}* est passé à *${prixFmt} FCFA* (votre cible : ${cibleFmt} FCFA).\n\n👉 ${SITE}/?produit=${alerte.produit_id}`
-    ).catch(() => {});
+    const textMsg = `📉 *Baisse de prix — Nopalou*\n\n*${alerte.produit_nom}* est passé à *${prixFmt} FCFA* (votre cible : ${cibleFmt} FCFA).\n\n👉 ${SITE}/?produit=${alerte.produit_id}`;
+    await sendWhatsAppNotification(alerte.telephone, {
+      textMessage: textMsg,
+      title: `📉 Baisse de prix : ${alerte.produit_nom}`,
+      detail: `Nouveau prix: ${prixFmt} FCFA (votre cible: ${cibleFmt} FCFA)`,
+      url: `${SITE}/?produit=${alerte.produit_id}`,
+      buttonParam: `?produit=${alerte.produit_id}`,
+    }).catch(() => {});
   }
 
   await pool.query('UPDATE alertes SET active=false WHERE id=$1', [alerte.id]);
@@ -33,10 +37,14 @@ async function envoyerAlertePrix(alerte, nouveauPrix) {
 async function confirmationCommande(telephone, reference) {
   console.log(`[COMMANDE] #${reference} confirmée → ${telephone}`);
   if (telephone) {
-    await sendWhatsAppText(
-      telephone,
-      `✅ *Paiement confirmé — Nopalou*\n\nVotre paiement (réf. *${reference}*) a bien été reçu et traité. Merci de votre confiance !\n\n👉 ${SITE}`
-    ).catch(() => {});
+    const textMsg = `✅ *Paiement confirmé — Nopalou*\n\nVotre paiement (réf. *${reference}*) a bien été reçu et traité. Merci de votre confiance !\n\n👉 ${SITE}`;
+    await sendWhatsAppNotification(telephone, {
+      textMessage: textMsg,
+      title: `✅ Paiement confirmé — Nopalou`,
+      detail: `Votre paiement pour la commande réf. ${reference} a bien été reçu et validé.`,
+      url: SITE,
+      buttonParam: 'commandes',
+    }).catch(() => {});
   }
 }
 
@@ -58,7 +66,13 @@ async function notifierModerationImmo(annonce) {
 
   if (annonce.rejete) {
     const msg = `❌ *Annonce refusée — Nopalou*\n\nVotre annonce *"${annonce.titre}"* n'a pas pu être publiée.\n\n📝 Motif : ${annonce.motif_rejet || 'Non précisé'}\n\nVous pouvez la corriger et la soumettre à nouveau sur Nopalou.`;
-    return sendWhatsAppText(annonce.contact_tel, msg).catch(() => {});
+    return sendWhatsAppNotification(annonce.contact_tel, {
+      textMessage: msg,
+      title: `❌ Annonce refusée — Nopalou`,
+      detail: `Annonce "${annonce.titre}" : ${annonce.motif_rejet || 'Non précisé'}`,
+      url: `${SITE}/compte`,
+      buttonParam: 'compte',
+    }).catch(() => {});
   }
 
   if (annonce.actif) {

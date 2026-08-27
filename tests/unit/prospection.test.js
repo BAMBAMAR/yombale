@@ -1,3 +1,7 @@
+jest.mock('../../backend/models/db', () => ({
+  pool: { query: jest.fn().mockResolvedValue({ rows: [] }), end: jest.fn().mockResolvedValue() },
+}));
+
 // tests/unit/prospection.test.js — Tests unitaires du moteur de prospection & CRM leads
 const {
   normaliserTelephoneSenegal,
@@ -6,11 +10,6 @@ const {
   genererLienWhatsApp,
   TEMPLATES_PAR_DEFAUT,
 } = require('../../backend/services/prospection');
-
-afterAll(async () => {
-  const { pool } = require('../../backend/models/db');
-  await pool.end().catch(() => {});
-});
 
 describe('Moteur de Prospection & Normalisation Leads Sénégal', () => {
   describe('1. Normalisation Téléphonique (+221)', () => {

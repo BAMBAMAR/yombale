@@ -4,7 +4,7 @@ const jwt    = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { envoyerEmail } = require('../services/email');
-const { sendWhatsAppText, sendWhatsAppTemplate, normalisePhone } = require('../services/whatsapp');
+const { sendWhatsAppText, sendWhatsAppTemplate, sendWhatsAppNotification, normalisePhone } = require('../services/whatsapp');
 const crypto = require('crypto');
 const { limiterAuth } = require('../middlewares/rateLimit');
 const { verifierToken } = require('../middlewares/auth');
@@ -453,7 +453,13 @@ router.post('/whatsapp-login', limiterAuth, async (req, res) => {
     const magicToken = jwt.sign({ userId: user.id, type: 'magic' }, process.env.JWT_SECRET, { expiresIn: '15m' });
     const magicLink = `${FRONTEND_URL}/connexion/magique?token=${magicToken}`;
     
-    await sendWhatsAppText(telephone, `👋 Bonjour !\\n\\nVoici votre lien de connexion magique à Nopalou.\\nCliquez ici pour accéder à votre compte sans mot de passe :\\n\\n👉 ${magicLink}\\n\\nCe lien est valide 15 minutes.`);
+    await sendWhatsAppNotification(telephone, {
+      textMessage: `👋 Bonjour !\n\nVoici votre lien de connexion magique à Nopalou.\nCliquez ici pour accéder à votre compte sans mot de passe :\n\n👉 ${magicLink}\n\nCe lien est valide 15 minutes.`,
+      title: `🔑 Connexion Magique — Nopalou`,
+      detail: `Accédez à votre compte en 1 Clic sans mot de passe (lien valide 15 minutes).`,
+      url: magicLink,
+      buttonParam: `connexion/magique?token=${magicToken}`,
+    });
     
     res.json({ success: true, message: 'Lien magique envoyé sur WhatsApp' });
   } catch (err) {

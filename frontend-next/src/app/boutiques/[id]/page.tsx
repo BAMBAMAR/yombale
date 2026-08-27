@@ -80,6 +80,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function BoutiqueDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  if (!id) redirect('/boutiques')
+
   let boutique: Boutique
   let annonces: Annonce[] = []
   let produits: Produit[] = []
@@ -87,7 +89,17 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
   try {
     boutique = await apiFetch<Boutique>(`/boutiques/${id}`)
   } catch {
-    notFound()
+    // Résolution universelle d'entité (si id est un produit, immo, annonce, etc.)
+    try {
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/boutiques/${id}`) {
+        redirect(resolved.url);
+      }
+    } catch (rErr) {
+      if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
+    }
+
+    redirect('/boutiques')
   }
 
   const b = boutique!

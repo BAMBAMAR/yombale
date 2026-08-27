@@ -1269,10 +1269,19 @@ router.post('/:id/credits-clients/:clientId/relance-whatsapp', async (req, res) 
 
     const messageRelance = `Bonjour ${c.nom},\n\nUn rappel amical de *${bq.nom}* : Votre solde du carnet s'élève actuellement à *${soldeNum.toLocaleString('fr-FR')} FCFA*.\nMerci de bien vouloir régulariser ce montant dès que possible.\n\nContacts boutique: ${bq.whatsapp || bq.telephone || ''}`;
 
-    // Tente d'envoyer par WhatsApp API Meta Cloud si le module existe
+    // Tente d'envoyer par WhatsApp API Meta Cloud avec garantie 24H Meta
     try {
       const whatsappService = require('../services/whatsapp');
-      if (whatsappService && typeof whatsappService.sendWhatsAppText === 'function') {
+      if (whatsappService && typeof whatsappService.sendWhatsAppNotification === 'function') {
+        const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+        await whatsappService.sendWhatsAppNotification(c.telephone, {
+          textMessage: messageRelance,
+          title: `💳 Rappel de solde — ${bq.nom}`,
+          detail: `Solde carnet débiteur : ${soldeNum.toLocaleString('fr-FR')} FCFA. Merci de bien vouloir régulariser auprès de ${bq.nom}.`,
+          url: `${SITE}/boutiques/${bq.slug || bq.id}`,
+          buttonParam: bq.slug || bq.id,
+        });
+      } else if (whatsappService && typeof whatsappService.sendWhatsAppText === 'function') {
         await whatsappService.sendWhatsAppText(c.telephone, messageRelance);
       }
     } catch (wsErr) {
@@ -4320,14 +4329,27 @@ router.post('/commandes/express', async (req, res) => {
       console.error('[EXPRESS NOTIF ERR]:', eNotif.message);
     }
 
-    // Notification WhatsApp à l'acheteur (client)
+    // Notification WhatsApp à l'acheteur (client) avec garantie 24H Meta
     if (client_telephone && client_telephone.trim()) {
       try {
-        const { sendWhatsAppText } = require('../services/whatsapp');
-        const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement bancaire' };
-        const msgClient = `✅ *Commande enregistrée avec succès — ${bqRes.rows[0].nom}*\n\nRéférence : *${ref}*\nArticles : ${articles.map(a => `${a.quantite || 1}x ${a.nom_produit || 'Produit'}`).join(', ')}\n💰 Total : *${new Intl.NumberFormat('fr-FR').format(totalGeneral)} FCFA*${fraisLiv > 0 ? ` (dont ${new Intl.NumberFormat('fr-FR').format(fraisLiv)} FCFA de livraison)` : ''}\n💳 Mode de paiement : ${methodeLabel[methode_paiement] || methode_paiement}\n\n📍 Adresse : ${client_adresse || 'Retrait en boutique'}\n\n🙏 La boutique *${bqRes.rows[0].nom}* a bien reçu votre commande et vous contactera très vite !`;
+        const { sendWhatsAppNotification } = require('../services/whatsapp');
+        const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement bancaire', credit: 'Achat à Crédit' };
+        const totalFmt = new Intl.NumberFormat('fr-FR').format(totalGeneral);
+        const articlesStr = articles.map(a => `${a.quantite || 1}x ${a.nom_produit || 'Produit'}`).join(', ');
+        const msgClient = `✅ *Commande enregistrée avec succès — ${bqRes.rows[0].nom}*\n\nRéférence : *${ref}*\nArticles : ${articlesStr}\n💰 Total : *${totalFmt} FCFA*${fraisLiv > 0 ? ` (dont ${new Intl.NumberFormat('fr-FR').format(fraisLiv)} FCFA de livraison)` : ''}\n💳 Mode de paiement : ${methodeLabel[methode_paiement] || methode_paiement}\n\n📍 Adresse : ${client_adresse || 'Retrait en boutique'}\n\n🙏 La boutique *${bqRes.rows[0].nom}* a bien reçu votre commande et vous contactera très vite !`;
 
-        sendWhatsAppText(client_telephone.trim(), msgClient)
+        const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+        const titleTpl = `✅ Commande enregistrée — ${bqRes.rows[0].nom}`;
+        const detailTpl = `Réf ${ref} : ${articlesStr} (${totalFmt} FCFA). Paiement: ${methodeLabel[methode_paiement] || methode_paiement}`;
+        const urlTpl = `${SITE}/boutiques/${bqRes.rows[0].slug || bqRes.rows[0].id}`;
+
+        sendWhatsAppNotification(client_telephone.trim(), {
+          textMessage: msgClient,
+          title: titleTpl,
+          detail: detailTpl,
+          url: urlTpl,
+          buttonParam: bqRes.rows[0].slug || bqRes.rows[0].id,
+        })
           .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation envoyée au ${client_telephone}`))
           .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
       } catch (eCl) {

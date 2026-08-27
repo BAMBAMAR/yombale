@@ -513,7 +513,7 @@ async function notifierVendeurCommande(boutique, {
   const { sendWhatsAppText, sendWhatsAppTemplate } = require('../services/whatsapp');
   const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: '💳 Demande d\'Achat à Crédit (Carnet client)' };
   const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
-  const lienCommandes = `${SITE}/boutique?tab=commandes`;
+  const lienCommandes = `${SITE}/boutique?tab=commandes&id=${boutique.id}&ref=${encodeURIComponent(reference)}`;
   const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${reference}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n👤 Client : ${clientNom}\n📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n👉 *Consultez vos commandes ici :*\n${lienCommandes}\n\n⚡ Répondez vite pour confirmer !`;
 
   // 1. Envoi du message texte (si le marchand a écrit au bot dans les 24h)
@@ -526,7 +526,7 @@ async function notifierVendeurCommande(boutique, {
   const detailTpl = `Réf ${reference} — ${nomProduit} × ${quantite}${montantTotal > 0 ? ' (' + new Intl.NumberFormat('fr-FR').format(montantTotal) + ' FCFA)' : ''}`;
   sendWhatsAppTemplate(vendeurTel, 'nopalou_fiche_texte', [
     { type: 'body', parameters: [{ type: 'text', text: titleTpl }, { type: 'text', text: detailTpl }, { type: 'text', text: lienCommandes }] },
-    { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: 'boutique?tab=commandes' }] },
+    { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: `boutique?tab=commandes&id=${boutique.id}` }] },
   ]).catch(err => console.error(`[WHATSAPP VENDEUR TPL ERR]:`, err.message));
 }
 
@@ -726,14 +726,26 @@ router.post(
         note: commande.note,
       });
 
-      // Notification WhatsApp au Client (Acheteur)
+      // Notification WhatsApp au Client (Acheteur) avec garantie 24H Meta
       if (commande.client_telephone) {
         try {
-          const { sendWhatsAppText } = require('../services/whatsapp');
-          const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement bancaire' };
-          const msgClient = `✅ *Commande enregistrée avec succès — ${boutique.nom}*\n\nRéférence : *${commande.reference}*\nProduit : ${commande.nom_produit} × ${commande.quantite}\n💰 Total : *${new Intl.NumberFormat('fr-FR').format(commande.montant_total)} FCFA*\n💳 Mode de paiement : ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}\n\n🙏 La boutique *${boutique.nom}* a bien reçu votre commande et vous contactera très vite !`;
+          const { sendWhatsAppNotification } = require('../services/whatsapp');
+          const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces à la livraison', virement: 'Virement bancaire', credit: 'Achat à Crédit' };
+          const montantFmt = new Intl.NumberFormat('fr-FR').format(commande.montant_total);
+          const msgClient = `✅ *Commande enregistrée avec succès — ${boutique.nom}*\n\nRéférence : *${commande.reference}*\nProduit : ${commande.nom_produit} × ${commande.quantite}\n💰 Total : *${montantFmt} FCFA*\n💳 Mode de paiement : ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}\n\n🙏 La boutique *${boutique.nom}* a bien reçu votre commande et vous contactera très vite !`;
 
-          sendWhatsAppText(commande.client_telephone, msgClient)
+          const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+          const titleTpl = `✅ Commande enregistrée — ${boutique.nom}`;
+          const detailTpl = `Réf ${commande.reference} : ${commande.nom_produit} × ${commande.quantite} (${montantFmt} FCFA). Paiement: ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}`;
+          const urlTpl = `${SITE}/boutiques/${boutique.slug || boutique.id}`;
+
+          sendWhatsAppNotification(commande.client_telephone, {
+            textMessage: msgClient,
+            title: titleTpl,
+            detail: detailTpl,
+            url: urlTpl,
+            buttonParam: boutique.slug || boutique.id,
+          })
             .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation commande envoyée au ${commande.client_telephone}`))
             .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
         } catch (eCl) {}
@@ -872,13 +884,13 @@ router.patch(
         }
       }
 
-      // Notifier le client du changement de statut sur WhatsApp
+      // Notifier le client du changement de statut sur WhatsApp avec garantie 24H Meta
       if (commande.client_telephone) {
-        const { sendWhatsAppText } = require('../services/whatsapp');
+        const { sendWhatsAppNotification } = require('../services/whatsapp');
         const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+        let wavePayUrl = `${SITE}/checkout-express?produit=${commande.produit_id || ''}&boutique=${commande.boutique_id}&phone=${commande.client_telephone}&pay=wave&auto=1`;
         let msgConfirmee = `✅ *Commande confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* (${commande.nom_produit}) a été confirmée. Nous préparons votre colis !`;
         if (commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') {
-          let wavePayUrl = `${SITE}/checkout-express?produit=${commande.produit_id || ''}&boutique=${commande.boutique_id}&phone=${commande.client_telephone}&pay=wave&auto=1`;
           try {
             const wave = require('../services/wave');
             if (Number(commande.montant_total) > 0 && process.env.WAVE_API_KEY && !process.env.WAVE_API_KEY.includes('xxxxxxxx')) {
@@ -907,18 +919,54 @@ router.patch(
         };
         const msg = msgs[req.body.statut];
         if (msg) {
-          sendWhatsAppText(commande.client_telephone, msg)
+          const statutTitres = {
+            confirmee:      `✅ Commande confirmée — ${boutique.nom}`,
+            en_preparation: `📦 En préparation — ${boutique.nom}`,
+            expediee:       `🚚 Commande expédiée — ${boutique.nom}`,
+            livree:         `🎉 Commande livrée — ${boutique.nom}`,
+            annulee:        `❌ Commande annulée — ${boutique.nom}`,
+          };
+          const titleTpl = statutTitres[req.body.statut] || `Statut commande — ${boutique.nom}`;
+          const detailTpl = `Réf ${commande.reference} (${commande.nom_produit}) : Statut mis à jour en ${req.body.statut.toUpperCase()}`;
+          const urlTpl = (req.body.statut === 'confirmee' && (commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave'))
+            ? wavePayUrl
+            : `${SITE}/boutiques/${boutique.slug || boutique.id}`;
+
+          sendWhatsAppNotification(commande.client_telephone, {
+            textMessage: msg,
+            title: titleTpl,
+            detail: detailTpl,
+            url: urlTpl,
+            buttonParam: boutique.slug || boutique.id,
+          })
             .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Statut ${req.body.statut} envoyé au ${commande.client_telephone}`))
             .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
         }
       }
 
-      // Notifier également le marchand sur son WhatsApp
-      const vendeurMobile = boutique.whatsapp || boutique.telephone;
+      // Notifier également le marchand sur son WhatsApp avec garantie 24H Meta
+      let vendeurMobile = boutique.whatsapp || boutique.telephone;
+      if (!vendeurMobile && boutique.utilisateur_id) {
+        try {
+          const uRes = await pool.query('SELECT telephone FROM utilisateurs WHERE id=$1', [boutique.utilisateur_id]);
+          if (uRes.rows[0]?.telephone) vendeurMobile = uRes.rows[0].telephone;
+        } catch (eU) {}
+      }
       if (vendeurMobile) {
-        const { sendWhatsAppText } = require('../services/whatsapp');
+        const { sendWhatsAppNotification } = require('../services/whatsapp');
+        const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
         const msgVendeur = `📢 *Statut Commande Mis à Jour — ${boutique.nom}*\n\nCommande : *${commande.reference}*\nNouveau statut : *${req.body.statut.toUpperCase()}*\nClient : ${commande.client_nom} (${commande.client_telephone})`;
-        sendWhatsAppText(vendeurMobile, msgVendeur)
+        const lienCommandes = `${SITE}/boutique?tab=commandes`;
+        const titleVendeur = `📢 Statut mis à jour — ${boutique.nom}`;
+        const detailVendeur = `Réf ${commande.reference} passé à ${req.body.statut.toUpperCase()} pour ${commande.client_nom || 'Client'}`;
+
+        sendWhatsAppNotification(vendeurMobile, {
+          textMessage: msgVendeur,
+          title: titleVendeur,
+          detail: detailVendeur,
+          url: lienCommandes,
+          buttonParam: 'boutique?tab=commandes',
+        })
           .then(() => console.log(`[WHATSAPP VENDEUR STATUS NOTIF SUCCESS] Envoyé au ${vendeurMobile}`))
           .catch(err => console.error('[WHATSAPP VENDEUR STATUS NOTIF ERR]:', err.message));
       }

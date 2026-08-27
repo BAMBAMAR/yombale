@@ -128,9 +128,7 @@ export default async function FicheImmoPage({
 }) {
   const { id } = await params;
 
-  if (id === 'boutique') {
-    redirect('/boutique?tab=commandes');
-  }
+  if (!id) redirect('/immo');
 
   let annonce: AnnonceImmo;
   let similaires: AnnonceSimilaire[] = [];
@@ -139,13 +137,19 @@ export default async function FicheImmoPage({
   try {
     annonce = await apiFetch<AnnonceImmo>(`/immo/${id}`);
   } catch {
-    // Redirection de secours si c'est une annonce classifiée standard (bouton template Meta)
+    // Résolution universelle d'entité : si le bouton Meta ou le lien pointe vers une boutique,
+    // un produit marchand, une commande, une petite annonce, ou un alias, rediriger automatiquement.
     try {
-      await apiFetch(`/annonces/${id}`);
-      redirect(`/annonces/${id}`);
-    } catch {
-      notFound();
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/immo/${id}`) {
+        redirect(resolved.url);
+      }
+    } catch (rErr) {
+      if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
     }
+
+    // Redirection de repli sans 404
+    redirect('/immo');
   }
 
   await apiFetch<{ annonces: AnnonceSimilaire[] }>(`/immo/${id}/similaires`)

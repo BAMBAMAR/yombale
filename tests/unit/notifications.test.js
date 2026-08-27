@@ -6,9 +6,10 @@ jest.mock('../../backend/services/email', () => ({
 }));
 
 jest.mock('../../backend/services/whatsapp', () => ({
-  sendWhatsAppText:       jest.fn().mockResolvedValue(undefined),
-  sendWhatsAppCarousel:   jest.fn().mockResolvedValue(undefined),
-  sendWhatsAppTemplate:   jest.fn().mockResolvedValue(undefined),
+  sendWhatsAppText:         jest.fn().mockResolvedValue(undefined),
+  sendWhatsAppCarousel:     jest.fn().mockResolvedValue(undefined),
+  sendWhatsAppTemplate:     jest.fn().mockResolvedValue(undefined),
+  sendWhatsAppNotification: jest.fn().mockResolvedValue(undefined),
 }));
 
 // Mock pool.query pour UPDATE alertes SET active=false
@@ -17,7 +18,7 @@ jest.mock('../../backend/models/db', () => ({
 }));
 
 const { envoyerEmail } = require('../../backend/services/email');
-const { sendWhatsAppText } = require('../../backend/services/whatsapp');
+const { sendWhatsAppText, sendWhatsAppNotification } = require('../../backend/services/whatsapp');
 const { pool } = require('../../backend/models/db');
 const { envoyerAlertePrix } = require('../../backend/services/notifications');
 
@@ -49,16 +50,16 @@ describe('envoyerAlertePrix', () => {
 
   test('envoie un WhatsApp si alerte.telephone défini', async () => {
     await envoyerAlertePrix({ ...alerteBase, telephone: '+221771234567' }, 280000);
-    expect(sendWhatsAppText).toHaveBeenCalledTimes(1);
-    const [tel, msg] = sendWhatsAppText.mock.calls[0];
+    expect(sendWhatsAppNotification).toHaveBeenCalledTimes(1);
+    const [tel, opts] = sendWhatsAppNotification.mock.calls[0];
     expect(tel).toBe('+221771234567');
-    expect(msg).toContain('Samsung Galaxy S21');
-    expect(msg).toContain('280');
+    expect(opts.textMessage).toContain('Samsung Galaxy S21');
+    expect(opts.textMessage).toContain('280');
   });
 
   test("n'envoie pas de WhatsApp si alerte.telephone absent", async () => {
     await envoyerAlertePrix({ ...alerteBase, email: 'test@example.com' }, 280000);
-    expect(sendWhatsAppText).not.toHaveBeenCalled();
+    expect(sendWhatsAppNotification).not.toHaveBeenCalled();
   });
 
   test('envoie email ET WhatsApp si les deux sont définis', async () => {
@@ -67,7 +68,7 @@ describe('envoyerAlertePrix', () => {
       280000
     );
     expect(envoyerEmail).toHaveBeenCalledTimes(1);
-    expect(sendWhatsAppText).toHaveBeenCalledTimes(1);
+    expect(sendWhatsAppNotification).toHaveBeenCalledTimes(1);
   });
 
   test('désactive toujours l\'alerte après envoi (UPDATE active=false)', async () => {

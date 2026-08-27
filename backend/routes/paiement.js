@@ -256,21 +256,42 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
           const boutique = bqRes.rows ? bqRes.rows[0] : null;
 
           try {
-            const { sendWhatsAppText } = require('../services/whatsapp');
+            const { sendWhatsAppNotification } = require('../services/whatsapp');
+            const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
             const montantFmt = new Intl.NumberFormat('fr-FR').format(cmd.montant_total);
 
-            // 1. Notification WhatsApp à l'acheteur (Client)
+            // 1. Notification WhatsApp à l'acheteur (Client) avec garantie 24H Meta
             if (cmd.client_telephone) {
               const msgClient = `🌊 *Paiement Wave Confirmé !*\n\nVotre commande *${cmd.reference}* (*${montantFmt} FCFA*)${boutique ? ` auprès de la boutique *${boutique.nom}*` : ''} a bien été réglée avec succès via Wave.\n\nMerci pour votre confiance !`;
-              sendWhatsAppText(cmd.client_telephone, msgClient).catch(err => console.error('[WAVE WEBHOOK NOTIF CLIENT ERR]:', err.message));
+              const titleClient = `🌊 Paiement Wave Confirmé — ${boutique?.nom || 'Nopalou'}`;
+              const detailClient = `Réf ${cmd.reference} : Paiement de ${montantFmt} FCFA reçu avec succès via Wave.`;
+              const urlClient = boutique ? `${SITE}/boutiques/${boutique.slug || boutique.id}` : SITE;
+
+              sendWhatsAppNotification(cmd.client_telephone, {
+                textMessage: msgClient,
+                title: titleClient,
+                detail: detailClient,
+                url: urlClient,
+                buttonParam: boutique ? (boutique.slug || boutique.id) : 'commandes',
+              }).catch(err => console.error('[WAVE WEBHOOK NOTIF CLIENT ERR]:', err.message));
             }
 
-            // 2. Notification WhatsApp au vendeur (Marchand)
+            // 2. Notification WhatsApp au vendeur (Marchand) avec garantie 24H Meta
             if (boutique) {
               const telVendeur = boutique.whatsapp || boutique.telephone;
               if (telVendeur) {
                 const msgVendeur = `🎉 *Nouveau Paiement Wave Reçu !*\n\nLa commande *${cmd.reference}* d'un montant de *${montantFmt} FCFA* a été payée avec succès par le client *${cmd.client_nom || 'Client'}* (${cmd.client_telephone || 'N/A'}).\n\nVous pouvez dès à présent préparer le colis pour la livraison !`;
-                sendWhatsAppText(telVendeur, msgVendeur).catch(err => console.error('[WAVE WEBHOOK NOTIF VENDEUR ERR]:', err.message));
+                const titleVendeur = `🎉 Paiement Wave Reçu — ${boutique.nom}`;
+                const detailVendeur = `Réf ${cmd.reference} : ${montantFmt} FCFA réglés par ${cmd.client_nom || 'Client'} (${cmd.client_telephone || 'N/A'}).`;
+                const lienCommandes = `${SITE}/boutique?tab=commandes`;
+
+                sendWhatsAppNotification(telVendeur, {
+                  textMessage: msgVendeur,
+                  title: titleVendeur,
+                  detail: detailVendeur,
+                  url: lienCommandes,
+                  buttonParam: 'boutique?tab=commandes',
+                }).catch(err => console.error('[WAVE WEBHOOK NOTIF VENDEUR ERR]:', err.message));
               }
             }
           } catch (whatsappErr) {

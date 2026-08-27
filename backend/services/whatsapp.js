@@ -128,6 +128,58 @@ async function sendWhatsAppTemplate(phone, templateName, components = []) {
   });
 }
 
+/**
+ * Envoie une notification transactionnelle garantie à un numéro (client ou marchand).
+ * 1. Tente d'envoyer le message texte libre détaillé (s'affichera si l'utilisateur a écrit dans les 24h).
+ * 2. Envoie systématiquement le Template Meta certifié `nopalou_fiche_texte` pour garantir
+ *    la réception 24h/24 même si la fenêtre des 24h Meta est fermée (anti-erreur 131047).
+ */
+async function sendWhatsAppNotification(phone, {
+  textMessage,
+  title,
+  detail,
+  url = SITE,
+  buttonParam = 'commandes',
+}) {
+  if (!phone) return null;
+  const normPhone = normalisePhone(phone);
+
+  // 1. Envoi du message texte libre (utile pour les clients actifs dans la fenêtre 24h)
+  if (textMessage) {
+    sendWhatsAppText(normPhone, textMessage).catch(err => {
+      console.warn(`[WHATSAPP NOTIF TEXT INFO] (${normPhone}):`, err.response?.data?.error?.message || err.message);
+    });
+  }
+
+  // 2. Envoi garanti par Template Meta (contourne la restriction 24h de Meta)
+  const cleanTitle = (title || 'Notification Nopalou').slice(0, 60);
+  const cleanDetail = (detail || 'Consultez votre espace Nopalou pour plus de détails.').slice(0, 1000);
+  const cleanUrl = url || SITE;
+  const cleanParam = String(buttonParam || 'commandes').replace(/^[/?#]+/, '');
+
+  try {
+    return await sendWhatsAppTemplate(normPhone, 'nopalou_fiche_texte', [
+      {
+        type: 'body',
+        parameters: [
+          { type: 'text', text: cleanTitle },
+          { type: 'text', text: cleanDetail },
+          { type: 'text', text: cleanUrl },
+        ],
+      },
+      {
+        type: 'button',
+        sub_type: 'url',
+        index: '0',
+        parameters: [{ type: 'text', text: cleanParam }],
+      },
+    ]);
+  } catch (tErr) {
+    console.error(`[WHATSAPP NOTIF TEMPLATE ERR] (${normPhone}):`, tErr.response?.data?.error?.message || tErr.message);
+    return null;
+  }
+}
+
 // ── "Carousel" (en réalité : templates à 1 carte, envoyés en série) ──────────
 // Malgré leur nom, nopalou_carousel_immo/annonce ne sont PAS de vrais templates
 // Carousel Meta (l'option n'existe pas dans l'interface actuelle) — ce sont de
@@ -374,6 +426,7 @@ async function sendFiche(type, id, phone) {
 module.exports = {
   sendWhatsAppText,
   sendWhatsAppTemplate,
+  sendWhatsAppNotification,
   sendWhatsAppCarousel,
   sendWhatsAppInteractive,
   sendWhatsAppButton,

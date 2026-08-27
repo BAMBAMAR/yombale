@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { apiFetch } from '@/lib/api'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import { fcfa } from '@/lib/format'
@@ -96,6 +96,8 @@ export default async function FicheProduitPage(
   { params }: { params: Promise<{ id: string; produitId: string }> }
 ) {
   const { id, produitId } = await params
+  if (!id || !produitId) redirect('/boutiques')
+
   let produit: ProduitDetail
 
   try {
@@ -104,7 +106,17 @@ export default async function FicheProduitPage(
     )
     produit = data.produit
   } catch {
-    notFound()
+    // Si le produit n'est pas trouvé sous cette boutique, tenter de résoudre le produit pour obtenir sa boutique canonique
+    try {
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(produitId)}`);
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/boutiques/${id}/produits/${produitId}`) {
+        redirect(resolved.url);
+      }
+    } catch (rErr) {
+      if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
+    }
+
+    redirect(`/boutiques/${id}`)
   }
 
   const p = produit!

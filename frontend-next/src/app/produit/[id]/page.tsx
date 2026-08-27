@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import ExternalImg from '@/components/ExternalImg';
@@ -254,6 +254,8 @@ function buildJsonLd(produit: Produit, offres: Offre[]): string {
 
 export default async function FicheProduitPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!id) redirect('/');
+
   let produit: Produit;
   let offres: Offre[] = [];
   let historique: HistoriquePoint[] = [];
@@ -264,7 +266,18 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
   try {
     produit = await apiFetch<Produit>(`/produits/${id}`);
   } catch {
-    notFound();
+    // Redirection automatique via résolveur d'entités (produit marchand, boutique, immo, annonce, commande)
+    try {
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/produit/${id}`) {
+        redirect(resolved.url);
+      }
+    } catch (rErr) {
+      if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
+    }
+
+    // Redirection de repli sans 404
+    redirect(`/?q=${encodeURIComponent(id)}`);
   }
 
   await Promise.all([

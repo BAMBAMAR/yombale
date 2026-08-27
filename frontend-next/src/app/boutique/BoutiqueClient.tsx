@@ -4630,7 +4630,13 @@ export default function BoutiqueClient({
     const listToSearch = boutiquesList.length > 0 ? boutiquesList : boutiques
     
     setMode(prevMode => {
-      // 1. Si on gère déjà une boutique manuellement
+      // 1. Si l'URL spécifie explicitement une boutique (?id=... ou ?manage=...), celle-ci est prioritaire
+      if (manageId && listToSearch.length > 0) {
+        const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
+        if (targetBoutique) return { managing: targetBoutique }
+      }
+
+      // 2. Si on gère déjà une boutique manuellement
       if (typeof prevMode === 'object' && 'managing' in prevMode) {
         // Rafraîchir les données de la boutique active (si modifiées par le réseau/cache)
         const updatedTarget = listToSearch.find(b => b.id === prevMode.managing.id)
@@ -4640,11 +4646,8 @@ export default function BoutiqueClient({
         return prevMode // On ne touche à rien
       }
 
-      // 2. Si on n'est pas encore en mode 'managing', on lit l'URL
-      if (manageId && listToSearch.length > 0) {
-        const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
-        if (targetBoutique) return { managing: targetBoutique }
-      } else if ((tabParam || lockedParam) && listToSearch.length > 0) {
+      // 3. Si on n'est pas encore en mode 'managing' mais qu'un onglet est demandé
+      if ((tabParam || lockedParam) && listToSearch.length > 0) {
         return { managing: listToSearch[0] }
       }
       
