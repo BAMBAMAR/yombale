@@ -516,6 +516,8 @@ module.exports = async function migrateInline() {
     `ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS motif_rejet TEXT`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS sponsorise BOOLEAN DEFAULT FALSE`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS sponsor_jusqu_au TIMESTAMPTZ`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS derniere_relance_catalogue_at TIMESTAMPTZ`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS nb_relances_catalogue INT DEFAULT 0`,
     `ALTER TABLE produits ADD COLUMN IF NOT EXISTS sponsorise BOOLEAN DEFAULT FALSE`,
     `ALTER TABLE produits ADD COLUMN IF NOT EXISTS sponsor_jusqu_au TIMESTAMPTZ`,
   ];

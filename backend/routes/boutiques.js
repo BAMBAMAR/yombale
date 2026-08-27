@@ -169,9 +169,12 @@ router.get('/catalogues-standards', async (req, res) => {
 router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
+      `SELECT b.id, b.nom, b.slug, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
               b.logo_url, b.actif, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
-              u.nom AS proprietaire_nom, u.email AS proprietaire_email,
+              b.derniere_relance_catalogue_at, COALESCE(b.nb_relances_catalogue, 0) AS nb_relances_catalogue,
+              (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits,
+              u.nom AS proprietaire_nom, u.prenom AS proprietaire_prenom, u.email AS proprietaire_email,
+              u.telephone AS proprietaire_telephone,
               a.plan AS plan_actif, a.fin AS plan_fin
        FROM boutiques b
        LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
@@ -187,6 +190,102 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
     );
     res.json({ boutiques: rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+});
+
+// ── POST /api/boutiques/admin/relance-catalogue — Envoi unitaire ou par lot de relances catalogue (admin)
+router.post('/admin/relance-catalogue', adminSecretOnly, async (req, res) => {
+  try {
+    const { boutiqueId, boutiqueIds, messageCustom, titreCustom } = req.body || {};
+    const { envoyerRelanceCatalogueBoutique, batchRelancerCatalogueBoutiques } = require('../services/relance-catalogue');
+
+    if (boutiqueId) {
+      const result = await envoyerRelanceCatalogueBoutique(boutiqueId, { messageCustom, titreCustom });
+      return res.json({ success: true, result });
+    }
+
+    if (Array.isArray(boutiqueIds) && boutiqueIds.length > 0) {
+      const result = await batchRelancerCatalogueBoutiques(boutiqueIds, { messageCustom, titreCustom });
+      return res.json({ success: true, ...result });
+    }
+
+    return res.status(400).json({ error: 'boutiqueId ou boutiqueIds (tableau) requis' });
+  } catch (err) {
+    console.error('[POST /api/boutiques/admin/relance-catalogue]', err.message);
+    res.status(500).json({ error: err.message || 'Erreur lors de l\'envoi de la relance catalogue' });
+  }
+});
+
+// ── GET /api/boutiques/admin/relance-catalogue/config — Configuration et statistiques de relance (admin)
+router.get('/admin/relance-catalogue/config', adminSecretOnly, async (req, res) => {
+  try {
+    const actif = await cfg.getBool('relance_catalogue_actif', false);
+    const seuil = await cfg.getNum('relance_catalogue_seuil', 1);
+    const delaiHeures = await cfg.getNum('relance_catalogue_delai_heures', 24);
+    const intervalleJours = await cfg.getNum('relance_catalogue_intervalle_jours', 7);
+    const titre = await cfg.get('relance_catalogue_titre');
+    const template = await cfg.get('relance_catalogue_template');
+
+    const statsRes = await pool.query(`
+      SELECT 
+        COUNT(*) FILTER (WHERE nb_prods = 0) AS count_0,
+        COUNT(*) FILTER (WHERE nb_prods = 1) AS count_1,
+        COUNT(*) FILTER (WHERE nb_prods = 2) AS count_2,
+        COUNT(*) FILTER (WHERE nb_prods = 3) AS count_3,
+        COUNT(*) FILTER (WHERE nb_prods BETWEEN 4 AND 5) AS count_4_5,
+        COUNT(*) FILTER (WHERE nb_prods > 5) AS count_plus_5,
+        COUNT(*) AS total_boutiques
+      FROM (
+        SELECT b.id, (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_prods
+        FROM boutiques b
+        WHERE b.actif = true
+      ) sub
+    `);
+
+    res.json({
+      config: {
+        actif,
+        seuil,
+        delai_heures: delaiHeures,
+        intervalle_jours: intervalleJours,
+        titre,
+        template,
+      },
+      stats: statsRes.rows[0] || {},
+    });
+  } catch (err) {
+    console.error('[GET /api/boutiques/admin/relance-catalogue/config]', err.message);
+    res.status(500).json({ error: 'Erreur chargement configuration relance' });
+  }
+});
+
+// ── PUT /api/boutiques/admin/relance-catalogue/config — Mise à jour de la configuration relance (admin)
+router.put('/admin/relance-catalogue/config', adminSecretOnly, async (req, res) => {
+  try {
+    const { actif, seuil, delai_heures, intervalle_jours, titre, template } = req.body || {};
+
+    const updates = {};
+    if (typeof actif !== 'undefined') updates.relance_catalogue_actif = String(Boolean(actif));
+    if (typeof seuil !== 'undefined') updates.relance_catalogue_seuil = String(Math.max(0, parseInt(seuil, 10) || 0));
+    if (typeof delai_heures !== 'undefined') updates.relance_catalogue_delai_heures = String(Math.max(1, parseInt(delai_heures, 10) || 24));
+    if (typeof intervalle_jours !== 'undefined') updates.relance_catalogue_intervalle_jours = String(Math.max(1, parseInt(intervalle_jours, 10) || 7));
+    if (typeof titre === 'string') updates.relance_catalogue_titre = titre.trim();
+    if (typeof template === 'string') updates.relance_catalogue_template = template.trim();
+
+    for (const [key, value] of Object.entries(updates)) {
+      await pool.query(
+        `INSERT INTO settings (key, value, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
+        [key, value]
+      );
+      await cfg.set(key, value);
+    }
+
+    res.json({ success: true, message: 'Configuration de relance catalogue mise à jour avec succès', updates });
+  } catch (err) {
+    console.error('[PUT /api/boutiques/admin/relance-catalogue/config]', err.message);
+    res.status(500).json({ error: 'Erreur lors de la sauvegarde de la configuration' });
+  }
 });
 
 // ── GET /api/boutiques/admin/promotions — toutes les promotions de toutes les boutiques (admin)

@@ -473,4 +473,110 @@ export async function validerLotReversementsWave(ids: string[]): Promise<{ succe
   }
 }
 
+// ── Relance & Onboarding Catalogue Marchands ──────────────────────────────
+export async function relancerCatalogueBoutique(
+  boutiqueId: string,
+  messageCustom?: string,
+  titreCustom?: string
+): Promise<{ success?: boolean; result?: any; error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/boutiques/admin/relance-catalogue`, {
+      method: 'POST',
+      headers: adminHeaders(secret),
+      body: JSON.stringify({ boutiqueId, messageCustom, titreCustom }),
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur lors de l\'envoi de la relance' }
+    revalidatePath('/admin/boutiques')
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+export async function batchRelancerCatalogueBoutiques(
+  boutiqueIds: string[],
+  messageCustom?: string,
+  titreCustom?: string
+): Promise<{ success?: boolean; successCount?: number; errorCount?: number; errors?: any[]; error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/boutiques/admin/relance-catalogue`, {
+      method: 'POST',
+      headers: adminHeaders(secret),
+      body: JSON.stringify({ boutiqueIds, messageCustom, titreCustom }),
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur lors de la relance groupée' }
+    revalidatePath('/admin/boutiques')
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+export async function getRelanceCatalogueConfig(): Promise<{
+  config?: {
+    actif: boolean
+    seuil: number
+    delai_heures: number
+    intervalle_jours: number
+    titre: string
+    template: string
+  }
+  stats?: Record<string, number>
+  error?: string
+}> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/boutiques/admin/relance-catalogue/config`, {
+      headers: adminHeaders(secret),
+      cache: 'no-store',
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur chargement configuration' }
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+export async function updateRelanceCatalogueConfig(payload: {
+  actif?: boolean
+  seuil?: number
+  delai_heures?: number
+  intervalle_jours?: number
+  titre?: string
+  template?: string
+}): Promise<{ success?: boolean; message?: string; error?: string }> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/boutiques/admin/relance-catalogue/config`, {
+      method: 'PUT',
+      headers: adminHeaders(secret),
+      body: JSON.stringify(payload),
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur lors de la sauvegarde de la configuration' }
+    revalidatePath('/admin/boutiques')
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+
 

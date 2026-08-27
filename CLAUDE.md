@@ -1,3 +1,36 @@
+- **Module d'Onboarding & Relance Catalogue Marchands : Filtrage par Seuil Paramétrable (0, 1, 2, 3... produits), Actions 1-Clic WhatsApp / Batch & Automatisation par Cron Quotidien (`relance-catalogue.js`, `boutiques.js`, `settingsCache.js`, `migrate-inline.js`, `AdminBoutiquesClient.tsx`, `admin.ts`, `relance-catalogue.test.js`, `CLAUDE.md`) (`main` - 27 août 2026)** 🛍️💬🤖⚡🎯🇸🇳✨ :
+  * **🔍 Contexte & Diagnostic du Besoin d'Activation Marchands** :
+    - **Boutiques Vides ou Incomplètes** : Beaucoup de marchands créent leur boutique mais ne publient pas immédiatement leurs articles par manque de temps ou méconnaissance des outils mis à leur disposition (Import IA, Caisse POS, Import CSV, Chatbot).
+    - **Nécessité d'un Accompagnement Proactif & Paramétrable** : Possibilité pour les administrateurs de cibler les commerces selon un seuil précis (ex. boutiques à 0 produit, ≤ 1 produit, ≤ 2 produits...), de leur envoyer en 1 clic un guide structuré des 5 façons d'ajouter des produits, et d'automatiser ces relances via une tâche de fond (Cron) 100% paramétrable.
+  * **💬 1. Guide d'Ajout de Produits & Compilation Dynamique (`relance-catalogue.js`)** :
+    - **5 Méthodes Concrètes Présentées au Marchand** :
+      1. 🪄 *L'Import Magique par Photo (IA)* : Envoi d'une photo d'article ou d'étiquette générant la fiche en 3 secondes.
+      2. 🛍️ *Espace Marchand Web* : Ajout avec photos, stock, prix et variantes (`/boutique?tab=produits&id=...`).
+      3. ⚡ *Saisie Express (Caisse POS)* : Enregistrement d'articles à la volée lors des encaissements (`/boutique/caisse?manage=...`).
+      4. 📊 *Import Excel / CSV* : Téléversement de catalogues volumineux.
+      5. 🤖 *Assistant IA WhatsApp* : Ajout interactif par simple message texte ou vocal.
+    - **Interpolation Intelligente des Variables** : Remplacement automatique des balises `{prenom}`, `{nom}`, `{boutique_nom}`, `{nb_produits}`, `{lien_boutique}`, `{lien_caisse}`, `{lien_accueil}`.
+  * **🏪 2. Interface d'Administration & Filtre par Seuil de Catalogue (`AdminBoutiquesClient.tsx`, `page.tsx`)** :
+    - **Sélecteur de Seuil Dynamique** : Filtrage instantané des boutiques par nombre de produits (📋 *Tous les volumes*, 🔴 *0 produit (Boutique vide)*, 🟠 *≤ 1 produit*, 🟡 *≤ 2 produits*, 🔵 *≤ 3 produits*, ⚪ *≤ 5 produits*).
+    - **Badges de Statut Catalogue en Temps Réel** : Indicateurs visuels clairs (`🔴 0 produit`, `🟠 1 produit`, `🟡 2 produits`, `🟢 15 produits`) et historique de relance (`💬 X relance(s)`).
+    - **Actions 1-Clic par Marchand** :
+      - *Bouton 💬 Relancer* : Ouvre la modale de personnalisation avec choix parmi 3 modèles pré-rédigés.
+      - *Bouton 📱 WhatsApp Web Direct (`wa.me`)* : Ouvre directement WhatsApp avec le guide personnalisé et le lien direct vers la boutique du commerçant.
+    - **Actions Groupées (Batch)** : Sélection multiple de boutiques et envoi en 1 clic via `BatchActionBar`.
+    - **Panneau de Configuration de l'Automatisation** : Bouton `⚙️ Automatisation Relances (Cron)` ouvrant une modale complète avec interrupteur ON/OFF, réglage du seuil de produits, délai post-création, intervalle anti-harcèlement et éditeur de modèle en direct.
+  * **⚙️ 3. Backend & Cron d'Onboarding Quotidien (`relance-catalogue.js`, `boutiques.js`, `settingsCache.js`, `migrate-inline.js`)** :
+    - **Migration Inline Sécurisée** : Ajout automatique des colonnes `derniere_relance_catalogue_at TIMESTAMPTZ` et `nb_relances_catalogue INT DEFAULT 0` sur la table `boutiques`.
+    - **Endpoints API Admin Sécurisés** :
+      - `GET /api/boutiques/admin/toutes` : Enrichi avec `nb_produits`, `derniere_relance_catalogue_at`, `nb_relances_catalogue`.
+      - `POST /api/boutiques/admin/relance-catalogue` : Déclenchement de relance unitaire ou batch.
+      - `GET /api/boutiques/admin/relance-catalogue/config` : Lecture des paramètres et statistiques de catalogues.
+      - `PUT /api/boutiques/admin/relance-catalogue/config` : Enregistrement dynamique des réglages.
+    - **Cron Quotidien (`demarrerCronRelanceCatalogue`)** : Planification automatique à 10h00 chaque matin dans `demarrerCronsMetier()` (`scraper.js`), respectant le seuil configuré, le délai d'inscription et l'intervalle anti-harcèlement.
+  * **🧪 4. Validation & Tests** :
+    - Nouveau fichier de tests unitaires : `tests/unit/relance-catalogue.test.js` (**9/9 tests passés**).
+    - Suite complète backend Jest : **19 suites de tests passées / 151 tests validés à 100% sans aucune erreur**.
+    - Typecheck et build Next.js (`npm run build`) : **100% réussi sans aucune erreur**.
+
 - **Refonte Ultra-Premium des Formulaires de Commande & Panier : Sélecteurs de Modes par Grandes Cartes Visuelles, Clarification Totale de l'Expérience d'Achat & Code Promo Intégré (`CommanderModal.tsx`, `DrawerCart.tsx`, `CLAUDE.md`) (`main` - 27 août 2026)** 💎✨🛒📋💬⚡🇸🇳 :
   * **🔍 Diagnostic des Problèmes d'Ergonomie et de Lisibilité** :
     - **Sélecteur d'onglets trop discret** : Les onglets de commande (WhatsApp vs Formulaire/Paiement direct) consistaient en deux petits boutons gris peu contrastés en haut de la fenêtre. Les acheteurs ne distinguaient pas immédiatement le choix du mode de commande ni où cliquer.

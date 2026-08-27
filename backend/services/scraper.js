@@ -1269,6 +1269,12 @@ function demarrerCronsMetier() {
   cron.schedule('*/15 * * * *', () => verifierAlertsPrix().catch(err => console.error('[ALERTES]', err.message)));
   const { detecterAnomalies } = require('./anomaly-detector');
   cron.schedule('0 1 * * *', () => detecterAnomalies().catch(err => console.error('[ANOMALY]', err.message)));
+  try {
+    const { demarrerCronRelanceCatalogue } = require('./relance-catalogue');
+    demarrerCronRelanceCatalogue();
+  } catch (e) {
+    console.error('[CRON RELANCE INIT ERR]:', e.message);
+  }
 }
 
 module.exports = { 
