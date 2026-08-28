@@ -182,7 +182,7 @@ export default async function HomePage({
         overflow: 'hidden',
       }}>
         {/* Layout en 3 colonnes pour utiliser l'espace Desktop (Gauche, Centre, Droite) */}
-        <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: 1380, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, position: 'relative', zIndex: 2 }}>
           
           {/* COLONNE GAUCHE (Desktop seulement : Carrousel dynamique WhatsApp & Parrainage) */}
           <div className="hero-side-card" style={{ flex: '0 0 310px', width: 310, display: 'flex' }}>
@@ -194,17 +194,17 @@ export default async function HomePage({
           
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: '#fff7ed', color: '#c75b00', padding: '4px 14px', borderRadius: 30,
-            fontSize: 11, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5',
+            background: 'var(--orange2, #FFF3E8)', color: 'var(--accent, #C75B00)', padding: '4px 14px', borderRadius: 30,
+            fontSize: 11.5, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5',
           }}>
             <span>✨ Comparateur N°1 de prix & vendeurs au Sénégal</span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(24px, 3.8vw, 36px)', fontWeight: 900, color: '#0f172a', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
-            Comparez les prix & trouvez les meilleurs vendeurs au <span style={{ color: '#C75B00' }}>Sénégal</span>
+          <h1 style={{ fontSize: 'clamp(24px, 3.8vw, 36px)', fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
+            Comparez les prix & trouvez les meilleurs vendeurs au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
           </h1>
 
-          <p style={{ fontSize: 14.5, color: '#475569', margin: '0 auto 14px', maxWidth: 600, lineHeight: 1.45 }}>
+          <p style={{ fontSize: 14.5, color: 'var(--text2, #6B5E52)', margin: '0 auto 14px', maxWidth: 600, lineHeight: 1.45 }}>
             Accédez instantanément à des milliers de produits, téléphones, électroménager et boutiques vérifiées à Dakar et dans toutes les régions.
           </p>
 
@@ -221,12 +221,12 @@ export default async function HomePage({
               width: '100%',
               maxWidth: 310,
               textAlign: 'left',
-              background: '#0f172a',
-              padding: '12px 16px',
+              background: 'var(--navy, #1C2B4A)',
+              padding: '14px 18px',
               borderRadius: 14,
               color: '#f8fafc',
-              border: '1px solid #1e293b',
-              boxShadow: '0 4px 16px rgba(15,23,42,0.12)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 4px 16px rgba(28,43,74,0.2)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -237,27 +237,27 @@ export default async function HomePage({
             }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.2)', color: '#fed7aa', padding: '2px 7px', borderRadius: 8, fontSize: 9.5, fontWeight: 800, border: '1px solid rgba(199,91,0,0.3)', letterSpacing: '0.04em' }}>🚀 NOUVEAU</span>
-                  <span style={{ fontSize: 10.5, fontWeight: 800, color: '#fed7aa' }}>{prixTafTaf} F/mois</span>
+                  <span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.25)', color: '#fed7aa', padding: '2px 7px', borderRadius: 8, fontSize: 10, fontWeight: 800, border: '1px solid rgba(199,91,0,0.4)', letterSpacing: '0.04em' }}>🚀 NOUVEAU</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fed7aa' }}>{prixTafTaf} F/mois</span>
                 </div>
-                <h3 style={{ fontSize: 13, fontWeight: 900, marginBottom: 2, color: '#fff', lineHeight: 1.2 }}>Boutique Taf Taf</h3>
-                <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px', lineHeight: 1.3 }}>Créez votre vitrine en 30s chrono !</p>
+                <h3 style={{ fontSize: 13.5, fontWeight: 900, marginBottom: 2, color: '#fff', lineHeight: 1.2 }}>Boutique Taf Taf</h3>
+                <p style={{ fontSize: 11.5, color: '#cbd5e1', margin: '0 0 6px', lineHeight: 1.3 }}>Créez votre vitrine en 30s chrono !</p>
                 
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <li style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0', lineHeight: 1.3 }}>
-                    <span style={{ color: '#C75B00', fontWeight: 900 }}>✓</span> Vitrine web & lien personnalisé
+                  <li style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0', lineHeight: 1.3 }}>
+                    <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 900 }}>✓</span> Vitrine web & lien personnalisé
                   </li>
-                  <li style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0', lineHeight: 1.3 }}>
-                    <span style={{ color: '#C75B00', fontWeight: 900 }}>✓</span> Commandes directes WhatsApp & Web
+                  <li style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0', lineHeight: 1.3 }}>
+                    <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 900 }}>✓</span> Commandes directes WhatsApp & Web
                   </li>
                 </ul>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 2 }}>
-                <Link href="/creer-boutique" style={{ fontSize: 11.5, fontWeight: 800, color: '#fed7aa', textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  Créer ma vitrine <span style={{ color: '#C75B00' }}>→</span>
+                <Link href="/creer-boutique" style={{ fontSize: 12, fontWeight: 800, color: '#fed7aa', textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  Créer ma vitrine <span style={{ color: 'var(--accent, #C75B00)' }}>→</span>
                 </Link>
-                <span style={{ fontSize: 9.5, fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#cbd5e1', background: 'rgba(255,255,255,0.08)', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)' }}>
                   30j offerts
                 </span>
               </div>

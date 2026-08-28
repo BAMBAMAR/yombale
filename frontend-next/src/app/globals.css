@@ -114,22 +114,39 @@ img, video, iframe {
   --pos-shadow:    0 2px 8px rgba(26,22,18,.08);
   --pos-shadow-lg: 0 8px 32px rgba(26,22,18,.16);
 
-  /* ── Système de spacing unifié (évite les valeurs arbitraires) ── */
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: 12px;
-  --sp-4: 16px;
-  --sp-5: 20px;
-  --sp-6: 24px;
-  --sp-8: 32px;
-  --sp-10: 40px;
+  /* ── Rayons de courbure standardisés (Border-Radius Scale) ─── */
+  --r-sm:   6px;
+  --r-md:   8px;
+  --r-lg:   12px;
+  --r-xl:   16px;
+  --r-pill: 9999px;
+
+  /* ── Système d'espacements unifié (Base 4/8pt Grid) ─────────── */
+  --sp-0-5: 2px;
+  --sp-1:   4px;
+  --sp-2:   8px;
+  --sp-3:   12px;
+  --sp-4:   16px;
+  --sp-5:   20px;
+  --sp-6:   24px;
+  --sp-8:   32px;
+  --sp-10:  40px;
+  --sp-12:  48px;
+  --sp-16:  64px;
+
+  /* ── Ombres chaudes harmonisées (Warm Shadow Scale) ─────────── */
+  --shadow-xs: 0 1px 2px rgba(26,22,18,.05);
+  --shadow-sm: 0 1px 4px rgba(26,22,18,.07);
+  --shadow-md: 0 4px 12px rgba(26,22,18,.08);
+  --shadow-lg: 0 8px 24px rgba(26,22,18,.12);
+  --shadow-xl: 0 16px 40px rgba(26,22,18,.16);
 
   /* ── Hauteurs de bouton standardisées ───────────────────────────
-     sm=32px  md=40px  lg=48px  xl=60px (Encaisser)               */
+     sm=32px  md=40px  lg=48px  xl=58px/60px (Encaisser POS)        */
   --btn-h-sm:  32px;
   --btn-h-md:  40px;
   --btn-h-lg:  48px;
-  --btn-h-xl:  60px;
+  --btn-h-xl:  58px;
 
   /* ── Type Scale unifié (WCAG Compliant) ───────────────────────── */
   --text-xs:   11px;
@@ -140,6 +157,176 @@ img, video, iframe {
   --text-xl:   22px;
   --text-2xl:  28px;
   --text-3xl:  clamp(28px, 4vw, 44px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CLASSES UTILITAIRES GLOBALES DESIGN SYSTEM NOPALOU
+   ════════════════════════════════════════════════════════════════ */
+
+/* Formatage numérique strict (montants FCFA & compteurs) */
+.num-tabular, .fcfa-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Boutons universels Design System */
+.btn-npl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--r-md);
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+.btn-npl:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.btn-npl:not(:disabled):active { transform: scale(0.98); }
+
+.btn-npl-sm { height: var(--btn-h-sm); padding: 0 12px; font-size: 12px; border-radius: var(--r-sm); }
+.btn-npl-md { height: var(--btn-h-md); padding: 0 16px; font-size: 13.5px; }
+.btn-npl-lg { height: var(--btn-h-lg); padding: 0 20px; font-size: 14.5px; font-weight: 800; }
+
+.btn-npl-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(199,91,0,.25);
+}
+.btn-npl-primary:not(:disabled):hover {
+  background: #A34900;
+  box-shadow: 0 4px 14px rgba(199,91,0,.35);
+}
+
+.btn-npl-secondary {
+  background: var(--card);
+  color: var(--navy);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+}
+.btn-npl-secondary:not(:disabled):hover {
+  background: var(--bg);
+  border-color: #D4C5B9;
+}
+
+.btn-npl-danger {
+  background: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+.btn-npl-danger:not(:disabled):hover {
+  background: #FEE2E2;
+}
+
+.btn-npl-ghost {
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid transparent;
+}
+.btn-npl-ghost:not(:disabled):hover {
+  background: rgba(26,22,18,0.05);
+  color: var(--navy);
+}
+
+/* Badges sémantiques universels */
+.badge-npl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+}
+.badge-npl-success { background: var(--green2); color: var(--price); border: 1px solid rgba(10,92,54,0.2); }
+.badge-npl-warning { background: #FFFBEB; color: #B45309; border: 1px solid #FCD34D; }
+.badge-npl-danger  { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+.badge-npl-info    { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+.badge-npl-accent  { background: var(--orange2); color: var(--accent); border: 1px solid rgba(199,91,0,0.25); }
+.badge-npl-navy    { background: #F1F5F9; color: var(--navy); border: 1px solid #CBD5E1; }
+
+/* Cartes et conteneurs surfaces standardisés */
+.card-npl {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-npl:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #D4C5B9;
+}
+
+/* Inputs standardisés avec focus doré chaud */
+.input-npl {
+  width: 100%;
+  height: var(--btn-h-md);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  color: var(--text1);
+  background: #ffffff;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input-npl::placeholder {
+  color: var(--text3);
+}
+.input-npl:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,91,0,0.15);
+}
+
+/* Tableaux financiers et listes de données */
+.table-npl-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-xs);
+}
+.table-npl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+.table-npl th {
+  background: var(--bg);
+  color: var(--text2);
+  font-weight: 750;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.table-npl td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text1);
+  vertical-align: middle;
+}
+.table-npl tr:last-child td {
+  border-bottom: none;
+}
+.table-npl tr:hover td {
+  background: rgba(248,245,240,0.5);
+}
+.table-npl .th-num, .table-npl .td-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Keyframes animations P4 */

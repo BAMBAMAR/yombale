@@ -252,7 +252,7 @@ function ProduitCard({
         </div>
       </div>
 
-      <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ padding: '0 14px 14px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={boutiqueId} />
         <button
           onClick={() => {
@@ -265,10 +265,28 @@ function ProduitCard({
             }
           }}
           disabled={!isEnStock}
-          className={`btn-premium ${addedCart ? 'btn-premium-success' : 'btn-premium-primary'}`}
-          style={{ width: '100%', padding: '9px', fontSize: 13, opacity: isEnStock ? 1 : 0.6 }}
+          className={`btn-npl ${addedCart ? 'btn-npl-secondary' : 'btn-npl-primary'} btn-npl-md`}
+          style={{ width: '100%', fontSize: 13, opacity: isEnStock ? 1 : 0.6, height: 40 }}
         >
-          {addedCart ? '✅ Ajouté !' : (isEnStock ? (p.variantes && p.variantes.length > 0 ? 'Choisir mes options' : <><ShoppingCart size={15} /> Ajouter au panier</>) : 'Rupture de stock')}
+          {addedCart ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#0A5C36', fontWeight: 800 }}>
+              <Check size={15} strokeWidth={3} />
+              <span>Ajouté au panier</span>
+            </span>
+          ) : (
+            isEnStock ? (
+              p.variantes && p.variantes.length > 0 ? (
+                <span>Choisir mes options</span>
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <ShoppingCart size={15} />
+                  <span>Ajouter au panier</span>
+                </span>
+              )
+            ) : (
+              <span>Rupture de stock</span>
+            )
+          )}
         </button>
       </div>
     </div>

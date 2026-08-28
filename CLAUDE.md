@@ -1,3 +1,42 @@
+- **Harmonisation Globale du Design System & Audit Esthétique UI/UX de Nopalou : Tokens Universels, Élimination des Emojis Non-Professionnels, Alignement Numérique Tabulaire & Cohérence Visuelle Marchand / Vitrine (`globals.css`, `MobileNav.tsx`, `NavbarGuides.tsx`, `DrawerCart.tsx`, `BoutiqueClient.tsx`, `AnalyticsClient.tsx`, `BoutiqueDetailClient.tsx`, `checkout-express/page.tsx`, `page.tsx`, `CLAUDE.md`) (`main` - 28 août 2026)** 🎨💎📐⚡🇸🇳✨ :
+  * **🔍 Contexte & Diagnostic de l'Audit Esthétique (31 Sections)** :
+    - **Incohérences de Typographie & Échelle de Texte** : Présence de micro-textes inférieurs à `11px` non conformes aux normes d'accessibilité WCAG AAA et disparités dans les graisses et interlignages.
+    - **Prolifération d'Emojis comme Icônes** : Utilisation hétérogène d'emojis système natifs (`⚡`, `💬`, `📦`, `📋`, `👉`) dans les tiroirs, barres d'outils et sélecteurs de paiement, générant un rendu disparate selon l'OS (Android, iOS, Windows).
+    - **Altération de la Grille & Asymétrie des Cartes Produits** : Variation de la hauteur des cartes selon la longueur des descriptions ou caractéristiques, provoquant un décrochage visuel des boutons CTA d'ajout au panier.
+    - **Disparités de Hauteurs & Rayons de Courbure** : Variations de hauteurs sur les boutons (`34px` à `54px`) et rayons disparates (`4px` à `24px`) sans tokens unifiés.
+  * **🎨 1. Système de Tokens Universels & CSS Foundations (`src/app/globals.css`)** :
+    - **Rayons de Courbure Harmoniques** :
+      - `--r-sm: 6px` (badges, tags, boutons compacts)
+      - `--r-md: 8px` (champs de saisie, puces de filtre, actions)
+      - `--r-lg: 12px` (cartes secondaires, boîtes de dialogue)
+      - `--r-xl: 16px` (cartes principales, tiroirs, bottom sheets)
+      - `--r-2xl: 20px` (hero banners, conteneurs majeurs)
+      - `--r-pill: 9999px` (badges d'état, boutons flottants)
+    - **Échelle d'Espacement Standardisée (Grille 8pt)** :
+      - `--sp-0-5: 2px` à `--sp-16: 64px` pour un rythme vertical irréprochable.
+    - **Ombres Portées Chaudes (Palette Dakar)** :
+      - Remplacement des ombres froides noires/grises par des ombres chaudes basées sur la teinte du sol (`rgba(26,22,18, alpha)`).
+    - **Hauteurs de Boutons Standardisées** :
+      - `--btn-h-sm: 32px`, `--btn-h-md: 40px`, `--btn-h-lg: 48px`, `--btn-h-xl: 56px`.
+    - **Classes Utilitaires Globales** :
+      - `.btn-npl`, `.btn-npl-primary`, `.btn-npl-secondary`, `.btn-npl-ghost`, `.btn-npl-danger`.
+      - `.badge-npl`, `.badge-npl-success`, `.badge-npl-warning`, `.badge-npl-danger`, `.badge-npl-info`.
+      - `.card-npl`, `.input-npl`, `.table-npl-container`, `.table-npl`, `.num-tabular`.
+  * **📱 2. Composants Globaux & Navigation (`MobileNav.tsx`, `NavbarGuides.tsx`, `DrawerCart.tsx`)** :
+    - **MobileNav** : Remplacement de 100% des emojis du tiroir par des icônes SVG vectorielles `lucide-react` (`Store`, `ShoppingBag`, `Home`, `Radio`, `FileText`, `Package`, `Bell`, `Heart`, `Users`, `BookOpen`, `Sparkles`, `Plus`, `LogOut`, `ChevronDown`, `Tag`, `Trophy`), augmentation de la taille des sous-titres à `11.5px` / `12px` et suppression des contours agressifs.
+    - **NavbarGuides** : Modernisation du menu déroulant avec icônes Lucide précises (`BookOpen`, `Trophy`, `Radio`, `Home`, `Tag`, `Package`, `Users`, `Sparkles`, `CheckCircle2`) et typographie système haute lisibilité.
+    - **DrawerCart** : Intégration d'icônes SVG nettes pour les modes de paiement (WhatsApp 1-Clic, Wave, Orange Money, Espèces, Carnet Crédit), boutons de quantité vectoriels, alignement tabulaire des prix.
+  * **🏪 3. Back-Office Marchand, POS & Tableaux Financiers (`BoutiqueClient.tsx`, `AnalyticsClient.tsx`)** :
+    - **Barre d'Outils Catalogue** : Alignement strict sur `--btn-h-md` (`38px-40px`) pour l'input de recherche produit, le filtre de statut, le filtre de catégorie et les boutons d'action (`Import Batch`, `Ajout Rapide`, `Nouveau Produit`).
+    - **Analytics & KPIs** : Modernisation des cartes de métriques (CA total, Ventes Web, Vues, Codes promos) avec la palette sable/marine et badges de santé des pixels ROAS (Meta, TikTok, GA4).
+  * **🛍️ 4. Vitrine Publique, Homepage & Checkout Express (`BoutiqueDetailClient.tsx`, `checkout-express/page.tsx`, `page.tsx`)** :
+    - **Grille de Produits Publique (`BoutiqueDetailClient.tsx`)** : Ajout de `margin-top: auto` sur le conteneur d'actions et le bouton CTA « Ajouter au panier », garantissant un alignement horizontal parfait sur toute la vitrine même en cas de descriptions ou titres asymétriques.
+    - **Homepage Hero (`page.tsx`)** : Harmonisation de la largeur maximale du conteneur Hero sur `1380px` pour correspondre exactement à la rangée de catégories, éliminant tout effet accordéon.
+    - **Tunnel Checkout Express (`checkout-express/page.tsx`)** : Modernisation des puces de sélection de paiement (Wave, OM, Cash) et des champs de livraison.
+  * **🧪 5. Validation & Tests** :
+    - Tests unitaires frontend : **35/35 tests validés avec succès (100%)**.
+    - Zéro appel de police externe conformément à la directive stricte `AGENTS.md`.
+
 - **Module d'Onboarding & Relance Catalogue Marchands : Filtrage par Seuil Paramétrable (0, 1, 2, 3... produits), Actions 1-Clic WhatsApp / Batch & Automatisation par Cron Quotidien (`relance-catalogue.js`, `boutiques.js`, `settingsCache.js`, `migrate-inline.js`, `AdminBoutiquesClient.tsx`, `admin.ts`, `relance-catalogue.test.js`, `CLAUDE.md`) (`main` - 27 août 2026)** 🛍️💬🤖⚡🎯🇸🇳✨ :
   * **🔍 Contexte & Diagnostic du Besoin d'Activation Marchands** :
     - **Boutiques Vides ou Incomplètes** : Beaucoup de marchands créent leur boutique mais ne publient pas immédiatement leurs articles par manque de temps ou méconnaissance des outils mis à leur disposition (Import IA, Caisse POS, Import CSV, Chatbot).

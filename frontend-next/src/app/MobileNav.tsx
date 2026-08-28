@@ -1,22 +1,36 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { logout } from '@/app/actions/auth'
+import {
+  Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
+  Bell, Heart, Users, BookOpen, Sparkles, Plus, LogOut, ChevronDown,
+  MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon
+} from 'lucide-react'
 
 interface Props {
   isLoggedIn: boolean
   nom?: string
 }
 
-const GUIDES = [
-  { href: '/tarifs-boutique', emoji: '🛍️', label: 'Tarifs & Forfaits Vendeurs', highlight: true, badge: 'OFFRE', badgeColor: '#C75B00' },
-  { href: '/guide-creer-boutique', emoji: '📦', label: 'Guide Vendeur & Sourcing' },
-  { href: '/demo', emoji: '🚀', label: 'Démo Commerciale', highlight: true, badge: 'NOUVEAU', badgeColor: 'var(--accent)' },
-  { href: '/guide-achat',   emoji: '🏆', label: 'Guide d\'achat intelligent' },
-  { href: '/guide-forfait', emoji: '📡', label: 'Guide forfait télécom' },
-  { href: '/guide-immo',   emoji: '🏡', label: 'Guide immobilier' },
-  { href: '/guide-prix',   emoji: '💡', label: 'Guide des prix' },
-  { href: '/guide-emploi', emoji: '📖', label: 'Comment utiliser Nopalou' },
-  { href: '/assistant-whatsapp', emoji: '💬', label: 'Assistant WhatsApp' },
+interface GuideItem {
+  href: string
+  icon: LucideIcon
+  label: string
+  highlight?: boolean
+  badge?: string
+  badgeColor?: string
+}
+
+const GUIDES: GuideItem[] = [
+  { href: '/tarifs-boutique', icon: Tag, label: 'Tarifs & Forfaits Vendeurs', highlight: true, badge: 'OFFRE', badgeColor: '#C75B00' },
+  { href: '/guide-creer-boutique', icon: Package, label: 'Guide Vendeur & Sourcing' },
+  { href: '/demo', icon: Sparkles, label: 'Démo Commerciale', highlight: true, badge: 'NOUVEAU', badgeColor: 'var(--accent)' },
+  { href: '/guide-achat',   icon: Trophy, label: 'Guide d\'achat intelligent' },
+  { href: '/guide-forfait', icon: Radio, label: 'Guide forfait télécom' },
+  { href: '/guide-immo',   icon: Home, label: 'Guide immobilier' },
+  { href: '/guide-prix',   icon: TrendingDown, label: 'Guide des prix' },
+  { href: '/guide-emploi', icon: BookOpen, label: 'Comment utiliser Nopalou' },
+  { href: '/assistant-whatsapp', icon: MessageCircle, label: 'Assistant WhatsApp' },
 ]
 
 export default function MobileNav({ isLoggedIn, nom }: Props) {
@@ -93,7 +107,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                     <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {displayName}
                     </p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--accent, #C75B00)', fontWeight: 700 }}>
+                    <p style={{ margin: 0, fontSize: 11.5, color: 'var(--accent, #C75B00)', fontWeight: 700 }}>
                       Gérer mon profil →
                     </p>
                   </div>
@@ -126,7 +140,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                       flexShrink: 0,
                     }}
                   >
-                    <span>🚪</span>
+                    <LogOut size={13} />
                     <span>Quitter</span>
                   </button>
                 </form>
@@ -153,7 +167,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                     boxShadow: '0 2px 6px rgba(199,91,0,0.2)',
                   }}
                 >
-                  <span>🏪</span>
+                  <Store size={14} />
                   <span>Ma Boutique Pro</span>
                 </a>
                 <a
@@ -167,21 +181,21 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                     padding: '8px 10px',
                     borderRadius: 8,
                     background: '#ffffff',
-                    border: '1.5px solid #16a34a',
-                    color: '#16a34a',
+                    border: '1.5px solid #0A5C36',
+                    color: '#0A5C36',
                     fontSize: 12,
                     fontWeight: 800,
                     textDecoration: 'none',
                   }}
                 >
-                  <span>🛒</span>
-                  <span>POS</span>
+                  <ShoppingCart size={14} />
+                  <span>POS Caisse</span>
                 </a>
               </div>
             </div>
           ) : (
             /* ── VISITEUR NON CONNECTÉ : BOUTONS CONNEXION / INSCRIPTION ── */
-            <div style={{ padding: '14px 16px', background: '#F8FAFC', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
+            <div style={{ padding: '14px 16px', background: '#FAF8F5', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
               <a
                 href="/creer-boutique"
                 onClick={close}
@@ -201,7 +215,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                   boxShadow: '0 2px 6px rgba(28,43,74,0.15)',
                 }}
               >
-                <span>🏪</span>
+                <Store size={15} />
                 <span>Ouvrir une Boutique Pro</span>
               </a>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -248,30 +262,60 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
 
           {/* ── 2. SERVICES PRINCIPAUX NOPALOU ── */}
           <div className="mobile-nav-section">Services</div>
-          <a href="/" className="mobile-nav-link" onClick={close}>🛒 Produits &amp; Catalogue</a>
-          <a href="/immo" className="mobile-nav-link" onClick={close}>🏠 Immobilier</a>
-          <a href="/telecom" className="mobile-nav-link" onClick={close}>📱 Forfaits Télécom</a>
-          <a href="/annonces" className="mobile-nav-link" onClick={close}>📋 Petites Annonces</a>
-          <a href="/boutiques" className="mobile-nav-link" onClick={close}>🏪 Annuaire des Boutiques</a>
+          <a href="/" className="mobile-nav-link" onClick={close}>
+            <ShoppingBag size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
+            <span>Produits &amp; Catalogue</span>
+          </a>
+          <a href="/immo" className="mobile-nav-link" onClick={close}>
+            <Home size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
+            <span>Immobilier &amp; Terrains</span>
+          </a>
+          <a href="/telecom" className="mobile-nav-link" onClick={close}>
+            <Radio size={15} style={{ color: '#2563EB', marginRight: 8 }} />
+            <span>Forfaits Télécom</span>
+          </a>
+          <a href="/annonces" className="mobile-nav-link" onClick={close}>
+            <FileText size={15} style={{ color: '#0A5C36', marginRight: 8 }} />
+            <span>Petites Annonces</span>
+          </a>
+          <a href="/boutiques" className="mobile-nav-link" onClick={close}>
+            <Store size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
+            <span>Annuaire des Boutiques</span>
+          </a>
 
           {/* ── 3. ESPACE UTILISATEUR (Si connecté, regroupé & sans doublon) ── */}
           {isLoggedIn && (
             <>
               <div className="mobile-nav-section">Mon Espace</div>
-              <a href="/compte?tab=suivi-commande" className="mobile-nav-link" onClick={close}>📦 Suivre ma commande</a>
-              <a href="/compte?tab=mes-annonces" className="mobile-nav-link" onClick={close}>📋 Mes annonces &amp; Biens</a>
-              <a href="/compte?tab=mes-alertes" className="mobile-nav-link" onClick={close}>🔔 Mes alertes prix</a>
-              <a href="/favoris" className="mobile-nav-link" onClick={close}>❤ Mes favoris</a>
+              <a href="/compte?tab=suivi-commande" className="mobile-nav-link" onClick={close}>
+                <Package size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
+                <span>Suivre ma commande</span>
+              </a>
+              <a href="/compte?tab=mes-annonces" className="mobile-nav-link" onClick={close}>
+                <FileText size={15} style={{ color: '#0A5C36', marginRight: 8 }} />
+                <span>Mes annonces &amp; Biens</span>
+              </a>
+              <a href="/compte?tab=mes-alertes" className="mobile-nav-link" onClick={close}>
+                <Bell size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
+                <span>Mes alertes prix</span>
+              </a>
+              <a href="/favoris" className="mobile-nav-link" onClick={close}>
+                <Heart size={15} style={{ color: '#DC2626', marginRight: 8 }} />
+                <span>Mes favoris</span>
+              </a>
               <a href="/compte/apporteur" className="mobile-nav-link" onClick={close}>
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>🤝 Parrainage &amp; Apporteur</span>
-                  <span style={{ fontSize: 10, background: '#FFEDD5', color: '#9A3412', padding: '2px 6px', borderRadius: 6, fontWeight: 800 }}>20%</span>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <Users size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
+                    <span>Parrainage &amp; Apporteur</span>
+                  </span>
+                  <span style={{ fontSize: 10.5, background: '#FFEDD5', color: '#9A3412', padding: '2px 6px', borderRadius: 6, fontWeight: 800 }}>20%</span>
                 </span>
               </a>
             </>
           )}
 
-          {/* ── 4. SECTION GUIDES EN ACCORDÉON COMPACT (1 seule ligne au lieu de 9) ── */}
+          {/* ── 4. SECTION GUIDES EN ACCORDÉON COMPACT ── */}
           <div className="mobile-nav-section" style={{ marginTop: 6 }}>Aide &amp; Guides</div>
           <button
             type="button"
@@ -288,35 +332,36 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>📖</span>
+              <BookOpen size={15} style={{ color: 'var(--accent)' }} />
               <span>Guides &amp; Tutoriels ({GUIDES.length})</span>
             </span>
-            <span style={{ fontSize: 12, transform: guidesOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-              ▼
-            </span>
+            <ChevronDown size={14} style={{ transform: guidesOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: 'var(--text2)' }} />
           </button>
 
           {guidesOpen && (
             <div style={{ background: '#FAF8F5', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
-              {GUIDES.map(g => (
-                <a
-                  key={g.href}
-                  href={g.href}
-                  className="mobile-nav-link mobile-nav-link--sub"
-                  onClick={close}
-                  style={g.highlight ? { background: '#fff7ed', fontWeight: 700, color: 'var(--accent)' } : undefined}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ marginRight: 8 }}>{g.emoji}</span>
-                    {g.label}
-                    {g.badge && (
-                      <span style={{ background: g.badgeColor, color: '#FFF', fontSize: 9, padding: '2px 6px', borderRadius: 10, marginLeft: 8, fontWeight: 800 }}>
-                        {g.badge}
-                      </span>
-                    )}
-                  </span>
-                </a>
-              ))}
+              {GUIDES.map(g => {
+                const GuideIcon = g.icon
+                return (
+                  <a
+                    key={g.href}
+                    href={g.href}
+                    className="mobile-nav-link mobile-nav-link--sub"
+                    onClick={close}
+                    style={g.highlight ? { background: '#fff7ed', fontWeight: 700, color: 'var(--accent)' } : undefined}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <GuideIcon size={14} style={{ marginRight: 8, color: g.highlight ? 'var(--accent)' : 'var(--text2)' }} />
+                      <span>{g.label}</span>
+                      {g.badge && (
+                        <span style={{ background: g.badgeColor, color: '#FFF', fontSize: 9.5, padding: '2px 6px', borderRadius: 10, marginLeft: 8, fontWeight: 800 }}>
+                          {g.badge}
+                        </span>
+                      )}
+                    </span>
+                  </a>
+                )
+              })}
             </div>
           )}
 
@@ -341,7 +386,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                 boxShadow: '0 4px 12px rgba(199,91,0,0.25)',
               }}
             >
-              <span>➕</span>
+              <Plus size={16} strokeWidth={3} />
               <span>Publier une annonce</span>
             </a>
           </div>

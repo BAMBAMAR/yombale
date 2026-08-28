@@ -2,6 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import {
+  BookOpen, Trophy, Radio, Home, TrendingDown,
+  MessageCircle, Tag, Package, Users, Sparkles, ChevronDown, CheckCircle2
+} from 'lucide-react'
 
 export default function NavbarGuides() {
   const [open, setOpen] = useState(false)
@@ -24,96 +28,98 @@ export default function NavbarGuides() {
         aria-haspopup="true"
         aria-controls="navbar-guides-dropdown"
         aria-label="Guides d'achat et assistants Nopalou"
-        style={{ whiteSpace: 'nowrap' }}
+        style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
       >
-        📚 Guides {open ? '▲' : '▼'}
+        <BookOpen size={15} style={{ color: 'var(--accent)' }} />
+        <span>Guides</span>
+        <ChevronDown size={13} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: 'var(--text2)' }} />
       </button>
 
       {open && (
         <div id="navbar-guides-dropdown" className="navbar-guides-dropdown" role="menu" aria-label="Sous-menu des guides">
           <Link href="/guide-achat" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
-            <span>🏆</span>
+            <Trophy size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Guide d&apos;achat intelligent</span>
-              <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--text3)' }}>Classement personnalisé de produits</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Classement personnalisé de produits</span>
             </span>
           </Link>
           <Link href="/guide-forfait" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
-            <span>📡</span>
+            <Radio size={18} style={{ color: '#2563EB', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Guide d&apos;achat forfait</span>
-              <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--text3)' }}>Trouver le meilleur forfait télécom</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Trouver le meilleur forfait télécom</span>
             </span>
           </Link>
           <Link href="/guide-immo" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
-            <span>🏡</span>
+            <Home size={18} style={{ color: 'var(--navy)', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Guide immobilier</span>
-              <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--text3)' }}>Trouver mon logement idéal</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Trouver mon logement idéal</span>
             </span>
           </Link>
           <Link href="/guide-prix" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
-            <span>💡</span>
+            <TrendingDown size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Guide des prix</span>
-              <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Comprendre le prix d&apos;un produit</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Comprendre le prix d&apos;un produit</span>
             </span>
           </Link>
           <Link href="/guide-emploi" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
-            <span>📖</span>
+            <BookOpen size={18} style={{ color: 'var(--navy)', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Guide d&apos;emploi</span>
-              <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Comment utiliser Nopalou</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Comment utiliser Nopalou</span>
             </span>
           </Link>
           <Link href="/assistant-whatsapp" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
-            <span>💬</span>
+            <MessageCircle size={18} style={{ color: '#0A5C36', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Assistant WhatsApp</span>
-              <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Comparez les prix depuis WhatsApp</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Comparez les prix depuis WhatsApp</span>
             </span>
           </Link>
           <Link href="/tarifs-boutique" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#fff7ed', borderRadius: 8 }}>
-            <span>🛍️</span>
+            <Tag size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: 'var(--accent)' }}>
-                Tarifs &amp; Forfaits Vendeurs <span style={{ background: '#C75B00', color: '#FFF', fontSize: 9, padding: '1px 6px', borderRadius: 10 }}>OFFRE</span>
+                Tarifs &amp; Forfaits Vendeurs <span style={{ background: '#C75B00', color: '#FFF', fontSize: 9.5, padding: '1px 6px', borderRadius: 10 }}>OFFRE</span>
               </span>
-              <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--text2)' }}>Créer ma boutique en ligne (1m offert)</span>
+              <span style={{ fontWeight: 500, fontSize: 11.5, color: 'var(--text2)' }}>Créer ma boutique en ligne (1m offert)</span>
             </span>
           </Link>
           <Link href="/guide-creer-boutique" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
-            <span>📦</span>
+            <Package size={18} style={{ color: 'var(--navy)', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Guide Vendeur &amp; Sourcing</span>
-              <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text3)' }}>Alibaba, AliExpress &amp; Vente WhatsApp</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Alibaba, AliExpress &amp; Vente WhatsApp</span>
             </span>
           </Link>
           <Link href="/guide-utilisation" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#f0fdf4', borderRadius: 8 }}>
-            <span>📖</span>
+            <CheckCircle2 size={18} style={{ color: '#0A5C36', flexShrink: 0 }} />
             <span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: '#16a34a' }}>
-                Guide d&apos;utilisation <span style={{ background: '#16a34a', color: '#FFF', fontSize: 9, padding: '1px 6px', borderRadius: 10 }}>COMPLET</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: '#0A5C36' }}>
+                Guide d&apos;utilisation <span style={{ background: '#0A5C36', color: '#FFF', fontSize: 9.5, padding: '1px 6px', borderRadius: 10 }}>COMPLET</span>
               </span>
-              <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--text2)' }}>Compte, Caisse POS, Dettes &amp; Factures</span>
+              <span style={{ fontWeight: 500, fontSize: 11.5, color: 'var(--text2)' }}>Compte, Caisse POS, Dettes &amp; Factures</span>
             </span>
           </Link>
           <Link href="/compte/apporteur" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#fff7ed', borderRadius: 8 }}>
-            <span>💼</span>
+            <Users size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: 'var(--accent)' }}>
-                Programme Apporteur <span style={{ background: '#C75B00', color: '#FFF', fontSize: 9, padding: '1px 6px', borderRadius: 10 }}>20% À VIE</span>
+                Programme Apporteur <span style={{ background: '#C75B00', color: '#FFF', fontSize: 9.5, padding: '1px 6px', borderRadius: 10 }}>20% À VIE</span>
               </span>
-              <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--text2)' }}>Gagnez des commissions chaque mois</span>
+              <span style={{ fontWeight: 500, fontSize: 11.5, color: 'var(--text2)' }}>Gagnez des commissions chaque mois</span>
             </span>
           </Link>
           <Link href="/demo" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#FFF7ED', borderRadius: 8 }}>
-            <span>🚀</span>
+            <Sparkles size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: 'var(--accent)' }}>
-                Démo Commerciale <span style={{ background: 'var(--accent)', color: '#FFF', fontSize: 9, padding: '1px 6px', borderRadius: 10 }}>NOUVEAU</span>
+                Démo Commerciale <span style={{ background: 'var(--accent)', color: '#FFF', fontSize: 9.5, padding: '1px 6px', borderRadius: 10 }}>NOUVEAU</span>
               </span>
-              <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--text2)' }}>Parcours interactif &amp; Bac à sable</span>
+              <span style={{ fontWeight: 500, fontSize: 11.5, color: 'var(--text2)' }}>Parcours interactif &amp; Bac à sable</span>
             </span>
           </Link>
         </div>

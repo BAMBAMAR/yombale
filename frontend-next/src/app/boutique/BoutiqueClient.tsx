@@ -2719,70 +2719,69 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         </div>
       )}
 
-      <div className="bq-catalogue-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>
-          {produits.length} produit{produits.length !== 1 ? 's' : ''} / {quota} max
+      <div className="bq-catalogue-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--text2, #6B5E52)', fontWeight: 600 }}>
+          <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{produits.length}</strong> produit{produits.length !== 1 ? 's' : ''} / {quota} max
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button
             onClick={() => setShowBatchModal(true)}
-            className="bq-catalogue-btn"
-            style={{
-              background: '#059669', color: '#fff', border: 'none', borderRadius: 8,
-              padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-            }}
+            className="btn-npl btn-npl-secondary btn-npl-sm"
+            style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}
           >
-            📦 Batch
+            <Package size={14} style={{ color: 'var(--navy)' }} />
+            <span>Import Batch</span>
           </button>
           <button
             onClick={() => setMode({ creating: 'rapide' })}
-            className="bq-catalogue-btn"
-            style={{
-              background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8,
-              padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            }}
+            className="btn-npl btn-npl-secondary btn-npl-sm"
+            style={{ height: 36, padding: '0 12px', fontSize: 12.5, borderColor: '#BFDBFE', color: '#1D4ED8', background: '#EFF6FF' }}
           >
-            ⚡ Rapide
+            <Zap size={14} />
+            <span>Ajout Rapide</span>
           </button>
           <button
             onClick={() => setMode({ creating: 'detaille' })}
-            className="bq-catalogue-btn"
-            style={{
-              background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8,
-              padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            }}
+            className="btn-npl btn-npl-primary btn-npl-sm"
+            style={{ height: 36, padding: '0 14px', fontSize: 12.5 }}
           >
-            + Détaillé
+            <Plus size={14} strokeWidth={2.5} />
+            <span>Nouveau Produit</span>
           </button>
         </div>
       </div>
 
       {produits.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-          <input
-            type="text"
-            placeholder="Rechercher un produit…"
-            value={rechercheTexte}
-            onChange={e => setRechercheTexte(e.target.value)}
-            style={{ flex: '1 1 180px', padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
-          />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 200 }}>
+            <input
+              type="text"
+              placeholder="Rechercher un produit (nom, référence, code-barres)…"
+              value={rechercheTexte}
+              onChange={e => setRechercheTexte(e.target.value)}
+              className="input-npl"
+              style={{ height: 38, fontSize: 13, paddingLeft: 36 }}
+            />
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3, #9C8E84)' }} />
+          </div>
           <select
             value={filtreStatut}
             onChange={e => setFiltreStatut(e.target.value as typeof filtreStatut)}
-            style={{ padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+            className="input-npl"
+            style={{ height: 38, fontSize: 12.5, width: 'auto', flex: '0 0 auto', padding: '0 10px' }}
           >
             <option value="tous">Tous les statuts</option>
-            <option value="synchronise">✓ Sur WhatsApp</option>
-            <option value="en_attente">⏳ En attente</option>
-            <option value="echec">✗ Échec</option>
-            <option value="jamais_partage">📢 Jamais partagés</option>
+            <option value="synchronise">Sur WhatsApp</option>
+            <option value="en_attente">En attente</option>
+            <option value="echec">Échec synchro</option>
+            <option value="jamais_partage">Jamais partagés</option>
           </select>
           {categoriesDisponibles.length > 1 && (
             <select
               value={filtreCategorie}
               onChange={e => setFiltreCategorie(e.target.value)}
-              style={{ padding: '7px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+              className="input-npl"
+              style={{ height: 38, fontSize: 12.5, width: 'auto', flex: '0 0 auto', padding: '0 10px' }}
             >
               <option value="toutes">Toutes les catégories</option>
               {categoriesDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
@@ -2792,13 +2791,15 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
       )}
 
       {successMsg && (
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px', color: '#16a34a', fontSize: 14, marginBottom: 12, fontWeight: 600 }}>
-          {successMsg}
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px', color: '#16a34a', fontSize: 13.5, marginBottom: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <CheckCircle2 size={16} />
+          <span>{successMsg}</span>
         </div>
       )}
       {deleteError && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 14, marginBottom: 12 }}>
-          {deleteError}
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 13.5, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <AlertTriangle size={16} />
+          <span>{deleteError}</span>
         </div>
       )}
 
@@ -2823,7 +2824,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }}>🛍️</span>
+            <ShoppingBag size={18} style={{ color: 'var(--accent)' }} />
             <span style={{ fontSize: 13.5, fontWeight: 800 }}>
               {selectedProdIds.size} produit{selectedProdIds.size > 1 ? 's' : ''} sélectionné{selectedProdIds.size > 1 ? 's' : ''}
             </span>

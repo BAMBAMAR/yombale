@@ -4,6 +4,10 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
+import {
+  ShoppingBag, Store, MapPin, CreditCard, MessageCircle,
+  CheckCircle2, Zap, AlertCircle, ArrowRight, Phone, ShieldCheck
+} from 'lucide-react'
 
 interface Zone {
   id: string
@@ -255,41 +259,48 @@ function CheckoutExpressContent() {
       {/* En-tête marque */}
       <div style={{ textAlign: 'center', padding: '16px 0 24px' }}>
         <Link href="/" style={{ textDecoration: 'none', display: 'inline-block' }}>
-          <span style={{ fontSize: 26, fontWeight: 900, color: '#C75B00', letterSpacing: '-0.02em' }}>🛍️ NOPALOU</span>
+          <span style={{ fontSize: 26, fontWeight: 900, color: 'var(--accent, #C75B00)', letterSpacing: '-0.02em' }}>NOPALOU</span>
         </Link>
-        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b', fontWeight: 600 }}>
-          Validation Express de Commande WhatsApp
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text2, #6B5E52)', fontWeight: 600 }}>
+          Validation Express de Commande Sécurisée
         </p>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 20, padding: 24, boxShadow: '0 12px 30px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0' }}>
+      <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, boxShadow: 'var(--shadow-md)', border: '1px solid var(--border, #E8DDD2)' }}>
         
         {/* Détails du Produit */}
         {produitInfo ? (
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid #f1f5f9', marginBottom: 20 }}>
-            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="📦" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover' }} />
-            <div style={{ flex: 1 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#C75B00', textTransform: 'uppercase' }}>{produitInfo.boutiqueNom}</span>
-              <h1 style={{ margin: '2px 0 4px', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>{produitInfo.nom}</h1>
-              <span style={{ fontSize: 16, fontWeight: 900, color: '#C75B00' }}>{fcfa(produitInfo.prix)}</span>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border, #E8DDD2)', marginBottom: 20 }}>
+            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="📦" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover', background: 'var(--bg, #F8F5F0)' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Store size={12} />
+                <span>{produitInfo.boutiqueNom}</span>
+              </span>
+              <h1 style={{ margin: '2px 0 4px', fontSize: 15.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{produitInfo.nom}</h1>
+              <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--accent, #C75B00)' }}>{fcfa(produitInfo.prix)}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '4px 8px' }}>
-              <button type="button" onClick={() => setQuantite(Math.max(1, quantite - 1))} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 16, cursor: 'pointer', padding: '2px 6px' }}>-</button>
-              <span style={{ fontWeight: 800, fontSize: 14 }}>{quantite}</span>
-              <button type="button" onClick={() => setQuantite(quantite + 1)} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 16, cursor: 'pointer', padding: '2px 6px' }}>+</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)', borderRadius: 8, padding: '3px 6px' }}>
+              <button type="button" onClick={() => setQuantite(Math.max(1, quantite - 1))} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer', padding: '2px 6px', color: 'var(--text2)' }}>-</button>
+              <span style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--navy, #1C2B4A)' }}>{quantite}</span>
+              <button type="button" onClick={() => setQuantite(quantite + 1)} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer', padding: '2px 6px', color: 'var(--text2)' }}>+</button>
             </div>
           </div>
         ) : loading ? (
-          <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>Chargement des informations du produit...</div>
+          <div style={{ padding: 20, textAlign: 'center', color: 'var(--text2, #6B5E52)' }}>Chargement des informations du produit...</div>
         ) : null}
 
         {/* Sélection Zone de Livraison */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 13, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>📍 Zone de livraison</label>
+          <label style={{ fontSize: 12.5, fontWeight: 750, color: 'var(--text2, #6B5E52)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+            <MapPin size={15} style={{ color: 'var(--accent)' }} />
+            <span>Zone de livraison</span>
+          </label>
           <select
             value={zoneId}
             onChange={e => setZoneId(e.target.value)}
-            style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: 12, fontSize: 14, background: '#fff', color: '#0f172a' }}
+            className="input-npl"
+            style={{ height: 42 }}
           >
             {zones.map(z => (
               <option key={z.id} value={z.id}>{z.nom} ({z.prix > 0 ? fcfa(z.prix) : 'Gratuit'})</option>
@@ -298,16 +309,16 @@ function CheckoutExpressContent() {
         </div>
 
         {/* Récapitulatif Tarifaire */}
-        <div style={{ background: '#f8fafc', borderRadius: 14, padding: 16, marginBottom: 24, border: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#64748b', marginBottom: 6 }}>
+        <div style={{ background: 'var(--bg, #F8F5F0)', borderRadius: 14, padding: 16, marginBottom: 24, border: '1px solid var(--border, #E8DDD2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, color: 'var(--text2, #6B5E52)', marginBottom: 6 }}>
             <span>Sous-total ({quantite} art.)</span>
-            <span>{fcfa(sousTotal)}</span>
+            <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{fcfa(sousTotal)}</strong>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#64748b', marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, color: 'var(--text2, #6B5E52)', marginBottom: 10 }}>
             <span>Livraison ({zoneSelectionnee?.nom?.split('(')[0] || 'Dakar'})</span>
-            <span>{fcfa(fraisLivraison)}</span>
+            <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{fcfa(fraisLivraison)}</strong>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 900, color: '#C75B00', borderTop: '1px solid #e2e8f0', paddingTop: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 17, fontWeight: 900, color: 'var(--accent, #C75B00)', borderTop: '1px solid var(--border, #E8DDD2)', paddingTop: 10 }}>
             <span>TOTAL À PAYER</span>
             <span>{fcfa(totalGlobal)}</span>
           </div>
@@ -315,8 +326,9 @@ function CheckoutExpressContent() {
 
         {/* Choix des 2 modes de commande / paiement */}
         <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-            Choisissez votre mode de finalisation :
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: 'var(--text2, #6B5E52)', textTransform: 'uppercase', letterSpacing: '0.03em', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Zap size={14} style={{ color: 'var(--accent)' }} />
+            <span>Choisissez votre mode de finalisation :</span>
           </p>
 
           {/* Option 1: Paiement Direct WhatsApp */}
@@ -326,95 +338,98 @@ function CheckoutExpressContent() {
             rel="noopener noreferrer"
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              background: '#25D366', color: '#fff', padding: '14px 18px', borderRadius: 14,
-              fontWeight: 800, fontSize: 15, textDecoration: 'none', boxShadow: '0 4px 12px rgba(37,211,102,0.25)',
+              background: '#16a34a', color: '#fff', padding: '14px 18px', borderRadius: 12,
+              fontWeight: 800, fontSize: 14.5, textDecoration: 'none', boxShadow: '0 4px 12px rgba(22,163,74,0.25)',
               textAlign: 'center',
             }}
           >
-            <span>💬</span> Option 1 : Paiement Direct via WhatsApp →
+            <MessageCircle size={18} />
+            <span>Option 1 : Paiement Direct via WhatsApp →</span>
           </a>
         </div>
 
         {/* Option 2: Formulaire en ligne (Wave / OM / Cash) */}
-        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
-          <p style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
-            📋 Option 2 : Formulaire de commande directe (1 Clic)
+        <div style={{ borderTop: '1px solid var(--border, #E8DDD2)', paddingTop: 20 }}>
+          <p style={{ margin: '0 0 14px', fontSize: 13.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <CreditCard size={16} style={{ color: 'var(--accent)' }} />
+            <span>Option 2 : Formulaire de commande directe (1 Clic)</span>
           </p>
 
           {errorMsg && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: 12, borderRadius: 10, fontSize: 13, marginBottom: 14 }}>
-              {errorMsg}
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: 12, borderRadius: 10, fontSize: 13, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <AlertCircle size={16} />
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>NOM & PRÉNOM *</label>
+              <label style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--text2, #6B5E52)', display: 'block', marginBottom: 4 }}>NOM & PRÉNOM *</label>
               <input
                 type="text"
                 required
                 placeholder="Ex: Babacar Ndiaye"
                 value={clientNom}
                 onChange={e => setClientNom(e.target.value)}
-                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: 10, fontSize: 14 }}
+                className="input-npl"
               />
             </div>
 
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>TÉLÉPHONE *</label>
+              <label style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--text2, #6B5E52)', display: 'block', marginBottom: 4 }}>TÉLÉPHONE *</label>
               <input
                 type="tel"
                 required
                 placeholder="Ex: 77 123 45 67"
                 value={clientTel}
                 onChange={e => setClientTel(e.target.value)}
-                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: 10, fontSize: 14 }}
+                className="input-npl"
               />
             </div>
 
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>ADRESSE DE LIVRAISON</label>
+              <label style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--text2, #6B5E52)', display: 'block', marginBottom: 4 }}>ADRESSE DE LIVRAISON</label>
               <input
                 type="text"
                 placeholder="Ex: Sacré-Cœur 3, Immeuble..."
                 value={clientAdresse}
                 onChange={e => setClientAdresse(e.target.value)}
-                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: 10, fontSize: 14 }}
+                className="input-npl"
               />
             </div>
 
             <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>MODE DE PAIEMENT</label>
+              <label style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--text2, #6B5E52)', display: 'block', marginBottom: 4 }}>MODE DE PAIEMENT</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 <button
                   type="button"
                   onClick={() => setMethodePaiement('wave')}
                   style={{
-                    padding: '10px 6px', borderRadius: 10, border: methodePaiement === 'wave' ? '2px solid #00A8FF' : '1px solid #cbd5e1',
-                    background: methodePaiement === 'wave' ? '#f0f9ff' : '#fff', color: '#0f172a', fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                    padding: '10px 8px', borderRadius: 10, border: methodePaiement === 'wave' ? '2px solid #00A8FF' : '1px solid var(--border, #E8DDD2)',
+                    background: methodePaiement === 'wave' ? '#f0f9ff' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  🌊 Wave
+                  Wave ⚡
                 </button>
                 <button
                   type="button"
                   onClick={() => setMethodePaiement('orange_money')}
                   style={{
-                    padding: '10px 6px', borderRadius: 10, border: methodePaiement === 'orange_money' ? '2px solid #ff6600' : '1px solid #cbd5e1',
-                    background: methodePaiement === 'orange_money' ? '#fff7ed' : '#fff', color: '#0f172a', fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                    padding: '10px 8px', borderRadius: 10, border: methodePaiement === 'orange_money' ? '2px solid #ff6600' : '1px solid var(--border, #E8DDD2)',
+                    background: methodePaiement === 'orange_money' ? '#fff7ed' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  🍊 OM
+                  Orange Money
                 </button>
                 <button
                   type="button"
                   onClick={() => setMethodePaiement('cash')}
                   style={{
-                    padding: '10px 6px', borderRadius: 10, border: methodePaiement === 'cash' ? '2px solid #16a34a' : '1px solid #cbd5e1',
-                    background: methodePaiement === 'cash' ? '#f0fdf4' : '#fff', color: '#0f172a', fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                    padding: '10px 8px', borderRadius: 10, border: methodePaiement === 'cash' ? '2px solid #16a34a' : '1px solid var(--border, #E8DDD2)',
+                    background: methodePaiement === 'cash' ? '#f0fdf4' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  💵 Cash
+                  Espèces
                 </button>
               </div>
             </div>
@@ -422,10 +437,9 @@ function CheckoutExpressContent() {
             <button
               type="submit"
               disabled={submitting}
+              className="btn-npl btn-npl-primary btn-npl-lg"
               style={{
-                marginTop: 10, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 12,
-                padding: '16px', fontWeight: 900, fontSize: 15, cursor: 'pointer', width: '100%',
-                boxShadow: '0 4px 14px rgba(199,91,0,0.3)',
+                marginTop: 8, width: '100%', fontSize: 14.5,
               }}
             >
               {submitting ? 'Validation en cours...' : '⚡ Valider et Payer la commande →'}
