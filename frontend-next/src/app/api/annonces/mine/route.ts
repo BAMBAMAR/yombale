@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { backendFetch } from '@/lib/backend-fetch'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/annonces/mine — Proxy authentifié pour les annonces de l'utilisateur connecté
 export async function GET() {
   try {

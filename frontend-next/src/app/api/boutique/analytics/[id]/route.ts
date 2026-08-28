@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { backendFetch } from '@/lib/backend-fetch'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const res = await backendFetch(`/api/analytics/boutique/${params.id}`)

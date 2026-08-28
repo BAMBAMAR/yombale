@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { backendFetch } from '@/lib/backend-fetch'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/abonnements/mon-plan — Proxy authentifié pour le plan d'abonnement actif
 export async function GET() {
   try {

@@ -1,3 +1,27 @@
+- **Résolution des Erreurs Runtime Client / SSR & Sécurisation des Routes Authentifiées Next.js : Correction `CompareFilterBanner`, Typage Lucide / TypeScript, `force-dynamic` sur les Routes Cookies & Élimination de `[Nopalou Error]` (`CompareFilterBanner.tsx`, `page.tsx`, `CardActions.tsx`, `BoutiqueClient.tsx`, `BoutiqueDetailClient.tsx`, `route.ts`, `CLAUDE.md`) (`main` - 28 août 2026)** 🛡️⚡🔍💎🇸🇳✨ :
+  * **🔍 1. Diagnostic & Élimination de `[Nopalou Error]` Côté Client** :
+    - **Sécurisation de `CompareFilterBanner.tsx`** : Ajout d'un fallback défensif `const nomItem = actif?.nom || ''` avant le calcul de `nomItem.length > 40`, éliminant le `TypeError: Cannot read properties of undefined (reading 'length')` qui déclenchait la capture d'exception par `error.tsx`.
+    - **Validation Stricte `categoriesActives` (`page.tsx`)** : Remplacement de l'assignation directe par un contrôle `Array.isArray(catAct)` pour empêcher toute exception `categoriesActives.includes is not a function` lors du SSR.
+    - **Sécurisation Événements `CardActions.tsx`** : Ajout systématique de `e.stopPropagation()` lors du clic sur les boutons d'action (Favoris, Comparateur) pour éviter les conflits d'événements et de navigation avec le composant parent `<Link>`.
+  * **⚡ 2. Déclaration `export const dynamic = 'force-dynamic'` sur les Routes API Authentifiées** :
+    - Éradication de 100% des erreurs de build `DYNAMIC_SERVER_USAGE` générées par l'accès à `cookies()` lors de la pré-génération statique Next.js sur les routes :
+      - `/api/abonnements/mon-plan/route.ts`
+      - `/api/annonces/mine/route.ts`
+      - `/api/immo/mine/route.ts`
+      - `/api/boutiques/mine/route.ts`
+      - `/api/boutiques/catalogues-standards/route.ts`
+      - `/api/boutique/analytics/[id]/route.ts`
+      - `/api/analytics/boutique/[id]/route.ts`
+  * **💎 3. Résolution des Erreurs TypeScript & Typage (`tsc`)** :
+    - **Imports `lucide-react` dans `BoutiqueClient.tsx`** : Ajout des icônes manquantes `Package`, `Plus`, `Search`.
+    - **Interface `Produit` dans `BoutiqueDetailClient.tsx`** : Ajout des champs optionnels `quantite_stock?: number | null` et `stock_quantite?: number | null`.
+    - **Typage dans `page.tsx`** : Cast explicite de l'objet `settings` vers `Record<string, string>`.
+  * **🧪 4. Validation & Conformité Build** :
+    - `npx tsc --noEmit` : **0 erreur TypeScript**.
+    - `npm test` : **35/35 tests unitaires passés avec succès (100%)**.
+    - `npm run build` : **Build de production Next.js 14.2.35 réussi à 100% sans aucun avertissement `DYNAMIC_SERVER_USAGE`**.
+    - Respect absolu de la règle `AGENTS.md` (zéro police externe, pile de polices système).
+
 - **Audit Esthétique & UI/UX Exhaustif (31 Sections) et Exécution des Phases P0, P1, P2 & P3 : Éradication des Couleurs Tailwind Slate, Unification des Tokens, Refonte du Dashboard Marchand, Skeletons Structurés, Empty States & Validation Build (`globals.css`, `layout.tsx`, `page.tsx`, `BoutiqueClient.tsx`, `ProduitsListe.tsx`, `CardActions.tsx`, `DrawerCart.tsx`, `BoutiqueDetailClient.tsx`, `task.md`, `implementation_plan.md`, `CLAUDE.md`) (`main` - 28 août 2026)** 🎨🔍💎📐⚡🇸🇳✨ :
   * **🔍 1. Audit Esthétique & UI/UX Exhaustif (31 Sections)** :
     - **Livrable complet** : Document de synthèse d'audit généré dans `implementation_plan.md` couvrant les 31 sections (première impression, hiérarchie visuelle, typographie, boutons, icônes, alignement, grille, espacements, couleurs, bordures, ombres, cartes, modales, dashboards, tableaux, formulaires, responsive, mobile-first, cohérence globale, scores par section, benchmark Shopify/Square, top 30 défauts, top 30 améliorations, plan en 4 phases).

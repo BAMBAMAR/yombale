@@ -158,8 +158,8 @@ export default async function HomePage({
       apiFetch<string[]>('/produits/categories-actives').catch(() => null),
       apiFetch<TendanceItem[]>('/produits/tendances?limit=4').catch(() => null),
     ])
-    if (stg) settings = stg
-    if (catAct) categoriesActives = catAct
+    if (stg && typeof stg === 'object') settings = stg as Record<string, string>
+    if (catAct && Array.isArray(catAct)) categoriesActives = catAct
     if (tendRes && Array.isArray(tendRes) && tendRes.length > 0) {
       tendances = tendRes
     }

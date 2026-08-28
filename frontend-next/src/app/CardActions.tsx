@@ -83,6 +83,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
 
   function toggleFav(e: React.MouseEvent) {
     e.preventDefault()
+    e.stopPropagation()
     try {
       const favs = lireFavs()
       const adding = !fav
@@ -99,6 +100,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
 
   function toggleCompare(e: React.MouseEvent) {
     e.preventDefault()
+    e.stopPropagation()
     if (blocage) return // bouton rendu disabled — garde-fou
     try {
       const list = lireCompare()
@@ -131,7 +133,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
   }
 
   return (
-    <div className="card-actions" onClick={e => e.preventDefault()}>
+    <div className="card-actions" onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
       <button
         onClick={toggleCompare}
         disabled={!!blocage}

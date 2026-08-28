@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { backendFetch } from '@/lib/backend-fetch'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const res = await backendFetch('/api/boutiques/catalogues-standards')

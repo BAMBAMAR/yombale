@@ -30,6 +30,8 @@ export interface Produit {
   unite_vente?: string | null
   has_variants?: boolean
   date_expiration?: string | null
+  quantite_stock?: number | null
+  stock_quantite?: number | null
 }
 
 export interface Annonce {

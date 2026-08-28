@@ -37,7 +37,8 @@ export default function CompareFilterBanner() {
   if (!actif) return null
 
   const label   = GROUPE_LABELS[groupe] || actif.catSlug || ''
-  const premier = actif.nom.length > 40 ? actif.nom.slice(0, 40) + '…' : actif.nom
+  const nomItem = actif.nom || ''
+  const premier = nomItem.length > 40 ? nomItem.slice(0, 40) + '…' : nomItem
 
   function vider(e: React.MouseEvent) {
     e.preventDefault()

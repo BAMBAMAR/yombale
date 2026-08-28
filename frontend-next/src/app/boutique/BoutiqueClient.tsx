@@ -27,7 +27,7 @@ import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import {
   Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square,
-  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon
+  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search
 } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
