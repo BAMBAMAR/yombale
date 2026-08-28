@@ -1,3 +1,20 @@
+- **Correction du Troncage des Boutons d'Action & Grille Responsive E-Commerce : Remplacement de `minmax(140px)` par `.boutique-produits-grid` (`minmax(210px)` / 2 Colonnes Mobile) & Ajustement Typographique (`globals.css`, `BoutiqueDetailClient.tsx`, `CLAUDE.md`) (`main` - 28 août 2026)** 📐🛍️✨🇸🇳 :
+  * **🔍 1. Diagnostic de l'Anomalie Visuelle (Boutons « Ajouter au panier » tronqués)** :
+    - **Cause Racine** : Dans la vue vitrine d'une boutique (`BoutiqueDetailClient.tsx`), la grille utilisait une directive inline `repeat(auto-fill, minmax(140px, 1fr))`, générant jusqu'à 8 à 9 colonnes ultra-étroites sur grand écran (~145px de largeur par carte).
+    - **Conséquence** : Avec 28px de padding de carte + 32px de padding bouton (`.btn-npl-md`) + 21px pour l'icône de caddie et l'espacement, l'espace résiduel pour le texte était de seulement ~65px, tronquant inévitablement l'intitulé « Ajouter au panier » en « Ajouter au panie ».
+  * **🎨 2. Corrections Appliquées & Nouveau Système de Grille E-Commerce (`globals.css`, `BoutiqueDetailClient.tsx`)** :
+    - **Création de la classe responsive `.boutique-produits-grid`** :
+      - *Desktop (≥ 768px)* : `repeat(auto-fill, minmax(210px, 1fr))` avec `gap: 16px` pour un rendu e-commerce aéré de standard professionnel.
+      - *Tablette (480px - 768px)* : `repeat(auto-fill, minmax(180px, 1fr))` avec `gap: 12px`.
+      - *Mobile (≤ 480px)* : `repeat(2, minmax(0, 1fr))` avec `gap: 10px` pour une grille 2 colonnes parfaitement calibrée.
+    - **Optimisation du Bouton CTA Produit (`ProduitCard`)** :
+      - Ajustement de la taille de texte à `12.5px`, `letter-spacing: -0.01em`, `padding: 0 8px`, `height: 38px` et `gap: 5px`.
+      - Réduction légère de l'icône de caddie à `14px` pour un équilibre parfait même sur les plus petits écrans.
+  * **🧪 3. Validation & Conformité** :
+    - `npx tsc --noEmit` : **0 erreur TypeScript**.
+    - `npm test` : **35/35 tests unitaires validés avec succès (100%)**.
+    - `npm run build` : **100% réussi sans aucun avertissement ni erreur**.
+
 - **Résolution des Erreurs Runtime Client / SSR & Sécurisation des Routes Authentifiées Next.js : Correction `CompareFilterBanner`, Typage Lucide / TypeScript, `force-dynamic` sur les Routes Cookies & Élimination de `[Nopalou Error]` (`CompareFilterBanner.tsx`, `page.tsx`, `CardActions.tsx`, `BoutiqueClient.tsx`, `BoutiqueDetailClient.tsx`, `route.ts`, `CLAUDE.md`) (`main` - 28 août 2026)** 🛡️⚡🔍💎🇸🇳✨ :
   * **🔍 1. Diagnostic & Élimination de `[Nopalou Error]` Côté Client** :
     - **Sécurisation de `CompareFilterBanner.tsx`** : Ajout d'un fallback défensif `const nomItem = actif?.nom || ''` avant le calcul de `nomItem.length > 40`, éliminant le `TypeError: Cannot read properties of undefined (reading 'length')` qui déclenchait la capture d'exception par `error.tsx`.

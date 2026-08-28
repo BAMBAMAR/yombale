@@ -254,7 +254,7 @@ function ProduitCard({
         </div>
       </div>
 
-      <div style={{ padding: '0 14px 14px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ padding: '0 12px 14px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <CardActions id={p.id} nom={p.nom} type="boutique_produit" boutiqueId={boutiqueId} />
         <button
           onClick={() => {
@@ -267,12 +267,21 @@ function ProduitCard({
             }
           }}
           disabled={!isEnStock}
-          className={`btn-npl ${addedCart ? 'btn-npl-secondary' : 'btn-npl-primary'} btn-npl-md`}
-          style={{ width: '100%', fontSize: 13, opacity: isEnStock ? 1 : 0.6, height: 40 }}
+          className={`btn-npl ${addedCart ? 'btn-npl-secondary' : 'btn-npl-primary'}`}
+          style={{
+            width: '100%',
+            fontSize: '12.5px',
+            opacity: isEnStock ? 1 : 0.6,
+            height: 38,
+            padding: '0 8px',
+            gap: 5,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+          }}
         >
           {addedCart ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#0A5C36', fontWeight: 800 }}>
-              <Check size={15} strokeWidth={3} />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#0A5C36', fontWeight: 800 }}>
+              <Check size={14} strokeWidth={3} />
               <span>Ajouté au panier</span>
             </span>
           ) : (
@@ -280,8 +289,8 @@ function ProduitCard({
               p.variantes && p.variantes.length > 0 ? (
                 <span>Choisir mes options</span>
               ) : (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <ShoppingCart size={15} />
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <ShoppingCart size={14} />
                   <span>Ajouter au panier</span>
                 </span>
               )
@@ -711,12 +720,7 @@ export default function BoutiqueDetailClient({
               </button>
             </div>
           ) : (
-            <div style={{
-              display: viewMode === 'grid' ? 'grid' : 'flex',
-              flexDirection: viewMode === 'grid' ? undefined : 'column',
-              gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(140px, 1fr))' : undefined,
-              gap: 16,
-            }}>
+            <div className={viewMode === 'grid' ? 'boutique-produits-grid' : 'boutique-produits-list'}>
               {produitsFiltres.map((p: Produit) => (
                 <ProduitCard
                   key={p.id}

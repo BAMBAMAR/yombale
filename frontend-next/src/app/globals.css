@@ -4820,6 +4820,14 @@ a {
 .boutique-annonces-section { margin-top: 8px; }
 .boutique-annonces-titre { font-family: var(--font-archivo), sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 .boutique-annonces-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+.boutique-produits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+.boutique-produits-list { display: flex; flex-direction: column; gap: 14px; }
+@media (max-width: 768px) {
+  .boutique-produits-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+}
+@media (max-width: 480px) {
+  .boutique-produits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}
 .boutique-annonce-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; text-decoration: none; color: inherit; transition: box-shadow .15s; }
 .boutique-annonce-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
 .boutique-annonce-img { height: 120px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 32px; overflow: hidden; }
