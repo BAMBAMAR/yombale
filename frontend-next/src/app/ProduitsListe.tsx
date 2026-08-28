@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import CardActions from './CardActions'
 import ExternalImg from '@/components/ExternalImg'
+import { Loader2, ChevronDown, ShoppingBag } from 'lucide-react'
 
 interface Produit {
   id: number
@@ -110,25 +111,56 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
         }); })()}
       </div>
 
+      {produits.length === 0 && !loading && (
+        <div className="empty-state-npl" style={{ padding: '60px 20px', textAlign: 'center', background: 'var(--card)', borderRadius: 'var(--r-xl)', border: '1px dashed var(--border-medium)', margin: '30px 0' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--orange2)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <ShoppingBag size={28} />
+          </div>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: '0 0 8px' }}>
+            Aucun produit ne correspond à vos critères
+          </h3>
+          <p style={{ fontSize: 14, color: 'var(--text-subtle)', maxWidth: 460, margin: '0 auto 20px', lineHeight: 1.5 }}>
+            Essayez d&apos;élargir votre recherche, de réinitialiser vos filtres ou de consulter nos catégories populaires.
+          </p>
+          <Link href="/" className="btn-npl btn-npl-secondary btn-npl-md" style={{ display: 'inline-flex' }}>
+            <span>Voir tout le catalogue</span>
+          </Link>
+        </div>
+      )}
+
       {loading && (
         <div className="grid-produits" aria-busy="true" aria-label="Chargement des produits supplémentaires">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="card-produit skeleton" style={{ height: 260, opacity: 0.8 }} />
+            <div key={i} className="card-produit skeleton-card" style={{ opacity: 0.9, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 12 }}>
+              <div className="skeleton skeleton-img" style={{ aspectRatio: '4/3', width: '100%', borderRadius: 6 }} />
+              <div className="skeleton skeleton-line skeleton-line--short" style={{ height: 12, marginTop: 10, width: '40%' }} />
+              <div className="skeleton skeleton-line" style={{ height: 16, marginTop: 6, width: '85%' }} />
+              <div className="skeleton skeleton-price" style={{ height: 20, marginTop: 8, width: '50%' }} />
+            </div>
           ))}
         </div>
       )}
 
       {restants > 0 && (
-        <div className="voir-plus-wrap">
+        <div className="voir-plus-wrap" style={{ marginTop: 24 }}>
           <button
-            className="voir-plus-btn"
+            className="voir-plus-btn btn-npl btn-npl-secondary btn-npl-lg"
             onClick={voirPlus}
             disabled={loading}
             aria-label={`Charger les ${restants.toLocaleString('fr-SN')} produits suivants`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
           >
-            {loading
-              ? '⏳ Chargement des offres…'
-              : `⬇ Voir plus (${restants.toLocaleString('fr-SN')} restant${restants > 1 ? 's' : ''})`}
+            {loading ? (
+              <>
+                <Loader2 size={16} className="spin" />
+                <span>Chargement des offres…</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown size={16} />
+                <span>Voir plus ({restants.toLocaleString('fr-SN')} restant{restants > 1 ? 's' : ''})</span>
+              </>
+            )}
           </button>
         </div>
       )}

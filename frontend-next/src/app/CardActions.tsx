@@ -5,6 +5,7 @@ import {
   infererGroupe, lireCompare, CAT_NOM_SLUG, MAX_COMPARE, GROUPE_LABELS,
   type CompareEntry,
 } from '@/lib/comparaison'
+import { Scale, Heart } from 'lucide-react'
 
 interface Props {
   id: string | number
@@ -140,7 +141,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
         aria-disabled={!!blocage}
         style={blocage ? { opacity: 0.35, cursor: 'not-allowed' } : undefined}
       >
-        ⚖
+        <Scale size={14} />
       </button>
       <button
         onClick={toggleFav}
@@ -148,7 +149,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
         title={fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
         aria-label={fav ? `Retirer ${nom} des favoris` : `Ajouter ${nom} aux favoris`}
       >
-        ♥
+        <Heart size={14} fill={fav ? 'currentColor' : 'none'} />
       </button>
     </div>
   )

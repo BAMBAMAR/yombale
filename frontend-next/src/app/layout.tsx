@@ -39,6 +39,7 @@ import VerifyEmailToast from './VerifyEmailToast';
 import DrawerCart from '@/components/DrawerCart';
 import { CartProvider } from '@/context/CartContext';
 import { Suspense } from 'react';
+import { MessageCircle, Heart, Store, User, Zap, Package, Trash2 } from 'lucide-react';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -267,11 +268,11 @@ export default async function RootLayout({
               <div className="navbar-actions">
                 {session ? (
                   <a href="/boutique" className="navbar-maboutique hidden-mobile" aria-label="Accéder à ma boutique" style={{ background: 'var(--navy)', color: '#fff', padding: '8px 14px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.15)' }}>
-                    🏪 Ma Boutique
+                    <Store size={15} style={{ color: 'var(--accent, #C75B00)' }} /> Ma Boutique
                   </a>
                 ) : (
                   <a href="/creer-boutique" className="navbar-taftaf hidden-mobile" aria-label="Créer Boutique Taf Taf" style={{ background: 'var(--navy)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', padding: '8px 16px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(28,43,74,0.18)' }}>
-                    <span style={{ color: '#C75B00' }}>⚡</span> Boutique Taf Taf
+                    <Zap size={15} style={{ color: 'var(--accent, #C75B00)' }} /> Boutique Taf Taf
                   </a>
                 )}
                 <a href="/deposer-annonce" className="navbar-deposer" aria-label="Publier une nouvelle annonce" style={{ whiteSpace: 'nowrap' }}>
@@ -289,10 +290,18 @@ export default async function RootLayout({
               {/* Mobile & Tablet icon actions + Drawer burger */}
               <div className="navbar-mobile-group">
                 <div className="navbar-icon-actions">
-                  <a href="/assistant-whatsapp" className="navbar-icon-btn navbar-icon-btn--whatsapp" aria-label="Assistant WhatsApp" title="Assistant WhatsApp">💬</a>
-                  <a href="/favoris" className="navbar-icon-btn navbar-icon-btn--favoris" aria-label="Mes favoris" title="Favoris">❤</a>
-                  <a href="/creer-boutique" className="navbar-pill-btn" aria-label="Boutique Taf Taf">🏪 Boutique</a>
-                  <a href={session ? "/compte" : "/connexion"} className="navbar-icon-btn navbar-icon-btn--profil" aria-label="Profil" title="Profil">👤</a>
+                  <a href="/assistant-whatsapp" className="navbar-icon-btn navbar-icon-btn--whatsapp" aria-label="Assistant WhatsApp" title="Assistant WhatsApp">
+                    <MessageCircle size={18} />
+                  </a>
+                  <a href="/favoris" className="navbar-icon-btn navbar-icon-btn--favoris" aria-label="Mes favoris" title="Favoris">
+                    <Heart size={18} />
+                  </a>
+                  <a href="/creer-boutique" className="navbar-pill-btn" aria-label="Boutique Taf Taf">
+                    <Store size={14} /> Boutique
+                  </a>
+                  <a href={session ? "/compte" : "/connexion"} className="navbar-icon-btn navbar-icon-btn--profil" aria-label="Profil" title="Profil">
+                    <User size={18} />
+                  </a>
                 </div>
                 <MobileNav
                   isLoggedIn={!!session}
@@ -374,13 +383,19 @@ export default async function RootLayout({
               {/* Colonne 4 — Informations */}
               <div className="footer-col">
                 <p className="footer-col-titre">Informations</p>
-                <a href="/suivi-commande">📦 Suivre ma commande</a>
+                <a href="/suivi-commande" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Package size={13} style={{ color: 'var(--accent, #C75B00)' }} /> Suivre ma commande
+                </a>
                 <a href="/guide-emploi">Comment ça marche ?</a>
-                <a href="/assistant-whatsapp">💬 Assistant WhatsApp</a>
+                <a href="/assistant-whatsapp" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <MessageCircle size={13} style={{ color: '#25D366' }} /> Assistant WhatsApp
+                </a>
                 <a href="/tarifs-boutique">Tarifs &amp; Forfaits Vendeurs</a>
                 <a href="/guide-creer-boutique">Guide Vendeur &amp; Sourcing</a>
                 <a href="/demo">Démo Commerciale</a>
-                <a href="/cgu#suppression-donnees">🗑️ Supprimer annonce / numéro</a>
+                <a href="/cgu#suppression-donnees" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Trash2 size={13} style={{ color: 'var(--red, #B91C1C)' }} /> Supprimer annonce / numéro
+                </a>
                 <a href="/mentions-legales">Mentions légales</a>
                 <a href="/confidentialite">Confidentialité</a>
                 <a href="/cgu">CGU</a>

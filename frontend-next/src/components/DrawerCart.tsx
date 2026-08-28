@@ -30,10 +30,10 @@ interface OrderSuccessData {
 }
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'dakar-intra', nom: '📍 Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
-  { id: 'dakar-banlieue', nom: '📍 Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
-  { id: 'regions-senegal', nom: '🚚 Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
-  { id: 'retrait-boutique', nom: '🏬 Retrait gratuit en boutique', prix: 0 },
+  { id: 'dakar-intra', nom: 'Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
+  { id: 'dakar-banlieue', nom: 'Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
+  { id: 'regions-senegal', nom: 'Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
+  { id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 },
 ]
 
 export default function DrawerCart() {
@@ -419,8 +419,9 @@ export default function DrawerCart() {
           </div>
 
           {isCredit && (
-            <p style={{ margin: 0, fontSize: 12, color: '#0284c7', background: '#f0f9ff', padding: '10px 14px', borderRadius: 12, border: '1px solid #bae6fd', fontWeight: 600 }}>
-              ℹ️ Votre demande est en attente d&apos;approbation par la boutique. Vous pouvez également contacter le commerçant sur WhatsApp pour confirmation directe.
+            <p style={{ margin: 0, fontSize: 12, color: '#0284c7', background: '#f0f9ff', padding: '10px 14px', borderRadius: 12, border: '1px solid #bae6fd', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <AlertCircle size={14} style={{ flexShrink: 0 }} />
+              <span>Votre demande est en attente d&apos;approbation par la boutique. Vous pouvez également contacter le commerçant sur WhatsApp pour confirmation directe.</span>
             </p>
           )}
 
@@ -435,7 +436,8 @@ export default function DrawerCart() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 14px rgba(34,197,94,0.35)'
               }}
             >
-              <span>💬</span> {t('shop.notifyVendorWhatsApp')}
+              <MessageCircle size={18} />
+              <span>{t('shop.notifyVendorWhatsApp')}</span>
             </a>
             <button
               onClick={() => { setOrderSuccessData(null); setCheckoutMode('whatsapp'); closeCart(); }}
@@ -462,14 +464,14 @@ export default function DrawerCart() {
         onClick={() => activeBoutiqueId && openCart(activeBoutiqueId)}
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 999,
-          background: '#C75B00', color: '#fff', border: 'none', borderRadius: 30,
+          background: 'var(--accent, #C75B00)', color: '#fff', border: 'none', borderRadius: 30,
           padding: '14px 22px', fontWeight: 900, fontSize: 15, cursor: 'pointer',
           boxShadow: '0 8px 24px rgba(199,91,0,0.4)', display: 'flex', alignItems: 'center', gap: 10,
         }}
       >
-        <span style={{ fontSize: 18 }}>🛒</span>
+        <ShoppingBag size={18} />
         <span>{t('shop.cartTitle')} ({getCartItemCount(activeBoutiqueId!)})</span>
-        <span style={{ background: 'rgba(255,255,255,0.2)', padding: '3px 8px', borderRadius: 12, fontSize: 13 }}>
+        <span style={{ background: 'rgba(255,255,255,0.2)', padding: '3px 8px', borderRadius: 12, fontSize: 13, fontWeight: 800 }}>
           {fcfa(totalGlobal)}
         </span>
       </button>

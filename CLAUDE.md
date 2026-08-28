@@ -1,3 +1,35 @@
+- **Audit Esthétique & UI/UX Exhaustif (31 Sections) et Exécution des Phases P0, P1, P2 & P3 : Éradication des Couleurs Tailwind Slate, Unification des Tokens, Refonte du Dashboard Marchand, Skeletons Structurés, Empty States & Validation Build (`globals.css`, `layout.tsx`, `page.tsx`, `BoutiqueClient.tsx`, `ProduitsListe.tsx`, `CardActions.tsx`, `DrawerCart.tsx`, `BoutiqueDetailClient.tsx`, `task.md`, `implementation_plan.md`, `CLAUDE.md`) (`main` - 28 août 2026)** 🎨🔍💎📐⚡🇸🇳✨ :
+  * **🔍 1. Audit Esthétique & UI/UX Exhaustif (31 Sections)** :
+    - **Livrable complet** : Document de synthèse d'audit généré dans `implementation_plan.md` couvrant les 31 sections (première impression, hiérarchie visuelle, typographie, boutons, icônes, alignement, grille, espacements, couleurs, bordures, ombres, cartes, modales, dashboards, tableaux, formulaires, responsive, mobile-first, cohérence globale, scores par section, benchmark Shopify/Square, top 30 défauts, top 30 améliorations, plan en 4 phases).
+    - **Scores établis** : Esthétique globale (48/100), UI (45/100), UX (52/100), Responsive (40/100), Cohérence Design System (30/100), POS / Caisse (72/100 ⭐ Point fort), Mobile marchand (35/100).
+  * **🎨 2. Exécution Phase P0 (Corrections Fondamentales & Tokens)** :
+    - **Contraste Typographique WCAG AA** : Assombrissement de `--text2` (`#6B5E52` → `#5A4E42`) et `--text3` (`#9C8E84` → `#8C7E74`) pour garantir un ratio de contraste ≥ 4.5:1 sur le fond sable `--bg` (`#F8F5F0`).
+    - **Échelle Typographique Minimale** : Rehaussement de `--text-xs` de `11px` à `12px` (minimum d'accessibilité) et taille de base `--text-base: 14px`.
+    - **Unification du Rayon de Courbure** : Alias direct de `--radius` sur `var(--r-md)` (8px) pour synchroniser les 68+ règles dépendantes sur la même source de vérité.
+    - **Largeurs Maximales Normalisées** : Standardisation de `--max-w: 1380px` (grilles, hero, contenu principal) et `--max-w-narrow: 1200px` (formulaires, lecture, footer).
+    - **Correction Focus Hero Search** : Remplacement du halo bleu froid Tailwind (`#0284c7`) par `var(--accent)` (orange brûlé `#C75B00`) et ombre chaude.
+    - **Éradication Globale des Couleurs Tailwind Slate** : Remplacement systématique de plus de 120 occurrences de `#f8fafc`, `#f1f5f9`, `#e2e8f0`, `#cbd5e1`, `#94a3b8`, `#64748b`, `#475569`, `#334155`, `#0f172a` dans `globals.css` et `page.tsx` par les nouveaux tokens sémantiques Nopalou (`--surface-muted`, `--surface-subtle`, `--border-light`, `--border-medium`, `--text-muted`, `--text-subtle`, `--text-body`, `--text-strong`, `--text-heading`).
+    - **Suppression des Doublons CSS** : Élimination de la double déclaration `.guide-wrap` et nettoyage de la fin de fichier `globals.css`.
+  * **💎 3. Exécution Phase P1 (Harmonisation des Composants & Icônes)** :
+    - **Unification Boutons, Cartes & Badges** : Synchronisation des hauteurs (`--btn-h-sm: 32px`, `--btn-h-md: 40px`, `--btn-h-lg: 48px`) et rayons (`--r-sm`, `--r-md`, `--r-lg`, `--r-pill`) entre `.btn-npl` et `.npl-btn`, `.card-npl` et `.npl-card`, `.badge-npl` et `.npl-badge`.
+    - **Classes Utilitaires Modales & Drawers** : Création de `.modal-overlay-npl`, `.modal-npl`, `.drawer-npl`, `.empty-state-npl` avec animations fluides (`fadeIn`, `modalPop`, `slideLeft`).
+    - **Remplacement Emojis UI par Lucide React (`layout.tsx`)** : Remplacement des emojis natifs dans les boutons d'actions mobile (`MessageCircle`, `Heart`, `Store`, `User`), les boutons desktop (`Store`, `Zap`) et les liens d'information du footer (`Package`, `MessageCircle`, `Trash2`).
+  * **🏪 4. Exécution Phase P2 (Refonte Dashboard Marchand & Navigation `BoutiqueClient.tsx`)** :
+    - **Bannière d'Accueil & Actions Clés** : Ajout d'un en-tête moderne avec le nom de la boutique, le statut en ligne/masqué, un bouton d'accès direct grand format à la Caisse POS (`ShoppingCart`) et le partage vitrine (`QrCode`).
+    - **Grille de KPIs Consolidée** : Refonte visuelle des 4 cartes métriques (Commandes en attente, Catalogue actif, Alertes de réassort, Formule d'abonnement) avec formatage tabulaire (`.num-tabular`), micro-badges et conteneurs d'icônes circulaires thématiques.
+    - **Raccourcis d'Actions Rapides** : Grille modernisée avec cartes interactives (Ventes & Dépenses Express, Carnet de Crédit/Dettes, Ajout Produit, Factures & Devis PDF, Caisse POS, QR Code).
+    - **Navigation Modulaire par Icônes Vectorielles (Desktop & Mobile)** : Remplacement de tous les emojis de navigation des 18 onglets (`NAV_GROUPS` et `tabInfoMap`) par des composants SVG `lucide-react` (`LayoutDashboard`, `ShoppingBag`, `ClipboardList`, `BookOpen`, `FileText`, `Truck`, `Zap`, `Receipt`, `Scale`, `BarChart3`, `Users`, `Gift`, `ScrollText`, `Code2`, `Megaphone`, `Settings`, `ShieldCheck`, `Store`).
+    - **En-têtes d'Onglets & Écrans Verrouillés** : Titre de section standardisé avec icônes dynamiques et modale de mise à niveau stylisée avec cadenas vectoriel `Lock`.
+  * **✨ 5. Exécution Phase P3 (Polish Ultra-Premium, Skeletons & Finitions Visuelles)** :
+    - **Skeletons Structurés Haute Fidélité (`ProduitsListe.tsx`)** : Remplacement des blocs gris opaques par des cartes squelettes réalistes (image avec aspect ratio, ligne marque, titre produit, prix et bouton).
+    - **Empty State Illustré (`ProduitsListe.tsx`)** : État vide premium `.empty-state-npl` avec icône `ShoppingBag`, message d'aide clair et bouton de retour catalogue.
+    - **Micro-interactions & Actions de Carte (`CardActions.tsx`)** : Remplacement des caractères unicode bruts (`⚖`, `♥`) par des icônes nettes `Scale` et `Heart` (avec remplissage dynamique `fill` lors de l'activation).
+    - **Harmonisation Tiroir Panier (`DrawerCart.tsx`)** : Bouton flottant mobile modernisé (`ShoppingBag`), assainissement des noms des zones de livraison et icônes d'alerte.
+    - **Détail Boutique (`BoutiqueDetailClient.tsx`)** : En-tête sticky modernisé avec icône `Store`.
+  * **🧪 6. Validation & Conformité Build** :
+    - Build de production Next.js (`npm run build`) : **100% réussi sans aucune erreur**.
+    - Zéro appel de police externe conformément à la directive stricte `AGENTS.md`.
+
 - **Harmonisation Globale du Design System & Audit Esthétique UI/UX de Nopalou : Tokens Universels, Élimination des Emojis Non-Professionnels, Alignement Numérique Tabulaire & Cohérence Visuelle Marchand / Vitrine (`globals.css`, `MobileNav.tsx`, `NavbarGuides.tsx`, `DrawerCart.tsx`, `BoutiqueClient.tsx`, `AnalyticsClient.tsx`, `BoutiqueDetailClient.tsx`, `checkout-express/page.tsx`, `page.tsx`, `CLAUDE.md`) (`main` - 28 août 2026)** 🎨💎📐⚡🇸🇳✨ :
   * **🔍 Contexte & Diagnostic de l'Audit Esthétique (31 Sections)** :
     - **Incohérences de Typographie & Échelle de Texte** : Présence de micro-textes inférieurs à `11px` non conformes aux normes d'accessibilité WCAG AAA et disparités dans les graisses et interlignages.

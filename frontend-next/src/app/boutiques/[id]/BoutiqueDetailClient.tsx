@@ -12,7 +12,7 @@ import CardActions from '@/app/CardActions'
 import { 
   ShoppingCart, Star, Share2, Tag, Info, Phone, MessageCircle, HelpCircle, Clock, 
   MapPin, Globe, Sparkles, Search, X, Filter, Grid, List, 
-  Eye, Check, ArrowUpDown, ChevronRight
+  Eye, Check, ArrowUpDown, ChevronRight, Store
 } from 'lucide-react'
 
 export interface Produit {
@@ -424,7 +424,7 @@ export default function BoutiqueDetailClient({
           animation: 'slideDown 0.25s ease-out',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <span style={{ fontSize: 20 }}>🏪</span>
+            <Store size={20} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
             <div style={{ minWidth: 0 }}>
               <p style={{ margin: 0, fontWeight: 800, fontSize: 14, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {boutique.nom}

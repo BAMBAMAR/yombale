@@ -241,13 +241,13 @@ export default async function HomePage({
                   <span style={{ fontSize: 11, fontWeight: 800, color: '#fed7aa' }}>{prixTafTaf} F/mois</span>
                 </div>
                 <h3 style={{ fontSize: 13.5, fontWeight: 900, marginBottom: 2, color: '#fff', lineHeight: 1.2 }}>Boutique Taf Taf</h3>
-                <p style={{ fontSize: 11.5, color: '#cbd5e1', margin: '0 0 6px', lineHeight: 1.3 }}>Créez votre vitrine en 30s chrono !</p>
+                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.8)', margin: '0 0 6px', lineHeight: 1.3 }}>Créez votre vitrine en 30s chrono !</p>
                 
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <li style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0', lineHeight: 1.3 }}>
+                  <li style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.9)', lineHeight: 1.3 }}>
                     <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 900 }}>✓</span> Vitrine web & lien personnalisé
                   </li>
-                  <li style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: '#e2e8f0', lineHeight: 1.3 }}>
+                  <li style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.9)', lineHeight: 1.3 }}>
                     <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 900 }}>✓</span> Commandes directes WhatsApp & Web
                   </li>
                 </ul>
@@ -257,7 +257,7 @@ export default async function HomePage({
                 <Link href="/creer-boutique" style={{ fontSize: 12, fontWeight: 800, color: '#fed7aa', textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   Créer ma vitrine <span style={{ color: 'var(--accent, #C75B00)' }}>→</span>
                 </Link>
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#cbd5e1', background: 'rgba(255,255,255,0.08)', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.08)', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)' }}>
                   30j offerts
                 </span>
               </div>
@@ -284,7 +284,7 @@ export default async function HomePage({
               return (
                 <Link key={c.slug} href="/immo" className="categ-pill" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
                   whiteSpace: 'nowrap', flexShrink: 0
                 }}>
                   <span>🏢</span> <span>Immobilier & Terrains</span>
@@ -296,7 +296,7 @@ export default async function HomePage({
               return (
                 <Link key={c.slug} href="/annonces" className="categ-pill" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
                   whiteSpace: 'nowrap', flexShrink: 0
                 }}>
                   <span>📢</span> <span>Petites Annonces</span>
@@ -308,7 +308,7 @@ export default async function HomePage({
               return (
                 <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: '#334155', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                  background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
                   whiteSpace: 'nowrap', flexShrink: 0
                 }}>
                   <span>{c.emoji}</span> <span>{c.label}</span>
@@ -323,10 +323,10 @@ export default async function HomePage({
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
                   fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
-                  background: isSelected ? '#C75B00' : '#fff',
-                  color: isSelected ? '#fff' : '#334155',
-                  border: isSelected ? '1px solid #C75B00' : '1px solid #e2e8f0',
-                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(0,0,0,0.03)',
+                  background: isSelected ? 'var(--accent, #C75B00)' : '#fff',
+                  color: isSelected ? '#fff' : 'var(--text-strong, #2A231E)',
+                  border: isSelected ? '1px solid var(--accent, #C75B00)' : '1px solid var(--border-light, #DDD5CB)',
+                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(26,22,18,0.03)',
                   transition: 'all 0.15s ease',
                   whiteSpace: 'nowrap', flexShrink: 0
                 }}
@@ -339,7 +339,7 @@ export default async function HomePage({
       </section>
 
       {/* ── CONTENU PRINCIPAL & RÉSULTATS DIRECTS ──────────────────── */}
-      <main id="resultats" className="page-container" style={{ maxWidth: 1440, paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
+      <main id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
         
         {/* BANDEAU FEEDBACK RECHERCHE & CONFIRMATION DES RÉSULTATS */}
         {hasFiltre && (
@@ -351,12 +351,12 @@ export default async function HomePage({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 20 }}>🔎</span>
               <div>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0f172a' }}>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
                   {total > 0 ? `${total} produit${total > 1 ? 's' : ''} trouvé${total > 1 ? 's' : ''}` : 'Aucun produit trouvé'}
                   {q ? ` pour "${q}"` : ''}
                   {categorie ? ` — Catégorie : ${CATEGORIES.find(c => c.slug === categorie)?.label || categorie}` : ''}
                 </h3>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-subtle, #5A4E42)' }}>
                   Résultats actualisés en temps réel.
                 </p>
               </div>
@@ -382,7 +382,7 @@ export default async function HomePage({
           {/* LIGNE 1 STRICTE : Budget + État (Gauche) | Bouton Boutique (Droite) */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', flexWrap: 'nowrap' }}>
             <div className="horizontal-scroll-fade" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', whiteSpace: 'nowrap', marginRight: 2 }}>Budget :</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-subtle, #5A4E42)', whiteSpace: 'nowrap', marginRight: 2 }}>Budget :</span>
               {BUDGETS.map((b) => {
                 const isActive = (b.prixMin === prixMin && b.prixMax === prixMax) || (b.label === 'Tout' && !prixMin && !prixMax);
                 return (
@@ -397,9 +397,9 @@ export default async function HomePage({
                 )
               })}
 
-              <div style={{ width: 1, height: 16, background: '#cbd5e1', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
+              <div style={{ width: 1, height: 16, background: 'var(--border-medium, #C8BDB2)', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
 
-              <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: '#64748b', whiteSpace: 'nowrap', marginLeft: 2 }}>État :</span>
+              <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-subtle, #5A4E42)', whiteSpace: 'nowrap', marginLeft: 2 }}>État :</span>
               {ETATS.map((e) => {
                 const isActive = etat === e.val;
                 return (
@@ -419,12 +419,12 @@ export default async function HomePage({
               href="/creer-boutique"
               className="hidden-mobile"
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0f172a', color: '#fff',
+                display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--navy, #1C2B4A)', color: '#fff',
                 padding: '5px 12px', borderRadius: 18, fontSize: 11.5, fontWeight: 800, textDecoration: 'none',
-                whiteSpace: 'nowrap', flexShrink: 0, boxShadow: '0 2px 6px rgba(15,23,42,0.12)'
+                whiteSpace: 'nowrap', flexShrink: 0, boxShadow: '0 2px 6px rgba(28,43,74,0.12)'
               }}
             >
-              <span style={{ color: '#C75B00', fontSize: 12 }}>⚡</span>
+              <span style={{ color: 'var(--accent, #C75B00)', fontSize: 12 }}>⚡</span>
               Ouvrir une Boutique Pro
             </Link>
           </div>
@@ -432,7 +432,7 @@ export default async function HomePage({
           {/* LIGNE 2 STRICTE : Trier + Tendances (Gauche) | Effacer (Droite) */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', flexWrap: 'nowrap' }}>
             <div className="horizontal-scroll-fade" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', whiteSpace: 'nowrap', marginRight: 2 }}>Trier :</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-subtle, #5A4E42)', whiteSpace: 'nowrap', marginRight: 2 }}>Trier :</span>
               {TRIS.map((t) => {
                 const isActive = tri === t.val;
                 return (
@@ -447,9 +447,9 @@ export default async function HomePage({
                 )
               })}
 
-              <div style={{ width: 1, height: 16, background: '#cbd5e1', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
+              <div style={{ width: 1, height: 16, background: 'var(--border-medium, #C8BDB2)', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
 
-              <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: '#C75B00', whiteSpace: 'nowrap', marginLeft: 2 }}>🔥 Tendances :</span>
+              <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: 'var(--accent, #C75B00)', whiteSpace: 'nowrap', marginLeft: 2 }}>🔥 Tendances :</span>
               {tendances.map((item, idx) => (
                 <Link
                   key={`${item.q}-${idx}`}
@@ -484,7 +484,7 @@ export default async function HomePage({
                 <span>✖</span> Effacer
               </Link>
             ) : null}
-            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, background: '#0f172a', color: '#fff', padding: '5px 12px', borderRadius: 18, fontSize: 11.5, fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 6px rgba(15,23,42,0.12)' }}>
+            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--navy, #1C2B4A)', color: '#fff', padding: '5px 12px', borderRadius: 18, fontSize: 11.5, fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 6px rgba(28,43,74,0.12)' }}>
               <span style={{ fontSize: 12 }}>🏪</span> Boutique Pro
             </Link>
           </div>
@@ -513,30 +513,30 @@ export default async function HomePage({
 
       {/* ── Bloc SEO (MODERNISÉ, SANS BOÎTE) ─────────────────────────────────────────────── */}
       {!hasFiltre && (
-        <section style={{ maxWidth: 1280, margin: '0 auto 32px', padding: '0 20px' }}>
+        <section style={{ maxWidth: 'var(--max-w-narrow, 1280px)', margin: '0 auto 32px', padding: '0 20px' }}>
           
           {/* En-tête de section épuré */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <span style={{ display: 'inline-block', background: '#fff7ed', color: '#C75B00', padding: '6px 16px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 12, border: '1px solid #fed7aa' }}>
+            <span style={{ display: 'inline-block', background: '#fff7ed', color: 'var(--accent, #C75B00)', padding: '6px 16px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 12, border: '1px solid #fed7aa' }}>
               6800+ produits · mis à jour toutes les 6h
             </span>
-            <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, color: '#0f172a', margin: 0, lineHeight: 1.2 }}>
-              Le comparateur de prix N°1 au <span style={{ color: '#C75B00' }}>Sénégal</span>
+            <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: 0, lineHeight: 1.2 }}>
+              Le comparateur de prix N°1 au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
             </h2>
           </div>
 
           {/* Grille de texte moderne */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32, marginBottom: 48 }}>
-            <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(15,23,42,0.03)' }}>
+            <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
               <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>📊</span>
-              <p style={{ margin: 0, color: '#475569', fontSize: 14, lineHeight: 1.7 }}>
+              <p style={{ margin: 0, color: 'var(--text-body, #4A3F36)', fontSize: 14, lineHeight: 1.7 }}>
                 <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais. Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ? Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands en ligne au Sénégal.
               </p>
             </div>
             
-            <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(15,23,42,0.03)' }}>
+            <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
               <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>📍</span>
-              <p style={{ margin: 0, color: '#475569', fontSize: 14, lineHeight: 1.7 }}>
+              <p style={{ margin: 0, color: 'var(--text-body, #4A3F36)', fontSize: 14, lineHeight: 1.7 }}>
                 Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis, Ziguinchor ou Kaolack — trouvez le meilleur prix avant d&apos;acheter. Nos prix sont mis à jour automatiquement toutes les 6 heures depuis Jumia, Expat-Dakar, CoinAfrique et d&apos;autres. <strong>Gratuit, sans inscription, sans pub.</strong>
               </p>
             </div>
@@ -569,14 +569,14 @@ export default async function HomePage({
             </div>
 
             {/* ── BANDEAU RÉSEAUX SOCIAUX OFFICIELS NOPALOU ──────────────────── */}
-            <div style={{ marginTop: 40, padding: '24px 20px', background: 'linear-gradient(135deg, #1C2B4A 0%, #0f172a 100%)', borderRadius: 16, color: '#ffffff', textAlign: 'center', boxShadow: '0 8px 24px rgba(15,27,74,0.15)' }}>
+            <div style={{ marginTop: 40, padding: '24px 20px', background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #0d1728 100%)', borderRadius: 16, color: '#ffffff', textAlign: 'center', boxShadow: '0 8px 24px rgba(28,43,74,0.15)' }}>
               <span style={{ fontSize: 11, fontWeight: 900, color: '#fed7aa', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'rgba(199,91,0,0.2)', padding: '4px 12px', borderRadius: 20, border: '1px solid rgba(199,91,0,0.3)' }}>
                 📢 Communauté &amp; Bons Plans
               </span>
               <h3 style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', margin: '10px 0 6px' }}>
                 Rejoignez Nopalou sur vos Réseaux Préférés
               </h3>
-              <p style={{ fontSize: 13, color: '#94a3b8', margin: '0 auto 20px', maxWidth: 540, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '0 auto 20px', maxWidth: 540, lineHeight: 1.5 }}>
                 Suivez nos vidéos TikTok, recevez les baisses de prix en direct sur notre Canal WhatsApp et profitez des ventes flash exclusives à Dakar.
               </p>
 
@@ -617,14 +617,14 @@ export default async function HomePage({
                   href="https://twitter.com/nopalou_sn"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#0f172a', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: 'var(--navy, #1C2B4A)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
                 >
                   <span>𝕏</span> <span>Twitter</span>
                 </a>
               </div>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: 30, padding: 16, background: '#f8fafc', borderRadius: 12, color: '#64748b', fontSize: 13, border: '1px solid #e2e8f0' }}>
+            <div style={{ textAlign: 'center', marginTop: 30, padding: 16, background: 'var(--surface-muted, #FAF8F5)', borderRadius: 12, color: 'var(--text-subtle, #5A4E42)', fontSize: 13, border: '1px solid var(--border-light, #DDD5CB)' }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, background: '#10b981', borderRadius: '50%', marginRight: 8 }} />
               Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais
             </div>
