@@ -189,18 +189,18 @@ export default function GuideUtilisationClient() {
                 {[
                   {
                     step: '1',
-                    title: 'Inscription avec votre numéro de téléphone / WhatsApp',
-                    desc: 'Rendez-vous sur nopalou.com/inscription. Indiquez votre prénom, nom, numéro de téléphone et mot de passe. Aucun justificatif lourd n\'est demandé.',
+                    title: 'Option A : Création 100% WhatsApp en 30 secondes (Sans Ordinateur)',
+                    desc: 'Envoyez simplement « creer boutique » au bot WhatsApp officiel Nopalou. Donnez le nom, la catégorie et la ville : votre vitrine et votre gestion sont créées instantanément !',
                   },
                   {
                     step: '2',
-                    title: 'Création de votre Boutique en 1 Clic',
-                    desc: 'Depuis votre menu ou sur nopalou.com/creer-boutique, saisissez le nom de votre commerce, votre ville (ex: Dakar, Thiès...), votre adresse et votre numéro WhatsApp commercial.',
+                    title: 'Option B : Formulaire Express en Ligne (2 minutes)',
+                    desc: 'Sur nopalou.com/creer-boutique, saisissez le nom de votre commerce, votre ville et votre numéro WhatsApp. Votre espace marchand simplifié à 6 onglets est immédiatement actif.',
                   },
                   {
                     step: '3',
-                    title: 'Bénéficiez immédiatement de 30 Jours d\'Essai 100% Offerts',
-                    desc: 'Toutes les fonctionnalités Pro (Caisse POS Offline, 3 Scanners EAN, Factures OHADA, Dettes WhatsApp) sont débloquées instantanément sans carte bancaire.',
+                    title: 'Option C : Migration 1-Clic depuis Shopify, WooCommerce ou Excel',
+                    desc: 'Uploadez votre fichier existant (CSV/Excel) : le moteur intelligent extrait automatiquement tous vos titres, prix, stocks et photos en quelques secondes.',
                   },
                 ].map((s) => (
                   <div key={s.step} style={{
@@ -277,13 +277,14 @@ export default function GuideUtilisationClient() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ background: '#FFF7ED', border: '1.5px solid #FFEDD5', borderRadius: 14, padding: '18px 22px' }}>
                   <h3 style={{ fontSize: 16, fontWeight: 900, color: '#C75B00', margin: '0 0 8px' }}>
-                    ✨ 4 Façons d&apos;Ajouter vos Produits :
+                    ✨ 5 Façons Rapides d&apos;Ajouter vos Produits :
                   </h3>
                   <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: '#1C2B4A', lineHeight: 1.8 }}>
-                    <li><strong>Saisie Manuelle Express</strong> : Nom, prix de vente, prix barré promotionnel, photos HD et description.</li>
-                    <li><strong>Variantes Multiples</strong> : Tailles (XS à XXL), Pointures (36 à 46), Stockage (64Go à 1To), Couleurs avec pastilles interactives.</li>
-                    <li><strong>Import par Lot Excel / CSV</strong> : Glissez-déposez votre fichier fournisseur ou votre liste de stock existante en 1 seconde (`BatchImportModal`).</li>
-                    <li><strong>Génération Codes-Barres EAN-13 GS1</strong> : Impression instantanée de planches de stickers autocollants à coller sur vos articles.</li>
+                    <li><strong>Mode Express en 5 secondes</strong> : Saisie ultra-rapide (Nom + Prix + Photo) activée par défaut.</li>
+                    <li><strong>Message WhatsApp direct</strong> : Envoyez simplement le nom et le prix au bot (ex: <em>« Robe Soie 15000 »</em>) pour publier l&apos;article instantanément.</li>
+                    <li><strong>Moteur d&apos;Import Intelligent Multi-Plateformes</strong> : Importez vos exports Shopify, WooCommerce, PrestaShop ou Excel/CSV avec auto-détection des colonnes et aperçu sans stress.</li>
+                    <li><strong>Variantes Multiples</strong> : Tailles (XS à XXL), Pointures (36 à 46), Couleurs et Stockage via l&apos;onglet <em>Détails avancés</em>.</li>
+                    <li><strong>Génération Codes-Barres EAN-13 GS1</strong> : Impression instantanée de planches d&apos;étiquettes autocollantes pour le magasin.</li>
                   </ul>
                 </div>
 
@@ -364,13 +365,19 @@ export default function GuideUtilisationClient() {
                 <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
                   <CheckCircle2 size={22} color="#D97706" />
                   <span style={{ fontSize: 14, color: '#92400E', fontWeight: 700 }}>
-                    Calcul automatique du solde restant et historique de tous les paiements partiels reçus.
+                    Importation massive des clients et de leurs soldes débiteurs initiaux depuis un fichier Excel/CSV en 1 clic.
                   </span>
                 </div>
                 <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
                   <CheckCircle2 size={22} color="#D97706" />
                   <span style={{ fontSize: 14, color: '#92400E', fontWeight: 700 }}>
-                    Bouton vert « 💬 Relancer sur WhatsApp » : envoie un message poli et professionnel avec le détail du solde en 1 clic.
+                    Bouton vert « 💬 Relancer sur WhatsApp » : envoie un message poli et professionnel avec le détail du solde et lien de paiement Wave.
+                  </span>
+                </div>
+                <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <CheckCircle2 size={22} color="#D97706" />
+                  <span style={{ fontSize: 14, color: '#92400E', fontWeight: 700 }}>
+                    Bilan du jour instantané : tapez simplement « Bilan » sur WhatsApp pour recevoir votre CA du jour, le nombre de commandes et la répartition Cash vs Wave.
                   </span>
                 </div>
               </div>

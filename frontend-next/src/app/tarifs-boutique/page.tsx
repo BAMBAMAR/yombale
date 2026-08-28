@@ -33,23 +33,27 @@ export const metadata: Metadata = {
 const FAQ_ITEMS = [
   {
     q: 'Combien coûte la création d’une boutique en ligne sur Nopalou ?',
-    a: 'La création de boutique démarre à 5.000 FCFA par mois avec la formule Boutique Taf Taf, avec 30 jours offerts. Vous profitez de 0% de commission sur vos ventes et des encaissements directs par Wave ou Orange Money.',
+    a: 'La création de boutique démarre dès 2.500 FCFA par mois avec la formule Boutique Taf Taf, avec 30 jours 100% offerts sans engagement. Vous profitez de 0% de commission sur vos ventes et des encaissements directs par Wave ou Orange Money.',
   },
   {
     q: 'Pourquoi Nopalou est la meilleure alternative à Shopify au Sénégal ?',
-    a: 'Contrairement à Shopify qui exige une carte bancaire internationale en dollars ($29/mois + frais de transaction) et n’intègre pas nativement les moyens de paiement locaux, Nopalou est 100% conçu pour le Sénégal : paiements Wave/Orange Money natifs, devises en FCFA, commandes directes sur WhatsApp et référencement automatique sur notre comparateur de prix.',
+    a: 'Contrairement à Shopify qui exige une carte bancaire en dollars ($29/mois + frais de transaction) et n’intègre pas nativement Wave ou Orange Money, Nopalou est 100% conçu pour le Sénégal : paiements locaux directs, commandes WhatsApp, caisse tactile POS magasin et référencement gratuit sur le comparateur de prix N°1.',
   },
   {
-    q: 'Puis-je vendre sur Nopalou si j’achète mes marchandises sur Alibaba ou AliExpress ?',
-    a: 'Absolument ! Des centaines de commerçants à Dakar et au Sénégal importent leurs produits depuis Alibaba, AliExpress, Shein ou 1688 et utilisent Nopalou pour créer leur catalogue vitrine et recevoir les commandes directement sur leur WhatsApp.',
+    q: 'Puis-je migrer mon catalogue Shopify, WooCommerce ou Excel en 1 clic ?',
+    a: 'Oui ! Grâce au moteur d’import intelligent Nopalou, vous pouvez glisser-déposer votre fichier d’export Shopify, WooCommerce ou Excel : vos titres, prix, stocks et photos sont reconnus automatiquement sans aucune ressaisie.',
+  },
+  {
+    q: 'Puis-je gérer ma boutique entièrement par WhatsApp sans ordinateur ?',
+    a: 'Absolument ! Vous pouvez ouvrir votre boutique en 30 secondes en envoyant un message WhatsApp, ajouter des produits en envoyant une simple photo et le prix, consulter votre bilan du jour et suivre votre carnet de dettes directement dans la conversation WhatsApp.',
   },
   {
     q: 'Comment mes clients paient-ils sur ma boutique ?',
-    a: 'Vos clients effectuent leurs commandes directement via WhatsApp. Ils peuvent vous régler via Wave, Orange Money, Wizall ou en espèces à la livraison. Vous gardez 100% de l’argent directement dans votre poche.',
+    a: 'Vos clients commandent directement sur votre boutique ou via WhatsApp. Ils peuvent vous régler via Wave, Orange Money, Free Money ou en espèces à la livraison. Vous recevez 100% des fonds instantanément sur votre propre compte.',
   },
   {
     q: 'Est-il nécessaire d’avoir des compétences informatiques ?',
-    a: 'Aucune compétence technique n’est nécessaire ! Vous remplissez le formulaire de création en 2 minutes depuis votre téléphone, et votre boutique est immédiatement prête à recevoir des clients.',
+    a: 'Aucune compétence technique n’est nécessaire ! L’espace marchand a été pensé pour le « zéro apprentissage » avec 6 onglets essentiels simples et un accompagnement WhatsApp permanent.',
   },
 ]
 

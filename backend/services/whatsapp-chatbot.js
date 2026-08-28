@@ -2294,19 +2294,20 @@ async function handleIncomingInternal(msg) {
       await sendWhatsAppText(phone, '📦 Entrez votre référence de commande (ex: CMD-12345) :');
       return;
     }
-    if (action === 'creer_boutique') {
-      const msgText = `🛍️ *Créer votre boutique sur Nopalou*\n\n` +
-        `Développez votre activité et vendez vos produits directement en ligne au Sénégal !\n\n` +
-        `✨ *Vos avantages marchands :*\n` +
-        `• 🏪 Catalogue produits complet & gestion de stock\n` +
-        `• 🌊 Encaissement direct Wave & Orange Money\n` +
-        `• 📊 Statistiques de vente en temps réel\n` +
-        `• 💬 Bot WhatsApp automatisé pour vos clients\n` +
-        `• ⚡ Reversements des ventes Wave 1-Clic\n\n` +
-        `👉 *Créez votre boutique gratuitement en 2 min :*\n${SITE}/creer-boutique`;
-      await sendWhatsAppText(phone, msgText);
-      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
-      await setSession(phone, 'MENU', {});
+    if (action === 'creer_boutique' || action === 'creer' || action === 'ouvrir_boutique') {
+      const bqExistante = await trouverBoutiqueMarchand(phone);
+      if (bqExistante) {
+        await sendWhatsAppText(phone, `🏪 Vous êtes déjà propriétaire de la boutique *${bqExistante.nom}* !\n\nTapez *bilan* pour vos ventes ou *stock* pour vos alertes.`);
+        await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+        await setSession(phone, 'MENU', {});
+        return;
+      }
+      await setSession(phone, 'CREATE_SHOP_NOM', {});
+      await sendWhatsAppText(
+        phone,
+        `🏪 *Création de votre boutique Nopalou en 30 secondes !* 🚀🇸🇳\n\n` +
+        `Quel est le *nom* de votre commerce ou boutique ?\n(ex: _Dakar Fashion_, _Épicerie Keur Massar_, _Touba Électro_...)`
+      );
       return;
     }
     if (action === 'forfaits' || action === 'forfaits_abonnements') {
@@ -2392,6 +2393,29 @@ async function handleIncomingInternal(msg) {
       await setSession(phone, 'MENU', {});
       return;
     }
+
+    // ── Commandes Rapides pour Commerçants Nopalou (Bilan, Stock, Dettes) ───────
+    if (/^(bilan|ventes|ventes du jour|chiffre d'affaire|chiffre daffaire|combien j'ai vendu|combien jai vendu|caisse du jour|mon bilan|rapport ventes)$/i.test(normTxtLower)) {
+      const bqMarchand = await trouverBoutiqueMarchand(phone);
+      if (bqMarchand) {
+        await envoyerBilanCaisseMarchand(phone, bqMarchand);
+        return;
+      }
+    }
+    if (/^(stock|stocks|alerte stock|alertes stock|rupture|ruptures|mes stocks|etat stock)$/i.test(normTxtLower)) {
+      const bqMarchand = await trouverBoutiqueMarchand(phone);
+      if (bqMarchand) {
+        await envoyerStockMarchand(phone, bqMarchand);
+        return;
+      }
+    }
+    if (/^(dette|dettes|carnet|carnet dettes|carnet de dettes|qui me doit|mes dettes|creances)$/i.test(normTxtLower)) {
+      const bqMarchand = await trouverBoutiqueMarchand(phone);
+      if (bqMarchand) {
+        await envoyerCarnetDettesMarchand(phone, bqMarchand);
+        return;
+      }
+    }
     // "plus" / "encore" / "d'autres" / "oui"... → paginer les derniers résultats affichés
     if (MOTS_PLUS.includes(normaliserTexte(text))) {
       const last = context?.last;
@@ -2460,18 +2484,19 @@ async function handleIncomingInternal(msg) {
         return;
       }
       if (cleanMenuNum === 5) {
-        const msgText = `🛍️ *Créer votre boutique sur Nopalou*\n\n` +
-          `Développez votre activité et vendez vos produits directement en ligne au Sénégal !\n\n` +
-          `✨ *Vos avantages marchands :*\n` +
-          `• 🏪 Catalogue produits complet & gestion de stock\n` +
-          `• 🌊 Encaissement direct Wave & Orange Money\n` +
-          `• 📊 Statistiques de vente en temps réel\n` +
-          `• 💬 Bot WhatsApp automatisé pour vos clients\n` +
-          `• ⚡ Reversements des ventes Wave 1-Clic\n\n` +
-          `👉 *Créez votre boutique gratuitement en 2 min :*\n${SITE}/creer-boutique`;
-        await sendWhatsAppText(phone, msgText);
-        await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
-        await setSession(phone, 'MENU', {});
+        const bqExistante = await trouverBoutiqueMarchand(phone);
+        if (bqExistante) {
+          await sendWhatsAppText(phone, `🏪 Vous êtes déjà propriétaire de la boutique *${bqExistante.nom}* !\n\nTapez *bilan* pour vos ventes ou *stock* pour vos alertes.`);
+          await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+          await setSession(phone, 'MENU', {});
+          return;
+        }
+        await setSession(phone, 'CREATE_SHOP_NOM', {});
+        await sendWhatsAppText(
+          phone,
+          `🏪 *Création de votre boutique Nopalou en 30 secondes !* 🚀🇸🇳\n\n` +
+          `Quel est le *nom* de votre commerce ou boutique ?\n(ex: _Dakar Fashion_, _Épicerie Keur Massar_, _Touba Électro_...)`
+        );
         return;
       }
       if (cleanMenuNum === 6) {
@@ -2522,6 +2547,35 @@ async function handleIncomingInternal(msg) {
       }
     }
 
+    // 3. Détection de l'ajout rapide de produit par texte pour commerçant (ex: "Robe Soie 15000" ou "Sac cuir 5000 10")
+    const productInfo = extraireInfosProduitTexte(text);
+    if (productInfo && productInfo.nom && productInfo.prix > 0) {
+      const bqMarchand = await trouverBoutiqueMarchand(phone);
+      if (bqMarchand) {
+        try {
+          const rProd = await pool.query(
+            `INSERT INTO boutique_produits (boutique_id, nom, prix, stock_quantite, en_stock, categorie)
+             VALUES ($1, $2, $3, $4, true, $5) RETURNING *`,
+            [bqMarchand.id, productInfo.nom, productInfo.prix, productInfo.stock || 1, bqMarchand.categorie || 'Général']
+          );
+          const p = rProd.rows[0];
+          await sendWhatsAppText(
+            phone,
+            `✅ *Article ajouté à votre boutique "${bqMarchand.nom}" !* 🎉\n\n` +
+            `🛍️ *${p.nom}*\n` +
+            `💰 *Prix :* ${(p.prix || 0).toLocaleString('fr-FR')} FCFA\n` +
+            `📦 *Stock disponible :* ${p.stock_quantite || 1} unité(s)\n\n` +
+            `👉 *Voir votre boutique en ligne :*\n${SITE}/boutiques/${bqMarchand.slug || bqMarchand.id}`
+          );
+          await sendWhatsAppMenuOuFin(phone, 'Envie d\'ajouter un autre produit ou de continuer ?').catch(() => {});
+          await setSession(phone, 'MENU', {});
+          return;
+        } catch (pErr) {
+          console.error('[AJOUT PRODUIT WA ERR]', pErr.message);
+        }
+      }
+    }
+
     // Texte libre reçu en état MENU → question FAQ, sinon traiter comme recherche
     const faq = detecterFAQ(text);
     if (faq) {
@@ -2533,6 +2587,87 @@ async function handleIncomingInternal(msg) {
     await setSession(phone, 'SEARCH_QUERY', {});
     await handleSearchQuery(phone, text);
     return;
+  }
+
+  // ── CREATE_SHOP_NOM → Saisie du nom de la boutique ─────────────────────────
+  if (state === 'CREATE_SHOP_NOM') {
+    if (!text || text.trim().length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Veuillez entrer un nom valide (au moins 2 lettres) pour votre boutique :');
+      return;
+    }
+    const nom = text.trim();
+    await setSession(phone, 'CREATE_SHOP_CAT', { nom });
+    await sendWhatsAppText(
+      phone,
+      `👌 Très joli nom : *${nom}* !\n\nQuel est votre *secteur d'activité principal* ?\n(ex: _Mode & Vêtements_, _Alimentation_, _Cosmétique_, _Électronique_, _Chaussures_...)`
+    );
+    return;
+  }
+
+  // ── CREATE_SHOP_CAT → Saisie de la catégorie ──────────────────────────────
+  if (state === 'CREATE_SHOP_CAT') {
+    const categorie = text?.trim() || 'Commerce général';
+    await setSession(phone, 'CREATE_SHOP_VILLE', { nom: context?.nom, categorie });
+    await sendWhatsAppText(
+      phone,
+      `📍 Super ! Dans quelle *ville ou quartier* êtes-vous situé ?\n(ex: _Dakar Médina_, _Thiès_, _Touba_, _Saint-Louis_, _Mbour_...)`
+    );
+    return;
+  }
+
+  // ── CREATE_SHOP_VILLE → Création effective de la boutique ──────────────────
+  if (state === 'CREATE_SHOP_VILLE') {
+    const ville = text?.trim() || 'Dakar';
+    const nom = context?.nom || 'Ma Boutique';
+    const categorie = context?.categorie || 'Commerce général';
+
+    try {
+      // 1. Génération du slug unique
+      let slug = nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'boutique';
+      const rCheck = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [slug]);
+      if (rCheck.rows.length > 0) {
+        slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+      }
+
+      // 2. Trouver ou créer l'utilisateur
+      const shortPh = phone.replace(/\D/g, '').slice(-9);
+      let userId = null;
+      const rUser = await pool.query("SELECT id FROM utilisateurs WHERE REGEXP_REPLACE(COALESCE(telephone, ''), '\\D', '', 'g') LIKE '%' || $1 LIMIT 1", [shortPh]);
+      if (rUser.rows[0]) {
+        userId = rUser.rows[0].id;
+      } else {
+        const rNewUser = await pool.query(
+          "INSERT INTO utilisateurs (nom, telephone, role, actif) VALUES ($1, $2, 'marchand', true) RETURNING id",
+          [nom, phone]
+        );
+        userId = rNewUser.rows[0]?.id;
+      }
+
+      // 3. Insérer la boutique
+      const rBq = await pool.query(
+        `INSERT INTO boutiques (nom, slug, categorie, ville, telephone, whatsapp, utilisateur_id, actif, mode_fonctionnement)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'hybride_pos') RETURNING *`,
+        [nom, slug, categorie, ville, phone, phone, userId]
+      );
+
+      const newBq = rBq.rows[0];
+
+      const msgSuccess =
+        `🎉 *Félicitations ! Votre boutique "${nom}" est officiellement ouverte et prête !* 🚀🇸🇳\n\n` +
+        `🔗 *Votre lien direct :*\n${SITE}/boutiques/${slug}\n\n` +
+        `📱 *Votre espace de gestion :*\n${SITE}/boutique\n\n` +
+        `✨ *Ajoutez votre 1er article dès maintenant :*\n` +
+        `Tapez simplement le nom et le prix (ex: *Robe Soie 15000*) !`;
+
+      await sendWhatsAppText(phone, msgSuccess);
+      await setSession(phone, 'MENU', { boutique: newBq });
+      return;
+    } catch (err) {
+      console.error('[CREATION BOUTIQUE WA ERR]', err.message);
+      await sendWhatsAppText(phone, '⚠️ Une erreur est survenue lors de la création de la boutique. Réessayez ou tapez *menu*.');
+      await setSession(phone, 'MENU', {});
+      return;
+    }
   }
 
   // ── BOUTIQUE_SECTEUR → choix du secteur ─────────────────────────────────────

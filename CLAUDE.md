@@ -1,3 +1,89 @@
+- **Harmonisation Globale de l'Écosystème Marchand : Guides Publics, Forfaits & Tarifs, Force de Vente, Prospection WhatsApp, Kit Commercial & Console Admin (`guide-creer-boutique`, `guide-utilisation`, `tarifs-boutique`, `prospection.js`, `ForceDeVenteClient.tsx`, `KitComClient.tsx`, `AdminBoutiquesClient.tsx`, `ApporteurClient.tsx`, `CLAUDE.md`, `walkthrough.md`) (`main` - 28 août 2026)** 🚀📢📘💼💎🇸🇳 :
+  * **📘 1. Guides Publics & Référencement SEO (`guide-creer-boutique`, `guide-utilisation`)** :
+    - Mise à jour intégrale du *Guide Créer sa Boutique 2026* avec les 3 parcours simplifiés : Création 100% WhatsApp en 30s (sans formulaire ni PC), Formulaire Express en ligne et Migration 1-clic depuis Shopify/WooCommerce/Excel.
+    - Ajout des sections dédiées au Carnet de Dettes numérique ("Bor"), aux commandes vocales/texte WhatsApp et à la Caisse Tactile POS magasin avec données structurées Schema.org (`HowTo` et `BreadcrumbList`).
+  * **💎 2. Tarifs & Forfaits Vendeurs (`tarifs-boutique`, `TarifsPublicsSelector.tsx`)** :
+    - Intégration dans les 3 formules (*Taf Taf*, *Pro*, *Business VIP*) des fonctionnalités phares : Moteur d'Import Intelligent Multi-Plateformes, Assistant Marchand WhatsApp 24/7 (Bilan du jour, alertes stock), Carnet de dettes client et Export Intégral 1-Clic (.JSON).
+    - Actualisation de la FAQ publique (prix réel de 2.500 FCFA pour la formule de base, onboarding WhatsApp et migration sans perte de données).
+  * **💼 3. Prospection & Force de Vente Terrain (`prospection.js`, `ForceDeVenteClient.tsx`)** :
+    - Nouveaux templates de prospection WhatsApp ciblés pour les commerçants sénégalais : Onboarding 30s WhatsApp, Migration Shopify/Excel 1-clic sans ressaisie, Mode, Tech, Véhicules, Immo, Supérettes et Grossistes d'import Chine.
+    - Actualisation du Funnel commercial terrain (Funnel 5 étapes avec Onboarding 30s), de l'Académie de formation et de la Matrice interactive pitchs/objections/closings.
+  * **📢 4. Kit Communication & Espace Apporteurs (`KitComClient.tsx`, `communication/page.tsx`, `ApporteurClient.tsx`)** :
+    - Nouveaux posts réseaux sociaux (Facebook, Instagram, LinkedIn, Statuts WhatsApp) prêts à publier mettant en avant la création 100% WhatsApp et la migration 1-clic.
+    - Harmonisation du message de parrainage et de la brochure commerciale apporteurs (20% de commission récurrente).
+  * **⚙️ 5. Console Admin Boutiques (`AdminBoutiquesClient.tsx`)** :
+    - Mise à jour du message de bienvenue et de guidance marchand personnalisé envoyé par l'administrateur avec les 5 méthodes d'ajout rapides et les commandes de bilan WhatsApp.
+  * **🧪 6. Validation & Tests** :
+    - Frontend `npm test` : **35/35 tests unitaires validés (100%)**.
+    - Backend `jest tests/unit` : **151/151 tests unitaires validés (19 suites, 100%)**.
+    - Zéro police externe conformément à la directive stricte `AGENTS.md`.
+
+- **Création de Boutique 100% WhatsApp & Ajout Direct d'Articles par Message (P4) : Onboarding Conversationnel en 3 Questions (*Nom*, *Catégorie*, *Ville*), Publication Instantanée d'Articles (*Nom + Prix*) & Détection Marchand Automatique (`whatsapp-chatbot.js`, `CLAUDE.md`, `walkthrough.md`) (`main` - 28 août 2026)** 🏪⚡💬✨🇸🇳 :
+  * **🏪 1. Onboarding & Création de Boutique 100% WhatsApp (`whatsapp-chatbot.js`)** :
+    - Déclenchement naturel via l'option 5 ou les mots-clés *« creer boutique »*, *« ouvrir boutique »*, *« vendre »*.
+    - Parcours conversationnel ultra-court en 3 étapes guidées (`CREATE_SHOP_NOM`, `CREATE_SHOP_CAT`, `CREATE_SHOP_VILLE`) sans jamais ouvrir d'ordinateur ni remplir de formulaire complexe.
+    - Création automatique du compte marchand, génération du slug unique et initialisation immédiate de la vitrine en ligne avec lien direct partageable et configuration POS hybride.
+  * **⚡ 2. Ajout Direct d'Articles au Catalogue par Message Texte (`whatsapp-chatbot.js`)** :
+    - Détection intelligente de syntaxe marchande pour les propriétaires de boutique (ex: *« Robe Soie 15000 »*, *« Sac Cuir 5000 stock 10 »*).
+    - Insertion immédiate dans `boutique_produits` avec mise en ligne instantanée sur la vitrine et confirmation détaillée avec bouton pour enchaîner les articles.
+  * **🧪 3. Validation & Tests** :
+    - `jest tests/unit/whatsapp-chatbot*` : **100% des 17 tests unitaires WhatsApp validés**.
+    - Frontend `npm test` : **35/35 tests validés avec succès**.
+    - Zéro police externe conformément à la directive stricte `AGENTS.md`.
+
+- **Automatisation WhatsApp Marchand, Export 1-Clic & Import Carnet Clients (P2 & P3) : Commandes Vocales / Texte (*Bilan du jour*, *Alertes Stock*, *Dettes*), Export Complet Boutique (.JSON) & Import Clients par Lot (`whatsapp-chatbot.js`, `boutiques.js`, `CarnetDettes.tsx`, `BoutiqueClient.tsx`, `CLAUDE.md`, `walkthrough.md`) (`main` - 28 août 2026)** 💬📊📥📦✨🇸🇳 :
+  * **💬 1. Commandes Intelligentes WhatsApp pour Commerçants (`whatsapp-chatbot.js`)** :
+    - Détection automatique du numéro de téléphone propriétaire de la boutique via `trouverBoutiqueMarchand`.
+    - **Bilan du jour instantané** : En tapant *« bilan »*, *« ventes »*, *« combien j'ai vendu »*, le commerçant reçoit immédiatement sur WhatsApp son chiffre d'affaires du jour, le nombre de transactions/commandes, la ventilation Espèces vs Digital (Wave/OM) et le nombre d'articles vendus.
+    - **Alertes Stock Faible & Ruptures** : En tapant *« stock »*, *« alerte stock »*, *« rupture »*, le bot renvoie la liste précise des articles sous le seuil d'alerte (≤ 3 unités) avec prix et statut.
+    - **Suivi Carnet de Dettes** : En tapant *« carnet »*, *« dettes »*, *« qui me doit »*, le bot calcule le total global des créances à recouvrer et le Top des clients débiteurs avec lien direct de gestion.
+  * **📦 2. Export Intégral 1-Clic de la Boutique & Portabilité des Données (`boutiques.js`, `BoutiqueClient.tsx`)** :
+    - Nouvel endpoint sécurisé `GET /api/boutiques/:id/export-complet`.
+    - Génération instantanée d'un fichier `.json` sécurisé contenant l'intégralité de la boutique : profil, coordonnées, catalogue complet, registre clients & dettes, ventes caisse et commandes web.
+    - Bouton de téléchargement direct intégré dans l'onglet Paramètres de l'espace marchand.
+  * **📥 3. Import par Lot de Clients & Dettes depuis Tableur (`CarnetDettes.tsx`, `boutiques.js`)** :
+    - Nouvel endpoint `POST /api/boutiques/:id/credits-clients/batch` avec insertion en base et report automatique des soldes initiaux dans l'historique du carnet.
+    - Modale intuitive dans `CarnetDettes.tsx` avec téléchargement de modèle type CSV (`modele_import_clients_dettes_nopalou.csv`), aperçu en temps réel et confirmation en 1 clic.
+  * **🧪 4. Validation & Conformité** :
+    - `npm test` : **100% des 35 tests unitaires frontend validés avec succès**.
+    - Backend : **100% des 151 tests unitaires validés (19 suites)**.
+    - Zéro police externe conformément à la directive stricte `AGENTS.md`.
+
+- **Moteur d'Import Intelligent & Migration Multi-Plateformes (P1) : Détection Automatique des Colonnes (Shopify, WooCommerce, PrestaShop, Excel), Prévisualisation Zero-Stress & Support Codes-Barres (`BatchImportModal.tsx`, `boutiques.js`, `CLAUDE.md`, `walkthrough.md`) (`main` - 28 août 2026)** 📦✨🚀🇸🇳📊 :
+  * **🔍 1. Moteur d'Analyse Intelligent de Fichiers (`BatchImportModal.tsx`)** :
+    - Détection automatique et dynamique des séparateurs de colonnes (`;`, `,`, `\t`, `|`) et des formats avec guillemets.
+    - Analyse sémantique multilingue (français/anglais) des en-têtes pour identifier sans effort de configuration : Nom (*nom, designation, title, product name*), Prix (*prix, pu, price, variant price, regular price*), Stock (*quantite, qty, stock, inventory qty*), Catégorie (*categorie, category, type*), Code-barres (*code_barre, barcode, ean13, sku, reference*), Description et Photos.
+    - Détection intelligente de la plateforme d'origine (Shopify 🛍️, WooCommerce 🛒, PrestaShop 🏪 ou Tableur Excel / Google Sheets 📑).
+  * **✨ 2. Prévisualisation Zero-Stress & Tableau d'Aperçu (`BatchImportModal.tsx`)** :
+    - Décompte instantané des articles prêts (`✓ X prêts`) et des articles nécessitant une vérification de prix (`⚠ Y sans prix défini`).
+    - Tableau interactif des premiers articles extraits avec badge de statut, permettant au commerçant de valider visuellement avant l'insertion en base.
+    - Résolution du blocage du bouton de soumission et traitement par lots de 50 articles pour éliminer tout risque de dépassement de délai réseau.
+  * **⚙️ 3. Prise en Charge Complète des Codes-Barres en Base (`backend/routes/boutiques.js`)** :
+    - Intégration de la colonne `code_barre` dans la requête d'insertion groupée `POST /api/boutiques/:id/produits/batch`.
+  * **🧪 4. Validation & Tests** :
+    - `npm test` : **100% des 35 tests unitaires validés avec succès**.
+    - Zéro police externe conformément à la directive stricte `AGENTS.md`.
+
+- **Refonte UX & Simplification Radicale de l'Espace Marchand (P0) : Navigation Progressive (18 → 6 Onglets Essentiels), Assistant d'Onboarding Dynamique, Éradication du Jargon Technique & Mode Express par Défaut (`BoutiqueClient.tsx`, `CLAUDE.md`, `walkthrough.md`, `task.md`) (`main` - 28 août 2026)** 🚀🛍️✨🇸🇳💎 :
+  * **🔍 1. Audit & Diagnostic d'Accessibilité Marchands Émergents** :
+    - Évaluation exhaustive de la plateforme sous le prisme des commerçants peu technophiles, habitués au papier/WhatsApp ou migrant d'autres solutions.
+    - Identification de la surcharge cognitive causée par l'exposition simultanée de 18 modules (fiscalité, développeur, logs, journal, etc.) dès la création.
+  * **🗂️ 2. Navigation Progressive (Progressive Disclosure) & Réorganisation Modulaire (`BoutiqueClient.tsx`)** :
+    - **6 Onglets Essentiels Visibles par Défaut** : Accueil (Dashboard consolidé), Mes commandes, Carnet de dettes, Mes produits (Catalogue), Partager ma boutique (Marketing/WhatsApp), Paramètres (Profil & Vitrine).
+    - **Tiroir d'Options Avancées Dépliable** : Intégration d'un bouton discret *« Plus d'options (comptabilité, rapports...) »* pour révéler à la demande les modules experts (Ventes & Dépenses rapides, Comptabilité détaillée, Statistiques, Factures & Devis PDF, Fournisseurs, Fidélité & Promos, Fiscalité & TVA, Mon équipe, Journal d'audit, Portail développeur).
+    - **Auto-Dépliement Intelligent** : Détection automatique des liens directs ou paramètres URL pointant vers un module avancé pour afficher instantanément la section sans friction.
+  * **🗣️ 3. Éradication du Jargon Informatique & Adoption d'un Langage Naturel (`BoutiqueClient.tsx`)** :
+    - Remplacement de tous les termes techniques par des formulations commerciales du quotidien : *« Comment fonctionne votre boutique ? »* (au lieu de *Mode d'exploitation*), *« 🏪 Magasin + Vente en ligne »* (au lieu de *Mode Hybride*), *« ⚡ 100% Vente en ligne »* (au lieu de *Mode Pure Player*), *« 📊 Publicité en ligne »* (au lieu de *Pixels & ROAS*), *« 🔗 Adresse web »* (au lieu de *Slug*), *« 📦 Importer plusieurs (CSV) »* (au lieu de *Import Batch*), *« + Ajouter un produit »* (au lieu de *Nouveau produit*).
+  * **🚀 4. Assistant d'Onboarding Post-Création & Jauge de Progression (`BoutiqueClient.tsx`)** :
+    - Déclenchement automatique d'un widget chaleureux de bienvenue lors de la création d'une boutique ou tant que le catalogue est vide.
+    - Jauge de complétion dynamique (`0%` à `100%`) évaluant le nom, le contact WhatsApp, les articles en stock et la personnalisation visuelle.
+    - 3 actions concrètes en 1 clic : ajout d'articles rapide, personnalisation du logo et partage WhatsApp immédiat.
+  * **⚡ 5. Mode Express Produit par Défaut (`BoutiqueClient.tsx`)** :
+    - Bascule du formulaire d'ajout produit sur le mode rapide par défaut (Nom + Prix + Photo) pour une publication en 5 secondes, avec accès facultatif aux variantes et caractéristiques via *« Détails avancés »*.
+  * **🧪 6. Validation & Conformité** :
+    - Tests unitaires frontend : **35/35 tests validés avec succès (100%)**.
+    - Zéro police externe conformément à la directive stricte `AGENTS.md`.
+
 - **Correction du Troncage des Boutons d'Action & Grille Responsive E-Commerce : Remplacement de `minmax(140px)` par `.boutique-produits-grid` (`minmax(210px)` / 2 Colonnes Mobile) & Ajustement Typographique (`globals.css`, `BoutiqueDetailClient.tsx`, `CLAUDE.md`) (`main` - 28 août 2026)** 📐🛍️✨🇸🇳 :
   * **🔍 1. Diagnostic de l'Anomalie Visuelle (Boutons « Ajouter au panier » tronqués)** :
     - **Cause Racine** : Dans la vue vitrine d'une boutique (`BoutiqueDetailClient.tsx`), la grille utilisait une directive inline `repeat(auto-fill, minmax(140px, 1fr))`, générant jusqu'à 8 à 9 colonnes ultra-étroites sur grand écran (~145px de largeur par carte).

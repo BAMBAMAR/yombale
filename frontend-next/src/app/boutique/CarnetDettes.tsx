@@ -139,6 +139,104 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [relanceAutoWa, setRelanceAutoWa] = useState(true)
   const [submittingTrans, setSubmittingTrans] = useState(false)
 
+  // ── Import par Lot Clients & Dettes ──────────────────────────────────────────
+  const [showModalImportClients, setShowModalImportClients] = useState(false)
+  const [clientsAImporter, setClientsAImporter] = useState<Array<{ nom: string; telephone: string; solde: number; adresse?: string; plafond_max?: number }>>([])
+  const [importingClients, setImportingClients] = useState(false)
+  const [importClientsError, setImportClientsError] = useState<string | null>(null)
+  const [importClientsSuccess, setImportClientsSuccess] = useState<string | null>(null)
+
+  function handleClientFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImportClientsError(null)
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string
+        const lines = text.split(/\r?\n/).filter(line => line.trim())
+        if (lines.length <= 1) {
+          setImportClientsError('Fichier vide ou format non valide')
+          return
+        }
+
+        const sep = text.includes(';') ? ';' : (text.includes('\t') ? '\t' : ',')
+        const startIdx = lines[0].toLowerCase().includes('nom') || lines[0].toLowerCase().includes('client') ? 1 : 0
+        const parsed: any[] = []
+
+        for (let i = startIdx; i < lines.length; i++) {
+          const cols = lines[i].split(sep).map(c => c.trim().replace(/^["']|["']$/g, ''))
+          if (cols.length >= 1 && cols[0]) {
+            const nom = cols[0]
+            const telephone = cols[1] || 'Non renseigné'
+            let soldeRaw = cols[2] ? cols[2].replace(/FCFA|CFA|[\s\xa0]/gi, '').replace(',', '.') : '0'
+            const solde = parseFloat(soldeRaw) || 0
+            const adresse = cols[3] || undefined
+            const plafond_max = cols[4] ? Number(cols[4]) || 200000 : 200000
+
+            parsed.push({ nom, telephone, solde, adresse, plafond_max })
+          }
+        }
+
+        if (parsed.length === 0) {
+          setImportClientsError('Aucun client valide trouvé.')
+        } else {
+          setClientsAImporter(parsed)
+        }
+      } catch {
+        setImportClientsError('Impossible de lire le fichier.')
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  async function validerImportClients() {
+    if (clientsAImporter.length === 0) return
+    setImportingClients(true)
+    setImportClientsError(null)
+
+    try {
+      const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clients: clientsAImporter }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de l’importation')
+
+      setImportClientsSuccess(`🎉 ${data.count || clientsAImporter.length} client(s) importé(s) avec succès dans votre carnet !`)
+      setTimeout(async () => {
+        setShowModalImportClients(false)
+        setClientsAImporter([])
+        setImportClientsSuccess(null)
+        await chargerDonnees()
+      }, 1500)
+    } catch (err: any) {
+      setImportClientsError(err.message || 'Erreur lors de l’importation')
+    } finally {
+      setImportingClients(false)
+    }
+  }
+
+  function telechargerModeleClientsCSV() {
+    const csvContent = "\uFEFF" + [
+      "Nom du Client;Numéro Téléphone;Dette Actuelle (FCFA);Adresse / Quartier;Plafond Max",
+      "Mamadou Diallo;771234567;15000;Médina Rue 6;200000",
+      "Fatou Ndiaye;785556677;0;Plateau;150000",
+      "Ibrahima Sow;768889900;45000;Parcelles Assainies U14;300000"
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'modele_import_clients_dettes_nopalou.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   // Scanner EAN Crédit
   const [modalScannerEanCredit, setModalScannerEanCredit] = useState(false)
   const [scannerEanStatusCredit, setScannerEanStatusCredit] = useState('Initialisation du scanner…')
@@ -1019,12 +1117,22 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </button>
 
               <button
+                onClick={() => setShowModalImportClients(true)}
+                className="npl-btn npl-btn-secondary"
+                title="Importer des clients et dettes depuis un fichier Excel ou CSV"
+                style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', cursor: 'pointer' }}
+              >
+                <span>📥</span>
+                <span style={{ whiteSpace: 'nowrap' }}>Import CSV</span>
+              </button>
+
+              <button
                 onClick={handleExportCSV}
                 className="npl-btn npl-btn-secondary"
                 title={t('common.exportCsv')}
                 style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', cursor: 'pointer' }}
               >
-                <span>📥</span>
+                <span>📊</span>
                 <span style={{ whiteSpace: 'nowrap' }}>CSV</span>
               </button>
 
@@ -2827,6 +2935,84 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   ✅ Valider
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal Import Clients par Lot (CSV / Excel) */}
+      {showModalImportClients && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }} onClick={() => setShowModalImportClients(false)}>
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 580, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 20 }}>📥</span>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: 'var(--navy)' }}>Importer des clients (CSV / Excel)</h3>
+              </div>
+              <button type="button" onClick={() => setShowModalImportClients(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+
+            {importClientsError && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700 }}>
+                ⚠️ {importClientsError}
+              </div>
+            )}
+
+            {importClientsSuccess && (
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#15803d', padding: '12px 16px', borderRadius: 10, fontSize: 14, fontWeight: 800 }}>
+                {importClientsSuccess}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff7ed', border: '1px solid #fed7aa', padding: '12px 14px', borderRadius: 12, flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <p style={{ margin: 0, fontSize: 12.5, fontWeight: 800, color: '#9a3412' }}>Besoin d'un modèle type ?</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#c2410c' }}>Nom, Téléphone, Dette initiale (FCFA), Adresse</p>
+              </div>
+              <button type="button" onClick={telechargerModeleClientsCSV} style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
+                Télécharger modèle CSV
+              </button>
+            </div>
+
+            <div style={{ border: '2px dashed #93c5fd', background: '#eff6ff', borderRadius: 14, padding: '24px 16px', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 800, color: '#1e3a8a' }}>Sélectionnez votre fichier (.CSV ou .TXT)</p>
+              <input type="file" accept=".csv,.txt" onChange={handleClientFileUpload} style={{ fontSize: 13 }} />
+            </div>
+
+            {clientsAImporter.length > 0 && (
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 }}>
+                <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                  ✓ {clientsAImporter.length} client(s) détecté(s) :
+                </p>
+                <div style={{ maxHeight: 160, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {clientsAImporter.slice(0, 5).map((c, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '6px 10px', borderRadius: 8, fontSize: 12 }}>
+                      <span style={{ fontWeight: 700, color: '#1e293b' }}>{c.nom} ({c.telephone})</span>
+                      <span style={{ color: c.solde > 0 ? '#dc2626' : '#16a34a', fontWeight: 800 }}>
+                        {c.solde > 0 ? `Dette : ${fcfa(c.solde)}` : 'Solde : 0 FCFA'}
+                      </span>
+                    </div>
+                  ))}
+                  {clientsAImporter.length > 5 && (
+                    <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b', textAlign: 'center' }}>
+                      ... et {clientsAImporter.length - 5} autre(s)
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: '1px solid #e2e8f0', paddingTop: 14 }}>
+              <button type="button" onClick={() => setShowModalImportClients(false)} style={{ padding: '10px 16px', background: '#f1f5f9', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#64748b' }}>
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={validerImportClients}
+                disabled={importingClients || clientsAImporter.length === 0}
+                style={{ padding: '10px 20px', background: clientsAImporter.length > 0 ? 'var(--navy)' : '#cbd5e1', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: clientsAImporter.length > 0 ? 'pointer' : 'not-allowed' }}
+              >
+                {importingClients ? 'Importation en cours...' : `Valider l'import (${clientsAImporter.length}) 🚀`}
+              </button>
             </div>
           </div>
         </div>

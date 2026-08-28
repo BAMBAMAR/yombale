@@ -98,23 +98,23 @@ export default function ForceDeVenteClient({
         demo: 'Créer un article "Robe Soirée" avec 3 tailles (S, M, L) et 2 couleurs en 20 secondes, puis générer la Story HD marque blanche pour WhatsApp.',
         objection: {
           q: '« Je vends très bien sur mon statut WhatsApp actuel »',
-          r: '« C\'est justement un outil pour booster votre statut ! En 1 clic, Nopalou génère une affiche Story HD avec votre logo et vos prix, et le client commande directement sur votre numéro sans que vous ayez à tout réécrire. »',
+          r: '« C\'est justement un outil pour décupler vos ventes WhatsApp ! En 1 clic, vos clientes commandent directement sur votre numéro, et vous demandez votre bilan de la journée en tapant simplement « Bilan » sur WhatsApp. »',
         },
-        closing: '« Installons votre 1er article ensemble maintenant. C\'est 100% gratuit pendant 30 jours, vous n\'avez aucun risque ! »',
+        closing: '« On active votre boutique par WhatsApp en 30 secondes chrono ? C\'est 100% offert pendant 30 jours ! »',
       },
       avec_app: {
-        pitch: `« Bonjour ! Vous utilisez déjà un logiciel de caisse, mais vos clientes ne peuvent pas voir votre stock disponible depuis chez elles. Nopalou synchronise votre Caisse physique avec votre Vitrine WhatsApp sans double saisie. Et surtout, nous prenons 0% de commission sur vos ventes. »`,
+        pitch: `« Bonjour ! Vous utilisez déjà un site ou un logiciel (Shopify, WooCommerce, Excel...), mais vous perdez du temps avec des outils complexes et des commissions élevées. Avec Nopalou, vous importez tout votre catalogue en 1 seul clic sans aucune ressaisie, et vous encaissez directement par Wave en FCFA avec 0% de commission. »`,
         diagnostic: [
-          'Pouvez-vous voir votre chiffre d\'affaires sur votre téléphone quand vous êtes chez vous ou en voyage ?',
-          'Votre logiciel actuel génère-t-il automatiquement des visuels pour vos réseaux sociaux ?',
-          'Combien payez-vous chaque mois ou en frais de maintenance ?',
+          'Combien payez-vous chaque mois en devises pour Shopify ou l\'hébergement ?',
+          'Pouvez-vous voir votre chiffre d\'affaires instantanément sur WhatsApp par un simple message ?',
+          'Comment gérez-vous vos dettes clients et les encaissements Wave locaux ?',
         ],
-        demo: 'Montrer la vue hybride : vente en caisse physique qui met à jour instantanément la vitrine web accessible aux clients sur smartphone.',
+        demo: 'Démonstration de l\'import intelligent multi-plateformes : glisser-déposer un export Shopify/Excel et voir tous les articles créés en 3 secondes.',
         objection: {
-          q: '« Je ne veux pas changer mes habitudes ni réinstaller tout mon stock »',
-          r: '« Pas besoin de tout recommencer ! Vous pouvez importer tout votre catalogue Excel en 1 clic. Testez Nopalou gratuitement pendant 30 jours en parallèle de votre outil actuel pour comparer. »',
+          q: '« Je ne veux pas perdre mon catalogue existant »',
+          r: '« Vous ne perdez rien du tout ! Notre moteur d\'import intelligent transfère automatiquement tous vos produits, prix et photos en 1 clic. Vous pouvez tester en parallèle pendant 30 jours sans risque. »',
         },
-        closing: '« Essayez pendant 30 jours gratuitement. Si vous ne gagnez pas au moins 2 heures par jour, vous arrêtez d\'un simple clic sans frais. »',
+        closing: '« Importons votre fichier de produits maintenant : vous verrez votre vitrine Nopalou prête dans 1 minute ! »',
       },
     },
     tech: {
@@ -450,8 +450,8 @@ export default function ForceDeVenteClient({
               {[
                 { step: '1', title: 'Repérage & Brise-glace', desc: 'Observer la boutique, saluer chaleureusement en wolof/français, poser la question d\'accroche.', color: '#3B82F6' },
                 { step: '2', title: 'Diagnostic Express', desc: 'Poser les 2 questions magiques (Gestion des dettes ? Temps passé sur WhatsApp ?).', color: '#8B5CF6' },
-                { step: '3', title: 'Démo Live 60s', desc: 'Démonstration de la Caisse POS hors-ligne ou du scanner par caméra sur son propre téléphone.', color: '#EC4899' },
-                { step: '4', title: 'Onboarding 3 min', desc: 'Création immédiate de la boutique sur place + 1er article pris en photo devant lui.', color: '#10B981' },
+                { step: '3', title: 'Démo Live 60s', desc: 'Démonstration de la Caisse POS hors-ligne, du bilan WhatsApp instantané ou de l\'import Shopify/Excel.', color: '#EC4899' },
+                { step: '4', title: 'Onboarding 30s WA', desc: 'Création de la boutique en 30s sur WhatsApp (3 questions) ou import du catalogue existant.', color: '#10B981' },
                 { step: '5', title: 'Suivi J+1 & J+7', desc: 'Message WhatsApp de félicitations à J+1, relance téléphonique à J+7 pour accompagner le 1er mois offert.', color: '#F59E0B' },
               ].map(s => (
                 <div key={s.step} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px 14px' }}>
@@ -535,8 +535,8 @@ export default function ForceDeVenteClient({
                 { num: '4', title: 'Démonstration par l\'Action', desc: 'Ne décrivez pas l\'application : montrez-la en direct en scannant un vrai produit sous ses yeux.' },
                 { num: '5', title: 'Écoute Active (80/20)', desc: 'Laissez le commerçant parler 80% du temps de ses difficultés quotidiennes de caisse et de dettes.' },
                 { num: '6', title: 'Mise en avant du 1er Mois Offert', desc: 'Désarmez la peur de payer en rappelant que le 1er mois est 100% gratuit sans engagement.' },
-                { num: '7', title: 'Onboarding Immédiat sur Place', desc: 'Ne laissez jamais le commerçant s\'inscrire "plus tard". Faites l\'inscription avec lui en 3 minutes.' },
-                { num: '8', title: 'Création de Valeur Tangible', desc: 'Prenez en photo 1 vrai produit de son magasin pour qu\'il voie immédiatement sa boutique en ligne active.' },
+                { num: '7', title: 'Onboarding Immédiat 30s', desc: 'Ne laissez jamais le commerçant s\'inscrire "plus tard". Ouvrez sa boutique par WhatsApp en 30s ou uploadez son fichier Excel/Shopify.' },
+                { num: '8', title: 'Création de Valeur Tangible', desc: 'Envoyez 1 article avec photo et prix au bot WhatsApp pour qu\'il voie immédiatement sa vitrine web active.' },
                 { num: '9', title: 'Preuve Sociale Locale', desc: 'Citez des boutiques voisines du même quartier déjà inscrites pour rassurer.' },
                 { num: '10', title: 'Suivi et Fidélisation J+1', desc: 'Envoyez un message de félicitations le soir même pour créer une relation de confiance durable.' },
               ].map(r => (

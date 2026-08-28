@@ -431,7 +431,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       )}
 
-      <SectionTitle>⚡ Mode d&apos;exploitation</SectionTitle>
+      <SectionTitle>🏪 Comment fonctionne votre boutique ?</SectionTitle>
       <input type="hidden" name="mode_fonctionnement" value={modeSelect} />
       <div>
         <label style={labelStyle}>Choisissez la configuration de votre tableau de bord</label>
@@ -449,10 +449,10 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
               style={{ display: 'none' }}
             />
             <span style={{ fontWeight: 800, fontSize: 13, color: '#1C2B4A', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🏪 Mode Hybride (Magasin + Web)
+              🏪 Magasin + Vente en ligne
             </span>
             <span style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
-              Caisse enregistreuse POS, stickers codes-barres EAN-13, carnet de dettes client et vente web.
+              Vendez en boutique avec la caisse, gérez vos dettes clients et recevez aussi des commandes en ligne.
             </span>
           </label>
 
@@ -469,10 +469,10 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
               style={{ display: 'none' }}
             />
             <span style={{ fontWeight: 800, fontSize: 13, color: '#C75B00', display: 'flex', alignItems: 'center', gap: 6 }}>
-              ⚡ Mode Pure Player (E-Commerce Web)
+              ⚡ 100% Vente en ligne
             </span>
             <span style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
-              Interface 100% digitale axée sur les commandes web, les livraisons, le marketing et l&apos;analytics.
+              Votre boutique est uniquement en ligne. Vous recevez des commandes par le site et WhatsApp.
             </span>
           </label>
         </div>
@@ -542,7 +542,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       </div>
 
-      <SectionTitle>📊 Pixels Publicitaires & Tracking ROAS</SectionTitle>
+      <SectionTitle>📊 Publicité en ligne (optionnel)</SectionTitle>
 
       <div className="bq-form-grid-2">
         <div>
@@ -564,7 +564,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         <input name="ga4_id" defaultValue={boutique?.ga4_id ?? ''} style={inputStyle} placeholder="Ex: G-XYZ1234567" />
       </div>
 
-      <SectionTitle>👁️ Visibilité & Désactivation dans l'Annuaire Public</SectionTitle>
+      <SectionTitle>👁️ Visibilité de votre boutique</SectionTitle>
       <div>
         <label style={labelStyle}>Visibilité publique de votre boutique</label>
         <select
@@ -580,7 +580,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </p>
       </div>
 
-      <SectionTitle>🔗 Lien personnalisé</SectionTitle>
+      <SectionTitle>🔗 Adresse web de votre boutique</SectionTitle>
 
       <div>
         <label style={labelStyle}>URL de votre boutique</label>
@@ -626,6 +626,27 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
             </div>
           )}
         </div>
+      </div>
+
+      <SectionTitle>📦 Export & Portabilité des données</SectionTitle>
+      <div style={{ background: '#FFFDF9', border: '1.5px solid #FED7AA', borderRadius: 14, padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+        <div>
+          <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#9A3412' }}>
+            Sauvegarder l'intégralité de ma boutique
+          </p>
+          <p style={{ margin: '3px 0 0', fontSize: 12, color: '#C2410C' }}>
+            Téléchargez en 1 clic vos produits, clients, dettes, commandes et historique en fichier JSON sécurisé.
+          </p>
+        </div>
+        <a
+          href={`/api/boutiques/${boutique?.id}/export-complet`}
+          download
+          className="btn-npl btn-npl-secondary btn-npl-sm"
+          style={{ borderColor: '#FED7AA', color: '#9A3412', background: '#FFF7ED', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          <span>📥</span>
+          <span>Exporter ma boutique (.JSON)</span>
+        </a>
       </div>
 
       <div style={{
@@ -746,7 +767,7 @@ function ValeursLibres({ valeurs, onAjouter, onRetirer }: {
   )
 }
 
-function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'detaille', onCancel, onSuccess }: {
+function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide', onCancel, onSuccess }: {
   boutiqueId: string
   boutiqueCat?: string | null
   produit?: Produit
@@ -2731,25 +2752,26 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
             onClick={() => setShowBatchModal(true)}
             className="btn-npl btn-npl-secondary btn-npl-sm"
             style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}
+            title="Importer plusieurs produits à la fois depuis un fichier Excel ou CSV"
           >
             <Package size={14} style={{ color: 'var(--navy)' }} />
-            <span>Import Batch</span>
+            <span>Importer plusieurs (CSV)</span>
           </button>
           <button
             onClick={() => setMode({ creating: 'rapide' })}
-            className="btn-npl btn-npl-secondary btn-npl-sm"
-            style={{ height: 36, padding: '0 12px', fontSize: 12.5, borderColor: '#BFDBFE', color: '#1D4ED8', background: '#EFF6FF' }}
-          >
-            <Zap size={14} />
-            <span>Ajout Rapide</span>
-          </button>
-          <button
-            onClick={() => setMode({ creating: 'detaille' })}
             className="btn-npl btn-npl-primary btn-npl-sm"
             style={{ height: 36, padding: '0 14px', fontSize: 12.5 }}
           >
             <Plus size={14} strokeWidth={2.5} />
-            <span>Nouveau Produit</span>
+            <span>+ Ajouter un produit</span>
+          </button>
+          <button
+            onClick={() => setMode({ creating: 'detaille' })}
+            className="btn-npl btn-npl-secondary btn-npl-sm"
+            style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}
+            title="Ajouter un produit avec toutes les options avancées (variantes, caractéristiques...)"
+          >
+            <span>Détails avancés</span>
           </button>
         </div>
       </div>
@@ -3517,6 +3539,15 @@ function BoutiqueDashboard({
     return () => { active = false }
   }, [boutique.id])
 
+  const hasProducts = Boolean(produitsCount && produitsCount > 0)
+  const hasLogoOrCover = Boolean(boutique.logo_url || boutique.cover_url)
+  const hasDesc = Boolean(boutique.description && boutique.description.trim().length > 5)
+  const hasPhone = Boolean(boutique.whatsapp || boutique.telephone)
+  const isBienvenue = typeof window !== 'undefined' && window.location.search.includes('bienvenue')
+
+  const stepsDone = [true, hasPhone, hasProducts, hasLogoOrCover || hasDesc].filter(Boolean).length
+  const pctReady = Math.round((stepsDone / 4) * 100)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
       
@@ -3584,6 +3615,167 @@ function BoutiqueDashboard({
           </button>
         </div>
       </div>
+
+      {/* ── ASSISTANT D'ONBOARDING MARCHAND (DÉMARRAGE RAPIDE) ─────────── */}
+      {(!hasProducts || pctReady < 100 || isBienvenue) && (
+        <div style={{
+          background: 'linear-gradient(135deg, #FFFDF9 0%, #FFF7ED 100%)',
+          border: '1.5px solid #FED7AA',
+          borderRadius: 'var(--r-xl, 16px)',
+          padding: '20px 24px',
+          boxShadow: '0 4px 14px rgba(199,91,0,0.06)',
+          animation: 'fadeIn 0.3s ease-out',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--orange2, #FFF3E8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                🚀
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                  {pctReady === 100 ? '🎉 Votre boutique est 100% prête à vendre !' : `Votre boutique est prête à ${pctReady}%`}
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: 12.5, color: 'var(--text-subtle, #8C7E74)' }}>
+                  {hasProducts ? 'Bravo ! Partagez maintenant votre vitrine pour recevoir vos premières commandes.' : 'Commencez par ajouter vos premiers articles pour ouvrir votre catalogue aux clients.'}
+                </p>
+              </div>
+            </div>
+            <span style={{
+              background: pctReady === 100 ? '#DCFCE7' : '#FEF3C7',
+              color: pctReady === 100 ? '#15803D' : '#92400E',
+              fontSize: 12,
+              fontWeight: 800,
+              padding: '4px 12px',
+              borderRadius: 20,
+              border: pctReady === 100 ? '1px solid #BBF7D0' : '1px solid #FDE68A',
+            }}>
+              {pctReady}% complété
+            </span>
+          </div>
+
+          {/* Barre de progression */}
+          <div style={{ width: '100%', height: 8, background: '#E2E8F0', borderRadius: 4, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{
+              width: `${pctReady}%`,
+              height: '100%',
+              background: pctReady === 100 ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' : 'linear-gradient(90deg, #FF6600 0%, #C75B00 100%)',
+              borderRadius: 4,
+              transition: 'width 0.4s ease',
+            }} />
+          </div>
+
+          {/* Étapes clés */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            {/* Étape 1 : Produits */}
+            <div style={{
+              background: '#FFFFFF',
+              border: hasProducts ? '1.5px solid #BBF7D0' : '1.5px solid #FED7AA',
+              borderRadius: 12,
+              padding: '14px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>📦</span>
+                    <span>1. Produits</span>
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 750, color: hasProducts ? '#16A34A' : '#C75B00' }}>
+                    {hasProducts ? `✓ ${(produitsCount ?? 0)} article(s)` : '⚠ À ajouter'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: 11.5, color: '#64748B', lineHeight: 1.4 }}>
+                  {hasProducts ? 'Vos articles sont visibles sur votre vitrine.' : 'Nom, prix et photo : c\'est tout !'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate('produits')}
+                className="btn-npl btn-npl-primary btn-npl-sm"
+                style={{ width: '100%', justifyContent: 'center', fontSize: 12, height: 32 }}
+              >
+                <Plus size={13} strokeWidth={2.5} />
+                <span>{hasProducts ? 'Gérer mon catalogue' : 'Ajouter un produit'}</span>
+              </button>
+            </div>
+
+            {/* Étape 2 : Personnalisation Logo / Profil */}
+            <div style={{
+              background: '#FFFFFF',
+              border: (hasLogoOrCover || hasDesc) ? '1.5px solid #BBF7D0' : '1.5px solid #E2E8F0',
+              borderRadius: 12,
+              padding: '14px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🎨</span>
+                    <span>2. Personnalisation</span>
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 750, color: (hasLogoOrCover || hasDesc) ? '#16A34A' : '#64748B' }}>
+                    {(hasLogoOrCover || hasDesc) ? '✓ Profil rempli' : '💡 Optionnel'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: 11.5, color: '#64748B', lineHeight: 1.4 }}>
+                  Ajoutez votre logo, description et liens réseaux sociaux.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate('infos')}
+                className="btn-npl btn-npl-secondary btn-npl-sm"
+                style={{ width: '100%', justifyContent: 'center', fontSize: 12, height: 32 }}
+              >
+                <Settings size={13} />
+                <span>Modifier le profil</span>
+              </button>
+            </div>
+
+            {/* Étape 3 : Partage WhatsApp */}
+            <div style={{
+              background: '#FFFFFF',
+              border: '1.5px solid #E2E8F0',
+              borderRadius: 12,
+              padding: '14px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>💬</span>
+                    <span>3. Diffusion</span>
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 750, color: '#16A34A' }}>
+                    ⚡ 1-Clic
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: 11.5, color: '#64748B', lineHeight: 1.4 }}>
+                  Partagez le lien de votre vitrine dans vos groupes et statuts WhatsApp.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')}
+                className="btn-npl btn-npl-secondary btn-npl-sm"
+                style={{ width: '100%', justifyContent: 'center', fontSize: 12, height: 32, borderColor: '#FED7AA', color: '#C75B00', background: '#FFF7ED' }}
+              >
+                <QrCode size={13} />
+                <span>Partager ma vitrine</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Grille de statistiques clés — 4 colonnes Desktop / 2 colonnes Mobile */}
       <div className="bq-kpi-grid">
@@ -4002,48 +4194,64 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
-  const NAV_GROUPS: NavGroup[] = [
+  // ── Navigation Progressive : Essentiel (visible par défaut) + Avancé (sur demande) ──
+  const NAV_ESSENTIAL: NavGroup[] = [
     {
-      icon: ShoppingCart,
-      title: t('shop.navGroupSalesClients'),
+      icon: LayoutDashboard,
+      title: t('shop.navGroupSalesClients') || 'Mon activité',
       items: [
-        { key: 'dashboard',   icon: LayoutDashboard, label: t('shop.overview') },
-        { key: 'commandes',   icon: ClipboardList, label: t('shop.orders') },
-        { key: 'carnet',      icon: BookOpen, label: t('shop.debts') },
-        { key: 'documents',   icon: FileText, label: t('shop.documents'), minPlan: 'pro' },
+        { key: 'dashboard',   icon: LayoutDashboard, label: t('shop.overview') || 'Accueil' },
+        { key: 'commandes',   icon: ClipboardList, label: t('shop.orders') || 'Mes commandes' },
+        { key: 'carnet',      icon: BookOpen, label: t('shop.debts') || 'Carnet de dettes' },
       ],
     },
     {
       icon: Package,
-      title: t('shop.navGroupCatalogStock'),
+      title: t('shop.navGroupCatalogStock') || 'Mes produits',
       items: [
-        { key: 'produits',     icon: ShoppingBag, label: t('shop.catalog') },
-        { key: 'fournisseurs', icon: Truck, label: t('shop.suppliers'), minPlan: 'pro' },
+        { key: 'produits',     icon: ShoppingBag, label: t('shop.catalog') || 'Catalogue' },
       ],
     },
     {
-      icon: Receipt,
-      title: t('shop.navGroupFinanceReports'),
+      icon: Megaphone,
+      title: t('shop.navGroupMarketingSettings') || 'Outils & Réglages',
       items: [
-        { key: 'express',     icon: Zap, label: t('shop.saisieExpress') || 'Saisie Express', minPlan: 'pro' },
-        { key: 'compta',      icon: Receipt, label: t('shop.accounting'), minPlan: 'pro' },
-        { key: 'fiscalite',   icon: Scale, label: t('shop.taxSettings'), minPlan: 'pro' },
-        { key: 'analytics',   icon: BarChart3, label: t('shop.analytics'), minPlan: 'pro' },
+        { key: 'marketing',   icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
+        { key: 'infos',       icon: Settings, label: t('shop.settings') || 'Paramètres' },
+      ],
+    },
+  ]
+
+  const NAV_ADVANCED: NavGroup[] = [
+    {
+      icon: Receipt,
+      title: t('shop.navGroupFinanceReports') || 'Comptabilité & Rapports',
+      items: [
+        { key: 'express',     icon: Zap, label: t('shop.saisieExpress') || 'Ventes & Dépenses rapides', minPlan: 'pro' },
+        { key: 'compta',      icon: Receipt, label: t('shop.accounting') || 'Comptabilité détaillée', minPlan: 'pro' },
+        { key: 'analytics',   icon: BarChart3, label: t('shop.analytics') || 'Statistiques', minPlan: 'pro' },
+        { key: 'documents',   icon: FileText, label: t('shop.documents') || 'Factures & Devis', minPlan: 'pro' },
       ],
     },
     {
       icon: Settings,
-      title: t('shop.navGroupSettingsTeam'),
+      title: t('shop.navGroupSettingsTeam') || 'Paramètres avancés',
       items: [
-        { key: 'equipe',      icon: Users, label: t('shop.team'), minPlan: 'business' },
-        { key: 'fidelite',    icon: Gift, label: t('shop.fidelitePromos') || 'Fidélité & Promos' },
-        { key: 'journal',     icon: ScrollText, label: t('shop.auditLog'), minPlan: 'business' },
-        { key: 'developer',   icon: Code2, label: t('shop.developer'), minPlan: 'business' },
-        { key: 'marketing',   icon: Megaphone, label: t('shop.marketing') },
-        { key: 'infos',       icon: Settings, label: t('shop.settings') },
+        { key: 'fournisseurs', icon: Truck, label: t('shop.suppliers') || 'Fournisseurs', minPlan: 'pro' },
+        { key: 'fidelite',    icon: Gift, label: t('shop.fidelitePromos') || 'Fidélité & Promotions' },
+        { key: 'fiscalite',   icon: Scale, label: t('shop.taxSettings') || 'Fiscalité & TVA', minPlan: 'pro' },
+        { key: 'equipe',      icon: Users, label: t('shop.team') || 'Mon équipe', minPlan: 'business' },
+        { key: 'journal',     icon: ScrollText, label: t('shop.auditLog') || 'Journal d\'activité', minPlan: 'business' },
+        { key: 'developer',   icon: Code2, label: t('shop.developer') || 'Portail développeur', minPlan: 'business' },
       ],
     },
   ]
+
+  // L'utilisateur peut basculer pour voir les options avancées
+  const [showAdvancedNav, setShowAdvancedNav] = useState(false)
+
+  // Groupes de navigation effectifs selon le mode
+  const NAV_GROUPS: NavGroup[] = showAdvancedNav ? [...NAV_ESSENTIAL, ...NAV_ADVANCED] : NAV_ESSENTIAL
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
   const [subTabCompta, setSubTabCompta] = useState<'bilan' | 'dashboard' | 'express' | 'ventes' | 'depenses'>('bilan')
@@ -4058,8 +4266,20 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     if (targetTab === 'compta') {
       setSubTabCompta((subTab as any) || 'bilan')
     }
+    // Auto-expand advanced nav if the target tab is in advanced groups
+    const isAdvancedTab = NAV_ADVANCED.some(g => g.items.some(i => i.key === targetTab))
+    if (isAdvancedTab && !showAdvancedNav) {
+      setShowAdvancedNav(true)
+    }
     setTab(targetTab)
   }
+
+  // Auto-expand advanced nav if the initial tab is in the advanced section
+  useEffect(() => {
+    const isAdvancedTab = NAV_ADVANCED.some(g => g.items.some(i => i.key === resolvedInitialTab))
+    if (isAdvancedTab) setShowAdvancedNav(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const getGroupIdxForTab = (t: ManageTab): number => {
     const idx = NAV_GROUPS.findIndex(g => g.items.some(i => i.key === t))
@@ -4461,6 +4681,39 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             )
           })}
         </nav>
+
+        {/* Bouton bascule : Afficher/Masquer les options avancées */}
+        <div style={{ padding: '4px 12px 12px' }}>
+          <button
+            type="button"
+            onClick={() => setShowAdvancedNav(v => !v)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: '10px 14px',
+              borderRadius: 10,
+              border: showAdvancedNav ? '1.5px solid var(--accent, #C75B00)' : '1.5px dashed var(--border-medium, #D1C4B4)',
+              background: showAdvancedNav ? 'var(--orange2, #FFF3E8)' : 'transparent',
+              cursor: 'pointer',
+              fontSize: 12.5,
+              fontWeight: 800,
+              color: showAdvancedNav ? 'var(--accent, #C75B00)' : 'var(--text-subtle, #8C7E74)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <ChevronDown
+              size={14}
+              style={{
+                transform: showAdvancedNav ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s ease',
+              }}
+            />
+            <span>{showAdvancedNav ? 'Masquer les options avancées' : 'Plus d\'options (comptabilité, rapports...)'}</span>
+          </button>
+        </div>
 
         {/* Nav Mobile — Bottom-Sheet (remplace les 2 niveaux de pills) */}
         <nav className="bq-nav-mobile" style={{ borderBottom: '1px solid var(--border)', background: 'var(--card)' }}>

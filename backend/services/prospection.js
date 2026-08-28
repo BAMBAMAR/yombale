@@ -58,6 +58,44 @@ const FOOTER_OPTOUT = '\n\n_Pour ne plus recevoir de message de notre part, rép
 // ── Templates de prospection sénégalaise haute performance ───────────────────
 const TEMPLATES_PAR_DEFAUT = [
   {
+    id: 'creation_whatsapp_30s',
+    titre: '⚡ Création 100% WhatsApp en 30s — Zéro Ordinateur, Zéro Formulaire',
+    canal: 'whatsapp',
+    categorie: 'general',
+    texte: `{Salam|Bonjour} {nom_boutique} ! 👋
+
+Saviez-vous que vous pouvez ouvrir votre boutique en ligne directement ici sur WhatsApp en moins de 30 secondes sans jamais toucher à un ordinateur ?
+
+Avec Nopalou (https://nopalou.com) :
+⚡ Vous donnez simplement votre nom, catégorie et ville par message
+📸 Vous ajoutez vos articles en envoyant une simple photo et le prix (ex: « Robe Soie 15000 »)
+🌊 Vos clients commandent en 1 clic et paient par Wave & Orange Money (0% de commission)
+📊 Vous demandez votre bilan du jour par message : tapez « Bilan » et recevez vos ventes en direct !
+🎁 1er mois 100% OFFERT sans engagement !
+
+Répondez simplement « OUI » pour ouvrir votre boutique démo tout de suite !` + FOOTER_OPTOUT
+  },
+  {
+    id: 'migration_shopify_excel',
+    titre: '📦 Migration 1-Clic — Quittez Shopify / WooCommerce / Excel sans ressaisie',
+    canal: 'whatsapp',
+    categorie: 'general',
+    texte: `{Salam alaykoum|Bonjour} {nom_boutique} ! 📦
+
+Vous en avez marre des frais Shopify en dollars ($29/mois), des blocages de cartes bancaires et des commissions exorbitantes ?
+
+Migrez sur Nopalou en 1 seul clic sans perdre vos données :
+✅ Import automatique intelligent de votre catalogue Shopify, WooCommerce ou Excel
+✅ Vos titres, prix, stocks et photos sont reconnus automatiquement
+✅ Import de votre carnet de clients & dettes existantes
+✅ Paiement direct Wave & Orange Money en FCFA à 0% de commission
+🎁 30 jours 100% gratuits pour tester la puissance de la plateforme !
+
+Testez l'import gratuit ici : https://nopalou.com/tarifs-boutique
+
+Pouvons-nous importer votre fichier ensemble en 2 minutes ?` + FOOTER_OPTOUT
+  },
+  {
     id: 'mode_pret_a_porter',
     titre: '👗 Mode & Prêt-à-Porter — WhatsApp 1-Clic & 0% Commission',
     canal: 'whatsapp',
@@ -66,10 +104,11 @@ const TEMPLATES_PAR_DEFAUT = [
 
 {J'ai vu vos magnifiques modèles|J'ai découvert vos collections|Je suis tombé sur vos superbes articles} {quartier}. Vous perdez sûrement beaucoup de temps à envoyer les photos, tailles et prix un par un à chaque client sur WhatsApp.
 
-Avec Nopalou (https://nopalou.com), vous avez votre boutique en ligne prête en 2 minutes :
+Avec Nopalou (https://nopalou.com), vous avez votre boutique prête en 30 secondes :
 ✅ Vos clients voient vos collections et commandent seuls en 1 clic
 ✅ Paiement direct Wave & Orange Money sur votre compte (0% de commission)
 ✅ Caisse enregistreuse POS & Carnet de dettes inclus
+✅ Suivez votre CA du jour en tapant simplement « Bilan » sur WhatsApp
 🎁 Le 1er mois est 100% OFFERT sans engagement !
 
 Découvrez une boutique démo ici : https://nopalou.com/guide-creer-boutique
@@ -88,7 +127,8 @@ Dans la téléphonie & tech à Dakar, les prix changent vite et les clients comp
 Avec Nopalou, votre boutique est référencée sur le comparateur N°1 au Sénégal :
 ✅ Visibilité directe auprès de milliers d'acheteurs à Dakar
 ✅ Caisse tactile avec scanner de codes-barres par caméra
-✅ Devis & Factures OHADA proformats en PDF en 10 secondes
+✅ Importez tout votre catalogue existant (Excel / Shopify) en 1 seconde
+✅ Devis & Factures OHADA proformas en PDF en 10 secondes
 🎁 30 jours 100% gratuits pour booster vos ventes !
 
 Lien d'inscription gratuite : https://nopalou.com/creer-boutique?plan=pro
@@ -145,6 +185,7 @@ Avez-vous un bien disponible que nous pouvons mettre en avant cette semaine ?` +
 Nopalou équipe votre commerce d'une solution tout-en-un simple et rapide :
 ✅ Caisse enregistreuse tactile sur téléphone (gestion de stock & ventes)
 ✅ Carnet de dettes client avec rappels WhatsApp en 1 clic
+✅ Bilan du jour et alertes de rupture de stock envoyés par WhatsApp
 ✅ Paiements Wave & Orange Money directs sans intermédiaire
 🎁 1 mois d'essai offert pour équiper votre magasin !
 
@@ -163,7 +204,8 @@ Combien d'argent dort dehors dans des dettes clients oubliées sur des cahiers p
 
 Nopalou intègre le Carnet de Dettes intelligent pour commerçants :
 📒 Vous notez les crédits clients en 5 secondes sur votre téléphone
-🔔 Vous envoyez des rappels polis sur WhatsApp en 1 seul clic
+📥 Importez vos clients et soldes existants d'un coup depuis un fichier Excel
+🔔 Vous envoyez des rappels polis sur WhatsApp en 1 seul clic avec lien Wave
 📊 Vous suivez vos encaissements Wave et vos marges nettes
 🎁 1er mois 100% offert sans carte bancaire !
 
@@ -179,7 +221,7 @@ Testez gratuitement dès maintenant : https://nopalou.com/tarifs-boutique` + FOO
 Vous vendez des arrivages de Chine (Alibaba, AliExpress, Shein, 1688) ou Turquie ?
 
 Fini le désordre des photos perdues dans vos statuts :
-✨ Publiez votre arrivage en 2 minutes avec vos prix en FCFA
+✨ Publiez votre arrivage en 2 minutes ou envoyez directement les photos au bot WhatsApp
 🌊 Recevez l'argent par Wave dès la réservation
 ⚡ Vos clients commandent directement sur votre WhatsApp
 🎁 30 jours offerts pour écouler votre prochain arrivage !
@@ -198,11 +240,13 @@ Je me permets de vous contacter car je suis de près le développement de {nom_b
 
 Contrairement aux plateformes étrangères comme Shopify qui exigent une carte bancaire en devises ($29/mois) et ne gèrent pas nativement le paiement Wave, Nopalou est la solution e-commerce et caisse magasin conçue pour le Sénégal :
 
-• Vitrine web connectée directement à votre WhatsApp
+• Vitrine web connectée directement à votre WhatsApp (créable en 30 secondes)
+• Moteur d'import intelligent de votre catalogue existant sans ressaisie
 • Caisse tactile POS magasin (fonctionne même sans connexion Internet)
+• Carnet de dettes client avec rappels WhatsApp en 1 clic
 • Encaissement direct Wave & Orange Money (0% de commission)
 • Facturation normalisée OHADA avec NINEA et RCCM
-• Suivi des stocks et clôtures de caisse (Rapports Z)
+• Suivi des stocks et clôtures de caisse (Rapports Z & Bilan WhatsApp)
 
 Nous vous offrons 30 jours d'essai gratuit pour équiper vos magasins :
 👉 https://nopalou.com/tarifs-boutique

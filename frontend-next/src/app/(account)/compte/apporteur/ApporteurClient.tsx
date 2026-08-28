@@ -61,7 +61,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
   ]
 
   const MESSAGE_PARTAGE = (lien: string) =>
-    `Salut ! Je te recommande Nopalou, le comparateur de prix N°1 au Sénégal. Tu peux créer ta boutique en ligne gratuitement (30 jours d'essai Pro offerts) et recevoir tes commandes directement sur WhatsApp. Crée ta boutique ici : ${lien}`
+    `Salut ! Je te recommande Nopalou, la solution de boutique en ligne et caisse POS au Sénégal. Tu peux créer ta boutique en 30s sur WhatsApp, importer tes produits en 1 clic et recevoir tes commandes par Wave. 30 jours offerts : ${lien}`
 
   useEffect(() => {
     if (statsInitiales !== undefined) return

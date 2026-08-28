@@ -146,6 +146,39 @@ const TEXTES = [
 
 const POST_TEMPLATES = [
   {
+    titre: '⚡ Post Création de Boutique 100% WhatsApp en 30s (Zéro PC)',
+    texte: `🚀 Ouvrez votre boutique en ligne sur WhatsApp en 30 secondes chrono ! 🇸🇳
+
+Pas besoin d'ordinateur ni de compétences techniques. Sur Nopalou, tout se fait par message :
+
+1️⃣ Envoyez « creer boutique » sur notre WhatsApp officiel (+221 70 871 79 42)
+2️⃣ Donnez le nom de votre commerce, votre catégorie et votre ville
+3️⃣ Ajoutez vos articles en envoyant simplement la photo et le prix !
+
+✅ Paiements directs Wave & Orange Money (0% commission)
+✅ Demandez votre bilan du jour par message : tapez « Bilan » et recevez vos ventes en direct !
+🎁 1er mois 100% OFFERT sans aucun engagement !
+
+👉 Lancez-vous gratuitement sur nopalou.com/creer-boutique ou écrivez-nous sur WhatsApp !
+
+#Nopalou #CommerceSenegal #WhatsAppCommerce #Dakar #VendreEnLigne #Wave`,
+  },
+  {
+    titre: '📦 Post Migration 1-Clic depuis Shopify, WooCommerce & Excel',
+    texte: `⚡ Quittez Shopify et les frais en dollars sans perdre vos produits !
+
+Commerçants à Dakar : importez l'intégralité de votre catalogue sur Nopalou en 1 seul clic :
+
+🛍️ Compatible avec les exports Shopify, WooCommerce, PrestaShop et fichiers Excel/CSV
+✨ Reconnaissance automatique de vos titres, prix, stocks et photos
+📒 Import direct de vos clients et carnet de dettes
+🌊 Encaissements locaux en FCFA via Wave & Orange Money sans frais de passerelle
+
+👉 Testez l'import gratuit sur nopalou.com/tarifs-boutique (1 mois offert)
+
+#Nopalou #AlternativeShopify #EcommerceDakar #MigrationBoutique #Senegal`,
+  },
+  {
     titre: '🎉 Post de Lancement Global Nopalou',
     texte: `🎉 Nopalou est arrivé au Sénégal !
 

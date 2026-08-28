@@ -1125,6 +1125,71 @@ router.post('/:id/credits-clients', async (req, res) => {
   }
 });
 
+// ── POST /api/boutiques/:id/credits-clients/batch — Import groupé de clients / carnet dettes (Migration)
+router.post('/:id/credits-clients/batch', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { clients } = req.body;
+    if (!Array.isArray(clients) || clients.length === 0) {
+      return res.status(400).json({ error: 'La liste des clients à importer est vide' });
+    }
+    if (clients.length > 500) {
+      return res.status(400).json({ error: 'La limite est de 500 clients par lot' });
+    }
+
+    const dbClient = await pool.connect();
+    try {
+      await dbClient.query('BEGIN');
+      const inseres = [];
+
+      for (const c of clients) {
+        if (!c.nom?.trim()) continue;
+        const tel = c.telephone?.trim() || 'Non renseigné';
+        const soldeInitial = Number(c.solde) || 0;
+        const plafond = Number(c.plafond_max) || 200000;
+
+        const r = await dbClient.query(
+          `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, adresse, plafond_max, note_client, solde)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+          [id, c.nom.trim(), tel, c.adresse?.trim() || null, plafond, c.note_client?.trim() || 'Import migration', soldeInitial]
+        );
+
+        const newClient = r.rows[0];
+        inseres.push(newClient);
+
+        // Si le client a une dette initiale, enregistrer une ligne d'historique
+        if (soldeInitial > 0) {
+          await dbClient.query(
+            `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note)
+             VALUES ($1, $2, 'vente_credit', $3, 'carnet_initial', 'Report solde initial / Migration')`,
+            [newClient.id, id, soldeInitial]
+          );
+        } else if (soldeInitial < 0) {
+          await dbClient.query(
+            `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note)
+             VALUES ($1, $2, 'depot_avance', $3, 'carnet_initial', 'Report avance initiale / Migration')`,
+            [newClient.id, id, Math.abs(soldeInitial)]
+          );
+        }
+      }
+
+      await dbClient.query('COMMIT');
+      res.status(201).json({ success: true, count: inseres.length, clients: inseres });
+    } catch (e) {
+      await dbClient.query('ROLLBACK');
+      throw e;
+    } finally {
+      dbClient.release();
+    }
+  } catch (err) {
+    console.error('[CREDITS CLIENTS BATCH ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l’importation des clients' });
+  }
+});
+
 // ── PUT /api/boutiques/:id/credits-clients/:clientId — Modifier un profil client
 router.put('/:id/credits-clients/:clientId', async (req, res) => {
   try {
@@ -2308,8 +2373,8 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
         const prixNum = (p.prix !== undefined && p.prix !== null && String(p.prix).trim() !== '' && !isNaN(Number(p.prix))) ? Number(p.prix) : null;
 
         const r = await client.query(
-          `INSERT INTO boutique_produits (boutique_id, nom, description, prix, images, en_stock, stock_quantite, categorie, whatsapp_sync_statut)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'synchronise') RETURNING *`,
+          `INSERT INTO boutique_produits (boutique_id, nom, description, prix, images, en_stock, stock_quantite, categorie, code_barre, whatsapp_sync_statut)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'synchronise') RETURNING *`,
           [
             id,
             p.nom.trim(),
@@ -2319,6 +2384,7 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
             p.en_stock !== false,
             stockQty,
             p.categorie || null,
+            p.code_barre?.trim() || null,
           ]
         );
         insere.push(r.rows[0]);
@@ -5314,6 +5380,66 @@ router.put('/:id/pos-regles-remises', verifierToken, async (req, res) => {
   } catch (err) {
     console.error('[PUT POS REGLES REMISES ERR]', err);
     res.status(500).json({ error: 'Erreur lors de l’enregistrement des règles de remises' });
+  }
+});
+
+// ── GET /api/boutiques/:id/export-complet — Portabilité Totale : Exporter toute la boutique en 1 Clic
+router.get('/:id/export-complet', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const b = await pool.query('SELECT * FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
+    if (!b.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+
+    const boutique = b.rows[0];
+
+    // Données consolidées
+    const [rProduits, rClients, rVentes, rCommandes] = await Promise.all([
+      pool.query('SELECT * FROM boutique_produits WHERE boutique_id=$1 ORDER BY created_at ASC', [id]),
+      pool.query('SELECT * FROM caisse_clients_credits WHERE boutique_id=$1 ORDER BY created_at ASC', [id]),
+      pool.query('SELECT * FROM boutique_ventes WHERE boutique_id=$1 ORDER BY created_at ASC', [id]),
+      pool.query('SELECT * FROM boutique_commandes WHERE boutique_id=$1 ORDER BY created_at ASC', [id]),
+    ]);
+
+    const exportPayload = {
+      export_meta: {
+        plateforme: 'Nopalou',
+        version: '2.0',
+        date_export: new Date().toISOString(),
+      },
+      boutique: {
+        id: boutique.id,
+        nom: boutique.nom,
+        slug: boutique.slug,
+        description: boutique.description,
+        categorie: boutique.categorie,
+        telephone: boutique.telephone,
+        whatsapp: boutique.whatsapp,
+        ville: boutique.ville,
+        adresse: boutique.adresse,
+        mode_fonctionnement: boutique.mode_fonctionnement,
+        actif: boutique.actif,
+      },
+      statistiques: {
+        total_produits: rProduits.rows.length,
+        total_clients_carnet: rClients.rows.length,
+        total_ventes: rVentes.rows.length,
+        total_commandes: rCommandes.rows.length,
+      },
+      produits: rProduits.rows,
+      clients_carnet: rClients.rows,
+      ventes: rVentes.rows,
+      commandes: rCommandes.rows,
+    };
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `nopalou_export_${boutique.slug || id}_${dateStr}.json`;
+
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.json(exportPayload);
+  } catch (err) {
+    console.error('[BOUTIQUE EXPORT COMPLET ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l’exportation complète de la boutique' });
   }
 });
 
