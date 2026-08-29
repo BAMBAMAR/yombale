@@ -1,9 +1,4 @@
-layout - 3957f445646a61b9.js: 1[PWA SW] Service Worker enregistré avec succès: https://nopalou.com/
-/api/admin / dashboard / stats ? period = today : 1  Failed to load resource: the server responded with a status of 500()
-  / api / affiliates / clicks ? range = 24h: 1  Failed to load resource: the server responded with a status of 401()
-6763 - b39f613c2ec0e62a.js: 1 ❌ Error: Fetch échoué
-    at e(page - ac156470bd9def19.js: 1: 2698)
-window.console.error @6763-b39f613c2ec0e62a.js: 1
+
 'use client'
 
 import { useState } from 'react'
