@@ -2,6 +2,7 @@
 // CRUD complet et administration des catégories de la plateforme Nopalou
 
 const router = require('express').Router();
+const crypto = require('crypto');
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 
@@ -34,63 +35,115 @@ const DEFAULT_CATEGORIES = [
 let categoriesTableEnsured = false;
 async function ensureCategoriesTable() {
   if (categoriesTableEnsured) return;
+
+  // 1. Créer la table si elle n'existe pas
   try {
     await pool.query(`
-      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
       CREATE TABLE IF NOT EXISTS categories (
-        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         nom         VARCHAR(100) NOT NULL,
         slug        VARCHAR(100) UNIQUE NOT NULL,
         icone       VARCHAR(50) DEFAULT '📦',
         description TEXT,
-        parent_id   UUID REFERENCES categories(id) ON DELETE SET NULL,
         ordre       INT DEFAULT 0,
         actif       BOOLEAN DEFAULT TRUE,
         created_at  TIMESTAMPTZ DEFAULT NOW(),
         updated_at  TIMESTAMPTZ DEFAULT NOW()
-      );
-      ALTER TABLE categories ADD COLUMN IF NOT EXISTS ordre INT DEFAULT 0;
-      ALTER TABLE categories ADD COLUMN IF NOT EXISTS actif BOOLEAN DEFAULT TRUE;
-      ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT;
-      ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES categories(id) ON DELETE SET NULL;
-      ALTER TABLE categories ADD COLUMN IF NOT EXISTS icone VARCHAR(50) DEFAULT '📦';
-      ALTER TABLE categories ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
-      ALTER TABLE categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-      CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
-      CREATE INDEX IF NOT EXISTS idx_categories_ordre ON categories(ordre);
+      )
     `);
+  } catch (e) {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS categories (
+          id          TEXT PRIMARY KEY,
+          nom         VARCHAR(100) NOT NULL,
+          slug        VARCHAR(100) UNIQUE NOT NULL,
+          icone       VARCHAR(50) DEFAULT '📦',
+          description TEXT,
+          ordre       INT DEFAULT 0,
+          actif       BOOLEAN DEFAULT TRUE,
+          created_at  TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+    } catch (_) {}
+  }
 
-    // Vérifier si des catégories existent
+  // 2. Ajouter chaque colonne individuellement
+  const colonnes = [
+    `ALTER TABLE categories ADD COLUMN IF NOT EXISTS ordre INT DEFAULT 0`,
+    `ALTER TABLE categories ADD COLUMN IF NOT EXISTS actif BOOLEAN DEFAULT TRUE`,
+    `ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT`,
+    `ALTER TABLE categories ADD COLUMN IF NOT EXISTS icone VARCHAR(50) DEFAULT '📦'`,
+    `ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id UUID`,
+    `ALTER TABLE categories ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`,
+    `ALTER TABLE categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`,
+  ];
+  for (const sql of colonnes) {
+    try { await pool.query(sql); } catch (_) {}
+  }
+
+  // 3. Auto-seed des catégories par défaut si la table est vide
+  try {
     const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM categories');
     if (parseInt(rows[0]?.count || 0) === 0) {
       for (const cat of DEFAULT_CATEGORIES) {
-        await pool.query(
-          `INSERT INTO categories (nom, slug, icone, ordre, actif)
-           VALUES ($1, $2, $3, $4, TRUE)
-           ON CONFLICT (slug) DO NOTHING`,
-          [cat.nom, cat.slug, cat.icone, cat.ordre]
-        );
+        try {
+          await pool.query(
+            `INSERT INTO categories (nom, slug, icone, ordre, actif)
+             VALUES ($1, $2, $3, $4, TRUE)
+             ON CONFLICT (slug) DO NOTHING`,
+            [cat.nom, cat.slug, cat.icone, cat.ordre]
+          );
+        } catch (_) {
+          try {
+            const fallbackId = crypto.randomUUID ? crypto.randomUUID() : cat.slug;
+            await pool.query(
+              `INSERT INTO categories (id, nom, slug, icone, ordre, actif)
+               VALUES ($1, $2, $3, $4, $5, TRUE)
+               ON CONFLICT (slug) DO NOTHING`,
+              [fallbackId, cat.nom, cat.slug, cat.icone, cat.ordre]
+            );
+          } catch (_) {}
+        }
       }
     }
-    categoriesTableEnsured = true;
-  } catch (e) {
-    console.warn('[CATEGORIES_ENSURE_TABLE]', e.message);
-  }
+  } catch (_) {}
+
+  categoriesTableEnsured = true;
 }
 
 // ── GET /api/categories — Liste publique des catégories actives
 router.get('/', async (req, res) => {
   try {
     await ensureCategoriesTable();
-    const { rows } = await pool.query(`
-      SELECT c.id, c.nom, c.slug, c.icone, c.description, COALESCE(c.ordre, 0) AS ordre, c.parent_id,
-             COALESCE((SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id), 0) AS nb_produits,
-             COALESCE((SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = c.slug AND actif = TRUE), 0) AS nb_annonces
-      FROM categories c
-      WHERE COALESCE(c.actif, TRUE) = TRUE
-      ORDER BY COALESCE(c.ordre, 0) ASC, c.nom ASC
-    `);
-    res.json({ categories: rows });
+    try {
+      const { rows } = await pool.query(`
+        SELECT c.id, c.nom, c.slug,
+               COALESCE(c.icone, '📦') AS icone,
+               COALESCE(c.description, '') AS description,
+               COALESCE(c.ordre, 0) AS ordre,
+               COALESCE((SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id), 0) AS nb_produits,
+               COALESCE((SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = c.slug AND actif = TRUE), 0) AS nb_annonces
+        FROM categories c
+        WHERE COALESCE(c.actif, TRUE) = TRUE
+        ORDER BY COALESCE(c.ordre, 0) ASC, c.nom ASC
+      `);
+      return res.json({ categories: rows });
+    } catch (eQuery) {
+      const { rows } = await pool.query(`SELECT * FROM categories WHERE COALESCE(actif, TRUE) = TRUE ORDER BY nom ASC`);
+      return res.json({
+        categories: rows.map(c => ({
+          id: c.id,
+          nom: c.nom,
+          slug: c.slug,
+          icone: c.icone || '📦',
+          description: c.description || '',
+          ordre: c.ordre || 0,
+          nb_produits: 0,
+          nb_annonces: 0,
+        })),
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -100,14 +153,39 @@ router.get('/', async (req, res) => {
 router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   try {
     await ensureCategoriesTable();
-    const { rows } = await pool.query(`
-      SELECT c.id, c.nom, c.slug, c.icone, c.description, COALESCE(c.ordre, 0) AS ordre, COALESCE(c.actif, TRUE) AS actif, c.parent_id, c.created_at,
-             COALESCE((SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id), 0) AS nb_produits,
-             COALESCE((SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = c.slug), 0) AS nb_annonces
-      FROM categories c
-      ORDER BY COALESCE(c.ordre, 0) ASC, c.nom ASC
-    `);
-    res.json({ categories: rows });
+    let categories = [];
+    try {
+      const { rows } = await pool.query(`
+        SELECT c.id, c.nom, c.slug,
+               COALESCE(c.icone, '📦') AS icone,
+               COALESCE(c.description, '') AS description,
+               COALESCE(c.ordre, 0) AS ordre,
+               COALESCE(c.actif, TRUE) AS actif,
+               c.parent_id,
+               COALESCE(c.created_at, NOW()) AS created_at,
+               COALESCE((SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id), 0) AS nb_produits,
+               COALESCE((SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = c.slug), 0) AS nb_annonces
+        FROM categories c
+        ORDER BY COALESCE(c.ordre, 0) ASC, c.nom ASC
+      `);
+      categories = rows;
+    } catch (errQuery) {
+      console.warn('[CATEGORIES_ADMIN_QUERY_FALLBACK]', errQuery.message);
+      const { rows } = await pool.query(`SELECT * FROM categories ORDER BY nom ASC`).catch(() => ({ rows: [] }));
+      categories = rows.map(c => ({
+        id: c.id,
+        nom: c.nom,
+        slug: c.slug,
+        icone: c.icone || '📦',
+        description: c.description || '',
+        ordre: c.ordre || 0,
+        actif: c.actif !== false,
+        created_at: c.created_at || new Date().toISOString(),
+        nb_produits: 0,
+        nb_annonces: 0,
+      }));
+    }
+    res.json({ categories });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -116,27 +194,41 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
 // ── POST /api/categories/admin — Création d'une catégorie (admin)
 router.post('/admin', adminSecretOnly, async (req, res) => {
   try {
-    const { nom, slug: customSlug, icone, description, actif = true, ordre = 0, parent_id } = req.body;
+    await ensureCategoriesTable();
+    const { nom, slug: customSlug, icone, description, actif = true, ordre = 0 } = req.body;
     if (!nom || !nom.trim()) {
       return res.status(400).json({ error: 'Le nom de la catégorie est obligatoire' });
     }
 
     const finalSlug = customSlug && customSlug.trim() ? slugify(customSlug) : slugify(nom);
     const finalIcone = icone ? icone.trim() : '📦';
-    const finalParentId = parent_id || null;
+    const finalDesc = description ? description.trim() : null;
 
-    const { rows } = await pool.query(
-      `INSERT INTO categories (nom, slug, icone, description, actif, ordre, parent_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [nom.trim(), finalSlug, finalIcone, description ? description.trim() : null, Boolean(actif), parseInt(ordre) || 0, finalParentId]
-    );
-
-    res.json({ success: true, categorie: rows[0] });
-  } catch (err) {
-    if (err.code === '23505') {
-      return res.status(400).json({ error: 'Une catégorie avec cet identifiant (slug) existe déjà.' });
+    let row = null;
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO categories (nom, slug, icone, description, actif, ordre)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [nom.trim(), finalSlug, finalIcone, finalDesc, Boolean(actif), parseInt(ordre) || 0]
+      );
+      row = rows[0];
+    } catch (eInsert) {
+      if (eInsert.code === '23505') {
+        return res.status(400).json({ error: 'Une catégorie avec cet identifiant (slug) existe déjà.' });
+      }
+      const newId = crypto.randomUUID ? crypto.randomUUID() : finalSlug;
+      const { rows } = await pool.query(
+        `INSERT INTO categories (id, nom, slug, icone, description, actif, ordre)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *`,
+        [newId, nom.trim(), finalSlug, finalIcone, finalDesc, Boolean(actif), parseInt(ordre) || 0]
+      );
+      row = rows[0];
     }
+
+    res.json({ success: true, categorie: row });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -144,14 +236,14 @@ router.post('/admin', adminSecretOnly, async (req, res) => {
 // ── PUT /api/categories/admin/reordonner — Réordonner les catégories (admin)
 router.put('/admin/reordonner', adminSecretOnly, async (req, res) => {
   try {
-    const { items } = req.body; // array of { id, ordre }
+    const { items } = req.body;
     if (!Array.isArray(items)) {
       return res.status(400).json({ error: 'Format invalide (liste d\'éléments requise)' });
     }
 
     for (const item of items) {
       if (item.id && item.ordre !== undefined) {
-        await pool.query('UPDATE categories SET ordre = $1 WHERE id = $2', [parseInt(item.ordre) || 0, item.id]);
+        await pool.query('UPDATE categories SET ordre = $1 WHERE id::text = $2 OR slug = $2', [parseInt(item.ordre) || 0, String(item.id)]);
       }
     }
 
@@ -165,9 +257,9 @@ router.put('/admin/reordonner', adminSecretOnly, async (req, res) => {
 router.put('/admin/:id', adminSecretOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const { nom, slug: customSlug, icone, description, actif, ordre, parent_id } = req.body;
+    const { nom, slug: customSlug, icone, description, actif, ordre } = req.body;
 
-    const current = await pool.query('SELECT * FROM categories WHERE id = $1', [id]);
+    const current = await pool.query('SELECT * FROM categories WHERE id::text = $1 OR slug = $1', [id]);
     if (!current.rows[0]) {
       return res.status(404).json({ error: 'Catégorie introuvable' });
     }
@@ -179,14 +271,13 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
     const newDesc = description !== undefined ? description : cur.description;
     const newActif = actif !== undefined ? Boolean(actif) : cur.actif;
     const newOrdre = ordre !== undefined ? parseInt(ordre) : cur.ordre;
-    const newParent = parent_id !== undefined ? (parent_id || null) : cur.parent_id;
 
     const { rows } = await pool.query(
       `UPDATE categories
-       SET nom = $1, slug = $2, icone = $3, description = $4, actif = $5, ordre = $6, parent_id = $7
-       WHERE id = $8
+       SET nom = $1, slug = $2, icone = $3, description = $4, actif = $5, ordre = $6, updated_at = NOW()
+       WHERE id = $7
        RETURNING *`,
-      [newNom, newSlug, newIcone, newDesc, newActif, newOrdre, newParent, id]
+      [newNom, newSlug, newIcone, newDesc, newActif, newOrdre, cur.id]
     );
 
     res.json({ success: true, categorie: rows[0] });
@@ -202,20 +293,28 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
 router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Vérifier si des produits ou annonces y sont rattachés
-    const check = await pool.query(`
-      SELECT 
-        (SELECT COUNT(*)::int FROM produits WHERE categorie_id = $1) AS nb_produits,
-        (SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = (SELECT slug FROM categories WHERE id = $1)) AS nb_annonces
-    `, [id]);
+    const current = await pool.query('SELECT * FROM categories WHERE id::text = $1 OR slug = $1', [id]);
+    if (!current.rows[0]) {
+      return res.status(404).json({ error: 'Catégorie introuvable' });
+    }
 
-    const nbP = check.rows[0]?.nb_produits || 0;
-    const nbA = check.rows[0]?.nb_annonces || 0;
+    const cat = current.rows[0];
+
+    // Vérifier si des produits ou annonces y sont rattachés
+    let nbP = 0;
+    let nbA = 0;
+    try {
+      const check = await pool.query(`
+        SELECT 
+          (SELECT COUNT(*)::int FROM produits WHERE categorie_id = $1) AS nb_produits,
+          (SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = $2) AS nb_annonces
+      `, [cat.id, cat.slug]);
+      nbP = check.rows[0]?.nb_produits || 0;
+      nbA = check.rows[0]?.nb_annonces || 0;
+    } catch (_) {}
 
     if (nbP > 0 || nbA > 0) {
-      // Désactiver plutôt que supprimer pour ne pas casser l'intégrité
-      await pool.query('UPDATE categories SET actif = FALSE WHERE id = $1', [id]);
+      await pool.query('UPDATE categories SET actif = FALSE WHERE id = $1', [cat.id]);
       return res.json({
         success: true,
         desactivee: true,
@@ -223,8 +322,8 @@ router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
       });
     }
 
-    await pool.query('DELETE FROM categories WHERE id = $1', [id]);
-    res.json({ success: true, deleted: true });
+    await pool.query('DELETE FROM categories WHERE id = $1', [cat.id]);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

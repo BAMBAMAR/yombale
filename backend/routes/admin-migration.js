@@ -17,47 +17,85 @@ function arrondirPrixCommercial(prix, arrondi = 500) {
 let migrationTablesEnsured = false;
 async function ensureMigrationTables() {
   if (migrationTablesEnsured) return;
-  try {
-    await pool.query(`
-      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS logo_url TEXT;
-      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS plan_actif VARCHAR(50) DEFAULT 'pro';
-      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS notes TEXT;
-      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS categorie VARCHAR(50);
-      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}';
-      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS en_stock BOOLEAN DEFAULT TRUE;
-      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_barre NUMERIC(12,2);
-    `);
-    migrationTablesEnsured = true;
-  } catch (e) {
-    console.warn('[MIGRATION_ENSURE_TABLES]', e.message);
+  const sqls = [
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS logo_url TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS plan_actif VARCHAR(50) DEFAULT 'pro'`,
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS notes TEXT`,
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS categorie VARCHAR(50)`,
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}'`,
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS en_stock BOOLEAN DEFAULT TRUE`,
+    `ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_barre NUMERIC(12,2)`,
+  ];
+  for (const sql of sqls) {
+    try { await pool.query(sql); } catch (e) {}
   }
+  migrationTablesEnsured = true;
 }
 
 // ── GET /api/admin/migration/stats — Résumé des données pour l'interface de migration
 router.get('/stats', adminSecretOnly, async (req, res) => {
   try {
     await ensureMigrationTables();
-    const [boutiquesRes, categoriesRes, totalImportsRes] = await Promise.all([
-      pool.query(`
-        SELECT b.id, b.nom, b.telephone, b.logo_url AS logo, COALESCE(b.plan_actif, 'pro') AS plan,
+
+    // 1. Boutiques
+    let boutiques = [];
+    try {
+      const bRes = await pool.query(`
+        SELECT b.*,
                COALESCE((SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id), 0) AS nb_produits
         FROM boutiques b
         ORDER BY b.created_at DESC
-        LIMIT 200
-      `),
-      pool.query(`
+        LIMIT 300
+      `);
+      boutiques = bRes.rows.map(b => ({
+        id: b.id,
+        nom: b.nom || 'Boutique sans nom',
+        slug: b.slug || b.id,
+        telephone: b.telephone || '',
+        logo: b.logo_url || b.logo || null,
+        plan: b.plan_actif || b.plan || 'pro',
+        nb_produits: parseInt(b.nb_produits || 0, 10),
+      }));
+    } catch (e) {
+      console.warn('[MIGRATION_STATS_BOUTIQUES_ERR]', e.message);
+      const bRes = await pool.query(`SELECT * FROM boutiques LIMIT 300`).catch(() => ({ rows: [] }));
+      boutiques = bRes.rows.map(b => ({
+        id: b.id,
+        nom: b.nom || 'Boutique',
+        slug: b.slug || b.id,
+        telephone: b.telephone || '',
+        logo: b.logo_url || null,
+        plan: 'pro',
+        nb_produits: 0,
+      }));
+    }
+
+    // 2. Catégories
+    let categories = [];
+    try {
+      const cRes = await pool.query(`
         SELECT id, nom, slug, icone FROM categories ORDER BY COALESCE(ordre, 0) ASC, nom ASC
-      `),
-      pool.query(`
+      `);
+      categories = cRes.rows;
+    } catch (e) {
+      categories = [];
+    }
+
+    // 3. Total migrés
+    let totalMigres = 0;
+    try {
+      const tRes = await pool.query(`
         SELECT COUNT(*)::int AS total FROM boutique_produits WHERE notes ILIKE '%[Migration]%' OR notes ILIKE '%[Import]%'
-      `).catch(() => ({ rows: [{ total: 0 }] })),
-    ]);
+      `);
+      totalMigres = parseInt(tRes.rows[0]?.total || 0, 10);
+    } catch (e) {
+      totalMigres = 0;
+    }
 
     res.json({
-      boutiques: boutiquesRes.rows,
-      categories: categoriesRes.rows,
-      totalMigres: totalImportsRes.rows[0]?.total || 0,
+      boutiques,
+      categories,
+      totalMigres,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

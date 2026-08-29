@@ -73,7 +73,10 @@ export default function AdminMigrationClient({
     setTimeout(() => setNotification(null), 4500)
   }
 
+  const [loadingBoutiques, setLoadingBoutiques] = useState(false)
+
   const reloadData = useCallback(async () => {
+    setLoadingBoutiques(true)
     try {
       const res = await fetch('/api/admin/migration/stats', {
         headers: { 'X-Admin-Secret': secret },
@@ -82,20 +85,20 @@ export default function AdminMigrationClient({
       if (res.ok) {
         const d = await res.json()
         setData(d)
-        if (!selectedBoutiqueId && d.boutiques?.length > 0) {
-          setSelectedBoutiqueId(d.boutiques[0].id)
+        if (d.boutiques && d.boutiques.length > 0) {
+          setSelectedBoutiqueId(prev => (prev && d.boutiques.some((b: any) => b.id === prev) ? prev : d.boutiques[0].id))
         }
       }
     } catch (e) {
       console.warn('[RELOAD_MIGRATION_ERR]', e)
+    } finally {
+      setLoadingBoutiques(false)
     }
-  }, [secret, selectedBoutiqueId])
+  }, [secret])
 
   useEffect(() => {
-    if (!initialData || !initialData.boutiques?.length) {
-      reloadData()
-    }
-  }, [reloadData, initialData])
+    reloadData()
+  }, [reloadData])
 
   // 1. Action Aspiration Shopify
   const handleShopifyMirror = async (e: React.FormEvent) => {
@@ -414,6 +417,12 @@ export default function AdminMigrationClient({
               background: '#f8fafc',
             }}
           >
+            {loadingBoutiques && !data?.boutiques?.length && (
+              <option value="">Chargement des boutiques...</option>
+            )}
+            {!loadingBoutiques && (!data?.boutiques || data.boutiques.length === 0) && (
+              <option value="">Aucune boutique trouvée</option>
+            )}
             {data?.boutiques?.map(b => (
               <option key={b.id} value={b.id}>
                 {b.nom} ({b.nb_produits} produits) {b.telephone ? `— ${b.telephone}` : ''}
