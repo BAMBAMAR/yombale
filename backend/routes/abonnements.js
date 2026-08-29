@@ -40,10 +40,16 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
 
     const { prix: prixMensuel, label } = PLANS[plan];
 
+    const [reduc3, reduc6, reduc12] = await Promise.all([
+      cfg.getNum('reduc_3_mois'),
+      cfg.getNum('reduc_6_mois'),
+      cfg.getNum('reduc_12_mois'),
+    ]);
+
     let remise = 0;
-    if (duree === 3) remise = 0.10;      // -10% pour 3 mois
-    else if (duree === 6) remise = 0.15; // -15% pour 6 mois
-    else if (duree === 12) remise = 0.25; // -25% pour 12 mois (1 an)
+    if (duree === 3) remise = (reduc3 || 10) / 100;
+    else if (duree === 6) remise = (reduc6 || 15) / 100;
+    else if (duree === 12) remise = (reduc12 || 25) / 100;
 
     const prixTotal = Math.round((prixMensuel * duree) * (1 - remise));
     const clientRef = `abmt_${userId}_${plan}_${duree}_${Date.now()}`;

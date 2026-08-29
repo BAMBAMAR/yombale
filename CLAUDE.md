@@ -1,4 +1,22 @@
-- **Correction de la Liste Vide des Boutiques dans l'Espace Admin (`backend/routes/boutiques.js`, `relance-catalogue.js`, `migrate-inline.js`, `CLAUDE.md`) (`local` - 29 août 2026)** 🛠️🏪👑 :
+- **Phase 1 de la Console Centrale de Pilotage Admin Nopalou (P0) (`featureFlags.js`, `feature-flags.js`, `categories.js`, `admin-dashboard.js`, `AdminDashboardClient.tsx`, `AdminFeatureFlagsClient.tsx`, `AdminCategoriesClient.tsx`, `AdminSidebarClient.tsx`, `abonnements.js`, `paiement.js`, `auth.js`, `CLAUDE.md`) (`local` - 29 août 2026)** 🚀👑🚩📊📁🔐 :
+  * **🔐 1. Correctif de Sécurité Critique JWT (`backend/middlewares/auth.js`)** :
+    - Élimination de la faille de contournement de signature `jwt.decode` sans vérification du secret en cas d'erreur de vérification.
+  * **💳 2. Dynamisation Intégrale des Remises sur Durée d'Abonnement (`abonnements.js`, `paiement.js`)** :
+    - Remplacement des pourcentages statiques par la lecture dynamique des clés `reduc_3_mois`, `reduc_6_mois`, `reduc_12_mois` depuis `settingsCache` pour tout calcul de paiement Wave et virement.
+  * **🚩 3. Moteur & Console de Feature Flags No-Code (`featureFlags.js`, `feature-flags.js`, `AdminFeatureFlagsClient.tsx`, `page.tsx`)** :
+    - Table PostgreSQL `feature_flags` avec cache mémoire haute performance (TTL 2min) et évaluation de portée (`global`, `plan`, `boutique`, `beta`).
+    - 10 drapeaux opérationnels intégrés (`POS_ENABLED`, `WHATSAPP_CHATBOT`, `STOCK_MANAGEMENT`, `DEBT_LEDGER`, `AI_MAGIC_IMPORT`, `OFFLINE_POS`, `PRICE_ALERTS`, `LOYALTY_PROGRAM`, `COMMISSIONS_APPORTEURS`, `DEVELOPER_PORTAL`).
+    - Interface interactive avec interrupteurs instantanés, filtres par module et création de nouveaux flags personnalisés.
+  * **📁 4. Gestionnaire & CRUD Complet des Catégories (`categories.js`, `AdminCategoriesClient.tsx`, `page.tsx`)** :
+    - Nouvelles routes publiques (`GET /api/categories`) et d'administration (`POST`, `PUT`, `DELETE`, `reordonner`).
+    - Interface d'administration pour créer, modifier les icônes/slugs, réordonner et activer/masquer les catégories avec comptage en direct des produits et annonces.
+  * **📊 5. Console de Pilotage & Dashboard Consolidé Multi-Périodes (`admin-dashboard.js`, `AdminDashboardClient.tsx`, `page.tsx`)** :
+    - Endpoint `/api/admin/dashboard/stats` avec sélecteur de période (*Aujourd'hui*, *7 derniers jours*, *30 derniers jours*, *Tout l'historique*).
+    - **Action Center (🔴 À traiter immédiatement)** : alertes de modération (annonces, immo, dépôts Wave/OM manuels, demandes de partenariats, sponsoring et boutiques 0 produit).
+    - Blocs KPI : Finances (MRR, CA Ventes, décomposition par plan), Marchands & Comptes, Catalogue & Stock, WhatsApp & Prospection, Raccourcis opérationnels.
+  * **📦 6. Statut** : Modifications enregistrées et commitées en local (aucun push sans demande explicite).
+
+- **Correction de la Liste Vide des Boutiques dans l'Espace Admin (`backend/routes/boutiques.js`, `relance-catalogue.js`, `migrate-inline.js`, `CLAUDE.md`) (`main` - 29 août 2026)** 🛠️🏪👑 :
   * **🔍 1. Diagnostic de la Section Boutique Vide en Admin** :
     - **Cause Racine** : La requête SQL de l'endpoint `GET /api/boutiques/admin/toutes` tentait d'extraire la colonne `u.prenom AS proprietaire_prenom` depuis la table `utilisateurs`. Or, la table `utilisateurs` ne comporte pas de colonne `prenom` (le nom complet est stocké dans `nom`), ce qui provoquait une erreur SQL immédiate `column u.prenom does not exist` (statut HTTP 500) et vidait la liste des boutiques côté client.
   * **⚡ 2. Corrections Appliquées** :

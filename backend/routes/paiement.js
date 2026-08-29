@@ -50,10 +50,15 @@ async function montantAttendu(reference, montantDeclare) {
     const plan = parts[2];
     const dureeMois = parseInt(parts[3] || '1', 10) || 1;
     const prixMensuel = { decouverte: prix.decouverte, pro: prix.pro, business: prix.business }[plan] ?? montantDeclare;
+    const [reduc3, reduc6, reduc12] = await Promise.all([
+      cfg.getNum('reduc_3_mois'),
+      cfg.getNum('reduc_6_mois'),
+      cfg.getNum('reduc_12_mois'),
+    ]);
     let remise = 0;
-    if (dureeMois === 3) remise = 0.10;
-    else if (dureeMois === 6) remise = 0.15;
-    else if (dureeMois === 12) remise = 0.25;
+    if (dureeMois === 3) remise = (reduc3 || 10) / 100;
+    else if (dureeMois === 6) remise = (reduc6 || 15) / 100;
+    else if (dureeMois === 12) remise = (reduc12 || 25) / 100;
     return Math.round((prixMensuel * dureeMois) * (1 - remise));
   }
   return montantDeclare;

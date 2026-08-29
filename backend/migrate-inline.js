@@ -24,6 +24,10 @@ module.exports = async function migrateInline() {
         icone      VARCHAR(10),
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS ordre INT DEFAULT 0;
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS actif BOOLEAN DEFAULT TRUE;
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT;
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES categories(id) ON DELETE SET NULL;
 
       CREATE TABLE IF NOT EXISTS produits (
         id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -566,6 +570,38 @@ module.exports = async function migrateInline() {
     `);
     console.log('[MIGRATE] ✅ Table settings OK');
   } catch (e) { console.warn('[MIGRATE] settings:', e.message); }
+
+  // Table feature_flags (interrupteurs de fonctionnalités à chaud)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS feature_flags (
+        key         VARCHAR(100) PRIMARY KEY,
+        label       VARCHAR(200) NOT NULL,
+        description TEXT,
+        categorie   VARCHAR(50) DEFAULT 'general',
+        enabled     BOOLEAN DEFAULT TRUE,
+        scope       VARCHAR(30) DEFAULT 'global',
+        meta        JSONB DEFAULT '{}',
+        updated_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_feature_flags_cat ON feature_flags(categorie);
+      CREATE INDEX IF NOT EXISTS idx_feature_flags_enabled ON feature_flags(enabled);
+
+      INSERT INTO feature_flags (key, label, description, categorie, enabled, scope) VALUES
+        ('POS_ENABLED', 'Caisse POS tactile en magasin', 'Permet aux commerçants d''encaisser en caisse magasin, imprimer des tickets et gérer les caissiers.', 'pos', TRUE, 'global'),
+        ('WHATSAPP_CHATBOT', 'Assistant & Commerce WhatsApp', 'Active le catalogue interactif, la commande par message et les relances IA WhatsApp.', 'whatsapp', TRUE, 'global'),
+        ('STOCK_MANAGEMENT', 'Gestion avancée des stocks & alertes', 'Permet le suivi des stocks en temps réel, alertes de rupture et valorisation d''inventaire.', 'stock', TRUE, 'global'),
+        ('DEBT_LEDGER', 'Carnet de dettes client & créances', 'Permet d''enregistrer les ventes à crédit et d''envoyer des rappels d''échéance.', 'commerce', TRUE, 'global'),
+        ('AI_MAGIC_IMPORT', 'Import magique de produits par IA', 'Génération automatique de fiches produits par photo ou catalogue via vision artificielle.', 'ia', TRUE, 'global'),
+        ('OFFLINE_POS', 'Mode Hors-Ligne Caisse POS', 'Encaissement local sans connexion internet avec synchronisation en arrière-plan.', 'pos', TRUE, 'global'),
+        ('PRICE_ALERTS', 'Alertes de baisse de prix', 'Système de notifications push et WhatsApp sur les chutes de prix des produits suivis.', 'marketing', TRUE, 'global'),
+        ('LOYALTY_PROGRAM', 'Programme fidélité & cashback', 'Gestion des points, cagnottes et cartes à tampons pour les clients fidèles.', 'marketing', TRUE, 'global'),
+        ('COMMISSIONS_APPORTEURS', 'Programme Apporteurs d''Affaires', 'Affiliation et reversement de commissions automatiques aux prescripteurs.', 'finance', TRUE, 'global'),
+        ('DEVELOPER_PORTAL', 'Portail Développeur API & Webhooks', 'Accès aux clés API REST et notifications de webhooks pour les tiers.', 'tech', TRUE, 'global')
+      ON CONFLICT (key) DO NOTHING;
+    `);
+    console.log('[MIGRATE] ✅ Table feature_flags OK');
+  } catch (e) { console.warn('[MIGRATE] feature_flags:', e.message); }
 
   // Table clics_affiliation — tracking des clics vers marchands externes
   try {

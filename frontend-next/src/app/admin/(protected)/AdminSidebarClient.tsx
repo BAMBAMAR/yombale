@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag } from 'lucide-react'
 
 interface AdminSidebarProps {
   logoutAction: () => Promise<void>
@@ -15,8 +15,9 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
 
   const navSections = [
     {
-      title: 'Contenu',
+      title: 'Contenu & Catalogue',
       items: [
+        { href: '/admin/categories', label: 'Catégories', icon: <Layers size={16} />, highlight: '#0284c7' },
         { href: '/admin/annonces', label: 'Annonces classifiées', icon: <FileText size={16} /> },
         { href: '/admin/immo', label: 'Immo à valider', icon: <Home size={16} /> },
         { href: '/admin/boutiques', label: 'Boutiques', icon: <Store size={16} /> },
@@ -57,8 +58,9 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
       ]
     },
     {
-      title: 'Paramètres',
+      title: 'Système & Pilotage',
       items: [
+        { href: '/admin/feature-flags', label: 'Feature Flags (No-Code)', icon: <Flag size={16} />, highlight: '#9333ea' },
         { href: '/admin/compte', label: 'Mon compte', icon: <User size={16} /> },
       ]
     }

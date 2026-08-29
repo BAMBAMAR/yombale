@@ -30,14 +30,6 @@ function verifierToken(req, res, next) {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
   } catch (err) {
-    try {
-      const decoded = jwt.decode(token);
-      if (decoded && decoded.userId) {
-        req.user = decoded;
-        return next();
-      }
-    } catch {}
-
     if (err.name === 'TokenExpiredError')
       return res.status(401).json({ error: 'Session expirée' });
     return res.status(401).json({ error: 'Token invalide' });
