@@ -1,3 +1,8 @@
+- **Refonte UI Page d'Abonnement (Premium Design) (`frontend-next/src/app/boutique/abonnement/AbonnementClient.tsx`) (`pushed` - 29 août 2026)** 💎✨ :
+  * **💎 1. Design "WOW" & Glassmorphism** : Refonte visuelle totale de la page de tarification pour correspondre au positionnement haut de gamme. Intégration d'un bloc CSS générant des cartes en verre (backdrop-filter blur), des dégradés textuels pour les titres, et des effets lumineux (pulse glow) sur les badges.
+  * **✨ 2. Micro-interactions** : Ajout d'animations au survol (soulèvement fluide `translateY`, augmentation dynamique de l'ombre portée `box-shadow`) sur les cartes tarifaires et les boutons d'appel à l'action.
+  * **📦 3. Statut** : Déployé sur GitHub (`origin/main`).
+
 - **Fix Logique Blacklist Chatbot (`backend/services/whatsapp-chatbot.js`) (`pushed` - 29 août 2026)** 🛑💬 :
   * **🛑 1. Fiabilisation du Message d'Adieu** : Correction d'une condition de course logique lors de l'envoi de la commande `STOP`. Le système s'ajoutait sur la liste noire avant d'envoyer le message de confirmation (ce qui déclenchait l'intercepteur de sécurité global de `sendWhatsAppText` qui refusait l'envoi). Inversion de l'ordre d'exécution pour garantir la réception du message d'adieu avant la coupure définitive.
   * **📦 2. Statut** : Déployé sur GitHub (`origin/main`).
