@@ -107,31 +107,32 @@ export default function KitComClient({
   const agentNameFormatted = nomAgent ? nomAgent : '[Votre Prénom]'
   const agentCodeFormatted = codeAgent ? codeAgent : '[VOTRE_CODE]'
 
-  const scriptOralPerso = `[Accroche — 15 sec]
-Bonjour, je m'appelle ${agentNameFormatted}, je représente Nopalou, le super-comparateur & solution de commerce digital N°1 au Sénégal.
+  const scriptOralPerso = `🚨 [ACCROCHE - 15 sec]
+"Bonjour ${agentNameFormatted}, partenaire certifié Nopalou. Vous savez, aujourd'hui vos clients comparent tout sur leur téléphone avant d'acheter. Nopalou, c'est l'outil qui vous permet de ne plus jamais rater une vente."
 
-[Problème — 20 sec]
-Vos clients comparent déjà les prix en ligne ou sur les réseaux. Nopalou vous apporte à la fois une vitrine marketplace et un outil complet pour votre magasin physique.
+💡 [LA DOULEUR & LA SOLUTION - 30 sec]
+"Actuellement, gérer les commandes WhatsApp et tenir un carnet de dettes, c'est un casse-tête. Avec Nopalou, on vous donne une vraie Caisse Enregistreuse sur votre téléphone (qui marche même sans internet) et une Vitrine en ligne automatique. Vous scannez les articles, envoyez les reçus par WhatsApp, et encaissez directement sur votre Wave ou Orange Money."
 
-[Solution Caisse POS & Gestion — 40 sec]
-Vous profitez d'une Caisse POS Tactile (3 Scanners: Caméra, Cloud <100ms, USB), du Mode Hors-Ligne PWA sans coupure, de la Facturation OHADA (Factures & Devis PDF conformes NINEA/RCCM), du Carnet de Dettes Client et des commandes WhatsApp directes.
+🎁 [OFFRE IRRÉFUSABLE - 15 sec]
+"Le 1er mois est 100% OFFERT. Pas besoin de carte bancaire, zéro commission sur vos ventes. Après, c'est à partir de seulement ${fcfa(prixPro)}/mois. C'est l'équivalent d'un bon repas pour digitaliser tout votre commerce."
 
-[Offre & Tarifs — 20 sec]
-Le 1er mois est 100% OFFERT sans aucun engagement. Ensuite, seulement ${fcfa(prixPro)}/mois sur la formule Pro ou ${fcfa(prixBusiness)}/mois en Business multi-caissiers, avec jusqu'à 25% de remise sur l'abonnement annuel.
+🔥 [APPEL À L'ACTION - 10 sec]
+"Je vous active votre mois offert tout de suite ? C'est prêt en 2 minutes. (Renseigner le code : ${agentCodeFormatted})"`
 
-[Clôture & Code — 15 sec]
-Créons votre boutique ensemble en 2 min sur nopalou.com/boutique avec mon code partenaire : ${agentCodeFormatted} ou contactez-moi sur WhatsApp au ${agentPhoneFormatted}.`
+  const apporteurTextePerso = `💼 OPPORTUNITÉ : Devenez Partenaire Nopalou !
 
-  const apporteurTextePerso = `💼 Devenez apporteur d'affaires Nopalou
+Vous avez un réseau de commerçants à Dakar ? Vous cherchez un revenu passif fiable ?
+Gagnez ${tauxApporteur}% de commission RÉCURRENTE sur chaque abonnement. Pas une seule fois, mais CHAQUE MOIS à vie !
 
-Vous connaissez des commerçants ou agences à Dakar ? Présentez-leur Nopalou et touchez ${tauxApporteur}% de commission récurrente sur chaque abonnement Pro ou Business recruté — chaque mois, tant que la boutique reste active !
+🚀 Ce que vous gagnez :
+- ${fcfa(Math.round(prixPro * tauxApporteur / 100))} à ${fcfa(Math.round(prixBusiness * tauxApporteur / 100))}/mois par boutique active.
+- Paiement garanti le 5 du mois via Wave ou OM.
+- 0 investissement de départ.
 
-Comment ça marche :
-1. Présentez Nopalou à votre réseau avec votre code : ${agentCodeFormatted}
-2. Le commerçant crée sa boutique sur nopalou.com/boutique
-3. Touchez ${tauxApporteur}% par Wave ou Orange Money chaque mois (${fcfa(Math.round(prixPro * tauxApporteur / 100))} à ${fcfa(Math.round(prixBusiness * tauxApporteur / 100))}/mois par boutique).
+✅ Vente facile :
+Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votre code : *${agentCodeFormatted}*
 
-📲 Contact Apporteur (${agentNameFormatted}) : ${agentPhoneFormatted}`
+📲 Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPhoneFormatted} pour obtenir votre Kit de Démarrage.`
 
   // Construction dynamique de l'URL du visuel selon le type sélectionné
   let generateurUrl = `/assets/produit-promo?type=${typeVisuel}`
@@ -148,23 +149,23 @@ Comment ça marche :
   // Légende automatique associée au visuel
   let legendePublication = ''
   if (typeVisuel === 'forfait_pro') {
-    legendePublication = `🖥️ Digitalisez votre magasin avec Nopalou POS !\n\nVous gérez une boutique à Dakar ? Profitez de la Caisse POS Tactile pour seulement ${fcfa(prixPro)}/mois avec :\n✅ 3 Scanners inclus (Caméra Smartphone, Cloud Sync <100ms, Douchette USB)\n✅ Mode Caisse PWA Hors-Ligne (Fonctionne même sans connexion Internet)\n✅ Facturation & Devis OHADA en PDF (NINEA, RCCM & TVA)\n✅ Carnet de Dettes Client & Relance WhatsApp 1-Clic\n✅ Impression Stickers Codes-Barres EAN-13 GS1\n✅ 0% Commission sur vos ventes !\n\n🎁 1er mois 100% OFFERT sans carte !\n👉 Créez votre boutique sur nopalou.com/boutique`
+    legendePublication = `🚀 STOP AUX GESTIONS BROUILLONNES ! Digitalisez votre magasin aujourd'hui.\n\nFini les carnets perdus et les dettes oubliées. Pour seulement ${fcfa(prixPro)}/mois, transformez votre téléphone en véritable Caisse Tactile :\n\n📱 Mode Hors-Ligne (Même sans réseau !)\n📸 Scannez les codes-barres avec votre caméra\n🧾 Éditez des factures et devis pros (PDF)\n💸 Encaissez par Wave/OM sans commission\n\n🎁 OFFRE SPÉCIALE : 30 Jours 100% OFFERTS (Sans carte bancaire)\n👉 Cliquez ici pour créer votre boutique : nopalou.com/boutique (Code : ${agentCodeFormatted})`
   } else if (typeVisuel === 'forfait_taftaf') {
-    legendePublication = `⚡ Lancez votre Vitrine Web en 30 secondes pour seulement ${fcfa(prixDecouverte)}/mois !\n\n✅ URL personnalisée nopalou.com/boutiques/votre-nom\n✅ Commandes reçues directement sur votre WhatsApp\n✅ Carnet de Dettes Client inclus\n✅ Import AliExpress & 1688 en 1-clic\n✅ 0% Commission sur vos ventes\n\n🎁 1er mois 100% OFFERT !\n👉 Créez votre boutique sur nopalou.com/creer-boutique`
+    legendePublication = `⚡ Votre vitrine en ligne prête en 30 secondes chrono !\n\nVous vendez sur WhatsApp ? Ne perdez plus de temps à répondre aux mêmes questions. Pour ${fcfa(prixDecouverte)}/mois :\n\n✅ Lien personnalisé pour vos clients\n✅ Commandes pré-remplies directement sur WhatsApp\n✅ Zéro commission, l'argent tombe sur votre Wave/OM\n\n🎁 TESTEZ GRATUITEMENT pendant 1 mois !\n👉 Créez votre boutique : nopalou.com/creer-boutique`
   } else if (typeVisuel === 'forfait_business') {
-    legendePublication = `👑 Caisse POS Multi-Vendeurs pour Grandes Enseignes !\n\n✅ Multi-Caissiers sécurisés par code PIN\n✅ Clôtures de Caisse Z automatiques & rapports de marges\n✅ Gestion des Fournisseurs & Scan OCR de factures\n✅ Import de catalogue par lot Excel / CSV\n✅ Portail Développeur API REST & Webhooks\n\n🎁 1er mois 100% OFFERT !\n👉 Contactez-nous pour une démo sur nopalou.com/boutique`
+    legendePublication = `👑 GESTION VIP POUR GROSSISTES ET GRANDES ENSEIGNES\n\nVous avez plusieurs employés ou boutiques ? Sécurisez votre business :\n\n🔐 Accès caissiers sécurisés par code PIN\n📊 Clôtures de caisse automatiques\n🏢 Gestion multi-magasins\n\n🎁 1er mois 100% OFFERT !\n👉 Demandez une démo : nopalou.com/boutique`
   } else if (typeVisuel === 'chatbot_wa') {
-    legendePublication = `🤖 Découvrez l'Assistant Chatbot WhatsApp Meta Nopalou 24h/24 !\n\nBesoin de trouver un produit, comparer les prix ou suivre une commande au Sénégal ?\n\n💬 Envoyez "MENU" au +221 70 871 79 42 (ou wa.me/221708717942)\n\n✅ Recherche instantanée de téléphones, TV, électro & biens immo\n✅ Alertes baisse de prix envoyées sur WhatsApp\n✅ Panier multi-produits 1-clic & Suivi de commande`
+    legendePublication = `🤖 Nopalou dans votre WhatsApp 24h/24 !\n\nEnvie de connaître le prix d'un produit sans scroller pendant des heures ?\n\n💬 Envoyez "MENU" au +221 70 871 79 42\n👉 Notre IA vous donne les meilleurs prix du Sénégal en 2 secondes !\n✅ 100% Gratuit et sans application à télécharger.`
   } else if (typeVisuel === 'immo') {
-    legendePublication = `🏢 Trouvez votre appartement, villa ou terrain à Dakar sur Nopalou Immo !\n\nAnnonces vérifiées à Almadies, Mermoz, Plateau, Fann, Yoff, Saly & Petite Côte.\n\n🔑 Photos HD, coordonnées directes du bailleur sans intermédiaire masqué !\n👉 Consultez les offres sur nopalou.com/immo`
+    legendePublication = `🏠 Marre des courtiers fantômes à Dakar ?\n\nTrouvez votre prochain appartement ou terrain directement sur Nopalou Immo.\n✅ Annonces 100% vérifiées\n✅ Contacts directs sans intermédiaires cachés\n\n👉 Découvrez les offres du jour : nopalou.com/immo`
   } else if (typeVisuel === 'telecom') {
-    legendePublication = `📡 Comparez tous les Forfaits & Pass Télécom au Sénégal !\n\nOrange, Yas (ex-Free), Expresso & Promobile — trouvez le Pass Internet, Voix & SMS le plus avantageux à Dakar !\n\n💡 Utilisez notre Guide interactif de scoring pour trouver le meilleur Pass au Go le moins cher !\n👉 Comparez sur nopalou.com/telecom ou nopalou.com/guide-forfait`
+    legendePublication = `📉 Arrêtez de gaspiller votre crédit !\n\nOrange, Free, Expresso... Lequel offre le meilleur pass internet aujourd'hui ?\nDécouvrez notre comparateur magique qui calcule le VRAI coût au Go.\n\n👉 Faites le test gratuit : nopalou.com/telecom`
   } else if (typeVisuel === 'apporteur') {
-    legendePublication = `💰 Devenez Apporteur d'Affaires Nopalou (${tauxApporteur}% de commission récurrente) !\n\nRecommandez Nopalou aux commerçants & agences et touchez chaque mois votre commission par Wave ou Orange Money.\n\n📄 Brochure PDF 13 pages disponible !\n👉 Activez votre compte sur nopalou.com/compte/apporteur`
+    legendePublication = `💰 REVENUS PASSIFS : Devenez Partenaire Nopalou\n\nRecommandez le meilleur outil de gestion aux commerçants et gagnez ${tauxApporteur}% de commission CHAQUE MOIS sur leurs abonnements !\n\n✅ 0 FCFA d'investissement\n✅ Paiement assuré par Wave/OM le 5 du mois\n\n👉 Rejoignez l'équipe : nopalou.com/compte/apporteur`
   } else if (typeVisuel === 'comparatif_paliers') {
-    legendePublication = `📊 Quelle formule Nopalou correspond à votre commerce ?\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/mois) : Vitrine web & commandes WhatsApp\n2️⃣ Pro (${fcfa(prixPro)}/mois) : Caisse POS Tactile + Factures OHADA + PWA Offline\n3️⃣ Business (${fcfa(prixBusiness)}/mois) : Multi-caissiers PIN + Fournisseurs OCR + API REST\n\n🎁 1er Mois 100% OFFERT sur toutes les formules !\n🏷️ Remises : -10% (3 mois), -15% (6 mois), -25% (12 mois / 3 mois offerts)\n👉 Comparez sur nopalou.com/boutique`
+    legendePublication = `📊 3 Façons de booster votre commerce avec Nopalou :\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/m) : Pour vendre vite sur WhatsApp\n2️⃣ Pro (${fcfa(prixPro)}/m) : La caisse enregistreuse tactile complète\n3️⃣ Business (${fcfa(prixBusiness)}/m) : Pour gérer vos employés et fournisseurs\n\n🎁 Testez la solution de votre choix GRATUITEMENT pendant 30 jours !\n👉 Voir les détails : nopalou.com/boutique`
   } else {
-    legendePublication = `🔥 BON PLAN PRIX NOPALOU !\n\n📱 ${genNom}\n💰 ${fcfa(parseInt(genPrix) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre) || 0)})\n🏪 Vendeur : ${genBoutique}\n\n👉 Comparez tous les prix sur nopalou.com`
+    legendePublication = `🔥 DINGUERIE DU JOUR !\n\n📱 ${genNom}\n💥 PRIX CHOC : ${fcfa(parseInt(genPrix) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre) || 0)})\n🏪 Vendeur vérifié : ${genBoutique}\n\n👉 Commandez vite avant rupture sur nopalou.com !`
   }
 
   return (
@@ -192,38 +193,70 @@ Comment ça marche :
         </p>
       </div>
 
-      {/* Barre de Personnalisation Agent / Apporteur */}
+      {/* Barre de Personnalisation Agent / Apporteur (Refonte SaaS) */}
       <div style={{
-        background: '#FFF7ED', border: '1.5px solid #FFEDD5', borderRadius: 14,
-        padding: '16px 20px', marginBottom: 32, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center',
+        background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0',
+        padding: '24px', marginBottom: 32, boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+        display: 'flex', flexDirection: 'column', gap: 16
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 18 }}>💼</span>
-          <span style={{ fontSize: 13, fontWeight: 800, color: '#C75B00' }}>
-            Personnaliser pour Agent / Apporteur :
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 20 }}>👤</span>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: '#0f172a' }}>Identité Apporteur</h3>
+            <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>Personnalisez les scripts avec vos informations.</p>
+          </div>
         </div>
-        <input
-          type="text"
-          placeholder="Votre prénom / nom"
-          value={nomAgent}
-          onChange={e => setNomAgent(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, flex: 1, minWidth: 160 }}
-        />
-        <input
-          type="text"
-          placeholder="N° WhatsApp (ex: 708717942)"
-          value={phoneAgent}
-          onChange={e => setPhoneAgent(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, flex: 1, minWidth: 160 }}
-        />
-        <input
-          type="text"
-          placeholder="Code Apporteur (ex: AGENT221)"
-          value={codeAgent}
-          onChange={e => setCodeAgent(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, flex: 1, minWidth: 160 }}
-        />
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Votre Prénom</label>
+            <input 
+              type="text" 
+              placeholder="Ex: Modou" 
+              value={nomAgent} 
+              onChange={e => setNomAgent(e.target.value)}
+              style={{
+                background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 8,
+                padding: '10px 14px', fontSize: 14, outline: 'none', transition: 'border-color 0.2s',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Numéro WhatsApp</label>
+            <div style={{ display: 'flex' }}>
+              <span style={{ 
+                background: '#e2e8f0', border: '1px solid #cbd5e1', borderRight: 'none', 
+                padding: '10px 12px', borderRadius: '8px 0 0 8px', fontSize: 14, color: '#475569', fontWeight: 600 
+              }}>+221</span>
+              <input 
+                type="text" 
+                placeholder="708717942" 
+                value={phoneAgent} 
+                onChange={e => setPhoneAgent(e.target.value)}
+                style={{
+                  flex: 1, background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '0 8px 8px 0',
+                  padding: '10px 14px', fontSize: 14, outline: 'none', minWidth: 0,
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Code Promo</label>
+            <input 
+              type="text" 
+              placeholder="Ex: MODOU20" 
+              value={codeAgent} 
+              onChange={e => setCodeAgent(e.target.value.toUpperCase())}
+              style={{
+                background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 8,
+                padding: '10px 14px', fontSize: 14, outline: 'none', fontWeight: 700, color: '#C75B00',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Navigation par Onglets (5 Tabs) */}

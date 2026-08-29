@@ -14,6 +14,54 @@ export default function Error({
   useEffect(() => {
     console.error('[Nopalou Error]', error)
 
+    // Auto-guérison automatique en cas de bundle/chunk en cache obsolète (ReferenceError, ChunkLoadError, etc.)
+    if (typeof window !== 'undefined') {
+      const errName = error?.name || ''
+      const errMsg = error?.message || ''
+      const isStaleBundleError =
+        errName === 'ReferenceError' ||
+        errName === 'ChunkLoadError' ||
+        errMsg.includes('is not defined') ||
+        errMsg.includes('Loading chunk') ||
+        errMsg.includes('dynamically imported module') ||
+        errMsg.includes('Failed to fetch')
+
+      if (isStaleBundleError) {
+        const reloadKey = 'nopalou_auto_heal_time'
+        const lastHeal = sessionStorage.getItem(reloadKey)
+        const now = Date.now()
+        // Éviter les boucles infinies : maximum 1 auto-reload toutes les 30 secondes
+        if (!lastHeal || now - parseInt(lastHeal, 10) > 30000) {
+          sessionStorage.setItem(reloadKey, now.toString())
+          console.warn('[Nopalou Error Boundary] Détection de cache obsolète. Purge automatique et rafraîchissement...')
+          
+          if ('caches' in window) {
+            caches.keys()
+              .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+              .catch(() => {})
+              .finally(() => {
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations()
+                    .then(regs => {
+                      for (const r of regs) r.update().catch(() => {})
+                    })
+                    .catch(() => {})
+                    .finally(() => {
+                      window.location.reload()
+                    })
+                } else {
+                  window.location.reload()
+                }
+              })
+            return
+          } else {
+            window.location.reload()
+            return
+          }
+        }
+      }
+    }
+
     // Sondage automatique /api/health toutes les 4 secondes pour restaurer la page dès que le serveur réagit
     const interval = setInterval(async () => {
       try {

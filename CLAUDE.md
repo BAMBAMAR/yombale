@@ -4813,3 +4813,23 @@ opalou_pos_session_) pour conserver l'Ã©tat du CA mÃªme en cas d'actualisati
 - **Normalisation des Grilles & Dashboard KPI** :
   - Refonte de `.dash-kpi-grid` (`repeat(auto-fit, minmax(180px, 1fr))`) et de `.dash-body-grid` pour un affichage réactif et harmonieux sur toutes les résolutions.
   - Ajout de limites de largeur conteneurs (`max-width: 1280px; margin: 0 auto;`) pour garantir la lisibilité sur très grands écrans.
+
+
+## 29 Août 2026 - Modifications Phase 2 Admin (Sales Enablement)
+
+Voici les URLs et les modifications apportées aux outils d'administration internes (Sales Enablement) :
+
+**1. Kit de Communication (Générateur de visuels et Scripts)**
+- **URL** : http://localhost:3000/admin/communication
+- **Fichier modifié** : frontend-next/src/app/admin/(protected)/communication/KitComClient.tsx
+- **Ce qui a été fait** : 
+  - Réécriture du script oral de démarchage (méthode AIDA avec accroche, douleur, solution, offre).
+  - Réécriture des légendes générées pour les réseaux sociaux pour être plus orientées conversion.
+  - Refonte UI (look SaaS premium) du formulaire où l'agent renseigne son prénom et son code.
+
+**2. CRM de Prospection (Base Leads et Dispatcher WhatsApp)**
+- **URL** : http://localhost:3000/admin/prospection
+- **Fichier modifié** : frontend-next/src/app/admin/(protected)/prospection/ProspectionClient.tsx
+- **Ce qui a été fait** :
+  - Modernisation des onglets de navigation (design style 'pilules' blanches sur fond gris clair).
+  - Redesign des boutons d'action rapide dans le tableau (Boutons 'Modifier', 'WA 1-Clic' et 'Supprimer' plus visibles et cliquables).

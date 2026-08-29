@@ -54,30 +54,38 @@ export default function RegisterSW() {
       }
     }
 
-    // Enregistrement effectif du Service Worker PWA
+    // Enregistrement effectif du Service Worker PWA avec auto-mise à jour transparente
     navigator.serviceWorker
       .register('/sw.js')
       .then((reg) => {
         console.log('[PWA SW] Service Worker enregistré avec succès:', reg.scope)
 
-        // Détecter une mise à jour disponible lors du téléchargement
+        // Détecter une mise à jour disponible lors du téléchargement et l'activer immédiatement
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing
           if (!newWorker) return
 
           newWorker.addEventListener('statechange', () => {
-            // Le nouveau SW est installé et prêt à remplacer l'ancien contrôleur
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller && !isRecentlyUpdated()) {
-              console.log('[PWA SW] Nouvelle version disponible. Affichage du bouton de mise à jour.')
-              setSwUpdateAvailable(true)
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('[PWA SW] Nouvelle version détectée -> Activation automatique transparente.')
+              newWorker.postMessage({ type: 'SKIP_WAITING' })
             }
           })
         })
 
-        // Vérifier si un nouveau SW est déjà téléchargé et en attente
-        if (reg.waiting && navigator.serviceWorker.controller && !isRecentlyUpdated()) {
-          setSwUpdateAvailable(true)
+        // Si un nouveau SW est déjà téléchargé et en attente, l'activer directement
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          console.log('[PWA SW] Service Worker en attente -> Activation automatique directe.')
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' })
         }
+
+        // Vérifier les mises à jour serveur lors du retour au premier plan de l'onglet
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'visible') {
+            reg.update().catch(() => {})
+          }
+        }
+        document.addEventListener('visibilitychange', handleVisibilityChange)
       })
       .catch((err) => {
         console.error('[PWA SW] Échec enregistrement Service Worker:', err)

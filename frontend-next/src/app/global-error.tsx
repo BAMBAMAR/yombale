@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useEffect } from 'react'
 
 export default function GlobalError({
   error,
@@ -8,6 +8,33 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const errName = error?.name || ''
+      const errMsg = error?.message || ''
+      const isStale =
+        errName === 'ReferenceError' ||
+        errName === 'ChunkLoadError' ||
+        errMsg.includes('is not defined') ||
+        errMsg.includes('Loading chunk')
+
+      if (isStale) {
+        const reloadKey = 'nopalou_global_auto_heal'
+        const lastHeal = sessionStorage.getItem(reloadKey)
+        const now = Date.now()
+        if (!lastHeal || now - parseInt(lastHeal, 10) > 30000) {
+          sessionStorage.setItem(reloadKey, now.toString())
+          if ('caches' in window) {
+            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => {
+              window.location.reload()
+            })
+          } else {
+            window.location.reload()
+          }
+        }
+      }
+    }
+  }, [error])
   return (
     <html lang="fr">
       <body style={{

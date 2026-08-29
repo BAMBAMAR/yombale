@@ -215,51 +215,55 @@ export default async function HomePage({
 
           </div>
 
-          {/* COLONNE DROITE (Desktop seulement : Boutique Taf Taf compacte) */}
+          {/* COLONNE DROITE (Desktop seulement : Espace Marchands B2B) */}
           <div className="hero-side-card" style={{ flex: '0 0 310px', width: 310, display: 'flex' }}>
             <div style={{
               width: '100%',
               maxWidth: 310,
               textAlign: 'left',
-              background: 'var(--navy, #1C2B4A)',
-              padding: '14px 18px',
+              background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #0d1728 100%)',
+              padding: '16px 20px',
               borderRadius: 14,
               color: '#f8fafc',
               border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 4px 16px rgba(28,43,74,0.2)',
+              boxShadow: '0 8px 24px rgba(28,43,74,0.3)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
               minHeight: 148,
               height: '100%',
               boxSizing: 'border-box',
-              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
             }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.25)', color: '#fed7aa', padding: '2px 7px', borderRadius: 8, fontSize: 10, fontWeight: 800, border: '1px solid rgba(199,91,0,0.4)', letterSpacing: '0.04em' }}>🚀 NOUVEAU</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fed7aa' }}>{prixTafTaf} F/mois</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.2)', color: '#fed7aa', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, border: '1px solid rgba(199,91,0,0.4)', letterSpacing: '0.05em' }}>
+                    🏪 POUR LES COMMERÇANTS
+                  </span>
                 </div>
-                <h2 style={{ fontSize: 13.5, fontWeight: 900, marginBottom: 2, color: '#fff', lineHeight: 1.2 }}>Boutique Taf Taf</h2>
-                <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.8)', margin: '0 0 6px', lineHeight: 1.3 }}>Créez votre vitrine en 30s chrono !</p>
-                
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <li style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.9)', lineHeight: 1.3 }}>
-                    <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 900 }}>✓</span> Vitrine web & lien personnalisé
-                  </li>
-                  <li style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.9)', lineHeight: 1.3 }}>
-                    <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 900 }}>✓</span> Commandes directes WhatsApp & Web
-                  </li>
-                </ul>
+                <h2 style={{ fontSize: 15, fontWeight: 900, margin: '0 0 6px', color: '#fff', lineHeight: 1.3 }}>
+                  Gérez votre commerce comme un Pro.
+                </h2>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: '0 0 10px', lineHeight: 1.4 }}>
+                  Vitrine Taf Taf, Caisse POS, Wave & WhatsApp. Tout en un.
+                </p>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 2 }}>
-                <Link href="/creer-boutique" style={{ fontSize: 12, fontWeight: 800, color: '#fed7aa', textDecoration: 'none', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  Créer ma vitrine <span style={{ color: 'var(--accent, #C75B00)' }}>→</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8 }}>
+                <Link href="/marchands" style={{ 
+                  background: 'var(--accent, #C75B00)', 
+                  color: '#fff', 
+                  padding: '8px 16px', 
+                  borderRadius: 10, 
+                  fontSize: 12, 
+                  fontWeight: 800, 
+                  textDecoration: 'none', 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: 4 
+                }}>
+                  Découvrir Nopalou SaaS <span style={{ fontSize: 14 }}>→</span>
                 </Link>
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.08)', padding: '2px 7px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)' }}>
-                  30j offerts
-                </span>
               </div>
             </div>
           </div>

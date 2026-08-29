@@ -1009,10 +1009,10 @@ export default function ProspectionClient({
         })}
       </div>
 
-      {/* Onglets Navigation (6 Tabs) */}
+      {/* Onglets Navigation (6 Tabs - SaaS Style) */}
       <div style={{
-        display: 'flex', gap: 8, overflowX: 'auto', borderBottom: '2px solid #E2E8F0',
-        paddingBottom: 2, marginBottom: 28,
+        display: 'flex', gap: 8, overflowX: 'auto', background: '#F8FAFC',
+        padding: '6px', borderRadius: 16, marginBottom: 28, border: '1px solid #E2E8F0'
       }}>
         {[
           { id: 'crm', label: `📋 1. Base CRM Leads (${stats.total || filteredLeads.length})`, icon: Users },
@@ -1020,7 +1020,7 @@ export default function ProspectionClient({
           { id: 'campagnes', label: '💬 3. Dispatcher & Campagnes', icon: Send },
           { id: 'logs', label: '📊 4. Historique d\'Envois', icon: History },
           { id: 'control', label: '🎛️ 5. Centre de Contrôle & Crons', icon: ShieldCheck },
-          { id: 'blacklist', label: `🚫 6. Liste Noire / Blacklist (${stats.blacklist !== undefined ? stats.blacklist : blacklist.length})`, icon: Ban },
+          { id: 'blacklist', label: `🚫 6. Liste Noire (${stats.blacklist !== undefined ? stats.blacklist : blacklist.length})`, icon: Ban },
         ].map((t) => {
           const Icon = t.icon
           const isActive = activeTab === t.id
@@ -1034,12 +1034,13 @@ export default function ProspectionClient({
                 if (t.id === 'blacklist') loadBlacklist()
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '12px 18px',
-                border: 'none', background: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
+                border: 'none', borderRadius: 12, cursor: 'pointer',
                 fontSize: 14, fontWeight: isActive ? 800 : 600,
                 color: isActive ? '#16A34A' : '#64748B',
-                borderBottom: isActive ? '3px solid #16A34A' : '3px solid transparent',
-                whiteSpace: 'nowrap', transition: 'all 0.15s',
+                background: isActive ? '#ffffff' : 'transparent',
+                boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.05)' : 'none',
+                whiteSpace: 'nowrap', transition: 'all 0.2s',
               }}
             >
               <Icon size={18} color={isActive ? '#16A34A' : '#64748B'} />
@@ -1369,37 +1370,39 @@ export default function ProspectionClient({
                             </span>
                           </td>
                           <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                            <div style={{ display: 'inline-flex', gap: 6 }}>
+                            <div style={{ display: 'inline-flex', gap: 8 }}>
                               <button
                                 onClick={() => handleOpenEditModal(lead)}
                                 title="Modifier ce prospect dans la base"
                                 style={{
-                                  padding: '6px 10px', background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE',
-                                  borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                                  padding: '8px', background: '#F8FAFC', color: '#64748b', border: '1px solid #e2e8f0',
+                                  borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                  transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                                 }}
                               >
-                                <Pencil size={13} /> Modifier
+                                <Pencil size={15} />
                               </button>
                               <a
                                 href={waDirectUrl}
                                 target="_blank"
                                 rel="noreferrer"
                                 style={{
-                                  padding: '6px 10px', background: '#16A34A', color: '#fff', borderRadius: 8,
-                                  fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4,
+                                  padding: '8px 14px', background: '#16A34A', color: '#fff', borderRadius: 8,
+                                  fontSize: 13, fontWeight: 900, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6,
+                                  boxShadow: '0 4px 12px rgba(22,163,74,0.3)', transition: 'transform 0.1s'
                                 }}
                               >
-                                <MessageSquare size={13} /> WA 1-Clic
+                                <MessageSquare size={15} /> Relancer
                               </a>
                               <button
                                 onClick={() => handleDeleteLead(lead.id)}
                                 title="Supprimer ce prospect"
                                 style={{
-                                  padding: '6px 8px', background: '#FEE2E2', color: '#DC2626', border: 'none',
-                                  borderRadius: 8, cursor: 'pointer',
+                                  padding: '8px', background: '#FEE2E2', color: '#DC2626', border: 'none',
+                                  borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center'
                                 }}
                               >
-                                <Trash2 size={13} />
+                                <Trash2 size={15} />
                               </button>
                             </div>
                           </td>
