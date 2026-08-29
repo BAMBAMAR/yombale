@@ -3269,6 +3269,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
                 {planActif === 'business' && <span className="badge-premium" style={{ background: '#1e3a8a', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>💼 Business</span>}
                 {planActif === 'pro'      && <span className="badge-premium" style={{ background: '#C75B00', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>⭐ Pro</span>}
                 {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#22c55e', color: '#064e3b', fontSize: 10, padding: '2px 6px', border: 'none' }}>⚡ Taf Taf</span>}
+                {(!planActif || planActif === 'gratuit') && <span className="badge-premium" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', fontSize: 10, padding: '2px 6px' }}>🌱 Gratuit</span>}
                 {boutique.mode_fonctionnement === 'pure_player' ? (
                   <span className="badge-premium" style={{ background: '#fff7ed', color: '#c75b00', borderColor: '#ffedd5', fontSize: 10, padding: '2px 6px' }}>Web</span>
                 ) : (
@@ -4931,6 +4932,11 @@ export default function BoutiqueClient({
       setPlanActifEffectif(planActif as any)
       if (typeof window !== 'undefined') {
         localStorage.setItem('nopalou_plan_actif', planActif)
+      }
+    } else {
+      setPlanActifEffectif(null)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('nopalou_plan_actif')
       }
     }
   }, [planActif])
