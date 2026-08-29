@@ -340,54 +340,68 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                         Formule de base gratuite
                       </Link>
                     ) : (
-                      <>
+                    <>
+                      {/* Bouton Paiement Direct Wave */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {estRecommande && (
+                          <span style={{ fontSize: 10.5, fontWeight: 700, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: 4, width: 'fit-content', margin: '0 auto 4px' }}>
+                            ⚡ Activation automatique
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleSouscrireWave(palier.id as 'decouverte' | 'pro' | 'business')}
                           disabled={isPending}
-                          className={btnClass}
+                          className="paiement-btn paiement-btn--wave"
+                          style={{ margin: 0, opacity: enCours ? 0.7 : 1, textAlign: 'left' }}
                         >
                           {enCours ? (
-                            <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', width: '100%' }}>
                               <Loader2 size={16} className="animate-spin" />
-                              <span>Connexion Wave…</span>
-                            </>
-                          ) : estActuel ? (
-                            <>
-                              <span>Renouveler {duree} mois ({fcfa(totalMontant)})</span>
-                              <ArrowRight size={16} />
-                            </>
+                              <span>Connexion à Wave…</span>
+                            </div>
                           ) : (
                             <>
-                              <span>{RANG_PALIER[palier.id] > RANG_PALIER[palierActuelId] ? 'Passer à cette formule' : 'Changer pour cette offre'}</span>
-                              <ArrowRight size={16} />
+                              <span className="paiement-btn-logo">🌊</span>
+                              <div className="paiement-btn-text">
+                                <span className="paiement-btn-nom" style={{ fontWeight: 800 }}>Wave (Paiement Direct)</span>
+                                <span className="paiement-btn-desc">
+                                  {estActuel ? `Renouveler ${duree} mois (${fcfa(totalMontant)})` : `Payer ${fcfa(totalMontant)} pour ${duree} mois`}
+                                </span>
+                              </div>
+                              <span className="paiement-btn-arrow">→</span>
                             </>
                           )}
                         </button>
+                      </div>
 
-                        <button
-                          type="button"
-                          onClick={() => setPlanManuel(palier.id as 'decouverte' | 'pro' | 'business')}
-                          disabled={isPending}
-                          style={{
-                            background: 'transparent',
-                            border: '1px solid transparent',
-                            padding: '8px 0',
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: '#64748B',
-                            cursor: 'pointer',
-                            textDecoration: 'underline',
-                            textDecorationColor: '#CBD5E1',
-                            textUnderlineOffset: 4,
-                            transition: 'color 0.2s'
-                          }}
-                          onMouseOver={(e) => e.currentTarget.style.color = '#1C2B4A'}
-                          onMouseOut={(e) => e.currentTarget.style.color = '#64748B'}
-                        >
-                          Autre moyen (Orange Money, Free...)
-                        </button>
-                      </>
+                      {/* Bouton OM */}
+                      <button
+                        disabled={true}
+                        className="paiement-btn paiement-btn--orange"
+                        style={{ margin: 0, textAlign: 'left' }}
+                      >
+                        <span className="paiement-btn-logo">🟠</span>
+                        <div className="paiement-btn-text">
+                          <span className="paiement-btn-nom">Orange Money <small style={{ color: '#ea580c', fontWeight: 800, marginLeft: 6 }}>(Bientôt)</small></span>
+                          <span className="paiement-btn-desc">Intégration API en cours</span>
+                        </div>
+                      </button>
+
+                      {/* Bouton Manuel */}
+                      <button 
+                        onClick={() => setPlanManuel(palier.id as 'decouverte' | 'pro' | 'business')}
+                        className="paiement-btn"
+                        style={{ margin: 0, textAlign: 'left' }}
+                      >
+                        <span className="paiement-btn-logo">🧾</span>
+                        <div className="paiement-btn-text">
+                          <span className="paiement-btn-nom">Paiement Manuel / Reçu</span>
+                          <span className="paiement-btn-desc">Envoyer la preuve de dépôt (Wave/OM)</span>
+                        </div>
+                        <span className="paiement-btn-arrow">→</span>
+                      </button>
+                    </>
                     )}
                   </div>
                 </div>
