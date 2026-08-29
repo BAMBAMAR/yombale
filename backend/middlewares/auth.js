@@ -57,11 +57,23 @@ async function requireEmailVerifie(req, res, next) {
   }
 }
 
-// Protège par ADMIN_SECRET (variable d'env Railway) — header X-Admin-Secret ou ?secret=
+// Protège par ADMIN_SECRET (variable d'env Railway/Render) — header X-Admin-Secret, query ?secret= ou cookie nopalou_admin
 function adminSecretOnly(req, res, next) {
-  const secret = req.headers['x-admin-secret'];
+  let secret = req.headers['x-admin-secret'] || req.query.secret;
+
+  // Fallback si cookie admin présent (nopalou_admin)
+  if (!secret && req.headers.cookie) {
+    const cookies = Object.fromEntries(
+      req.headers.cookie.split(';').map(c => {
+        const parts = c.trim().split('=');
+        return [parts[0], parts.slice(1).join('=')];
+      })
+    );
+    secret = cookies['nopalou_admin'];
+  }
+
   if (process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {
-    return res.status(401).json({ error: 'Secret admin requis. Envoyez le header X-Admin-Secret.' });
+    return res.status(401).json({ error: 'Secret admin requis. Envoyez le header X-Admin-Secret ou le cookie nopalou_admin.' });
   }
   next();
 }

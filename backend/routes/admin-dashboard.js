@@ -10,18 +10,17 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
     const period = req.query.period || '30d'; // 'today', '7d', '30d', 'all'
 
     let dateFilterSql = "created_at >= NOW() - INTERVAL '30 days'";
-    let dateFilterDate = "created_at::date >= CURRENT_DATE - 30";
-    let dateFilterToday = "created_at::date = CURRENT_DATE";
+    let dateFilterProcessedAt = "processed_at >= NOW() - INTERVAL '30 days'";
 
     if (period === 'today') {
       dateFilterSql = "created_at::date = CURRENT_DATE";
-      dateFilterDate = "created_at::date = CURRENT_DATE";
+      dateFilterProcessedAt = "processed_at::date = CURRENT_DATE";
     } else if (period === '7d') {
       dateFilterSql = "created_at >= NOW() - INTERVAL '7 days'";
-      dateFilterDate = "created_at::date >= CURRENT_DATE - 7";
+      dateFilterProcessedAt = "processed_at >= NOW() - INTERVAL '7 days'";
     } else if (period === 'all') {
       dateFilterSql = "1=1";
-      dateFilterDate = "1=1";
+      dateFilterProcessedAt = "1=1";
     }
 
     // 1. Business & Finances
@@ -32,7 +31,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COUNT(*) AS nb_ventes_total
         FROM ventes
         WHERE archivee IS NOT TRUE AND ${dateFilterSql}
-      `),
+      `).catch(() => ({ rows: [{ ca_total_ventes: 0, nb_ventes_total: 0 }] })),
       pool.query(`
         SELECT
           COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW()), 0) AS mrr,
@@ -42,14 +41,14 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COUNT(*) FILTER (WHERE plan = 'pro' AND statut = 'actif' AND fin > NOW()) AS abonnements_pro,
           COUNT(*) FILTER (WHERE plan = 'decouverte' AND statut = 'actif' AND fin > NOW()) AS abonnements_decouverte
         FROM abonnements
-      `),
+      `).catch(() => ({ rows: [{ mrr: 0, abonnements_actifs: 0, nouveaux_abonnements_periode: 0 }] })),
       pool.query(`
         SELECT
           COUNT(*) FILTER (WHERE statut = 'en_attente') AS en_attente,
           COUNT(*) FILTER (WHERE statut = 'valide' AND ${dateFilterSql}) AS valides_periode,
           COALESCE(SUM(montant) FILTER (WHERE statut = 'valide' AND ${dateFilterSql}), 0) AS montant_valide_periode
         FROM paiements_manuels
-      `),
+      `).catch(() => ({ rows: [{ en_attente: 0, valides_periode: 0, montant_valide_periode: 0 }] })),
     ]);
 
     // 2. Utilisateurs & Marchands
@@ -62,7 +61,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COUNT(*) FILTER (WHERE suspendu = TRUE) AS utilisateurs_suspendus,
           COUNT(*) FILTER (WHERE est_apporteur = TRUE) AS apporteurs_total
         FROM utilisateurs
-      `),
+      `).catch(() => ({ rows: [{ total_utilisateurs: 0, nouveaux_utilisateurs_periode: 0 }] })),
       pool.query(`
         SELECT
           COUNT(*) AS total_boutiques,
@@ -71,7 +70,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COUNT(*) FILTER (WHERE sponsorise = TRUE AND (sponsor_jusqu_au IS NULL OR sponsor_jusqu_au > NOW())) AS boutiques_sponsorisees,
           COUNT(*) FILTER (WHERE (SELECT COUNT(*) FROM boutique_produits WHERE boutique_id = boutiques.id) = 0) AS boutiques_zero_produit
         FROM boutiques
-      `),
+      `).catch(() => ({ rows: [{ total_boutiques: 0, boutiques_actives: 0, nouvelles_boutiques_periode: 0 }] })),
     ]);
 
     // 3. Activité Commandes & Catalogue
@@ -84,13 +83,13 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COUNT(*) FILTER (WHERE statut = 'livree') AS commandes_livrees
         FROM commandes_boutique
         WHERE ${dateFilterSql}
-      `),
+      `).catch(() => ({ rows: [{ total_commandes: 0, volume_commandes: 0, commandes_en_attente: 0, commandes_livrees: 0 }] })),
       pool.query(`
         SELECT
           (SELECT COUNT(*)::int FROM produits) AS produits_scrapes,
           (SELECT COUNT(*)::int FROM boutique_produits) AS produits_marchands,
           (SELECT COUNT(*)::int FROM boutique_produits WHERE en_stock = TRUE) AS produits_en_stock
-      `),
+      `).catch(() => ({ rows: [{ produits_scrapes: 0, produits_marchands: 0, produits_en_stock: 0 }] })),
       pool.query(`
         SELECT
           COUNT(*) AS total_annonces,
@@ -98,7 +97,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COUNT(*) FILTER (WHERE actif = FALSE AND rejete = FALSE AND supprimee = FALSE) AS annonces_en_attente,
           COUNT(*) FILTER (WHERE rejete = TRUE) AS annonces_rejetees
         FROM annonces_classifiees
-      `),
+      `).catch(() => ({ rows: [{ total_annonces: 0, annonces_actives: 0, annonces_en_attente: 0 }] })),
       pool.query(`
         SELECT
           COUNT(*) AS total_immo,
@@ -106,7 +105,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COUNT(*) FILTER (WHERE actif = FALSE AND supprimee = FALSE AND COALESCE(rejete, FALSE) = FALSE) AS immo_en_attente,
           COUNT(*) FILTER (WHERE COALESCE(demande_sponsorisation, FALSE) = TRUE) AS immo_demandes_sponsoring
         FROM annonces_immo
-      `),
+      `).catch(() => ({ rows: [{ total_immo: 0, immo_actives: 0, immo_en_attente: 0 }] })),
     ]);
 
     // 4. Outreach, WhatsApp & Support
@@ -114,15 +113,15 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       pool.query(`
         SELECT
           (SELECT COUNT(*)::int FROM whatsapp_sessions) AS sessions_chatbot_actives,
-          (SELECT COUNT(*)::int FROM whatsapp_processed_messages WHERE ${dateFilterSql}) AS messages_traites_periode,
+          (SELECT COUNT(*)::int FROM whatsapp_processed_messages WHERE ${dateFilterProcessedAt}) AS messages_traites_periode,
           (SELECT COUNT(*)::int FROM whatsapp_blacklist) AS optouts_whatsapp
-      `),
+      `).catch(() => ({ rows: [{ sessions_chatbot_actives: 0, messages_traites_periode: 0, optouts_whatsapp: 0 }] })),
       pool.query(`
         SELECT
           (SELECT COUNT(*)::int FROM prospection_leads) AS total_leads,
           (SELECT COUNT(*)::int FROM prospection_leads WHERE statut = 'converti') AS leads_convertis,
           (SELECT COUNT(*)::int FROM prospection_messages_log WHERE ${dateFilterSql}) AS messages_prospection_periode
-      `),
+      `).catch(() => ({ rows: [{ total_leads: 0, leads_convertis: 0, messages_prospection_periode: 0 }] })),
       pool.query(`
         SELECT
           COUNT(*) FILTER (WHERE statut = 'en_attente') AS demandes_support_en_attente
@@ -132,7 +131,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
         SELECT
           COUNT(*) FILTER (WHERE statut = 'en_attente') AS demandes_partenaires_en_attente
         FROM demandes_partenaires
-      `),
+      `).catch(() => ({ rows: [{ demandes_partenaires_en_attente: 0 }] })),
     ]);
 
     // 5. Synthèse des Alertes & Actions Immédiates (Action Center)
