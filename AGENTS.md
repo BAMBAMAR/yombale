@@ -11,3 +11,8 @@
 - **Bannissement Strict du `fetch` / Téléchargement de Polices Externes sur Tout le Projet** : Il est STRICTEMENT INTERDIT de télécharger, `fetch`, `@import` ou injecter des polices d'écriture dynamiquement depuis des CDN externes (ex: fichiers TTF/WOFF/WOFF2 depuis `cdn.jsdelivr.net`, Google Fonts CDN, unpkg, fontsource CDN, ou tout autre serveur tiers) sur L'ENSEMBLE DU SITE et de l'application (`frontend-next`, routes d'images `ImageResponse` / `@vercel/og` / Satori, API, styles, scripts).
 - **Raison** : Évite les ralentissements réseau, les échecs au runtime edge/SSR/build, la dépendance à des CDN externes, garantit des temps de réponse ultra-rapides et évite les blocages d'affichage.
 - **Alternative Obligatoire** : Utiliser exclusivement la pile de polices système native haute lisibilité (`fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'`) ou les polices système `var(--font-inter)` avec une mise en page CSS propre et des couleurs à fort contraste.
+
+## 🔑 Règle d'Authentification Git (GitHub Token)
+- **Token Disponible** : Le jeton d'authentification GitHub (`GITHUB_TOKEN=<VOIR_DANS_.ENV>`) est disponible dans le fichier `.env` à la racine.
+- **Utilisation pour les Push** : Lors d'une demande de `git push`, si l'environnement demande une authentification ou si vous devez configurer le remote URL pour pousser les modifications de manière automatisée, vous DEVEZ utiliser ce token.
+- **Exemple de Remote** : `https://<TOKEN>@github.com/<utilisateur>/<repo>.git`

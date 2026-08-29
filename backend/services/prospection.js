@@ -73,7 +73,7 @@ Avec Nopalou (https://nopalou.com) :
 📊 Vous demandez votre bilan du jour par message : tapez « Bilan » et recevez vos ventes en direct !
 🎁 1er mois 100% OFFERT sans engagement !
 
-Répondez simplement « OUI » pour ouvrir votre boutique démo tout de suite !` + FOOTER_OPTOUT
+Répondez simplement « OUI » pour ouvrir votre boutique tout de suite !` + FOOTER_OPTOUT
   },
   {
     id: 'migration_shopify_excel',
@@ -111,7 +111,7 @@ Avec Nopalou (https://nopalou.com), vous avez votre boutique prête en 30 second
 ✅ Suivez votre CA du jour en tapant simplement « Bilan » sur WhatsApp
 🎁 Le 1er mois est 100% OFFERT sans engagement !
 
-Découvrez une boutique démo ici : https://nopalou.com/guide-creer-boutique
+Découvrez une boutique exemple ici : https://nopalou.com/guide-creer-boutique
 
 Voulez-vous que je vous active votre lien test gratuit aujourd'hui ?` + FOOTER_OPTOUT
   },
@@ -150,7 +150,7 @@ Avec Nopalou (https://nopalou.com), partagez votre parc auto en 1 seul lien pro 
 ✅ Référencement sur le portail auto n°1 au Sénégal
 🎁 1er mois 100% OFFERT sans aucun engagement !
 
-Découvrez la vitrine démo : https://nopalou.com/annonces
+Découvrez un exemple de vitrine : https://nopalou.com/annonces
 
 Pouvons-nous ajouter votre 1er véhicule disponible aujourd'hui ?` + FOOTER_OPTOUT
   },
@@ -255,7 +255,8 @@ Seriez-vous disponible pour un échange rapide de 5 minutes cette semaine ?
 
 Bien cordialement,
 L'équipe Déploiement Nopalou Sénégal
-+221 77 000 00 00` + '\n\nPour vous désinscrire de nos communications, répondez STOP à cet email.'
+contact@nopalou.com
+WhatsApp : +221 70 871 79 42` + '\n\nPour vous désinscrire de nos communications, répondez STOP à cet email.'
   }
 ];
 
@@ -469,6 +470,40 @@ function nettoyerNomBoutique(rawNom, categorie = 'mode', quartier = '') {
 
   return toTitleCase(clean);
 }
+
+function nettoyerContactNom(rawNom) {
+  if (!rawNom || typeof rawNom !== 'string') return null;
+  const clean = rawNom.trim().toLowerCase();
+  
+  if (
+    clean === 'responsable' ||
+    clean === 'anonyme' ||
+    clean === 'participant(e) anonyme' ||
+    clean.length < 2 ||
+    rawNom.includes('"')
+  ) {
+    return null;
+  }
+
+  // Filtrer les noms de catégories génériques qui se retrouvent souvent dans les noms de contacts WhatsApp/Groupes
+  if (
+    /^(mode|véhicules?|vehicules?|commerce\s*général|commerce\s*\&\s*boutique|commerce|informatique|téléphonie|tech|électroménager|beauté|cosmétique|immo|immobilière|agence|boutique|grossiste|alimentation|livraison|de\s*livraison|préféré|iphone|dakar|sénégal|senegal)$/i.test(clean) ||
+    clean.includes('commerce') ||
+    clean.includes('boutique') ||
+    clean.includes('véhicule') ||
+    clean.includes('vehicule') ||
+    clean.includes('téléphone') ||
+    clean.includes('livraison') ||
+    clean.includes('anonyme') ||
+    clean.includes('5g') ||
+    clean.includes('iphone')
+  ) {
+    return null;
+  }
+
+  return toTitleCase(rawNom.trim());
+}
+
 
 function estLeadEmploiOuInvalide(lead) {
   const cat = String(lead.categorie || '').toLowerCase();
@@ -1117,7 +1152,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     }
 
     // Cadence Anti-Ban intelligente (Jitter aléatoire entre 2.5s et 4.5s si envoi réel)
-    if (!simulation) {
+    if (!simulation && canal === 'whatsapp') {
       // Pause de respiration de 12s tous les 25 envois
       if (index > 0 && index % 25 === 0) {
         await new Promise((r) => setTimeout(r, 12000));
@@ -1159,6 +1194,7 @@ module.exports = {
   DICTIONNAIRE_QUARTIERS,
   detecterQuartier,
   nettoyerNomBoutique,
+  nettoyerContactNom,
   estLeadEmploiOuInvalide,
   nettoyerEtEnrichirLead,
   nettoyerTousLesLeadsBdd,

@@ -1,3 +1,10 @@
+- **Audit Marketing, Fix Chatbot & Stabilité Prospection (`backend/services/prospection.js`, `backend/services/whatsapp-chatbot.js`, `backend/services/scraper-prospection.js`) (`pushed` - 29 août 2026)** 🧹🤖🚀 :
+  * **🧹 1. Qualité des Données (Scraping)** : Création d'un filtre intelligent (`nettoyerContactNom`) pour empêcher l'insertion de noms de prospects génériques ("Mode", "Commerce Général", etc.) et exécution d'un script de nettoyage sur la base de données.
+  * **🤖 2. Fix Chatbot Prospection** : Mise en place d'intercepteurs prioritaires dans le chatbot (`handleIncomingInternal`) pour capturer proprement les "OUI", "START" ou "BILAN" venant des contacts prospectés et les rediriger vers le flux de création de boutique (au lieu de paginer des réponses aléatoires).
+  * **🚀 3. Stabilité des Campagnes (Fix 500 API Timeout)** : Désactivation du délai anti-bannissement de WhatsApp (Jitter de 3.5s) lors de l'exécution d'une campagne simulée ou par Email, empêchant ainsi le timeout serveur 500 lors de l'envoi de lots massifs.
+  * **📞 4. Ajustements Marketing** : Remplacement des numéros factices par l'e-mail officiel (`contact@nopalou.com`) et le numéro du chatbot WhatsApp (`+221 70 871 79 42`) dans le template B2B. Remplacement du mot "démo" (dévalorisant) par "vitrine" ou "boutique" pour augmenter la conversion.
+  * **📦 5. Statut** : Prêt pour le déploiement sur GitHub (`origin/main`).
+
 - **Résilience Images Externes & Règle Déploiement Strict (`ExternalImg.tsx`, `AdminAnnoncesClient.tsx`, `AdminImmoClient.tsx`, `AdminBoutiquesClient.tsx`, `AGENTS.md`, `CLAUDE.md`) (`pushed` - 29 août 2026)** 🛡️🖼️🛑 :
   * **🖼️ 1. Résilience & Fallback CDN Images (Facebook CDN & Externes)** :
     - Gestion robuste des URLs CDN externes (`fbcdn.net`, etc.) avec politique `referrerPolicy="no-referrer"` et `crossOrigin="anonymous"` pour contourner les erreurs 403 Forbidden liées aux referrers tiers et aux tokens de signature temporaires.

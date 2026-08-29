@@ -1682,6 +1682,33 @@ async function handleIncomingInternal(msg) {
   // ── 2. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─
   const normTxtLower = normaliserTexte(text).trim();
 
+  // ── INTERCEPTION DES REPONSES DE PROSPECTION (OUI, BILAN) ──────────────────
+  if (state === 'IDLE' || state === 'MENU' || !state) {
+    if (normTxtLower === 'oui' || normTxtLower === 'ok' || normTxtLower === 'waaw' || normTxtLower === 'waw' || normTxtLower === 'je veux' || normTxtLower === 'start') {
+      const bqExistante = await trouverBoutiqueMarchand(phone);
+      if (!bqExistante && interactiveId !== 'sat_oui') {
+        await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
+        await sendWhatsAppText(
+          phone,
+          "🚀 *Création de votre boutique Nopalou* en 30s !\n\nQuel est le *nom de votre boutique* ?\n_(ex: Top Mode, Électro Dakar, Mère Diallo...)_"
+        );
+        return;
+      }
+    }
+    
+    if (/^(bilan|ventes|mon bilan|rapport ventes|ventes du jour)$/i.test(normTxtLower)) {
+      const bqExistante = await trouverBoutiqueMarchand(phone);
+      if (!bqExistante) {
+        await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
+        await sendWhatsAppText(
+          phone,
+          "👋 Pour accéder à votre bilan de caisse en temps réel, vous devez d'abord ouvrir votre boutique !\n\n🚀 *Création de votre boutique* en 30s :\nQuel est le *nom de votre boutique* ?"
+        );
+        return;
+      }
+    }
+  }
+
   // ── GESTION MULTI-PHOTOS WHATSAPP (Photos additionnelles sans légende) ──────
   if (msg.type === 'image') {
     const normPh = normalisePhone(phone);
@@ -2154,7 +2181,7 @@ async function handleIncomingInternal(msg) {
   ];
   const MOTS_PLUS = [
     'plus', 'encore', 'd\'autres', 'dautres', 'autres', 'autre', 'voir plus', 'la suite',
-    'suivant', 'suivante', 'next', 'suite', 'ok', 'oui', 'waaw', 'waw', 'yeneen', 'yenen'
+    'suivant', 'suivante', 'next', 'suite', 'yeneen', 'yenen'
   ];
 
   // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
