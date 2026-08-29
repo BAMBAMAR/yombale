@@ -175,20 +175,14 @@ router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
       // Désactiver plutôt que supprimer
       await pool.query('UPDATE plans SET actif = FALSE WHERE id = $1', [plan.id]);
       plansCache.invalidate();
-      return res.json({ success: true, desactive: true, message: `Forfait "${plan.label}" désactivé car des abonnements actifs l'utilisent.` });
-    }
-
-    await pool.query('DELETE FROM plans WHERE id = $1', [plan.id]);
-    plansCache.invalidate();
-      plansCache.invalidate();
       return res.json({
         success: true,
         desactive: true,
-        message: `Le plan a été désactivé (masqué) car ${check.rows[0].count} abonné(s) actif(s) l'utilisent actuellement.`,
+        message: `Le plan "${plan.label}" a été désactivé car ${check.rows[0].count} abonné(s) actif(s) l'utilisent actuellement.`,
       });
     }
 
-    await pool.query('DELETE FROM plans WHERE id = $1', [id]);
+    await pool.query('DELETE FROM plans WHERE id = $1', [plan.id]);
     plansCache.invalidate();
 
     await enregistrerAdminLog({
@@ -207,3 +201,4 @@ router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
 });
 
 module.exports = router;
+
