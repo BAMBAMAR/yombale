@@ -10,15 +10,15 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v10';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
   `nopalou-api-cache-${CACHE_VERSION}`,
+  `nopalou-scripts-cache-${CACHE_VERSION}`,
   `nopalou-pwa-meta-cache-${CACHE_VERSION}`,
   `nopalou-assets-cache-${CACHE_VERSION}`,
-  'nopalou-offline-fallback-v1',
-  'serwist-precache',
+  `nopalou-offline-fallback-${CACHE_VERSION}`,
 ];
 
 const FALLBACK_HTML = `<!DOCTYPE html>
@@ -156,17 +156,33 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 6. Assets statiques (CSS, JS, images locales et distantes) — StaleWhileRevalidate
+    // 6. Scripts JS & Chunks Next.js — NetworkFirst pour TOUJOURS exécuter la version à jour
+    {
+      matcher: ({ request, url }) =>
+        request.destination === "script" ||
+        url.pathname.startsWith("/_next/static/chunks/") ||
+        url.pathname.endsWith(".js"),
+      handler: new NetworkFirst({
+        cacheName: `nopalou-scripts-cache-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 3,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 100,
+            maxAgeSeconds: 24 * 60 * 60 * 7,
+          }),
+        ],
+      }),
+    },
+    // 7. Assets statiques (CSS, images, fonts) — StaleWhileRevalidate
     {
       matcher: ({ request, url }) =>
         request.destination === "style" ||
-        request.destination === "script" ||
         request.destination === "image" ||
-        url.pathname.startsWith("/_next/static/") ||
+        request.destination === "font" ||
         url.hostname.includes("unsplash.com") ||
         url.hostname.includes("cloudinary.com") ||
         url.hostname.includes("wsrv.nl") ||
-        url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|js)$/i) !== null,
+        url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|css|woff2?)$/i) !== null,
       handler: new StaleWhileRevalidate({
         cacheName: `nopalou-assets-cache-${CACHE_VERSION}`,
         plugins: [
@@ -197,10 +213,11 @@ const serwist = new Serwist({
   },
 });
 
-// ── Installation : pré-cacher /offline.html ───────────────────────────────
+// ── Installation : pré-cacher /offline.html & skipWaiting ────────────────
 self.addEventListener("install", (event: any) => {
+  (self as any).skipWaiting();
   event.waitUntil(
-    caches.open("nopalou-offline-fallback-v1").then((cache) => {
+    caches.open(`nopalou-offline-fallback-${CACHE_VERSION}`).then((cache) => {
       return cache.put(
         "/offline.html",
         new Response(FALLBACK_HTML, {
@@ -212,21 +229,19 @@ self.addEventListener("install", (event: any) => {
   );
 });
 
-// ── Activation : purger tous les caches de versions précédentes ───────────
+// ── Activation : purger sans exception tous les caches de versions précédentes ──
 self.addEventListener("activate", (event: any) => {
   event.waitUntil(
-    caches.keys().then(async (keys) => {
-      const toDelete = keys.filter((key) => {
-        const isCurrentVersion = CACHE_NAMES.some((name) => key === name);
-        const isPrecache = key.startsWith('serwist-precache');
-        return !isCurrentVersion && !isPrecache;
-      });
+    (async () => {
+      const keys = await caches.keys();
+      const toDelete = keys.filter((key) => !CACHE_NAMES.includes(key));
 
       if (toDelete.length > 0) {
-        console.log(`[SW ${CACHE_VERSION}] Purge de ${toDelete.length} cache(s) obsolète(s):`, toDelete);
+        console.log(`[SW ${CACHE_VERSION}] Purge automatique de ${toDelete.length} cache(s) obsolète(s):`, toDelete);
         await Promise.all(toDelete.map((key) => caches.delete(key)));
       }
-    })
+      await (self as any).clients.claim();
+    })()
   );
 });
 
