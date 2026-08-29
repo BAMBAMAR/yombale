@@ -17,6 +17,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
     {
       title: 'Contenu & Catalogue',
       items: [
+        { href: '/admin/migration', label: '🚀 Migration & Onboarding', icon: <Rocket size={16} />, highlight: '#0284c7' },
         { href: '/admin/categories', label: 'Catégories', icon: <Layers size={16} />, highlight: '#0284c7' },
         { href: '/admin/annonces', label: 'Annonces classifiées', icon: <FileText size={16} /> },
         { href: '/admin/immo', label: 'Immo à valider', icon: <Home size={16} /> },

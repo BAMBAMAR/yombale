@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { ShieldCheck, Search, Filter, Clock, User, ArrowRight, Eye, RefreshCw, Terminal, Globe } from 'lucide-react'
 
 interface AuditLog {
@@ -33,6 +33,12 @@ export default function AdminAuditLogsClient({
   const [page, setPage] = useState(1)
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    if (!initialLogs || initialLogs.length === 0) {
+      fetchLogs(1)
+    }
+  }, [secret])
 
   const fetchLogs = (targetPage = 1, searchQuery = q, targetCible = cibleType) => {
     startTransition(async () => {

@@ -255,6 +255,7 @@ app.use('/api/admin/whatsapp-templates', require('./routes/admin-whatsapp-templa
 app.use('/api/admin/omnisearch',    require('./routes/admin-search'));
 app.use('/api/admin/export',       require('./routes/admin-export'));
 app.use('/api/admin/system',       require('./routes/admin-system'));
+app.use('/api/admin/migration',    require('./routes/admin-migration'));
 app.use('/api/click',           require('./routes/click'));
 app.use('/api/analytics',       require('./routes/analytics'));
 app.use('/api/whatsapp',        require('./routes/whatsapp'));

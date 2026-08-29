@@ -16,9 +16,64 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
+const DEFAULT_CATEGORIES = [
+  { nom: 'Telephones & Tablettes', slug: 'smartphones', icone: '📱', ordre: 1 },
+  { nom: 'Informatique & Laptops', slug: 'informatique', icone: '💻', ordre: 2 },
+  { nom: 'TV & Électroménager', slug: 'tv-electro', icone: '📺', ordre: 3 },
+  { nom: 'Mode & Vêtements', slug: 'mode', icone: '👗', ordre: 4 },
+  { nom: 'Maison & Décoration', slug: 'maison', icone: '🏠', ordre: 5 },
+  { nom: 'Auto & Moto', slug: 'auto-moto', icone: '🛵', ordre: 6 },
+  { nom: 'Beauté & Parfums', slug: 'beaute', icone: '💄', ordre: 7 },
+  { nom: 'Jeux & Consoles', slug: 'jeux', icone: '🎮', ordre: 8 },
+  { nom: 'Télécom & Forfaits', slug: 'telecom', icone: '📶', ordre: 9 },
+  { nom: 'Immobilier', slug: 'immo', icone: '🏡', ordre: 10 },
+  { nom: 'Emploi & Services', slug: 'emploi', icone: '💼', ordre: 11 },
+  { nom: 'Divers & Autres', slug: 'divers', icone: '📦', ordre: 12 },
+];
+
+let categoriesTableEnsured = false;
+async function ensureCategoriesTable() {
+  if (categoriesTableEnsured) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        nom         VARCHAR(100) NOT NULL,
+        slug        VARCHAR(100) UNIQUE NOT NULL,
+        icone       VARCHAR(50) DEFAULT '📦',
+        description TEXT,
+        parent_id   UUID REFERENCES categories(id) ON DELETE SET NULL,
+        ordre       INT DEFAULT 0,
+        actif       BOOLEAN DEFAULT TRUE,
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
+      CREATE INDEX IF NOT EXISTS idx_categories_ordre ON categories(ordre);
+    `);
+
+    // Vérifier si des catégories existent
+    const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM categories');
+    if (parseInt(rows[0]?.count || 0) === 0) {
+      for (const cat of DEFAULT_CATEGORIES) {
+        await pool.query(
+          `INSERT INTO categories (nom, slug, icone, ordre, actif)
+           VALUES ($1, $2, $3, $4, TRUE)
+           ON CONFLICT (slug) DO NOTHING`,
+          [cat.nom, cat.slug, cat.icone, cat.ordre]
+        );
+      }
+    }
+    categoriesTableEnsured = true;
+  } catch (e) {
+    console.warn('[CATEGORIES_ENSURE_TABLE]', e.message);
+  }
+}
+
 // ── GET /api/categories — Liste publique des catégories actives
 router.get('/', async (req, res) => {
   try {
+    await ensureCategoriesTable();
     const { rows } = await pool.query(`
       SELECT c.id, c.nom, c.slug, c.icone, c.description, c.ordre, c.parent_id,
              (SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id) AS nb_produits,
@@ -36,6 +91,7 @@ router.get('/', async (req, res) => {
 // ── GET /api/categories/admin/toutes — Liste complète pour la console d'administration
 router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   try {
+    await ensureCategoriesTable();
     const { rows } = await pool.query(`
       SELECT c.id, c.nom, c.slug, c.icone, c.description, c.ordre, c.actif, c.parent_id, c.created_at,
              (SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id) AS nb_produits,

@@ -53,6 +53,11 @@ const DEFAULTS = {
   relance_catalogue_intervalle_jours: '7',
   relance_catalogue_titre:            '🛍️ Nopalou — Ajoutez vos produits',
   relance_catalogue_template:         `👋 Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! 🎉\n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les 5 façons rapides d'ajouter vos articles :\n\n1️⃣ 🪄 *L'Import Magique par Photo (IA)* :\nPrenez en photo vos articles ou une facture/catalogue et envoyez-les directement ici sur WhatsApp ou dans votre espace. L'IA crée la fiche produit (titre, description, prix) en 3 secondes !\n\n2️⃣ 🛍️ *Depuis votre Espace Marchand* :\nRendez-vous sur : {lien_boutique}\nCliquez sur « Ajouter un produit » pour renseigner photos, prix et stock.\n\n3️⃣ ⚡ *La Saisie Express (Caisse POS)* :\nEnregistrez vos articles en 1 clic lors de vos ventes au comptoir : {lien_caisse}\n\n4️⃣ 📊 *L'Import Excel / CSV* :\nImportez tout votre catalogue d'un coup si vous avez déjà un fichier.\n\n5️⃣ 🤖 *Discussion avec l'Assistant WhatsApp* :\nÉcrivez simplement les noms et prix de vos articles à ce numéro, l'assistant les enregistre directement.\n\nBesoin d'aide ou d'un conseil ? Répondez directement à ce message, l'équipe Nopalou vous accompagne ! 🤝`,
+  maintenance_mode:                   'false',
+  maintenance_message:                'Plateforme en maintenance programmée.',
+  system_banner_active:               'false',
+  system_banner_text:                 '',
+  system_banner_level:                'info',
 };
 
 async function loadSettings() {

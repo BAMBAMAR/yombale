@@ -3,6 +3,29 @@
 
 const { pool } = require('../models/db');
 
+let auditTableEnsured = false;
+async function ensureAuditLogsTable() {
+  if (auditTableEnsured) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin_audit_logs (
+        id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        admin_nom       VARCHAR(150) NOT NULL DEFAULT 'Admin',
+        admin_role      VARCHAR(50) NOT NULL DEFAULT 'super_admin',
+        action          VARCHAR(100) NOT NULL,
+        cible_type      VARCHAR(100) NOT NULL,
+        cible_id        VARCHAR(100),
+        description     TEXT NOT NULL,
+        ancienne_valeur JSONB,
+        nouvelle_valeur JSONB,
+        ip_adresse      VARCHAR(50),
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    auditTableEnsured = true;
+  } catch (e) {}
+}
+
 async function enregistrerAdminLog({
   adminNom = 'Admin',
   adminRole = 'super_admin',
@@ -15,6 +38,7 @@ async function enregistrerAdminLog({
   req = null,
 }) {
   try {
+    await ensureAuditLogsTable();
     const ip = req ? (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim() : null;
 
     await pool.query(

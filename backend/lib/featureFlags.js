@@ -20,7 +20,43 @@ const DEFAULT_FLAGS = {
   DEVELOPER_PORTAL: { enabled: true, scope: 'global', label: 'Portail Développeur API & Webhooks', categorie: 'tech' },
 };
 
+let tableEnsured = false;
+async function ensureTable() {
+  if (tableEnsured) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS feature_flags (
+        key         VARCHAR(100) PRIMARY KEY,
+        label       VARCHAR(200) NOT NULL,
+        description TEXT DEFAULT '',
+        categorie   VARCHAR(50) NOT NULL DEFAULT 'general',
+        enabled     BOOLEAN NOT NULL DEFAULT TRUE,
+        scope       VARCHAR(50) NOT NULL DEFAULT 'global',
+        meta        JSONB DEFAULT '{}'::jsonb,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_feature_flags_cat ON feature_flags(categorie);
+      CREATE INDEX IF NOT EXISTS idx_feature_flags_enabled ON feature_flags(enabled);
+    `);
+
+    // Insérer les drapeaux par défaut s'ils n'existent pas
+    for (const [k, v] of Object.entries(DEFAULT_FLAGS)) {
+      await pool.query(
+        `INSERT INTO feature_flags (key, label, categorie, enabled, scope)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (key) DO NOTHING`,
+        [k, v.label, v.categorie, v.enabled, v.scope]
+      );
+    }
+    tableEnsured = true;
+  } catch (e) {
+    console.warn('[FEATURE_FLAGS_ENSURE_TABLE]', e.message);
+  }
+}
+
 async function loadFlags() {
+  await ensureTable();
   try {
     const { rows } = await pool.query('SELECT key, label, description, categorie, enabled, scope, meta, updated_at FROM feature_flags');
     cache.clear();
@@ -37,7 +73,7 @@ async function loadFlags() {
       });
     }
   } catch (err) {
-    // Si la table n'existe pas encore ou DB occupée, fallback sur DEFAULT_FLAGS
+    // Si DB occupée, fallback sur DEFAULT_FLAGS
     cache.clear();
     for (const [k, v] of Object.entries(DEFAULT_FLAGS)) {
       cache.set(k, { key: k, ...v, meta: {} });
@@ -102,6 +138,7 @@ async function getPublicFlags() {
  * Met à jour un feature flag (ou le crée s'il n'existe pas)
  */
 async function setFlag(key, { enabled, label, description, categorie, scope, meta }) {
+  await ensureTable();
   const current = cache.get(key) || {};
   const newEnabled = enabled !== undefined ? Boolean(enabled) : (current.enabled !== undefined ? current.enabled : true);
   const newLabel = label || current.label || key;

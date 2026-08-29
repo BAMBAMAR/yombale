@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Activity, Server, Database, ShieldAlert, AlertTriangle, Download, RefreshCw,
   CheckCircle2, XCircle, HardDrive, Cpu, Radio, FileSpreadsheet, Megaphone, Lock
@@ -84,8 +84,8 @@ export default function AdminSystemClient({
     setTimeout(() => setNotification(null), 4000)
   }
 
-  const refreshHealth = async () => {
-    setLoading(true)
+  const refreshHealth = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const res = await fetch('/api/admin/system/health', {
         headers: { 'X-Admin-Secret': secret },
@@ -99,14 +99,20 @@ export default function AdminSystemClient({
         setBannerActive(d.banner?.active ?? false)
         setBannerText(d.banner?.text || '')
         setBannerLevel(d.banner?.level || 'info')
-        showToast('ok', 'Santé système actualisée avec succès !')
+        if (!silent) showToast('ok', 'Santé système actualisée avec succès !')
       }
     } catch (err: any) {
-      showToast('err', err.message || 'Erreur réseau')
+      if (!silent) showToast('err', err.message || 'Erreur réseau')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
-  }
+  }, [secret])
+
+  useEffect(() => {
+    refreshHealth(true)
+    const interval = setInterval(() => refreshHealth(true), 30000)
+    return () => clearInterval(interval)
+  }, [refreshHealth])
 
   const handleSaveMaintenance = async (e: React.FormEvent) => {
     e.preventDefault()

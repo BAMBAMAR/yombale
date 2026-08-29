@@ -895,6 +895,17 @@ function BoutiqueRow({
           ⚙️ Gérer le marchand
         </button>
 
+        <a
+          href={`/admin/migration`}
+          style={{
+            background: '#0284c7', color: '#fff', border: 'none', textDecoration: 'none',
+            borderRadius: 6, fontSize: 11, padding: '6px 10px', fontWeight: 700, textAlign: 'center',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4
+          }}
+        >
+          🚀 Migrer Catalogue
+        </a>
+
         <div style={{ display: 'flex', gap: 6 }}>
           <a
             href={`/boutiques/${boutique.slug || boutique.id}`}

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Layers, Plus, Search, CheckCircle2, XCircle, Edit3, Trash2, ArrowUpDown, Eye, EyeOff, Package, FileText } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Layers, Plus, Search, CheckCircle2, XCircle, Edit3, Trash2, ArrowUpDown, Eye, EyeOff, Package, FileText, RefreshCw } from 'lucide-react'
 
 interface Categorie {
   id: string
@@ -25,11 +25,36 @@ export default function AdminCategoriesClient({
   secret: string
 }) {
   const [categories, setCategories] = useState<Categorie[]>(initialCategories)
+  const [loading, setLoading] = useState(false)
   const [q, setQ] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingCat, setEditingCat] = useState<Categorie | null>(null)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+
+  const reloadCategories = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/categories/admin/toutes', {
+        headers: { 'X-Admin-Secret': secret },
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const d = await res.json()
+        setCategories(d.categories || [])
+      }
+    } catch (e) {
+      console.warn('[RELOAD_CATEGORIES_ERR]', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!initialCategories || initialCategories.length === 0) {
+      reloadCategories()
+    }
+  }, [secret])
 
   // Formulaire (création ou édition)
   const [formNom, setFormNom] = useState('')

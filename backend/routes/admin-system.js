@@ -21,29 +21,55 @@ router.get('/health', adminSecretOnly, async (req, res) => {
       dbStatus = 'error: ' + err.message;
     }
 
-    // 1. Décompte des tables clés
-    const [countsRes] = await Promise.all([
-      pool.query(`
-        SELECT
-          (SELECT COUNT(*)::int FROM utilisateurs) AS utilisateurs,
-          (SELECT COUNT(*)::int FROM boutiques) AS boutiques,
-          (SELECT COUNT(*)::int FROM boutique_produits) AS produits_marchands,
-          (SELECT COUNT(*)::int FROM produits) AS produits_scrapes,
-          (SELECT COUNT(*)::int FROM commandes_boutique) AS commandes,
-          (SELECT COUNT(*)::int FROM ventes) AS ventes_pos,
-          (SELECT COUNT(*)::int FROM abonnements WHERE statut='actif' AND fin > NOW()) AS abonnements_actifs,
-          (SELECT COUNT(*)::int FROM admin_audit_logs) AS audit_logs
-      `),
+    // 1. Décompte résilient des tables clés
+    const safeCount = async (sql) => {
+      try {
+        const r = await pool.query(sql);
+        return parseInt(r.rows[0]?.c ?? r.rows[0]?.count ?? 0, 10);
+      } catch (e) {
+        return 0;
+      }
+    };
+
+    const [
+      nbUtilisateurs,
+      nbBoutiques,
+      nbProduitsMarchands,
+      nbProduitsScrapes,
+      nbCommandes,
+      nbVentesPos,
+      nbAbonnementsActifs,
+      nbAuditLogs,
+    ] = await Promise.all([
+      safeCount('SELECT COUNT(*)::int AS c FROM utilisateurs'),
+      safeCount('SELECT COUNT(*)::int AS c FROM boutiques'),
+      safeCount('SELECT COUNT(*)::int AS c FROM boutique_produits'),
+      safeCount('SELECT COUNT(*)::int AS c FROM produits'),
+      safeCount('SELECT COUNT(*)::int AS c FROM commandes_boutique'),
+      safeCount('SELECT COUNT(*)::int AS c FROM ventes'),
+      safeCount("SELECT COUNT(*)::int AS c FROM abonnements WHERE statut='actif' AND fin > NOW()"),
+      safeCount('SELECT COUNT(*)::int AS c FROM admin_audit_logs'),
     ]);
+
+    const counts = {
+      utilisateurs: nbUtilisateurs,
+      boutiques: nbBoutiques,
+      produits_marchands: nbProduitsMarchands,
+      produits_scrapes: nbProduitsScrapes,
+      commandes: nbCommandes,
+      ventes_pos: nbVentesPos,
+      abonnements_actifs: nbAbonnementsActifs,
+      audit_logs: nbAuditLogs,
+    };
 
     // 2. Vérification des configurations de services externes
     const services = {
       database: {
         status: dbStatus,
         latencyMs: dbLatency,
-        poolTotal: pool.totalCount,
-        poolIdle: pool.idleCount,
-        poolWaiting: pool.waitingCount,
+        poolTotal: pool.totalCount ?? 0,
+        poolIdle: pool.idleCount ?? 0,
+        poolWaiting: pool.waitingCount ?? 0,
       },
       wave: {
         configured: Boolean(process.env.WAVE_API_KEY),
@@ -81,11 +107,11 @@ router.get('/health', adminSecretOnly, async (req, res) => {
 
     // 4. Paramètres de maintenance et bannière
     const [maintActive, maintMsg, bannerActive, bannerMsg, bannerLevel] = await Promise.all([
-      cfg.getBool('maintenance_mode'),
-      cfg.get('maintenance_message'),
-      cfg.getBool('system_banner_active'),
-      cfg.get('system_banner_text'),
-      cfg.get('system_banner_level'),
+      cfg.getBool('maintenance_mode').catch(() => false),
+      cfg.get('maintenance_message').catch(() => 'Plateforme en maintenance programmée.'),
+      cfg.getBool('system_banner_active').catch(() => false),
+      cfg.get('system_banner_text').catch(() => ''),
+      cfg.get('system_banner_level').catch(() => 'info'),
     ]);
 
     res.json({
@@ -93,7 +119,7 @@ router.get('/health', adminSecretOnly, async (req, res) => {
       timestamp: new Date().toISOString(),
       server: serverInfo,
       services,
-      counts: countsRes.rows[0],
+      counts,
       maintenance: {
         active: Boolean(maintActive),
         message: maintMsg || 'La plateforme est momentanément en maintenance pour amélioration.',

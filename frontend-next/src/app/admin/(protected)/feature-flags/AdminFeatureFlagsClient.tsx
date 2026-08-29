@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { Flag, Plus, Search, CheckCircle2, XCircle, Sparkles, Sliders, Shield, Zap, RefreshCw, Layers } from 'lucide-react'
 
 interface FeatureFlag {
@@ -33,12 +33,37 @@ export default function AdminFeatureFlagsClient({
   secret: string
 }) {
   const [flags, setFlags] = useState<FeatureFlag[]>(initialFlags)
+  const [loading, setLoading] = useState(false)
   const [q, setQ] = useState('')
   const [activeCat, setActiveCat] = useState('tous')
   const [loadingKey, setLoadingKey] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [notification, setNotification] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const [, startTransition] = useTransition()
+
+  const reloadFlags = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/feature-flags/admin/toutes', {
+        headers: { 'X-Admin-Secret': secret },
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const d = await res.json()
+        setFlags(d.flags || [])
+      }
+    } catch (e) {
+      console.warn('[RELOAD_FLAGS_ERR]', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!initialFlags || initialFlags.length === 0) {
+      reloadFlags()
+    }
+  }, [secret])
 
   // Formulaire nouveau flag
   const [newKey, setNewKey] = useState('')

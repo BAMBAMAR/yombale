@@ -8,9 +8,34 @@ const { adminSecretOnly } = require('../middlewares/auth');
 
 const router = express.Router();
 
+let quarantinesTableEnsured = false;
+async function ensureQuarantinesTable() {
+  if (quarantinesTableEnsured) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS quarantines_log (
+        id              SERIAL PRIMARY KEY,
+        offre_id        INT NOT NULL,
+        raison          VARCHAR(255) NOT NULL,
+        prix            NUMERIC(12,2),
+        prix_moyen_30j  NUMERIC(12,2),
+        status          VARCHAR(50) DEFAULT 'quarantined',
+        validated_by    VARCHAR(100),
+        validated_at    TIMESTAMPTZ,
+        created_at      TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_quarantines_status ON quarantines_log(status);
+    `);
+    quarantinesTableEnsured = true;
+  } catch (e) {
+    console.warn('[QUARANTINES_ENSURE_TABLE]', e.message);
+  }
+}
+
 // GET /api/qualite/quarantines — liste des quarantines (admin)
 router.get('/quarantines', adminSecretOnly, async (req, res) => {
   try {
+    await ensureQuarantinesTable();
     const status = req.query.status || 'quarantined';
     const filter = status === 'all' ? '' : `AND status = '${status}'`;
 
