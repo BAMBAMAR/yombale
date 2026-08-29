@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { adminLogout } from '@/app/actions/admin'
 import AdminSidebarClient from './AdminSidebarClient'
+import AdminOmnisearch from './AdminOmnisearch'
 
 const COOKIE = 'nopalou_admin'
 
@@ -15,7 +16,10 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
   return (
     <div className="admin-layout">
       <AdminSidebarClient logoutAction={adminLogout} />
-      <main className="admin-main">{children}</main>
+      <main className="admin-main">
+        <AdminOmnisearch secret={secret} />
+        {children}
+      </main>
     </div>
   )
 }

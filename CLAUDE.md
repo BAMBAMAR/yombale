@@ -1,3 +1,17 @@
+- **Phase 3 de la Console Centrale de Pilotage Admin Nopalou (P2) (`admin-search.js`, `admin-export.js`, `admin-system.js`, `AdminOmnisearch.tsx`, `AdminSystemClient.tsx`, `layout.tsx`, `AdminSidebarClient.tsx`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`local` - 29 août 2026)** 🔍📥🏥🚨⌨️📊 :
+  * **🔍 1. Moteur de Recherche Globale & Omnisearch Modal (`admin-search.js`, `AdminOmnisearch.tsx`, `layout.tsx`)** :
+    - Raccourci universel `Ctrl+K` / `Cmd+K` accessible sur l'ensemble des pages d'administration.
+    - Recherche simultanée ultra-rapide à travers 5 entités : Comptes utilisateurs, Boutiques, Commandes boutique, Annonces classifiées/immo et Produits du comparateur.
+  * **📥 2. Centre d'Exportations Données CSV / Excel (`admin-export.js`, `AdminSystemClient.tsx`)** :
+    - Flux CSV encodés en UTF-8 avec BOM (`\uFEFF`) pour ouverture directe et propre sous Microsoft Excel et Google Sheets.
+    - 6 flux d'exportation disponibles : *Utilisateurs*, *Boutiques*, *Ventes POS*, *Commandes web*, *Abonnements marchands*, *Leads de prospection*.
+  * **🏥 3. Diagnostic Santé Système & Supervision Technique (`admin-system.js`, `AdminSystemClient.tsx`, `page.tsx`)** :
+    - Monitoring en temps réel de la latence PostgreSQL (ms), de la mémoire Node.js (Heap & RSS), de l'uptime et des variables de configuration externes (Wave, WhatsApp, Cloudinary, Sentry, Email).
+  * **🚨 4. Contrôleur du Mode Maintenance & Bannières d'Annonces (`admin-system.js`, `AdminSystemClient.tsx`)** :
+    - Verrouillage/déverrouillage instantané du mode maintenance avec message personnalisé pour les visiteurs.
+    - Publication et configuration en direct de bannières d'information globale sur tout le site avec choix du niveau d'alerte (*Info*, *Succès/Promo*, *Avertissement*, *Urgent*).
+  * **📦 5. Statut** : Modifications enregistrées et commitées en local (aucun push sans demande explicite).
+
 - **Phase 2 de la Console Centrale de Pilotage Admin Nopalou (P1) (`plansCache.js`, `plans.js`, `adminAuditLogger.js`, `admin-audit-logs.js`, `admin-marchands.js`, `AdminPlansClient.tsx`, `AdminAuditLogsClient.tsx`, `AdminSidebarClient.tsx`, `migrate-inline.js`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`local` - 29 août 2026)** 💎👑🛡️👤📝⚙️ :
   * **💎 1. Moteur & Console des Plans Tarifaires 100% Administrables (`plansCache.js`, `plans.js`, `AdminPlansClient.tsx`, `page.tsx`)** :
     - Nouvelle table `plans` avec cache mémoire haute performance (TTL 3min).

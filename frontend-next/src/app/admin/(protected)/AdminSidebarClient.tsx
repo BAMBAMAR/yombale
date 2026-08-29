@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag, Crown } from 'lucide-react'
+import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag, Crown, Activity } from 'lucide-react'
 
 interface AdminSidebarProps {
   logoutAction: () => Promise<void>
@@ -63,6 +63,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
       items: [
         { href: '/admin/feature-flags', label: 'Feature Flags (No-Code)', icon: <Flag size={16} />, highlight: '#9333ea' },
         { href: '/admin/audit-logs', label: 'Audit Logs & Traçabilité', icon: <ShieldCheck size={16} />, highlight: '#059669' },
+        { href: '/admin/system', label: 'Santé Système & Exports', icon: <Activity size={16} />, highlight: '#0284c7' },
         { href: '/admin/compte', label: 'Mon compte', icon: <User size={16} /> },
       ]
     }
