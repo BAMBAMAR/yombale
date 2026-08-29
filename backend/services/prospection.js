@@ -748,6 +748,13 @@ function estNomPropreAuthentique(nom) {
     return false;
   }
 
+  // Noms issus de scraping WhatsApp non identifiés ou peu qualitatifs pour une salutation directe
+  if (
+    /\b(anonyme|participant|membre|top|tops|sn|mbs|user|utilisateur|admin|inconnu|officiel|official)\b/i.test(str)
+  ) {
+    return false;
+  }
+
   return true;
 }
 

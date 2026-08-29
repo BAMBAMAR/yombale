@@ -402,19 +402,22 @@ router.post('/campagnes/lancer', adminOnly, async (req, res) => {
       console.warn('[PROSPECTION] Insert campagne table warning (continuation en mode direct):', cmpInsertErr.message);
     }
 
-    // Lancer la campagne
-    const resultat = await lancerCampagne({
+    // Lancer la campagne en arrière-plan pour éviter les timeouts API (500)
+    lancerCampagne({
       campagneId,
       leadIds,
       canal,
       templateMessage,
       simulation,
-    });
+    }).catch(err => console.error('[PROSPECTION] Erreur background campagne:', err));
 
     res.json({
       success: true,
       campagneId,
-      resultat,
+      resultat: {
+        en_arriere_plan: true,
+        message: 'La campagne a été lancée en arrière-plan avec succès.'
+      },
     });
   } catch (err) {
     console.error('[PROSPECTION CAMPAGNES LANCER ERR]:', err);

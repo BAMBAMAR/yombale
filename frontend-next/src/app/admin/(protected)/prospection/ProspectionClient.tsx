@@ -737,7 +737,11 @@ export default function ProspectionClient({
       })
       const data = await res.json()
       if (res.ok) {
-        showToast(`🎉 Campagne terminée : ${data.resultat.nbSucces} envoyés (${data.resultat.nbEchecs} échecs)`)
+        if (data.resultat?.en_arriere_plan) {
+          showToast(`🎉 ${data.resultat.message}`)
+        } else {
+          showToast(`🎉 Campagne terminée : ${data.resultat.nbSucces} envoyés (${data.resultat.nbEchecs} échecs)`)
+        }
         await reloadLeads()
       } else {
         showToast(`❌ ${data.error}`)
