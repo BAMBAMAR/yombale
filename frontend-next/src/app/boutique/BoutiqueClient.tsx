@@ -4008,6 +4008,7 @@ function BoutiqueMobileBottomSheet({
   formatNumber,
   sheetTitle,
   onBack,
+  boutiqueId,
 }: {
   navGroups: NavGroup[]
   activeTab: ManageTab
@@ -4017,6 +4018,7 @@ function BoutiqueMobileBottomSheet({
   formatNumber: (n: number) => string
   sheetTitle: string
   onBack: () => void
+  boutiqueId: string
 }) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
@@ -4157,11 +4159,11 @@ function BoutiqueMobileBottomSheet({
 
             <div className="mobile-bs-footer">
               <a
-                href={`/boutique/caisse?b=${boutique.id}`}
+                href={`/boutique/caisse?b=${boutiqueId}`}
                 className="mobile-bs-footer-link"
                 style={{ background: '#F0FDF4', color: '#16a34a', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', gap: 6 }}
                 onClick={() => {
-                  if (typeof window !== 'undefined') localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id);
+                  if (typeof window !== 'undefined') localStorage.setItem('nopalou_pos_active_boutique_id', boutiqueId);
                   closeSheet();
                 }}
               >
@@ -4737,6 +4739,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           formatNumber={formatNumber}
           sheetTitle={boutique.nom}
           onBack={onBack}
+          boutiqueId={boutique.id}
         />
 
         {/* Liens rapides (Desktop seulement) */}
