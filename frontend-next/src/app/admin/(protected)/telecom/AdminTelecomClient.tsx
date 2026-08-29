@@ -85,7 +85,7 @@ export default function AdminTelecomClient({
     setSaving(true)
     setErr('')
     const isEdit = modal !== 'create'
-    const url  = isEdit ? `${BACKEND}/api/telecom/${(modal as Forfait).id}` : `${BACKEND}/api/telecom`
+    const url  = isEdit ? `/api/telecom/${(modal as Forfait).id}` : `/api/telecom`
     const method = isEdit ? 'PUT' : 'POST'
     try {
       const r = await fetch(url, {
@@ -108,7 +108,7 @@ export default function AdminTelecomClient({
   async function deactivate(id: string) {
     if (!confirm('Désactiver ce forfait ?')) return
     try {
-      const r = await fetch(`${BACKEND}/api/telecom/${id}`, {
+      const r = await fetch(`/api/telecom/${id}`, {
         method: 'DELETE',
         headers: { 'X-Admin-Secret': adminSecret },
       })
@@ -120,7 +120,7 @@ export default function AdminTelecomClient({
     setLoadingBatch(true)
     for (const id of selectedIds) {
       try {
-        await fetch(`${BACKEND}/api/telecom/${id}`, {
+        await fetch(`/api/telecom/${id}`, {
           method: 'DELETE',
           headers: { 'X-Admin-Secret': adminSecret },
         })

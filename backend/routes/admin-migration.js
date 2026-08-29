@@ -14,13 +14,34 @@ function arrondirPrixCommercial(prix, arrondi = 500) {
   return Math.ceil(p / arrondi) * arrondi;
 }
 
+let migrationTablesEnsured = false;
+async function ensureMigrationTables() {
+  if (migrationTablesEnsured) return;
+  try {
+    await pool.query(`
+      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS logo_url TEXT;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS plan_actif VARCHAR(50) DEFAULT 'pro';
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS notes TEXT;
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS categorie VARCHAR(50);
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}';
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS en_stock BOOLEAN DEFAULT TRUE;
+      ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_barre NUMERIC(12,2);
+    `);
+    migrationTablesEnsured = true;
+  } catch (e) {
+    console.warn('[MIGRATION_ENSURE_TABLES]', e.message);
+  }
+}
+
 // ── GET /api/admin/migration/stats — Résumé des données pour l'interface de migration
 router.get('/stats', adminSecretOnly, async (req, res) => {
   try {
+    await ensureMigrationTables();
     const [boutiquesRes, categoriesRes, totalImportsRes] = await Promise.all([
       pool.query(`
-        SELECT b.id, b.nom, b.slug, b.telephone, b.logo, b.plan,
-               (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits
+        SELECT b.id, b.nom, b.telephone, b.logo_url AS logo, COALESCE(b.plan_actif, 'pro') AS plan,
+               COALESCE((SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id), 0) AS nb_produits
         FROM boutiques b
         ORDER BY b.created_at DESC
         LIMIT 200
@@ -46,6 +67,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
 // ── POST /api/admin/migration/shopify-mirror — Aspiration intégrale d'une boutique Shopify
 router.post('/shopify-mirror', adminSecretOnly, async (req, res) => {
   try {
+    await ensureMigrationTables();
     const { storeUrl, boutiqueId, margePct = 0, arrondi = 500, categorieId = null } = req.body;
 
     if (!storeUrl || !boutiqueId) {
@@ -96,7 +118,6 @@ router.post('/shopify-mirror', adminSecretOnly, async (req, res) => {
         const variant = p.variants?.[0] || {};
         let rawPrice = parseFloat(variant.price) || 0;
         
-        // Si le prix est en USD/EUR (< 1000), convertir par défaut (taux moyen ~650)
         let prixVente = rawPrice;
         if (rawPrice > 0 && rawPrice < 500) {
           prixVente = rawPrice * 650;
@@ -117,8 +138,8 @@ router.post('/shopify-mirror', adminSecretOnly, async (req, res) => {
         // Insertion dans boutique_produits
         await pool.query(`
           INSERT INTO boutique_produits (
-            boutique_id, categorie_id, nom, description, prix, prix_promo, stock, photos, notes, actif, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE, NOW(), NOW())
+            boutique_id, categorie, nom, description, prix, prix_barre, en_stock, images, notes, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
         `, [
           boutiqueId,
           categorieId || null,
@@ -126,8 +147,8 @@ router.post('/shopify-mirror', adminSecretOnly, async (req, res) => {
           description || null,
           prixVente,
           variant.compare_at_price ? arrondirPrixCommercial(parseFloat(variant.compare_at_price) * (rawPrice < 500 ? 650 : 1) * margeFacteur, arrondi) : null,
-          parseInt(variant.inventory_quantity) || 10,
-          JSON.stringify(images),
+          true,
+          images,
           `[Migration Shopify] Source: ${base}/products/${p.handle}`,
         ]);
 
@@ -162,6 +183,7 @@ router.post('/shopify-mirror', adminSecretOnly, async (req, res) => {
 // ── POST /api/admin/migration/csv-batch — Import groupé CSV / Excel Universel
 router.post('/csv-batch', adminSecretOnly, async (req, res) => {
   try {
+    await ensureMigrationTables();
     const { boutiqueId, categorieId, items, margePct = 0, arrondi = 500 } = req.body;
 
     if (!boutiqueId || !Array.isArray(items) || items.length === 0) {
@@ -188,7 +210,6 @@ router.post('/csv-batch', adminSecretOnly, async (req, res) => {
           prixVente = arrondirPrixCommercial(prixVente, arrondi);
         }
 
-        const stock = parseInt(item.stock || item.quantite || item.qty || 10, 10);
         const description = (item.description || item.body || '').trim() || null;
         
         let photos = [];
@@ -201,16 +222,16 @@ router.post('/csv-batch', adminSecretOnly, async (req, res) => {
 
         await pool.query(`
           INSERT INTO boutique_produits (
-            boutique_id, categorie_id, nom, description, prix, stock, photos, notes, actif, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, NOW(), NOW())
+            boutique_id, categorie, nom, description, prix, en_stock, images, notes, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
         `, [
           boutiqueId,
-          item.categorie_id || categorieId || null,
+          item.categorie || categorieId || null,
           nom,
           description,
           prixVente,
-          stock,
-          JSON.stringify(photos),
+          true,
+          photos,
           `[Import CSV] ${new Date().toLocaleDateString('fr-FR')}`,
         ]);
 
@@ -243,6 +264,7 @@ router.post('/csv-batch', adminSecretOnly, async (req, res) => {
 // ── POST /api/admin/migration/url-magic — Import unitaire ou multiple par Baguette Magique
 router.post('/url-magic', adminSecretOnly, async (req, res) => {
   try {
+    await ensureMigrationTables();
     const { url, boutiqueId, categorieId, margePct = 0, arrondi = 500 } = req.body;
 
     if (!url || !boutiqueId) {
@@ -260,10 +282,12 @@ router.post('/url-magic', adminSecretOnly, async (req, res) => {
       prixFinal = arrondirPrixCommercial(prixFinal, arrondi);
     }
 
+    const imagesList = scraped.images || (scraped.image ? [scraped.image] : []);
+
     const { rows } = await pool.query(`
       INSERT INTO boutique_produits (
-        boutique_id, categorie_id, nom, description, prix, photos, notes, actif, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE, NOW(), NOW())
+        boutique_id, categorie, nom, description, prix, en_stock, images, notes, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
       RETURNING *
     `, [
       boutiqueId,
@@ -271,7 +295,8 @@ router.post('/url-magic', adminSecretOnly, async (req, res) => {
       scraped.titre,
       scraped.description || null,
       prixFinal,
-      JSON.stringify(scraped.images || (scraped.image ? [scraped.image] : [])),
+      true,
+      imagesList,
       `[Baguette Magique URL] Source: ${url.trim().substring(0, 200)}`,
     ]);
 
@@ -366,7 +391,7 @@ router.post('/welcome-kit', adminSecretOnly, async (req, res) => {
     const { boutiqueId } = req.body;
 
     const { rows } = await pool.query(`
-      SELECT b.id, b.nom, b.slug, b.telephone, b.plan, b.logo, u.email, u.prenom, u.nom AS user_nom
+      SELECT b.id, b.nom, COALESCE(b.slug, b.id::text) AS slug, b.telephone, COALESCE(b.plan_actif, 'pro') AS plan, b.logo_url AS logo, u.email, u.prenom, u.nom AS user_nom
       FROM boutiques b
       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
       WHERE b.id = $1

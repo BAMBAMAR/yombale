@@ -9,9 +9,34 @@ const { adminSecretOnly } = require('../middlewares/auth');
 
 const router = express.Router();
 
+let affiliateClicksTableEnsured = false;
+async function ensureAffiliateClicksTable() {
+  if (affiliateClicksTableEnsured) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS affiliate_clicks (
+        id             SERIAL PRIMARY KEY,
+        click_ref      VARCHAR(255) NOT NULL,
+        apporteur_code VARCHAR(100),
+        geo            VARCHAR(100),
+        device         VARCHAR(100),
+        ip_hash        VARCHAR(255),
+        converted      BOOLEAN DEFAULT FALSE,
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        converted_at   TIMESTAMPTZ
+      );
+      CREATE INDEX IF NOT EXISTS idx_aff_clicks_created ON affiliate_clicks(created_at DESC);
+    `);
+    affiliateClicksTableEnsured = true;
+  } catch (e) {
+    console.warn('[AFFILIATE_CLICKS_ENSURE_TABLE]', e.message);
+  }
+}
+
 // GET /api/affiliates/clicks — liste des clics affiliés (admin)
 router.get('/clicks', adminSecretOnly, async (req, res) => {
   try {
+    await ensureAffiliateClicksTable();
     const range = req.query.range || '24h';
     const interval =
       range === '7d' ? '7 days' : range === '30d' ? '30 days' : '1 day';

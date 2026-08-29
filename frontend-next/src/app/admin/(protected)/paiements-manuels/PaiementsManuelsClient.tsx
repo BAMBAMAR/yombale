@@ -68,7 +68,7 @@ export default function PaiementsManuelsClient({
     setEnCours(id)
     setMsg(null)
     try {
-      const r = await fetch(`${BACKEND}/api/paiement/manuel/${id}/valider`, {
+      const r = await fetch(`/api/paiement/manuel/${id}/valider`, {
         method: 'POST', headers: { 'X-Admin-Secret': secret },
       })
       const data = await r.json()
@@ -85,7 +85,7 @@ export default function PaiementsManuelsClient({
     setEnCours(id)
     setMsg(null)
     try {
-      const r = await fetch(`${BACKEND}/api/paiement/manuel/${id}/rejeter`, {
+      const r = await fetch(`/api/paiement/manuel/${id}/rejeter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
         body: JSON.stringify({ motif }),
@@ -105,7 +105,7 @@ export default function PaiementsManuelsClient({
     let succesCount = 0
     try {
       for (const id of selectedIds) {
-        const r = await fetch(`${BACKEND}/api/paiement/manuel/${id}/valider`, {
+        const r = await fetch(`/api/paiement/manuel/${id}/valider`, {
           method: 'POST', headers: { 'X-Admin-Secret': secret },
         })
         if (r.ok) succesCount++
@@ -128,7 +128,7 @@ export default function PaiementsManuelsClient({
     let count = 0
     try {
       for (const id of selectedIds) {
-        const r = await fetch(`${BACKEND}/api/paiement/manuel/${id}/rejeter`, {
+        const r = await fetch(`/api/paiement/manuel/${id}/rejeter`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
           body: JSON.stringify({ motif }),

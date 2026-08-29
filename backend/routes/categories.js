@@ -36,6 +36,7 @@ async function ensureCategoriesTable() {
   if (categoriesTableEnsured) return;
   try {
     await pool.query(`
+      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
       CREATE TABLE IF NOT EXISTS categories (
         id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         nom         VARCHAR(100) NOT NULL,
@@ -48,6 +49,13 @@ async function ensureCategoriesTable() {
         created_at  TIMESTAMPTZ DEFAULT NOW(),
         updated_at  TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS ordre INT DEFAULT 0;
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS actif BOOLEAN DEFAULT TRUE;
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT;
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES categories(id) ON DELETE SET NULL;
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS icone VARCHAR(50) DEFAULT '📦';
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+      ALTER TABLE categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
       CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
       CREATE INDEX IF NOT EXISTS idx_categories_ordre ON categories(ordre);
     `);
@@ -75,9 +83,9 @@ router.get('/', async (req, res) => {
   try {
     await ensureCategoriesTable();
     const { rows } = await pool.query(`
-      SELECT c.id, c.nom, c.slug, c.icone, c.description, c.ordre, c.parent_id,
-             (SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id) AS nb_produits,
-             (SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = c.slug AND actif = TRUE AND supprimee = FALSE) AS nb_annonces
+      SELECT c.id, c.nom, c.slug, c.icone, c.description, COALESCE(c.ordre, 0) AS ordre, c.parent_id,
+             COALESCE((SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id), 0) AS nb_produits,
+             COALESCE((SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = c.slug AND actif = TRUE), 0) AS nb_annonces
       FROM categories c
       WHERE COALESCE(c.actif, TRUE) = TRUE
       ORDER BY COALESCE(c.ordre, 0) ASC, c.nom ASC
@@ -93,11 +101,11 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   try {
     await ensureCategoriesTable();
     const { rows } = await pool.query(`
-      SELECT c.id, c.nom, c.slug, c.icone, c.description, c.ordre, c.actif, c.parent_id, c.created_at,
-             (SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id) AS nb_produits,
-             (SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = c.slug) AS nb_annonces
+      SELECT c.id, c.nom, c.slug, c.icone, c.description, COALESCE(c.ordre, 0) AS ordre, COALESCE(c.actif, TRUE) AS actif, c.parent_id, c.created_at,
+             COALESCE((SELECT COUNT(*)::int FROM produits WHERE categorie_id = c.id), 0) AS nb_produits,
+             COALESCE((SELECT COUNT(*)::int FROM annonces_classifiees WHERE categorie_slug = c.slug), 0) AS nb_annonces
       FROM categories c
-      ORDER BY COALESCE(c.ordre, 0) ASC, c.created_at ASC
+      ORDER BY COALESCE(c.ordre, 0) ASC, c.nom ASC
     `);
     res.json({ categories: rows });
   } catch (err) {

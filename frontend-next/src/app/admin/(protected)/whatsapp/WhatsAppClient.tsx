@@ -61,7 +61,7 @@ export default function WhatsAppClient({
 
   async function updateSupportStatut(id: string, newStatut: string) {
     try {
-      const r = await fetch(`${BACKEND}/api/whatsapp/admin/support/${id}`, {
+      const r = await fetch(`/api/whatsapp/admin/support/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
         body: JSON.stringify({ statut: newStatut }),
@@ -79,7 +79,7 @@ export default function WhatsAppClient({
   }
 
   async function toggle(key: 'whatsapp_enabled' | 'whatsapp_chatbot') {
-    const r = await fetch(`${BACKEND}/api/whatsapp/admin/toggle`, {
+    const r = await fetch(`/api/whatsapp/admin/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
       body: JSON.stringify({ key }),
@@ -95,7 +95,7 @@ export default function WhatsAppClient({
     if (!testPhone) return
     setBusy(true)
     try {
-      const r = await fetch(`${BACKEND}/api/whatsapp/admin/test`, {
+      const r = await fetch(`/api/whatsapp/admin/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
         body: JSON.stringify({ phone: testPhone, message: testMsg }),
@@ -108,7 +108,7 @@ export default function WhatsAppClient({
 
   async function clearSessions() {
     if (!confirm('Vider toutes les sessions chatbot ?')) return
-    const r = await fetch(`${BACKEND}/api/whatsapp/admin/sessions`, {
+    const r = await fetch(`/api/whatsapp/admin/sessions`, {
       method: 'DELETE',
       headers: { 'X-Admin-Secret': secret },
     })

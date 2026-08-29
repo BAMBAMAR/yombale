@@ -69,7 +69,10 @@ function adminSecretOnly(req, res, next) {
         return [parts[0], parts.slice(1).join('=')];
       })
     );
-    secret = cookies['nopalou_admin'];
+    const raw = cookies['nopalou_admin'];
+    if (raw) {
+      try { secret = decodeURIComponent(raw); } catch { secret = raw; }
+    }
   }
 
   if (process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {

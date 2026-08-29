@@ -106,9 +106,12 @@ router.post('/admin', adminSecretOnly, async (req, res) => {
 router.put('/admin/:id', adminSecretOnly, async (req, res) => {
   try {
     const { id } = req.params;
+    if (!id || id === 'undefined') {
+      return res.status(400).json({ error: 'Identifiant de forfait valide requis.' });
+    }
     const { label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description } = req.body;
 
-    const current = await pool.query('SELECT * FROM plans WHERE id = $1', [id]);
+    const current = await pool.query('SELECT * FROM plans WHERE id::text = $1 OR slug = $1', [id]);
     if (!current.rows[0]) {
       return res.status(404).json({ error: 'Plan introuvable' });
     }
@@ -129,7 +132,7 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
        SET label = $1, prix_mensuel = $2, badge = $3, couleur = $4, avantages = $5, limites = $6, ordre = $7, actif = $8, description = $9, updated_at = NOW()
        WHERE id = $10
        RETURNING *`,
-      [newLabel, newPrix, newBadge, newCouleur, newAvantages, newLimites, newOrdre, newActif, newDesc, id]
+      [newLabel, newPrix, newBadge, newCouleur, newAvantages, newLimites, newOrdre, newActif, newDesc, cur.id]
     );
 
     plansCache.invalidate();
@@ -137,7 +140,7 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
     await enregistrerAdminLog({
       action: 'plan_modifie',
       cibleType: 'plan',
-      cibleId: id,
+      cibleId: cur.id,
       description: `Mise à jour du forfait "${newLabel}" (${cur.slug}) — Prix: ${newPrix} FCFA/mois`,
       ancienneValeur: cur,
       nouvelleValeur: rows[0],
@@ -154,7 +157,10 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
 router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const current = await pool.query('SELECT * FROM plans WHERE id = $1', [id]);
+    if (!id || id === 'undefined') {
+      return res.status(400).json({ error: 'Identifiant de forfait valide requis.' });
+    }
+    const current = await pool.query('SELECT * FROM plans WHERE id::text = $1 OR slug = $1', [id]);
     if (!current.rows[0]) return res.status(404).json({ error: 'Plan introuvable' });
 
     const plan = current.rows[0];
@@ -167,7 +173,13 @@ router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
 
     if (check.rows[0].count > 0) {
       // Désactiver plutôt que supprimer
-      await pool.query('UPDATE plans SET actif = FALSE WHERE id = $1', [id]);
+      await pool.query('UPDATE plans SET actif = FALSE WHERE id = $1', [plan.id]);
+      plansCache.invalidate();
+      return res.json({ success: true, desactive: true, message: `Forfait "${plan.label}" désactivé car des abonnements actifs l'utilisent.` });
+    }
+
+    await pool.query('DELETE FROM plans WHERE id = $1', [plan.id]);
+    plansCache.invalidate();
       plansCache.invalidate();
       return res.json({
         success: true,

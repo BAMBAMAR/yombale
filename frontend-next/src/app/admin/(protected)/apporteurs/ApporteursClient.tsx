@@ -73,7 +73,7 @@ export default function ApporteursClient({
     setSaving(true)
     setMsg(null)
     try {
-      const r = await fetch(`${BACKEND}/api/settings`, {
+      const r = await fetch(`/api/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
         body: JSON.stringify(form),
@@ -88,7 +88,7 @@ export default function ApporteursClient({
 
   async function payerCommission(id: string, forcer: boolean) {
     try {
-      const r = await fetch(`${BACKEND}/api/apporteurs/admin/commissions/${id}/payer`, {
+      const r = await fetch(`/api/apporteurs/admin/commissions/${id}/payer`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
         body: JSON.stringify({ ignorer_seuil: forcer }),
@@ -109,7 +109,7 @@ export default function ApporteursClient({
     for (const id of selectedCommissionIds) {
       try {
         const comm = commissions.find(c => c.id === id)
-        const r = await fetch(`${BACKEND}/api/apporteurs/admin/commissions/${id}/payer`, {
+        const r = await fetch(`/api/apporteurs/admin/commissions/${id}/payer`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
           body: JSON.stringify({ ignorer_seuil: true }),
