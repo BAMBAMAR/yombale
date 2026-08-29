@@ -194,7 +194,7 @@ export default async function HomePage({
           
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'var(--orange2, #FFF3E8)', color: 'var(--accent, #C75B00)', padding: '4px 14px', borderRadius: 30,
+            background: 'var(--orange2, #FFF3E8)', color: '#9a3412', padding: '4px 14px', borderRadius: 30,
             fontSize: 11.5, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5',
           }}>
             <span>✨ Comparateur N°1 de prix & vendeurs au Sénégal</span>
@@ -240,7 +240,7 @@ export default async function HomePage({
                   <span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.25)', color: '#fed7aa', padding: '2px 7px', borderRadius: 8, fontSize: 10, fontWeight: 800, border: '1px solid rgba(199,91,0,0.4)', letterSpacing: '0.04em' }}>🚀 NOUVEAU</span>
                   <span style={{ fontSize: 11, fontWeight: 800, color: '#fed7aa' }}>{prixTafTaf} F/mois</span>
                 </div>
-                <h3 style={{ fontSize: 13.5, fontWeight: 900, marginBottom: 2, color: '#fff', lineHeight: 1.2 }}>Boutique Taf Taf</h3>
+                <h2 style={{ fontSize: 13.5, fontWeight: 900, marginBottom: 2, color: '#fff', lineHeight: 1.2 }}>Boutique Taf Taf</h2>
                 <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.8)', margin: '0 0 6px', lineHeight: 1.3 }}>Créez votre vitrine en 30s chrono !</p>
                 
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -282,7 +282,7 @@ export default async function HomePage({
 
             if (c.slug === 'immo') {
               return (
-                <Link key={c.slug} href="/immo" className="categ-pill" style={{
+                <Link key={c.slug} href="/immo" prefetch={false} aria-label="Immobilier et Terrains au Sénégal" className="categ-pill" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
                   background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
                   whiteSpace: 'nowrap', flexShrink: 0
@@ -294,7 +294,7 @@ export default async function HomePage({
 
             if (c.slug === 'annonces') {
               return (
-                <Link key={c.slug} href="/annonces" className="categ-pill" style={{
+                <Link key={c.slug} href="/annonces" prefetch={false} aria-label="Petites Annonces au Sénégal" className="categ-pill" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
                   background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
                   whiteSpace: 'nowrap', flexShrink: 0
@@ -306,7 +306,7 @@ export default async function HomePage({
 
             if (c.slug === 'telecom') {
               return (
-                <Link key={c.slug} href="/telecom" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
+                <Link key={c.slug} href="/telecom" prefetch={false} aria-label="Télécom et forfaits mobiles" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
                   background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
                   whiteSpace: 'nowrap', flexShrink: 0
@@ -320,6 +320,8 @@ export default async function HomePage({
               <Link
                 key={c.slug}
                 href={isSelected ? '/#resultats' : `/?categorie=${c.slug}#resultats`}
+                prefetch={false}
+                aria-label={`Filtrer par catégorie ${c.label}`}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
                   fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
@@ -389,6 +391,7 @@ export default async function HomePage({
                   <Link
                     key={b.label}
                     href={buildFilterUrl({ prixMin: b.prixMin, prixMax: b.prixMax })}
+                    prefetch={false}
                     className={`budget-pill${isActive ? ' active' : ''}`}
                     style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
                   >
@@ -406,6 +409,7 @@ export default async function HomePage({
                   <Link
                     key={e.label}
                     href={buildFilterUrl({ etat: e.val })}
+                    prefetch={false}
                     className={`budget-pill hidden-mobile${isActive ? ' active' : ''}`}
                     style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
                   >
@@ -439,6 +443,7 @@ export default async function HomePage({
                   <Link
                     key={t.val || 'defaut'}
                     href={buildFilterUrl({ tri: t.val })}
+                    prefetch={false}
                     className={`budget-pill${isActive ? ' active' : ''}`}
                     style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
                   >
@@ -449,11 +454,12 @@ export default async function HomePage({
 
               <div style={{ width: 1, height: 16, background: 'var(--border-medium, #C8BDB2)', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
 
-              <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: 'var(--accent, #C75B00)', whiteSpace: 'nowrap', marginLeft: 2 }}>🔥 Tendances :</span>
+              <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: '#9a3412', whiteSpace: 'nowrap', marginLeft: 2 }}>🔥 Tendances :</span>
               {tendances.map((item, idx) => (
                 <Link
                   key={`${item.q}-${idx}`}
                   href={buildFilterUrl({ q: item.q })}
+                  prefetch={false}
                   className="budget-pill hidden-mobile"
                   style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
                 >
@@ -465,6 +471,7 @@ export default async function HomePage({
             {hasFiltre ? (
               <Link
                 href="/#resultats"
+                prefetch={false}
                 className="budget-pill hidden-mobile"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2',
@@ -517,7 +524,7 @@ export default async function HomePage({
           
           {/* En-tête de section épuré */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <span style={{ display: 'inline-block', background: '#fff7ed', color: 'var(--accent, #C75B00)', padding: '6px 16px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 12, border: '1px solid #fed7aa' }}>
+            <span style={{ display: 'inline-block', background: '#fff7ed', color: '#9a3412', padding: '6px 16px', borderRadius: 30, fontSize: 12, fontWeight: 800, marginBottom: 12, border: '1px solid #fed7aa' }}>
               6800+ produits · mis à jour toutes les 6h
             </span>
             <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: 0, lineHeight: 1.2 }}>
@@ -545,7 +552,7 @@ export default async function HomePage({
           <p className="chip-row-label">Comparer par catégorie</p>
             <div className="chip-row">
               {CATEGORIES.filter(c => c.slug !== 'telecom').map(c => (
-                <Link key={c.slug} href={`/categorie/${c.slug}`} className="chip">
+                <Link key={c.slug} href={`/categorie/${c.slug}`} aria-label={`Catalogue complet de la catégorie ${c.label}`} className="chip">
                   <span className="chip-em">{c.emoji}</span>
                   {c.label}
                 </Link>

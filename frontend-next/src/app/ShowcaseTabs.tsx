@@ -32,7 +32,7 @@ export default function ShowcaseTabs({
         {/* Header Section */}
         <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{
-            alignSelf: 'center', background: '#fff7ed', color: '#c75b00',
+            alignSelf: 'center', background: '#fff7ed', color: '#9a3412',
             fontSize: 12, fontWeight: 800, padding: '4px 14px', borderRadius: 20,
             border: '1px solid #ffedd5', display: 'inline-flex', alignItems: 'center', gap: 6
           }}>
@@ -94,12 +94,12 @@ export default function ShowcaseTabs({
           padding: '20px 16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(28,43,74,0.03)'
         }}>
           <div style={{ textAlign: 'center', marginBottom: 14 }}>
-            <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--accent, #C75B00)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: 12, fontWeight: 900, color: '#9a3412', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               ⚡ Chaîne de Valeur Complète Vendeurs &amp; Client
             </span>
-            <h4 style={{ margin: '4px 0 0', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
+            <h3 style={{ margin: '4px 0 0', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
               De la Recherche du Produit jusqu&apos;à la Remise en Main Propre par le Livreur
-            </h4>
+            </h3>
           </div>
 
           <div style={{
@@ -153,11 +153,11 @@ export default function ShowcaseTabs({
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
-              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>
+              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
                 🎁 1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
-                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
+                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
                   Soit {(getPrix(prixTafTaf) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
                 </p>
               )}
@@ -231,11 +231,11 @@ export default function ShowcaseTabs({
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
-              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>
+              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
                 🎁 1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
-                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
+                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
                   Soit {(getPrix(prixPro) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
                 </p>
               )}
@@ -309,11 +309,11 @@ export default function ShowcaseTabs({
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
-              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#16a34a' }}>
+              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
                 🎁 1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
-                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#C75B00' }}>
+                <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
                   Soit {(getPrix(prixBusiness) * duree).toLocaleString('fr-FR')} FCFA pour {duree} mois
                 </p>
               )}

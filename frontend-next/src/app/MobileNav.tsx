@@ -66,7 +66,11 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
         <div className="mobile-nav-overlay" onClick={close} aria-hidden="true" />
       )}
 
-      <div className={`mobile-nav-drawer${open ? ' mobile-nav-drawer--open' : ''}`} aria-hidden={!open}>
+      <div
+        className={`mobile-nav-drawer${open ? ' mobile-nav-drawer--open' : ''}`}
+        aria-hidden={!open}
+        {...(!open ? { inert: '' } : {})}
+      >
         {/* Header Drawer */}
         <div className="mobile-nav-header">
           <a href="/" className="mobile-nav-logo" onClick={close}>

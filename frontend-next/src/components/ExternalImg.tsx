@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { sanitizeImgUrl } from '@/lib/sanitizeImg'
+import { sanitizeImgUrl, optimizeCloudinaryImgUrl } from '@/lib/sanitizeImg'
 
-export { sanitizeImgUrl }
+export { sanitizeImgUrl, optimizeCloudinaryImgUrl }
 
 export interface ExternalImgProps {
   src: string | null | undefined
@@ -21,8 +21,9 @@ export interface ExternalImgProps {
 }
 
 /**
- * Balise img native robuste :
+ * Balise img native robuste & ultra-optimisée :
  * - Chargement direct et sécurisé en HTTPS
+ * - Optimisation automatique Cloudinary (WebP/AVIF, f_auto, q_auto, dimensionnement)
  * - Fallback via proxy CDN (wsrv.nl) si échec direct
  * - Affichage de l'élément de secours en dernier recours
  * - Tatouage numérique / Watermark anti-vol de marque (optionnel)
@@ -41,8 +42,9 @@ export default function ExternalImg({
   onMouseEnter,
   onMouseLeave,
 }: ExternalImgProps) {
-  const cleanSrc = sanitizeImgUrl(src)
-  const [attempt, setAttempt] = useState<number>(0) // 0 = direct, 1 = proxy (wsrv.nl), 2 = fallback
+  const targetWidth = width ? Math.min(width * 2, 1000) : 500
+  const cleanSrc = optimizeCloudinaryImgUrl(src, targetWidth) || sanitizeImgUrl(src)
+  const [attempt, setAttempt] = useState<number>(0) // 0 = direct/optimisé, 1 = proxy (wsrv.nl), 2 = fallback
 
   useEffect(() => {
     setAttempt(0)
@@ -63,8 +65,6 @@ export default function ExternalImg({
     return <>{fallback}</>
   }
 
-  const isFb = cleanSrc.includes('fbcdn.net') || cleanSrc.includes('facebook.com')
-
   const currentSrc = attempt === 1
     ? `https://wsrv.nl/?url=${encodeURIComponent(cleanSrc)}`
     : cleanSrc
@@ -77,10 +77,10 @@ export default function ExternalImg({
       className={className}
       style={style}
       loading={loading}
+      decoding="async"
       width={width}
       height={height}
       referrerPolicy="no-referrer"
-      crossOrigin="anonymous"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onContextMenu={watermark ? (e) => e.preventDefault() : undefined}
@@ -120,4 +120,5 @@ export default function ExternalImg({
 
   return imageElement
 }
+
 

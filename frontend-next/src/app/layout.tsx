@@ -216,10 +216,10 @@ export default async function RootLayout({
 
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-GD7365PKTS"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           nonce={nonce}
         />
-        <Script id="ga4-init" strategy="afterInteractive" nonce={nonce}>
+        <Script id="ga4-init" strategy="lazyOnload" nonce={nonce}>
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -254,12 +254,12 @@ export default async function RootLayout({
                 <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
                 <span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>
               </a>
-              <div className="navbar-links" role="menubar" style={{ whiteSpace: 'nowrap' }}>
-                <a href="/" className="navbar-link" role="menuitem">Produits</a>
-                <a href="/immo" className="navbar-link" role="menuitem">Immobilier</a>
-                <a href="/telecom" className="navbar-link" role="menuitem">Télécom</a>
-                <a href="/annonces" className="navbar-link" role="menuitem">Annonces</a>
-                <a href="/boutiques" className="navbar-link" role="menuitem">Boutiques</a>
+              <div className="navbar-links" style={{ whiteSpace: 'nowrap' }}>
+                <a href="/" className="navbar-link">Produits</a>
+                <a href="/immo" className="navbar-link">Immobilier</a>
+                <a href="/telecom" className="navbar-link">Télécom</a>
+                <a href="/annonces" className="navbar-link">Annonces</a>
+                <a href="/boutiques" className="navbar-link">Boutiques</a>
                 <NavbarGuides />
               </div>
               <div className="navbar-search-desktop">
@@ -407,7 +407,7 @@ export default async function RootLayout({
                 <a href="mailto:contact@nopalou.com">contact@nopalou.com</a>
                 <a href="tel:+221708717942">+221 70 871 79 42</a>
                 <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,.35)', marginTop: 4 }}>Dakar, Sénégal</span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,.75)', marginTop: 4 }}>Dakar, Sénégal</span>
               </div>
             </div>
           </div>
