@@ -1,3 +1,11 @@
+- **Correction de la Liste Vide des Boutiques dans l'Espace Admin (`backend/routes/boutiques.js`, `relance-catalogue.js`, `migrate-inline.js`, `CLAUDE.md`) (`local` - 29 août 2026)** 🛠️🏪👑 :
+  * **🔍 1. Diagnostic de la Section Boutique Vide en Admin** :
+    - **Cause Racine** : La requête SQL de l'endpoint `GET /api/boutiques/admin/toutes` tentait d'extraire la colonne `u.prenom AS proprietaire_prenom` depuis la table `utilisateurs`. Or, la table `utilisateurs` ne comporte pas de colonne `prenom` (le nom complet est stocké dans `nom`), ce qui provoquait une erreur SQL immédiate `column u.prenom does not exist` (statut HTTP 500) et vidait la liste des boutiques côté client.
+  * **⚡ 2. Corrections Appliquées** :
+    - Remplacement de `u.prenom` par `split_part(u.nom, ' ', 1) AS proprietaire_prenom` dans `backend/routes/boutiques.js` et `backend/services/relance-catalogue.js`.
+    - Ajout de la migration sécurisée `ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS prenom VARCHAR(100)` dans `backend/migrate-inline.js`.
+  * **📦 3. Statut** : Modifications enregistrées en local (aucun push conformément aux consignes).
+
 - **Modernisation des Alertes Prix, Portail d'Abonnement Wave Débloqué, Routage Caisse POS Multi-Boutiques & Mode Nuit Haute Visibilité (`AlertesClientTab.tsx`, `AbonnementClient.tsx`, `CaisseClient.tsx`, `BoutiqueClient.tsx`, `abonnements.js`, `paiement.js`, `CLAUDE.md`, `walkthrough.md`) (`main` - 29 août 2026)** 🔔💳🖥️🌙✨🇸🇳 :
   * **🔔 1. Restauration Complète du Module d'Alertes Prix (`AlertesClientTab.tsx`, `CompteClient.tsx`, `mes-alertes/page.tsx`, `FormAlerte.tsx`, `MesAlertesClient.tsx`)** :
     - Résolution de l'affichage vide de l'onglet *Alerte Prix* dans *Mon Compte* (`/compte?tab=mes-alertes`) et sur `/mes-alertes`.
