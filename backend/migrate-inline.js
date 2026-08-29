@@ -603,6 +603,66 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table feature_flags OK');
   } catch (e) { console.warn('[MIGRATE] feature_flags:', e.message); }
 
+  // Table plans (plans tarifaires 100% administrables sans code)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS plans (
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        slug          VARCHAR(50) UNIQUE NOT NULL,
+        label         VARCHAR(100) NOT NULL,
+        prix_mensuel  NUMERIC(10,2) NOT NULL DEFAULT 0,
+        badge         VARCHAR(100),
+        couleur       VARCHAR(30) DEFAULT '#0284c7',
+        avantages     JSONB DEFAULT '[]',
+        limites       JSONB DEFAULT '{}',
+        ordre         INT DEFAULT 0,
+        actif         BOOLEAN DEFAULT TRUE,
+        visibilite    VARCHAR(20) DEFAULT 'public',
+        description   TEXT,
+        created_at    TIMESTAMPTZ DEFAULT NOW(),
+        updated_at    TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_plans_slug ON plans(slug);
+      CREATE INDEX IF NOT EXISTS idx_plans_actif ON plans(actif, ordre);
+
+      INSERT INTO plans (slug, label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description) VALUES
+        ('gratuit', 'Boutique Gratuite', 0, 'Départ', '#64748b', '["Page boutique vitrine visible sur Nopalou", "Coordonnées et contact WhatsApp direct", "Jusqu''à 2 annonces classées incluses"]', '{"max_produits": 10, "max_caissiers": 1, "pos": false, "whatsapp_chatbot": false}', 0, TRUE, 'Pour lancer sa visibilité sur internet sans frais.'),
+        ('decouverte', 'Boutique Taf Taf', 2500, 'Populaire', '#10b981', '["Carnet de dettes client & relances WhatsApp", "Catalogue connecté avec commandes WhatsApp", "Encaissement direct Wave & Orange Money", "Import IA magique de produits", "0% de commission", "1er mois 100% OFFERT"]', '{"max_produits": 50, "max_caissiers": 1, "pos": false, "whatsapp_chatbot": true}', 1, TRUE, 'Pour les commerçants souhaitant digitaliser leurs ventes et carnet de crédits.'),
+        ('pro', 'Boutique Pro', 5000, 'Recommandé', '#f59e0b', '["Tout le contenu Taf Taf", "Caisse POS tactile magasin & tickets", "Saisie express & scanner code-barres", "Référencement prioritaire & Badge Certifié", "5 annonces classées incluses / mois", "Analytics avancés", "1er mois 100% OFFERT"]', '{"max_produits": 300, "max_caissiers": 3, "pos": true, "whatsapp_chatbot": true}', 2, TRUE, 'Pour les boutiques avec point de vente physique nécessitant une caisse POS.'),
+        ('business', 'Boutique Business VIP', 10000, '👑 VIP', '#6366f1', '["Tout le contenu Pro", "Relances automatiques WhatsApp des dettes & paniers", "Multi-caissiers avec codes PIN & clôtures Z", "Multi-magasins & transferts de stock", "Portail Développeur API & Webhooks", "Comptabilité fournisseurs & Bons de commande", "Bannière sponsorisée en tête de catégorie", "15 annonces classées incluses", "Account Manager VIP 7j/7", "1er mois 100% OFFERT"]', '{"max_produits": 2000, "max_caissiers": 10, "pos": true, "whatsapp_chatbot": true, "api_access": true}', 3, TRUE, 'La solution tout-en-un pour les moyennes et grandes enseignes.')
+      ON CONFLICT (slug) DO UPDATE SET
+        label = EXCLUDED.label,
+        badge = EXCLUDED.badge,
+        couleur = EXCLUDED.couleur,
+        avantages = EXCLUDED.avantages,
+        limites = EXCLUDED.limites;
+    `);
+    console.log('[MIGRATE] ✅ Table plans OK');
+  } catch (e) { console.warn('[MIGRATE] plans:', e.message); }
+
+  // Table admin_audit_logs (traçabilité complète des actions de gestion)
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin_audit_logs (
+        id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        admin_nom       VARCHAR(150) NOT NULL DEFAULT 'Admin',
+        admin_role      VARCHAR(50) DEFAULT 'super_admin',
+        action          VARCHAR(100) NOT NULL,
+        cible_type      VARCHAR(50) NOT NULL,
+        cible_id        VARCHAR(100),
+        description     TEXT NOT NULL,
+        ancienne_valeur JSONB,
+        nouvelle_valeur JSONB,
+        ip_adresse      VARCHAR(100),
+        created_at      TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_action ON admin_audit_logs(action);
+      CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_cible ON admin_audit_logs(cible_type, cible_id);
+      CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_date ON admin_audit_logs(created_at DESC);
+    `);
+    console.log('[MIGRATE] ✅ Table admin_audit_logs OK');
+  } catch (e) { console.warn('[MIGRATE] admin_audit_logs:', e.message); }
+
   // Table clics_affiliation — tracking des clics vers marchands externes
   try {
     await pool.query(`
@@ -707,10 +767,7 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_abonnements_fin    ON abonnements(fin) WHERE statut = 'actif';
     `);
     
-    // Update existing constraint for older databases
-    await pool.query(`
       ALTER TABLE abonnements DROP CONSTRAINT IF EXISTS abonnements_plan_check;
-      ALTER TABLE abonnements ADD CONSTRAINT abonnements_plan_check CHECK (plan IN ('gratuit', 'decouverte', 'taf_taf', 'pro', 'business', 'immo'));
     `);
     
     console.log('[MIGRATE] ✅ Table abonnements OK');

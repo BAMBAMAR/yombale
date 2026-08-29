@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag } from 'lucide-react'
+import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag, Crown } from 'lucide-react'
 
 interface AdminSidebarProps {
   logoutAction: () => Promise<void>
@@ -28,8 +28,9 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
     {
       title: 'Monétisation & Facturation',
       items: [
-        { href: '/admin/comptes', label: 'Comptes utilisateurs', icon: <Users size={16} /> },
+        { href: '/admin/plans', label: 'Plans & Forfaits', icon: <Crown size={16} />, highlight: '#eab308' },
         { href: '/admin/abonnements', label: 'Abonnements', icon: <Star size={16} /> },
+        { href: '/admin/comptes', label: 'Comptes utilisateurs', icon: <Users size={16} /> },
         { href: '/admin/paiements-manuels', label: 'Paiements manuels', icon: <Receipt size={16} /> },
         { href: '/admin/reversements', label: 'Reversements Wave 1-Clic', icon: <DollarSign size={16} />, highlight: '#1d4ed8' },
         { href: '/admin/revenus', label: 'Revenus & Finances', icon: <DollarSign size={16} /> },
@@ -61,6 +62,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
       title: 'Système & Pilotage',
       items: [
         { href: '/admin/feature-flags', label: 'Feature Flags (No-Code)', icon: <Flag size={16} />, highlight: '#9333ea' },
+        { href: '/admin/audit-logs', label: 'Audit Logs & Traçabilité', icon: <ShieldCheck size={16} />, highlight: '#059669' },
         { href: '/admin/compte', label: 'Mon compte', icon: <User size={16} /> },
       ]
     }

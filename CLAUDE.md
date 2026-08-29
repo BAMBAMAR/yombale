@@ -1,3 +1,17 @@
+- **Phase 2 de la Console Centrale de Pilotage Admin Nopalou (P1) (`plansCache.js`, `plans.js`, `adminAuditLogger.js`, `admin-audit-logs.js`, `admin-marchands.js`, `AdminPlansClient.tsx`, `AdminAuditLogsClient.tsx`, `AdminSidebarClient.tsx`, `migrate-inline.js`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`local` - 29 août 2026)** 💎👑🛡️👤📝⚙️ :
+  * **💎 1. Moteur & Console des Plans Tarifaires 100% Administrables (`plansCache.js`, `plans.js`, `AdminPlansClient.tsx`, `page.tsx`)** :
+    - Nouvelle table `plans` avec cache mémoire haute performance (TTL 3min).
+    - Suppression de la contrainte CHECK statique `abonnements_plan_check` permettant de créer des forfaits sur-mesure ou saisonniers sans toucher au code SQL.
+    - Interface d'administration pour créer, modifier (prix mensuel FCFA, badge marketing, couleur branding, description, liste interactive d'avantages, limites produits/caissiers) et activer/masquer les forfaits en direct.
+    - Compteur en direct des abonnés actifs par forfait.
+  * **🛡️ 2. Système d'Audit Logs Global & Traçabilité Immuable (`adminAuditLogger.js`, `admin-audit-logs.js`, `AdminAuditLogsClient.tsx`, `page.tsx`)** :
+    - Nouvelle table `admin_audit_logs` traçant chaque opération administrative (qui, quoi, quand, entité cible, description, anciennes/nouvelles valeurs au format JSON, adresse IP).
+    - Interface de consultation avec filtrage multi-critères par type d'entité (*Forfaits*, *Boutiques*, *Comptes*, *Feature flags*, *Catégories*, *Paiements*, *Paramètres*), recherche textuelle et inspecteur de diff.
+  * **👤 3. API & Fiches Marchands 360° (`admin-marchands.js`)** :
+    - Endpoint `/api/admin/marchands/:id/fiche` consolidant identité, boutiques, chiffre d'affaires cumulé, ventes POS/Web, historique des abonnements, paiements et logs d'activité.
+    - Endpoint `/api/admin/marchands/:id/action-plan` permettant à l'administrateur d'attribuer ou prolonger manuellement un forfait à un marchand avec journalisation automatique.
+  * **📦 4. Statut** : Modifications enregistrées et commitées en local (aucun push sans demande explicite).
+
 - **Phase 1 de la Console Centrale de Pilotage Admin Nopalou (P0) (`featureFlags.js`, `feature-flags.js`, `categories.js`, `admin-dashboard.js`, `AdminDashboardClient.tsx`, `AdminFeatureFlagsClient.tsx`, `AdminCategoriesClient.tsx`, `AdminSidebarClient.tsx`, `abonnements.js`, `paiement.js`, `auth.js`, `CLAUDE.md`) (`local` - 29 août 2026)** 🚀👑🚩📊📁🔐 :
   * **🔐 1. Correctif de Sécurité Critique JWT (`backend/middlewares/auth.js`)** :
     - Élimination de la faille de contournement de signature `jwt.decode` sans vérification du secret en cas d'erreur de vérification.

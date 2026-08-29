@@ -247,6 +247,8 @@ app.use('/api/paiements',       require('./routes/boutiques'));
 app.use('/api/facebook-posts',  require('./routes/facebook-posts'));
 app.use('/api/abonnements',     require('./routes/abonnements'));
 app.use('/api/admin/utilisateurs', require('./routes/admin-utilisateurs'));
+app.use('/api/admin/marchands',    require('./routes/admin-marchands'));
+app.use('/api/admin/audit-logs',   require('./routes/admin-audit-logs'));
 app.use('/api/admin/dashboard',    require('./routes/admin-dashboard'));
 app.use('/api/click',           require('./routes/click'));
 app.use('/api/analytics',       require('./routes/analytics'));
@@ -262,6 +264,7 @@ app.use('/api/prospection',     require('./routes/prospection'));
 app.use('/api/entites',         require('./routes/entites'));
 app.use('/api/feature-flags',   require('./routes/feature-flags'));
 app.use('/api/categories',      require('./routes/categories'));
+app.use('/api/plans',           require('./routes/plans'));
 
 // ── Health check (Diagnostics & Liveness/Readiness Probes) ─────
 app.get(['/health', '/api/health'], async (req, res) => {
