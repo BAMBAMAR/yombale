@@ -48,7 +48,7 @@ async function envoyerRelanceCatalogueBoutique(boutiqueId, { messageCustom, titr
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.actif,
             b.derniere_relance_catalogue_at, b.nb_relances_catalogue,
-            u.nom AS proprietaire_nom, u.prenom AS proprietaire_prenom, u.telephone AS proprietaire_telephone,
+            u.nom AS proprietaire_nom, split_part(u.nom, ' ', 1) AS proprietaire_prenom, u.telephone AS proprietaire_telephone,
             (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits
      FROM boutiques b
      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
@@ -141,7 +141,7 @@ async function recupererBoutiquesEligiblesRelance() {
   const query = `
     SELECT b.id, b.nom, b.slug, b.telephone, b.whatsapp, b.created_at,
            b.derniere_relance_catalogue_at, b.nb_relances_catalogue,
-           u.nom AS proprietaire_nom, u.prenom AS proprietaire_prenom, u.telephone AS proprietaire_telephone,
+           u.nom AS proprietaire_nom, split_part(u.nom, ' ', 1) AS proprietaire_prenom, u.telephone AS proprietaire_telephone,
            (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits
     FROM boutiques b
     LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id

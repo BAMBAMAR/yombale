@@ -173,7 +173,7 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
               b.logo_url, b.actif, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
               b.derniere_relance_catalogue_at, COALESCE(b.nb_relances_catalogue, 0) AS nb_relances_catalogue,
               (SELECT COUNT(*)::int FROM boutique_produits WHERE boutique_id = b.id) AS nb_produits,
-              u.nom AS proprietaire_nom, u.prenom AS proprietaire_prenom, u.email AS proprietaire_email,
+              u.nom AS proprietaire_nom, split_part(u.nom, ' ', 1) AS proprietaire_prenom, u.email AS proprietaire_email,
               u.telephone AS proprietaire_telephone,
               a.plan AS plan_actif, a.fin AS plan_fin
        FROM boutiques b
@@ -189,7 +189,10 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
        LIMIT 5000`
     );
     res.json({ boutiques: rows });
-  } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
+  } catch (err) {
+    console.error('[GET_BOUTIQUES_ADMIN_TOUTES_ERR]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // ── POST /api/boutiques/admin/relance-catalogue — Envoi unitaire ou par lot de relances catalogue (admin)
