@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag, Crown, Activity } from 'lucide-react'
+import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag, Crown, Activity, ShoppingBag } from 'lucide-react'
 
 interface AdminSidebarProps {
   logoutAction: () => Promise<void>
@@ -30,6 +30,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
       items: [
         { href: '/admin/plans', label: 'Plans & Forfaits', icon: <Crown size={16} />, highlight: '#eab308' },
         { href: '/admin/abonnements', label: 'Abonnements', icon: <Star size={16} /> },
+        { href: '/admin/commandes', label: 'Commandes Web', icon: <ShoppingBag size={16} />, highlight: '#ea580c' },
         { href: '/admin/comptes', label: 'Comptes utilisateurs', icon: <Users size={16} /> },
         { href: '/admin/paiements-manuels', label: 'Paiements manuels', icon: <Receipt size={16} /> },
         { href: '/admin/reversements', label: 'Reversements Wave 1-Clic', icon: <DollarSign size={16} />, highlight: '#1d4ed8' },
@@ -51,7 +52,8 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
     {
       title: 'Canaux & Outils',
       items: [
-        { href: '/admin/whatsapp', label: 'WhatsApp', icon: <MessageCircle size={16} /> },
+        { href: '/admin/whatsapp', label: 'WhatsApp Bot', icon: <MessageCircle size={16} /> },
+        { href: '/admin/whatsapp/templates', label: 'Templates WhatsApp', icon: <MessageCircle size={16} />, highlight: '#16a34a' },
         { href: '/admin/publications', label: 'Publications Facebook', icon: <BookOpen size={16} /> },
         { href: '/admin/communication', label: 'Kit communication', icon: <Palette size={16} /> },
         { href: '/admin/developer', label: 'Portail Développeur API', icon: <Terminal size={16} /> },

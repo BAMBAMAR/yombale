@@ -250,6 +250,8 @@ app.use('/api/admin/utilisateurs', require('./routes/admin-utilisateurs'));
 app.use('/api/admin/marchands',    require('./routes/admin-marchands'));
 app.use('/api/admin/audit-logs',   require('./routes/admin-audit-logs'));
 app.use('/api/admin/dashboard',    require('./routes/admin-dashboard'));
+app.use('/api/admin/commandes',    require('./routes/admin-commandes'));
+app.use('/api/admin/whatsapp-templates', require('./routes/admin-whatsapp-templates'));
 app.use('/api/admin/omnisearch',    require('./routes/admin-search'));
 app.use('/api/admin/export',       require('./routes/admin-export'));
 app.use('/api/admin/system',       require('./routes/admin-system'));

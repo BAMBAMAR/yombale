@@ -1,3 +1,15 @@
+- **Phase 4 de la Console Centrale de Pilotage Admin Nopalou (P3) (`whatsappTemplates.js`, `admin-whatsapp-templates.js`, `admin-commandes.js`, `AdminWhatsAppTemplatesClient.tsx`, `AdminCommandesClient.tsx`, `AdminSidebarClient.tsx`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`local` - 29 août 2026)** 💬🛍️🤖📱🚚📦 :
+  * **💬 1. Moteur & Éditeur des Templates WhatsApp Centralisés (`whatsappTemplates.js`, `admin-whatsapp-templates.js`, `AdminWhatsAppTemplatesClient.tsx`, `page.tsx`)** :
+    - Gestion dynamique de 6 modèles de messages cruciaux : *Onboarding J+1 (Partage Vitrine)*, *Onboarding J+7 (Encaissement Wave)*, *Onboarding J+25 (Fin d'essai)*, *Relance Dettes Client (Carnet)*, *Relance Boutique 0 Produit*, *Notification Commande Marchand*.
+    - Injection dynamique de variables contextuelles (`{prenom}`, `{boutique_nom}`, `{slug}`, `{montant}`, `{lien_boutique}`, `{date_echeance}`, `{nom_produit}`, etc.).
+    - Simulateur en direct reproduisant le rendu réel des bulles WhatsApp pour une prévisualisation fidèle avant sauvegarde.
+    - Bouton de réinitialisation instantanée aux textes par défaut.
+  * **🛍️ 2. Console Centralisée des Commandes Web (`admin-commandes.js`, `AdminCommandesClient.tsx`, `page.tsx`)** :
+    - Vue panoramique de toutes les commandes passées sur l'ensemble des boutiques de la plateforme.
+    - Pilules de synthèse financière et compteurs par statut (*En attente*, *Confirmée*, *Expédiée*, *Livrée*, *Annulée*).
+    - Modification directe des statuts de commande avec traçabilité dans l'audit log et tiroir de coordonnées client complètes.
+  * **📦 3. Statut** : Modifications enregistrées et commitées en local (aucun push sans demande explicite).
+
 - **Phase 3 de la Console Centrale de Pilotage Admin Nopalou (P2) (`admin-search.js`, `admin-export.js`, `admin-system.js`, `AdminOmnisearch.tsx`, `AdminSystemClient.tsx`, `layout.tsx`, `AdminSidebarClient.tsx`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`local` - 29 août 2026)** 🔍📥🏥🚨⌨️📊 :
   * **🔍 1. Moteur de Recherche Globale & Omnisearch Modal (`admin-search.js`, `AdminOmnisearch.tsx`, `layout.tsx`)** :
     - Raccourci universel `Ctrl+K` / `Cmd+K` accessible sur l'ensemble des pages d'administration.
