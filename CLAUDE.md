@@ -1,3 +1,7 @@
+- **Fix Logique Blacklist Chatbot (`backend/services/whatsapp-chatbot.js`) (`pushed` - 29 août 2026)** 🛑💬 :
+  * **🛑 1. Fiabilisation du Message d'Adieu** : Correction d'une condition de course logique lors de l'envoi de la commande `STOP`. Le système s'ajoutait sur la liste noire avant d'envoyer le message de confirmation (ce qui déclenchait l'intercepteur de sécurité global de `sendWhatsAppText` qui refusait l'envoi). Inversion de l'ordre d'exécution pour garantir la réception du message d'adieu avant la coupure définitive.
+  * **📦 2. Statut** : Déployé sur GitHub (`origin/main`).
+
 - **Stabilité Campagnes Async & Filtrage Noms WhatsApp (`backend/routes/prospection.js`, `backend/services/prospection.js`, `ProspectionClient.tsx`, `CLAUDE.md`) (`pushed` - 29 août 2026)** 🚀🛡️ :
   * **🚀 1. Exécution Asynchrone des Campagnes (Fix 500 API Timeout)** : Modification de l'architecture de `lancerCampagne` dans la route POST pour s'exécuter en arrière-plan ("fire-and-forget"). L'API répond désormais instantanément avec un succès, évitant le timeout de 30s du proxy/navigateur lors de l'envoi de dizaines de messages avec le Jitter Anti-Ban.
   * **🛡️ 2. Filtrage des Noms "Insensés"** : Amélioration de `estNomPropreAuthentique` pour bloquer les scories de scraping WhatsApp ("Participant E Anonyme", "Membre Anonyme", "Tops Top", "sn") afin de garantir un accueil générique professionnel ("Salam ! 👋") au lieu d'une salutation robotique.

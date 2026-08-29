@@ -1581,24 +1581,11 @@ async function handleIncomingInternal(msg) {
   const estMotStop = MOTS_STOP.some(m => normText === m || normText.includes(m)) || normInteractive === 'stop';
 
   if (estMotStop) {
-    await ajouterBlacklist(phone, 'user_stop');
-    const telClean = phone.replace(/\D/g, '').slice(-9);
-    try {
-      await pool.query(
-        `UPDATE annonces_classifiees SET actif = false, supprimee = true, updated_at = NOW() WHERE contact_tel LIKE '%' || $1 OR contact_tel LIKE '%' || $2`,
-        [telClean, phone]
-      );
-      await pool.query(
-        `UPDATE annonces_immo SET actif = false, supprimee = true, updated_at = NOW() WHERE contact_tel LIKE '%' || $1 OR contact_tel LIKE '%' || $2`,
-        [telClean, phone]
-      );
-      await pool.query(`UPDATE alertes SET active = false WHERE telephone LIKE '%' || $1 OR telephone = $2`, [telClean, phone]);
-    } catch {}
-
     await sendWhatsAppText(
       phone,
       `❌ *Désinscription effectuée — Nopalou*\n\nVous êtes maintenant désinscrit(e) des messages WhatsApp Nopalou. Vos annonces et alertes associées ont été désactivées.\n\nVous ne recevrez plus aucun message de notre part sur ce numéro (+${phone}).\n\n*(Pour vous réinscrire un jour : envoyez simplement START)*`
     );
+    await ajouterBlacklist(phone, 'user_stop');
     await setSession(phone, 'IDLE', {});
     return;
   }
@@ -1663,7 +1650,6 @@ async function handleIncomingInternal(msg) {
   const MOTS_OPTOUT = ['stop', 'arret', 'desinscrire', 'desinscription', 'annuler', 'bloquer', 'supprimer', 'ne plus recevoir', 'refus'];
   if (MOTS_OPTOUT.includes(normaliserTexte(text).trim())) {
     const normPh = normalisePhone(phone);
-    await ajouterBlacklist(normPh, 'demande_utilisateur_stop');
     try {
       await pool.query(
         "UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE telephone = $1",
@@ -1675,6 +1661,7 @@ async function handleIncomingInternal(msg) {
       phone,
       '✅ *Désinscription confirmée*\n\nC\'est bien noté ! Votre numéro a été retiré avec succès de nos listes. Vous ne recevrez plus aucun message de prospection ou de notification de notre part.\n\nSi vous souhaitez revenir plus tard, il vous suffira de taper *menu*.'
     );
+    await ajouterBlacklist(normPh, 'demande_utilisateur_stop');
     await setSession(phone, 'IDLE', {});
     return;
   }
