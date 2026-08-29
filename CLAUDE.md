@@ -1,3 +1,11 @@
+- **Résilience Images Externes & Règle Déploiement Strict (`ExternalImg.tsx`, `AdminAnnoncesClient.tsx`, `AdminImmoClient.tsx`, `AdminBoutiquesClient.tsx`, `AGENTS.md`, `CLAUDE.md`) (`pushed` - 29 août 2026)** 🛡️🖼️🛑 :
+  * **🖼️ 1. Résilience & Fallback CDN Images (Facebook CDN & Externes)** :
+    - Gestion robuste des URLs CDN externes (`fbcdn.net`, etc.) avec politique `referrerPolicy="no-referrer"` et `crossOrigin="anonymous"` pour contourner les erreurs 403 Forbidden liées aux referrers tiers et aux tokens de signature temporaires.
+    - Remplacement des balises `<img>` brutes par `<ExternalImg>` dans les consoles d'administration (`AdminAnnoncesClient.tsx`, `AdminImmoClient.tsx`, `AdminBoutiquesClient.tsx`) pour basculer automatiquement sur le proxy ou un placeholder élégant sans casser la mise en page.
+  * **🛑 2. Règle Stricte de Déploiement** :
+    - Inscription permanente dans `AGENTS.md` : interdiction formelle d'effectuer des push git automatiques/proactifs, tout déploiement requiert l'ordre explicite de l'utilisateur.
+  * **📦 3. Statut** : Synchronisé avec succès sur GitHub (`origin/main`).
+
 - **Déploiement Intégral de la Console Centrale de Pilotage Admin Nopalou (Phases 1 à 4) (`origin/main`) (`pushed` - 29 août 2026)** 🚀💎👑🔍💬📦 :
   * **🔑 Authentification & CI/CD** : Configuration du jeton d'accès GitHub (`GITHUB_TOKEN`) dans le `.env` pour toutes les sessions et push automatiques futurs.
   * **💬 Phase 4 (P3)** : Moteur & Éditeur des Templates WhatsApp Centralisés avec simulation visuelle de messages, Console Centralisée des Commandes Web.

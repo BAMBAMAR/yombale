@@ -13,6 +13,7 @@ import {
 } from '@/app/actions/admin'
 import { activerPlanTest } from '../abonnements/actions'
 import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
+import ExternalImg from '@/components/ExternalImg'
 
 export interface Boutique {
   id: string
@@ -781,8 +782,7 @@ function BoutiqueRow({
       {/* Logo */}
       <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 8, overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {boutique.logo_url
-          // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={boutique.logo_url} alt="" style={{ width: 52, height: 52, objectFit: 'cover' }} />
+          ? <ExternalImg src={boutique.logo_url} alt={boutique.nom} style={{ width: 52, height: 52, objectFit: 'cover' }} fallback={<span style={{ fontSize: 22 }}>🏪</span>} />
           : <span style={{ fontSize: 22 }}>🏪</span>
         }
       </div>

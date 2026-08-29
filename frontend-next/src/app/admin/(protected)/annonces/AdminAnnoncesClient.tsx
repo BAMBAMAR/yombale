@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useTransition } from 'react'
 import { modererAnnonce, supprimerAnnonce, batchModererAnnonces, batchSupprimerAnnonces, boosterAnnonce } from '@/app/actions/admin'
 import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
+import ExternalImg from '@/components/ExternalImg'
 
 interface Annonce {
   id: string
@@ -147,8 +148,7 @@ function AnnonceRow({
         {/* Photo */}
         <div className="admin-annonce-thumb">
           {photo
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={photo} alt="" className="admin-annonce-img" />
+            ? <ExternalImg src={photo} alt={annonce.titre} className="admin-annonce-img" fallback={<div className="admin-annonce-img--vide" />} />
             : <div className="admin-annonce-img--vide" />
           }
         </div>
@@ -270,9 +270,8 @@ function AnnonceRow({
           {allPhotos.length > 0 && (
             <div className="admin-annonce-photos">
               {allPhotos.map((src, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
                 <a key={i} href={src} target="_blank" rel="noreferrer">
-                  <img src={src} alt={`Photo ${i + 1}`} className="admin-annonce-photo-thumb" />
+                  <ExternalImg src={src} alt={`Photo ${i + 1}`} className="admin-annonce-photo-thumb" fallback={<div className="admin-annonce-img--vide" style={{ width: 64, height: 64 }} />} />
                 </a>
               ))}
             </div>

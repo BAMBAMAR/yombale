@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useTransition } from 'react'
 import { modererImmo, activerSponsoring, supprimerImmo, batchModererImmo } from '@/app/actions/admin'
 import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
+import ExternalImg from '@/components/ExternalImg'
 
 interface AnnonceImmo {
   id: number
@@ -131,8 +132,7 @@ function ImmoRow({
       <div className="admin-annonce-body">
         <div className="admin-annonce-thumb">
           {annonce.photos?.[0]
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={annonce.photos[0]} alt="" className="admin-annonce-img" />
+            ? <ExternalImg src={annonce.photos[0]} alt={annonce.titre} className="admin-annonce-img" fallback={<div className="admin-annonce-img--vide" />} />
             : <div className="admin-annonce-img--vide" />
           }
         </div>
@@ -295,8 +295,7 @@ function SponsoringRow({
       <div className="admin-annonce-body">
         <div className="admin-annonce-thumb">
           {annonce.photos?.[0]
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={annonce.photos[0]} alt="" className="admin-annonce-img" />
+            ? <ExternalImg src={annonce.photos[0]} alt={annonce.titre} className="admin-annonce-img" fallback={<div className="admin-annonce-img--vide" />} />
             : <div className="admin-annonce-img--vide" />
           }
         </div>

@@ -63,6 +63,8 @@ export default function ExternalImg({
     return <>{fallback}</>
   }
 
+  const isFb = cleanSrc.includes('fbcdn.net') || cleanSrc.includes('facebook.com')
+
   const currentSrc = attempt === 1
     ? `https://wsrv.nl/?url=${encodeURIComponent(cleanSrc)}`
     : cleanSrc
@@ -77,7 +79,8 @@ export default function ExternalImg({
       loading={loading}
       width={width}
       height={height}
-      referrerPolicy={attempt === 0 ? "no-referrer" : undefined}
+      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onContextMenu={watermark ? (e) => e.preventDefault() : undefined}
