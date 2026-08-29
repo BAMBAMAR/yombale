@@ -1,4 +1,12 @@
-- **Phase 4 de la Console Centrale de Pilotage Admin Nopalou (P3) (`whatsappTemplates.js`, `admin-whatsapp-templates.js`, `admin-commandes.js`, `AdminWhatsAppTemplatesClient.tsx`, `AdminCommandesClient.tsx`, `AdminSidebarClient.tsx`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`local` - 29 août 2026)** 💬🛍️🤖📱🚚📦 :
+- **Déploiement Intégral de la Console Centrale de Pilotage Admin Nopalou (Phases 1 à 4) (`origin/main`) (`pushed` - 29 août 2026)** 🚀💎👑🔍💬📦 :
+  * **🔑 Authentification & CI/CD** : Configuration du jeton d'accès GitHub (`GITHUB_TOKEN`) dans le `.env` pour toutes les sessions et push automatiques futurs.
+  * **💬 Phase 4 (P3)** : Moteur & Éditeur des Templates WhatsApp Centralisés avec simulation visuelle de messages, Console Centralisée des Commandes Web.
+  * **🔍 Phase 3 (P2)** : Omnisearch modal (`Ctrl+K`), Centre d'exportations de données CSV/Excel (6 flux standardisés), Diagnostic santé système & latence DB, Contrôleur du Mode Maintenance et Bannières d'annonces.
+  * **💎 Phase 2 (P1)** : Plans Tarifaires 100% dynamiques et administrables sans code SQL, Journal d'Audit Logs global immuable avec diff inspector, API Fiches Marchands 360°.
+  * **🚩 Phase 1 (P0)** : Correctif de sécurité JWT critique, Remises d'abonnement dynamiques via settings, Feature Flags No-Code (10 drapeaux), CRUD & Ordre des Catégories, Multi-period Dashboard consolidé avec Action Center.
+  * **📦 Statut** : Synchronisé avec succès sur GitHub (`origin/main`).
+
+- **Phase 4 de la Console Centrale de Pilotage Admin Nopalou (P3) (`whatsappTemplates.js`, `admin-whatsapp-templates.js`, `admin-commandes.js`, `AdminWhatsAppTemplatesClient.tsx`, `AdminCommandesClient.tsx`, `AdminSidebarClient.tsx`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`pushed` - 29 août 2026)** 💬🛍️🤖📱🚚📦 :
   * **💬 1. Moteur & Éditeur des Templates WhatsApp Centralisés (`whatsappTemplates.js`, `admin-whatsapp-templates.js`, `AdminWhatsAppTemplatesClient.tsx`, `page.tsx`)** :
     - Gestion dynamique de 6 modèles de messages cruciaux : *Onboarding J+1 (Partage Vitrine)*, *Onboarding J+7 (Encaissement Wave)*, *Onboarding J+25 (Fin d'essai)*, *Relance Dettes Client (Carnet)*, *Relance Boutique 0 Produit*, *Notification Commande Marchand*.
     - Injection dynamique de variables contextuelles (`{prenom}`, `{boutique_nom}`, `{slug}`, `{montant}`, `{lien_boutique}`, `{date_echeance}`, `{nom_produit}`, etc.).
@@ -8,9 +16,9 @@
     - Vue panoramique de toutes les commandes passées sur l'ensemble des boutiques de la plateforme.
     - Pilules de synthèse financière et compteurs par statut (*En attente*, *Confirmée*, *Expédiée*, *Livrée*, *Annulée*).
     - Modification directe des statuts de commande avec traçabilité dans l'audit log et tiroir de coordonnées client complètes.
-  * **📦 3. Statut** : Modifications enregistrées et commitées en local (aucun push sans demande explicite).
+  * **📦 3. Statut** : Poussé et synchronisé sur GitHub.
 
-- **Phase 3 de la Console Centrale de Pilotage Admin Nopalou (P2) (`admin-search.js`, `admin-export.js`, `admin-system.js`, `AdminOmnisearch.tsx`, `AdminSystemClient.tsx`, `layout.tsx`, `AdminSidebarClient.tsx`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`local` - 29 août 2026)** 🔍📥🏥🚨⌨️📊 :
+- **Phase 3 de la Console Centrale de Pilotage Admin Nopalou (P2) (`admin-search.js`, `admin-export.js`, `admin-system.js`, `AdminOmnisearch.tsx`, `AdminSystemClient.tsx`, `layout.tsx`, `AdminSidebarClient.tsx`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`pushed` - 29 août 2026)** 🔍📥🏥🚨⌨️📊 :
   * **🔍 1. Moteur de Recherche Globale & Omnisearch Modal (`admin-search.js`, `AdminOmnisearch.tsx`, `layout.tsx`)** :
     - Raccourci universel `Ctrl+K` / `Cmd+K` accessible sur l'ensemble des pages d'administration.
     - Recherche simultanée ultra-rapide à travers 5 entités : Comptes utilisateurs, Boutiques, Commandes boutique, Annonces classifiées/immo et Produits du comparateur.
@@ -22,9 +30,9 @@
   * **🚨 4. Contrôleur du Mode Maintenance & Bannières d'Annonces (`admin-system.js`, `AdminSystemClient.tsx`)** :
     - Verrouillage/déverrouillage instantané du mode maintenance avec message personnalisé pour les visiteurs.
     - Publication et configuration en direct de bannières d'information globale sur tout le site avec choix du niveau d'alerte (*Info*, *Succès/Promo*, *Avertissement*, *Urgent*).
-  * **📦 5. Statut** : Modifications enregistrées et commitées en local (aucun push sans demande explicite).
+  * **📦 5. Statut** : Poussé et synchronisé sur GitHub.
 
-- **Phase 2 de la Console Centrale de Pilotage Admin Nopalou (P1) (`plansCache.js`, `plans.js`, `adminAuditLogger.js`, `admin-audit-logs.js`, `admin-marchands.js`, `AdminPlansClient.tsx`, `AdminAuditLogsClient.tsx`, `AdminSidebarClient.tsx`, `migrate-inline.js`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`local` - 29 août 2026)** 💎👑🛡️👤📝⚙️ :
+- **Phase 2 de la Console Centrale de Pilotage Admin Nopalou (P1) (`plansCache.js`, `plans.js`, `adminAuditLogger.js`, `admin-audit-logs.js`, `admin-marchands.js`, `AdminPlansClient.tsx`, `AdminAuditLogsClient.tsx`, `AdminSidebarClient.tsx`, `migrate-inline.js`, `app.js`, `CLAUDE.md`, `walkthrough.md`) (`pushed` - 29 août 2026)** 💎👑🛡️👤📝⚙️ :
   * **💎 1. Moteur & Console des Plans Tarifaires 100% Administrables (`plansCache.js`, `plans.js`, `AdminPlansClient.tsx`, `page.tsx`)** :
     - Nouvelle table `plans` avec cache mémoire haute performance (TTL 3min).
     - Suppression de la contrainte CHECK statique `abonnements_plan_check` permettant de créer des forfaits sur-mesure ou saisonniers sans toucher au code SQL.
@@ -36,7 +44,7 @@
   * **👤 3. API & Fiches Marchands 360° (`admin-marchands.js`)** :
     - Endpoint `/api/admin/marchands/:id/fiche` consolidant identité, boutiques, chiffre d'affaires cumulé, ventes POS/Web, historique des abonnements, paiements et logs d'activité.
     - Endpoint `/api/admin/marchands/:id/action-plan` permettant à l'administrateur d'attribuer ou prolonger manuellement un forfait à un marchand avec journalisation automatique.
-  * **📦 4. Statut** : Modifications enregistrées et commitées en local (aucun push sans demande explicite).
+  * **📦 4. Statut** : Poussé et synchronisé sur GitHub.
 
 - **Phase 1 de la Console Centrale de Pilotage Admin Nopalou (P0) (`featureFlags.js`, `feature-flags.js`, `categories.js`, `admin-dashboard.js`, `AdminDashboardClient.tsx`, `AdminFeatureFlagsClient.tsx`, `AdminCategoriesClient.tsx`, `AdminSidebarClient.tsx`, `abonnements.js`, `paiement.js`, `auth.js`, `CLAUDE.md`) (`local` - 29 août 2026)** 🚀👑🚩📊📁🔐 :
   * **🔐 1. Correctif de Sécurité Critique JWT (`backend/middlewares/auth.js`)** :
