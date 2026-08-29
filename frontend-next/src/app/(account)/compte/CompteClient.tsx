@@ -14,6 +14,7 @@ import ProfilClient from '../compte/profil/ProfilClient'
 import ApporteurClient from '../compte/apporteur/ApporteurClient'
 import FonctionnalitesClient from '../compte/fonctionnalites/FonctionnalitesClient'
 import SuiviCommandeClient from './tabs/SuiviCommandeClient'
+import AlertesClientTab from './tabs/AlertesClientTab'
 
 export default function CompteClient({ 
   nom, 
@@ -183,10 +184,11 @@ export default function CompteClient({
         )}
         {tab === 'mes-annonces-immo' && <AnnoncesImmoClient />}
         {tab === 'suivi-commande' && <SuiviCommandeClient />}
+        {(tab === 'mes-alertes' || tab === 'alertes') && <AlertesClientTab userId={userId} />}
         {tab === 'favoris' && <FavorisClient />}
         {tab === 'profil' && <ProfilClient nom={nom} email={email || ''} />}
         {tab === 'apporteur' && <ApporteurClient />}
-        {tab === 'fonctionnalites' && <FonctionnalitesClient />}
+        {(tab === 'fonctionnalites' || tab === 'abonnement' || tab === 'tarifs') && <FonctionnalitesClient />}
       </div>
     </>
   )

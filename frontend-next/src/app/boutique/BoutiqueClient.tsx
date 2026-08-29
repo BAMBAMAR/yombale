@@ -3395,7 +3395,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {boutique.mode_fonctionnement !== 'pure_player' && (
               <a
-                href="/boutique/caisse"
+                href={`/boutique/caisse?b=${boutique.id}`}
                 style={{
                   flex: 1,
                   minWidth: 110,
@@ -3595,7 +3595,7 @@ function BoutiqueDashboard({
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           {boutique.mode_fonctionnement !== 'pure_player' && (
             <a
-              href="/boutique/caisse"
+              href={`/boutique/caisse?b=${boutique.id}`}
               className="btn-npl btn-npl-primary btn-npl-md"
               style={{ textDecoration: 'none', background: 'var(--accent, #C75B00)', color: '#fff', border: 'none', boxShadow: '0 2px 8px rgba(199,91,0,0.3)' }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
@@ -3935,7 +3935,7 @@ function BoutiqueDashboard({
 
           {boutique.mode_fonctionnement !== 'pure_player' && (
             <a
-              href="/boutique/caisse"
+              href={`/boutique/caisse?b=${boutique.id}`}
               className="bq-action-btn"
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
@@ -4156,10 +4156,13 @@ function BoutiqueMobileBottomSheet({
 
             <div className="mobile-bs-footer">
               <a
-                href="/boutique/caisse"
+                href={`/boutique/caisse?b=${boutique.id}`}
                 className="mobile-bs-footer-link"
                 style={{ background: '#F0FDF4', color: '#16a34a', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', gap: 6 }}
-                onClick={closeSheet}
+                onClick={() => {
+                  if (typeof window !== 'undefined') localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id);
+                  closeSheet();
+                }}
               >
                 <ShoppingCart size={15} />
                 <span>{t('caisse.posTitle') || 'Caisse POS'}</span>
@@ -4741,27 +4744,14 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', fontSize: 12, color: 'var(--accent)', borderRadius: 8, fontWeight: 800, background: 'var(--orange2)', border: '1px solid #fed7aa' }}>
               <span>{t('shop.purePlayerMode')}</span>
             </div>
-          ) : isAllowed('pro') ? (
-            <a href="/boutique/caisse"
+          ) : (
+            <a href={`/boutique/caisse?b=${boutique.id}`}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: '#16a34a', textDecoration: 'none', borderRadius: 8, fontWeight: 700, background: '#f0fdf4', border: '1px solid #bbf7d0' }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <ShoppingCart size={14} />
                 <span>{t('shop.posPhysicalLink')}</span>
-              </span>
-            </a>
-          ) : (
-            <a href="/boutique/abonnement"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', fontSize: 12, color: 'var(--text-body)', textDecoration: 'none', borderRadius: 8, fontWeight: 700, background: 'var(--surface-muted)', border: '1px dashed var(--border-medium)' }}
-              title="La Caisse POS (Physique) nécessite la formule Pro ou Business"
-            >
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <ShoppingCart size={14} />
-                <span>{t('caisse.posTitle')}</span>
-              </span>
-              <span style={{ fontSize: 9, background: 'var(--accent)', color: '#fff', padding: '2px 6px', borderRadius: 4, fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 4 }}>
-                🔒 Pro
               </span>
             </a>
           )}
@@ -4965,7 +4955,7 @@ export default function BoutiqueClient({
   }, [boutiques])
 
   const searchParams = useSearchParams()
-  const manageId = searchParams.get('manage') || searchParams.get('id')
+  const manageId = searchParams.get('manage') || searchParams.get('id') || searchParams.get('b') || searchParams.get('boutique')
   const tabParam = searchParams.get('tab')
   const lockedParam = searchParams.get('locked')
 
@@ -4973,9 +4963,9 @@ export default function BoutiqueClient({
     const listToSearch = boutiquesList.length > 0 ? boutiquesList : boutiques
     
     setMode(prevMode => {
-      // 1. Si l'URL spécifie explicitement une boutique (?id=... ou ?manage=...), celle-ci est prioritaire
+      // 1. Si l'URL spécifie explicitement une boutique (?id=... ou ?manage=... ou ?b=...), celle-ci est prioritaire
       if (manageId && listToSearch.length > 0) {
-        const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId)
+        const targetBoutique = listToSearch.find(b => b.id === manageId || b.slug === manageId || b.nom?.toLowerCase() === manageId.toLowerCase())
         if (targetBoutique) return { managing: targetBoutique }
       }
 
@@ -4990,7 +4980,7 @@ export default function BoutiqueClient({
       }
 
       // 3. Si on n'est pas encore en mode 'managing' mais qu'un onglet est demandé
-      if ((tabParam || lockedParam) && listToSearch.length > 0) {
+      if (tabParam && tabParam !== 'caisse' && listToSearch.length > 0) {
         return { managing: listToSearch[0] }
       }
       

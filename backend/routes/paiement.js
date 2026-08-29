@@ -125,19 +125,37 @@ async function appliquerPaiementReussi(reference, montant, methode) {
       );
     }
   }
-  // Abonnement Boutique Pro/Business : ref = abmt_userId_plan ou abmt_userId_plan_duree
+  // Abonnement Boutique Pro/Business : ref = abmt_userId_plan ou abmt_userId_plan_duree ou abmt_userId_plan_duree_timestamp
   if (ref && ref.startsWith('abmt_')) {
     const parts = ref.split('_');
     const userId = parts[1];
-    const plan   = parts[2];
+    const rawPlan = parts[2];
+    const plan = rawPlan === 'taf_taf' ? 'decouverte' : rawPlan;
     const dureeMois = parseInt(parts[3] || '1', 10) || 1;
     const pxAbmt = await getPrix();
     const PRIX   = { decouverte: pxAbmt.decouverte, pro: pxAbmt.pro, business: pxAbmt.business };
     if (userId && plan && PRIX[plan]) {
-      const fin = new Date(Date.now() + dureeMois * 30 * 24 * 60 * 60 * 1000).toISOString();
+      // Vérifier si l'utilisateur a déjà un abonnement actif
+      const existingAbmt = await pool.query(
+        `SELECT id, plan, fin FROM abonnements WHERE utilisateur_id=$1 AND statut='actif' AND fin > NOW() ORDER BY fin DESC LIMIT 1`,
+        [userId]
+      );
+      let dateDebut = new Date();
+      if (existingAbmt.rows[0] && existingAbmt.rows[0].plan === plan) {
+        // Prolongation de la formule existante
+        const currentFin = new Date(existingAbmt.rows[0].fin);
+        if (currentFin > dateDebut) dateDebut = currentFin;
+      } else if (existingAbmt.rows[0]) {
+        // Changement / Upgrade de formule : on clôture l'ancien forfait
+        await pool.query(
+          `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
+          [userId]
+        );
+      }
+      const fin = new Date(dateDebut.getTime() + dureeMois * 30 * 24 * 60 * 60 * 1000).toISOString();
       const abonnementRow = await pool.query(
-        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
-         VALUES ($1,$2,'actif',$3,$4,$5)
+        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, debut, fin, commande_ref)
+         VALUES ($1,$2,'actif',$3,NOW(),$4,$5)
          ON CONFLICT (commande_ref) WHERE commande_ref IS NOT NULL DO NOTHING
          RETURNING id`,
         [userId, plan, PRIX[plan], fin, ref]

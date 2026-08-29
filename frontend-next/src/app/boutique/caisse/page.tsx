@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import { backendFetch } from '@/lib/backend-fetch'
 import { verifySession } from '@/lib/dal'
 import CaisseClient from './CaisseClient'
@@ -14,10 +13,11 @@ export const dynamic = 'force-dynamic'
 export default async function CaissePage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>
+  searchParams: Promise<{ token?: string; b?: string; boutique?: string }>
 }) {
   const params = await searchParams
   const token = params.token?.trim() || null
+  const initialBoutiqueId = params.b?.trim() || params.boutique?.trim() || null
 
   let planActif: string | null = null
   let userId: string | null = null
@@ -34,13 +34,14 @@ export default async function CaissePage({
     } catch {
       planActif = null
     }
-
-    // ── Vérification du plan : Caisse POS réservée aux formules Pro & Business
-    const isPro = planActif === 'pro' || planActif === 'business'
-    if (!isPro) {
-      redirect('/boutique?tab=caisse&locked=true')
-    }
   }
 
-  return <CaisseClient planActif={planActif} initialToken={token} userId={userId} />
+  return (
+    <CaisseClient
+      planActif={planActif}
+      initialToken={token}
+      userId={userId}
+      initialBoutiqueId={initialBoutiqueId}
+    />
+  )
 }

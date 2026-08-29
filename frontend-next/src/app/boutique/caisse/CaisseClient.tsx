@@ -79,7 +79,7 @@ interface TicketEnAttente {
   panier: LignePanier[]
 }
 
-export default function CaisseClient({ planActif: planActifProp, initialToken, userId: userIdProp }: { planActif?: string | null; initialToken?: string | null; userId?: string | null }) {
+export default function CaisseClient({ planActif: planActifProp, initialToken, userId: userIdProp, initialBoutiqueId }: { planActif?: string | null; initialToken?: string | null; userId?: string | null; initialBoutiqueId?: string | null }) {
   const { t, isRtl, formatPrice, formatNumber } = useTranslation()
   // Récupère le userId depuis la prop serveur, avec fallback sur localStorage pour mode terminal
   const userId = userIdProp || (typeof window !== 'undefined' ? localStorage.getItem('nopalou_user_id') || 'anonymous' : 'anonymous')
@@ -139,7 +139,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     ? activeBoutiqueObj.plan_actif
     : (initialToken ? (terminalPlan || 'pro') : planActifProp)
 
-  const estBoutiqueAutorisee = (activePlan === 'pro' || activePlan === 'business') || (loadingProduits && boutiques.length === 0)
+  // La Caisse POS est accessible à toutes les boutiques du commerçant
+  const estBoutiqueAutorisee = true
 
   // Synchroniser l'état offline avec le hook de connectivité réelle (ping /api/ping)
   useEffect(() => {
@@ -898,10 +899,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
         if (merchantBoutiques.length > 0) {
           setBoutiques(merchantBoutiques)
-          localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(merchantBoutiques))
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify(merchantBoutiques))
+          }
+          const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+          const queryBId = urlParams?.get('b') || urlParams?.get('boutique') || urlParams?.get('manage') || urlParams?.get('id') || initialBoutiqueId
           const savedBId = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_active_boutique_id') : null
-          const validSaved = merchantBoutiques.find(b => b.id === savedBId)
-          const bId = validSaved ? validSaved.id : (boutiqueActiveId || merchantBoutiques[0].id)
+          const targetBId = queryBId || savedBId
+          const validTarget = merchantBoutiques.find(b => b.id === targetBId || b.slug === targetBId || b.nom?.toLowerCase() === targetBId?.toLowerCase())
+          const bId = validTarget ? validTarget.id : (boutiqueActiveId || merchantBoutiques[0].id)
           setBoutiqueActiveId(bId)
           if (typeof window !== 'undefined') {
             localStorage.setItem('nopalou_pos_active_boutique_id', bId)
@@ -918,9 +924,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               const cachedBoutiques = JSON.parse(cachedStr)
               if (cachedBoutiques && cachedBoutiques.length > 0) {
                 setBoutiques(cachedBoutiques)
+                const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+                const queryBId = urlParams?.get('b') || urlParams?.get('boutique') || urlParams?.get('manage') || urlParams?.get('id') || initialBoutiqueId
                 const savedBId = typeof window !== 'undefined' ? localStorage.getItem('nopalou_pos_active_boutique_id') : null
-                const validSaved = cachedBoutiques.find((b: any) => b.id === savedBId)
-                const bId = validSaved ? validSaved.id : (boutiqueActiveId || cachedBoutiques[0].id)
+                const targetBId = queryBId || savedBId
+                const validTarget = cachedBoutiques.find((b: any) => b.id === targetBId || b.slug === targetBId || b.nom?.toLowerCase() === targetBId?.toLowerCase())
+                const bId = validTarget ? validTarget.id : (boutiqueActiveId || cachedBoutiques[0].id)
                 setBoutiqueActiveId(bId)
                 await chargerCaissiersEtSession(bId)
                 await chargerProduitsBoutique(bId)
@@ -939,7 +948,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       }
     }
     chargerBoutiquesEtProduits()
-  }, [initialToken])
+  }, [initialToken, initialBoutiqueId])
 
   async function chargerReglesRemises(bId: string) {
     if (!bId) return
@@ -1175,7 +1184,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     }
   }
 
-  function changerBoutiqueActive(newBId: string) {
+  async function changerBoutiqueActive(newBId: string) {
     if (session) {
       alert("⚠️ Vous avez une session de caisse (Fonds de caisse) en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.");
       return;
@@ -1183,12 +1192,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     setBoutiqueActiveId(newBId)
     if (typeof window !== 'undefined') {
       localStorage.setItem('nopalou_pos_active_boutique_id', newBId)
+      const url = new URL(window.location.href)
+      url.searchParams.set('b', newBId)
+      window.history.replaceState({}, '', url.toString())
     }
-    chargerProduitsBoutique(newBId)
     viderPanier()
     setVerrouille(true)
     setSession(null)
     setConflitSessionMessage(null)
+    await chargerCaissiersEtSession(newBId)
+    await chargerProduitsBoutique(newBId)
+    await chargerClientsCredits(newBId)
+    await chargerReglesRemises(newBId)
   }
 
   function demanderChangementBoutique(newBId: string) {
@@ -2444,6 +2459,36 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             box-shadow: 0 4px 16px rgba(249,115,22,0.25) !important;
           }
 
+          .caisse-btn-retour {
+            transition: all 0.15s ease;
+          }
+          .pos-theme-dark .caisse-btn-retour {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border: 1px solid #475569 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+          }
+          .pos-theme-dark .caisse-btn-retour:hover {
+            background-color: #334155 !important;
+            border-color: #f97316 !important;
+            color: #ffffff !important;
+          }
+          .pos-theme-light .caisse-btn-retour {
+            background-color: #1e3a5f !important;
+            color: #ffffff !important;
+            border: 1px solid #1e3a5f !important;
+            box-shadow: 0 2px 6px rgba(28,43,74,0.25) !important;
+          }
+          .pos-theme-light .caisse-btn-retour:hover {
+            background-color: #152840 !important;
+          }
+
+          .pos-theme-dark .caisse-boutique-select {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border-color: #475569 !important;
+          }
+
           .hover-bg-slate:hover {
             background-color: var(--pos-surface2) !important;
           }
@@ -2553,16 +2598,16 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 alignItems: 'center',
                 gap: 5,
                 flexShrink: 0,
-                background: 'var(--pos-navy)',
+                background: isDarkMode ? '#1e293b' : '#1e3a5f',
                 color: '#ffffff',
-                border: '1px solid var(--pos-navy)',
+                border: isDarkMode ? '1px solid #475569' : '1px solid #1e3a5f',
                 borderRadius: 8,
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(28,43,74,0.25)'
+                boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 6px rgba(28,43,74,0.25)'
               }}
             >
               <ArrowLeft size={14} />
-              <span>{t('caisse.shop')}</span>
+              <span>{t('caisse.shop') || 'Boutique'}</span>
             </button>
           )}
 
@@ -2598,7 +2643,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 <img
                   src={activeBoutiqueObj.logo}
                   alt={activeBoutiqueObj.nom}
-                  style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--pos-border)' }}
+                  style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover', border: isDarkMode ? '1px solid #475569' : '1px solid var(--pos-border)' }}
                 />
               ) : (
                 <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--pos-primary)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900, flexShrink: 0 }}>
@@ -2606,7 +2651,20 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 </span>
               )}
               {initialToken || boutiques.length === 1 ? (
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--pos-navy)', background: 'var(--pos-primary-bg)', padding: '5px 10px', borderRadius: 6, border: '1px solid var(--pos-border)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <span style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: isDarkMode ? '#f8fafc' : '#1e3a5f',
+                  background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg)',
+                  padding: '5px 10px',
+                  borderRadius: 6,
+                  border: isDarkMode ? '1px solid #475569' : '1px solid var(--pos-border)',
+                  maxWidth: 180,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
+                }}>
                   {activeBoutiqueObj?.nom || boutiques[0]?.nom}
                 </span>
               ) : (
@@ -2614,13 +2672,28 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   value={boutiqueActiveId}
                   onChange={e => demanderChangementBoutique(e.target.value)}
                   className="caisse-boutique-select"
-                  style={{ padding: '5px 8px', borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--pos-surface)', color: 'var(--pos-text)', fontWeight: 800, fontSize: 11.5, cursor: 'pointer', outline: 'none', maxWidth: 180, minWidth: 110, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                  style={{
+                    padding: '5px 8px',
+                    borderRadius: 8,
+                    border: isDarkMode ? '1.5px solid #475569' : '1.5px solid var(--pos-border)',
+                    background: isDarkMode ? '#1e293b' : 'var(--pos-surface)',
+                    color: isDarkMode ? '#ffffff' : 'var(--pos-text)',
+                    fontWeight: 800,
+                    fontSize: 11.5,
+                    cursor: 'pointer',
+                    outline: 'none',
+                    maxWidth: 180,
+                    minWidth: 110,
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
                 >
                   {boutiques.map(b => {
                     const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
                     return (
-                      <option key={b.id} value={b.id}>
-                        {isAuth ? '🟢' : '🔒'} {b.nom}
+                      <option key={b.id} value={b.id} style={{ background: isDarkMode ? '#1e293b' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000' }}>
+                        {isAuth ? '🟢' : '🏪'} {b.nom}
                       </option>
                     );
                   })}

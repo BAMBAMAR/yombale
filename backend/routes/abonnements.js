@@ -32,17 +32,11 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
   try {
 
     const userId = req.user.userId;
-    const { plan, duree_mois = 1 } = req.body;
+    const { plan: rawPlan, duree_mois = 1 } = req.body;
+    const plan = rawPlan === 'taf_taf' ? 'decouverte' : rawPlan;
     const duree = [1, 3, 6, 12].includes(Number(duree_mois)) ? Number(duree_mois) : 1;
     const PLANS = await getPlans();
-    if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide (pro ou business)' });
-
-    // Vérifier qu'il n'y a pas déjà un abonnement actif
-    const existing = await pool.query(
-      `SELECT id FROM abonnements WHERE utilisateur_id=$1 AND statut='actif' AND fin > NOW()`,
-      [userId]
-    );
-    if (existing.rows[0]) return res.status(409).json({ error: 'Abonnement actif existant' });
+    if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide (decouverte, pro ou business)' });
 
     const { prix: prixMensuel, label } = PLANS[plan];
 
@@ -52,7 +46,7 @@ router.post('/initier', verifierToken, limiterEcriture, async (req, res) => {
     else if (duree === 12) remise = 0.25; // -25% pour 12 mois (1 an)
 
     const prixTotal = Math.round((prixMensuel * duree) * (1 - remise));
-    const clientRef = `abmt_${userId}_${plan}_${duree}`;
+    const clientRef = `abmt_${userId}_${plan}_${duree}_${Date.now()}`;
 
     const session = await wave.createCheckoutSession({
       amount:           prixTotal,
