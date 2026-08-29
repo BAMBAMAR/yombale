@@ -1,3 +1,21 @@
+- **Modernisation des Alertes Prix, Portail d'Abonnement Wave Débloqué, Routage Caisse POS Multi-Boutiques & Mode Nuit Haute Visibilité (`AlertesClientTab.tsx`, `AbonnementClient.tsx`, `CaisseClient.tsx`, `BoutiqueClient.tsx`, `abonnements.js`, `paiement.js`, `CLAUDE.md`, `walkthrough.md`) (`main` - 29 août 2026)** 🔔💳🖥️🌙✨🇸🇳 :
+  * **🔔 1. Restauration Complète du Module d'Alertes Prix (`AlertesClientTab.tsx`, `CompteClient.tsx`, `mes-alertes/page.tsx`, `FormAlerte.tsx`, `MesAlertesClient.tsx`)** :
+    - Résolution de l'affichage vide de l'onglet *Alerte Prix* dans *Mon Compte* (`/compte?tab=mes-alertes`) et sur `/mes-alertes`.
+    - Composant unifié combinant le formulaire de création avec extraction automatique d'URL produit, choix de canal (WhatsApp, Email ou les deux) et liste de cartes d'alertes actives avec prix cible en FCFA et suppression instantanée.
+  * **💳 2. Déblocage des Abonnements Marchands & Paiement Wave Direct (`abonnements.js`, `paiement.js`, `AbonnementClient.tsx`)** :
+    - Suppression du blocage `409 Conflict` sur `/api/abonnements/initier` permettant aux marchands de renouveler ou changer de forfait à tout moment.
+    - Prise en charge du cumul des durées (`GREATEST(fin, NOW()) + dureeMois * 30 days`) et des surclassements de plan dans le webhook Wave.
+    - Refonte du portail `/boutique/abonnement` : grille des 4 forfaits (*Gratuit*, *Découverte / Taf Taf*, *Pro*, *Business VIP*), sélecteur de durée (1 à 12 mois avec remises jusqu'à -25%), flux Wave direct et paiement manuel de secours.
+  * **🏪 3. Routage Direct Caisse POS & Sélection de Boutique (« amar ») (`caisse/page.tsx`, `BoutiqueClient.tsx`, `CaisseClient.tsx`)** :
+    - Déverrouillage de la caisse POS pour tous les commerçants (suppression de la redirection intempestive `locked=true`).
+    - Transmission et synchronisation de la boutique active via query param `?b=...` et `initialBoutiqueId`, permettant d'ouvrir directement la caisse de la boutique choisie sans basculer sur une autre boutique.
+  * **🌙 4. Correction du Contraste & Visibilité du Bouton Boutique en Mode Nuit (`CaisseClient.tsx`)** :
+    - Résolution du problème de contraste en mode nuit où `--pos-navy: #ffffff` provoquait un affichage de texte blanc sur fond blanc pour le bouton **« ← Boutique »**.
+    - Styles dédiés haute visibilité en mode sombre (`background: #1e293b`, `border: 1px solid #475569`, `color: #ffffff`, survol `#f97316`) et harmonisation du sélecteur de boutique et des badges.
+  * **🧪 5. Validation & Déploiement** :
+    - Code poussé et synchronisé avec succès sur la branche `origin/main` (`0ef5e07` et `6eb4575`).
+    - Conformité stricte aux directives de polices système `AGENTS.md`.
+
 - **Harmonisation Globale de l'Écosystème Marchand : Guides Publics, Forfaits & Tarifs, Force de Vente, Prospection WhatsApp, Kit Commercial & Console Admin (`guide-creer-boutique`, `guide-utilisation`, `tarifs-boutique`, `prospection.js`, `ForceDeVenteClient.tsx`, `KitComClient.tsx`, `AdminBoutiquesClient.tsx`, `ApporteurClient.tsx`, `CLAUDE.md`, `walkthrough.md`) (`main` - 28 août 2026)** 🚀📢📘💼💎🇸🇳 :
   * **📘 1. Guides Publics & Référencement SEO (`guide-creer-boutique`, `guide-utilisation`)** :
     - Mise à jour intégrale du *Guide Créer sa Boutique 2026* avec les 3 parcours simplifiés : Création 100% WhatsApp en 30s (sans formulaire ni PC), Formulaire Express en ligne et Migration 1-clic depuis Shopify/WooCommerce/Excel.
