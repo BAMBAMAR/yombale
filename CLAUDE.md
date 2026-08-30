@@ -1,3 +1,16 @@
+- **Correction Erreur 401 & Route Handlers API Boutiques Manquants (`frontend-next/src/app/api/boutiques/...`, `CLAUDE.md`) (`pushed` - 30 août 2026)** 🔐🛡️⚡ :
+  * **🔐 1. Cause Racine de l'Erreur 401** :
+    - L'appel client `PUT /api/boutiques/${boutique.id}/statut` depuis `BoutiqueClient.tsx` (basculement boutique en ligne / masquée) ne disposait d'aucun Route Handler Next.js.
+    - La requête était relayée au backend Express via le fallback de `next.config.js` sans l'en-tête `Authorization: Bearer <jwt>`, provoquant un rejet systématique `401 Unauthorized` par le middleware `verifierToken`.
+  * **🛡️ 2. Route Handlers Sécurisés Ajoutés (`frontend-next/src/app/api/boutiques/`)** :
+    - `[id]/statut/route.ts` : Proxy authentifié `PUT` et `GET` pour la visibilité boutique.
+    - `[id]/route.ts` : Extension avec `PUT` et `DELETE` via `backendFetch`.
+    - `[id]/[...path]/route.ts` : Catch-all proxy dynamique sécurisé pour toutes les sous-routes (`logs`, `api-keys`, `webhooks`, `pos-sessions`, `scanner-remote`, etc.).
+    - `[id]/credits-clients/batch/route.ts` : Proxy `POST` pour l'import groupé du carnet de dettes.
+    - `[id]/caissiers/[caissierId]/route.ts` : Proxy `PUT`, `PATCH`, `DELETE` pour les caissiers.
+    - `[id]/admins/[adminId]/route.ts` : Proxy `DELETE` pour la révocation des administrateurs délégués.
+  * **📦 3. Statut** : Déployé sur GitHub (`origin/main`).
+
 - **Refonte Marketing B2B, Pages Produits & Dispositif SEO Sourcing/POS/WhatsApp (`marchands/page.tsx`, `pos/page.tsx`, `whatsapp/page.tsx`, `migration/page.tsx`, `pourquoi-nopalou/page.tsx`, `guide-sourcing-revente/page.tsx`, `KitComClient.tsx`, `sitemap.ts`, `layout.tsx`, `CLAUDE.md`) (`pushed` - 30 août 2026)** 🚀🏪📦💬⚖️🛡️ :
   * **🏪 1. Nouvelles Landing Pages B2B & Conversion** :
     - `/marchands` : Refonte complète SaaS d'élite, Hero haute conversion, mockup interactif en FCFA, 6 piliers métiers, matrice comparative vs Shopify et FAQ.
