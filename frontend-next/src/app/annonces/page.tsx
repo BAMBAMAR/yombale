@@ -112,10 +112,21 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   return {
     title: titre,
     description: desc,
+    keywords: [
+      'annonces sénégal',
+      'petites annonces dakar',
+      'expat dakar annonces',
+      'expat-dakar sénégal',
+      'alternative expat dakar',
+      'achat vente dakar particulier',
+      'annonces gratuites sénégal',
+      'nopalou annonces'
+    ],
     alternates: { canonical: `${BASE}/annonces` },
     openGraph: {
       title: titre,
       description: desc,
+      url: `${BASE}/annonces`,
       type: 'website',
       images: [{ url: '/api/og-image', width: 1200, height: 630, alt: titre }],
     },

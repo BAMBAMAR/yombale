@@ -567,10 +567,10 @@ export default async function HomePage({
             <div className="chip-row" style={{ marginBottom: 24 }}>
               {[
                 { href: '/creer-boutique', label: 'Créer sa boutique en ligne (1m offert)', emoji: '🚀' },
+                { href: '/guide-sourcing-revente', label: 'Sourcing Alibaba, AliExpress & Shein', emoji: '📦' },
                 { href: '/compte/apporteur', label: 'Programme Apporteur (20% récurrent à vie)', emoji: '💼' },
-                { href: '/guide-utilisation', label: 'Guide d\'utilisation complet (Site & Boutique)', emoji: '📖' },
                 { href: '/tarifs-boutique', label: 'Tarifs & Forfaits Vendeurs Sénégal', emoji: '🏷️' },
-                { href: '/guide-creer-boutique', label: 'Alternative Shopify & Sourcing Alibaba', emoji: '📦' },
+                { href: '/marchands', label: 'Plateforme Marchands & POS Caisse', emoji: '🏪' },
               ].map(l => (
                 <Link key={l.href} href={l.href} className="chip chip-small" style={{ background: '#fff7ed', border: '1px solid #fed7aa' }}>
                   <span className="chip-em">{l.emoji}</span>

@@ -352,7 +352,19 @@ export default async function RootLayout({
             </div>
 
             <div className="footer-links">
-              {/* Colonne 2 — Catégories */}
+              {/* Colonne 2 — Solutions Commerçants & POS */}
+              <div className="footer-col">
+                <p className="footer-col-titre">Boutique &amp; POS</p>
+                <a href="/marchands" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Créer une Boutique en Ligne</a>
+                <a href="/pos">Caisse Enregistreuse POS (Offline)</a>
+                <a href="/whatsapp">Vendre sur WhatsApp</a>
+                <a href="/migration">Migration Shopify &amp; Excel</a>
+                <a href="/pourquoi-nopalou">Pourquoi Choisir Nopalou ?</a>
+                <a href="/tarifs-boutique">Tarifs Forfaits Vendeurs</a>
+                <a href="/demo?role=marchand">Tester la Caisse &amp; Boutique</a>
+              </div>
+
+              {/* Colonne 3 — Catégories */}
               <div className="footer-col">
                 <p className="footer-col-titre">Catégories</p>
                 <a href="/categorie/smartphones">Téléphones</a>
@@ -361,53 +373,42 @@ export default async function RootLayout({
                 <a href="/categorie/mode">Mode</a>
                 <a href="/categorie/maison">Maison</a>
                 <a href="/categorie/auto-moto">Auto &amp; Moto</a>
-                <a href="/categorie/jeux">Jeux Vidéo</a>
                 <a href="/telecom">Télécom</a>
                 <a href="/immo">Immobilier</a>
                 <a href="/annonces">Annonces</a>
               </div>
 
-              {/* Colonne 3 — Mon compte */}
+              {/* Colonne 4 — Mon compte */}
               <div className="footer-col">
                 <p className="footer-col-titre">Mon compte</p>
                 <a href="/connexion">Connexion</a>
                 <a href="/inscription">Inscription</a>
-                <a href="/deposer-annonce">Publier une annonce</a>
-                <a href="/deposer-immo">Publier un bien immo</a>
-                <a href="/mes-annonces">Mes annonces</a>
+                <a href="/creer-boutique">Créer ma boutique</a>
+                <a href="/boutique">Gérer ma boutique</a>
+                <a href="/compte/apporteur">Programme Apporteur (20%)</a>
                 <a href="/favoris">Mes favoris</a>
-                <a href="/boutique">Ma boutique</a>
-                <a href="/compte/apporteur">Devenir apporteur</a>
-              </div>
-
-              {/* Colonne 4 — Informations */}
-              <div className="footer-col">
-                <p className="footer-col-titre">Informations</p>
                 <a href="/suivi-commande" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <Package size={13} style={{ color: 'var(--accent, #C75B00)' }} /> Suivre ma commande
                 </a>
+              </div>
+
+              {/* Colonne 5 — Informations & Contact */}
+              <div className="footer-col">
+                <p className="footer-col-titre">Informations</p>
                 <a href="/guide-emploi">Comment ça marche ?</a>
                 <a href="/assistant-whatsapp" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <MessageCircle size={13} style={{ color: '#25D366' }} /> Assistant WhatsApp
                 </a>
-                <a href="/tarifs-boutique">Tarifs &amp; Forfaits Vendeurs</a>
+                <a href="/guide-sourcing-revente">📦 Sourcing Alibaba, AliExpress &amp; Shein</a>
                 <a href="/guide-creer-boutique">Guide Vendeur &amp; Sourcing</a>
-                <a href="/demo">Démo Commerciale</a>
                 <a href="/cgu#suppression-donnees" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <Trash2 size={13} style={{ color: 'var(--red, #B91C1C)' }} /> Supprimer annonce / numéro
                 </a>
                 <a href="/mentions-legales">Mentions légales</a>
                 <a href="/confidentialite">Confidentialité</a>
                 <a href="/cgu">CGU</a>
-              </div>
-
-              {/* Colonne 5 — Contact */}
-              <div className="footer-col">
-                <p className="footer-col-titre">Contact</p>
-                <a href="mailto:contact@nopalou.com">contact@nopalou.com</a>
-                <a href="tel:+221708717942">+221 70 871 79 42</a>
-                <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,.75)', marginTop: 4 }}>Dakar, Sénégal</span>
+                <a href="mailto:contact@nopalou.com" style={{ marginTop: 6, fontWeight: 700 }}>contact@nopalou.com</a>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,.75)' }}>+221 70 871 79 42 &bull; Dakar</span>
               </div>
             </div>
           </div>
@@ -416,6 +417,12 @@ export default async function RootLayout({
           <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires</p>
             <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13 }}>
+              <a href="/pos">Caisse enregistreuse Dakar</a>
+              <a href="/pos">Caisse enregistreuse Prix Sénégal</a>
+              <a href="/pos">Caisse enregistreuse petit commerce</a>
+              <a href="/marchands">Créer une boutique en ligne Sénégal</a>
+              <a href="/whatsapp">Vendre sur WhatsApp Sénégal</a>
+              <a href="/guide-sourcing-revente">Acheter sur Alibaba revendre Dakar</a>
               <a href="/categorie/tv-electro/climatiseurs">Climatiseur prix Dakar</a>
               <a href="/categorie/smartphones/iphone">iPhone prix Dakar</a>
               <a href="/categorie/smartphones/samsung">Samsung prix Dakar</a>
@@ -423,10 +430,8 @@ export default async function RootLayout({
               <a href="/categorie/tv-electro/refrigerateurs">Frigo prix Dakar</a>
               <a href="/categorie/informatique/ordinateurs">Ordinateur portable Dakar</a>
               <a href="/immo/location-appartement-dakar">Location appartement Dakar</a>
-              <a href="/immo/location-chambre-dakar">Chambre à louer Dakar</a>
               <a href="/immo/vente-terrain-dakar">Terrain à vendre Dakar</a>
               <a href="/telecom/orange">Forfaits Orange</a>
-              <a href="/telecom/yas">Forfaits Yas</a>
             </div>
           </div>
 

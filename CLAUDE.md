@@ -1,3 +1,19 @@
+- **Refonte Marketing B2B, Pages Produits & Dispositif SEO Sourcing/POS/WhatsApp (`marchands/page.tsx`, `pos/page.tsx`, `whatsapp/page.tsx`, `migration/page.tsx`, `pourquoi-nopalou/page.tsx`, `guide-sourcing-revente/page.tsx`, `KitComClient.tsx`, `sitemap.ts`, `layout.tsx`, `CLAUDE.md`) (`pushed` - 30 août 2026)** 🚀🏪📦💬⚖️🛡️ :
+  * **🏪 1. Nouvelles Landing Pages B2B & Conversion** :
+    - `/marchands` : Refonte complète SaaS d'élite, Hero haute conversion, mockup interactif en FCFA, 6 piliers métiers, matrice comparative vs Shopify et FAQ.
+    - `/pos` : Présentation exhaustive de la caisse tactile Offline-First, 3 modes de scan, reçus thermiques/factures OHADA, multi-caissiers PIN, rapport Z journalier et déclinaisons pour 6 secteurs d'activité.
+    - `/whatsapp` : Simulateur de chat WhatsApp en direct (commandes prêtes, relances de dettes Wave 1-clic, bilan automatisé du soir).
+    - `/migration` : Migration 1-clic sans perte de données depuis Shopify, WooCommerce et Excel.
+    - `/pourquoi-nopalou` : Comparatif factuel face à WhatsApp seul, au carnet papier, à Shopify et aux caisses traditionnelles.
+  * **📦 2. Dispositif SEO Massif (Sourcing Alibaba, AliExpress, Shein, Afrety & Caisse)** :
+    - Création de la page pilier `/guide-sourcing-revente` avec données structurées `Article` et `FAQPage` pour capter les requêtes Alibaba Sénégal, Afrety, groupage, AliExpress livraison Dakar, revente Shein et alternatives Shopify.
+    - Optimisation exacte des requêtes *« Caisse enregistreuse Dakar »*, *« Caisse enregistreuse Prix Sénégal »*, *« Caisse enregistreuse petit commerce »* et *« Expat-Dakar »*.
+  * **🎯 3. Sales Enablement & Kit Commercial Terrain (`KitComClient.tsx`)** :
+    - Nouvel onglet « 🎯 Kit Terrain & Objections » : Fiche commerciale A5 imprimable en 1-clic (`window.print()`), Battlecard des 11 objections avec décodage psychologique et 5 scripts WhatsApp terrain.
+  * **🌐 4. Maillage & Sitemap** :
+    - Intégration de la colonne *Solutions Marchands* et des recherches populaires dans le footer global (`layout.tsx`) et déclaration de toutes les routes dans `sitemap.ts`.
+  * **📦 5. Statut** : Déployé sur GitHub (`origin/main`).
+
 - **Refonte UI Page d'Abonnement (Premium Design) (`frontend-next/src/app/boutique/abonnement/AbonnementClient.tsx`) (`pushed` - 29 août 2026)** 💎✨ :
   * **💎 1. Design "WOW" & Glassmorphism** : Refonte visuelle totale de la page de tarification pour correspondre au positionnement haut de gamme. Intégration d'un bloc CSS générant des cartes en verre (backdrop-filter blur), des dégradés textuels pour les titres, et des effets lumineux (pulse glow) sur les badges.
   * **✨ 2. Micro-interactions & Boutons** : Ajout d'animations au survol (soulèvement fluide `translateY`, augmentation dynamique de l'ombre portée `box-shadow`) sur les cartes tarifaires. Remplacement des boutons génériques par l'interface de paiement standard explicite (boutons dédiés Wave, Orange Money, et Manuel) directement dans les cartes pour unifier l'expérience d'achat.

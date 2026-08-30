@@ -49,10 +49,16 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   })),
-  // Boutique & Forfaits Vendeurs SEO
+  // Boutique, POS & Forfaits Vendeurs SEO
+  { url: `${BASE}/marchands`,            changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/pos`,                  changeFrequency: 'weekly', priority: 0.9 },
+  { url: `${BASE}/whatsapp`,             changeFrequency: 'weekly', priority: 0.9 },
+  { url: `${BASE}/migration`,            changeFrequency: 'monthly', priority: 0.85 },
+  { url: `${BASE}/pourquoi-nopalou`,     changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/creer-boutique`,       changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/tarifs-boutique`,      changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/guide-creer-boutique`, changeFrequency: 'monthly', priority: 0.8 },
+  { url: `${BASE}/guide-sourcing-revente`, changeFrequency: 'monthly', priority: 0.85 },
   // Guides
   { url: `${BASE}/guide-prix`,    changeFrequency: 'monthly', priority: 0.6 },
   { url: `${BASE}/guide-achat`,   changeFrequency: 'monthly', priority: 0.6 },
