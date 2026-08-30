@@ -1,3 +1,9 @@
+- **Automatisation & Planificateur de Tâches Windows pour le Scraping (`scripts/run-scraper-task.bat`, `scripts/gerer-taches-planifiees.ps1`, `CLAUDE.md`) (`pushed` - 30 août 2026)** ⏰🤖🔄 :
+  * **⏰ 1. Enregistrement dans le Planificateur Windows** : Création de la tâche planifiée automatique `Nopalou_Scraper_Facebook` programmée quotidiennement à 04h00.
+  * **🤖 2. Script Wrapper avec Logs & Auto-Détection (`scripts/run-scraper-task.bat`)** : Détection dynamique de l'exécutable Node.js, exécution de `scripts/sync-immo-local.js` et journalisation complète horodatée dans `logs/scraper-task.log`.
+  * **🔧 3. Utilitaire de Gestion PowerShell (`scripts/gerer-taches-planifiees.ps1`)** : Commandes 1-clic pour créer (`creer`, `creer-all`), exécuter immédiatement (`lancer`), inspecter le statut (`status`), lire les logs en direct (`logs`) et supprimer la tâche (`supprimer`).
+  * **📦 4. Statut** : Déployé sur GitHub (`origin/main`).
+
 - **Correction Erreur 401 & Route Handlers API Boutiques Manquants (`frontend-next/src/app/api/boutiques/...`, `CLAUDE.md`) (`pushed` - 30 août 2026)** 🔐🛡️⚡ :
   * **🔐 1. Cause Racine de l'Erreur 401** :
     - L'appel client `PUT /api/boutiques/${boutique.id}/statut` depuis `BoutiqueClient.tsx` (basculement boutique en ligne / masquée) ne disposait d'aucun Route Handler Next.js.
