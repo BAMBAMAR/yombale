@@ -21,9 +21,15 @@ router.get('/', limiterRecherche, async (req, res) => {
       // ── Produits marketplace ─────────────────────────────────────────────────
       pool.query(
         `SELECT p.id, p.nom, p.marque, p.prix_min AS prix, p.image_url AS image,
-                m.nom AS marchand
+                (
+                  SELECT m.nom 
+                  FROM offres o 
+                  JOIN marchands m ON m.id = o.marchand_id 
+                  WHERE o.produit_id = p.id AND o.stock = true AND o.quarantinee = false 
+                  ORDER BY o.prix ASC 
+                  LIMIT 1
+                ) AS marchand
          FROM produits p
-         LEFT JOIN marchands m ON m.id = p.marchand_id
          WHERE p.nom ILIKE $1 OR p.marque ILIKE $1
          ORDER BY
            CASE WHEN p.nom ILIKE $2 THEN 0 ELSE 1 END,
@@ -55,10 +61,11 @@ router.get('/', limiterRecherche, async (req, res) => {
       // ── Annonces classées ────────────────────────────────────────────────────
       pool.query(
         `SELECT a.id, a.titre AS nom, a.description, a.prix, a.ville,
-                a.photos->>0 AS image, a.categorie, a.statut
+                a.photos->>0 AS image, a.categorie_slug AS categorie,
+                CASE WHEN a.actif THEN 'publiee' ELSE 'inactive' END AS statut
          FROM annonces_classifiees a
-         WHERE a.statut = 'publiee'
-           AND (a.titre ILIKE $1 OR a.description ILIKE $1 OR a.categorie ILIKE $1 OR a.ville ILIKE $1)
+         WHERE a.actif = true AND a.supprimee = false
+           AND (a.titre ILIKE $1 OR a.description ILIKE $1 OR a.categorie_slug ILIKE $1 OR a.ville ILIKE $1)
          ORDER BY
            CASE WHEN a.titre ILIKE $2 THEN 0 ELSE 1 END,
            CASE WHEN a.utilisateur_id IS NOT NULL THEN 0 ELSE 1 END,
@@ -71,9 +78,10 @@ router.get('/', limiterRecherche, async (req, res) => {
       pool.query(
         `SELECT ai.id, ai.titre AS nom, ai.description, ai.prix,
                 ai.ville, ai.quartier, ai.photos->>0 AS image,
-                ai.type_bien, ai.transaction, ai.surface, ai.statut
+                ai.type_bien, ai.transaction, ai.surface_m2 AS surface,
+                CASE WHEN ai.actif THEN 'publiee' ELSE 'inactive' END AS statut
          FROM annonces_immo ai
-         WHERE ai.statut = 'publiee'
+         WHERE ai.actif = true AND ai.supprimee = false
            AND (ai.titre ILIKE $1 OR ai.ville ILIKE $1 OR ai.quartier ILIKE $1
                 OR ai.type_bien ILIKE $1 OR ai.description ILIKE $1)
          ORDER BY

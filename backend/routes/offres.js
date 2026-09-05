@@ -39,18 +39,33 @@ router.post('/sync', adminSecretOnly, async (req, res) => {
       const prix = corrigerPrixParPlancher(prixBrut, nomProduit);
       if (!prix || prix <= 0 || prix > 1e9) continue;
 
-      await pool.query(
-        `INSERT INTO offres (produit_id, marchand_id, prix, url_achat, scraped_at)
-         VALUES ($1, $2, $3, $4, NOW())
-         ON CONFLICT (produit_id, marchand_id)
-         DO UPDATE SET prix=EXCLUDED.prix, scraped_at=NOW()`,
-        [p.produit_id, marchand_id, prix, url]
-      );
-      await pool.query(
-        `INSERT INTO historique_prix (offre_id, prix)
-         SELECT id, $1 FROM offres WHERE produit_id=$2 AND marchand_id=$3`,
-        [prix, p.produit_id, marchand_id]
-      );
+      let offreId;
+      if (url) {
+        const r = await pool.query(
+          `INSERT INTO offres (produit_id, marchand_id, prix, url_achat, scraped_at)
+           VALUES ($1, $2, $3, $4, NOW())
+           ON CONFLICT (marchand_id, url_achat) WHERE url_achat IS NOT NULL AND TRIM(url_achat) != ''
+           DO UPDATE SET produit_id=EXCLUDED.produit_id, prix=EXCLUDED.prix, scraped_at=NOW()
+           RETURNING id`,
+          [p.produit_id, marchand_id, prix, url]
+        );
+        offreId = r.rows[0]?.id;
+      } else {
+        const r = await pool.query(
+          `INSERT INTO offres (produit_id, marchand_id, prix, url_achat, scraped_at)
+           VALUES ($1, $2, $3, $4, NOW())
+           RETURNING id`,
+          [p.produit_id, marchand_id, prix, null]
+        );
+        offreId = r.rows[0]?.id;
+      }
+
+      if (offreId) {
+        await pool.query(
+          `INSERT INTO historique_prix (offre_id, prix) VALUES ($1, $2)`,
+          [offreId, prix]
+        );
+      }
 
       updated++;
     } catch (err) { console.error('[SYNC]', err.message); }

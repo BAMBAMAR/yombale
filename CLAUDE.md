@@ -1,3 +1,38 @@
+- **Refonte Majeure du Pipeline de Scraping, Moteur de Matching E-commerce & Déduplication du Catalogue (`backend/services/matching.js`, `backend/services/scraper.js`, `backend/services/scraper-new-sites.js`, `backend/routes/search.js`, `backend/routes/offres.js`, `scratch/dedup_offer_urls.js`, `scratch/migrate_offres_constraint.js`, `scratch/merge_duplicate_products.js`, `CLAUDE.md`) (`pushed` - 05 septembre 2026)** 🚀🛒🔍⚡🧬🛡️ :
+  * **🔍 1. Réparation Critique de l'API de Recherche (`backend/routes/search.js`)** :
+    - Élimination de l'erreur 500 sur `GET /api/search` due à la jointure `p.marchand_id` inexistante sur `produits` : remplacement par une sous-requête corrélée sélectionnant le marchand de l'offre active la moins chère (`stock = true AND quarantinee = false`).
+    - Correction des filtres `annonces_classifiees` (`actif = true AND supprimee = false`, `categorie_slug`).
+    - Correction des colonnes `annonces_immo` (`surface_m2`, `actif = true AND supprimee = false`).
+  * **🏷️ 2. Taxonomie & Backfill 100% des Catégories Manquantes** :
+    - Insertion des catégories `alimentation` (*Alimentation & Épicerie*) et `sport` (*Sport & Fitness*) dans PostgreSQL.
+    - Backfill massif des 2 277 fiches orphelines de catégorie : **0 fiche sans catégorie (NULL) restante en base**.
+  * **🧹 3. Assainissement Massif des Données & Doublons Marchands** :
+    - Déduplication de 378 offres redondantes sur les mêmes URLs marchands et rattachement de 11 637 historiques de prix.
+    - Fusion des doublons marchands : `Dakar Mondial Telephone` ➔ `Dakar Mondial Téléphone` et `Univers Cosmétix` ➔ `Univers Cosmetix`.
+    - Correction des 7 prix aberrants concaténés (ex: élastiques à 1,8 milliard FCFA) et purge de 296 URLs wishlist Jumia (`/customer/account/login`).
+  * **🗄️ 4. Migration de Schéma PostgreSQL sur `offres` (`scratch/migrate_offres_constraint.js`)** :
+    - Suppression de la contrainte bloquante `offres_produit_id_marchand_id_key` (`UNIQUE (produit_id, marchand_id)`).
+    - Création de l'index unique partiel `idx_offres_marchand_url ON offres (marchand_id, url_achat) WHERE url_achat IS NOT NULL AND TRIM(url_achat) != ''`.
+    - Mise à jour des routes d'ingestion (`backend/routes/offres.js`, `backend/services/scraper.js`) avec upsert atomique sur `(marchand_id, url_achat)`.
+  * **🧬 5. Moteur de Matching Déterministe & Canonique (`backend/services/matching.js`)** :
+    - Création d'un module de rapprochement e-commerce haute précision : normalisation unicode, nettoyage de bruit marketing (`neuf`, `scellé`, `garantie`, `venant`).
+    - Extraction déterministe Marque + Modèle (Apple, Samsung Galaxy, Xiaomi/Redmi, Tecno, Infinix, consoles PS5/PS4/Switch/Xbox).
+    - Verrou strict de variantes : interdiction absolue de fusionner les suffixes `Ultra`, `Pro`, `Plus`, `Max`, `Mini`, `Lite`, `Fe`, `Play`.
+    - Discrimination métier de l'électroménager : interdiction de fusionner les appareils différents (`four` ≠ `hotte` ≠ `plaque` ≠ `cuisinière` ≠ `climatiseur`).
+    - Contrôle BTU et dimensions : exclusion des dimensions d'encastrement (`60x60`, `90x60`), des gaz (`R410`) et contrôle de puissance BTU des climatiseurs.
+    - Recherche de correspondances hybride : EAN > Titre exact normalisé > Modèle canonique > Jaccard.
+  * **🛡️ 6. Résilience des Scrapers (`backend/services/scraper.js`, `backend/services/scraper-new-sites.js`)** :
+    - Auchan : correction de la duplication du titre PrestaShop et extraction de l'EAN à 13 chiffres depuis l'URL.
+    - Kaynoo : support lazy-loading des images (`data-src`, `data-lazy-src`).
+    - Jumia : exclusion stricte des URLs login/wishlist.
+    - `nettoyerPrix` : protection contre la concaténation de prix barrés et prix promotionnels.
+    - `getMarchandId` : normalisation `unaccent(LOWER(nom))` et gestion des alias marchands pour empêcher la génération de doublons.
+    - `scraper-new-sites` : gestion des pages vides et des erreurs hébergeur (`Account Suspended`).
+  * **📦 7. Déduplication Rétroactive du Catalogue (`scratch/merge_duplicate_products.js`)** :
+    - Fusion transactionnelle de **194 fiches produits doublons orphelines** : 199 offres rattachées à des fiches canoniques.
+    - Le nombre de produits multi-marchands grimpe à **983 produits (20.2% du catalogue)** avec jusqu'à 10 offres concurrentes par fiche.
+  * **📦 8. Statut** : Déployé sur GitHub (`origin/main`).
+
 - **Audit et Assainissement des Données Produits & Réparation des Prix Incohérents (`backend/scripts/assainir-prix-outliers.js`, `backend/services/scraper.js`, `backend/services/anomaly-detector.js`, `backend/routes/produits.js`, `CLAUDE.md`) (`pushed` - 05 septembre 2026)** 🏷️🧹🛡️⚡ :
   * **🔍 1. Audit & Identification des Causes Racines** :
     - Écart Accueil vs Fiche Produit : la route `GET /api/produits` exécutait `MIN(o.prix)` brut sans filtrage, capturant des anomalies (ex: lampe à 1 150 FCFA sur une TV à 50 000 FCFA avec faux badge -98%), alors que la fiche produit `/produit/[id]` appliquait un filtre médian excluant les outliers (*"1 hors fourchette"*).

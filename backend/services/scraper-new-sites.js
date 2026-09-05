@@ -29,11 +29,13 @@ const sleep  = ms => new Promise(r => setTimeout(r, ms));
 
 function nettoyerPrix(t) {
   if (!t) return 0;
-  let s = (t + '').replace(/[\s\u00a0]/g, '');
-  // Supprimer la partie d\u00e9cimale (virgule/point + 1-2 chiffres) avant le strip global
-  // "185000,50" \u2192 "185000" | "1750.00" \u2192 "1750" | "185.000" (milliers) \u2192 inchang\u00e9
-  s = s.replace(/[,.](\d{1,2})(?=\D|$)/g, '');
-  const n = parseInt(s.replace(/[^0-9]/g, ''));
+  let str = (t + '').trim();
+  const lignes = str.split(/\n|\r|\t|\s{2,}|[-–—/]/).map(s => s.trim()).filter(Boolean);
+  const cible = lignes.length > 0 ? lignes[0] : str;
+  const m = cible.match(/(\d{1,3}(?:[\s.\u00a0]\d{3})+|\d+)(?:[.,](\d{1,2}))?/);
+  if (!m) return 0;
+  const entier = m[1].replace(/[\s.\u00a0]/g, '');
+  const n = parseInt(entier, 10);
   return isNaN(n) || n < 500 ? 0 : n;
 }
 function nettoyerTitre(t) {
@@ -61,6 +63,9 @@ async function fetchHtml(url, referer = '', timeout = 20000) {
     headers: buildHeaders(referer), timeout, maxRedirects: 5,
     responseType: 'text',
   });
+  if (!data || data.length < 50 || data.includes('Account Suspended')) {
+    throw new Error(`Page invalide ou site suspendu (${url})`);
+  }
   return data;
 }
 

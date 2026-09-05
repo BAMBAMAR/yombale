@@ -4,6 +4,7 @@ const cheerio  = require('cheerio');
 const cron     = require('node-cron');
 const { pool } = require('../models/db');
 const scrapingLock = require('../lib/scrapingLock');
+const matching = require('./matching');
 
 const UA = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -13,11 +14,11 @@ const UA = [
 const randUA = () => UA[Math.floor(Math.random() * UA.length)];
 
 const CATS = {
-  expat:     ['telephones', 'tv-home-cinema', 'ordinateurs-accessoires', 'electromenager'],
-  jumia:     ['telephone-tablette', 'electronique', 'informatique', 'electromenager'],
-  coinafrique:['telephones-et-tablettes', 'electronique-et-video', 'ordinateurs-et-accessoires', 'electromenager'],
-  auchan:    ['104-epicerie-salee', '105-epicerie-sucree', '110-petit-dejeuner', '108-boissons'],
-  kaynoo:    ['produits-hightech', 'produits-electromenager', 'beaute-bien-etre', 'mode-sacs-accessoires'],
+  expat:     ['telephones', 'tv-home-cinema', 'ordinateurs-accessoires', 'electromenager', 'mode-beaute', 'sports-loisirs-jeux', 'maison-mobilier'],
+  jumia:     ['telephone-tablette', 'electronique', 'informatique', 'electromenager', 'sante-beaute', 'mode-homme', 'mode-femme', 'supermarche', 'articles-de-sport'],
+  coinafrique:['telephones-et-tablettes', 'electronique-et-video', 'ordinateurs-et-accessoires', 'electromenager', 'vetements-femme', 'vetements-homme', 'chaussures-femme', 'chaussures-homme', 'sports-loisirs-voyages'],
+  auchan:    ['104-epicerie-salee', '105-epicerie-sucree', '110-petit-dejeuner', '108-boissons', '113-entretien-et-nettoyage', '112-hygiene-et-beaute', '107-cremerie-et-frais'],
+  kaynoo:    ['produits-hightech', 'produits-electromenager', 'beaute-bien-etre', 'mode-sacs-accessoires', 'sports-fitness', 'maison-cuisine'],
   decathlon: ['3745-tous-les-sports'],
   jiji:      ['mobile-phones', 'computers-and-accessories', 'tv-and-dvd-equipment', 'home-appliances']
 };
@@ -91,6 +92,26 @@ const CAT_MOTS = [
     'clavier','souris ','imprimante','disque dur',' ssd ','moniteur','ecran pc',
     'routeur','asus vivobook','asus zenbook','acer aspire','acer nitro','toshiba',
   ]},
+  // ── Beauté, Parfums & Cosmétiques ──
+  { slug:'beaute', mots:[
+    'parfum','eau de toilette','eau de parfum','musc','cosmetique','rouge a levres','creme hydratante',
+    'soin visage','soin corps','serum','shampoing','gel douche','lait de beaute','savon noir',
+    'huile essentielle','gommage','palette maquillage','mascara','fond de teint','coffret beaute',
+    'demaquillant','apres-shampoing','deodorant','anti-transpirant','lait corporel'
+  ]},
+  // ── Alimentation & Épicerie ──
+  { slug:'alimentation', mots:[
+    'riz ','huile de tournesol','huile de palme','sucre ','lait en poudre','lait liquide','cafe ',
+    'the vert','chocolat','biscuit','boisson','jus d','soda','eau minerale','vinaigre','mayonnaise',
+    'moutarde','ketchup','sauce tomate','pate alimentaire','spaghetti','couscous','farine','sardine',
+    'thon ','bouillon','epice','yaourt','fromage','beurre','confiture','miel'
+  ]},
+  // ── Sport & Fitness ──
+  { slug:'sport', mots:[
+    'ballon de foot','maillot de foot','velo ','vtt','tapis de course','haltere','haltère',
+    'banc de musculation','corde a sauter','gant de boxe','raquette','elastique musculation',
+    'vetement de sport','fitness','yoga','proteine whey','creatine','tapis de gym'
+  ]},
   // ── Maison ──
   { slug:'maison', mots:[
     'canapé','canape','chaise','matelas','lit ','armoire','meuble','fontaine','table basse','commode',
@@ -99,7 +120,7 @@ const CAT_MOTS = [
   // ── Mode ──
   { slug:'mode', mots:[
     'robe','chaussure','sac a main','sac à main','chemise','pantalon','vêtement','habit',
-    'sneaker','basket','parfum','eau de toilette','eau de parfum','musc','jean homme','t-shirt','coffret beaute',
+    'sneaker','basket','jean homme','t-shirt','costume','talons','sandale','veste','manteau',
   ]},
   // ── Auto-moto ──
   { slug:'auto-moto', mots:[
@@ -112,13 +133,19 @@ const CAT_MOTS = [
 ];
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 function nettoyerPrix(t) {
   if (!t) return 0;
-  let s = (t + '').trim();
-  s = s.replace(/[,.](\d{1,2})(?=\D|$)/g, '');
-  const n = parseInt(s.replace(/[^0-9]/g, ''));
+  let str = (t + '').trim();
+  const lignes = str.split(/\n|\r|\t|\s{2,}|[-–—/]/).map(s => s.trim()).filter(Boolean);
+  const cible = lignes.length > 0 ? lignes[0] : str;
+  const m = cible.match(/(\d{1,3}(?:[\s.\u00a0]\d{3})+|\d+)(?:[.,](\d{1,2}))?/);
+  if (!m) return 0;
+  const entier = m[1].replace(/[\s.\u00a0]/g, '');
+  const n = parseInt(entier, 10);
   return isNaN(n) || n < 100 ? 0 : n;
 }
+
 function nettoyerTitre(t) { return (t||'').trim().replace(/\s+/g,' ').slice(0,255); }
 function extraireMarque(titre) { const t=titre.toLowerCase(); return MARQUES.find(m=>t.includes(m.toLowerCase()))||null; }
 
@@ -131,13 +158,27 @@ async function getCatId(titre) {
   return null;
 }
 
+const MARCHAND_ALIASES = {
+  'dakar mondial telephone': 'Dakar Mondial Téléphone',
+  'univers cosmetix': 'Univers Cosmetix',
+  'univers cosmetic': 'Univers Cosmetix',
+};
+
 const _marchandCache={};
 async function getMarchandId(nom,siteUrl=null) {
-  if(_marchandCache[nom]) return _marchandCache[nom];
-  const {rows}=await pool.query('SELECT id FROM marchands WHERE nom=$1',[nom]);
-  if(rows.length){ _marchandCache[nom]=rows[0].id; return rows[0].id; }
-  const r=await pool.query('INSERT INTO marchands(nom,site_url,methode) VALUES($1,$2,$3) RETURNING id',[nom,siteUrl,'scraper']);
-  _marchandCache[nom]=r.rows[0].id; return r.rows[0].id;
+  const nomTrim = (nom || '').trim();
+  const key = nomTrim.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const canonNom = MARCHAND_ALIASES[key] || nomTrim;
+
+  if(_marchandCache[canonNom]) return _marchandCache[canonNom];
+
+  const {rows} = await pool.query(
+    'SELECT id, nom FROM marchands WHERE unaccent(LOWER(nom)) = unaccent(LOWER($1)) OR LOWER(nom) = LOWER($1) LIMIT 1',
+    [canonNom]
+  );
+  if(rows.length){ _marchandCache[canonNom]=rows[0].id; return rows[0].id; }
+  const r=await pool.query('INSERT INTO marchands(nom,site_url,methode) VALUES($1,$2,$3) RETURNING id',[canonNom,siteUrl,'scraper']);
+  _marchandCache[canonNom]=r.rows[0].id; return r.rows[0].id;
 }
 
 async function fetchPage(url, retries=3) {
@@ -285,9 +326,10 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
               const prod = it.item || it;
               const nom  = prod.name;
               const prix = nettoyerPrix(String(prod.offers?.price || prod.offers?.lowPrice || ''));
-              const href = prod.url || prod.offers?.url || '';
+              let href = prod.url || prod.offers?.url || '';
               const img  = prod.image || (Array.isArray(prod.image) ? prod.image[0] : null);
-              if (nom && prix > 500) {
+              if (href && (href.includes('/customer/account/login') || !href.includes('.html'))) continue;
+              if (nom && prix > 500 && href) {
                 resultats.push({ titre: nettoyerTitre(nom), prix, url: href, image_url: img || null });
                 found++;
               }
@@ -303,9 +345,10 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
             const obj = JSON.parse(raw || '{}');
             const nom  = obj.name || obj.item_name;
             const prix = nettoyerPrix(String(obj.price || obj.item_price || ''));
-            const href = $(el).find('a').first().attr('href') || '';
+            let href = $(el).find('a[href$=".html"], a.core').first().attr('href') || $(el).find('a').first().attr('href') || '';
+            if (href && (href.includes('/customer/account/login') || !href.includes('.html'))) return;
             const img  = $(el).find('img').first().attr('data-src') || $(el).find('img').first().attr('src') || null;
-            if (nom && prix > 500) {
+            if (nom && prix > 500 && href) {
               resultats.push({ titre: nettoyerTitre(nom), prix, url: href.startsWith('http') ? href : `https://www.jumia.sn${href}`, image_url: img });
               found++;
             }
@@ -315,10 +358,10 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
 
       if (found === 0) {
         const essais=[
-          { c:'article.prd',           t:'p.name,h3.name,.name',              p:'div.prc,.prc,.price--current', l:'a.core,a[href]', i:'img.img,img[data-src],img[src]' },
-          { c:'article[class*="prd"]', t:'[class*="name"]',                   p:'[class*="prc"],[class*="price"]', l:'a[href]', i:'img' },
-          { c:'ul.-pvs li',            t:'h3,.name,[class*="name"]',          p:'[class*="price"],[class*="prc"]', l:'a[href]', i:'img' },
-          { c:'article',               t:'p,h3,h2,[class*="name"]',           p:'[class*="price"],[class*="prc"],[class*="amount"]', l:'a[href*="/"]', i:'img' },
+          { c:'article.prd',           t:'p.name,h3.name,.name',              p:'div.prc,.prc,.price--current', l:'a[href$=".html"],a.core,a[href]', i:'img.img,img[data-src],img[src]' },
+          { c:'article[class*="prd"]', t:'[class*="name"]',                   p:'[class*="prc"],[class*="price"]', l:'a[href$=".html"],a[href]', i:'img' },
+          { c:'ul.-pvs li',            t:'h3,.name,[class*="name"]',          p:'[class*="price"],[class*="prc"]', l:'a[href$=".html"],a[href]', i:'img' },
+          { c:'article',               t:'p,h3,h2,[class*="name"]',           p:'[class*="price"],[class*="prc"],[class*="amount"]', l:'a[href*=".html"],a[href*="/"]', i:'img' },
         ];
         for(const s of essais){
           const items=$(s.c); if(!items.length) continue;
@@ -327,6 +370,7 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
             const titre=nettoyerTitre(titreEl.text()||titreEl.attr('data-name'));
             const prix=nettoyerPrix($(el).find(s.p).first().text());
             let href=$(el).find(s.l).first().attr('href')||'';
+            if(href && (href.includes('/customer/account/login') || !href.includes('.html'))) return;
             if(href&&!href.startsWith('http')) href=`https://www.jumia.sn${href}`;
             const img=$(el).find(s.i).first().attr('data-src')||$(el).find(s.i).first().attr('src')||null;
             if(titre.length>3&&prix>500&&href){ resultats.push({titre,prix,url:href,image_url:img}); found++; }
@@ -386,12 +430,13 @@ async function scraperKaynoo(categorie='produits-hightech', maxPages=3) {
       const $ = cheerio.load(html);
       let found = 0;
       $('.product-item').each((_, el) => {
-        const titre = nettoyerTitre($(el).find('.product-item-name a').text());
+        const titre = nettoyerTitre($(el).find('.product-item-name a').first().text());
         const prixStr = $(el).find('.price').first().text();
         const prix = nettoyerPrix(prixStr);
-        let href = $(el).find('.product-item-name a').attr('href') || '';
-        const img = $(el).find('.product-image-photo').attr('src') || $(el).find('.product-image-photo').attr('data-src') || null;
-        if (titre.length > 3 && prix > 500) {
+        let href = $(el).find('.product-item-name a').first().attr('href') || '';
+        const imgEl = $(el).find('.product-image-photo, .product-item-photo img, img').first();
+        const img = imgEl.attr('data-src') || imgEl.attr('src') || imgEl.attr('data-lazy-src') || imgEl.attr('data-original') || null;
+        if (titre.length > 3 && prix > 500 && href) {
           resultats.push({ titre, prix, url: href, image_url: img });
           found++;
         }
@@ -421,14 +466,18 @@ async function scraperAuchan(categorie='137-boissons', maxPages=3) {
       const $ = cheerio.load(html);
       let found = 0;
       $('.product-miniature, article, .item').each((_, el) => {
-        const titre = nettoyerTitre($(el).find('.product-title a, h3, h2, .name').text());
-        const prixStr = $(el).find('.product-price, .price, [itemprop="price"]').text();
+        const titreEl = $(el).find('.product-title a, h3 a, h2 a, .product-title, .name').first();
+        const titre = nettoyerTitre(titreEl.text());
+        const prixStr = $(el).find('.product-price, .price, [itemprop="price"]').first().text();
         const prix = nettoyerPrix(prixStr);
-        let href = $(el).find('.product-title a, a.thumbnail, a').attr('href') || '';
+        let href = $(el).find('.product-title a, a.thumbnail, a').first().attr('href') || '';
         if (href && !href.startsWith('http')) href = `https://www.auchan.sn${href}`;
-        const img = $(el).find('img').attr('src') || $(el).find('img').attr('data-src') || null;
-        if (titre.length > 3 && prix > 500) {
-          resultats.push({ titre, prix, url: href, image_url: img });
+        const img = $(el).find('img').first().attr('src') || $(el).find('img').first().attr('data-src') || null;
+        const eanMatch = href.match(/(\d{13})(?:\.html)?$/) || href.match(/[-_/](\d{13})[-_.]/);
+        const ean = eanMatch ? eanMatch[1] : null;
+
+        if (titre.length > 3 && prix > 500 && href) {
+          resultats.push({ titre, prix, url: href, image_url: img, ean });
           found++;
         }
       });
@@ -442,8 +491,10 @@ async function scraperAuchan(categorie='137-boissons', maxPages=3) {
               const prix = nettoyerPrix(prod.price);
               const href = prod.url || '';
               const img = prod.cover?.url || null;
-              if (titre && prix > 500) {
-                resultats.push({ titre, prix, url: href, image_url: img });
+              const eanMatch = href.match(/(\d{13})(?:\.html)?$/) || href.match(/[-_/](\d{13})[-_.]/);
+              const ean = prod.ean13 || (eanMatch ? eanMatch[1] : null);
+              if (titre && prix > 500 && href) {
+                resultats.push({ titre, prix, url: href, image_url: img, ean });
                 found++;
               }
             }
@@ -849,93 +900,67 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         continue;
       }
       item.prix = corrigerPrixParPlancher(prixVerifie, item.titre);
+
+      // 1. Recherche du produit correspondant via le moteur de matching
+      const catId = await getCatId(item.titre);
+      const correspondant = await matching.trouverProduitCorrespondant(pool, item, catId);
+
       let produitId;
-
-      if(item.ean){
-        const {rows:byEan}=await pool.query('SELECT id FROM produits WHERE ean=$1 LIMIT 1',[item.ean]);
-        if(byEan.length>0){ produitId=byEan[0].id; stats.mis_a_jour++; }
-      }
-
-      if(!produitId){
-        const {rows:byNom}=await pool.query(
-          `SELECT id FROM produits WHERE ${sqlNomNormalise('nom')} = ${sqlNomNormalise('$1')} LIMIT 1`,
-          [normaliserTitre(item.titre)]
+      if (correspondant) {
+        produitId = correspondant.id;
+        stats.mis_a_jour++;
+      } else {
+        const marqueDetectee = matching.extraireMarque(item.titre) || extraireMarque(item.titre);
+        const { rows: n } = await pool.query(
+          'INSERT INTO produits(nom, marque, categorie_id, ean, image_url) VALUES($1, $2, $3, $4, $5) RETURNING id',
+          [item.titre, marqueDetectee, catId, item.ean || null, item.image_url]
         );
-        if(byNom.length>0){ produitId=byNom[0].id; stats.mis_a_jour++; }
+        produitId = n[0].id;
+        stats.inseres++;
       }
 
-      if(!produitId){
-        const nomNorm = normaliserTitre(item.titre);
-        const motsCles = nomNorm.split(/\s+/).filter(m => m.length >= 3 && !MOTS_GENERIQUES.has(m)).slice(0, 4);
-        if(motsCles.length > 0){
-          const {rows:fuzzy}=await pool.query(
-            `SELECT id, nom, prix_min, categorie_id,
-                    similarity(LOWER(nom), $1) AS sim
-             FROM produits
-             WHERE LOWER(nom) LIKE '%' || $2 || '%'
-                OR LOWER(nom) ILIKE $3
-             ORDER BY sim DESC LIMIT 3`,
-            [nomNorm, motsCles[0].toLowerCase(), '%' + motsCles.slice(0,2).join('%').toLowerCase() + '%']
-          );
-          if(fuzzy.length > 0 && (fuzzy[0].sim > 0.65 || _motsClesCommuns(item.titre, fuzzy[0].nom) >= 2)){
-            const marqueSrc  = extraireMarque(item.titre);
-            const marqueDest = extraireMarque(fuzzy[0].nom);
-            const tailleSrc  = extrairePouce(item.titre);
-            const tailleDest = extrairePouce(fuzzy[0].nom);
-            const catSrc     = await getCatId(item.titre);
-            const catDest    = fuzzy[0].categorie_id;
-            const ACCESSOIRE_RE = /\b(chargeur|cable|câble|adaptateur|support|housse|etui|étui|coque|sacoche|powerbank|power\s*bank|doigtier|lampe|poche|boite|bobine)\b/i;
-            const isAccSrc   = ACCESSOIRE_RE.test(item.titre);
-            const isAccDest  = ACCESSOIRE_RE.test(fuzzy[0].nom);
-            const pRef       = fuzzy[0].prix_min ? parseFloat(fuzzy[0].prix_min) : null;
-            const ratioPrix  = (pRef && pRef > 0 && item.prix > 0) ? (item.prix / pRef) : 1;
-
-            if (marqueSrc && marqueDest && marqueSrc !== marqueDest) {
-              // Marques différentes -> pas de merge
-            } else if (tailleSrc && tailleDest && Math.abs(tailleSrc - tailleDest) > 10) {
-              // Écrans/tailles incompatibles -> pas de merge
-            } else if (catSrc && catDest && catSrc !== catDest) {
-              // Catégories détectées incompatibles -> pas de merge
-            } else if (isAccSrc !== isAccDest) {
-              // L'un est un accessoire et l'autre est un appareil principal -> pas de merge
-            } else if (pRef && (ratioPrix < 0.35 || ratioPrix > 2.8)) {
-              // Écart de prix trop grand (ex: lampe 1 150 FCFA sur TV 50 000 FCFA) -> pas de merge
-            } else {
-              produitId = fuzzy[0].id; stats.mis_a_jour++;
-            }
-          }
-        }
+      if (item.image_url) {
+        await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL', [item.image_url, produitId]);
       }
-
-      if(!produitId){
-        const catId=await getCatId(item.titre);
-        const {rows:n}=await pool.query(
-          'INSERT INTO produits(nom,marque,categorie_id,ean,image_url) VALUES($1,$2,$3,$4,$5) RETURNING id',
-          [item.titre, extraireMarque(item.titre), catId, item.ean||null, item.image_url]
+      if (catId) {
+        await pool.query(
+          'UPDATE produits SET categorie_id=$1 WHERE id=$2 AND (categorie_id IS NULL OR categorie_id != $1)',
+          [catId, produitId]
         );
-        produitId=n[0].id; stats.inseres++;
       }
-
-      if(item.image_url) await pool.query('UPDATE produits SET image_url=$1 WHERE id=$2 AND image_url IS NULL',[item.image_url,produitId]);
-      const catDetectee = await getCatId(item.titre);
-      if(catDetectee) await pool.query(
-        'UPDATE produits SET categorie_id=$1 WHERE id=$2 AND (categorie_id IS NULL OR categorie_id != $1)',
-        [catDetectee, produitId]
-      );
 
       const specs = extraireSpecs(item.titre);
-      const {rows:offre}=await pool.query(
-        `INSERT INTO offres(produit_id,marchand_id,prix,url_achat,titre_marchand,specs,scraped_at,stock)
-         VALUES($1,$2,$3,$4,$5,$6,NOW(),true)
-         ON CONFLICT(produit_id,marchand_id)
-         DO UPDATE SET prix=EXCLUDED.prix, url_achat=EXCLUDED.url_achat,
-                       titre_marchand=EXCLUDED.titre_marchand,
-                       specs=EXCLUDED.specs,
-                       scraped_at=NOW(), stock=true
-         RETURNING id`,
-        [produitId,marchandId,item.prix,item.url,item.titre,JSON.stringify(specs)]
-      );
-      if(offre.length>0) await pool.query('INSERT INTO historique_prix(offre_id,prix) VALUES($1,$2)',[offre[0].id,item.prix]);
+      let offreRows = [];
+
+      // 2. Insertion de l'offre avec protection contre les doublons d'URL
+      if (item.url && item.url.trim()) {
+        const { rows: resOffre } = await pool.query(
+          `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock)
+           VALUES($1, $2, $3, $4, $5, $6, NOW(), true)
+           ON CONFLICT (marchand_id, url_achat) WHERE url_achat IS NOT NULL AND TRIM(url_achat) != ''
+           DO UPDATE SET produit_id = EXCLUDED.produit_id,
+                         prix = EXCLUDED.prix,
+                         titre_marchand = EXCLUDED.titre_marchand,
+                         specs = EXCLUDED.specs,
+                         scraped_at = NOW(),
+                         stock = true
+           RETURNING id`,
+          [produitId, marchandId, item.prix, item.url.trim(), item.titre, JSON.stringify(specs)]
+        );
+        offreRows = resOffre;
+      } else {
+        const { rows: resOffre } = await pool.query(
+          `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock)
+           VALUES($1, $2, $3, $4, $5, $6, NOW(), true)
+           RETURNING id`,
+          [produitId, marchandId, item.prix, null, item.titre, JSON.stringify(specs)]
+        );
+        offreRows = resOffre;
+      }
+
+      if (offreRows.length > 0) {
+        await pool.query('INSERT INTO historique_prix(offre_id, prix) VALUES($1, $2)', [offreRows[0].id, item.prix]);
+      }
 
       produitsModifies.add(produitId);
     }catch(err){ console.error(`[DB] "${item.titre}":`,err.message); stats.erreurs++; }
@@ -949,8 +974,8 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         nb_offres = sub.nb_offres
       FROM (
         SELECT p.id,
-          MIN(CASE WHEN o.stock THEN o.prix END) AS prix_min,
-          COUNT(o.id) AS nb_offres
+          MIN(CASE WHEN o.stock AND o.quarantinee = false THEN o.prix END) AS prix_min,
+          COUNT(CASE WHEN o.stock AND o.quarantinee = false THEN o.id END) AS nb_offres
         FROM produits p
         LEFT JOIN offres o ON o.produit_id = p.id
         WHERE p.id = ANY($1::uuid[])
