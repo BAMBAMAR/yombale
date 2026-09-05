@@ -726,6 +726,26 @@ function prixPlancher(titre) {
   if (/reflex|mirrorless|appareil photo/.test(s))            return 150_000;
   if (/camera\s*(ip|surveillance|360)/.test(s))              return  15_000;
 
+  // ── Gros électroménager / Cuisinières & Fours ──
+  if (/cuisiniere|gaziniere|piano de cuisson/.test(s))       return  50_000;
+  if (/plaque\s*(de\s*)?cuisson|table\s*(de\s*)?cuisson/.test(s)) return 20_000;
+  if (/four\s*(encastrable|electrique|pyrolyse)/.test(s))   return  60_000;
+  if (/four\b/.test(s) && !/four a pizza jouet|accessoire/.test(s)) return 30_000;
+  if (/air\s*fryer|friteuse\s*sans\s*huile/.test(s))        return  20_000;
+  if (/mini[- ]?chaine|chaine\s*hifi|home\s*cinema/.test(s)) return  30_000;
+  if (/lave[- ]vaisselle/.test(s))                          return  80_000;
+
+  // ── Parfumerie de luxe ──
+  if (/\b(eau de parfum|edp|eau de toilette|edt|parfum)\b/.test(s) && /(xerjoff|chanel|dior|hermes|gaultier|diesel|boss|narciso|creed|roja|tom ford)/.test(s)) return 25_000;
+  if (/\b(eau de parfum|edp|parfum)\b/.test(s) && !/desodorisant|diffuseur|brume/.test(s)) return 15_000;
+  if (/coffret\s*(parfum|cadeau|beaute)/.test(s) && /(xerjoff|chanel|dior|hermes|gaultier|boss|clarins)/.test(s)) return 20_000;
+
+  // ── Consoles de jeux ──
+  if (/\b(playstation\s*5|ps5)\b/.test(s))                  return 250_000;
+  if (/\b(playstation\s*4|ps4)\b/.test(s))                  return  80_000;
+  if (/\b(xbox\s*series\s*[xs]|xbox\s*one)\b/.test(s))      return  80_000;
+  if (/\b(nintendo\s*switch)\b/.test(s))                    return  80_000;
+
   if (/(hisense|lg|samsung|tcl|sony|philips)\s*(tv|television|tele|televiseur)/.test(s)) return 80_000;
   if (/\b(tv|tele|television)\b|televiseur/.test(s))         return  50_000;
 
@@ -849,7 +869,7 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
         const motsCles = nomNorm.split(/\s+/).filter(m => m.length >= 3 && !MOTS_GENERIQUES.has(m)).slice(0, 4);
         if(motsCles.length > 0){
           const {rows:fuzzy}=await pool.query(
-            `SELECT id, nom,
+            `SELECT id, nom, prix_min, categorie_id,
                     similarity(LOWER(nom), $1) AS sim
              FROM produits
              WHERE LOWER(nom) LIKE '%' || $2 || '%'
@@ -862,8 +882,24 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
             const marqueDest = extraireMarque(fuzzy[0].nom);
             const tailleSrc  = extrairePouce(item.titre);
             const tailleDest = extrairePouce(fuzzy[0].nom);
+            const catSrc     = await getCatId(item.titre);
+            const catDest    = fuzzy[0].categorie_id;
+            const ACCESSOIRE_RE = /\b(chargeur|cable|câble|adaptateur|support|housse|etui|étui|coque|sacoche|powerbank|power\s*bank|doigtier|lampe|poche|boite|bobine)\b/i;
+            const isAccSrc   = ACCESSOIRE_RE.test(item.titre);
+            const isAccDest  = ACCESSOIRE_RE.test(fuzzy[0].nom);
+            const pRef       = fuzzy[0].prix_min ? parseFloat(fuzzy[0].prix_min) : null;
+            const ratioPrix  = (pRef && pRef > 0 && item.prix > 0) ? (item.prix / pRef) : 1;
+
             if (marqueSrc && marqueDest && marqueSrc !== marqueDest) {
+              // Marques différentes -> pas de merge
             } else if (tailleSrc && tailleDest && Math.abs(tailleSrc - tailleDest) > 10) {
+              // Écrans/tailles incompatibles -> pas de merge
+            } else if (catSrc && catDest && catSrc !== catDest) {
+              // Catégories détectées incompatibles -> pas de merge
+            } else if (isAccSrc !== isAccDest) {
+              // L'un est un accessoire et l'autre est un appareil principal -> pas de merge
+            } else if (pRef && (ratioPrix < 0.35 || ratioPrix > 2.8)) {
+              // Écart de prix trop grand (ex: lampe 1 150 FCFA sur TV 50 000 FCFA) -> pas de merge
             } else {
               produitId = fuzzy[0].id; stats.mis_a_jour++;
             }

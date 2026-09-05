@@ -14,11 +14,21 @@ const { chromium } = require('playwright');
 const SESSION_FILE = path.join(__dirname, '../backend/.fb-session.json');
 
 async function main() {
-  console.log('🌐 Ouverture du navigateur Chromium...');
-  const browser = await chromium.launch({ 
-    headless: false,
-    args: ['--start-maximized']
-  });
+  console.log('🌐 Ouverture du navigateur Google Chrome...');
+  let browser;
+  try {
+    browser = await chromium.launch({ 
+      headless: false,
+      channel: 'chrome',
+      args: ['--start-maximized']
+    });
+  } catch (err) {
+    console.log('⚠️ Google Chrome non trouvé directement via Playwright, utilisation du Chromium embarqué...');
+    browser = await chromium.launch({ 
+      headless: false,
+      args: ['--start-maximized']
+    });
+  }
   const ctx = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
     locale: 'fr-FR',
@@ -45,14 +55,18 @@ async function main() {
   });
 
   // Détection automatique de la présence du cookie de connexion
+  let detected = false;
   const pollInterval = setInterval(async () => {
     try {
       const cookies = await ctx.cookies();
-      if (cookies.some(c => c.name === 'c_user')) {
-        console.log('✨ Session utilisateur Facebook détectée (c_user).');
+      if (!detected && cookies.some(c => c.name === 'c_user')) {
+        detected = true;
+        console.log('✨ Session utilisateur Facebook détectée (c_user) !');
+        console.log('⏳ Finalisation et sauvegarde automatique dans 5 secondes...');
+        setTimeout(() => resolveDone('c_user_auto'), 5000);
       }
     } catch {}
-  }, 3000);
+  }, 2000);
 
   await donePromise;
   clearInterval(pollInterval);

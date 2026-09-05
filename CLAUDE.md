@@ -1,3 +1,24 @@
+- **Audit et Assainissement des Données Produits & Réparation des Prix Incohérents (`backend/scripts/assainir-prix-outliers.js`, `backend/services/scraper.js`, `backend/services/anomaly-detector.js`, `backend/routes/produits.js`, `CLAUDE.md`) (`pushed` - 05 septembre 2026)** 🏷️🧹🛡️⚡ :
+  * **🔍 1. Audit & Identification des Causes Racines** :
+    - Écart Accueil vs Fiche Produit : la route `GET /api/produits` exécutait `MIN(o.prix)` brut sans filtrage, capturant des anomalies (ex: lampe à 1 150 FCFA sur une TV à 50 000 FCFA avec faux badge -98%), alors que la fiche produit `/produit/[id]` appliquait un filtre médian excluant les outliers (*"1 hors fourchette"*).
+    - Matching laxiste dans les scrapers : la règle `_motsClesCommuns >= 2` fusionnait des accessoires (lampes de poche, adaptateurs, supports, câbles) avec des appareils principaux (TV, frigo, ordinateurs) sans vérification de prix ni de catégorie.
+    - Prix WooCommerce historiques divisés par 100 : un ancien scraping du 16 mai 2026 avait divisé par 100 les prix en FCFA de Soumari, Kanje, Master Office Déco, Electronic Corp et Univers Cosmétix (ex: cuisinière à 2 808 FCFA au lieu de 280 800 FCFA).
+    - Absence de prix planchers : `prixPlancher` ne couvrait ni les cuisinières, ni les plaques de cuisson, ni les fours, ni les Air Fryers, ni les parfums, ni les consoles.
+  * **🧹 2. Assainissement Massif de la Base de Données (`backend/scripts/assainir-prix-outliers.js`)** :
+    - Mise en quarantaine immédiate de 283 offres aberrantes / faux rapprochements rattachées à des produits multi-offres (`< 0.35×` ou `> 3.0×` de la médiane).
+    - Correction des prix historiques légitimes divisés par 100 (×100).
+    - Recalcul global des champs `prix_min`, `prix_max` et `nb_offres` sur 773 produits dans PostgreSQL : élimination totale des faux rabais (-98%, -99%, -100%).
+  * **🛡️ 3. Sécurisation du Matching et Planchers de Sécurité (`backend/services/scraper.js`)** :
+    - Blocage strict de la fusion Accessoire vs Appareil principal (`ACCESSOIRE_RE`).
+    - Contrôle de ratio de prix lors du matching : refus du merge si l'offre s'écarte de `[0.35× ; 2.8×]` du prix de référence du produit existant (création d'un produit séparé au lieu de polluer).
+    - Contrôle de catégorie détectée pour interdire les rapprochements inter-catégories.
+    - Extension de `prixPlancher` pour les cuisinières (50k), plaques (20k), fours (30k-60k), Air Fryers (20k), mini-chaînes (30k), parfums (15k-25k) et consoles (80k-250k).
+  * **🤖 4. Détecteur d'Anomalies Automatique (`backend/services/anomaly-detector.js`)** :
+    - Détection continue des offres en écart sévère par rapport à la médiane du produit et quarantaine automatique avec recalcul instantané du prix minimum.
+  * **⚡ 5. Harmonisation des Requêtes Backend (`backend/routes/produits.js`)** :
+    - Ajout systématique de `AND o.quarantinee = false` sur `/api/produits/:id` et `/api/produits/:id/similaires`.
+  * **📦 6. Statut** : Déployé sur GitHub (`origin/main`).
+
 - **Automatisation & Planificateur de Tâches Windows pour le Scraping (`scripts/run-scraper-task.bat`, `scripts/gerer-taches-planifiees.ps1`, `CLAUDE.md`) (`pushed` - 30 août 2026)** ⏰🤖🔄 :
   * **⏰ 1. Enregistrement dans le Planificateur Windows** : Création de la tâche planifiée automatique `Nopalou_Scraper_Facebook` programmée quotidiennement à 04h00.
   * **🤖 2. Script Wrapper avec Logs & Auto-Détection (`scripts/run-scraper-task.bat`)** : Détection dynamique de l'exécutable Node.js, exécution de `scripts/sync-immo-local.js` et journalisation complète horodatée dans `logs/scraper-task.log`.

@@ -16,12 +16,18 @@ $LogPath = Join-Path $ProjectPath "logs\scraper-task.log"
 switch ($Action) {
     'creer' {
         Write-Host "Création de la tâche planifiée $TaskNameFB (quotidienne à $Heure)..." -ForegroundColor Cyan
-        schtasks /Create /TN $TaskNameFB /TR "`"$BatPath`" --facebook" /SC DAILY /ST $Heure /F
-        Write-Host "✅ Tâche $TaskNameFB configurée avec succès !" -ForegroundColor Green
+        $ActionFB = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"`"$BatPath`" --facebook`"" -WorkingDirectory $ProjectPath
+        $Trigger = New-ScheduledTaskTrigger -Daily -At $Heure
+        $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+        Register-ScheduledTask -TaskName $TaskNameFB -Action $ActionFB -Trigger $Trigger -Settings $Settings -Force | Out-Null
+        Write-Host "✅ Tâche $TaskNameFB configurée avec succès (cmd.exe wrapper, batterie autorisée) !" -ForegroundColor Green
     }
     'creer-all' {
         Write-Host "Création de la tâche planifiée $TaskNameAll (quotidienne à $Heure pour toutes les sources)..." -ForegroundColor Cyan
-        schtasks /Create /TN $TaskNameAll /TR "`"$BatPath`" --all" /SC DAILY /ST $Heure /F
+        $ActionAll = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"`"$BatPath`" --all`"" -WorkingDirectory $ProjectPath
+        $Trigger = New-ScheduledTaskTrigger -Daily -At $Heure
+        $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+        Register-ScheduledTask -TaskName $TaskNameAll -Action $ActionAll -Trigger $Trigger -Settings $Settings -Force | Out-Null
         Write-Host "✅ Tâche $TaskNameAll configurée avec succès !" -ForegroundColor Green
     }
     'lancer' {

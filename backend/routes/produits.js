@@ -398,7 +398,7 @@ router.get('/:id', checkUUID, async (req, res) => {
              COUNT(o.id) AS nb_offres
       FROM produits p
       LEFT JOIN categories c ON c.id        = p.categorie_id
-      LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
+      LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true AND o.quarantinee = false
       WHERE p.id = $1
       GROUP BY p.id, c.nom`,
       [req.params.id]
@@ -576,7 +576,7 @@ router.get('/:id/similaires', checkUUID, async (req, res) => {
              'meme_marque' AS similarite
       FROM produits p
       LEFT JOIN categories c ON c.id = p.categorie_id
-      LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
+      LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true AND o.quarantinee = false
       LEFT JOIN marchands m  ON m.id = o.marchand_id
       WHERE p.id != $1
         AND p.marque ILIKE $2
@@ -612,7 +612,7 @@ router.get('/:id/similaires', checkUUID, async (req, res) => {
                'meme_categorie' AS similarite
         FROM produits p
         LEFT JOIN categories c ON c.id = p.categorie_id
-        LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true
+        LEFT JOIN offres o     ON o.produit_id = p.id AND o.stock = true AND o.quarantinee = false
         LEFT JOIN marchands m  ON m.id = o.marchand_id
         WHERE p.id != ALL($1::uuid[])
           AND p.categorie_id = $2
