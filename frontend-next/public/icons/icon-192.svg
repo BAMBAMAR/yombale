@@ -7,7 +7,7 @@
       <stop offset="100%" stop-color="#9E3C00"/>
     </linearGradient>
     <linearGradient id="sheenGrad192" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.5"/>
       <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.10"/>
       <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
     </linearGradient>
@@ -16,13 +16,13 @@
       <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.15"/>
     </filter>
     <filter id="symbolDepth192" x="-10%" y="-10%" width="120%" height="125%">
-      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.15"/>
+      <feDropShadow dx="0" dy="3.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.16"/>
     </filter>
   </defs>
   <g filter="url(#softShadow192)">
-    <rect x="28" y="28" width="456" height="456" rx="105" fill="url(#nopalouGrad192)"/>
+    <rect x="26" y="26" width="460" height="460" rx="118" fill="url(#nopalouGrad192)"/>
   </g>
-  <rect x="29.5" y="29.5" width="453" height="453" rx="103.5" fill="none" stroke="url(#sheenGrad192)" stroke-width="2.5"/>
+  <rect x="27.5" y="27.5" width="457" height="457" rx="116.5" fill="none" stroke="url(#sheenGrad192)" stroke-width="2.5"/>
   <g filter="url(#symbolDepth192)">
     <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
   </g>

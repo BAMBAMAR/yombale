@@ -86,14 +86,14 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/icon', type: 'image/png', sizes: '32x32' },
-      { url: '/icons/icon-192.png?v=8', type: 'image/png', sizes: '192x192' },
-      { url: '/icons/icon-512.png?v=8', type: 'image/png', sizes: '512x512' },
+      { url: '/icons/icon-192.png?v=10', type: 'image/png', sizes: '192x192' },
+      { url: '/icons/icon-512.png?v=10', type: 'image/png', sizes: '512x512' },
     ],
-    shortcut: '/icons/icon-192.png?v=8',
+    shortcut: '/icons/icon-192.png?v=10',
     apple: [
-      { url: '/apple-icon.png?v=8', sizes: '180x180', type: 'image/png' },
-      { url: '/icons/icon-192.png?v=8', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png?v=8', sizes: '512x512', type: 'image/png' },
+      { url: '/apple-icon.png?v=10', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/icon-192.png?v=10', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png?v=10', sizes: '512x512', type: 'image/png' },
     ],
   },
 };

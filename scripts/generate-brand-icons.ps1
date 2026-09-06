@@ -42,25 +42,13 @@ public class NopalouIconGenerator
 
             Color white = Color.White;
 
-            if (mode == "maskable")
+            // Pour Android (standalone ET maskable sur Splash Screen) :
+            // Toujours générer le Squircle aux angles nettement arrondis (26% de rayon)
+            // avec ombre portée douce et lueur supérieure de verre.
+            // Cela empêche définitivement Chrome d'afficher un carré brut à 90° au démarrage !
+            if (mode == "apple")
             {
-                // Mode Maskable Android : Plein écran sans coins coupés (l'OS Android découpe lui-même)
-                using (LinearGradientBrush grad = new LinearGradientBrush(startPoint, endPoint, c1, c4))
-                {
-                    grad.InterpolationColors = colorBlend;
-                    g.FillRectangle(grad, 0, 0, size, size);
-                }
-
-                // Monogramme N dans la zone de sécurité W3C (60% de diamètre, centré)
-                float scale = 0.60f * ((float)size / 512.0f);
-                float offsetX = 102.4f * ((float)size / 512.0f);
-                float offsetY = 102.4f * ((float)size / 512.0f);
-
-                DrawNMonogram(g, offsetX, offsetY, scale, white, true);
-            }
-            else if (mode == "apple")
-            {
-                // Mode Apple iOS : Fond plein 100% (iOS applique son propre squircle, JAMAIS de transparence dans les coins)
+                // Mode Apple iOS : Fond plein 100% (iOS applique son propre masque squircle nativement)
                 using (LinearGradientBrush grad = new LinearGradientBrush(startPoint, endPoint, c1, c4))
                 {
                     grad.InterpolationColors = colorBlend;
@@ -68,43 +56,43 @@ public class NopalouIconGenerator
                 }
 
                 // Subtile lueur supérieure de verre (Apple glass highlight)
-                using (Pen sheenPen = new Pen(Color.FromArgb(45, 255, 255, 255), 2.0f))
+                using (Pen sheenPen = new Pen(Color.FromArgb(50, 255, 255, 255), 2.0f))
                 {
                     g.DrawRectangle(sheenPen, 1, 1, size - 2, size - 2);
                 }
 
-                float scale = 0.68f * ((float)size / 512.0f);
-                float offsetX = 81.92f * ((float)size / 512.0f);
-                float offsetY = 81.92f * ((float)size / 512.0f);
+                float scale = 0.66f * ((float)size / 512.0f);
+                float offsetX = 87.04f * ((float)size / 512.0f);
+                float offsetY = 87.04f * ((float)size / 512.0f);
 
                 DrawNMonogram(g, offsetX, offsetY, scale, white, true);
             }
             else
             {
-                // Mode App / Splash Screen Standalone (icon-512, icon-192) :
-                // Squircle harmonieux à 23% de rayon, avec ombre portée douce et reflet supérieur
-                float pad = (float)size * 0.055f; // 5.5% marge pour l'ombre diffuse
+                // Mode Android Splash Screen & Launcher (maskable + standalone) :
+                // Squircle aux angles très arrondis (26% de rayon), aucun angle droit !
+                float pad = (float)size * 0.05f; // 5% de marge pour l'ombre diffuse
                 float w = (float)size - (pad * 2.0f);
                 float h = (float)size - (pad * 2.0f);
-                float radius = w * 0.23f;
+                float radius = w * 0.26f; // 26% de rayon = coins visiblement et nettement arrondis
 
                 // 1. Ombre portée diffuse multi-couches
                 int shadowSteps = 8;
                 for (int s = shadowSteps; s >= 1; s--)
                 {
-                    float offset = s * (1.8f * (float)size / 512.0f);
+                    float offset = s * (2.0f * (float)size / 512.0f);
                     float expand = s * (1.2f * (float)size / 512.0f);
-                    int alpha = (int)(18 - (s * 1.8f));
-                    if (alpha < 3) alpha = 3;
+                    int alpha = (int)(22 - (s * 2.2f));
+                    if (alpha < 4) alpha = 4;
 
                     using (GraphicsPath shadowPath = CreateSquirclePath(pad - expand, pad + offset - expand, w + (expand * 2), h + (expand * 2), radius + expand))
-                    using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(alpha, 120, 45, 0)))
+                    using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(alpha, 130, 50, 0)))
                     {
                         g.FillPath(shadowBrush, shadowPath);
                     }
                 }
 
-                // 2. Corps de l'icône Squircle avec dégradé chaud
+                // 2. Corps de l'icône Squircle avec dégradé solaire riche
                 using (GraphicsPath squirclePath = CreateSquirclePath(pad, pad, w, h, radius))
                 using (LinearGradientBrush grad = new LinearGradientBrush(new PointF(pad, pad), new PointF(pad + w, pad + h), c1, c4))
                 {
@@ -112,7 +100,7 @@ public class NopalouIconGenerator
                     g.FillPath(grad, squirclePath);
 
                     // 3. Reflet supérieur de verre (Specular Inner Sheen)
-                    using (Pen sheenPen = new Pen(Color.FromArgb(70, 255, 255, 255), 2.2f * ((float)size / 512.0f)))
+                    using (Pen sheenPen = new Pen(Color.FromArgb(80, 255, 255, 255), 2.5f * ((float)size / 512.0f)))
                     {
                         sheenPen.Alignment = PenAlignment.Inset;
                         g.DrawPath(sheenPen, squirclePath);

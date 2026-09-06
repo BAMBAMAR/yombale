@@ -10,7 +10,7 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v11';
+const CACHE_VERSION = 'v12';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
