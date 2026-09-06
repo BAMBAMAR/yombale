@@ -1,8 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- Icône maskable PWA — fond plein, N dans la zone sûre centrale (40% du rayon) -->
-  <rect width="512" height="512" fill="#C75B00"/>
-  <!-- N réduit à 60% et centré (zone sûre W3C) -->
-  <g transform="translate(102.4 102.4) scale(0.6)">
-    <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#fff"/>
+  <defs>
+    <!-- Dégradé Signature Nopalou Plein Écran -->
+    <linearGradient id="nopalouMaskableGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7E22"/>
+      <stop offset="35%" stop-color="#EA580C"/>
+      <stop offset="70%" stop-color="#C75B00"/>
+      <stop offset="100%" stop-color="#9E3C00"/>
+    </linearGradient>
+
+    <!-- Micro-Profondeur sous le Monogramme N -->
+    <filter id="maskableSymbolDepth" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#000000" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Fond Plein 100% W3C Maskable (Sans coins coupés : le système Android applique son propre masque) -->
+  <rect width="512" height="512" fill="url(#nopalouMaskableGrad)"/>
+
+  <!-- N officiel réduit à 60% et centré dans la zone sûre W3C (cercle de sécurité Android) -->
+  <g transform="translate(102.4 102.4) scale(0.6)" filter="url(#maskableSymbolDepth)">
+    <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
   </g>
 </svg>

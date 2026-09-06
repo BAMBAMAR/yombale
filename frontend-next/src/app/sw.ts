@@ -10,13 +10,14 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v10';
+const CACHE_VERSION = 'v11';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
   `nopalou-api-cache-${CACHE_VERSION}`,
   `nopalou-scripts-cache-${CACHE_VERSION}`,
   `nopalou-pwa-meta-cache-${CACHE_VERSION}`,
+  `nopalou-icons-cache-${CACHE_VERSION}`,
   `nopalou-assets-cache-${CACHE_VERSION}`,
   `nopalou-offline-fallback-${CACHE_VERSION}`,
 ];
@@ -142,15 +143,28 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 5. Manifest & PWA Meta — CacheFirst
+    // 5. Manifest PWA — NetworkFirst (mise à jour immédiate des icônes et métadonnées)
     {
-      matcher: ({ url }) =>
-        url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/'),
-      handler: new CacheFirst({
+      matcher: ({ url }) => url.pathname === '/manifest.json',
+      handler: new NetworkFirst({
         cacheName: `nopalou-pwa-meta-cache-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 2,
         plugins: [
           new ExpirationPlugin({
-            maxEntries: 20,
+            maxEntries: 5,
+            maxAgeSeconds: 24 * 60 * 60, // 24h max
+          }),
+        ],
+      }),
+    },
+    // 5b. Icônes PWA — StaleWhileRevalidate (mise à jour en arrière-plan immédiate)
+    {
+      matcher: ({ url }) => url.pathname.startsWith('/icons/'),
+      handler: new StaleWhileRevalidate({
+        cacheName: `nopalou-icons-cache-${CACHE_VERSION}`,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 30,
             maxAgeSeconds: 24 * 60 * 60 * 30,
           }),
         ],

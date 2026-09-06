@@ -14,9 +14,8 @@ export default function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#C75B00',
-          borderRadius: 40,
-          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
+          background: 'linear-gradient(145deg, #FF7E22 0%, #EA580C 35%, #C75B00 70%, #9E3C00 100%)',
+          boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.25)',
         }}
       >
         <svg width="180" height="180" viewBox="0 0 512 512" style={{ position: 'absolute', top: 0, left: 0 }}>
@@ -31,3 +30,4 @@ export default function AppleIcon() {
     { ...size }
   )
 }
+

@@ -61,15 +61,17 @@ Le monogramme **N** repose sur une géométrie vectorielle équilibrée :
 - **Encoches triangulaires soustractives** :
   - Encoche supérieure : `(188, 108)` → `(324, 108)` → `(324, 306)`
   - Encoche inférieure : `(188, 206)` → `(324, 404)` → `(188, 404)`
-- **Rayon de courbure du carré support** : `rx = 112 px` (21,8 % de la largeur)
+- **Rayon de courbure du carré support (Squircle)** : `rx = 105 px` (23 % de la largeur), courbure continue avec lueur interne supérieure (`sheenGrad`) et ombre portée diffuse.
+- **Dégradé officiel PWA & App Tiles** : Dégradé multi-stop solaire (`#FF7E22` à 0% → `#EA580C` à 35% → `#C75B00` à 70% → `#9E3C00` à 100%).
 
 ---
 
-## 5. Spécification PWA & Zone Sûre Android (Maskable Icon)
+## 5. Spécification PWA & Zone Sûre Android / iOS
 
-Conformément au standard W3C Web App Manifest :
-- L'icône `icon-maskable-512.png` a un fond `#C75B00` plein (sans coins arrondis pré-découpés).
-- Le symbole N est mis à l'échelle à 60 % et centré (`translate(102.4, 102.4) scale(0.6)`), garantissant qu'aucune partie du logo n'est rognée lors du recadrage en cercle, goutte, squircle ou carré par les lanceurs Android.
+Conformément aux standards W3C Web App Manifest et Apple Human Interface Guidelines :
+- **Android Launcher (Maskable)** : L'icône `icon-maskable-512.png` possède un fond plein 100% avec le dégradé solaire (sans coins transparents). Le symbole N est mis à l'échelle à 60 % et centré (`translate(102.4, 102.4) scale(0.6)`), assurant un recadrage parfait par les lanceurs Pixel, Samsung One UI et Xiaomi.
+- **Splash Screen & Desktop PWA (Standalone)** : `icon-512.png` et `icon-192.png` intègrent le squircle continu à 23% de rayon avec ombre portée 3D et reflet de verre, éliminant tout bloc aux angles droits au démarrage.
+- **iOS Safari (Apple Touch Icon)** : `apple-icon.png` remplit 100% du format 180×180 px avec le dégradé officiel sans coins arrondis transparents, permettant à iOS d'appliquer son squircle natif sans aucun coin noir.
 
 ---
 

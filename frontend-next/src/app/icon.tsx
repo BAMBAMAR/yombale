@@ -11,8 +11,9 @@ export default function Icon() {
         style={{
           width: '100%', height: '100%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: '#C75B00',
-          borderRadius: 7,
+          background: 'linear-gradient(145deg, #FF7E22 0%, #EA580C 35%, #C75B00 70%, #9E3C00 100%)',
+          borderRadius: 8,
+          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.2)',
         }}
       >
         {/* N propriétaire — tracé vectoriel via SVG inline */}

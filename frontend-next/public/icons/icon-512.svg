@@ -1,4 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect x="20" y="20" width="472" height="472" rx="112" fill="#C75B00"/>
-  <path fill-rule="evenodd" d="M130 119h252v274H130Z M319 119H193l126 183Z M193 393h126L193 210Z" fill="#fff"/>
+  <defs>
+    <!-- Dégradé Signature Solaire & Cuivré Nopalou -->
+    <linearGradient id="nopalouGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7E22"/>
+      <stop offset="35%" stop-color="#EA580C"/>
+      <stop offset="70%" stop-color="#C75B00"/>
+      <stop offset="100%" stop-color="#9E3C00"/>
+    </linearGradient>
+
+    <!-- Reflet Spéculaire Supérieur (Effet Verre / Céramique Apple) -->
+    <linearGradient id="sheenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <!-- Ombre Portée Flottante 3D (Effet Élévation Mobile) -->
+    <filter id="softShadow" x="-15%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#8A3400" flood-opacity="0.32"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+
+    <!-- Micro-Profondeur sous le Monogramme N -->
+    <filter id="symbolDepth" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Corps de l'Icône : Squircle Continu avec Ombre Diffuse -->
+  <g filter="url(#softShadow)">
+    <rect x="28" y="28" width="456" height="456" rx="105" fill="url(#nopalouGrad)"/>
+  </g>
+
+  <!-- Lueur Interne Haute Fidélité -->
+  <rect x="29.5" y="29.5" width="453" height="453" rx="103.5" fill="none" stroke="url(#sheenGrad)" stroke-width="2.5"/>
+
+  <!-- Monogramme N Officiel Centré avec Profondeur -->
+  <g filter="url(#symbolDepth)">
+    <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+  </g>
 </svg>

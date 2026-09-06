@@ -5111,3 +5111,18 @@ Voici les URLs et les modifications apportées aux outils d'administration inter
 - **Ce qui a été fait** :
   - Modernisation des onglets de navigation (design style 'pilules' blanches sur fond gris clair).
   - Redesign des boutons d'action rapide dans le tableau (Boutons 'Modifier', 'WA 1-Clic' et 'Supprimer' plus visibles et cliquables).
+
+## 06 Septembre 2026 : Refonte Ultra-Premium de l'Icône PWA, Splash Screen et Apple Touch Icon
+- **Diagnostic & Résolution du problème d'icône d'ouverture (Splash Screen) et coins non arrondis** :
+  - **Android Splash Screen & Conflit Maskable** : L'icône maskable W3C possède un fond plein à angles droits 90° (destinée à être découpée par le launcher). Lors de l'ouverture (Splash Screen WebAPK), certains terminaux affichaient l'icône brute sans masque, créant un pavé rectangulaire sans aucun arrondi.
+  - **iOS Safari (Apple Touch Icon)** : Suppression du `borderRadius: 40` transparent dans `apple-icon.tsx` qui provoquait des angles noirs disgracieux sur iPhone (iOS appliquant nativement son propre squircle sur un fond 100% opaque).
+- **Modernisation Esthétique Haute Fidélité** :
+  - **Dégradé Solaire Multi-Stop** : Transition chaude de `#FF7E22` (solaire) → `#EA580C` → `#C75B00` (terracotta officiel) → `#9E3C00` (profondeur).
+  - **Squircle Continu (Rayon 23%) & Lueur de Verre** : Intégration d'un micro-reflet spéculaire supérieur (inner highlight translucide) et d'une ombre portée diffuse multi-couches (drop shadow) pour donner un effet 3D flottant tactile au lancement.
+  - **PWA Manifest v8** : Passage de `background_color` à `#FFFFFF` pur pour une ouverture nette et éclatante, cache-busting des icônes (`?v=8`), séparation rigoureuse `purpose: "any"` (splash & desktop) vs `purpose: "maskable"` (launcher).
+  - **Composant PWA Promo (`PwaInstallPrompt.tsx`)** : Remplacement de l'icône générique Lucide par le monogramme N officiel dans son squircle lumineux.
+  - **Forçage & Déploiement Automatique des Mises à Jour (Zéro action requise de l'utilisateur)** :
+    * **Service Worker v11 & Auto-Purge** : Incrémentation du cache vers `v11` dans `sw.ts`. À la prochaine ouverture de l'application, l'événement `activate` détruit automatiquement tous les anciens caches de l'appareil (`caches.delete()`) et recharge la page silencieusement avec les nouveaux actifs `?v=8`.
+    * **Stratégie `NetworkFirst` & `no-cache` sur `manifest.json`** : Configuration d'en-têtes HTTP `no-cache, no-store, must-revalidate` dans `next.config.js` et routage NetworkFirst dans `sw.ts`. Cela permet au serveur WebAPK de Google et aux navigateurs mobiles de détecter immédiatement la version 8 du manifest et de recompiler/mettre à jour l'icône de l'écran d'accueil en tâche de fond de manière 100% autonome.
+
+

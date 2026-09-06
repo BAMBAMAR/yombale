@@ -105,19 +105,28 @@ export default function PwaInstallPrompt() {
         gap: 12,
         animation: 'fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
       }}>
-        {/* Icône Nopalou */}
+        {/* Icône officielle Nopalou PWA */}
         <div style={{
           width: 44,
           height: 44,
           borderRadius: 12,
-          background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)',
+          background: 'linear-gradient(145deg, #FF7E22 0%, #EA580C 35%, #C75B00 70%, #9E3C00 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          boxShadow: '0 4px 12px rgba(199, 91, 0, 0.4)',
+          boxShadow: '0 4px 14px rgba(234, 88, 12, 0.45)',
+          border: '1px solid rgba(255, 255, 255, 0.25)',
+          overflow: 'hidden',
+          position: 'relative',
         }}>
-          <Smartphone size={24} style={{ color: '#fff' }} />
+          <svg width="32" height="32" viewBox="0 0 512 512" style={{ position: 'relative', zIndex: 1 }}>
+            <path
+              fillRule="evenodd"
+              d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z"
+              fill="#FFFFFF"
+            />
+          </svg>
         </div>
 
         {/* Texte promotionnel */}
