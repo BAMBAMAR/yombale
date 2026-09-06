@@ -12463,6 +12463,71 @@ html, body {
   .hero-categories-scroll::-webkit-scrollbar { display: none; }
 }
 
+/* ── Hero Split Layout (2 Colonnes Desktop, 1 Colonne Mobile) ────────── */
+.hero-split-grid {
+  display: grid;
+  grid-template-columns: 1.16fr 0.84fr;
+  gap: 36px;
+  align-items: center;
+  text-align: left;
+}
+
+.hero-split-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  min-width: 0;
+}
+
+.hero-split-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.hero-split-categories {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 12px;
+}
+
+@media (max-width: 1024px) {
+  .hero-split-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .hero-split-left {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .hero-split-categories {
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+    padding-left: 4px;
+    padding-right: 16px;
+  }
+
+  .hero-split-categories::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    NOPALOU i18n & RTL (ARABIC / ENGLISH / FRENCH)
    ════════════════════════════════════════════════════════════════ */
