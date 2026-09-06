@@ -1,3 +1,53 @@
+- **Résolution Définitive Splash Screen & Refonte Icônes PWA v14 (`manifest.json`, `layout.tsx`, `RegisterSW.tsx`, `sw.ts`, `icons/*`, `generate-pwa-icons.mjs`) (`pushed` - 06 septembre 2026)** 🚀🎨📱 :
+  * **🎯 1. Cause Racine Éliminée (Fond Blanc & Squircle Flottant)** :
+    - Découverte : Chrome Android génère le splash screen natif à partir de `background_color` + l'icône `purpose: "any"` la plus grande (`icon-1024.png`).
+    - L'icône `any` contenait un rectangle blanc forcé (`<rect fill="#FFFFFF">`) cuit dans le fichier avec un squircle orange au centre, tandis que le manifest spécifiait `background_color: "#FFFFFF"`. Résultat : effet disgracieux de "carré orange posé sur un grand fond blanc".
+    - `background_color` du manifest unifié à `#C75B00` (Orange Nopalou officiel).
+    - Suppression des rectangles blancs dans `icon-512.svg` et `icon-192.svg` pour obtenir une véritable transparence alpha autour du squircle.
+  * **📐 2. Calibration Safe Zone Maskable (Adaptive Icons)** :
+    - Recalibrage de `icon-maskable-512.svg` : monogramme N redimensionné à `scale(0.48)` et recentré à `translate(133.12, 133.12)`.
+    - 100% du monogramme reste désormais à l'intérieur du cercle sécurisé (safe zone de 80% de diamètre), éliminant tout rognage sur les lanceurs Android (Samsung One UI, Pixel Pixel Launcher, etc.).
+  * **🖼️ 3. Régénération Haute Définition via Chromium Headless (Playwright)** :
+    - Création du script automatisé `scripts/generate-pwa-icons.mjs` pour un rendu vectoriel vers matriciel pixel-perfect.
+    - Génération de `icon-192.png`, `icon-512.png`, `icon-1024.png` (transparence pure, bords nets).
+    - Génération de `icon-maskable-512.png` et `icon-maskable-1024.png` (full-bleed orange, N sécurisé).
+    - Sauvegarde préalable des anciennes icônes dans `public/icons/backup_v13/`.
+  * **🔄 4. Synchronisation Globale du Cache & Service Worker v14** :
+    - `layout.tsx` : migration de toutes les balises `<link>` `icon`, `apple` et `shortcut` de `?v=12` vers `?v=14`.
+    - `manifest.json` : mise à jour de `"version": "14"` et de toutes les icônes / raccourcis en `?v=14`.
+    - `RegisterSW.tsx` : `FORCE_VERSION = '14'` — purge automatique de tous les caches au démarrage chez tous les utilisateurs et hard reload transparent.
+    - `sw.ts` : `CACHE_VERSION = 'v14'`. Compilation du Service Worker vérifiée dans `public/sw.js`.
+  * **🧪 5. Contrôle Qualité** :
+    - Build Next.js (`npm run build`) validé avec succès (code 0).
+    - Suite de 35 tests unitaires validée à 100% (`npm test`).
+    - Aucune police externe injectée (respect strict de la politique native system font).
+    - Aucun `git push` non sollicité.
+
+- **Icônes PWA Premium 4x SSAA + Force-Update v13 (`RegisterSW.tsx`, `manifest.json`, `icons/*.png`, `icons/*.svg`, `apple-icon.tsx`) (`pushed` - 06 septembre 2026)** 🎨🔄📱 :
+  * **🎨 1. Refonte Complète des Icônes PWA** :
+    - Rendu 4x super-sampling (SSAA) via C# System.Drawing pour une netteté cristalline à toutes les tailles (192, 512, 1024px).
+    - True superellipse iOS (n=5, 720 segments) au lieu d'un simple `rx` arrondi pour des courbes continues premium.
+    - Dégradé solaire officiel (#FF7E22 → #EA580C → #C75B00 → #9E3C00) avec highlight subtil en haut.
+    - Ombre portée douce sous le squircle pour un effet de profondeur.
+  * **📱 2. Séparation Correcte Any / Maskable dans manifest.json** :
+    - Icônes `purpose: "any"` : squircle sur fond blanc (splash screen, desktop, navigateur).
+    - Icônes `purpose: "maskable"` : gradient full-bleed 100% avec N centré dans la safe zone 60% (écran d'accueil Android adaptatif).
+    - Correction du problème de double-crop causé par `"any maskable"` combiné.
+  * **🍎 3. Apple Icon Corrigé** :
+    - Suppression du `borderRadius` dans `apple-icon.tsx` — iOS applique son propre masque superellipse nativement.
+    - Plus de coins noirs sur iPhone/iPad.
+  * **🔄 4. Force-Update Automatique pour Tous les Utilisateurs** :
+    - Mécanisme `FORCE_VERSION` dans `RegisterSW.tsx` : compare la version déployée avec `localStorage`.
+    - Si version différente → purge automatique de tous les caches (icônes, assets, precache, HTML, offline) + désinscription SW + hard-reload.
+    - Transparent pour l'utilisateur, aucune action manuelle requise.
+  * **📂 5. Fichiers Impactés** :
+    - `RegisterSW.tsx` : force-update v13
+    - `manifest.json` : séparation any/maskable, version v13, cache-busting `?v=13`
+    - `icon-512.svg`, `icon-192.svg`, `icon-maskable-512.svg` : SVGs mis à jour
+    - `icon-*.png`, `icon-maskable-*.png`, `apple-icon.png` : PNG régénérés en 4x SSAA
+    - `generate-premium-icons.ps1` : nouveau script de génération C#
+    - `generate-brand-icons.ps1` : synchronisé avec le nouveau script
+
 - **Rééquilibrage Ergonomique & Aération du Hero d'Accueil (`page.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 📐✨🌬️ :
   * **🌬️ 1. Élimination du Tassement & Rétablissement de l'Espace Vital** :
     - Rétablissement d'une hauteur optimale aérée (~200px) évitant l'effet écrasé/mélangé tout en restant deux fois plus compact que la version initiale.

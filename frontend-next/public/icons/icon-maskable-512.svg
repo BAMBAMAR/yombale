@@ -11,8 +11,8 @@
   <!-- Full-bleed background (Android applies its own mask) -->
   <rect width="512" height="512" fill="url(#mg)"/>
 
-  <!-- N centered in 60% safe zone: translate(102.4, 102.4) scale(0.6) -->
-  <g transform="translate(102.4, 102.4) scale(0.6)">
+  <!-- N centered in safe zone (safe circle = 80% diameter, logo = 48% scale): translate(133.12, 133.12) scale(0.48) -->
+  <g transform="translate(133.12, 133.12) scale(0.48)">
     <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
   </g>
 </svg>
