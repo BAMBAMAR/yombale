@@ -8,35 +8,45 @@ export default function NavbarCartBtn() {
   const { totalItemCount, openCart } = useCart()
 
   return (
-    <button
-      type="button"
-      onClick={() => openCart()}
-      className="navbar-cart-btn"
-      aria-label={`Panier (${totalItemCount} article${totalItemCount > 1 ? 's' : ''})`}
-      title="Mon panier"
+    <div
       style={{
+        position: 'relative',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'relative',
-        background: 'rgba(28,43,74,0.04)',
-        border: '1px solid var(--border, #E8DDD2)',
-        borderRadius: 10,
-        width: 38,
-        height: 38,
-        color: 'var(--navy, #1C2B4A)',
-        cursor: 'pointer',
-        transition: 'all 0.15s ease',
         flexShrink: 0,
       }}
     >
-      <ShoppingCart size={18} />
+      <button
+        type="button"
+        onClick={() => openCart()}
+        className="navbar-cart-btn"
+        aria-label={`Panier (${totalItemCount} article${totalItemCount > 1 ? 's' : ''})`}
+        title="Mon panier"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(28,43,74,0.04)',
+          border: '1px solid var(--border, #E8DDD2)',
+          borderRadius: 10,
+          width: 38,
+          height: 38,
+          color: 'var(--navy, #1C2B4A)',
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+          padding: 0,
+        }}
+      >
+        <ShoppingCart size={18} />
+      </button>
+
       {totalItemCount > 0 && (
         <span
           style={{
             position: 'absolute',
             top: -4,
-            right: -6,
+            right: -5,
             background: 'var(--accent, #C75B00)',
             color: '#ffffff',
             fontSize: 10.5,
@@ -48,15 +58,17 @@ export default function NavbarCartBtn() {
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 2px 6px rgba(199,91,0,0.35)',
+            border: '2px solid #ffffff',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
             lineHeight: 1,
-            zIndex: 2,
+            zIndex: 10,
             boxSizing: 'border-box',
+            pointerEvents: 'none',
           }}
         >
           {totalItemCount > 99 ? '99+' : totalItemCount}
         </span>
       )}
-    </button>
+    </div>
   )
 }

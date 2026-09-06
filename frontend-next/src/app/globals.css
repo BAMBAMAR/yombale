@@ -2715,6 +2715,17 @@ a {
     font-weight: 800;
   }
 
+  .mobile-bottom-nav-item span {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
+  }
+
   .mobile-bottom-nav-item.active .mobile-bottom-nav-icon-wrap {
     color: var(--accent, #C75B00);
   }
@@ -2725,7 +2736,8 @@ a {
     align-items: center;
     justify-content: center;
     width: 28px;
-    height: 22px;
+    height: 24px;
+    flex-shrink: 0;
     transition: transform 0.2s ease;
   }
 
@@ -2749,16 +2761,19 @@ a {
   }
 
   .mobile-bottom-nav-cta-btn {
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent, #C75B00) 0%, #a84c00 100%);
+    background: var(--accent, #C75B00);
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 6px rgba(199, 91, 0, 0.35);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(199, 91, 0, 0.3);
+    transition: transform 0.15s ease, background-color 0.15s ease;
   }
 
   .mobile-bottom-nav-item:active .mobile-bottom-nav-cta-btn {
@@ -2766,7 +2781,8 @@ a {
   }
 
   .mobile-bottom-nav-item.active .mobile-bottom-nav-cta-btn {
-    box-shadow: 0 0 0 2.5px #ffffff, 0 0 0 4.5px var(--accent, #C75B00);
+    background: #a84c00;
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 3.5px var(--accent, #C75B00);
   }
 
   /* Neutralisation définitive de tout bouton flottant superposé */
@@ -10726,6 +10742,7 @@ button:focus-visible,
   .caisse-categories-bar {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
+    justify-content: flex-start !important;
     padding-bottom: 6px !important;
     padding-right: 28px !important;
     -webkit-overflow-scrolling: touch;
@@ -12442,7 +12459,7 @@ html, body {
 
 .hero-categories-scroll { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 @media (max-width: 640px) {
-  .hero-categories-scroll { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-left: 20px; padding-right: 20px; margin-left: -20px; margin-right: -20px; }
+  .hero-categories-scroll { flex-wrap: nowrap !important; justify-content: flex-start !important; overflow-x: auto !important; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-left: 16px; padding-right: 20px; }
   .hero-categories-scroll::-webkit-scrollbar { display: none; }
 }
 

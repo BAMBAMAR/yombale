@@ -206,7 +206,7 @@ export default async function HomePage({
           </div>
 
           {/* CATÉGORIES EN PILULES FLUIDES */}
-          <div className="hero-categories-scroll" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+          <div className="hero-categories-scroll" style={{ alignItems: 'center', gap: 8, marginTop: 14 }}>
             {CATEGORIES.map((c) => {
               if (
                 categoriesActives !== null &&

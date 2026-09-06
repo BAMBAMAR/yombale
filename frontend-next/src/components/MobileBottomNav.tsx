@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Heart, User, Store, PlusCircle } from 'lucide-react'
+import { Home, Heart, User, Store, Plus } from 'lucide-react'
 
 interface Props {
   isLoggedIn?: boolean
@@ -47,18 +47,21 @@ export default function MobileBottomNav({ isLoggedIn = false, isMerchant = false
         <span>Boutiques</span>
       </Link>
 
-      {/* 3. Créer Boutique (Remplace l'ancien panier redondant) */}
+      {/* 3. Créer Boutique (Bouton central parfaitement aligné) */}
       <Link
         href="/creer-boutique"
         className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreerBoutique ? ' active' : ''}`}
-        aria-label="Créer une boutique pro"
+        aria-label="Créer une boutique"
+        title="Créer une boutique"
         aria-current={isCreerBoutique ? 'page' : undefined}
       >
-        <div className="mobile-bottom-nav-cta-btn">
-          <PlusCircle size={18} strokeWidth={2.5} />
+        <div className="mobile-bottom-nav-icon-wrap">
+          <div className="mobile-bottom-nav-cta-btn">
+            <Plus size={14} strokeWidth={3} />
+          </div>
         </div>
-        <span style={{ fontWeight: 800, color: isCreerBoutique ? 'var(--accent, #C75B00)' : 'inherit' }}>
-          Créer boutique
+        <span style={{ fontWeight: 700, color: isCreerBoutique ? 'var(--accent, #C75B00)' : 'inherit', whiteSpace: 'nowrap' }}>
+          Créer
         </span>
       </Link>
 

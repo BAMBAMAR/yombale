@@ -322,7 +322,20 @@ export default async function BoutiquesPage({
 
       {/* CATEGORIES */}
       <div id="resultats" style={{ marginBottom: 32 }}>
-        <div className="hero-categories-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none', justifyContent: 'center' }}>
+        <div
+          className="hero-categories-scroll"
+          style={{
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            paddingBottom: 8,
+            paddingLeft: 4,
+            paddingRight: 16,
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+            justifyContent: 'flex-start',
+          }}
+        >
           {categoriesAffichage.map(c => {
             const isSelected = (cat === c.slug) || (!cat && c.slug === '')
             return (

@@ -1,3 +1,29 @@
+- **Correction Ergonomique Mobile : Alignement Parfait du Bouton "Créer", Visibilité du Badge Panier et Défilement Intégral des Catégories (`NavbarCartBtn.tsx`, `MobileBottomNav.tsx`, `globals.css`, `boutiques/page.tsx`, `page.tsx`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 🎯📱🛒✨ :
+  * **🎯 1. Alignement Parfait du Bouton Central "Créer" dans la Barre Basse Mobile (`MobileBottomNav.tsx`, `globals.css`)** :
+    - **Causes du désalignement éliminées** :
+      1. Le libellé précédent sur deux lignes (*"Créer"* / *"boutique"*) dépassait la hauteur de la barre fixe (56px) et rompait l'alignement horizontal avec les 4 autres onglets (*Accueil*, *Boutiques*, *Favoris*, *Compte*).
+      2. Le bouton circulaire manquait de `flex-shrink: 0` et d'un wrapper aux dimensions identiques (`.mobile-bottom-nav-icon-wrap`), ce qui provoquait son écrasement en forme d'ovale et son décalage vertical au-dessus de la bordure haute.
+    - **Corrections apportées** :
+      - Utilisation du libellé épuré et percutant **« Créer »** sur une seule ligne avec `white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis;`.
+      - Intégration du bouton dans `.mobile-bottom-nav-icon-wrap` (hauteur 24px) avec un bouton central circulaire parfait de 22px (`flex-shrink: 0`) et une icône `Plus` nette (`strokeWidth={3}`).
+      - Alignement vertical et horizontal rigoureux à 100% avec les 4 autres onglets de la navigation mobile.
+  * **🛒 2. Rétablissement de la Visibilité Complète du Chiffre sur le Badge Panier (`NavbarCartBtn.tsx`)** :
+    - **Cause racine identifiée** : Sur les navigateurs mobiles (iOS Safari / WebKit et Android Chrome), les éléments `<button>` appliquent par défaut un découpage natif (`overflow: clip` / `overflow: hidden`). Tout badge positionné en coordonnées négatives (`top: -4px; right: -6px;`) à l'intérieur du `<button>` voyait sa partie droite coupée net par l'arrondi du bouton, rendant le chiffre (ex: "1") partiellement invisible.
+    - **Correction** :
+      - Encapsulation du bouton dans un wrapper conteneur `<div style={{ position: 'relative', display: 'inline-flex' }}>` et déportation du badge à l'extérieur du `<button>` pour éliminer tout risque de rognage.
+      - Ajout d'une bordure blanche nette (`border: 2px solid #ffffff`) pour contraster magnifiquement le badge orange sur n'importe quel arrière-plan.
+      - Ajout de `pointerEvents: 'none'` pour que les clics sur le badge ouvrent instantanément le panier.
+  * **↔️ 3. Résolution du Blocage de Défilement vers la Gauche dans les Catégories (`boutiques/page.tsx`, `globals.css`, `page.tsx`)** :
+    - **Cause racine identifiée** : L'utilisation de `justifyContent: 'center'` combinée à `overflowX: 'auto'` en Flexbox provoquait le phénomène de "data loss on overflow" : les premiers éléments (comme le filtre *"Toutes les boutiques"*) étaient positionnés à des coordonnées de défilement négatives (`scrollLeft < 0`), inaccessibles au défilement horizontal natif des navigateurs. Le premier bouton était ainsi tronqué à gauche (*"...es"*).
+    - **Corrections** :
+      - `boutiques/page.tsx` : Remplacement de `justifyContent: 'center'` par `justifyContent: 'flex-start'`, activation de `-webkit-overflow-scrolling: touch` et espacements latéraux adaptés (`paddingLeft: 4, paddingRight: 16`).
+      - `globals.css` : Ajout de `justify-content: flex-start !important;` sur la règle globale `.hero-categories-scroll`, `.commandes-status-scroll`, `.horizontal-scroll-fade`, `.nopalou-scroll-tabs`, `.caisse-categories-bar`.
+      - `page.tsx` : Suppression du style inline conflictuel pour laisser les media queries CSS gérer le centrage desktop et le défilement fluide sans rognage sur mobile.
+  * **🧪 4. Contrôle Qualité** :
+    - TypeScript strict vérifié avec succès sur tous les fichiers modifiés (0 erreur).
+    - Zéro appel de police CDN externe (conformité absolue aux règles Nopalou).
+    - Règle de déploiement respectée (aucun git push sans ordre explicite de l'utilisateur).
+
 - **Correction des Dysfonctionnements Panier (Badge persistant, Élimination de la Superposition et Redondance Mobile) & Remplacement par "Créer Boutique" (`CartContext.tsx`, `DrawerCart.tsx`, `MobileBottomNav.tsx`, `NavbarCartBtn.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 🛒📱✨🎯🚀 :
   * **🛒 1. Éradication du Bug de Badge Panier Bloqué / Décalage Multi-Boutiques (`CartContext.tsx`, `DrawerCart.tsx`)** :
     - Nettoyage automatique des boutiques vides : `removeFromCart` et `updateQuantity` suppriment désormais proprement la clé boutique dès que le nombre d'articles atteint 0 (`delete copy[boutiqueId]`).
