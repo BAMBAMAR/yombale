@@ -342,9 +342,18 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
               {visuels.map(v => (
                 <div key={v.url} style={{ border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', background: '#fff' }}>
-                  <a href={v.url} target="_blank" rel="noopener noreferrer">
+                  <a href={v.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', padding: v.url.includes('icon') || v.url.includes('logo-mark') ? 20 : 0 }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={v.url} alt={v.titre} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
+                    <img
+                      src={v.url}
+                      alt={v.titre}
+                      style={{
+                        width: '100%',
+                        aspectRatio: '4/3',
+                        objectFit: v.url.includes('icon') || v.url.includes('logo') ? 'contain' : 'cover',
+                        display: 'block',
+                      }}
+                    />
                   </a>
                   <div style={{ padding: 14 }}>
                     <p style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A', margin: '0 0 4px' }}>{v.titre}</p>
@@ -355,10 +364,10 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                       </span>
                       <a
                         href={v.url}
-                        download={`nopalou-${v.titre.toLowerCase().replace(/[^a-z0-9]/g, '-')}.png`}
+                        download={v.url.endsWith('.svg') ? `nopalou-${v.titre.toLowerCase().replace(/[^a-z0-9]/g, '-')}.svg` : `nopalou-${v.titre.toLowerCase().replace(/[^a-z0-9]/g, '-')}.png`}
                         style={{ padding: '6px 12px', background: '#C75B00', color: '#fff', borderRadius: 6, fontSize: 11, fontWeight: 800, textDecoration: 'none' }}
                       >
-                        ⬇ HD PNG
+                        ⬇ {v.url.endsWith('.svg') ? 'SVG Vectoriel' : 'HD PNG'}
                       </a>
                     </div>
                   </div>

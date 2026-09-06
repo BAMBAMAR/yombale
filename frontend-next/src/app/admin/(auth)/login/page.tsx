@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import AdminLoginForm from './AdminLoginForm'
 
 export const metadata: Metadata = {
@@ -19,7 +20,8 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-header">
+        <div className="auth-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Image src="/icons/logo-mark.svg" alt="Nopalou" width={48} height={48} priority style={{ marginBottom: 12 }} />
           <a href="/" className="auth-brand">
             Nopa<span className="auth-brand-accent">lou</span>
           </a>

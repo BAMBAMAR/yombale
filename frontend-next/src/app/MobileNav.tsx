@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { logout } from '@/app/actions/auth'
 import {
   Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
@@ -72,8 +73,9 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
       >
         {/* Header Drawer */}
         <div className="mobile-nav-header">
-          <a href="/" className="mobile-nav-logo" onClick={close}>
-            Nopa<span>lou</span>
+          <a href="/" className="mobile-nav-logo" onClick={close} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Image src="/icons/logo-mark.svg" alt="" width={26} height={26} style={{ flexShrink: 0 }} priority />
+            <span>Nopa<span style={{ color: 'var(--accent, #C75B00)' }}>lou</span></span>
           </a>
           <button className="mobile-nav-close" onClick={close} aria-label="Fermer">✕</button>
         </div>

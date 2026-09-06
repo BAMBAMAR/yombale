@@ -47,13 +47,19 @@ export default async function OgImage({ params }: { params: { id: string } }) {
         }}>
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 10,
-              background: '#C75B00',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 26, fontWeight: 900, color: '#fff',
-            }}>N</div>
-            <span style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>
+            <svg width="44" height="44" viewBox="0 0 512 512" style={{ display: 'block' }}>
+              <defs>
+                <linearGradient id="ogProdGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FF7E22"/>
+                  <stop offset="35%" stopColor="#EA580C"/>
+                  <stop offset="70%" stopColor="#C75B00"/>
+                  <stop offset="100%" stopColor="#9E3C00"/>
+                </linearGradient>
+              </defs>
+              <rect x="26" y="26" width="460" height="460" rx="118" fill="url(#ogProdGrad)"/>
+              <path fillRule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+            </svg>
+            <span style={{ fontSize: 28, fontWeight: 800, color: '#fff', display: 'flex' }}>
               Nopa<span style={{ color: '#C75B00' }}>lou</span>
             </span>
           </div>

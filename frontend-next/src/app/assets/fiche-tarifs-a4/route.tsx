@@ -37,19 +37,18 @@ export async function GET(request: Request) {
             padding: '36px 72px 16px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-              <div style={{
-                width: 70, height: 70, borderRadius: 18,
-                background: '#C75B00',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="42" height="42" viewBox="0 0 512 512">
-                  <path
-                    fillRule="evenodd"
-                    d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z"
-                    fill="#FFFFFF"
-                  />
-                </svg>
-              </div>
+              <svg width="70" height="70" viewBox="0 0 512 512" style={{ display: 'block' }}>
+                <defs>
+                  <linearGradient id="tarifsA4Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FF7E22"/>
+                    <stop offset="35%" stopColor="#EA580C"/>
+                    <stop offset="70%" stopColor="#C75B00"/>
+                    <stop offset="100%" stopColor="#9E3C00"/>
+                  </linearGradient>
+                </defs>
+                <rect x="26" y="26" width="460" height="460" rx="118" fill="url(#tarifsA4Grad)"/>
+                <path fillRule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+              </svg>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline' }}>
                   <span style={{ fontSize: 44, fontWeight: 900, color: '#1C2B4A', letterSpacing: -1 }}>Nopa</span>

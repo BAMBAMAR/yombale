@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag, Crown, Activity, ShoppingBag } from 'lucide-react'
 
@@ -76,9 +77,12 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
     <aside className={`admin-sidebar ${mobileMenuOpen ? 'admin-sidebar--mobile-open' : ''}`}>
       {/* Header Sidebar Desktop & Mobile */}
       <div className="admin-sidebar-header-row">
-        <Link href="/admin" className="admin-logo" onClick={() => setMobileMenuOpen(false)}>
-          Nopa<span>lou</span>
-          <em>Admin</em>
+        <Link href="/admin" className="admin-logo" onClick={() => setMobileMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Image src="/icons/logo-mark.svg" alt="" width={24} height={24} style={{ flexShrink: 0 }} priority />
+          <div>
+            Nopa<span>lou</span>
+            <em>Admin</em>
+          </div>
         </Link>
         <button
           type="button"

@@ -9,6 +9,23 @@ function formatPrix(val: string | null): string {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' FCFA'
 }
 
+function NopalouLogoMark({ size = 60 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 512 512" style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id={`promoMarkGrad_${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FF7E22"/>
+          <stop offset="35%" stopColor="#EA580C"/>
+          <stop offset="70%" stopColor="#C75B00"/>
+          <stop offset="100%" stopColor="#9E3C00"/>
+        </linearGradient>
+      </defs>
+      <rect x="26" y="26" width="460" height="460" rx="118" fill={`url(#promoMarkGrad_${size})`}/>
+      <path fillRule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+    </svg>
+  )
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
 
@@ -59,7 +76,7 @@ export async function GET(request: Request) {
           {/* Header Nopalou */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <NopalouLogoMark size={60} />
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: '#25D366', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
@@ -123,7 +140,7 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <NopalouLogoMark size={60} />
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Immo</span></span>
             </div>
             <span style={{ background: '#4338CA', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
@@ -184,7 +201,7 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <NopalouLogoMark size={60} />
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Télécom</span></span>
             </div>
             <span style={{ background: '#0284C7', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
@@ -245,7 +262,7 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <NopalouLogoMark size={60} />
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Partner</span></span>
             </div>
             <span style={{ background: C.vert, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
@@ -307,7 +324,7 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <NopalouLogoMark size={60} />
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: C.orange, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
@@ -370,7 +387,7 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <NopalouLogoMark size={60} />
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: '#1D4ED8', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
@@ -433,7 +450,7 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 60, height: 60, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, fontWeight: 900, color: '#fff' }}>N</div>
+              <NopalouLogoMark size={60} />
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: '#7E22CE', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
@@ -495,7 +512,7 @@ export async function GET(request: Request) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 46, height: 46, borderRadius: 14, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 900, color: '#fff' }}>N</div>
+              <NopalouLogoMark size={46} />
               <span style={{ fontSize: 30, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 900, color: C.marine, letterSpacing: -0.5, margin: 0, display: 'flex' }}>
@@ -601,7 +618,7 @@ export async function GET(request: Request) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 16, background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 900, color: '#fff' }}>N</div>
+            <NopalouLogoMark size={56} />
             <span style={{ fontSize: 36, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
           </div>
           <span style={{ background: C.orange, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#fff', letterSpacing: 0.5, display: 'flex' }}>

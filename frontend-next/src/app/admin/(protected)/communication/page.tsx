@@ -5,6 +5,36 @@ export const metadata = { title: 'Kit communication — Admin Nopalou' }
 
 const VISUELS = [
   {
+    titre: '💎 Logo Master Vectoriel SVG (Format Original)',
+    desc: 'Format SVG vectoriel infini sans perte — Idéal pour impression grand format, packaging, sérigraphie, presse et découpe',
+    url: '/icons/logo-mark.svg',
+    usage: 'Vectoriel · Print & Packaging',
+  },
+  {
+    titre: '💎 Logo Master PNG Ultra-HD (1024 × 1024 px)',
+    desc: '1024 × 1024 px — Fond transparent alpha, dégradé solaire 4 étapes officiel, haute précision 1:1',
+    url: '/icons/icon-1024.png',
+    usage: 'Master Graphisme · Transparent',
+  },
+  {
+    titre: '💎 Logo Master PNG Web & App (512 × 512 px)',
+    desc: '512 × 512 px — Fond transparent alpha, format standard haute fidélité pour web, applications et signatures',
+    url: '/icons/icon-512.png',
+    usage: 'Web & Digital · Transparent',
+  },
+  {
+    titre: '💎 Logo Officiel Fond Blanc Pur (800 × 800 px)',
+    desc: '800 × 800 px — Logo complet avec typographie Nopalou sur fond blanc pur (#FFFFFF) pour documents, factures et presse',
+    url: '/assets/logo-blanc',
+    usage: 'Universel · Presse & Devis',
+  },
+  {
+    titre: '💎 Logo Officiel Fond Sombre (800 × 800 px)',
+    desc: '800 × 800 px — Logo complet avec typographie Nopalou sur fond sombre (#0B0F19) pour réseaux sociaux et dark mode',
+    url: '/assets/logo-sombre',
+    usage: 'Réseaux Sociaux · Dark Mode',
+  },
+  {
     titre: '⭐ Poster Écosystème Global (Tout-en-Un)',
     desc: '1200 × 1600 px HD — Visuel maître regroupant TOUTES les fonctionnalités (Acheteur, Caisse POS 3 Scanners, EAN-13, Dettes Client, Chatbot Meta, Commission 20%)',
     url: '/assets/poster-ecosysteme',
@@ -51,18 +81,6 @@ const VISUELS = [
     desc: '1080 × 1920 px — Format vertical stories et TikTok',
     url: '/assets/story-instagram',
     usage: 'Instagram · TikTok',
-  },
-  {
-    titre: 'Logo fond blanc',
-    desc: '800 × 800 px — Pour documents, présentations, presse',
-    url: '/assets/logo-blanc',
-    usage: 'Universel',
-  },
-  {
-    titre: 'Logo fond sombre',
-    desc: '800 × 800 px — Pour réseaux sociaux, fonds sombres',
-    url: '/assets/logo-sombre',
-    usage: 'Réseaux sociaux',
   },
   {
     titre: 'Bannière hero (desktop)',

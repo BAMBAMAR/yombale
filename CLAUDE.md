@@ -1,3 +1,28 @@
+- **Harmonisation Globale des Logos & Pack Téléchargeable Admin Master (`/admin/communication`, `/assets/*`, `AdminSidebarClient.tsx`, `MobileNav.tsx`, `opengraph-image.tsx`) (`pushed` - 06 septembre 2026)** 🎨📦✨ :
+  * **📦 1. Hub de Téléchargement Logos Master dans l'Espace Admin (`/admin/communication`)** :
+    - Ajout du pack officiel "Logo & Marque Master" en tête du kit de communication :
+      * Master SVG Vectoriel Pur (`/icons/logo-mark.svg`)
+      * Master PNG Ultra-HD 1024×1024 (`/icons/icon-1024.png`)
+      * Master PNG HD 512×512 (`/icons/icon-512.png`)
+      * Logo Nopalou Fond Blanc 800×800 (`/assets/logo-blanc`)
+      * Logo Nopalou Fond Sombre 800×800 (`/assets/logo-sombre`)
+    - `KitComClient.tsx` : support du téléchargement direct 1-clic des fichiers `.svg` et `.png` (avec attribution dynamique du nom de fichier), rendu d'aperçu soigné sur fond neutre `#F8FAFC` et `object-fit: contain` sans distorsion ni rognage.
+    - `logo-blanc/route.tsx` & `logo-sombre/route.tsx` : génération dynamique du squircle vectoriel authentique avec dégradé solaire 4-stop (`#FF7E22` → `#EA580C` → `#C75B00` → `#9E3C00`) et monogramme géométrique "N".
+  * **🚫 2. Éradication Totale des Anciens Placeholders Textuels (`<div>N</div>`)** :
+    - Détection et suppression définitive de tous les placeholders archaïques textuels (`<div>N</div>` / simples boîtes carrées) sur l'intégralité du projet.
+    - Zéro placeholder résiduel vérifié par audit grep sur l'ensemble du code source.
+  * **🖥️ 3. Mise à Jour de l'Administration & Interfaces** :
+    - `AdminSidebarClient.tsx` : intégration de `/icons/logo-mark.svg` dans l'en-tête de la barre latérale du dashboard admin.
+    - `admin/(auth)/login/page.tsx` : intégration de `/icons/logo-mark.svg` sur la carte d'authentification admin.
+    - `MobileNav.tsx` : intégration du logo officiel dans le drawer de navigation mobile.
+  * **🖼️ 4. Mise à Jour des Visuels Sociaux & Supports Marketing (`src/app/assets/`)** :
+    - `opengraph-image.tsx` & `produit/[id]/opengraph-image.tsx` : intégration du dégradé solaire 4-stop et du monogramme squircle authentique dans les métadonnées OpenGraph partagées sur WhatsApp/Facebook/Twitter.
+    - Refonte vectorielle du logo sur les 20 supports graphiques du kit com : `poster-ecosysteme`, `pilier-acheteur`, `pilier-marchand`, `pilier-apporteur`, `chatbot-whatsapp`, `cover-facebook`, `carte-visite`, `banniere-hero`, `badge-commercial`, `affiche-vitrine`, `produit-promo` (9 variantes unifiées avec composant `NopalouLogoMark`), `flyer-commercial-a5`, `fiche-tarifs-a4`, `flyer-demarchage`, `post-instagram`, `story-instagram`, `memo-poche-commercial`, `palier/[plan]/carre`, `palier/[plan]/story`, `brochure-apporteur`.
+  * **🧪 5. Contrôle Qualité & Conformité** :
+    - Compilation Next.js (`npm run build`) validée avec succès (code 0) sur l'intégralité des 104 pages.
+    - Respect strict des directives d'interdiction de polices externes CDN (polices système natives uniquement).
+    - Respect de la règle de déploiement : aucun `git push` sans instruction explicite de l'utilisateur.
+
 - **Résolution Haute Définition Native 1:1, Symétrie Vectorielle Absolue & Force-Update v17 (`manifest.json`, `layout.tsx`, `RegisterSW.tsx`, `sw.ts`, `icons/*`, `generate-master-icons.mjs`) (06 septembre 2026)** 💎📐✨ :
   * **🔍 1. Diagnostic des 3 Causes du Manque de Netteté & Dissymétrie sur Téléphone** :
     - *Échelle 2x Mismatch* : Playwright générait avec `deviceScaleFactor: 2`, produisant un fichier réel de 1024×1024 px étiqueté 512×512 px. Android WebAPK sous-échantillonnait le fichier à l'affichage du splash screen avec un filtre brut basse définition, créant des contours flous et baveux sur écran AMOLED.

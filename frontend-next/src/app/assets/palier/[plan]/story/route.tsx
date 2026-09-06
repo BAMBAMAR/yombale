@@ -75,15 +75,18 @@ export async function GET(
 
         {/* En-tête Nopalou */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '78px 80px 0' }}>
-          <div
-            style={{
-              width: 64, height: 64, borderRadius: 16, background: '#C75B00',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 38, fontWeight: 900, color: '#fff',
-            }}
-          >
-            N
-          </div>
+          <svg width="64" height="64" viewBox="0 0 512 512" style={{ display: 'block' }}>
+            <defs>
+              <linearGradient id="palierStoryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF7E22"/>
+                <stop offset="35%" stopColor="#EA580C"/>
+                <stop offset="70%" stopColor="#C75B00"/>
+                <stop offset="100%" stopColor="#9E3C00"/>
+              </linearGradient>
+            </defs>
+            <rect x="26" y="26" width="460" height="460" rx="118" fill="url(#palierStoryGrad)"/>
+            <path fillRule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+          </svg>
           <span style={{ fontSize: 42, fontWeight: 900, color: '#fff', display: 'flex' }}>
             Nopa<span style={{ color: '#C75B00', display: 'flex' }}>lou</span>
           </span>

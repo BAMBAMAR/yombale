@@ -38,13 +38,19 @@ export async function GET() {
           justifyContent: 'center', padding: '0 0 0 64px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 12,
-              background: '#C75B00',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 30, fontWeight: 900, color: '#fff',
-            }}>N</div>
-            <span style={{ fontSize: 34, fontWeight: 900, color: '#fff' }}>
+            <svg width="56" height="56" viewBox="0 0 512 512" style={{ display: 'block' }}>
+              <defs>
+                <linearGradient id="carteVisiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FF7E22"/>
+                  <stop offset="35%" stopColor="#EA580C"/>
+                  <stop offset="70%" stopColor="#C75B00"/>
+                  <stop offset="100%" stopColor="#9E3C00"/>
+                </linearGradient>
+              </defs>
+              <rect x="26" y="26" width="460" height="460" rx="118" fill="url(#carteVisiteGrad)"/>
+              <path fillRule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+            </svg>
+            <span style={{ fontSize: 34, fontWeight: 900, color: '#fff', display: 'flex' }}>
               Nopa<span style={{ color: '#C75B00' }}>lou</span>
             </span>
           </div>

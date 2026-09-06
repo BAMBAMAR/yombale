@@ -230,7 +230,7 @@ export async function GET() {
   <div style="position:absolute; right:-80px; top:-80px; width:360px; height:360px; border-radius:50%; background: radial-gradient(circle, rgba(199,91,0,0.3) 0%, transparent 70%);"></div>
   <div style="position:absolute; left:-60px; bottom:-60px; width:300px; height:300px; border-radius:50%; background: radial-gradient(circle, rgba(199,91,0,0.2) 0%, transparent 70%);"></div>
   <div style="display:flex; align-items:center; gap:16px; margin-bottom:56px;">
-    <div style="width:64px; height:64px; border-radius:14px; background:${COULEURS.orange}; display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:900; color:#fff;">N</div>
+    <svg width="64" height="64" viewBox="0 0 512 512" style="display:block;"><defs><linearGradient id="brochureGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF7E22"/><stop offset="35%" stop-color="#EA580C"/><stop offset="70%" stop-color="#C75B00"/><stop offset="100%" stop-color="#9E3C00"/></linearGradient></defs><rect x="26" y="26" width="460" height="460" rx="118" fill="url(#brochureGrad)"/><path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/></svg>
     <span style="font-size:40px; font-weight:900;">Nopa<span style="color:${COULEURS.orange};">lou</span></span>
   </div>
   <p style="font-size:44px; font-weight:900; text-align:center; margin:0 0 20px; max-width:600px; line-height:1.2;">Le guide complet pour présenter et utiliser Nopalou</p>

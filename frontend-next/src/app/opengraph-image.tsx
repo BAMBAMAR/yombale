@@ -32,26 +32,22 @@ export default function OgImage() {
           display: 'flex',
         }} />
 
-        {/* Logo — monogramme vectoriel + wordmark */}
+        {/* Logo — monogramme vectoriel authentique + wordmark */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 20, marginBottom: 40,
         }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: 16,
-            background: '#C75B00',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-          }}>
-            {/* N vectoriel via SVG */}
-            <svg width="72" height="72" viewBox="0 0 512 512" style={{ position: 'absolute', top: 0, left: 0 }}>
-              <path
-                fillRule="evenodd"
-                d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z"
-                fill="#FFFFFF"
-              />
-            </svg>
-          </div>
+          <svg width="72" height="72" viewBox="0 0 512 512" style={{ display: 'block' }}>
+            <defs>
+              <linearGradient id="ogBrandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF7E22"/>
+                <stop offset="35%" stopColor="#EA580C"/>
+                <stop offset="70%" stopColor="#C75B00"/>
+                <stop offset="100%" stopColor="#9E3C00"/>
+              </linearGradient>
+            </defs>
+            <rect x="26" y="26" width="460" height="460" rx="118" fill="url(#ogBrandGrad)"/>
+            <path fillRule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
+          </svg>
           <span style={{ fontSize: 52, fontWeight: 800, letterSpacing: -1, display: 'flex' }}>
             <span style={{ color: '#fff' }}>Nopa</span>
             <span style={{ color: '#C75B00' }}>lou</span>
