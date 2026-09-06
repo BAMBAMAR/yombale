@@ -1,37 +1,49 @@
-- **Refonte Majeure du Pipeline de Scraping, Moteur de Matching E-commerce & Déduplication du Catalogue (`backend/services/matching.js`, `backend/services/scraper.js`, `backend/services/scraper-new-sites.js`, `backend/routes/search.js`, `backend/routes/offres.js`, `scratch/dedup_offer_urls.js`, `scratch/migrate_offres_constraint.js`, `scratch/merge_duplicate_products.js`, `CLAUDE.md`) (`pushed` - 05 septembre 2026)** 🚀🛒🔍⚡🧬🛡️ :
-  * **🔍 1. Réparation Critique de l'API de Recherche (`backend/routes/search.js`)** :
-    - Élimination de l'erreur 500 sur `GET /api/search` due à la jointure `p.marchand_id` inexistante sur `produits` : remplacement par une sous-requête corrélée sélectionnant le marchand de l'offre active la moins chère (`stock = true AND quarantinee = false`).
-    - Correction des filtres `annonces_classifiees` (`actif = true AND supprimee = false`, `categorie_slug`).
-    - Correction des colonnes `annonces_immo` (`surface_m2`, `actif = true AND supprimee = false`).
-  * **🏷️ 2. Taxonomie & Backfill 100% des Catégories Manquantes** :
-    - Insertion des catégories `alimentation` (*Alimentation & Épicerie*) et `sport` (*Sport & Fitness*) dans PostgreSQL.
-    - Backfill massif des 2 277 fiches orphelines de catégorie : **0 fiche sans catégorie (NULL) restante en base**.
-  * **🧹 3. Assainissement Massif des Données & Doublons Marchands** :
-    - Déduplication de 378 offres redondantes sur les mêmes URLs marchands et rattachement de 11 637 historiques de prix.
-    - Fusion des doublons marchands : `Dakar Mondial Telephone` ➔ `Dakar Mondial Téléphone` et `Univers Cosmétix` ➔ `Univers Cosmetix`.
-    - Correction des 7 prix aberrants concaténés (ex: élastiques à 1,8 milliard FCFA) et purge de 296 URLs wishlist Jumia (`/customer/account/login`).
-  * **🗄️ 4. Migration de Schéma PostgreSQL sur `offres` (`scratch/migrate_offres_constraint.js`)** :
-    - Suppression de la contrainte bloquante `offres_produit_id_marchand_id_key` (`UNIQUE (produit_id, marchand_id)`).
-    - Création de l'index unique partiel `idx_offres_marchand_url ON offres (marchand_id, url_achat) WHERE url_achat IS NOT NULL AND TRIM(url_achat) != ''`.
-    - Mise à jour des routes d'ingestion (`backend/routes/offres.js`, `backend/services/scraper.js`) avec upsert atomique sur `(marchand_id, url_achat)`.
-  * **🧬 5. Moteur de Matching Déterministe & Canonique (`backend/services/matching.js`)** :
-    - Création d'un module de rapprochement e-commerce haute précision : normalisation unicode, nettoyage de bruit marketing (`neuf`, `scellé`, `garantie`, `venant`).
-    - Extraction déterministe Marque + Modèle (Apple, Samsung Galaxy, Xiaomi/Redmi, Tecno, Infinix, consoles PS5/PS4/Switch/Xbox).
-    - Verrou strict de variantes : interdiction absolue de fusionner les suffixes `Ultra`, `Pro`, `Plus`, `Max`, `Mini`, `Lite`, `Fe`, `Play`.
-    - Discrimination métier de l'électroménager : interdiction de fusionner les appareils différents (`four` ≠ `hotte` ≠ `plaque` ≠ `cuisinière` ≠ `climatiseur`).
-    - Contrôle BTU et dimensions : exclusion des dimensions d'encastrement (`60x60`, `90x60`), des gaz (`R410`) et contrôle de puissance BTU des climatiseurs.
-    - Recherche de correspondances hybride : EAN > Titre exact normalisé > Modèle canonique > Jaccard.
-  * **🛡️ 6. Résilience des Scrapers (`backend/services/scraper.js`, `backend/services/scraper-new-sites.js`)** :
-    - Auchan : correction de la duplication du titre PrestaShop et extraction de l'EAN à 13 chiffres depuis l'URL.
-    - Kaynoo : support lazy-loading des images (`data-src`, `data-lazy-src`).
-    - Jumia : exclusion stricte des URLs login/wishlist.
-    - `nettoyerPrix` : protection contre la concaténation de prix barrés et prix promotionnels.
-    - `getMarchandId` : normalisation `unaccent(LOWER(nom))` et gestion des alias marchands pour empêcher la génération de doublons.
-    - `scraper-new-sites` : gestion des pages vides et des erreurs hébergeur (`Account Suspended`).
-  * **📦 7. Déduplication Rétroactive du Catalogue (`scratch/merge_duplicate_products.js`)** :
-    - Fusion transactionnelle de **194 fiches produits doublons orphelines** : 199 offres rattachées à des fiches canoniques.
-    - Le nombre de produits multi-marchands grimpe à **983 produits (20.2% du catalogue)** avec jusqu'à 10 offres concurrentes par fiche.
-  * **📦 8. Statut** : Déployé sur GitHub (`origin/main`).
+- **Système d'Alerte Incident & Gestion Résiliente des Pannes WhatsApp / UX Auth (`backend/services/admin-alerts.js`, `backend/services/whatsapp-health.js`, `backend/routes/auth.js`, `backend/routes/whatsapp.js`, `ConnexionForm.tsx`, `InscriptionForm.tsx`, `CLAUDE.md`) (`local` - 06 septembre 2026)** 🚨🛡️💬📱✨ :
+  * **🚨 1. Alerting Multi-Canal Administrateur (`backend/services/admin-alerts.js`)** :
+    - Notification prioritaire d'urgence par **Email** (via Resend) et/ou **Telegram Bot** (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` configurables).
+    - Modèle d'email HTML responsive avec badges d'urgence, motif clair et lien d'action direct cliquable vers le Billing Hub de Meta Facebook.
+    - Mécanisme anti-flood avec cooldown paramétrable (30 minutes par défaut) pour éviter le spam de notifications lors d'afflux d'utilisateurs.
+  * **🛡️ 2. Suivi de Santé WhatsApp & Circuit Breaker (`backend/services/whatsapp-health.js`, `backend/routes/whatsapp.js`, `backend/services/whatsapp.js`)** :
+    - Détection automatique des erreurs critiques de livraison Meta : code `131056` (*unsettled payments* / impayé Meta WhatsApp Business), code `190` (*OAuth token expired*), code `131042`/`131045` (*compte restreint*).
+    - Basculement instantané en mode dégradé `whatsappHealth.isDegraded() === true` dès le premier échec webhook ou direct API.
+    - Rétablissement automatique de l'état sain (`recordSuccess()`) dès la reprise de livraison des statuts `sent`, `delivered` ou `read`.
+    - Route dédiée de consultation de statut : `GET /api/whatsapp/health`.
+  * **⚡ 3. Sécurisation des Endpoints Backend, Alertes Crashs & Base de Données (`backend/app.js`, `backend/models/db.js`, `backend/routes/auth.js`, `backend/services/cron-relances-carnet.js`)** :
+    - `POST /api/auth/whatsapp-otp-send` : Circuit breaker qui renvoie un code HTTP 503 explicite avec `{ degraded: true, fallback: 'email' }` dès que WhatsApp est en panne critique, empêchant de tromper l'utilisateur.
+    - `GET /health` & `GET /api/health` : Code HTTP 503 automatique si PostgreSQL est indisponible, et intégration du statut de santé WhatsApp complet.
+    - `backend/app.js` : Branchement de `uncaughtException` sur `adminAlerts` pour notifier instantanément l'administrateur en cas de crash imprévu du serveur Node.js sur Render.
+    - `backend/models/db.js` : Alertes Telegram/Email automatiques en cas de déconnexion inattendue du pool PostgreSQL ou d'échec de reconnexion.
+    - Code d'erreur structuré `ACCOUNT_NOT_FOUND` sur l'erreur 404 de connexion (numéro inexistant) pour guider le frontend.
+    - `cron-relances-carnet.js` : Correction d'un bug critique d'import de pool (`db.pool || db`), mise en pause propre des relances si WhatsApp est dégradé et persistance de `derniere_relance_whatsapp` uniquement en cas d'envoi réussi.
+  * **💬 4. Expérience Utilisateur Frontend & Alternatives Visibles (`ConnexionForm.tsx`, `InscriptionForm.tsx`)** :
+    - Bannière d'avertissement bienveillante en cas de service WhatsApp indisponible avec bouton 1-clic : **[✉️ Se connecter / S'inscrire par Email & Mot de passe]**.
+    - Gestion intelligente de l'erreur 404 : détection du compte manquant et bouton direct **[✨ Créer mon compte avec ce numéro]** avec transmission du numéro en paramètre d'URL (`?tel=...`).
+    - Écran de saisie du code OTP : compte à rebours de 45 secondes, bouton "↻ Renvoyer le code" et option d'assistance "Code non reçu sur WhatsApp ? [Connexion par Email →]".
+    - Pré-remplissage automatique du numéro de téléphone sur la page d'inscription s'il a été transmis via l'URL.
+  * **🧪 5. Validation Qualité & Tests** :
+    - Suite de tests unitaires dédiée `tests/unit/admin-alerts-and-health.test.js` : **6/6 tests passés avec succès (100%)**.
+    - Suite complète frontend (`scripts/run-unit-tests.mjs`) : **35/35 tests passés avec succès (100%)**.
+  * **📦 6. Statut** : Testé et validé localement avec succès.
+
+- **Session de Scraping en Direct, Correction Critique des Prix & Consolidation du Catalogue (`backend/services/scraper.js`, `CLAUDE.md`) (`local` - 06 septembre 2026)** 🚀🛒🔍⚡🧬🛡️ :
+  * **⚡ 1. Optimisation Fast-Fail 404 & Slugs HTTP 200 Vérifiés (`backend/services/scraper.js`)** :
+    - Abandon immédiat sans retry des URLs retournant un code 404 (`if (st === 404) throw err;`) et rupture de boucle de pagination.
+    - Élimination des temps morts sur les catégories obsolètes ou renommées (ex: `ordinateurs-accessoires` ➔ `ordinateurs` sur Expat, `supermarche` ➔ `epicerie` sur Jumia).
+  * **🛡️ 2. Éradication d'un Bug Critique de Corruption de Prix (`corrigerPrixParPlancher`)** :
+    - **Suppression définitive des divisions par 100/1000** : l'ancienne heuristique divisait à tort les produits électroniques haut de gamme (ex: MacBook Pro à 2 850 000 FCFA bradé à 28 500 FCFA, Lenovo Legion à 3 950 000 FCFA réduit à 39 500 FCFA). En zone UEMOA/XOF, les prix en ligne sont strictement en entiers sans centimes.
+    - **Protection renforcée des accessoires** : extension de l'exclusion `prixPlancher` aux sacs, sacoches, télécommandes, pointeurs, cordons et housses, empêchant des multiplications indues par 100 (ex: télécommande à 15 000 FCFA multipliée à 1 500 000 FCFA).
+    - Restauration immédiate des prix d'origine dans la base pour les références impactées.
+  * **🏷️ 3. Normalisation & 100% de Catégorisation Garantie (`getCatId`)** :
+    - Normalisation NFD bilatérale (recherche sans accents à la fois sur le titre et sur les mots-clés du dictionnaire `CAT_MOTS`).
+    - Fallback automatique vers la catégorie `divers` pour interdire toute persistance de fiches orphelines de catégorie (`categorie_id IS NULL`).
+    - Backfill batch SQL haute performance : **100% des 6 254 fiches produits sont catégorisées (0 NULL)**.
+  * **📊 4. Résultats & Progression Globale du Catalogue** :
+    - **Fiches Produits** : 4 862 ➔ **6 254** (+1 392 fiches).
+    - **Offres Marchands** : 6 814 ➔ **8 947** (+2 133 offres actives).
+    - **Fiches Multi-Marchands** : 983 ➔ **1 225 fiches** (19.6% du catalogue comparateur).
+    - **Densité Concurrentielle** : jusqu'à 7 marchands simultanés sur les fiches phares (ex: *Samsung Galaxy A16 5G* avec 12 offres sur 7 marchands, *Tecno Camon 50 Pro* avec 10 offres sur 7 marchands).
+  * **📦 5. Statut** : Testé et validé en conditions réelles.
+
 
 - **Audit et Assainissement des Données Produits & Réparation des Prix Incohérents (`backend/scripts/assainir-prix-outliers.js`, `backend/services/scraper.js`, `backend/services/anomaly-detector.js`, `backend/routes/produits.js`, `CLAUDE.md`) (`pushed` - 05 septembre 2026)** 🏷️🧹🛡️⚡ :
   * **🔍 1. Audit & Identification des Causes Racines** :

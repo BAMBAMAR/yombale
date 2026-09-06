@@ -1,6 +1,7 @@
 // backend/routes/whatsapp.js
 const express = require('express');
 const crypto  = require('crypto');
+const whatsappHealth = require('../services/whatsapp-health');
 const router  = express.Router();
 
 // ── Vérification signature HMAC-SHA256 Meta ──────────────────────────────────
@@ -59,12 +60,29 @@ router.post('/webhook', verifyHmac, async (req, res) => {
     }
   }
 
-  if (entry.statuses) {
-    console.log('[WHATSAPP] Statut livraison:', entry.statuses[0].status);
-    if (entry.statuses[0].errors) {
-      console.log('[WHATSAPP] Erreur de livraison:', JSON.stringify(entry.statuses[0].errors, null, 2));
+  if (entry.statuses && Array.isArray(entry.statuses)) {
+    for (const statusObj of entry.statuses) {
+      console.log('[WHATSAPP] Statut livraison:', statusObj.status);
+      if (statusObj.status === 'failed') {
+        const errFirst = statusObj.errors?.[0] || {};
+        console.log('[WHATSAPP] Erreur de livraison:', JSON.stringify(statusObj.errors, null, 2));
+        whatsappHealth.recordFailure({
+          code: errFirst.code,
+          title: errFirst.title,
+          message: errFirst.message,
+          details: errFirst.error_data?.details,
+          href: errFirst.href,
+        });
+      } else if (['sent', 'delivered', 'read'].includes(statusObj.status)) {
+        whatsappHealth.recordSuccess();
+      }
     }
   }
+});
+
+// ── GET /api/whatsapp/health — état de santé et circuit-breaker ──────────────
+router.get('/health', (req, res) => {
+  res.json(whatsappHealth.getStatus());
 });
 
 // ── POST /api/whatsapp/send — envoi manuel (bouton frontend) ─────────────────

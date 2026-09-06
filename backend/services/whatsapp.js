@@ -1,5 +1,6 @@
 // backend/services/whatsapp.js — Meta Cloud API v18.0
 const axios = require('axios');
+const whatsappHealth = require('./whatsapp-health');
 
 const PHONE_ID   = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const TOKEN      = process.env.WHATSAPP_API_TOKEN;
@@ -84,7 +85,9 @@ async function post(payload) {
     const { data } = await axios.post(apiUrl(), payload, { headers: headers() });
     return data;
   } catch (err) {
-    console.error('[WHATSAPP] Erreur:', err.response?.data?.error?.message || err.message);
+    const errObj = err.response?.data?.error || { message: err.message };
+    console.error('[WHATSAPP] Erreur:', errObj.message || err.message);
+    whatsappHealth.recordFailure(errObj);
     throw err;
   }
 }

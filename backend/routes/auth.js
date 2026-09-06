@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { envoyerEmail } = require('../services/email');
 const { sendWhatsAppText, sendWhatsAppTemplate, sendWhatsAppNotification, normalisePhone } = require('../services/whatsapp');
+const whatsappHealth = require('../services/whatsapp-health');
 const crypto = require('crypto');
 const { limiterAuth } = require('../middlewares/rateLimit');
 const { verifierToken } = require('../middlewares/auth');
@@ -244,6 +245,16 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
     telephone = normalisePhone(telephone);
     if (!telephone) return res.status(400).json({ error: 'Numéro invalide' });
 
+    // ── Circuit Breaker : Si le service WhatsApp est en panne critique ──
+    // Évite de laisser l'utilisateur attendre un code qui ne sera pas délivré
+    if (whatsappHealth.isDegraded()) {
+      return res.status(503).json({
+        error: 'Le service de vérification WhatsApp est momentanément indisponible. Veuillez utiliser la connexion par Email.',
+        degraded: true,
+        fallback: 'email',
+      });
+    }
+
     // ── Vérification préalable selon le flux (login vs inscription) ──
     const cleanPhone = telephone;
     const withPlus = '+' + cleanPhone;
@@ -256,7 +267,11 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
         [cleanPhone, withPlus, raw9Digits]
       );
       if (!rows.length) {
-        return res.status(404).json({ error: 'Aucun compte associé à ce numéro WhatsApp. Veuillez d\'abord vous inscrire.' });
+        return res.status(404).json({
+          error: 'Aucun compte associé à ce numéro WhatsApp. Veuillez d\'abord vous inscrire.',
+          code: 'ACCOUNT_NOT_FOUND',
+          telephone: cleanPhone,
+        });
       }
       if (rows[0].suspendu) {
         return res.status(403).json({ error: 'Ce compte est suspendu.' });

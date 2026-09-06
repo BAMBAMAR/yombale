@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { signup, type AuthState, setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter } from 'next/navigation'
@@ -24,9 +24,8 @@ function getPasswordStrength(pwd: string): { score: number; label: string; color
   if (!pwd) return { score: 0, label: '', color: '' }
   let score = 0
   if (pwd.length >= 8)  score++
-  if (pwd.length >= 12) score++
-  if (/[0-9]/.test(pwd)) score++
   if (/[A-Z]/.test(pwd)) score++
+  if (/[0-9]/.test(pwd)) score++
   if (/[^A-Za-z0-9]/.test(pwd)) score++
   if (score <= 1) return { score: 1, label: 'Trop faible', color: '#EF4444' }
   if (score === 2) return { score: 2, label: 'Faible',     color: '#F97316' }
@@ -53,8 +52,28 @@ export default function InscriptionForm() {
   const [stepWhatsapp, setStepWhatsapp] = useState<'form' | 'code'>('form')
   const [loadingWa, setLoadingWa] = useState(false)
   const [errorWa, setErrorWa] = useState('')
+  const [isDegraded, setIsDegraded] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tel = params.get('tel')
+      if (tel) {
+        setTelephone(tel)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const interval = setInterval(() => {
+      setResendCooldown(prev => Math.max(0, prev - 1))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [resendCooldown])
 
   const strength = getPasswordStrength(password)
   const confirmOk = confirm.length > 0 && confirm === password
@@ -74,6 +93,7 @@ export default function InscriptionForm() {
     if (!nom.trim()) { setErrorWa(t('errors.fieldRequired')); return; }
     if (telephone.length < 9) { setErrorWa(t('auth.waInvalidPhone')); return; }
     setErrorWa('')
+    setIsDegraded(false)
     setLoadingWa(true)
     try {
       const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
@@ -83,8 +103,44 @@ export default function InscriptionForm() {
         body: JSON.stringify({ telephone, type: 'register' })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || t('errors.serverError'))
+      if (!res.ok) {
+        if (res.status === 503 || data.degraded) {
+          setIsDegraded(true)
+          setErrorWa(data.error || 'Le service WhatsApp est momentanément indisponible.')
+          return
+        }
+        throw new Error(data.error || t('errors.serverError'))
+      }
       setStepWhatsapp('code')
+      setResendCooldown(45)
+    } catch (err: any) {
+      setErrorWa(err.message)
+    } finally {
+      setLoadingWa(false)
+    }
+  }
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0 || loadingWa) return
+    setErrorWa('')
+    setLoadingWa(true)
+    try {
+      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+      const res = await fetch(`${BACKEND}/api/auth/whatsapp-otp-send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone, type: 'register' })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        if (res.status === 503 || data.degraded) {
+          setIsDegraded(true)
+          setErrorWa(data.error || 'Le service WhatsApp est momentanément indisponible.')
+          return
+        }
+        throw new Error(data.error || t('errors.serverError'))
+      }
+      setResendCooldown(45)
     } catch (err: any) {
       setErrorWa(err.message)
     } finally {
@@ -362,7 +418,48 @@ export default function InscriptionForm() {
         </form>
       ) : (
         <form onSubmit={stepWhatsapp === 'form' ? handleSendWaCode : handleVerifyWaCode} className="auth-form">
-          {errorWa && (
+          {isDegraded && (
+            <div style={{
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: 12,
+              padding: '14px 16px',
+              marginBottom: 18,
+              color: '#92400e',
+              fontSize: 13.5,
+              lineHeight: 1.5,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 6 }}>
+                <span>⚠️</span>
+                <span>Service WhatsApp momentanément indisponible</span>
+              </div>
+              <p style={{ margin: '0 0 10px 0' }}>
+                {errorWa || 'Les vérifications WhatsApp sont momentanément indisponibles. Vous pouvez vous inscrire facilement avec votre adresse Email.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setSignupMethod('email')}
+                style={{
+                  background: '#d97706',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '9px 15px',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                <span>✉️</span>
+                <span>S'inscrire par Email & Mot de passe</span>
+              </button>
+            </div>
+          )}
+
+          {!isDegraded && errorWa && (
             <div className="auth-error" role="alert">
               <span className="auth-error-icon">⚠</span>
               {errorWa}
@@ -421,9 +518,32 @@ export default function InscriptionForm() {
                   style={{ letterSpacing: '2px' }}
                 />
               </div>
-              <button type="button" onClick={() => setStepWhatsapp('form')} style={{ background: 'none', border: 'none', color: '#64748b', marginTop: 12, cursor: 'pointer', fontSize: 14 }}>
-                {t('auth.waChangeNumber')}
-              </button>
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => { setStepWhatsapp('form'); setErrorWa(''); setIsDegraded(false); }}
+                  style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13, padding: 0 }}
+                >
+                  ← {t('auth.waChangeNumber') || 'Changer de numéro'}
+                </button>
+                <button
+                  type="button"
+                  disabled={resendCooldown > 0 || loadingWa}
+                  onClick={handleResendCode}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: resendCooldown > 0 ? '#94a3b8' : '#15803d',
+                    cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    padding: 0
+                  }}
+                >
+                  {resendCooldown > 0 ? `Renvoyer (${resendCooldown}s)` : '↻ Renvoyer le code'}
+                </button>
+              </div>
             </div>
           )}
 
@@ -439,6 +559,39 @@ export default function InscriptionForm() {
               <><span className="auth-spinner" />{t('common.pleaseWait')}</>
             ) : stepWhatsapp === 'form' ? t('auth.waSendCode') : t('auth.registerBtn')}
           </button>
+
+          {stepWhatsapp === 'code' && (
+            <div style={{
+              marginTop: 16,
+              padding: '10px 14px',
+              background: '#f8fafc',
+              border: '1px dashed #cbd5e1',
+              borderRadius: 10,
+              fontSize: 12.5,
+              color: '#64748b',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8
+            }}>
+              <span>Code non reçu sur WhatsApp ?</span>
+              <button
+                type="button"
+                onClick={() => setSignupMethod('email')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#C75B00',
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                S'inscrire par Email →
+              </button>
+            </div>
+          )}
         </form>
       )}
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { login, type AuthState } from '@/app/actions/auth'
 import { setAuthCookieAction } from '@/app/actions/auth'
@@ -33,13 +33,24 @@ export default function ConnexionForm() {
   const [stepWhatsapp, setStepWhatsapp] = useState<'phone' | 'code'>('phone')
   const [loadingWa, setLoadingWa] = useState(false)
   const [errorWa, setErrorWa] = useState('')
+  const [errorType, setErrorType] = useState<'none' | 'account_not_found' | 'whatsapp_degraded' | 'generic'>('none')
+  const [resendCooldown, setResendCooldown] = useState(0)
   
   const router = useRouter()
 
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const interval = setInterval(() => {
+      setResendCooldown(prev => Math.max(0, prev - 1))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [resendCooldown])
+
   const handleSendWaCode = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (telephone.length < 9) { setErrorWa(t('auth.waInvalidPhone')); return; }
+    if (telephone.length < 9) { setErrorWa(t('auth.waInvalidPhone')); setErrorType('generic'); return; }
     setErrorWa('')
+    setErrorType('none')
     setLoadingWa(true)
     try {
       const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
@@ -49,8 +60,52 @@ export default function ConnexionForm() {
         body: JSON.stringify({ telephone, type: 'login' })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || t('errors.serverError'))
+      if (!res.ok) {
+        if (res.status === 404 || data.code === 'ACCOUNT_NOT_FOUND') {
+          setErrorType('account_not_found')
+          setErrorWa(data.error || 'Aucun compte associé à ce numéro WhatsApp.')
+          return
+        }
+        if (res.status === 503 || data.degraded) {
+          setErrorType('whatsapp_degraded')
+          setErrorWa(data.error || 'Le service WhatsApp est momentanément indisponible.')
+          return
+        }
+        setErrorType('generic')
+        throw new Error(data.error || t('errors.serverError'))
+      }
       setStepWhatsapp('code')
+      setResendCooldown(45)
+    } catch (err: any) {
+      setErrorWa(err.message)
+    } finally {
+      setLoadingWa(false)
+    }
+  }
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0 || loadingWa) return
+    setErrorWa('')
+    setErrorType('none')
+    setLoadingWa(true)
+    try {
+      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+      const res = await fetch(`${BACKEND}/api/auth/whatsapp-otp-send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telephone, type: 'login' })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        if (res.status === 503 || data.degraded) {
+          setErrorType('whatsapp_degraded')
+          setErrorWa(data.error || 'Le service WhatsApp est momentanément indisponible.')
+          return
+        }
+        setErrorType('generic')
+        throw new Error(data.error || t('errors.serverError'))
+      }
+      setResendCooldown(45)
     } catch (err: any) {
       setErrorWa(err.message)
     } finally {
@@ -257,7 +312,87 @@ export default function ConnexionForm() {
         </form>
       ) : (
         <form onSubmit={stepWhatsapp === 'phone' ? handleSendWaCode : handleVerifyWaCode} className="auth-form">
-          {errorWa && (
+          {errorType === 'whatsapp_degraded' && (
+            <div style={{
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: 12,
+              padding: '14px 16px',
+              marginBottom: 18,
+              color: '#92400e',
+              fontSize: 13.5,
+              lineHeight: 1.5,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 6 }}>
+                <span>⚠️</span>
+                <span>Service WhatsApp momentanément indisponible</span>
+              </div>
+              <p style={{ margin: '0 0 10px 0' }}>
+                {errorWa || 'Les envois de codes WhatsApp connaissent une indisponibilité temporaire. Veuillez utiliser la connexion classique par Email.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setLoginMethod('email')}
+                style={{
+                  background: '#d97706',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '9px 15px',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                <span>✉️</span>
+                <span>Se connecter par Email & Mot de passe</span>
+              </button>
+            </div>
+          )}
+
+          {errorType === 'account_not_found' && (
+            <div style={{
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: 12,
+              padding: '14px 16px',
+              marginBottom: 18,
+              color: '#1e40af',
+              fontSize: 13.5,
+              lineHeight: 1.5,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 6 }}>
+                <span>ℹ️</span>
+                <span>Compte non trouvé</span>
+              </div>
+              <p style={{ margin: '0 0 10px 0' }}>
+                Ce numéro WhatsApp n'est pas encore enregistré. Vous pouvez créer votre compte gratuitement en 10 secondes.
+              </p>
+              <Link
+                href={`/inscription?tel=${encodeURIComponent(telephone)}`}
+                style={{
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  borderRadius: 8,
+                  padding: '9px 15px',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                <span>✨</span>
+                <span>Créer mon compte avec ce numéro</span>
+              </Link>
+            </div>
+          )}
+
+          {errorType === 'generic' && errorWa && (
             <div className="auth-error" role="alert">
               <span className="auth-error-icon">⚠</span>
               {errorWa}
@@ -299,17 +434,73 @@ export default function ConnexionForm() {
                   style={{ letterSpacing: '2px' }}
                 />
               </div>
-              <button type="button" onClick={() => setStepWhatsapp('phone')} style={{ background: 'none', border: 'none', color: '#64748b', marginTop: 12, cursor: 'pointer', fontSize: 14 }}>
-                {t('auth.waChangeNumber')}
-              </button>
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => { setStepWhatsapp('phone'); setErrorWa(''); setErrorType('none'); }}
+                  style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13, padding: 0 }}
+                >
+                  ← {t('auth.waChangeNumber') || 'Changer de numéro'}
+                </button>
+                <button
+                  type="button"
+                  disabled={resendCooldown > 0 || loadingWa}
+                  onClick={handleResendCode}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: resendCooldown > 0 ? '#94a3b8' : '#15803d',
+                    cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    padding: 0
+                  }}
+                >
+                  {resendCooldown > 0 ? `Renvoyer (${resendCooldown}s)` : '↻ Renvoyer le code'}
+                </button>
+              </div>
             </div>
           )}
 
-          <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: '#25D366' }}>
+          <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: '#25D366', marginTop: 14 }}>
             {loadingWa ? (
               <><span className="auth-spinner" />{t('common.pleaseWait')}</>
             ) : stepWhatsapp === 'phone' ? t('auth.waSendCode') : t('auth.waVerifyLogin')}
           </button>
+
+          {stepWhatsapp === 'code' && (
+            <div style={{
+              marginTop: 16,
+              padding: '10px 14px',
+              background: '#f8fafc',
+              border: '1px dashed #cbd5e1',
+              borderRadius: 10,
+              fontSize: 12.5,
+              color: '#64748b',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8
+            }}>
+              <span>Code non reçu ?</span>
+              <button
+                type="button"
+                onClick={() => setLoginMethod('email')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#C75B00',
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Connexion par Email →
+              </button>
+            </div>
+          )}
         </form>
       )}
 

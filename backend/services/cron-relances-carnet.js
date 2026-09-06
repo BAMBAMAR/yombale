@@ -1,7 +1,9 @@
 // backend/services/cron-relances-carnet.js
 // Service d'arrière-plan pour la relance automatique WhatsApp selon les dates d'échéance du carnet
 
-const pool = require('../models/db');
+const db = require('../models/db');
+const pool = db.pool || db;
+const whatsappHealth = require('./whatsapp-health');
 let sendWhatsAppText;
 try {
   const ws = require('./whatsapp');
@@ -15,6 +17,11 @@ try {
  */
 async function traiterRelancesAutomatiquesWhatsApp() {
   try {
+    // Vérifier l'état du service WhatsApp avant de lancer des relances par lot
+    if (whatsappHealth.isDegraded()) {
+      console.warn('[RELANCE AUTO WA] Service WhatsApp actuellement dégradé. Relances reportées.');
+      return { succes: false, reporte: true, raison: 'whatsapp_degrade' };
+    }
     // 1. Chercher toutes les créances impayées avec échéance aujourd'hui ou dépassée (et relance_auto_whatsapp = true)
     // dont aucune relance n'a été envoyée aujourd'hui
     const query = `
@@ -67,16 +74,21 @@ async function traiterRelancesAutomatiquesWhatsApp() {
         try {
           await sendWhatsAppText(r.client_tel, msg);
           envoyees++;
+
+          // Marquer la date de dernière relance uniquement en cas de succès
+          await pool.query(
+            `UPDATE caisse_credit_historique SET derniere_relance_whatsapp = NOW() WHERE id = $1`,
+            [r.trans_id]
+          );
         } catch (errApi) {
           console.warn(`[RELANCE AUTO WA] Échec envoi vers ${r.client_tel}:`, errApi.message);
+          // Si le service est tombé en panne critique (impayé, etc.), interrompre la boucle
+          if (whatsappHealth.isDegraded()) {
+            console.warn('[RELANCE AUTO WA] WhatsApp en panne critique, arrêt des relances.');
+            break;
+          }
         }
       }
-
-      // Marquer la date de dernière relance
-      await pool.query(
-        `UPDATE caisse_credit_historique SET derniere_relance_whatsapp = NOW() WHERE id = $1`,
-        [r.trans_id]
-      );
     }
 
     console.log(`[RELANCE AUTO WA] ✅ ${envoyees} relances WhatsApp traitées avec succès.`);

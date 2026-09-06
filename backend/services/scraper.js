@@ -14,11 +14,11 @@ const UA = [
 const randUA = () => UA[Math.floor(Math.random() * UA.length)];
 
 const CATS = {
-  expat:     ['telephones', 'tv-home-cinema', 'ordinateurs-accessoires', 'electromenager', 'mode-beaute', 'sports-loisirs-jeux', 'maison-mobilier'],
-  jumia:     ['telephone-tablette', 'electronique', 'informatique', 'electromenager', 'sante-beaute', 'mode-homme', 'mode-femme', 'supermarche', 'articles-de-sport'],
-  coinafrique:['telephones-et-tablettes', 'electronique-et-video', 'ordinateurs-et-accessoires', 'electromenager', 'vetements-femme', 'vetements-homme', 'chaussures-femme', 'chaussures-homme', 'sports-loisirs-voyages'],
-  auchan:    ['104-epicerie-salee', '105-epicerie-sucree', '110-petit-dejeuner', '108-boissons', '113-entretien-et-nettoyage', '112-hygiene-et-beaute', '107-cremerie-et-frais'],
-  kaynoo:    ['produits-hightech', 'produits-electromenager', 'beaute-bien-etre', 'mode-sacs-accessoires', 'sports-fitness', 'maison-cuisine'],
+  expat:     ['telephones', 'tv-home-cinema', 'ordinateurs', 'electromenager', 'mode-beaute'],
+  jumia:     ['telephone-tablette', 'electronique', 'informatique', 'electromenager', 'sante-beaute', 'mode-homme', 'mode-femme', 'epicerie', 'maison-cuisine'],
+  coinafrique:['telephones-et-tablettes', 'electronique', 'ordinateurs', 'electromenager', 'vetements-femme', 'vetements-homme'],
+  auchan:    ['104-epicerie-salee', '105-epicerie-sucree', '110-petit-dejeuner', '113-entretien-et-nettoyage', '112-hygiene-et-beaute', '107-cremerie-et-frais'],
+  kaynoo:    ['produits-hightech', 'produits-electromenager', 'beaute-bien-etre', 'mode-sacs-accessoires'],
   decathlon: ['3745-tous-les-sports'],
   jiji:      ['mobile-phones', 'computers-and-accessories', 'tv-and-dvd-equipment', 'home-appliances']
 };
@@ -153,9 +153,18 @@ let _catCache=null;
 function invaliderCatCache() { _catCache = null; }
 async function getCatId(titre) {
   if(!_catCache){ const {rows}=await pool.query('SELECT id,slug FROM categories'); _catCache=rows; }
-  const t=(' '+titre+' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  for(const {slug,mots} of CAT_MOTS){ if(mots.some(m=>t.includes(m))){ const c=_catCache.find(x=>x.slug===slug); if(c) return c.id; } }
-  return null;
+  const t=(' '+(titre||'')+' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  for(const {slug,mots} of CAT_MOTS){
+    if(mots.some(m => {
+      const mNorm = m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      return t.includes(mNorm);
+    })){
+      const c=_catCache.find(x=>x.slug===slug);
+      if(c) return c.id;
+    }
+  }
+  const divers = _catCache.find(x => x.slug === 'divers');
+  return divers ? divers.id : null;
 }
 
 const MARCHAND_ALIASES = {
@@ -172,10 +181,17 @@ async function getMarchandId(nom,siteUrl=null) {
 
   if(_marchandCache[canonNom]) return _marchandCache[canonNom];
 
-  const {rows} = await pool.query(
-    'SELECT id, nom FROM marchands WHERE unaccent(LOWER(nom)) = unaccent(LOWER($1)) OR LOWER(nom) = LOWER($1) LIMIT 1',
-    [canonNom]
-  );
+  let rows = [];
+  try {
+    const res = await pool.query(
+      'SELECT id, nom FROM marchands WHERE unaccent(LOWER(nom)) = unaccent(LOWER($1)) OR LOWER(nom) = LOWER($1) LIMIT 1',
+      [canonNom]
+    );
+    rows = res.rows;
+  } catch (err) {
+    const res = await pool.query('SELECT id, nom FROM marchands WHERE LOWER(nom) = LOWER($1) LIMIT 1', [canonNom]);
+    rows = res.rows;
+  }
   if(rows.length){ _marchandCache[canonNom]=rows[0].id; return rows[0].id; }
   const r=await pool.query('INSERT INTO marchands(nom,site_url,methode) VALUES($1,$2,$3) RETURNING id',[canonNom,siteUrl,'scraper']);
   _marchandCache[canonNom]=r.rows[0].id; return r.rows[0].id;
@@ -191,6 +207,7 @@ async function fetchPage(url, retries=3) {
       return data;
     }catch(err){
       const st=err.response?.status;
+      if (st === 404) throw err;
       console.warn(`[HTTP] Tentative ${i+1}/${retries} — ${st||err.code} — ${url}`);
       if(i<retries-1) await sleep(st===429||st===403 ? 12000*(i+1) : 3000*(i+1));
       else throw err;
@@ -264,7 +281,10 @@ async function scraperExpatDakar(categorie='telephones', maxPages=4) {
           if(found>0){ console.log(`[EXPAT] Page ${page}: ${found} (sélecteur "${s.c}")`); break; }
         }
       }
-    }catch(err){ console.error(`[EXPAT] Page ${page}:`,err.message); }
+    }catch(err){
+      console.error(`[EXPAT] Page ${page}:`,err.message);
+      if (err.response?.status === 404 || page === 1) break;
+    }
     await sleep(2000+Math.random()*1000);
   }
   console.log(`[EXPAT] Total: ${resultats.length}`); return resultats;
@@ -382,7 +402,10 @@ async function scraperJumia(categorie='telephone-tablette', maxPages=5) {
       if(found===0){
         break;
       }
-    }catch(err){ console.error(`[JUMIA] Page ${page}:`,err.message); }
+    }catch(err){
+      console.error(`[JUMIA] Page ${page}:`,err.message);
+      if (err.response?.status === 404 || page === 1) break;
+    }
     await sleep(2500+Math.random()*1500);
   }
   console.log(`[JUMIA] Total: ${resultats.length}`); return resultats;
@@ -413,7 +436,10 @@ async function scraperCoinAfrique(categorie='telephones-et-tablettes', maxPages=
         if(found>0){ console.log(`[COIN] Page ${page}: ${found} (sélecteur "${s.c}")`); break; }
       }
       if(found===0){ console.warn(`[COIN] Page ${page}: 0 résultat`); break; }
-    }catch(err){ console.error(`[COIN] Page ${page}:`,err.message); }
+    }catch(err){
+      console.error(`[COIN] Page ${page}:`,err.message);
+      if (err.response?.status === 404 || page === 1) break;
+    }
     await sleep(2000+Math.random()*1000);
   }
   console.log(`[COIN] Total: ${resultats.length}`); return resultats;
@@ -449,6 +475,7 @@ async function scraperKaynoo(categorie='produits-hightech', maxPages=3) {
       }
     } catch (err) {
       console.error(`[KAYNOO] Page ${page}:`, err.message);
+      if (err.response?.status === 404 || page === 1) break;
     }
     await sleep(2000 + Math.random() * 1000);
   }
@@ -509,6 +536,7 @@ async function scraperAuchan(categorie='137-boissons', maxPages=3) {
       }
     } catch (err) {
       console.error(`[AUCHAN] Page ${page}:`, err.message);
+      if (err.response?.status === 404 || page === 1) break;
     }
     await sleep(2000 + Math.random() * 1000);
   }
@@ -677,9 +705,9 @@ function extraireKg(s) {
 }
 
 function prixPlancher(titre) {
-  const s = ' ' + (titre || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') + ' ';
+  const s = ' ' + (titre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') + ' ';
 
-  if (/\b(chargeur|cable|câble|adaptateur|support|housse|etui|étui|coque|sacoche|protection ecran|film de protection|verre trempe|batterie externe|power\s*bank|powerbank)\b/.test(s)) {
+  if (/\b(chargeur|cable|câble|adaptateur|support|housse|etui|étui|coque|sacoche|sac|sac a dos|sac à dos|protection ecran|film de protection|verre trempe|batterie externe|power\s*bank|powerbank|telecommande|télécommande|pointeur|cordon|embout|filtre|boite|boîte|coussin)\b/.test(s)) {
     return null;
   }
 
@@ -810,32 +838,19 @@ function corrigerPrixXOF(prix) {
 }
 
 function corrigerPrixParPlancher(prix, titre) {
+  if (!prix || prix <= 0) return 0;
   const plancher = prixPlancher(titre);
   if (!plancher) return prix;
 
-  if (prix < plancher) {
-    const p100  = prix * 100;
+  // En e-commerce au Sénégal (XOF/FCFA), les prix sont toujours des entiers en FCFA.
+  // JAMAIS de division par 100/1000 : cela détruisait les PC/MacBook haut de gamme (ex: 2.85M FCFA -> 28 500 FCFA).
+  // La multiplication par 1000 ne s'applique que si le vendeur a saisi un montant tronqué dérisoire (< 1000 FCFA)
+  // pour un produit dont le plancher est significatif (ex: 150 FCFA au lieu de 150 000 FCFA).
+  if (prix < 1000 && plancher >= 20000) {
     const p1000 = prix * 1000;
-    if (p100 >= plancher && p100 <= plancher * 30) {
-      console.warn(`[PRIX×100] "${titre}" : ${prix} → ${p100} FCFA (plancher: ${plancher})`);
-      return p100;
-    }
     if (p1000 >= plancher && p1000 <= plancher * 30) {
       console.warn(`[PRIX×1000] "${titre}" : ${prix} → ${p1000} FCFA (plancher: ${plancher})`);
       return p1000;
-    }
-  }
-
-  if (prix > plancher * 100) {
-    const d100  = Math.round(prix / 100);
-    const d1000 = Math.round(prix / 1000);
-    if (d100 >= plancher && d100 <= plancher * 30) {
-      console.warn(`[PRIX÷100] "${titre}" : ${prix} → ${d100} FCFA (plancher: ${plancher})`);
-      return d100;
-    }
-    if (d1000 >= plancher && d1000 <= plancher * 30) {
-      console.warn(`[PRIX÷1000] "${titre}" : ${prix} → ${d1000} FCFA (plancher: ${plancher})`);
-      return d1000;
     }
   }
 
@@ -967,48 +982,52 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
   }
 
   if(produitsModifies.size > 0){
-    const ids = [...produitsModifies];
-    await pool.query(`
-      UPDATE produits SET
-        prix_min = sub.prix_min,
-        nb_offres = sub.nb_offres
-      FROM (
-        SELECT p.id,
-          MIN(CASE WHEN o.stock AND o.quarantinee = false THEN o.prix END) AS prix_min,
-          COUNT(CASE WHEN o.stock AND o.quarantinee = false THEN o.id END) AS nb_offres
-        FROM produits p
-        LEFT JOIN offres o ON o.produit_id = p.id
-        WHERE p.id = ANY($1::uuid[])
-        GROUP BY p.id
-      ) sub
-      WHERE produits.id = sub.id`,
-      [ids]
-    );
+    try {
+      const ids = [...produitsModifies];
+      await pool.query(`
+        UPDATE produits SET
+          prix_min = sub.prix_min,
+          nb_offres = sub.nb_offres
+        FROM (
+          SELECT p.id,
+            MIN(CASE WHEN o.stock AND o.quarantinee = false THEN o.prix END) AS prix_min,
+            COUNT(CASE WHEN o.stock AND o.quarantinee = false THEN o.id END) AS nb_offres
+          FROM produits p
+          LEFT JOIN offres o ON o.produit_id = p.id
+          WHERE p.id = ANY($1::uuid[])
+          GROUP BY p.id
+        ) sub
+        WHERE produits.id = sub.id`,
+        [ids]
+      );
 
-    const { rows: declenchees } = await pool.query(
-      `SELECT a.*, p.nom AS produit_nom, p.prix_min
-       FROM alertes a
-       JOIN produits p ON p.id = a.produit_id
-       WHERE a.active = true AND a.produit_id = ANY($1::uuid[])
-         AND p.prix_min IS NOT NULL AND p.prix_min <= a.prix_cible`,
-      [ids]
-    );
+      const { rows: declenchees } = await pool.query(
+        `SELECT a.*, p.nom AS produit_nom, p.prix_min
+         FROM alertes a
+         JOIN produits p ON p.id = a.produit_id
+         WHERE a.active = true AND a.produit_id = ANY($1::uuid[])
+           AND p.prix_min IS NOT NULL AND p.prix_min <= a.prix_cible`,
+        [ids]
+      );
 
-    const { rows: declencheesWhatsapp } = await pool.query(
-      `SELECT a.*, p.id AS produit_id, p.nom AS produit_nom, p.prix_min
-       FROM alertes a
-       JOIN produits p ON p.id = ANY($1::uuid[])
-         AND p.nom ILIKE '%' || a.produit_nom || '%'
-       WHERE a.active = true AND a.telephone IS NOT NULL AND a.produit_id IS NULL
-         AND p.prix_min IS NOT NULL AND p.prix_min <= a.prix_cible`,
-      [ids]
-    );
+      const { rows: declencheesWhatsapp } = await pool.query(
+        `SELECT a.*, p.id AS produit_id, p.nom AS produit_nom, p.prix_min
+         FROM alertes a
+         JOIN produits p ON p.id = ANY($1::uuid[])
+           AND p.nom ILIKE '%' || a.produit_nom || '%'
+         WHERE a.active = true AND a.telephone IS NOT NULL AND a.produit_id IS NULL
+           AND p.prix_min IS NOT NULL AND p.prix_min <= a.prix_cible`,
+        [ids]
+      );
 
-    if (declenchees.length > 0 || declencheesWhatsapp.length > 0) {
-      const { envoyerAlertePrix } = require('./notifications');
-      for (const alerte of [...declenchees, ...declencheesWhatsapp]) {
-        await envoyerAlertePrix(alerte, alerte.prix_min).catch(err => console.error('[ALERTE]', err.message));
+      if (declenchees.length > 0 || declencheesWhatsapp.length > 0) {
+        const { envoyerAlertePrix } = require('./notifications');
+        for (const alerte of [...declenchees, ...declencheesWhatsapp]) {
+          await envoyerAlertePrix(alerte, alerte.prix_min).catch(err => console.error('[ALERTE]', err.message));
+        }
       }
+    } catch (errSync) {
+      console.error('[POST-SYNC ERROR]', errSync.message);
     }
   }
 
@@ -1080,7 +1099,7 @@ async function lancerScraping(sources=['expat','jumia','coinafrique','auchan','k
         await sleep(4000);
       }
       rapport.sources[src]=stats;
-      await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1',[c.nom]);
+      await pool.query('UPDATE marchands SET derniere_sync=NOW() WHERE nom=$1',[c.nom]).catch(e => console.warn('[MARCHAND SYNC WARN]', e.message));
       console.log(`[SCRAPER] ${c.nom}: ${stats.scrapes} scrapés → ${stats.inseres} nouveaux, ${stats.mis_a_jour} màj`);
       await sleep(5000);
     }

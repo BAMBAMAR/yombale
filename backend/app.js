@@ -22,6 +22,17 @@ require('dotenv').config();
 // ── Gestion globale des erreurs inattendues (Évite la mort du process Node) ──
 process.on('uncaughtException', (err) => {
   console.error('💥 [CRITICAL UNCAUGHT EXCEPTION]:', err.stack || err.message);
+  try {
+    const { alerterAdmin } = require('./services/admin-alerts');
+    alerterAdmin({
+      type: 'uncaught_exception',
+      priorite: 'CRITIQUE',
+      titre: 'Crash Serveur Node.js Imprévu',
+      message: `Une erreur critique non interceptée est survenue sur le serveur Render : ${err.message}`,
+      details: err.stack,
+      cooldownMs: 15 * 60 * 1000,
+    }).catch(() => {});
+  } catch {}
 });
 
 process.on('unhandledRejection', (reason) => {
@@ -275,6 +286,8 @@ app.use('/api/plans',           require('./routes/plans'));
 // ── Health check (Diagnostics & Liveness/Readiness Probes) ─────
 app.get(['/health', '/api/health'], async (req, res) => {
   const { pool } = require('./models/db');
+  let whatsappHealth = null;
+  try { whatsappHealth = require('./services/whatsapp-health').getStatus(); } catch {}
   let dbStatus = 'ok';
   let dbLatency = 0;
   const start = Date.now();
@@ -285,9 +298,10 @@ app.get(['/health', '/api/health'], async (req, res) => {
     dbStatus = 'error: ' + err.message;
   }
 
+  const isHealthy = dbStatus === 'ok';
   const mem = process.memoryUsage();
-  res.json({
-    status: dbStatus === 'ok' ? 'ok' : 'degraded',
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ok' : 'degraded',
     processType: process.env.PROCESS_TYPE || 'web',
     version: '1.2.0',
     uptimeSeconds: Math.floor(process.uptime()),
@@ -300,6 +314,7 @@ app.get(['/health', '/api/health'], async (req, res) => {
       status: dbStatus,
       latencyMs: dbLatency,
     },
+    whatsapp: whatsappHealth,
     timestamp: new Date().toISOString(),
   });
 });
