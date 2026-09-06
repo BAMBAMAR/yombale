@@ -31,6 +31,8 @@ import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
 import NavbarGuides from './NavbarGuides';
 import MobileNav from './MobileNav';
+import MobileBottomNav from '@/components/MobileBottomNav';
+import NavbarCartBtn from '@/components/NavbarCartBtn';
 import BottomBars from './BottomBars';
 import RegisterSW from './RegisterSW';
 import PwaInstallPrompt from '@/components/PwaInstallPrompt';
@@ -227,25 +229,7 @@ export default async function RootLayout({
             gtag('config', 'G-GD7365PKTS');
           `}
         </Script>
-        <Script id="ripple-handler" strategy="afterInteractive" nonce={nonce}>
-          {`
-            document.addEventListener('click', function(e) {
-              const target = e.target.closest('button, .chip, .pcard, .nav-user, .navbar-link, .btn-primary');
-              if (!target) return;
-              const rect = target.getBoundingClientRect();
-              const circle = document.createElement('span');
-              const diameter = Math.max(rect.width, rect.height);
-              const radius = diameter / 2;
-              circle.style.width = circle.style.height = diameter + 'px';
-              circle.style.left = (e.clientX - rect.left - radius) + 'px';
-              circle.style.top = (e.clientY - rect.top - radius) + 'px';
-              circle.classList.add('ripple');
-              const existing = target.getElementsByClassName('ripple')[0];
-              if (existing) existing.remove();
-              target.appendChild(circle);
-            });
-          `}
-        </Script>
+
 
         <header role="banner">
           <nav className="navbar" aria-label="Navigation principale">
@@ -266,6 +250,7 @@ export default async function RootLayout({
                 <NavbarSearch />
               </div>
               <div className="navbar-actions">
+                <NavbarCartBtn />
                 {session ? (
                   <a href="/boutique" className="navbar-maboutique hidden-mobile" aria-label="Accéder à ma boutique" style={{ background: 'var(--navy)', color: '#fff', padding: '8px 14px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.15)' }}>
                     <Store size={15} style={{ color: 'var(--accent, #C75B00)' }} /> Ma Boutique
@@ -287,22 +272,9 @@ export default async function RootLayout({
                   </>
                 )}
               </div>
-              {/* Mobile & Tablet icon actions + Drawer burger */}
+              {/* Mobile: Accès Panier + Drawer burger épuré */}
               <div className="navbar-mobile-group">
-                <div className="navbar-icon-actions">
-                  <a href="/assistant-whatsapp" className="navbar-icon-btn navbar-icon-btn--whatsapp" aria-label="Assistant WhatsApp" title="Assistant WhatsApp">
-                    <MessageCircle size={18} />
-                  </a>
-                  <a href="/favoris" className="navbar-icon-btn navbar-icon-btn--favoris" aria-label="Mes favoris" title="Favoris">
-                    <Heart size={18} />
-                  </a>
-                  <a href="/creer-boutique" className="navbar-pill-btn" aria-label="Boutique Taf Taf">
-                    <Store size={14} /> Boutique
-                  </a>
-                  <a href={session ? "/compte" : "/connexion"} className="navbar-icon-btn navbar-icon-btn--profil" aria-label="Profil" title="Profil">
-                    <User size={18} />
-                  </a>
-                </div>
+                <NavbarCartBtn />
                 <MobileNav
                   isLoggedIn={!!session}
                   nom={session?.nom ?? session?.email ?? undefined}
@@ -316,6 +288,7 @@ export default async function RootLayout({
 
         <DrawerCart />
         <BottomBars />
+        <MobileBottomNav isLoggedIn={!!session} />
         <RegisterSW />
         <PwaInstallPrompt />
         <FavToast />

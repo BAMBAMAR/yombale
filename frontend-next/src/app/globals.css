@@ -994,11 +994,11 @@ a {
 /* ── Carte produit ─────────────────────────────────────────────── */
 .card-produit {
   background: var(--card);
-  border: 1px solid rgba(255, 255, 255, 0.08); /* Premium subtle border in dark mode usually, or soft grey in light mode. Wait, using var(--border) is safer but let's make the shadow premium */
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
-  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1008,38 +1008,22 @@ a {
 }
 
 .card-produit:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0,0,0,0.06);
-  border-color: rgba(199, 91, 0, 0.3); /* Subtle accent glow on border */
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong, #D0C0B0);
 }
 
-/* ── Signature « ticket » — cartes promo uniquement (spec 2026-07-11) ──
-   Le tilt signale « bon plan à saisir ». Perforation = vraies encoches
-   semi-circulaires de la couleur du fond (papier poinçonné), PAS de
-   border dashed. */
+/* ── Cartes promo — design épuré sans inclinaison gadget ────────── */
 .card-produit--ticket {
-  transition: transform .25s ease, box-shadow .25s ease;
-  will-change: transform;
+  transform: none !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
-/* Inclinaison volontairement subtile (retour utilisateur : presque invisible,
-   et un angle plus fort rend le texte flou par anti-aliasing de rotation) */
-.card-produit--ticket.tilt-a { transform: rotate(-0.35deg); }
-.card-produit--ticket.tilt-b { transform: rotate(0.35deg); }
-.card-produit--ticket:hover  { transform: rotate(0); }
+.card-produit--ticket.tilt-a,
+.card-produit--ticket.tilt-b { transform: none !important; }
+.card-produit--ticket:hover  { transform: translateY(-3px) !important; }
 
 .card-produit--ticket::before {
-  content: '';
-  display: block;
-  height: 5px;
-  margin: -16px -16px 6px;   /* annule le padding 16px de la carte pour toucher le bord */
-  background:
-    radial-gradient(circle at 5px -1px, var(--bg) 3.5px, transparent 4px) repeat-x left top / 14px 5px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .card-produit--ticket,
-  .card-produit--ticket.tilt-a,
-  .card-produit--ticket.tilt-b { transform: none; transition: none; }
+  display: none !important;
 }
 
 .card-produit .nom {
@@ -1068,16 +1052,20 @@ a {
 
 /* ── Navbar simple ─────────────────────────────────────────────── */
 .navbar {
-  background: #fff;
-  border-bottom: 2px solid var(--accent);
-  padding: 0 5%;
-  height: 62px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 4%;
+  height: 68px;
   display: flex;
   align-items: center;
   gap: 16px;
   position: sticky;
   top: 0;
   z-index: 200;
+  box-shadow: 0 1px 4px rgba(26, 22, 18, 0.04);
+  transition: all 0.2s ease;
 }
 
 .logo {
@@ -1201,70 +1189,140 @@ a {
   align-self: flex-start;
 }
 
-/* ── Produit fiche header — aligned with forfait-fiche-header ── */
-.produit-fiche-header {
+/* ── Produit Hero Card (PDP standard Apple/Shopify) ── */
+.produit-hero-card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 24px 28px 20px;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  overflow: hidden;
+  margin-bottom: 20px;
 }
 
-.produit-fiche-top {
+.produit-hero-visual {
+  position: relative;
+  background: var(--bg);
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border-right: 1px solid var(--border);
+}
+
+.produit-hero-visual-inner {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+.produit-hero-body {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.produit-hero-top {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 14px;
+  flex-wrap: wrap;
 }
 
-.produit-fiche-nom-row {
+.produit-hero-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--navy);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.produit-hero-buybox {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.produit-fiche-nom-row--avec-cta {
-  flex-wrap: wrap;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: auto;
 }
 
-.produit-fiche-nom-row--avec-cta .produit-fiche-nom {
-  flex: 1 1 auto;
+.produit-hero-price-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.cta-acheter--header {
-  display: inline-block;
-  width: auto;
-  margin-left: auto;
-  padding: 10px 24px;
-  font-size: 15px;
+.produit-hero-price {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--price);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.produit-hero-seller {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text2);
+}
+
+.produit-hero-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 14.5px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(199,91,0,0.25);
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
-  .cta-acheter--header {
+.produit-hero-cta:hover {
+  background: #A34900;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(199,91,0,0.35);
+}
+
+@media (max-width: 768px) {
+  .produit-hero-card {
+    grid-template-columns: 1fr;
+  }
+  .produit-hero-visual {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    min-height: 220px;
+    padding: 20px;
+  }
+  .produit-hero-body {
+    padding: 20px;
+  }
+  .produit-hero-title {
+    font-size: 20px;
+  }
+  .produit-hero-buybox {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .produit-hero-cta {
     width: 100%;
-    margin-left: 0;
     text-align: center;
   }
-}
-
-.produit-fiche-img {
-  position: relative;
-  width: 88px;
-  height: 88px;
-  flex-shrink: 0;
-  background: var(--bg);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.produit-fiche-nom {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--navy);
-  line-height: 1.2;
 }
 
 /* ── Box meilleur prix ────────────────────────────────────────── */
@@ -2597,8 +2655,107 @@ a {
   z-index: 300;
   display: flex;
   flex-direction: column;
-  /* iPhone à encoche : ne pas passer sous la barre home (viewport-fit=cover) */
   padding-bottom: env(safe-area-inset-bottom);
+  transition: bottom 0.2s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NOPALOU PREMIUM MOBILE BOTTOM NAVIGATION (2026 UX Standard)
+   ════════════════════════════════════════════════════════════════ */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    z-index: 450;
+    box-shadow: 0 -2px 10px rgba(26, 22, 18, 0.05);
+  }
+
+  .mobile-bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+    color: var(--text2, #5A4E42);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    position: relative;
+    transition: color 0.15s ease, transform 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .mobile-bottom-nav-item:active {
+    transform: scale(0.92);
+  }
+
+  .mobile-bottom-nav-item.active {
+    color: var(--accent, #C75B00);
+    font-weight: 800;
+  }
+
+  .mobile-bottom-nav-item.active .mobile-bottom-nav-icon-wrap {
+    color: var(--accent, #C75B00);
+  }
+
+  .mobile-bottom-nav-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 22px;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-bottom-nav-badge {
+    position: absolute;
+    top: -4px;
+    right: -7px;
+    background: var(--accent, #C75B00);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 900;
+    height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(199, 91, 0, 0.35);
+    line-height: 1;
+  }
+
+  /* Padding bas de sécurité sur mobile pour que le contenu ne soit jamais masqué */
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .bottom-bars-wrap {
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+  }
 }
 
 /* ── FavBar ────────────────────────────────────────────────────── */
@@ -9970,19 +10127,23 @@ a {
 
 @media (max-width: 640px) {
   .logo-name {
-    display: none !important;
+    display: inline !important;
+    font-size: 19px !important;
+    font-weight: 900;
   }
   .navbar-icon-actions {
-    gap: 4px;
+    gap: 6px;
   }
   .navbar-icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     font-size: 14px;
+    border-radius: 10px;
   }
   .navbar-pill-btn {
-    padding: 5px 8px;
-    font-size: 10px;
+    padding: 6px 10px;
+    font-size: 11px;
+    border-radius: 12px;
   }
 }
 

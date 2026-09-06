@@ -1,3 +1,34 @@
+- **Refonte Design System & Expérience Utilisateur Premium E-Commerce 2026 (`globals.css`, `layout.tsx`, `page.tsx`, `produit/[id]/page.tsx`, `BoutiqueClient.tsx`, `DrawerCart.tsx`, `MobileBottomNav.tsx`, `NavbarCartBtn.tsx`, `CartContext.tsx`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** ✨💎🎨🛒📱⚡ :
+  * **🎨 1. Design System & Modern Glassmorphism Layout (`globals.css`, `layout.tsx`)** :
+    - Modernisation de la navbar sticky : fond en verre dépoli (`background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border)`), élimination de l'ancienne bordure orange agressive de 2px.
+    - Résolution du bug de troncature mobile : le logo et nom de marque *"NOPALOU"* restent désormais visibles en permanence sur toutes les largeurs d'écran (`.logo-name` non masqué).
+    - Épuration du header mobile : suppression des 4 icônes miniatures compressées et remplacement par un bouton Panier dynamique interactif et le drawer de navigation.
+    - Suppression du script JavaScript invasif de ripple effect sur le DOM (`span.ripple`).
+  * **📱 2. Navigation Mobile Ergonomique Persistante (`MobileBottomNav.tsx`, `globals.css`)** :
+    - Barre de navigation basse persistante à 5 destinations accessibles au pouce : **Accueil** (`/`), **Explorer** (`/boutiques`), **Panier** (trigger tiroir avec badge live), **Favoris** (`/favoris`) et **Compte/Boutique** (`/compte`).
+    - Prise en charge native des zones sûres mobiles (`env(safe-area-inset-bottom)`), détection active de l'onglet courant et micro-animations douces.
+  * **🛒 3. Panier Interactif Unifié & Modernisation DrawerCart (`DrawerCart.tsx`, `NavbarCartBtn.tsx`, `CartContext.tsx`)** :
+    - `NavbarCartBtn.tsx` : Déclencheur interactif avec compteur réactif en temps réel pour le header desktop et mobile.
+    - `CartContext.tsx` : Amélioration de `openCart()` pour cibler intelligemment le panier actif ou la première boutique non vide, et exposition de `totalItemCount` consolidé.
+    - `DrawerCart.tsx` : Harmonisation totale avec les tokens chaleureux Nopalou (`var(--navy)`, `var(--border)`, `var(--bg)`), et masquage automatique du bouton flottant en vue mobile pour éliminer tout chevauchement avec la bottom nav.
+  * **🛍️ 4. Épuration du Hero & Page d'Accueil (`src/app/page.tsx`)** :
+    - Hero réaligné, aéré et centré : proposition de valeur limpide, barre de recherche principale fluide et pilules de catégories filtrantes harmonisées.
+    - Élimination des redondances visuelles : suppression du bouton répété *"Ouvrir une Boutique Pro"* et des barres d'actions dupliquées sur mobile.
+    - Modernisation du bandeau communautaire social avec cartes glassmorphiques élégantes.
+  * **🏷️ 5. Modernisation des Cartes Produits (`globals.css`)** :
+    - Suppression définitive de la rotation inclinée `-0.35deg` et des fausses perforations radiales de ticket qui floutaient le rendu typographique.
+    - Cartes stables, bordures précises, élévation chaude et prix en police tabulaire haut de gamme.
+  * **💎 6. Refonte de la Fiche Produit (PDP) (`produit/[id]/page.tsx`, `globals.css`)** :
+    - Remplacement de l'ancien header étriqué `.produit-fiche-header` par `.produit-hero-card` : visuel produit généreux (`ExternalImg` avec watermark), typographie noble, et buybox intégrée avec affichage du meilleur vendeur, badge d'économie et CTA direct.
+    - Élimination des classes résiduelles télécoms (`.forfait-fiche-prix`, `.forfait-fiche-duree`) et suppression du bouton d'achat doublon en milieu de page.
+  * **🏪 7. Harmonisation Espace Marchand (`BoutiqueClient.tsx`)** :
+    - Remplacement des couleurs dures Slate Tailwind restantes (`#0f172a`, `#64748b`, `#cbd5e1`, `#1d4ed8`) par la palette chaleureuse Nopalou (`var(--navy)`, `var(--border)`, `var(--accent)`).
+  * **🧪 8. Validation Qualité & Conformité** :
+    - Respect strict de l'interdiction de CDN de polices externes (pile système native haute lisibilité préservée).
+    - Suite de tests unitaires : **35/35 tests passés avec succès (100%)**.
+    - Build de production Next.js complet : **succès sans aucune erreur** (`npm run build`).
+  * **📦 9. Statut** : Prêt et validé localement (aucun git push exécuté, en attente de l'ordre utilisateur).
+
 - **Système d'Alerte Incident & Gestion Résiliente des Pannes WhatsApp / UX Auth (`backend/services/admin-alerts.js`, `backend/services/whatsapp-health.js`, `backend/routes/auth.js`, `backend/routes/whatsapp.js`, `ConnexionForm.tsx`, `InscriptionForm.tsx`, `CLAUDE.md`) (`local` - 06 septembre 2026)** 🚨🛡️💬📱✨ :
   * **🚨 1. Alerting Multi-Canal Administrateur (`backend/services/admin-alerts.js`)** :
     - Notification prioritaire d'urgence par **Email** (via Resend) et/ou **Telegram Bot** (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` configurables).

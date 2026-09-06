@@ -5184,8 +5184,8 @@ export default function BoutiqueClient({
         background: '#ffffff',
         borderRadius: 16,
         padding: '24px 28px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+        border: '1px solid var(--border, #E8DDD2)',
+        boxShadow: 'var(--shadow-xs)',
         marginBottom: 28,
         display: 'flex',
         justifyContent: 'space-between',
@@ -5195,26 +5195,26 @@ export default function BoutiqueClient({
       }}>
         <div style={{ flex: '1 1 320px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontSize: 24, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: 0, letterSpacing: '-0.02em' }}>
               Mes Boutiques
             </h1>
             <span style={{
               fontSize: 12,
               fontWeight: 800,
-              background: '#eff6ff',
-              color: '#1d4ed8',
-              border: '1px solid #bfdbfe',
+              background: 'var(--orange2, #FFF3E8)',
+              color: 'var(--accent, #C75B00)',
+              border: '1px solid rgba(199, 91, 0, 0.2)',
               padding: '3px 10px',
               borderRadius: 20,
               display: 'inline-flex',
               alignItems: 'center',
               gap: 5
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent, #C75B00)' }} />
               {boutiques.length} / 3 autorisée{boutiques.length > 1 ? 's' : ''}
             </span>
           </div>
-          <p style={{ fontSize: 13, color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13, color: 'var(--text2, #6B5E52)', margin: 0, lineHeight: 1.5 }}>
             Gérez vos points de vente, catalogue produits, encaissements et caisse enregistreuse POS.
           </p>
         </div>
@@ -5228,15 +5228,15 @@ export default function BoutiqueClient({
             padding: '10px 18px',
             borderRadius: 10,
             background: '#ffffff',
-            border: '1.5px solid #cbd5e1',
-            color: '#0f172a',
+            border: '1.5px solid var(--border, #E8DDD2)',
+            color: 'var(--navy, #1C2B4A)',
             fontWeight: 700,
             fontSize: 13,
             textDecoration: 'none',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            boxShadow: '0 2px 6px rgba(26,22,18,0.04)',
             transition: 'all 0.15s ease'
           }}>
-            <Monitor size={16} style={{ color: '#0f172a' }} />
+            <Monitor size={16} style={{ color: 'var(--navy, #1C2B4A)' }} />
             <span>{t('shop.openPosBtn')}</span>
           </Link>
 
@@ -5298,8 +5298,9 @@ export default function BoutiqueClient({
           <p style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>{t('shop.createShopPrompt')}</p>
           <p style={{ fontSize: 14, color: '#9ca3af', marginBottom: 24 }}>{t('shop.createShopDesc')}</p>
           <button onClick={() => setMode('create')} style={{
-            padding: '12px 28px', background: '#1d4ed8', color: '#fff',
+            padding: '12px 28px', background: 'var(--accent, #C75B00)', color: '#fff',
             border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(199,91,0,0.25)'
           }}>
             {t('shop.createMyFirstShop')}
           </button>

@@ -418,40 +418,58 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
           {/* ── Colonne principale ──────────────────────────────── */}
           <div className="fiche-main">
 
-            {/* ── Header produit — aligné sur la fiche forfait ── */}
-            <div className="produit-fiche-header">
-              <div className="produit-fiche-top">
-                {produit.marque && <span className="marque-badge">{produit.marque}</span>}
-                {(produit.categorie_nom ?? produit.categorie) && (
-                  <Link href={`/?categorie=${produit.categorie}`} className="categ-tag">
-                    {produit.categorie_nom ?? produit.categorie}
-                  </Link>
-                )}
-              </div>
-              <div className="produit-fiche-nom-row produit-fiche-nom-row--avec-cta">
-                {produit.image_url && (
-                  <div className="produit-fiche-img">
-                    <ExternalImg src={produit.image_url} alt={produit.nom} watermark={true} style={{ width: '100%', height: '100%', objectFit: 'contain' }} loading="eager" />
+            {/* ── Header produit & Hero visual ── */}
+            <div className="produit-hero-card">
+              {produit.image_url && (
+                <div className="produit-hero-visual">
+                  <div className="produit-hero-visual-inner">
+                    <ExternalImg
+                      src={produit.image_url}
+                      alt={produit.nom}
+                      watermark={true}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      loading="eager"
+                    />
                   </div>
-                )}
-                <h1 className="produit-fiche-nom">{produit.nom}</h1>
-                {best?.url_achat && (
-                  <a
-                    href={`/api/click/${best.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="cta-acheter cta-acheter--header"
-                    aria-label={`Acheter au meilleur prix${best.marchand_nom ? ` chez ${best.marchand_nom}` : ''}`}
-                  >
-                    🛒 Acheter →
-                  </a>
-                )}
-              </div>
-              <div className="forfait-fiche-prix-row">
-                <span className="forfait-fiche-prix">{prixMin ? fcfa(prixMin) : '—'}</span>
-                {best?.marchand_nom && (
-                  <span className="forfait-fiche-duree">chez {best.marchand_nom}</span>
-                )}
+                </div>
+              )}
+              <div className="produit-hero-body">
+                <div>
+                  <div className="produit-hero-top">
+                    {produit.marque && <span className="marque-badge">{produit.marque}</span>}
+                    {(produit.categorie_nom ?? produit.categorie) && (
+                      <Link href={`/?categorie=${produit.categorie}`} className="categ-tag">
+                        {produit.categorie_nom ?? produit.categorie}
+                      </Link>
+                    )}
+                  </div>
+                  <h1 className="produit-hero-title" style={{ marginTop: 10 }}>{produit.nom}</h1>
+                </div>
+
+                <div className="produit-hero-buybox">
+                  <div className="produit-hero-price-wrap">
+                    <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Meilleure offre
+                    </span>
+                    <span className="produit-hero-price">{prixMin ? fcfa(prixMin) : '—'}</span>
+                    {best?.marchand_nom && (
+                      <span className="produit-hero-seller">chez {best.marchand_nom}</span>
+                    )}
+                  </div>
+
+                  {best?.url_achat && (
+                    <a
+                      href={`/api/click/${best.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="produit-hero-cta"
+                      aria-label={`Acheter au meilleur prix${best.marchand_nom ? ` chez ${best.marchand_nom}` : ''}`}
+                    >
+                      <span>🛒 Acheter au meilleur prix</span>
+                      <span>→</span>
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -673,12 +691,6 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
                   })}
                 </div>
               </div>
-            )}
-
-            {best?.url_achat && (
-              <a href={`/api/click/${best.id}`} target="_blank" rel="noopener noreferrer" className="cta-acheter">
-                🛒 Acheter au meilleur prix →
-              </a>
             )}
 
             {/* CTA comparaison — visible sur mobile avant la sidebar */}

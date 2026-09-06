@@ -174,173 +174,109 @@ export default async function HomePage({
     <>
       {/* ── HERO HOME ÉPURÉ & MODERNE (NOPALOU BRAND SYSTEM) ────────── */}
       <section style={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #fff7ed 100%)',
-        borderBottom: '1px solid #fed7aa',
-        padding: '20px 20px 16px',
+        background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 60%, var(--bg, #F8F5F0) 100%)',
+        borderBottom: '1px solid var(--border, #E8DDD2)',
+        padding: '36px 20px 24px',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Layout en 3 colonnes pour utiliser l'espace Desktop (Gauche, Centre, Droite) */}
-        <div style={{ maxWidth: 1380, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, position: 'relative', zIndex: 2 }}>
-          
-          {/* COLONNE GAUCHE (Desktop seulement : Carrousel dynamique WhatsApp & Parrainage) */}
-          <div className="hero-side-card" style={{ flex: '0 0 310px', width: 310, display: 'flex' }}>
-            <HeroWhatsAppCarousel />
-          </div>
-
-          {/* COLONNE CENTRALE */}
-          <div style={{ flex: '1 1 auto', width: '100%', maxWidth: 760, minWidth: 0 }}>
+        <div style={{ maxWidth: 840, margin: '0 auto', position: 'relative', zIndex: 2 }}>
           
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'var(--orange2, #FFF3E8)', color: '#9a3412', padding: '4px 14px', borderRadius: 30,
-            fontSize: 11.5, fontWeight: 800, marginBottom: 8, border: '1px solid #ffedd5',
+            background: 'var(--orange2, #FFF3E8)', color: 'var(--accent, #C75B00)', padding: '5px 16px', borderRadius: 30,
+            fontSize: 12, fontWeight: 800, marginBottom: 12, border: '1px solid #FFEDD5',
+            letterSpacing: '0.02em',
           }}>
-            <span>✨ Comparateur N°1 de prix & vendeurs au Sénégal</span>
+            <span>✨ Le premier comparateur de prix &amp; vendeurs au Sénégal</span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(24px, 3.8vw, 36px)', fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>
-            Comparez les prix & trouvez les meilleurs vendeurs au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
+          <h1 style={{ fontSize: 'clamp(26px, 4.2vw, 40px)', fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '0 0 10px', lineHeight: 1.2, letterSpacing: '-0.025em' }}>
+            Achetez au meilleur prix à Dakar &amp; au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
           </h1>
 
-          <p style={{ fontSize: 14.5, color: 'var(--text2, #6B5E52)', margin: '0 auto 14px', maxWidth: 600, lineHeight: 1.45 }}>
-            Accédez instantanément à des milliers de produits, téléphones, électroménager et boutiques vérifiées à Dakar et dans toutes les régions.
+          <p style={{ fontSize: 'clamp(14px, 1.8vw, 15.5px)', color: 'var(--text2, #5A4E42)', margin: '0 auto 20px', maxWidth: 620, lineHeight: 1.5 }}>
+            Comparez en temps réel des milliers de téléphones, TV, électroménager et boutiques vérifiées. 100% gratuit, indépendant et actualisé toutes les 6 heures.
           </p>
 
           {/* BARRE DE RECHERCHE PRINCIPALE */}
-          <div style={{ maxWidth: 620, margin: '0 auto' }}>
+          <div style={{ maxWidth: 660, margin: '0 auto 20px' }}>
             <SearchBar defaultValue={q} />
           </div>
 
-          </div>
+          {/* CATÉGORIES EN PILULES FLUIDES */}
+          <div className="hero-categories-scroll" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+            {CATEGORIES.map((c) => {
+              if (
+                categoriesActives !== null &&
+                !categoriesActives.includes(c.slug) &&
+                c.slug !== 'telecom' &&
+                c.slug !== 'immo' &&
+                c.slug !== 'annonces'
+              ) {
+                return null;
+              }
+              const isSelected = categorie === c.slug
 
-          {/* COLONNE DROITE (Desktop seulement : Espace Marchands B2B) */}
-          <div className="hero-side-card" style={{ flex: '0 0 310px', width: 310, display: 'flex' }}>
-            <div style={{
-              width: '100%',
-              maxWidth: 310,
-              textAlign: 'left',
-              background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #0d1728 100%)',
-              padding: '16px 20px',
-              borderRadius: 14,
-              color: '#f8fafc',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 8px 24px rgba(28,43,74,0.3)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              minHeight: 148,
-              height: '100%',
-              boxSizing: 'border-box',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  <span style={{ display: 'inline-block', background: 'rgba(199,91,0,0.2)', color: '#fed7aa', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, border: '1px solid rgba(199,91,0,0.4)', letterSpacing: '0.05em' }}>
-                    🏪 POUR LES COMMERÇANTS
-                  </span>
-                </div>
-                <h2 style={{ fontSize: 15, fontWeight: 900, margin: '0 0 6px', color: '#fff', lineHeight: 1.3 }}>
-                  Gérez votre commerce comme un Pro.
-                </h2>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', margin: '0 0 10px', lineHeight: 1.4 }}>
-                  Vitrine Taf Taf, Caisse POS, Wave & WhatsApp. Tout en un.
-                </p>
-              </div>
+              if (c.slug === 'immo') {
+                return (
+                  <Link key={c.slug} href="/immo" prefetch={false} aria-label="Immobilier et Terrains au Sénégal" className="categ-pill" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
+                    whiteSpace: 'nowrap', flexShrink: 0
+                  }}>
+                    <span>🏢</span> <span>Immobilier &amp; Terrains</span>
+                  </Link>
+                )
+              }
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8 }}>
-                <Link href="/marchands" style={{ 
-                  background: 'var(--accent, #C75B00)', 
-                  color: '#fff', 
-                  padding: '8px 16px', 
-                  borderRadius: 10, 
-                  fontSize: 12, 
-                  fontWeight: 800, 
-                  textDecoration: 'none', 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: 4 
-                }}>
-                  Découvrir Nopalou SaaS <span style={{ fontSize: 14 }}>→</span>
-                </Link>
-              </div>
-            </div>
-          </div>
+              if (c.slug === 'annonces') {
+                return (
+                  <Link key={c.slug} href="/annonces" prefetch={false} aria-label="Petites Annonces au Sénégal" className="categ-pill" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
+                    whiteSpace: 'nowrap', flexShrink: 0
+                  }}>
+                    <span>📢</span> <span>Petites Annonces</span>
+                  </Link>
+                )
+              }
 
-        </div>
+              if (c.slug === 'telecom') {
+                return (
+                  <Link key={c.slug} href="/telecom" prefetch={false} aria-label="Télécom et forfaits mobiles" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
+                    whiteSpace: 'nowrap', flexShrink: 0
+                  }}>
+                    <span>{c.emoji}</span> <span>{c.label}</span>
+                  </Link>
+                )
+              }
 
-        {/* CATÉGORIES EN PILULES FLUIDES SUR TOUTE LA LARGEUR DU HERO (Dans le même rectangle) */}
-        <div className="hero-categories-scroll" style={{ maxWidth: 1380, margin: '16px auto 0', position: 'relative', zIndex: 2 }}>
-          {CATEGORIES.map((c) => {
-            if (
-              categoriesActives !== null &&
-              !categoriesActives.includes(c.slug) &&
-              c.slug !== 'telecom' &&
-              c.slug !== 'immo' &&
-              c.slug !== 'annonces'
-            ) {
-              return null;
-            }
-            const isSelected = categorie === c.slug
-
-            if (c.slug === 'immo') {
               return (
-                <Link key={c.slug} href="/immo" prefetch={false} aria-label="Immobilier et Terrains au Sénégal" className="categ-pill" style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
-                  whiteSpace: 'nowrap', flexShrink: 0
-                }}>
-                  <span>🏢</span> <span>Immobilier & Terrains</span>
-                </Link>
-              )
-            }
-
-            if (c.slug === 'annonces') {
-              return (
-                <Link key={c.slug} href="/annonces" prefetch={false} aria-label="Petites Annonces au Sénégal" className="categ-pill" style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
-                  whiteSpace: 'nowrap', flexShrink: 0
-                }}>
-                  <span>📢</span> <span>Petites Annonces</span>
-                </Link>
-              )
-            }
-
-            if (c.slug === 'telecom') {
-              return (
-                <Link key={c.slug} href="/telecom" prefetch={false} aria-label="Télécom et forfaits mobiles" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                  background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 2px 4px rgba(26,22,18,0.03)',
-                  whiteSpace: 'nowrap', flexShrink: 0
-                }}>
+                <Link
+                  key={c.slug}
+                  href={isSelected ? '/#resultats' : `/?categorie=${c.slug}#resultats`}
+                  prefetch={false}
+                  aria-label={`Filtrer par catégorie ${c.label}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
+                    fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
+                    background: isSelected ? 'var(--accent, #C75B00)' : '#fff',
+                    color: isSelected ? '#fff' : 'var(--text-strong, #2A231E)',
+                    border: isSelected ? '1px solid var(--accent, #C75B00)' : '1px solid var(--border-light, #DDD5CB)',
+                    boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(26,22,18,0.03)',
+                    transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap', flexShrink: 0
+                  }}
+                >
                   <span>{c.emoji}</span> <span>{c.label}</span>
                 </Link>
               )
-            }
-
-            return (
-              <Link
-                key={c.slug}
-                href={isSelected ? '/#resultats' : `/?categorie=${c.slug}#resultats`}
-                prefetch={false}
-                aria-label={`Filtrer par catégorie ${c.label}`}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
-                  fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
-                  background: isSelected ? 'var(--accent, #C75B00)' : '#fff',
-                  color: isSelected ? '#fff' : 'var(--text-strong, #2A231E)',
-                  border: isSelected ? '1px solid var(--accent, #C75B00)' : '1px solid var(--border-light, #DDD5CB)',
-                  boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.22)' : '0 2px 4px rgba(26,22,18,0.03)',
-                  transition: 'all 0.15s ease',
-                  whiteSpace: 'nowrap', flexShrink: 0
-                }}
-              >
-                <span>{c.emoji}</span> <span>{c.label}</span>
-              </Link>
-            )
-          })}
+            })}
+          </div>
         </div>
       </section>
 
@@ -385,7 +321,7 @@ export default async function HomePage({
         {/* ── BARRE DE FILTRES EN 2 LIGNES STRICTES SANS AUCUN RETOUR À LA LIGNE ────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
           
-          {/* LIGNE 1 STRICTE : Budget + État (Gauche) | Bouton Boutique (Droite) */}
+          {/* LIGNE 1 : Budget + État */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', flexWrap: 'nowrap' }}>
             <div className="horizontal-scroll-fade" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-subtle, #5A4E42)', whiteSpace: 'nowrap', marginRight: 2 }}>Budget :</span>
@@ -397,7 +333,7 @@ export default async function HomePage({
                     href={buildFilterUrl({ prixMin: b.prixMin, prixMax: b.prixMax })}
                     prefetch={false}
                     className={`budget-pill${isActive ? ' active' : ''}`}
-                    style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
+                    style={{ padding: '4px 10px', fontSize: 12, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
                   >
                     {b.label}
                   </Link>
@@ -415,7 +351,7 @@ export default async function HomePage({
                     href={buildFilterUrl({ etat: e.val })}
                     prefetch={false}
                     className={`budget-pill hidden-mobile${isActive ? ' active' : ''}`}
-                    style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
+                    style={{ padding: '4px 10px', fontSize: 12, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
                   >
                     {e.label}
                   </Link>
@@ -423,21 +359,23 @@ export default async function HomePage({
               })}
             </div>
 
-            <Link
-              href="/creer-boutique"
-              className="hidden-mobile"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--navy, #1C2B4A)', color: '#fff',
-                padding: '5px 12px', borderRadius: 18, fontSize: 11.5, fontWeight: 800, textDecoration: 'none',
-                whiteSpace: 'nowrap', flexShrink: 0, boxShadow: '0 2px 6px rgba(28,43,74,0.12)'
-              }}
-            >
-              <span style={{ color: 'var(--accent, #C75B00)', fontSize: 12 }}>⚡</span>
-              Ouvrir une Boutique Pro
-            </Link>
+            {hasFiltre ? (
+              <Link
+                href="/#resultats"
+                prefetch={false}
+                className="budget-pill hidden-mobile"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2',
+                  background: '#fef2f2', fontWeight: 700, padding: '4px 10px', fontSize: 12, borderRadius: 14,
+                  whiteSpace: 'nowrap', flexShrink: 0
+                }}
+              >
+                <span>✖</span> Réinitialiser
+              </Link>
+            ) : null}
           </div>
 
-          {/* LIGNE 2 STRICTE : Trier + Tendances (Gauche) | Effacer (Droite) */}
+          {/* LIGNE 2 : Trier + Tendances */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%', flexWrap: 'nowrap' }}>
             <div className="horizontal-scroll-fade" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-subtle, #5A4E42)', whiteSpace: 'nowrap', marginRight: 2 }}>Trier :</span>
@@ -449,7 +387,7 @@ export default async function HomePage({
                     href={buildFilterUrl({ tri: t.val })}
                     prefetch={false}
                     className={`budget-pill${isActive ? ' active' : ''}`}
-                    style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
+                    style={{ padding: '4px 10px', fontSize: 12, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
                   >
                     {t.label}
                   </Link>
@@ -465,39 +403,12 @@ export default async function HomePage({
                   href={buildFilterUrl({ q: item.q })}
                   prefetch={false}
                   className="budget-pill hidden-mobile"
-                  style={{ padding: '3px 9px', fontSize: 11.5, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
+                  style={{ padding: '4px 10px', fontSize: 12, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
                 >
                   {item.label}
                 </Link>
               ))}
             </div>
-
-            {hasFiltre ? (
-              <Link
-                href="/#resultats"
-                prefetch={false}
-                className="budget-pill hidden-mobile"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2',
-                  background: '#fef2f2', fontWeight: 700, padding: '3px 9px', fontSize: 11.5, borderRadius: 14,
-                  whiteSpace: 'nowrap', flexShrink: 0
-                }}
-              >
-                <span>✖</span> Effacer
-              </Link>
-            ) : null}
-          </div>
-
-          {/* BARRE ACTION MOBILE ONLY */}
-          <div className="visible-mobile-flex" style={{ display: 'none', gap: 8, width: '100%', paddingTop: 2 }}>
-            {hasFiltre ? (
-              <Link href="/#resultats" className="budget-pill" style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2', background: '#fef2f2', margin: 0, padding: '5px 10px', fontSize: 11.5 }}>
-                <span>✖</span> Effacer
-              </Link>
-            ) : null}
-            <Link href="/creer-boutique" style={{ flex: 2, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--navy, #1C2B4A)', color: '#fff', padding: '5px 12px', borderRadius: 18, fontSize: 11.5, fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 6px rgba(28,43,74,0.12)' }}>
-              <span style={{ fontSize: 12 }}>🏪</span> Boutique Pro
-            </Link>
           </div>
         </div>
 
@@ -591,12 +502,12 @@ export default async function HomePage({
                 Suivez nos vidéos TikTok, recevez les baisses de prix en direct sur notre Canal WhatsApp et profitez des ventes flash exclusives à Dakar.
               </p>
 
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a
                   href="https://www.tiktok.com/@nopalou.com?_r=1&_t=ZS-98f75NgDJNS"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#000000', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none', transition: 'transform 0.15s' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 20, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.15s ease' }}
                 >
                   <span>🎵</span> <span>TikTok (@nopalou.com)</span>
                 </a>
@@ -604,15 +515,15 @@ export default async function HomePage({
                   href="https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#25D366', color: '#ffffff', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none', transition: 'transform 0.15s' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'rgba(37, 211, 102, 0.15)', color: '#86efac', border: '1px solid rgba(37, 211, 102, 0.35)', borderRadius: 20, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.15s ease' }}
                 >
-                  <span>📢</span> <span>Canal WhatsApp</span>
+                  <span>💬</span> <span>Canal WhatsApp</span>
                 </a>
                 <a
                   href="https://www.facebook.com/profile.php?id=61591675701726"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#1877F2', color: '#ffffff', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 20, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.15s ease' }}
                 >
                   <span>📘</span> <span>Facebook</span>
                 </a>
@@ -620,7 +531,7 @@ export default async function HomePage({
                   href="https://www.instagram.com/nopalousn/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', color: '#ffffff', border: 'none', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 20, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.15s ease' }}
                 >
                   <span>📸</span> <span>Instagram</span>
                 </a>
@@ -628,7 +539,7 @@ export default async function HomePage({
                   href="https://twitter.com/nopalou_sn"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: 'var(--navy, #1C2B4A)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 24, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 20, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.15s ease' }}
                 >
                   <span>𝕏</span> <span>Twitter</span>
                 </a>

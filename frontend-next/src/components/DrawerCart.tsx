@@ -345,7 +345,7 @@ export default function DrawerCart() {
     return (
       <div
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(8px)',
+          position: 'fixed', inset: 0, background: 'rgba(28,43,74,0.6)', backdropFilter: 'blur(8px)',
           zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
         }}
         onClick={() => { setOrderSuccessData(null); setCheckoutMode('whatsapp'); closeCart(); }}
@@ -353,7 +353,7 @@ export default function DrawerCart() {
         <div
           style={{
             background: '#ffffff', borderRadius: 24, padding: '32px 26px', width: '100%', maxWidth: 480,
-            textAlign: 'center', boxShadow: '0 25px 60px -12px rgba(0,0,0,0.4)', display: 'flex',
+            textAlign: 'center', boxShadow: '0 25px 60px -12px rgba(28,43,74,0.3)', display: 'flex',
             flexDirection: 'column', alignItems: 'center', gap: 16, animation: 'fadeInScale 0.25s ease-out'
           }}
           onClick={e => e.stopPropagation()}
@@ -401,10 +401,10 @@ export default function DrawerCart() {
           </div>
 
           {/* Récapitulatif Box */}
-          <div style={{ width: '100%', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '14px 16px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748b' }}>
+          <div style={{ width: '100%', background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)', borderRadius: 14, padding: '14px 16px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text2, #6B5E52)' }}>
               <span>Boutique</span>
-              <strong style={{ color: '#1e293b' }}>{orderSuccessData.boutiqueNom}</strong>
+              <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{orderSuccessData.boutiqueNom}</strong>
             </div>
             {orderSuccessData.codePromo && (
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 700 }}>
@@ -412,7 +412,7 @@ export default function DrawerCart() {
                 <span>-{fcfa(orderSuccessData.reduction)}</span>
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 900, color: '#C75B00', borderTop: '1px solid #e2e8f0', paddingTop: 6, marginTop: 2 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 900, color: 'var(--accent, #C75B00)', borderTop: '1px solid var(--border, #E8DDD2)', paddingTop: 6, marginTop: 2 }}>
               <span>Total {isCredit ? 'à inscrire' : 'à régler'}</span>
               <span>{fcfa(orderSuccessData.total)}</span>
             </div>
@@ -442,7 +442,7 @@ export default function DrawerCart() {
             <button
               onClick={() => { setOrderSuccessData(null); setCheckoutMode('whatsapp'); closeCart(); }}
               style={{
-                width: '100%', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 14,
+                width: '100%', background: 'var(--navy, #1C2B4A)', color: '#fff', border: 'none', borderRadius: 14,
                 padding: '13px 20px', fontWeight: 800, fontSize: 14, cursor: 'pointer'
               }}
             >
@@ -457,21 +457,24 @@ export default function DrawerCart() {
   // 2. Si le panier est vide et pas de commande en succès, ne rien afficher
   if (!activeCart || items.length === 0) return null
 
-  // 3. Bouton flottant lorsque le tiroir est fermé
+  // 3. Bouton flottant lorsque le tiroir est fermé (desktop uniquement pour ne pas chevaucher la bottom nav mobile)
   if (!isCartOpen) {
     return (
       <button
         onClick={() => activeBoutiqueId && openCart(activeBoutiqueId)}
+        className="drawer-cart-floating-btn"
         style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 999,
+          position: 'fixed', bottom: 28, right: 28, zIndex: 990,
           background: 'var(--accent, #C75B00)', color: '#fff', border: 'none', borderRadius: 30,
-          padding: '14px 22px', fontWeight: 900, fontSize: 15, cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(199,91,0,0.4)', display: 'flex', alignItems: 'center', gap: 10,
+          padding: '13px 20px', fontWeight: 800, fontSize: 14.5, cursor: 'pointer',
+          boxShadow: '0 8px 24px rgba(199,91,0,0.35)', display: 'flex', alignItems: 'center', gap: 10,
+          letterSpacing: '-0.01em', transition: 'transform 0.15s ease, box-shadow 0.15s ease'
         }}
+        aria-label="Voir le panier"
       >
         <ShoppingBag size={18} />
         <span>{t('shop.cartTitle')} ({getCartItemCount(activeBoutiqueId!)})</span>
-        <span style={{ background: 'rgba(255,255,255,0.2)', padding: '3px 8px', borderRadius: 12, fontSize: 13, fontWeight: 800 }}>
+        <span style={{ background: 'rgba(255,255,255,0.22)', padding: '3px 8px', borderRadius: 12, fontSize: 12.5, fontWeight: 900 }}>
           {fcfa(totalGlobal)}
         </span>
       </button>
@@ -482,14 +485,22 @@ export default function DrawerCart() {
     <div className="drawer-cart-overlay" onClick={closeCart}>
       <div className="drawer-cart-container" onClick={e => e.stopPropagation()}>
         <style jsx global>{`
+          .drawer-cart-floating-btn {
+            display: flex;
+          }
+          @media (max-width: 768px) {
+            .drawer-cart-floating-btn {
+              display: none !important;
+            }
+          }
           .drawer-cart-overlay {
             position: fixed;
             inset: 0;
             z-index: 9999;
             display: flex;
             justify-content: flex-end;
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(6px);
+            background: rgba(28, 43, 74, 0.45);
+            backdrop-filter: blur(8px);
           }
           .drawer-cart-container {
             width: 100%;
@@ -498,7 +509,7 @@ export default function DrawerCart() {
             height: 100%;
             display: flex;
             flex-direction: column;
-            box-shadow: -10px 0 40px rgba(0,0,0,0.3);
+            box-shadow: -10px 0 40px rgba(28,43,74,0.18);
             animation: slideLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           }
@@ -508,17 +519,17 @@ export default function DrawerCart() {
           .premium-cart-input {
             width: 100%;
             padding: 11px 13px;
-            border: 1.5px solid #e2e8f0;
+            border: 1.5px solid var(--border, #E8DDD2);
             border-radius: 12px;
             font-size: 13.5px;
-            color: #0f172a;
+            color: var(--text1, #1A1612);
             background: #ffffff;
             transition: all 0.2s ease;
             box-sizing: border-box;
             outline: none;
           }
           .premium-cart-input:focus {
-            border-color: #C75B00;
+            border-color: var(--accent, #C75B00);
             box-shadow: 0 0 0 3px rgba(199, 91, 0, 0.12);
           }
           .cart-mode-card {
@@ -527,7 +538,7 @@ export default function DrawerCart() {
             gap: 4px;
             padding: 12px 14px;
             border-radius: 14px;
-            border: 2px solid #e2e8f0;
+            border: 1.5px solid var(--border, #E8DDD2);
             background: #ffffff;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -542,7 +553,7 @@ export default function DrawerCart() {
             box-shadow: 0 4px 14px -2px rgba(34, 197, 94, 0.2);
           }
           .cart-mode-card.active-form {
-            border-color: #C75B00;
+            border-color: var(--accent, #C75B00);
             background: #fff7ed;
             box-shadow: 0 4px 14px -2px rgba(199, 91, 0, 0.2);
           }
@@ -552,18 +563,18 @@ export default function DrawerCart() {
             gap: 8px;
             padding: 10px 12px;
             border-radius: 10px;
-            border: 1.5px solid #e2e8f0;
+            border: 1.5px solid var(--border, #E8DDD2);
             background: #ffffff;
             font-size: 13px;
             font-weight: 600;
-            color: #334155;
+            color: var(--text2, #6B5E52);
             cursor: pointer;
             transition: all 0.2s ease;
           }
           .payment-chip-btn.selected {
-            border-color: #C75B00;
-            background: #fff7ed;
-            color: #9a3412;
+            border-color: var(--accent, #C75B00);
+            background: var(--orange2, #FFF3E8);
+            color: var(--accent, #C75B00);
             box-shadow: 0 0 0 2px rgba(199, 91, 0, 0.15);
           }
           @keyframes slideLeft {
@@ -577,18 +588,18 @@ export default function DrawerCart() {
             .drawer-cart-container {
               max-width: 100%;
               height: auto;
-              max-height: 92vh;
+              max-height: 90vh;
               border-top-left-radius: 24px;
               border-top-right-radius: 24px;
               animation: slideUp 0.25s ease-out;
             }
             .mobile-cart-handle {
               display: block;
-              width: 44px;
-              height: 5px;
+              width: 40px;
+              height: 4px;
               border-radius: 3px;
-              background: #cbd5e1;
-              margin: 6px auto 8px;
+              background: var(--border, #E8DDD2);
+              margin: 4px auto 10px;
             }
             @keyframes slideUp {
               from { transform: translateY(100%); }
@@ -669,12 +680,12 @@ export default function DrawerCart() {
           </div>
 
           {/* Section Options & Finalisation de commande */}
-          <div style={{ padding: '16px 20px 24px', borderTop: '1.5px solid #f1f5f9', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 14, marginTop: 'auto' }}>
+          <div style={{ padding: '16px 20px 24px', borderTop: '1px solid var(--border, #E8DDD2)', background: 'var(--bg, #F8F5F0)', display: 'flex', flexDirection: 'column', gap: 14, marginTop: 'auto' }}>
             
             {/* Choix zone de livraison */}
             {zones.length > 0 && (
               <div>
-                <label style={{ fontSize: 12, fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--text1, #1A1612)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <span>📍</span> {t('shop.deliveryZoneLabel')}
                 </label>
                 <select
@@ -692,8 +703,8 @@ export default function DrawerCart() {
             )}
 
             {/* Section Code Promo */}
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '12px 14px' }}>
-              <label style={{ fontSize: 12, fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+            <div style={{ background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', borderRadius: 14, padding: '12px 14px' }}>
+              <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--text1, #1A1612)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <span>🏷️</span> Code Promo (optionnel)
               </label>
 
@@ -729,7 +740,7 @@ export default function DrawerCart() {
                     onClick={appliquerCodePromo}
                     disabled={promoLoading || !codePromo.trim()}
                     style={{
-                      background: '#0f172a', color: '#fff', border: 'none', borderRadius: 10,
+                      background: 'var(--navy, #1C2B4A)', color: '#fff', border: 'none', borderRadius: 10,
                       padding: '9px 14px', fontSize: 13, fontWeight: 800, cursor: (promoLoading || !codePromo.trim()) ? 'not-allowed' : 'pointer',
                       opacity: (promoLoading || !codePromo.trim()) ? 0.6 : 1, whiteSpace: 'nowrap'
                     }}
@@ -745,10 +756,10 @@ export default function DrawerCart() {
             </div>
 
             {/* Récapitulatif Prix */}
-            <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748b' }}>
+            <div style={{ background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, boxShadow: 'var(--shadow-xs)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text2, #6B5E52)' }}>
                 <span>{t('common.subtotal')}</span>
-                <strong style={{ color: '#1e293b' }}>{fcfa(sousTotal)}</strong>
+                <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{fcfa(sousTotal)}</strong>
               </div>
               {reductionMontant > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 700 }}>
@@ -757,12 +768,12 @@ export default function DrawerCart() {
                 </div>
               )}
               {fraisLivraison > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748b' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text2, #6B5E52)' }}>
                   <span>{t('shop.deliveryLabel')}</span>
                   <span>{fcfa(fraisLivraison)}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16.5, fontWeight: 900, color: '#C75B00', borderTop: '1.5px solid #f1f5f9', paddingTop: 8, marginTop: 2 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16.5, fontWeight: 900, color: 'var(--accent, #C75B00)', borderTop: '1px solid var(--border, #E8DDD2)', paddingTop: 8, marginTop: 2 }}>
                 <span>{t('common.total')}</span>
                 <span>{fcfa(totalGlobal)}</span>
               </div>

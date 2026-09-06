@@ -24,7 +24,8 @@ interface CartContextType {
   carts: Record<string, BoutiqueCart>
   activeBoutiqueId: string | null
   isCartOpen: boolean
-  openCart: (boutiqueId: string) => void
+  totalItemCount: number
+  openCart: (boutiqueId?: string) => void
   closeCart: () => void
   addToCart: (
     boutiqueId: string,
@@ -72,14 +73,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch { /* ignoré */ }
   }, [carts])
 
-  function openCart(boutiqueId: string) {
-    setActiveBoutiqueId(boutiqueId)
+  function openCart(boutiqueId?: string) {
+    const targetId = boutiqueId || activeBoutiqueId || Object.keys(carts)[0] || null
+    if (targetId) {
+      setActiveBoutiqueId(targetId)
+    }
     setIsCartOpen(true)
   }
 
   function closeCart() {
     setIsCartOpen(false)
   }
+
+  const totalItemCount = Object.values(carts).reduce((acc, c) => {
+    return acc + (c.items || []).reduce((sum, item) => sum + (item.quantite || 0), 0)
+  }, 0)
 
   function addToCart(
     boutiqueId: string,
@@ -194,6 +202,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       carts,
       activeBoutiqueId,
       isCartOpen,
+      totalItemCount,
       openCart,
       closeCart,
       addToCart,
