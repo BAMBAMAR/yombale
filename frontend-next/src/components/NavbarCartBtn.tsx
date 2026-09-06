@@ -45,11 +45,13 @@ export default function NavbarCartBtn() {
             minWidth: 18,
             padding: '0 4px',
             borderRadius: 9999,
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 2px 6px rgba(199,91,0,0.35)',
             lineHeight: 1,
+            zIndex: 2,
+            boxSizing: 'border-box',
           }}
         >
           {totalItemCount > 99 ? '99+' : totalItemCount}

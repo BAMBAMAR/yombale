@@ -45,6 +45,8 @@ interface CartContextType {
   removeFromCart: (boutiqueId: string, productId: string) => void
   updateQuantity: (boutiqueId: string, productId: string, delta: number) => void
   clearCart: (boutiqueId: string) => void
+  clearAllCarts: () => void
+  setActiveBoutiqueId: (boutiqueId: string) => void
   getCartTotal: (boutiqueId: string) => number
   getCartItemCount: (boutiqueId: string) => number
 }
@@ -56,12 +58,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [activeBoutiqueId, setActiveBoutiqueId] = useState<string | null>(null)
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false)
 
-  // Charger le panier depuis localStorage
+  // Charger et assainir le panier depuis localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('nopalou_carts')
       if (saved) {
-        setCarts(JSON.parse(saved))
+        const parsed = JSON.parse(saved)
+        if (parsed && typeof parsed === 'object') {
+          const sanitized: Record<string, BoutiqueCart> = {}
+          for (const [k, v] of Object.entries(parsed as Record<string, BoutiqueCart>)) {
+            if (v && Array.isArray(v.items) && v.items.length > 0) {
+              sanitized[k] = {
+                ...v,
+                items: v.items.filter(item => item && item.id && (item.quantite || 0) > 0)
+              }
+            }
+          }
+          setCarts(sanitized)
+          const firstBoutique = Object.keys(sanitized)[0] || null
+          if (firstBoutique) setActiveBoutiqueId(firstBoutique)
+        }
       }
     } catch { /* ignoré */ }
   }, [])
@@ -69,14 +85,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Sauvegarder dans localStorage à chaque modification
   useEffect(() => {
     try {
-      localStorage.setItem('nopalou_carts', JSON.stringify(carts))
+      // Si tous les paniers sont vides, nettoyer localStorage
+      if (Object.keys(carts).length === 0) {
+        localStorage.removeItem('nopalou_carts')
+      } else {
+        localStorage.setItem('nopalou_carts', JSON.stringify(carts))
+      }
     } catch { /* ignoré */ }
   }, [carts])
 
+  // Basculer automatiquement l'activeBoutiqueId si la boutique courante est supprimée/vide
+  useEffect(() => {
+    if (activeBoutiqueId && (!carts[activeBoutiqueId] || carts[activeBoutiqueId].items.length === 0)) {
+      const nextBoutique = Object.keys(carts).find(id => (carts[id]?.items || []).length > 0) || null
+      setActiveBoutiqueId(nextBoutique)
+    }
+  }, [carts, activeBoutiqueId])
+
   function openCart(boutiqueId?: string) {
-    const targetId = boutiqueId || activeBoutiqueId || Object.keys(carts)[0] || null
-    if (targetId) {
-      setActiveBoutiqueId(targetId)
+    if (boutiqueId && carts[boutiqueId]?.items?.length > 0) {
+      setActiveBoutiqueId(boutiqueId)
+    } else if (activeBoutiqueId && (carts[activeBoutiqueId]?.items || []).length > 0) {
+      // On garde la boutique active si elle a des articles
+    } else {
+      // Trouver la première boutique qui contient des articles
+      const boutiqueWithItems = Object.keys(carts).find(id => (carts[id]?.items || []).length > 0)
+      setActiveBoutiqueId(boutiqueWithItems || (boutiqueId ?? Object.keys(carts)[0] ?? null))
     }
     setIsCartOpen(true)
   }
@@ -151,10 +185,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existing = prev[boutiqueId]
       if (!existing) return prev
       const newItems = existing.items.filter(i => i.id !== productId)
-      return {
-        ...prev,
-        [boutiqueId]: { ...existing, items: newItems }
+      const copy = { ...prev }
+      if (newItems.length === 0) {
+        delete copy[boutiqueId]
+        return copy
       }
+      copy[boutiqueId] = { ...existing, items: newItems }
+      return copy
     })
   }
 
@@ -170,10 +207,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return i
       }).filter(Boolean) as CartItem[]
 
-      return {
-        ...prev,
-        [boutiqueId]: { ...existing, items: newItems }
+      const copy = { ...prev }
+      if (newItems.length === 0) {
+        delete copy[boutiqueId]
+        return copy
       }
+      copy[boutiqueId] = { ...existing, items: newItems }
+      return copy
     })
   }
 
@@ -183,6 +223,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       delete copy[boutiqueId]
       return copy
     })
+  }
+
+  function clearAllCarts() {
+    setCarts({})
+    setActiveBoutiqueId(null)
+    try {
+      localStorage.removeItem('nopalou_carts')
+    } catch {}
   }
 
   function getCartTotal(boutiqueId: string): number {
@@ -209,6 +257,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeFromCart,
       updateQuantity,
       clearCart,
+      clearAllCarts,
+      setActiveBoutiqueId,
       getCartTotal,
       getCartItemCount,
     }}>

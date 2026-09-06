@@ -3,8 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ShoppingCart, Heart, User, Store } from 'lucide-react'
-import { useCart } from '@/context/CartContext'
+import { Home, Heart, User, Store, PlusCircle } from 'lucide-react'
 
 interface Props {
   isLoggedIn?: boolean
@@ -13,10 +12,10 @@ interface Props {
 
 export default function MobileBottomNav({ isLoggedIn = false, isMerchant = false }: Props) {
   const pathname = usePathname() || ''
-  const { totalItemCount, openCart } = useCart()
 
   const isHome = pathname === '/'
   const isExplorer = pathname === '/boutiques' || pathname.startsWith('/boutiques/') || pathname.startsWith('/categorie')
+  const isCreerBoutique = pathname === '/creer-boutique' || pathname.startsWith('/creer-boutique')
   const isFavorites = pathname === '/favoris'
   const isAccount = pathname.startsWith('/compte') || pathname === '/connexion' || pathname === '/inscription' || pathname === '/boutique' || pathname.startsWith('/boutique/')
 
@@ -48,23 +47,20 @@ export default function MobileBottomNav({ isLoggedIn = false, isMerchant = false
         <span>Boutiques</span>
       </Link>
 
-      {/* 3. Panier Interactif */}
-      <button
-        type="button"
-        onClick={() => openCart()}
-        className="mobile-bottom-nav-item"
-        aria-label={`Panier (${totalItemCount} article${totalItemCount > 1 ? 's' : ''})`}
+      {/* 3. Créer Boutique (Remplace l'ancien panier redondant) */}
+      <Link
+        href="/creer-boutique"
+        className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreerBoutique ? ' active' : ''}`}
+        aria-label="Créer une boutique pro"
+        aria-current={isCreerBoutique ? 'page' : undefined}
       >
-        <div className="mobile-bottom-nav-icon-wrap">
-          <ShoppingCart size={20} strokeWidth={2} />
-          {totalItemCount > 0 && (
-            <span className="mobile-bottom-nav-badge">
-              {totalItemCount > 99 ? '99+' : totalItemCount}
-            </span>
-          )}
+        <div className="mobile-bottom-nav-cta-btn">
+          <PlusCircle size={18} strokeWidth={2.5} />
         </div>
-        <span>Panier</span>
-      </button>
+        <span style={{ fontWeight: 800, color: isCreerBoutique ? 'var(--accent, #C75B00)' : 'inherit' }}>
+          Créer boutique
+        </span>
+      </Link>
 
       {/* 4. Favoris */}
       <Link

@@ -1,3 +1,23 @@
+- **Correction des Dysfonctionnements Panier (Badge persistant, Élimination de la Superposition et Redondance Mobile) & Remplacement par "Créer Boutique" (`CartContext.tsx`, `DrawerCart.tsx`, `MobileBottomNav.tsx`, `NavbarCartBtn.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 🛒📱✨🎯🚀 :
+  * **🛒 1. Éradication du Bug de Badge Panier Bloqué / Décalage Multi-Boutiques (`CartContext.tsx`, `DrawerCart.tsx`)** :
+    - Nettoyage automatique des boutiques vides : `removeFromCart` et `updateQuantity` suppriment désormais proprement la clé boutique dès que le nombre d'articles atteint 0 (`delete copy[boutiqueId]`).
+    - Élimination des paniers orphelins dans `localStorage` : assainissement au montage (`useEffect`), suppression automatique de `nopalou_carts` lorsque le panier est complètement vide.
+    - Sélection intelligente de boutique dans `openCart` : ciblage prioritaire d'une boutique avec articles (`items.length > 0`), évitant l'ouverture silencieuse sur une boutique vide qui masquait le tiroir.
+    - Ajout des fonctions `clearAllCarts()` et `setActiveBoutiqueId()` dans le contexte.
+    - Prise en charge multi-boutiques dans `DrawerCart` : ajout d'onglets de sélection lorsque des articles proviennent de plusieurs boutiques différentes, et bouton « Vider » rapide dans l'en-tête.
+    - Gestion propre de l'état panier vide dans le tiroir (`ShoppingBag` + message bienveillant + lien « Explorer les boutiques ») au lieu d'un renvoi `null` silencieux.
+  * **🚫 2. Suppression de la Redondance et de la Superposition Visuelle (`DrawerCart.tsx`, `globals.css`)** :
+    - Suppression définitive du bouton flottant orange superposé (`drawer-cart-floating-btn` : *"Mon Panier (1) | 7 500 FCFA"*) qui chevauchait la barre basse mobile (`MobileBottomNav`).
+    - L'accès au panier est désormais unifié et universel via l'icône de panier du header (`NavbarCartBtn`) avec son badge réactif en temps réel.
+  * **📱 3. Remplacement du Panier dans la Barre Basse Mobile par "Créer Boutique" (`MobileBottomNav.tsx`, `globals.css`)** :
+    - Remplacement de l'ancien onglet redondant "Panier" par le bouton central d'action vendeur **« Créer boutique »** (`/creer-boutique`).
+    - Visuel ergonomique moderne avec bouton circulaire orange (`.mobile-bottom-nav-cta-btn`) et icône `PlusCircle` / boutique.
+    - Navigation mobile claire et optimisée : `Accueil` | `Boutiques` | `Créer boutique` | `Favoris` | `Compte`.
+  * **🧪 4. Validation & Conformité** :
+    - TypeScript strict vérifié sans aucune erreur sur l'ensemble des fichiers modifiés (`DrawerCart.tsx`, `MobileBottomNav.tsx`, `CartContext.tsx`, `NavbarCartBtn.tsx`).
+    - Zéro CDN de polices externes (respect strict des directives).
+  * **📦 5. Statut** : Prêt et validé localement (aucun git push exécuté, conformément à la règle stricte).
+
 - **Correction Troncature En-tête Desktop & Mise en Avant des Forfaits et Solutions Vendeurs Nopalou (`globals.css`, `NavbarActions.tsx`, `layout.tsx`, `page.tsx`, `ShowcaseTabs.tsx`, `MobileNav.tsx`, `MobileBottomNav.tsx`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 🚀🏪💳🛒📱✨ :
   * **🖥️ 1. Résolution du Débordement Horizontal de l'En-tête Desktop (`globals.css`, `NavbarActions.tsx`, `layout.tsx`)** :
     - Marges adaptatives : remplacement de `padding: 0 4%` par `padding: 0 clamp(10px, 1.8vw, 24px)` sur `.navbar`.

@@ -38,7 +38,7 @@ const DEFAULT_ZONES: Zone[] = [
 
 export default function DrawerCart() {
   const { t } = useTranslation()
-  const { carts, activeBoutiqueId, isCartOpen, openCart, closeCart, updateQuantity, removeFromCart, clearCart, getCartTotal, getCartItemCount } = useCart()
+  const { carts, activeBoutiqueId, isCartOpen, openCart, closeCart, updateQuantity, removeFromCart, clearCart, clearAllCarts, setActiveBoutiqueId, getCartTotal, getCartItemCount } = useCart()
   const [zones, setZones] = useState<Zone[]>(DEFAULT_ZONES)
   const [zoneId, setZoneId] = useState<string>('dakar-intra')
   const [loadingCheckout, setLoadingCheckout] = useState<boolean>(false)
@@ -454,32 +454,11 @@ export default function DrawerCart() {
     )
   }
 
-  // 2. Si le panier est vide et pas de commande en succès, ne rien afficher
-  if (!activeCart || items.length === 0) return null
+  // 2. Si le tiroir n'est pas ouvert et pas de confirmation de commande, ne rien afficher
+  // (Suppression définitive du bouton flottant pour éliminer toute superposition et redondance)
+  if (!isCartOpen) return null
 
-  // 3. Bouton flottant lorsque le tiroir est fermé (desktop uniquement pour ne pas chevaucher la bottom nav mobile)
-  if (!isCartOpen) {
-    return (
-      <button
-        onClick={() => activeBoutiqueId && openCart(activeBoutiqueId)}
-        className="drawer-cart-floating-btn"
-        style={{
-          position: 'fixed', bottom: 28, right: 28, zIndex: 990,
-          background: 'var(--accent, #C75B00)', color: '#fff', border: 'none', borderRadius: 30,
-          padding: '13px 20px', fontWeight: 800, fontSize: 14.5, cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(199,91,0,0.35)', display: 'flex', alignItems: 'center', gap: 10,
-          letterSpacing: '-0.01em', transition: 'transform 0.15s ease, box-shadow 0.15s ease'
-        }}
-        aria-label="Voir le panier"
-      >
-        <ShoppingBag size={18} />
-        <span>{t('shop.cartTitle')} ({getCartItemCount(activeBoutiqueId!)})</span>
-        <span style={{ background: 'rgba(255,255,255,0.22)', padding: '3px 8px', borderRadius: 12, fontSize: 12.5, fontWeight: 900 }}>
-          {fcfa(totalGlobal)}
-        </span>
-      </button>
-    )
-  }
+  const boutiquesWithItems = Object.keys(carts).filter(id => (carts[id]?.items || []).length > 0)
 
   return (
     <div className="drawer-cart-overlay" onClick={closeCart}>
@@ -613,36 +592,117 @@ export default function DrawerCart() {
           <div className="mobile-cart-handle" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)', background: 'var(--orange2, #FFF3E8)', padding: '2px 8px', borderRadius: 6, textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <Store size={12} />
-                  <span>{activeCart.boutiqueNom}</span>
-                </span>
-              </div>
+              {activeCart?.boutiqueNom && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)', background: 'var(--orange2, #FFF3E8)', padding: '2px 8px', borderRadius: 6, textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <Store size={12} />
+                    <span>{activeCart.boutiqueNom}</span>
+                  </span>
+                </div>
+              )}
               <h2 style={{ margin: 0, fontSize: 17, color: 'var(--navy, #1C2B4A)', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <ShoppingBag size={18} style={{ color: 'var(--accent)' }} />
-                <span>{t('caisse.cart')} ({getCartItemCount(activeBoutiqueId!)})</span>
+                <span>{t('caisse.cart')} ({activeBoutiqueId ? getCartItemCount(activeBoutiqueId) : 0})</span>
               </h2>
             </div>
-            <button
-              onClick={closeCart}
-              style={{
-                width: 34, height: 34, borderRadius: '50%', background: 'var(--bg, #F8F5F0)',
-                border: '1px solid var(--border, #E8DDD2)', fontSize: 16, cursor: 'pointer', color: 'var(--text2, #6B5E52)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800,
-              }}
-              title={t('common.close')}
-            >
-              <X size={16} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeBoutiqueId) {
+                      clearCart(activeBoutiqueId)
+                    }
+                  }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626',
+                    borderRadius: 8, padding: '5px 8px', fontSize: 11.5, fontWeight: 800, cursor: 'pointer'
+                  }}
+                  title="Vider ce panier"
+                >
+                  <Trash2 size={13} />
+                  <span>Vider</span>
+                </button>
+              )}
+              <button
+                onClick={closeCart}
+                style={{
+                  width: 34, height: 34, borderRadius: '50%', background: 'var(--bg, #F8F5F0)',
+                  border: '1px solid var(--border, #E8DDD2)', fontSize: 16, cursor: 'pointer', color: 'var(--text2, #6B5E52)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800,
+                }}
+                title={t('common.close')}
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Multi-boutiques Switcher Tabs si articles dans plusieurs boutiques */}
+        {boutiquesWithItems.length > 1 && (
+          <div style={{ padding: '8px 16px', background: '#F1F5F9', borderBottom: '1px solid var(--border, #E8DDD2)', display: 'flex', gap: 6, overflowX: 'auto' }}>
+            {boutiquesWithItems.map(bId => {
+              const bCart = carts[bId]
+              const isSelected = activeBoutiqueId === bId
+              const bCount = (bCart?.items || []).reduce((s, it) => s + (it.quantite || 0), 0)
+              return (
+                <button
+                  key={bId}
+                  type="button"
+                  onClick={() => setActiveBoutiqueId(bId)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px',
+                    borderRadius: 8, border: isSelected ? '1.5px solid var(--accent, #C75B00)' : '1px solid #CBD5E1',
+                    background: isSelected ? '#FFF7ED' : '#FFFFFF', color: isSelected ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                    fontWeight: 800, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap'
+                  }}
+                >
+                  <Store size={13} />
+                  <span>{bCart?.boutiqueNom || 'Boutique'}</span>
+                  <span style={{
+                    background: isSelected ? 'var(--accent, #C75B00)' : '#E2E8F0',
+                    color: isSelected ? '#FFFFFF' : '#475569',
+                    padding: '1px 6px', borderRadius: 8, fontSize: 10.5, fontWeight: 900
+                  }}>
+                    {bCount}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {/* Contenu Scrollable (Articles + Options + Formulaires) */}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          
-          {/* Liste des Articles du Panier */}
-          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {items.length === 0 ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
+              <div style={{ width: 68, height: 68, borderRadius: '50%', background: 'var(--orange2, #FFF3E8)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <ShoppingBag size={32} style={{ color: 'var(--accent, #C75B00)' }} />
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '0 0 8px' }}>Votre panier est vide</h3>
+              <p style={{ fontSize: 13, color: 'var(--text2, #6B5E52)', margin: '0 0 24px', maxWidth: 280, lineHeight: 1.5 }}>
+                Parcourez nos boutiques partenaires pour ajouter des articles et commander rapidement.
+              </p>
+              <a
+                href="/boutiques"
+                onClick={closeCart}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: 'var(--accent, #C75B00)', color: '#fff', textDecoration: 'none',
+                  padding: '12px 22px', borderRadius: 12, fontWeight: 800, fontSize: 13.5,
+                  boxShadow: '0 4px 12px rgba(199,91,0,0.25)'
+                }}
+              >
+                <Store size={16} />
+                <span>Explorer les boutiques</span>
+              </a>
+            </div>
+          ) : (
+            <>
+              {/* Liste des Articles du Panier */}
+              <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {items.map(item => (
               <div key={item.id} style={{ display: 'flex', gap: 12, padding: '12px', background: '#ffffff', borderRadius: 14, border: '1px solid var(--border, #E8DDD2)', alignItems: 'center', boxShadow: 'var(--shadow-xs)' }}>
                 <div style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: 'var(--bg, #F8F5F0)' }}>
@@ -893,7 +953,7 @@ export default function DrawerCart() {
                   <span>{t('shop.orderViaWhatsAppDirect')} ({fcfa(totalGlobal)}) →</span>
                 </button>
 
-                {activeCart.whatsapp && (
+                {activeCart?.whatsapp && (
                   <a
                     href={`tel:${activeCart.whatsapp.replace(/\D/g, '')}`}
                     style={{
@@ -1003,10 +1063,11 @@ export default function DrawerCart() {
                 </button>
               </form>
             )}
-
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
+  </div>
+</div>
   )
 }
