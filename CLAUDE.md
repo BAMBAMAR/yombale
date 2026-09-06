@@ -1,3 +1,23 @@
+- **Rééquilibrage Ergonomique & Aération du Hero d'Accueil (`page.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 📐✨🌬️ :
+  * **🌬️ 1. Élimination du Tassement & Rétablissement de l'Espace Vital** :
+    - Rétablissement d'une hauteur optimale aérée (~200px) évitant l'effet écrasé/mélangé tout en restant deux fois plus compact que la version initiale.
+    - Marges de la section ramenées à **`16px 20px 14px`** avec centrage élégant `maxWidth: 1060px` et espacement équilibré `gap: 22px`.
+  * **🔍 2. Colonne Recherche Distincte & Bien Hiérarchisée** :
+    - Badge supérieur *"✨ 1er comparateur de prix au Sénégal"* bien séparé au-dessus du titre H1.
+    - Titre H1 prestigieux et clair (`clamp(18px, 2.1vw, 25px)`).
+    - Sous-titre explicatif concis réintroduit pour poser le contexte (*"Comparez des milliers de prix et boutiques vérifiées • 100% gratuit & actualisé toutes les 6h"*).
+    - Barre de recherche confortable et mise en valeur (`padding: 12px 18px`, bouton loupe `48px`, marge basse `8px`).
+    - Ruban de catégories fluide et agréable avec pilules nettes (`padding: 3.5px 9px`, `fontSize: 11px`).
+  * **🏪 3. Carte Commerçants Lisible & Proportionnée** :
+    - Restauration des 3 points clés verticaux avec puces emojis et interligne agréable (*⚡ Caisse tactile*, *📲 Relances impayés*, *🪄 Import Ali/SHEIN 1-clic*).
+    - Tarification claire et mise en avant (*Dès 2 500 FCFA/mois*).
+    - Deux boutons d'action spacieux et faciles à cliquer (*Créer Boutique →* et *Forfaits ↓*).
+    - Alignement parfait en hauteur (`align-items: stretch`).
+  * **🧪 4. Contrôle Qualité** :
+    - Zéro erreur TypeScript sur les fichiers impactés.
+    - Zéro CDN de polices externes (conformité absolue avec les directives Nopalou).
+    - Aucun `git push` sans ordre explicite de l'utilisateur.
+
 - **Ultra-Aplatissement & Compacité Maximale du Hero d'Accueil (`page.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 📐⚡📉✨ :
   * **📉 1. Réduction Maximale de la Hauteur (~100px vs ~380px)** :
     - Diminution drastique des marges de la section à **`6px 14px 6px`**.

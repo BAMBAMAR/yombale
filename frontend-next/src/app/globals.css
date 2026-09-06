@@ -2153,27 +2153,27 @@ a {
 .hero-search {
   display: flex;
   max-width: 620px;
-  margin: 0 auto 5px;
+  margin: 0 auto 8px;
   background: #fff;
   border-radius: var(--r-pill);
   border: 1px solid var(--border-medium);
   overflow: hidden;
-  box-shadow: 0 3px 12px rgba(26,22,18,0.05);
+  box-shadow: 0 4px 18px rgba(26,22,18,0.06);
   position: relative;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .hero-search:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 4px 16px rgba(199,91,0,0.12);
+  box-shadow: 0 6px 24px rgba(199,91,0,0.14);
 }
 
 .hero-search-input {
   flex: 1;
   border: none;
   outline: none;
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 12px 18px;
+  font-size: 13.5px;
   color: var(--text1);
   background: transparent;
   min-width: 0;
@@ -2184,7 +2184,7 @@ a {
   color: #fff;
   border: none;
   padding: 0;
-  width: 38px;
+  width: 48px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -12466,8 +12466,8 @@ html, body {
 /* ── Hero Split Layout (2 Colonnes Desktop, 1 Colonne Mobile) ────────── */
 .hero-split-grid {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 16px;
+  grid-template-columns: 1.18fr 0.82fr;
+  gap: 22px;
   align-items: stretch;
   text-align: left;
 }
@@ -12490,7 +12490,7 @@ html, body {
 
 .hero-split-categories {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: nowrap !important;
   justify-content: flex-start !important;
   overflow-x: auto !important;
@@ -12512,7 +12512,7 @@ html, body {
   .hero-split-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
     align-items: stretch;
     text-align: center;
   }

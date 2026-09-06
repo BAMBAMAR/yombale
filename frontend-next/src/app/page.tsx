@@ -176,44 +176,54 @@ export default async function HomePage({
       <section style={{
         background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 60%, var(--bg, #F8F5F0) 100%)',
         borderBottom: '1px solid var(--border, #E8DDD2)',
-        padding: '6px 14px 6px',
+        padding: '16px 20px 14px',
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: 1040, margin: '0 auto', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: 1060, margin: '0 auto', position: 'relative', zIndex: 2 }}>
           <div className="hero-split-grid">
             
             {/* ── COLONNE GAUCHE : RECHERCHE & ACCÈS RAPIDE COMPACT ──────── */}
             <div className="hero-split-left">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 3,
-                  background: 'var(--orange2, #FFF3E8)', color: 'var(--accent, #C75B00)', padding: '1px 7px', borderRadius: 10,
-                  fontSize: 10, fontWeight: 800, border: '1px solid #FFEDD5', letterSpacing: '0.01em',
-                  whiteSpace: 'nowrap', flexShrink: 0
+              <div>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  background: 'var(--orange2, #FFF3E8)', color: 'var(--accent, #C75B00)', padding: '2px 9px', borderRadius: 16,
+                  fontSize: 11, fontWeight: 800, marginBottom: 5, border: '1px solid #FFEDD5',
+                  letterSpacing: '0.01em',
                 }}>
-                  ✨ N°1 au Sénégal
-                </span>
+                  <span>✨ 1er comparateur de prix au Sénégal</span>
+                </div>
+
                 <h1 style={{
-                  fontSize: 'clamp(15px, 1.7vw, 19px)',
+                  fontSize: 'clamp(18px, 2.1vw, 25px)',
                   fontWeight: 900,
                   color: 'var(--navy, #1C2B4A)',
-                  margin: 0,
+                  margin: '0 0 4px',
                   lineHeight: 1.2,
-                  letterSpacing: '-0.02em',
-                  whiteSpace: 'nowrap'
+                  letterSpacing: '-0.02em'
                 }}>
                   Achetez au meilleur prix à Dakar &amp; au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
                 </h1>
+
+                <p style={{
+                  fontSize: 12.5,
+                  color: 'var(--text2, #5A4E42)',
+                  margin: '0 0 10px',
+                  maxWidth: 520,
+                  lineHeight: 1.3
+                }}>
+                  Comparez des milliers de prix et boutiques vérifiées • 100% gratuit &amp; actualisé toutes les 6h
+                </p>
               </div>
 
               {/* BARRE DE RECHERCHE COMPACTE */}
-              <div style={{ width: '100%', maxWidth: 540, marginBottom: 5 }}>
+              <div style={{ width: '100%', maxWidth: 520, marginBottom: 8 }}>
                 <SearchBar defaultValue={q} />
               </div>
 
               {/* RUBAN UNIQUE FLUIDE & ULTRA-PLAT */}
-              <div style={{ width: '100%', maxWidth: 540 }}>
+              <div style={{ width: '100%', maxWidth: 520 }}>
                 <div className="hero-split-categories">
                   {CATEGORIES.map((c) => {
                     if (
@@ -230,7 +240,7 @@ export default async function HomePage({
                     if (c.slug === 'immo') {
                       return (
                         <Link key={c.slug} href="/immo" prefetch={false} aria-label="Immobilier et Terrains" className="categ-pill" style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 10, fontSize: 10.5, fontWeight: 600, textDecoration: 'none',
+                          display: 'inline-flex', alignItems: 'center', gap: 3.5, padding: '3.5px 9px', borderRadius: 14, fontSize: 11, fontWeight: 600, textDecoration: 'none',
                           background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 1px 2px rgba(26,22,18,0.03)',
                           whiteSpace: 'nowrap', flexShrink: 0
                         }}>
@@ -242,7 +252,7 @@ export default async function HomePage({
                     if (c.slug === 'annonces') {
                       return (
                         <Link key={c.slug} href="/annonces" prefetch={false} aria-label="Petites Annonces" className="categ-pill" style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 10, fontSize: 10.5, fontWeight: 600, textDecoration: 'none',
+                          display: 'inline-flex', alignItems: 'center', gap: 3.5, padding: '3.5px 9px', borderRadius: 14, fontSize: 11, fontWeight: 600, textDecoration: 'none',
                           background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 1px 2px rgba(26,22,18,0.03)',
                           whiteSpace: 'nowrap', flexShrink: 0
                         }}>
@@ -254,7 +264,7 @@ export default async function HomePage({
                     if (c.slug === 'telecom') {
                       return (
                         <Link key={c.slug} href="/telecom" prefetch={false} aria-label="Télécom & Forfaits" className={`categ-pill${isSelected ? ' active' : ''}`} style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 10, fontSize: 10.5, fontWeight: 600, textDecoration: 'none',
+                          display: 'inline-flex', alignItems: 'center', gap: 3.5, padding: '3.5px 9px', borderRadius: 14, fontSize: 11, fontWeight: 600, textDecoration: 'none',
                           background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 1px 2px rgba(26,22,18,0.03)',
                           whiteSpace: 'nowrap', flexShrink: 0
                         }}>
@@ -270,7 +280,7 @@ export default async function HomePage({
                         prefetch={false}
                         aria-label={`Filtrer par catégorie ${c.label}`}
                         style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 10, fontSize: 10.5,
+                          display: 'inline-flex', alignItems: 'center', gap: 3.5, padding: '3.5px 9px', borderRadius: 14, fontSize: 11,
                           fontWeight: isSelected ? 800 : 600, textDecoration: 'none',
                           background: isSelected ? 'var(--accent, #C75B00)' : '#fff',
                           color: isSelected ? '#fff' : 'var(--text-strong, #2A231E)',
@@ -287,7 +297,7 @@ export default async function HomePage({
                   <Link
                     href="/boutiques"
                     style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 10, fontSize: 10.5,
+                      display: 'inline-flex', alignItems: 'center', gap: 3.5, padding: '3.5px 9px', borderRadius: 14, fontSize: 11,
                       fontWeight: 700, textDecoration: 'none', background: 'var(--bg, #F8F5F0)', color: 'var(--accent, #C75B00)',
                       border: '1px solid var(--border, #E8DDD2)', whiteSpace: 'nowrap', flexShrink: 0
                     }}
@@ -302,10 +312,10 @@ export default async function HomePage({
             <div className="hero-split-right">
               <div style={{
                 background: 'linear-gradient(145deg, #1C2B4A 0%, #17243E 60%, #101B30 100%)',
-                borderRadius: 12,
+                borderRadius: 15,
                 border: '1px solid rgba(255,255,255,0.12)',
-                padding: '8px 12px',
-                boxShadow: '0 4px 14px rgba(28, 43, 74, 0.10)',
+                padding: '14px 16px',
+                boxShadow: '0 8px 20px rgba(28, 43, 74, 0.12)',
                 color: '#ffffff',
                 position: 'relative',
                 overflow: 'hidden',
@@ -315,76 +325,91 @@ export default async function HomePage({
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                gap: 4
+                gap: 8
               }}>
                 {/* Lueur décorative discrète */}
                 <div style={{
                   position: 'absolute',
                   top: -25,
                   right: -25,
-                  width: 70,
-                  height: 70,
+                  width: 80,
+                  height: 80,
                   borderRadius: '50%',
                   background: 'radial-gradient(circle, rgba(199,91,0,0.25) 0%, rgba(199,91,0,0) 70%)',
                   pointerEvents: 'none'
                 }} />
 
-                {/* En-tête commerçants */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <span style={{
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginBottom: 6 }}>
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
                       background: 'rgba(199, 91, 0, 0.22)', color: '#FED7AA',
-                      fontSize: 9, fontWeight: 800, padding: '1px 6px',
-                      borderRadius: 10, border: '1px solid rgba(199, 91, 0, 0.4)'
+                      fontSize: 9.5, fontWeight: 800, padding: '2px 8px',
+                      borderRadius: 14, border: '1px solid rgba(199, 91, 0, 0.4)'
                     }}>
-                      🏪 COMMERÇANTS
+                      <span>🏪 COMMERÇANTS</span>
+                    </div>
+                    <span style={{
+                      background: '#16A34A', color: '#ffffff',
+                      fontSize: 9, padding: '2px 7px', borderRadius: 14,
+                      fontWeight: 900, letterSpacing: '0.02em'
+                    }}>
+                      30J OFFERTS
                     </span>
-                    <strong style={{ fontSize: 12.5, color: '#FFFFFF', fontWeight: 800 }}>
-                      Caisse POS &amp; Vitrine Web
-                    </strong>
                   </div>
-                  <span style={{
-                    background: '#16A34A', color: '#ffffff',
-                    fontSize: 8.5, padding: '1px 5px', borderRadius: 10,
-                    fontWeight: 900, letterSpacing: '0.02em', flexShrink: 0
+
+                  <h3 style={{
+                    margin: '0 0 6px',
+                    fontSize: 14.5,
+                    fontWeight: 900,
+                    color: '#FFFFFF',
+                    lineHeight: 1.25
                   }}>
-                    30J OFFERTS
-                  </span>
+                    Caisse POS Tactile &amp; Vitrine Web Nopalou
+                  </h3>
+
+                  {/* 3 Atouts majeurs concis et distincts */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3.5, marginBottom: 6, fontSize: 11.5 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 12 }}>⚡</span>
+                      <span style={{ color: '#E2E8F0' }}><strong>Caisse tactile hors-ligne</strong> &amp; scan caméra</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 12 }}>📲</span>
+                      <span style={{ color: '#E2E8F0' }}><strong>Relances impayés</strong> automatiques WhatsApp</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 12 }}>🪄</span>
+                      <span style={{ color: '#E2E8F0' }}><strong>Import Ali/SHEIN 1-clic</strong> • 0% commission</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Points forts en ligne compacte */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 8, fontSize: 10.5,
-                  color: '#E2E8F0', flexWrap: 'wrap'
-                }}>
-                  <span>⚡ Caisse hors-ligne &amp; scan</span>
-                  <span>•</span>
-                  <span>📲 Relances WhatsApp</span>
-                  <span>•</span>
-                  <span>🪄 0% com.</span>
-                </div>
+                <div>
+                  {/* Tarification claire */}
+                  <div style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 7 }}>
+                    Dès <strong style={{ color: '#FED7AA', fontSize: 12 }}>2 500 FCFA/mois</strong> après essai gratuit • Sans engagement
+                  </div>
 
-                {/* Ligne Tarif & Actions combinées */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                  <span style={{ fontSize: 10, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                    Dès <strong style={{ color: '#FED7AA', fontSize: 11 }}>2 500 F/mois</strong>
-                  </span>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {/* Boutons d'action distincts */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Link
                       href="/creer-boutique"
                       style={{
-                        padding: '4px 9px',
-                        borderRadius: 6,
+                        flex: 1,
+                        padding: '7px 11px',
+                        borderRadius: 8,
                         background: 'var(--accent, #C75B00)',
                         color: '#ffffff',
                         fontWeight: 800,
-                        fontSize: 11,
+                        fontSize: 12,
                         textDecoration: 'none',
-                        boxShadow: '0 2px 5px rgba(199, 91, 0, 0.3)',
+                        boxShadow: '0 3px 8px rgba(199, 91, 0, 0.3)',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 3,
+                        justifyContent: 'center',
+                        gap: 4,
+                        transition: 'all 0.15s ease',
                         whiteSpace: 'nowrap'
                       }}
                     >
@@ -395,15 +420,16 @@ export default async function HomePage({
                     <a
                       href="#forfaits-vendeurs"
                       style={{
-                        padding: '4px 7px',
-                        borderRadius: 6,
+                        padding: '7px 9px',
+                        borderRadius: 8,
                         background: 'rgba(255, 255, 255, 0.08)',
                         border: '1px solid rgba(255, 255, 255, 0.18)',
                         color: '#F1F5F9',
                         fontWeight: 700,
-                        fontSize: 10.5,
+                        fontSize: 11.5,
                         textDecoration: 'none',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease'
                       }}
                     >
                       Forfaits ↓
