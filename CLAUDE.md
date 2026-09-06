@@ -5122,9 +5122,13 @@ Voici les URLs et les modifications apportées aux outils d'administration inter
   - **PWA Manifest v8** : Passage de `background_color` à `#FFFFFF` pur pour une ouverture nette et éclatante, cache-busting des icônes (`?v=8`), séparation rigoureuse `purpose: "any"` (splash & desktop) vs `purpose: "maskable"` (launcher).
   - **Composant PWA Promo (`PwaInstallPrompt.tsx`)** : Remplacement de l'icône générique Lucide par le monogramme N officiel dans son squircle lumineux.
   - **Forçage & Déploiement Automatique des Mises à Jour (Zéro action requise de l'utilisateur)** :
-    * **Service Worker v12 & Auto-Purge** : Incrémentation du cache vers `v12` dans `sw.ts`. À la prochaine ouverture de l'application, l'événement `activate` détruit automatiquement tous les anciens caches de l'appareil (`caches.delete()`) et recharge la page silencieusement avec les nouveaux actifs `?v=10`.
-    * **Stratégie `NetworkFirst` & `no-cache` sur `manifest.json`** : Configuration d'en-têtes HTTP `no-cache, no-store, must-revalidate` dans `next.config.js` et routage NetworkFirst dans `sw.ts`. Cela permet au serveur WebAPK de Google et aux navigateurs mobiles de détecter immédiatement la version 10 du manifest et de recompiler/mettre à jour l'icône de l'écran d'accueil en tâche de fond de manière 100% autonome.
-    * **Éradication Définitive du Carré Brut 90° (`icon-maskable-512`)** : Le mode maskable remplissait auparavant un rectangle 512x512 plein (`FillRectangle`) sans aucun arrondi, ce qui amenait Chrome WebAPK à afficher un carré brut sur le Splash Screen. Désormais, TOUTES les icônes Android (`icon-512`, `icon-192`, `icon-maskable-512`) sont uniformément dotées du Squircle à courbure très prononcée (26% de rayon, rx=118px) avec ombre portée douce multi-couches et `purpose: "any maskable"`, garantissant des angles parfaitement arrondis et luxueux sur tous les terminaux.
+    * **Service Worker v13 & Auto-Purge** : Incrémentation du cache vers `v13` dans `sw.ts` et `sw.js`. À la prochaine ouverture de l'application, l'événement `activate` détruit automatiquement tous les anciens caches de l'appareil (`caches.delete()`) et recharge la page silencieusement avec les nouveaux actifs `?v=12`.
+    * **Résolution de la Netteté Retina Ultra-HD & Éradication du Flou (« c'est flou »)** :
+      - Suppression du halo d'ombre multi-couches baveux et du décalage d'ombre noire sous le N qui créaient un aspect flou/sale sur les écrans OLED haute densité.
+      - Intégration du Super-Échantillonnage Studio 2x (SSAA) dans `generate-brand-icons.ps1` : tracé à 2048×2048 puis réduction bicubique haute précision pour un contour rasoir d'une netteté cristalline.
+      - Ajout des actifs 1024×1024 px (`icon-1024.png`, `icon-maskable-1024.png`) dans `manifest.json` (v12) et `layout.tsx` pour éliminer tout upscaling sur téléphones 1080p/1440p.
+      - Fond blanc pur 100% (`#FFFFFF`) sur le canevas d'icône pour fusionner mathématiquement avec le splash screen et éliminer définitivement les 4 encoches noires dans les coins.
+
 
 
 

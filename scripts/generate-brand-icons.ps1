@@ -18,23 +18,24 @@ public class NopalouIconGenerator
         return path;
     }
 
-    public static void Generate(int size, string outputPath, string mode)
+    public static void Generate(int targetSize, string outputPath, string mode)
     {
-        using (Bitmap bmp = new Bitmap(size, size, PixelFormat.Format32bppArgb))
-        using (Graphics g = Graphics.FromImage(bmp))
+        // Rendu en Super-Échantillonnage 2x (SSAA) : on dessine au double de la taille
+        // puis on réduit en bicubique haute précision pour une netteté 'Retina Crystal Clear' (zéro flou)
+        int renderSize = targetSize * 2;
+
+        using (Bitmap renderBmp = new Bitmap(renderSize, renderSize, PixelFormat.Format32bppArgb))
+        using (Graphics g = Graphics.FromImage(renderBmp))
         {
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.SmoothingMode = SmoothingMode.HighQuality;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            g.Clear(Color.Transparent);
+            g.CompositingQuality = CompositingQuality.HighQuality;
 
-            PointF startPoint = new PointF(0, 0);
-            PointF endPoint = new PointF(size, size);
-
-            Color c1 = ColorTranslator.FromHtml("#FF7E22"); // Solar radiant orange
-            Color c2 = ColorTranslator.FromHtml("#EA580C"); // Pure energetic orange
-            Color c3 = ColorTranslator.FromHtml("#C75B00"); // Signature Nopalou burnt orange
-            Color c4 = ColorTranslator.FromHtml("#9E3C00"); // Deep bronze shadow
+            Color c1 = ColorTranslator.FromHtml("#FF7E22"); // Solaire éclatant
+            Color c2 = ColorTranslator.FromHtml("#EA580C"); // Orange pur dynamique
+            Color c3 = ColorTranslator.FromHtml("#C75B00"); // Terracotta officiel Nopalou
+            Color c4 = ColorTranslator.FromHtml("#9E3C00"); // Ombre cuivrée profonde
 
             ColorBlend colorBlend = new ColorBlend();
             colorBlend.Colors = new Color[] { c1, c2, c3, c4 };
@@ -42,96 +43,82 @@ public class NopalouIconGenerator
 
             Color white = Color.White;
 
-            // Pour Android (standalone ET maskable sur Splash Screen) :
-            // Toujours générer le Squircle aux angles nettement arrondis (26% de rayon)
-            // avec ombre portée douce et lueur supérieure de verre.
-            // Cela empêche définitivement Chrome d'afficher un carré brut à 90° au démarrage !
             if (mode == "apple")
             {
-                // Mode Apple iOS : Fond plein 100% (iOS applique son propre masque squircle nativement)
-                using (LinearGradientBrush grad = new LinearGradientBrush(startPoint, endPoint, c1, c4))
+                // Mode Apple iOS : Fond plein 100% (iOS applique son propre squircle)
+                using (LinearGradientBrush grad = new LinearGradientBrush(new PointF(0, 0), new PointF(renderSize, renderSize), c1, c4))
                 {
                     grad.InterpolationColors = colorBlend;
-                    g.FillRectangle(grad, 0, 0, size, size);
+                    g.FillRectangle(grad, 0, 0, renderSize, renderSize);
                 }
 
-                // Subtile lueur supérieure de verre (Apple glass highlight)
-                using (Pen sheenPen = new Pen(Color.FromArgb(50, 255, 255, 255), 2.0f))
+                // Lueur interne de verre très fine et nette
+                using (Pen sheenPen = new Pen(Color.FromArgb(55, 255, 255, 255), 3.0f))
                 {
-                    g.DrawRectangle(sheenPen, 1, 1, size - 2, size - 2);
+                    g.DrawRectangle(sheenPen, 2, 2, renderSize - 4, renderSize - 4);
                 }
 
-                float scale = 0.66f * ((float)size / 512.0f);
-                float offsetX = 87.04f * ((float)size / 512.0f);
-                float offsetY = 87.04f * ((float)size / 512.0f);
+                float scale = 0.66f * ((float)renderSize / 512.0f);
+                float offsetX = 87.04f * ((float)renderSize / 512.0f);
+                float offsetY = 87.04f * ((float)renderSize / 512.0f);
 
-                DrawNMonogram(g, offsetX, offsetY, scale, white, true);
+                DrawCrispNMonogram(g, offsetX, offsetY, scale, white);
             }
             else
             {
-                // Mode Android Splash Screen & Launcher (maskable + standalone) :
-                // Squircle aux angles très arrondis (26% de rayon), aucun angle droit !
-                float pad = (float)size * 0.05f; // 5% de marge pour l'ombre diffuse
-                float w = (float)size - (pad * 2.0f);
-                float h = (float)size - (pad * 2.0f);
-                float radius = w * 0.26f; // 26% de rayon = coins visiblement et nettement arrondis
+                // Mode Splash Screen & PWA Android (Netteté absolue, zéro flou, zéro encoche noire) :
+                // 1. Fond blanc pur (#FFFFFF) fusionnant à 100% avec le splash screen
+                g.Clear(Color.White);
 
-                // 1. Ombre portée diffuse multi-couches
-                int shadowSteps = 8;
-                for (int s = shadowSteps; s >= 1; s--)
-                {
-                    float offset = s * (2.0f * (float)size / 512.0f);
-                    float expand = s * (1.2f * (float)size / 512.0f);
-                    int alpha = (int)(22 - (s * 2.2f));
-                    if (alpha < 4) alpha = 4;
+                // 2. Squircle aux angles nets et généreux (26% de courbure)
+                float pad = (float)renderSize * 0.045f;
+                float w = (float)renderSize - (pad * 2.0f);
+                float h = (float)renderSize - (pad * 2.0f);
+                float radius = w * 0.26f;
 
-                    using (GraphicsPath shadowPath = CreateSquirclePath(pad - expand, pad + offset - expand, w + (expand * 2), h + (expand * 2), radius + expand))
-                    using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(alpha, 130, 50, 0)))
-                    {
-                        g.FillPath(shadowBrush, shadowPath);
-                    }
-                }
-
-                // 2. Corps de l'icône Squircle avec dégradé solaire riche
+                // 3. Dessin du Squircle avec dégradé solaire éclatant (contour rasoir, net et sans bavure)
                 using (GraphicsPath squirclePath = CreateSquirclePath(pad, pad, w, h, radius))
                 using (LinearGradientBrush grad = new LinearGradientBrush(new PointF(pad, pad), new PointF(pad + w, pad + h), c1, c4))
                 {
                     grad.InterpolationColors = colorBlend;
                     g.FillPath(grad, squirclePath);
 
-                    // 3. Reflet supérieur de verre (Specular Inner Sheen)
-                    using (Pen sheenPen = new Pen(Color.FromArgb(80, 255, 255, 255), 2.5f * ((float)size / 512.0f)))
+                    // 4. Lueur interne supérieure (effet vitre polie / céramique luxueuse)
+                    using (Pen sheenPen = new Pen(Color.FromArgb(70, 255, 255, 255), 3.5f * ((float)renderSize / 512.0f)))
                     {
                         sheenPen.Alignment = PenAlignment.Inset;
                         g.DrawPath(sheenPen, squirclePath);
                     }
                 }
 
+                // 5. Monogramme N officiel d'un blanc pur éclatant, avec des contours ultra-nets
                 float scale = w / 512.0f;
                 float offsetX = pad;
                 float offsetY = pad;
 
-                DrawNMonogram(g, offsetX, offsetY, scale, white, true);
+                DrawCrispNMonogram(g, offsetX, offsetY, scale, white);
             }
 
-            bmp.Save(outputPath, ImageFormat.Png);
-            Console.WriteLine("Pixel-perfect generated: " + outputPath + " (" + size + "x" + size + ") [" + mode + "]");
+            // Réduction bicubique haute fidélité vers la taille cible (anti-crénelage parfait)
+            using (Bitmap finalBmp = new Bitmap(targetSize, targetSize, PixelFormat.Format32bppArgb))
+            using (Graphics gFinal = Graphics.FromImage(finalBmp))
+            {
+                gFinal.SmoothingMode = SmoothingMode.HighQuality;
+                gFinal.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                gFinal.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                gFinal.CompositingQuality = CompositingQuality.HighQuality;
+
+                gFinal.DrawImage(renderBmp, new Rectangle(0, 0, targetSize, targetSize), 0, 0, renderSize, renderSize, GraphicsUnit.Pixel);
+                finalBmp.Save(outputPath, ImageFormat.Png);
+            }
+
+            Console.WriteLine("Crystal-Clear generated: " + outputPath + " (" + targetSize + "x" + targetSize + ") [" + mode + "]");
         }
     }
 
-    private static void DrawNMonogram(Graphics g, float offsetX, float offsetY, float scale, Color color, bool withDepth)
+    private static void DrawCrispNMonogram(Graphics g, float offsetX, float offsetY, float scale, Color color)
     {
-        // Si avec profondeur : dessine une micro-ombre douce sous la lettre N
-        if (withDepth)
-        {
-            float shadowOffset = 2.5f * scale;
-            using (GraphicsPath shadowPath = BuildNPath(offsetX, offsetY + shadowOffset, scale))
-            using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(40, 0, 0, 0)))
-            {
-                g.FillPath(shadowBrush, shadowPath);
-            }
-        }
-
+        // Tracé mathématique pur du N, zéro ombre floue parasite pour une netteté 100% vectorielle
         using (GraphicsPath nPath = BuildNPath(offsetX, offsetY, scale))
         using (SolidBrush brush = new SolidBrush(color))
         {
@@ -180,11 +167,12 @@ $iconsDir = Join-Path $baseDir "frontend-next\public\icons"
 $publicDir = Join-Path $baseDir "frontend-next\public"
 $appDir = Join-Path $baseDir "frontend-next\src\app"
 
+[NopalouIconGenerator]::Generate(1024, (Join-Path $iconsDir "icon-1024.png"), "standalone")
 [NopalouIconGenerator]::Generate(512, (Join-Path $iconsDir "icon-512.png"), "standalone")
 [NopalouIconGenerator]::Generate(192, (Join-Path $iconsDir "icon-192.png"), "standalone")
-[NopalouIconGenerator]::Generate(512, (Join-Path $iconsDir "icon-maskable-512.png"), "maskable")
+[NopalouIconGenerator]::Generate(512, (Join-Path $iconsDir "icon-maskable-512.png"), "standalone")
+[NopalouIconGenerator]::Generate(1024, (Join-Path $iconsDir "icon-maskable-1024.png"), "standalone")
 [NopalouIconGenerator]::Generate(180, (Join-Path $publicDir "apple-icon.png"), "apple")
 [NopalouIconGenerator]::Generate(180, (Join-Path $appDir "apple-icon.png"), "apple")
 
-Write-Output "ALL ULTRA-PREMIUM PNG ICONS SUCCESSFULLY GENERATED!"
-
+Write-Output "ALL CRYSTAL-CLEAR RETINA PNG ICONS SUCCESSFULLY GENERATED!"
