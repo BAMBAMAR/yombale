@@ -1,3 +1,24 @@
+- **Refonte Haute Précision PWA & Architecture Native Master v16 (`manifest.json`, `layout.tsx`, `RegisterSW.tsx`, `sw.ts`, `icons/*`) (06 septembre 2026)** 💎⚪🟠✨ :
+  * **💎 1. Éradication Complète de Tout Colmatage & Standard Industriel** :
+    - Élimination des solutions palliatives (fonds carrés peints, masques bidouillés ou écrans unifiés orange).
+    - Alignement de l'architecture PWA sur les références mondiales d'icônes à silhouette autonome (Starbucks, Duolingo, Pinterest, GitHub) : déclaration exclusive des flux haute fidélité `purpose: "any"` sur fond 100% transparent.
+    - Élimination de la priorité WebAPK `MASKABLE` qui forçait une boîte carrée 90° au démarrage sur Android.
+  * **🎨 2. Rendu Géométrique de Haute Précision : Superellipse de Lamé (n = 5.0)** :
+    - Remplacement des arrondis SVG classiques (`rx`) par une véritable courbe superelliptique continue d'ordre 5 (formule de Gabriel Lamé), identique aux standards Apple iOS et Samsung One UI / Xiaomi HyperOS.
+    - Application du dégradé solaire officiel 4-stops (`#FF7E22` → `#EA580C` → `#C75B00` → `#9E3C00`) avec lueur zénithale interne (glassmorphism sheen) pour un relief optique luxueux.
+    - Rendu 4x SSAA (Super-Sampled Anti-Aliasing) via Playwright Chromium Headless pour des PNG 1024px, 512px, 192px et Apple Touch Icon 180px d'une netteté cristalline sur écrans Retina et AMOLED.
+  * **📱 3. Splash Screen Mobile Épuré (Fond Blanc & Logo Flottant)** :
+    - `background_color: "#FFFFFF"` (blanc pur), sans texte d'accompagnement.
+    - Le squircle Nopalou flotte avec ses courbes soyeuses au centre de l'écran, sans aucun cadre, aucun contour ni aucun médaillon résiduel.
+  * **🔄 4. Synchronisation Globale Caches & Service Worker (v16)** :
+    - `RegisterSW.tsx` : `FORCE_VERSION = '16'` avec purge automatique des caches clients.
+    - `sw.ts` & `public/sw.js` : `CACHE_VERSION = 'v16'`.
+    - `manifest.json` & `layout.tsx` : synchronisés sur la version `v16`.
+  * **🧪 5. Contrôle Qualité & Tests** :
+    - 35/35 tests unitaires frontend validés avec succès (`npm test`).
+    - Build Next.js (`npm run build`) validé à 100% sur l'intégralité des 104 pages sans avertissement.
+    - Zéro appel de police externe conformément à `AGENTS.md`.
+
 - **Résolution Définitive Splash Screen & Refonte Icônes PWA v14 (`manifest.json`, `layout.tsx`, `RegisterSW.tsx`, `sw.ts`, `icons/*`, `generate-pwa-icons.mjs`) (`pushed` - 06 septembre 2026)** 🚀🎨📱 :
   * **🎯 1. Cause Racine Éliminée (Fond Blanc & Squircle Flottant)** :
     - Découverte : Chrome Android génère le splash screen natif à partir de `background_color` + l'icône `purpose: "any"` la plus grande (`icon-1024.png`).

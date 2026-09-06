@@ -1,18 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="mg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="maskableGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FF7E22"/>
       <stop offset="35%" stop-color="#EA580C"/>
       <stop offset="70%" stop-color="#C75B00"/>
       <stop offset="100%" stop-color="#9E3C00"/>
     </linearGradient>
+    <linearGradient id="maskableSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.20"/>
+      <stop offset="35%" stop-color="#FFFFFF" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    </linearGradient>
   </defs>
-
-  <!-- Full-bleed background (Android applies its own mask) -->
-  <rect width="512" height="512" fill="url(#mg)"/>
-
-  <!-- N centered in safe zone (safe circle = 80% diameter, logo = 48% scale): translate(133.12, 133.12) scale(0.48) -->
-  <g transform="translate(133.12, 133.12) scale(0.48)">
+  <rect width="512" height="512" fill="url(#maskableGrad)"/>
+  <rect width="512" height="512" fill="url(#maskableSheen)"/>
+  <g transform="translate(107.52, 107.52) scale(0.5800)">
     <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
   </g>
 </svg>

@@ -19,11 +19,11 @@ export default function RegisterSW() {
     if (!('serviceWorker' in navigator)) return
 
     // =====================================================================
-    // FORCE-UPDATE v14 : Purge automatique des caches icônes/manifest/assets
-    // pour forcer le re-téléchargement des nouvelles icônes PWA premium et du splash.
+    // FORCE-UPDATE v16 : Purge automatique des caches icônes/manifest/assets
+    // pour forcer le re-téléchargement du splash screen blanc et des icônes.
     // Chaque incrémentation de FORCE_VERSION déclenche la purge chez TOUS les utilisateurs.
     // =====================================================================
-    const FORCE_VERSION = '14'
+    const FORCE_VERSION = '16'
     const FORCE_KEY = 'nopalou_force_v'
 
     try {

@@ -86,16 +86,16 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/icon', type: 'image/png', sizes: '32x32' },
-      { url: '/icons/icon-192.png?v=14', type: 'image/png', sizes: '192x192' },
-      { url: '/icons/icon-512.png?v=14', type: 'image/png', sizes: '512x512' },
-      { url: '/icons/icon-1024.png?v=14', type: 'image/png', sizes: '1024x1024' },
+      { url: '/icons/icon-192.png?v=16', type: 'image/png', sizes: '192x192' },
+      { url: '/icons/icon-512.png?v=16', type: 'image/png', sizes: '512x512' },
+      { url: '/icons/icon-1024.png?v=16', type: 'image/png', sizes: '1024x1024' },
     ],
-    shortcut: '/icons/icon-192.png?v=14',
+    shortcut: '/icons/icon-192.png?v=16',
     apple: [
-      { url: '/apple-icon.png?v=14', sizes: '180x180', type: 'image/png' },
-      { url: '/icons/icon-192.png?v=14', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png?v=14', sizes: '512x512', type: 'image/png' },
-      { url: '/icons/icon-1024.png?v=14', sizes: '1024x1024', type: 'image/png' },
+      { url: '/apple-icon.png?v=16', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/icon-192.png?v=16', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png?v=16', sizes: '512x512', type: 'image/png' },
+      { url: '/icons/icon-1024.png?v=16', sizes: '1024x1024', type: 'image/png' },
     ],
   },
 };
