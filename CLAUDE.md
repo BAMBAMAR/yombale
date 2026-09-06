@@ -1,3 +1,22 @@
+- **Ultra-Aplatissement & Compacité Maximale du Hero d'Accueil (`page.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 📐⚡📉✨ :
+  * **📉 1. Réduction Maximale de la Hauteur (~100px vs ~380px)** :
+    - Diminution drastique des marges de la section à **`6px 14px 6px`**.
+    - Cadrage centré à `maxWidth: 1040px` avec gouttière resserrée (`gap: 16px`) entre les deux colonnes (`1.15fr` / `0.85fr`).
+  * **🔍 2. Colonne Recherche & Catégories Ultra-Dense** :
+    - En-tête fusionné en 1 seule ligne compacte : micro-badge *"✨ N°1 au Sénégal"* + titre H1 côte à côte (`clamp(15px, 1.7vw, 19px)`).
+    - Suppression intégrale des paragraphes superflus de remplissage pour un accès direct aux produits.
+    - Barre de recherche ultra-fine (`padding: 8px 14px`, bouton loupe `38px`, marge basse `5px`, hauteur ~35px).
+    - Ruban de catégories ultra-plat (`padding: 2px 7px`, `fontSize: 10.5px`, coins arrondis `10px`).
+  * **🏪 3. Carte Commerçants Horizontale & Épurée** :
+    - Ligne 1 : Badge *"🏪 COMMERÇANTS"* + Titre *"Caisse POS & Vitrine Web"* + Pillule *"30J OFFERTS"*.
+    - Ligne 2 : Points forts en ligne condensée (*⚡ Caisse hors-ligne & scan • 📲 Relances WhatsApp • 🪄 0% com.*).
+    - Ligne 3 : Tarif (*Dès 2 500 F/mois*) et boutons d'action (*Créer Boutique →*, *Forfaits ↓*) sur la même rangée horizontale (`gap: 4px`, boutons `padding: 4px 9px`).
+    - Hauteur de la carte réduite à **~80px**, alignée au pixel près avec la colonne de recherche.
+  * **🧪 4. Contrôle Qualité** :
+    - Zéro erreur TypeScript sur les fichiers impactés.
+    - Zéro CDN de polices externes (conformité absolue avec les directives Nopalou).
+    - Aucun `git push` sans ordre explicite de l'utilisateur.
+
 - **Ajustement Compact & Alignement Rigoureux du Hero 2 Colonnes (`page.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 📐🎯✨ :
   * **📏 1. Réduction de la Largeur & Cadrage Compact (`maxWidth: 1060px`)** :
     - Réduction du conteneur de `1240px` à **`1060px`** pour éviter l'effet étiré et recentrer l'attention sans vider les côtés.
