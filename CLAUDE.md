@@ -1,20 +1,17 @@
-- **Refonte Ergonomique du Hero d'Accueil : Disposition 2 Colonnes Desktop & Élimination des Vides Latéraux (`page.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 🎨🖥️📱⚡ :
-  * **🖥️ 1. Élimination des Grands Vides Blancs Latéraux sur Grand Écran (`page.tsx`, `globals.css`)** :
-    - Élargissement du conteneur hero de `maxWidth: 840px` à `maxWidth: 1240px`, s'alignant harmonieusement sur la largeur standard du catalogue produit (`1200px+`).
-    - Mise en place d'une grille réactive en **2 colonnes équilibrées** (`.hero-split-grid` : `1.16fr 0.84fr`) avec espacement de 36px.
-  * **🔍 2. Structuration Propre de la Colonne Gauche (Recherche & Catégories)** :
-    - Alignement naturel à gauche du badge, du titre d'accroche et du sous-titre.
-    - Barre de recherche pleine largeur dans la colonne (`maxWidth: 580px`).
-    - Fin des 4 lignes de pilules en vrac qui « tiraient en largeur » : les catégories populaires sont désormais calées sous la recherche en accès rapide épuré (`.hero-split-categories`).
-  * **🏪 3. Carte Vitrine « Solutions Marchands & POS » en Colonne Droite** :
-    - Transformation du bloc marchand en une carte vitrine technologique haut de gamme (dégradé Navy sombre `#1C2B4A`, bordure subtile, lueur diffuse, badges dorés et verts).
-    - Mise en avant des 3 atouts décisifs (Caisse tactile offline, Relance WhatsApp impayés, Import Ali/SHEIN 1-clic 0% commission), de l'offre 30 jours offerts et de deux boutons CTA clairs (`Créer ma Boutique →` et `Voir Forfaits ↓`).
-    - Remplit intelligemment l'espace droit sur desktop pour un taux de conversion et d'acquisition vendeur optimal.
-  * **📱 4. Continuité Mobile & Tablette Fluide (`max-width: 1024px`)** :
-    - Bascule automatique en une seule colonne centrée avec ruban tactile de catégories défilant sans rognage (`overflow-x: auto; justify-content: flex-start !important`).
-  * **🧪 5. Contrôle Qualité** :
+- **Ajustement Compact & Alignement Rigoureux du Hero 2 Colonnes (`page.tsx`, `globals.css`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 📐🎯✨ :
+  * **📏 1. Réduction de la Largeur & Cadrage Compact (`maxWidth: 1060px`)** :
+    - Réduction du conteneur de `1240px` à **`1060px`** pour éviter l'effet étiré et recentrer l'attention sans vider les côtés.
+    - Espacement resserré à `gap: 28px` entre les deux colonnes (`1.15fr` / `0.85fr`).
+  * **📐 2. Alignement Vertical Strict & Suppression des 5 Lignes Décalées** :
+    - Élimination des 5 rangées désordonnées de pilules avec son élément orphelin en ligne 5.
+    - Les catégories sont désormais intégrées dans un **ruban horizontal unique et fluide sur une seule ligne** (`flex-wrap: nowrap !important; overflow-x: auto !important;`) calé exactement sous la barre de recherche (`maxWidth: 540px`).
+    - Lien rapide *"Toutes les boutiques →"* placé en vis-à-vis pour accéder à l'annuaire complet sans surcharger le hero.
+    - Application de `align-items: stretch` sur la grille pour que la carte commerçante droite commence au même niveau supérieur que la colonne gauche et finisse sur la même ligne de fond.
+  * **🏪 3. Carte Commerçants Compacte & Proportionnée** :
+    - Textes et espacements condensés, boutons bien proportionnés (`Créer ma Boutique →` et `Voir Forfaits ↓`).
+  * **🧪 4. Contrôle Qualité** :
     - TypeScript strict vérifié (0 erreur).
-    - Respect strict des directives (aucun `git push` sans demande explicite).
+    - Aucun `git push` sans ordre explicite de l'utilisateur.
 
 - **Correction Ergonomique Mobile : Alignement Parfait du Bouton "Créer", Visibilité du Badge Panier et Défilement Intégral des Catégories (`NavbarCartBtn.tsx`, `MobileBottomNav.tsx`, `globals.css`, `boutiques/page.tsx`, `page.tsx`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 🎯📱🛒✨ :
   * **🎯 1. Alignement Parfait du Bouton Central "Créer" dans la Barre Basse Mobile (`MobileBottomNav.tsx`, `globals.css`)** :
