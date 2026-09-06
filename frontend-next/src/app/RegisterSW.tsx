@@ -18,6 +18,56 @@ export default function RegisterSW() {
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator)) return
 
+    // =====================================================================
+    // FORCE-UPDATE v13 : Purge automatique des caches icônes/manifest/assets
+    // pour forcer le re-téléchargement des nouvelles icônes PWA premium.
+    // Chaque incrémentation de FORCE_VERSION déclenche la purge chez TOUS les utilisateurs.
+    // =====================================================================
+    const FORCE_VERSION = '13'
+    const FORCE_KEY = 'nopalou_force_v'
+
+    try {
+      const currentForce = localStorage.getItem(FORCE_KEY)
+      if (currentForce !== FORCE_VERSION) {
+        console.log(`[PWA Force-Update] v${currentForce || '?'} → v${FORCE_VERSION} — Purge complète des caches icônes/assets...`)
+
+        // 1. Purger tous les caches liés aux icônes, manifest, assets et PWA metadata
+        caches.keys().then(async (names) => {
+          const cachesToPurge = names.filter(n =>
+            n.includes('icon') ||
+            n.includes('asset') ||
+            n.includes('pwa-meta') ||
+            n.includes('precache') ||
+            n.includes('html-cache') ||
+            n.includes('offline-fallback')
+          )
+          if (cachesToPurge.length > 0) {
+            console.log('[PWA Force-Update] Purge de', cachesToPurge.length, 'cache(s):', cachesToPurge)
+            await Promise.all(cachesToPurge.map(n => caches.delete(n)))
+          }
+
+          // 2. Dés-inscrire et ré-inscrire le SW pour forcer le re-précaching
+          const registrations = await navigator.serviceWorker.getRegistrations()
+          for (const reg of registrations) {
+            await reg.unregister()
+          }
+
+          // 3. Sauvegarder la version et forcer un hard-reload
+          localStorage.setItem(FORCE_KEY, FORCE_VERSION)
+          console.log('[PWA Force-Update] Caches purgés, SW désinscrit → Hard reload...')
+          window.location.reload()
+        }).catch((err) => {
+          console.error('[PWA Force-Update] Erreur:', err)
+          localStorage.setItem(FORCE_KEY, FORCE_VERSION)
+        })
+
+        return // Stop here, page will reload
+      }
+    } catch {
+      // localStorage indisponible (navigation privée, etc.)
+    }
+    // =====================================================================
+
     // En environnement de développement local, désactiver et désinscrire le Service Worker
     // pour éviter les erreurs de précaching sur les bundles HMR/dev.
     const isDev =

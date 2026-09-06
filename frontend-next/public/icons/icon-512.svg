@@ -1,27 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="nopalouGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#FF7E22"/>
       <stop offset="35%" stop-color="#EA580C"/>
       <stop offset="70%" stop-color="#C75B00"/>
       <stop offset="100%" stop-color="#9E3C00"/>
     </linearGradient>
-    <linearGradient id="sheenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
-      <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
-    </linearGradient>
   </defs>
 
-  <!-- Fond blanc pur 100% (matching parfait background_color PWA, 0 encoche noire) -->
+  <!-- White background -->
   <rect width="512" height="512" fill="#FFFFFF"/>
 
-  <!-- Corps de l'Icône : Squircle aux angles très nets et fluides (26% de rayon) -->
-  <rect x="24" y="24" width="464" height="464" rx="120" fill="url(#nopalouGrad)"/>
+  <!-- Superellipse squircle (approximated with high rx) -->
+  <rect x="20" y="20" width="472" height="472" rx="110" fill="url(#g)"/>
 
-  <!-- Lueur Interne Spéculaire (Fin et ultra-net, effet vitre Apple) -->
-  <rect x="25.5" y="25.5" width="461" height="461" rx="118.5" fill="none" stroke="url(#sheenGrad)" stroke-width="3"/>
-
-  <!-- Monogramme N officiel blanc pur éclatant (Zéro ombre baveuse, netteté 100% vectorielle) -->
+  <!-- N monogram -->
   <path fill-rule="evenodd" d="M120 108h272v296H120Z M324 108H188l136 198Z M188 404h136L188 206Z" fill="#FFFFFF"/>
 </svg>
