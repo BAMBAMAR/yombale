@@ -16,18 +16,26 @@ const SESSION_FILE = path.join(__dirname, '../backend/.fb-session.json');
 async function main() {
   console.log('🌐 Ouverture du navigateur Google Chrome...');
   let browser;
-  try {
+  const launchOptions = {
+    headless: false,
+    args: [
+      '--start-maximized',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-blink-features=AutomationControlled'
+    ]
+  };
+
+  try { 
     browser = await chromium.launch({ 
-      headless: false,
-      channel: 'chrome',
-      args: ['--start-maximized']
+      ...launchOptions,
+      channel: 'chrome'
     });
   } catch (err) {
     console.log('⚠️ Google Chrome non trouvé directement via Playwright, utilisation du Chromium embarqué...');
-    browser = await chromium.launch({ 
-      headless: false,
-      args: ['--start-maximized']
-    });
+    browser = await chromium.launch(launchOptions);
   }
   const ctx = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
@@ -48,20 +56,42 @@ async function main() {
   page.on('close', () => resolveDone('page_closed'));
   browser.on('disconnected', () => resolveDone('browser_closed'));
 
+  const verifierSession = async () => {
+    try {
+      const cookies = await ctx.cookies();
+      const hasCUser = cookies.some(c => c.name === 'c_user');
+      const url = page.url();
+      const isAuthPage = url.includes('/login') || url.includes('/checkpoint') || url.includes('two_step_verification');
+      return hasCUser && !isAuthPage;
+    } catch {
+      return false;
+    }
+  };
+
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  rl.question('Appuyez sur Entrée une fois connecté > ', () => {
-    rl.close();
-    resolveDone('enter_pressed');
-  });
+  const attendreToucheEntree = () => {
+    rl.question('Appuyez sur Entrée une fois connecté > ', async () => {
+      const connecte = await verifierSession();
+      if (!connecte) {
+        console.log('\n⚠️  Connexion non encore finalisée : cookie de session (c_user) absent ou vous êtes encore sur la page de connexion/2FA.');
+        console.log('👉  Veuillez terminer la connexion dans la fenêtre Chrome avant d\'appuyer sur Entrée.\n');
+        attendreToucheEntree();
+      } else {
+        rl.close();
+        resolveDone('enter_pressed');
+      }
+    });
+  };
+  attendreToucheEntree();
 
   // Détection automatique de la présence du cookie de connexion
   let detected = false;
   const pollInterval = setInterval(async () => {
     try {
-      const cookies = await ctx.cookies();
-      if (!detected && cookies.some(c => c.name === 'c_user')) {
+      const connecte = await verifierSession();
+      if (!detected && connecte) {
         detected = true;
-        console.log('✨ Session utilisateur Facebook détectée (c_user) !');
+        console.log('\n✨ Session utilisateur Facebook détectée (c_user) !');
         console.log('⏳ Finalisation et sauvegarde automatique dans 5 secondes...');
         setTimeout(() => resolveDone('c_user_auto'), 5000);
       }
@@ -72,10 +102,19 @@ async function main() {
   clearInterval(pollInterval);
   try { rl.close(); } catch {}
 
+  const cookiesFinaux = await ctx.cookies().catch(() => []);
+  const estValide = cookiesFinaux.some(c => c.name === 'c_user');
+
   try {
     await ctx.storageState({ path: SESSION_FILE });
-    console.log(`\n✅ Session sauvegardée avec succès dans ${SESSION_FILE}`);
-    console.log('   Vous pouvez maintenant lancer : node scripts/sync-immo-local.js --facebook --dry');
+    if (estValide) {
+      console.log(`\n✅ Session Facebook authentifiée sauvegardée avec succès dans ${SESSION_FILE}`);
+      console.log('🚀 Vous pouvez maintenant lancer le scraping local avec progression :');
+      console.log('   node scripts/sync-immo-local.js --facebook');
+    } else {
+      console.log(`\n⚠️ Attention : Session sauvegardée dans ${SESSION_FILE} mais sans cookie utilisateur actif (c_user).`);
+      console.log('   Si le scraping échoue, relancez : node scripts/fb-login-setup.js et connectez-vous complètement.');
+    }
   } catch (err) {
     console.error('Erreur lors de la sauvegarde de la session:', err.message);
   }

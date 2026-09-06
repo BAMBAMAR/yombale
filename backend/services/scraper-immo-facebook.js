@@ -534,7 +534,7 @@ async function lancerNavigateur(pw) {
         // Pages publiques : attente plus longue entre scrolls (React charge différemment des groupes)
         const scrollPause = groupe.type === 'page' ? 3000 : 2500;
         for (let i = 0; i < 15; i++) {
-          await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+          await page.evaluate(() => window.scrollTo(0, document.body?.scrollHeight || document.documentElement?.scrollHeight || 0));
           await page.waitForTimeout(scrollPause);
         }
 

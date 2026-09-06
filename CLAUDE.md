@@ -1,3 +1,27 @@
+- **Résolution Haute Définition Native 1:1, Symétrie Vectorielle Absolue & Force-Update v17 (`manifest.json`, `layout.tsx`, `RegisterSW.tsx`, `sw.ts`, `icons/*`, `generate-master-icons.mjs`) (06 septembre 2026)** 💎📐✨ :
+  * **🔍 1. Diagnostic des 3 Causes du Manque de Netteté & Dissymétrie sur Téléphone** :
+    - *Échelle 2x Mismatch* : Playwright générait avec `deviceScaleFactor: 2`, produisant un fichier réel de 1024×1024 px étiqueté 512×512 px. Android WebAPK sous-échantillonnait le fichier à l'affichage du splash screen avec un filtre brut basse définition, créant des contours flous et baveux sur écran AMOLED.
+    - *Dissymétrie Optique (Voile blanc)* : Le dégradé zénithal blanc sur les 40% supérieurs délavait l'orange, donnant l'illusion visuelle d'un haut enflé et déséquilibré par rapport au bas.
+    - *Déformation de Courbure (Lamé n=5)* : L'approximation polygonale à 720 points avec n=5 aplatissait les 4 côtés et pinçait les coins, cassant la fluidité organique du squircle de référence.
+  * **📐 2. Restauration Vectorielle Pure & Symétrie 100% Mathématique** :
+    - Restauration de la géométrie authentique `logo-mark.svg` : rayon continu quad-symétrique `rx = 25.65%` (standard Apple / Material), éliminant tout effet de coussin ou bossage.
+    - Monogramme "N" géométriquement parfait : jambages gauche et droit de largeur strictement identique (68 px), découpes triangulaires en miroir parfait, marges gauche/droite (94 px) et haut/bas (82 px) parfaitement réparties.
+    - Dégradé solaire 4-stop authentique (`#FF7E22` → `#EA580C` → `#C75B00` → `#9E3C00`) sans voile blanc perturbateur, avec flux diagonal équilibré.
+  * **💎 3. Rendu Pixel-Perfect 1:1 Strict (`deviceScaleFactor: 1`)** :
+    - `icon-1024.png` : exactement 1024×1024 px réels.
+    - `icon-512.png` : exactement 512×512 px réels.
+    - `icon-192.png` : exactement 192×192 px réels.
+    - `apple-icon.png` : exactement 180×180 px (full-bleed pour masque natif iOS).
+    - `favicon-32x32.png` & `favicon-16x16.png` : exactement 32×32 et 16×16 px.
+    - Élimination totale de tout artefact de sous-échantillonnage mobile.
+  * **🔄 4. Synchronisation Globale & Force-Update Client v17** :
+    - `RegisterSW.tsx` : `FORCE_VERSION = '17'` — déclenche la purge automatique de tous les caches d'icônes/assets et force un hard reload chez tous les utilisateurs.
+    - `sw.ts` & `public/sw.js` : `CACHE_VERSION = 'v17'`.
+    - `manifest.json` & `layout.tsx` : versionnés sur `?v=17`.
+  * **🧪 5. Validation & Qualité** :
+    - Compilation Next.js (`npm run build`) validée sans erreur (code 0) sur les 104 pages.
+    - Respect strict de la règle d'interdiction de polices externes CDN (polices système natives uniquement).
+
 - **Refonte Haute Précision PWA & Architecture Native Master v16 (`manifest.json`, `layout.tsx`, `RegisterSW.tsx`, `sw.ts`, `icons/*`) (06 septembre 2026)** 💎⚪🟠✨ :
   * **💎 1. Éradication Complète de Tout Colmatage & Standard Industriel** :
     - Élimination des solutions palliatives (fonds carrés peints, masques bidouillés ou écrans unifiés orange).

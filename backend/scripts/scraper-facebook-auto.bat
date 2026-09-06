@@ -6,7 +6,8 @@ REM Affiche la progression en direct sur la console ET sauvegarde dans backend/s
 cd /d "%~dp0..\.."
 if not exist "backend\scripts\logs" mkdir "backend\scripts\logs"
 
-set LOGFILE=backend\scripts\logs\fb-scraper-%date:~-4,4%%date:~-7,2%%date:~-10,2%-%time:~0,2%%time:~3,2%.log
-set LOGFILE=%LOGFILE: =0%
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ts = Get-Date -Format 'yyyyMMdd-HHmmss'; $log = Join-Path 'backend\scripts\logs' ('fb-scraper-' + $ts + '.log'); & '%~dp0lancer-scraper-facebook.ps1' 2>&1 | Tee-Object -FilePath $log"
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& '%~dp0lancer-scraper-facebook.ps1' | Tee-Object -FilePath '%LOGFILE%'"
+echo.
+echo ========================================================
+pause

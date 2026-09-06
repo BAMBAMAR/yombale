@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+chcp 65001 >nul
 
 :: Définition du répertoire du projet
 set "PROJECT_DIR=%~dp0.."
@@ -33,10 +34,22 @@ set "ARGS=%*"
 if "%ARGS%"=="" set "ARGS=--facebook"
 
 echo [!DATE! !TIME!] Execution: "%NODE_CMD%" scripts/sync-immo-local.js %ARGS% >> "%LOG_FILE%"
-"%NODE_CMD%" scripts\sync-immo-local.js %ARGS% >> "%LOG_FILE%" 2>&1
+echo ========================================================
+echo   LANCEMENT DU SCRAPING LOCAL NOPALOU
+echo   Logs enregistres dans : logs\scraper-task.log
+echo ========================================================
+echo.
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { & '%NODE_CMD%' scripts\sync-immo-local.js %ARGS% } 2>&1 | Tee-Object -FilePath '%LOG_FILE%' -Append"
 set "EXIT_CODE=%errorlevel%"
 
 echo [!DATE! !TIME!] Fin de la tâche avec code de sortie: %EXIT_CODE% >> "%LOG_FILE%"
 echo =================================================== >> "%LOG_FILE%"
+
+echo.
+echo ========================================================
+echo Scraping termine (Code de sortie: %EXIT_CODE%).
+echo ========================================================
+pause
 
 exit /b %EXIT_CODE%
