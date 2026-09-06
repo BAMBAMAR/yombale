@@ -276,7 +276,95 @@ export default async function HomePage({
                 </Link>
               )
             })}
+
+            {/* Raccourci Caisse POS & Forfaits Vendeurs */}
+            <a
+              href="#forfaits-vendeurs"
+              className="categ-pill"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, fontSize: 13,
+                fontWeight: 800, textDecoration: 'none',
+                background: 'linear-gradient(135deg, #1C2B4A 0%, #2A3F6C 100%)',
+                color: '#ffffff',
+                border: '1px solid rgba(199,91,0,0.5)',
+                boxShadow: '0 3px 8px rgba(28,43,74,0.18)',
+                whiteSpace: 'nowrap', flexShrink: 0
+              }}
+            >
+              <span>⚡</span> <span>Caisse POS &amp; Forfaits</span>
+              <span style={{ background: '#16A34A', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 10, fontWeight: 900 }}>1m Offert</span>
+            </a>
           </div>
+
+          {/* CARTE D'ACQUISITION MARCHANDS & FORFAITS VENDEURS */}
+          {!hasFiltre && (
+            <div style={{
+              marginTop: 24,
+              background: '#ffffff',
+              borderRadius: 18,
+              border: '1.5px solid var(--border, #E8DDD2)',
+              padding: '16px 20px',
+              boxShadow: '0 8px 24px rgba(28, 43, 74, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              flexWrap: 'wrap',
+              textAlign: 'left'
+            }}>
+              <div style={{ flex: '1 1 360px', minWidth: 260 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FFF3EA', color: 'var(--accent, #C75B00)', fontSize: 11.5, fontWeight: 800, padding: '3px 10px', borderRadius: 20, marginBottom: 6 }}>
+                  <span>🏪 SOLUTIONS MARCHANDS &amp; COMMERÇANTS</span>
+                  <span style={{ background: '#16A34A', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 10, fontWeight: 900 }}>30J OFFERTS</span>
+                </div>
+                <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                  Passez à la vitesse supérieure avec la Caisse POS &amp; la Vitrine Nopalou
+                </h3>
+                <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
+                  Caisse tactile hors-ligne, scan caméra, relance impayés WhatsApp, import Ali/SHEIN 1-clic et 0% de commission. Dès 2 500 FCFA/mois.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <a
+                  href="#forfaits-vendeurs"
+                  style={{
+                    padding: '9px 14px',
+                    borderRadius: 10,
+                    background: 'var(--bg, #F8F5F0)',
+                    border: '1px solid var(--border, #E8DDD2)',
+                    color: 'var(--navy, #1C2B4A)',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Comparer les Forfaits ↓
+                </a>
+                <Link
+                  href="/creer-boutique"
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: 10,
+                    background: 'var(--accent, #C75B00)',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: 13,
+                    textDecoration: 'none',
+                    boxShadow: '0 3px 10px rgba(199,91,0,0.25)',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                >
+                  <span>Créer ma Boutique</span>
+                  <span>→</span>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

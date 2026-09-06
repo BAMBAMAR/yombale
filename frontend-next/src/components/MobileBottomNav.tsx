@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Compass, ShoppingCart, Heart, User, Store } from 'lucide-react'
+import { Home, ShoppingCart, Heart, User, Store } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 
 interface Props {
@@ -35,17 +35,17 @@ export default function MobileBottomNav({ isLoggedIn = false, isMerchant = false
         <span>Accueil</span>
       </Link>
 
-      {/* 2. Explorer / Boutiques */}
+      {/* 2. Boutiques & Vendeurs */}
       <Link
         href="/boutiques"
         className={`mobile-bottom-nav-item${isExplorer ? ' active' : ''}`}
-        aria-label="Boutiques et Catalogues"
+        aria-label="Boutiques et Catalogues Partenaires"
         aria-current={isExplorer ? 'page' : undefined}
       >
         <div className="mobile-bottom-nav-icon-wrap">
-          <Compass size={20} strokeWidth={isExplorer ? 2.5 : 2} />
+          <Store size={20} strokeWidth={isExplorer ? 2.5 : 2} />
         </div>
-        <span>Explorer</span>
+        <span>Boutiques</span>
       </Link>
 
       {/* 3. Panier Interactif */}

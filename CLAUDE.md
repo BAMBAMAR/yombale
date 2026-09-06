@@ -1,3 +1,26 @@
+- **Correction Troncature En-tête Desktop & Mise en Avant des Forfaits et Solutions Vendeurs Nopalou (`globals.css`, `NavbarActions.tsx`, `layout.tsx`, `page.tsx`, `ShowcaseTabs.tsx`, `MobileNav.tsx`, `MobileBottomNav.tsx`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** 🚀🏪💳🛒📱✨ :
+  * **🖥️ 1. Résolution du Débordement Horizontal de l'En-tête Desktop (`globals.css`, `NavbarActions.tsx`, `layout.tsx`)** :
+    - Marges adaptatives : remplacement de `padding: 0 4%` par `padding: 0 clamp(10px, 1.8vw, 24px)` sur `.navbar`.
+    - Espacements fluides : `.navbar-top-row { gap: clamp(6px, 1vw, 14px); }`, `.navbar-links { gap: clamp(2px, 0.35vw, 4px); }`, et `.navbar-link { padding: 6px clamp(5px, 0.55vw, 10px); font-size: 13.5px; }`.
+    - Bouton Déconnexion compact : remplacement de l'ancien texte large `Déconnexion` (90px) par un bouton moderne compact avec icône `LogOut`, tooltip `title="Se déconnecter"` et libellé responsive `Quitter` (gain de plus de 70px de largeur).
+    - Tronquage sécurisé des noms d'utilisateurs longs (`maxWidth: 120px` avec `text-overflow: ellipsis`).
+    - Masquage intelligent de la redondance `.navbar-taftaf` sur écrans `<= 1320px` (le lien direct *Boutiques* étant déjà présent dans le menu principal adjacent).
+    - Rehaussement du point de bascule mobile de `1040px` à `1140px` pour que les tablettes paysage et petits ordinateurs portables basculent fluidement sur le tiroir mobile au lieu de tronquer l'en-tête.
+  * **🏪 2. Mise en Avant Héroïque des Forfaits & Solutions Commerçants (`page.tsx`, `ShowcaseTabs.tsx`)** :
+    - Carte d'acquisition marchands insérée en haut de page d'accueil sous la recherche : **« SOLUTIONS MARCHANDS & COMMERÇANTS (30J OFFERTS) — Passez à la vitesse supérieure avec la Caisse POS & la Vitrine Nopalou »**.
+    - Mise en avant des atouts décisifs : Caisse tactile hors-ligne, scan codes-barres caméra, relance impayés WhatsApp, Baguette Magique Import Ali/SHEIN 1-clic et 0% de commission. Deux CTA directs : `Comparer les Forfaits ↓` (ancrage fluide vers `#forfaits-vendeurs`) et `Créer ma Boutique →`.
+    - Raccourci doré en pilule dans la barre de catégories : `⚡ Caisse POS & Forfaits (1m Offert)`.
+    - Modernisation de la section `#forfaits-vendeurs` (`ShowcaseTabs.tsx`) avec la charte chaleureuse Nopalou (`var(--navy)`, `var(--accent)`, `var(--bg)`), comparaison détaillée des 3 formules (**Boutique Taf Taf 2 500 FCFA**, **Vendeur Pro 5 000 FCFA**, **Business VIP 10 000 FCFA**), sélecteur de durée avec réductions (-10% à -25%) et programme d'apporteur d'affaires (20% de commission récurrente).
+  * **📱 3. Valorisation des Solutions Vendeurs sur Mobile (`MobileNav.tsx`, `MobileBottomNav.tsx`)** :
+    - Tiroir mobile : ajout d'une section dédiée **« Commerçants & POS (1m Offert) »** donnant accès direct aux Forfaits Vendeurs, à la Caisse POS Offline, à la vente WhatsApp et à la démo interactive.
+    - Ajout du badge `1m Offert` sur le bouton principal `Ouvrir une Boutique Pro`.
+    - Optimisation de l'onglet 2 de la barre basse persistante avec l'icône `Store` et le libellé **« Boutiques »**.
+  * **🧪 4. Validation & Qualité** :
+    - Respect strict du bannissement des polices externes (0 CDN).
+    - Suite de 35 tests unitaires frontend : **35/35 passés avec succès (100%)**.
+    - Rendu HTML SSR validé sans aucune erreur.
+  * **📦 5. Statut** : Prêt et validé localement (aucun git push exécuté, conformément à la règle stricte).
+
 - **Refonte Design System & Expérience Utilisateur Premium E-Commerce 2026 (`globals.css`, `layout.tsx`, `page.tsx`, `produit/[id]/page.tsx`, `BoutiqueClient.tsx`, `DrawerCart.tsx`, `MobileBottomNav.tsx`, `NavbarCartBtn.tsx`, `CartContext.tsx`, `CLAUDE.md`) (`pushed` - 06 septembre 2026)** ✨💎🎨🛒📱⚡ :
   * **🎨 1. Design System & Modern Glassmorphism Layout (`globals.css`, `layout.tsx`)** :
     - Modernisation de la navbar sticky : fond en verre dépoli (`background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border)`), élimination de l'ancienne bordure orange agressive de 2px.

@@ -19,40 +19,42 @@ export default function ShowcaseTabs({
   const getPrix = (base: number) => Math.round(base * (1 - remise));
 
   return (
-    <section className="showcase-section" style={{
-      background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
+    <section className="showcase-section" id="forfaits-vendeurs" style={{
+      background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 60%, var(--bg, #F8F5F0) 100%)',
       borderRadius: 24,
       padding: '44px 24px',
       margin: '40px 0',
-      border: '1px solid #e2e8f0',
-      boxShadow: '0 10px 30px rgba(15, 23, 42, 0.04)',
+      border: '1px solid var(--border, #E8DDD2)',
+      boxShadow: '0 8px 30px rgba(28, 43, 74, 0.05)',
+      scrollMarginTop: '80px',
     }}>
       <div style={{ maxWidth: 1240, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
         
         {/* Header Section */}
         <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{
-            alignSelf: 'center', background: '#fff7ed', color: '#9a3412',
-            fontSize: 12, fontWeight: 800, padding: '4px 14px', borderRadius: 20,
-            border: '1px solid #ffedd5', display: 'inline-flex', alignItems: 'center', gap: 6
+            alignSelf: 'center', background: '#FFF3EA', color: 'var(--accent, #C75B00)',
+            fontSize: 12, fontWeight: 800, padding: '5px 16px', borderRadius: 20,
+            border: '1px solid #FFEDD5', display: 'inline-flex', alignItems: 'center', gap: 6
           }}>
-            <Sparkles size={14} style={{ color: '#C75B00' }} />
-            <span>Formules &amp; Solutions Commerciales Nopalou</span>
+            <Sparkles size={14} style={{ color: 'var(--accent, #C75B00)' }} />
+            <span>SOLUTIONS &amp; FORFAITS COMMERÇANTS NOPALOU</span>
           </div>
 
-          <h2 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 900, color: '#0f172a', margin: 0, lineHeight: 1.25 }}>
-            Propulsez vos ventes avec des outils de gestion <span style={{ color: '#C75B00' }}>puissants &amp; simples</span>
+          <h2 style={{ fontSize: 'clamp(26px, 4vw, 36px)', fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: 0, lineHeight: 1.25 }}>
+            Propulsez vos ventes avec la Caisse POS &amp; la Vitrine <span style={{ color: 'var(--accent, #C75B00)' }}>Nopalou</span>
           </h2>
 
-          <p style={{ fontSize: 15, color: '#475569', margin: 0, lineHeight: 1.6 }}>
-            Choisissez la formule adaptée à votre commerce. Essayez gratuitement pendant 30 jours, sans engagement.
+          <p style={{ fontSize: 15, color: 'var(--text2, #5A4E42)', margin: 0, lineHeight: 1.6 }}>
+            Caisse tactile même sans Internet, scan caméra, relance impayés WhatsApp et zéro commission. <strong>1er mois 100% OFFERT sur tous nos forfaits</strong>.
           </p>
 
           {/* Selector Durée (1, 3, 6, 12 Mois) */}
           <div style={{
             display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6,
-            alignSelf: 'center', background: '#f1f5f9', padding: 6, borderRadius: 30,
-            border: '1px solid #cbd5e1', marginTop: 10
+            alignSelf: 'center', background: '#ffffff', padding: 6, borderRadius: 30,
+            border: '1.5px solid var(--border, #E8DDD2)', marginTop: 10,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
           }}>
             {[
               { m: 1, label: '1 mois (30j offerts)', badge: null },
@@ -66,8 +68,8 @@ export default function ShowcaseTabs({
                 onClick={() => setDuree(d.m as any)}
                 style={{
                   padding: '8px 16px', borderRadius: 20, border: 'none',
-                  background: duree === d.m ? (d.m === 12 ? '#C75B00' : 'var(--navy)') : 'transparent',
-                  color: duree === d.m ? '#fff' : '#475569',
+                  background: duree === d.m ? (d.m === 12 ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)') : 'transparent',
+                  color: duree === d.m ? '#fff' : 'var(--text2, #5A4E42)',
                   fontWeight: duree === d.m ? 800 : 600, fontSize: 13, cursor: 'pointer',
                   boxShadow: duree === d.m ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
                   transition: 'all 0.2s ease', display: 'inline-flex', alignItems: 'center', gap: 6

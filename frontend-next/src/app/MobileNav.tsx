@@ -4,7 +4,7 @@ import { logout } from '@/app/actions/auth'
 import {
   Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
   Bell, Heart, Users, BookOpen, Sparkles, Plus, LogOut, ChevronDown,
-  MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon
+  MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon, Zap
 } from 'lucide-react'
 
 interface Props {
@@ -69,7 +69,6 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
       <div
         className={`mobile-nav-drawer${open ? ' mobile-nav-drawer--open' : ''}`}
         aria-hidden={!open}
-        {...(!open ? { inert: '' } : {})}
       >
         {/* Header Drawer */}
         <div className="mobile-nav-header">
@@ -221,6 +220,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
               >
                 <Store size={15} />
                 <span>Ouvrir une Boutique Pro</span>
+                <span style={{ background: '#16A34A', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 8, fontWeight: 900 }}>1m Offert</span>
               </a>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <a
@@ -285,6 +285,28 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           <a href="/boutiques" className="mobile-nav-link" onClick={close}>
             <Store size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
             <span>Annuaire des Boutiques</span>
+          </a>
+
+          {/* ── 2.5 SOLUTIONS MARCHANDS & FORFAITS ── */}
+          <div className="mobile-nav-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>Commerçants &amp; POS</span>
+            <span style={{ fontSize: 10, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8, fontWeight: 800 }}>1m Offert</span>
+          </div>
+          <a href="/tarifs-boutique" className="mobile-nav-link" onClick={close}>
+            <Zap size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
+            <span>Forfaits &amp; Abonnements Vendeurs</span>
+          </a>
+          <a href="/pos" className="mobile-nav-link" onClick={close}>
+            <ShoppingCart size={15} style={{ color: '#16A34A', marginRight: 8 }} />
+            <span>Caisse Enregistreuse POS (Offline)</span>
+          </a>
+          <a href="/whatsapp" className="mobile-nav-link" onClick={close}>
+            <MessageCircle size={15} style={{ color: '#25D366', marginRight: 8 }} />
+            <span>Vendre sur WhatsApp (0% commission)</span>
+          </a>
+          <a href="/demo?role=marchand" className="mobile-nav-link" onClick={close}>
+            <Sparkles size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
+            <span>Tester la Démo Caisse Gratuite</span>
           </a>
 
           {/* ── 3. ESPACE UTILISATEUR (Si connecté, regroupé & sans doublon) ── */}

@@ -1056,11 +1056,11 @@ a {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
-  padding: 0 4%;
+  padding: 0 clamp(10px, 1.8vw, 24px);
   height: 68px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: clamp(8px, 1.2vw, 16px);
   position: sticky;
   top: 0;
   z-index: 200;
@@ -6321,13 +6321,14 @@ a {
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: clamp(2px, 0.35vw, 4px);
+  flex-shrink: 0;
 }
 
 .navbar-link {
-  padding: 7px 13px;
+  padding: 6px clamp(5px, 0.55vw, 10px);
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 650;
   color: var(--navy);
   text-decoration: none;
@@ -6335,6 +6336,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .navbar-link:hover {
@@ -6346,21 +6348,26 @@ a {
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: clamp(4px, 0.6vw, 8px);
+  flex-shrink: 0;
 }
 
 .navbar-actions-compte {
   display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .navbar-deposer {
-  padding: 7px 14px;
+  padding: 6px clamp(8px, 0.8vw, 13px);
   background: var(--accent);
   color: #fff;
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 600;
   transition: opacity .15s;
+  white-space: nowrap;
 }
 
 .navbar-deposer:hover {
@@ -6368,13 +6375,14 @@ a {
 }
 
 .navbar-inscription {
-  padding: 7px 14px;
+  padding: 6px clamp(8px, 0.8vw, 13px);
   border: 1.5px solid rgba(254, 215, 170, 0.65);
   color: #fed7aa;
   border-radius: var(--radius);
   font-size: 13px;
   font-weight: 700;
   transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
 }
 
 .navbar-inscription:hover {
@@ -6383,17 +6391,25 @@ a {
   color: #fff;
 }
 
-@media (max-width: 1040px) {
-  .navbar-links { display: none; }
+@media (max-width: 1320px) {
+  /* Masquer le gros bouton Taf Taf entre 1140px et 1320px pour éviter la troncature à droite */
+  .navbar-taftaf {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1140px) {
+  .navbar-links { display: none !important; }
   /* Connexion + S'inscrire sont dans le tiroir mobile — on les cache de la navbar */
-  .navbar-link   { display: none; }
-  .navbar-inscription { display: none; }
+  .navbar-link   { display: none !important; }
+  .navbar-inscription { display: none !important; }
   /* Nom du compte + Déconnexion sont dans le tiroir mobile aussi — sans ce
      masquage, .navbar-actions dépasse le viewport (nom + Déconnexion + Publier
      + hamburger ne tiennent pas sur une largeur téléphone) */
   .navbar-actions-compte { display: none !important; }
-  /* Réduire le bouton Publier pour laisser de la place au hamburger */
-  .navbar-deposer { font-size: 11px; padding: 5px 8px; }
+  .navbar-deposer { display: none !important; }
+  .navbar-taftaf { display: none !important; }
+  .navbar-maboutique { display: none !important; }
   /* S'assurer que le bouton hamburger est toujours visible */
   .mobile-nav-btn { flex-shrink: 0; }
 }
@@ -11076,7 +11092,7 @@ span.ripple {
   align-items: center;
   justify-content: space-between;
   height: 100%;
-  gap: 16px;
+  gap: clamp(6px, 1vw, 14px);
 }
 
 .navbar-search-desktop {
@@ -11178,7 +11194,7 @@ span.ripple {
   display: none;
 }
 
-@media (max-width: 1040px) {
+@media (max-width: 1140px) {
   .navbar {
     height: auto !important;
     padding: 10px 4% !important;
