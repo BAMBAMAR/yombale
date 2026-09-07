@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import AccountNavLinks from './AccountNavLinks'
 import { useTranslation } from '@/i18n/context'
+import { BookOpen, Store, LogOut, ChevronRight, ExternalLink } from 'lucide-react'
 
 interface Props {
   nom: string
@@ -115,62 +116,82 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
         }}
       >
         <Link
+          href="/boutique"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '9px 12px',
+            fontSize: 12.5,
+            color: 'var(--navy, #1C2B4A)',
+            textDecoration: 'none',
+            borderRadius: 10,
+            fontWeight: 750,
+            background: 'linear-gradient(135deg, #FAF8F5 0%, #F5EFE6 100%)',
+            border: '1.5px solid #E8DDD2',
+            boxShadow: '0 1px 3px rgba(28,43,74,0.03)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Store size={15} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+            <span>{t('shop.merchantAccount') || 'Mon compte marchand'}</span>
+          </div>
+          <ChevronRight size={14} style={{ color: '#94A3B8' }} />
+        </Link>
+
+        <Link
           href="/guide-utilisation"
           target="_blank"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            padding: '8px 12px',
-            fontSize: 12,
-            color: '#C75B00',
+            justifyContent: 'space-between',
+            padding: '9px 12px',
+            fontSize: 12.5,
+            color: '#475569',
             textDecoration: 'none',
-            borderRadius: 8,
-            fontWeight: 750,
-            background: '#FFF7ED',
-            border: '1px solid #FFEDD5',
-            transition: 'background 0.15s',
-          }}
-        >
-          <span>📖 Guide d&apos;utilisation</span>
-        </Link>
-        <Link
-          href="/boutique"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 12px',
-            fontSize: 12,
-            color: 'var(--navy, #1C2B4A)',
-            textDecoration: 'none',
-            borderRadius: 8,
-            fontWeight: 700,
-            background: '#F1F5F9',
+            borderRadius: 10,
+            fontWeight: 650,
+            background: '#ffffff',
             border: '1px solid #E2E8F0',
-            transition: 'background 0.15s',
+            transition: 'all 0.15s ease',
           }}
         >
-          <span>🏪 {t('shop.merchantAccount') || 'Espace Boutique'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <BookOpen size={15} style={{ color: '#64748B', flexShrink: 0 }} />
+            <span>Guide d&apos;utilisation</span>
+          </div>
+          <ExternalLink size={12} style={{ color: '#94A3B8' }} />
         </Link>
+
         <a
           href="/api/auth/deconnexion"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            justifyContent: 'center',
+            gap: 6,
             padding: '8px 12px',
+            marginTop: 4,
             fontSize: 12,
-            color: '#DC2626',
+            color: '#94A3B8',
             textDecoration: 'none',
             borderRadius: 8,
-            fontWeight: 700,
-            background: '#FEF2F2',
-            border: '1px solid #FEE2E2',
-            transition: 'background 0.15s',
+            fontWeight: 600,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.color = '#DC2626'
+            e.currentTarget.style.background = '#FEF2F2'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.color = '#94A3B8'
+            e.currentTarget.style.background = 'transparent'
           }}
         >
-          <span>🚪 {t('account.navLogout') || 'Déconnexion'}</span>
+          <LogOut size={13} style={{ flexShrink: 0 }} />
+          <span>{t('account.navLogout') || 'Déconnexion'}</span>
         </a>
       </div>
     </aside>

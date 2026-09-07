@@ -6459,9 +6459,9 @@ a {
 /* ── Audit Mobile : Navbar très petit écran ────────────────────── */
 @media (max-width: 480px) {
   .navbar { gap: 8px; padding: 0 3%; }
-  /* Logo : cacher le texte, garder l'icône pour économiser l'espace */
-  .logo-name { display: none; }
-  .logo { gap: 0; }
+  /* Logo : afficher Nopalou complet comme sur la charte */
+  .logo-name { display: inline-flex !important; font-size: 19px !important; font-weight: 800 !important; }
+  .logo { display: flex !important; align-items: center !important; gap: 7px !important; }
   /* Bouton Publier encore plus compact */
   .navbar-deposer { font-size: 10px; padding: 4px 7px; }
 }
@@ -10536,6 +10536,10 @@ button:focus-visible,
 }
 
 .bq-kpi-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-height: 88px;
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease;
 }
 
@@ -10651,12 +10655,14 @@ button:focus-visible,
   }
 
   .bq-kpi-card {
-    padding: 10px 12px !important;
+    padding: 12px 14px !important;
     border-radius: 12px !important;
+    min-height: 88px !important;
   }
 
   .bq-kpi-card p {
-    font-size: 20px !important;
+    font-size: 19px !important;
+    line-height: 24px !important;
   }
 
   .bq-actions-container {
@@ -10869,8 +10875,9 @@ button:focus-visible,
 
   /* Actions pro */
   .logo-name {
-    display: none;
-    font-size: 18px;
+    display: inline-flex !important;
+    font-size: 19px !important;
+    font-weight: 800;
   }
 
   /* Show icon actions, hide text-based deposer */
@@ -10891,7 +10898,9 @@ button:focus-visible,
 
 @media (max-width: 640px) {
   .logo-name {
-    display: none !important;
+    display: inline-flex !important;
+    font-size: 18px !important;
+    font-weight: 800;
   }
   .navbar-icon-actions {
     gap: 4px;
@@ -11155,6 +11164,40 @@ span.ripple {
   display: none;
 }
 
+/* Bouton Assistant WhatsApp dans l'en-tête */
+.navbar-whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #25D366;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  flex-shrink: 0;
+}
+.navbar-whatsapp-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+@media (max-width: 640px) {
+  .navbar-whatsapp-btn {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 9px !important;
+  }
+}
+@media (max-width: 380px) {
+  .navbar-whatsapp-btn {
+    width: 33px !important;
+    height: 33px !important;
+    border-radius: 8px !important;
+  }
+}
+
 /* ── Mobile icon buttons (Comparer / Favoris / Profil) ─────────── */
 .navbar-mobile-group {
   display: none;
@@ -11331,7 +11374,9 @@ span.ripple {
 
 @media (max-width: 580px) {
   .logo-name {
-    display: none !important;
+    display: inline-flex !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
   }
   .navbar-top-row {
     gap: 6px;
@@ -12203,18 +12248,28 @@ body:has(.caisse-header) .site-footer {
   display: inline;
 }
 
+/* Boutons secondaires masqués sur smartphone dans le header POS */
+.caisse-desktop-only {
+  display: inline-flex !important;
+}
+
 /* Sélecteur de boutique : visible sur tablette+ */
 .caisse-boutique-select {
   display: block;
 }
 
+.caisse-header {
+  flex-wrap: nowrap !important;
+}
+
 @media (max-width: 640px) {
-  /* Sur petit écran : masquer les labels texte dans le header */
-  .caisse-label-desktop {
-    display: none;
+  /* Sur petit écran : masquer les labels texte et boutons secondaires dans le header */
+  .caisse-label-desktop,
+  .caisse-desktop-only {
+    display: none !important;
   }
 
-  /* Masquer le select boutique sur très petit écran (moins d'espace) */
+  /* Masquer le select boutique brut sur très petit écran (remplacé par overlay) */
   .caisse-boutique-select {
     display: none;
   }
@@ -12719,6 +12774,11 @@ html[dir="rtl"] .auth-eye-btn {
   padding: 10px 14px;
   background: var(--card, #ffffff);
   border-bottom: 1px solid var(--border, #E8DDD2);
+}
+
+.account-sidebar .mobile-nav-compact-bar {
+  border-bottom: none !important;
+  padding: 0 !important;
 }
 
 .mobile-nav-compact-back {

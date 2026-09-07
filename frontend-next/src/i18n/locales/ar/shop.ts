@@ -47,6 +47,7 @@ export const shop: LocaleTranslations['shop'] = {
   navGroupCatalogStock: 'الكتالوج والمخزون',
   navGroupFinanceReports: 'المالية والتقارير',
   navGroupSettingsTeam: 'الإعدادات والفريق',
+  navGroupMarketingSettings: 'الأدوات والإعدادات',
 
   // Actions & KPIs
   manageShop: 'إدارة متجري',
@@ -87,9 +88,11 @@ export const shop: LocaleTranslations['shop'] = {
   proBannerDesc: 'كتالوج · محاسبة · إحصائيات · ظهور مميز في المقدمة',
   viewPlans: 'عرض الباقات ←',
   myAccountBack: 'حسابي',
+  myShopsBack: 'متاجري',
+  homeShopBack: 'الرئيسية',
   posPhysicalLink: '🛒 كاشير نقطة البيع (POS) ↗',
   viewPublicShopLink: 'عرض المتجر ↗',
-  merchantAccount: '👤 حساب التاجر ↗',
+  merchantAccount: 'حساب التاجر',
   purePlayerMode: '⚡ نمط التجارة الإلكترونية عبر الويب',
   shopActive: 'متجر نشط (متصل)',
   shopInactive: 'متجر معطل (مخفي)',
@@ -374,7 +377,7 @@ export const shop: LocaleTranslations['shop'] = {
   // Carnet de dettes modales & cartes étendues
   createCustomerModalTitle: '👤 إنشاء بطاقة عميل جديدة',
   editCustomerModalTitle: '✏️ تعديل بطاقة العميل',
-  customerFullNameLabel: 'الاسم الكامل للعميل *',
+  customerFullNameLabel: 'الاسم الكامل للعميل',
   customerFullNamePlaceholder: 'مثال: فاتو سو، مادو ندياي',
   customerPhoneLabel: 'رقم الهاتف (واتساب) *',
   customerPhonePlaceholder: 'مثال: 771234567',

@@ -20,8 +20,29 @@
   * **📋 4. Phase 4 : Resserrement des Barres d'Outils Commandes & Carnet de Dettes (`Commandes.tsx`, `CarnetDettes.tsx`)** :
     - `Commandes.tsx` : Remplacement des boutons d'export CSV et PDF dispersés par un menu déroulant élégant `[ 📥 Exporter ▾ ]` et organisation fluide des filtres de canaux (Tous, Web, POS).
     - `CarnetDettes.tsx` : Élimination de la 2ème rangée de 4 boutons compressés sur mobile (`QR`, `Import CSV`, `CSV`, `PDF`). Intégration d'un menu déroulant unique `[ ⋯ Plus ▾ ]` aux côtés des boutons majeurs `[ ⚡ + Vente crédit ]` et `[ 👤 + Client ]`.
-  * **🧪 5. Validation Qualité & Conformité** :
-    - 35/35 tests unitaires passés avec succès (100%).
+  * **💬 5. En-tête : Rétablissement du Bouton Assistant WhatsApp près du Panier & Logo Nopalou Complet sur Mobile (`layout.tsx`, `NavbarWhatsappBtn.tsx`, `globals.css`)** :
+    - `NavbarWhatsappBtn.tsx` : Création du composant dédié à l'Assistant WhatsApp (icône SVG officielle WhatsApp, fond vert `#25D366`, infobulle et ombre soignée).
+    - `layout.tsx` : Positionnement du bouton Assistant WhatsApp directement à côté du panier (`NavbarCartBtn`) sur ordinateur (`navbar-actions`) et sur smartphone/tablette (`navbar-mobile-group`).
+    - `globals.css` : Rétablissement permanent du texte de marque `Nopalou` (`.logo-name`) sur toutes les résolutions mobiles (suppression des `display: none !important` sous 640px, 580px et 480px) pour afficher le logo officiel complet avec l'icône squircle `[N]` + `Nopa` en bleu marine `#1C2B4A` + `lou` en orange vif `#C75B00`, 100% conforme à la charte graphique.
+  * **🌐 6. Internationalisation (i18n) & Correction du Bouton Retour "shop.myShopsBack" (`BoutiqueClient.tsx`, `locales/{fr,en,ar}/shop.ts`)** :
+    - Éradication du bogue d'affichage où le bouton de retour de la barre latérale boutique affichait la clé brute non résolue `shop.myShopsBack` au lieu du texte localisé.
+    - Ajout des clés manquantes dans les dictionnaires FR, EN et AR avec 100% de parité :
+      * `myShopsBack` : `'Mes Boutiques'` (FR), `'My Shops'` (EN), `'متاجري'` (AR).
+      * `homeShopBack` : `'Accueil Boutique'` (FR), `'Shop Home'` (EN), `'الرئيسية'` (AR).
+      * `navGroupMarketingSettings` : `'Outils & Réglages'` (FR), `'Tools & Settings'` (EN), `'الأدوات والإعدادات'` (AR).
+    - Typage strict dans `BoutiqueClient.tsx` sans cast forcé `(t as any)` pour une robustesse totale au build et au runtime.
+  * **🛡️ 7. Sécurisation Authentification KPIs & Éradication des Erreurs 401 `/api/comptabilite/:id/dashboard` (`BoutiqueClient.tsx`, `actions.ts`, `CarnetDettes.tsx`)** :
+    - Éradication des requêtes directes côté client `fetch('/api/comptabilite/:id/dashboard')` qui échouaient avec l'erreur `401 (Unauthorized)` en raison de l'absence d'en-tête JWT Authorization dans le navigateur.
+    - Migration intégrale vers les Server Actions Next.js (`getDashboard`, `getCreditsClients`, `getBoutiqueProduits`) orchestrées en parallèle via `Promise.allSettled`.
+    - Les requêtes transitent désormais de manière 100% sécurisée via `backendFetch` avec signature cryptographique automatique du JWT `userId` côté serveur Node.js (`JWT_SECRET`).
+    - Correction similaire dans `CarnetDettes.tsx` avec `updateStatutCommande` pour le rejet des demandes de crédit.
+  * **📐 8. Alignement Pixel-Perfect des Cartes KPIs & Normalisation Typographique (`BoutiqueClient.tsx`, `globals.css`)** :
+    - Élimination du décrochage vertical des chiffres provoqué par le retour à la ligne intempestif de l'icône dans la carte "Commandes en attente" sur écrans mobiles étroits.
+    - Standardisation de la hauteur de l'en-tête de carte à 28px (`gap: 6px`, conteneur d'icône compact 28x28px, titre avec `flex: 1`, `minWidth: 0` et `textOverflow: ellipsis`).
+    - Calage strict de la ligne de flottaison des 4 chiffres métriques (`lineHeight: 26px`, taille uniforme 20px, marge zéro) : les chiffres de chaque ligne sont désormais 100% alignés horizontalement au pixel près.
+    - Éradication des flèches doubles parasites (`→ →` corrigé en `→`) sur les boutons d'action des cartes Commandes et Catalogue.
+  * **🧪 9. Validation Qualité & Conformité** :
+    - 35/35 tests unitaires passés avec succès (100%), incluant la validation de parité stricte des dictionnaires i18n (FR, EN, AR).
     - Vérification TypeScript validée sans aucune erreur sur tous les composants modifiés.
     - Règle de zéro chargement/fetch dynamique de polices CDN strictement respectée.
     - Règle absolue de déploiement : aucun `git push` sans instruction explicite de l'utilisateur.
@@ -5355,6 +5376,79 @@ Voici les URLs et les modifications apportées aux outils d'administration inter
       - Ajout des actifs 1024×1024 px (`icon-1024.png`, `icon-maskable-1024.png`) dans `manifest.json` (v12) et `layout.tsx` pour éliminer tout upscaling sur téléphones 1080p/1440p.
       - Fond blanc pur 100% (`#FFFFFF`) sur le canevas d'icône pour fusionner mathématiquement avec le splash screen et éliminer définitivement les 4 encoches noires dans les coins.
 
-
-
-
+## 07 Septembre 2026 : Améliorations En-tête, Éradication Erreur 401, Alignement KPI & Refonte Header Boutique SaaS Pro
+- **En-tête de l'Application & Assistant WhatsApp (`layout.tsx`, `NavbarWhatsappBtn.tsx`)** :
+  - Rétablissement du bouton d'accès direct à l'assistant WhatsApp à côté du panier dans la barre supérieure.
+  - Garantie de visibilité du logo officiel Nopalou complet sur les formats mobiles et tablettes.
+- **Correction des Clés de Traduction i18n (`shop.ts` FR / EN / AR)** :
+  - Résolution du bogue d'affichage de la clé brute `shop.myShopsBack` dans la barre latérale de gestion boutique.
+  - Ajout des clés `myShopsBack`, `homeShopBack` et `navGroupMarketingSettings` avec 100% de parité sur les 3 langues (FR, EN, AR).
+- **Éradication Définitive des Erreurs 401 sur le Dashboard Boutique (`actions.ts`, `BoutiqueClient.tsx`, `CarnetDettes.tsx`)** :
+  - **Diagnostic** : Les appels client-side directs `fetch('/api/comptabilite/:id/dashboard')` et `fetch('/api/boutiques/:id/credits-clients')` échouaient avec un statut HTTP 401 Unauthorized car le cookie JWT n'était pas transmis de façon sécurisée côté navigateur.
+  - **Solution Server Action** : Implémentation de la Server Action `getCreditsClients` via `backendFetch` (qui signe et transmet un JWT valide côté serveur).
+  - Migration de tous les chargements de données initiaux dans `BoutiqueClient.tsx` vers `Promise.allSettled([getBoutiqueProduits, getDashboard, getCreditsClients])`.
+  - Migration de la validation/rejet des commandes à crédit dans `CarnetDettes.tsx` vers la Server Action `updateStatutCommande`.
+- **Alignement au Cordeau des 4 Cartes KPI Boutique (`BoutiqueClient.tsx`, `globals.css`)** :
+  - **Problème** : La carte « Commandes en attente » voyait son titre se scinder sur deux lignes sur smartphone et petits écrans, ce qui doublait la hauteur de l'en-tête et décalait le chiffre par rapport aux trois autres cartes.
+  - **Correction** :
+    - En-tête de carte à hauteur fixe normalisée (`height: 28px`), titre avec `flex: 1; minWidth: 0; textOverflow: ellipsis; whiteSpace: nowrap`.
+    - Boîte d'icône compacte et calibrée à 28×28px.
+    - Standardisation typographique des montants à 20px (line-height 26px) pour toutes les cartes.
+    - Suppression du doublon visuel de flèches `→ →` sur les liens de navigation.
+    - Ajout des règles CSS `.bq-kpi-card` avec `min-height: 114px !important` et distribution flex `space-between`.
+- **Refonte Graphique SaaS Pro de l'En-tête Boutique dans la Sidebar (`BoutiqueClient.tsx`)** :
+  - **Avant** : Bouton condensé avec émojis `[📱 QR & Vitrine]` et badges serrés sans hiérarchie claire.
+  - **Après** : Carte d'identité moderne et aérée façon Shopify/Stripe :
+    - Avatar squircle (44×44px) avec dégradé subtil navy vers terracotta, initiales en gras et ombre portée douce (ou logo officiel si configuré).
+    - Nom de la boutique lisible avec badge de forfait dynamique (`⭐ VIP`, `PRO`).
+    - Pastille interactive de visibilité « En ligne / Masquée » avec puce lumineuse verte pulsée.
+    - Grille d'actions rapides vectorielles en 2 boutons clairs : `[ QrCode ] QR Code` (ouvre la modale de partage) et `[ ExternalLink ] Vitrine ↗` (ouvre la boutique publique dans un nouvel onglet).
+- **Refonte Graphique & Ergonomique du Header Caisse POS (Style Terminal POS Pro) (`CaisseClient.tsx`, `globals.css`)** :
+  - **Problème identifié** : Sur smartphone et petits écrans, l'en-tête de la caisse POS retombait sur deux étages désordonnés (`flexWrap: wrap`). Le sélecteur de boutique était masqué, ne laissant qu'une initiale orpheline `[T]`. Deux boutons cadenas `[🔒]` apparaissaient côte-à-côte avec des styles disparates, des émojis bruts `☀️` et `📐` étaient utilisés, et le bouton layout 3-colonnes encombrait l'écran alors que la vue mobile est strictement à 1 colonne.
+  - **Corrections & Améliorations Pro (Shopify POS / Square)** :
+    - **Ligne Unique Verrouillée (`flexWrap: nowrap`, `height: 52px`)** : Élimination définitive de la cassure sur 2 lignes.
+    - **Identité Boutique & Sélecteur Tactile** : Logo squircle (26×26px) + nom de la boutique toujours lisible avec troncature propre (`maxWidth: 110px`), complété par un chevron et sélecteur tactile transparent si plusieurs boutiques.
+    - **Pilule Caissier Pro Dé-doublonnée** : Affichage net de l'avatar rôle (`👑 Gérant` / `👤 Bamba`) avec indicateur lumineux `●` de session active. Un tap sur la pilule permet de verrouiller le terminal, éliminant le mini cadenas interne superflu.
+    - **Icônes Vectorielles Modernes** : Remplacement des émojis par les icônes Lucide `Sun` / `Moon` avec gestion native des thèmes sombre et clair.
+    - **Masquage du Bouton 3 Colonnes sur Mobile** : Remplacement de l'émoji `📐` par l'icône Lucide `Columns3` et masquage automatique sur écran mobile (`caisse-desktop-only`).
+    - **Harmonisation Thème Sombre & Accès Clôture Z** : Remplacement du carré blanc tranchant de Clôture Z par un design translucide rouge sécurisé en mode sombre (`rgba(220, 38, 38, 0.2)`). Clôture Z accessible à 1-tap en tête du menu Outils `⚙️` sur mobile et en bouton direct sur grand écran.
+- **Refonte Typographique, Alignement & Ergonomie des Cartes KPI Boutique (Inspiration Meta Business Suite) (`BoutiqueClient.tsx`, `globals.css`)** 📊✨💎📱 :
+  - **Inspiration Visuelle & Clarté Maximale** : Harmonisation des 4 cartes KPI du tableau de bord marchand sur le modèle épuré, compact et direct de Meta Business Suite (`[ 37 464 ↓ -63% ] / [ Vues ⓘ ]`).
+  - **Ligne 1 (Métrique Héroïque & Statut sur la même baseline)** :
+    - Grand chiffre héroïque en `font-size: 22px`, `font-weight: 850`, typographie à espacement tabulaire `num-tabular` pour un alignement vertical parfait des chiffres.
+    - Statut/tendance immédiat aligné à droite sur la même baseline :
+      * Chiffre d'affaires : `● Ce mois` (vert `#16A34A`)
+      * Commandes en attente : `● X à traiter` (rouge `#DC2626`) si > 0, ou `✓ À jour` (vert `#16A34A`) si 0
+      * Alertes de stock : `⚠️ Faible` (ambre `#D97706`) si rupture/seuil bas, ou `✓ En stock` (vert `#16A34A`)
+      * Dettes clients : `● À recouvrer` (rouge `#DC2626`) si encours, ou `✓ Zéro dette` (vert `#16A34A`)
+  - **Ligne 2 (Libellé Métier & Info-Bulle Explicative)** :
+    - Libellé textuel contrasté (`#64748B`, `font-size: 13px`, `font-weight: 600`).
+    - Icône vectorielle SVG Lucide `Info` (`ⓘ`) avec infobulle native expliquant la provenance précise du calcul (ex: *Total des encaissements enregistrés ce mois-ci...*).
+    - Micro-chevron de navigation discret (`ChevronRight`) signalant l'interactivité.
+  - **Tuile Interactive Intégrale 1-Tap (Élimination du Bruit Visuel)** :
+    - La carte entière est interactive et cliquable (`role="button"`, redirection fluide vers Compta, Commandes, Produits ou Carnet de dettes).
+    - Suppression des liens textuels superflus au bas de chaque carte (`Voir la comptabilité →`, `Gérer →`) qui allongeaient artificiellement la hauteur et causaient des ruptures de symétrie.
+  - **Hauteur Compacte & Alignement CSS (`globals.css`)** :
+    - Hauteur normalisée à ~88-92px (au lieu de 118px), distribution flex centrée (`justify-content: center !important`), transitions douces au survol (`translateY(-2px)` + ombre légère).
+    - Disposition responsive parfaite : 4 colonnes sur desktop et grille 2x2 compacte et tactile sur smartphone.
+- **Bouclier Anti-401 & Route Handler Proxy `/api/comptabilite/[boutiqueId]/dashboard` (`route.ts`, `CarnetDettes.tsx`)** 🛡️⚡🔐 :
+  - **Double Protection Anti-401** :
+    - Création du Route Handler Next.js `frontend-next/src/app/api/comptabilite/[boutiqueId]/dashboard/route.ts`. Même si un client PWA, un ancien bundle navigateur ou un composant externe tente d'appeler cette URL directement sans en-tête d'authentification, Next.js intercepte l'appel côté serveur, injecte le JWT signé avec `JWT_SECRET` via `backendFetch`, et retourne les métriques en 200 OK (avec repli gracieux à zéro si non-trouvé).
+- **Résolution des Désalignements de Formulaires, Textes Tronqués & Refonte de la Sidebar Compte (`Comptabilite.tsx`, `AccountSidebarClient.tsx`, `globals.css`, `shop.ts`)** 📐✨💎📱 :
+  - **Alignement Pixel-Perfect des Champs Formulaire (`SaisieExpressView` & Dépenses Express)** :
+    * **Éradication du décalage vertical** : Remplacement des grilles rigides `grid-template-columns: 1fr 1fr` par une grille fluide `repeat(auto-fit, minmax(200px, 1fr))` avec `align-items: end`, garantissant que les champs restent 100% alignés sur la même ligne de base quel que soit le retour à la ligne d'un libellé.
+    * **Hauteur tactile normalisée** : Hauteur unifiée à 44px (`height: 44`) sur tous les `<select>` et `<input>` de saisie rapide.
+    * **Fin des contradictions d'astérisque** : Remplacement de `Nom complet du client * (Optionnel)` par `Nom complet du client (optionnel)`. Suppression de l'astérisque sur les champs non obligatoires dans tous les dictionnaires i18n (`fr`, `en`, `ar`).
+    * **Élimination des troncatures de texte** :
+      - Simplification des options de paiement : `💵 Espèces` (au lieu de `💵 Espèces (Cash)`), `🌊 Wave` (au lieu de `🌊 Wave Senegal`), `💳 Carte bancaire`.
+      - Placeholders raccourcis : `Client comptoir` (au lieu de `Ex: Client comptoir`).
+  - **Refonte Épurée SaaS de la Sidebar Compte (`AccountSidebarClient.tsx`, `globals.css`)** :
+    * **Suppression du "Syndrome Arlequin"** : Élimination des 3 gros pavés de couleurs disparates (orange `#FFF7ED`, bleu `#F1F5F9`, rouge/rose `#FEF2F2`).
+    * **Nettoyage Iconographique Vectoriel** :
+      - Élimination du doublon d'émojis `🏪 👤 Mon compte marchand ↗` au profit d'un lien sobre avec icône SVG Lucide `Store` et chevron de navigation.
+      - Ajout de l'icône Lucide `BookOpen` sur le guide d'utilisation avec icône externe `ExternalLink`.
+      - Déconnexion transformée en action discrète et élégante tout en bas avec icône Lucide `LogOut` et survol rouge subtil.
+    * **Suppression du double trait de séparation** : Correction CSS sur `.account-sidebar .mobile-nav-compact-bar` (`border-bottom: none !important`) pour éliminer la double bordure sous le sélecteur `Tableau de bord ⌄`.
+  - **Contrôle Qualité & Tests** :
+    * Typage TypeScript : 0 erreur sur tous les fichiers modifiés.
+    * Suite de tests unitaires : 35/35 validés avec 100% de succès.

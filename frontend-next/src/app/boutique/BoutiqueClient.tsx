@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
-import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits, updateStock, duplicateProduit } from './actions'
+import { createBoutique, updateBoutique, deleteBoutique, createProduit, updateProduit, deleteProduit, marquerProduitPartage, publierProduitAnnonce, getBoutiqueProduits, updateStock, duplicateProduit, getDashboard, getCreditsClients } from './actions'
 import Comptabilite, { SaisieExpressView } from './Comptabilite'
 import CarnetDettes from './CarnetDettes'
 import Commandes from './Commandes'
@@ -27,7 +27,7 @@ import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import {
   Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square,
-  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search
+  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info
 } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
@@ -3655,36 +3655,41 @@ function BoutiqueDashboard({
       } catch (e) {}
     }
 
-    // 1. Produits et alertes stock
-    getBoutiqueProduits(boutique.id)
-      .then(produits => {
-        if (!active) return
-        const count = produits.length
-        const alerts = produits.filter(p => !p.en_stock || ((p.quantite_stock ?? p.stock_quantite) !== null && (p.quantite_stock ?? p.stock_quantite)! <= 3)).length
+    // Chargement parallèle sécurisé via Server Actions (évite les erreurs 401 en client-side)
+    Promise.allSettled([
+      getBoutiqueProduits(boutique.id),
+      getDashboard(boutique.id),
+      getCreditsClients(boutique.id)
+    ]).then(([resProduits, resDash, resCredits]) => {
+      if (!active) return
+      let count = produitsCount || 0
+      let alerts = stockAlertsCount || 0
+      let ca = caMois || 0
+      let dettes = dettesTotal || 0
+
+      if (resProduits.status === 'fulfilled' && Array.isArray(resProduits.value)) {
+        const prods = resProduits.value
+        count = prods.length
+        alerts = prods.filter(p => !p.en_stock || ((p.quantite_stock ?? p.stock_quantite) !== null && (p.quantite_stock ?? p.stock_quantite)! <= 3)).length
         setProduitsCount(count)
         setStockAlertsCount(alerts)
-      })
-      .catch(() => {})
+      }
 
-    // 2. Chiffre d'Affaires du mois
-    fetch(`/api/comptabilite/${boutique.id}/dashboard`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (!active || !data) return
-        if (typeof data.ca_mois === 'number') setCaMois(data.ca_mois)
-      })
-      .catch(() => {})
+      if (resDash.status === 'fulfilled' && resDash.value && typeof resDash.value.ca_mois === 'number') {
+        ca = resDash.value.ca_mois
+        setCaMois(ca)
+      }
 
-    // 3. Dettes clients à recouvrer
-    fetch(`/api/boutiques/${boutique.id}/credits-clients`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (!active || !data?.clients || !Array.isArray(data.clients)) return
-        const total = data.clients.filter((c: any) => c.solde > 0).reduce((s: number, c: any) => s + Number(c.solde), 0)
-        setDettesTotal(total)
-      })
-      .catch(() => {})
-      .finally(() => { if (active) setLoading(false) })
+      if (resCredits.status === 'fulfilled' && resCredits.value?.clients && Array.isArray(resCredits.value.clients)) {
+        dettes = resCredits.value.clients.filter((c: any) => c.solde > 0).reduce((s: number, c: any) => s + Number(c.solde), 0)
+        setDettesTotal(dettes)
+      }
+
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ count, alerts, ca, dettes }))
+      } catch {}
+      setLoading(false)
+    })
 
     return () => { active = false }
   }, [boutique.id])
@@ -3776,80 +3781,198 @@ function BoutiqueDashboard({
         </div>
       )}
 
-      {/* ── GRILLE DES 4 MÉTRIQUES OPÉRATIONNELLES (HERO KPIs) ── */}
+      {/* ── GRILLE DES 4 MÉTRIQUES OPÉRATIONNELLES (HERO KPIs) — Style Meta Dashboard ── */}
       <div className="bq-kpi-grid">
         {/* KPI 1 : Chiffre d'Affaires du Mois */}
-        <div className="bq-kpi-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Chiffre d&apos;affaires</span>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Receipt size={16} style={{ color: '#16A34A' }} />
-              </div>
-            </div>
-            <p className="num-tabular" style={{ margin: 0, fontSize: 20, fontWeight: 900, color: 'var(--navy)' }}>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onNavigate('compta')}
+          onKeyDown={e => e.key === 'Enter' && onNavigate('compta')}
+          className="bq-kpi-card"
+          style={{
+            background: '#FFFFFF',
+            border: '1.5px solid #E2E8F0',
+            borderRadius: 14,
+            padding: '16px 18px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 6,
+            minHeight: 92,
+            cursor: 'pointer',
+            transition: 'all 0.18s ease',
+          }}
+          title="Cliquez pour accéder au journal et au bilan comptable"
+        >
+          {/* Ligne 1 : Valeur Hero + Tendance/Statut sur la même baseline */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
               {loading ? '...' : (caMois !== null ? `${formatPrice(caMois)}` : '0 FCFA')}
-            </p>
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              ● Ce mois
+            </span>
           </div>
-          <button onClick={() => onNavigate('compta')} style={{ background: 'none', border: 'none', color: '#16A34A', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span>Voir la comptabilité →</span>
-          </button>
+
+          {/* Ligne 2 : Libellé + Info-bulle ⓘ */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>Chiffre d&apos;affaires</span>
+            <span title="Total des encaissements enregistrés ce mois-ci (ventes caisse POS et commandes web)" style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
+            </span>
+            <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+          </div>
         </div>
 
         {/* KPI 2 : Commandes en attente */}
-        <div className="bq-kpi-card" style={{ background: nbEnAttente > 0 ? '#fff8f0' : 'var(--card)', border: nbEnAttente > 0 ? '1px solid #FED7AA' : '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.pendingOrdersCount')}</span>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: nbEnAttente > 0 ? 'var(--orange2)' : 'var(--surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <ClipboardList size={16} style={{ color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }} />
-              </div>
-            </div>
-            <p className="num-tabular" style={{ margin: 0, fontSize: 22, fontWeight: 900, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>
-              {formatNumber(nbEnAttente)} {nbEnAttente > 0 ? '🔴' : ''}
-            </p>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onNavigate('commandes')}
+          onKeyDown={e => e.key === 'Enter' && onNavigate('commandes')}
+          className="bq-kpi-card"
+          style={{
+            background: '#FFFFFF',
+            border: nbEnAttente > 0 ? '1.5px solid #FED7AA' : '1.5px solid #E2E8F0',
+            borderRadius: 14,
+            padding: '16px 18px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 6,
+            minHeight: 92,
+            cursor: 'pointer',
+            transition: 'all 0.18s ease',
+          }}
+          title="Cliquez pour gérer et préparer vos commandes"
+        >
+          {/* Ligne 1 : Valeur Hero + Tendance/Statut sur la même baseline */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: nbEnAttente > 0 ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
+              {formatNumber(nbEnAttente)}
+            </span>
+            {nbEnAttente > 0 ? (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                ● {nbEnAttente} à traiter
+              </span>
+            ) : (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                ✓ À jour
+              </span>
+            )}
           </div>
-          <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span>{t('shop.viewOrders')} →</span>
-          </button>
+
+          {/* Ligne 2 : Libellé + Info-bulle ⓘ */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>{t('shop.pendingOrdersCount')}</span>
+            <span title="Commandes clients en attente de préparation ou d'expédition" style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
+            </span>
+            <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+          </div>
         </div>
 
         {/* KPI 3 : Alertes Stock */}
-        <div className="bq-kpi-card" style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : 'var(--card)', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.stockAlerts')}</span>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: stockAlertsCount && stockAlertsCount > 0 ? '#fef3c7' : 'var(--surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <AlertTriangle size={16} style={{ color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }} />
-              </div>
-            </div>
-            <p className="num-tabular" style={{ margin: 0, fontSize: 22, fontWeight: 900, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onNavigate('produits')}
+          onKeyDown={e => e.key === 'Enter' && onNavigate('produits')}
+          className="bq-kpi-card"
+          style={{
+            background: '#FFFFFF',
+            border: stockAlertsCount && stockAlertsCount > 0 ? '1.5px solid #FCD34D' : '1.5px solid #E2E8F0',
+            borderRadius: 14,
+            padding: '16px 18px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 6,
+            minHeight: 92,
+            cursor: 'pointer',
+            transition: 'all 0.18s ease',
+          }}
+          title="Cliquez pour réapprovisionner ou ajuster vos stocks"
+        >
+          {/* Ligne 1 : Valeur Hero + Tendance/Statut sur la même baseline */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: stockAlertsCount && stockAlertsCount > 0 ? '#B45309' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
               {loading ? '...' : formatNumber(stockAlertsCount ?? 0)}
-            </p>
+            </span>
+            {stockAlertsCount && stockAlertsCount > 0 ? (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                ⚠️ Faible
+              </span>
+            ) : (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                ✓ En stock
+              </span>
+            )}
           </div>
-          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span>{t('shop.manageCatalogBtn')} →</span>
-          </button>
+
+          {/* Ligne 2 : Libellé + Info-bulle ⓘ */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>{t('shop.stockAlerts')}</span>
+            <span title="Articles dont le stock est épuisé ou inférieur au seuil d'alerte configuré" style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
+            </span>
+            <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+          </div>
         </div>
 
-        {/* KPI 4 : Dettes Clients ou Formule */}
-        <div className="bq-kpi-card" style={{ background: dettesTotal && dettesTotal > 0 ? '#fef2f2' : 'var(--card)', border: dettesTotal && dettesTotal > 0 ? '1px solid #fecaca' : '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: dettesTotal && dettesTotal > 0 ? '#dc2626' : 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {dettesTotal && dettesTotal > 0 ? 'Dettes à recouvrer' : t('shop.catalog')}
+        {/* KPI 4 : Dettes Clients / Carnet */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onNavigate(dettesTotal && dettesTotal > 0 ? 'carnet' : 'produits')}
+          onKeyDown={e => e.key === 'Enter' && onNavigate(dettesTotal && dettesTotal > 0 ? 'carnet' : 'produits')}
+          className="bq-kpi-card"
+          style={{
+            background: '#FFFFFF',
+            border: dettesTotal && dettesTotal > 0 ? '1.5px solid #FECACA' : '1.5px solid #E2E8F0',
+            borderRadius: 14,
+            padding: '16px 18px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 6,
+            minHeight: 92,
+            cursor: 'pointer',
+            transition: 'all 0.18s ease',
+          }}
+          title="Cliquez pour consulter le carnet de dettes et relancer les clients"
+        >
+          {/* Ligne 1 : Valeur Hero + Tendance/Statut sur la même baseline */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: dettesTotal && dettesTotal > 0 ? '#DC2626' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
+              {loading ? '...' : (dettesTotal && dettesTotal > 0 ? `${formatPrice(dettesTotal)}` : `${formatNumber(produitsCount ?? 0)} art.`)}
+            </span>
+            {dettesTotal && dettesTotal > 0 ? (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                ● À recouvrer
               </span>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: dettesTotal && dettesTotal > 0 ? '#fee2e2' : 'var(--orange2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {dettesTotal && dettesTotal > 0 ? <BookOpen size={16} style={{ color: '#dc2626' }} /> : <ShoppingBag size={16} style={{ color: 'var(--accent)' }} />}
-              </div>
-            </div>
-            <p className="num-tabular" style={{ margin: 0, fontSize: dettesTotal && dettesTotal > 0 ? 18 : 22, fontWeight: 900, color: dettesTotal && dettesTotal > 0 ? '#dc2626' : 'var(--navy)' }}>
-              {loading ? '...' : (dettesTotal && dettesTotal > 0 ? `${formatPrice(dettesTotal)}` : `${formatNumber(produitsCount ?? 0)} articles`)}
-            </p>
+            ) : (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                ✓ Zéro dette
+              </span>
+            )}
           </div>
-          <button onClick={() => onNavigate(dettesTotal && dettesTotal > 0 ? 'carnet' : 'produits')} style={{ background: 'none', border: 'none', color: dettesTotal && dettesTotal > 0 ? '#dc2626' : 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span>{dettesTotal && dettesTotal > 0 ? 'Ouvrir le carnet →' : 'Voir les produits →'}</span>
-          </button>
+
+          {/* Ligne 2 : Libellé + Info-bulle ⓘ */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>
+              {dettesTotal && dettesTotal > 0 ? 'Dettes clients' : t('shop.catalog')}
+            </span>
+            <span title="Montant total des crédits et dettes clients en cours à recouvrer via relance WhatsApp" style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
+            </span>
+            <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+          </div>
         </div>
       </div>
 
@@ -4295,7 +4418,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     },
     {
       icon: Megaphone,
-      title: (t as any)('shop.navGroupMarketingSettings') || 'Outils & Réglages',
+      title: t('shop.navGroupMarketingSettings'),
       items: [
         { key: 'marketing',   icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
         { key: 'infos',       icon: Settings, label: t('shop.settings') || 'Paramètres' },
@@ -4558,10 +4681,10 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
               </svg>
               <span>
                 {tab !== 'dashboard'
-                  ? 'Accueil Boutique'
+                  ? t('shop.homeShopBack')
                   : hasMultipleBoutiques
-                    ? ((t as any)('shop.myShopsBack') || 'Mes Boutiques')
-                    : 'Mon Compte'}
+                    ? t('shop.myShopsBack')
+                    : t('shop.myAccountBack')}
               </span>
             </button>
 
@@ -4592,83 +4715,198 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {boutique.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={boutique.logo_url}
-                alt={boutique.nom}
-                style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 12, flexShrink: 0, boxShadow: '0 3px 10px rgba(26,22,18,0.12)', border: '1.5px solid #ffffff' }}
-              />
-            ) : (
-              <div
+          <div style={{
+            background: 'linear-gradient(135deg, #FAF8F5 0%, #FFF8F0 100%)',
+            border: '1px solid #E8DDD2',
+            borderRadius: 14,
+            padding: '12px 14px',
+            boxShadow: '0 2px 8px rgba(28,43,74,0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+          }}>
+            {/* Ligne 1 : Logo + Nom + Badges de Statut */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {boutique.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={boutique.logo_url}
+                  alt={boutique.nom}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    objectFit: 'cover',
+                    borderRadius: 12,
+                    flexShrink: 0,
+                    boxShadow: '0 3px 10px rgba(28,43,74,0.12)',
+                    border: '1.5px solid #ffffff'
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, var(--accent, #C75B00) 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 16,
+                    fontWeight: 900,
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)',
+                    letterSpacing: '0.02em',
+                    border: '1.5px solid #ffffff',
+                  }}
+                >
+                  {boutique.nom ? boutique.nom.slice(0, 2).toUpperCase() : 'NP'}
+                </div>
+              )}
+
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <h2 style={{
+                    margin: 0,
+                    fontWeight: 850,
+                    fontSize: 15.5,
+                    color: 'var(--navy, #1C2B4A)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    letterSpacing: '-0.02em',
+                  }}>
+                    {boutique.nom}
+                  </h2>
+                  {planActif && (
+                    <span
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        letterSpacing: '0.04em',
+                        padding: '1.5px 6px',
+                        borderRadius: 5,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        background: planActif === 'business' ? '#FEF3C7' : planActif === 'pro' ? '#FFF3E8' : '#F1F5F9',
+                        color: planActif === 'business' ? '#B45309' : planActif === 'pro' ? '#C75B00' : '#475569',
+                        border: planActif === 'business' ? '1px solid #FCD34D' : planActif === 'pro' ? '1px solid #FED7AA' : '1px solid #E2E8F0',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {planActif === 'business' ? '⭐ VIP' : planActif.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {/* Pastille Interactive En Ligne / Masquée */}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const nouveauStatut = !boutique.actif
+                      const msg = nouveauStatut 
+                        ? 'Voulez-vous réactiver votre boutique et la rendre visible dans l’annuaire public Nopalou ?' 
+                        : 'Voulez-vous désactiver (masquer) votre boutique du catalogue public Nopalou ?'
+                      if (!confirm(msg)) return
+                      try {
+                        const res = await fetch(`/api/boutiques/${boutique.id}/statut`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ actif: nouveauStatut }),
+                        })
+                        if (res.ok) router.refresh()
+                        else alert('Erreur lors de la modification du statut.')
+                      } catch {
+                        alert('Erreur réseau')
+                      }
+                    }}
+                    style={{
+                      background: boutique.actif !== false ? '#F0FDF4' : '#F8FAFC',
+                      border: boutique.actif !== false ? '1px solid #BBF7D0' : '1px solid #E2E8F0',
+                      color: boutique.actif !== false ? '#15803D' : '#64748B',
+                      fontSize: 11,
+                      fontWeight: 750,
+                      padding: '2px 8px',
+                      borderRadius: 20,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      transition: 'all 0.15s ease',
+                    }}
+                    title={boutique.actif !== false ? 'Boutique en ligne (cliquez pour masquer)' : 'Boutique masquée (cliquez pour activer)'}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: boutique.actif !== false ? '#16A34A' : '#94A3B8',
+                        boxShadow: boutique.actif !== false ? '0 0 0 2px rgba(22, 163, 74, 0.2)' : 'none',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span>{boutique.actif !== false ? 'En ligne' : 'Masquée'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Ligne 2 : Actions Rapides SaaS Vectorielles (QR Code + Voir vitrine) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, paddingTop: 6, borderTop: '1px solid rgba(232,221,210,0.6)' }}>
+              <button
+                type="button"
+                onClick={() => setShowQrModal(true)}
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
-                  color: '#ffffff',
-                  display: 'flex',
+                  background: '#ffffff',
+                  border: '1.5px solid #E2E8F0',
+                  borderRadius: 8,
+                  padding: '6px 8px',
+                  fontSize: 11.5,
+                  fontWeight: 750,
+                  color: 'var(--navy, #1C2B4A)',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 15,
-                  fontWeight: 900,
-                  flexShrink: 0,
-                  boxShadow: '0 4px 12px rgba(199, 91, 0, 0.28)',
-                  letterSpacing: '-0.02em',
+                  gap: 5,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease',
                 }}
+                title="Afficher le QR Code et partager la vitrine de la boutique"
               >
-                {boutique.nom ? boutique.nom.slice(0, 2).toUpperCase() : 'NP'}
-              </div>
-            )}
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 15, color: 'var(--navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.02em' }}>
-                {boutique.nom}
-              </p>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowQrModal(true)}
-                  className="npl-btn npl-btn-secondary npl-btn-sm"
-                  style={{ height: 26, fontSize: 11, padding: '0 8px' }}
-                >
-                  <span>📱</span>
-                  <span>QR & Vitrine</span>
-                </button>
-                {planActif && (
-                  <span className={planActif === 'business' ? 'npl-badge npl-badge-success' : planActif === 'pro' ? 'npl-badge npl-badge-brand' : 'npl-badge npl-badge-neutral'} style={{ fontSize: 10, padding: '2px 6px' }}>
-                    <span className="npl-badge-dot" />
-                    <span>{planActif.toUpperCase()}</span>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const nouveauStatut = !boutique.actif
-                    const msg = nouveauStatut 
-                      ? 'Voulez-vous réactiver votre boutique et la rendre visible dans l’annuaire public Nopalou ?' 
-                      : 'Voulez-vous désactiver (masquer) votre boutique du catalogue public Nopalou ?'
-                    if (!confirm(msg)) return
-                    try {
-                      const res = await fetch(`/api/boutiques/${boutique.id}/statut`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ actif: nouveauStatut }),
-                      })
-                      if (res.ok) router.refresh()
-                      else alert('Erreur lors de la modification du statut.')
-                    } catch {
-                      alert('Erreur réseau')
-                    }
-                  }}
-                  className={boutique.actif !== false ? 'npl-badge npl-badge-success' : 'npl-badge npl-badge-neutral'}
-                  style={{ fontSize: 10, padding: '2px 7px', cursor: 'pointer', border: 'none' }}
-                  title={boutique.actif !== false ? 'Boutique en ligne (cliquez pour masquer)' : 'Boutique masquée (cliquez pour activer)'}
-                >
-                  <span className="npl-badge-dot" style={{ backgroundColor: boutique.actif !== false ? '#16a34a' : '#94a3b8' }} />
-                  <span>{boutique.actif !== false ? 'En ligne' : 'Masquée'}</span>
-                </button>
-              </div>
+                <QrCode size={13} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+                <span>QR Code</span>
+              </button>
+
+              <a
+                href={`/boutiques/${boutique.slug || boutique.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: '#ffffff',
+                  border: '1.5px solid #E2E8F0',
+                  borderRadius: 8,
+                  padding: '6px 8px',
+                  fontSize: 11.5,
+                  fontWeight: 750,
+                  color: 'var(--navy, #1C2B4A)',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 5,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Voir la vitrine publique telle que la voient vos clients"
+              >
+                <ExternalLink size={12} style={{ color: '#64748B', flexShrink: 0 }} />
+                <span>Vitrine ↗</span>
+              </a>
             </div>
           </div>
         </div>

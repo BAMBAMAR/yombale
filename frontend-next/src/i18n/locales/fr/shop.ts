@@ -45,6 +45,7 @@ export const shop = {
   navGroupCatalogStock: 'Catalogue & Stocks',
   navGroupFinanceReports: 'Finance & Rapports',
   navGroupSettingsTeam: 'Paramètres & Équipe',
+  navGroupMarketingSettings: 'Outils & Réglages',
 
   // Actions & KPIs
   manageShop: 'Gérer ma boutique',
@@ -85,9 +86,11 @@ export const shop = {
   proBannerDesc: 'Catalogue · Comptabilité · Analytics · Placement prioritaire',
   viewPlans: 'Voir les plans →',
   myAccountBack: 'Mon compte',
+  myShopsBack: 'Mes Boutiques',
+  homeShopBack: 'Accueil Boutique',
   posPhysicalLink: '🛒 Caisse POS (Physique) ↗',
   viewPublicShopLink: 'Voir la boutique ↗',
-  merchantAccount: '👤 Mon compte marchand ↗',
+  merchantAccount: 'Mon compte marchand',
   purePlayerMode: '⚡ Mode Pure Player Web',
   shopActive: 'Boutique Active (En ligne)',
   shopInactive: 'Boutique Désactivée (Masquée)',
@@ -372,7 +375,7 @@ export const shop = {
   // Carnet de dettes modales & cartes étendues
   createCustomerModalTitle: '👤 Créer une nouvelle fiche client',
   editCustomerModalTitle: '✏️ Modifier la fiche client',
-  customerFullNameLabel: 'Nom complet du client *',
+  customerFullNameLabel: 'Nom complet du client',
   customerFullNamePlaceholder: 'Ex: Fatou Sow, Modou Ndiaye',
   customerPhoneLabel: 'Numéro Téléphone (WhatsApp) *',
   customerPhonePlaceholder: 'Ex: 771234567',

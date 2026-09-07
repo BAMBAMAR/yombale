@@ -6,6 +6,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { useTranslation } from '@/i18n/context'
+import { updateStatutCommande, listCommandes } from './actions'
 
 interface ClientCredit {
   id: string
@@ -467,19 +468,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         setProduits(prodsList)
       }
 
-      // 3. Commandes à crédit en attente d'approbation
+      // 3. Commandes à crédit en attente d'approbation (via Server Action sécurisée)
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
-        const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('auth_token') || '') : ''
-        const resCmd = await fetch(`${backendUrl}/api/comptabilite/${boutique.id}/commandes`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        })
-        if (resCmd.ok) {
-          const dataCmd = await resCmd.json()
-          const listCmd = Array.isArray(dataCmd) ? dataCmd : (dataCmd.commandes || [])
-          const enAttenteCredit = listCmd.filter((c: any) => c.statut === 'en_attente' && (c.methode_paiement === 'credit' || c.note?.toLowerCase().includes('crédit')))
-          setCommandesCreditEnAttente(enAttenteCredit)
-        }
+        const dataCmd = await listCommandes(boutique.id)
+        const listCmd = Array.isArray(dataCmd) ? dataCmd : (dataCmd.commandes || [])
+        const enAttenteCredit = listCmd.filter((c: any) => c.statut === 'en_attente' && (c.methode_paiement === 'credit' || c.note?.toLowerCase().includes('crédit')))
+        setCommandesCreditEnAttente(enAttenteCredit)
       } catch (eCmd) {}
     } catch (err) {
       console.error('Erreur chargement carnet:', err)
@@ -1411,16 +1405,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     onClick={async () => {
                       if (!confirm(`Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${cmd.client_nom} (${fcfa(cmd.montant_total)}) ?`)) return
                       try {
-                        const res = await fetch(`/api/comptabilite/${boutique.id}/commandes/${cmd.id}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ statut: 'annulee' }),
-                        })
-                        if (res.ok) {
+                        const res = await updateStatutCommande(boutique.id, cmd.id, 'annulee')
+                        if (res.success) {
                           setCommandesCreditEnAttente((prev: any[]) => prev.filter((c: any) => c.id !== cmd.id))
                           await chargerDonnees()
                         } else {
-                          alert('Erreur lors du rejet de la demande.')
+                          alert(res.error || 'Erreur lors du rejet de la demande.')
                         }
                       } catch (e) {
                         alert('Erreur lors du traitement.')

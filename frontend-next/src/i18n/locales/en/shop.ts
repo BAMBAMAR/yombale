@@ -47,6 +47,7 @@ export const shop: LocaleTranslations['shop'] = {
   navGroupCatalogStock: 'Catalog & Inventory',
   navGroupFinanceReports: 'Finance & Reports',
   navGroupSettingsTeam: 'Settings & Team',
+  navGroupMarketingSettings: 'Tools & Settings',
 
   // Actions & KPIs
   manageShop: 'Manage shop',
@@ -87,9 +88,11 @@ export const shop: LocaleTranslations['shop'] = {
   proBannerDesc: 'Catalog · Accounting · Analytics · Priority placement',
   viewPlans: 'View plans →',
   myAccountBack: 'My account',
+  myShopsBack: 'My Shops',
+  homeShopBack: 'Shop Home',
   posPhysicalLink: '🛒 POS Register (Physical) ↗',
   viewPublicShopLink: 'View public shop ↗',
-  merchantAccount: '👤 Merchant account ↗',
+  merchantAccount: 'Merchant account',
   purePlayerMode: '⚡ Pure Player Web Mode',
   shopActive: 'Shop Active (Online)',
   shopInactive: 'Shop Disabled (Hidden)',
@@ -374,7 +377,7 @@ export const shop: LocaleTranslations['shop'] = {
   // Carnet de dettes modales & cartes étendues
   createCustomerModalTitle: '👤 Create New Customer Profile',
   editCustomerModalTitle: '✏️ Edit Customer Profile',
-  customerFullNameLabel: 'Customer full name *',
+  customerFullNameLabel: 'Customer full name',
   customerFullNamePlaceholder: 'Ex: Fatou Sow, Modou Ndiaye',
   customerPhoneLabel: 'Phone number (WhatsApp) *',
   customerPhonePlaceholder: 'Ex: 771234567',

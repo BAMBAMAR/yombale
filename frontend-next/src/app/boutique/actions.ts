@@ -248,6 +248,14 @@ export async function getDashboard(boutiqueId: string) {
   } catch { return null }
 }
 
+export async function getCreditsClients(boutiqueId: string) {
+  try {
+    const res = await backendFetch(`/api/boutiques/${boutiqueId}/credits-clients`)
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
 export async function listDepenses(boutiqueId: string) {
   try {
     const res = await backendFetch(`/api/comptabilite/${boutiqueId}/depenses`)

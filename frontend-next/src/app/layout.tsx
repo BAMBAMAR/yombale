@@ -33,6 +33,7 @@ import NavbarGuides from './NavbarGuides';
 import MobileNav from './MobileNav';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import NavbarCartBtn from '@/components/NavbarCartBtn';
+import NavbarWhatsappBtn from '@/components/NavbarWhatsappBtn';
 import BottomBars from './BottomBars';
 import RegisterSW from './RegisterSW';
 import PwaInstallPrompt from '@/components/PwaInstallPrompt';
@@ -252,6 +253,7 @@ export default async function RootLayout({
                 <NavbarSearch />
               </div>
               <div className="navbar-actions">
+                <NavbarWhatsappBtn />
                 <NavbarCartBtn />
                 {session ? (
                   <a href="/boutique" className="navbar-maboutique hidden-mobile" aria-label="Accéder à ma boutique" style={{ background: 'var(--navy)', color: '#fff', padding: '6px 11px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.15)' }}>
@@ -276,8 +278,9 @@ export default async function RootLayout({
                   </>
                 )}
               </div>
-              {/* Mobile: Accès Panier + Drawer burger épuré */}
+              {/* Mobile: Accès Assistant WhatsApp + Panier + Drawer burger épuré */}
               <div className="navbar-mobile-group">
+                <NavbarWhatsappBtn />
                 <NavbarCartBtn />
                 <MobileNav
                   isLoggedIn={!!session}

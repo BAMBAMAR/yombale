@@ -1886,13 +1886,13 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, alignItems: 'end' }}>
         <div>
-          <label style={labelStyle}>{t('shop.customerFullNameLabel')}</label>
-          <input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder={t('common.optional')} />
+          <label style={{ ...labelStyle, marginBottom: 4, display: 'block' }}>{t('shop.customerFullNameLabel')} <span style={{ fontWeight: 400, color: '#64748b' }}>({t('common.optional')})</span></label>
+          <input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder="Client comptoir" />
         </div>
         <div>
-          <label style={labelStyle}>{t('shop.customerPhoneLabel')}</label>
+          <label style={{ ...labelStyle, marginBottom: 4, display: 'block' }}>{t('shop.customerPhoneLabel')} <span style={{ fontWeight: 400, color: '#64748b' }}>({t('common.optional')})</span></label>
           <input value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} placeholder="77 000 00 00" />
         </div>
       </div>
@@ -2022,9 +2022,9 @@ function EditVenteModal({ vente, boutiqueId, onClose, onDone }: { vente: Vente; 
           <label style={labelStyle}>{t('shop.deliveryFeeLabel')}</label>
           <input type="number" min={0} value={frais} onChange={e => setFrais(Number(e.target.value))} style={inputStyle} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div><label style={labelStyle}>{t('shop.customerFullNameLabel')}</label><input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder={t('common.optional')} /></div>
-          <div><label style={labelStyle}>{t('shop.customerPhoneLabel')}</label><input value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} placeholder={t('common.optional')} /></div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, alignItems: 'end' }}>
+          <div><label style={{ ...labelStyle, marginBottom: 4, display: 'block' }}>{t('shop.customerFullNameLabel')} <span style={{ fontWeight: 400, color: '#64748b' }}>({t('common.optional')})</span></label><input value={clientNom} onChange={e => setClientNom(e.target.value)} style={inputStyle} placeholder="Client comptoir" /></div>
+          <div><label style={{ ...labelStyle, marginBottom: 4, display: 'block' }}>{t('shop.customerPhoneLabel')} <span style={{ fontWeight: 400, color: '#64748b' }}>({t('common.optional')})</span></label><input value={clientTel} onChange={e => setClientTel(e.target.value)} style={inputStyle} placeholder="77 000 00 00" /></div>
         </div>
         <div>
           <label style={labelStyle}>{t('shop.paymentModePrompt')}</label>
@@ -3617,30 +3617,34 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           </div>
 
           {/* Mode de Paiement & Client */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'end' }}>
             <div>
-              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>{t('shop.paymentModePrompt')}</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 6, display: 'block' }}>
+                {t('shop.paymentModePrompt')}
+              </label>
               <select
                 value={methodePaiement}
                 onChange={e => setMethodePaiement(e.target.value)}
-                style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
+                style={{ ...inputStyle, borderRadius: 12, padding: '10px 12px', height: 44 }}
               >
-                <option value="especes">💵 Espèces (Cash)</option>
-                <option value="wave">🌊 Wave Senegal</option>
+                <option value="especes">💵 Espèces</option>
+                <option value="wave">🌊 Wave</option>
                 <option value="orange_money">🍊 Orange Money</option>
-                <option value="carte">💳 Carte Bancaire</option>
+                <option value="carte">💳 Carte bancaire</option>
                 <option value="cheque">📜 Chèque</option>
               </select>
             </div>
 
             <div>
-              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>{t('shop.customerFullNameLabel')} ({t('common.optional')})</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 6, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={`${t('shop.customerFullNameLabel')} (${t('common.optional')})`}>
+                {t('shop.customerFullNameLabel')} <span style={{ fontWeight: 500, color: '#64748B' }}>({t('common.optional')})</span>
+              </label>
               <input
                 type="text"
-                placeholder="Ex: Client comptoir"
+                placeholder="Client comptoir"
                 value={clientNom}
                 onChange={e => setClientNom(e.target.value)}
-                style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
+                style={{ ...inputStyle, borderRadius: 12, padding: '10px 12px', height: 44 }}
               />
             </div>
           </div>
@@ -3698,13 +3702,15 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'end' }}>
             <div>
-              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569' }}>{t('shop.productCategory')}</label>
+              <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 6, display: 'block' }}>
+                {t('shop.productCategory')}
+              </label>
               <select
                 value={catDepense}
                 onChange={e => setCatDepense(e.target.value)}
-                style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
+                style={{ ...inputStyle, borderRadius: 12, padding: '10px 12px', height: 44 }}
               >
                 <option value="stock">📦 {t('shop.catStock')}</option>
                 <option value="loyer">🏠 {t('shop.catRent')}</option>
@@ -3718,8 +3724,10 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569', margin: 0 }}>{t('shop.expenseReasonLabel')}</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, minHeight: 20 }}>
+                <label style={{ ...labelStyle, fontSize: 12, fontWeight: 800, color: '#475569', margin: 0 }}>
+                  {t('shop.expenseReasonLabel')}
+                </label>
                 <button
                   type="button"
                   onClick={demarrerScannerNom}
@@ -3730,10 +3738,10 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               </div>
               <input
                 type="text"
-                placeholder="Ex: Facture Senelec, Achat sacs plastique"
+                placeholder="Facture, sacs, transport..."
                 value={descDepense}
                 onChange={e => setDescDepense(e.target.value)}
-                style={{ ...inputStyle, borderRadius: 12, padding: 12 }}
+                style={{ ...inputStyle, borderRadius: 12, padding: '10px 12px', height: 44 }}
               />
               {ocrDetections.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>

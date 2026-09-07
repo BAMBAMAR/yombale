@@ -8,7 +8,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { CATEGORIES } from '@/lib/categories'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident, creerBoutiqueDocument } from '../actions'
-import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid, BarChart3 } from 'lucide-react'
+import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid, BarChart3, Sun, Moon, Columns3, ChevronDown } from 'lucide-react'
 import {
   sauvegarderProduitsLocaux,
   obtenirProduitsLocaux,
@@ -2536,6 +2536,33 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             border-color: #475569 !important;
           }
 
+          .pos-theme-dark .pos-btn-danger {
+            background: rgba(220, 38, 38, 0.2) !important;
+            color: #f87171 !important;
+            border-color: rgba(220, 38, 38, 0.4) !important;
+          }
+          .pos-theme-dark .pos-btn-danger:hover {
+            background: rgba(220, 38, 38, 0.3) !important;
+          }
+          .pos-theme-dark .pos-btn-success {
+            background: rgba(22, 163, 74, 0.2) !important;
+            color: #4ade80 !important;
+            border-color: rgba(22, 163, 74, 0.4) !important;
+          }
+          .pos-theme-dark .pos-btn-success:hover {
+            background: rgba(22, 163, 74, 0.3) !important;
+          }
+
+          .caisse-desktop-only {
+            display: inline-flex !important;
+          }
+
+          @media (max-width: 640px) {
+            .caisse-desktop-only {
+              display: none !important;
+            }
+          }
+
           .hover-bg-slate:hover {
             background-color: var(--pos-surface2) !important;
           }
@@ -2587,26 +2614,28 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         }
       `}</style>
 
-      {/* En-tête MOBILE-FIRST NOPALOU POS */}
+      {/* En-tête MOBILE-FIRST NOPALOU POS — Style Terminal POS Pro (Shopify/Square) */}
       <header className="caisse-header no-print" style={{
         background: 'var(--pos-surface)',
         borderBottom: '2px solid var(--pos-primary)',
-        padding: '0 14px',
+        padding: '0 10px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         boxShadow: 'var(--pos-shadow)',
-        gap: 8,
+        gap: 6,
+        height: 52,
         minHeight: 52,
         flexShrink: 0,
-        flexWrap: 'wrap',
+        flexWrap: 'nowrap',
       }}>
-        {/* Côté Gauche : Retour + POS badge + Boutique selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        {/* Côté Gauche : Retour + Identité Boutique & Sélecteur */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexShrink: 1 }}>
           {initialToken ? (
             <div
               style={{
-                padding: '6px 12px',
+                height: 34,
+                padding: '0 10px',
                 fontSize: 12,
                 fontWeight: 800,
                 display: 'inline-flex',
@@ -2619,7 +2648,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 boxShadow: '0 2px 6px rgba(29,78,216,0.3)'
               }}
             >
-              <span>📱 {t('caisse.terminalCashier')}</span>
+              <span>📱</span>
+              <span className="caisse-label-desktop">{t('caisse.terminalCashier')}</span>
             </div>
           ) : (
             <button
@@ -2638,23 +2668,27 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               }}
               className="caisse-btn-retour"
               style={{
-                padding: '6px 12px',
+                height: 34,
+                padding: '0 10px',
                 fontSize: 12,
                 fontWeight: 800,
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: 5,
                 flexShrink: 0,
                 background: isDarkMode ? '#1e293b' : '#1e3a5f',
                 color: '#ffffff',
-                border: isDarkMode ? '1px solid #475569' : '1px solid #1e3a5f',
+                border: isDarkMode ? '1px solid #334155' : '1px solid #1e3a5f',
                 borderRadius: 8,
                 cursor: 'pointer',
-                boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 6px rgba(28,43,74,0.25)'
+                boxShadow: isDarkMode ? '0 2px 6px rgba(0,0,0,0.3)' : '0 2px 6px rgba(28,43,74,0.2)',
+                transition: 'all 0.15s ease',
               }}
+              title="Retourner au tableau de bord de la boutique"
             >
               <ArrowLeft size={14} />
-              <span>{t('caisse.shop') || 'Boutique'}</span>
+              <span className="caisse-label-desktop">{t('caisse.shop') || 'Boutique'}</span>
             </button>
           )}
 
@@ -2663,10 +2697,10 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             <div className="caisse-status-badge" title={`${ventesHorsLigneCount} vente(s) enregistrée(s) localement en attente de synchronisation`} style={{
               background: '#dc2626',
               color: '#fff',
-              padding: '4px 8px',
+              padding: '3px 7px',
               borderRadius: 6,
               fontWeight: 800,
-              fontSize: 10.5,
+              fontSize: 10,
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
@@ -2674,178 +2708,280 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               whiteSpace: 'nowrap',
               animation: 'pulse 1.5s infinite'
             }}>
-              <span>⚠️ Hors-Ligne</span>
+              <span>⚠️</span>
+              <span className="caisse-label-desktop">Hors-Ligne</span>
               {ventesHorsLigneCount > 0 && (
-                <span style={{ background: '#991b1b', padding: '1px 5px', borderRadius: 4, fontSize: 9.5, fontWeight: 900 }}>
-                  {ventesHorsLigneCount} en attente
+                <span style={{ background: '#991b1b', padding: '1px 4px', borderRadius: 4, fontSize: 9.5, fontWeight: 900 }}>
+                  {ventesHorsLigneCount}
                 </span>
               )}
             </div>
           )}
 
-          {/* Sélecteur de boutique & Logo — sécurisé par PIN Superviseur */}
+          {/* Badge & Sélecteur Boutique Pro (Toujours visible avec logo + nom lisible) */}
           {boutiques.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <div
+              style={{
+                position: 'relative',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg)',
+                border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border)',
+                borderRadius: 8,
+                padding: '3px 8px 3px 4px',
+                height: 34,
+                flexShrink: 1,
+                minWidth: 0,
+              }}
+              title={boutiques.length > 1 ? "Boutique active (cliquez pour changer de boutique)" : "Boutique active"}
+            >
               {activeBoutiqueObj?.logo ? (
                 <img
                   src={activeBoutiqueObj.logo}
                   alt={activeBoutiqueObj.nom}
-                  style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover', border: isDarkMode ? '1px solid #475569' : '1px solid var(--pos-border)' }}
+                  style={{ width: 26, height: 26, borderRadius: 6, objectFit: 'cover', flexShrink: 0, border: isDarkMode ? '1px solid #475569' : '1px solid var(--pos-border)' }}
                 />
               ) : (
-                <span style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--pos-primary)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 900, flexShrink: 0 }}>
+                <span style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 6,
+                  background: 'linear-gradient(135deg, var(--pos-primary, #C75B00) 0%, #ea580c 100%)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12.5,
+                  fontWeight: 900,
+                  flexShrink: 0,
+                }}>
                   {activeBoutiqueObj?.nom ? activeBoutiqueObj.nom.charAt(0).toUpperCase() : '🏪'}
                 </span>
               )}
-              {initialToken || boutiques.length === 1 ? (
-                <span style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  color: isDarkMode ? '#f8fafc' : '#1e3a5f',
-                  background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg)',
-                  padding: '5px 10px',
-                  borderRadius: 6,
-                  border: isDarkMode ? '1px solid #475569' : '1px solid var(--pos-border)',
-                  maxWidth: 180,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0
-                }}>
-                  {activeBoutiqueObj?.nom || boutiques[0]?.nom}
-                </span>
-              ) : (
-                <select
-                  value={boutiqueActiveId}
-                  onChange={e => demanderChangementBoutique(e.target.value)}
-                  className="caisse-boutique-select"
-                  style={{
-                    padding: '5px 8px',
-                    borderRadius: 8,
-                    border: isDarkMode ? '1.5px solid #475569' : '1.5px solid var(--pos-border)',
-                    background: isDarkMode ? '#1e293b' : 'var(--pos-surface)',
-                    color: isDarkMode ? '#ffffff' : 'var(--pos-text)',
-                    fontWeight: 800,
-                    fontSize: 11.5,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    maxWidth: 180,
-                    minWidth: 110,
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}
-                >
-                  {boutiques.map(b => {
-                    const isAuth = b.plan_actif === 'pro' || b.plan_actif === 'business';
-                    return (
-                      <option key={b.id} value={b.id} style={{ background: isDarkMode ? '#1e293b' : '#ffffff', color: isDarkMode ? '#ffffff' : '#000000' }}>
-                        {isAuth ? '🟢' : '🏪'} {b.nom}
+
+              <span style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: isDarkMode ? '#f8fafc' : '#1e3a5f',
+                maxWidth: 110,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {activeBoutiqueObj?.nom || boutiques[0]?.nom}
+              </span>
+
+              {boutiques.length > 1 && !initialToken && (
+                <>
+                  <ChevronDown size={12} style={{ color: isDarkMode ? '#94a3b8' : '#64748b', flexShrink: 0 }} />
+                  <select
+                    value={boutiqueActiveId}
+                    onChange={e => demanderChangementBoutique(e.target.value)}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: 0,
+                      width: '100%',
+                      height: '100%',
+                      cursor: 'pointer',
+                    }}
+                    title="Changer de boutique (sécurisé par PIN Superviseur)"
+                  >
+                    {boutiques.map(b => (
+                      <option key={b.id} value={b.id}>
+                        {b.plan_actif === 'pro' || b.plan_actif === 'business' ? '🟢' : '🏪'} {b.nom}
                       </option>
-                    );
-                  })}
-                </select>
+                    ))}
+                  </select>
+                </>
               )}
             </div>
           )}
         </div>
 
-        {/* Côté Droit : Caissier + Langue + Outils + Session — groupé compact */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        {/* Côté Droit : Caissier Pro + Thème + Layout (Desktop) + Outils + Session */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+          {/* Espace Caissier Pro (Tap pour verrouiller / changer) */}
+          <button
+            type="button"
+            onClick={verrouillerCaisseManuellement}
+            title={`${t('caisse.lockPos') || 'Verrouiller le terminal'} (${caissierNom})`}
+            style={{
+              height: 34,
+              padding: '0 8px',
+              borderRadius: 20,
+              background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg)',
+              border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              flexShrink: 0,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span style={{ fontSize: 13, lineHeight: 1 }}>
+              {roleActif === 'superviseur' ? '👑' : <User size={13} color="var(--pos-primary)" />}
+            </span>
+            <span style={{
+              fontSize: 11,
+              fontWeight: 800,
+              color: 'var(--pos-text)',
+              maxWidth: 65,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              {caissierNom?.split(' ')[0] || caissierNom}
+            </span>
+            <span
+              style={{
+                width: 6.5,
+                height: 6.5,
+                borderRadius: '50%',
+                backgroundColor: session ? '#16a34a' : '#94a3b8',
+                boxShadow: session ? '0 0 0 2px rgba(22, 163, 74, 0.25)' : 'none',
+                flexShrink: 0,
+              }}
+              title={session ? 'Session caisse active' : 'Session caisse fermée'}
+            />
+          </button>
 
-          {/* Espace Caissier — compact Nopalou */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'var(--pos-primary-bg)', border: '1px solid var(--pos-border)',
-            borderRadius: 8, padding: '4px 8px 4px 9px',
-            maxWidth: 140, flexShrink: 0
-          }}>
-            <span style={{ fontSize: 13 }}>{roleActif === 'superviseur' ? '👑' : <User size={13} color="var(--pos-primary)" />}</span>
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--pos-text)', maxWidth: 68, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{caissierNom}</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: session ? 'var(--pos-success)' : 'var(--pos-danger)', lineHeight: 1.2 }}>
-                {session ? '● Active' : '● Fermée'}
-              </span>
-            </div>
-            <button
-              onClick={verrouillerCaisseManuellement}
-              title={t('caisse.lockPos')}
-              style={{ background: 'var(--pos-primary-bg)', color: 'var(--pos-primary)', border: '1px solid var(--pos-border)', borderRadius: 5, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-            >
-              <Lock size={11} />
-            </button>
-          </div>
-
-          {/* Bouton Bascule Mode Nuit / Jour */}
+          {/* Bouton Bascule Mode Nuit / Jour (Vectoriel Sun / Moon) */}
           <button
             type="button"
             onClick={toggleDarkMode}
             title={isDarkMode ? "Passer en mode jour" : "Passer en mode nuit (sombre)"}
             style={{
-              display: 'flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 8,
-              border: '1.5px solid var(--pos-border)', background: 'var(--pos-surface)',
-              color: 'var(--pos-text)', fontWeight: 800, fontSize: 12, cursor: 'pointer',
-              boxShadow: 'var(--pos-shadow)', flexShrink: 0
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              border: isDarkMode ? '1px solid #334155' : '1.5px solid var(--pos-border)',
+              background: isDarkMode ? '#1e293b' : 'var(--pos-surface)',
+              color: isDarkMode ? '#f59e0b' : 'var(--pos-text)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              boxShadow: 'var(--pos-shadow)',
+              transition: 'all 0.15s ease',
             }}
           >
-            <span>{isDarkMode ? '☀️' : '🌙'}</span>
-            <span className="caisse-label-desktop">{isDarkMode ? 'Jour' : 'Nuit'}</span>
+            {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
           </button>
 
-          {/* Bouton Bascule 3 Colonnes (Pupitre Tactile Central) */}
+          {/* Bouton Bascule 3 Colonnes — Réservé aux écrans larges desktop */}
           <button
             type="button"
             onClick={toggleLayoutColCentrale}
             title="Afficher ou masquer la colonne centrale (pupitre tactile express)"
+            className="caisse-desktop-only"
             style={{
-              display: 'flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 8,
-              border: '1.5px solid var(--pos-border)',
-              background: layoutColCentrale ? 'var(--pos-primary-bg)' : 'var(--pos-surface)',
+              height: 34,
+              padding: '0 8px',
+              borderRadius: 8,
+              border: isDarkMode ? '1px solid #334155' : '1.5px solid var(--pos-border)',
+              background: layoutColCentrale ? 'var(--pos-primary-bg)' : (isDarkMode ? '#1e293b' : 'var(--pos-surface)'),
               color: layoutColCentrale ? 'var(--pos-primary)' : 'var(--pos-text)',
-              fontWeight: 800, fontSize: 12, cursor: 'pointer',
-              boxShadow: 'var(--pos-shadow)', flexShrink: 0
+              fontWeight: 800,
+              fontSize: 11.5,
+              cursor: 'pointer',
+              alignItems: 'center',
+              gap: 5,
+              boxShadow: 'var(--pos-shadow)',
+              flexShrink: 0,
             }}
           >
-            <span>📐</span>
-            <span className="caisse-label-desktop">{layoutColCentrale ? '3 Colonnes' : '2 Colonnes'}</span>
+            <Columns3 size={14} />
+            <span className="caisse-label-desktop">{layoutColCentrale ? '3 Col' : '2 Col'}</span>
           </button>
 
-          {/* Menu Dropdown Outils */}
+          {/* Menu Dropdown Outils & Actions */}
           <div style={{ position: 'relative' }}>
             <button
+              type="button"
               onClick={() => setMenuOutilsOuvert(!menuOutilsOuvert)}
               className="pos-btn pos-btn-sm pos-btn-secondary"
-              style={{ gap: 5, flexShrink: 0, fontWeight: 800 }}
+              style={{
+                height: 34,
+                padding: '0 8px',
+                borderRadius: 8,
+                border: isDarkMode ? '1px solid #334155' : '1.5px solid var(--pos-border)',
+                background: menuOutilsOuvert ? 'var(--pos-primary-bg)' : (isDarkMode ? '#1e293b' : 'var(--pos-surface)'),
+                color: menuOutilsOuvert ? 'var(--pos-primary)' : 'var(--pos-text)',
+                gap: 5,
+                flexShrink: 0,
+                fontWeight: 800,
+                fontSize: 11.5,
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+              title={t('caisse.tools') || 'Outils et clôture'}
             >
-              <Settings size={13} />
+              <Settings size={14} />
               <span className="caisse-label-desktop">{t('caisse.tools')}</span>
-              <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
             </button>
+
             {menuOutilsOuvert && (
               <>
-                {/* Overlay pour fermer en cliquant dehors */}
                 <div
                   onClick={() => setMenuOutilsOuvert(false)}
                   style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
                 />
                 <div style={{
                   position: 'fixed',
-                  top: 58,
-                  right: 14,
-                  background: 'var(--pos-surface, #ffffff)',
-                  border: '1px solid var(--pos-border, #e2e8f0)',
+                  top: 56,
+                  right: 12,
+                  background: isDarkMode ? '#1e293b' : 'var(--pos-surface, #ffffff)',
+                  border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border, #e2e8f0)',
                   borderRadius: 12,
                   padding: 8,
                   zIndex: 9999,
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 2,
-                  minWidth: 205,
+                  gap: 3,
+                  minWidth: 220,
                 }}>
-                  <div style={{ padding: '4px 12px 6px', borderBottom: '1px solid var(--pos-border, #f1f5f9)', marginBottom: 2 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--pos-text2, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('caisse.toolsTitle')}</span>
+                  <div style={{ padding: '4px 10px 6px', borderBottom: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border, #f1f5f9)', marginBottom: 2 }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#94a3b8' : 'var(--pos-text2, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {t('caisse.toolsTitle')}
+                    </span>
                   </div>
+
+                  {/* Accès Clôture Z / Ouverture Session intégré dans Outils */}
+                  {session ? (
+                    <button
+                      onClick={() => { setModalClotureZ(true); setMenuOutilsOuvert(false); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%',
+                        background: isDarkMode ? 'rgba(220, 38, 38, 0.15)' : '#FEF2F2',
+                        border: isDarkMode ? '1px solid rgba(220, 38, 38, 0.3)' : '1px solid #FECACA',
+                        color: isDarkMode ? '#F87171' : '#DC2626',
+                        fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4
+                      }}
+                    >
+                      <Lock size={14} />
+                      <span>{t('caisse.closeZ') || 'Clôture Z (Fin de journée)'}</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setModalSessionOuverture(true); setMenuOutilsOuvert(false); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%',
+                        background: isDarkMode ? 'rgba(22, 163, 74, 0.15)' : '#F0FDF4',
+                        border: isDarkMode ? '1px solid rgba(22, 163, 74, 0.3)' : '1px solid #BBF7D0',
+                        color: isDarkMode ? '#4ADE80' : '#15803D',
+                        fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4
+                      }}
+                    >
+                      <Unlock size={14} />
+                      <span>{t('caisse.session') || 'Ouvrir une session de caisse'}</span>
+                    </button>
+                  )}
+
                   {roleActif === 'superviseur' && (
                     <>
                       <button
@@ -2860,19 +2996,19 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                             }).catch(() => {})
                           }
                         }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'var(--pos-primary-bg)', border: '1px solid var(--pos-border)', color: 'var(--pos-primary)', fontSize: 13, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 2 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: isDarkMode ? '#0f172a' : 'var(--pos-primary-bg)', border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border)', color: 'var(--pos-primary)', fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 2 }}
                       >
                         <BarChart3 size={14} color="var(--pos-primary)" /> {t('caisse.reportX')}
                       </button>
                       <button
                         onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: isDarkMode ? '#ffffff' : 'var(--pos-text)', fontSize: 12.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                       >
                         <Download size={14} /> {t('caisse.importBatch')}
                       </button>
                       <button
                         onClick={() => { ouvrirConfigPin(); setMenuOutilsOuvert(false); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: isDarkMode ? '#ffffff' : 'var(--pos-text)', fontSize: 12.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                       >
                         <Lock size={14} /> {t('caisse.configPins')}
                       </button>
@@ -2880,13 +3016,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   )}
                   <button
                     onClick={() => { setModalHistorique(true); setMenuOutilsOuvert(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: isDarkMode ? '#ffffff' : 'var(--pos-text)', fontSize: 12.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
                     <History size={14} /> {roleActif === 'superviseur' ? `${t('caisse.history')} (${historiqueVentes.length})` : 'Mes ventes récentes'}
                   </button>
                   <button
                     onClick={() => { setModalCarnet(true); setMenuOutilsOuvert(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%', background: 'none', border: 'none', color: 'var(--pos-text)', fontSize: 13, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: isDarkMode ? '#ffffff' : 'var(--pos-text)', fontSize: 12.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
                   >
                     <Book size={14} /> {t('caisse.debts')} ({clientsCredits.length})
                   </button>
@@ -2895,22 +3031,54 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             )}
           </div>
 
-          {/* Bouton Session/Clôture — Nopalou brand colors */}
+          {/* Bouton Session Direct Desktop (Clôture Z / Ouvrir Session) */}
           {session ? (
             <button
+              type="button"
               onClick={() => setModalClotureZ(true)}
-              className="pos-btn pos-btn-sm pos-btn-danger"
-              style={{ flexShrink: 0, fontWeight: 800, gap: 5 }}
+              className="caisse-desktop-only"
+              style={{
+                height: 34,
+                padding: '0 10px',
+                borderRadius: 8,
+                background: isDarkMode ? 'rgba(220, 38, 38, 0.2)' : '#FEF2F2',
+                border: isDarkMode ? '1px solid rgba(220, 38, 38, 0.4)' : '1px solid #FECACA',
+                color: isDarkMode ? '#F87171' : '#DC2626',
+                fontWeight: 800,
+                fontSize: 11.5,
+                alignItems: 'center',
+                gap: 5,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+              title="Clôturer la session de caisse (Rapport Z)"
             >
-              <Lock size={11} /> <span className="caisse-label-desktop">{t('caisse.closeZ')}</span>
+              <Lock size={12} />
+              <span className="caisse-label-desktop">{t('caisse.closeZ')}</span>
             </button>
           ) : (
             <button
+              type="button"
               onClick={() => setModalSessionOuverture(true)}
-              className="pos-btn pos-btn-sm pos-btn-success"
-              style={{ flexShrink: 0, fontWeight: 800, gap: 5 }}
+              style={{
+                height: 34,
+                padding: '0 10px',
+                borderRadius: 8,
+                background: isDarkMode ? 'rgba(22, 163, 74, 0.25)' : '#F0FDF4',
+                border: isDarkMode ? '1px solid rgba(22, 163, 74, 0.5)' : '1px solid #BBF7D0',
+                color: isDarkMode ? '#4ADE80' : '#15803D',
+                fontWeight: 800,
+                fontSize: 11.5,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+              title="Ouvrir une nouvelle session de caisse"
             >
-              <Unlock size={11} /> <span className="caisse-label-desktop">{t('caisse.session')}</span>
+              <Unlock size={12} />
+              <span className="caisse-label-desktop">{t('caisse.session')}</span>
             </button>
           )}
         </div>
