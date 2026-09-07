@@ -124,6 +124,7 @@ export default function ProspectionClient({
   const [quartierFilter, setQuartierFilter] = useState('tous')
   const [campagneLimit, setCampagneLimit] = useState<number | 'tous'>(50)
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([])
+  const [sortBy, setSortBy] = useState<'date' | 'priorite' | 'fit' | 'qualite'>('priorite')
 
   // Modal Ajout Unique
   const [showAddModal, setShowAddModal] = useState(false)
@@ -478,6 +479,32 @@ export default function ProspectionClient({
       return true
     })
   }, [leads, catFilter, statutFilter, sourceFilter, operateurFilter, quartierFilter, search])
+
+  // Tri des leads filtrés par priorité commerciale
+  const sortedFilteredLeads = useMemo(() => {
+    const arr = [...filteredLeads]
+    const now = Date.now()
+    switch (sortBy) {
+      case 'priorite':
+        return arr.sort((a, b) => {
+          // Priorité = Fit × Qualité × Fraîcheur (leads récents favorisés)
+          const dayA = (now - new Date(a.created_at).getTime()) / 86400000
+          const dayB = (now - new Date(b.created_at).getTime()) / 86400000
+          const freshA = Math.max(0, 100 - dayA * 0.5)
+          const freshB = Math.max(0, 100 - dayB * 0.5)
+          const scoreA = (a.fit_score || 0) * (a.score || 0) * freshA
+          const scoreB = (b.fit_score || 0) * (b.score || 0) * freshB
+          return scoreB - scoreA
+        })
+      case 'fit':
+        return arr.sort((a, b) => (b.fit_score || 0) - (a.fit_score || 0))
+      case 'qualite':
+        return arr.sort((a, b) => (b.score || 0) - (a.score || 0))
+      case 'date':
+      default:
+        return arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    }
+  }, [filteredLeads, sortBy])
 
   // Audience cible réelle pour la campagne (prend en compte la sélection manuelle OU les filtres, avec limite)
   const campaignTargetLeads = useMemo(() => {
@@ -983,34 +1010,72 @@ export default function ProspectionClient({
         </div>
       </div>
 
-      {/* Cartes KPIs Statistiques */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
-        {[
-          { label: 'Total Prospects Collectés', val: stats.total, color: '#1C2B4A', bg: '#F8FAFC', icon: Users },
-          { label: 'Nouveaux à Contacter', val: stats.nouveaux, color: '#2563EB', bg: '#EFF6FF', icon: UserPlus },
-          { label: 'Prospects Contactés', val: stats.contactes, color: '#C75B00', bg: '#FFF7ED', icon: Send },
-          { label: 'Boutiques Converties', val: stats.convertis, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2 },
-        ].map((kpi, idx) => {
-          const Icon = kpi.icon
-          return (
-            <div key={idx} style={{
-              background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16,
-              padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#64748B', display: 'block', marginBottom: 4 }}>
-                  {kpi.label}
-                </span>
-                <span style={{ fontSize: 28, fontWeight: 900, color: kpi.color }}>
-                  {kpi.val}
-                </span>
+      {/* ═══════ Funnel Prospection Nopalou ═══════ */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 28 }}>
+
+        {/* Ligne 1 : Funnel 7 étapes */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+          {[
+            { label: 'Total Collectés', val: stats.total, color: '#1C2B4A', bg: '#F8FAFC', icon: Users, pct: null },
+            { label: '🎯 Qualifiés (Score ≥70)', val: stats.qualifies, color: '#7C3AED', bg: '#F5F3FF', icon: Sparkles, pct: stats.total ? Math.round(stats.qualifies / stats.total * 100) : 0 },
+            { label: '✉️ Nouveaux', val: stats.nouveaux, color: '#2563EB', bg: '#EFF6FF', icon: UserPlus, pct: stats.total ? Math.round(stats.nouveaux / stats.total * 100) : 0 },
+            { label: '📨 Contactés', val: stats.contactes, color: '#C75B00', bg: '#FFF7ED', icon: Send, pct: stats.total ? Math.round(stats.contactes / stats.total * 100) : 0 },
+            { label: '💬 En Discussion', val: stats.en_discussion, color: '#D97706', bg: '#FFFBEB', icon: MessageSquare, pct: stats.total ? Math.round(stats.en_discussion / stats.total * 100) : 0 },
+            { label: '🏪 Boutiques Créées', val: stats.convertis, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2, pct: stats.contactes ? Math.round(stats.convertis / stats.contactes * 100) : 0 },
+            { label: '🚫 Désinscrits', val: stats.desinscrits + stats.invalides, color: '#64748B', bg: '#F1F5F9', icon: Ban, pct: stats.total ? Math.round((stats.desinscrits + stats.invalides) / stats.total * 100) : 0 },
+          ].map((kpi, idx) => {
+            const Icon = kpi.icon
+            return (
+              <div key={idx} style={{
+                background: '#fff', border: `1.5px solid ${kpi.color}22`, borderRadius: 14,
+                padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              }}>
+                <div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#64748B', display: 'block', marginBottom: 2 }}>
+                    {kpi.label}
+                  </span>
+                  <span style={{ fontSize: 26, fontWeight: 900, color: kpi.color }}>
+                    {kpi.val}
+                  </span>
+                  {kpi.pct !== null && (
+                    <span style={{ fontSize: 11, color: '#94A3B8', display: 'block' }}>
+                      {kpi.pct}% du total
+                    </span>
+                  )}
+                </div>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: kpi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon size={20} color={kpi.color} />
+                </div>
               </div>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: kpi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon size={22} color={kpi.color} />
-              </div>
+            )
+          })}
+        </div>
+
+        {/* Ligne 2 : Qualité & Fit Score */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div style={{ background: 'linear-gradient(135deg, #1C2B4A, #2D4A8A)', borderRadius: 14, padding: '16px 20px', color: '#fff' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>📊 Score Qualité Moyen</div>
+            <div style={{ fontSize: 30, fontWeight: 900 }}>{stats.avg_score}<span style={{ fontSize: 16, opacity: 0.7 }}>/100</span></div>
+            <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 6, height: 6 }}>
+              <div style={{ width: `${stats.avg_score}%`, background: '#60A5FA', borderRadius: 6, height: 6, transition: 'width 0.6s' }} />
             </div>
-          )
-        })}
+          </div>
+          <div style={{ background: 'linear-gradient(135deg, #059669, #16A34A)', borderRadius: 14, padding: '16px 20px', color: '#fff' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>⭐ Nopalou Fit Score Moyen</div>
+            <div style={{ fontSize: 30, fontWeight: 900 }}>{stats.avg_fit_score}<span style={{ fontSize: 16, opacity: 0.7 }}>/100</span></div>
+            <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 6, height: 6 }}>
+              <div style={{ width: `${stats.avg_fit_score}%`, background: '#6EE7B7', borderRadius: 6, height: 6, transition: 'width 0.6s' }} />
+            </div>
+          </div>
+          <div style={{ background: 'linear-gradient(135deg, #7C3AED, #9333EA)', borderRadius: 14, padding: '16px 20px', color: '#fff' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>🔥 Leads Haut Fit (≥70%)</div>
+            <div style={{ fontSize: 30, fontWeight: 900 }}>{stats.haut_fit}</div>
+            <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
+              Taux de conversion estimé : {stats.haut_fit && stats.total ? Math.round(stats.haut_fit / stats.total * 100) : 0}% de la base
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Onglets Navigation (6 Tabs - SaaS Style) */}
@@ -1229,6 +1294,21 @@ export default function ProspectionClient({
                 ))}
               </select>
 
+              {/* Tri par Priorité */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'date' | 'priorite' | 'fit' | 'qualite')}
+                style={{
+                  padding: '7px 10px', borderRadius: 8, border: '1px solid #16A34A',
+                  fontSize: 12, fontWeight: 700, background: '#F0FDF4', color: '#16A34A',
+                }}
+              >
+                <option value="priorite">🔥 Priorité Commerciale</option>
+                <option value="fit">⭐ Nopalou Fit Score</option>
+                <option value="qualite">📊 Score Qualité</option>
+                <option value="date">📅 Date Ajout</option>
+              </select>
+
               {/* Bouton Réinitialiser si filtres actifs */}
               {(search || catFilter !== 'tous' || statutFilter !== 'tous' || sourceFilter !== 'tous' || operateurFilter !== 'tous' || quartierFilter !== 'tous') && (
                 <button
@@ -1282,18 +1362,19 @@ export default function ProspectionClient({
                     <th style={{ padding: '14px 16px', fontWeight: 800 }}>Catégorie / Zone</th>
                     <th style={{ padding: '14px 16px', fontWeight: 800 }}>Statut</th>
                     <th style={{ padding: '14px 16px', fontWeight: 800 }}>Source</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800, whiteSpace: 'nowrap' }}>⭐ Score / Fit</th>
                     <th style={{ padding: '14px 16px', fontWeight: 800, textAlign: 'right' }}>Actions 1-Clic</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredLeads.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '40px 20px', textAlign: 'center', color: '#94A3B8' }}>
+                      <td colSpan={8} style={{ padding: '40px 20px', textAlign: 'center', color: '#94A3B8' }}>
                         Aucun prospect trouvé. Utilisez <strong>« ⚡ Auto-Sourcing Annonces »</strong> ou <strong>« 📥 Import Vrac »</strong> pour alimenter votre base.
                       </td>
                     </tr>
                   ) : (
-                    filteredLeads.map((lead) => {
+                    sortedFilteredLeads.map((lead) => {
                       const isSelected = selectedLeadIds.includes(lead.id)
                       const st = STATUT_LABELS[lead.statut] || STATUT_LABELS.nouveau
                       const op = OPERATEUR_COLORS[lead.operateur] || OPERATEUR_COLORS.Autre
@@ -1372,6 +1453,31 @@ export default function ProspectionClient({
                             <span style={{ fontSize: 11, color: '#64748B', background: '#F1F5F9', padding: '3px 8px', borderRadius: 6 }}>
                               {lead.source}
                             </span>
+                          </td>
+                          <td style={{ padding: '14px 16px', minWidth: 110 }}>
+                            {/* Score Qualité */}
+                            {(() => {
+                              const sc = lead.score || 0
+                              const fc = lead.fit_score || 0
+                              const scColor = sc >= 70 ? '#16A34A' : sc >= 40 ? '#D97706' : '#DC2626'
+                              const fcColor = fc >= 70 ? '#7C3AED' : fc >= 40 ? '#2563EB' : '#94A3B8'
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                    <span style={{ fontSize: 10, fontWeight: 800, color: scColor, minWidth: 22 }}>{sc}</span>
+                                    <div style={{ flex: 1, background: '#E2E8F0', borderRadius: 4, height: 5 }}>
+                                      <div style={{ width: `${sc}%`, background: scColor, borderRadius: 4, height: 5 }} />
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                    <span style={{ fontSize: 10, fontWeight: 800, color: fcColor, minWidth: 22 }}>⭐{fc}</span>
+                                    <div style={{ flex: 1, background: '#E2E8F0', borderRadius: 4, height: 5 }}>
+                                      <div style={{ width: `${fc}%`, background: fcColor, borderRadius: 4, height: 5 }} />
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })()}
                           </td>
                           <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                             <div style={{ display: 'inline-flex', gap: 8 }}>

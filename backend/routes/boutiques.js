@@ -467,6 +467,18 @@ router.post('/taf-taf', async (req, res) => {
     );
     const boutiqueId = insertBoutique.rows[0].id;
 
+    // Hook automatique de conversion CRM prospection
+    if (telephone) {
+      const normTel = String(telephone).replace(/\D/g, '').slice(-9);
+      if (normTel.length === 9) {
+        pool.query(
+          `UPDATE prospection_leads SET statut = 'converti', derniere_action_at = NOW(), updated_at = NOW()
+           WHERE telephone LIKE '%' || $1`,
+          [normTel]
+        ).catch(e => console.warn('[CRM CONVERSION HOOK ERR]:', e.message));
+      }
+    }
+
     try {
       const slugBase = slugify(nom);
       const slug = await uniqueSlug(slugBase, boutiqueId);
@@ -2191,6 +2203,18 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
        adresse||null, ville||'Dakar', logo_url, apporteurId]
     );
     const newId = r.rows[0].id;
+
+    // Hook automatique de conversion CRM prospection
+    if (telephone) {
+      const normTel = String(telephone).replace(/\D/g, '').slice(-9);
+      if (normTel.length === 9) {
+        pool.query(
+          `UPDATE prospection_leads SET statut = 'converti', derniere_action_at = NOW(), updated_at = NOW()
+           WHERE telephone LIKE '%' || $1`,
+          [normTel]
+        ).catch(e => console.warn('[CRM CONVERSION HOOK ERR]:', e.message));
+      }
+    }
 
     // UPDATE des colonnes avancées (ajoutées par migration — best-effort)
     try {

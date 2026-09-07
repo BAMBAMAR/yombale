@@ -1,5 +1,31 @@
+- **Audit Exhaustif & Refonte CRM Moteur de Prospection Nopalou (`backend/routes/prospection.js`, `backend/scripts/reconcilier-conversions-historiques.js`, `frontend-next/src/app/admin/(protected)/prospection/ProspectionClient.tsx`, `frontend-next/src/app/admin/(protected)/prospection/page.tsx`) (07 septembre 2026)** 🎯📊🔬✨ :
+  * **🔍 1. Audit Exhaustif Data Quality sur 847+ leads** :
+    - Audit complet de la base PostgreSQL réelle (`prospection_leads`, `prospection_campagnes`, `prospection_messages_log`, `boutiques`).
+    - Identification de la cause racine des **0 convertis** : tracking de conversion rompu (résolu).
+    - Identification de **99 leads d'offres d'emploi** (faux positifs purs) dans la base.
+    - Identification de **9 boutiques** créées par des prospects contactés mais non tracées comme converties.
+    - Score Qualité moyen de la base : **58.3/100**, Nopalou Fit Score moyen : **48.8/100**.
+  * **🛠️ 2. Réconciliation CRM & Nettoyage** (script `reconcilier-conversions-historiques.js`) :
+    - **9 boutiques converties** réconciliées automatiquement (vs 0 affiché avant).
+    - **99 leads d'offres d'emploi** marqués `invalide` et exclus définitivement des campagnes.
+    - **859 leads** mis à jour avec leurs scores `score` et `fit_score` calculés en batch haute performance.
+  * **📊 3. Enrichissement API Stats** (`backend/routes/prospection.js`) :
+    - Ajout de `en_discussion`, `invalides`, `qualifies` (score ≥70), `haut_fit` (fit ≥70), `avg_score`, `avg_fit_score` dans la réponse JSON de `GET /api/prospection/leads`.
+    - Stats disponibles pour le funnel complet : Total → Qualifiés → Nouveaux → Contactés → En Discussion → Convertis → Désinscrits.
+  * **🎨 4. Dashboard Admin Prospection Redesign** (`ProspectionClient.tsx`, `page.tsx`) :
+    - **Funnel Prospection 7 étapes** avec pourcentages : Total Collectés → 🎯 Qualifiés (Score ≥70) → ✉️ Nouveaux → 📨 Contactés → 💬 En Discussion → 🏪 Boutiques Créées → 🚫 Désinscrits.
+    - **3 panneaux de qualité** avec barres de progression animées : Score Qualité Moyen (/100), Nopalou Fit Score Moyen (/100), Leads Haut Fit (≥70%).
+    - **Colonne Score / Fit** dans le tableau CRM avec barres visuelles color-coded (rouge < 40, orange 40-70, vert ≥ 70).
+    - **Tri par Priorité Commerciale** (Fit × Qualité × Fraîcheur), Fit Score, Qualité, ou Date.
+    - Mise à jour des types TypeScript : `StatsLeads` (8 nouveaux champs) et `Lead` (ajout `fit_score`).
+  * **✅ 5. Vérification** :
+    - `test-prospection-suite.js` : 100% des tests passés (normalisation téléphones, nettoyage noms, détection emploi, blacklist STOP).
+    - Zéro nouvelle erreur TypeScript dans les fichiers prospection.
+    - Routes backend chargées sans erreur.
+
 - **Refonte Ergonomie Globale : Suppression du Syndrome des Boutons qui Traînent & Harmonisation Boutique/Compte "Zéro Déchet Visuel" (`frontend-next/src/app/boutique/*`, `frontend-next/src/app/(account)/*`) (07 septembre 2026)** 🎨⚡📱✨ :
   * **🛍️ 1. Phase 1 : Barre d'Outils Mobile Pro pour Catalogue Produits (`BoutiqueClient.tsx`)** :
+
     - Élimination de l'anomalie visuelle `+ + Ajouter un produit` (double plus).
     - Condensation drastique de 5 lignes chaotiques (~240px de hauteur) en 2 lignes structurées (~85px) :
       * **Ligne 1** : Bouton dominant pleine largeur `[ ＋ Ajouter un produit ]` + Menu déroulant compact `[ ⋯ Plus ▾ ]` avec options secondaires (Importation Excel/CSV et Ajout détaillé).

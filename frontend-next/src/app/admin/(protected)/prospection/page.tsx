@@ -17,6 +17,7 @@ export interface Lead {
   source: string
   statut: string
   score: number
+  fit_score: number
   notes: string | null
   derniere_action_at: string | null
   created_at: string
@@ -26,9 +27,15 @@ export interface StatsLeads {
   total: number
   nouveaux: number
   contactes: number
+  en_discussion: number
   convertis: number
-  desinscrits?: number
-  blacklist?: number
+  desinscrits: number
+  invalides: number
+  qualifies: number
+  haut_fit: number
+  avg_score: number
+  avg_fit_score: number
+  blacklist: number
 }
 
 export interface BlacklistItem {
@@ -66,7 +73,7 @@ export default async function AdminProspectionPage() {
   const secret = jar.get('nopalou_admin')?.value || ''
 
   let initialLeads: Lead[] = []
-  let initialStats: StatsLeads = { total: 0, nouveaux: 0, contactes: 0, convertis: 0 }
+  let initialStats: StatsLeads = { total: 0, nouveaux: 0, contactes: 0, en_discussion: 0, convertis: 0, desinscrits: 0, invalides: 0, qualifies: 0, haut_fit: 0, avg_score: 0, avg_fit_score: 0, blacklist: 0 }
   let templates: TemplateMsg[] = []
   let dorking: DorkingRequete[] = []
 

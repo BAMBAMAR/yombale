@@ -62,8 +62,14 @@ router.get('/leads', adminOnly, async (req, res) => {
           COUNT(*) AS total,
           COUNT(*) FILTER (WHERE statut = 'nouveau') AS nouveaux,
           COUNT(*) FILTER (WHERE statut LIKE 'contacte%') AS contactes,
+          COUNT(*) FILTER (WHERE statut = 'en_discussion') AS en_discussion,
           COUNT(*) FILTER (WHERE statut = 'converti') AS convertis,
-          COUNT(*) FILTER (WHERE statut = 'desinscrit') AS desinscrits
+          COUNT(*) FILTER (WHERE statut = 'desinscrit') AS desinscrits,
+          COUNT(*) FILTER (WHERE statut = 'invalide') AS invalides,
+          ROUND(AVG(score), 0) AS avg_score,
+          ROUND(AVG(fit_score), 0) AS avg_fit_score,
+          COUNT(*) FILTER (WHERE score >= 70) AS qualifies,
+          COUNT(*) FILTER (WHERE fit_score >= 70) AS haut_fit
         FROM prospection_leads
       `),
       pool.query(`SELECT COUNT(*) AS total_blacklist FROM whatsapp_blacklist`),
@@ -78,8 +84,14 @@ router.get('/leads', adminOnly, async (req, res) => {
         total: parseInt(resStats.rows[0].total, 10) || 0,
         nouveaux: parseInt(resStats.rows[0].nouveaux, 10) || 0,
         contactes: parseInt(resStats.rows[0].contactes, 10) || 0,
+        en_discussion: parseInt(resStats.rows[0].en_discussion, 10) || 0,
         convertis: parseInt(resStats.rows[0].convertis, 10) || 0,
         desinscrits: parseInt(resStats.rows[0].desinscrits, 10) || 0,
+        invalides: parseInt(resStats.rows[0].invalides, 10) || 0,
+        qualifies: parseInt(resStats.rows[0].qualifies, 10) || 0,
+        haut_fit: parseInt(resStats.rows[0].haut_fit, 10) || 0,
+        avg_score: parseFloat(resStats.rows[0].avg_score) || 0,
+        avg_fit_score: parseFloat(resStats.rows[0].avg_fit_score) || 0,
         blacklist: parseInt(resBlacklist.rows[0]?.total_blacklist, 10) || 0,
       }
     });

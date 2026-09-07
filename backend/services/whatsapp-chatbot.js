@@ -1651,6 +1651,13 @@ async function handleIncomingInternal(msg) {
       `❌ *Désinscription effectuée — Nopalou*\n\nVous êtes maintenant désinscrit(e) des messages WhatsApp Nopalou. Vos annonces et alertes associées ont été désactivées.\n\nVous ne recevrez plus aucun message de notre part sur ce numéro (+${phone}).\n\n*(Pour vous réinscrire un jour : envoyez simplement START)*`
     );
     await ajouterBlacklist(phone, 'user_stop');
+    try {
+      const normPh = normalisePhone(phone);
+      await pool.query(
+        `UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3`,
+        [phone, normPh, phone.slice(-9)]
+      );
+    } catch (_) {}
     await setSession(phone, 'IDLE', {});
     return;
   }
@@ -1784,6 +1791,16 @@ async function handleIncomingInternal(msg) {
     if (normTxtLower === 'oui' || normTxtLower === 'ok' || normTxtLower === 'waaw' || normTxtLower === 'waw' || normTxtLower === 'je veux' || normTxtLower === 'start') {
       const bqExistante = await trouverBoutiqueMarchand(phone);
       if (!bqExistante && interactiveId !== 'sat_oui') {
+        // Enregistrer l'engagement dans le CRM prospection
+        try {
+          const normPh = normalisePhone(phone);
+          await pool.query(
+            `UPDATE prospection_leads SET statut = 'en_discussion', derniere_action_at = NOW(), updated_at = NOW()
+             WHERE (telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3) AND (statut LIKE 'contacte%' OR statut = 'nouveau')`,
+            [phone, normPh, phone.slice(-9)]
+          );
+        } catch (_) {}
+
         await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
         await sendWhatsAppText(
           phone,
@@ -2776,6 +2793,19 @@ async function handleIncomingInternal(msg) {
 
       const newBq = rBq.rows[0];
 
+      // Hook de conversion automatique CRM prospection
+      try {
+        const normPh = normalisePhone(phone);
+        await pool.query(
+          `UPDATE prospection_leads 
+           SET statut = 'converti', derniere_action_at = NOW(), updated_at = NOW() 
+           WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3`,
+          [phone, normPh, phone.slice(-9)]
+        );
+      } catch (errConv) {
+        console.warn('[CRM CONVERSION HOOK ERR]:', errConv.message);
+      }
+
       const msgSuccess =
         `🎉 *Félicitations ! Votre boutique "${nom}" est officiellement ouverte et prête !* 🚀🇸🇳\n\n` +
         `🔗 *Votre lien direct :*\n${SITE}/boutiques/${slug}\n\n` +
@@ -3582,6 +3612,18 @@ async function handleIncomingInternal(msg) {
       );
 
       const bqCreee = resBq.rows[0];
+
+      // Hook de conversion automatique CRM prospection
+      try {
+        await pool.query(
+          `UPDATE prospection_leads 
+           SET statut = 'converti', derniere_action_at = NOW(), updated_at = NOW() 
+           WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3`,
+          [normPh, phone, normPh.slice(-9)]
+        );
+      } catch (errConv) {
+        console.warn('[CRM CONVERSION HOOK ERR]:', errConv.message);
+      }
 
       // Lier dans boutique_utilisateurs
       try {

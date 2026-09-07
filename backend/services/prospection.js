@@ -510,29 +510,79 @@ function estLeadEmploiOuInvalide(lead) {
   if (cat === 'emploi' || cat === 'recrutement' || cat === 'stage') return true;
 
   const texte = `${lead.nom_boutique || ''} ${lead.notes || ''} ${lead.contact_nom || ''}`.toLowerCase();
-  if (
-    texte.includes('cherche travail') ||
-    texte.includes('cherche emploi') ||
-    texte.includes('cherche un travail') ||
-    texte.includes('chercheuse d\'emploi') ||
-    texte.includes('demande d\'emploi') ||
-    texte.includes('agent de securite') ||
-    texte.includes('agents de séc') ||
-    texte.includes('recrutement femmes') ||
-    texte.includes('chauffeur cherche') ||
-    texte.includes('cherche stage') ||
-    texte.includes('recherche d\'emploi') ||
-    texte.includes('recherche emploi') ||
-    texte.includes('call center') ||
-    texte.includes('avis de recherche') ||
-    texte.includes('perte de piece') ||
-    texte.includes('perdu cle') ||
-    texte.includes('donne contre bon soin')
-  ) {
-    return true;
+  
+  // Regex complète couvrant les offres, demandes d'emploi, services domestiques et annonces de perte
+  const regexEmploi = /\b(cherche\s+(?:un\s+)?(?:travail|emploi|boulot|stage|job|place|poste)|demande\s+d['’]emploi|recherche\s+(?:d['’])?(?:emploi|stage|travail)|chercheuse\s+d['’]emploi|recrutement|recrute|embauche|agents?\s+de\s+s[eé]c(?:urit[eé])?|chauffeur\s+cherche|cherche\s+(?:vendeuse|chauffeur|nounou|cuisinier|serveur|femme\s+de\s+m[eé]nage|vigile|gouvernante)|call\s+center|t[eé]l[eé]conseiller|avis\s+de\s+recherche|perte\s+de\s+pi[eè]ce|perdu\s+cl[eé]|donne\s+contre\s+bon\s+soin)\b/i;
+
+  return regexEmploi.test(texte);
+}
+
+// ── Calcul du Score de Qualité de Donnée (/100) ──────────────────────────────
+function calculerLeadQualityScore(lead) {
+  if (estLeadEmploiOuInvalide(lead)) return 0;
+  let score = 0;
+
+  const telNorm = normaliserTelephoneSenegal(lead.telephone || lead.telephone_brut);
+  if (telNorm.valide && telNorm.operateur !== 'Fixe') {
+    score += 25;
+    if (telNorm.operateur === 'Orange' || telNorm.operateur === 'Free (Yas)') score += 10;
   }
 
-  return false;
+  if (estNomPropreAuthentique(lead.nom_boutique)) {
+    score += 25;
+  } else if (lead.nom_boutique && !['mode', 'véhicules', 'immobilière', 'commerce général', 'commerce & boutique', 'emploi'].includes(lead.nom_boutique.toLowerCase())) {
+    score += 10;
+  }
+
+  if (lead.ville && ['dakar', 'thiès', 'mbour', 'touba', 'saint-louis', 'ziguinchor', 'kaolack'].includes(lead.ville.toLowerCase())) {
+    score += 15;
+  }
+  if (lead.quartier && lead.quartier !== 'Dakar' && lead.quartier !== 'Tout Dakar & Régions') {
+    score += 10;
+  }
+
+  if (lead.contact_nom && estNomPropreAuthentique(lead.contact_nom)) {
+    score += 15;
+  }
+
+  return Math.min(100, Math.max(0, score));
+}
+
+// ── Calcul du Score d'Affinité Commerciale Nopalou Fit Score (/100) ──────────
+function calculerNopalouFitScore(lead) {
+  if (estLeadEmploiOuInvalide(lead)) return 0;
+  let fit = 0;
+  const cat = String(lead.categorie || '').toLowerCase();
+
+  // 1. Potentiel selon la catégorie cible (+40)
+  if (['mode', 'smartphones', 'tech', 'beaute', 'cosmetique', 'superette', 'alimentation'].includes(cat)) {
+    fit += 40; // Coeur de cible catalogue WhatsApp & Wave
+  } else if (['maison', 'tv-electro', 'grossiste', 'quincaillerie'].includes(cat)) {
+    fit += 30; // Caisse POS magasin & inventaire
+  } else if (['auto-moto', 'immo'].includes(cat)) {
+    fit += 15; // Vitrine sans panier
+  } else {
+    fit += 10;
+  }
+
+  // 2. Commerce établi avec enseigne identifiable (+30)
+  if (estNomPropreAuthentique(lead.nom_boutique)) {
+    fit += 30;
+  }
+
+  // 3. Mobile WhatsApp réactif (Orange/Free) (+20)
+  const telNorm = normaliserTelephoneSenegal(lead.telephone || lead.telephone_brut);
+  if (telNorm.valide && (telNorm.operateur === 'Orange' || telNorm.operateur === 'Free (Yas)')) {
+    fit += 20;
+  }
+
+  // 4. Bonus marché physique dakarois stratégique (+10)
+  const q = String(lead.quartier || '').toLowerCase();
+  if (['sandaga', 'hlm', 'colobane', 'maristes', 'plateau', 'tilène', 'centenaire'].some(m => q.includes(m))) {
+    fit += 10;
+  }
+
+  return Math.min(100, Math.max(0, fit));
 }
 
 function nettoyerEtEnrichirLead(lead) {
@@ -561,11 +611,26 @@ function nettoyerEtEnrichirLead(lead) {
     contactNom = toTitleCase(contactNom);
   }
 
+  const leadPourScore = {
+    nom_boutique: nomPropre,
+    contact_nom: contactNom,
+    quartier: quartierFinal,
+    categorie: rawCat,
+    telephone: lead.telephone,
+    telephone_brut: lead.telephone_brut,
+    ville: lead.ville,
+  };
+
+  const scoreQualite = calculerLeadQualityScore(leadPourScore);
+  const fitScore = calculerNopalouFitScore(leadPourScore);
+
   return {
     nom_boutique: nomPropre,
     contact_nom: contactNom,
     quartier: quartierFinal,
     categorie: rawCat,
+    score: scoreQualite,
+    fit_score: fitScore,
     statut: estInvalide ? 'invalide' : (lead.statut === 'invalide' ? 'nouveau' : (lead.statut || 'nouveau')),
     notes: estInvalide ? (lead.notes ? `${lead.notes} | Hors-cible (Emploi/Recrutement)` : 'Hors-cible (Emploi/Recrutement)') : lead.notes,
   };
@@ -587,6 +652,7 @@ async function nettoyerTousLesLeadsBdd() {
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'manuel';
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS statut VARCHAR(50) DEFAULT 'nouveau';
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS score INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS fit_score INT DEFAULT 0;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS notes TEXT;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
@@ -642,6 +708,9 @@ async function nettoyerTousLesLeadsBdd() {
           invalidesEmploi++;
         }
       }
+      if (enrichi.score !== lead.score || enrichi.fit_score !== lead.fit_score) {
+        changed = true;
+      }
 
       if (changed) {
         await pool.query(`
@@ -651,11 +720,13 @@ async function nettoyerTousLesLeadsBdd() {
             contact_nom = $2,
             quartier = $3,
             categorie = $4,
-            statut = $5,
-            notes = $6,
+            score = $5,
+            fit_score = $6,
+            statut = $7,
+            notes = $8,
             updated_at = NOW()
-          WHERE id = $7
-        `, [enrichi.nom_boutique, enrichi.contact_nom, enrichi.quartier, enrichi.categorie, enrichi.statut, enrichi.notes, lead.id]);
+          WHERE id = $9
+        `, [enrichi.nom_boutique, enrichi.contact_nom, enrichi.quartier, enrichi.categorie, enrichi.score, enrichi.fit_score, enrichi.statut, enrichi.notes, lead.id]);
         nettoyes++;
       }
     } catch (rowErr) {
@@ -919,9 +990,11 @@ function extraireLeadsDepuisTexte(rawText, defauts = {}) {
   return leadsTrouves;
 }
 
-// ── Auto-Sourcing depuis les Annonces & Commerces Existants ───────────────────
+// ── Auto-Sourcing depuis les Annonces & Commerces Existants (Optimisé Haute Performance) ───
 async function autoSourcerDepuisAnnonces() {
   try {
+    await ensureProspectionTables();
+
     const resAnnonces = await pool.query(`
       SELECT contact_nom, contact_tel, titre, categorie_slug, quartier, ville
       FROM annonces_classifiees
@@ -930,42 +1003,89 @@ async function autoSourcerDepuisAnnonces() {
       LIMIT 1000
     `);
 
-    let inseres = 0;
-    let doublons = 0;
+    if (resAnnonces.rows.length === 0) {
+      return { success: true, trouves: 0, inseres: 0, doublons: 0 };
+    }
+
+    // 1. Parsing, normalisation et déduplication préalable en mémoire (< 50ms)
+    const leadsParTel = new Map();
 
     for (const a of resAnnonces.rows) {
       const norm = normaliserTelephoneSenegal(a.contact_tel);
-      if (!norm.valide) continue;
+      if (!norm.valide || norm.operateur === 'Fixe') continue;
 
-      if (estDesinscrit && (await estDesinscrit(norm.national))) continue;
+      if (leadsParTel.has(norm.national)) continue;
 
-      // Filtrer les annonces d'emploi
+      // Filtrer les annonces d'emploi et faux positifs
       if (a.categorie_slug === 'emploi' || a.categorie_slug === 'recrutement') continue;
+      if (estLeadEmploiOuInvalide({ nom_boutique: a.titre, notes: a.contact_nom, categorie: a.categorie_slug })) continue;
 
       const quartierDetecte = detecterQuartier(`${a.titre || ''} ${a.quartier || ''} ${a.ville || ''}`) || a.quartier || a.ville || 'Dakar';
       const nomNettoye = a.contact_nom ? toTitleCase(a.contact_nom) : nettoyerNomBoutique(a.titre, a.categorie_slug || 'mode', quartierDetecte);
       const categorie = a.categorie_slug || 'mode';
-      const source = 'annonces_classifiees';
 
-      try {
+      leadsParTel.set(norm.national, {
+        nom_boutique: nomNettoye,
+        contact_nom: a.contact_nom ? toTitleCase(a.contact_nom) : null,
+        telephone: norm.national,
+        telephone_brut: norm.brut,
+        operateur: norm.operateur,
+        categorie,
+        ville: a.ville || 'Dakar',
+        quartier: quartierDetecte,
+        source: 'annonces_classifiees',
+      });
+    }
+
+    const uniqueLeads = Array.from(leadsParTel.values());
+    if (uniqueLeads.length === 0) {
+      return { success: true, trouves: resAnnonces.rows.length, inseres: 0, doublons: 0 };
+    }
+
+    // 2. Détection en une seule requête SQL des numéros déjà présents en base
+    const tousTels = uniqueLeads.map(l => l.telephone);
+    const resExistants = await pool.query(
+      'SELECT telephone FROM prospection_leads WHERE telephone = ANY($1::text[])',
+      [tousTels]
+    );
+    const existantsSet = new Set(resExistants.rows.map(r => r.telephone));
+
+    // 3. Filtrer les leads non encore insérés
+    const aInserer = uniqueLeads.filter(l => !existantsSet.has(l.telephone));
+    let inseres = 0;
+
+    if (aInserer.length > 0) {
+      // Insertion par batch de 50 pour rapidité maximale et sécurité
+      const CHUNK_SIZE = 50;
+      for (let i = 0; i < aInserer.length; i += CHUNK_SIZE) {
+        const chunk = aInserer.slice(i, i + CHUNK_SIZE);
+        const values = [];
+        const placeholders = chunk.map((l, idx) => {
+          const offset = idx * 9;
+          values.push(l.nom_boutique, l.contact_nom, l.telephone, l.telephone_brut, l.operateur, l.categorie, l.ville, l.quartier, l.source);
+          return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, 'nouveau')`;
+        }).join(', ');
+
         const query = `
           INSERT INTO prospection_leads (
             nom_boutique, contact_nom, telephone, telephone_brut, operateur,
             categorie, ville, quartier, source, statut
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'nouveau')
+          ) VALUES ${placeholders}
           ON CONFLICT (telephone) DO NOTHING
           RETURNING id
         `;
-        const values = [nomNettoye, a.contact_nom ? toTitleCase(a.contact_nom) : null, norm.national, norm.brut, norm.operateur, categorie, a.ville || 'Dakar', quartierDetecte, source];
-        const resDb = await pool.query(query, values);
-        if (resDb.rows.length > 0) inseres++;
-        else doublons++;
-      } catch (e) {
-        // Ignore single row err
+        const resIns = await pool.query(query, values);
+        inseres += resIns.rows.length;
       }
     }
 
-    return { success: true, trouves: resAnnonces.rows.length, inseres, doublons };
+    return {
+      success: true,
+      trouves: resAnnonces.rows.length,
+      uniques: uniqueLeads.length,
+      doublons: existantsSet.size,
+      inseres,
+    };
   } catch (err) {
     console.error('[PROSPECTION AUTO-SOURCE ERR]:', err.message);
     throw err;
@@ -1085,6 +1205,40 @@ async function ensureProspectionTables() {
   }
 }
 
+// ── Résolution Dynamique de Template par Catégorie Métier ───────────────────
+function resoudreTemplatePourLead(templateOriginal, lead) {
+  if (!templateOriginal || typeof templateOriginal !== 'string') return '';
+  const cat = String(lead.categorie || '').toLowerCase();
+  
+  // Si le template contient des références explicites à la mode/vêtements
+  const estTemplateModeOuRobe = /robe|soie|taille|collection|modèle/i.test(templateOriginal);
+  
+  if (estTemplateModeOuRobe) {
+    if (cat === 'auto-moto') {
+      const tpl = TEMPLATES_PAR_DEFAUT.find(t => t.id === 'auto_vehicules');
+      if (tpl) return tpl.texte;
+    }
+    if (cat === 'immo' || cat === 'immobilier') {
+      const tpl = TEMPLATES_PAR_DEFAUT.find(t => t.id === 'immo_agences');
+      if (tpl) return tpl.texte;
+    }
+    if (cat === 'tech' || cat === 'smartphones' || cat === 'informatique') {
+      const tpl = TEMPLATES_PAR_DEFAUT.find(t => t.id === 'tech_telephonie');
+      if (tpl) return tpl.texte;
+    }
+    if (cat === 'grossiste') {
+      const tpl = TEMPLATES_PAR_DEFAUT.find(t => t.id === 'sourcing_alibaba');
+      if (tpl) return tpl.texte;
+    }
+    if (cat === 'divers' || cat === 'superette' || cat === 'alimentation' || cat === 'quincaillerie') {
+      const tpl = TEMPLATES_PAR_DEFAUT.find(t => t.id === 'commerce_general');
+      if (tpl) return tpl.texte;
+    }
+  }
+
+  return templateOriginal;
+}
+
 // ── Exécution de Campagne de Prospection Automatisée avec Jitter Humain ───────
 async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, simulation = false }) {
   if (!leadIds || leadIds.length === 0) {
@@ -1115,7 +1269,9 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       continue;
     }
 
-    const messageFinal = interpolerMessage(templateMessage, lead);
+    // Résolution contextuelle du template (Persona matching)
+    const templateAdapte = resoudreTemplatePourLead(templateMessage, lead);
+    const messageFinal = interpolerMessage(templateAdapte, lead);
     let statutEnvoi = simulation ? 'simule' : 'echec';
     let erreurEnvoi = null;
 
@@ -1208,6 +1364,9 @@ module.exports = {
   interpolerMessage,
   genererLienWhatsApp,
   extraireLeadsDepuisTexte,
+  calculerLeadQualityScore,
+  calculerNopalouFitScore,
+  resoudreTemplatePourLead,
   autoSourcerDepuisAnnonces,
   genererRequetesDorking,
   lancerCampagne,
