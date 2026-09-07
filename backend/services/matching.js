@@ -256,46 +256,65 @@ function sontMemeProduit(itemA, itemB) {
 }
 
 /**
+ * Compare deux titres ou fiches textuelles brutes (méthode historique de déduplication).
+ */
+function sontIdentiques(titreA, titreB) {
+  const tA = typeof titreA === 'string' ? titreA : (titreA?.titre || titreA?.nom || '');
+  const tB = typeof titreB === 'string' ? titreB : (titreB?.titre || titreB?.nom || '');
+  const score = similariteJaccard(tA, tB);
+  const mqA = extraireMarque(tA);
+  const mqB = extraireMarque(tB);
+
+  if (mqA && mqB && mqA.toLowerCase() !== mqB.toLowerCase()) {
+    return { match: false, methode: 'marque_differente', score };
+  }
+
+  const modA = extraireModele(tA);
+  const modB = extraireModele(tB);
+  if (modA && modB && modA.toLowerCase() === modB.toLowerCase()) {
+    return { match: true, methode: 'modele', modele: modA, score };
+  }
+
+  if (score >= 0.7) {
+    return { match: true, methode: 'jaccard', score };
+  }
+
+  return { match: false, methode: 'none', score };
+}
+
+/**
  * Recherche dans la base PostgreSQL si un produit existant correspond à l'item scrapé.
  */
 async function trouverProduitCorrespondant(pool, item, catId = null) {
-  // 1. EAN
-  if (item.ean) {
-    const { rows: byEan } = await pool.query('SELECT id, nom, prix_min, categorie_id FROM produits WHERE ean = $1 LIMIT 1', [item.ean]);
-    if (byEan.length > 0) return byEan[0];
+  const normTitre = normaliserTitre(item.titre || item.nom || '');
+  const ean = item.ean || null;
+
+  // 1. Recherche par EAN exact
+  if (ean) {
+    const { rows } = await pool.query('SELECT * FROM produits WHERE ean = $1 LIMIT 1', [ean]);
+    if (rows.length > 0) return rows[0];
   }
 
-  const titre = item.titre || item.nom;
-  if (!titre) return null;
-
-  const normTitre = normaliserTitre(titre);
-  const marque = extraireMarque(titre);
-  const modele = extraireModele(titre);
-
-  // 2. Exact normalized title
-  const { rows: byNom } = await pool.query(
-    `SELECT id, nom, prix_min, categorie_id FROM produits WHERE TRIM(LOWER(nom)) = $1 LIMIT 1`,
-    [normTitre]
-  );
-  if (byNom.length > 0) return byNom[0];
-
-  // 3. Match par Modèle identifié
-  if (modele) {
-    const cleanMod = modele.replace(/\+/g, 'plus');
-    const { rows: byModel } = await pool.query(`
-      SELECT id, nom, prix_min, categorie_id, marque
-      FROM produits
-      WHERE LOWER(nom) LIKE '%' || $1 || '%'
-      LIMIT 10
-    `, [cleanMod]);
-
-    for (const cand of byModel) {
+  // 2. Recherche par marque + modèle
+  const marque = extraireMarque(normTitre);
+  const modele = extraireModele(normTitre);
+  if (marque && modele) {
+    const { rows } = await pool.query(
+      `SELECT * FROM produits 
+       WHERE LOWER(marque) = LOWER($1) 
+         AND (LOWER(nom) LIKE '%' || LOWER($2) || '%' OR LOWER(modele) = LOWER($2))
+       LIMIT 5`,
+      [marque, modele]
+    );
+    for (const cand of rows) {
       const cmp = sontMemeProduit(item, cand);
-      if (cmp.match) {
-        return cand;
-      }
+      if (cmp.match) return cand;
     }
   }
+
+  // 3. Recherche par titre normalisé exact
+  const { rows: exacts } = await pool.query('SELECT * FROM produits WHERE LOWER(nom) = LOWER($1) LIMIT 1', [normTitre]);
+  if (exacts.length > 0) return exacts[0];
 
   // 4. Recherche par mots-clés discriminants + pg_trgm
   const mots = normTitre.split(/\s+/).filter(w => w.length >= 3 && !['apple','samsung','sony','pour','avec'].includes(w)).slice(0, 3);
@@ -321,6 +340,7 @@ async function trouverProduitCorrespondant(pool, item, catId = null) {
 }
 
 module.exports = {
+  sontIdentiques,
   sontMemeProduit,
   trouverProduitCorrespondant,
   normaliserTitre,

@@ -1,3 +1,25 @@
+- **Audit End-to-End Exhaustif & Résolution Intégrale des 8 Anomalies Plateforme (`backend/routes/boutiques.js`, `backend/migrate-inline.js`, `backend/services/matching.js`, `backend/services/whatsapp-health.js`, `scripts/e2e-exhaustive-qa.mjs`) (`pushed` - 07 septembre 2026)** 🛡️🚀✨ :
+  * **📋 1. Cartographie Exhaustive & Matrice de Tests E2E (100% de Réussite)** :
+    - Élaboration et exécution d'un banc de test End-to-End simulant les actions réelles : Visiteur -> Acheteur -> Marchand -> Caissier POS -> Admin -> PostgreSQL.
+    - 37 parcours et scénarios transactionnels exécutés : 37/37 PASS (Taux de succès de 100 %).
+    - 160/160 tests unitaires Jest au vert (20 test suites sur 20 validées).
+    - 35/35 tests unitaires frontend Next.js validés.
+    - 23/23 tests de robustesse du chatbot WhatsApp validés (parsing NLP Franco-Wolof, gestion des sessions, commandes par message, bilans de caisse).
+  * **🔴 2. Résolution des Anomalies Critiques (P1)** :
+    - **Avis Clients Produit (QA-01 & QA-05)** : Résolution du crash SQL 500 sur `POST /api/boutiques/:id/produits/:prodId/avis`. Harmonisation des colonnes `client_nom` et `nom_client` avec support de `commande_ref` pour les avis d'achat certifiés.
+    - **Moteur de Fidélisation & Cashback (QA-02)** : Câblage transactionnel intégral du moteur de fidélité aux ventes POS (`/pos-vente`) et commandes en ligne express (`/commandes/express`). Crédit automatique du cashback et des points, déduction réelle de cagnotte en caisse, mise à jour dynamique du rang (`bronze`, `argent`, `or`, `vip`) et traçabilité horodatée dans `boutique_fidelite_mouvements`.
+    - **Sécurisation Caisse POS (QA-03)** : Garde de validation stricte rejetant immédiatement en HTTP 400 Bad Request tout ticket POS envoyé sans articles valides (éradication des faux succès silencieux).
+  * **🟠 3. Résolution des Anomalies Majeures (P2) & Mineures (P3/P4)** :
+    - **Clôture de Caisse Z (QA-04)** : Normalisation de la lecture des paramètres dans `POST /pos-sessions/cloturer` pour accepter indifféremment `sessionId` / `session_id` et `especesComptees` / `especes_comptees`.
+    - **Import Batch Catalogue (QA-06)** : Réponse explicite en HTTP 400 Bad Request lorsqu'un fichier ou lot ne contient aucun article valide.
+    - **Déduplication & Matching Produits (QA-07)** : Exportation de la fonction `sontIdentiques` dans `backend/services/matching.js` pour pérenniser les tests de non-régression de l'équipe technique.
+    - **Migrations Inline (QA-08)** : Nettoyage d'une anomalie de syntaxe SQL sur `abonnements` dans `backend/migrate-inline.js`, garantissant une exécution sans accroc de toutes les migrations au démarrage du serveur.
+  * **🛡️ 4. Santé WhatsApp & Résilience Meta API** :
+    - Isolation de l'erreur Meta 131026 ("Message Undeliverable") pour éviter les faux positifs de coupure de service (circuit breaker), fiabilisant le monitoring admin.
+  * **🧪 5. Conformité & Règles Agentic** :
+    - Respect strict des directives d'interdiction de chargement dynamique de polices externes (polices système natives).
+    - Déploiement git exécuté uniquement sur demande explicite de l'utilisateur.
+
 - **Harmonisation Globale des Logos & Pack Téléchargeable Admin Master (`/admin/communication`, `/assets/*`, `AdminSidebarClient.tsx`, `MobileNav.tsx`, `opengraph-image.tsx`) (`pushed` - 06 septembre 2026)** 🎨📦✨ :
   * **📦 1. Hub de Téléchargement Logos Master dans l'Espace Admin (`/admin/communication`)** :
     - Ajout du pack officiel "Logo & Marque Master" en tête du kit de communication :

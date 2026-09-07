@@ -86,8 +86,10 @@ async function post(payload) {
     return data;
   } catch (err) {
     const errObj = err.response?.data?.error || { message: err.message };
-    console.error('[WHATSAPP] Erreur:', errObj.message || err.message);
-    whatsappHealth.recordFailure(errObj);
+    whatsappHealth.recordFailure({
+      ...errObj,
+      recipient_id: payload?.to,
+    });
     throw err;
   }
 }

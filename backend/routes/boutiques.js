@@ -2392,6 +2392,10 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
         );
         insere.push(r.rows[0]);
       }
+      if (insere.length === 0 && produits.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Aucun produit valide à importer. Les produits doivent avoir un nom non-vide.', count: 0 });
+      }
       await client.query('COMMIT');
       res.status(201).json({ success: true, count: insere.length, produits: insere });
       
@@ -2474,12 +2478,20 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
   try {
     await ensureRefColSize();
     const idParam = req.params.id;
-    const { items, caissier, caissier_id, session_id, modePaiement, client_id, idempotency_key } = req.body;
-    console.log('[POS VENTE] ▶ Requête reçue:', { idParam, nbItems: items?.length, caissier, caissier_id, session_id, modePaiement, hasIdempotency: !!idempotency_key });
+    const { items, articles, caissier, caissier_id, session_id, modePaiement, client_id, idempotency_key, fidelite_client_id, deduction_cagnotte_fcfa } = req.body;
+    const saleItems = (Array.isArray(items) && items.length > 0) ? items : (Array.isArray(articles) && articles.length > 0 ? articles : null);
+    
+    if (!saleItems || saleItems.length === 0) {
+      return res.status(400).json({ error: 'La vente doit contenir au moins un article valide.' });
+    }
+
+    console.log('[POS VENTE] ▶ Requête reçue:', { idParam, nbItems: saleItems.length, caissier, caissier_id, session_id, modePaiement, fidelite_client_id, hasIdempotency: !!idempotency_key });
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(
-      `SELECT id, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      `SELECT id, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
+              fidelite_actif, fidelite_type, fidelite_taux_cashback, fidelite_seuil_tampon, fidelite_tampons_max
+       FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
       [idParam]
     );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -2522,11 +2534,10 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
       client = cRes.rows[0] || null;
     }
 
-    if (Array.isArray(items) && items.length > 0) {
-      const refVente = idempotencyKey || `POS-${Date.now().toString().slice(-6)}`;
-      
-      // Calcul fiscalité globale
-      const calculation = calculerFiscaliteDocument(boutique, client, items);
+    const refVente = idempotencyKey || `POS-${Date.now().toString().slice(-6)}`;
+    
+    // Calcul fiscalité globale
+    const calculation = calculerFiscaliteDocument(boutique, client, saleItems);
 
       // Calcul timbre fiscal
       let timbre = 0;
@@ -2545,6 +2556,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
 
       // ── TRANSACTION ATOMIQUE : stock + ventes + commandes + facture + session ──
       console.log('[POS VENTE] ✓ Calcul fiscal OK. ref:', refVente, 'netAPayer:', netAPayer, 'items:', calculation.items.length);
+      let fideliteResult = null;
       const dbClient = await pool.connect();
       try {
         await dbClient.query('BEGIN');
@@ -2708,6 +2720,98 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
           );
         }
 
+        // ── Comptabilisation Fidélité Client (Cashback / Tampons / Points) ──
+        fideliteResult = null;
+        const targetFideliteId = fidelite_client_id && /^[0-9a-f-]{36}$/i.test(String(fidelite_client_id)) ? String(fidelite_client_id) : null;
+        let fidClientRow = null;
+
+        if (targetFideliteId) {
+          const fcRes = await dbClient.query(
+            `SELECT * FROM boutique_clients_fidelite WHERE id = $1 AND boutique_id = $2 FOR UPDATE`,
+            [targetFideliteId, boutiqueId]
+          );
+          fidClientRow = fcRes.rows[0] || null;
+        } else if (client?.telephone) {
+          const fcRes = await dbClient.query(
+            `SELECT * FROM boutique_clients_fidelite WHERE boutique_id = $1 AND (telephone = $2 OR telephone = $3) FOR UPDATE`,
+            [boutiqueId, client.telephone.trim(), client.telephone.trim().replace(/^221/, '')]
+          );
+          fidClientRow = fcRes.rows[0] || null;
+        }
+
+        if (fidClientRow) {
+          const isFideliteActive = boutique.fidelite_actif !== false;
+          const fidType = boutique.fidelite_type || 'cagnotte';
+          const tauxCashback = Number(boutique.fidelite_taux_cashback !== undefined ? boutique.fidelite_taux_cashback : 3.00);
+          const seuilTampon = Number(boutique.fidelite_seuil_tampon || 2000);
+
+          let gainCashback = 0;
+          let gainTampons = 0;
+          const gainPoints = Math.max(1, Math.floor(netAPayer / 100));
+
+          if (isFideliteActive) {
+            if (fidType === 'tampons') {
+              gainTampons = Math.floor(netAPayer / Math.max(1, seuilTampon));
+            } else {
+              gainCashback = Math.round(netAPayer * (tauxCashback / 100));
+            }
+          }
+
+          // Déduction cagnotte si demandée
+          const montantDeduit = Math.max(0, Math.min(Number(deduction_cagnotte_fcfa) || 0, Number(fidClientRow.cagnotte_fcfa || 0)));
+
+          const nouveauCumulDepense = Number(fidClientRow.total_depense || 0) + netAPayer;
+          const nouveauNbVisites = Number(fidClientRow.nb_visites || 0) + 1;
+          const nouvelleCagnotte = Math.max(0, Number(fidClientRow.cagnotte_fcfa || 0) - montantDeduit + gainCashback);
+          const nouveauxPoints = Number(fidClientRow.points_solde || 0) + gainPoints;
+          const nouveauxTampons = Number(fidClientRow.tampons_actuels || 0) + gainTampons;
+
+          let nouveauRang = 'bronze';
+          if (nouveauCumulDepense >= 500000) nouveauRang = 'vip';
+          else if (nouveauCumulDepense >= 200000) nouveauRang = 'or';
+          else if (nouveauCumulDepense >= 50000) nouveauRang = 'argent';
+
+          await dbClient.query(
+            `UPDATE boutique_clients_fidelite
+             SET cagnotte_fcfa = $1,
+                 points_solde = $2,
+                 tampons_actuels = $3,
+                 total_depense = $4,
+                 nb_visites = $5,
+                 rang_fidelite = $6,
+                 derniere_visite = NOW(),
+                 updated_at = NOW()
+             WHERE id = $7`,
+            [nouvelleCagnotte, nouveauxPoints, nouveauxTampons, nouveauCumulDepense, nouveauNbVisites, nouveauRang, fidClientRow.id]
+          );
+
+          if (gainCashback > 0 || gainTampons > 0) {
+            await dbClient.query(
+              `INSERT INTO boutique_fidelite_mouvements (boutique_id, client_fidelite_id, vente_reference, type_mouvement, valeur_fcfa, points, description)
+               VALUES ($1, $2, $3, 'credit_achat', $4, $5, $6)`,
+              [boutiqueId, fidClientRow.id, refVente, gainCashback, gainPoints, `Gain fidélité sur vente POS ${refVente}`]
+            );
+          }
+
+          if (montantDeduit > 0) {
+            await dbClient.query(
+              `INSERT INTO boutique_fidelite_mouvements (boutique_id, client_fidelite_id, vente_reference, type_mouvement, valeur_fcfa, points, description)
+               VALUES ($1, $2, $3, 'debit_utilisation', $4, 0, $5)`,
+              [boutiqueId, fidClientRow.id, refVente, montantDeduit, `Déduction cagnotte sur vente POS ${refVente}`]
+            );
+          }
+
+          fideliteResult = {
+            clientId: fidClientRow.id,
+            nom: fidClientRow.nom,
+            cagnotte: nouvelleCagnotte,
+            gainCashback,
+            gainTampons,
+            montantDeduit,
+            rang: nouveauRang
+          };
+        }
+
         await dbClient.query('COMMIT');
       } catch (txErr) {
         await dbClient.query('ROLLBACK');
@@ -2716,9 +2820,13 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
       } finally {
         dbClient.release();
       }
-    }
 
-    res.status(201).json({ success: true, message: 'Stock, Comptabilité et Facture POS sauvegardés' });
+      res.status(201).json({
+        success: true,
+        message: 'Stock, Comptabilité et Facture POS sauvegardés',
+        reference: refVente,
+        fidelite: fideliteResult
+      });
   } catch (err) {
     console.error('[BOUTIQUE POS VENTE ERREUR]', err.code, err.message, err.detail || '', err.stack?.split('\n').slice(0, 5).join(' | '));
     res.status(500).json({
@@ -3322,13 +3430,22 @@ router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
 router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { sessionId, especesComptees, ventesEspeces, ventesWave, ventesOrangeMoney, ventesCarte, ventesTotal, nbVentes, caissierNom } = req.body;
+    const targetSessionId = req.body.sessionId || req.body.session_id || req.params.sessionId;
+    const countedCash = req.body.especesComptees ?? req.body.especes_comptees ?? req.body.montant_reel;
+    const vEspeces = req.body.ventesEspeces ?? req.body.ventes_especes;
+    const vWave = req.body.ventesWave ?? req.body.ventes_wave;
+    const vOM = req.body.ventesOrangeMoney ?? req.body.ventes_orange_money;
+    const vCarte = req.body.ventesCarte ?? req.body.ventes_carte;
+    const vTotal = req.body.ventesTotal ?? req.body.ventes_total;
+    const nVentes = req.body.nbVentes ?? req.body.nb_ventes;
+    const cNom = req.body.caissierNom || req.body.caissier_nom;
+
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutiqueId = bRes.rows[0].id;
 
-    if (sessionId && /^[0-9a-f-]{36}$/i.test(sessionId)) {
+    if (targetSessionId && /^[0-9a-f-]{36}$/i.test(targetSessionId)) {
       // Réconciliation comptable SQL directe sur la session
       const aggRes = await pool.query(
         `SELECT 
@@ -3340,15 +3457,15 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
            COALESCE(SUM(CASE WHEN LOWER(methode_paiement) IN ('carte', 'cb') THEN montant_total ELSE 0 END), 0) AS sql_carte
          FROM ventes
          WHERE boutique_id = $1 AND session_id = $2 AND archivee IS NOT TRUE`,
-        [boutiqueId, sessionId]
+        [boutiqueId, targetSessionId]
       );
       const agg = aggRes.rows[0] || {};
-      const finalTotal = Number(agg.sql_nb) > 0 ? Number(agg.sql_total) : Number(ventesTotal || 0);
-      const finalNb = Number(agg.sql_nb) > 0 ? Number(agg.sql_nb) : Number(nbVentes || 0);
-      const finalEspeces = Number(agg.sql_nb) > 0 ? Number(agg.sql_especes) : Number(ventesEspeces || 0);
-      const finalWave = Number(agg.sql_nb) > 0 ? Number(agg.sql_wave) : Number(ventesWave || 0);
-      const finalOM = Number(agg.sql_nb) > 0 ? Number(agg.sql_om) : Number(ventesOrangeMoney || 0);
-      const finalCarte = Number(agg.sql_nb) > 0 ? Number(agg.sql_carte) : Number(ventesCarte || 0);
+      const finalTotal = Number(agg.sql_nb) > 0 ? Number(agg.sql_total) : Number(vTotal || 0);
+      const finalNb = Number(agg.sql_nb) > 0 ? Number(agg.sql_nb) : Number(nVentes || 0);
+      const finalEspeces = Number(agg.sql_nb) > 0 ? Number(agg.sql_especes) : Number(vEspeces || 0);
+      const finalWave = Number(agg.sql_nb) > 0 ? Number(agg.sql_wave) : Number(vWave || 0);
+      const finalOM = Number(agg.sql_nb) > 0 ? Number(agg.sql_om) : Number(vOM || 0);
+      const finalCarte = Number(agg.sql_nb) > 0 ? Number(agg.sql_carte) : Number(vCarte || 0);
 
       const updRes = await pool.query(
         `UPDATE boutique_pos_sessions
@@ -3365,14 +3482,14 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
          WHERE id = $8 AND boutique_id = $9
          RETURNING *`,
         [
-          Number(especesComptees || 0),
+          Number(countedCash || 0),
           finalEspeces,
           finalWave,
           finalOM,
           finalCarte,
           finalTotal,
           finalNb,
-          sessionId,
+          targetSessionId,
           boutiqueId
         ]
       );
@@ -3381,10 +3498,10 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
       await enregistrerAuditLog(
         boutiqueId,
         req.user?.userId,
-        caissierNom || updRes.rows[0]?.caissier_nom || 'Caissier',
+        cNom || updRes.rows[0]?.caissier_nom || 'Caissier',
         'pos_session',
-        `Clôture Z de la session de caisse POS par ${caissierNom || updRes.rows[0]?.caissier_nom || 'Caissier'} (Espèces comptées: ${especesComptees || 0} FCFA, Ventes totales: ${finalTotal} FCFA, Tickets: ${finalNb})`,
-        { sessionId, especesComptees, ventesTotal: finalTotal, nbVentes: finalNb, ecart: updRes.rows[0]?.ecart_caisse, caissierNom },
+        `Clôture Z de la session de caisse POS par ${cNom || updRes.rows[0]?.caissier_nom || 'Caissier'} (Espèces comptées: ${countedCash || 0} FCFA, Ventes totales: ${finalTotal} FCFA, Tickets: ${finalNb})`,
+        { sessionId: targetSessionId, especesComptees: countedCash, ventesTotal: finalTotal, nbVentes: finalNb, ecart: updRes.rows[0]?.ecart_caisse, caissierNom: cNom },
         req
       );
     }
@@ -4511,6 +4628,47 @@ router.post('/commandes/express', async (req, res) => {
       console.error('[EXPRESS NOTIF ERR]:', eNotif.message);
     }
 
+    // Crédit Fidélité automatique sur commande en ligne si client inscrit
+    if (client_telephone && String(client_telephone).trim()) {
+      try {
+        const cleanTel = String(client_telephone).trim().replace(/\s+/g, '');
+        const fidCliRes = await pool.query(
+          `SELECT * FROM boutique_clients_fidelite WHERE boutique_id = $1 AND (telephone = $2 OR telephone = $3) LIMIT 1`,
+          [actualBoutiqueId, cleanTel, cleanTel.replace(/^221/, '')]
+        );
+        if (fidCliRes.rows[0]) {
+          const fidCli = fidCliRes.rows[0];
+          const bqFidRes = await pool.query(`SELECT fidelite_actif, fidelite_type, fidelite_taux_cashback FROM boutiques WHERE id = $1`, [actualBoutiqueId]);
+          const bqFid = bqFidRes.rows[0];
+          if (bqFid && bqFid.fidelite_actif !== false) {
+            const taux = Number(bqFid.fidelite_taux_cashback !== undefined ? bqFid.fidelite_taux_cashback : 3.00);
+            const gain = Math.round(totalGeneral * (taux / 100));
+            const nvDepense = Number(fidCli.total_depense || 0) + totalGeneral;
+            const nvCagnotte = Number(fidCli.cagnotte_fcfa || 0) + gain;
+            const nvVisites = Number(fidCli.nb_visites || 0) + 1;
+            const nvRang = nvDepense >= 500000 ? 'vip' : nvDepense >= 200000 ? 'or' : nvDepense >= 50000 ? 'argent' : 'bronze';
+
+            await pool.query(
+              `UPDATE boutique_clients_fidelite 
+               SET cagnotte_fcfa = $1, total_depense = $2, nb_visites = $3, rang_fidelite = $4, derniere_visite = NOW(), updated_at = NOW()
+               WHERE id = $5`,
+              [nvCagnotte, nvDepense, nvVisites, nvRang, fidCli.id]
+            );
+
+            if (gain > 0) {
+              await pool.query(
+                `INSERT INTO boutique_fidelite_mouvements (boutique_id, client_fidelite_id, vente_reference, type_mouvement, valeur_fcfa, points, description)
+                 VALUES ($1, $2, $3, 'credit_achat', $4, $5, $6)`,
+                [actualBoutiqueId, fidCli.id, ref, gain, Math.floor(totalGeneral / 100), `Gain fidélité commande web ${ref}`]
+              );
+            }
+          }
+        }
+      } catch (fidErr) {
+        console.warn('[FIDELITE COMMANDE WEB ERR]:', fidErr.message);
+      }
+    }
+
     // Notification WhatsApp à l'acheteur (client) avec garantie 24H Meta
     if (client_telephone && client_telephone.trim()) {
       try {
@@ -5108,9 +5266,10 @@ router.get('/:id/produits/:prodId/avis', async (req, res) => {
 router.post('/:id/produits/:prodId/avis', async (req, res) => {
   try {
     const { id, prodId } = req.params;
-    const { client_nom, note, commentaire, commande_ref } = req.body;
+    const { client_nom, nom_client, nom, note, commentaire, commande_ref } = req.body;
+    const authorName = (client_nom || nom_client || nom || '').trim();
 
-    if (!client_nom || !client_nom.trim()) {
+    if (!authorName) {
       return res.status(400).json({ error: 'Votre nom est requis.' });
     }
     if (!note || isNaN(Number(note)) || Number(note) < 1 || Number(note) > 5) {
@@ -5128,10 +5287,10 @@ router.post('/:id/produits/:prodId/avis', async (req, res) => {
     }
 
     const r = await pool.query(
-      `INSERT INTO boutique_avis (boutique_id, produit_id, client_nom, note, commentaire, commande_ref)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO boutique_avis (boutique_id, produit_id, client_nom, nom_client, note, commentaire, commande_ref)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [targetBoutiqueId, prodId, client_nom.trim(), Number(note), commentaire.trim(), commande_ref || null]
+      [targetBoutiqueId, prodId, authorName, authorName, Number(note), commentaire.trim(), commande_ref || null]
     );
 
     res.status(201).json({

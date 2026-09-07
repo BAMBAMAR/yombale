@@ -765,11 +765,8 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_abonnements_user   ON abonnements(utilisateur_id, statut);
       CREATE INDEX IF NOT EXISTS idx_abonnements_fin    ON abonnements(fin) WHERE statut = 'actif';
-    `);
-    
       ALTER TABLE abonnements DROP CONSTRAINT IF EXISTS abonnements_plan_check;
     `);
-    
     console.log('[MIGRATE] ✅ Table abonnements OK');
   } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }
 
@@ -874,6 +871,9 @@ module.exports = async function migrateInline() {
         valide       BOOLEAN DEFAULT true,
         created_at   TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE boutique_avis ADD COLUMN IF NOT EXISTS client_nom VARCHAR(150);
+      ALTER TABLE boutique_avis ADD COLUMN IF NOT EXISTS nom_client VARCHAR(150);
+      ALTER TABLE boutique_avis ADD COLUMN IF NOT EXISTS commande_ref VARCHAR(100);
     `);
     console.log('[MIGRATE] ✅ Table boutique_avis OK');
   } catch (e) { console.warn('[MIGRATE] boutique_avis:', e.message); }

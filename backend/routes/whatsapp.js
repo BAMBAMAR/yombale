@@ -72,6 +72,7 @@ router.post('/webhook', verifyHmac, async (req, res) => {
           message: errFirst.message,
           details: errFirst.error_data?.details,
           href: errFirst.href,
+          recipient_id: statusObj.recipient_id,
         });
       } else if (['sent', 'delivered', 'read'].includes(statusObj.status)) {
         whatsappHealth.recordSuccess();

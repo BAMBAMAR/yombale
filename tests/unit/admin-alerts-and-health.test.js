@@ -122,6 +122,57 @@ describe('Admin Alerts & WhatsApp Health Resilience', () => {
       expect(whatsappHealth.isDegraded()).toBe(true);
     });
 
+    test('ignore l\'erreur destinataire (131026 / Message Undeliverable) et maintient l\'état sain', () => {
+      whatsappHealth.recordFailure({
+        code: 131026,
+        title: 'Message Undeliverable.',
+        message: 'Message Undeliverable.',
+        recipient_id: '221770000000',
+      });
+
+      const status = whatsappHealth.getStatus();
+      expect(status.healthy).toBe(true);
+      expect(whatsappHealth.isDegraded()).toBe(false);
+      expect(status.consecutiveFailures).toBe(0);
+      expect(status.lastRecipientFailure).toBeTruthy();
+      expect(status.lastRecipientFailure.code).toBe(131026);
+      expect(status.recipientFailuresCount).toBe(1);
+      expect(envoyerEmail).not.toHaveBeenCalled();
+    });
+
+    test('ne déclenche pas d\'alerte admin ni de mode dégradé même après 3 échecs destinataires consécutifs', () => {
+      for (let i = 0; i < 3; i++) {
+        whatsappHealth.recordFailure({
+          code: 131026,
+          title: 'Message Undeliverable.',
+          message: 'Message Undeliverable.',
+          recipient_id: `22177000000${i}`,
+        });
+      }
+
+      const status = whatsappHealth.getStatus();
+      expect(status.healthy).toBe(true);
+      expect(whatsappHealth.isDegraded()).toBe(false);
+      expect(status.consecutiveFailures).toBe(0);
+      expect(status.recipientFailuresCount).toBe(3);
+      expect(envoyerEmail).not.toHaveBeenCalled();
+    });
+
+    test('déclenche le mode dégradé après 3 pannes d\'infrastructure serveur consécutives', () => {
+      for (let i = 0; i < 3; i++) {
+        whatsappHealth.recordFailure({
+          code: 500,
+          message: 'Internal Server Error from Meta Graph API',
+        });
+      }
+
+      const status = whatsappHealth.getStatus();
+      expect(status.healthy).toBe(false);
+      expect(whatsappHealth.isDegraded()).toBe(true);
+      expect(status.consecutiveFailures).toBe(3);
+      expect(envoyerEmail).toHaveBeenCalled();
+    });
+
     test('rétablit l\'état sain lors d\'un succès', () => {
       // Provoquer une dégradation
       whatsappHealth.recordFailure({
