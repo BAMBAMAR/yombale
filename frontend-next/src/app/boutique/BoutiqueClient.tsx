@@ -4305,6 +4305,13 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   useEffect(() => {
     const gIdx = getGroupIdxForTab(tab)
     setActiveGroupIdx(gIdx)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      if (url.searchParams.get('tab') !== tab) {
+        url.searchParams.set('tab', tab)
+        window.history.replaceState(null, '', url.toString())
+      }
+    }
   }, [tab])
 
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
@@ -4412,15 +4419,9 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.location.href = '/compte'
-                } else {
-                  router.push('/compte')
-                }
-              }}
+              onClick={onBack}
               className="bq-back-btn"
-              title="Retourner au menu Mon compte"
+              title="Retourner à la liste de mes boutiques"
               style={{
                 background: '#ffffff',
                 border: '1.5px solid #E2E8F0',
@@ -4442,7 +4443,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              <span>{t('shop.myAccountBack') || 'Mon compte'}</span>
+              <span>{t('shop.myShopsBack') || 'Mes Boutiques'}</span>
             </button>
 
             <button

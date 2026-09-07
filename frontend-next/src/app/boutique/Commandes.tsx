@@ -66,6 +66,9 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
       updateStatutCommande(boutiqueId, commande.id, statut).then(() => {
         setLoading(false)
         onUpdate()
+        if (commande.methode_paiement === 'credit' || commande.note?.toLowerCase().includes('crédit')) {
+          window.dispatchEvent(new Event('carnet_updated'))
+        }
       }).catch(() => setLoading(false))
     })
   }

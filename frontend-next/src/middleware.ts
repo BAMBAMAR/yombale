@@ -70,7 +70,10 @@ export async function middleware(req: NextRequest) {
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r))
 
   if (isProtected && !session) {
-    return NextResponse.redirect(new URL('/connexion', req.nextUrl))
+    const loginUrl = new URL('/connexion', req.nextUrl)
+    const fullPath = req.nextUrl.pathname + req.nextUrl.search
+    loginUrl.searchParams.set('redirect', fullPath)
+    return NextResponse.redirect(loginUrl)
   }
 
   if (isAuthRoute && session) {

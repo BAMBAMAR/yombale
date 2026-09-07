@@ -1,3 +1,49 @@
+- **Refonte UX de Navigabilité Globale, Sécurisation Caisse POS & Escape Hatch Chatbot WhatsApp (`backend/routes/comptabilite.js`, `backend/routes/boutiques.js`, `backend/services/whatsapp-chatbot.js`, `frontend-next/src/app/boutique/*`, `frontend-next/src/components/*`, `frontend-next/src/middleware.ts`) (07 septembre 2026)** 🧭🛒⚡✨ :
+  * **🔴 1. Correction Critique : Carnet de Dettes & Notifications WhatsApp Automatiques** :
+    - `backend/routes/comptabilite.js` :
+      * Correction du crash de l'API Meta Cloud (Erreur #100) causé par des query params illégaux (`?tab=...`) dans les URL dynamiques de template. Nettoyage strict du `buttonParam` (`boutique.slug || boutique.id`).
+      * Automatisation transactionnelle : Lors de la confirmation d'une commande à crédit (`statut = 'confirmee'`), inscription/mise à jour automatique du client dans `caisse_clients_credits`, insertion idempotente dans `caisse_credit_historique` (`type = 'vente_credit'`), incrémentation du solde débiteur et envoi d'une notification WhatsApp enrichie 24/7 au client avec solde actualisé.
+    - `backend/routes/boutiques.js` :
+      * Dans `POST /:id/credits-clients/approuver-commande` : intégration de l'envoi de notification WhatsApp au client avec le montant et le solde de dette restant.
+      * Dans `POST /:id/credits-clients/:clientId/transaction` : envoi automatique de notification WhatsApp serveur au client lors d'un ajout de dette (`vente_credit`) ou d'un remboursement partiel/total avec solde actualisé.
+    - `frontend-next/src/app/boutique/Commandes.tsx` : Émission de l'événement personnalisé `carnet_updated` pour synchroniser instantanément l'onglet Carnet de Dettes sans rechargement.
+  * **🛡️ 2. Sécurisation Anti-Perte de Données & POS Caisse** :
+    - `frontend-next/src/app/boutique/caisse/CaisseClient.tsx` : Persistance automatique du panier POS dans `localStorage` (`nopalou_pos_cart_${boutiqueActiveId}`), restauration transparente au chargement/changement de boutique, nettoyage immédiat lors de la finalisation de vente (`viderPanier`) et protection `beforeunload` alertant le vendeur en cas de tentative de rechargement/quitter avec des articles au panier.
+    - `frontend-next/src/components/DrawerCart.tsx` : Gestion native de l'historique mobile (`history.pushState` & écouteur `popstate`) permettant de fermer le tiroir panier avec le bouton retour / geste de balayage Android/iOS sans quitter la page, plus écouteur de la touche `Escape` sur desktop.
+  * **🔗 3. Préservation des Liens Profonds & Authentification Réactive** :
+    - `frontend-next/src/middleware.ts` : Préservation systématique du chemin d'accès complet et des paramètres dans `loginUrl.searchParams.set('redirect', fullPath)`.
+    - `frontend-next/src/app/actions/auth.ts` : Prise en charge du paramètre `redirect` dans les Server Actions `login` et `signup` avec assainissement d'URL.
+    - `frontend-next/src/app/connexion/ConnexionForm.tsx` : Lecture de `useSearchParams()`, transmission transparente du paramètre `redirect` pour les flux OTP WhatsApp, formulaire Email classique et lien de création de compte.
+    - `frontend-next/src/components/MobileBottomNav.tsx` : Détection réactive de l'état marchand côté client (`localStorage`) pour afficher dynamiquement l'onglet "Boutique" et rediriger vers `/boutique` au lieu de `/compte`.
+  * **🧭 4. Navigabilité & Retours Hiérarchiques (Acheteur & Marchand)** :
+    - `frontend-next/src/app/boutique/BoutiqueClient.tsx` :
+      * Synchronisation bidirectionnelle de l'onglet actif avec l'URL (`window.history.replaceState` sur `?tab=...`), permettant le partage de lien direct vers un onglet et la conservation de l'onglet au rechargement (F5).
+      * Remplacement du bouton d'en-tête "Mon compte" qui éjectait le commerçant de son contexte par un bouton de retour hiérarchique clair "← Mes Boutiques" appelant `onBack()`.
+    - `frontend-next/src/app/boutiques/[id]/page.tsx` : Ajout d'un fil d'Ariane officiel (`Accueil › Boutiques › [Nom de la boutique]`) et d'un bouton de retour rapide "← Toutes les boutiques" pour éviter toute sensation de piège chez l'acheteur.
+  * **🤖 5. Chatbot WhatsApp : Escape Hatch Universel & Support Multi-Boutiques** :
+    - `backend/services/whatsapp-chatbot.js` :
+      * **Suppression de "annuler" de `MOTS_OPTOUT`** : Éradication du bug critique où taper "annuler" désinscrivait et blacklisait l'utilisateur au lieu d'annuler son action en cours.
+      * **Escape Hatch Universel** : Interception prioritaire des mots-clés (`annuler`, `retour`, `quitter`, `exit`, `accueil`, `menu`, `0`, `back`). Si l'utilisateur est dans un flux marchand, l'action en cours est annulée proprement et le menu marchand de sa boutique est immédiatement réaffiché sans friction ni désinscription.
+      * **Support Multi-Boutiques** : Implémentation de `trouverToutesBoutiquesMarchand(phone)`, ajout de l'option `🔄 Changer de boutique` dans le menu marchand pour les commerçants multi-boutiques, et sélecteur interactif (`MARCHAND_CHOISIR_BOUTIQUE`).
+  * **🏠 6. Refonte Intégrale de l'Accueil Espace Compte (`/compte`) & Hub de Raccourcis** :
+    - `frontend-next/src/app/(account)/compte/tabs/AccountDashboardHub.tsx` :
+      * Création du nouveau tableau de bord d'accueil affiché par défaut sur `/compte` (lorsqu'aucun sous-onglet n'est sélectionné).
+      * **Hero Card Profil & Statut** : Salutation dynamique, nom, avatar, badges de compte actif et commerçant, lien rapide vers les paramètres du profil.
+      * **Grille de Raccourcis Prioritaires (Quick Actions Grid)** : Cartes interactives esthétiques pour 🏪 *Ma Boutique & POS*, 📦 *Mes Commandes (Achats)*, 📣 *Mes Annonces*, 🤝 *Espace Apporteur (20%)*, 🏡 *Biens Immobiliers*, 🔔 *Favoris & Alertes*, ⚙️ *Mon Profil*.
+      * **Onboarding Actif & Empty State valorisé** : Remplacement du vide par 4 cartes d'action concrètes (*Vendre un article*, *Créer ma boutique pro*, *Explorer les boutiques*, *Devenir apporteur*).
+      * **Aperçu des annonces récentes** avec statut, prix formaté et accès rapide au gestionnaire complet.
+    - `frontend-next/src/app/(account)/compte/CompteClient.tsx` :
+      * Redirection de l'arrivée par défaut vers `isDashboard` (`accueil`) au lieu de forcer l'onglet vide `mes-annonces`.
+      * Ajout d'un bouton de retour hiérarchique `"← Tableau de bord"` au sommet de chaque sous-onglet pour revenir au hub en 1 clic.
+    - `frontend-next/src/app/(account)/AccountNavLinks.tsx` :
+      * Ajout de l'item `🏠 Tableau de bord` en tête de liste et mise à jour de l'indicateur mobile compact.
+    - `frontend-next/src/app/(account)/mes-annonces/AnnoncesClient.tsx` :
+      * Remplacement du message d'état vide par une carte d'encouragement moderne avec boutons d'action valorisés (*Publier ma première annonce*, *Ouvrir une boutique pro*).
+  * **🧪 7. Tests & Validation** :
+    - 35/35 tests unitaires frontend Next.js passés avec 100% de succès.
+    - Contrôles de syntaxe Node.js (`node -c`) validés sur tous les fichiers modifiés.
+    - Respect absolu des règles : interdiction des polices CDN externes et aucun `git push` sans instruction explicite de l'utilisateur.
+
 - **Audit End-to-End Exhaustif & Résolution Intégrale des 8 Anomalies Plateforme (`backend/routes/boutiques.js`, `backend/migrate-inline.js`, `backend/services/matching.js`, `backend/services/whatsapp-health.js`, `scripts/e2e-exhaustive-qa.mjs`) (`pushed` - 07 septembre 2026)** 🛡️🚀✨ :
   * **📋 1. Cartographie Exhaustive & Matrice de Tests E2E (100% de Réussite)** :
     - Élaboration et exécution d'un banc de test End-to-End simulant les actions réelles : Visiteur -> Acheteur -> Marchand -> Caissier POS -> Admin -> PostgreSQL.

@@ -206,12 +206,78 @@ export default function AnnoncesClient({
       </div>
 
       {annonces.length === 0 ? (
-        <div className="empty-state" style={{ marginTop: 32 }}>
-          <span style={{ fontSize: 48 }}>📋</span>
-          <p>{t('account.noAds')}</p>
-          <Link href="/deposer-annonce" className="budget-pill active" style={{ marginTop: 8 }}>
-            {t('account.publishFirstAd')}
-          </Link>
+        <div style={{
+          marginTop: 24,
+          padding: '40px 24px',
+          background: '#ffffff',
+          borderRadius: 16,
+          border: '1.5px dashed #CBD5E1',
+          textAlign: 'center',
+          boxShadow: '0 4px 14px rgba(26,22,18,0.02)',
+        }}>
+          <div style={{
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #FFF3E8 0%, #FFEDD5 100%)',
+            color: 'var(--accent, #C75B00)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 30,
+            marginBottom: 16,
+            boxShadow: '0 4px 12px rgba(199,91,0,0.15)',
+          }}>
+            📣
+          </div>
+          <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+            Vous n&apos;avez aucune annonce en ligne pour le moment
+          </h3>
+          <p style={{ margin: '0 auto 20px', maxWidth: 460, fontSize: 13.5, color: '#64748B', lineHeight: 1.5 }}>
+            Vendez des téléphones, du mobilier, des véhicules ou de la mode auprès de milliers d&apos;acheteurs vérifiés à Dakar et dans tout le Sénégal !
+          </p>
+
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link
+              href="/deposer-annonce"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 24px',
+                borderRadius: 10,
+                background: 'var(--accent, #C75B00)',
+                color: '#ffffff',
+                fontWeight: 800,
+                fontSize: 14,
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
+              }}
+            >
+              <span>+</span>
+              <span>Publier ma première annonce</span>
+            </Link>
+
+            <Link
+              href="/creer-boutique"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 20px',
+                borderRadius: 10,
+                background: '#F8FAFC',
+                border: '1.5px solid #CBD5E1',
+                color: 'var(--navy, #1C2B4A)',
+                fontWeight: 750,
+                fontSize: 13.5,
+                textDecoration: 'none',
+              }}
+            >
+              <span>🏪</span>
+              <span>Ouvrir une boutique pro</span>
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="annonces-list">

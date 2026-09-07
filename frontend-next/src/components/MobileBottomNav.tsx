@@ -12,12 +12,30 @@ interface Props {
 
 export default function MobileBottomNav({ isLoggedIn = false, isMerchant = false }: Props) {
   const pathname = usePathname() || ''
+  const [effectiveIsMerchant, setEffectiveIsMerchant] = React.useState<boolean>(isMerchant || pathname.startsWith('/boutique'))
+  const [effectiveIsLoggedIn, setEffectiveIsLoggedIn] = React.useState<boolean>(isLoggedIn || pathname.startsWith('/boutique') || pathname.startsWith('/compte'))
+
+  React.useEffect(() => {
+    if (pathname.startsWith('/boutique')) {
+      setEffectiveIsMerchant(true)
+      setEffectiveIsLoggedIn(true)
+    }
+    try {
+      const storedMerchant = localStorage.getItem('nopalou_is_merchant')
+      const storedBoutique = localStorage.getItem('nopalou_boutique_active') || localStorage.getItem('nopalou_user_boutiques')
+      if (storedMerchant === 'true' || (storedBoutique && storedBoutique !== '[]' && storedBoutique !== 'null')) {
+        setEffectiveIsMerchant(true)
+        setEffectiveIsLoggedIn(true)
+      }
+    } catch (_) {}
+  }, [pathname])
 
   const isHome = pathname === '/'
   const isExplorer = pathname === '/boutiques' || pathname.startsWith('/boutiques/') || pathname.startsWith('/categorie')
   const isCreerBoutique = pathname === '/creer-boutique' || pathname.startsWith('/creer-boutique')
   const isFavorites = pathname === '/favoris'
-  const isAccount = pathname.startsWith('/compte') || pathname === '/connexion' || pathname === '/inscription' || pathname === '/boutique' || pathname.startsWith('/boutique/')
+  const isBoutique = pathname.startsWith('/boutique')
+  const isAccount = pathname.startsWith('/compte') || pathname === '/connexion' || pathname === '/inscription' || isBoutique
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Navigation principale mobile">
@@ -80,19 +98,19 @@ export default function MobileBottomNav({ isLoggedIn = false, isMerchant = false
 
       {/* 5. Mon Compte / Espace Vendeur */}
       <Link
-        href={isLoggedIn ? (isMerchant ? '/boutique' : '/compte') : '/connexion'}
+        href={effectiveIsLoggedIn ? (effectiveIsMerchant ? '/boutique' : '/compte') : '/connexion'}
         className={`mobile-bottom-nav-item${isAccount ? ' active' : ''}`}
-        aria-label={isLoggedIn ? (isMerchant ? 'Ma Boutique' : 'Mon Compte') : 'Se connecter'}
+        aria-label={effectiveIsLoggedIn ? (effectiveIsMerchant ? 'Ma Boutique' : 'Mon Compte') : 'Se connecter'}
         aria-current={isAccount ? 'page' : undefined}
       >
         <div className="mobile-bottom-nav-icon-wrap">
-          {isMerchant ? (
+          {effectiveIsMerchant ? (
             <Store size={20} strokeWidth={isAccount ? 2.5 : 2} />
           ) : (
             <User size={20} strokeWidth={isAccount ? 2.5 : 2} />
           )}
         </div>
-        <span>{isLoggedIn ? (isMerchant ? 'Boutique' : 'Compte') : 'Connexion'}</span>
+        <span>{effectiveIsLoggedIn ? (effectiveIsMerchant ? 'Boutique' : 'Compte') : 'Connexion'}</span>
       </Link>
     </nav>
   )

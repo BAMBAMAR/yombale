@@ -125,7 +125,67 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
     : null
 
   return (
-    <div className="page-container" style={{ maxWidth: 1440, paddingTop: 0, paddingBottom: '3rem' }}>
+    <div className="page-container" style={{ maxWidth: 1440, paddingTop: 10, paddingBottom: '3rem' }}>
+
+      {/* Fil d'Ariane & Retour Catalogue */}
+      <nav
+        aria-label="Fil d'Ariane"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 10,
+          padding: '8px 4px 14px',
+          margin: '0 auto',
+          maxWidth: 1350,
+        }}
+      >
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 12.5,
+          fontWeight: 600,
+          background: 'var(--orange2, #FFF3E8)',
+          padding: '5px 14px',
+          borderRadius: '20px',
+          border: '1px solid rgba(199, 91, 0, 0.12)',
+        }}>
+          <Link href="/" style={{ color: 'var(--text2, #6B5E52)', textDecoration: 'none' }}>
+            Accueil
+          </Link>
+          <span style={{ color: 'var(--accent, #C75B00)', opacity: 0.6 }}>›</span>
+          <Link href="/boutiques" style={{ color: 'var(--text2, #6B5E52)', textDecoration: 'none' }}>
+            Boutiques
+          </Link>
+          <span style={{ color: 'var(--accent, #C75B00)', opacity: 0.6 }}>›</span>
+          <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 750 }}>
+            {b.nom}
+          </span>
+        </div>
+
+        <Link
+          href="/boutiques"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 12.5,
+            fontWeight: 700,
+            color: 'var(--navy, #1C2B4A)',
+            background: '#ffffff',
+            border: '1.5px solid var(--border, #E8DDD2)',
+            padding: '5px 14px',
+            borderRadius: '20px',
+            textDecoration: 'none',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          }}
+        >
+          <span>←</span>
+          <span>Toutes les boutiques</span>
+        </Link>
+      </nav>
 
       {/* Cover photo HD responsive */}
       <div className="bq-public-cover">

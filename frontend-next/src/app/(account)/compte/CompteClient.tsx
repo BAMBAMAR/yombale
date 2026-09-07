@@ -15,6 +15,7 @@ import ApporteurClient from '../compte/apporteur/ApporteurClient'
 import FonctionnalitesClient from '../compte/fonctionnalites/FonctionnalitesClient'
 import SuiviCommandeClient from './tabs/SuiviCommandeClient'
 import AlertesClientTab from './tabs/AlertesClientTab'
+import AccountDashboardHub from './tabs/AccountDashboardHub'
 
 export default function CompteClient({ 
   nom, 
@@ -29,7 +30,9 @@ export default function CompteClient({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const tab = searchParams.get('tab') || 'mes-annonces'
+  const rawTab = searchParams.get('tab')
+  const isDashboard = !rawTab || rawTab === 'accueil' || rawTab === 'dashboard'
+  const tab = isDashboard ? 'accueil' : rawTab
   const isOnline = useOnlineStatus()
   const [isOffline, setIsOffline] = useState(false)
 
@@ -161,6 +164,14 @@ export default function CompteClient({
 
   const { t } = useTranslation()
 
+  const handleNavigateTab = (tabKey: string) => {
+    if (tabKey === 'accueil' || tabKey === 'dashboard') {
+      router.push('/compte')
+    } else {
+      router.push(`/compte?tab=${tabKey}`)
+    }
+  }
+
   return (
     <>
       {isOffline && (
@@ -170,6 +181,44 @@ export default function CompteClient({
       )}
 
       <div style={{ padding: '20px' }}>
+        {/* En-tête de retour au Dashboard si on est dans un sous-onglet */}
+        {!isDashboard && (
+          <div style={{ marginBottom: 18 }}>
+            <button
+              type="button"
+              onClick={() => handleNavigateTab('accueil')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13,
+                fontWeight: 800,
+                color: 'var(--navy, #1C2B4A)',
+                background: '#ffffff',
+                border: '1.5px solid var(--border, #E8DDD2)',
+                padding: '7px 16px',
+                borderRadius: 20,
+                cursor: 'pointer',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span style={{ color: 'var(--accent, #C75B00)', fontSize: 16 }}>←</span>
+              <span>Tableau de bord</span>
+            </button>
+          </div>
+        )}
+
+        {isDashboard && (
+          <AccountDashboardHub
+            nom={nom}
+            email={email}
+            initiale={initiale}
+            userId={userId}
+            session={session}
+            onNavigateTab={handleNavigateTab}
+          />
+        )}
         {tab === 'mes-annonces' && (
            <AnnoncesClient 
               created={false} 

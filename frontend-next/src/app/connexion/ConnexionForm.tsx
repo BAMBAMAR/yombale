@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { login, type AuthState } from '@/app/actions/auth'
 import { setAuthCookieAction } from '@/app/actions/auth'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
 
@@ -25,6 +25,9 @@ export default function ConnexionForm() {
   const [state, action] = useFormState<AuthState, FormData>(login, {})
   const [showPassword, setShowPassword] = useState(false)
   const { t } = useTranslation()
+  const searchParams = useSearchParams()
+  const rawRedirect = searchParams.get('redirect') || ''
+  const redirectUrl = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/compte'
   
   const [loginMethod, setLoginMethod] = useState<'whatsapp' | 'email'>('whatsapp')
   
@@ -130,7 +133,7 @@ export default function ConnexionForm() {
       
       if (data.token) {
         await setAuthCookieAction(data.token)
-        router.push('/compte')
+        router.push(redirectUrl)
       }
     } catch (err: any) {
       setErrorWa(err.message)
@@ -258,6 +261,7 @@ export default function ConnexionForm() {
 
       {loginMethod === 'email' ? (
         <form action={action} className="auth-form">
+          <input type="hidden" name="redirect" value={rawRedirect} />
           {state.error && (
             <div className="auth-error" role="alert">
               <span className="auth-error-icon">⚠</span>
@@ -508,7 +512,7 @@ export default function ConnexionForm() {
 
       <p className="auth-switch">
         {t('auth.noAccountPrompt')}{' '}
-        <Link href="/inscription" className="auth-link">{t('auth.createAccountLink')}</Link>
+        <Link href={rawRedirect ? `/inscription?redirect=${encodeURIComponent(rawRedirect)}` : '/inscription'} className="auth-link">{t('auth.createAccountLink')}</Link>
       </p>
     </div>
   )

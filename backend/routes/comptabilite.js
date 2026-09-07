@@ -510,24 +510,35 @@ async function notifierVendeurCommande(boutique, {
     return;
   }
 
-  const { sendWhatsAppText, sendWhatsAppTemplate } = require('../services/whatsapp');
+  const { sendWhatsAppNotification } = require('../services/whatsapp');
   const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: '💳 Demande d\'Achat à Crédit (Carnet client)' };
+  const isCredit = methodePaiement === 'credit';
   const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
   const lienCommandes = `${SITE}/boutique?tab=commandes&id=${boutique.id}&ref=${encodeURIComponent(reference)}`;
-  const msg = `🛒 *Nouvelle commande — ${boutique.nom}*\n\nRéf : *${reference}*\nProduit : ${nomProduit} × ${quantite}${montantTotal > 0 ? `\nMontant : *${new Intl.NumberFormat('fr-FR').format(montantTotal)} FCFA*` : ''}${fraisLivraison > 0 ? `\nLivraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA` : ''}\n💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n👤 Client : ${clientNom}\n📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n👉 *Consultez vos commandes ici :*\n${lienCommandes}\n\n⚡ Répondez vite pour confirmer !`;
+  const montantFmt = new Intl.NumberFormat('fr-FR').format(montantTotal);
+  const msg = `${isCredit ? '🚨 *Demande d\'achat à crédit (Carnet)*' : '🛒 *Nouvelle commande*'} — *${boutique.nom}*\n\n` +
+    `Réf : *${reference}*\n` +
+    `Produit : ${nomProduit} × ${quantite}\n` +
+    (montantTotal > 0 ? `Montant : *${montantFmt} FCFA*\n` : '') +
+    (fraisLivraison > 0 ? `Livraison : ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} FCFA\n` : '') +
+    `💳 Paiement souhaité : ${methodeLabel[methodePaiement] || methodePaiement}\n\n` +
+    `👤 Client : ${clientNom}\n` +
+    `📞 ${clientTelephone}${clientAdresse ? `\n📍 ${clientAdresse}` : ''}${note ? `\n📝 ${note}` : ''}\n\n` +
+    `👉 *Consultez vos commandes ici :*\n${lienCommandes}\n\n` +
+    `⚡ Répondez vite pour confirmer !`;
 
-  // 1. Envoi du message texte (si le marchand a écrit au bot dans les 24h)
-  sendWhatsAppText(vendeurTel, msg)
+  const titleTpl = (isCredit ? `🚨 Achat Crédit (Carnet) — ${boutique.nom}` : `🛒 Nouvelle commande — ${boutique.nom}`).slice(0, 60);
+  const detailTpl = `Réf ${reference} — ${nomProduit} × ${quantite}${montantTotal > 0 ? ' (' + montantFmt + ' FCFA)' : ''}`;
+
+  sendWhatsAppNotification(vendeurTel, {
+    textMessage: msg,
+    title: titleTpl,
+    detail: detailTpl,
+    url: lienCommandes,
+    buttonParam: boutique.slug || boutique.id,
+  })
     .then(() => console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`))
     .catch(err => console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message));
-
-  // 2. Envoi garanti par Template Meta (passant outre la restriction des 24h)
-  const titleTpl = `🛒 Nouvelle commande — ${boutique.nom}`;
-  const detailTpl = `Réf ${reference} — ${nomProduit} × ${quantite}${montantTotal > 0 ? ' (' + new Intl.NumberFormat('fr-FR').format(montantTotal) + ' FCFA)' : ''}`;
-  sendWhatsAppTemplate(vendeurTel, 'nopalou_fiche_texte', [
-    { type: 'body', parameters: [{ type: 'text', text: titleTpl }, { type: 'text', text: detailTpl }, { type: 'text', text: lienCommandes }] },
-    { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: `boutique?tab=commandes&id=${boutique.id}` }] },
-  ]).catch(err => console.error(`[WHATSAPP VENDEUR TPL ERR]:`, err.message));
 }
 
 // Logique de création de commande, partagée entre la route HTTP publique
@@ -848,6 +859,90 @@ router.patch(
       );
       if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
 
+      // Alimenter automatiquement le Carnet de dettes si la commande à crédit passe à "confirmee"
+      let carnetNouveauSolde = null;
+      const isCommandeCredit = commande.methode_paiement === 'credit' || (commande.note && commande.note.toLowerCase().includes('crédit'));
+      if (req.body.statut === 'confirmee' && isCommandeCredit) {
+        try {
+          const cleanTel = String(commande.client_telephone || '').replace(/\D/g, '');
+          const shortTel = cleanTel.length >= 9 ? cleanTel.slice(-9) : cleanTel;
+          const nomClient = (commande.client_nom || 'Client Crédit').trim();
+          const montantCredit = Number(commande.montant_total) || 0;
+
+          let clRes = null;
+          if (shortTel) {
+            clRes = await pool.query(
+              `SELECT * FROM caisse_clients_credits
+               WHERE boutique_id = $1
+                 AND REPLACE(REPLACE(telephone, ' ', ''), '+', '') LIKE '%' || $2
+               LIMIT 1`,
+              [req.params.boutiqueId, shortTel]
+            );
+          }
+          if ((!clRes || clRes.rows.length === 0) && nomClient) {
+            clRes = await pool.query(
+              `SELECT * FROM caisse_clients_credits
+               WHERE boutique_id = $1
+                 AND LOWER(TRIM(nom)) = LOWER(TRIM($2))
+               LIMIT 1`,
+              [req.params.boutiqueId, nomClient]
+            );
+          }
+
+          let carnetClient;
+          if (!clRes || clRes.rows.length === 0) {
+            const insCl = await pool.query(
+              `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, adresse, solde, plafond_max)
+               VALUES ($1, $2, $3, $4, 0, 250000)
+               RETURNING *`,
+              [req.params.boutiqueId, nomClient, commande.client_telephone || cleanTel || 'Inconnu', commande.client_adresse || null]
+            );
+            carnetClient = insCl.rows[0];
+          } else {
+            carnetClient = clRes.rows[0];
+          }
+
+          // Vérification d'idempotence : vérifier si la transaction de cette commande existe déjà dans caisse_credit_historique
+          const noteCheck = commande.reference || commande.id;
+          const existingTrans = await pool.query(
+            `SELECT id FROM caisse_credit_historique
+             WHERE client_id = $1 AND boutique_id = $2
+               AND (note LIKE '%' || $3 || '%' OR note LIKE '%' || $4 || '%')
+             LIMIT 1`,
+            [carnetClient.id, req.params.boutiqueId, noteCheck, commande.reference || 'CMD']
+          );
+
+          if (!existingTrans.rows[0] && montantCredit > 0) {
+            const noteTrans = `Achat à crédit Web (Réf: ${commande.reference || 'Commande'}, ${commande.nom_produit || 'Article'} x${commande.quantite || 1})`;
+            const prodsTrans = JSON.stringify([{
+              nom: commande.nom_produit || 'Article',
+              quantite: commande.quantite || 1,
+              prix: montantCredit / Math.max(1, Number(commande.quantite) || 1),
+            }]);
+
+            await pool.query(
+              `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, relance_auto_whatsapp)
+               VALUES ($1, $2, 'vente_credit', $3, 'credit', $4, $5, true)`,
+              [carnetClient.id, req.params.boutiqueId, montantCredit, noteTrans, prodsTrans]
+            );
+
+            const soldeUp = await pool.query(
+              `UPDATE caisse_clients_credits
+               SET solde = solde + $1, updated_at = NOW()
+               WHERE id = $2
+               RETURNING solde`,
+              [montantCredit, carnetClient.id]
+            );
+            carnetNouveauSolde = soldeUp.rows[0]?.solde;
+            console.log(`[CARNET AUTO-INCRÉMENT] Commande ${commande.reference} inscrite au carnet de ${carnetClient.nom} — Nouveau solde: ${carnetNouveauSolde} FCFA`);
+          } else if (existingTrans.rows[0]) {
+            carnetNouveauSolde = carnetClient.solde;
+          }
+        } catch (eCarnet) {
+          console.error('[CARNET AUTO-INCRÉMENT ERR]:', eCarnet.message);
+        }
+      }
+
       // Alimenter la Comptabilité et la commission si la commande passe à "livree"
       if (req.body.statut === 'livree' && commande.montant_total > 0) {
         const { rows: [b] } = await pool.query('SELECT commission_rate FROM boutiques WHERE id=$1', [req.params.boutiqueId]);
@@ -906,8 +1001,21 @@ router.patch(
       if (commande.client_telephone) {
         const { sendWhatsAppNotification } = require('../services/whatsapp');
         const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+        const montantFmt = new Intl.NumberFormat('fr-FR').format(commande.montant_total);
         let wavePayUrl = `${SITE}/checkout-express?produit=${commande.produit_id || ''}&boutique=${commande.boutique_id}&phone=${commande.client_telephone}&pay=wave&auto=1`;
-        let msgConfirmee = `✅ *Commande confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* (${commande.nom_produit}) a été confirmée. Nous préparons votre colis !`;
+
+        let msgConfirmee;
+        if (isCommandeCredit) {
+          const soldePart = carnetNouveauSolde !== null
+            ? `\n\n📊 *Votre solde carnet actuel dû est de : ${new Intl.NumberFormat('fr-FR').format(carnetNouveauSolde)} FCFA*.`
+            : '';
+          msgConfirmee = `✅ *Achat à crédit approuvé — ${boutique.nom}*\n\n` +
+            `Bonjour *${commande.client_nom}*, votre achat à crédit de *${montantFmt} FCFA* (Réf: *${commande.reference}*, ${commande.nom_produit}) a été validé par la boutique et inscrit à votre Carnet client.${soldePart}\n\n` +
+            `🙏 Merci de votre confiance !`;
+        } else {
+          msgConfirmee = `✅ *Commande confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* (${commande.nom_produit}) a été confirmée. Nous préparons votre colis !`;
+        }
+
         if (commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave') {
           try {
             const wave = require('../services/wave');
@@ -938,14 +1046,16 @@ router.patch(
         const msg = msgs[req.body.statut];
         if (msg) {
           const statutTitres = {
-            confirmee:      `✅ Commande confirmée — ${boutique.nom}`,
+            confirmee:      isCommandeCredit ? `✅ Achat crédit approuvé — ${boutique.nom}` : `✅ Commande confirmée — ${boutique.nom}`,
             en_preparation: `📦 En préparation — ${boutique.nom}`,
             expediee:       `🚚 Commande expédiée — ${boutique.nom}`,
             livree:         `🎉 Commande livrée — ${boutique.nom}`,
             annulee:        `❌ Commande annulée — ${boutique.nom}`,
           };
-          const titleTpl = statutTitres[req.body.statut] || `Statut commande — ${boutique.nom}`;
-          const detailTpl = `Réf ${commande.reference} (${commande.nom_produit}) : Statut mis à jour en ${req.body.statut.toUpperCase()}`;
+          const titleTpl = (statutTitres[req.body.statut] || `Statut commande — ${boutique.nom}`).slice(0, 60);
+          const detailTpl = isCommandeCredit && req.body.statut === 'confirmee'
+            ? `Réf ${commande.reference} : ${montantFmt} FCFA inscrits au carnet.`
+            : `Réf ${commande.reference} (${commande.nom_produit}) : Statut mis à jour en ${req.body.statut.toUpperCase()}`;
           const urlTpl = (req.body.statut === 'confirmee' && (commande.methode_paiement === 'wave' || commande.methode_paiement === 'pay_wave'))
             ? wavePayUrl
             : `${SITE}/boutiques/${boutique.slug || boutique.id}`;

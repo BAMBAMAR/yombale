@@ -225,6 +225,54 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [cagnotteDeduite, setCagnotteDeduite] = useState<number>(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
+  // ── Persistance Locale & Anti-Perte Panier Caisse POS ─────────────────────────
+  const cartLoadedRef = useRef<string | null>(null)
+
+  // 1. Restauration automatique du panier sauvegardé à l'ouverture de la boutique
+  useEffect(() => {
+    if (!boutiqueActiveId || typeof window === 'undefined') return
+    if (cartLoadedRef.current === boutiqueActiveId) return
+    cartLoadedRef.current = boutiqueActiveId
+    try {
+      const saved = localStorage.getItem(`nopalou_pos_cart_${boutiqueActiveId}`)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPanier(parsed)
+          console.log(`🛒 [POS CAISSE] Panier en cours restauré automatiquement (${parsed.length} articles)`)
+        }
+      }
+    } catch (e) {
+      console.warn('[POS CAISSE] Erreur restauration panier local:', e)
+    }
+  }, [boutiqueActiveId])
+
+  // 2. Synchronisation temps réel du panier dans localStorage
+  useEffect(() => {
+    if (!boutiqueActiveId || typeof window === 'undefined') return
+    // Ne synchroniser que si le panier initial pour cette boutique a déjà été chargé
+    if (cartLoadedRef.current !== boutiqueActiveId) return
+    try {
+      if (panier.length > 0) {
+        localStorage.setItem(`nopalou_pos_cart_${boutiqueActiveId}`, JSON.stringify(panier))
+      } else {
+        localStorage.removeItem(`nopalou_pos_cart_${boutiqueActiveId}`)
+      }
+    } catch (e) {}
+  }, [panier, boutiqueActiveId])
+
+  // 3. Avertissement si l'utilisateur tente de quitter l'onglet alors qu'une vente est en cours
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (panier.length > 0) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [panier])
+
   // ── Mode Nuit & Disposition 3 Colonnes ────────────────────────────────────────
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
   const [layoutColCentrale, setLayoutColCentrale] = useState<boolean>(true)

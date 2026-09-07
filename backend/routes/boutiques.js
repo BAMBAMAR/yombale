@@ -1304,9 +1304,10 @@ router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(id);
     const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const bqRes = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
+    const bqRes = await pool.query(`SELECT id, nom, slug, telephone, whatsapp FROM boutiques WHERE ${bqCond}`, [id]);
     if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const bqId = bqRes.rows[0].id;
+    const bq = bqRes.rows[0];
+    const bqId = bq.id;
 
     const client = await pool.connect();
     try {
@@ -1402,6 +1403,49 @@ router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
       }
 
       await client.query('COMMIT');
+
+      // Notification WhatsApp automatique au client pour la transaction
+      const clientTelNum = c.rows[0].telephone;
+      if (clientTelNum) {
+        try {
+          const { sendWhatsAppNotification } = require('../services/whatsapp');
+          const montantFmt = new Intl.NumberFormat('fr-FR').format(numMontant);
+          const soldeFmt = new Intl.NumberFormat('fr-FR').format(nouveauSolde);
+          const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+          const nomClient = c.rows[0].nom || 'Client';
+
+          let msgNotif = '';
+          let titleTpl = '';
+          if (type === 'vente_credit') {
+            msgNotif = `💳 *Achat à crédit enregistré — ${bq.nom}*\n\n` +
+              `Bonjour *${nomClient}*, un achat à crédit de *${montantFmt} FCFA* a été inscrit dans votre Carnet client.\n\n` +
+              `📊 *Votre solde total dû est de : ${soldeFmt} FCFA*.\n\n` +
+              `Merci de votre confiance !`;
+            titleTpl = `💳 Achat à crédit — ${bq.nom}`;
+          } else if (type === 'remboursement' || type === 'depot_avance') {
+            msgNotif = `💚 *Règlement enregistré — ${bq.nom}*\n\n` +
+              `Bonjour *${nomClient}*, nous confirmons la réception de votre règlement de *${montantFmt} FCFA*.\n\n` +
+              `📊 *Votre solde carnet restant est de : ${soldeFmt} FCFA*.\n\n` +
+              `Merci pour votre paiement !`;
+            titleTpl = `💚 Règlement reçu — ${bq.nom}`;
+          }
+
+          if (msgNotif) {
+            sendWhatsAppNotification(clientTelNum, {
+              textMessage: msgNotif,
+              title: titleTpl.slice(0, 60),
+              detail: `Montant : ${montantFmt} FCFA. Solde carnet : ${soldeFmt} FCFA.`,
+              url: `${SITE}/boutiques/${bq.slug || bq.id}`,
+              buttonParam: bq.slug || bq.id,
+            })
+              .then(() => console.log(`[WHATSAPP CREDIT TRANSACTION SUCCESS] Notif envoyée à ${clientTelNum}`))
+              .catch(err => console.error('[WHATSAPP CREDIT TRANSACTION ERR]:', err.message));
+          }
+        } catch (eWs) {
+          console.error('[WHATSAPP TRANSACTION NOTIF ERR]:', eWs.message);
+        }
+      }
+
       res.json({ success: true, nouveauSolde, transaction: hist.rows[0] });
     } catch (e) {
       await client.query('ROLLBACK');
@@ -1593,6 +1637,37 @@ router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
 
       await dbClient.query('COMMIT');
       console.log(`🎉 [APPROUVER-CMD SUCCÈS] Client: ${carnetClient.nom}, Nouveau Solde: ${soldeRes.rows[0].solde}`);
+
+      // 5. Envoi automatique de confirmation WhatsApp au client
+      if (client_telephone) {
+        try {
+          const { sendWhatsAppNotification } = require('../services/whatsapp');
+          const montantFmt = new Intl.NumberFormat('fr-FR').format(montant);
+          const soldeFmt = new Intl.NumberFormat('fr-FR').format(soldeRes.rows[0].solde);
+          const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+
+          const msgClient = `✅ *Achat à crédit approuvé — ${bqRes.rows[0].nom}*\n\n` +
+            `Bonjour *${carnetClient.nom}*, votre achat à crédit de *${montantFmt} FCFA* (${nom_produit || 'Article'} × ${quantite || 1}) a été validé et inscrit à votre Carnet client.\n\n` +
+            `📊 *Votre solde total dû est de : ${soldeFmt} FCFA*.\n\n` +
+            `🙏 Merci de votre confiance !`;
+
+          const titleTpl = `✅ Achat crédit approuvé — ${bqRes.rows[0].nom}`.slice(0, 60);
+          const detailTpl = `Réf ${reference || 'Crédit'} : ${montantFmt} FCFA inscrits au carnet. Solde dû: ${soldeFmt} FCFA.`.slice(0, 1000);
+          const urlTpl = `${SITE}/boutiques/${bqRes.rows[0].slug || bqRes.rows[0].id}`;
+
+          sendWhatsAppNotification(client_telephone, {
+            textMessage: msgClient,
+            title: titleTpl,
+            detail: detailTpl,
+            url: urlTpl,
+            buttonParam: bqRes.rows[0].slug || bqRes.rows[0].id,
+          })
+            .then(() => console.log(`[WHATSAPP CREDIT APPROBATION SUCCESS] Notif envoyée à ${client_telephone}`))
+            .catch(err => console.error('[WHATSAPP CREDIT APPROBATION ERR]:', err.message));
+        } catch (eWs) {
+          console.error('[WHATSAPP NOTIF ERR]:', eWs.message);
+        }
+      }
 
       res.json({
         success: true,

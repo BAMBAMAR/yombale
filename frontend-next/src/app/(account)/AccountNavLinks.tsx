@@ -31,6 +31,14 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
 
   const groupes: NavGroup[] = [
     {
+      id: 'vue-dashboard',
+      title: 'Mon Espace',
+      icon: '🏠',
+      items: [
+        { href: '/compte', label: 'Tableau de bord', emoji: '🏠', tab: 'accueil' },
+      ],
+    },
+    {
       id: 'annonces-achats',
       title: t('account.groupAdsPurchases'),
       icon: '📦',
@@ -113,6 +121,7 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
 
   // État accordéon Desktop
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    'vue-dashboard': true,
     'annonces-achats': true,
     'boutique-caisse': true,
     'compte-parrainage': true,
@@ -130,6 +139,9 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
   }
 
   function isItemActive(lien: NavLinkItem): boolean {
+    if (lien.tab === 'accueil') {
+      return !overrideTab || overrideTab === 'accueil' || overrideTab === 'dashboard'
+    }
     if (overrideTab && lien.tab) {
       return lien.tab === overrideTab
     }
@@ -353,8 +365,8 @@ function MobileBottomSheetNav({
 
   // Trouver l'item actif pour la barre compacte
   const activeItem = groupes.flatMap(g => g.items).find(item => isItemActive(item))
-  const currentIcon = activeItem?.emoji || '📋'
-  const currentLabel = activeItem?.label || sheetTitle
+  const currentIcon = activeItem?.emoji || '🏠'
+  const currentLabel = activeItem?.label || 'Tableau de bord'
 
   function openSheet() {
     setIsOpen(true)

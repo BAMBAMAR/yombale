@@ -43,7 +43,9 @@ export default function ConnexionClient() {
             <h1 className="auth-card-titre">{t('auth.loginTitle')}</h1>
             <p className="auth-card-desc">{t('auth.loginDesc')}</p>
           </div>
-          <ConnexionForm />
+          <React.Suspense fallback={<div style={{ textAlign: 'center', padding: 20 }}><span className="auth-spinner" /></div>}>
+            <ConnexionForm />
+          </React.Suspense>
         </div>
       </div>
     </div>

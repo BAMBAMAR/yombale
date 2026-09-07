@@ -93,6 +93,43 @@ export default function DrawerCart() {
     } catch {}
   }, [])
 
+  // Interception du bouton Retour Mobile (Android / iOS) et touche Échap Desktop
+  useEffect(() => {
+    const isVisible = isCartOpen || !!orderSuccessData
+    if (!isVisible || typeof window === 'undefined') return
+
+    // Pousser un état dans l'historique pour capturer le retour physique
+    window.history.pushState({ modal: 'nopalou_cart' }, '')
+
+    const handlePopState = () => {
+      if (orderSuccessData) {
+        setOrderSuccessData(null)
+      }
+      closeCart()
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (orderSuccessData) {
+          setOrderSuccessData(null)
+        }
+        closeCart()
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('keydown', handleKeyDown)
+      // Si le tiroir a été fermé par clic (et non par le bouton retour physique), nettoyer l'historique
+      if (window.history.state?.modal === 'nopalou_cart') {
+        window.history.back()
+      }
+    }
+  }, [isCartOpen, !!orderSuccessData, closeCart])
+
   // Validation du code promo
   async function appliquerCodePromo() {
     if (!codePromo.trim()) {

@@ -31,7 +31,8 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
     return { error: 'Erreur de connexion au serveur' }
   }
 
-  redirect('/compte')
+  const redirectTarget = formData.get('redirect')?.toString().trim()
+  redirect(redirectTarget && redirectTarget.startsWith('/') ? redirectTarget : '/compte')
 }
 
 // ── Inscription ──────────────────────────────────────────────────
@@ -62,7 +63,8 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
     return { error: 'Erreur de connexion au serveur' }
   }
 
-  redirect('/compte')
+  const redirectTargetSignup = formData.get('redirect')?.toString().trim()
+  redirect(redirectTargetSignup && redirectTargetSignup.startsWith('/') ? redirectTargetSignup : '/compte')
 }
 
 // ── Déconnexion ──────────────────────────────────────────────────

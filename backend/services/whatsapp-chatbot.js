@@ -400,6 +400,59 @@ async function trouverBoutiqueMarchand(phone) {
   return rows[0] || null;
 }
 
+// Recherche de l'ensemble des boutiques d'un commerçant (Multi-Boutiques)
+async function trouverToutesBoutiquesMarchand(phone) {
+  const rawDigits = String(phone).replace(/\D/g, '');
+  const short9 = rawDigits.slice(-9);
+  if (!short9) return [];
+
+  const { rows } = await pool.query(
+    `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
+            b.couleur_theme, b.logo_url, u.nom AS proprietaire_nom
+     FROM boutiques b
+     LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+     WHERE (b.actif IS NULL OR b.actif = true)
+       AND (
+         REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(b.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+         OR REGEXP_REPLACE(COALESCE(u.telephone, ''), '\\D', '', 'g') LIKE '%' || $1
+       )
+     ORDER BY b.created_at DESC`,
+    [short9]
+  );
+  return rows;
+}
+
+// Sélecteur interactif pour commerçant possédant plusieurs boutiques
+async function envoyerSelecteurBoutiquesMarchand(phone, boutiques) {
+  const rows = boutiques.slice(0, 10).map((b, idx) => ({
+    id: `choisir_bq_${b.id}`,
+    title: `${idx + 1}. ${b.nom.slice(0, 21)}`,
+    description: `${b.ville || 'Sénégal'} · ${b.categorie || 'Commerce'}`
+  }));
+
+  let msg = `🏪 *Gestion Multi-Boutiques Nopalou*\n\nVous êtes propriétaire de *${boutiques.length} boutiques* rattachées à votre numéro :\n\n`;
+  boutiques.forEach((b, idx) => {
+    msg += `*${idx + 1}.* ${b.nom} (${b.ville || 'Sénégal'})\n`;
+  });
+  msg += `\nChoisissez la boutique que vous souhaitez piloter sur WhatsApp :`;
+
+  await sendWhatsAppText(phone, msg);
+
+  await sendWhatsAppInteractive(
+    phone,
+    'Mes Boutiques',
+    'Sélectionnez une boutique :',
+    [
+      {
+        title: '🏪 Vos Boutiques Partenaires',
+        rows
+      }
+    ]
+  );
+  await setSession(phone, 'MARCHAND_CHOISIR_BOUTIQUE', { boutiques, isMarchandAuth: true });
+}
+
 // Vérification du Code PIN marchand (PIN de la boutique ou code d'un caissier actif)
 async function verifierCodePin(boutique, pinSaisi) {
   if (!boutique || !pinSaisi) return false;
@@ -427,6 +480,23 @@ async function envoyerMenuMarchand(phone, boutique) {
 
   await sendWhatsAppText(phone, header);
 
+  const toutesBoutiques = await trouverToutesBoutiquesMarchand(phone);
+  const gestionRows = [
+    { id: 'marchand_dettes', title: '📒 Carnet de Dettes ("Bor")', description: 'Clients débiteurs & relances' },
+    { id: 'marchand_vitrine', title: '🔗 Statut WhatsApp & Lien', description: 'Message à partager pour vendre' },
+    { id: 'marchand_changer_pin', title: '⚙️ Changer mon Code PIN', description: 'Modifier votre code secret' },
+  ];
+
+  if (toutesBoutiques.length > 1) {
+    gestionRows.push({
+      id: 'marchand_changer_boutique',
+      title: '🔄 Changer de boutique',
+      description: `Basculer (${toutesBoutiques.length} boutiques disponibles)`
+    });
+  }
+
+  gestionRows.push({ id: 'menu', title: '⬅️ Menu Général', description: 'Retourner au menu Nopalou' });
+
   await sendWhatsAppInteractive(
     phone,
     boutique.nom,
@@ -443,12 +513,7 @@ async function envoyerMenuMarchand(phone, boutique) {
       },
       {
         title: '📒 Gestion & Vitrine',
-        rows: [
-          { id: 'marchand_dettes', title: '📒 Carnet de Dettes ("Bor")', description: 'Clients débiteurs & relances' },
-          { id: 'marchand_vitrine', title: '🔗 Statut WhatsApp & Lien', description: 'Message à partager pour vendre' },
-          { id: 'marchand_changer_pin', title: '⚙️ Changer mon Code PIN', description: 'Modifier votre code secret' },
-          { id: 'menu', title: '⬅️ Menu Général', description: 'Retourner au menu Nopalou' },
-        ],
+        rows: gestionRows,
       },
     ]
   );
@@ -1647,7 +1712,8 @@ async function handleIncomingInternal(msg) {
   }
 
   // ── 1. MOT-CLÉ PRIORITAIRE DE DÉSINSCRIPTION / OPTOUT (STOP / ARRET / REFUS) ──
-  const MOTS_OPTOUT = ['stop', 'arret', 'desinscrire', 'desinscription', 'annuler', 'bloquer', 'supprimer', 'ne plus recevoir', 'refus'];
+  // IMPORTANT: "annuler" ou "supprimer" ne doivent JAMAIS désinscrire l'utilisateur.
+  const MOTS_OPTOUT = ['stop', 'arret', 'arreter', 'desinscrire', 'desinscription', 'bloquer', 'ne plus recevoir', 'refus'];
   if (MOTS_OPTOUT.includes(normaliserTexte(text).trim())) {
     const normPh = normalisePhone(phone);
     try {
@@ -1666,8 +1732,52 @@ async function handleIncomingInternal(msg) {
     return;
   }
 
-  // ── 2. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─
+  // ── 2. ESCAPE HATCH UNIVERSEL : RETOUR / ANNULER / MENU / QUITTER / ACCUEIL / 0 ──
+  // Permet à tout moment à un marchand ou un acheteur de quitter une impasse ou un tunnel de saisie
   const normTxtLower = normaliserTexte(text).trim();
+  const MOTS_ESCAPE = ['annuler', 'retour', 'quitter', 'exit', 'accueil', 'menu', '0', 'revenir', 'back'];
+  const isEscapeRequested = MOTS_ESCAPE.includes(normTxtLower) || ['menu', 'annuler', 'retour', 'btn_annuler', 'menu_marchand', 'menu_general'].includes(interactiveId);
+
+  if (isEscapeRequested) {
+    // 1. Demande explicite de Menu Général Nopalou
+    if (interactiveId === 'menu_general' || normTxtLower === 'menu general' || normTxtLower === 'menu général' || normTxtLower === 'menu principal') {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
+      return;
+    }
+
+    // 2. Contexte Marchand (authentifié, dans un sous-état marchand ou possédant une boutique)
+    const isMarchandState = state?.startsWith('MARCHAND_') || state?.startsWith('AJOUT_PRODUIT_');
+    const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+
+    if (bqMarchand && (isMarchandState || context?.isMarchandAuth)) {
+      if (normTxtLower === 'menu' || interactiveId === 'menu' || interactiveId === 'menu_marchand') {
+        await envoyerMenuMarchand(phone, bqMarchand);
+        return;
+      }
+      // "annuler", "retour", "quitter", "0"
+      await sendWhatsAppText(phone, `🔄 Action annulée. Retour à l'espace de votre boutique *${bqMarchand.nom}*.`).catch(() => {});
+      await envoyerMenuMarchand(phone, bqMarchand);
+      return;
+    }
+
+    // 3. Contexte Acheteur dans une Boutique
+    if (context?.boutique && !context?.isMarchandAuth) {
+      const bqAcheteur = context.boutique;
+      if (normTxtLower === 'annuler' || normTxtLower === 'retour' || normTxtLower === '0') {
+        await sendWhatsAppText(phone, `🔄 Retour à la boutique *${bqAcheteur.nom}*.`).catch(() => {});
+        await envoyerMenuBoutique(phone, bqAcheteur);
+        return;
+      }
+    }
+
+    // 4. Par défaut : Menu Général
+    await setSession(phone, 'MENU', {});
+    await sendMenu(phone);
+    return;
+  }
+
+  // ── 3. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─
 
   // ── INTERCEPTION DES REPONSES DE PROSPECTION (OUI, BILAN) ──────────────────
   if (state === 'IDLE' || state === 'MENU' || !state) {
@@ -3668,6 +3778,18 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
+    if (action === 'marchand_changer_boutique' || action === 'changer boutique' || action === 'changer de boutique' || action === 'mes boutiques') {
+      const toutesBoutiques = await trouverToutesBoutiquesMarchand(phone);
+      if (toutesBoutiques.length > 1) {
+        await envoyerSelecteurBoutiquesMarchand(phone, toutesBoutiques);
+        return;
+      } else {
+        await sendWhatsAppText(phone, `ℹ️ Vous n'avez qu'une seule boutique active rattachée à ce numéro (*${boutique.nom}*).`);
+        await envoyerMenuMarchand(phone, boutique);
+        return;
+      }
+    }
+
     if (action === 'menu') {
       const buttons = [
         { id: 'menu_marchand', title: '🏪 Menu Marchand' },
@@ -3690,6 +3812,34 @@ async function handleIncomingInternal(msg) {
     // Ré-afficher le menu marchand
     await envoyerMenuMarchand(phone, boutique);
     return;
+  }
+
+  // ── MARCHAND_CHOISIR_BOUTIQUE → Sélection d'une boutique parmi plusieurs ───
+  if (state === 'MARCHAND_CHOISIR_BOUTIQUE' || interactiveId?.startsWith('choisir_bq_')) {
+    const boutiques = context?.boutiques || (await trouverToutesBoutiquesMarchand(phone));
+    let targetBq = null;
+
+    if (interactiveId?.startsWith('choisir_bq_')) {
+      const bqId = interactiveId.replace('choisir_bq_', '');
+      targetBq = boutiques.find(b => b.id === bqId);
+    } else {
+      const num = parseInt(text.trim(), 10);
+      if (!isNaN(num) && num >= 1 && num <= boutiques.length) {
+        targetBq = boutiques[num - 1];
+      } else {
+        targetBq = boutiques.find(b => normaliserTexte(b.nom).includes(normTxtLower));
+      }
+    }
+
+    if (targetBq) {
+      await sendWhatsAppText(phone, `✅ Vous gérez maintenant : *${targetBq.nom}*`);
+      await envoyerMenuMarchand(phone, targetBq);
+      return;
+    } else {
+      await sendWhatsAppText(phone, `⚠️ Choix non reconnu. Veuillez sélectionner l'une de vos boutiques :`);
+      await envoyerSelecteurBoutiquesMarchand(phone, boutiques);
+      return;
+    }
   }
 
   // ── MARCHAND_CHANGE_PIN_ACTUEL → Saisie du PIN actuel ─────────────────────────
@@ -4240,6 +4390,7 @@ module.exports = {
   extraireNumeroTelephone,
   trouverBoutiqueParTelephone,
   trouverBoutiqueMarchand,
+  trouverToutesBoutiquesMarchand,
   verifierCodePin,
   envoyerMenuMarchand,
   envoyerCommandesMarchand,
