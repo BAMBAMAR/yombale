@@ -1,3 +1,31 @@
+- **Refonte Ergonomie Globale : Suppression du Syndrome des Boutons qui Traînent & Harmonisation Boutique/Compte "Zéro Déchet Visuel" (`frontend-next/src/app/boutique/*`, `frontend-next/src/app/(account)/*`) (07 septembre 2026)** 🎨⚡📱✨ :
+  * **🛍️ 1. Phase 1 : Barre d'Outils Mobile Pro pour Catalogue Produits (`BoutiqueClient.tsx`)** :
+    - Élimination de l'anomalie visuelle `+ + Ajouter un produit` (double plus).
+    - Condensation drastique de 5 lignes chaotiques (~240px de hauteur) en 2 lignes structurées (~85px) :
+      * **Ligne 1** : Bouton dominant pleine largeur `[ ＋ Ajouter un produit ]` + Menu déroulant compact `[ ⋯ Plus ▾ ]` avec options secondaires (Importation Excel/CSV et Ajout détaillé).
+      * **Ligne 2** : Barre de recherche unique avec compteur de résultats intégré et filtres de statut/catégorie inline.
+    - Élimination totale des retours à la ligne chaotiques et des boutons orphelins sur écrans 360-390px.
+  * **📊 2. Phase 2 : Accueil Boutique "Zéro Déchet Visuel" & KPIs Financiers Réels (`BoutiqueClient.tsx`)** :
+    - Suppression du bandeau bleu marine redondant de 200px (`👋 NomBoutique`).
+    - Remplacement du pavé d'onboarding de 480px par un bandeau compact dismissible de 40px (`[🚀 Configuré à X%] [2 étapes ▾] [✕]`) avec persistance `localStorage`.
+    - Transformation des KPIs décoratifs en 4 indicateurs financiers en direct : Chiffre d'Affaires du mois (`caMois`), Commandes en attente avec badge d'alerte (`nbEnAttente`), Alertes de stock critique (`stockAlertsCount`), et Dettes clients à encaisser (`dettesTotal`).
+    - Installation du Hub d'Actions 1-Tap à 4 tuiles tactiles (`[⚡ Vente Express]`, `[🛒 Caisse POS]`, `[➕ Ajouter Produit]`, `[📒 Carnet Dettes]`) complété par des pilules horizontales pour les raccourcis secondaires.
+  * **👤 3. Phase 3 : Harmonisation du Tableau de Bord Compte (`/compte`) & Annonces (`AccountDashboardHub.tsx`, `AnnoncesClient.tsx`)** :
+    - `AccountDashboardHub.tsx` : Alignement parfait sur la charte et la compacité de la boutique.
+      * Hero profil compact (avatar, statut vérifié, badge commerçant, lien profil).
+      * 4 KPIs d'activité connectés : Ma Boutique, Mes Annonces, Mes Commandes, Mes Commissions.
+      * Hub d'action 1-Tap à 4 tuiles + pilules horizontales (Favoris, Immo, POS, Explorer).
+      * Onboarding compact et chaleureux sans espaces vides démesurés en cas de compte sans annonce.
+    - `AnnoncesClient.tsx` : Résolution du syndrome des 4 boutons empilés sous chaque annonce. Remplacement par 1 bouton d'action dominant (`[ ✏️ Modifier ]` ou `[ ⚡ Activer ]`) + 1 menu d'options compact `[ ⋯ ]` (Booster, Voir en ligne, Supprimer) avec fermeture au clic extérieur.
+  * **📋 4. Phase 4 : Resserrement des Barres d'Outils Commandes & Carnet de Dettes (`Commandes.tsx`, `CarnetDettes.tsx`)** :
+    - `Commandes.tsx` : Remplacement des boutons d'export CSV et PDF dispersés par un menu déroulant élégant `[ 📥 Exporter ▾ ]` et organisation fluide des filtres de canaux (Tous, Web, POS).
+    - `CarnetDettes.tsx` : Élimination de la 2ème rangée de 4 boutons compressés sur mobile (`QR`, `Import CSV`, `CSV`, `PDF`). Intégration d'un menu déroulant unique `[ ⋯ Plus ▾ ]` aux côtés des boutons majeurs `[ ⚡ + Vente crédit ]` et `[ 👤 + Client ]`.
+  * **🧪 5. Validation Qualité & Conformité** :
+    - 35/35 tests unitaires passés avec succès (100%).
+    - Vérification TypeScript validée sans aucune erreur sur tous les composants modifiés.
+    - Règle de zéro chargement/fetch dynamique de polices CDN strictement respectée.
+    - Règle absolue de déploiement : aucun `git push` sans instruction explicite de l'utilisateur.
+
 - **Refonte UX de Navigabilité Globale, Sécurisation Caisse POS & Escape Hatch Chatbot WhatsApp (`backend/routes/comptabilite.js`, `backend/routes/boutiques.js`, `backend/services/whatsapp-chatbot.js`, `frontend-next/src/app/boutique/*`, `frontend-next/src/components/*`, `frontend-next/src/middleware.ts`) (07 septembre 2026)** 🧭🛒⚡✨ :
   * **🔴 1. Correction Critique : Carnet de Dettes & Notifications WhatsApp Automatiques** :
     - `backend/routes/comptabilite.js` :
@@ -42,7 +70,17 @@
   * **🧪 7. Tests & Validation** :
     - 35/35 tests unitaires frontend Next.js passés avec 100% de succès.
     - Contrôles de syntaxe Node.js (`node -c`) validés sur tous les fichiers modifiés.
+    - Compilation Next.js (`npm run build`) validée avec succès (Code 0).
     - Respect absolu des règles : interdiction des polices CDN externes et aucun `git push` sans instruction explicite de l'utilisateur.
+  * **📱 8. Ergonomie Mobile : Onglet Compte Universel, Retours Boutique & Dépliage Plus d'Options** :
+    - `frontend-next/src/components/MobileBottomNav.tsx` : Rétablissement permanent de l'onglet `Compte` (icône `User`) en 5ème position. Élimination du doublon où les onglets 2 et 5 portaient le même nom "Boutique(s)" et la même icône de magasin. Accès universel garanti à `/compte` depuis la page d'accueil.
+    - `frontend-next/src/app/boutique/BoutiqueClient.tsx` :
+      * **Historique & Gestes Mobiles** : Intégration de `window.history.pushState` et d'un écouteur d'événement `popstate` pour que les retours arrière (gestes de balayage gauche iOS/Android ou bouton physique Précédent) naviguent entre les onglets et reviennent à l'accueil boutique (`dashboard`) au lieu d'éjecter le commerçant de l'application.
+      * **Bouton `←` Hiérarchique** : Si le gérant est dans un sous-onglet (`tab !== 'dashboard'`), `←` affiche *"Accueil Boutique"* et ramène au tableau de bord sans quitter la gestion. S'il est sur le dashboard, `←` affiche *"Mon Compte"* (si 1 boutique) ou *"Mes Boutiques"* (si multi-boutiques).
+      * **Ouverture Directe 1 Boutique** : Si le marchand ne possède qu'une boutique, l'accès à `/boutique` ouvre directement son tableau de bord sans imposer la liste avec une seule carte.
+      * **Résolution de l'anomalie "Plus d'options"** : Création du panneau interactif `.bq-advanced-mobile-panel` déployé sous le bouton sur mobile. Révélation immédiate des modules avancés (Comptabilité, Documents, Fournisseurs, Fidélité, Fiscalité, Équipe, etc.) en cartes tactiles réactives.
+    - `frontend-next/src/app/boutique/CarnetDettes.tsx` : Gestion `popstate` sur la fiche détaillée du client sur smartphone : le geste retour referme la fiche sans quitter la boutique.
+    - `frontend-next/src/app/boutique/caisse/CaisseClient.tsx` : Remplacement de `window.history.back()` par un lien direct sécurisé vers le tableau de bord boutique.
 
 - **Audit End-to-End Exhaustif & Résolution Intégrale des 8 Anomalies Plateforme (`backend/routes/boutiques.js`, `backend/migrate-inline.js`, `backend/services/matching.js`, `backend/services/whatsapp-health.js`, `scripts/e2e-exhaustive-qa.mjs`) (`pushed` - 07 septembre 2026)** 🛡️🚀✨ :
   * **📋 1. Cartographie Exhaustive & Matrice de Tests E2E (100% de Réussite)** :

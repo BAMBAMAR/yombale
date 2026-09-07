@@ -58,7 +58,8 @@ function AnnonceCard({
   numeroOM: string
   waveActif: boolean
 }) {
-  const [deleteErr, setDeleteErr]  = useState<string | null>(null)
+  const [deleteErr, setDeleteErr] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
   const { t } = useTranslation()
@@ -66,6 +67,7 @@ function AnnonceCard({
   function handleDelete() {
     if (!confirm(t('account.adConfirmDelete'))) return
     setDeleteErr(null)
+    setMenuOpen(false)
     startTransition(async () => {
       const res = await deleteAnnonce(annonce.id)
       if (res.error) setDeleteErr(res.error)
@@ -106,27 +108,182 @@ function AnnonceCard({
 
         {deleteErr && <p className="annonce-delete-err">{deleteErr}</p>}
 
-        <div className="annonce-card-actions">
-          {needsPayment && (
-            <Link href={`/payer-annonce/${annonce.id}`} className="annonce-action-btn annonce-action-btn--pay">
-              {t('account.adActionActivate')} ({fcfa(prixAnnonce)})
+        {/* Barre d'action pro : 1 bouton dominant + 1 menu compact [⋯] */}
+        <div className="annonce-card-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, position: 'relative' }}>
+          {needsPayment ? (
+            <Link
+              href={`/payer-annonce/${annonce.id}`}
+              className="annonce-action-btn annonce-action-btn--pay"
+              style={{
+                flex: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '7px 12px',
+                borderRadius: 8,
+                fontWeight: 800,
+                fontSize: 12,
+              }}
+            >
+              ⚡ {t('account.adActionActivate')} ({fcfa(prixAnnonce)})
+            </Link>
+          ) : (
+            <Link
+              href={`/mes-annonces/${annonce.id}/modifier`}
+              className="annonce-action-btn annonce-action-btn--edit"
+              style={{
+                flex: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '7px 12px',
+                borderRadius: 8,
+                fontWeight: 800,
+                fontSize: 12,
+              }}
+            >
+              ✏️ {t('account.adActionEdit')}
             </Link>
           )}
-          <Link href={`/mes-annonces/${annonce.id}/modifier`} className="annonce-action-btn annonce-action-btn--edit">
-            {t('account.adActionEdit')}
-          </Link>
-          {annonce.actif && (
-            <Link href={`/payer-boost/${annonce.id}`} className="annonce-action-btn">
-              {t('account.adActionBoost')}
-            </Link>
-          )}
-          <button
-            onClick={handleDelete}
-            disabled={isPending}
-            className="annonce-action-btn annonce-action-btn--delete"
-          >
-            {isPending ? '…' : t('account.adActionDelete')}
-          </button>
+
+          {/* Menu d'options compact */}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(!menuOpen)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 34,
+                height: 34,
+                borderRadius: 8,
+                background: menuOpen ? '#E2E8F0' : '#F1F5F9',
+                border: '1px solid #CBD5E1',
+                color: 'var(--navy, #1C2B4A)',
+                cursor: 'pointer',
+                fontSize: 16,
+                fontWeight: 900,
+                lineHeight: 1,
+              }}
+              title="Options de l'annonce"
+            >
+              ⋯
+            </button>
+
+            {menuOpen && (
+              <>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                  onClick={() => setMenuOpen(false)}
+                />
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  bottom: '100%',
+                  marginBottom: 6,
+                  width: 210,
+                  background: '#ffffff',
+                  borderRadius: 12,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                  border: '1px solid #E2E8F0',
+                  padding: '6px',
+                  zIndex: 50,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                }}>
+                  {needsPayment && (
+                    <Link
+                      href={`/mes-annonces/${annonce.id}/modifier`}
+                      onClick={() => setMenuOpen(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '8px 10px',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: 'var(--navy, #1C2B4A)',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      ✏️ {t('account.adActionEdit')}
+                    </Link>
+                  )}
+
+                  {annonce.actif && (
+                    <>
+                      <Link
+                        href={`/payer-boost/${annonce.id}`}
+                        onClick={() => setMenuOpen(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '8px 10px',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 750,
+                          color: 'var(--accent, #C75B00)',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        🚀 {t('account.adActionBoost')}
+                      </Link>
+
+                      <Link
+                        href={`/annonces/${annonce.id}`}
+                        target="_blank"
+                        onClick={() => setMenuOpen(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '8px 10px',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 650,
+                          color: '#475569',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        👁️ Voir l&apos;annonce en ligne
+                      </Link>
+                    </>
+                  )}
+
+                  <div style={{ height: 1, background: '#F1F5F9', margin: '3px 0' }} />
+
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isPending}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: '#DC2626',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    🗑️ {isPending ? 'Suppression…' : t('account.adActionDelete')}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

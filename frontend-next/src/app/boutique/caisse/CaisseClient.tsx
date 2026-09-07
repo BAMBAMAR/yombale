@@ -2240,18 +2240,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 >
                   Activer l&apos;Abonnement Pro (5 000 FCFA/mois) →
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => window.history.back()}
+                <Link
+                  href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
                   className="annonce-back"
-                  style={{ margin: '0 auto' }}
+                  style={{ margin: '0 auto', textDecoration: 'none' }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="19" y1="12" x2="5" y2="12"></line>
                     <polyline points="12 19 5 12 12 5"></polyline>
                   </svg>
                   <span>Retour au tableau de bord boutique</span>
-                </button>
+                </Link>
               </>
             )}
           </div>

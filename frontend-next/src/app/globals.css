@@ -10588,6 +10588,10 @@ button:focus-visible,
   }
 }
 
+.bq-advanced-mobile-panel {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .bq-manage-layout {
     flex-direction: column;
@@ -10629,6 +10633,11 @@ button:focus-visible,
 
   .mobile-nav-compact.mobile-nav-compact--boutique {
     display: block !important;
+  }
+
+  .bq-advanced-mobile-panel {
+    display: flex !important;
+    animation: fadeSlideDown 0.2s ease-out;
   }
 
   .bq-nav-badge {

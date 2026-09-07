@@ -382,6 +382,7 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
   const [loading, setLoading] = useState(true)
   const [filtre, setFiltre] = useState('')
   const [filtreCanal, setFiltreCanal] = useState<'tous' | 'web' | 'caisse'>('tous')
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -547,11 +548,11 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
 
       {/* Sélecteur de canal & Exports */}
       {filtre !== 'abandonne' && (
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '8px 12px', borderRadius: 12, border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '8px 12px', borderRadius: 12, border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 4 }}>{t('shop.orderSource')} :</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 2 }}>{t('shop.orderSource')} :</span>
             <button onClick={() => setFiltreCanal('tous')} style={{
-              padding: '4px 12px', borderRadius: 16, border: '1px solid',
+              padding: '4px 10px', borderRadius: 14, border: '1px solid',
               borderColor: filtreCanal === 'tous' ? '#1e293b' : '#cbd5e1',
               background: filtreCanal === 'tous' ? '#1e293b' : '#fff',
               color: filtreCanal === 'tous' ? '#fff' : '#475569',
@@ -560,16 +561,16 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
               {t('common.all')} ({formatNumber(commandes.length)})
             </button>
             <button onClick={() => setFiltreCanal('web')} style={{
-              padding: '4px 12px', borderRadius: 16, border: '1px solid',
+              padding: '4px 10px', borderRadius: 14, border: '1px solid',
               borderColor: filtreCanal === 'web' ? '#2563eb' : '#cbd5e1',
               background: filtreCanal === 'web' ? '#eff6ff' : '#fff',
               color: filtreCanal === 'web' ? '#1d4ed8' : '#475569',
               fontSize: 12, fontWeight: 700, cursor: 'pointer',
             }}>
-              🌐 Web & WhatsApp
+              🌐 Web
             </button>
             <button onClick={() => setFiltreCanal('caisse')} style={{
-              padding: '4px 12px', borderRadius: 16, border: '1px solid',
+              padding: '4px 10px', borderRadius: 14, border: '1px solid',
               borderColor: filtreCanal === 'caisse' ? '#ea580c' : '#cbd5e1',
               background: filtreCanal === 'caisse' ? '#fff7ed' : '#fff',
               color: filtreCanal === 'caisse' ? '#c75b00' : '#475569',
@@ -579,13 +580,96 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={exportCommandesCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '4px 10px', fontWeight: 700, cursor: 'pointer' }}>
-              📥 {t('common.exportCsv')}
+          {/* Menu compact d'export */}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              style={{
+                fontSize: 12,
+                color: 'var(--navy, #1C2B4A)',
+                background: showExportMenu ? '#e2e8f0' : '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: 8,
+                padding: '5px 10px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <span>📥 Exporter</span>
+              <span style={{ fontSize: 10 }}>▾</span>
             </button>
-            <button onClick={exportCommandesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '4px 10px', fontWeight: 700, cursor: 'pointer' }}>
-              📄 {t('common.exportPdf')}
-            </button>
+
+            {showExportMenu && (
+              <>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                  onClick={() => setShowExportMenu(false)}
+                />
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '100%',
+                  marginTop: 4,
+                  width: 200,
+                  background: '#ffffff',
+                  borderRadius: 10,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
+                  border: '1px solid #e2e8f0',
+                  padding: '6px',
+                  zIndex: 50,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                }}>
+                  <button
+                    onClick={() => { setShowExportMenu(false); exportCommandesCSV(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: '#166534',
+                      background: '#f0fdf4',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <span>📥</span>
+                    <span>{t('common.exportCsv')} (Excel)</span>
+                  </button>
+                  <button
+                    onClick={() => { setShowExportMenu(false); exportCommandesPDF(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: '#1d4ed8',
+                      background: '#eff6ff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <span>📄</span>
+                    <span>{t('common.exportPdf')} (Registre)</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

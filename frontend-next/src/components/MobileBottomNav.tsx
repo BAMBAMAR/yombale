@@ -96,21 +96,17 @@ export default function MobileBottomNav({ isLoggedIn = false, isMerchant = false
         <span>Favoris</span>
       </Link>
 
-      {/* 5. Mon Compte / Espace Vendeur */}
+      {/* 5. Mon Compte */}
       <Link
-        href={effectiveIsLoggedIn ? (effectiveIsMerchant ? '/boutique' : '/compte') : '/connexion'}
+        href={effectiveIsLoggedIn ? '/compte' : '/connexion'}
         className={`mobile-bottom-nav-item${isAccount ? ' active' : ''}`}
-        aria-label={effectiveIsLoggedIn ? (effectiveIsMerchant ? 'Ma Boutique' : 'Mon Compte') : 'Se connecter'}
+        aria-label={effectiveIsLoggedIn ? 'Mon Compte' : 'Se connecter'}
         aria-current={isAccount ? 'page' : undefined}
       >
         <div className="mobile-bottom-nav-icon-wrap">
-          {effectiveIsMerchant ? (
-            <Store size={20} strokeWidth={isAccount ? 2.5 : 2} />
-          ) : (
-            <User size={20} strokeWidth={isAccount ? 2.5 : 2} />
-          )}
+          <User size={20} strokeWidth={isAccount ? 2.5 : 2} />
         </div>
-        <span>{effectiveIsLoggedIn ? (effectiveIsMerchant ? 'Boutique' : 'Compte') : 'Connexion'}</span>
+        <span>{effectiveIsLoggedIn ? 'Compte' : 'Connexion'}</span>
       </Link>
     </nav>
   )

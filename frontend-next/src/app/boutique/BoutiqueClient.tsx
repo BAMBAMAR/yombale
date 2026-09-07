@@ -2505,6 +2505,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
   const [menuActionsOuvertId, setMenuActionsOuvertId] = useState<string | null>(null)
   const [partageModalData, setPartageModalData] = useState<{ produit: Produit; isNew?: boolean } | null>(null)
   const [selectedProdIds, setSelectedProdIds] = useState<Set<string>>(new Set())
+  const [showMenuOptionsCatalogue, setShowMenuOptionsCatalogue] = useState(false)
 
   async function saveStock(produitId: string) {
     const val = Number(stockInputVal)
@@ -2743,77 +2744,192 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         </div>
       )}
 
-      <div className="bq-catalogue-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--text2, #6B5E52)', fontWeight: 600 }}>
-          <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{produits.length}</strong> produit{produits.length !== 1 ? 's' : ''} / {quota} max
-        </p>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {/* ── BARRE D'ACTIONS DU CATALOGUE UNIFIÉE ET COMPACTE (2 LIGNES MAX) ── */}
+      <div className="bq-toolbar-compact" style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Ligne 1 : Bouton principal dominant + Menu d'options compact [⋯ Plus ▾] */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <button
-            onClick={() => setShowBatchModal(true)}
-            className="btn-npl btn-npl-secondary btn-npl-sm"
-            style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}
-            title="Importer plusieurs produits à la fois depuis un fichier Excel ou CSV"
-          >
-            <Package size={14} style={{ color: 'var(--navy)' }} />
-            <span>Importer plusieurs (CSV)</span>
-          </button>
-          <button
+            type="button"
             onClick={() => setMode({ creating: 'rapide' })}
-            className="btn-npl btn-npl-primary btn-npl-sm"
-            style={{ height: 36, padding: '0 14px', fontSize: 12.5 }}
+            className="btn-npl btn-npl-primary"
+            style={{
+              flex: 1,
+              height: 40,
+              padding: '0 16px',
+              fontSize: 13,
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              borderRadius: 10,
+              boxShadow: '0 2px 8px rgba(199,91,0,0.25)',
+              background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
+              color: '#ffffff',
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
-            <Plus size={14} strokeWidth={2.5} />
-            <span>+ Ajouter un produit</span>
+            <Plus size={16} strokeWidth={2.5} />
+            <span>Ajouter un produit</span>
           </button>
-          <button
-            onClick={() => setMode({ creating: 'detaille' })}
-            className="btn-npl btn-npl-secondary btn-npl-sm"
-            style={{ height: 36, padding: '0 12px', fontSize: 12.5 }}
-            title="Ajouter un produit avec toutes les options avancées (variantes, caractéristiques...)"
-          >
-            <span>Détails avancés</span>
-          </button>
-        </div>
-      </div>
 
-      {produits.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 200 }}>
-            <input
-              type="text"
-              placeholder="Rechercher un produit (nom, référence, code-barres)…"
-              value={rechercheTexte}
-              onChange={e => setRechercheTexte(e.target.value)}
-              className="input-npl"
-              style={{ height: 38, fontSize: 13, paddingLeft: 36 }}
-            />
-            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3, #9C8E84)' }} />
-          </div>
-          <select
-            value={filtreStatut}
-            onChange={e => setFiltreStatut(e.target.value as typeof filtreStatut)}
-            className="input-npl"
-            style={{ height: 38, fontSize: 12.5, width: 'auto', flex: '0 0 auto', padding: '0 10px' }}
-          >
-            <option value="tous">Tous les statuts</option>
-            <option value="synchronise">Sur WhatsApp</option>
-            <option value="en_attente">En attente</option>
-            <option value="echec">Échec synchro</option>
-            <option value="jamais_partage">Jamais partagés</option>
-          </select>
-          {categoriesDisponibles.length > 1 && (
-            <select
-              value={filtreCategorie}
-              onChange={e => setFiltreCategorie(e.target.value)}
-              className="input-npl"
-              style={{ height: 38, fontSize: 12.5, width: 'auto', flex: '0 0 auto', padding: '0 10px' }}
+          {/* Menu déroulant compact pour les options secondaires */}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowMenuOptionsCatalogue(!showMenuOptionsCatalogue)}
+              className="btn-npl btn-npl-secondary"
+              style={{
+                height: 40,
+                padding: '0 12px',
+                fontSize: 12.5,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                borderRadius: 10,
+                background: '#ffffff',
+                border: '1.5px solid var(--border, #E8DDD2)',
+                color: 'var(--navy, #1C2B4A)',
+                cursor: 'pointer',
+              }}
+              title="Plus d'actions (Import CSV, ajout détaillé)"
             >
-              <option value="toutes">Toutes les catégories</option>
-              {categoriesDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          )}
+              <span>⋯ Plus</span>
+              <ChevronDown size={14} />
+            </button>
+
+            {showMenuOptionsCatalogue && (
+              <>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                  onClick={() => setShowMenuOptionsCatalogue(false)}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    right: 0,
+                    zIndex: 50,
+                    minWidth: 240,
+                    background: '#ffffff',
+                    border: '1px solid var(--border, #E8DDD2)',
+                    borderRadius: 12,
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
+                    padding: '6px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenuOptionsCatalogue(false)
+                      setShowBatchModal(true)
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: 'none',
+                      color: 'var(--navy, #1C2B4A)',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <Package size={16} style={{ color: 'var(--accent, #C75B00)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span>Importer CSV / Excel</span>
+                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>Ajout par lot de produits</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenuOptionsCatalogue(false)
+                      setMode({ creating: 'detaille' })
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: 'none',
+                      color: 'var(--navy, #1C2B4A)',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <Settings size={16} style={{ color: 'var(--accent, #C75B00)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span>Ajout détaillé & Variantes</span>
+                      <span style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>Tailles, couleurs, fiches complètes</span>
+                    </div>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Ligne 2 : Recherche et Filtres intégrés sur une seule ligne */}
+        {produits.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+              <input
+                type="text"
+                placeholder={`Rechercher parmi ${produits.length} produit${produits.length > 1 ? 's' : ''}…`}
+                value={rechercheTexte}
+                onChange={e => setRechercheTexte(e.target.value)}
+                className="input-npl"
+                style={{ height: 38, fontSize: 12.5, paddingLeft: 34, width: '100%', boxSizing: 'border-box' }}
+              />
+              <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3, #9C8E84)' }} />
+            </div>
+
+            <select
+              value={filtreStatut}
+              onChange={e => setFiltreStatut(e.target.value as typeof filtreStatut)}
+              className="input-npl"
+              style={{ height: 38, fontSize: 12, width: 'auto', flexShrink: 0, padding: '0 8px', maxWidth: 130 }}
+              title="Filtrer par statut WhatsApp"
+            >
+              <option value="tous">Statut: Tous</option>
+              <option value="synchronise">Sur WhatsApp</option>
+              <option value="en_attente">En attente</option>
+              <option value="echec">Échec synchro</option>
+              <option value="jamais_partage">Non partagés</option>
+            </select>
+
+            {categoriesDisponibles.length > 1 && (
+              <select
+                value={filtreCategorie}
+                onChange={e => setFiltreCategorie(e.target.value)}
+                className="input-npl"
+                style={{ height: 38, fontSize: 12, width: 'auto', flexShrink: 0, padding: '0 8px', maxWidth: 120 }}
+                title="Filtrer par catégorie"
+              >
+                <option value="toutes">Catégories: Toutes</option>
+                {categoriesDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
+          </div>
+        )}
+      </div>
 
       {successMsg && (
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px', color: '#16a34a', fontSize: 13.5, marginBottom: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -3269,7 +3385,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
                 {planActif === 'business' && <span className="badge-premium" style={{ background: '#1e3a8a', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>💼 Business</span>}
                 {planActif === 'pro'      && <span className="badge-premium" style={{ background: '#C75B00', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>⭐ Pro</span>}
                 {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#22c55e', color: '#064e3b', fontSize: 10, padding: '2px 6px', border: 'none' }}>⚡ Taf Taf</span>}
-                {(!planActif || planActif === 'gratuit') && <span className="badge-premium" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', fontSize: 10, padding: '2px 6px' }}>🌱 Gratuit</span>}
+                {(!planActif || (planActif as any) === 'gratuit') && <span className="badge-premium" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', fontSize: 10, padding: '2px 6px' }}>🌱 Gratuit</span>}
                 {boutique.mode_fonctionnement === 'pure_player' ? (
                   <span className="badge-premium" style={{ background: '#fff7ed', color: '#c75b00', borderColor: '#ffedd5', fontSize: 10, padding: '2px 6px' }}>Web</span>
                 ) : (
@@ -3508,24 +3624,38 @@ function BoutiqueDashboard({
   onNavigate: (tab: ManageTab, subTab?: string) => void
   onOpenQrModal?: () => void
 }) {
-  const { t, formatNumber } = useTranslation()
+  const { t, formatPrice, formatNumber } = useTranslation()
   const [produitsCount, setProduitsCount] = useState<number | null>(null)
   const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(null)
+  const [caMois, setCaMois] = useState<number | null>(null)
+  const [dettesTotal, setDettesTotal] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const dismissed = localStorage.getItem(`nopalou_onboarding_dismissed_${boutique.id}`) === 'true'
+      setOnboardingDismissed(dismissed)
+    }
+  }, [boutique.id])
 
   useEffect(() => {
     let active = true
     const cacheKey = `nopalou_offline_dash_counts_${boutique.id}`
-    const cached = localStorage.getItem(cacheKey)
+    const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null
     if (cached) {
       try {
-        const { count, alerts } = JSON.parse(cached)
+        const { count, alerts, ca, dettes } = JSON.parse(cached)
         if (typeof count === 'number') setProduitsCount(count)
         if (typeof alerts === 'number') setStockAlertsCount(alerts)
+        if (typeof ca === 'number') setCaMois(ca)
+        if (typeof dettes === 'number') setDettesTotal(dettes)
         setLoading(false)
       } catch (e) {}
     }
 
+    // 1. Produits et alertes stock
     getBoutiqueProduits(boutique.id)
       .then(produits => {
         if (!active) return
@@ -3533,10 +3663,29 @@ function BoutiqueDashboard({
         const alerts = produits.filter(p => !p.en_stock || ((p.quantite_stock ?? p.stock_quantite) !== null && (p.quantite_stock ?? p.stock_quantite)! <= 3)).length
         setProduitsCount(count)
         setStockAlertsCount(alerts)
-        localStorage.setItem(cacheKey, JSON.stringify({ count, alerts }))
+      })
+      .catch(() => {})
+
+    // 2. Chiffre d'Affaires du mois
+    fetch(`/api/comptabilite/${boutique.id}/dashboard`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!active || !data) return
+        if (typeof data.ca_mois === 'number') setCaMois(data.ca_mois)
+      })
+      .catch(() => {})
+
+    // 3. Dettes clients à recouvrer
+    fetch(`/api/boutiques/${boutique.id}/credits-clients`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!active || !data?.clients || !Array.isArray(data.clients)) return
+        const total = data.clients.filter((c: any) => c.solde > 0).reduce((s: number, c: any) => s + Number(c.solde), 0)
+        setDettesTotal(total)
       })
       .catch(() => {})
       .finally(() => { if (active) setLoading(false) })
+
     return () => { active = false }
   }, [boutique.id])
 
@@ -3550,266 +3699,122 @@ function BoutiqueDashboard({
   const pctReady = Math.round((stepsDone / 4) * 100)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
       
-      {/* ── BANNIÈRE BIENVENUE MARCHAND & RACCOURCIS RAPIDES ─────────── */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #15223a 100%)',
-        borderRadius: 'var(--r-xl, 16px)',
-        padding: '20px 24px',
-        color: '#ffffff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 16,
-        boxShadow: '0 4px 20px rgba(28,43,74,0.18)',
-        border: '1px solid rgba(255,255,255,0.1)',
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <span style={{ fontSize: 20 }}>👋</span>
-            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', margin: 0 }}>
-              {boutique.nom}
-            </h2>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: 11,
-              fontWeight: 700,
-              padding: '2px 8px',
-              borderRadius: 20,
-              background: boutique.actif !== false ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.15)',
-              color: boutique.actif !== false ? '#86efac' : 'rgba(255,255,255,0.8)',
-              border: boutique.actif !== false ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(255,255,255,0.2)',
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: boutique.actif !== false ? '#22c55e' : '#94a3b8' }} />
-              {boutique.actif !== false ? 'En ligne' : 'Masquée'}
-            </span>
-          </div>
-          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.4 }}>
-            Espace d&apos;administration de votre commerce · Tableau de bord consolidé
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          {boutique.mode_fonctionnement !== 'pure_player' && (
-            <a
-              href={`/boutique/caisse?b=${boutique.id}`}
-              className="btn-npl btn-npl-primary btn-npl-md"
-              style={{ textDecoration: 'none', background: 'var(--accent, #C75B00)', color: '#fff', border: 'none', boxShadow: '0 2px 8px rgba(199,91,0,0.3)' }}
-              onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
-            >
-              <ShoppingCart size={16} />
-              <span>{t('caisse.posTitle') || 'Ouvrir la Caisse'}</span>
-            </a>
-          )}
-          <button
-            type="button"
-            onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')}
-            className="btn-npl btn-npl-secondary btn-npl-md"
-            style={{ background: 'rgba(255,255,255,0.1)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)' }}
-          >
-            <QrCode size={16} />
-            <span>Partager Vitrine</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── ASSISTANT D'ONBOARDING MARCHAND (DÉMARRAGE RAPIDE) ─────────── */}
-      {(!hasProducts || pctReady < 100 || isBienvenue) && (
+      {/* ── ASSISTANT D'ONBOARDING COMPACT & ESCAMOTABLE ── */}
+      {(!hasProducts || pctReady < 100 || isBienvenue) && !onboardingDismissed && (
         <div style={{
           background: 'linear-gradient(135deg, #FFFDF9 0%, #FFF7ED 100%)',
           border: '1.5px solid #FED7AA',
-          borderRadius: 'var(--r-xl, 16px)',
-          padding: '20px 24px',
-          boxShadow: '0 4px 14px rgba(199,91,0,0.06)',
-          animation: 'fadeIn 0.3s ease-out',
+          borderRadius: 14,
+          padding: '12px 16px',
+          boxShadow: '0 2px 8px rgba(199,91,0,0.04)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--orange2, #FFF3E8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-                🚀
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
-                  {pctReady === 100 ? '🎉 Votre boutique est 100% prête à vendre !' : `Votre boutique est prête à ${pctReady}%`}
-                </h3>
-                <p style={{ margin: '2px 0 0', fontSize: 12.5, color: 'var(--text-subtle, #8C7E74)' }}>
-                  {hasProducts ? 'Bravo ! Partagez maintenant votre vitrine pour recevoir vos premières commandes.' : 'Commencez par ajouter vos premiers articles pour ouvrir votre catalogue aux clients.'}
-                </p>
-              </div>
-            </div>
-            <span style={{
-              background: pctReady === 100 ? '#DCFCE7' : '#FEF3C7',
-              color: pctReady === 100 ? '#15803D' : '#92400E',
-              fontSize: 12,
-              fontWeight: 800,
-              padding: '4px 12px',
-              borderRadius: 20,
-              border: pctReady === 100 ? '1px solid #BBF7D0' : '1px solid #FDE68A',
-            }}>
-              {pctReady}% complété
-            </span>
-          </div>
-
-          {/* Barre de progression */}
-          <div style={{ width: '100%', height: 8, background: '#E2E8F0', borderRadius: 4, overflow: 'hidden', marginBottom: 16 }}>
-            <div style={{
-              width: `${pctReady}%`,
-              height: '100%',
-              background: pctReady === 100 ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' : 'linear-gradient(90deg, #FF6600 0%, #C75B00 100%)',
-              borderRadius: 4,
-              transition: 'width 0.4s ease',
-            }} />
-          </div>
-
-          {/* Étapes clés */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-            {/* Étape 1 : Produits */}
-            <div style={{
-              background: '#FFFFFF',
-              border: hasProducts ? '1.5px solid #BBF7D0' : '1.5px solid #FED7AA',
-              borderRadius: 12,
-              padding: '14px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>📦</span>
-                    <span>1. Produits</span>
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 750, color: hasProducts ? '#16A34A' : '#C75B00' }}>
-                    {hasProducts ? `✓ ${(produitsCount ?? 0)} article(s)` : '⚠ À ajouter'}
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 11.5, color: '#64748B', lineHeight: 1.4 }}>
-                  {hasProducts ? 'Vos articles sont visibles sur votre vitrine.' : 'Nom, prix et photo : c\'est tout !'}
-                </p>
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 200 }}>
+              <span style={{ fontSize: 16 }}>🚀</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                {pctReady === 100 ? 'Boutique 100% prête à vendre !' : `Boutique prête à ${pctReady}%`}
+              </span>
               <button
                 type="button"
-                onClick={() => onNavigate('produits')}
-                className="btn-npl btn-npl-primary btn-npl-sm"
-                style={{ width: '100%', justifyContent: 'center', fontSize: 12, height: 32 }}
+                onClick={() => setOnboardingOpen(!onboardingOpen)}
+                style={{
+                  background: 'none', border: 'none', color: 'var(--accent, #C75B00)',
+                  fontSize: 12, fontWeight: 750, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0
+                }}
               >
-                <Plus size={13} strokeWidth={2.5} />
-                <span>{hasProducts ? 'Gérer mon catalogue' : 'Ajouter un produit'}</span>
+                <span>{onboardingOpen ? 'Masquer détails ▴' : 'Voir les étapes ▾'}</span>
               </button>
             </div>
-
-            {/* Étape 2 : Personnalisation Logo / Profil */}
-            <div style={{
-              background: '#FFFFFF',
-              border: (hasLogoOrCover || hasDesc) ? '1.5px solid #BBF7D0' : '1.5px solid #E2E8F0',
-              borderRadius: 12,
-              padding: '14px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>🎨</span>
-                    <span>2. Personnalisation</span>
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 750, color: (hasLogoOrCover || hasDesc) ? '#16A34A' : '#64748B' }}>
-                    {(hasLogoOrCover || hasDesc) ? '✓ Profil rempli' : '💡 Optionnel'}
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 11.5, color: '#64748B', lineHeight: 1.4 }}>
-                  Ajoutez votre logo, description et liens réseaux sociaux.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('infos')}
-                className="btn-npl btn-npl-secondary btn-npl-sm"
-                style={{ width: '100%', justifyContent: 'center', fontSize: 12, height: 32 }}
-              >
-                <Settings size={13} />
-                <span>Modifier le profil</span>
-              </button>
-            </div>
-
-            {/* Étape 3 : Partage WhatsApp */}
-            <div style={{
-              background: '#FFFFFF',
-              border: '1.5px solid #E2E8F0',
-              borderRadius: 12,
-              padding: '14px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: 10,
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>💬</span>
-                    <span>3. Diffusion</span>
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 750, color: '#16A34A' }}>
-                    ⚡ 1-Clic
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 11.5, color: '#64748B', lineHeight: 1.4 }}>
-                  Partagez le lien de votre vitrine dans vos groupes et statuts WhatsApp.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')}
-                className="btn-npl btn-npl-secondary btn-npl-sm"
-                style={{ width: '100%', justifyContent: 'center', fontSize: 12, height: 32, borderColor: '#FED7AA', color: '#C75B00', background: '#FFF7ED' }}
-              >
-                <QrCode size={13} />
-                <span>Partager ma vitrine</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setOnboardingDismissed(true)
+                if (typeof window !== 'undefined') localStorage.setItem(`nopalou_onboarding_dismissed_${boutique.id}`, 'true')
+              }}
+              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', padding: '2px 6px' }}
+              title="Ne plus afficher"
+            >
+              ✕
+            </button>
           </div>
+
+          {onboardingOpen && (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #FED7AA', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+              <div style={{ background: '#FFFFFF', border: hasProducts ? '1px solid #BBF7D0' : '1px solid #FED7AA', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>📦 1. Produits</span>
+                  <span style={{ fontSize: 11, fontWeight: 750, color: hasProducts ? '#16A34A' : '#C75B00' }}>{hasProducts ? '✓ Prêt' : 'À ajouter'}</span>
+                </div>
+                <button type="button" onClick={() => onNavigate('produits')} className="btn-npl btn-npl-primary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5 }}>
+                  {hasProducts ? 'Gérer catalogue' : 'Ajouter un produit'}
+                </button>
+              </div>
+
+              <div style={{ background: '#FFFFFF', border: (hasLogoOrCover || hasDesc) ? '1px solid #BBF7D0' : '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>🎨 2. Profil</span>
+                  <span style={{ fontSize: 11, fontWeight: 750, color: (hasLogoOrCover || hasDesc) ? '#16A34A' : '#64748B' }}>{(hasLogoOrCover || hasDesc) ? '✓ Rempli' : 'Optionnel'}</span>
+                </div>
+                <button type="button" onClick={() => onNavigate('infos')} className="btn-npl btn-npl-secondary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5 }}>
+                  Modifier profil
+                </button>
+              </div>
+
+              <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>💬 3. WhatsApp</span>
+                  <span style={{ fontSize: 11, fontWeight: 750, color: '#16A34A' }}>⚡ 1-Clic</span>
+                </div>
+                <button type="button" onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')} className="btn-npl btn-npl-secondary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5, borderColor: '#FED7AA', color: '#C75B00', background: '#FFF7ED' }}>
+                  Partager vitrine
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Grille de statistiques clés — 4 colonnes Desktop / 2 colonnes Mobile */}
+      {/* ── GRILLE DES 4 MÉTRIQUES OPÉRATIONNELLES (HERO KPIs) ── */}
       <div className="bq-kpi-grid">
+        {/* KPI 1 : Chiffre d'Affaires du Mois */}
         <div className="bq-kpi-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.pendingOrdersCount')}</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Chiffre d&apos;affaires</span>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Receipt size={16} style={{ color: '#16A34A' }} />
+              </div>
+            </div>
+            <p className="num-tabular" style={{ margin: 0, fontSize: 20, fontWeight: 900, color: 'var(--navy)' }}>
+              {loading ? '...' : (caMois !== null ? `${formatPrice(caMois)}` : '0 FCFA')}
+            </p>
+          </div>
+          <button onClick={() => onNavigate('compta')} style={{ background: 'none', border: 'none', color: '#16A34A', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span>Voir la comptabilité →</span>
+          </button>
+        </div>
+
+        {/* KPI 2 : Commandes en attente */}
+        <div className="bq-kpi-card" style={{ background: nbEnAttente > 0 ? '#fff8f0' : 'var(--card)', border: nbEnAttente > 0 ? '1px solid #FED7AA' : '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.pendingOrdersCount')}</span>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: nbEnAttente > 0 ? 'var(--orange2)' : 'var(--surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <ClipboardList size={16} style={{ color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }} />
               </div>
             </div>
-            <p className="num-tabular" style={{ margin: 0, fontSize: 26, fontWeight: 900, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>{formatNumber(nbEnAttente)}</p>
+            <p className="num-tabular" style={{ margin: 0, fontSize: 22, fontWeight: 900, color: nbEnAttente > 0 ? 'var(--accent)' : 'var(--navy)' }}>
+              {formatNumber(nbEnAttente)} {nbEnAttente > 0 ? '🔴' : ''}
+            </p>
           </div>
           <button onClick={() => onNavigate('commandes')} style={{ background: 'none', border: 'none', color: 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             <span>{t('shop.viewOrders')} →</span>
           </button>
         </div>
 
-        <div className="bq-kpi-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.catalog')}</span>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <ShoppingBag size={16} style={{ color: 'var(--navy)' }} />
-              </div>
-            </div>
-            <p className="num-tabular" style={{ margin: 0, fontSize: 26, fontWeight: 900, color: 'var(--navy)' }}>{loading ? '...' : formatNumber(produitsCount ?? 0)}</p>
-          </div>
-          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span>{t('shop.manageCatalogBtn')} →</span>
-          </button>
-        </div>
-
+        {/* KPI 3 : Alertes Stock */}
         <div className="bq-kpi-card" style={{ background: stockAlertsCount && stockAlertsCount > 0 ? '#fffbeb' : 'var(--card)', border: stockAlertsCount && stockAlertsCount > 0 ? '1px solid #fcd34d' : '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -3818,163 +3823,208 @@ function BoutiqueDashboard({
                 <AlertTriangle size={16} style={{ color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }} />
               </div>
             </div>
-            <p className="num-tabular" style={{ margin: 0, fontSize: 26, fontWeight: 900, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>{loading ? '...' : formatNumber(stockAlertsCount ?? 0)}</p>
+            <p className="num-tabular" style={{ margin: 0, fontSize: 22, fontWeight: 900, color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--navy)' }}>
+              {loading ? '...' : formatNumber(stockAlertsCount ?? 0)}
+            </p>
           </div>
-          <button onClick={() => onNavigate('fournisseurs')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span>{t('shop.restockBtn')} →</span>
+          <button onClick={() => onNavigate('produits')} style={{ background: 'none', border: 'none', color: stockAlertsCount && stockAlertsCount > 0 ? '#b45309' : 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span>{t('shop.manageCatalogBtn')} →</span>
           </button>
         </div>
 
-        <div className="bq-kpi-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        {/* KPI 4 : Dettes Clients ou Formule */}
+        <div className="bq-kpi-card" style={{ background: dettesTotal && dettesTotal > 0 ? '#fef2f2' : 'var(--card)', border: dettesTotal && dettesTotal > 0 ? '1px solid #fecaca' : '1px solid var(--border)', borderRadius: 'var(--r-lg, 12px)', padding: '16px 18px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.shopTierTitle')}</span>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--orange2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Star size={16} style={{ color: 'var(--accent)' }} />
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: dettesTotal && dettesTotal > 0 ? '#dc2626' : 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {dettesTotal && dettesTotal > 0 ? 'Dettes à recouvrer' : t('shop.catalog')}
+              </span>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: dettesTotal && dettesTotal > 0 ? '#fee2e2' : 'var(--orange2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {dettesTotal && dettesTotal > 0 ? <BookOpen size={16} style={{ color: '#dc2626' }} /> : <ShoppingBag size={16} style={{ color: 'var(--accent)' }} />}
               </div>
             </div>
-            <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: planActif === 'business' ? 'var(--navy)' : planActif === 'pro' ? 'var(--accent)' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'var(--price)' : 'var(--text-subtle)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf' : 'Gratuit'}
+            <p className="num-tabular" style={{ margin: 0, fontSize: dettesTotal && dettesTotal > 0 ? 18 : 22, fontWeight: 900, color: dettesTotal && dettesTotal > 0 ? '#dc2626' : 'var(--navy)' }}>
+              {loading ? '...' : (dettesTotal && dettesTotal > 0 ? `${formatPrice(dettesTotal)}` : `${formatNumber(produitsCount ?? 0)} articles`)}
             </p>
           </div>
-          <Link href="/boutique/abonnement" style={{ color: 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 12, textDecoration: 'none' }}>
-            <span>{t('shop.manageTierBtn')} →</span>
-          </Link>
+          <button onClick={() => onNavigate(dettesTotal && dettesTotal > 0 ? 'carnet' : 'produits')} style={{ background: 'none', border: 'none', color: dettesTotal && dettesTotal > 0 ? '#dc2626' : 'var(--accent, #C75B00)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, marginTop: 12, textAlign: 'left', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span>{dettesTotal && dettesTotal > 0 ? 'Ouvrir le carnet →' : 'Voir les produits →'}</span>
+          </button>
         </div>
       </div>
 
-      {/* Raccourcis d'action rapide — Grille 3 colonnes Desktop / 2 colonnes Mobile */}
-      <div className="bq-actions-container" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--r-xl, 16px)', padding: '20px 22px', boxShadow: 'var(--shadow-sm)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <Zap size={18} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: 'var(--navy)', letterSpacing: '-0.01em' }}>
-            {t('shop.quickActions')}
-          </h3>
+      {/* ── HUB D'ACTIONS RAPIDES TACTILES 1-TAP (Style Wave / Square) ── */}
+      <div style={{ background: 'var(--card, #ffffff)', border: '1px solid var(--border, #E8DDD2)', borderRadius: 'var(--r-xl, 16px)', padding: '18px 20px', boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Zap size={18} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)', letterSpacing: '-0.01em' }}>
+              Actions rapides
+            </h3>
+          </div>
+          <span style={{ fontSize: 12, color: 'var(--text-subtle, #8C7E74)', fontWeight: 600 }}>1-Tap direct</span>
         </div>
-        
-        <div className="bq-actions-grid">
-          
+
+        {/* Grille 4 tuiles tactiles */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))',
+          gap: 12,
+        }}>
+          {/* Tuile 1 : Vente Express */}
           <button
+            type="button"
             onClick={() => onNavigate('express')}
-            className="bq-action-btn"
+            className="bq-action-tile"
             style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-              borderRadius: 'var(--r-lg, 12px)', background: 'var(--card)', border: '1.5px solid var(--border)',
-              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: 'var(--shadow-xs)',
-              transition: 'all 0.15s ease',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '16px 12px', borderRadius: 14, background: '#F0FDF4', border: '1.5px solid #BBF7D0',
+              cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
             }}
           >
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Zap size={20} style={{ color: 'var(--price)' }} />
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16A34A' }}>
+              <Zap size={22} />
             </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickSalesExpenses')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-subtle)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickSalesExpensesDesc')}</p>
+            <div>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Vente Express</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#15803D', fontWeight: 600 }}>Scan & Comptoir</p>
             </div>
           </button>
 
-          <button
-            onClick={() => onNavigate('carnet')}
-            className="bq-action-btn"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-              borderRadius: 'var(--r-lg, 12px)', background: 'var(--card)', border: '1.5px solid var(--border)',
-              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: 'var(--shadow-xs)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <BookOpen size={20} style={{ color: 'var(--red)' }} />
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickDebtBook')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-subtle)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickDebtBookDesc')}</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigate('produits')}
-            className="bq-action-btn"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-              borderRadius: 'var(--r-lg, 12px)', background: 'var(--card)', border: '1.5px solid var(--border)',
-              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: 'var(--shadow-xs)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--orange2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <PlusCircle size={20} style={{ color: 'var(--accent)' }} />
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.newProduct')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-subtle)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Photos, prix & détails</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigate('documents')}
-            className="bq-action-btn"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-              borderRadius: 'var(--r-lg, 12px)', background: 'var(--card)', border: '1.5px solid var(--border)',
-              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: 'var(--shadow-xs)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--surface-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <FileText size={20} style={{ color: 'var(--navy)' }} />
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.documents')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-subtle)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Factures & Devis PDF</p>
-            </div>
-          </button>
-
-          {boutique.mode_fonctionnement !== 'pure_player' && (
+          {/* Tuile 2 : Caisse POS */}
+          {boutique.mode_fonctionnement !== 'pure_player' ? (
             <a
               href={`/boutique/caisse?b=${boutique.id}`}
-              className="bq-action-btn"
+              className="bq-action-tile"
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-                borderRadius: 'var(--r-lg, 12px)', background: 'var(--card)', border: '1.5px solid var(--border)',
-                textDecoration: 'none', WebkitFontSmoothing: 'antialiased',
-                boxShadow: 'var(--shadow-xs)',
-                transition: 'all 0.15s ease',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                padding: '16px 12px', borderRadius: 14, background: '#FFF3E8', border: '1.5px solid #FED7AA',
+                cursor: 'pointer', textAlign: 'center', textDecoration: 'none', transition: 'all 0.15s ease', gap: 8,
               }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
             >
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--surface-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <ShoppingCart size={20} style={{ color: 'var(--navy)' }} />
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FFEDD5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent, #C75B00)' }}>
+                <ShoppingCart size={22} />
               </div>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickPos')}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-subtle)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickPosDesc')}</p>
+              <div>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Caisse POS</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--accent, #C75B00)', fontWeight: 600 }}>Plein écran</p>
               </div>
             </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onNavigate('commandes')}
+              className="bq-action-tile"
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                padding: '16px 12px', borderRadius: 14, background: '#EFF6FF', border: '1.5px solid #BFDBFE',
+                cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
+              }}
+            >
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
+                <ClipboardList size={22} />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Commandes</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#1D4ED8', fontWeight: 600 }}>Web & WhatsApp</p>
+              </div>
+            </button>
           )}
 
+          {/* Tuile 3 : Nouveau Produit */}
           <button
-            onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')}
-            className="bq-action-btn"
+            type="button"
+            onClick={() => onNavigate('produits')}
+            className="bq-action-tile"
             style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-              borderRadius: 'var(--r-lg, 12px)', background: 'var(--card)', border: '1.5px solid var(--border)',
-              cursor: 'pointer', textAlign: 'left', WebkitFontSmoothing: 'antialiased',
-              boxShadow: 'var(--shadow-xs)',
-              transition: 'all 0.15s ease',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '16px 12px', borderRadius: 14, background: '#FAF8F5', border: '1.5px solid #E8DDD2',
+              cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
             }}
           >
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--orange2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Share2 size={20} style={{ color: 'var(--accent)' }} />
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--surface-muted, #F1F5F9)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--navy, #1C2B4A)' }}>
+              <PlusCircle size={22} />
             </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--text1)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickQr')}</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--text-subtle)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.quickQrDesc')}</p>
+            <div>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Ajouter Produit</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-subtle, #8C7E74)', fontWeight: 600 }}>Photo & Prix</p>
             </div>
+          </button>
+
+          {/* Tuile 4 : Carnet de Dettes */}
+          <button
+            type="button"
+            onClick={() => onNavigate('carnet')}
+            className="bq-action-tile"
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '16px 12px', borderRadius: 14, background: '#FEF2F2', border: '1.5px solid #FECACA',
+              cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
+            }}
+          >
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626' }}>
+              <BookOpen size={22} />
+            </div>
+            <div>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Carnet Dettes</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#B91C1C', fontWeight: 600 }}>Crédit & Relance</p>
+            </div>
+          </button>
+        </div>
+
+        {/* Puces secondaires compactes */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap', paddingTop: 12, borderTop: '1px solid var(--border-light, #F1E9E0)' }}>
+          <button
+            type="button"
+            onClick={() => onNavigate('documents')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
+              background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
+              color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
+            }}
+          >
+            <FileText size={13} style={{ color: 'var(--navy)' }} />
+            <span>Factures & Devis</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('compta')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
+              background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
+              color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
+            }}
+          >
+            <Receipt size={13} style={{ color: '#16A34A' }} />
+            <span>Comptabilité</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('analytics')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
+              background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
+              color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
+            }}
+          >
+            <BarChart3 size={13} style={{ color: 'var(--accent, #C75B00)' }} />
+            <span>Statistiques</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('equipe')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
+              background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
+              color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
+            }}
+          >
+            <Users size={13} style={{ color: '#6366F1' }} />
+            <span>Équipe</span>
           </button>
         </div>
       </div>
@@ -4009,6 +4059,7 @@ function BoutiqueMobileBottomSheet({
   sheetTitle,
   onBack,
   boutiqueId,
+  hasMultipleBoutiques = false,
 }: {
   navGroups: NavGroup[]
   activeTab: ManageTab
@@ -4019,7 +4070,9 @@ function BoutiqueMobileBottomSheet({
   sheetTitle: string
   onBack: () => void
   boutiqueId: string
+  hasMultipleBoutiques?: boolean
 }) {
+  const router = useRouter()
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
@@ -4063,8 +4116,29 @@ function BoutiqueMobileBottomSheet({
         <button
           type="button"
           className="mobile-nav-compact-back"
-          onClick={onBack}
-          aria-label="Retour aux boutiques"
+          onClick={() => {
+            if (activeTab !== 'dashboard') {
+              onSetTab('dashboard')
+            } else if (hasMultipleBoutiques) {
+              onBack()
+            } else {
+              router.push('/compte')
+            }
+          }}
+          aria-label={
+            activeTab !== 'dashboard'
+              ? "Retour à l'accueil de la boutique"
+              : hasMultipleBoutiques
+                ? "Retour à mes boutiques"
+                : "Retour à mon compte"
+          }
+          title={
+            activeTab !== 'dashboard'
+              ? "Retour au tableau de bord"
+              : hasMultipleBoutiques
+                ? "Retour à mes boutiques"
+                : "Retour à mon compte"
+          }
         >
           <ArrowLeft size={16} />
         </button>
@@ -4187,13 +4261,14 @@ function BoutiqueMobileBottomSheet({
   )
 }
 
-function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialTab: initialTabProp }: {
+function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialTab: initialTabProp, hasMultipleBoutiques = false }: {
   boutique: Boutique
   planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   onBack: () => void
   onEdit: () => void
   prixPro: number
   initialTab?: string
+  hasMultipleBoutiques?: boolean
 }) {
   const router = useRouter()
   const { t, formatNumber } = useTranslation()
@@ -4220,7 +4295,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     },
     {
       icon: Megaphone,
-      title: t('shop.navGroupMarketingSettings') || 'Outils & Réglages',
+      title: (t as any)('shop.navGroupMarketingSettings') || 'Outils & Réglages',
       items: [
         { key: 'marketing',   icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
         { key: 'infos',       icon: Settings, label: t('shop.settings') || 'Paramètres' },
@@ -4268,16 +4343,40 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
     router.refresh()
   }, [router])
 
-  const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
+  // Navigation fluide entre onglets avec persistance historique pushState
+  const handleNavigateTab = (targetTab: ManageTab, subTab?: string) => {
     if (targetTab === 'compta') {
       setSubTabCompta((subTab as any) || 'bilan')
     }
-    // Auto-expand advanced nav if the target tab is in advanced groups
+    // Auto-déplier les options avancées si l'onglet cible est dans la section avancée
     const isAdvancedTab = NAV_ADVANCED.some(g => g.items.some(i => i.key === targetTab))
     if (isAdvancedTab && !showAdvancedNav) {
       setShowAdvancedNav(true)
     }
+    if (typeof window !== 'undefined' && targetTab !== tab) {
+      const url = new URL(window.location.href)
+      url.searchParams.set('tab', targetTab)
+      window.history.pushState({ tab: targetTab, boutiqueManage: true }, '', url.toString())
+    }
     setTab(targetTab)
+  }
+
+  // Écouteur popstate pour que le bouton retour du navigateur / smartphone revienne entre les onglets sans quitter la boutique
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === 'undefined') return
+      const url = new URL(window.location.href)
+      const currentTab = (url.searchParams.get('tab') as ManageTab) || 'dashboard'
+      if (validTabs.includes(currentTab)) {
+        setTab(currentTab)
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  const handleNavigateFromDashboard = (targetTab: ManageTab, subTab?: string) => {
+    handleNavigateTab(targetTab, subTab)
   }
 
   // Auto-expand advanced nav if the initial tab is in the advanced section
@@ -4419,9 +4518,23 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
             <button
               type="button"
-              onClick={onBack}
+              onClick={() => {
+                if (tab !== 'dashboard') {
+                  handleNavigateTab('dashboard')
+                } else if (hasMultipleBoutiques) {
+                  onBack()
+                } else {
+                  router.push('/compte')
+                }
+              }}
               className="bq-back-btn"
-              title="Retourner à la liste de mes boutiques"
+              title={
+                tab !== 'dashboard'
+                  ? "Retourner à l'accueil de la boutique"
+                  : hasMultipleBoutiques
+                    ? "Retourner à la liste de mes boutiques"
+                    : "Retourner à mon compte"
+              }
               style={{
                 background: '#ffffff',
                 border: '1.5px solid #E2E8F0',
@@ -4443,7 +4556,13 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              <span>{t('shop.myShopsBack') || 'Mes Boutiques'}</span>
+              <span>
+                {tab !== 'dashboard'
+                  ? 'Accueil Boutique'
+                  : hasMultipleBoutiques
+                    ? ((t as any)('shop.myShopsBack') || 'Mes Boutiques')
+                    : 'Mon Compte'}
+              </span>
             </button>
 
             <button
@@ -4645,10 +4764,7 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                   return (
                     <button
                       key={item.key}
-                      onClick={() => {
-                        if (item.key === 'compta') setSubTabCompta('bilan')
-                        setTab(item.key)
-                      }}
+                      onClick={() => handleNavigateTab(item.key)}
                       className={`bq-nav-item${isActive ? ' active' : ''}`}
                       style={{
                         opacity: allowed ? 1 : 0.85,
@@ -4720,6 +4836,60 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             />
             <span>{showAdvancedNav ? 'Masquer les options avancées' : 'Plus d\'options (comptabilité, rapports...)'}</span>
           </button>
+
+          {/* Panneau dépliable interactif visible également sur mobile lorsque showAdvancedNav est actif */}
+          {showAdvancedNav && (
+            <div className="bq-advanced-mobile-panel" style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {NAV_ADVANCED.map((group, gIdx) => (
+                <div key={gIdx} style={{ background: '#FAF8F5', border: '1px solid #E8DDD2', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontSize: 11, fontWeight: 800, color: 'var(--navy)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <group.icon size={13} style={{ color: 'var(--accent, #C75B00)' }} />
+                    <span>{group.title}</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 6 }}>
+                    {group.items.map(item => {
+                      const allowed = isAllowed(item.minPlan)
+                      const isActive = tab === item.key
+                      const ItemIcon = item.icon
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => handleNavigateTab(item.key)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '8px 10px',
+                            borderRadius: 8,
+                            fontSize: 12,
+                            fontWeight: isActive ? 800 : 600,
+                            color: isActive ? '#C75B00' : 'var(--navy)',
+                            background: isActive ? '#FFF3E8' : '#ffffff',
+                            border: isActive ? '1.5px solid #C75B00' : '1px solid #E2E8F0',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            boxShadow: isActive ? '0 2px 6px rgba(199,91,0,0.15)' : '0 1px 2px rgba(0,0,0,0.03)',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <ItemIcon size={14} style={{ color: isActive ? '#C75B00' : '#64748B', flexShrink: 0 }} />
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>
+                            {item.label}
+                          </span>
+                          {!allowed && (
+                            <span style={{ fontSize: 8.5, background: item.minPlan === 'business' ? '#1C2B4A' : '#C75B00', color: '#fff', padding: '1px 4px', borderRadius: 3, fontWeight: 800 }}>
+                              🔒
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Nav Mobile — Bottom-Sheet (remplace les 2 niveaux de pills) */}
@@ -4731,16 +4901,14 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
         <BoutiqueMobileBottomSheet
           navGroups={NAV_GROUPS}
           activeTab={tab}
-          onSetTab={(newTab) => {
-            if (newTab === 'compta') setSubTabCompta('bilan')
-            setTab(newTab)
-          }}
+          onSetTab={(newTab) => handleNavigateTab(newTab)}
           isAllowed={isAllowed}
           nbEnAttente={nbEnAttente}
           formatNumber={formatNumber}
           sheetTitle={boutique.nom}
           onBack={onBack}
           boutiqueId={boutique.id}
+          hasMultipleBoutiques={hasMultipleBoutiques}
         />
 
         {/* Liens rapides (Desktop seulement) */}
@@ -4993,10 +5161,15 @@ export default function BoutiqueClient({
       if (tabParam && tabParam !== 'caisse' && listToSearch.length > 0) {
         return { managing: listToSearch[0] }
       }
+
+      // 4. Si le marchand n'a qu'une seule boutique et arrive sur /boutique : ouverture directe du dashboard de sa boutique
+      if (listToSearch.length === 1 && prevMode === 'list' && !searchParams.get('list')) {
+        return { managing: listToSearch[0] }
+      }
       
       return prevMode
     })
-  }, [manageId, tabParam, lockedParam, boutiquesList, boutiques])
+  }, [manageId, tabParam, lockedParam, boutiquesList, boutiques, searchParams])
 
   // ── Préchargement Global (Offline Sync) ───────────────────────────────────────────────
   // Charge toutes les données (catalogue, historique caisse, clients) en arrière-plan
@@ -5069,10 +5242,10 @@ export default function BoutiqueClient({
               }).catch(() => {});
 
           } catch (e) {
-            console.warn("Erreur préchargement background pour boutique", b.id, e);
+            console.error('[Preload Offline] Erreur préchargement boutique', b.id, e);
           }
         });
-      }, 1200);
+      }, 2500);
 
       return () => clearTimeout(preloadTimer);
     }
@@ -5122,6 +5295,7 @@ export default function BoutiqueClient({
           boutique={mode.managing}
           planActif={planActifEffectif ?? null}
           initialTab={tabParam ?? undefined}
+          hasMultipleBoutiques={boutiquesList.length > 1}
           onBack={() => {
             if (typeof window !== 'undefined') {
               const url = new URL(window.location.href)

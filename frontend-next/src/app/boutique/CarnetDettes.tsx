@@ -68,6 +68,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [loading, setLoading] = useState(true)
   const [recherche, setRecherche] = useState('')
   const [filtreStatus, setFiltreStatus] = useState<'tous' | 'retard' | 'credits'>('tous')
+  const [isMobile, setIsMobile] = useState(false)
   
   // Client sélectionné & Historique
   const [clientSelectionne, setClientSelectionne] = useState<ClientCredit | null>(null)
@@ -76,6 +77,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
   // Modales & Menus contextuels
   const [menuOuvertClientId, setMenuOuvertClientId] = useState<string | null>(null)
+  const [showMenuOptionsDettes, setShowMenuOptionsDettes] = useState(false)
   const [showModalNouveauClient, setShowModalNouveauClient] = useState(false)
   const [showModalEditClient, setShowModalEditClient] = useState(false)
   const [showModalTransaction, setShowModalTransaction] = useState(false)
@@ -87,10 +89,14 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       if (!target.closest('.npl-dropdown')) {
         setMenuOuvertClientId(null)
       }
+      if (!target.closest('.npl-dettes-options-dropdown')) {
+        setShowMenuOptionsDettes(false)
+      }
     }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setMenuOuvertClientId(null)
+        setShowMenuOptionsDettes(false)
         setShowModalNouveauClient(false)
         setShowModalEditClient(false)
         setShowModalTransaction(false)
@@ -104,6 +110,23 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [])
+
+  // Gestion fluide de l'historique mobile pour la fiche client (le geste retour referme la fiche sans quitter la boutique)
+  useEffect(() => {
+    if (!clientSelectionne || !isMobile) return
+    const onPop = () => {
+      setClientSelectionne(null)
+    }
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ clientDetail: true }, '')
+      window.addEventListener('popstate', onPop)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('popstate', onPop)
+      }
+    }
+  }, [clientSelectionne?.id, isMobile])
 
   // Formulaire Client (Création)
   const [nomClient, setNomClient] = useState('')
@@ -411,8 +434,6 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   }
 
   // Détection réactive de la largeur d'écran (Mobile < 768px)
-  const [isMobile, setIsMobile] = useState(false)
-
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
@@ -1038,113 +1059,202 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             </div>
           </div>
 
-          {/* Barre d'outils responsive fluide (Hiérarchie visuelle Stripe / Square) */}
+          {/* Barre d'outils responsive épurée : 2 boutons majeurs + 1 menu compact [⋯ Plus ▾] */}
           <div style={{
             display: 'flex',
-            flexDirection: 'column',
+            alignItems: 'center',
             gap: 8,
             width: isMobile ? '100%' : 'auto',
-            minWidth: 0
           }}>
-            {/* Ligne 1 : Boutons d'Action Principaux (Grandes cibles tactiles 44px, texte complet) */}
-            <div style={{ display: 'flex', gap: 8, width: '100%', flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
+            <button
+              onClick={() => ouvrirModalTransaction('vente_credit')}
+              className="npl-btn npl-btn-primary"
+              style={{
+                flex: isMobile ? 1.2 : 'initial',
+                minHeight: 42,
+                padding: '8px 14px',
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                whiteSpace: 'nowrap',
+                background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
+                color: '#ffffff',
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
+                cursor: 'pointer'
+              }}
+            >
+              <span>⚡</span>
+              <span>+ Vente crédit</span>
+            </button>
+
+            <button
+              onClick={() => setShowModalNouveauClient(true)}
+              className="npl-btn npl-btn-secondary"
+              style={{
+                flex: isMobile ? 1 : 'initial',
+                minHeight: 42,
+                padding: '8px 14px',
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                whiteSpace: 'nowrap',
+                background: 'var(--navy, #1C2B4A)',
+                color: '#ffffff',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <span>👤</span>
+              <span>+ Client</span>
+            </button>
+
+            {/* Menu Déroulant [⋯ Plus ▾] pour QR, Import CSV, Exports */}
+            <div className="npl-dettes-options-dropdown" style={{ position: 'relative' }}>
               <button
-                onClick={() => ouvrirModalTransaction('vente_credit')}
-                className="npl-btn npl-btn-primary"
+                type="button"
+                onClick={() => setShowMenuOptionsDettes(!showMenuOptionsDettes)}
                 style={{
-                  flex: isMobile ? 1.2 : 'initial',
-                  minHeight: 44,
-                  padding: '10px 16px',
+                  minHeight: 42,
+                  padding: '8px 12px',
                   borderRadius: 10,
-                  fontSize: 13,
-                  fontWeight: 800,
+                  fontSize: 12.5,
+                  fontWeight: 750,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  whiteSpace: 'nowrap',
-                  background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
-                  color: '#ffffff',
-                  border: 'none',
-                  boxShadow: '0 3px 10px rgba(199, 91, 0, 0.25)',
-                  cursor: 'pointer'
+                  gap: 4,
+                  background: showMenuOptionsDettes ? '#e2e8f0' : '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  color: 'var(--navy, #1C2B4A)',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                 }}
+                title="Options et exports du carnet"
               >
-                <span>⚡</span>
-                <span>+ Vente crédit</span>
+                <span>⋯ Plus</span>
+                <span style={{ fontSize: 10 }}>▾</span>
               </button>
 
-              <button
-                onClick={() => setShowModalNouveauClient(true)}
-                className="npl-btn npl-btn-secondary"
-                style={{
-                  flex: isMobile ? 1 : 'initial',
-                  minHeight: 44,
-                  padding: '10px 16px',
-                  borderRadius: 10,
-                  fontSize: 13,
-                  fontWeight: 800,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  whiteSpace: 'nowrap',
-                  background: 'var(--navy, #1C2B4A)',
-                  color: '#ffffff',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                <span>👤</span>
-                <span>+ Client</span>
-              </button>
-            </div>
+              {showMenuOptionsDettes && (
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '100%',
+                  marginTop: 6,
+                  width: 220,
+                  background: '#ffffff',
+                  borderRadius: 12,
+                  boxShadow: '0 10px 28px rgba(0,0,0,0.15)',
+                  border: '1px solid #e2e8f0',
+                  padding: '6px',
+                  zIndex: 50,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => { setShowMenuOptionsDettes(false); setShowQrModalComptoir(true); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: '#1e293b',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <span>📱</span>
+                    <span>QR Client Comptoir</span>
+                  </button>
 
-            {/* Ligne 2 : Actions secondaires et Utilitaires */}
-            <div style={{
-              display: 'flex',
-              gap: 6,
-              width: '100%',
-            }}>
-              <button
-                onClick={() => setShowQrModalComptoir(true)}
-                className="npl-btn npl-btn-secondary"
-                title="QR Code Client"
-                style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', cursor: 'pointer' }}
-              >
-                <span>📱</span>
-                <span style={{ whiteSpace: 'nowrap' }}>QR Client</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowMenuOptionsDettes(false); setShowModalImportClients(true); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: '#1d4ed8',
+                      background: '#eff6ff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <span>📥</span>
+                    <span>Importer CSV / Excel</span>
+                  </button>
 
-              <button
-                onClick={() => setShowModalImportClients(true)}
-                className="npl-btn npl-btn-secondary"
-                title="Importer des clients et dettes depuis un fichier Excel ou CSV"
-                style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8', cursor: 'pointer' }}
-              >
-                <span>📥</span>
-                <span style={{ whiteSpace: 'nowrap' }}>Import CSV</span>
-              </button>
+                  <div style={{ height: 1, background: '#f1f5f9', margin: '3px 0' }} />
 
-              <button
-                onClick={handleExportCSV}
-                className="npl-btn npl-btn-secondary"
-                title={t('common.exportCsv')}
-                style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', cursor: 'pointer' }}
-              >
-                <span>📊</span>
-                <span style={{ whiteSpace: 'nowrap' }}>CSV</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowMenuOptionsDettes(false); handleExportCSV(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: '#166534',
+                      background: '#f0fdf4',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <span>📊</span>
+                    <span>{t('common.exportCsv')}</span>
+                  </button>
 
-              <button
-                onClick={handleExportPDF}
-                className="npl-btn npl-btn-secondary"
-                title={t('common.exportPdf')}
-                style={{ flex: 1, minHeight: 38, padding: '6px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#1e293b', cursor: 'pointer' }}
-              >
-                <span>🖨️</span>
-                <span style={{ whiteSpace: 'nowrap' }}>PDF</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowMenuOptionsDettes(false); handleExportPDF(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: '#475569',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <span>🖨️</span>
+                    <span>{t('common.exportPdf')} (Registre)</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1678,7 +1788,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             {/* Bouton Retour Liste sur Mobile */}
             {isMobile && (
               <button
-                onClick={() => setClientSelectionne(null)}
+                onClick={() => {
+                  setClientSelectionne(null)
+                  if (typeof window !== 'undefined' && window.history.state?.clientDetail) {
+                    window.history.back()
+                  }
+                }}
                 style={{
                   background: '#f1f5f9',
                   border: '1px solid #cbd5e1',
