@@ -349,34 +349,69 @@ export default function SocialShopManager({
     }
   }
 
-  // 1.E. Forcer la synchronisation d'un compte
+  // 1.E. Synchroniser un compte officiel -> Déclenche l'exploration et permet de SÉLECTIONNER les publications à importer
   async function handleSyncAccount(acc: SocialAccountAdmin) {
     try {
       setSyncingAccountId(acc.id)
       setMessage(null)
+      setImportMode('profile')
+      setProfilePlatform(acc.plateforme as any)
+      setProfileUsername(acc.nom_compte)
+
+      // Scroll doux automatique vers la section de sélection
+      setTimeout(() => {
+        document.getElementById('social-selection-section')?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+
+      setExploringProfile(true)
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/sync-account/${acc.id}`, {
+      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/explore-profile`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          plateforme: acc.plateforme,
+          username: acc.nom_compte.trim(),
+        }),
       })
 
       const data = await res.json()
       if (!res.ok) {
-        setMessage({ type: 'error', text: data.error || 'Erreur synchronisation compte' })
+        setMessage({ type: 'error', text: data.error || 'Impossible d\'explorer ce profil' })
         return
       }
 
-      setMessage({
-        type: 'success',
-        text: `🔄 Compte @${acc.nom_compte} synchronisé ! ${data.new_posts_imported} nouveau(x) post(s) rapatrié(s).`,
+      const found: DiscoveredPost[] = data.posts || []
+      setDiscoveredPosts(found)
+
+      const initialSelected = new Set<string>()
+      found.forEach(p => {
+        if (!p.is_already_imported) {
+          initialSelected.add(p.url)
+        }
       })
-      await loadAdminData()
+      setSelectedDiscoveredUrls(initialSelected)
+
+      if (found.length > 0) {
+        setMessage({
+          type: 'success',
+          text: `✨ Synchronisation pour @${acc.nom_compte} : ${found.length} publication(s) trouvée(s). Cochez celles que vous souhaitez ajouter à votre boutique ci-dessous :`,
+        })
+      } else {
+        setMessage({
+          type: 'error',
+          text: `Aucune publication trouvée automatiquement pour @${acc.nom_compte}. Vous pouvez coller directement les liens de vos vidéos dans l'onglet "Coller plusieurs liens".`,
+        })
+      }
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Erreur lors de la synchronisation' })
     } finally {
       setSyncingAccountId(null)
+      setExploringProfile(false)
     }
   }
 
@@ -786,19 +821,21 @@ export default function SocialShopManager({
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: 4,
+                            gap: 5,
                             background: '#dcfce7',
                             color: '#15803d',
-                            border: '1px solid #86efac',
-                            borderRadius: 6,
-                            padding: '3px 8px',
-                            fontSize: 11,
+                            border: '1.5px solid #86efac',
+                            borderRadius: 8,
+                            padding: '4px 10px',
+                            fontSize: 11.5,
                             fontWeight: 800,
                             cursor: syncingAccountId === acc.id ? 'not-allowed' : 'pointer',
+                            boxShadow: '0 1px 3px rgba(21,128,61,0.1)',
                           }}
+                          title="Découvrir les publications de ce compte et choisir lesquelles ajouter"
                         >
                           <RefreshCw size={11} className={syncingAccountId === acc.id ? 'spin' : ''} />
-                          <span>{syncingAccountId === acc.id ? 'Sync…' : 'Synchroniser'}</span>
+                          <span>{syncingAccountId === acc.id ? 'Recherche…' : '🔄 Synchroniser & Choisir'}</span>
                         </button>
                       </div>
                     )}
@@ -811,12 +848,15 @@ export default function SocialShopManager({
       </div>
 
       {/* ── SECTION 2 : ACQUISITION DE PUBLICATIONS (3 MODES AU CHOIX) ── */}
-      <div style={{
-        background: '#ffffff',
-        borderRadius: 16,
-        padding: '24px',
-        border: '1px solid #e2e8f0',
-      }}>
+      <div
+        id="social-selection-section"
+        style={{
+          background: '#ffffff',
+          borderRadius: 16,
+          padding: '24px',
+          border: '1px solid #e2e8f0',
+        }}
+      >
         <div style={{ marginBottom: 16 }}>
           <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
             2. Ajouter du contenu à votre Social Shop
@@ -1013,6 +1053,44 @@ export default function SocialShopManager({
             {/* Grille des publications découvertes à cocher */}
             {discoveredPosts.length > 0 && (
               <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 14, padding: '16px', background: '#f8fafc' }}>
+                {/* Bandeau d'aide et raccourci Multi-liens */}
+                <div style={{
+                  background: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  borderRadius: 10,
+                  padding: '10px 14px',
+                  marginBottom: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 10,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#0369a1' }}>
+                    <Sparkles size={16} style={{ flexShrink: 0 }} />
+                    <span>
+                      <strong>Cochez les publications</strong> ci-dessous que vous voulez ajouter à votre boutique. Vous pouvez aussi coller directement les liens de vos vidéos TikTok/Instagram/Facebook :
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setImportMode('batch')}
+                    style={{
+                      background: '#0284c7',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '6px 12px',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    📋 Coller des liens de vidéos
+                  </button>
+                </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>

@@ -128,8 +128,20 @@ async function fetchOEmbedMetadata(url, platform) {
       result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
     }
   } else if (platform === 'facebook') {
-    result.mediaType = 'POST';
-    result.embedHtml = `<div class="fb-post" data-href="${url}" data-width="100%"></div>`;
+    const isVideoOrReel = /\/(reel|videos|watch)/i.test(url);
+    const isPage = !isVideoOrReel && !/\/(posts|photos|story\.php|permalink\.php)/i.test(url);
+    result.mediaType = isVideoOrReel ? 'REEL' : 'POST';
+
+    let fbPluginUrl = '';
+    if (isVideoOrReel) {
+      fbPluginUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=`;
+    } else if (isPage) {
+      fbPluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(url)}&tabs=timeline&width=380&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId=`;
+    } else {
+      fbPluginUrl = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=`;
+    }
+
+    result.embedHtml = `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
   } else if (platform === 'youtube') {
     result.mediaType = 'VIDEO';
     let videoId = null;

@@ -163,6 +163,25 @@ export default function SocialShopFeed({
     }
   }, [activePostId, posts])
 
+  // Hydratation dynamique du script officiel TikTok Falcon Embed lors de l'ouverture du modal
+  useEffect(() => {
+    if (selectedPost?.plateforme === 'tiktok') {
+      const existingScript = document.getElementById('tiktok-embed-script')
+      if (existingScript) existingScript.remove()
+
+      const script = document.createElement('script')
+      script.id = 'tiktok-embed-script'
+      script.src = 'https://www.tiktok.com/embed.js'
+      script.async = true
+      document.body.appendChild(script)
+
+      return () => {
+        const s = document.getElementById('tiktok-embed-script')
+        if (s) s.remove()
+      }
+    }
+  }, [selectedPost])
+
   // Filtrage des publications
   const filteredPosts = useMemo(() => {
     if (activeFilter === 'all') return posts
@@ -203,12 +222,43 @@ export default function SocialShopFeed({
       msg += `🛍️ Produit : *${produit.nom}*\n`
       if (produit.prix) msg += `💰 Prix : *${fcfa(produit.prix)}*\n`
     } else {
-      msg += `J'ai vu votre publication ${post.plateforme.toUpperCase()} sur votre Social Shop Nopalou :\n`
+      msg += `Je souhaite commander l'article présenté dans votre publication ${post.plateforme.toUpperCase()} :\n`
+      if (post.caption) {
+        const cleanCaption = post.caption.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim()
+        if (cleanCaption) {
+          msg += `📝 Référence / Description : *${cleanCaption.slice(0, 120)}${cleanCaption.length > 120 ? '...' : ''}*\n`
+        }
+      }
     }
-    msg += `🔗 Lien : ${postLink}\n`
-    msg += `Est-ce toujours disponible ? Merci !`
+    msg += `🔗 Lien de la publication : ${postLink}\n`
+    msg += `Est-ce toujours disponible et quel est son prix avec livraison ? Merci !`
 
     return `https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`
+  }
+
+  // Obtenir le code HTML d'embed optimisé avec iframe officielle pour Facebook
+  function getRenderableEmbedHtml(post: SocialPost): string {
+    if (!post.embed_html) return ''
+
+    // Cas Facebook : si l'embed contient l'ancien format xfbml <div class="fb-post" ou n'a pas d'iframe
+    if (post.plateforme === 'facebook' && (post.embed_html.includes('fb-post') || !post.embed_html.includes('<iframe'))) {
+      const url = post.post_url
+      const isVideoOrReel = /\/(reel|videos|watch)/i.test(url)
+      const isPage = !isVideoOrReel && !/\/(posts|photos|story\.php|permalink\.php)/i.test(url)
+      
+      let fbPluginUrl = ''
+      if (isVideoOrReel) {
+        fbPluginUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=`
+      } else if (isPage) {
+        fbPluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(url)}&tabs=timeline&width=380&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId=`
+      } else {
+        fbPluginUrl = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=`
+      }
+
+      return `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`
+    }
+
+    return post.embed_html
   }
 
   return (
@@ -632,11 +682,46 @@ export default function SocialShopFeed({
                     </button>
                   </div>
                 ) : (
-                  <div style={{ padding: '8px 12px', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Découvrir la vidéo</span>
-                    <span style={{ fontSize: 11, color: '#C75B00', fontWeight: 800, display: 'flex', alignItems: 'center' }}>
-                      Voir <ChevronRight size={12} />
-                    </span>
+                  <div style={{ padding: '8px 12px', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: 11, color: '#15803d', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', flexShrink: 0 }} />
+                        Commande directe
+                      </p>
+                      <p style={{ margin: 0, fontSize: 10, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Non listé au catalogue
+                      </p>
+                    </div>
+                    {whatsappNumber ? (
+                      <a
+                        href={getWhatsAppUrlForPost(post) || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          background: '#25d366',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 8,
+                          padding: '5px 10px',
+                          fontSize: 11,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          flexShrink: 0,
+                          textDecoration: 'none',
+                          boxShadow: '0 2px 6px rgba(37,211,102,0.25)',
+                        }}
+                      >
+                        <MessageCircle size={12} /> Commander
+                      </a>
+                    ) : (
+                      <span style={{ fontSize: 11, color: '#C75B00', fontWeight: 800, display: 'flex', alignItems: 'center' }}>
+                        Voir <ChevronRight size={12} />
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -718,8 +803,19 @@ export default function SocialShopFeed({
               {selectedPost.embed_html ? (
                 <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 8 }}>
                   <div
-                    style={{ width: '100%', height: '100%', minHeight: 460, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    dangerouslySetInnerHTML={{ __html: selectedPost.embed_html }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      minHeight: 460,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: (selectedPost.plateforme === 'tiktok' || selectedPost.plateforme === 'facebook') ? '#ffffff' : 'transparent',
+                      borderRadius: (selectedPost.plateforme === 'tiktok' || selectedPost.plateforme === 'facebook') ? 12 : 0,
+                      overflow: 'hidden',
+                      padding: (selectedPost.plateforme === 'tiktok' || selectedPost.plateforme === 'facebook') ? '8px 4px' : 0,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: getRenderableEmbedHtml(selectedPost) }}
                   />
                   <div style={{ padding: '8px 12px', textAlign: 'center' }}>
                     <a
@@ -730,14 +826,14 @@ export default function SocialShopFeed({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 6,
-                        color: '#94a3b8',
-                        fontSize: 12,
+                        color: selectedPost.plateforme === 'tiktok' ? '#38bdf8' : '#94a3b8',
+                        fontSize: 12.5,
                         fontWeight: 700,
                         textDecoration: 'none',
                       }}
                     >
-                      <span>Ouvrir sur {selectedPost.plateforme === 'instagram' ? 'Instagram' : selectedPost.plateforme}</span>
-                      <ExternalLink size={12} />
+                      <span>Ouvrir sur {selectedPost.plateforme === 'instagram' ? 'Instagram' : selectedPost.plateforme === 'tiktok' ? 'TikTok' : selectedPost.plateforme === 'facebook' ? 'Facebook' : 'YouTube'}</span>
+                      <ExternalLink size={13} />
                     </a>
                   </div>
                 </div>
@@ -884,26 +980,82 @@ export default function SocialShopFeed({
                 </div>
 
                 {selectedPost.produits_associes.length === 0 ? (
-                  <div style={{ background: '#f8fafc', borderRadius: 12, padding: '16px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-                    <p style={{ margin: '0 0 10px', fontSize: 13, color: '#64748b' }}>
-                      Aucun produit spécifique n&apos;est directement rattaché à ce média.
-                    </p>
+                  <div style={{
+                    background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                    borderRadius: 16,
+                    padding: '20px 18px',
+                    border: '1.5px solid #86efac',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 12,
+                    boxShadow: '0 4px 14px rgba(34,197,94,0.08)',
+                  }}>
+                    <div style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: '50%',
+                      background: '#25d366',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(37,211,102,0.3)',
+                    }}>
+                      <MessageCircle size={24} />
+                    </div>
+
+                    <div>
+                      <h4 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 900, color: '#14532d' }}>
+                        Commander cet article directement
+                      </h4>
+                      <p style={{ margin: 0, fontSize: 12.5, color: '#166534', lineHeight: 1.45 }}>
+                        Cet article n&apos;est pas encore lié au catalogue, mais vous pouvez le <strong>commander immédiatement par WhatsApp</strong> auprès de la boutique !
+                      </p>
+                    </div>
+
+                    {whatsappNumber ? (
+                      <a
+                        href={getWhatsAppUrlForPost(selectedPost) || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          background: '#25d366',
+                          color: '#ffffff',
+                          padding: '12px 20px',
+                          borderRadius: 12,
+                          fontSize: 13.5,
+                          fontWeight: 900,
+                          textDecoration: 'none',
+                          boxShadow: '0 4px 14px rgba(37,211,102,0.35)',
+                          width: '100%',
+                        }}
+                      >
+                        <MessageCircle size={18} /> Commander par WhatsApp Direct
+                      </a>
+                    ) : (
+                      <span style={{ fontSize: 12, color: '#64748b' }}>Numéro WhatsApp non renseigné</span>
+                    )}
+
                     <Link
                       href={`/boutiques/${boutiqueKey}`}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 6,
-                        background: '#0f172a',
-                        color: '#fff',
-                        padding: '8px 14px',
-                        borderRadius: 8,
+                        color: '#15803d',
                         fontSize: 12,
                         fontWeight: 700,
-                        textDecoration: 'none',
+                        textDecoration: 'underline',
+                        marginTop: 2,
                       }}
                     >
-                      <Store size={14} /> Explorer le catalogue complet
+                      <Store size={13} /> Ou explorer le catalogue complet
                     </Link>
                   </div>
                 ) : (
@@ -1016,21 +1168,22 @@ export default function SocialShopFeed({
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      background: '#f0fdf4',
-                      color: '#16a34a',
-                      border: '1.5px solid #bbf7d0',
+                      background: selectedPost.produits_associes.length === 0 ? '#25d366' : '#f0fdf4',
+                      color: selectedPost.produits_associes.length === 0 ? '#ffffff' : '#16a34a',
+                      border: selectedPost.produits_associes.length === 0 ? 'none' : '1.5px solid #bbf7d0',
                       borderRadius: 12,
-                      padding: '10px 14px',
+                      padding: '12px 16px',
                       textDecoration: 'none',
-                      fontSize: 13,
-                      fontWeight: 800,
+                      fontSize: 13.5,
+                      fontWeight: 900,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 8,
+                      boxShadow: selectedPost.produits_associes.length === 0 ? '0 4px 14px rgba(37,211,102,0.3)' : 'none',
                     }}
                   >
-                    <MessageCircle size={16} /> Discuter de cette publication sur WhatsApp
+                    <MessageCircle size={18} /> {selectedPost.produits_associes.length === 0 ? 'Commander cet article par WhatsApp Direct' : 'Discuter de cette publication sur WhatsApp'}
                   </a>
                 )}
 
@@ -1041,22 +1194,22 @@ export default function SocialShopFeed({
                     setSelectedPost(null)
                   }}
                   style={{
-                    background: '#C75B00',
-                    color: '#fff',
-                    border: 'none',
+                    background: selectedPost.produits_associes.length === 0 ? '#f8fafc' : '#C75B00',
+                    color: selectedPost.produits_associes.length === 0 ? '#475569' : '#fff',
+                    border: selectedPost.produits_associes.length === 0 ? '1px solid #cbd5e1' : 'none',
                     borderRadius: 12,
-                    padding: '12px 16px',
-                    fontSize: 13.5,
-                    fontWeight: 900,
+                    padding: '11px 16px',
+                    fontSize: 13,
+                    fontWeight: 800,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 8,
-                    boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
+                    boxShadow: selectedPost.produits_associes.length === 0 ? 'none' : '0 4px 14px rgba(199,91,0,0.25)',
                   }}
                 >
-                  <ShoppingCart size={16} /> Voir mon Panier d&apos;Achats
+                  <ShoppingCart size={15} /> Voir mon Panier d&apos;Achats
                 </button>
               </div>
             </div>

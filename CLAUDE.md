@@ -1,3 +1,72 @@
+- **Résolution : Sélection Interactive des Publications après Synchronisation & Rendu des Embeds Facebook (`SocialShopManager.tsx`, `social-parser.js`, `SocialShopFeed.tsx`) (08 septembre 2026)** 🔄☑️📘📱✨ :
+  * **🎯 1. Demandes Utilisateur & Diagnostic** :
+    - *Demande 1 — « et après synchro je devais sélectionner les pub que je veux ajouter »* :
+      * Dans `SocialShopManager.tsx`, le bouton « Synchroniser » de la section 1 exécutait auparavant un import direct en arrière-plan sans présenter la liste des publications à cocher/décocher.
+      * Le commerçant s'attendait à ce que la synchronisation d'un profil (@nopalousn, @dieteltouba, khadim.amar.52) explore le compte et lui permette de CHOISIR visuellement avec des cases à cocher les publications à ajouter à sa boutique.
+    - *Demande 2 — « Même problème pour Facebook et aucune pub récupérée » (Écran noir dans le lecteur modal)* :
+      * Pour Facebook, l'embed HTML était généré sous la forme `<div class="fb-post" data-href="..." data-width="100%"></div>`.
+      * En React, cette balise XFBML ne s'exécute pas sans le SDK Facebook client (`FB.XFBML.parse()`), provoquant un blocage d'affichage (hauteur 0px sur fond noir).
+      * De plus, les profils ou pages Facebook requièrent l'iframe officielle du plugin Facebook (`plugins/page.php`, `plugins/video.php` ou `plugins/post.php`).
+  * **🛠️ 2. Correctifs Appliqués** :
+    - *Workflow de Synchronisation & Sélection Interactive (`SocialShopManager.tsx`)* :
+      * Transformation du bouton « Synchroniser » en **« 🔄 Synchroniser & Choisir »**.
+      * Au clic sur un compte connecté, l'application bascule automatiquement en mode exploration (`explore-profile`), fait défiler l'écran de manière fluide vers la grille de sélection, et affiche les publications trouvées avec des cases à cocher `[x]`.
+      * Toutes les nouvelles publications sont pré-cochées par défaut, avec options « Tout cocher » et « Tout décocher ».
+      * Ajout d'un bandeau d'assistance intégrant un raccourci direct **« 📋 Coller des liens de vidéos »** vers l'import en lot pour contourner facilement les restrictions anti-scraping anonymes imposées par TikTok/Facebook sans API payante.
+      * Bouton d'action proéminent : **« 🚀 Valider et Importer les (X) publications sélectionnées »**.
+    - *Résolution Définitive de l'Écran Noir Facebook (`social-parser.js` & `SocialShopFeed.tsx`)* :
+      * Dans `backend/services/social-parser.js` : génération d'iframes officielles Facebook natives avec détection automatique du type de contenu :
+        - Vidéos et Reels : `https://www.facebook.com/plugins/video.php`
+        - Pages Facebook : `https://www.facebook.com/plugins/page.php?tabs=timeline`
+        - Publications et photos : `https://www.facebook.com/plugins/post.php`
+      * Dans `SocialShopFeed.tsx` : ajout de la fonction `getRenderableEmbedHtml(post)` qui convertit dynamiquement à la volée tout ancien tag `<div class="fb-post">` en iframe officielle, garantissant que même les publications déjà en base de données s'affichent instantanément sans écran noir.
+      * Application d'un conteneur blanc à coins arrondis pour le lecteur Facebook et TikTok.
+  * **🧪 3. Validation & Invariants** :
+    - Compilation TypeScript `npx tsc --noEmit` validée avec **0 erreur**.
+    - 27/27 tests unitaires `tests/unit/social-shop.test.js` passés avec succès.
+    - Règle absolue respectée : **aucun git push sans commande explicite de l'utilisateur**.
+
+- **Résolution : Affichage & Hydratation des Embeds TikTok & Explication Sync Profil (`SocialShopFeed.tsx`, `middleware.ts`) (08 septembre 2026)** 🎵🛡️📱✨ :
+  * **🎯 1. Diagnostic des 2 Questions Rapportées par l'Utilisateur** :
+    - *Question 1 — « TikTok ne s'affiche pas » (Fond noir avec simple texte @pseudo)* :
+      1. Dans `frontend-next/src/app/boutiques/[id]/SocialShopFeed.tsx`, TikTok génère un bloc HTML `<blockquote class="tiktok-embed" cite="...">` avec un tag `<script async src="https://www.tiktok.com/embed.js"></script>`. En React, l'injection via `dangerouslySetInnerHTML` **n'exécute jamais les balises `<script>`**, laissant le bloc à l'état brut sans transformation en widget interactif.
+      2. De plus, dans `frontend-next/src/middleware.ts`, la CSP ne contenait pas les domaines de sous-ressources TikTok (`*.tiktokcdn.com`, `*.ttwstatic.com` vers lequel `https://www.tiktok.com/embed.js` redirige en 302 vers `sf16-website-login.neutral.ttwstatic.com`), provoquant le blocage par le navigateur.
+    - *Question 2 — « Pourquoi un seul produit est récupéré après synchro par réseaux sociaux »* :
+      1. Lors de la synchronisation par nom d'utilisateur (`@nopalousn` ou `@dieteltouba`), les APIs publiques oEmbed de TikTok et Meta ne permettent pas à des serveurs tiers d'aspirer anonymement la liste des vidéos privées/publiques d'un utilisateur par un simple `@pseudo`.
+      2. La synchronisation de profil enregistre donc **la carte de profil officielle du créateur** pour le compte connecté.
+      3. Pour importer les 10, 18 ou 20 vidéos spécifiques du marchand avec leurs miniatures HD et leurs liens produits, le commerçant utilise l'outil dédié **« 📋 L'Import en lot multi-liens »** en collant les URLs de ses vidéos.
+  * **🛠️ 2. Correctifs Appliqués** :
+    - *Hydratation Dynamique du Script TikTok Falcon Embed (`SocialShopFeed.tsx`)* :
+      * Ajout d'un `useEffect` injectant et instanciant dynamiquement le script officiel `https://www.tiktok.com/embed.js` dans le DOM lors de la sélection d'une publication TikTok.
+      * Encapsulation du conteneur TikTok dans un cadre à fond blanc propre avec coins arrondis pour révéler fidèlement le rendu du widget.
+    - *Autorisation CSP Étendue (`middleware.ts`)* :
+      * Déclaration de `https://*.tiktok.com https://*.tiktokcdn.com https://*.ttwstatic.com` dans `script-src`, `connect-src` et `frame-src`.
+  * **🧪 3. Validation & Tests** :
+    - Compilation TypeScript `npx tsc --noEmit` validée avec **0 erreur** (code 0).
+    - Tests unitaires `tests/unit/social-shop.test.js` passés à 100%.
+    - Aucun git push sans ordre explicite de l'utilisateur.
+
+- **Fonctionnalité Clé : Commande WhatsApp Direct pour Publications sans Produits Catalogue (`SocialShopFeed.tsx`) (08 septembre 2026)** 💬🛍️⚡📱 :
+  * **🎯 1. Demande & Objectif Produit** :
+    - Lorsqu'une vidéo ou publication sociale importée (Reel Instagram, TikTok, Facebook) n'a aucun produit spécifique rattaché à son catalogue web, l'acheteur doit pouvoir la **commander immédiatement par WhatsApp Direct** sans friction.
+    - Élimination des états morts ou impasses (qui affichaient un simple texte passif *"Aucun produit rattaché"* et contraignaient l'acheteur à chercher manuellement).
+  * **✨ 2. Améliorations Implémentées** :
+    - *Bouton d'Action Direct sur la Carte de la Grille* :
+      * Remplacement du texte passif *"Découvrir la vidéo | Voir >"* par un badge *"Commande directe (Non listé au catalogue)"* accompagné d'un bouton vert WhatsApp vibrant **« 💬 Commander »**.
+      * Clic direct avec `e.stopPropagation()` ouvrant instantanément la discussion WhatsApp préremplie avec le vendeur.
+    - *Carte Immersive de Commande Directe dans le Lecteur Modal* :
+      * Transformation de l'encart vide en une véritable carte de commande directe WhatsApp haute conversion aux dégradés émeraude (`#f0fdf4` / `#dcfce7`).
+      * Bouton proéminent **« 💬 Commander par WhatsApp Direct »** avec icône WhatsApp et ombre portée.
+      * Lien secondaire élégant *"Ou explorer le catalogue complet"*.
+    - *Adaptation Intelligente du Pied de Lecteur (Modal Footer)* :
+      * Pour les publications sans articles rattachés, le bouton WhatsApp devient le **Call-to-Action Principal** en pleine largeur avec contraste fort (`#25d366`), tandis que le bouton *"Voir mon Panier"* passe en action secondaire.
+    - *Message WhatsApp Optimisé & Contextualisé* :
+      * Génération d'un message vendeur explicite et structuré : *"Bonjour [Boutique] ! Je souhaite commander l'article présenté dans votre publication [PLATEFORME] : 📝 Référence / Description : [Légende nettoyée] 🔗 Lien : [URL vitrine] Est-ce disponible et quel est son prix avec livraison ?"*
+  * **🧪 3. Validation & Tests** :
+    - Compilation TypeScript `npx tsc --noEmit` validée avec **0 erreur** (code 0).
+    - 27/27 tests unitaires `tests/unit/social-shop.test.js` passés avec succès.
+    - Respect absolu de la règle : aucun git push sans instruction explicite de l'utilisateur.
+
 - **Résolution : Synchronisation Compteur Panier & Réconciliation Clé Boutique (Slug vs UUID) (`CartContext.tsx`, `BoutiqueDetailClient.tsx`, `SocialShopFeed.tsx`) (08 septembre 2026)** 🛒⚡🔢✨ :
   * **🎯 1. Diagnostic de l'Anomalie Rapportée (« Le panier n'est pas incrémenté »)** :
     - *Symptôme constaté sur les captures d'écran de l'utilisateur* :
