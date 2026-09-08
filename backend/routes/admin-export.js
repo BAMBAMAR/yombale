@@ -8,7 +8,11 @@ const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
 function escapeCsv(val) {
   if (val === null || val === undefined) return '""';
-  const str = String(val).replace(/"/g, '""');
+  let str = String(val).replace(/"/g, '""');
+  // SÉCURITÉ P1 : Neutralisation de l'injection de formules (CSV / Excel Injection)
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = "'" + str;
+  }
   return `"${str}"`;
 }
 

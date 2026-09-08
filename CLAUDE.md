@@ -1,3 +1,29 @@
+- **Audit Forensique Global de Cybersécurité & Hardening de la Plateforme Nopalou (`backend/routes/paiement.js`, `backend/services/wave.js`, `backend/routes/boutiques.js`, `backend/middlewares/auth.js`, `backend/routes/auth.js`, `backend/middlewares/rateLimit.js`, `backend/routes/admin-export.js`, `frontend-next/src/app/sw.ts`, `tests/unit/security-hardening.test.js`) (08 septembre 2026)** 🛡️🔒💳⚡ :
+  * **🔍 1. Audit Forensique Global sur 25 Domaines & Identification des Failles P0/P1** :
+    - Évaluation exhaustive de la surface d'attaque couvrant l'authentification, les passerelles de paiement (Wave, Orange Money), le terminal POS / caisse, le carnet de dettes, les documents fiscaux, la PWA, l'IA/chatbot WhatsApp et les exports administratifs.
+    - Identification et neutralisation de 10 failles critiques (P0/P1).
+  * **🛡️ 2. Corrections Techniques de Haute Sécurité Appliquées** :
+    - **Paiements & Flux Financiers (`backend/routes/paiement.js`, `backend/services/wave.js`)** :
+      - *Suppression du marquage arbitraire* sur `POST /api/paiement/confirmer-succes` : transformation de l'endpoint en lecture seule sécurisée. Seuls les webhooks signés HMAC Wave ou l'action administrative peuvent marquer une commande comme payée.
+      - *Protection Anti-Rejeu Webhook Wave (Replay Attack)* : validation stricte de la fraîcheur temporelle du timestamp `parts.t` avec rejet systématique si $\Delta t > 300\text{ secondes}$ (5 minutes).
+    - **Intégrité des Prix & Commandes (`backend/routes/boutiques.js`)** :
+      - *Neutralisation du Price Tampering* sur `POST /commandes/express` : imposition stricte des prix vérifiés en base (`SELECT prix FROM boutique_produits`) et validation côté serveur des codes promo (dates, min d'achat, utilisations max).
+    - **Contrôle d'Accès IAM & Anti-BOLA/IDOR (`backend/routes/boutiques.js`)** :
+      - Remplacement de `tokenOptional` par `verifierToken` + `checkBoutiqueAccess(id, req.user.userId)` sur l'ensemble du carnet de dettes (`/credits-clients`), des documents fiscaux (`/documents`, factures PDF), des fournisseurs (`/fournisseurs`), des commandes d'achats (`/commandes-fournisseurs`) et des journaux d'audit (`/logs`).
+      - Élimination absolue du champ `code_pin` des caissiers dans les réponses du terminal caisse (`/caisse-terminal/:token` et `/caissiers`).
+    - **Durcissement de l'Authentification Admin & OTP (`backend/middlewares/auth.js`, `backend/routes/auth.js`)** :
+      - *Fail-Closed strict* sur `adminSecretOnly` : rejet immédiat en erreur 500 si `ADMIN_SECRET` n'est pas configuré sur le serveur (aucun contournement possible). Suppression du paramètre `?secret=` en URL pour stopper les fuites dans les logs et referrers.
+      - *Génération OTP Sécurisée* : remplacement de `Math.random` par `crypto.randomInt` (CSPRNG), masquage des numéros et suppression du code OTP en clair dans les logs serveur, verrouillage après 5 tentatives infructueuses et comparaison timing-safe (`crypto.timingSafeEqual`).
+    - **PWA & Cache Local (`frontend-next/src/app/sw.ts`)** :
+      - Bannissement du cache Service Worker pour les endpoints privés : stratégie `NetworkOnly` obligatoire sur `/api/auth`, `/api/admin`, `/api/paiement`, `/api/boutiques`, `/api/utilisateurs`.
+    - **Rate Limiting & Protection Injections (`backend/middlewares/rateLimit.js`, `backend/routes/admin-export.js`)** :
+      - Validation syntaxique et sécurisation de la résolution IP dans `realIp(req)` pour bloquer le contournement de rate limit par faux headers.
+      - Neutralisation de l'injection de formules de tableur (CSV / Excel Formula Injection) sur les exports administrateurs via préfixage systématique d'apostrophe.
+  * **🧪 3. Validation par Tests Automatisés & Documentation** :
+    - Création d'une suite de tests dédiée `tests/unit/security-hardening.test.js` (10/10 tests validés avec succès).
+    - Rédaction du Rapport d'Audit Forensique complet de 32 sections (`security_audit_report.md`).
+    - Respect absolu des règles : aucune police externe téléchargée, aucun push git sans accord préalable.
+
 - **Audit, Fiabilisation & Contrôle Immédiat du Cron de Relance Marchands Sans Catalogue (`backend/services/relance-catalogue.js`, `backend/routes/boutiques.js`, `frontend-next/src/app/actions/admin.ts`, `frontend-next/src/app/admin/(protected)/boutiques/AdminBoutiquesClient.tsx`, `page.tsx`) (08 septembre 2026)** 🤖📢🏪✨ :
   * **🔍 1. Audit Réel du Fonctionnement & Diagnostic Précis** :
     - **Le Cron fonctionne et est bien actif** : Configuré en base (`relance_catalogue_actif: true`, seuil $\le 1$ produit, délai > 24h, intervalle 7 jours) et programmé à `0 10 * * *` (10h00 chaque matin) via `demarrerCronsMetier()`. L'historique de la base confirme des exécutions effectives (ex: boutique *Misbah electro* horodatée à `10:00:06 GMT`).

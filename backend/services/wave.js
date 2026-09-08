@@ -96,8 +96,16 @@ function verifyWebhookSignature(req) {
     const timestamp = parts.t;
     const signature = parts.v1;
 
-    if (!signature) {
-      console.error('[WAVE WEBHOOK] ❌ Refusé : Structure de signature v1 invalide.');
+    if (!signature || !timestamp) {
+      console.error('[WAVE WEBHOOK] ❌ Refusé : Structure de signature v1 invalide ou timestamp manquant.');
+      return false;
+    }
+
+    // Protection anti-rejeu (Replay Attack Prevention) : tolérance maximale de 5 minutes (300s)
+    const nowSec = Math.floor(Date.now() / 1000);
+    const tsNum = parseInt(timestamp, 10);
+    if (isNaN(tsNum) || Math.abs(nowSec - tsNum) > 300) {
+      console.error(`[WAVE WEBHOOK] ❌ Refusé : Timestamp webhook expiré ou invalide (delta: ${nowSec - tsNum}s).`);
       return false;
     }
 
@@ -107,7 +115,7 @@ function verifyWebhookSignature(req) {
       .update(`${timestamp}${rawBody}`)
       .digest('hex');
 
-    // Calcul HMAC-SHA256 avec rawBody seul (fallback pour les outils de test)
+    // Calcul HMAC-SHA256 avec rawBody seul (fallback pour les outils de test locaux en dev uniquement)
     const expectedBodyOnly = crypto
       .createHmac('sha256', secretClean)
       .update(rawBody)
@@ -118,7 +126,7 @@ function verifyWebhookSignature(req) {
     const expBufBodyOnly = Buffer.from(expectedBodyOnly, 'hex');
 
     const matchesTimestampPayload = sigBuf.length === expBufTimestamp.length && crypto.timingSafeEqual(sigBuf, expBufTimestamp);
-    const matchesBodyOnlyPayload = sigBuf.length === expBufBodyOnly.length && crypto.timingSafeEqual(sigBuf, expBufBodyOnly);
+    const matchesBodyOnlyPayload = process.env.NODE_ENV !== 'production' && sigBuf.length === expBufBodyOnly.length && crypto.timingSafeEqual(sigBuf, expBufBodyOnly);
 
     if (matchesTimestampPayload || matchesBodyOnlyPayload) {
       return true;

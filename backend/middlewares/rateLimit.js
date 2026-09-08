@@ -1,9 +1,26 @@
 const rateLimit = require('express-rate-limit');
 
-// Derrière Cloudflare, req.ip est une IP CDN partagée.
-// CF-Connecting-IP contient la vraie IP du client.
+const net = require('net');
+
+// Derrière reverse proxy / Cloudflare, sécurise l'identification de l'IP
 function realIp(req) {
-  return (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
+  // 1. Si CF-Connecting-IP est fourni, valider qu'il s'agit d'une IP valide
+  const cfIp = req.headers['cf-connecting-ip'];
+  if (cfIp && typeof cfIp === 'string') {
+    const clean = cfIp.split(',')[0].trim();
+    if (net.isIP(clean)) return clean;
+  }
+  // 2. Utiliser req.ip sécurisé par Express (trust proxy 1)
+  if (req.ip && net.isIP(req.ip)) {
+    return req.ip;
+  }
+  // 3. Fallback X-Forwarded-For nettoyé
+  const xff = req.headers['x-forwarded-for'];
+  if (xff && typeof xff === 'string') {
+    const clean = xff.split(',')[0].trim();
+    if (net.isIP(clean)) return clean;
+  }
+  return req.socket?.remoteAddress || '127.0.0.1';
 }
 
 // Vérifie si la requête vient du serveur Next.js SSR (header secret partagé)

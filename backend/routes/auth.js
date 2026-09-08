@@ -290,9 +290,10 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
       }
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
-    otps.set(telephone, { code, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min
-    console.log(`[OTP] Code généré pour ${telephone} (${type || 'standard'}) : ${code}`);
+    const code = crypto.randomInt(100000, 1000000).toString(); // 6 digits CSPRNG
+    otps.set(telephone, { code, expiresAt: Date.now() + 10 * 60 * 1000, tentatives: 0 }); // 10 min, max 5 tentatives
+    // SÉCURITÉ P0 : Masquage strict du numéro et JAMAIS de code en clair dans les logs
+    console.log(`[OTP] Code généré pour ${telephone.slice(0, 4)}**** (${type || 'standard'})`);
 
     // ── Tentative 1 : Template Meta certifié (fonctionne même à froid) ──
     try {
@@ -308,12 +309,12 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
           parameters: [{ type: 'text', text: code }],
         },
       ]);
-      console.log(`[OTP] Envoyé via template nopalou_auth_otp à ${telephone}`);
+      console.log(`[OTP] Envoyé via template nopalou_auth_otp à ${telephone.slice(0, 4)}****`);
     } catch (templateErr) {
       // ── Tentative 2 : Texte libre (fallback) ──
-      console.warn(`[OTP] Template nopalou_auth_otp échoué (${templateErr.message}), fallback texte libre`);
+      console.warn(`[OTP] Template nopalou_auth_otp échoué, fallback texte libre`);
       await sendWhatsAppText(telephone, `Nopalou - Votre code de vérification est : *${code}*.\nCe code expire dans 10 minutes.`);
-      console.log(`[OTP] Envoyé via texte libre à ${telephone}`);
+      console.log(`[OTP] Envoyé via texte libre à ${telephone.slice(0, 4)}****`);
     }
 
     res.json({ success: true, message: 'Code envoyé' });
@@ -335,7 +336,20 @@ router.post('/whatsapp-otp-verify', limiterAuth, async (req, res) => {
       otps.delete(telephone);
       return res.status(400).json({ error: 'Code expiré' });
     }
-    if (data.code !== code) return res.status(400).json({ error: 'Code incorrect' });
+
+    // Protection anti force brute : 5 tentatives max
+    data.tentatives = (data.tentatives || 0) + 1;
+    if (data.tentatives > 5) {
+      otps.delete(telephone);
+      return res.status(429).json({ error: 'Trop de tentatives incorrectes. Ce code a été invalidé par sécurité.' });
+    }
+
+    const bufExpected = Buffer.from(String(data.code));
+    const bufActual = Buffer.from(String(code || '').trim());
+    const isMatch = bufExpected.length === bufActual.length && crypto.timingSafeEqual(bufExpected, bufActual);
+    if (!isMatch) {
+      return res.status(400).json({ error: `Code incorrect (${Math.max(0, 5 - data.tentatives)} tentative(s) restante(s))` });
+    }
 
     otps.delete(telephone);
     res.json({ success: true });
@@ -357,7 +371,20 @@ router.post('/whatsapp-otp-login', limiterAuth, async (req, res) => {
       otps.delete(telephone);
       return res.status(400).json({ error: 'Code expiré' });
     }
-    if (data.code !== code) return res.status(400).json({ error: 'Code incorrect' });
+
+    // Protection anti force brute : 5 tentatives max
+    data.tentatives = (data.tentatives || 0) + 1;
+    if (data.tentatives > 5) {
+      otps.delete(telephone);
+      return res.status(429).json({ error: 'Trop de tentatives incorrectes. Ce code a été invalidé par sécurité.' });
+    }
+
+    const bufExpected = Buffer.from(String(data.code));
+    const bufActual = Buffer.from(String(code || '').trim());
+    const isMatch = bufExpected.length === bufActual.length && crypto.timingSafeEqual(bufExpected, bufActual);
+    if (!isMatch) {
+      return res.status(400).json({ error: `Code incorrect (${Math.max(0, 5 - data.tentatives)} tentative(s) restante(s))` });
+    }
 
     otps.delete(telephone);
     

@@ -1087,17 +1087,16 @@ router.post('/:id/paniers-abandonnes/:cartId/relancer', verifierToken, async (re
 });
 
 // ── GET /api/boutiques/:id/credits-clients — Liste des clients avec carnet de dettes/avances
-router.get('/:id/credits-clients', async (req, res) => {
+router.get('/:id/credits-clients', verifierToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé au carnet de dettes de cette boutique' });
+    }
+
     const includeHistorique = req.query.include_historique === 'true' || req.query.include_historique === '1';
-
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
-    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-
-    const boutiqueId = b.rows[0].id;
+    const boutiqueId = b.id;
     const { rows: clients } = await pool.query(
       `SELECT * FROM caisse_clients_credits WHERE boutique_id=$1 ORDER BY nom ASC`,
       [boutiqueId]
@@ -1128,17 +1127,17 @@ router.get('/:id/credits-clients', async (req, res) => {
 });
 
 // ── GET /api/boutiques/:id/credits-clients/:clientId/historique — Historique détaillé d'un client
-router.get('/:id/credits-clients/:clientId/historique', async (req, res) => {
+router.get('/:id/credits-clients/:clientId/historique', verifierToken, async (req, res) => {
   try {
     const { id, clientId } = req.params;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
-    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé à l\'historique de ce débiteur' });
+    }
 
     const { rows } = await pool.query(
       `SELECT * FROM caisse_credit_historique WHERE client_id=$1 AND boutique_id=$2 ORDER BY created_at DESC`,
-      [clientId, b.rows[0].id]
+      [clientId, b.id]
     );
 
     res.json({ success: true, historique: rows });
@@ -1149,23 +1148,23 @@ router.get('/:id/credits-clients/:clientId/historique', async (req, res) => {
 });
 
 // ── POST /api/boutiques/:id/credits-clients — Créer un nouveau profil client carnet
-router.post('/:id/credits-clients', async (req, res) => {
+router.post('/:id/credits-clients', verifierToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour ajouter un débiteur à cette boutique' });
+    }
+
     const { nom, telephone, adresse, plafond_max, note_client } = req.body;
     if (!nom?.trim() || !telephone?.trim()) {
       return res.status(400).json({ error: 'Nom et téléphone du client requis' });
     }
 
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
-    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-
     const r = await pool.query(
       `INSERT INTO caisse_clients_credits (boutique_id, nom, telephone, adresse, plafond_max, note_client, solde)
        VALUES ($1, $2, $3, $4, $5, $6, 0) RETURNING *`,
-      [b.rows[0].id, nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null]
+      [b.id, nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null]
     );
 
     res.status(201).json({ success: true, client: r.rows[0] });
@@ -1241,26 +1240,25 @@ router.post('/:id/credits-clients/batch', verifierToken, param('id').isUUID(), a
 });
 
 // ── PUT /api/boutiques/:id/credits-clients/:clientId — Modifier un profil client
-router.put('/:id/credits-clients/:clientId', async (req, res) => {
+router.put('/:id/credits-clients/:clientId', verifierToken, async (req, res) => {
   try {
     const { id, clientId } = req.params;
-    const { nom, telephone, adresse, plafond_max, note_client } = req.body;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour modifier ce débiteur' });
+    }
 
+    const { nom, telephone, adresse, plafond_max, note_client } = req.body;
     if (!nom || !telephone) {
       return res.status(400).json({ error: 'Nom et téléphone requis' });
     }
-
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id = $1' : 'slug = $1';
-    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
-    if (b.rows.length === 0) return res.status(404).json({ error: 'Boutique introuvable' });
 
     const r = await pool.query(
       `UPDATE caisse_clients_credits 
        SET nom = $1, telephone = $2, adresse = $3, plafond_max = $4, note_client = $5
        WHERE id = $6 AND boutique_id = $7
        RETURNING *`,
-      [nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null, clientId, b.rows[0].id]
+      [nom.trim(), telephone.trim(), adresse?.trim() || null, Number(plafond_max || 200000), note_client?.trim() || null, clientId, b.id]
     );
 
     if (r.rows.length === 0) {
@@ -1275,26 +1273,25 @@ router.put('/:id/credits-clients/:clientId', async (req, res) => {
 });
 
 // ── PATCH /api/boutiques/:id/credits-clients/:clientId/statut — Blacklister/Changer statut d'un client (actif, bloque)
-router.patch('/:id/credits-clients/:clientId/statut', async (req, res) => {
+router.patch('/:id/credits-clients/:clientId/statut', verifierToken, async (req, res) => {
   try {
     const { id, clientId } = req.params;
-    const { statut } = req.body;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour modifier le statut de ce débiteur' });
+    }
 
+    const { statut } = req.body;
     if (!['actif', 'bloque', 'archive'].includes(statut)) {
       return res.status(400).json({ error: 'Statut invalide (actif, bloque, archive)' });
     }
-
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id = $1' : 'slug = $1';
-    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
-    if (b.rows.length === 0) return res.status(404).json({ error: 'Boutique introuvable' });
 
     const r = await pool.query(
       `UPDATE caisse_clients_credits 
        SET statut = $1, updated_at = NOW()
        WHERE id = $2 AND boutique_id = $3
        RETURNING *`,
-      [statut, clientId, b.rows[0].id]
+      [statut, clientId, b.id]
     );
 
     if (r.rows.length === 0) {
@@ -1309,23 +1306,22 @@ router.patch('/:id/credits-clients/:clientId/statut', async (req, res) => {
 });
 
 // ── DELETE /api/boutiques/:id/credits-clients/:clientId — Supprimer un client du carnet
-router.delete('/:id/credits-clients/:clientId', async (req, res) => {
+router.delete('/:id/credits-clients/:clientId', verifierToken, async (req, res) => {
   try {
     const { id, clientId } = req.params;
-
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id = $1' : 'slug = $1';
-    const b = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [id]);
-    if (b.rows.length === 0) return res.status(404).json({ error: 'Boutique introuvable' });
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour supprimer ce débiteur' });
+    }
 
     await pool.query(
       `DELETE FROM caisse_credit_historique WHERE client_id = $1 AND boutique_id = $2`,
-      [clientId, b.rows[0].id]
+      [clientId, b.id]
     ).catch(() => {});
 
     const r = await pool.query(
       `DELETE FROM caisse_clients_credits WHERE id = $1 AND boutique_id = $2 RETURNING *`,
-      [clientId, b.rows[0].id]
+      [clientId, b.id]
     );
 
     if (r.rows.length === 0) {
@@ -1340,21 +1336,22 @@ router.delete('/:id/credits-clients/:clientId', async (req, res) => {
 });
 
 // ── POST /api/boutiques/:id/credits-clients/:clientId/transaction — Vente à crédit / Remboursement / Dépôt d'avance
-router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
+router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (req, res) => {
   try {
     const { id, clientId } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour enregistrer des transactions financières sur cette boutique' });
+    }
+
     const { type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp } = req.body; // 'vente_credit', 'remboursement', 'depot_avance'
     const numMontant = Number(montant);
     if (!type || !numMontant || numMontant <= 0) {
       return res.status(400).json({ error: 'Type de transaction et montant valide (> 0) requis' });
     }
 
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const bqRes = await pool.query(`SELECT id, nom, slug, telephone, whatsapp FROM boutiques WHERE ${bqCond}`, [id]);
-    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const bq = bqRes.rows[0];
-    const bqId = bq.id;
+    const bq = b;
+    const bqId = b.id;
 
     const client = await pool.connect();
     try {
@@ -1507,14 +1504,13 @@ router.post('/:id/credits-clients/:clientId/transaction', async (req, res) => {
 });
 
 // ── POST /api/boutiques/:id/credits-clients/:clientId/relance-whatsapp — Déclencher une relance WhatsApp
-router.post('/:id/credits-clients/:clientId/relance-whatsapp', async (req, res) => {
+router.post('/:id/credits-clients/:clientId/relance-whatsapp', verifierToken, async (req, res) => {
   try {
     const { id, clientId } = req.params;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const bqRes = await pool.query(`SELECT id, nom, telephone, whatsapp FROM boutiques WHERE ${bqCond}`, [id]);
-    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const bq = bqRes.rows[0];
+    const bq = await checkBoutiqueAccess(id, req.user.userId);
+    if (!bq && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour déclencher des relances sur cette boutique' });
+    }
 
     const clientRes = await pool.query(`SELECT * FROM caisse_clients_credits WHERE id=$1 AND boutique_id=$2`, [clientId, bq.id]);
     if (!clientRes.rows[0]) return res.status(404).json({ error: 'Client introuvable' });
@@ -1563,20 +1559,20 @@ router.post('/:id/credits-clients/:clientId/relance-whatsapp', async (req, res) 
 });
 
 // ── POST /api/boutiques/:id/credits-clients/relances-echeances — Déclencher les relances automatiques échues de cette boutique
-router.post('/:id/credits-clients/relances-echeances', async (req, res) => {
+router.post('/:id/credits-clients/relances-echeances', verifierToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
-    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const bqRes = await pool.query(`SELECT id, nom FROM boutiques WHERE ${bqCond}`, [id]);
-    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const bq = await checkBoutiqueAccess(id, req.user.userId);
+    if (!bq && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux relances automatiques de cette boutique' });
+    }
 
     const { traiterRelancesAutomatiquesWhatsApp } = require('../services/cron-relances-carnet');
-    const result = await traiterRelancesAutomatiquesWhatsApp(bqRes.rows[0].id);
+    const result = await traiterRelancesAutomatiquesWhatsApp(bq.id);
 
     res.json({
       success: true,
-      message: `${result.relancesEnvoyees || 0} relance(s) automatique(s) envoyée(s) pour ${bqRes.rows[0].nom}`,
+      message: `${result.relancesEnvoyees || 0} relance(s) automatique(s) envoyée(s) pour ${bq.nom}`,
       details: result
     });
   } catch (err) {
@@ -1587,18 +1583,16 @@ router.post('/:id/credits-clients/relances-echeances', async (req, res) => {
 
 
 // ── POST /api/boutiques/:id/credits-clients/approuver-commande — Approbation d'une demande d'achat à crédit
-router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
+router.post('/:id/credits-clients/approuver-commande', verifierToken, async (req, res) => {
   console.log('📌 [BACKEND APPROUVER-CMD REÇU]', req.body);
   try {
     const param = req.params.id;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(param);
-    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const bqRes = await pool.query(`SELECT id, nom, telephone, whatsapp FROM boutiques WHERE ${bqCond}`, [param]);
-    if (!bqRes.rows[0]) {
-      console.error('❌ [APPROUVER-CMD] Boutique introuvable:', param);
-      return res.status(404).json({ error: 'Boutique introuvable' });
+    const bq = await checkBoutiqueAccess(param, req.user.userId);
+    if (!bq && !req.user?.is_admin) {
+      console.error('❌ [APPROUVER-CMD] Boutique introuvable ou non autorisée:', param);
+      return res.status(403).json({ error: 'Accès non autorisé pour approuver les crédits de cette boutique' });
     }
-    const boutiqueId = bqRes.rows[0].id;
+    const boutiqueId = bq.id;
 
     const { commande_id, client_nom, client_telephone, montant, nom_produit, quantite, reference } = req.body;
     console.log('🔍 [APPROUVER-CMD DONNÉES]', { boutiqueId, commande_id, client_nom, client_telephone, montant, reference });
@@ -3183,9 +3177,13 @@ router.post('/:id/avoirs/creer', tokenOptional, async (req, res) => {
 });
 
 // ── GET /api/boutiques/:id/pos-historique — Récupérer l'historique des ventes POS
-router.get('/:id/pos-historique', tokenOptional, param('id').isUUID(), async (req, res) => {
+router.get('/:id/pos-historique', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
     const { id } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé à l\'historique POS de cette boutique' });
+    }
     const { rows } = await pool.query(
       `SELECT reference AS id,
               TO_CHAR(created_at, 'DD/MM/YYYY') AS date,
@@ -3235,25 +3233,27 @@ router.get('/:id/pos-historique', tokenOptional, param('id').isUUID(), async (re
 
 // ── 👥 GESTION DES CAISSIERS ET SESSIONS DE CAISSE POS ─────────────────────────
 
-// GET /api/boutiques/:id/caissiers
-router.get('/:id/caissiers', tokenOptional, async (req, res) => {
+// GET /api/boutiques/:id/caissiers — Gestion sécurisée des caissiers (PIN masqué)
+router.get('/:id/caissiers', verifierToken, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id, nom, utilisateur_id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
-    const utilisateurId = bRes.rows[0].utilisateur_id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux caissiers de cette boutique' });
+    }
+    const boutiqueId = b.id;
+    const utilisateurId = b.utilisateur_id;
 
+    // Sécurité P0 : Ne JAMAIS renvoyer code_pin en clair aux clients API
     const r = await pool.query(
-      `SELECT id, nom, prenom, code_pin, role, actif, created_at
+      `SELECT id, nom, prenom, role, actif, created_at
        FROM boutique_caissiers
        WHERE boutique_id = $1
        ORDER BY created_at ASC`,
       [boutiqueId]
     );
 
-    // Caissiers par défaut personnalisés si la table est vide
+    // Caissiers par défaut si la table est vide
     if (r.rows.length === 0) {
       let gerantNom = 'Propriétaire';
       let gerantPrenom = 'Gérant';
@@ -3270,7 +3270,7 @@ router.get('/:id/caissiers', tokenOptional, async (req, res) => {
         `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
          VALUES ($1, $2, $3, '0000', 'superviseur'),
                 ($1, 'Principal', 'Caissier', '1234', 'caissier')
-         RETURNING id, nom, prenom, code_pin, role, actif, created_at`,
+         RETURNING id, nom, prenom, role, actif, created_at`,
         [boutiqueId, gerantNom, gerantPrenom]
       );
       return res.json({ caissiers: def1.rows });
@@ -3296,7 +3296,7 @@ router.post('/:id/caissiers', verifierToken, checkAbonnement, async (req, res) =
     const r = await pool.query(
       `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
        VALUES ($1, $2, $3, $4, COALESCE($5, 'caissier'))
-       RETURNING id, nom, prenom, code_pin, role, actif, created_at`,
+       RETURNING id, nom, prenom, role, actif, created_at`,
       [bq.id, nom.trim(), prenom ? prenom.trim() : null, code_pin.trim(), role]
     );
 
@@ -3343,7 +3343,7 @@ router.put('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
 
     if (queryParts.length === 0) return res.json({ success: true });
 
-    const q = `UPDATE boutique_caissiers SET ${queryParts.join(', ')} WHERE id = $1 AND boutique_id = $2 RETURNING *`;
+    const q = `UPDATE boutique_caissiers SET ${queryParts.join(', ')} WHERE id = $1 AND boutique_id = $2 RETURNING id, nom, prenom, role, actif, created_at`;
     const r = await pool.query(q, values);
     if (!r.rows[0]) return res.status(404).json({ error: 'Caissier introuvable' });
 
@@ -3389,8 +3389,9 @@ router.post('/:id/caissiers/verifier-pin', tokenOptional, async (req, res) => {
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutiqueId = bRes.rows[0].id;
 
+    // Sécurité P0 : Ne jamais renvoyer code_pin dans l'objet caissier retourné
     const r = await pool.query(
-      `SELECT id, nom, prenom, code_pin, role
+      `SELECT id, nom, prenom, role
        FROM boutique_caissiers
        WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE`,
       [boutiqueId, code_pin.trim()]
@@ -3408,13 +3409,14 @@ router.post('/:id/caissiers/verifier-pin', tokenOptional, async (req, res) => {
 });
 
 // GET /api/boutiques/:id/pos-sessions — Historique filtrable des sessions de caisse (Rapports Z)
-router.get('/:id/pos-sessions', tokenOptional, async (req, res) => {
+router.get('/:id/pos-sessions', verifierToken, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux sessions de caisse de cette boutique' });
+    }
+    const boutiqueId = b.id;
 
     const { limit = 100, page = 1, from, to, caissier, statut } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
@@ -3458,13 +3460,14 @@ router.get('/:id/pos-sessions', tokenOptional, async (req, res) => {
 });
 
 // GET /api/boutiques/:id/pos-sessions/active — Session en cours
-router.get('/:id/pos-sessions/active', tokenOptional, async (req, res) => {
+router.get('/:id/pos-sessions/active', verifierToken, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé à la session active de cette boutique' });
+    }
+    const boutiqueId = b.id;
 
     const r = await pool.query(
       `SELECT * FROM boutique_pos_sessions 
@@ -3481,13 +3484,14 @@ router.get('/:id/pos-sessions/active', tokenOptional, async (req, res) => {
 });
 
 // GET /api/boutiques/:id/pos-sessions/:sessionId — Détail et ventes d'une session
-router.get('/:id/pos-sessions/:sessionId', tokenOptional, async (req, res) => {
+router.get('/:id/pos-sessions/:sessionId', verifierToken, async (req, res) => {
   try {
     const { id: idParam, sessionId } = req.params;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette session de caisse' });
+    }
+    const boutiqueId = b.id;
 
     const sRes = await pool.query(
       `SELECT * FROM boutique_pos_sessions WHERE id = $1 AND boutique_id = $2`,
@@ -3531,14 +3535,15 @@ async function verifierAbonnementCaisse(boutiqueId) {
 }
 
 // POST /api/boutiques/:id/pos-sessions/ouvrir
-router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
+router.post('/:id/pos-sessions/ouvrir', verifierToken, async (req, res) => {
   try {
     const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour ouvrir une session sur cette boutique' });
+    }
+    const boutiqueId = b.id;
     const { caissierNom, fondDeCaisse, caissierId } = req.body;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
 
     const plan = await verifierAbonnementCaisse(boutiqueId);
     if (!plan) {
@@ -3585,9 +3590,15 @@ router.post('/:id/pos-sessions/ouvrir', tokenOptional, async (req, res) => {
 });
 
 // POST /api/boutiques/:id/pos-sessions/cloturer
-router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
+router.post('/:id/pos-sessions/cloturer', verifierToken, async (req, res) => {
   try {
     const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour clôturer une session sur cette boutique' });
+    }
+    const boutiqueId = b.id;
+
     const targetSessionId = req.body.sessionId || req.body.session_id || req.params.sessionId;
     const countedCash = req.body.especesComptees ?? req.body.especes_comptees ?? req.body.montant_reel;
     const vEspeces = req.body.ventesEspeces ?? req.body.ventes_especes;
@@ -3597,11 +3608,6 @@ router.post('/:id/pos-sessions/cloturer', tokenOptional, async (req, res) => {
     const vTotal = req.body.ventesTotal ?? req.body.ventes_total;
     const nVentes = req.body.nbVentes ?? req.body.nb_ventes;
     const cNom = req.body.caissierNom || req.body.caissier_nom;
-
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
 
     if (targetSessionId && /^[0-9a-f-]{36}$/i.test(targetSessionId)) {
       // Réconciliation comptable SQL directe sur la session
@@ -3759,14 +3765,15 @@ function calculerFiscaliteDocument(boutique, client, items) {
 }
 
 // ── GET /api/boutiques/:id/documents — Lister les documents
-router.get('/:id/documents', tokenOptional, param('id').isUUID(), async (req, res) => {
+router.get('/:id/documents', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
     const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux documents de cette boutique' });
+    }
+    const boutiqueId = b.id;
     const { type } = req.query; // 'devis', 'proforma', 'bon_commande_client', 'facture'
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
 
     let query = `
       SELECT d.*, c.nom as client_nom, c.telephone as client_telephone
@@ -3791,19 +3798,22 @@ router.get('/:id/documents', tokenOptional, param('id').isUUID(), async (req, re
 });
 
 // ── POST /api/boutiques/:id/documents — Créer un document (devis, proforma, facture)
-router.post('/:id/documents', tokenOptional, param('id').isUUID(), async (req, res) => {
+router.post('/:id/documents', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
     const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux documents de cette boutique' });
+    }
+    const boutiqueId = b.id;
     const { type, client_id, caissier_id, statut, items, mode_paiement, date_echeance, notes } = req.body;
     
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(
-      `SELECT id, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
-      [idParam]
+      `SELECT id, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut FROM boutiques WHERE id = $1`,
+      [boutiqueId]
     );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutique = bRes.rows[0];
-    const boutiqueId = boutique.id;
 
     let client = null;
     if (client_id && /^[0-9a-f-]{36}$/i.test(client_id)) {
@@ -3878,9 +3888,14 @@ router.post('/:id/documents', tokenOptional, param('id').isUUID(), async (req, r
 });
 
 // ── PUT /api/boutiques/:id/documents/:docId — Modifier ou valider
-router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
+router.put('/:id/documents/:docId', verifierToken, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
   try {
-    const { id: boutiqueId, docId } = req.params;
+    const { id: idParam, docId } = req.params;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux documents de cette boutique' });
+    }
+    const boutiqueId = b.id;
     const { statut, type, client_id, caissier_id, items, mode_paiement, date_echeance, notes } = req.body;
 
     const docRes = await pool.query(`SELECT * FROM caisse_documents WHERE id=$1 AND boutique_id=$2`, [docId, boutiqueId]);
@@ -3971,9 +3986,15 @@ router.put('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('
 });
 
 // ── DELETE /api/boutiques/:id/documents/:docId — Annuler/Supprimer
-router.delete('/:id/documents/:docId', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
+router.delete('/:id/documents/:docId', verifierToken, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
   try {
-    const { id: boutiqueId, docId } = req.params;
+    const { id: idParam, docId } = req.params;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux documents de cette boutique' });
+    }
+    const boutiqueId = b.id;
+
     const docRes = await pool.query(`SELECT id, reference, type, statut, items FROM caisse_documents WHERE id=$1 AND boutique_id=$2`, [docId, boutiqueId]);
     if (!docRes.rows[0]) return res.status(404).json({ error: 'Document introuvable' });
     const doc = docRes.rows[0];
@@ -4030,9 +4051,14 @@ router.get('/:id/bons-achat/:code', tokenOptional, param('id').isUUID(), async (
 });
 
 // ── POST /api/boutiques/:id/bons-achat — Émettre avoir
-router.post('/:id/bons-achat', tokenOptional, param('id').isUUID(), async (req, res) => {
+router.post('/:id/bons-achat', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
-    const { id: boutiqueId } = req.params;
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux avoirs de cette boutique' });
+    }
+    const boutiqueId = b.id;
     const { client_id, valeur, code, date_expiration } = req.body;
 
     const uniqueCode = code || `AVOIR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
@@ -4050,25 +4076,35 @@ router.post('/:id/bons-achat', tokenOptional, param('id').isUUID(), async (req, 
 });
 
 // ── CRUD Fournisseurs
-router.get('/:id/fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
+router.get('/:id/fournisseurs', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
-    const { rows } = await pool.query(`SELECT * FROM fournisseurs WHERE boutique_id = $1 ORDER BY nom ASC`, [req.params.id]);
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux fournisseurs' });
+    }
+    const { rows } = await pool.query(`SELECT * FROM fournisseurs WHERE boutique_id = $1 ORDER BY nom ASC`, [b.id]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-router.post('/:id/fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
+router.post('/:id/fournisseurs', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé' });
+    }
     const { nom, telephone, email, adresse, ninea } = req.body;
     const r = await pool.query(
       `INSERT INTO fournisseurs (boutique_id, nom, telephone, email, adresse, ninea)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [req.params.id, nom, telephone || null, email || null, adresse || null, ninea || null]
+      [b.id, nom, telephone || null, email || null, adresse || null, ninea || null]
     );
 
-    enregistrerAuditLog(req.params.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_cree', `Création du fournisseur "${nom}"`, { nom, telephone, email }, req);
+    enregistrerAuditLog(b.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_cree', `Création du fournisseur "${nom}"`, { nom, telephone, email }, req);
 
     res.status(201).json(r.rows[0]);
   } catch (err) {
@@ -4076,17 +4112,22 @@ router.post('/:id/fournisseurs', tokenOptional, param('id').isUUID(), async (req
   }
 });
 
-router.put('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), param('fId').isUUID(), async (req, res) => {
+router.put('/:id/fournisseurs/:fId', verifierToken, param('id').isUUID(), param('fId').isUUID(), async (req, res) => {
   try {
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé' });
+    }
     const { nom, telephone, email, adresse, ninea, solde_du } = req.body;
     await pool.query(
       `UPDATE fournisseurs
        SET nom = $1, telephone = $2, email = $3, adresse = $4, ninea = $5, solde_du = $6
        WHERE id = $7 AND boutique_id = $8`,
-      [nom, telephone, email, adresse, ninea, solde_du !== undefined ? Number(solde_du) : 0, req.params.fId, req.params.id]
+      [nom, telephone, email, adresse, ninea, solde_du !== undefined ? Number(solde_du) : 0, req.params.fId, b.id]
     );
 
-    enregistrerAuditLog(req.params.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_modifie', `Modification du fournisseur "${nom}"`, { nom, solde_du }, req);
+    enregistrerAuditLog(b.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_modifie', `Modification du fournisseur "${nom}"`, { nom, solde_du }, req);
 
     res.json({ success: true });
   } catch (err) {
@@ -4094,11 +4135,16 @@ router.put('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), param(
   }
 });
 
-router.delete('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), param('fId').isUUID(), async (req, res) => {
+router.delete('/:id/fournisseurs/:fId', verifierToken, param('id').isUUID(), param('fId').isUUID(), async (req, res) => {
   try {
-    await pool.query(`DELETE FROM fournisseurs WHERE id = $1 AND boutique_id = $2`, [req.params.fId, req.params.id]);
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé' });
+    }
+    await pool.query(`DELETE FROM fournisseurs WHERE id = $1 AND boutique_id = $2`, [req.params.fId, b.id]);
 
-    enregistrerAuditLog(req.params.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_supprime', `Suppression du fournisseur #${req.params.fId}`, {}, req);
+    enregistrerAuditLog(b.id, req.user?.userId || null, req.user?.nom || null, 'fournisseur_supprime', `Suppression du fournisseur #${req.params.fId}`, {}, req);
 
     res.json({ success: true });
   } catch (err) {
@@ -4107,14 +4153,19 @@ router.delete('/:id/fournisseurs/:fId', tokenOptional, param('id').isUUID(), par
 });
 
 // ── CRUD Commandes Fournisseurs
-router.get('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
+router.get('/:id/commandes-fournisseurs', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux commandes fournisseurs' });
+    }
     const { rows } = await pool.query(
       `SELECT c.*, f.nom as fournisseur_nom
        FROM bons_commande_fournisseur c
        JOIN fournisseurs f ON c.fournisseur_id = f.id
        WHERE c.boutique_id = $1 ORDER BY c.created_at DESC`,
-      [req.params.id]
+      [b.id]
     );
     res.json(rows);
   } catch (err) {
@@ -4122,8 +4173,13 @@ router.get('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), a
   }
 });
 
-router.post('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), async (req, res) => {
+router.post('/:id/commandes-fournisseurs', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux commandes fournisseurs' });
+    }
     const { fournisseur_id, items, date_livraison, justificatif_url } = req.body;
     const itemsArray = Array.isArray(items) ? items : [];
     const total = itemsArray.reduce((acc, item) => acc + (Number(item.prix_achat || item.prixAchat || 0) * Number(item.quantite || 1)), 0);
@@ -4132,10 +4188,10 @@ router.post('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), 
     const r = await pool.query(
       `INSERT INTO bons_commande_fournisseur (boutique_id, fournisseur_id, reference, items, montant_total, date_livraison, justificatif_url)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [req.params.id, fournisseur_id, reference, JSON.stringify(itemsArray), total, date_livraison || null, justificatif_url || null]
+      [b.id, fournisseur_id, reference, JSON.stringify(itemsArray), total, date_livraison || null, justificatif_url || null]
     );
 
-    enregistrerAuditLog(req.params.id, req.user?.userId || null, req.user?.nom || null, 'commande_fournisseur_creee', `Création d'un bon de commande fournisseur #${reference} (${total} FCFA)`, { reference, montant: total }, req);
+    enregistrerAuditLog(b.id, req.user?.userId || null, req.user?.nom || null, 'commande_fournisseur_creee', `Création d'un bon de commande fournisseur #${reference} (${total} FCFA)`, { reference, montant: total }, req);
 
     res.status(201).json(r.rows[0]);
   } catch (err) {
@@ -4144,10 +4200,15 @@ router.post('/:id/commandes-fournisseurs', tokenOptional, param('id').isUUID(), 
   }
 });
 
-router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID(), param('cId').isUUID(), async (req, res) => {
+router.put('/:id/commandes-fournisseurs/:cId', verifierToken, param('id').isUUID(), param('cId').isUUID(), async (req, res) => {
   try {
+    const { id: idParam, cId } = req.params;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux commandes fournisseurs' });
+    }
+    const boutiqueId = b.id;
     const { statut, date_livraison, fournisseur_id, items, justificatif_url } = req.body;
-    const { id: boutiqueId, cId } = req.params;
 
     const cmdRes = await pool.query(`SELECT * FROM bons_commande_fournisseur WHERE id=$1 AND boutique_id=$2`, [cId, boutiqueId]);
     if (!cmdRes.rows[0]) return res.status(404).json({ error: 'Commande introuvable' });
@@ -4213,8 +4274,8 @@ router.put('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID
         if (pMaj) {
           setImmediate(async () => {
             try {
-              const b = await pool.query('SELECT slug, whatsapp_catalog_id FROM boutiques WHERE id=$1', [boutiqueId]);
-              await syncProduit({ ...pMaj, boutique_slug: b.rows[0]?.slug, whatsapp_catalog_id: b.rows[0]?.whatsapp_catalog_id });
+              const bQ = await pool.query('SELECT slug, whatsapp_catalog_id FROM boutiques WHERE id=$1', [boutiqueId]);
+              await syncProduit({ ...pMaj, boutique_slug: bQ.rows[0]?.slug, whatsapp_catalog_id: bQ.rows[0]?.whatsapp_catalog_id });
             } catch {}
           });
         }
@@ -4241,8 +4302,13 @@ const uploadJustificatifAchat = multer({
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-router.post('/:id/upload-justificatif', tokenOptional, param('id').isUUID(), uploadJustificatifAchat.single('justificatif'), async (req, res) => {
+router.post('/:id/upload-justificatif', verifierToken, param('id').isUUID(), uploadJustificatifAchat.single('justificatif'), async (req, res) => {
   try {
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé' });
+    }
     if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
     const url = await uploadBuffer(req.file.buffer, 'justificatifs_achats');
     res.json({ url });
@@ -4253,10 +4319,14 @@ router.post('/:id/upload-justificatif', tokenOptional, param('id').isUUID(), upl
 });
 
 // ── GET /api/boutiques/:id/documents/:docId/pdf — Générer le PDF A4 du document (Facture, Devis, Proforma)
-router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
+router.get('/:id/documents/:docId/pdf', verifierToken, param('id').isUUID(), param('docId').isUUID(), async (req, res) => {
   try {
-    const boutiqueId = req.params.id;
-    const docId = req.params.docId;
+    const { id: idParam, docId } = req.params;
+    const bAccess = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!bAccess && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé au document PDF' });
+    }
+    const boutiqueId = bAccess.id;
 
     const bRes = await pool.query('SELECT * FROM boutiques WHERE id=$1', [boutiqueId]);
     const boutique = bRes.rows[0];
@@ -4503,9 +4573,14 @@ router.get('/:id/documents/:docId/pdf', tokenOptional, param('id').isUUID(), par
   }
 });
 
-router.delete('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isUUID(), param('cId').isUUID(), async (req, res) => {
+router.delete('/:id/commandes-fournisseurs/:cId', verifierToken, param('id').isUUID(), param('cId').isUUID(), async (req, res) => {
   try {
-    await pool.query(`DELETE FROM bons_commande_fournisseur WHERE id = $1 AND boutique_id = $2`, [req.params.cId, req.params.id]);
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé' });
+    }
+    await pool.query(`DELETE FROM bons_commande_fournisseur WHERE id = $1 AND boutique_id = $2`, [req.params.cId, b.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -4515,13 +4590,14 @@ router.delete('/:id/commandes-fournisseurs/:cId', tokenOptional, param('id').isU
 // ── ROUTE AUDIT LOGS ─────────────────────────────────────────────────────────
 
 // GET /api/boutiques/:id/logs/export.csv
-router.get('/:id/logs/export.csv', tokenOptional, async (req, res) => {
+router.get('/:id/logs/export.csv', verifierToken, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id, nom FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutique = bRes.rows[0];
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé au journal d\'audit' });
+    }
+    const boutique = b;
 
     const { type, q } = req.query;
     let queryParts = ['boutique_id = $1'];
@@ -4552,12 +4628,19 @@ router.get('/:id/logs/export.csv', tokenOptional, async (req, res) => {
       const d = new Date(l.created_at);
       const dateStr = d.toLocaleDateString('fr-FR');
       const heureStr = d.toLocaleTimeString('fr-FR');
-      const descClean = (l.description || '').replace(/;/g, ',').replace(/\n/g, ' ');
-      csv += `${dateStr};${heureStr};"${l.auteur_nom}";"${l.type_action}";"${descClean}";"${l.ip_adresse || ''}"\n`;
+      // Anti CSV-injection : si un champ commence par =, +, -, @, \t, préfixer par une apostrophe
+      const sanitizeCell = (txt) => {
+        let str = String(txt || '').replace(/;/g, ',').replace(/\n/g, ' ').replace(/"/g, '""');
+        if (/^[=+\-@\t\r]/.test(str)) {
+          str = "'" + str;
+        }
+        return `"${str}"`;
+      };
+      csv += `${dateStr};${heureStr};${sanitizeCell(l.auteur_nom)};${sanitizeCell(l.type_action)};${sanitizeCell(l.description)};${sanitizeCell(l.ip_adresse || '')}\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename=journal_audit_${boutique.nom.replace(/[^a-z0-9]/gi, '_')}.csv`);
+    res.setHeader('Content-Disposition', `attachment; filename=journal_audit_${(boutique.nom || 'boutique').replace(/[^a-z0-9]/gi, '_')}.csv`);
     res.status(200).send(csv);
   } catch (err) {
     console.error('[EXPORT LOGS CSV ERR]', err);
@@ -4566,13 +4649,14 @@ router.get('/:id/logs/export.csv', tokenOptional, async (req, res) => {
 });
 
 // GET /api/boutiques/:id/logs
-router.get('/:id/logs', tokenOptional, async (req, res) => {
+router.get('/:id/logs', verifierToken, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
-    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé au journal d\'audit' });
+    }
+    const boutiqueId = b.id;
 
     const { type, q, limit = 100 } = req.query;
     let queryParts = ['boutique_id = $1'];
@@ -4628,8 +4712,9 @@ router.get('/caisse-terminal/:token', async (req, res) => {
     const plan = await verifierAbonnementCaisse(boutique.id);
     boutique.plan_actif = plan || 'pro';
 
+    // SÉCURITÉ P0 : Exclusion absolue du code_pin dans la liste des caissiers transmise au client
     let cRes = await pool.query(
-      `SELECT id, nom, prenom, code_pin, role FROM boutique_caissiers WHERE boutique_id = $1 AND actif = TRUE ORDER BY nom`,
+      `SELECT id, nom, prenom, role FROM boutique_caissiers WHERE boutique_id = $1 AND actif = TRUE ORDER BY nom`,
       [boutique.id]
     );
 
@@ -4639,7 +4724,7 @@ router.get('/caisse-terminal/:token', async (req, res) => {
         `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
          VALUES ($1, 'Bamba', 'Caissier 1', '1234', 'caissier'),
                 ($1, 'Superviseur', 'Gérant', '9999', 'superviseur')
-         RETURNING id, nom, prenom, code_pin, role`,
+         RETURNING id, nom, prenom, role`,
         [boutique.id]
       );
       caissiers = defC.rows;
@@ -4708,47 +4793,98 @@ router.post('/commandes/express', async (req, res) => {
 
     const actualBoutiqueId = bqRes.rows[0].id;
     const ref = 'CMD-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
-    const fraisLiv = Number(frais_livraison) || 0;
-    const reductionVal = Math.max(0, Number(montant_reduction || remise) || 0);
+    const fraisLiv = Math.max(0, Number(frais_livraison) || 0);
+
+    // ── 1. Calcul strict et sécurisé des prix depuis la base de données ──
     let totalArticles = 0;
-
-    let finalNote = note || '';
-    if (code_promo && String(code_promo).trim()) {
-      const promoNote = `[Code Promo: ${String(code_promo).trim().toUpperCase()}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
-      finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
-
-      await pool.query(
-        `UPDATE boutique_promotions 
-         SET fois_utilise = fois_utilise + 1 
-         WHERE boutique_id = $1 AND UPPER(code) = $2`,
-        [actualBoutiqueId, String(code_promo).trim().toUpperCase()]
-      ).catch(() => {});
-    }
+    const articlesTraites = [];
 
     for (const art of articles) {
-      let prix = Number(art.prix_unitaire);
-      let nomProd = art.nom_produit || 'Produit sans nom';
-
       const validProdId = (art.produit_id && String(art.produit_id).length === 36) ? art.produit_id : null;
+      let prix = 0;
+      let nomProd = art.nom_produit || 'Produit sans nom';
+      const qte = Math.max(1, Number(art.quantite) || 1);
 
       if (validProdId) {
-        const pRes = await pool.query('SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id = $1', [validProdId]);
+        const pRes = await pool.query(
+          'SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
+          [validProdId, actualBoutiqueId]
+        );
         if (pRes.rows[0]) {
-          if (!prix || isNaN(prix)) prix = Number(pRes.rows[0].prix) || 0;
+          // Sécurité P0 : TOUJOURS utiliser le prix officiel de la base de données
+          prix = Number(pRes.rows[0].prix) || 0;
           if (pRes.rows[0].nom) nomProd = pRes.rows[0].nom;
 
-          // Décrémentation de stock (si géré)
+          // Décrémentation atomique de stock si géré
           if (typeof pRes.rows[0].stock_quantite === 'number' && pRes.rows[0].stock_quantite > 0) {
-            const nvStock = Math.max(0, pRes.rows[0].stock_quantite - (Number(art.quantite) || 1));
+            const nvStock = Math.max(0, pRes.rows[0].stock_quantite - qte);
             await pool.query('UPDATE boutique_produits SET stock_quantite = $1 WHERE id = $2', [nvStock, validProdId]).catch(() => {});
+          }
+        } else {
+          return res.status(400).json({ error: `L'article "${nomProd}" n'appartient pas à cette boutique ou est indisponible.` });
+        }
+      } else {
+        // Fallback exceptionnel si produit non référencé dans boutique_produits
+        prix = Math.max(0, Number(art.prix_unitaire) || 0);
+      }
+
+      const totalLigne = prix * qte;
+      totalArticles += totalLigne;
+      articlesTraites.push({ validProdId, nomProd, qte, prix, totalLigne });
+    }
+
+    // ── 2. Validation stricte du code promo côté serveur ──
+    let reductionVal = 0;
+    let promoAppliquee = null;
+
+    if (code_promo && String(code_promo).trim()) {
+      const cleanCode = String(code_promo).trim().toUpperCase();
+
+      // Vérification promo globale
+      const platformPromoActive = await cfg.getBool('promo_active');
+      const platformPromoCode = ((await cfg.get('promo_code')) || '').trim().toUpperCase();
+      const platformPromoReduc = (await cfg.getNum('promo_reduction')) || 0;
+
+      if (platformPromoActive && platformPromoCode && cleanCode === platformPromoCode) {
+        reductionVal = Math.round((totalArticles * platformPromoReduc) / 100);
+        promoAppliquee = cleanCode;
+      } else {
+        // Vérification promo boutique
+        const promoRes = await pool.query(
+          `SELECT * FROM boutique_promotions
+           WHERE boutique_id = $1 AND UPPER(code) = $2 AND actif = true`,
+          [actualBoutiqueId, cleanCode]
+        );
+        const p = promoRes.rows[0];
+        if (p) {
+          const notExpired = !p.fin || new Date(p.fin) >= new Date();
+          const minAchatOk = !p.min_achat || totalArticles >= Number(p.min_achat);
+          const maxUsageOk = !p.max_utilisations || Number(p.fois_utilise || 0) < Number(p.max_utilisations);
+
+          if (notExpired && minAchatOk && maxUsageOk) {
+            if (p.type_remise === 'pourcentage') {
+              reductionVal = Math.round((totalArticles * Number(p.valeur || 0)) / 100);
+            } else {
+              reductionVal = Math.min(totalArticles, Number(p.valeur || 0));
+            }
+            promoAppliquee = cleanCode;
+            await pool.query(
+              `UPDATE boutique_promotions SET fois_utilise = fois_utilise + 1 WHERE id = $1`,
+              [p.id]
+            ).catch(() => {});
           }
         }
       }
+    }
 
-      const qte = Math.max(1, Number(art.quantite) || 1);
-      const totalLigne = (prix || 0) * qte;
-      totalArticles += totalLigne;
+    let finalNote = note || '';
+    if (promoAppliquee) {
+      const promoNote = `[Code Promo: ${promoAppliquee}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
+      finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
+    }
 
+    // Enregistrement des lignes de commande avec les prix vérifiés
+    for (const item of articlesTraites) {
       await pool.query(
         `INSERT INTO commandes_boutique (
           reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
@@ -4756,8 +4892,8 @@ router.post('/commandes/express', async (req, res) => {
           statut, source, methode_paiement, frais_livraison, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, NOW())`,
         [
-          ref, actualBoutiqueId, validProdId, nomProd, qte, prix || 0,
-          totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, finalNote || null,
+          ref, actualBoutiqueId, item.validProdId, item.nomProd, item.qte, item.prix,
+          item.totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, finalNote || null,
           methode_paiement || 'wave', fraisLiv,
         ]
       );

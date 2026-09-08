@@ -93,9 +93,17 @@ const serwist = new Serwist({
       matcher: ({ url }) => isExternalTracker(url),
       handler: new NetworkOnly(),
     },
-    // 1. /api/ping — NetworkOnly STRICT en premier (ne jamais cacher)
+    // 1. Endpoints sensibles, authentification, paiement, admin, boutiques — NetworkOnly STRICT (jamais mis en cache)
     {
-      matcher: ({ url }) => url.pathname === '/api/ping',
+      matcher: ({ url, request }) =>
+        url.pathname === '/api/ping' ||
+        request.method !== 'GET' ||
+        url.pathname.startsWith('/api/auth') ||
+        url.pathname.startsWith('/api/admin') ||
+        url.pathname.startsWith('/api/paiement') ||
+        url.pathname.startsWith('/api/boutiques') ||
+        url.pathname.startsWith('/api/utilisateurs') ||
+        url.pathname.startsWith('/api/credits-clients'),
       handler: new NetworkOnly(),
     },
     // 2. Navigation HTML — NetworkFirst avec timeout 2s
@@ -128,10 +136,18 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 4. Routes API internes (/api/) — NetworkFirst (sauf /api/ping)
+    // 4. Routes API publiques lecture seule (/api/annonces, /api/telecom, /api/categories) — NetworkFirst
     {
-      matcher: ({ url }) =>
-        url.pathname.startsWith("/api/") && url.pathname !== "/api/ping",
+      matcher: ({ url, request }) =>
+        request.method === "GET" &&
+        url.pathname.startsWith("/api/") &&
+        url.pathname !== "/api/ping" &&
+        !url.pathname.startsWith('/api/auth') &&
+        !url.pathname.startsWith('/api/admin') &&
+        !url.pathname.startsWith('/api/paiement') &&
+        !url.pathname.startsWith('/api/boutiques') &&
+        !url.pathname.startsWith('/api/utilisateurs') &&
+        !url.pathname.startsWith('/api/credits-clients'),
       handler: new NetworkFirst({
         cacheName: `nopalou-api-cache-${CACHE_VERSION}`,
         networkTimeoutSeconds: 2,

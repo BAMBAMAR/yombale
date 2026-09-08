@@ -24,6 +24,11 @@ function verifierToken(req, res, next) {
     token = cookies['nopalou_session'] || cookies['token'] || cookies['session'];
   }
 
+  // Fallback si paramètre query token (ex: ouverture de PDF dans un nouvel onglet)
+  if (!token && req.query?.token) {
+    token = req.query.token;
+  }
+
   if (!token) return res.status(401).json({ error: 'Token manquant' });
 
   try {
@@ -37,7 +42,23 @@ function verifierToken(req, res, next) {
 }
 
 function tokenOptional(req, res, next) {
-  const token = req.headers['authorization']?.split(' ')[1];
+  const authHeader = req.headers['authorization'];
+  let token = authHeader && authHeader.split(' ')[1];
+
+  if (!token && req.headers.cookie) {
+    const cookies = Object.fromEntries(
+      req.headers.cookie.split(';').map(c => {
+        const parts = c.trim().split('=');
+        return [parts[0], parts.slice(1).join('=')];
+      })
+    );
+    token = cookies['nopalou_session'] || cookies['token'] || cookies['session'];
+  }
+
+  if (!token && req.query?.token) {
+    token = req.query.token;
+  }
+
   if (token) {
     try { req.user = jwt.verify(token, process.env.JWT_SECRET); } catch {}
   }
@@ -57,9 +78,16 @@ async function requireEmailVerifie(req, res, next) {
   }
 }
 
-// Protège par ADMIN_SECRET (variable d'env Railway/Render) — header X-Admin-Secret, query ?secret= ou cookie nopalou_admin
+// Protège par ADMIN_SECRET (variable d'env Railway/Render) — header X-Admin-Secret ou cookie nopalou_admin
+// SÉCURITÉ P0 : FAIL-CLOSED strict. Si ADMIN_SECRET n'est pas configuré, rejet immédiat 500 (pas de bypass).
 function adminSecretOnly(req, res, next) {
-  let secret = req.headers['x-admin-secret'] || req.query.secret;
+  const adminSecret = process.env.ADMIN_SECRET;
+  if (!adminSecret || adminSecret.trim().length === 0) {
+    console.error('[CRITICAL SECURITY CONFIG] ADMIN_SECRET is not configured on server.');
+    return res.status(500).json({ error: 'Configuration de sécurité serveur incomplète (ADMIN_SECRET non défini).' });
+  }
+
+  let secret = req.headers['x-admin-secret'];
 
   // Fallback si cookie admin présent (nopalou_admin)
   if (!secret && req.headers.cookie) {
@@ -75,8 +103,8 @@ function adminSecretOnly(req, res, next) {
     }
   }
 
-  if (process.env.ADMIN_SECRET && !secretsMatch(secret, process.env.ADMIN_SECRET)) {
-    return res.status(401).json({ error: 'Secret admin requis. Envoyez le header X-Admin-Secret ou le cookie nopalou_admin.' });
+  if (!secret || !secretsMatch(secret, adminSecret)) {
+    return res.status(401).json({ error: 'Secret admin invalide ou absent. Header X-Admin-Secret requis.' });
   }
   next();
 }

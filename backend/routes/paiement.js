@@ -333,18 +333,28 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
   }
 });
 
-// POST /api/paiement/confirmer-succes — confirmation de succès Wave au retour d'affichage
+// POST /api/paiement/confirmer-succes — vérification sécurisée en lecture seule du statut de commande
+// Sécurité : Seul le Webhook officiel Wave (signé HMAC) ou l'administrateur peut marquer une commande comme payée.
 router.post('/confirmer-succes', async (req, res) => {
   try {
     const { reference } = req.body;
     if (!reference) return res.status(400).json({ error: 'Référence requise' });
 
-    await pool.query(
-      `UPDATE commandes_boutique SET paiement_recu = true, statut = CASE WHEN statut = 'en_attente' THEN 'payee' ELSE statut END, updated_at = NOW() WHERE reference = $1`,
+    const { rows } = await pool.query(
+      `SELECT reference, statut, paiement_recu FROM commandes_boutique WHERE reference = $1 LIMIT 1`,
       [reference]
     );
 
-    res.json({ succes: true });
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'Commande introuvable' });
+    }
+
+    res.json({
+      succes: true,
+      reference: rows[0].reference,
+      paye: Boolean(rows[0].paiement_recu),
+      statut: rows[0].statut,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
