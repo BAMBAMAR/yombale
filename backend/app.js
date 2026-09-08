@@ -284,6 +284,7 @@ app.use('/api/categories',      require('./routes/categories'));
 app.use('/api/plans',           require('./routes/plans'));
 app.use('/api/social-shop',     require('./routes/social-shop'));
 app.use('/api/boutiques',       require('./routes/social-shop'));
+app.use('/api',                 require('./routes/social-shop'));
 app.use('/api/admin/integrations', require('./routes/admin-integrations'));
 
 // ── Health check (Diagnostics & Liveness/Readiness Probes) ─────
@@ -324,6 +325,11 @@ app.get(['/health', '/api/health'], async (req, res) => {
 
 // ── SSR pour les bots (Googlebot, Bingbot…) ──────────────────
 app.use(require('./middlewares/bot-ssr'));
+
+// ── 404 JSON explicite pour toute route /api/* non reconnue ──
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: `Endpoint API introuvable : ${req.method} ${req.originalUrl}` });
+});
 
 // ── Catch-all → SPA frontend ──────────────────────────────────
 app.get('*', (req, res) =>

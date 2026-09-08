@@ -49,7 +49,7 @@ async function verifierAccesBoutique(boutiqueId, userId) {
  * GET /api/boutiques/:id/social/posts
  * Récupère le feed social public de la boutique avec les produits associés
  */
-router.get(['/boutiques/:id/social/posts', '/:id/posts'], limiterGeneral, async (req, res) => {
+router.get(['/:id/social/posts', '/boutiques/:id/social/posts', '/:id/posts'], limiterGeneral, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique || boutique.actif === false) {
@@ -143,7 +143,7 @@ router.get(['/boutiques/:id/social/posts', '/:id/posts'], limiterGeneral, async 
  * GET /api/boutiques/:id/social/posts/:postId
  * Récupère le détail d'une publication spécifique (Deep Link / Modal)
  */
-router.get(['/boutiques/:id/social/posts/:postId', '/:id/posts/:postId'], limiterGeneral, async (req, res) => {
+router.get(['/:id/social/posts/:postId', '/boutiques/:id/social/posts/:postId', '/:id/posts/:postId'], limiterGeneral, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -203,7 +203,7 @@ router.get(['/boutiques/:id/social/posts/:postId', '/:id/posts/:postId'], limite
  * POST /api/boutiques/:id/social/events
  * Enregistrement des événements Social Commerce (Attribution)
  */
-router.post(['/boutiques/:id/social/events', '/:id/events'], limiterGeneral, async (req, res) => {
+router.post(['/:id/social/events', '/boutiques/:id/social/events', '/:id/events'], limiterGeneral, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -242,7 +242,7 @@ router.post(['/boutiques/:id/social/events', '/:id/events'], limiterGeneral, asy
  * GET /api/boutiques/:id/social/admin/overview
  * Tableau de bord Social Shop pour le marchand
  */
-router.get(['/boutiques/:id/social/admin/overview', '/:id/admin/overview'], verifierToken, async (req, res) => {
+router.get(['/:id/social/admin/overview', '/boutiques/:id/social/admin/overview', '/:id/admin/overview'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -305,7 +305,7 @@ router.get(['/boutiques/:id/social/admin/overview', '/:id/admin/overview'], veri
  * GET /api/boutiques/:id/social/admin/posts
  * Liste complète des publications pour la table de curation du marchand
  */
-router.get(['/boutiques/:id/social/admin/posts', '/:id/admin/posts'], verifierToken, async (req, res) => {
+router.get(['/:id/social/admin/posts', '/boutiques/:id/social/admin/posts', '/:id/admin/posts'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -352,7 +352,7 @@ router.get(['/boutiques/:id/social/admin/posts', '/:id/admin/posts'], verifierTo
  * Importe une publication par URL publique (TikTok, Instagram, Facebook, YouTube)
  * Récupère les métadonnées officielles via oEmbed et suggère des produits correspondants (Smart Matching)
  */
-router.post(['/boutiques/:id/social/admin/import-url', '/:id/admin/import-url'], verifierToken, async (req, res) => {
+router.post(['/:id/social/admin/import-url', '/boutiques/:id/social/admin/import-url', '/:id/admin/import-url'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -446,7 +446,7 @@ router.post(['/boutiques/:id/social/admin/import-url', '/:id/admin/import-url'],
  * PATCH /api/boutiques/:id/social/admin/posts/:postId
  * Met à jour le statut d'affichage, mise à la une ou ordre d'une publication
  */
-router.patch(['/boutiques/:id/social/admin/posts/:postId', '/:id/admin/posts/:postId'], verifierToken, async (req, res) => {
+router.patch(['/:id/social/admin/posts/:postId', '/boutiques/:id/social/admin/posts/:postId', '/:id/admin/posts/:postId'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -503,7 +503,7 @@ router.patch(['/boutiques/:id/social/admin/posts/:postId', '/:id/admin/posts/:po
  * DELETE /api/boutiques/:id/social/admin/posts/:postId
  * Supprime une publication du Social Shop
  */
-router.delete(['/boutiques/:id/social/admin/posts/:postId', '/:id/admin/posts/:postId'], verifierToken, async (req, res) => {
+router.delete(['/:id/social/admin/posts/:postId', '/boutiques/:id/social/admin/posts/:postId', '/:id/admin/posts/:postId'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -527,7 +527,7 @@ router.delete(['/boutiques/:id/social/admin/posts/:postId', '/:id/admin/posts/:p
  * POST /api/boutiques/:id/social/admin/posts/:postId/produits
  * Associe un produit de la boutique à une publication
  */
-router.post(['/boutiques/:id/social/admin/posts/:postId/produits', '/:id/admin/posts/:postId/produits'], verifierToken, async (req, res) => {
+router.post(['/:id/social/admin/posts/:postId/produits', '/boutiques/:id/social/admin/posts/:postId/produits', '/:id/admin/posts/:postId/produits'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -576,7 +576,7 @@ router.post(['/boutiques/:id/social/admin/posts/:postId/produits', '/:id/admin/p
  * DELETE /api/boutiques/:id/social/admin/posts/:postId/produits/:produitId
  * Dissocie un produit d'une publication
  */
-router.delete(['/boutiques/:id/social/admin/posts/:postId/produits/:produitId', '/:id/admin/posts/:postId/produits/:produitId'], verifierToken, async (req, res) => {
+router.delete(['/:id/social/admin/posts/:postId/produits/:produitId', '/boutiques/:id/social/admin/posts/:postId/produits/:produitId', '/:id/admin/posts/:postId/produits/:produitId'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -600,7 +600,7 @@ router.delete(['/boutiques/:id/social/admin/posts/:postId/produits/:produitId', 
  * POST /api/boutiques/:id/social/admin/accounts
  * Enregistre ou met à jour le profil/compte officiel du marchand (Instagram, TikTok, Facebook)
  */
-router.post(['/boutiques/:id/social/admin/accounts', '/:id/admin/accounts'], verifierToken, async (req, res) => {
+router.post(['/:id/social/admin/accounts', '/boutiques/:id/social/admin/accounts', '/:id/admin/accounts'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -657,7 +657,7 @@ router.post(['/boutiques/:id/social/admin/accounts', '/:id/admin/accounts'], ver
  * DELETE /api/boutiques/:id/social/admin/accounts/:plateforme
  * Déconnecte un compte social de la boutique
  */
-router.delete(['/boutiques/:id/social/admin/accounts/:plateforme', '/:id/admin/accounts/:plateforme'], verifierToken, async (req, res) => {
+router.delete(['/:id/social/admin/accounts/:plateforme', '/boutiques/:id/social/admin/accounts/:plateforme', '/:id/admin/accounts/:plateforme'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -682,7 +682,7 @@ router.delete(['/boutiques/:id/social/admin/accounts/:plateforme', '/:id/admin/a
  * POST /api/boutiques/:id/social/admin/smart-match/:postId
  * Relance l'analyse de Smart Matching pour une publication donnée
  */
-router.post(['/boutiques/:id/social/admin/smart-match/:postId', '/:id/admin/smart-match/:postId'], verifierToken, async (req, res) => {
+router.post(['/:id/social/admin/smart-match/:postId', '/boutiques/:id/social/admin/smart-match/:postId', '/:id/admin/smart-match/:postId'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -716,7 +716,7 @@ router.post(['/boutiques/:id/social/admin/smart-match/:postId', '/:id/admin/smar
  * POST /api/boutiques/:id/social/admin/import-batch
  * Importe une liste d'URLs en lot (Batch Import multi-liens)
  */
-router.post(['/boutiques/:id/social/admin/import-batch', '/:id/admin/import-batch'], verifierToken, async (req, res) => {
+router.post(['/:id/social/admin/import-batch', '/boutiques/:id/social/admin/import-batch', '/:id/admin/import-batch'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -825,7 +825,7 @@ router.post(['/boutiques/:id/social/admin/import-batch', '/:id/admin/import-batc
  * POST /api/boutiques/:id/social/admin/explore-profile
  * Aspire et découvre les publications publiques d'un profil (@pseudo)
  */
-router.post(['/boutiques/:id/social/admin/explore-profile', '/:id/admin/explore-profile'], verifierToken, async (req, res) => {
+router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/explore-profile', '/:id/admin/explore-profile'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -875,7 +875,7 @@ router.post(['/boutiques/:id/social/admin/explore-profile', '/:id/admin/explore-
  * POST /api/boutiques/:id/social/admin/sync-account/:accountId
  * Synchronise les dernières publications d'un compte social connecté
  */
-router.post(['/boutiques/:id/social/admin/sync-account/:accountId', '/:id/admin/sync-account/:accountId'], verifierToken, async (req, res) => {
+router.post(['/:id/social/admin/sync-account/:accountId', '/boutiques/:id/social/admin/sync-account/:accountId', '/:id/admin/sync-account/:accountId'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -968,7 +968,7 @@ router.post(['/boutiques/:id/social/admin/sync-account/:accountId', '/:id/admin/
  * PATCH /api/boutiques/:id/social/admin/accounts/:accountId/toggle-sync
  * Active ou désactive l'Auto-Sync d'un compte
  */
-router.patch(['/boutiques/:id/social/admin/accounts/:accountId/toggle-sync', '/:id/admin/accounts/:accountId/toggle-sync'], verifierToken, async (req, res) => {
+router.patch(['/:id/social/admin/accounts/:accountId/toggle-sync', '/boutiques/:id/social/admin/accounts/:accountId/toggle-sync', '/:id/admin/accounts/:accountId/toggle-sync'], verifierToken, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
     if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });

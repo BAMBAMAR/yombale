@@ -133,20 +133,29 @@ export default function SocialShopManager({
       ])
 
       if (overviewRes.ok) {
-        const d = await overviewRes.json()
-        setAccounts(d.comptes || [])
-        setStats(d.stats || {})
-        setAnalytics(d.analytics_30j || {})
+        const ct = overviewRes.headers.get('content-type') || ''
+        if (ct.includes('application/json')) {
+          const d = await overviewRes.json()
+          setAccounts(d.comptes || [])
+          setStats(d.stats || {})
+          setAnalytics(d.analytics_30j || {})
+        }
       }
 
       if (postsRes.ok) {
-        const d = await postsRes.json()
-        setPosts(d.posts || [])
+        const ct = postsRes.headers.get('content-type') || ''
+        if (ct.includes('application/json')) {
+          const d = await postsRes.json()
+          setPosts(d.posts || [])
+        }
       }
 
       if (prodsRes.ok) {
-        const d = await prodsRes.json()
-        setCatalogue(d.produits || [])
+        const ct = prodsRes.headers.get('content-type') || ''
+        if (ct.includes('application/json')) {
+          const d = await prodsRes.json()
+          setCatalogue(d.produits || [])
+        }
       }
     } catch (err) {
       console.error('[LOAD_SOCIAL_ADMIN_ERR]', err)

@@ -31,7 +31,11 @@
   * **🛡️ 6. Administration Plateforme (`frontend-next/src/app/admin/(protected)/integrations/`, `backend/routes/admin-integrations.js`)** :
     - Ajout du lien direct vers **Migration Marchands** (`/admin/migration`) dans la barre latérale `AdminSidebarClient.tsx`.
     - Création de la page **Intégrations & Réseaux Sociaux** (`/admin/integrations`) : supervision des connecteurs, suivi des comptes marchands connectés, kill-switch d'urgence et modération.
-  * **🧪 7. Tests & Validation** :
+  * **🛠️ 7. Résolution Routage Express & Garde-Fou 404 JSON (`backend/routes/social-shop.js`, `backend/app.js`, `frontend-next/src/app/boutique/SocialShopManager.tsx`)** :
+    - *Résolution préfixes Express* : Déclaration systématique du segment `/:id/social/...` sur les 16 routes de `social-shop.js` pour matcher parfaitement avec le montage `app.use('/api/boutiques', router)`.
+    - *Garde-fou 404 JSON strict* : Ajout de `app.all('/api/*', ...)` avant le catch-all HTML de la SPA, éliminant définitivement les retours `<!DOCTYPE html>` sur les requêtes API en erreur.
+    - *Protection cliente* : Vérification préalable du `Content-Type: application/json` dans `SocialShopManager.tsx` avant tout appel à `.json()`.
+  * **🧪 8. Tests & Validation** :
     - Tests unitaires complets dans `tests/unit/social-shop.test.js` (27/27 tests passés avec succès).
     - Compilation TypeScript `npx tsc --noEmit` validée avec 0 erreur (code 0).
     - Respect absolu des règles projet : polices système exclusivement, aucun push automatique sans confirmation explicite.
