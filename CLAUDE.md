@@ -1,3 +1,26 @@
+- **Amélioration Mobile : Renommage « Autres produits », Correction des Textes Tronqués & Fluidité Responsive (`BoutiqueDetailClient.tsx`, `SocialShopFeed.tsx`) (08 septembre 2026)** 📱✨🏷️ :
+  * **🎯 1. Demandes & Diagnostic de la Capture d'Écran Mobile** :
+    - *Demande 1 — « Changer vue sur les réseau en autres produits »* :
+      * Dans `BoutiqueDetailClient.tsx` et `SocialShopFeed.tsx`, le libellé « Vu sur nos réseaux » a été transformé en **« Autres produits »** (avec compteur et icône) pour valoriser ces articles comme faisant partie intégrante de l'offre commerciale.
+      * L'onglet principal « Catalogue produits » a été raccourci en **« Produits »** pour tenir sans déborder sur les petits écrans de smartphones.
+    - *Demande 2 — « Corriger les texte tronqué & Adaptabilité mobile »* :
+      * Sur la capture d'écran, les pilules de filtrage étaient compressées et écourtées (`Articles`, `🎵 Til`, `📸 Inst`, `📘 Fa`) car les boutons en flexbox n'avaient pas `flex-shrink: 0`.
+      * La barre d'onglets du haut scrollait aussi de façon rigide en masquant le premier onglet (`e produits 1`).
+  * **🛠️ 2. Correctifs Appliqués** :
+    - *Suppression Définitive de la Troncation des Filtres (`SocialShopFeed.tsx`)* :
+      * Ajout de `flexShrink: 0`, `whiteSpace: 'nowrap'` et `WebkitOverflowScrolling: 'touch'` sur l'ensemble des boutons de filtrage : `Tous (21)`, `Liés au catalogue (X)`, `🎵 TikTok (X)`, `📸 Instagram (X)`, `📘 Facebook (X)`.
+      * Défilement tactile fluide au doigt (swipe) sans aucune coupure de texte.
+    - *Bannière Contextualisée (`SocialShopFeed.tsx`)* :
+      * Titre : **« Autres produits de la boutique »**.
+      * Badge : **« ✨ Autres Produits & Vidéos »**.
+      * Sous-titre : *« Retrouvez ici les articles présentés sur nos réseaux sociaux officiels (vidéos, Reels, publications). Commandez en 1 clic ! »*.
+    - *Barre d'Onglets Mobile Optimisée (`BoutiqueDetailClient.tsx`)* :
+      * Utilisation de `flex: '0 0 auto'`, `padding: '8px 14px'` pour chaque onglet avec les compteurs (`Produits (1)`, `Autres produits (21)`), empêchant le débordement involontaire.
+  * **🧪 3. Validation & Invariants** :
+    - Tests unitaires `tests/unit/social-shop.test.js` : 27/27 validés.
+    - Compilation TypeScript `npx tsc --noEmit` avec 0 erreur.
+    - Règle absolue respectée : aucun git push sans commande explicite de l'utilisateur.
+
 - **Intégration Clé : Rapatriement Automatique Meta Graph API via Token DB Actif (`social-parser.js`) (08 septembre 2026)** 📘📸⚡✨ :
   * **🎯 1. Observation Utilisateur & Diagnostic Majeur** :
     - L'utilisateur a fait remarquer avec justesse que les publications continuent d'être diffusées sur Facebook via le panneau d'administration, ce qui indiquait que la session Meta n'était pas déconnectée.

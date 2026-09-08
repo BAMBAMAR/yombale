@@ -544,7 +544,7 @@ export default function BoutiqueDetailClient({
         <button
           onClick={() => setTab('produits')}
           style={{
-            flex: '1 0 auto', minWidth: 100, padding: '8px 12px', borderRadius: 10, border: 'none',
+            flex: '0 0 auto', padding: '8px 14px', borderRadius: 10, border: 'none',
             background: tab === 'produits' ? '#fff' : 'transparent',
             color: tab === 'produits' ? '#C75B00' : '#64748b',
             fontWeight: tab === 'produits' ? 900 : 600, fontSize: 12.5, cursor: 'pointer',
@@ -554,7 +554,7 @@ export default function BoutiqueDetailClient({
           }}
         >
           <Tag size={15} style={{ color: tab === 'produits' ? '#C75B00' : '#94a3b8' }} />
-          <span>Catalogue produits</span>
+          <span>Produits</span>
           {produits.length > 0 && (
             <span style={{
               background: tab === 'produits' ? '#fff7f0' : '#e2e8f0',
@@ -569,7 +569,7 @@ export default function BoutiqueDetailClient({
         <button
           onClick={() => setTab('social')}
           style={{
-            flex: '1 0 auto', minWidth: 110, padding: '8px 12px', borderRadius: 10, border: 'none',
+            flex: '0 0 auto', padding: '8px 14px', borderRadius: 10, border: 'none',
             background: tab === 'social' ? '#fff' : 'transparent',
             color: tab === 'social' ? '#C75B00' : '#64748b',
             fontWeight: tab === 'social' ? 900 : 600, fontSize: 12.5, cursor: 'pointer',
@@ -579,7 +579,7 @@ export default function BoutiqueDetailClient({
           }}
         >
           <span style={{ fontSize: 14 }}>🎬</span>
-          <span>Vu sur nos réseaux</span>
+          <span>Autres produits</span>
           {initialSocialPosts.length > 0 && (
             <span style={{
               background: tab === 'social' ? '#fff7f0' : '#e2e8f0',

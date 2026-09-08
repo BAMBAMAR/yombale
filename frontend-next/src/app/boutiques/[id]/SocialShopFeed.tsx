@@ -275,13 +275,13 @@ export default function SocialShopFeed({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(199, 91, 0, 0.25)', border: '1px solid rgba(199, 91, 0, 0.5)', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, color: '#fed7aa', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              <Sparkles size={12} /> Social Commerce Nopalou
+              <Sparkles size={12} /> Autres Produits & Vidéos
             </div>
             <h2 style={{ margin: 0, fontSize: 'clamp(18px, 3.5vw, 22px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>
-              Vu sur nos réseaux sociaux
+              Autres produits de la boutique
             </h2>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8', maxWidth: 650 }}>
-              Explorez nos vidéos, Reels et publications officielles. Commandez en 1 clic les articles portés et présentés !
+              Retrouvez ici les articles présentés sur nos réseaux sociaux officiels (vidéos, Reels, publications). Commandez en 1 clic !
             </p>
           </div>
 
@@ -310,6 +310,7 @@ export default function SocialShopFeed({
                       fontWeight: 700,
                       textDecoration: 'none',
                       transition: 'background 0.15s ease',
+                      flexShrink: 0,
                     }}
                   >
                     <span>{conf.icon}</span>
@@ -323,28 +324,30 @@ export default function SocialShopFeed({
         </div>
       </div>
 
-      {/* ── BARRE DE FILTRES RESPONSIVE ── */}
+      {/* ── BARRE DE FILTRES RESPONSIVE MOBILE SANS TEXTE TRONQUÉ ── */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 8,
         overflowX: 'auto',
-        paddingBottom: 10,
+        paddingBottom: 8,
         marginBottom: 16,
         scrollbarWidth: 'none',
+        WebkitOverflowScrolling: 'touch',
       }}>
         <button
           onClick={() => setActiveFilter('all')}
           style={{
-            padding: '8px 16px',
+            padding: '7px 14px',
             borderRadius: 20,
             border: activeFilter === 'all' ? '1.5px solid #0f172a' : '1px solid #e2e8f0',
             background: activeFilter === 'all' ? '#0f172a' : '#ffffff',
             color: activeFilter === 'all' ? '#ffffff' : '#475569',
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: 800,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
             gap: 6,
@@ -356,22 +359,23 @@ export default function SocialShopFeed({
         <button
           onClick={() => setActiveFilter('with_products')}
           style={{
-            padding: '8px 16px',
+            padding: '7px 14px',
             borderRadius: 20,
             border: activeFilter === 'with_products' ? '1.5px solid #C75B00' : '1px solid #e2e8f0',
             background: activeFilter === 'with_products' ? '#C75B00' : '#ffffff',
             color: activeFilter === 'with_products' ? '#ffffff' : '#475569',
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: 800,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
             gap: 6,
           }}
         >
-          <ShoppingBag size={14} />
-          <span>Articles à acheter ({posts.filter(p => p.produits_associes?.length > 0).length})</span>
+          <ShoppingBag size={13} />
+          <span>Liés au catalogue ({posts.filter(p => p.produits_associes?.length > 0).length})</span>
         </button>
 
         {['tiktok', 'instagram', 'facebook'].map(platKey => {
@@ -385,15 +389,16 @@ export default function SocialShopFeed({
               key={platKey}
               onClick={() => setActiveFilter(platKey)}
               style={{
-                padding: '8px 16px',
+                padding: '7px 14px',
                 borderRadius: 20,
                 border: isActive ? `1.5px solid ${conf.color}` : '1px solid #e2e8f0',
                 background: isActive ? conf.color : '#ffffff',
                 color: isActive ? '#ffffff' : '#475569',
-                fontSize: 12.5,
+                fontSize: 12,
                 fontWeight: 800,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                flexShrink: 0,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
