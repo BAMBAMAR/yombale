@@ -10593,7 +10593,7 @@ button:focus-visible,
 }
 
 .bq-advanced-mobile-panel {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 768px) {

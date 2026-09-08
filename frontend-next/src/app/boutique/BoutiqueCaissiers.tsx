@@ -11,14 +11,18 @@ interface Caissier {
   actif: boolean
 }
 
+const CODES_PIN_TRIVIAUX = ['1234', '0000', '9999', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '1212']
+
 export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }) {
   const [caissiers, setCaissiers] = useState<Caissier[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
   
   const [newNom, setNewNom] = useState('')
   const [newPrenom, setNewPrenom] = useState('')
   const [newPin, setNewPin] = useState('')
+  const [showNewPin, setShowNewPin] = useState(false)
   const [newRole, setNewRole] = useState('caissier')
   const [adding, setAdding] = useState(false)
   const { t } = useTranslation()
@@ -26,6 +30,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   // Edit states
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editPin, setEditPin] = useState('')
+  const [showEditPin, setShowEditPin] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
 
   async function fetchCaissiers() {
@@ -55,17 +60,23 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   async function handleAddCaissier(e: React.FormEvent) {
     e.preventDefault()
     if (!newNom || !newPin) return
-    if (newPin.length < 4) {
-      setError('Le code PIN doit comporter au moins 4 chiffres')
+    const pinNettoye = newPin.trim()
+    if (!/^\d{4,6}$/.test(pinNettoye)) {
+      setError('Le code PIN doit comporter entre 4 et 6 chiffres numériques')
+      return
+    }
+    if (CODES_PIN_TRIVIAUX.includes(pinNettoye)) {
+      setError('Code PIN trop simple ou par défaut (évitez 1234, 0000, 9999...). Veuillez choisir un code secret personnalisé.')
       return
     }
     setAdding(true)
     setError(null)
+    setSuccessMsg(null)
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom: newNom, prenom: newPrenom, code_pin: newPin, role: newRole })
+        body: JSON.stringify({ nom: newNom.trim(), prenom: newPrenom.trim(), code_pin: pinNettoye, role: newRole })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || t('errors.genericError') || "Erreur lors de l'ajout")
@@ -73,6 +84,8 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
       setNewPrenom('')
       setNewPin('')
       setNewRole('caissier')
+      setSuccessMsg('✅ Nouveau caissier ajouté avec succès !')
+      setTimeout(() => setSuccessMsg(null), 4000)
       await fetchCaissiers()
     } catch (err: any) {
       setError(err.message)
@@ -117,17 +130,23 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   }
 
   async function handleSavePin(caissierId: string) {
-    if (editPin.length < 4) {
-      setError('Le code PIN doit comporter au moins 4 chiffres')
+    const pinNettoye = editPin.trim()
+    if (!/^\d{4,6}$/.test(pinNettoye)) {
+      setError('Le code PIN doit comporter entre 4 et 6 chiffres numériques.')
+      return
+    }
+    if (CODES_PIN_TRIVIAUX.includes(pinNettoye)) {
+      setError('Ce code PIN est trop simple ou par défaut (évitez 1234, 0000, 9999...). Veuillez choisir un code secret personnalisé.')
       return
     }
     setSavingEdit(true)
     setError(null)
+    setSuccessMsg(null)
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers/${caissierId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code_pin: editPin })
+        body: JSON.stringify({ code_pin: pinNettoye })
       })
       if (!res.ok) {
         const data = await res.json()
@@ -135,6 +154,8 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
       }
       setEditingId(null)
       setEditPin('')
+      setSuccessMsg('✅ Code PIN mis à jour avec succès !')
+      setTimeout(() => setSuccessMsg(null), 4000)
       await fetchCaissiers()
     } catch (err: any) {
       setError(err.message)
@@ -161,6 +182,8 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   const activeToken = caisseToken || boutiqueId
   const terminalUrl = `${siteUrl}/boutique/caisse?token=${activeToken}`
 
+  const caissiersAvecPinTrivial = caissiers.filter(c => c.actif && (!c.code_pin || CODES_PIN_TRIVIAUX.includes(String(c.code_pin).trim())));
+
   if (loading && caissiers.length === 0) return <div style={{ padding: 40, textAlign: 'center' }}>{t('common.loading')}</div>
 
   return (
@@ -173,6 +196,32 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
           {t('shop.teamDesc')}
         </p>
       </div>
+
+      {/* Alerte Sécurité Codes PIN par défaut */}
+      {caissiersAvecPinTrivial.length > 0 && (
+        <div style={{
+          background: '#fff7ed',
+          border: '1.5px solid #fed7aa',
+          borderLeft: '4px solid #ea580c',
+          borderRadius: 14,
+          padding: '14px 16px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+          boxShadow: '0 2px 8px rgba(234, 88, 12, 0.06)'
+        }}>
+          <span style={{ fontSize: 22 }}>🛡️</span>
+          <div>
+            <h4 style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 800, color: '#9a3412' }}>
+              Action requise : Personnalisez les codes PIN de votre équipe
+            </h4>
+            <p style={{ margin: 0, fontSize: 12.5, color: '#c2410c', lineHeight: 1.5 }}>
+              {caissiersAvecPinTrivial.length} membre(s) utilise(nt) encore un code d&apos;usine par défaut (ex: 1234 ou 0000). Pour accéder à la caisse POS en toute sécurité, veuillez modifier ces codes ci-dessous.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Bloc Lien Terminal Caissier (0 Débordement) */}
       <div style={{
@@ -259,7 +308,13 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
 
       {error && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: 10, marginBottom: 20, fontSize: 13 }}>
-          {error}
+          ⚠️ {error}
+        </div>
+      )}
+
+      {successMsg && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '10px 14px', borderRadius: 10, marginBottom: 20, fontSize: 13, fontWeight: 700 }}>
+          {successMsg}
         </div>
       )}
 
@@ -309,22 +364,38 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
               boxSizing: 'border-box'
             }}
           />
-          <input 
-            type="password" 
-            maxLength={6}
-            placeholder={t('shop.pinCode')}
-            value={newPin}
-            onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))}
-            required
-            style={{
-              padding: '10px 12px',
-              borderRadius: 8,
-              border: '1px solid #cbd5e1',
-              fontSize: 13.5,
-              width: '100%',
-              boxSizing: 'border-box'
-            }}
-          />
+          
+          <div style={{ position: 'relative', width: '100%' }}>
+            <input 
+              type={showNewPin ? 'text' : 'password'}
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="Code PIN (4 à 6 chiffres)"
+              value={newPin}
+              onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))}
+              required
+              style={{
+                padding: '10px 40px 10px 12px',
+                borderRadius: 8,
+                border: '1px solid #cbd5e1',
+                fontSize: 13.5,
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPin(!showNewPin)}
+              style={{
+                position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: 4
+              }}
+              title="Afficher/Masquer le code PIN"
+            >
+              {showNewPin ? '🙈' : '👁️'}
+            </button>
+          </div>
+
           <select
             value={newRole}
             onChange={e => setNewRole(e.target.value)}
@@ -345,7 +416,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
 
         <button 
           type="submit"
-          disabled={adding || !newNom || !newPin}
+          disabled={adding || !newNom || !newPin || newPin.length < 4}
           className="npl-btn npl-btn-primary npl-btn-md"
           style={{ width: '100%', color: '#ffffff', justifySelf: 'stretch' }}
         >
@@ -360,96 +431,129 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
           {t('shop.registeredCashiersTitle')} ({caissiers.length})
         </h3>
 
-        {caissiers.map(caissier => (
-          <div key={caissier.id} className="npl-card-subtle" style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 12,
-            padding: '12px 16px',
-            background: '#ffffff'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: '50%',
-                background: caissier.actif ? '#eff6ff' : '#f1f5f9',
-                border: caissier.actif ? '1px solid #bfdbfe' : '1px solid #cbd5e1',
-                color: caissier.actif ? '#1d4ed8' : '#64748b',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 800, fontSize: 16, flexShrink: 0
-              }}>
-                {(caissier.nom || 'C').charAt(0).toUpperCase()}
-              </div>
+        {caissiers.map(caissier => {
+          const isTrivial = CODES_PIN_TRIVIAUX.includes(String(caissier.code_pin || '').trim());
+          const isEditing = editingId === caissier.id;
 
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--navy)' }}>
-                    {caissier.prenom} {caissier.nom}
-                  </span>
-                  <span className={`npl-badge ${caissier.actif ? 'npl-badge-success' : 'npl-badge-neutral'}`} style={{ fontSize: 11 }}>
-                    <span className="npl-badge-dot" />
-                    <span>{caissier.actif ? t('shop.activeStatus') : t('shop.inactiveStatus')}</span>
-                  </span>
-                  {caissier.role === 'superviseur' && (
-                    <span className="npl-badge npl-badge-warning" style={{ fontSize: 11 }}>
-                      {t('shop.roleCashierSupervisor')}
+          return (
+            <div key={caissier.id} className="npl-card-subtle" style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 12,
+              padding: '14px 16px',
+              background: '#ffffff',
+              border: isTrivial ? '1.5px solid #fed7aa' : '1px solid var(--border)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                <div style={{
+                  width: 42, height: 42, borderRadius: '50%',
+                  background: caissier.actif ? (caissier.role === 'superviseur' ? '#fef3c7' : '#eff6ff') : '#f1f5f9',
+                  border: caissier.actif ? (caissier.role === 'superviseur' ? '1px solid #fde68a' : '1px solid #bfdbfe') : '1px solid #cbd5e1',
+                  color: caissier.actif ? (caissier.role === 'superviseur' ? '#b45309' : '#1d4ed8') : '#64748b',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 800, fontSize: 16, flexShrink: 0
+                }}>
+                  {(caissier.nom || 'C').charAt(0).toUpperCase()}
+                </div>
+
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 800, fontSize: 14.5, color: 'var(--navy)' }}>
+                      {caissier.prenom} {caissier.nom}
                     </span>
-                  )}
-                </div>
+                    <span className={`npl-badge ${caissier.actif ? 'npl-badge-success' : 'npl-badge-neutral'}`} style={{ fontSize: 11 }}>
+                      <span className="npl-badge-dot" />
+                      <span>{caissier.actif ? t('shop.activeStatus') : t('shop.inactiveStatus')}</span>
+                    </span>
+                    {caissier.role === 'superviseur' && (
+                      <span className="npl-badge npl-badge-warning" style={{ fontSize: 11 }}>
+                        👑 {t('shop.roleCashierSupervisor')}
+                      </span>
+                    )}
+                    {isTrivial && (
+                      <span style={{
+                        fontSize: 10.5, fontWeight: 800, color: '#dc2626', background: '#fef2f2',
+                        padding: '2px 8px', borderRadius: 6, border: '1px solid #fecaca'
+                      }}>
+                        ⚠️ PIN d&apos;usine à changer
+                      </span>
+                    )}
+                  </div>
 
-                <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>
-                  {editingId === caissier.id ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-                      <input 
-                        type="password"
-                        maxLength={6}
-                        value={editPin}
-                        onChange={e => setEditPin(e.target.value.replace(/\D/g, ''))}
-                        placeholder={t('shop.pinCode')}
-                        style={{ width: 100, padding: '4px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #cbd5e1' }}
-                      />
-                      <button 
-                        onClick={() => handleSavePin(caissier.id)} 
-                        disabled={savingEdit || editPin.length < 4}
-                        className="npl-btn npl-btn-primary npl-btn-sm"
-                        style={{ padding: '3px 8px', fontSize: 11 }}
-                      >
-                        {t('common.save')}
-                      </button>
-                      <button 
-                        onClick={() => setEditingId(null)}
-                        className="npl-btn npl-btn-secondary npl-btn-sm"
-                        style={{ padding: '3px 8px', fontSize: 11 }}
-                      >
-                        {t('common.cancel')}
-                      </button>
-                    </div>
-                  ) : (
-                    <span>PIN: •••• <button onClick={() => { setEditingId(caissier.id); setEditPin(''); }} style={{ background: 'none', border: 'none', color: 'var(--navy)', textDecoration: 'underline', cursor: 'pointer', fontSize: 11, padding: '0 4px' }}>{t('common.edit')}</button></span>
-                  )}
+                  <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 4 }}>
+                    {isEditing ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative' }}>
+                          <input 
+                            type={showEditPin ? 'text' : 'password'}
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={editPin}
+                            onChange={e => setEditPin(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Nouveau PIN"
+                            style={{ width: 130, padding: '6px 30px 6px 8px', fontSize: 13, borderRadius: 6, border: '1.5px solid #ea580c', fontWeight: 800 }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowEditPin(!showEditPin)}
+                            style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12 }}
+                          >
+                            {showEditPin ? '🙈' : '👁️'}
+                          </button>
+                        </div>
+                        <button 
+                          onClick={() => handleSavePin(caissier.id)} 
+                          disabled={savingEdit || editPin.length < 4}
+                          className="npl-btn npl-btn-primary npl-btn-sm"
+                          style={{ padding: '6px 12px', fontSize: 12, color: '#ffffff' }}
+                        >
+                          {savingEdit ? '...' : t('common.save')}
+                        </button>
+                        <button 
+                          onClick={() => { setEditingId(null); setEditPin(''); }}
+                          className="npl-btn npl-btn-secondary npl-btn-sm"
+                          style={{ padding: '6px 10px', fontSize: 12 }}
+                        >
+                          {t('common.cancel')}
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>Code PIN : <strong>••••</strong></span>
+                        <button
+                          onClick={() => { setEditingId(caissier.id); setEditPin(''); setShowEditPin(false); }}
+                          style={{ background: 'none', border: 'none', color: '#ea580c', textDecoration: 'underline', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: '0 4px' }}
+                        >
+                          ✏️ Modifier le PIN
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button 
-                type="button"
-                onClick={() => handleToggleActif(caissier)}
-                className={`npl-btn ${caissier.actif ? 'npl-btn-secondary' : 'npl-btn-success'} npl-btn-sm`}
-              >
-                {caissier.actif ? t('shop.inactiveStatus') : t('shop.activeStatus')}
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleDelete(caissier.id)}
-                className="npl-btn npl-btn-danger npl-btn-sm"
-              >
-                🗑️
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button 
+                  type="button"
+                  onClick={() => handleToggleActif(caissier)}
+                  className={`npl-btn ${caissier.actif ? 'npl-btn-secondary' : 'npl-btn-success'} npl-btn-sm`}
+                >
+                  {caissier.actif ? t('shop.inactiveStatus') : t('shop.activeStatus')}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => handleDelete(caissier.id)}
+                  className="npl-btn npl-btn-danger npl-btn-sm"
+                  title="Supprimer ce caissier"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {caissiers.length === 0 && !loading && (
           <div style={{ padding: 24, textAlign: 'center', color: 'var(--text3)', background: '#fff', borderRadius: 12, border: '1px solid var(--border)' }}>

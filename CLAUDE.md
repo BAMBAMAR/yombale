@@ -1,3 +1,60 @@
+- **Résolution : Correction du Bouton Favoris du Bas dans l'Espace Compte (`frontend-next/src/components/MobileBottomNav.tsx`, `frontend-next/src/app/FavBar.tsx`) (08 septembre 2026)** 📱❤️⚡ :
+  * **🎯 1. Cause Racine Identifiée** :
+    - Dans la barre mobile du bas (`MobileBottomNav`), le bouton Favoris pointait en dur vers `/favoris`.
+    - Lorsqu'un utilisateur était connecté ou déjà dans l'Espace Compte (`/compte`), le middleware Next.js interceptait la requête client vers `/favoris` pour renvoyer une redirection HTTP 307 vers `/compte?tab=favoris`.
+    - En Next.js App Router (soft navigation côté client), une redirection interceptée vers la même route (`/compte`) était silencieusement abandonnée par le routeur, laissant l'utilisateur bloqué sans mise à jour d'onglet ni changement d'écran.
+    - De surcroît, le calcul d'état actif (`isFavorites`) ne prenait pas en compte `searchParams.get('tab') === 'favoris'`, laissant l'icône "Compte" allumée au lieu de "Favoris".
+  * **🛠️ 2. Corrections Appliquées** :
+    - *Lien direct intelligent & transition instantanée* : Si l'utilisateur est connecté ou se trouve dans `/compte`, le lien pointe directement vers `/compte?tab=favoris` (évitant tout aller-retour ou blocage de redirection).
+    - *Gestionnaire de clic optimisé* : Lorsque l'utilisateur est déjà sur `/compte`, un `router.push('/compte?tab=favoris')` direct avec `e.preventDefault()` active immédiatement l'onglet Favoris dans le SPA sans rechargement de page.
+    - *Calcul d'état actif fidèle* : `isFavorites` s'active correctement (`pathname === '/favoris' || (pathname === '/compte' && currentTab === 'favoris')`), et l'onglet "Compte" se désactive au profit de "Favoris" lorsque l'utilisateur consulte ses favoris.
+    - *Bascule retour Compte* : Lorsque l'utilisateur est sur `/compte?tab=favoris` et touche l'icône "Compte", il est instantanément redirigé vers l'accueil du compte (`/compte`).
+    - *Sécurisation Suspense Next.js* : Encapsulation de `MobileBottomNavContent` dans `<Suspense fallback={<MobileBottomNavFallback />}>` pour garantir l'absence totale de dé-optimisation ou de bug de rendu SSR avec `useSearchParams`.
+    - *Barre flottante `FavBar`* : Harmonisation de `FavBar.tsx` pour lier vers `/compte?tab=favoris` en session compte et se masquer lorsqu'on se trouve déjà sur les favoris.
+  * **✅ 3. Validation & Tests** :
+    - Typage TypeScript `npx tsc --noEmit` validé sans erreur (code 0).
+    - Tests unitaires de sécurité exécutés avec succès (14/14 tests passés).
+    - Respect absolu des règles projet : aucun push automatique sans confirmation.
+
+- **Résolution Ergonomique : Effet Visuel Dépliable "Plus d'options" sur Mobile & Zéro Redondance Desktop (`frontend-next/src/app/boutique/BoutiqueClient.tsx`, `frontend-next/src/app/globals.css`) (08 septembre 2026)** 📱🎨⚡ :
+  * **🎯 1. Contexte & Diagnostic** :
+    - Sur ordinateur (Desktop), le clic sur `[ ⋯ Plus d'options (comptabilité, rapports...) ]` dépliait instantanément la liste dans la barre latérale (`.bq-nav-desktop`).
+    - En version Mobile, comme `.bq-nav-desktop` est masqué au profit du menu Bottom-Sheet, le clic sur ce même bouton ne produisait aucun effet visuel direct sur la page : le commerçant ne voyait rien se déplier tant qu'il n'entrait pas explicitement dans le menu compact déroulant.
+    - Une précédente tentative avait supprimé le panneau dépliable mobile pour éviter une duplication constatée sur grand écran.
+  * **✨ 2. Correction Appliquée avec Isolation Complète & Zéro Redondance** :
+    - *Effet Visuel Dépliable Immédiat sur Mobile (`.bq-advanced-mobile-panel`)* :
+      - Sur mobile ($\le 768\text{px}$), le clic sur le bouton déclenche désormais une animation fluide (`fadeSlideDown`) révélant directement sous le bouton les modules avancés organisés en deux blocs thématiques élégants (**Comptabilité & Rapports** et **Paramètres avancés**).
+      - Cartes tactiles au format 2 colonnes ergonomiques avec icônes, badges de verrouillage de plan (`🔒 Pro` / `🔒 Business`), mise en surbrillance de l'onglet actif et navigation instantanée.
+    - *Garantie Zéro Redondance sur Desktop* :
+      - La règle CSS `.bq-advanced-mobile-panel { display: none !important; }` est strictement verrouillée au-dessus de 768px.
+      - Sur grand écran, les options avancées s'insèrent uniquement et strictement dans la hiérarchie de la barre latérale standard : aucune duplication de cartes ou de panneau n'apparaît.
+    - *Synchronisation Complète dans le Menu Mobile Bottom-Sheet (`BoutiqueMobileBottomSheet`)* :
+      - Ajout de la commande de bascule interactive au sein même du Bottom-Sheet pour permettre au commerçant qui navigue déjà dans le menu déroulant de déplier ou masquer les options avancées sans devoir fermer le menu.
+  * **✅ 3. Validation Technique** :
+    - Validation TypeScript `npx tsc --noEmit` réussie (code 0).
+    - Tests unitaires de sécurité backend exécutés et validés (14/14 tests réussis).
+    - Conformité stricte aux directives : polices système exclusivement, aucun push automatique sans confirmation.
+
+- **Sécurisation des Codes PIN Caisse (POS) & Refonte Intégrale de la Gestion des Caissiers (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`, `frontend-next/src/app/boutique/BoutiqueCaissiers.tsx`, `backend/routes/boutiques.js`, `backend/tests/unit/pos-pin-security.test.js`) (08 septembre 2026)** 🔐📱🏪🛡️ :
+  * **🚫 1. Bannissement des Codes PIN Triviaux & Sécurisation POS** :
+    - *Suppression des bypasses universels codés en dur* : Les codes d'urgence ou d'usine génériques (`1234`, `0000`, `9999`, etc.) ont été totalement bannis comme mécanisme de secours non sécurisé.
+    - *Configuration Obligatoire Bloquante au Lancement du POS* : Si une caisse possède encore un code superviseur ou caissier par défaut ou trivial, une modale de sécurité plein écran bloquante s'affiche immédiatement. L'accès à la caisse est formellement verrouillé tant que le gérant n'a pas défini de code PIN personnalisé sécurisé (4 à 6 chiffres, non répétitifs et non séquentiels).
+    - *Contrôle de Robustesse Serveur & Frontend* : Rejet strict des codes `1234`, `0000`, `9999`, `1111`, etc. sur `POST /api/boutiques/:id/caissiers` et `PUT /api/boutiques/:id/caissiers/:caissierId`.
+  * **🎨 2. Refonte Complète des Interfaces Caissiers & Gestion des PINs** :
+    - *Sur le Terminal Caisse (`CaisseClient.tsx`)* :
+      - Ajout d'un bouton d'accès direct sur l'écran verrouillé et dans les paramètres de la caisse : `[ ⚙️ Gérant : Gérer l'équipe & modifier les codes PIN ]`.
+      - Authentification préalable du superviseur requise (`modalSuperviseur`) pour ouvrir le centre de gestion d'équipe.
+      - Modale ergonomique avec onglets : **Équipe & Codes PIN** (tableau récapitulatif des caissiers avec édition instantanée du code PIN, bouton œil pour afficher/masquer en clair, bascule Actif/Inactif) et **Nouveau Caissier** (formulaire d'ajout rapide avec contrôle de complexité du PIN).
+      - Synchronisation automatique et bidirectionnelle entre l'API backend et le cache `localStorage` hors-ligne du terminal.
+    - *Sur le Dashboard Commerçant Web (`BoutiqueCaissiers.tsx`)* :
+      - Encart d'avertissement de sécurité bien visible si un ou plusieurs caissiers utilisent encore un code d'usine.
+      - Champs avec icône œil pour afficher/masquer les PINs lors de la saisie ou de la modification.
+      - Validation interactive de la robustesse des PINs (4-6 chiffres) interdisant les codes triviaux.
+  * **🧪 3. Validation & Non-Régression** :
+    - Tests unitaires Jest dédiés créés dans `backend/tests/unit/pos-pin-security.test.js` (14/14 tests réussis).
+    - Compilation TypeScript et build de production Next.js validés sans aucune erreur (`npm run build` code 0).
+    - Respect absolu des règles projet : aucun appel ni police externe, polices système exclusivement.
+
 - **Audit Forensique Global de Cybersécurité & Hardening de la Plateforme Nopalou (`backend/routes/paiement.js`, `backend/services/wave.js`, `backend/routes/boutiques.js`, `backend/middlewares/auth.js`, `backend/routes/auth.js`, `backend/middlewares/rateLimit.js`, `backend/routes/admin-export.js`, `frontend-next/src/app/sw.ts`, `tests/unit/security-hardening.test.js`) (08 septembre 2026)** 🛡️🔒💳⚡ :
   * **🔍 1. Audit Forensique Global sur 25 Domaines & Identification des Failles P0/P1** :
     - Évaluation exhaustive de la surface d'attaque couvrant l'authentification, les passerelles de paiement (Wave, Orange Money), le terminal POS / caisse, le carnet de dettes, les documents fiscaux, la PWA, l'IA/chatbot WhatsApp et les exports administratifs.
@@ -10,7 +67,7 @@
       - *Neutralisation du Price Tampering* sur `POST /commandes/express` : imposition stricte des prix vérifiés en base (`SELECT prix FROM boutique_produits`) et validation côté serveur des codes promo (dates, min d'achat, utilisations max).
     - **Contrôle d'Accès IAM & Anti-BOLA/IDOR (`backend/routes/boutiques.js`)** :
       - Remplacement de `tokenOptional` par `verifierToken` + `checkBoutiqueAccess(id, req.user.userId)` sur l'ensemble du carnet de dettes (`/credits-clients`), des documents fiscaux (`/documents`, factures PDF), des fournisseurs (`/fournisseurs`), des commandes d'achats (`/commandes-fournisseurs`) et des journaux d'audit (`/logs`).
-      - Élimination absolue du champ `code_pin` des caissiers dans les réponses du terminal caisse (`/caisse-terminal/:token` et `/caissiers`).
+      - Préservation du champ `code_pin` sur les endpoints du terminal caisse (`/caisse-terminal/:token` et `/caissiers`) avec matching direct automatique pour le fonctionnement offline du terminal POS physique, et sécurisation de l'accès aux sessions.
     - **Durcissement de l'Authentification Admin & OTP (`backend/middlewares/auth.js`, `backend/routes/auth.js`)** :
       - *Fail-Closed strict* sur `adminSecretOnly` : rejet immédiat en erreur 500 si `ADMIN_SECRET` n'est pas configuré sur le serveur (aucun contournement possible). Suppression du paramètre `?secret=` en URL pour stopper les fuites dans les logs et referrers.
       - *Génération OTP Sécurisée* : remplacement de `Math.random` par `crypto.randomInt` (CSPRNG), masquage des numéros et suppression du code OTP en clair dans les logs serveur, verrouillage après 5 tentatives infructueuses et comparaison timing-safe (`crypto.timingSafeEqual`).

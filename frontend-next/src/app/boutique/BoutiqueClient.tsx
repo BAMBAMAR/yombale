@@ -4185,6 +4185,8 @@ function BoutiqueMobileBottomSheet({
   hasMultipleBoutiques = false,
   boutiques = [],
   onSelectBoutique,
+  showAdvancedNav = false,
+  onToggleAdvancedNav,
 }: {
   navGroups: NavGroup[]
   activeTab: ManageTab
@@ -4198,6 +4200,8 @@ function BoutiqueMobileBottomSheet({
   hasMultipleBoutiques?: boolean
   boutiques?: Boutique[]
   onSelectBoutique?: (b: Boutique) => void
+  showAdvancedNav?: boolean
+  onToggleAdvancedNav?: () => void
 }) {
   const router = useRouter()
   const { t } = useTranslation()
@@ -4399,6 +4403,40 @@ function BoutiqueMobileBottomSheet({
                   </div>
                 )
               })}
+
+              {onToggleAdvancedNav && (
+                <div style={{ padding: '6px 8px 12px' }}>
+                  <button
+                    type="button"
+                    onClick={onToggleAdvancedNav}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      border: showAdvancedNav ? '1.5px solid var(--accent, #C75B00)' : '1.5px dashed var(--border-medium, #D1C4B4)',
+                      background: showAdvancedNav ? 'var(--orange2, #FFF3E8)' : '#FAF8F5',
+                      cursor: 'pointer',
+                      fontSize: 12.5,
+                      fontWeight: 800,
+                      color: showAdvancedNav ? 'var(--accent, #C75B00)' : 'var(--text-subtle, #8C7E74)',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <ChevronDown
+                      size={14}
+                      style={{
+                        transform: showAdvancedNav ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                    />
+                    <span>{showAdvancedNav ? 'Masquer les options avancées' : 'Plus d\'options (comptabilité, rapports...)'}</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="mobile-bs-footer">
@@ -5271,6 +5309,60 @@ function BoutiqueManage({
             />
             <span>{showAdvancedNav ? 'Masquer les options avancées' : 'Plus d\'options (comptabilité, rapports...)'}</span>
           </button>
+
+          {/* Panneau dépliable interactif visible UNIQUEMENT sur mobile lorsque showAdvancedNav est actif (display: none !important sur desktop) */}
+          {showAdvancedNav && (
+            <div className="bq-advanced-mobile-panel" style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {NAV_ADVANCED.map((group, gIdx) => (
+                <div key={gIdx} style={{ background: '#FAF8F5', border: '1px solid #E8DDD2', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontSize: 11, fontWeight: 800, color: 'var(--navy, #1C2B4A)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <group.icon size={13} style={{ color: 'var(--accent, #C75B00)' }} />
+                    <span>{group.title}</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 6 }}>
+                    {group.items.map(item => {
+                      const allowed = isAllowed(item.minPlan)
+                      const isActive = tab === item.key
+                      const ItemIcon = item.icon
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => handleNavigateTab(item.key)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '8px 10px',
+                            borderRadius: 8,
+                            fontSize: 12,
+                            fontWeight: isActive ? 800 : 600,
+                            color: isActive ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                            background: isActive ? 'var(--orange2, #FFF3E8)' : '#ffffff',
+                            border: isActive ? '1.5px solid var(--accent, #C75B00)' : '1px solid #E2E8F0',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            boxShadow: isActive ? '0 2px 6px rgba(199,91,0,0.15)' : '0 1px 2px rgba(0,0,0,0.03)',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <ItemIcon size={14} style={{ color: isActive ? 'var(--accent, #C75B00)' : '#64748B', flexShrink: 0 }} />
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>
+                            {item.label}
+                          </span>
+                          {!allowed && (
+                            <span style={{ fontSize: 8.5, background: item.minPlan === 'business' ? 'var(--navy, #1C2B4A)' : 'var(--accent, #C75B00)', color: '#fff', padding: '1px 4px', borderRadius: 3, fontWeight: 800 }}>
+                              🔒
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Nav Mobile — Bottom-Sheet (remplace les 2 niveaux de pills) */}
@@ -5292,6 +5384,8 @@ function BoutiqueManage({
           hasMultipleBoutiques={hasMultipleBoutiques}
           boutiques={boutiques}
           onSelectBoutique={onSelectBoutique}
+          showAdvancedNav={showAdvancedNav}
+          onToggleAdvancedNav={() => setShowAdvancedNav(v => !v)}
         />
 
         {/* Liens rapides (Desktop seulement) */}

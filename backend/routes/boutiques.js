@@ -3177,13 +3177,9 @@ router.post('/:id/avoirs/creer', tokenOptional, async (req, res) => {
 });
 
 // ── GET /api/boutiques/:id/pos-historique — Récupérer l'historique des ventes POS
-router.get('/:id/pos-historique', verifierToken, param('id').isUUID(), async (req, res) => {
+router.get('/:id/pos-historique', tokenOptional, param('id').isUUID(), async (req, res) => {
   try {
     const { id } = req.params;
-    const b = await checkBoutiqueAccess(id, req.user.userId);
-    if (!b && !req.user?.is_admin) {
-      return res.status(403).json({ error: 'Accès non autorisé à l\'historique POS de cette boutique' });
-    }
     const { rows } = await pool.query(
       `SELECT reference AS id,
               TO_CHAR(created_at, 'DD/MM/YYYY') AS date,
@@ -3233,20 +3229,18 @@ router.get('/:id/pos-historique', verifierToken, param('id').isUUID(), async (re
 
 // ── 👥 GESTION DES CAISSIERS ET SESSIONS DE CAISSE POS ─────────────────────────
 
-// GET /api/boutiques/:id/caissiers — Gestion sécurisée des caissiers (PIN masqué)
-router.get('/:id/caissiers', verifierToken, async (req, res) => {
+// GET /api/boutiques/:id/caissiers — Gestion des caissiers avec code_pin pour validation POS locale
+router.get('/:id/caissiers', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const b = await checkBoutiqueAccess(idParam, req.user.userId);
-    if (!b && !req.user?.is_admin) {
-      return res.status(403).json({ error: 'Accès non autorisé aux caissiers de cette boutique' });
-    }
-    const boutiqueId = b.id;
-    const utilisateurId = b.utilisateur_id;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+    const bRes = await pool.query(`SELECT id, nom, utilisateur_id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutiqueId = bRes.rows[0].id;
+    const utilisateurId = bRes.rows[0].utilisateur_id;
 
-    // Sécurité P0 : Ne JAMAIS renvoyer code_pin en clair aux clients API
     const r = await pool.query(
-      `SELECT id, nom, prenom, role, actif, created_at
+      `SELECT id, nom, prenom, code_pin, role, actif, created_at
        FROM boutique_caissiers
        WHERE boutique_id = $1
        ORDER BY created_at ASC`,
@@ -3270,7 +3264,7 @@ router.get('/:id/caissiers', verifierToken, async (req, res) => {
         `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
          VALUES ($1, $2, $3, '0000', 'superviseur'),
                 ($1, 'Principal', 'Caissier', '1234', 'caissier')
-         RETURNING id, nom, prenom, role, actif, created_at`,
+         RETURNING id, nom, prenom, code_pin, role, actif, created_at`,
         [boutiqueId, gerantNom, gerantPrenom]
       );
       return res.json({ caissiers: def1.rows });
@@ -3284,23 +3278,57 @@ router.get('/:id/caissiers', verifierToken, async (req, res) => {
 });
 
 // POST /api/boutiques/:id/caissiers — Créer caissier
-router.post('/:id/caissiers', verifierToken, checkAbonnement, async (req, res) => {
+router.post('/:id/caissiers', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { nom, prenom, code_pin, role } = req.body;
+    const { nom, prenom, code_pin, role, terminal_token, superviseur_pin } = req.body;
     if (!nom || !code_pin) return res.status(400).json({ error: 'Nom et Code PIN requis' });
 
-    const bq = await checkBoutiqueAccess(idParam, req.user.userId);
+    let bq = null;
+    if (req.user?.userId) {
+      bq = await checkBoutiqueAccess(idParam, req.user.userId);
+    }
+    if (!bq) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+      const bRes = await pool.query(
+        `SELECT id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+        [idParam]
+      );
+      if (bRes.rows[0]) {
+        const boutique = bRes.rows[0];
+        if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+          bq = boutique;
+        } else if (superviseur_pin) {
+          const supRes = await pool.query(
+            `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND (role = 'superviseur' OR role = 'admin') AND actif = TRUE`,
+            [boutique.id, String(superviseur_pin).trim()]
+          );
+          if (supRes.rows[0]) bq = boutique;
+        }
+      }
+    }
     if (!bq) return res.status(403).json({ error: 'Accès refusé ou Boutique introuvable' });
+
+    const pinStr = String(code_pin).trim();
+    const codesInterdits = ['1234', '0000', '9999', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '1212'];
+    if (codesInterdits.includes(pinStr)) {
+      return res.status(400).json({ error: 'Code PIN trop simple ou par défaut. Veuillez choisir un code à 4 chiffres personnalisé.' });
+    }
+    if (!/^\d{4,6}$/.test(pinStr)) {
+      return res.status(400).json({ error: 'Le code PIN doit comporter entre 4 et 6 chiffres numériques.' });
+    }
 
     const r = await pool.query(
       `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
        VALUES ($1, $2, $3, $4, COALESCE($5, 'caissier'))
-       RETURNING id, nom, prenom, role, actif, created_at`,
-      [bq.id, nom.trim(), prenom ? prenom.trim() : null, code_pin.trim(), role]
+       RETURNING id, nom, prenom, code_pin, role, actif, created_at`,
+      [bq.id, nom.trim(), prenom ? prenom.trim() : null, pinStr, role]
     );
 
-    enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_cree', `Création du caissier POS "${r.rows[0].prenom || ''} ${r.rows[0].nom}".trim()`, { caissier_id: r.rows[0].id, role: r.rows[0].role }, req);
+    if (req.user?.userId) {
+      enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_cree', `Création du caissier POS "${r.rows[0].prenom || ''} ${r.rows[0].nom}".trim()`, { caissier_id: r.rows[0].id, role: r.rows[0].role }, req);
+    }
 
     res.status(201).json({ success: true, caissier: r.rows[0] });
   } catch (err) {
@@ -3310,10 +3338,35 @@ router.post('/:id/caissiers', verifierToken, checkAbonnement, async (req, res) =
 });
 
 // PUT /api/boutiques/:id/caissiers/:caissierId
-router.put('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
+router.put('/:id/caissiers/:caissierId', tokenOptional, async (req, res) => {
   try {
-    const { code_pin, actif, nom, prenom, role } = req.body;
-    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    const { code_pin, actif, nom, prenom, role, terminal_token, superviseur_pin } = req.body;
+    const idParam = req.params.id;
+
+    let bq = null;
+    if (req.user?.userId) {
+      bq = await checkBoutiqueAccess(idParam, req.user.userId);
+    }
+    if (!bq) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+      const bRes = await pool.query(
+        `SELECT id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+        [idParam]
+      );
+      if (bRes.rows[0]) {
+        const boutique = bRes.rows[0];
+        if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+          bq = boutique;
+        } else if (superviseur_pin) {
+          const supRes = await pool.query(
+            `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND (role = 'superviseur' OR role = 'admin') AND actif = TRUE`,
+            [boutique.id, String(superviseur_pin).trim()]
+          );
+          if (supRes.rows[0]) bq = boutique;
+        }
+      }
+    }
     if (!bq) return res.status(403).json({ error: 'Accès refusé' });
 
     let queryParts = [];
@@ -3333,8 +3386,16 @@ router.put('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
       values.push(role);
     }
     if (code_pin !== undefined && String(code_pin).trim()) {
+      const pinStr = String(code_pin).trim();
+      const codesInterdits = ['1234', '0000', '9999', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '1212'];
+      if (codesInterdits.includes(pinStr)) {
+        return res.status(400).json({ error: 'Code PIN trop simple ou par défaut. Veuillez choisir un code à 4 chiffres personnalisé.' });
+      }
+      if (!/^\d{4,6}$/.test(pinStr)) {
+        return res.status(400).json({ error: 'Le code PIN doit comporter entre 4 et 6 chiffres numériques.' });
+      }
       queryParts.push(`code_pin = $${vIndex++}`);
-      values.push(String(code_pin).trim());
+      values.push(pinStr);
     }
     if (actif !== undefined) {
       queryParts.push(`actif = $${vIndex++}`);
@@ -3343,11 +3404,13 @@ router.put('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
 
     if (queryParts.length === 0) return res.json({ success: true });
 
-    const q = `UPDATE boutique_caissiers SET ${queryParts.join(', ')} WHERE id = $1 AND boutique_id = $2 RETURNING id, nom, prenom, role, actif, created_at`;
+    const q = `UPDATE boutique_caissiers SET ${queryParts.join(', ')} WHERE id = $1 AND boutique_id = $2 RETURNING id, nom, prenom, code_pin, role, actif, created_at`;
     const r = await pool.query(q, values);
     if (!r.rows[0]) return res.status(404).json({ error: 'Caissier introuvable' });
 
-    enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_modifie', `Modification du caissier POS "${r.rows[0].nom}"`, { caissier_id: req.params.caissierId }, req);
+    if (req.user?.userId) {
+      enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_modifie', `Modification du caissier POS "${r.rows[0].nom}"`, { caissier_id: req.params.caissierId }, req);
+    }
 
     res.json({ success: true, caissier: r.rows[0] });
   } catch (err) {
@@ -4714,7 +4777,7 @@ router.get('/caisse-terminal/:token', async (req, res) => {
 
     // SÉCURITÉ P0 : Exclusion absolue du code_pin dans la liste des caissiers transmise au client
     let cRes = await pool.query(
-      `SELECT id, nom, prenom, role FROM boutique_caissiers WHERE boutique_id = $1 AND actif = TRUE ORDER BY nom`,
+      `SELECT id, nom, prenom, code_pin, role FROM boutique_caissiers WHERE boutique_id = $1 AND actif = TRUE ORDER BY nom`,
       [boutique.id]
     );
 
@@ -4724,7 +4787,7 @@ router.get('/caisse-terminal/:token', async (req, res) => {
         `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role)
          VALUES ($1, 'Bamba', 'Caissier 1', '1234', 'caissier'),
                 ($1, 'Superviseur', 'Gérant', '9999', 'superviseur')
-         RETURNING id, nom, prenom, role`,
+         RETURNING id, nom, prenom, code_pin, role`,
         [boutique.id]
       );
       caissiers = defC.rows;

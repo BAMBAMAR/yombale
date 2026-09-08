@@ -175,10 +175,26 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   // Rôle Actif de la Session ('caissier' ou 'superviseur')
   const [roleActif, setRoleActif] = useState<'caissier' | 'superviseur'>('caissier')
 
-  // Codes PIN secrets (Stockés de façon masquée et sécurisée)
+  // Codes PIN secrets & Configuration Obligatoire
   const [pinCaissier, setPinCaissier] = useState<string>('1234')
   const [pinSuperviseur, setPinSuperviseur] = useState<string>('9999')
   const [modalConfigPin, setModalConfigPin] = useState<boolean>(false)
+  const [modalConfigObligatoire, setModalConfigObligatoire] = useState<boolean>(false)
+  const [pinObligatoireSuperviseur, setPinObligatoireSuperviseur] = useState<string>('')
+  const [pinObligatoireCaissier, setPinObligatoireCaissier] = useState<string>('')
+  const [erreurConfigObligatoire, setErreurConfigObligatoire] = useState<string | null>(null)
+  const [savingConfigObligatoire, setSavingConfigObligatoire] = useState<boolean>(false)
+
+  // Gestion Équipe & Modification PINs Avancée
+  const [ongletConfigPin, setOngletConfigPin] = useState<'liste' | 'ajouter'>('liste')
+  const [editPinsState, setEditPinsState] = useState<{ [caissierId: string]: string }>({})
+  const [showPinState, setShowPinState] = useState<{ [caissierId: string]: boolean }>({})
+  const [savingPinId, setSavingPinId] = useState<string | null>(null)
+  const [nouveauCaissierNom, setNouveauCaissierNom] = useState<string>('')
+  const [nouveauCaissierPrenom, setNouveauCaissierPrenom] = useState<string>('')
+  const [nouveauCaissierRole, setNouveauCaissierRole] = useState<'caissier' | 'superviseur'>('caissier')
+  const [nouveauCaissierPin, setNouveauCaissierPin] = useState<string>('')
+  const [addingCaissierState, setAddingCaissierState] = useState<boolean>(false)
 
   // Formulaire de modification des PINs (Masqué type=password)
   const [ancienPinSuperviseur, setAncienPinSuperviseur] = useState<string>('')
@@ -909,6 +925,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 setCaissiersList(actifs)
                 setCaissierSelectionneId(actifs[0].id)
                 setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`)
+                if (verifierSiConfigObligatoire(actifs, bqObj.id)) {
+                  setModalConfigObligatoire(true)
+                }
               }
             }
 
@@ -1061,6 +1080,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             setCaissiersList(actifs);
             setCaissierSelectionneId(actifs[0].id);
             setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`);
+            if (verifierSiConfigObligatoire(actifs, bId)) {
+              setModalConfigObligatoire(true);
+            }
           }
         }
       }
@@ -1351,42 +1373,218 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     }
   }
 
-  // ── Ouvrir la modale de modification des PINs (Réservé au Gérant) ─────────────
+  // ── Constantes & Fonctions de Vérification de Sécurité PIN ────────────────
+  const CODES_PIN_TRIVIAUX = ['1234', '0000', '9999', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '1212'];
+
+  function verifierSiConfigObligatoire(caissiers: any[], bId?: string): boolean {
+    if (!caissiers || caissiers.length === 0) return false;
+    const aCodeTrivial = caissiers.some(c => c.actif !== false && (!c.code_pin || CODES_PIN_TRIVIAUX.includes(String(c.code_pin).trim())));
+    const hasSuperviseur = caissiers.some(c => (c.role === 'superviseur' || c.role === 'admin') && c.code_pin && !CODES_PIN_TRIVIAUX.includes(String(c.code_pin).trim()));
+    return aCodeTrivial || !hasSuperviseur;
+  }
+
+  // ── Soumission de la Configuration Initiale Obligatoire des PINs ───────────
+  async function soumettreConfigObligatoire() {
+    setErreurConfigObligatoire(null);
+    const supPin = pinObligatoireSuperviseur.trim();
+    const caiPin = pinObligatoireCaissier.trim();
+
+    if (!supPin || supPin.length < 4 || !caiPin || caiPin.length < 4) {
+      setErreurConfigObligatoire('Chaque code PIN doit comporter entre 4 et 6 chiffres.');
+      return;
+    }
+    if (CODES_PIN_TRIVIAUX.includes(supPin)) {
+      setErreurConfigObligatoire('Le code Superviseur est trop simple (évitez 0000, 1234, 9999...). Choisissez un code secret.');
+      return;
+    }
+    if (CODES_PIN_TRIVIAUX.includes(caiPin)) {
+      setErreurConfigObligatoire('Le code Caissier est trop simple (évitez 1234, 0000, 9999...). Choisissez un code secret.');
+      return;
+    }
+    if (supPin === caiPin) {
+      setErreurConfigObligatoire('Le code Superviseur et le code Caissier doivent être différents pour séparer les pouvoirs.');
+      return;
+    }
+
+    setSavingConfigObligatoire(true);
+    try {
+      const bId = boutiqueActiveId || (boutiques[0]?.id);
+      const supObj = caissiersList.find(c => c.role === 'superviseur' || c.role === 'admin') || caissiersList[0];
+      const caiObj = caissiersList.find(c => c.role === 'caissier' && c.id !== supObj?.id) || caissiersList[1] || caissiersList[0];
+      const tokenAuth = initialToken || bId;
+
+      if (supObj) {
+        await fetch(`/api/boutiques/${bId}/caissiers/${supObj.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code_pin: supPin, terminal_token: tokenAuth })
+        });
+      }
+
+      if (caiObj && caiObj.id !== supObj?.id) {
+        await fetch(`/api/boutiques/${bId}/caissiers/${caiObj.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code_pin: caiPin, terminal_token: tokenAuth })
+        });
+      }
+
+      // Recharger la liste des caissiers à jour
+      const resCaissiers = await fetch(`/api/boutiques/${bId}/caissiers`);
+      if (resCaissiers.ok) {
+        const d = await resCaissiers.json();
+        if (d.caissiers) {
+          const actifs = d.caissiers.filter((c: any) => c.actif !== false);
+          setCaissiersList(actifs);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`nopalou_offline_caissiers_${bId}`, JSON.stringify(actifs));
+          }
+        }
+      }
+
+      setPinSuperviseur(supPin);
+      setPinCaissier(caiPin);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`nopalou_pin_configured_${bId}`, 'true');
+        localStorage.setItem('nopalou_pin_superviseur', supPin);
+        localStorage.setItem('nopalou_pin_caissier', caiPin);
+      }
+
+      setModalConfigObligatoire(false);
+      showToast('🎉 Configuration de sécurité réussie ! La caisse est prête.', 'success');
+    } catch (err: any) {
+      setErreurConfigObligatoire('Erreur lors de l\'enregistrement. Vérifiez votre connexion.');
+    } finally {
+      setSavingConfigObligatoire(false);
+    }
+  }
+
+  // ── Ouvrir la modale de gestion d'équipe et des PINs (Réservé au Gérant) ─────
   function ouvrirConfigPin() {
-    demanderValidationSuperviseur('Accès aux Paramètres de Modification des Codes PIN', () => {
+    demanderValidationSuperviseur('Accès au Centre de Gestion d\'Équipe et Codes PIN', () => {
       setModalConfigPin(true)
       setMsgConfigPin(null)
+      setOngletConfigPin('liste')
     })
   }
 
-  function enregistrerNouveauxPins() {
-    setMsgConfigPin(null)
-    if (ancienPinSuperviseur !== pinSuperviseur) {
-      setMsgConfigPin({ type: 'error', text: '⚠️ Code PIN Superviseur actuel incorrect.' })
-      return
+  // ── Modification directe du code PIN d'un caissier (depuis le POS) ─────────
+  async function modifierPinCaissier(caissierId: string) {
+    const nouveauCode = editPinsState[caissierId]?.trim();
+    if (!nouveauCode || nouveauCode.length < 4) {
+      showToast('Le code PIN doit comporter au moins 4 chiffres.', 'warning');
+      return;
     }
-
-    let aChange = false
-    if (nouveauPinCaissier.trim().length === 4) {
-      setPinCaissier(nouveauPinCaissier.trim())
-      localStorage.setItem('nopalou_pin_caissier', nouveauPinCaissier.trim())
-      aChange = true
+    if (CODES_PIN_TRIVIAUX.includes(nouveauCode)) {
+      showToast('Ce code PIN est trop simple ou interdit (1234, 0000, 9999...).', 'warning');
+      return;
     }
+    setSavingPinId(caissierId);
+    try {
+      const bId = boutiqueActiveId || (boutiques[0]?.id);
+      const res = await fetch(`/api/boutiques/${bId}/caissiers/${caissierId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code_pin: nouveauCode,
+          superviseur_pin: pinSuperviseurSaisi,
+          terminal_token: initialToken || bId
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur modification PIN');
 
-    if (nouveauPinSuperviseur.trim().length === 4) {
-      setPinSuperviseur(nouveauPinSuperviseur.trim())
-      localStorage.setItem('nopalou_pin_superviseur', nouveauPinSuperviseur.trim())
-      aChange = true
+      // Mettre à jour l'état local et cache
+      const updatedList = caissiersList.map(c => c.id === caissierId ? { ...c, code_pin: nouveauCode } : c);
+      setCaissiersList(updatedList);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`nopalou_offline_caissiers_${bId}`, JSON.stringify(updatedList));
+      }
+      setEditPinsState(prev => {
+        const copy = { ...prev };
+        delete copy[caissierId];
+        return copy;
+      });
+      showToast('✅ Code PIN mis à jour avec succès !', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Erreur modification PIN', 'warning');
+    } finally {
+      setSavingPinId(null);
     }
+  }
 
-    if (aChange) {
-      setMsgConfigPin({ type: 'success', text: '✅ Vos nouveaux codes PIN secrets ont été mis à jour avec succès !' })
-      setAncienPinSuperviseur('')
-      setNouveauPinCaissier('')
-      setNouveauPinSuperviseur('')
-      setTimeout(() => setModalConfigPin(false), 1500)
-    } else {
-      setMsgConfigPin({ type: 'error', text: 'Veuillez saisir un code PIN valide à 4 chiffres.' })
+  // ── Ajout d'un Nouveau Caissier depuis le POS ──────────────────────────────
+  async function ajouterNouveauCaissier() {
+    if (!nouveauCaissierNom.trim() || !nouveauCaissierPin.trim()) {
+      showToast('Nom et Code PIN requis', 'warning');
+      return;
+    }
+    if (nouveauCaissierPin.length < 4) {
+      showToast('Le code PIN doit comporter au moins 4 chiffres', 'warning');
+      return;
+    }
+    if (CODES_PIN_TRIVIAUX.includes(nouveauCaissierPin.trim())) {
+      showToast('Code PIN trop simple ou interdit (1234, 0000, etc.)', 'warning');
+      return;
+    }
+    setAddingCaissierState(true);
+    try {
+      const bId = boutiqueActiveId || (boutiques[0]?.id);
+      const res = await fetch(`/api/boutiques/${bId}/caissiers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: nouveauCaissierNom.trim(),
+          prenom: nouveauCaissierPrenom.trim(),
+          code_pin: nouveauCaissierPin.trim(),
+          role: nouveauCaissierRole,
+          superviseur_pin: pinSuperviseurSaisi,
+          terminal_token: initialToken || bId
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur création caissier');
+
+      const updated = [...caissiersList, data.caissier];
+      setCaissiersList(updated);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`nopalou_offline_caissiers_${bId}`, JSON.stringify(updated));
+      }
+      setNouveauCaissierNom('');
+      setNouveauCaissierPrenom('');
+      setNouveauCaissierPin('');
+      setOngletConfigPin('liste');
+      showToast('✅ Nouveau membre ajouté avec succès !', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Erreur création caissier', 'warning');
+    } finally {
+      setAddingCaissierState(false);
+    }
+  }
+
+  // ── Activer / Désactiver un Caissier depuis le POS ─────────────────────────
+  async function toggleActifCaissier(caissierId: string, actifActuel: boolean) {
+    try {
+      const bId = boutiqueActiveId || (boutiques[0]?.id);
+      const res = await fetch(`/api/boutiques/${bId}/caissiers/${caissierId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actif: !actifActuel,
+          superviseur_pin: pinSuperviseurSaisi,
+          terminal_token: initialToken || bId
+        })
+      });
+      if (res.ok) {
+        const updated = caissiersList.map(c => c.id === caissierId ? { ...c, actif: !actifActuel } : c);
+        setCaissiersList(updated);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`nopalou_offline_caissiers_${bId}`, JSON.stringify(updated));
+        }
+        showToast(actifActuel ? 'Caissier désactivé' : 'Caissier réactivé', 'success');
+      }
+    } catch (err) {
+      showToast('Erreur modification statut', 'warning');
     }
   }
 
@@ -1400,8 +1598,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   }
 
   function validerSuperviseurPin() {
-    const hasSuperviseurPin = caissiersList.some(c => (c.role === 'superviseur' || c.role === 'admin') && c.code_pin === pinSuperviseurSaisi);
-    if (pinSuperviseurSaisi === pinSuperviseur || hasSuperviseurPin) {
+    const superviseurs = caissiersList.filter(c => c.role === 'superviseur' || c.role === 'admin');
+    const hasSuperviseurPin = superviseurs.some(c => c.code_pin && c.code_pin === pinSuperviseurSaisi);
+    
+    // Si des superviseurs sont configurés en base/liste, seul leur code PIN exact est accepté
+    const isValide = superviseurs.length > 0
+      ? hasSuperviseurPin
+      : (pinSuperviseurSaisi === pinSuperviseur);
+
+    if (isValide) {
       setModalSuperviseur(false)
       if (superviseurAction) superviseurAction()
     } else {
@@ -1426,26 +1631,39 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     const codeSaisi = codeToTest !== undefined ? codeToTest : codePinSaisi
     if (!codeSaisi || codeSaisi.length < 4) return
 
-    const caissier = caissiersList.find(c => c.id === caissierSelectionneId) 
-      || caissiersList.find(c => c.code_pin === codeSaisi) 
-      || caissiersList[0]
+    // 1. Trouver le caissier ou superviseur dont le code PIN correspond exactement
+    const caissierParPin = caissiersList.find(c => c.code_pin && c.code_pin === codeSaisi);
+    const caissierSelectionne = caissiersList.find(c => c.id === caissierSelectionneId);
+    
+    // Si la liste contient des caissiers configurés, validation stricte sur leur PIN
+    let isValide = false;
+    let caissier = null;
 
-    const isValide = caissier 
-      ? codeSaisi === caissier.code_pin 
-      : (codeSaisi === pinCaissier || codeSaisi === pinSuperviseur);
+    if (caissiersList.length > 0) {
+      if (caissierParPin) {
+        caissier = caissierParPin;
+        isValide = true;
+      } else if (caissierSelectionne && caissierSelectionne.code_pin && caissierSelectionne.code_pin === codeSaisi) {
+        caissier = caissierSelectionne;
+        isValide = true;
+      }
+    } else {
+      // Fallback local uniquement si la liste des caissiers n'a pas encore été synchronisée
+      isValide = (codeSaisi === pinCaissier || codeSaisi === pinSuperviseur);
+    }
       
     if (isValide) {
       if (caissier) setCaissierSelectionneId(caissier.id);
       const isSuper = caissier 
         ? (caissier.role === 'superviseur' || caissier.role === 'admin')
-        : codeSaisi === pinSuperviseur;
+        : (codeSaisi === pinSuperviseur);
         
       const realRole = isSuper ? 'superviseur' : 'caissier'
       setRoleActif(realRole)
       
       const realNom = caissier 
         ? `${caissier.prenom} ${caissier.nom}`
-        : (codeSaisi === pinSuperviseur ? 'Gérant / Superviseur' : 'Caissier 1 (Bamba)');
+        : (codeSaisi === pinSuperviseur ? 'Gérant / Superviseur' : 'Caissier Principal');
         
       setCaissierNom(realNom)
 
@@ -2259,11 +2477,406 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     )
   }
 
+  // ── Modales de Gestion des PINs & Configuration (Disponibles Verrouillé ou Déverrouillé) ──
+  function renderModalesGestionPin() {
+    return (
+      <>
+        {/* ── Modale de Configuration Initiale Obligatoire des Codes PIN ────── */}
+        {modalConfigObligatoire && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.88)', backdropFilter: 'blur(6px)', zIndex: 12000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div style={{ background: '#ffffff', borderRadius: 20, padding: 32, width: '100%', maxWidth: 480, border: '2px solid #ea580c', boxShadow: '0 25px 60px -15px rgba(234,88,12,0.3)', textAlign: 'center' }}>
+              <div style={{ width: 64, height: 64, borderRadius: 16, background: '#fff7ed', border: '1.5px solid #fed7aa', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 16px' }}>
+                🛡️
+              </div>
+              
+              <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 900, color: '#0f172a' }}>
+                Sécurisation Obligatoire du POS
+              </h2>
+              <p style={{ margin: '0 0 20px', fontSize: 13, color: '#475569', lineHeight: 1.5 }}>
+                Pour protéger vos recettes et empêcher tout accès avec les codes d&apos;usine, personnalisez vos <strong>codes PIN secrets</strong> avant d&apos;encaisser.
+              </p>
+
+              {erreurConfigObligatoire && (
+                <div style={{ padding: '10px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700, marginBottom: 16, background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', textAlign: 'left' }}>
+                  ⚠️ {erreurConfigObligatoire}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 24, textAlign: 'left' }}>
+                <div style={{ background: '#fff7ed', padding: 14, borderRadius: 12, border: '1px solid #fed7aa' }}>
+                  <label style={{ fontSize: 12, color: '#9a3412', display: 'block', fontWeight: 800, marginBottom: 4 }}>
+                    👑 1. Code PIN Superviseur / Gérant (4 à 6 chiffres)
+                  </label>
+                  <span style={{ fontSize: 11, color: '#c2410c', display: 'block', marginBottom: 8 }}>
+                    Autorise les remises, annulations et clôtures Z.
+                  </span>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="••••"
+                    value={pinObligatoireSuperviseur}
+                    onChange={e => setPinObligatoireSuperviseur(e.target.value.replace(/\D/g, ''))}
+                    style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1.5px solid #ea580c', background: '#ffffff', color: '#0f172a', fontSize: 22, fontWeight: 900, letterSpacing: '0.3em', boxSizing: 'border-box', textAlign: 'center' }}
+                  />
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                  <label style={{ fontSize: 12, color: '#334155', display: 'block', fontWeight: 800, marginBottom: 4 }}>
+                    👤 2. Code PIN Caissier Principal (4 à 6 chiffres)
+                  </label>
+                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 8 }}>
+                    Code utilisé quotidiennement pour enregistrer les ventes.
+                  </span>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="••••"
+                    value={pinObligatoireCaissier}
+                    onChange={e => setPinObligatoireCaissier(e.target.value.replace(/\D/g, ''))}
+                    style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1.5px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 22, fontWeight: 900, letterSpacing: '0.3em', boxSizing: 'border-box', textAlign: 'center' }}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={soumettreConfigObligatoire}
+                disabled={savingConfigObligatoire || pinObligatoireSuperviseur.length < 4 || pinObligatoireCaissier.length < 4}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: 12,
+                  background: (pinObligatoireSuperviseur.length >= 4 && pinObligatoireCaissier.length >= 4) ? '#ea580c' : '#cbd5e1',
+                  color: '#ffffff', border: 'none', fontWeight: 900, fontSize: 15, cursor: (pinObligatoireSuperviseur.length >= 4 && pinObligatoireCaissier.length >= 4) ? 'pointer' : 'not-allowed',
+                  boxShadow: '0 4px 14px rgba(234,88,12,0.3)', transition: 'background 0.15s'
+                }}
+              >
+                {savingConfigObligatoire ? '⏳ Enregistrement sécurisé...' : '🔒 Valider et Activer la Caisse POS →'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modale Avancée : Gestion de l'Équipe & Modification des PINs ─── */}
+        {modalConfigPin && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', zIndex: 11000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+            <div style={{ background: '#ffffff', borderRadius: 20, width: '100%', maxWidth: 580, maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: '1.5px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+              
+              {/* Header */}
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 10, background: '#fff7ed', border: '1px solid #fed7aa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                    👥
+                  </div>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
+                      Équipe & Modification des PINs
+                    </h2>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
+                      Espace d&apos;administration réservé au Gérant
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setModalConfigPin(false)}
+                  style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, color: '#64748b', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Navigation par Onglets */}
+              <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', padding: '6px 16px 0' }}>
+                <button
+                  onClick={() => setOngletConfigPin('liste')}
+                  style={{
+                    padding: '10px 16px', background: 'none', border: 'none',
+                    borderBottom: ongletConfigPin === 'liste' ? '2.5px solid #ea580c' : '2.5px solid transparent',
+                    color: ongletConfigPin === 'liste' ? '#ea580c' : '#64748b',
+                    fontWeight: 800, fontSize: 13, cursor: 'pointer'
+                  }}
+                >
+                  👥 Membres de l&apos;Équipe ({caissiersList.length})
+                </button>
+                <button
+                  onClick={() => setOngletConfigPin('ajouter')}
+                  style={{
+                    padding: '10px 16px', background: 'none', border: 'none',
+                    borderBottom: ongletConfigPin === 'ajouter' ? '2.5px solid #ea580c' : '2.5px solid transparent',
+                    color: ongletConfigPin === 'ajouter' ? '#ea580c' : '#64748b',
+                    fontWeight: 800, fontSize: 13, cursor: 'pointer'
+                  }}
+                >
+                  ➕ Ajouter un Caissier
+                </button>
+              </div>
+
+              {/* Corps défilable */}
+              <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
+                {ongletConfigPin === 'liste' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ padding: '10px 12px', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af', fontSize: 12, lineHeight: 1.4 }}>
+                      💡 <strong>Sécurité</strong> : Chaque membre dispose de son propre code PIN secret. Modifiez-le à tout moment ci-dessous.
+                    </div>
+
+                    {caissiersList.map((c: any) => {
+                      const isSuper = c.role === 'superviseur' || c.role === 'admin';
+                      const isTrivial = CODES_PIN_TRIVIAUX.includes(String(c.code_pin || '').trim());
+                      const showPin = showPinState[c.id] || false;
+                      const isEditing = editPinsState[c.id] !== undefined;
+
+                      return (
+                        <div key={c.id} style={{
+                          background: '#f8fafc', border: isTrivial ? '1.5px solid #fca5a5' : '1px solid #e2e8f0',
+                          borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <div style={{
+                                width: 36, height: 36, borderRadius: '50%',
+                                background: isSuper ? '#fef3c7' : '#e0e7ff',
+                                color: isSuper ? '#b45309' : '#4338ca',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontWeight: 800, fontSize: 14
+                              }}>
+                                {(c.nom || 'C').charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>
+                                    {c.prenom} {c.nom}
+                                  </span>
+                                  <span style={{
+                                    fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 6,
+                                    background: isSuper ? '#fff7ed' : '#f1f5f9',
+                                    color: isSuper ? '#c2410c' : '#475569',
+                                    border: isSuper ? '1px solid #fed7aa' : '1px solid #e2e8f0'
+                                  }}>
+                                    {isSuper ? '👑 Superviseur' : '👤 Caissier'}
+                                  </span>
+                                </div>
+                                {isTrivial && (
+                                  <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 700, display: 'block', marginTop: 2 }}>
+                                    ⚠️ Code PIN par défaut — À personnaliser d&apos;urgence !
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => toggleActifCaissier(c.id, c.actif !== false)}
+                              style={{
+                                padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                                background: c.actif !== false ? '#dcfce7' : '#f1f5f9',
+                                color: c.actif !== false ? '#166534' : '#64748b',
+                                border: 'none', cursor: 'pointer'
+                              }}
+                            >
+                              {c.actif !== false ? '✅ Actif' : 'Désactivé'}
+                            </button>
+                          </div>
+
+                          {/* Modification Inline du PIN */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #e2e8f0', paddingTop: 10 }}>
+                            {isEditing ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                                <input
+                                  type={showPin ? 'text' : 'password'}
+                                  inputMode="numeric"
+                                  maxLength={6}
+                                  placeholder="Nouveau PIN"
+                                  value={editPinsState[c.id]}
+                                  onChange={e => {
+                                    const val = e.target.value.replace(/\D/g, '');
+                                    setEditPinsState(prev => ({ ...prev, [c.id]: val }));
+                                  }}
+                                  style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1.5px solid #ea580c', background: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '0.15em' }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPinState(prev => ({ ...prev, [c.id]: !prev[c.id] }))}
+                                  style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, padding: '8px', cursor: 'pointer', fontSize: 14 }}
+                                >
+                                  {showPin ? '🙈' : '👁️'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => modifierPinCaissier(c.id)}
+                                  disabled={savingPinId === c.id || (editPinsState[c.id]?.length || 0) < 4}
+                                  style={{ padding: '8px 14px', borderRadius: 8, background: '#ea580c', color: '#fff', border: 'none', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
+                                >
+                                  {savingPinId === c.id ? '...' : '💾 Enregistrer'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditPinsState(prev => {
+                                      const copy = { ...prev };
+                                      delete copy[c.id];
+                                      return copy;
+                                    });
+                                  }}
+                                  style={{ padding: '8px 10px', borderRadius: 8, background: '#e2e8f0', color: '#475569', border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Code PIN :</span>
+                                  <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', letterSpacing: '0.15em', background: '#e2e8f0', padding: '2px 8px', borderRadius: 4 }}>
+                                    {showPin ? c.code_pin : '••••'}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowPinState(prev => ({ ...prev, [c.id]: !prev[c.id] }))}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: '0 4px' }}
+                                    title="Afficher/Masquer le code PIN"
+                                  >
+                                    {showPin ? '🙈' : '👁️'}
+                                  </button>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditPinsState(prev => ({ ...prev, [c.id]: '' }));
+                                  }}
+                                  style={{ padding: '4px 10px', borderRadius: 6, background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
+                                >
+                                  ✏️ Modifier le PIN
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Formulaire d'Ajout d'un Nouveau Caissier */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Prénom</label>
+                        <input
+                          type="text"
+                          placeholder="ex: Aminata"
+                          value={nouveauCaissierPrenom}
+                          onChange={e => setNouveauCaissierPrenom(e.target.value)}
+                          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Nom *</label>
+                        <input
+                          type="text"
+                          placeholder="ex: Diallo"
+                          value={nouveauCaissierNom}
+                          onChange={e => setNouveauCaissierNom(e.target.value)}
+                          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Rôle de Sécurité</label>
+                      <select
+                        value={nouveauCaissierRole}
+                        onChange={e => setNouveauCaissierRole(e.target.value as any)}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', boxSizing: 'border-box' }}
+                      >
+                        <option value="caissier">👤 Caissier Standard (Encaissement uniquement)</option>
+                        <option value="superviseur">👑 Gérant / Superviseur (Remises, Annulations, Clôtures)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Code PIN Secret (4 à 6 chiffres) *</label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="•••• (ex: 5829)"
+                        value={nouveauCaissierPin}
+                        onChange={e => setNouveauCaissierPin(e.target.value.replace(/\D/g, ''))}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #cbd5e1', fontSize: 18, fontWeight: 800, textAlign: 'center', letterSpacing: '0.2em', boxSizing: 'border-box' }}
+                      />
+                      <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginTop: 4 }}>
+                        ⚠️ Les codes triviaux (1234, 0000, 9999...) sont automatiquement rejetés.
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={ajouterNouveauCaissier}
+                      disabled={addingCaissierState || !nouveauCaissierNom || nouveauCaissierPin.length < 4}
+                      style={{
+                        marginTop: 10, padding: '12px', borderRadius: 10, background: '#ea580c', color: '#fff', border: 'none',
+                        fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                      }}
+                    >
+                      <span>{addingCaissierState ? '⏳' : '🏪 +'}</span>
+                      <span>{addingCaissierState ? 'Création en cours...' : 'Ajouter ce membre à l\'équipe'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: '14px 24px', borderTop: '1px solid #f1f5f9', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setModalConfigPin(false)}
+                  style={{ padding: '10px 18px', borderRadius: 8, background: '#e2e8f0', color: '#475569', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modale de Validation Superviseur */}
+        {modalSuperviseur && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 12500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 380, border: '2px solid #ea580c', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>👑</div>
+              <h3 style={{ margin: '0 0 6px', fontSize: 17, color: '#0f172a', fontWeight: 800 }}>Autorisation Superviseur Requise</h3>
+              <p style={{ margin: '0 0 16px', fontSize: 13, color: '#c2410c', fontWeight: 600 }}>{superviseurTitre}</p>
+
+              <div style={{ marginBottom: 16 }}>
+                <input
+                  type="password"
+                  maxLength={6}
+                  placeholder="••••"
+                  value={pinSuperviseurSaisi}
+                  onChange={e => setPinSuperviseurSaisi(e.target.value.replace(/\D/g, ''))}
+                  style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1.5px solid #ea580c', background: '#f8fafc', color: '#0f172a', fontSize: 22, textAlign: 'center', letterSpacing: '0.3em', boxSizing: 'border-box', fontWeight: 900 }}
+                />
+                {superviseurError && <p style={{ margin: '6px 0 0', color: '#dc2626', fontSize: 12, fontWeight: 700 }}>{superviseurError}</p>}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setModalSuperviseur(false)} style={{ flex: 1, padding: '10px', background: '#e2e8f0', color: '#334155', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>
+                  Annuler
+                </button>
+                <button onClick={validerSuperviseurPin} style={{ flex: 1, padding: '10px', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, cursor: 'pointer' }}>
+                  Valider
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    )
+  }
+
   // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ ─────────────────────────────────────
   if (verrouille) {
     const bqName = boutiques.find(b => b.id === boutiqueActiveId)?.nom || (boutiques[0]?.nom) || ''
+    const caissierMatch = caissiersList.find(c => c.code_pin && c.code_pin === codePinSaisi);
+
     return (
-      <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
+      <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', position: 'relative' }}>
         <div style={{ background: 'var(--pos-surface)', border: '2px solid var(--pos-primary)', borderRadius: 24, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center', boxShadow: 'var(--pos-shadow-lg)' }}>
           {activeBoutiqueObj?.logo ? (
             <img
@@ -2279,53 +2892,38 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: 'var(--pos-navy)' }}>
             Caisse POS {bqName ? `· ${bqName}` : 'Nopalou'}
           </h2>
-          <p style={{ margin: '0 0 20px', fontSize: 13, color: 'var(--pos-text2)' }}>Entrez votre code PIN secret pour accéder à la caisse.</p>
+          <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--pos-text2)' }}>
+            Tapez votre code PIN secret pour déverrouiller la caisse.
+          </p>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--pos-text2)', display: 'block', marginBottom: 6, textAlign: 'left', letterSpacing: '0.05em' }}>IDENTIFICATION CAISSIER</label>
-            <select
-              value={caissierSelectionneId}
-              onChange={e => {
-                const cid = e.target.value;
-                setCaissierSelectionneId(cid);
-                const c = caissiersList.find(x => x.id === cid);
-                if (c) setCaissierNom(`${c.prenom} ${c.nom}`);
-              }}
-              style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1.5px solid var(--pos-border)', background: 'var(--pos-surface2)', color: 'var(--pos-text)', fontSize: 14, fontWeight: 700, outline: 'none' }}
-            >
-              {caissiersList.length > 0 ? (
-                caissiersList.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.role === 'superviseur' || c.role === 'admin' ? '👑' : '👤'} {c.prenom} {c.nom}
-                  </option>
-                ))
-              ) : (
-                <>
-                  <option value="">👤 Caissier 1 (Bamba)</option>
-                  <option value="9999">👑 Gérant / Superviseur</option>
-                </>
-              )}
-            </select>
+          {/* Pastilles Visuelles de Chiffres PIN (Feedback Tactile) */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
+            {[0, 1, 2, 3].map(i => {
+              const isFilled = codePinSaisi.length > i;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    width: 16, height: 16, borderRadius: '50%',
+                    background: isFilled ? 'var(--pos-primary, #ea580c)' : 'var(--pos-surface2, #f1f5f9)',
+                    border: isFilled ? '2px solid var(--pos-primary, #ea580c)' : '2px solid var(--pos-border, #cbd5e1)',
+                    transform: isFilled ? 'scale(1.15)' : 'scale(1)',
+                    transition: 'all 0.15s ease'
+                  }}
+                />
+              );
+            })}
           </div>
 
-          <div style={{ marginBottom: 20 }}>
-            <input
-              type="password"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={4}
-              placeholder="••••"
-              value={codePinSaisi}
-              onChange={e => setCodePinSaisi(e.target.value)}
-              style={{
-                width: '100%', padding: '14px', borderRadius: 12, border: '2px solid var(--pos-primary)',
-                background: 'var(--pos-primary-bg)', color: 'var(--pos-navy)', fontSize: 26, letterSpacing: '0.4em', textAlign: 'center', boxSizing: 'border-box', fontWeight: 900,
-              }}
-            />
-            {pinError && <p style={{ margin: '8px 0 0', color: 'var(--pos-danger)', fontSize: 13, fontWeight: 700 }}>{pinError}</p>}
-          </div>
+          {caissierMatch && (
+            <div style={{ marginBottom: 12, padding: '6px 12px', borderRadius: 8, background: '#dcfce7', color: '#166534', fontSize: 12.5, fontWeight: 800 }}>
+              👤 Identifié : {caissierMatch.prenom} {caissierMatch.nom} ({caissierMatch.role === 'superviseur' ? '👑 Superviseur' : 'Caissier'})
+            </div>
+          )}
 
-          {/* Clavier Numérique PIN Pad Tactile avec Déclenchement Automatique */}
+          {pinError && <p style={{ margin: '0 0 12px', color: 'var(--pos-danger, #dc2626)', fontSize: 13, fontWeight: 700 }}>{pinError}</p>}
+
+          {/* Clavier Numérique PIN Pad Tactile */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
             {['1','2','3','4','5','6','7','8','9','C','0','⌫'].map(val => (
               <button
@@ -2339,15 +2937,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   } else if (val === '⌫') {
                     setCodePinSaisi(prev => prev.slice(0, -1))
                     setPinError(null)
-                  } else if (codePinSaisi.length < 4) {
+                  } else if (codePinSaisi.length < 6) {
                     const nextPin = codePinSaisi + val
                     setCodePinSaisi(nextPin)
                     setPinError(null)
                   }
                 }}
                 style={{
-                  padding: '16px', background: 'var(--pos-surface2)', border: '1.5px solid var(--pos-border)', borderRadius: 10,
-                  color: 'var(--pos-navy)', fontWeight: 800, fontSize: 18, cursor: 'pointer', userSelect: 'none',
+                  padding: '16px', background: 'var(--pos-surface2, #f8fafc)', border: '1.5px solid var(--pos-border, #cbd5e1)', borderRadius: 10,
+                  color: 'var(--pos-navy, #0f172a)', fontWeight: 800, fontSize: 18, cursor: 'pointer', userSelect: 'none',
                   transition: 'background 0.1s',
                 }}
               >
@@ -2355,10 +2953,24 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               </button>
             ))}
           </div>
-          <p style={{ margin: '0', fontSize: 11, color: 'var(--pos-text3)', fontStyle: 'italic' }}>
-            ⚡ Le déverrouillage s&apos;effectue automatiquement dès la saisie du 4ème chiffre.
-          </p>
+
+          {/* Bouton d'accès gestion d'équipe pour le Gérant */}
+          <button
+            type="button"
+            onClick={ouvrirConfigPin}
+            style={{
+              marginTop: 10, background: 'none', border: 'none', color: 'var(--pos-primary, #ea580c)',
+              fontSize: 12.5, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 8
+            }}
+          >
+            <span>⚙️</span>
+            <span>Gérant : Gérer l&apos;équipe & modifier les codes PIN</span>
+          </button>
         </div>
+
+        {/* Injection des modales actives (Configuration Obligatoire, Équipe & Superviseur) */}
+        {renderModalesGestionPin()}
       </div>
     )
   }
@@ -4199,111 +4811,8 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         />
       )}
 
-      {/* Modale Paramètres des Codes PIN (Strictement Protégée par Mot de Passe Gérant) */}
-      {modalConfigPin && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, border: '2px solid #C75B00', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>👑 Modification Sécurisée des Codes PIN</h2>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>Espace restreint au Gérant / Superviseur de la boutique.</p>
-              </div>
-              <button onClick={() => setModalConfigPin(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
-            </div>
-
-            {msgConfigPin && (
-              <div style={{ padding: '10px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, marginBottom: 16, background: msgConfigPin.type === 'success' ? '#f0fdf4' : '#fef2f2', border: msgConfigPin.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', color: msgConfigPin.type === 'success' ? '#166534' : '#991b1b' }}>
-                {msgConfigPin.text}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
-              <div style={{ background: '#fff7ed', padding: 12, borderRadius: 10, border: '1px solid #fed7aa' }}>
-                <label style={{ fontSize: 12, color: '#9a3412', display: 'block', fontWeight: 800, marginBottom: 4 }}>
-                  1. Saisir le Code PIN Superviseur Actuel (Obligatoire)
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  placeholder="•••• (PIN Master Gérant)"
-                  value={ancienPinSuperviseur}
-                  onChange={e => setAncienPinSuperviseur(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #fed7aa', background: '#ffffff', color: '#0f172a', fontSize: 18, fontWeight: 700, letterSpacing: '0.3em', boxSizing: 'border-box', textAlign: 'center' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, color: '#475569', display: 'block', fontWeight: 700, marginBottom: 4 }}>
-                  Nouveau Code PIN Caissier (4 chiffres secrets)
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  placeholder="•••• (ex: 1234)"
-                  value={nouveauPinCaissier}
-                  onChange={e => setNouveauPinCaissier(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 16, fontWeight: 700, letterSpacing: '0.2em', boxSizing: 'border-box', textAlign: 'center' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, color: '#475569', display: 'block', fontWeight: 700, marginBottom: 4 }}>
-                  Nouveau Code PIN Superviseur Gérant (4 chiffres secrets)
-                </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  placeholder="•••• (ex: 9999)"
-                  value={nouveauPinSuperviseur}
-                  onChange={e => setNouveauPinSuperviseur(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 16, fontWeight: 700, letterSpacing: '0.2em', boxSizing: 'border-box', textAlign: 'center' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setModalConfigPin(false)} style={{ flex: 1, padding: '12px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 10, fontWeight: 600, cursor: 'pointer' }}>
-                Annuler
-              </button>
-              <button onClick={enregistrerNouveauxPins} style={{ flex: 1, padding: '12px', background: '#C75B00', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}>
-                🔒 Valider et Masquer les PINs →
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modale de Validation Superviseur */}
-      {modalSuperviseur && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 380, border: '2px solid #ea580c', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>👑</div>
-            <h3 style={{ margin: '0 0 6px', fontSize: 17, color: '#0f172a', fontWeight: 800 }}>Autorisation Superviseur Requis</h3>
-            <p style={{ margin: '0 0 16px', fontSize: 13, color: '#c2410c', fontWeight: 600 }}>{superviseurTitre}</p>
-
-            <div style={{ marginBottom: 16 }}>
-              <input
-                type="password"
-                maxLength={4}
-                placeholder="••••"
-                value={pinSuperviseurSaisi}
-                onChange={e => setPinSuperviseurSaisi(e.target.value)}
-                style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #ea580c', background: '#f8fafc', color: '#0f172a', fontSize: 20, textAlign: 'center', letterSpacing: '0.3em', boxSizing: 'border-box' }}
-              />
-              {superviseurError && <p style={{ margin: '6px 0 0', color: '#dc2626', fontSize: 12 }}>{superviseurError}</p>}
-            </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setModalSuperviseur(false)} style={{ flex: 1, padding: '10px', background: '#e2e8f0', color: '#334155', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>
-                Annuler
-              </button>
-              <button onClick={validerSuperviseurPin} style={{ flex: 1, padding: '10px', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, cursor: 'pointer' }}>
-                Valider
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Modales de Gestion des PINs & Configuration ── */}
+      {renderModalesGestionPin()}
 
       {/* Modale Historique des Opérations */}
       {modalHistorique && (
