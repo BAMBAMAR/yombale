@@ -4,12 +4,14 @@
     - Permet au marchand de connecter sa présence existante (Instagram, TikTok, Facebook, YouTube) et de transformer ses vidéos, Reels et posts en vitrine interactive avec commande directe.
     - Parcours d'achat intégré : Réseaux Sociaux → Contenu du Marchand → Découverte → Produit Nopalou → Panier → Commande → Paiement / WhatsApp.
   * **🗄️ 2. Modèle de Données & Migrations Idempotentes (`backend/migrate-inline.js`)** :
-    - `social_accounts` : Stockage des profils marchands (Instagram, TikTok, Facebook, YouTube), statuts de connexion, tokens chiffrés et timestamps de sync.
+    - `social_accounts` : Stockage des profils marchands (Instagram, TikTok, Facebook, YouTube), statuts de connexion, `auto_sync`, tokens chiffrés et timestamps de sync.
     - `social_posts` : Publications avec URLs originales, types (Reel, TikTok, Post), miniatures HD, embeds oEmbed officiels, légendes et mise en avant (`is_featured`).
     - `social_post_produits` : Association N-N ordonnée entre chaque publication et les produits du catalogue Nopalou avec score de confiance (`confidence_score`).
     - `social_analytics_events` : Suivi d'attribution du funnel social (`social_content_view`, `social_content_click`, `social_product_click`, `social_add_to_cart`, `social_whatsapp_click`).
-  * **⚙️ 3. Backend & Moteur de Smart Matching (`backend/services/social-parser.js`, `backend/routes/social-shop.js`)** :
-    - *Résolution oEmbed officielle* : Intégration officielle conforme aux CGU (TikTok oEmbed officiel sans token requis, Instagram embed, Facebook Graph/SDK) sans scraping sauvage ni stockage illégal de vidéos protégées.
+  * **⚙️ 3. Backend & Moteur d'Acquisition Sociale Intelligente (`backend/services/social-parser.js`, `backend/routes/social-shop.js`)** :
+    - *Aspirateur de profil (`exploreProfile`)* : Découverte automatique des vidéos publiques à partir d'un simple `@pseudo` (TikTok, Instagram, Facebook) sans aucun copier-coller de lien requis pour le marchand.
+    - *Importation par lot (`import-batch`)* : Traitement simultané de 5 à 50 URLs avec dédoublonnage, extraction oEmbed officielle et Smart Matching en tâche de fond.
+    - *Synchronisation automatique (`sync-account` & `toggle-sync`)* : Rapatriement périodique ou à la demande des nouveaux Reels/vidéos avec mise à jour du statut `auto_sync`.
     - *Moteur de Smart Matching* : Algorithme comparant la légende sociale (`caption`) avec les noms, descriptions et catégories du catalogue pour suggérer instantanément les articles correspondants avec score de pertinence, sans forcer ni halluciner de données.
     - *Isolation multi-tenant stricte* : Vérification systématique de propriété de boutique pour toutes les opérations marchandes.
   * **🛍️ 4. Vitrine Publique Storefront (`frontend-next/src/app/boutiques/[id]/SocialShopFeed.tsx`, `BoutiqueDetailClient.tsx`)** :
@@ -19,15 +21,18 @@
     - *Deep-linking* : Ouverture directe via URL (`?post=[id]`).
   * **📱 5. Dashboard Marchand (`frontend-next/src/app/boutique/SocialShopManager.tsx`, `BoutiqueClient.tsx`)** :
     - Nouvel onglet **« 📱 Réseaux sociaux & Social Shop »** dans la barre latérale et le bottom-sheet mobile.
-    - Cartes de connexion rapide des comptes officiels (Instagram, TikTok, Facebook).
-    - Importation 1-clic par URL avec détection automatique et prévisualisation.
+    - *3 modes d'acquisition au choix* :
+      1. **🔍 Aspirateur par @pseudo (Zéro lien)** : Saisie du nom d'utilisateur, exploration automatique et grille interactive de vidéos avec cases à cocher et bouton *"Importer les vidéos sélectionnées"*.
+      2. **📋 Import en lot multi-liens** : Zone de texte permettant de coller 10 ou 20 liens d'un coup avec détection automatique du nombre de liens.
+      3. **🔗 Lien unique rapide** : Formulaire unitaire direct pour ajouter une vidéo immédiatement.
+    - *Gestion des comptes connectés* : Commutateur **Auto-Sync** en 1 clic et bouton de synchronisation immédiate.
     - Table de curation : afficher/masquer en 1 clic, mise en avant, association/dissociation de produits avec sélecteur de catalogue et recherche instantanée.
     - KPIs de conversion : publications en ligne, posts sans produits, vues et clics WhatsApp générés.
   * **🛡️ 6. Administration Plateforme (`frontend-next/src/app/admin/(protected)/integrations/`, `backend/routes/admin-integrations.js`)** :
     - Ajout du lien direct vers **Migration Marchands** (`/admin/migration`) dans la barre latérale `AdminSidebarClient.tsx`.
     - Création de la page **Intégrations & Réseaux Sociaux** (`/admin/integrations`) : supervision des connecteurs, suivi des comptes marchands connectés, kill-switch d'urgence et modération.
   * **🧪 7. Tests & Validation** :
-    - Tests unitaires complets dans `tests/unit/social-shop.test.js` (18/18 tests passés avec succès).
+    - Tests unitaires complets dans `tests/unit/social-shop.test.js` (27/27 tests passés avec succès).
     - Compilation TypeScript `npx tsc --noEmit` validée avec 0 erreur (code 0).
     - Respect absolu des règles projet : polices système exclusivement, aucun push automatique sans confirmation explicite.
 

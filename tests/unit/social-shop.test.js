@@ -6,6 +6,9 @@ const {
   extractExternalPostId,
   normalizeText,
   matchProductsWithCaption,
+  cleanUsername,
+  parseBatchUrls,
+  exploreProfile,
 } = require('../../backend/services/social-parser');
 
 describe('Social Parser — Détection de plateforme (detectPlatform)', () => {
@@ -150,3 +153,78 @@ describe('Social Parser — Moteur de Smart Matching (matchProductsWithCaption)'
     expect(matchProductsWithCaption(null, null)).toEqual([]);
   });
 });
+
+describe('Social Parser — Nettoyage de nom d\'utilisateur (cleanUsername)', () => {
+  test('nettoie les @ et espaces superflus', () => {
+    expect(cleanUsername('@wax_dakar ')).toBe('wax_dakar');
+    expect(cleanUsername('@@boutique_chic')).toBe('boutique_chic');
+  });
+
+  test('extrait le pseudo depuis une URL de profil', () => {
+    expect(cleanUsername('https://www.instagram.com/wax_dakar/')).toBe('wax_dakar');
+    expect(cleanUsername('https://tiktok.com/@senegal_mode')).toBe('senegal_mode');
+  });
+
+  test('gère les entrées vides ou non-chaînes', () => {
+    expect(cleanUsername('')).toBe('');
+    expect(cleanUsername(null)).toBe('');
+  });
+});
+
+describe('Social Parser — Découpage par lot multi-URLs (parseBatchUrls)', () => {
+  test('extrait plusieurs URLs TikTok, Instagram et Facebook depuis un texte multi-lignes', () => {
+    const rawText = `
+      https://www.tiktok.com/@shop/video/1111111111111
+      https://www.instagram.com/reel/C_XYZ987/
+      https://www.facebook.com/watch/?v=222222222
+      texte inutile ignorer
+      https://www.tiktok.com/@shop/video/1111111111111 (doublon)
+    `;
+
+    const parsed = parseBatchUrls(rawText);
+    expect(parsed.length).toBe(3); // 3 uniques valides
+    expect(parsed[0].platform).toBe('tiktok');
+    expect(parsed[1].platform).toBe('instagram');
+    expect(parsed[2].platform).toBe('facebook');
+  });
+
+  test('gère un tableau d\'URLs avec dédoublonnage', () => {
+    const arr = [
+      'https://www.instagram.com/p/ABC12345/',
+      'https://www.instagram.com/p/ABC12345/',
+      'pas une url valide',
+    ];
+    const parsed = parseBatchUrls(arr);
+    expect(parsed.length).toBe(1);
+    expect(parsed[0].url).toBe('https://www.instagram.com/p/ABC12345/');
+  });
+
+  test('renvoie un tableau vide pour du texte sans URL valide', () => {
+    expect(parseBatchUrls('')).toEqual([]);
+    expect(parseBatchUrls(null)).toEqual([]);
+    expect(parseBatchUrls('bonjour tout le monde')).toEqual([]);
+  });
+});
+
+describe('Social Parser — Exploration de profil (exploreProfile)', () => {
+  test('rejette un pseudo vide avec une erreur explicite', async () => {
+    const res = await exploreProfile('tiktok', '');
+    expect(res.success).toBe(false);
+    expect(res.error).toBeDefined();
+  });
+
+  test('génère un résultat structuré pour un profil TikTok', async () => {
+    const res = await exploreProfile('tiktok', 'wax_dakar');
+    expect(res.platform).toBe('tiktok');
+    expect(res.username).toBe('wax_dakar');
+    expect(Array.isArray(res.posts)).toBe(true);
+  });
+
+  test('génère un résultat structuré pour un profil Instagram', async () => {
+    const res = await exploreProfile('instagram', 'boutique_senegal');
+    expect(res.platform).toBe('instagram');
+    expect(res.username).toBe('boutique_senegal');
+    expect(Array.isArray(res.posts)).toBe(true);
+  });
+});
+

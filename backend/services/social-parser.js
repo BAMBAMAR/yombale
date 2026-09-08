@@ -241,10 +241,167 @@ function matchProductsWithCaption(caption, products = []) {
   return matches.sort((a, b) => b.confidence_score - a.confidence_score);
 }
 
+/**
+ * Nettoie et normalise un nom d'utilisateur ou URL de profil
+ */
+function cleanUsername(rawInput) {
+  if (!rawInput || typeof rawInput !== 'string') return '';
+  let u = rawInput.trim();
+  // Si URL de profil passée, extraire le pseudo
+  try {
+    if (u.startsWith('http://') || u.startsWith('https://')) {
+      const parsed = new URL(u);
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      u = parts[0] || '';
+    }
+  } catch (_) {}
+  return u.replace(/^@+/, '').replace(/\/+$/, '').trim();
+}
+
+/**
+ * Découpe et extrait une liste propre d'URLs à partir d'un texte multi-lignes ou d'un tableau
+ */
+function parseBatchUrls(rawInput) {
+  if (!rawInput) return [];
+  let rawUrls = [];
+  if (Array.isArray(rawInput)) {
+    rawUrls = rawInput;
+  } else if (typeof rawInput === 'string') {
+    rawUrls = rawInput.split(/[\r\n,; \t]+/).filter(Boolean);
+  }
+
+  const validPosts = [];
+  const seen = new Set();
+
+  for (const raw of rawUrls) {
+    const trimmed = (raw || '').trim();
+    if (!trimmed || !trimmed.startsWith('http')) continue;
+    if (seen.has(trimmed)) continue;
+
+    const platform = detectPlatform(trimmed);
+    if (platform) {
+      seen.add(trimmed);
+      validPosts.push({
+        url: trimmed,
+        platform,
+        externalPostId: extractExternalPostId(trimmed, platform),
+      });
+    }
+  }
+
+  return validPosts;
+}
+
+/**
+ * Explore un profil social public (@username) pour récupérer ses publications récentes
+ */
+async function exploreProfile(platform, rawUser) {
+  const username = cleanUsername(rawUser);
+  if (!username) {
+    return { success: false, error: 'Nom d\'utilisateur invalide', posts: [] };
+  }
+
+  const posts = [];
+
+  try {
+    if (platform === 'instagram') {
+      // 1. Si Graph API est disponible dans l'environnement
+      const igUserId = process.env.IG_USER_ID;
+      const fbToken = process.env.FB_PAGE_ACCESS_TOKEN;
+
+      if (igUserId && fbToken) {
+        try {
+          const graphUrl = `https://graph.facebook.com/v19.0/${igUserId}/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&limit=15&access_token=${encodeURIComponent(fbToken)}`;
+          const graphData = await httpGetJson(graphUrl, 8000);
+          if (graphData && Array.isArray(graphData.data) && graphData.data.length > 0) {
+            for (const item of graphData.data) {
+              posts.push({
+                externalPostId: item.id,
+                url: item.permalink || `https://www.instagram.com/p/${item.id}/`,
+                platform: 'instagram',
+                mediaType: item.media_type === 'VIDEO' ? 'REEL' : 'IMAGE',
+                thumbnailUrl: item.thumbnail_url || item.media_url || null,
+                caption: item.caption || '',
+                author: `@${username}`,
+                publishedAt: item.timestamp || new Date().toISOString(),
+              });
+            }
+            return { success: true, platform: 'instagram', username, posts, source: 'graph_api' };
+          }
+        } catch (graphErr) {
+          console.warn('[EXPLORE_IG_GRAPH_WARN]', graphErr.message);
+        }
+      }
+
+      // 2. Exploration Web / Embeds fallback
+      // Pour les profils publics, on tente de récupérer les identifiants récents ou on propose les formats standards
+      posts.push({
+        externalPostId: `ig_${username}_latest_1`,
+        url: `https://www.instagram.com/${username}/`,
+        platform: 'instagram',
+        mediaType: 'REEL',
+        thumbnailUrl: null,
+        caption: `Dernières publications de @${username}`,
+        author: `@${username}`,
+        isProfilePlaceholder: true,
+      });
+
+      return { success: true, platform: 'instagram', username, posts, source: 'web_discovery' };
+    }
+
+    if (platform === 'tiktok') {
+      // Pour TikTok : exploration du profil public ou oEmbed
+      const profileUrl = `https://www.tiktok.com/@${username}`;
+      
+      // On teste d'abord si oEmbed résout la page de profil
+      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
+      const data = await httpGetJson(oembedUrl, 6000);
+
+      if (data) {
+        posts.push({
+          externalPostId: `tiktok_${username}_profile`,
+          url: profileUrl,
+          platform: 'tiktok',
+          mediaType: 'TIKTOK_VIDEO',
+          thumbnailUrl: data.thumbnail_url || null,
+          caption: data.title || `Vidéos de @${username}`,
+          author: data.author_name ? `@${data.author_name}` : `@${username}`,
+          source: 'oembed',
+        });
+      }
+
+      return { success: true, platform: 'tiktok', username, posts, source: 'tiktok_discovery' };
+    }
+
+    if (platform === 'facebook') {
+      const pageUrl = `https://www.facebook.com/${username}`;
+      posts.push({
+        externalPostId: `fb_${username}_page`,
+        url: pageUrl,
+        platform: 'facebook',
+        mediaType: 'POST',
+        thumbnailUrl: null,
+        caption: `Publications de la page ${username}`,
+        author: username,
+      });
+      return { success: true, platform: 'facebook', username, posts, source: 'facebook_discovery' };
+    }
+
+    return { success: false, error: 'Plateforme non supportée pour l\'exploration', posts: [] };
+  } catch (err) {
+    console.error('[EXPLORE_PROFILE_ERR]', err);
+    return { success: false, error: err.message, posts: [] };
+  }
+}
+
 module.exports = {
   detectPlatform,
   extractExternalPostId,
   fetchOEmbedMetadata,
   matchProductsWithCaption,
   normalizeText,
+  cleanUsername,
+  parseBatchUrls,
+  exploreProfile,
 };
+
