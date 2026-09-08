@@ -1,3 +1,96 @@
+- **Audit, Fiabilisation & Contrôle Immédiat du Cron de Relance Marchands Sans Catalogue (`backend/services/relance-catalogue.js`, `backend/routes/boutiques.js`, `frontend-next/src/app/actions/admin.ts`, `frontend-next/src/app/admin/(protected)/boutiques/AdminBoutiquesClient.tsx`, `page.tsx`) (08 septembre 2026)** 🤖📢🏪✨ :
+  * **🔍 1. Audit Réel du Fonctionnement & Diagnostic Précis** :
+    - **Le Cron fonctionne et est bien actif** : Configuré en base (`relance_catalogue_actif: true`, seuil $\le 1$ produit, délai > 24h, intervalle 7 jours) et programmé à `0 10 * * *` (10h00 chaque matin) via `demarrerCronsMetier()`. L'historique de la base confirme des exécutions effectives (ex: boutique *Misbah electro* horodatée à `10:00:06 GMT`).
+    - **2 Boutiques Actuellement Éligibles Détectées en Base** :
+      1. *DIEME SHOP* (+221785126043, 0 produit, inscrite le 06/09/2026) : Non relancée le 07/09 à 10h car elle n'avait que 15h d'existence (< délai de 24h). Elle était en attente du passage du 08/09.
+      2. *Misbah electro* (+221777202086, 0 produit, inscrite le 29/08/2026) : Relancée il y a 7 jours, redevenue éligible conformément à la règle anti-spam des 7 jours.
+    - **Correction Critique sur le Paramètre de Bouton Template Meta (`buttonParam`)** :
+      - `genererMessageRelance` construisait `buttonParam: boutique?tab=produits&id=${boutique.id}`.
+      - Dans `sendWhatsAppNotification`, le paramètre dynamique d'URL de template Meta (`nopalou_fiche_texte`) n'autorise que des identifiants épurés alphanumériques (`/^[a-zA-Z0-9_-]+$/`). L'ancienne valeur était tronquée en chaîne invalide `boutiquetabproduitsid...` créant un lien mort.
+      - **Correction appliquée** : Passage à `buttonParam: String(boutique.slug || boutique.id || 'boutique').slice(0, 50)` pour générer une URL propre et valide 24h/24.
+  * **⚡ 2. Déclencheur & Test Immédiat dans le Tableau de Bord Admin** :
+    - **Nouvel Endpoint API Backend** : `POST /api/boutiques/admin/relance-catalogue/executer-cron` permettant à l'administrateur de déclencher manuellement et instantanément le cycle sans attendre 10h00 le lendemain.
+    - **Enrichissement de la Configuration** : `GET /api/boutiques/admin/relance-catalogue/config` renvoie désormais la liste détaillée et le décompte des boutiques éligibles en temps réel (`boutiquesEligibles`).
+    - **Interface Admin Interactive (`ModalConfigAutomatisation`)** :
+      - Affichage d'un encart visuel bleu ciel indiquant : *"🎯 Boutiques ciblées actuellement : X"* avec la liste nominative des boutiques en attente.
+      - Bouton interactif `[ 🚀 Exécuter le Cron Maintenant ]` avec confirmation et retour d'état en direct (ex: *"🚀 Relance effectuée ! X message(s) envoyé(s)"*).
+  * **✅ 3. Validation & Build** :
+    - Compilation Next.js (`npm run build`) validée sans erreur (code 0, 104 pages optimisées).
+    - Respect strict des directives : polices système uniquement, aucun `git push` automatique sans accord.
+
+- **Résolution Définitive : Fenêtre Meta 24h (Notifications Commandes) & Gestion Multi-Boutiques Intégrale (`backend/services/whatsapp.js`, `backend/services/whatsapp-chatbot.js`, `backend/routes/boutiques.js`, `backend/routes/comptabilite.js`, `frontend-next/src/app/boutique/BoutiqueClient.tsx`) (07 septembre 2026)** 🛒🏪⚡🔔 :
+  * **🚨 1. Résolution du Problème de Notification Commande hors Fenêtre 24h Meta** :
+    - **Cause Racine Identifiée** : Lorsqu'un client passait une commande sur la plateforme, si le commerçant n'avait pas envoyé de message au chat WhatsApp dans les 24 dernières heures, WhatsApp Cloud API rejetait immédiatement le message texte libre avec l'erreur `(#131047) Re-engagement message: More than 24 hours have passed`. Le fallback par template Meta (`nopalou_fiche_texte`) pouvait échouer car le paramètre d'URL dynamique du bouton contenait des caractères spéciaux interdits (`?`, `=`, `&`) comme `boutique?tab=commandes` ou tentait d'appeler `hello_world`. De plus, le paramètre `detail` du template ne contenait que la référence et le total sans AUCUNE coordonnée client (nom, téléphone, adresse), forçant le commerçant à écrire au bot ou à se connecter pour avoir les infos.
+    - **Envoi Garanti 24h/24 via Template Meta Sécurisé** :
+      - Assainissement strict du paramètre de bouton dynamique (`cleanParam`) dans `sendWhatsAppNotification` : seuls les caractères alphanumériques sûrs (`/^[a-zA-Z0-9_-]+$/`) sont conservés pour garantir 100% d'acceptation par les serveurs Meta.
+      - Enrichissement complet du champ `detail` (jusqu'à 1000 caractères) avec : Réf commande, Articles et quantités, Total FCFA, Nom complet du client, Numéro de téléphone direct, Adresse de livraison, Mode de paiement choisi (Wave, OM, Cash, Crédit carnet).
+      - Correction identique dans `notifierVendeurPanierGroupe` (`whatsapp-chatbot.js`) pour les commandes groupées multi-articles.
+      - Ajout de `slug` dans la sélection boutique de `POST /api/boutiques/commandes/express` pour assurer la construction des URLs propres.
+      - Résultat : Le commerçant reçoit TOUTES les données de la commande instantanément 24h/24 même s'il n'a pas écrit au chatbot depuis des mois !
+
+  * **🏪 2. Résolution Intégrale du Support Multi-Boutiques (Chatbot WhatsApp & Web)** :
+    - **Cause Racine Identifiée** :
+      - *Côté WhatsApp* : `trouverBoutiqueMarchand` exécutait un `ORDER BY b.created_at DESC LIMIT 1`. Un commerçant possédant 2 ou 3 boutiques ne voyait STRICTEMENT QUE sa dernière boutique créée ; les précédentes étaient totalement masquées et inaccessibles.
+      - *Côté Web* : Sur `/boutique`, lorsqu'un commerçant gérait une boutique (`mode: managing`), l'interface ne recevait pas la liste complète de ses boutiques et n'offrait aucun sélecteur pour basculer facilement vers ses autres établissements.
+    - **Implémentation Multi-Boutiques dans le Chatbot WhatsApp (`whatsapp-chatbot.js`)** :
+      - Utilisation systématique de `trouverToutesBoutiquesMarchand(phone)` :
+      - Dans le Menu Principal (`sendMenu`) : Si le numéro possède plusieurs boutiques, affiche automatiquement `🏪 Mes Boutiques (${toutesBq.length})` et ouvre le sélecteur interactif.
+      - Sélecteur Interactif Dédié : Déclenchable par bouton ou par mots-clés (`changer boutique`, `mes boutiques`, `choisir boutique`, `marchand_changer_boutique`). Affiche la liste des boutiques avec nom, ville et catégorie pour choisir en 1 clic ou en tapant 1, 2, 3.
+      - Bouton `[ 🔄 Changer de boutique ]` intégré dans l'Espace Marchand pour basculer d'une boutique à l'autre à tout moment.
+      - Commandes rapides (`bilan`, `stock`, `dette`, `carnet`) adaptées : utilisent la boutique sélectionnée en session ou demandent de choisir si plusieurs boutiques sont associées au numéro.
+    - **Implémentation Multi-Boutiques sur le Web (`BoutiqueClient.tsx`)** :
+      - Ajout du **Boutique Switcher Déroulant (Desktop)** : Dans l'en-tête de la barre latérale (`bq-sidebar-header`), affichage d'un sélecteur interactif `[ 🏪 {boutique.nom} ▾ ]` déroulant la liste complète des boutiques du commerçant avec leur ville et badge actif pour switcher instantanément en 1 clic, avec lien `+ Créer une autre boutique`.
+      - Ajout du **Sélecteur Horizontal (Mobile Bottom-Sheet)** : Dans la barre de navigation mobile compacte `BoutiqueMobileBottomSheet`, les commerçants multi-boutiques disposent d'un carrousel de bascule instantanée entre leurs magasins.
+      - **Élimination de la Troncature Header Sidebar** : Remplacement du bouton texte verbeux `[ ✕ Fermer le menu ]` qui débordait de la barre latérale étroite par un bouton icône compact carré moderne `[ ✕ ]` (32×32px avec tooltip), permettant au bouton retour `[ ← Accueil Boutique ]` d'occuper tout l'espace sans aucune troncature de texte.
+    - **✅ Validation & Build** :
+      - Compilation Next.js (`npm run build`) validée avec succès (104 routes générées sans erreur).
+      - Vérification de syntaxe Node.js (`node -c`) validée sans erreur.
+
+- **Audit & Fiabilisation Complète des Relances Automatiques du Carnet de Dettes (`backend/services/cron-relances-carnet.js`, `backend/routes/boutiques.js`, `frontend-next/src/app/boutique/CarnetDettes.tsx`) (07 septembre 2026)** 📒🔔⚡💬 :
+  * **🔍 1. Diagnostic des Blocages Antérieurs** :
+    - **Blocage Meta 24h (Erreur 131047)** : Le cron appelait l'envoi de texte libre brut (`sendWhatsAppText`). Dès lors que la date d'échéance d'une créance tombait plusieurs jours après la vente, la fenêtre de 24h Meta était fermée et le message était systématiquement rejeté par WhatsApp Cloud API.
+    - **Spam / Multiplication des messages par client** : La requête SQL sélectionnait une ligne par transaction (`caisse_credit_historique`) au lieu de regrouper par client débiteur. Un client ayant 3 créances échues recevait 3 messages identiques consécutifs en quelques secondes.
+    - **Crash en cas de numéro plateforme / self-messaging (Erreur Meta 100)** : Si un test ou une créance pointait vers le numéro officiel de la plateforme (`+221 70 871 79 42`), Meta renvoyait une erreur `(#100) Invalid parameter` bloquant la boucle d'envoi.
+    - **Numéros de téléphone incomplets** : Absence de validation préventive pour filtrer les numéros tronqués (ex: 8 chiffres).
+  * **🛡️ 2. Refonte & Résilience du Cron (`cron-relances-carnet.js`)** :
+    - **Envoi Garanti 24h/24 via Template Meta `nopalou_fiche_texte`** : Utilisation de `sendWhatsAppNotification` qui tente le texte libre enrichi si la session client est active, et envoie systématiquement le template officiel certifié Meta pour garantir 100% de délivrabilité hors de la fenêtre des 24h.
+    - **Déduplication & Agrégation par Client** : Requête SQL avec `GROUP BY c.id` et `ARRAY_AGG(h.id)`. Chaque client endetté ne reçoit qu'un seul message de rappel quotidien poli mentionnant son solde total dû, la plus ancienne échéance et le lien direct vers la vitrine/contact de la boutique.
+    - **Mise à jour Atomique de l'Historique** : Dès l'envoi validé par Meta, toutes les créances échues du client sont horodatées (`UPDATE caisse_credit_historique SET derniere_relance_whatsapp = NOW() WHERE id = ANY($1::uuid[])`).
+    - **Protection Anti-Auto-Envoi & Validation Regex** : Contrôle du format du numéro (10 à 15 chiffres avec indicatif) et exclusion automatique du numéro officiel Nopalou pour neutraliser toute erreur Meta 100.
+    - **Support Multi-Boutiques ou Unitaire** : `traiterRelancesAutomatiquesWhatsApp(boutiqueId = null)` permet d'exécuter le cron de manière globale ou ciblé sur une boutique spécifique.
+  * **🏪 3. Déclenchement Instantané Côté Marchand (`boutiques.js`, `CarnetDettes.tsx`)** :
+    - **Nouvel Endpoint API Dédié** : `POST /api/boutiques/:id/credits-clients/relances-echeances` permettant à un commerçant de déclencher immédiatement la relance de toutes ses créances échues sans attendre le cycle automatique de 12h.
+    - **Bouton Direct dans le Carnet de Dettes** : Intégration d'un bouton `[ 🔔 Relances créances échues ]` dans le menu d'options `[ ⋯ Plus ▾ ]` du carnet de dettes avec retour visuel immédiat du nombre de relances traitées.
+  * **✅ 4. Validation & Tests E2E** :
+    - Test direct sur l'API Meta Cloud validé (`message_status: 'accepted'`).
+    - Build complet de l'application Next.js (`npm run build`) validé avec succès (0 erreur).
+
+- **Corrections Ergonomie Boutique/Compte & Résilience Auto-Sourcing Prospection (`backend/services/prospection.js`, `backend/routes/prospection.js`, `frontend-next/src/app/boutique/BoutiqueClient.tsx`, `frontend-next/src/app/(account)/AccountSidebarClient.tsx`, `frontend-next/src/app/(account)/compte/tabs/AccountDashboardHub.tsx`, `frontend-next/src/app/globals.css`) (07 septembre 2026)** 🛠️✨📱 :
+  * **🛍️ 1. Suppression de la Redondance "Plus d'options" (`BoutiqueClient.tsx`)** :
+    - Élimination du doublon d'affichage du panneau d'options avancées : lorsque `showAdvancedNav` était actif, les éléments `NAV_ADVANCED` étaient ajoutés à `NAV_GROUPS` dans le `<nav>` principal ET ré-affichés une deuxième fois en grille intégrale sous le bouton.
+    - Suppression du panneau doublon `.bq-advanced-mobile-panel` sous le bouton bascule. Le clic sur "Plus d'options" étend désormais proprement le menu de navigation unique sans duplication.
+  * **📱 2. Éradication de la Redondance "Accueil Compte" en Version Mobile (`AccountSidebarClient.tsx`, `AccountDashboardHub.tsx`, `globals.css`)** :
+    - Sur `/compte` mobile, l'utilisateur voyait deux cartes d'identité empilées l'une sur l'autre (la carte de la barre latérale mobile en haut + la carte d'accueil "Bonjour, {nom}" en dessous).
+    - Masquage sur mobile (`.account-hub-hero-card { display: none !important; }`) de la Hero card du Dashboard Hub afin que la barre latérale reste la source unique de vérité visuelle.
+    - Ajout d'un bouton d'accès direct `[ 👤 Profil ]` compact et élégant directement dans la carte d'identité de `AccountSidebarClient.tsx` pour préserver 100% de la navigabilité sans aucun déchet visuel.
+  * **🛡️ 3. Résilience & Auto-Guérison Endpoint Auto-Sourcing (`/api/prospection/leads/auto-source`)** :
+    - Isolation des extensions PostgreSQL `pgcrypto` et `uuid-ossp` dans des blocs `try/catch` distincts pour éviter le blocage global des migrations sur bases managées sans droits superuser.
+    - Ajout automatique et dynamique des colonnes manquantes (`fit_score`, `score`, `email`, `contact_nom`, `telephone_brut`, etc.) via `ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS` dès l'appel à `ensureProspectionTables()`.
+    - Ajout de logs détaillés dans la route `POST /api/prospection/leads/auto-source` avec retour JSON descriptif en cas d'incident.
+  * **🤖 4. Éradication de la Boucle Infinie Espace Marchand & Escape Hatch Chatbot WhatsApp (`whatsapp-chatbot.js`)** :
+    - Élargissement des mots-clés universels d'annulation pour inclure `quitte`, `annule`, `sortir`, `fin`, `quit`, `cancel` (évite que le mot "Quitte" ne soit pris comme nom de produit lors de la création d'un article).
+    - Correction de la boucle bloquante dans l'Espace Marchand : lorsque l'utilisateur était déjà au menu marchand (`MARCHAND_MENU`) et tapait `Annuler`, `Quitter`, `Quitte` ou `Menu`, le système le renvoyait indéfiniment vers son propre menu marchand.
+    - Désormais, le système distingue proprement un sous-état d'action en cours (`AJOUT_PRODUIT_*`, modification PIN, carnet de dettes -> annule et retourne au menu marchand) de l'état d'accueil marchand (`MARCHAND_MENU` -> quitte immédiatement vers le Menu Général Nopalou).
+    - Correction du bouton `⬅️ Menu Général` dans le menu interactif marchand : correction de l'ID `menu` vers `menu_general` pour éviter l'interception réflexe par le menu marchand.
+  * **⚡ 5. Navigation Anti-Scroll & Rémanence Immédiate du Menu Marchand (`whatsapp-chatbot.js`)** :
+    - Élimination du besoin de scroller pour retrouver le menu : ajout systématique de boutons interactifs de réponse rapide `[ 🏪 Menu Marchand ]` sous chaque réponse clé (catalogue/stock, bilan de caisse journalier, carnet de dettes, partage de vitrine).
+    - Ajout d'une option directe `🏪 Menu Marchand` dans la liste interactive de consultation des commandes clients.
+    - Ajout dynamique de la ligne `🏪 Espace {nom_boutique}` en première position du Menu Général Nopalou (`sendMenu`) pour tout numéro reconnu comme commerçant partenaire.
+    - Déclencheur textuel universel direct : taper à tout moment `marchand`, `espace marchand`, `ma boutique`, `dashboard` ou `tableau de bord` affiche instantanément le menu marchand en bas du chat sans aucun défilement.
+  * **✅ 6. Validation & Build** :
+    - Build Next.js (`npm run build`) validé avec succès (0 erreur TypeScript, 0 avertissement bloquant).
+    - Tests de syntaxe et d'exécution Node.js sur `whatsapp-chatbot.js`, `test-prospection-suite.js` et `test-auto-source-full.js` validés à 100%.
+
 - **Audit Exhaustif & Refonte CRM Moteur de Prospection Nopalou (`backend/routes/prospection.js`, `backend/scripts/reconcilier-conversions-historiques.js`, `frontend-next/src/app/admin/(protected)/prospection/ProspectionClient.tsx`, `frontend-next/src/app/admin/(protected)/prospection/page.tsx`) (07 septembre 2026)** 🎯📊🔬✨ :
   * **🔍 1. Audit Exhaustif Data Quality sur 847+ leads** :
     - Audit complet de la base PostgreSQL réelle (`prospection_leads`, `prospection_campagnes`, `prospection_messages_log`, `boutiques`).

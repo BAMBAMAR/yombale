@@ -107,12 +107,7 @@ async function sendWhatsAppText(phone, message) {
   } catch (err) {
     const metaError = err.response?.data?.error;
     if (metaError?.code === 131047 || metaError?.message?.includes('24 hours')) {
-      console.warn(`[WHATSAPP 24H WINDOW RESTRICTION] ⚠️ Impossible d'envoyer le message texte libre à ${phone} (Fenêtre 24h Meta fermée). Tentative d'envoi par template...`);
-      try {
-        return await sendWhatsAppTemplate(phone, 'hello_world');
-      } catch (tErr) {
-        console.error(`[WHATSAPP TEMPLATE FALLBACK ERR]:`, tErr.response?.data?.error?.message || tErr.message);
-      }
+      console.warn(`[WHATSAPP 24H WINDOW RESTRICTION] ⚠️ Fenêtre 24h Meta fermée pour ${phone} (texte libre non délivré).`);
     }
     throw err;
   }
@@ -144,7 +139,7 @@ async function sendWhatsAppNotification(phone, {
   title,
   detail,
   url = SITE,
-  buttonParam = 'commandes',
+  buttonParam = 'boutique',
 }) {
   if (!phone) return null;
   const normPhone = normalisePhone(phone);
@@ -160,10 +155,11 @@ async function sendWhatsAppNotification(phone, {
   const cleanTitle = (title || 'Notification Nopalou').slice(0, 60);
   const cleanDetail = (detail || 'Consultez votre espace Nopalou pour plus de détails.').slice(0, 1000);
   const cleanUrl = url || SITE;
-  const cleanParam = String(buttonParam || 'commandes').replace(/^[/?#]+/, '');
+  // Le paramètre de bouton dynamique de nopalou_fiche_texte n'accepte qu'un identifiant sans caractères spéciaux
+  const cleanParam = String(buttonParam || 'boutique').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
 
   try {
-    return await sendWhatsAppTemplate(normPhone, 'nopalou_fiche_texte', [
+    const res = await sendWhatsAppTemplate(normPhone, 'nopalou_fiche_texte', [
       {
         type: 'body',
         parameters: [
@@ -179,6 +175,7 @@ async function sendWhatsAppNotification(phone, {
         parameters: [{ type: 'text', text: cleanParam }],
       },
     ]);
+    return res;
   } catch (tErr) {
     console.error(`[WHATSAPP NOTIF TEMPLATE ERR] (${normPhone}):`, tErr.response?.data?.error?.message || tErr.message);
     return null;

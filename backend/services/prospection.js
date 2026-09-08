@@ -1132,10 +1132,12 @@ function genererRequetesDorking(categorie = 'tous', quartier = 'Dakar') {
 // ── Auto-Guérison et Création Préventive des Tables de Prospection ───────────
 async function ensureProspectionTables() {
   try {
-    await pool.query(`
-      CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    // 1. Extensions optionnelles (séparées pour éviter de bloquer si permission refusée sur DB cloud)
+    try { await pool.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto";'); } catch (_) {}
+    try { await pool.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'); } catch (_) {}
 
+    // 2. Table prospection_leads
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS prospection_leads (
         id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         nom_boutique       VARCHAR(255) NOT NULL,
@@ -1150,12 +1152,28 @@ async function ensureProspectionTables() {
         source             VARCHAR(100) DEFAULT 'manuel',
         statut             VARCHAR(50) DEFAULT 'nouveau',
         score              INT DEFAULT 0,
+        fit_score          INT DEFAULT 0,
         notes              TEXT,
         derniere_action_at TIMESTAMPTZ,
         created_at         TIMESTAMPTZ DEFAULT NOW(),
         updated_at         TIMESTAMPTZ DEFAULT NOW()
       );
+    `);
 
+    // 3. Garantir l'existence de toutes les colonnes requises (migrations à chaud)
+    await pool.query(`
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS score INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS fit_score INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS contact_nom VARCHAR(150);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone_brut VARCHAR(100);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS operateur VARCHAR(50) DEFAULT 'Orange';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS notes TEXT;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
+    `);
+
+    // 4. Table prospection_campagnes
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS prospection_campagnes (
         id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         titre              VARCHAR(255) NOT NULL,
@@ -1170,7 +1188,10 @@ async function ensureProspectionTables() {
         metadonnees        JSONB DEFAULT '{}',
         created_at         TIMESTAMPTZ DEFAULT NOW()
       );
+    `);
 
+    // 5. Table prospection_messages_log
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS prospection_messages_log (
         id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         campagne_id        UUID,
@@ -1182,23 +1203,30 @@ async function ensureProspectionTables() {
         erreur             TEXT,
         created_at         TIMESTAMPTZ DEFAULT NOW()
       );
+    `);
 
+    // 6. Table whatsapp_blacklist
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS whatsapp_blacklist (
         phone              VARCHAR(50) PRIMARY KEY,
         reason             VARCHAR(255) DEFAULT 'optout',
         created_at         TIMESTAMPTZ DEFAULT NOW()
       );
+    `);
 
+    // 7. Index de performance
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_tel ON prospection_leads(telephone);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_statut ON prospection_leads(statut);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_cat ON prospection_leads(categorie);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_date ON prospection_leads(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_score ON prospection_leads(score DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_fit ON prospection_leads(fit_score DESC);
       CREATE INDEX IF NOT EXISTS idx_prospection_target ON prospection_leads(statut, categorie, quartier);
       CREATE INDEX IF NOT EXISTS idx_prospection_campagnes_date ON prospection_campagnes(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_campagne ON prospection_messages_log(campagne_id);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_lead ON prospection_messages_log(lead_id);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_date ON prospection_messages_log(created_at DESC);
-      CREATE INDEX IF NOT EXISTS idx_prospection_log_camp_date ON prospection_messages_log(campagne_id, created_at DESC);
     `);
   } catch (err) {
     console.warn('[PROSPECTION] ensureProspectionTables warning:', err.message);

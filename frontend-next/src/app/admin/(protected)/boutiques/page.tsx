@@ -39,6 +39,7 @@ export default async function AdminBoutiquesPage() {
   let boutiques: Boutique[] = []
   let relanceConfig: any = null
   let relanceStats: any = null
+  let relanceEligibles: any[] = []
 
   try {
     const [rBoutiques, rConfig] = await Promise.all([
@@ -60,6 +61,7 @@ export default async function AdminBoutiquesPage() {
       const dataCfg = await rConfig.json()
       relanceConfig = dataCfg.config ?? null
       relanceStats = dataCfg.stats ?? null
+      relanceEligibles = dataCfg.boutiquesEligibles ?? []
     }
   } catch {
     // backend indisponible
@@ -75,6 +77,7 @@ export default async function AdminBoutiquesPage() {
         boutiques={boutiques}
         initialRelanceConfig={relanceConfig}
         initialRelanceStats={relanceStats}
+        initialRelanceEligibles={relanceEligibles}
       />
     </div>
   )

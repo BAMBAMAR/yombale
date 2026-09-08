@@ -307,7 +307,8 @@ router.post('/leads/auto-source', adminOnly, async (req, res) => {
     const stats = await autoSourcerDepuisAnnonces();
     res.json(stats);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[PROSPECTION AUTO-SOURCE ERR]:', err);
+    res.status(500).json({ error: err.message || 'Erreur lors de l\'auto-sourcing' });
   }
 });
 

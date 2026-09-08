@@ -743,6 +743,32 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     }
   }
 
+  // Déclencher les relances automatiques pour les créances échues de la boutique
+  const [relancantEcheances, setRelancantEcheances] = useState(false)
+  const handleRelancerEcheances = async () => {
+    setRelancantEcheances(true)
+    try {
+      const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/relances-echeances`, {
+        method: 'POST'
+      })
+      const data = await res.json()
+      if (res.ok) {
+        alert(data.message || 'Traitement des relances terminé !')
+        await chargerDonnees()
+        if (clientSelectionne) {
+          await chargerHistoriqueClient(clientSelectionne.id)
+        }
+      } else {
+        alert(data.error || 'Erreur lors du déclenchement des relances.')
+      }
+    } catch (e) {
+      console.error('Erreur relance echeances:', e)
+      alert('Erreur réseau lors de la relance des échéances.')
+    } finally {
+      setRelancantEcheances(false)
+    }
+  }
+
   // Blacklister ou Réactiver un client du carnet
   const handleChangerStatutClient = async (c: ClientCredit, nouveauStatut: 'actif' | 'bloque' | 'archive') => {
     try {
@@ -1198,6 +1224,32 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   >
                     <span>📥</span>
                     <span>Importer CSV / Excel</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={relancantEcheances}
+                    onClick={() => { setShowMenuOptionsDettes(false); handleRelancerEcheances(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: '#c2410c',
+                      background: '#fff7ed',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                      opacity: relancantEcheances ? 0.6 : 1,
+                    }}
+                    title="Envoyer les relances automatiques WhatsApp pour toutes les créances échues"
+                  >
+                    <span>🔔</span>
+                    <span>{relancantEcheances ? 'Relance en cours…' : 'Relances créances échues'}</span>
                   </button>
 
                   <div style={{ height: 1, background: '#f1f5f9', margin: '3px 0' }} />

@@ -532,6 +532,16 @@ export async function getRelanceCatalogueConfig(): Promise<{
     template: string
   }
   stats?: Record<string, number>
+  boutiquesEligibles?: Array<{
+    id: string
+    nom: string
+    slug: string
+    nb_produits: number
+    telephone: string
+    created_at: string
+    derniere_relance_catalogue_at?: string | null
+    nb_relances_catalogue?: number
+  }>
   error?: string
 }> {
   const jar    = await cookies()
@@ -577,6 +587,34 @@ export async function updateRelanceCatalogueConfig(payload: {
     return { error: err.message || 'Erreur serveur' }
   }
 }
+
+export async function executerCronRelanceCatalogueAction(): Promise<{
+  success?: boolean
+  count?: number
+  successCount?: number
+  errorCount?: number
+  errors?: any[]
+  message?: string
+  error?: string
+}> {
+  const jar    = await cookies()
+  const secret = jar.get(COOKIE)?.value
+  if (!secret) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/boutiques/admin/relance-catalogue/executer-cron`, {
+      method: 'POST',
+      headers: adminHeaders(secret),
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur lors de l\'exécution du cron' }
+    revalidatePath('/admin/boutiques')
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
 
 
 

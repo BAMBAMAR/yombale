@@ -4183,6 +4183,8 @@ function BoutiqueMobileBottomSheet({
   onBack,
   boutiqueId,
   hasMultipleBoutiques = false,
+  boutiques = [],
+  onSelectBoutique,
 }: {
   navGroups: NavGroup[]
   activeTab: ManageTab
@@ -4194,6 +4196,8 @@ function BoutiqueMobileBottomSheet({
   onBack: () => void
   boutiqueId: string
   hasMultipleBoutiques?: boolean
+  boutiques?: Boutique[]
+  onSelectBoutique?: (b: Boutique) => void
 }) {
   const router = useRouter()
   const { t } = useTranslation()
@@ -4308,6 +4312,49 @@ function BoutiqueMobileBottomSheet({
               </button>
             </div>
 
+            {/* Sélecteur Multi-Boutiques Rapide (Mobile) */}
+            {boutiques && boutiques.length > 1 && (
+              <div style={{ padding: '8px 16px', background: '#F8FAF5', borderBottom: '1px solid #E8DDD2', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Mes Boutiques ({boutiques.length})
+                </div>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                  {boutiques.map(b => {
+                    const isCurrent = b.id === boutiqueId;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => {
+                          closeSheet();
+                          if (!isCurrent && onSelectBoutique) onSelectBoutique(b);
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: 8,
+                          border: isCurrent ? '1.5px solid #16a34a' : '1px solid #d1d5db',
+                          background: isCurrent ? '#f0fdf4' : '#ffffff',
+                          color: isCurrent ? '#166534' : '#1C2B4A',
+                          fontWeight: isCurrent ? 800 : 600,
+                          fontSize: 12,
+                          whiteSpace: 'nowrap',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          cursor: isCurrent ? 'default' : 'pointer',
+                          flexShrink: 0,
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                        }}
+                      >
+                        <span>🏪 {b.nom}</span>
+                        {isCurrent && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a' }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="mobile-bs-body">
               {navGroups.map((group, gIdx) => {
                 const hasActive = group.items.some(i => i.key === activeTab)
@@ -4384,7 +4431,18 @@ function BoutiqueMobileBottomSheet({
   )
 }
 
-function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialTab: initialTabProp, hasMultipleBoutiques = false }: {
+function BoutiqueManage({
+  boutique,
+  planActif,
+  onBack,
+  onEdit,
+  prixPro,
+  initialTab: initialTabProp,
+  hasMultipleBoutiques = false,
+  boutiques = [],
+  onSelectBoutique,
+  onCreateBoutique,
+}: {
   boutique: Boutique
   planActif: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
   onBack: () => void
@@ -4392,9 +4450,13 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
   prixPro: number
   initialTab?: string
   hasMultipleBoutiques?: boolean
+  boutiques?: Boutique[]
+  onSelectBoutique?: (b: Boutique) => void
+  onCreateBoutique?: () => void
 }) {
   const router = useRouter()
   const { t, formatNumber } = useTranslation()
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false)
   const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
@@ -4666,20 +4728,21 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                 fontSize: 12,
                 color: '#1C2B4A',
                 fontWeight: 800,
-                padding: '7px 12px',
+                padding: '7px 11px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                whiteSpace: 'nowrap',
+                flex: '1 1 auto',
+                minWidth: 0,
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                 transition: 'all 0.15s ease',
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C75B00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C75B00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              <span>
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {tab !== 'dashboard'
                   ? t('shop.homeShopBack')
                   : hasMultipleBoutiques
@@ -4692,26 +4755,27 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
               type="button"
               onClick={() => setIsSidebarOpen(false)}
               className="bq-sidebar-close-btn"
-              title="Fermer le menu latéral pour agrandir l'espace de travail"
+              title={t('shop.closeMenu') || "Fermer le menu latéral"}
+              aria-label={t('shop.closeMenu') || "Fermer le menu latéral"}
               style={{
+                width: 32,
+                height: 32,
+                flexShrink: 0,
                 background: '#ffffff',
                 border: '1.5px solid #E2E8F0',
                 borderRadius: 10,
-                padding: '7px 12px',
                 cursor: 'pointer',
                 color: '#64748B',
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
-                whiteSpace: 'nowrap',
+                justifyContent: 'center',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                 transition: 'all 0.15s ease',
               }}
             >
-              <span style={{ fontSize: 13, lineHeight: 1 }}>✕</span>
-              <span>{t('shop.closeMenu') || 'Fermer le menu'}</span>
+              <span style={{ lineHeight: 1 }}>✕</span>
             </button>
           </div>
 
@@ -4765,20 +4829,58 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                 </div>
               )}
 
-              <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ minWidth: 0, flex: 1, position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <h2 style={{
-                    margin: 0,
-                    fontWeight: 850,
-                    fontSize: 15.5,
-                    color: 'var(--navy, #1C2B4A)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    letterSpacing: '-0.02em',
-                  }}>
-                    {boutique.nom}
-                  </h2>
+                  {boutiques && boutiques.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsSwitcherOpen(v => !v)}
+                      style={{
+                        background: isSwitcherOpen ? '#fff' : 'transparent',
+                        border: isSwitcherOpen ? '1px solid var(--accent, #C75B00)' : '1px solid transparent',
+                        borderRadius: 8,
+                        padding: '1px 5px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        minWidth: 0,
+                        maxWidth: '100%',
+                        textAlign: 'left',
+                        boxShadow: isSwitcherOpen ? '0 2px 6px rgba(199,91,0,0.15)' : 'none',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title="Changer de boutique"
+                    >
+                      <h2 style={{
+                        margin: 0,
+                        fontWeight: 850,
+                        fontSize: 15.5,
+                        color: 'var(--navy, #1C2B4A)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        letterSpacing: '-0.02em',
+                      }}>
+                        {boutique.nom}
+                      </h2>
+                      <ChevronDown size={14} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0, transform: isSwitcherOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
+                    </button>
+                  ) : (
+                    <h2 style={{
+                      margin: 0,
+                      fontWeight: 850,
+                      fontSize: 15.5,
+                      color: 'var(--navy, #1C2B4A)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      letterSpacing: '-0.02em',
+                    }}>
+                      {boutique.nom}
+                    </h2>
+                  )}
+
                   {planActif && (
                     <span
                       style={{
@@ -4800,6 +4902,101 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
                     </span>
                   )}
                 </div>
+
+                {/* Dropdown Menu Sélecteur de Boutique */}
+                {isSwitcherOpen && boutiques && boutiques.length > 1 && (
+                  <>
+                    <div
+                      style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+                      onClick={() => setIsSwitcherOpen(false)}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 4px)',
+                      left: 0,
+                      zIndex: 1000,
+                      background: '#ffffff',
+                      border: '1.5px solid #E8DDD2',
+                      borderRadius: 12,
+                      boxShadow: '0 8px 24px rgba(28,43,74,0.18)',
+                      width: 250,
+                      padding: '6px',
+                    }}>
+                      <div style={{ padding: '6px 8px', fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Mes Boutiques ({boutiques.length})
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {boutiques.map(b => {
+                          const isCurrent = b.id === boutique.id;
+                          return (
+                            <button
+                              key={b.id}
+                              type="button"
+                              onClick={() => {
+                                setIsSwitcherOpen(false);
+                                if (!isCurrent && onSelectBoutique) onSelectBoutique(b);
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '8px 10px',
+                                borderRadius: 8,
+                                border: isCurrent ? '1.5px solid #BBF7D0' : '1px solid transparent',
+                                background: isCurrent ? '#F0FDF4' : 'transparent',
+                                cursor: isCurrent ? 'default' : 'pointer',
+                                textAlign: 'left',
+                                transition: 'background 0.12s ease',
+                              }}
+                            >
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontWeight: isCurrent ? 800 : 600, fontSize: 13, color: isCurrent ? '#166534' : '#1C2B4A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {b.nom}
+                                </div>
+                                <div style={{ fontSize: 11, color: '#64748B' }}>
+                                  {b.ville || 'Sénégal'}
+                                </div>
+                              </div>
+                              {isCurrent && (
+                                <span style={{ fontSize: 10, fontWeight: 800, color: '#16a34a', background: '#DCFCE7', padding: '2px 6px', borderRadius: 6 }}>
+                                  Actif
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {boutiques.length < 3 && onCreateBoutique && (
+                        <div style={{ borderTop: '1px solid #E8DDD2', marginTop: 6, paddingTop: 6 }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsSwitcherOpen(false);
+                              onCreateBoutique();
+                            }}
+                            style={{
+                              width: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              padding: '7px 10px',
+                              borderRadius: 8,
+                              border: 'none',
+                              background: '#FFF3E8',
+                              color: 'var(--accent, #C75B00)',
+                              fontSize: 12,
+                              fontWeight: 750,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <span>+</span>
+                            <span>Créer une autre boutique</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {/* Pastille Interactive En Ligne / Masquée */}
@@ -5074,60 +5271,6 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
             />
             <span>{showAdvancedNav ? 'Masquer les options avancées' : 'Plus d\'options (comptabilité, rapports...)'}</span>
           </button>
-
-          {/* Panneau dépliable interactif visible également sur mobile lorsque showAdvancedNav est actif */}
-          {showAdvancedNav && (
-            <div className="bq-advanced-mobile-panel" style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {NAV_ADVANCED.map((group, gIdx) => (
-                <div key={gIdx} style={{ background: '#FAF8F5', border: '1px solid #E8DDD2', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontSize: 11, fontWeight: 800, color: 'var(--navy)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    <group.icon size={13} style={{ color: 'var(--accent, #C75B00)' }} />
-                    <span>{group.title}</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 6 }}>
-                    {group.items.map(item => {
-                      const allowed = isAllowed(item.minPlan)
-                      const isActive = tab === item.key
-                      const ItemIcon = item.icon
-                      return (
-                        <button
-                          key={item.key}
-                          type="button"
-                          onClick={() => handleNavigateTab(item.key)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            padding: '8px 10px',
-                            borderRadius: 8,
-                            fontSize: 12,
-                            fontWeight: isActive ? 800 : 600,
-                            color: isActive ? '#C75B00' : 'var(--navy)',
-                            background: isActive ? '#FFF3E8' : '#ffffff',
-                            border: isActive ? '1.5px solid #C75B00' : '1px solid #E2E8F0',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            boxShadow: isActive ? '0 2px 6px rgba(199,91,0,0.15)' : '0 1px 2px rgba(0,0,0,0.03)',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          <ItemIcon size={14} style={{ color: isActive ? '#C75B00' : '#64748B', flexShrink: 0 }} />
-                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, minWidth: 0 }}>
-                            {item.label}
-                          </span>
-                          {!allowed && (
-                            <span style={{ fontSize: 8.5, background: item.minPlan === 'business' ? '#1C2B4A' : '#C75B00', color: '#fff', padding: '1px 4px', borderRadius: 3, fontWeight: 800 }}>
-                              🔒
-                            </span>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Nav Mobile — Bottom-Sheet (remplace les 2 niveaux de pills) */}
@@ -5147,6 +5290,8 @@ function BoutiqueManage({ boutique, planActif, onBack, onEdit, prixPro, initialT
           onBack={onBack}
           boutiqueId={boutique.id}
           hasMultipleBoutiques={hasMultipleBoutiques}
+          boutiques={boutiques}
+          onSelectBoutique={onSelectBoutique}
         />
 
         {/* Liens rapides (Desktop seulement) */}
@@ -5531,9 +5676,19 @@ export default function BoutiqueClient({
       <div className="bq-manage-outer-wrap" style={{ maxWidth: 1360, margin: '32px auto', padding: '0 24px' }}>
         <BoutiqueManage
           boutique={mode.managing}
+          boutiques={boutiquesList}
           planActif={planActifEffectif ?? null}
           initialTab={tabParam ?? undefined}
           hasMultipleBoutiques={boutiquesList.length > 1}
+          onSelectBoutique={(b) => {
+            if (typeof window !== 'undefined') {
+              const url = new URL(window.location.href)
+              url.searchParams.set('manage', b.id)
+              window.history.replaceState(null, '', url.toString())
+            }
+            setMode({ managing: b })
+          }}
+          onCreateBoutique={() => setMode('create')}
           onBack={() => {
             if (typeof window !== 'undefined') {
               const url = new URL(window.location.href)

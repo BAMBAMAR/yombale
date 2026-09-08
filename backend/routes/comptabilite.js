@@ -528,12 +528,21 @@ async function notifierVendeurCommande(boutique, {
     `⚡ Répondez vite pour confirmer !`;
 
   const titleTpl = (isCredit ? `🚨 Achat Crédit (Carnet) — ${boutique.nom}` : `🛒 Nouvelle commande — ${boutique.nom}`).slice(0, 60);
-  const detailTpl = `Réf ${reference} — ${nomProduit} × ${quantite}${montantTotal > 0 ? ' (' + montantFmt + ' FCFA)' : ''}`;
+  // Le template Meta 'nopalou_fiche_texte' autorise jusqu'à 1000 caractères dans le paramètre detail.
+  // On y intègre l'ensemble des coordonnées client (Nom, Tel, Adresse, Paiement) pour que le commerçant
+  // dispose de TOUTES les informations vitales même en dehors de la fenêtre 24h Meta sans avoir à écrire au bot.
+  const payLabel = methodeLabel[methodePaiement] || methodePaiement || 'Wave';
+  const detailTpl = `Réf ${reference} — ${nomProduit} × ${quantite}${montantTotal > 0 ? ` (${montantFmt} FCFA)` : ''}\n` +
+    `👤 Client : ${clientNom || 'Client'}\n` +
+    `📞 Tél : ${clientTelephone || 'Non renseigné'}` +
+    (clientAdresse ? `\n📍 Adresse : ${clientAdresse}` : '') +
+    `\n💳 Paiement : ${payLabel}` +
+    (fraisLivraison > 0 ? ` | Livr: ${new Intl.NumberFormat('fr-FR').format(fraisLivraison)} F` : '');
 
   sendWhatsAppNotification(vendeurTel, {
     textMessage: msg,
     title: titleTpl,
-    detail: detailTpl,
+    detail: detailTpl.slice(0, 1000),
     url: lienCommandes,
     buttonParam: boutique.slug || boutique.id,
   })
@@ -552,7 +561,7 @@ async function creerCommandeBoutique({
   nomProduitManuel, prixUnitaireManuel, groupeCommande, items = [], varianteId,
   codePromo, montantReduction,
 }) {
-  const bQuery = 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
+  const bQuery = 'SELECT id, nom, slug, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
   if (!boutique) {
     const e = new Error('Boutique introuvable');

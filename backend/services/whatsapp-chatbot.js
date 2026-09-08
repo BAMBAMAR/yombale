@@ -495,7 +495,7 @@ async function envoyerMenuMarchand(phone, boutique) {
     });
   }
 
-  gestionRows.push({ id: 'menu', title: '⬅️ Menu Général', description: 'Retourner au menu Nopalou' });
+  gestionRows.push({ id: 'menu_general', title: '⬅️ Menu Général', description: 'Retourner au menu Nopalou' });
 
   await sendWhatsAppInteractive(
     phone,
@@ -598,19 +598,27 @@ async function envoyerCommandesMarchand(phone, boutique, offset = 0) {
     `📋 *Commandes — ${boutique.nom}${pageInfo} :*\n\n` +
     `${fiches.join('\n\n─────────────────────\n\n')}\n\n` +
     `👉 *Pour changer le statut d'une commande :*\n` +
-    `Tapez son numéro (*1*, *2*, *3*...) ou sélectionnez-la dans la liste ci-dessous :`
+    `Tapez son numéro (*1*, *2*, *3*...) ou sélectionnez-la dans la liste ci-dessous :\n` +
+    `💡 _Tapez *marchand* à tout moment pour revenir au tableau de bord._`
   );
 
   // Menu interactif pour sélectionner quelle commande gérer
-  const rows = commandes.map((c, i) => {
-    const numIdx = safeOffset + i + 1;
-    const statutTxt = STATUT_LABELS[c.statut] || c.statut;
-    return {
-      id: `cmd_sel_${c.id}`,
-      title: `${numIdx}. ${c.reference}`.slice(0, 24),
-      description: `${c.client_nom} — ${statutTxt}`.slice(0, 72),
-    };
-  });
+  const rows = [
+    {
+      id: 'menu_marchand',
+      title: '🏪 Menu Marchand',
+      description: `Retour au tableau de bord ${boutique.nom}`,
+    },
+    ...commandes.map((c, i) => {
+      const numIdx = safeOffset + i + 1;
+      const statutTxt = STATUT_LABELS[c.statut] || c.statut;
+      return {
+        id: `cmd_sel_${c.id}`,
+        title: `${numIdx}. ${c.reference}`.slice(0, 24),
+        description: `${c.client_nom} — ${statutTxt}`.slice(0, 72),
+      };
+    }),
+  ];
 
   if (safeOffset + 5 < totalCommandes) {
     rows.push({
@@ -751,11 +759,14 @@ async function envoyerStockMarchand(phone, boutique) {
     );
   }
 
-  await sendWhatsAppButton(
+  await sendWhatsAppButtons3(
     phone,
-    'Souhaitez-vous ajouter un nouvel article ?',
-    'marchand_ajout_produit',
-    '➕ Ajouter un produit'
+    'Que souhaitez-vous faire ?',
+    [
+      { id: 'marchand_ajout_produit', title: '➕ Ajouter produit' },
+      { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+      { id: 'menu_general', title: '🌐 Menu Nopalou' },
+    ]
   ).catch(() => {});
   await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
 }
@@ -801,6 +812,15 @@ async function envoyerBilanCaisseMarchand(phone, boutique) {
     `${SITE}/boutique/caisse`;
 
   await sendWhatsAppText(phone, msg);
+  await sendWhatsAppButtons3(
+    phone,
+    'Accès rapide :',
+    [
+      { id: 'marchand_commandes', title: '📋 Mes Commandes' },
+      { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+      { id: 'menu_general', title: '🌐 Menu Nopalou' },
+    ]
+  ).catch(() => {});
   await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
 }
 
@@ -848,6 +868,15 @@ async function envoyerCarnetDettesMarchand(phone, boutique) {
       `💡 _Cliquez sur un lien ci-dessus pour envoyer instantanément un rappel poli WhatsApp au client !_`
     );
   }
+  await sendWhatsAppButtons3(
+    phone,
+    'Accès rapide :',
+    [
+      { id: 'marchand_caisse', title: '💰 Bilan Caisse' },
+      { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+      { id: 'menu_general', title: '🌐 Menu Nopalou' },
+    ]
+  ).catch(() => {});
   await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
 }
 
@@ -867,11 +896,45 @@ async function envoyerVitrineStatutMarchand(phone, boutique) {
     `${msgStatut}\n` +
     `─────────────────────`
   );
+  await sendWhatsAppButtons3(
+    phone,
+    'Accès rapide :',
+    [
+      { id: 'marchand_ajout_produit', title: '➕ Ajouter produit' },
+      { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+      { id: 'menu_general', title: '🌐 Menu Nopalou' },
+    ]
+  ).catch(() => {});
   await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
 }
 
 // ── Menu principal ────────────────────────────────────────────────────────────
 async function sendMenu(phone) {
+  const toutesBq = await trouverToutesBoutiquesMarchand(phone).catch(() => []);
+
+  const marchandsRows = [];
+  if (toutesBq.length > 1) {
+    marchandsRows.push({
+      id: 'marchand_choisir_boutique',
+      title: `🏪 Mes Boutiques (${toutesBq.length})`.slice(0, 24),
+      description: `Gérer vos ${toutesBq.length} boutiques marchandes`,
+    });
+  } else if (toutesBq.length === 1) {
+    const bq = toutesBq[0];
+    marchandsRows.push({
+      id: 'menu_marchand',
+      title: `🏪 Espace ${bq.nom}`.slice(0, 24),
+      description: 'Gérer vos commandes, stock, caisse POS',
+    });
+  }
+  marchandsRows.push(
+    { id: 'creer_boutique', title: '🛍️ Créer ma boutique', description: 'Vendre sur Nopalou (30j offerts)' },
+    { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
+    { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
+    { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
+    { id: 'support', title: '💬 Support', description: 'Contacter l\'équipe Nopalou' }
+  );
+
   await sendWhatsAppInteractive(
     phone,
     '🛍️ Nopalou',
@@ -888,13 +951,7 @@ async function sendMenu(phone) {
       },
       {
         title: 'Marchands & Compte',
-        rows: [
-          { id: 'creer_boutique', title: '🛍️ Créer ma boutique', description: 'Vendre sur Nopalou (30j offerts)' },
-          { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
-          { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
-          { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
-          { id: 'support', title: '💬 Support', description: 'Contacter l\'équipe Nopalou' },
-        ],
+        rows: marchandsRows.slice(0, 6),
       },
     ]
   );
@@ -1583,12 +1640,21 @@ async function notifierVendeurPanierGroupe(boutique, commandesCreees, groupeComm
   sendWhatsAppText(vendeurTel, msg).catch(() => {});
 
   // Envoi garanti par Template Meta (passant outre la restriction des 24h)
-  const titleTpl = `🛒 Nouvelle commande groupée — ${boutique.nom}`;
-  const detailTpl = `Réf ${groupeCommande} — Total: ${prixFmt(total)} (${commandesCreees.length} articles)`;
+  const titleTpl = `🛒 Commande groupée — ${boutique.nom}`.slice(0, 60);
+  const detailTpl = `Réf ${groupeCommande} — Total: ${prixFmt(total)} (${commandesCreees.length} art.)\n` +
+    `👤 Client : ${premiere.client_nom || 'Client'}\n` +
+    `📞 Tél : ${premiere.client_telephone || 'Non renseigné'}` +
+    (premiere.client_adresse ? `\n📍 Adresse : ${premiere.client_adresse}` : '') +
+    `\n💳 Paiement : ${methodeLabel[premiere.methode_paiement] || premiere.methode_paiement || 'Wave'}` +
+    (fraisLivraison > 0 ? ` | Livr: ${prixFmt(fraisLivraison)}` : '');
+
+  const btnParam = String(boutique.slug || boutique.id || 'boutique').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
   sendWhatsAppTemplate(vendeurTel, 'nopalou_fiche_texte', [
-    { type: 'body', parameters: [{ type: 'text', text: titleTpl }, { type: 'text', text: detailTpl }, { type: 'text', text: lienCommandes }] },
-    { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: 'boutique?tab=commandes' }] },
-  ]).catch(() => {});
+    { type: 'body', parameters: [{ type: 'text', text: titleTpl }, { type: 'text', text: detailTpl.slice(0, 1000) }, { type: 'text', text: lienCommandes }] },
+    { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: btnParam }] },
+  ]).catch(err => {
+    console.error('[WHATSAPP NOTIF GROUPE TEMPLATE ERR]:', err.response?.data?.error?.message || err.message);
+  });
 }
 
 // ── Dispatcher principal avec file d'attente séquentielle par numéro ────────────
@@ -1740,40 +1806,82 @@ async function handleIncomingInternal(msg) {
   }
 
   // ── 2. ESCAPE HATCH UNIVERSEL : RETOUR / ANNULER / MENU / QUITTER / ACCUEIL / 0 ──
-  // Permet à tout moment à un marchand ou un acheteur de quitter une impasse ou un tunnel de saisie
+  // Permet à tout moment à un marchand ou un acheteur de quitter une impasse, un tunnel de saisie ou l'espace marchand
   const normTxtLower = normaliserTexte(text).trim();
-  const MOTS_ESCAPE = ['annuler', 'retour', 'quitter', 'exit', 'accueil', 'menu', '0', 'revenir', 'back'];
-  const isEscapeRequested = MOTS_ESCAPE.includes(normTxtLower) || ['menu', 'annuler', 'retour', 'btn_annuler', 'menu_marchand', 'menu_general'].includes(interactiveId);
+  const MOTS_ESCAPE = [
+    'annuler', 'annule', 'quitter', 'quitte', 'exit', 'quit', 'cancel',
+    'sortir', 'fin', 'stop', 'retour', 'revenir', 'back', 'accueil', 'menu', '0'
+  ];
+  const isEscapeRequested = MOTS_ESCAPE.includes(normTxtLower) ||
+    ['menu', 'annuler', 'retour', 'btn_annuler', 'menu_marchand', 'menu_general', 'boutique_quitter'].includes(interactiveId);
 
   if (isEscapeRequested) {
     // 1. Demande explicite de Menu Général Nopalou
-    if (interactiveId === 'menu_general' || normTxtLower === 'menu general' || normTxtLower === 'menu général' || normTxtLower === 'menu principal') {
+    if (
+      interactiveId === 'menu_general' ||
+      interactiveId === 'boutique_quitter' ||
+      normTxtLower === 'menu general' ||
+      normTxtLower === 'menu général' ||
+      normTxtLower === 'menu principal' ||
+      normTxtLower === 'nopalou' ||
+      normTxtLower === 'client' ||
+      normTxtLower === 'acheteur'
+    ) {
       await setSession(phone, 'MENU', {});
       await sendMenu(phone);
       return;
     }
 
-    // 2. Contexte Marchand (authentifié, dans un sous-état marchand ou possédant une boutique)
-    const isMarchandState = state?.startsWith('MARCHAND_') || state?.startsWith('AJOUT_PRODUIT_');
+    // 2. Contexte Marchand (authentifié ou dans un flux marchand)
     const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bqMarchand && (context?.isMarchandAuth || state?.startsWith('MARCHAND_') || state?.startsWith('AJOUT_PRODUIT_'))) {
+      const isSubAction =
+        state?.startsWith('AJOUT_PRODUIT_') ||
+        state?.startsWith('CREER_BOUTIQUE_') ||
+        ['MARCHAND_CHANGE_PIN_ACTUEL', 'MARCHAND_CHANGE_PIN_NOUVEAU', 'MARCHAND_DETTES_CLIENT', 'MARCHAND_DETTES_MONTANT', 'MARCHAND_DETTES_NOTE'].includes(state);
 
-    if (bqMarchand && (isMarchandState || context?.isMarchandAuth)) {
-      if (normTxtLower === 'menu' || interactiveId === 'menu' || interactiveId === 'menu_marchand') {
+      // 2.A. Si l'utilisateur est dans un tunnel de saisie (ajout produit, modification PIN, carnet de dettes...)
+      if (isSubAction) {
+        await sendWhatsAppText(phone, `🔄 Action annulée. Retour à l'espace de votre boutique *${bqMarchand.nom}*.`).catch(() => {});
         await envoyerMenuMarchand(phone, bqMarchand);
         return;
       }
-      // "annuler", "retour", "quitter", "0"
-      await sendWhatsAppText(phone, `🔄 Action annulée. Retour à l'espace de votre boutique *${bqMarchand.nom}*.`).catch(() => {});
-      await envoyerMenuMarchand(phone, bqMarchand);
+
+      // 2.B. Si l'utilisateur demande explicitement d'ouvrir ou rafraîchir le menu marchand
+      if (interactiveId === 'menu_marchand' || normTxtLower === 'menu marchand' || normTxtLower === 'espace marchand' || normTxtLower === 'boutique') {
+        await envoyerMenuMarchand(phone, bqMarchand);
+        return;
+      }
+
+      // 2.C. Si l'utilisateur est DÉJÀ au menu marchand (ou neutre) et demande "menu", "quitter", "quitte", "annuler", "retour", "accueil", "0"
+      // -> Il souhaite quitter l'espace marchand pour accéder au menu général Nopalou !
+      await setSession(phone, 'MENU', {});
+      await sendWhatsAppText(phone, `👋 Retour au menu principal Nopalou :`).catch(() => {});
+      await sendMenu(phone);
       return;
     }
 
     // 3. Contexte Acheteur dans une Boutique
     if (context?.boutique && !context?.isMarchandAuth) {
       const bqAcheteur = context.boutique;
-      if (normTxtLower === 'annuler' || normTxtLower === 'retour' || normTxtLower === '0') {
-        await sendWhatsAppText(phone, `🔄 Retour à la boutique *${bqAcheteur.nom}*.`).catch(() => {});
+      const isSubActionAcheteur = state?.startsWith('COMMANDE_');
+      if (isSubActionAcheteur) {
+        await sendWhatsAppText(phone, `🔄 Commande annulée. Retour à la boutique *${bqAcheteur.nom}*.`).catch(() => {});
         await envoyerMenuBoutique(phone, bqAcheteur);
+        return;
+      }
+      if (
+        normTxtLower === 'annuler' ||
+        normTxtLower === 'annule' ||
+        normTxtLower === 'retour' ||
+        normTxtLower === 'quitter' ||
+        normTxtLower === 'quitte' ||
+        normTxtLower === 'menu' ||
+        normTxtLower === '0'
+      ) {
+        await setSession(phone, 'MENU', {});
+        await sendWhatsAppText(phone, `👋 Retour au menu principal Nopalou :`).catch(() => {});
+        await sendMenu(phone);
         return;
       }
     }
@@ -2002,6 +2110,54 @@ async function handleIncomingInternal(msg) {
     }
   }
 
+  // ── SÉLECTION & BASCULE MULTI-BOUTIQUES COMMERÇANT ───────────────────────────
+  const isChangerBoutique =
+    interactiveId === 'marchand_choisir_boutique' ||
+    interactiveId === 'marchand_changer_boutique' ||
+    normTxtLower === 'changer boutique' ||
+    normTxtLower === 'mes boutiques' ||
+    normTxtLower === 'choisir boutique';
+
+  if (isChangerBoutique) {
+    const toutesBq = await trouverToutesBoutiquesMarchand(phone);
+    if (toutesBq.length > 0) {
+      await envoyerSelecteurBoutiquesMarchand(phone, toutesBq);
+      return;
+    } else {
+      await sendWhatsAppText(phone, "Vous n'avez pas encore de boutique associée à ce numéro. Tapez *créer boutique* pour vous lancer !").catch(() => {});
+      return;
+    }
+  }
+
+  if (interactiveId?.startsWith('choisir_bq_') || state === 'MARCHAND_CHOISIR_BOUTIQUE') {
+    const toutesBq = (context?.boutiques && context.boutiques.length > 0)
+      ? context.boutiques
+      : await trouverToutesBoutiquesMarchand(phone);
+
+    let bqChoisie = null;
+    if (interactiveId?.startsWith('choisir_bq_')) {
+      const bqId = interactiveId.replace('choisir_bq_', '');
+      bqChoisie = toutesBq.find(b => String(b.id) === String(bqId));
+    } else if (text && text.trim()) {
+      const numIdx = parseInt(text.trim(), 10);
+      if (!isNaN(numIdx) && numIdx >= 1 && numIdx <= toutesBq.length) {
+        bqChoisie = toutesBq[numIdx - 1];
+      } else {
+        bqChoisie = toutesBq.find(b => b.nom.toLowerCase().includes(normTxtLower));
+      }
+    }
+
+    if (bqChoisie) {
+      await setSession(phone, 'MARCHAND_MENU', { boutique: bqChoisie, isMarchandAuth: true });
+      await sendWhatsAppText(phone, `✅ Vous gérez maintenant votre boutique *${bqChoisie.nom}*.`).catch(() => {});
+      await envoyerMenuMarchand(phone, bqChoisie);
+      return;
+    } else {
+      await sendWhatsAppText(phone, `⚠️ Choix non reconnu. Veuillez choisir une boutique dans la liste ou taper son numéro (1 à ${toutesBq.length}) :`).catch(() => {});
+      return;
+    }
+  }
+
   // ── DÉCLENCHEURS COMMERÇANT & ESPACE MARCHAND SÉCURISÉ ───────────────────────
   const MOTS_MARCHAND = [
     'marchand', 'gestion', 'espace marchand', 'mon espace', 'gerer', 'gerer boutique',
@@ -2016,7 +2172,17 @@ async function handleIncomingInternal(msg) {
     state === 'MARCHAND_MENU';
 
   if (estDeclencheurMarchand) {
-    const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    let bqMarchand = context?.boutique;
+    if (!bqMarchand) {
+      const toutesBq = await trouverToutesBoutiquesMarchand(phone);
+      if (toutesBq.length > 1) {
+        // Le commerçant a plusieurs boutiques et n'en a pas encore sélectionné une : afficher le sélecteur interactif
+        await envoyerSelecteurBoutiquesMarchand(phone, toutesBq);
+        return;
+      }
+      bqMarchand = toutesBq[0] || null;
+    }
+
     if (bqMarchand) {
       // Si l'utilisateur envoie son PIN pour déverrouiller
       if (state === 'MARCHAND_PIN' || /^\d{4,6}$/.test(text.trim())) {
@@ -2310,7 +2476,11 @@ async function handleIncomingInternal(msg) {
   }
 
   // ── Actions directes de sélection de menu (Menu Marchand / Menu Boutique / Menu Général) ─
-  if (interactiveId === 'menu_marchand' || normTxtLower === 'menu marchand') {
+  const DECLENCHEURS_MENU_MARCHAND = [
+    'menu_marchand', 'marchand', 'menu marchand', 'espace marchand', 'ma boutique',
+    'tableau de bord', 'dashboard', 'mon commerce'
+  ];
+  if (interactiveId === 'menu_marchand' || DECLENCHEURS_MENU_MARCHAND.includes(normTxtLower)) {
     const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
     if (bq) {
       await envoyerMenuMarchand(phone, bq);
@@ -2537,21 +2707,45 @@ async function handleIncomingInternal(msg) {
 
     // ── Commandes Rapides pour Commerçants Nopalou (Bilan, Stock, Dettes) ───────
     if (/^(bilan|ventes|ventes du jour|chiffre d'affaire|chiffre daffaire|combien j'ai vendu|combien jai vendu|caisse du jour|mon bilan|rapport ventes)$/i.test(normTxtLower)) {
-      const bqMarchand = await trouverBoutiqueMarchand(phone);
+      let bqMarchand = context?.boutique;
+      if (!bqMarchand) {
+        const toutesBq = await trouverToutesBoutiquesMarchand(phone);
+        if (toutesBq.length > 1) {
+          await envoyerSelecteurBoutiquesMarchand(phone, toutesBq);
+          return;
+        }
+        bqMarchand = toutesBq[0] || null;
+      }
       if (bqMarchand) {
         await envoyerBilanCaisseMarchand(phone, bqMarchand);
         return;
       }
     }
     if (/^(stock|stocks|alerte stock|alertes stock|rupture|ruptures|mes stocks|etat stock)$/i.test(normTxtLower)) {
-      const bqMarchand = await trouverBoutiqueMarchand(phone);
+      let bqMarchand = context?.boutique;
+      if (!bqMarchand) {
+        const toutesBq = await trouverToutesBoutiquesMarchand(phone);
+        if (toutesBq.length > 1) {
+          await envoyerSelecteurBoutiquesMarchand(phone, toutesBq);
+          return;
+        }
+        bqMarchand = toutesBq[0] || null;
+      }
       if (bqMarchand) {
         await envoyerStockMarchand(phone, bqMarchand);
         return;
       }
     }
     if (/^(dette|dettes|carnet|carnet dettes|carnet de dettes|qui me doit|mes dettes|creances)$/i.test(normTxtLower)) {
-      const bqMarchand = await trouverBoutiqueMarchand(phone);
+      let bqMarchand = context?.boutique;
+      if (!bqMarchand) {
+        const toutesBq = await trouverToutesBoutiquesMarchand(phone);
+        if (toutesBq.length > 1) {
+          await envoyerSelecteurBoutiquesMarchand(phone, toutesBq);
+          return;
+        }
+        bqMarchand = toutesBq[0] || null;
+      }
       if (bqMarchand) {
         await envoyerCarnetDettesMarchand(phone, bqMarchand);
         return;
@@ -3845,7 +4039,7 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
-    if (action === 'boutique_quitter' || action === 'quitter') {
+    if (action === 'boutique_quitter' || action === 'quitter' || action === 'menu_general') {
       await setSession(phone, 'MENU', {});
       await sendMenu(phone);
       return;

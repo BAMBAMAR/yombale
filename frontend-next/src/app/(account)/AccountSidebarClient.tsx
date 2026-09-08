@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import AccountNavLinks from './AccountNavLinks'
 import { useTranslation } from '@/i18n/context'
-import { BookOpen, Store, LogOut, ChevronRight, ExternalLink } from 'lucide-react'
+import { BookOpen, Store, LogOut, ChevronRight, ExternalLink, User } from 'lucide-react'
 
 interface Props {
   nom: string
@@ -37,6 +37,7 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
     >
       {/* Carte d'Identité Utilisateur */}
       <div
+        className="account-sidebar-identity-card"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -97,6 +98,28 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
             </p>
           )}
         </div>
+        <Link
+          href="/compte?tab=profil"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 11,
+            fontWeight: 750,
+            color: 'var(--navy, #1C2B4A)',
+            background: '#ffffff',
+            border: '1px solid #E2E8F0',
+            padding: '5px 9px',
+            borderRadius: 8,
+            textDecoration: 'none',
+            flexShrink: 0,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <User size={13} style={{ color: 'var(--accent, #C75B00)' }} />
+          <span>Profil</span>
+        </Link>
       </div>
 
       {/* Navigation Accordéon Desktop / Tabs Mobile */}

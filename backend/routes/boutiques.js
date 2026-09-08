@@ -244,6 +244,14 @@ router.get('/admin/relance-catalogue/config', adminSecretOnly, async (req, res) 
       ) sub
     `);
 
+    const { recupererBoutiquesEligiblesRelance } = require('../services/relance-catalogue');
+    let boutiquesEligibles = [];
+    try {
+      boutiquesEligibles = await recupererBoutiquesEligiblesRelance();
+    } catch (eRel) {
+      console.warn('[CONFIG RELANCE] Impossible de récupérer les boutiques éligibles:', eRel.message);
+    }
+
     res.json({
       config: {
         actif,
@@ -254,10 +262,37 @@ router.get('/admin/relance-catalogue/config', adminSecretOnly, async (req, res) 
         template,
       },
       stats: statsRes.rows[0] || {},
+      boutiquesEligibles: boutiquesEligibles.map(b => ({
+        id: b.id,
+        nom: b.nom,
+        slug: b.slug,
+        nb_produits: b.nb_produits || 0,
+        telephone: b.whatsapp || b.telephone || b.proprietaire_telephone || '',
+        created_at: b.created_at,
+        derniere_relance_catalogue_at: b.derniere_relance_catalogue_at,
+        nb_relances_catalogue: b.nb_relances_catalogue || 0,
+      })),
     });
   } catch (err) {
     console.error('[GET /api/boutiques/admin/relance-catalogue/config]', err.message);
     res.status(500).json({ error: 'Erreur chargement configuration relance' });
+  }
+});
+
+// ── POST /api/boutiques/admin/relance-catalogue/executer-cron — Exécution manuelle immédiate du cron de relance
+router.post('/admin/relance-catalogue/executer-cron', adminSecretOnly, async (req, res) => {
+  try {
+    const { recupererBoutiquesEligiblesRelance, batchRelancerCatalogueBoutiques } = require('../services/relance-catalogue');
+    const boutiques = await recupererBoutiquesEligiblesRelance();
+    if (boutiques.length === 0) {
+      return res.json({ success: true, count: 0, message: 'Aucune boutique éligible pour le moment.' });
+    }
+    const ids = boutiques.map(b => b.id);
+    const result = await batchRelancerCatalogueBoutiques(ids);
+    res.json({ success: true, count: boutiques.length, ...result });
+  } catch (err) {
+    console.error('[POST /api/boutiques/admin/relance-catalogue/executer-cron]', err.message);
+    res.status(500).json({ error: err.message || 'Erreur lors de l\'exécution manuelle du cron' });
   }
 });
 
@@ -1526,6 +1561,30 @@ router.post('/:id/credits-clients/:clientId/relance-whatsapp', async (req, res) 
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+// ── POST /api/boutiques/:id/credits-clients/relances-echeances — Déclencher les relances automatiques échues de cette boutique
+router.post('/:id/credits-clients/relances-echeances', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
+    const bqRes = await pool.query(`SELECT id, nom FROM boutiques WHERE ${bqCond}`, [id]);
+    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const { traiterRelancesAutomatiquesWhatsApp } = require('../services/cron-relances-carnet');
+    const result = await traiterRelancesAutomatiquesWhatsApp(bqRes.rows[0].id);
+
+    res.json({
+      success: true,
+      message: `${result.relancesEnvoyees || 0} relance(s) automatique(s) envoyée(s) pour ${bqRes.rows[0].nom}`,
+      details: result
+    });
+  } catch (err) {
+    console.error('[CREDITS RELANCES ECHEANCES ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du traitement des relances' });
+  }
+});
+
 
 // ── POST /api/boutiques/:id/credits-clients/approuver-commande — Approbation d'une demande d'achat à crédit
 router.post('/:id/credits-clients/approuver-commande', async (req, res) => {
@@ -4641,7 +4700,7 @@ router.post('/commandes/express', async (req, res) => {
       return res.status(400).json({ error: 'Au moins un article est requis dans le panier.' });
     }
 
-    const bqQuery = 'SELECT id, nom, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
+    const bqQuery = 'SELECT id, nom, slug, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
     const bqRes = await pool.query(bqQuery, [boutique_id]);
     if (!bqRes.rows[0]) {
       return res.status(400).json({ error: 'Boutique introuvable.' });

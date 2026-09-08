@@ -11411,6 +11411,11 @@ span.ripple {
     overflow: hidden !important;
   }
 
+  /* Sur mobile : masquer le hero profil du Dashboard Hub (redondant avec la sidebar) */
+  .account-hub-hero-card {
+    display: none !important;
+  }
+
   /* Si on est sur une sous-page du compte, on masque la sidebar pour afficher immédiatement le contenu */
   .account-sidebar--sub {
     display: none !important;

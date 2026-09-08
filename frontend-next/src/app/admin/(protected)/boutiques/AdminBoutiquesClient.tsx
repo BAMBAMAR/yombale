@@ -10,6 +10,7 @@ import {
   relancerCatalogueBoutique,
   batchRelancerCatalogueBoutiques,
   updateRelanceCatalogueConfig,
+  executerCronRelanceCatalogueAction,
 } from '@/app/actions/admin'
 import { activerPlanTest } from '../abonnements/actions'
 import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
@@ -92,15 +93,27 @@ function genererMessageGuide(b: Boutique, template?: string) {
 function ModalConfigAutomatisation({
   config,
   stats,
+  eligibles = [],
   onClose,
   onSaved,
 }: {
   config: RelanceConfig
   stats?: Record<string, number>
+  eligibles?: Array<{
+    id: string
+    nom: string
+    slug?: string
+    nb_produits: number
+    telephone?: string
+    created_at?: string
+    derniere_relance_catalogue_at?: string | null
+    nb_relances_catalogue?: number
+  }>
   onClose: () => void
   onSaved: () => void
 }) {
   const [pending, startTransition] = useTransition()
+  const [testingCron, setTestingCron] = useState(false)
   const [actif, setActif] = useState<boolean>(config?.actif ?? false)
   const [seuil, setSeuil] = useState<number>(config?.seuil ?? 1)
   const [delaiHeures, setDelaiHeures] = useState<number>(config?.delai_heures ?? 24)
@@ -131,6 +144,32 @@ function ModalConfigAutomatisation({
           onSaved()
           onClose()
         }, 1200)
+      }
+    })
+  }
+
+  function handleTesterCron() {
+    if (!window.confirm('Voulez-vous déclencher immédiatement le cycle de relance pour les boutiques éligibles ?')) return
+    setMsg(null)
+    setTestingCron(true)
+    startTransition(async () => {
+      try {
+        const res = await executerCronRelanceCatalogueAction()
+        if (res.error) {
+          setMsg({ type: 'err', text: res.error })
+        } else if (res.count === 0) {
+          setMsg({ type: 'ok', text: 'ℹ️ Aucune boutique éligible pour le moment.' })
+        } else {
+          setMsg({
+            type: 'ok',
+            text: `🚀 Relance effectuée ! ${res.successCount ?? 0} message(s) envoyé(s)${res.errorCount ? ` (${res.errorCount} échecs)` : ''}.`,
+          })
+          onSaved()
+        }
+      } catch (err: any) {
+        setMsg({ type: 'err', text: err.message || 'Erreur lors de l\'exécution du cron' })
+      } finally {
+        setTestingCron(false)
       }
     })
   }
@@ -226,6 +265,45 @@ function ModalConfigAutomatisation({
             >
               {actif ? 'Désactiver' : 'Activer'}
             </button>
+          </div>
+
+          {/* Boutiques ciblées en attente */}
+          <div style={{
+            background: '#f0f9ff', border: '1px solid #bae6fd',
+            borderRadius: 14, padding: '16px 20px', marginBottom: 20
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 14, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>🎯</span>
+                  <span>Boutiques ciblées actuellement : {eligibles?.length ?? 0}</span>
+                </div>
+                <div style={{ fontSize: 12, color: '#0284c7', marginTop: 4 }}>
+                  {eligibles && eligibles.length > 0 ? (
+                    <span>
+                      En attente du prochain passage :{' '}
+                      <strong>{eligibles.map(b => `${b.nom} (${b.nb_produits} prod)`).join(', ')}</strong>
+                    </span>
+                  ) : (
+                    <span>Toutes les boutiques ont déjà un catalogue ou ont été relancées récemment.</span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleTesterCron}
+                disabled={testingCron || pending}
+                style={{
+                  background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10,
+                  padding: '10px 16px', fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  opacity: (testingCron || pending) ? 0.7 : 1,
+                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.2)'
+                }}
+              >
+                <span>{testingCron ? '⏳ Envoi en cours…' : '🚀 Exécuter le Cron Maintenant'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Paramètres de filtrage */}
@@ -941,10 +1019,21 @@ export default function AdminBoutiquesClient({
   boutiques,
   initialRelanceConfig,
   initialRelanceStats,
+  initialRelanceEligibles,
 }: {
   boutiques: Boutique[]
   initialRelanceConfig?: RelanceConfig
   initialRelanceStats?: Record<string, number>
+  initialRelanceEligibles?: Array<{
+    id: string
+    nom: string
+    slug?: string
+    nb_produits: number
+    telephone?: string
+    created_at?: string
+    derniere_relance_catalogue_at?: string | null
+    nb_relances_catalogue?: number
+  }>
 }) {
   const [, startTransition] = useTransition()
   const [selectedBoutique, setSelectedBoutique] = useState<Boutique | null>(null)
@@ -1360,6 +1449,7 @@ export default function AdminBoutiquesClient({
         <ModalConfigAutomatisation
           config={relanceConfig}
           stats={initialRelanceStats}
+          eligibles={initialRelanceEligibles}
           onClose={() => setShowConfigModal(false)}
           onSaved={refresh}
         />
