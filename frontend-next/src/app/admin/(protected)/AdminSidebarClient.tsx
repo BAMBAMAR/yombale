@@ -54,6 +54,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
     {
       title: 'Canaux & Outils',
       items: [
+        { href: '/admin/integrations', label: 'Intégrations & Réseaux', icon: <Link2 size={16} />, highlight: '#C75B00' },
         { href: '/admin/whatsapp', label: 'WhatsApp Bot', icon: <MessageCircle size={16} /> },
         { href: '/admin/whatsapp/templates', label: 'Templates WhatsApp', icon: <MessageCircle size={16} />, highlight: '#16a34a' },
         { href: '/admin/publications', label: 'Publications Facebook', icon: <BookOpen size={16} /> },
@@ -65,6 +66,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
     {
       title: 'Système & Pilotage',
       items: [
+        { href: '/admin/migration', label: 'Migration Marchands', icon: <Rocket size={16} />, highlight: '#ea580c' },
         { href: '/admin/sante-donnees', label: '🛡️ Santé des Données', icon: <ShieldCheck size={16} />, highlight: '#16a34a' },
         { href: '/admin/feature-flags', label: 'Feature Flags (No-Code)', icon: <Flag size={16} />, highlight: '#9333ea' },
         { href: '/admin/audit-logs', label: 'Audit Logs & Traçabilité', icon: <ShieldCheck size={16} />, highlight: '#059669' },

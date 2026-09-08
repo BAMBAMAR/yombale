@@ -1476,9 +1476,82 @@ module.exports = async function migrateInline() {
         (stock_quantite = 0 AND (en_stock = true OR en_stock IS NULL))
       );
       UPDATE boutique_produits SET en_stock = true WHERE stock_quantite IS NULL AND en_stock IS NULL;
+
+      -- ============================================================================
+      -- 🛍️ TABLES SOCIAL SHOP / SOCIAL COMMERCE NOPALOU
+      -- ============================================================================
+      CREATE TABLE IF NOT EXISTS social_accounts (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id      UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        plateforme       VARCHAR(30) NOT NULL, -- 'instagram', 'tiktok', 'facebook', 'youtube'
+        nom_compte       VARCHAR(150) NOT NULL, -- ex: '@maboutique_sn'
+        profil_url       TEXT,
+        statut           VARCHAR(30) DEFAULT 'actif', -- 'actif', 'inactif', 'deconnecte'
+        access_token     TEXT,
+        refresh_token    TEXT,
+        token_expires_at TIMESTAMPTZ,
+        derniere_sync_at TIMESTAMPTZ,
+        auto_sync        BOOLEAN DEFAULT FALSE,
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_social_accounts_boutique_plateforme UNIQUE (boutique_id, plateforme)
+      );
+      CREATE INDEX IF NOT EXISTS idx_social_accounts_boutique ON social_accounts(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS social_posts (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id       UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        social_account_id UUID REFERENCES social_accounts(id) ON DELETE SET NULL,
+        plateforme        VARCHAR(30) NOT NULL, -- 'instagram', 'tiktok', 'facebook', 'youtube'
+        external_post_id  VARCHAR(150),
+        post_url          TEXT NOT NULL,
+        media_type        VARCHAR(30) DEFAULT 'VIDEO', -- 'IMAGE', 'VIDEO', 'REEL', 'TIKTOK_VIDEO', 'POST'
+        media_url         TEXT,
+        thumbnail_url     TEXT,
+        embed_html        TEXT,
+        caption           TEXT,
+        auteur            VARCHAR(150),
+        visible           BOOLEAN DEFAULT TRUE,
+        is_featured       BOOLEAN DEFAULT FALSE,
+        ordre             INT DEFAULT 0,
+        published_at      TIMESTAMPTZ DEFAULT NOW(),
+        derniere_sync_at  TIMESTAMPTZ DEFAULT NOW(),
+        created_at        TIMESTAMPTZ DEFAULT NOW(),
+        updated_at        TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_social_posts_boutique_url UNIQUE (boutique_id, post_url)
+      );
+      CREATE INDEX IF NOT EXISTS idx_social_posts_boutique_visible ON social_posts(boutique_id, visible, ordre);
+      CREATE INDEX IF NOT EXISTS idx_social_posts_plateforme ON social_posts(boutique_id, plateforme);
+      CREATE INDEX IF NOT EXISTS idx_social_posts_featured ON social_posts(boutique_id, is_featured) WHERE is_featured = TRUE;
+
+      CREATE TABLE IF NOT EXISTS social_post_produits (
+        id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        social_post_id      UUID NOT NULL REFERENCES social_posts(id) ON DELETE CASCADE,
+        produit_id          UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        ordre               INT DEFAULT 0,
+        confidence_score    NUMERIC(3,2) DEFAULT 1.00,
+        valide_par_marchand BOOLEAN DEFAULT TRUE,
+        created_at          TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_social_post_produits UNIQUE (social_post_id, produit_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_spp_post ON social_post_produits(social_post_id);
+      CREATE INDEX IF NOT EXISTS idx_spp_produit ON social_post_produits(produit_id);
+
+      CREATE TABLE IF NOT EXISTS social_analytics_events (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id    UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        social_post_id UUID REFERENCES social_posts(id) ON DELETE SET NULL,
+        produit_id     UUID REFERENCES boutique_produits(id) ON DELETE SET NULL,
+        event_type     VARCHAR(50) NOT NULL, -- 'social_content_view', 'social_content_click', 'social_product_click', 'social_add_to_cart', 'social_whatsapp_click'
+        session_id     VARCHAR(100),
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_sae_boutique_type ON social_analytics_events(boutique_id, event_type);
+      CREATE INDEX IF NOT EXISTS idx_sae_post ON social_analytics_events(social_post_id);
+      CREATE INDEX IF NOT EXISTS idx_sae_created_at ON social_analytics_events(created_at DESC);
     `);
 
-    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support et réconciliation de stock OK');
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support/social_shop OK');
   } catch (err) {
     console.warn('[MIGRATE] POS Avancé & Recherches échec:', err.message);
   }

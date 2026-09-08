@@ -23,6 +23,7 @@ import ParametresFidelitePromos from './ParametresFidelitePromos'
 import GestionDocuments from './GestionDocuments'
 import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
+import SocialShopManager from './SocialShopManager'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import {
@@ -3609,7 +3610,7 @@ function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
   )
 }
 
-type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite'
+type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite'
 
 function BoutiqueDashboard({
   boutique,
@@ -4518,8 +4519,9 @@ function BoutiqueManage({
     },
     {
       icon: Megaphone,
-      title: t('shop.navGroupMarketingSettings'),
+      title: t('shop.navGroupMarketingSettings') || 'Marketing & Réseaux',
       items: [
+        { key: 'social',      icon: Share2, label: '📱 Réseaux sociaux & Social Shop' },
         { key: 'marketing',   icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
         { key: 'infos',       icon: Settings, label: t('shop.settings') || 'Paramètres' },
       ],
@@ -4694,6 +4696,7 @@ function BoutiqueManage({
     analytics:   { icon: BarChart3, title: t('shop.analytics'), desc: t('shop.analyticsDesc') },
     infos:       { icon: Settings, title: t('shop.settings'), desc: t('shop.settingsDesc') },
     marketing:   { icon: Megaphone, title: t('shop.marketing'), desc: t('shop.marketingDesc') },
+    social:      { icon: Share2, title: 'Réseaux Sociaux & Social Shop', desc: 'Connectez et transformez vos publications Instagram, TikTok et Facebook en boutique interactive.' },
     equipe:      { icon: Users, title: t('shop.team'), desc: t('shop.teamDesc') },
     admins:      { icon: ShieldCheck, title: t('shop.admins'), desc: t('shop.adminsDesc') },
     caissiers:   { icon: Store, title: t('shop.caissiers'), desc: t('shop.caissiersDesc') },
@@ -5513,6 +5516,7 @@ function BoutiqueManage({
               </div>
             )}
             {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} onOpenQrModal={() => setShowQrModal(true)} onNavigate={(t) => setTab(t)} planActif={planActif} />}
+            {tab === 'social'      && <SocialShopManager boutiqueId={boutique.id} boutiqueNom={boutique.nom} boutiqueSlug={boutique.slug} />}
             {tab === 'equipe'      && <BoutiqueEquipe boutiqueId={boutique.id} />}
             {tab === 'admins'      && <BoutiqueAdmins boutiqueId={boutique.id} />}
             {tab === 'caissiers'   && <BoutiqueCaissiers boutiqueId={boutique.id} />}

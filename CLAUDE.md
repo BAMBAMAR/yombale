@@ -1,3 +1,36 @@
+- **Implémentation Majeure : Social Shop Nopalou (Social Commerce) & Centre d'Intégrations Admin (`backend/routes/social-shop.js`, `backend/services/social-parser.js`, `backend/routes/admin-integrations.js`, `frontend-next/src/app/boutiques/[id]/SocialShopFeed.tsx`, `frontend-next/src/app/boutique/SocialShopManager.tsx`, `frontend-next/src/app/admin/(protected)/integrations/`, `tests/unit/social-shop.test.js`) (08 septembre 2026)** 🎬🛍️📱✨ :
+  * **🎯 1. Contexte & Objectif Produit** :
+    - Remplacement de l'ancien modèle Niveau 1 (simples liens externes Facebook/Instagram qui faisaient quitter la boutique Nopalou) par une véritable couche de **Social Commerce**.
+    - Permet au marchand de connecter sa présence existante (Instagram, TikTok, Facebook, YouTube) et de transformer ses vidéos, Reels et posts en vitrine interactive avec commande directe.
+    - Parcours d'achat intégré : Réseaux Sociaux → Contenu du Marchand → Découverte → Produit Nopalou → Panier → Commande → Paiement / WhatsApp.
+  * **🗄️ 2. Modèle de Données & Migrations Idempotentes (`backend/migrate-inline.js`)** :
+    - `social_accounts` : Stockage des profils marchands (Instagram, TikTok, Facebook, YouTube), statuts de connexion, tokens chiffrés et timestamps de sync.
+    - `social_posts` : Publications avec URLs originales, types (Reel, TikTok, Post), miniatures HD, embeds oEmbed officiels, légendes et mise en avant (`is_featured`).
+    - `social_post_produits` : Association N-N ordonnée entre chaque publication et les produits du catalogue Nopalou avec score de confiance (`confidence_score`).
+    - `social_analytics_events` : Suivi d'attribution du funnel social (`social_content_view`, `social_content_click`, `social_product_click`, `social_add_to_cart`, `social_whatsapp_click`).
+  * **⚙️ 3. Backend & Moteur de Smart Matching (`backend/services/social-parser.js`, `backend/routes/social-shop.js`)** :
+    - *Résolution oEmbed officielle* : Intégration officielle conforme aux CGU (TikTok oEmbed officiel sans token requis, Instagram embed, Facebook Graph/SDK) sans scraping sauvage ni stockage illégal de vidéos protégées.
+    - *Moteur de Smart Matching* : Algorithme comparant la légende sociale (`caption`) avec les noms, descriptions et catégories du catalogue pour suggérer instantanément les articles correspondants avec score de pertinence, sans forcer ni halluciner de données.
+    - *Isolation multi-tenant stricte* : Vérification systématique de propriété de boutique pour toutes les opérations marchandes.
+  * **🛍️ 4. Vitrine Publique Storefront (`frontend-next/src/app/boutiques/[id]/SocialShopFeed.tsx`, `BoutiqueDetailClient.tsx`)** :
+    - *Nouvel onglet tactile de 1er ordre* : **« 🎬 Vu sur nos réseaux »** avec filtres dynamiques (Tous, 📸 Instagram, 🎵 TikTok, 📘 Facebook, 🛍️ Articles à acheter).
+    - *Grille visuelle mobile-first* : Cartes au format vertical vidéo avec miniature HD, badge officiel de la plateforme, badge d'articles tagués et aperçu produit immédiat en bas de carte.
+    - *Modal immersif « Acheter ce que vous voyez »* : Lecteur officiel responsive, carrousel des produits portés/présentés avec prix FCFA, bouton direct « 🛒 Ajouter au panier » et bouton « 💬 Commander sur WhatsApp » prérempli avec le contexte de la publication.
+    - *Deep-linking* : Ouverture directe via URL (`?post=[id]`).
+  * **📱 5. Dashboard Marchand (`frontend-next/src/app/boutique/SocialShopManager.tsx`, `BoutiqueClient.tsx`)** :
+    - Nouvel onglet **« 📱 Réseaux sociaux & Social Shop »** dans la barre latérale et le bottom-sheet mobile.
+    - Cartes de connexion rapide des comptes officiels (Instagram, TikTok, Facebook).
+    - Importation 1-clic par URL avec détection automatique et prévisualisation.
+    - Table de curation : afficher/masquer en 1 clic, mise en avant, association/dissociation de produits avec sélecteur de catalogue et recherche instantanée.
+    - KPIs de conversion : publications en ligne, posts sans produits, vues et clics WhatsApp générés.
+  * **🛡️ 6. Administration Plateforme (`frontend-next/src/app/admin/(protected)/integrations/`, `backend/routes/admin-integrations.js`)** :
+    - Ajout du lien direct vers **Migration Marchands** (`/admin/migration`) dans la barre latérale `AdminSidebarClient.tsx`.
+    - Création de la page **Intégrations & Réseaux Sociaux** (`/admin/integrations`) : supervision des connecteurs, suivi des comptes marchands connectés, kill-switch d'urgence et modération.
+  * **🧪 7. Tests & Validation** :
+    - Tests unitaires complets dans `tests/unit/social-shop.test.js` (18/18 tests passés avec succès).
+    - Compilation TypeScript `npx tsc --noEmit` validée avec 0 erreur (code 0).
+    - Respect absolu des règles projet : polices système exclusivement, aucun push automatique sans confirmation explicite.
+
 - **Résolution : Correction du Bouton Favoris du Bas dans l'Espace Compte (`frontend-next/src/components/MobileBottomNav.tsx`, `frontend-next/src/app/FavBar.tsx`) (08 septembre 2026)** 📱❤️⚡ :
   * **🎯 1. Cause Racine Identifiée** :
     - Dans la barre mobile du bas (`MobileBottomNav`), le bouton Favoris pointait en dur vers `/favoris`.

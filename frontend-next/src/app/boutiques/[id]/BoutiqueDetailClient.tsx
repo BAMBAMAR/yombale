@@ -7,6 +7,7 @@ import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import CommanderModal from './CommanderModal'
 import AvisClients from '@/components/AvisClients'
 import CrossSelling from '@/components/CrossSelling'
+import SocialShopFeed from './SocialShopFeed'
 import { useCart } from '@/context/CartContext'
 import CardActions from '@/app/CardActions'
 import { 
@@ -328,9 +329,10 @@ export default function BoutiqueDetailClient({
   produits: Produit[]
   annonces: Annonce[]
 }) {
-  const [tab, setTab] = useState<'produits' | 'annonces' | 'infos'>('produits')
+  const [tab, setTab] = useState<'produits' | 'social' | 'annonces' | 'infos'>('produits')
   const [commanderProduit, setCommanderProduit] = useState<Produit | null>(null)
   const [quickViewProduct, setQuickViewProduct] = useState<Produit | null>(null)
+  const [activePostParam, setActivePostParam] = useState<string | null>(null)
 
   // 🔍 Filtres & Recherche de produits dans la boutique
   const [searchQuery, setSearchQuery] = useState('')
@@ -350,8 +352,19 @@ export default function BoutiqueDetailClient({
   const cartTotal = getCartTotal(boutiqueKey)
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('mode=credit')) {
-      setIsCreditMode(true)
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search)
+      if (searchParams.get('mode') === 'credit') {
+        setIsCreditMode(true)
+      }
+      const postParam = searchParams.get('post')
+      if (postParam) {
+        setActivePostParam(postParam)
+        setTab('social')
+      }
+      if (searchParams.get('tab') === 'social') {
+        setTab('social')
+      }
     }
 
     function handleScroll() {
@@ -519,6 +532,22 @@ export default function BoutiqueDetailClient({
               {produits.length}
             </span>
           )}
+        </button>
+
+        <button
+          onClick={() => setTab('social')}
+          style={{
+            flex: '1 0 auto', minWidth: 110, padding: '8px 12px', borderRadius: 10, border: 'none',
+            background: tab === 'social' ? '#fff' : 'transparent',
+            color: tab === 'social' ? '#C75B00' : '#64748b',
+            fontWeight: tab === 'social' ? 900 : 600, fontSize: 12.5, cursor: 'pointer',
+            boxShadow: tab === 'social' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            transition: 'all 0.15s ease', whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ fontSize: 14 }}>🎬</span>
+          <span>Vu sur nos réseaux</span>
         </button>
 
         {annonces.length > 0 && (
@@ -769,6 +798,17 @@ export default function BoutiqueDetailClient({
             </div>
           )}
         </div>
+      )}
+
+      {/* 🎬 ONGLET SOCIAL SHOP / VU SUR NOS RÉSEAUX */}
+      {tab === 'social' && (
+        <SocialShopFeed
+          boutiqueId={boutique.id}
+          boutiqueNom={boutique.nom}
+          boutiqueSlug={boutique.slug}
+          whatsappNumber={boutique.whatsapp}
+          activePostId={activePostParam}
+        />
       )}
 
       {/* Onglet Infos & Contact */}
