@@ -6,6 +6,8 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import { ZonesView } from './Comptabilite'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
+import { Zap, MessageCircle } from 'lucide-react'
+import ModalNouvelleCommandeWave from './ModalNouvelleCommandeWave'
 
 interface Commande {
   id: string; reference: string; nom_produit: string; quantite: number
@@ -152,6 +154,24 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
                       style={{ padding: '6px 12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                     >
                       ✅ {t('shop.statusConfirmed')}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        let cleanTel = commande.client_telephone.replace(/\D/g, '')
+                        if (cleanTel.length === 9 && (cleanTel.startsWith('77') || cleanTel.startsWith('78') || cleanTel.startsWith('76') || cleanTel.startsWith('75') || cleanTel.startsWith('70'))) {
+                          cleanTel = `221${cleanTel}`
+                        }
+                        const SITE = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
+                        const payUrl = `${SITE}/checkout-express?produit=${(commande as any).produit_id || ''}&boutique=${boutiqueId}&phone=${cleanTel}&pay=wave&ref=${commande.reference}&auto=1`
+                        const msg = `Bonjour ${commande.client_nom} ! 👋\n\nVoici le rappel pour votre commande Nopalou :\n📦 *${commande.nom_produit}* × ${commande.quantite}\n💰 Total : *${fcfa(commande.montant_total)}*\n🔖 Référence : *${commande.reference}*\n\n💳 *Pour régler directement en 1 clic par Wave sécurisé :*\n👉 ${payUrl}\n\nMerci pour votre confiance !`
+                        window.open(`https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`, '_blank')
+                      }}
+                      style={{ padding: '6px 12px', background: '#25D366', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      title="Renvoyer le lien de paiement Wave au client sur WhatsApp"
+                    >
+                      <MessageCircle size={13} /> Relancer Wave
                     </button>
 
                     {(commande.methode_paiement === 'credit' || commande.note?.toLowerCase().includes('crédit')) && (
@@ -383,6 +403,7 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
   const [filtre, setFiltre] = useState('')
   const [filtreCanal, setFiltreCanal] = useState<'tous' | 'web' | 'caisse'>('tous')
   const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showModalNouvelleCommande, setShowModalNouvelleCommande] = useState(false)
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -513,26 +534,52 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Sub Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', gap: 16, paddingBottom: 4 }}>
-        <button
-          onClick={() => setSubTab('commandes')}
-          style={{
-            background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'commandes' ? 700 : 500,
-            color: subTab === 'commandes' ? '#C75B00' : '#475569', borderBottom: subTab === 'commandes' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
-          }}
-        >
-          📋 {t('shop.ordersTitle')}
-        </button>
-        <button
-          onClick={() => setSubTab('zones')}
-          style={{
-            background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'zones' ? 700 : 500,
-            color: subTab === 'zones' ? '#C75B00' : '#475569', borderBottom: subTab === 'zones' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
-          }}
-        >
-          🚚 {t('shop.deliveryZonesTitle')}
-        </button>
+      {/* Sub Tabs & Action Nouvelle Commande */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', gap: 12, paddingBottom: 6, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={() => setSubTab('commandes')}
+            style={{
+              background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'commandes' ? 700 : 500,
+              color: subTab === 'commandes' ? '#C75B00' : '#475569', borderBottom: subTab === 'commandes' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
+            }}
+          >
+            📋 {t('shop.ordersTitle')}
+          </button>
+          <button
+            onClick={() => setSubTab('zones')}
+            style={{
+              background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'zones' ? 700 : 500,
+              color: subTab === 'zones' ? '#C75B00' : '#475569', borderBottom: subTab === 'zones' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
+            }}
+          >
+            🚚 {t('shop.deliveryZonesTitle')}
+          </button>
+        </div>
+
+        {subTab === 'commandes' && (
+          <button
+            type="button"
+            onClick={() => setShowModalNouvelleCommande(true)}
+            style={{
+              background: 'linear-gradient(135deg, #16a34a, #15803d)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 10,
+              padding: '8px 14px',
+              fontSize: 12.5,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 3px 10px rgba(22, 163, 74, 0.25)',
+            }}
+          >
+            <Zap size={15} />
+            <span>⚡ Nouvelle commande / Lien Wave 💬</span>
+          </button>
+        )}
       </div>
 
       {subTab === 'zones' ? (
@@ -788,6 +835,14 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
       )}
         </>
       )}
+
+      {/* Modal Nouvelle Commande & Lien Wave */}
+      <ModalNouvelleCommandeWave
+        boutiqueId={boutiqueId}
+        isOpen={showModalNouvelleCommande}
+        onClose={() => setShowModalNouvelleCommande(false)}
+        onSuccess={load}
+      />
     </div>
   )
 }

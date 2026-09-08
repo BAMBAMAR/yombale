@@ -368,6 +368,47 @@ export async function updateStatutCommande(boutiqueId: string, commandeId: strin
   }
 }
 
+export async function creerCommandeDirecte(
+  boutiqueId: string,
+  data: {
+    nom_produit: string
+    prix_unitaire: number
+    quantite?: number
+    produit_id?: string
+    client_nom?: string
+    client_telephone: string
+    client_adresse?: string
+    frais_livraison?: number
+    zone_livraison_id?: string
+    note?: string
+    methode_paiement?: string
+    source?: string
+  }
+): Promise<{ success: boolean; commande?: any; wave_url?: string; checkout_url?: string; error?: string }> {
+  try {
+    const res = await backendFetch(`/api/comptabilite/${boutiqueId}/commandes`, {
+      method: 'POST',
+      body: JSON.stringify({
+        ...data,
+        source: data.source || 'whatsapp_direct',
+        methode_paiement: data.methode_paiement || 'wave',
+      }),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      return { success: false, error: json.error || 'Impossible de créer la commande' }
+    }
+    return {
+      success: true,
+      commande: json.commande,
+      wave_url: json.wave_url,
+      checkout_url: json.checkout_url,
+    }
+  } catch {
+    return { success: false, error: 'Erreur de connexion au serveur' }
+  }
+}
+
 export async function updateStock(boutiqueId: string, produitId: string, stock_quantite: number): Promise<ActionState> {
   try {
     const res = await backendFetch(`/api/comptabilite/${boutiqueId}/stock/${produitId}`, {

@@ -1,3 +1,22 @@
+- **Fonctionnalité : Commande Directe & Générateur de Lien de Paiement Wave WhatsApp dans l'Onglet Commandes (`Commandes.tsx`, `ModalNouvelleCommandeWave.tsx`, `actions.ts`) (08 septembre 2026)** ⚡💳💬🧾 :
+  * **🎯 1. Demande & Contexte Métier** :
+    - L'utilisateur a demandé d'intégrer le circuit de vente issu de WhatsApp (ex: négociation suite à un post TikTok/Facebook/Instagram ou vente sur mesure) directement dans l'espace commerçant, spécifiquement dans l'onglet **Commandes** (et non dans la Caisse POS physique).
+    - Parcours cible : Le marchand saisit le montant et les détails convenus ➔ Nopalou génère la commande officielle et le lien de paiement Wave sécurisé ➔ WhatsApp s'ouvre en 1 clic pour envoyer le lien au client ➔ Dès validation Wave, la commande est confirmée et comptabilisée.
+  * **🛠️ 2. Réalisations Techniques** :
+    - *Nouveau composant `ModalNouvelleCommandeWave.tsx`* :
+      * Modal réactif, moderne et accessible smartphone : saisie de l'article (saisie libre ou sélection dans le catalogue), montant convenu (FCFA), quantité, frais de livraison (sélection de zone ou montant libre), nom du client et numéro WhatsApp.
+      * Calcul en temps réel du total et des frais.
+      * Écran de confirmation avec référence `CMD-2026-XXXX`, boîte de copie rapide du lien Wave et bouton direct vert : **« 💬 Ouvrir WhatsApp et envoyer le message au client »**.
+    - *Bouton d'Action Principal dans `Commandes.tsx`* :
+      * Bouton vert vibrant **« ⚡ Nouvelle commande / Lien Wave 💬 »** ajouté dans la barre d'onglets de la page Commandes.
+    - *Bouton de Relance Wave Directe* :
+      * Sur les commandes en attente (`statut === 'en_attente'`), ajout du bouton rapide **« 💬 Relancer Wave »** pour ré-envoyer un rappel avec le lien de paiement Wave en un clic sur WhatsApp si le client tarde à payer.
+    - *Action Serveur `creerCommandeDirecte` (`actions.ts`)* :
+      * Communication directe avec l'API `/api/comptabilite/:boutiqueId/commandes` pour créer la commande et récupérer le lien Wave officiel généré par Wave API (`wave_url`).
+  * **🧪 3. Validation & Invariants** :
+    - Polices système natives préservées (`fontFamily: 'system-ui, ...'`), 0 chargement de polices externes.
+    - Aucun git push automatique exécuté (règle absolue respectée).
+
 - **Amélioration Mobile : Renommage « Autres produits », Correction des Textes Tronqués & Fluidité Responsive (`BoutiqueDetailClient.tsx`, `SocialShopFeed.tsx`) (08 septembre 2026)** 📱✨🏷️ :
   * **🎯 1. Demandes & Diagnostic de la Capture d'Écran Mobile** :
     - *Demande 1 — « Changer vue sur les réseau en autres produits »* :
