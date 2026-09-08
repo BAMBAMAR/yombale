@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api'
 import { notFound, redirect } from 'next/navigation'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import BoutiqueDetailClient, { type Produit, type Annonce } from './BoutiqueDetailClient'
+import { type SocialPost, type SocialAccount } from './SocialShopFeed'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import ExternalImg from '@/components/ExternalImg'
 import BoutonPartager from '@/components/BoutonPartager'
@@ -85,6 +86,8 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
   let boutique: Boutique
   let annonces: Annonce[] = []
   let produits: Produit[] = []
+  let socialPosts: SocialPost[] = []
+  let socialAccounts: SocialAccount[] = []
 
   try {
     boutique = await apiFetch<Boutique>(`/boutiques/${id}`)
@@ -109,13 +112,19 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
     redirect(`/boutiques/${b.slug}`)
   }
 
-  // Fetch produits + annonces en parallèle — utiliser b.id (UUID) même si params.id est un slug
+  // Fetch produits + annonces + social posts en parallèle — utiliser b.id (UUID) même si params.id est un slug
   await Promise.all([
     apiFetch<{ produits: Produit[] }>(`/boutiques/${b.id}/produits`)
       .then(d => { produits = d.produits ?? [] })
       .catch(() => {}),
     apiFetch<{ annonces: Annonce[] }>(`/annonces?utilisateur_id=${b.utilisateur_id}&limit=24`)
       .then(d => { annonces = d.annonces ?? [] })
+      .catch(() => {}),
+    apiFetch<{ posts: SocialPost[]; comptes_sociaux: SocialAccount[] }>(`/boutiques/${b.id}/social/posts`)
+      .then(d => {
+        socialPosts = d.posts ?? []
+        socialAccounts = d.comptes_sociaux ?? []
+      })
       .catch(() => {}),
   ])
 
@@ -312,6 +321,8 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
           }}
           produits={produits}
           annonces={annonces}
+          initialSocialPosts={socialPosts}
+          initialSocialAccounts={socialAccounts}
         />
       </div>
     </div>

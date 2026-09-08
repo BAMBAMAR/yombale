@@ -7,7 +7,7 @@ import { fcfa, lienBoutiqueWhatsapp } from '@/lib/format'
 import CommanderModal from './CommanderModal'
 import AvisClients from '@/components/AvisClients'
 import CrossSelling from '@/components/CrossSelling'
-import SocialShopFeed from './SocialShopFeed'
+import SocialShopFeed, { type SocialPost, type SocialAccount } from './SocialShopFeed'
 import { useCart } from '@/context/CartContext'
 import CardActions from '@/app/CardActions'
 import { 
@@ -309,6 +309,8 @@ export default function BoutiqueDetailClient({
   boutique,
   produits,
   annonces,
+  initialSocialPosts = [],
+  initialSocialAccounts = [],
 }: {
   boutique: {
     id: string
@@ -328,6 +330,8 @@ export default function BoutiqueDetailClient({
   }
   produits: Produit[]
   annonces: Annonce[]
+  initialSocialPosts?: SocialPost[]
+  initialSocialAccounts?: SocialAccount[]
 }) {
   const [tab, setTab] = useState<'produits' | 'social' | 'annonces' | 'infos'>('produits')
   const [commanderProduit, setCommanderProduit] = useState<Produit | null>(null)
@@ -346,10 +350,38 @@ export default function BoutiqueDetailClient({
   const [isSticky, setIsSticky] = useState(false)
   const [isCreditMode, setIsCreditMode] = useState(false)
 
-  const { openCart, getCartItemCount, getCartTotal, addToCart } = useCart()
+  const { carts, openCart, getCartItemCount, getCartTotal, addToCart, clearCart } = useCart()
   const boutiqueKey = boutique.slug || boutique.id
-  const cartCount = getCartItemCount(boutiqueKey)
-  const cartTotal = getCartTotal(boutiqueKey)
+  const cartCount = getCartItemCount(boutiqueKey, boutique.id)
+  const cartTotal = getCartTotal(boutiqueKey, boutique.id)
+
+  // 🔄 Réconciliation automatique Panier : si des articles ont été ajoutés sous l'UUID, les basculer sous le Slug
+  useEffect(() => {
+    if (!boutique.slug || !boutique.id || boutique.slug === boutique.id) return
+    const uuidCart = carts[boutique.id]
+    if (uuidCart && uuidCart.items && uuidCart.items.length > 0) {
+      uuidCart.items.forEach(it => {
+        for (let i = 0; i < it.quantite; i++) {
+          addToCart(
+            boutique.slug!,
+            uuidCart.boutiqueNom || boutique.nom,
+            {
+              id: it.produitId || it.id,
+              nom: it.nom,
+              prix: it.prix,
+              images: it.images,
+              varianteId: it.varianteId,
+              detailsVariante: it.detailsVariante,
+              uniteVente: it.uniteVente,
+            },
+            uuidCart.whatsapp || boutique.whatsapp,
+            false
+          )
+        }
+      })
+      clearCart(boutique.id)
+    }
+  }, [boutique.slug, boutique.id, carts, addToCart, clearCart, boutique.nom, boutique.whatsapp])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -465,7 +497,7 @@ export default function BoutiqueDetailClient({
               </a>
             )}
             <button
-              onClick={() => openCart(boutiqueKey)}
+              onClick={() => openCart(boutiqueKey, boutique.id)}
               style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
             >
               <ShoppingCart size={15} />
@@ -495,7 +527,7 @@ export default function BoutiqueDetailClient({
             </div>
           </div>
           <button
-            onClick={() => openCart(boutiqueKey)}
+            onClick={() => openCart(boutiqueKey, boutique.id)}
             style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
           >
             <ShoppingCart size={16} /> Ouvrir mon Panier
@@ -548,6 +580,15 @@ export default function BoutiqueDetailClient({
         >
           <span style={{ fontSize: 14 }}>🎬</span>
           <span>Vu sur nos réseaux</span>
+          {initialSocialPosts.length > 0 && (
+            <span style={{
+              background: tab === 'social' ? '#fff7f0' : '#e2e8f0',
+              color: tab === 'social' ? '#C75B00' : '#475569',
+              padding: '1px 6px', borderRadius: 10, fontSize: 11, fontWeight: 800,
+            }}>
+              {initialSocialPosts.length}
+            </span>
+          )}
         </button>
 
         {annonces.length > 0 && (
@@ -803,10 +844,12 @@ export default function BoutiqueDetailClient({
       {/* 🎬 ONGLET SOCIAL SHOP / VU SUR NOS RÉSEAUX */}
       {tab === 'social' && (
         <SocialShopFeed
-          boutiqueId={boutique.id}
+          boutiqueId={boutiqueKey}
           boutiqueNom={boutique.nom}
           boutiqueSlug={boutique.slug}
           whatsappNumber={boutique.whatsapp}
+          initialPosts={initialSocialPosts}
+          socialAccounts={initialSocialAccounts}
           activePostId={activePostParam}
         />
       )}

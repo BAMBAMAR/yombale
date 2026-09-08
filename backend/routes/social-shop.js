@@ -52,8 +52,8 @@ async function verifierAccesBoutique(boutiqueId, userId) {
 router.get(['/:id/social/posts', '/boutiques/:id/social/posts', '/:id/posts'], limiterGeneral, async (req, res) => {
   try {
     const boutique = await resolveBoutiqueId(req.params.id);
-    if (!boutique || boutique.actif === false) {
-      return res.status(404).json({ error: 'Boutique introuvable ou inactive' });
+    if (!boutique) {
+      return res.status(404).json({ error: 'Boutique introuvable' });
     }
 
     const { plateforme, featured, limit = 40 } = req.query;
@@ -618,10 +618,11 @@ router.post(['/:id/social/admin/accounts', '/boutiques/:id/social/admin/accounts
       return res.status(400).json({ error: 'Plateforme invalide' });
     }
 
-    // Normalisation de l'URL du profil si manquant
+    // Normalisation du nom de compte et de l'URL du profil si manquant
+    const cleanHandle = cleanUsername(nom_compte);
+    const displayAccountName = cleanHandle ? `@${cleanHandle}` : nom_compte.trim();
     let finalProfilUrl = profil_url || null;
-    const cleanHandle = nom_compte.replace(/^@/, '').trim();
-    if (!finalProfilUrl) {
+    if (!finalProfilUrl && cleanHandle) {
       if (plat === 'instagram') finalProfilUrl = `https://instagram.com/${cleanHandle}`;
       else if (plat === 'tiktok') finalProfilUrl = `https://tiktok.com/@${cleanHandle}`;
       else if (plat === 'facebook') finalProfilUrl = `https://facebook.com/${cleanHandle}`;
@@ -636,7 +637,7 @@ router.post(['/:id/social/admin/accounts', '/boutiques/:id/social/admin/accounts
          statut = 'actif',
          updated_at = NOW()
        RETURNING *`,
-      [boutique.id, plat, nom_compte.trim(), finalProfilUrl]
+      [boutique.id, plat, displayAccountName, finalProfilUrl]
     );
 
     // Mettre à jour en miroir la table `boutiques` pour la rétro-compatibilité

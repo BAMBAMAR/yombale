@@ -71,14 +71,22 @@ const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" hei
 </svg>`;
 
 // ── Helpers pour exclure les URLs externes du routing SW ─────────────────
-function isExternalTracker(url: URL): boolean {
+function isExternalTrackerOrSocialMedia(url: URL): boolean {
+  const h = url.hostname.toLowerCase();
   return (
-    url.hostname.includes('google') ||
-    url.hostname.includes('googletagmanager') ||
-    url.hostname.includes('google-analytics') ||
-    url.hostname.includes('doubleclick') ||
-    url.hostname.includes('facebook') ||
-    url.hostname.includes('analytics')
+    h.includes('google') ||
+    h.includes('googletagmanager') ||
+    h.includes('google-analytics') ||
+    h.includes('doubleclick') ||
+    h.includes('facebook') ||
+    h.includes('analytics') ||
+    h.includes('instagram.com') ||
+    h.includes('cdninstagram.com') ||
+    h.includes('fbcdn.net') ||
+    h.includes('tiktok.com') ||
+    h.includes('tiktokcdn.com') ||
+    h.includes('youtube.com') ||
+    h.includes('ytimg.com')
   );
 }
 
@@ -88,9 +96,9 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: false,
   runtimeCaching: [
-    // 0. Exclure les URLs externes d'analytics/trackers
+    // 0. Exclure les URLs externes d'analytics/trackers et médias sociaux
     {
-      matcher: ({ url }) => isExternalTracker(url),
+      matcher: ({ url }) => isExternalTrackerOrSocialMedia(url),
       handler: new NetworkOnly(),
     },
     // 1. Endpoints sensibles, authentification, paiement, admin, boutiques — NetworkOnly STRICT (jamais mis en cache)
@@ -300,6 +308,10 @@ serwist.setCatchHandler(async ({ request }: any) => {
     request.destination === "image" ||
     (url && url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif)$/i) !== null)
   ) {
+    // Si c'est un média social ou tracker externe, laisser l'élément <img> gérer l'erreur nativement sans masquer avec un SVG "Image Hors-Ligne"
+    if (url && isExternalTrackerOrSocialMedia(url)) {
+      return new Response(null, { status: 404 });
+    }
     const cachedAsset = await caches.match(request, { ignoreSearch: true });
     if (cachedAsset) return cachedAsset;
     return new Response(PLACEHOLDER_SVG, {

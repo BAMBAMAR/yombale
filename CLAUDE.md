@@ -1,3 +1,56 @@
+- **Résolution : Synchronisation Compteur Panier & Réconciliation Clé Boutique (Slug vs UUID) (`CartContext.tsx`, `BoutiqueDetailClient.tsx`, `SocialShopFeed.tsx`) (08 septembre 2026)** 🛒⚡🔢✨ :
+  * **🎯 1. Diagnostic de l'Anomalie Rapportée (« Le panier n'est pas incrémenté »)** :
+    - *Symptôme constaté sur les captures d'écran de l'utilisateur* :
+      1. Dans la barre sticky / en-tête de la boutique Amar, le bouton *"Panier"* restait figé sans badge numérique après avoir cliqué sur `+ Panier` sur un article associé à une publication sociale.
+      2. En revanche, à l'ouverture du tiroir de commande (`DrawerCart`), les articles étaient bien présents et affichaient *"Panier en cours (3)"*.
+    - *Cause Racine Technique Identifiée* :
+      - Dans `BoutiqueDetailClient.tsx`, la clé de référence du panier est `boutiqueKey = boutique.slug || boutique.id` (soit `'amar'`). L'en-tête écoute donc `getCartItemCount('amar')`.
+      - Dans `SocialShopFeed.tsx`, la fonction `handleAddProductToCart` appelait `addToCart(boutiqueId, ...)` avec la prop `boutiqueId` qui recevait l'UUID brut (`'038e7522-3e0f-4fd6-b3aa-f87f0a5ef25c'`) au lieu de `boutiqueKey`.
+      - Les articles étaient donc stockés dans `carts['038e7522-3e0f-4fd6-b3aa-f87f0a5ef25c']` alors que l'en-tête de la page surveillait `carts['amar']` (vide), affichant 0 et masquant le badge.
+  * **🛠️ 2. Solutions & Correctifs Appliqués** :
+    - *Harmonisation de la Clé Panier (`SocialShopFeed.tsx`)* :
+      * `handleAddProductToCart` utilise désormais systématiquement `boutiqueKey` (`boutiqueSlug || boutiqueId`), aligné avec le reste de la vitrine et du catalogue produit.
+      * Ajustement de la condition de stock du bouton modal (`disabled={prod.en_stock === false}`).
+    - *Support Multi-Clés & Réconciliation Fluide (`CartContext.tsx`)* :
+      * Extension des méthodes `getCartItemCount`, `getCartTotal` et `openCart` pour accepter un `alternateId` optionnel. Si le panier est interrogé par son slug (`amar`), il vérifie également sous l'UUID (`038e7522...`) et vice-versa.
+    - *Migration Automatique des Paniers Orphelins (`BoutiqueDetailClient.tsx`)* :
+      * Ajout d'un `useEffect` de réconciliation automatique : si un utilisateur a déjà des articles stockés sous l'UUID en localStorage, ils sont immédiatement migrés sous le slug de la boutique sans aucune perte de quantité ni de configuration, et l'ancien panier orphelin est purgé.
+    - *Propagations Précises (`BoutiqueDetailClient.tsx`)* :
+      * `<SocialShopFeed>` reçoit explicitement `boutiqueId={boutiqueKey}`.
+      * Les boutons d'ouverture de panier dans la barre sticky et la bannière crédit passent à la fois le slug et l'UUID.
+  * **🧪 3. Validation & Tests** :
+    - Compilation TypeScript `npx tsc --noEmit` validée avec **0 erreur** (code 0).
+    - 27/27 tests unitaires `tests/unit/social-shop.test.js` passés à 100% de succès.
+    - Respect absolu de la règle : aucun git push sans instruction explicite de l'utilisateur.
+
+- **Résolution Complète : Déblocage Embeds CSP (`frame-src`), Éradication "Image Hors-Ligne" (SW) & Nettoyage Social Boutique Amar (`middleware.ts`, `sw.ts`, `SocialShopFeed.tsx`, `social-parser.js`, `public/sw.js`) (08 septembre 2026)** 🎬🛡️🖼️✨ :
+  * **🎯 1. Diagnostic Précis des 2 Anomalies Visuelles Rapportées** :
+    - *Anomalie 1 — Blocage Lecteur Vidéo (« Ce contenu est bloqué. Pour résoudre le problème, contactez le propriétaire du site. »)* :
+      Dans `frontend-next/src/middleware.ts`, les directives de Content-Security-Policy (CSP) ne contenaient aucune directive `frame-src`. En l'absence de `frame-src`, les navigateurs appliquent strictement `default-src 'self'`, bloquant immédiatement toute iframe externe provenant de `https://www.instagram.com/`.
+    - *Anomalie 2 — Miniature Remplacée par « Image Hors-Ligne »* :
+      Dans `frontend-next/src/app/sw.ts`, le Service Worker Serwist interceptait aveuglément toutes les requêtes d'images (`request.destination === "image"`), y compris les images distantes du CDN Instagram (`instagram.com`, `fbcdn.net`). Lors des redirections HTTP 301/302 d'Instagram, Serwist déclenchait son `setCatchHandler` et renvoyait un faux SVG 200 OK affichant l'icône cassée et le texte "Image Hors-Ligne", empêchant le mécanisme de fallback `wsrv.nl` d'`ExternalImg` de s'exécuter.
+    - *Anomalie 3 — Affichage Brut d'URLs comme Auteur & Nom de Compte* :
+      Lorsque le commerçant a collé `https://www.instagram.com/dieteltouba/` dans le champ profil, le système affichait l'URL complète non tronquée sur les cartes et le badge de la vitrine.
+  * **🛠️ 2. Solutions & Correctifs Appliqués** :
+    - *CSP Débloquée pour les Réseaux Sociaux (`middleware.ts`)* :
+      * Ajout de `frame-src 'self' https://www.instagram.com https://instagram.com https://www.tiktok.com https://www.facebook.com https://web.facebook.com https://www.youtube.com https://youtube.com`.
+      * Ajout des domaines d'embeds et scripts officiels dans `script-src` et `connect-src`.
+      * Éradication définitive du message "Ce contenu est bloqué" dans le modal d'achat.
+    - *Immunisation du Service Worker contre les Médias Sociaux (`sw.ts`, `public/sw.js`)* :
+      * Ajout de `isExternalTrackerOrSocialMedia` : exclusion stricte des requêtes `instagram.com`, `cdninstagram.com`, `fbcdn.net`, `tiktok.com`, `tiktokcdn.com`, `youtube.com` de toute mise en cache Serwist (`NetworkOnly()`).
+      * Suppression du faux SVG "Image Hors-Ligne" pour les médias sociaux dans `setCatchHandler`, permettant au navigateur et à `ExternalImg` d'activer le proxy HD transparent `wsrv.nl`.
+    - *Formatage Automatique des Pseudos (`SocialShopFeed.tsx`)* :
+      * Création du helper universel `formatHandle` : extraction automatique de `@dieteltouba` depuis n'importe quelle URL de profil brute.
+      * Rendu d'une carte de profil officielle colorée aux dégradés officiels de la plateforme lorsqu'aucun média direct n'est présent (remplacement du bloc noir vide).
+      * Ajout d'un bouton de secours direct "Ouvrir sur Instagram" au pied du lecteur vidéo dans le modal.
+    - *Normalisation en Base de Données (Boutique AMAR)* :
+      * Profil Instagram synchronisé : `@dieteltouba` avec profil officiel `https://instagram.com/dieteltouba`.
+      * Les 2 Reels Instagram (`DcOaFSQkeeN`, `DcbkNBbsve1`) utilisent désormais `www.instagram.com/reel/[id]/embed/` et les miniatures optimisées.
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - 27/27 tests unitaires `tests/unit/social-shop.test.js` passés avec 100% de succès.
+    - Compilation TypeScript `npx tsc --noEmit` validée sans aucune erreur (code 0).
+    - Zéro appel de police CDN externe conformément à `AGENTS.md`. Aucun git push sans demande explicite.
+
 - **Implémentation Majeure : Social Shop Nopalou (Social Commerce) & Centre d'Intégrations Admin (`backend/routes/social-shop.js`, `backend/services/social-parser.js`, `backend/routes/admin-integrations.js`, `frontend-next/src/app/boutiques/[id]/SocialShopFeed.tsx`, `frontend-next/src/app/boutique/SocialShopManager.tsx`, `frontend-next/src/app/admin/(protected)/integrations/`, `tests/unit/social-shop.test.js`) (08 septembre 2026)** 🎬🛍️📱✨ :
   * **🎯 1. Contexte & Objectif Produit** :
     - Remplacement de l'ancien modèle Niveau 1 (simples liens externes Facebook/Instagram qui faisaient quitter la boutique Nopalou) par une véritable couche de **Social Commerce**.

@@ -85,11 +85,12 @@ export async function middleware(req: NextRequest) {
 
   const cspDirectives = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://www.instagram.com https://instagram.com https://*.cdninstagram.com https://www.tiktok.com https://connect.facebook.net`,
     `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' blob: data: https:",
     "font-src 'self' data:",
-    `connect-src 'self' blob: data: https: wss: ${process.env.BACKEND_URL ?? ''} ${process.env.NEXT_PUBLIC_BACKEND_URL ?? ''}`,
+    `connect-src 'self' blob: data: https: wss: https://www.instagram.com https://*.instagram.com https://*.fbcdn.net https://www.tiktok.com ${process.env.BACKEND_URL ?? ''} ${process.env.NEXT_PUBLIC_BACKEND_URL ?? ''}`,
+    `frame-src 'self' https://www.instagram.com https://instagram.com https://www.tiktok.com https://www.facebook.com https://web.facebook.com https://www.youtube.com https://youtube.com`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

@@ -25,7 +25,7 @@ interface CartContextType {
   activeBoutiqueId: string | null
   isCartOpen: boolean
   totalItemCount: number
-  openCart: (boutiqueId?: string) => void
+  openCart: (boutiqueId?: string, alternateId?: string) => void
   closeCart: () => void
   addToCart: (
     boutiqueId: string,
@@ -47,8 +47,8 @@ interface CartContextType {
   clearCart: (boutiqueId: string) => void
   clearAllCarts: () => void
   setActiveBoutiqueId: (boutiqueId: string) => void
-  getCartTotal: (boutiqueId: string) => number
-  getCartItemCount: (boutiqueId: string) => number
+  getCartTotal: (boutiqueId: string, alternateId?: string) => number
+  getCartItemCount: (boutiqueId: string, alternateId?: string) => number
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -102,15 +102,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [carts, activeBoutiqueId])
 
-  function openCart(boutiqueId?: string) {
-    if (boutiqueId && carts[boutiqueId]?.items?.length > 0) {
-      setActiveBoutiqueId(boutiqueId)
+  function openCart(boutiqueId?: string, alternateId?: string) {
+    const targetKey = (boutiqueId && carts[boutiqueId]?.items?.length > 0)
+      ? boutiqueId
+      : ((alternateId && carts[alternateId]?.items?.length > 0) ? alternateId : null)
+
+    if (targetKey) {
+      setActiveBoutiqueId(targetKey)
     } else if (activeBoutiqueId && (carts[activeBoutiqueId]?.items || []).length > 0) {
       // On garde la boutique active si elle a des articles
     } else {
       // Trouver la première boutique qui contient des articles
       const boutiqueWithItems = Object.keys(carts).find(id => (carts[id]?.items || []).length > 0)
-      setActiveBoutiqueId(boutiqueWithItems || (boutiqueId ?? Object.keys(carts)[0] ?? null))
+      setActiveBoutiqueId(boutiqueWithItems || (targetKey ?? boutiqueId ?? Object.keys(carts)[0] ?? null))
     }
     setIsCartOpen(true)
   }
@@ -233,14 +237,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }
 
-  function getCartTotal(boutiqueId: string): number {
-    const cart = carts[boutiqueId]
+  function getCartTotal(boutiqueId: string, alternateId?: string): number {
+    const cart = carts[boutiqueId] || (alternateId ? carts[alternateId] : undefined)
     if (!cart) return 0
     return cart.items.reduce((acc, item) => acc + (item.prix * item.quantite), 0)
   }
 
-  function getCartItemCount(boutiqueId: string): number {
-    const cart = carts[boutiqueId]
+  function getCartItemCount(boutiqueId: string, alternateId?: string): number {
+    const cart = carts[boutiqueId] || (alternateId ? carts[alternateId] : undefined)
     if (!cart) return 0
     return cart.items.reduce((acc, item) => acc + item.quantite, 0)
   }

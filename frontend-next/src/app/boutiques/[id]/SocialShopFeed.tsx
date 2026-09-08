@@ -88,6 +88,20 @@ const PLATFORM_CONFIG = {
   },
 }
 
+function formatHandle(raw?: string | null): string {
+  if (!raw) return ''
+  let u = raw.trim()
+  try {
+    if (u.startsWith('http://') || u.startsWith('https://')) {
+      const parsed = new URL(u)
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      u = parts[0] || ''
+    }
+  } catch (_) {}
+  const cleaned = u.replace(/^@+/, '').replace(/\/+$/, '').trim()
+  return cleaned ? `@${cleaned}` : raw
+}
+
 export default function SocialShopFeed({
   boutiqueId,
   boutiqueNom,
@@ -113,7 +127,7 @@ export default function SocialShopFeed({
 
     async function loadSocialFeed() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || ''
         const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/posts`)
         if (!res.ok) return
         const data = await res.json()
@@ -161,7 +175,7 @@ export default function SocialShopFeed({
   function handleAddProductToCart(produit: SocialProduct, e?: React.MouseEvent) {
     if (e) e.stopPropagation()
     addToCart(
-      boutiqueId,
+      boutiqueKey,
       boutiqueNom,
       {
         id: produit.id,
@@ -249,7 +263,7 @@ export default function SocialShopFeed({
                     }}
                   >
                     <span>{conf.icon}</span>
-                    <span>{acc.nom_compte}</span>
+                    <span>{formatHandle(acc.nom_compte)}</span>
                     <ExternalLink size={12} style={{ opacity: 0.6 }} />
                   </a>
                 )
@@ -431,10 +445,44 @@ export default function SocialShopFeed({
                       alt={post.caption || 'Publication sociale'}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       loading="lazy"
+                      fallback={
+                        <div style={{
+                          width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', justifyContent: 'center',
+                          background: post.plateforme === 'instagram'
+                            ? 'linear-gradient(135deg, #405DE6 0%, #833AB4 50%, #E1306C 100%)'
+                            : 'linear-gradient(135deg, #1e293b, #0f172a)',
+                          color: '#ffffff', padding: 16, textAlign: 'center',
+                        }}>
+                          <span style={{ fontSize: 32, marginBottom: 6 }}>{conf.icon}</span>
+                          <span style={{ fontSize: 12, fontWeight: 800 }}>{formatHandle(post.auteur) || conf.label}</span>
+                        </div>
+                      }
                     />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1e293b, #0f172a)', color: '#94a3b8' }}>
-                      <Play size={40} style={{ opacity: 0.6 }} />
+                    <div style={{
+                      width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      background: post.plateforme === 'instagram'
+                        ? 'linear-gradient(135deg, #405DE6 0%, #5851DB 25%, #833AB4 50%, #C13584 75%, #E1306C 100%)'
+                        : post.plateforme === 'tiktok'
+                        ? 'linear-gradient(135deg, #000000 0%, #161823 100%)'
+                        : 'linear-gradient(135deg, #1877F2 0%, #0c4a9e 100%)',
+                      color: '#ffffff', padding: 20, textAlign: 'center',
+                    }}>
+                      <div style={{
+                        width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
+                        backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 24, marginBottom: 10, border: '1.5px solid rgba(255,255,255,0.35)',
+                      }}>
+                        {conf.icon}
+                      </div>
+                      <p style={{ margin: 0, fontWeight: 900, fontSize: 13, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                        {formatHandle(post.auteur) || `@${boutiqueNom}`}
+                      </p>
+                      <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.85)', marginTop: 4, fontWeight: 700 }}>
+                        Profil officiel connecté
+                      </span>
                     </div>
                   )}
 
@@ -511,7 +559,7 @@ export default function SocialShopFeed({
                   <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
                     {post.auteur && (
                       <p style={{ margin: '0 0 2px', fontSize: 11.5, fontWeight: 800, color: '#f8fafc' }}>
-                        {post.auteur}
+                        {formatHandle(post.auteur)}
                       </p>
                     )}
                     {post.caption && (
@@ -668,10 +716,31 @@ export default function SocialShopFeed({
               overflowY: 'auto',
             }}>
               {selectedPost.embed_html ? (
-                <div
-                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8 }}
-                  dangerouslySetInnerHTML={{ __html: selectedPost.embed_html }}
-                />
+                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 8 }}>
+                  <div
+                    style={{ width: '100%', height: '100%', minHeight: 460, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    dangerouslySetInnerHTML={{ __html: selectedPost.embed_html }}
+                  />
+                  <div style={{ padding: '8px 12px', textAlign: 'center' }}>
+                    <a
+                      href={selectedPost.post_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        color: '#94a3b8',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <span>Ouvrir sur {selectedPost.plateforme === 'instagram' ? 'Instagram' : selectedPost.plateforme}</span>
+                      <ExternalLink size={12} />
+                    </a>
+                  </div>
+                </div>
               ) : selectedPost.thumbnail_url ? (
                 <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 400 }}>
                   <ExternalImg
@@ -706,11 +775,66 @@ export default function SocialShopFeed({
                   </a>
                 </div>
               ) : (
-                <div style={{ padding: 30, textAlign: 'center', color: '#94a3b8' }}>
-                  <Play size={48} style={{ opacity: 0.5, marginBottom: 12 }} />
-                  <p style={{ margin: 0, fontSize: 14 }}>Contenu interactif disponible</p>
-                  <a href={selectedPost.post_url} target="_blank" rel="noopener noreferrer" style={{ color: '#fed7aa', fontWeight: 700, fontSize: 13, marginTop: 8, display: 'inline-block' }}>
-                    Voir la publication originale →
+                <div style={{
+                  padding: 36,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  color: '#fff',
+                  width: '100%',
+                  height: '100%',
+                  minHeight: 380,
+                  background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
+                }}>
+                  <div style={{
+                    width: 68,
+                    height: 68,
+                    borderRadius: '50%',
+                    background: selectedPost.plateforme === 'instagram'
+                      ? 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)'
+                      : selectedPost.plateforme === 'tiktok'
+                      ? '#000000'
+                      : '#1877f2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 28,
+                    marginBottom: 16,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                    border: '2px solid rgba(255,255,255,0.2)',
+                  }}>
+                    {selectedPost.plateforme === 'instagram' ? '📸' : selectedPost.plateforme === 'tiktok' ? '🎵' : '📘'}
+                  </div>
+                  <h4 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 900, color: '#ffffff' }}>
+                    {selectedPost.auteur || `@${boutiqueNom}`}
+                  </h4>
+                  <p style={{ margin: '0 0 20px', fontSize: 12.5, color: '#94a3b8', maxWidth: 280, lineHeight: 1.4 }}>
+                    {selectedPost.caption || `Découvrez nos publications officielles sur ${selectedPost.plateforme.toUpperCase()}.`}
+                  </p>
+                  <a
+                    href={selectedPost.post_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: selectedPost.plateforme === 'instagram'
+                        ? 'linear-gradient(45deg, #f09433, #dc2743, #bc1888)'
+                        : '#2563eb',
+                      color: '#ffffff',
+                      padding: '10px 20px',
+                      borderRadius: 24,
+                      fontWeight: 800,
+                      fontSize: 13,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <span>Voir sur {selectedPost.plateforme}</span>
+                    <ExternalLink size={14} />
                   </a>
                 </div>
               )}
@@ -829,7 +953,7 @@ export default function SocialShopFeed({
                           <button
                             type="button"
                             onClick={() => handleAddProductToCart(prod)}
-                            disabled={!prod.en_stock}
+                            disabled={prod.en_stock === false}
                             style={{
                               background: addedProductId === prod.id ? '#16a34a' : '#0f172a',
                               color: '#fff',
@@ -838,7 +962,7 @@ export default function SocialShopFeed({
                               padding: '6px 12px',
                               fontSize: 11.5,
                               fontWeight: 800,
-                              cursor: prod.en_stock ? 'pointer' : 'not-allowed',
+                              cursor: prod.en_stock === false ? 'not-allowed' : 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               gap: 6,
@@ -913,7 +1037,7 @@ export default function SocialShopFeed({
                 <button
                   type="button"
                   onClick={() => {
-                    openCart(boutiqueKey)
+                    openCart(boutiqueKey, boutiqueId)
                     setSelectedPost(null)
                   }}
                   style={{
