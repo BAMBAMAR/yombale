@@ -305,6 +305,34 @@ function parseBatchUrls(rawInput) {
   return validPosts;
 }
 
+let cachedMetaToken = null;
+let lastMetaTokenFetch = 0;
+
+/**
+ * Récupère le token Meta actif (priorité à la table settings en DB, sinon process.env)
+ */
+async function getLiveMetaToken() {
+  if (process.env.NODE_ENV === 'test') {
+    return process.env.FB_PAGE_ACCESS_TOKEN || null;
+  }
+  const now = Date.now();
+  if (cachedMetaToken && now - lastMetaTokenFetch < 60000) {
+    return cachedMetaToken;
+  }
+  try {
+    const { pool } = require('../models/db');
+    if (pool) {
+      const { rows } = await pool.query(`SELECT value FROM settings WHERE key='fb_page_access_token'`);
+      if (rows.length && rows[0].value) {
+        cachedMetaToken = rows[0].value;
+        lastMetaTokenFetch = now;
+        return cachedMetaToken;
+      }
+    }
+  } catch (_) {}
+  return process.env.FB_PAGE_ACCESS_TOKEN || null;
+}
+
 /**
  * Explore un profil social public (@username) pour récupérer ses publications récentes
  */
@@ -318,9 +346,9 @@ async function exploreProfile(platform, rawUser) {
 
   try {
     if (platform === 'instagram') {
-      // 1. Si Graph API est disponible dans l'environnement
+      // 1. Si Graph API est disponible dans l'environnement ou en base
       const igUserId = process.env.IG_USER_ID;
-      const fbToken = process.env.FB_PAGE_ACCESS_TOKEN;
+      const fbToken = await getLiveMetaToken();
 
       if (igUserId && fbToken) {
         try {
@@ -347,7 +375,6 @@ async function exploreProfile(platform, rawUser) {
       }
 
       // 2. Exploration Web / Embeds fallback
-      // Pour les profils publics, on tente de récupérer les identifiants récents ou on propose les formats standards
       posts.push({
         externalPostId: `ig_${username}_latest_1`,
         url: `https://www.instagram.com/${username}/`,
@@ -366,7 +393,6 @@ async function exploreProfile(platform, rawUser) {
       // Pour TikTok : exploration du profil public ou oEmbed
       const profileUrl = `https://www.tiktok.com/@${username}`;
       
-      // On teste d'abord si oEmbed résout la page de profil
       const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
       const data = await httpGetJson(oembedUrl, 6000);
 
@@ -387,6 +413,36 @@ async function exploreProfile(platform, rawUser) {
     }
 
     if (platform === 'facebook') {
+      // 1. Si Graph API est disponible avec la page Meta connectée
+      const fbToken = await getLiveMetaToken();
+      const pageId = process.env.FB_PAGE_ID || '1190520027476281';
+
+      if (fbToken && pageId) {
+        try {
+          const graphUrl = `https://graph.facebook.com/v19.0/${pageId}/posts?fields=id,message,created_time,permalink_url,full_picture,attachments{media,type,url}&limit=15&access_token=${encodeURIComponent(fbToken)}`;
+          const graphData = await httpGetJson(graphUrl, 8000);
+          if (graphData && Array.isArray(graphData.data) && graphData.data.length > 0) {
+            for (const item of graphData.data) {
+              const isVideo = item.attachments?.data?.[0]?.type === 'video_inline' || (item.permalink_url && item.permalink_url.includes('/reel/'));
+              posts.push({
+                externalPostId: item.id,
+                url: item.permalink_url || `https://www.facebook.com/${item.id}`,
+                platform: 'facebook',
+                mediaType: isVideo ? 'REEL' : 'POST',
+                thumbnailUrl: item.full_picture || item.attachments?.data?.[0]?.media?.image?.src || null,
+                caption: item.message || '',
+                author: username,
+                publishedAt: item.created_time || new Date().toISOString(),
+              });
+            }
+            return { success: true, platform: 'facebook', username, posts, source: 'meta_graph_api' };
+          }
+        } catch (fbGraphErr) {
+          console.warn('[EXPLORE_FB_GRAPH_WARN]', fbGraphErr.message);
+        }
+      }
+
+      // 2. Fallback profil/page
       const pageUrl = `https://www.facebook.com/${username}`;
       posts.push({
         externalPostId: `fb_${username}_page`,

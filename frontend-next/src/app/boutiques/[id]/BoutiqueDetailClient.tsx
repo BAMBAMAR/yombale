@@ -847,7 +847,7 @@ export default function BoutiqueDetailClient({
           boutiqueId={boutiqueKey}
           boutiqueNom={boutique.nom}
           boutiqueSlug={boutique.slug}
-          whatsappNumber={boutique.whatsapp}
+          whatsappNumber={boutique.whatsapp || boutique.telephone}
           initialPosts={initialSocialPosts}
           socialAccounts={initialSocialAccounts}
           activePostId={activePostParam}

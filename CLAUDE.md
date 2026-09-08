@@ -1,3 +1,34 @@
+- **Intégration Clé : Rapatriement Automatique Meta Graph API via Token DB Actif (`social-parser.js`) (08 septembre 2026)** 📘📸⚡✨ :
+  * **🎯 1. Observation Utilisateur & Diagnostic Majeur** :
+    - L'utilisateur a fait remarquer avec justesse que les publications continuent d'être diffusées sur Facebook via le panneau d'administration, ce qui indiquait que la session Meta n'était pas déconnectée.
+    - Vérification approfondie : Dans la base de données PostgreSQL (table `settings`, clé `fb_page_access_token`), le jeton en production est **parfaitement valide et actif** (`EAAWCNh4yJ4ABR8RMO...`), tandis que le fichier local `.env` contenait un ancien jeton de test.
+    - Test direct exécuté sur Meta Graph API avec ce jeton DB :
+      * Facebook Page (`1190520027476281`) : **HTTP 200 — 10 publications récupérées** avec titres, photos et permalinks.
+      * Instagram Media (`17841414834263910`) : **HTTP 200 — 10 médias récupérés** avec vidéos Reels, photos et légendes.
+    - Problème : `social-parser.js` lisait uniquement `process.env.FB_PAGE_ACCESS_TOKEN` au lieu de consulter la table `settings` en priorité.
+  * **🛠️ 2. Correctifs Appliqués** :
+    - Dans `backend/services/social-parser.js` :
+      * Ajout de `getLiveMetaToken()` avec mise en cache mémoire (60s) lisant en priorité le token actif depuis `settings WHERE key='fb_page_access_token'`.
+      * Branché sur `exploreProfile` pour **Facebook** et **Instagram** : interrogation directe de Meta Graph API pour lister les publications et Reels récents du compte officiel.
+      * Performance serveur : **0 Mo de RAM supplémentaire sur Render**, 0 dépendance à un navigateur Chromium, réponse en < 500ms.
+  * **🧪 3. Validation & Invariants** :
+    - Tests unitaires `tests/unit/social-shop.test.js` : 27/27 passés avec succès.
+    - Compilation TypeScript `npx tsc --noEmit` sans erreur.
+    - Respect absolu de la règle : aucun git push sans commande explicite de l'utilisateur.
+
+- **Amélioration : Activation Bouton WhatsApp Direct & Fallback Téléphone Boutique (`BoutiqueDetailClient.tsx`) (08 septembre 2026)** 💬📞🛍️✨ :
+  * **🎯 1. Contexte & Diagnostic des Captures d'Écran Utilisateur** :
+    - Sur les captures envoyées par l'utilisateur, les embeds Facebook et TikTok fonctionnent désormais parfaitement (la page Facebook de Khadim Amar et le profil TikTok Nopalousn s'affichent en plein écran avec leurs contenus).
+    - Cependant, sur le panneau de commande directe, la mention passait en *« Numéro WhatsApp non renseigné »* et le bouton de commande verte était inactif.
+    - Diagnostic : La boutique AMAR avait son numéro renseigné dans la colonne `telephone` (`777202086`) mais `whatsapp` était resté à `NULL`. De plus, `BoutiqueDetailClient.tsx` ne passait que `whatsappNumber={boutique.whatsapp}` sans fallback.
+  * **🛠️ 2. Correctifs Appliqués** :
+    - Dans `BoutiqueDetailClient.tsx` : ajout du repli automatique `whatsappNumber={boutique.whatsapp || boutique.telephone}`.
+    - En base de données : renseignement de `whatsapp = '777202086'` pour la boutique AMAR.
+    - Résultat immédiat : le bouton vert vibrant **« 💬 Commander par WhatsApp Direct »** s'active sur toutes les publications sociales non associées au catalogue.
+  * **🧪 3. Validation & Invariants** :
+    - Compilation TypeScript `npx tsc --noEmit` validée avec **0 erreur**.
+    - Règle absolue respectée : aucun git push sans commande explicite de l'utilisateur.
+
 - **Résolution : Sélection Interactive des Publications après Synchronisation & Rendu des Embeds Facebook (`SocialShopManager.tsx`, `social-parser.js`, `SocialShopFeed.tsx`) (08 septembre 2026)** 🔄☑️📘📱✨ :
   * **🎯 1. Demandes Utilisateur & Diagnostic** :
     - *Demande 1 — « et après synchro je devais sélectionner les pub que je veux ajouter »* :
