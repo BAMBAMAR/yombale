@@ -26,10 +26,10 @@ export default function GlobalError({
           sessionStorage.setItem(reloadKey, now.toString())
           if ('caches' in window) {
             caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).finally(() => {
-              window.location.reload()
+              (window as any).location.reload()
             })
           } else {
-            window.location.reload()
+            (window as any).location.reload()
           }
         }
       }

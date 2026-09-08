@@ -39,9 +39,12 @@ interface DashboardStats {
   }
   commandes: {
     total: number
+    actives?: number
     volume: number
+    volume_annule?: number
     en_attente: number
     livrees: number
+    annulees?: number
   }
   catalogue: {
     produits_scrapes: number
@@ -379,12 +382,17 @@ export default function AdminDashboardClient({
         </div>
 
         <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Volume Commandes Web</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Volume Commandes Web (Net)</span>
           <div style={{ fontSize: 26, fontWeight: 800, color: '#475569', margin: '6px 0 2px' }}>
             {fcfa(commandes?.volume || 0)}
           </div>
           <span style={{ fontSize: 12, color: '#475569' }}>
-            {commandes?.total || 0} commande(s) passée(s)
+            {commandes?.actives ?? (commandes?.total || 0)} active(s) · {commandes?.livrees || 0} livrée(s)
+            {Number(commandes?.volume_annule || 0) > 0 && (
+              <span style={{ color: '#94a3b8', display: 'block', fontSize: 11, marginTop: 2 }}>
+                (Exclut {fcfa(commandes?.volume_annule || 0)} de commandes annulées)
+              </span>
+            )}
           </span>
         </div>
       </div>

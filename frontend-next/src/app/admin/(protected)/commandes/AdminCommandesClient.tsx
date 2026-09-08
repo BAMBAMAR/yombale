@@ -13,6 +13,7 @@ interface Commande {
   boutique_id: string
   boutique_nom?: string
   boutique_slug?: string
+  boutique_tel?: string
   nom_produit: string
   quantite: number
   prix_unitaire: number

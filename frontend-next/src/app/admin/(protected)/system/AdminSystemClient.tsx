@@ -216,7 +216,7 @@ export default function AdminSystemClient({
         </div>
 
         <button
-          onClick={refreshHealth}
+          onClick={() => refreshHealth()}
           disabled={loading}
           style={{
             display: 'inline-flex',

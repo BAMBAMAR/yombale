@@ -30,7 +30,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COALESCE(SUM(montant_total), 0) AS ca_total_ventes,
           COUNT(*) AS nb_ventes_total
         FROM ventes
-        WHERE archivee IS NOT TRUE AND ${dateFilterSql}
+        WHERE archivee IS NOT TRUE AND montant_total > 0 AND ${dateFilterSql}
       `).catch(() => ({ rows: [{ ca_total_ventes: 0, nb_ventes_total: 0 }] })),
       pool.query(`
         SELECT
@@ -78,12 +78,15 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       pool.query(`
         SELECT
           COUNT(*) AS total_commandes,
-          COALESCE(SUM(montant_total), 0) AS volume_commandes,
+          COUNT(*) FILTER (WHERE statut != 'annulee') AS commandes_actives,
+          COALESCE(SUM(montant_total) FILTER (WHERE statut != 'annulee'), 0) AS volume_commandes,
+          COALESCE(SUM(montant_total) FILTER (WHERE statut = 'annulee'), 0) AS volume_annule,
           COUNT(*) FILTER (WHERE statut = 'en_attente') AS commandes_en_attente,
-          COUNT(*) FILTER (WHERE statut = 'livree') AS commandes_livrees
+          COUNT(*) FILTER (WHERE statut = 'livree') AS commandes_livrees,
+          COUNT(*) FILTER (WHERE statut = 'annulee') AS commandes_annulees
         FROM commandes_boutique
         WHERE ${dateFilterSql}
-      `).catch(() => ({ rows: [{ total_commandes: 0, volume_commandes: 0, commandes_en_attente: 0, commandes_livrees: 0 }] })),
+      `).catch(() => ({ rows: [{ total_commandes: 0, commandes_actives: 0, volume_commandes: 0, volume_annule: 0, commandes_en_attente: 0, commandes_livrees: 0, commandes_annulees: 0 }] })),
       pool.query(`
         SELECT
           (SELECT COUNT(*)::int FROM produits) AS produits_scrapes,
@@ -177,9 +180,12 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       },
       commandes: {
         total: parseInt(commandesRes.rows[0]?.total_commandes || 0),
+        actives: parseInt(commandesRes.rows[0]?.commandes_actives || 0),
         volume: Number(commandesRes.rows[0]?.volume_commandes || 0),
+        volume_annule: Number(commandesRes.rows[0]?.volume_annule || 0),
         en_attente: parseInt(commandesRes.rows[0]?.commandes_en_attente || 0),
         livrees: parseInt(commandesRes.rows[0]?.commandes_livrees || 0),
+        annulees: parseInt(commandesRes.rows[0]?.commandes_annulees || 0),
       },
       catalogue: {
         produits_scrapes: parseInt(produitsRes.rows[0]?.produits_scrapes || 0),

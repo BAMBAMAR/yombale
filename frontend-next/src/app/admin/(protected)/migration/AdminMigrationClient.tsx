@@ -258,8 +258,8 @@ export default function AdminMigrationClient({
           clients.push({
             nom: parts[0],
             telephone: parts[1] || '',
-            solde_dette: parseFloat(parts[2] || 0) || 0,
-            plafond_credit: parseFloat(parts[3] || 50000) || 50000,
+            solde_dette: parseFloat(parts[2] || '0') || 0,
+            plafond_credit: parseFloat(parts[3] || '50000') || 50000,
           })
         }
       }

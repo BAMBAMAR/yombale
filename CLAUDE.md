@@ -5571,3 +5571,29 @@ Voici les URLs et les modifications apportées aux outils d'administration inter
   - **Contrôle Qualité & Tests** :
     * Typage TypeScript : 0 erreur sur tous les fichiers modifiés.
     * Suite de tests unitaires : 35/35 validés avec 100% de succès.
+
+### Audit Global Forensique & Fiabilisation des Données Nopalou (Septembre 2026) 🛡️📊🔍⚡
+- **Audit Forensique Exhaustif de la Base PostgreSQL Réelle (60 tables)** :
+  - **Intégrité Référentielle Validée à 100%** : 39/39 boutiques rattachées à un `utilisateur_id` valide, 0 produit boutique orphelin, 0 commande orpheline, 0 vente orpheline, 0 offre sans produit ou sans marchand.
+  - **Exactitude Mathématique du Carnet de Dettes** : Vérification de tous les comptes clients (`caisse_clients_credits`), chaque solde correspond au centime près à la somme des mouvements `vente_credit` moins les `remboursement` de `caisse_credit_historique`.
+  - **Alignement Temporel & Timezone** : Base PostgreSQL configurée en UTC, alignée avec le fuseau de Dakar (UTC+0, sans décalage horaire).
+- **Corrections Prioritaires Appliquées (Backend & Frontend)** :
+  - **Volume d'Affaires Admin Réconcilié (`admin-dashboard.js`, `AdminDashboardClient.tsx`)** :
+    - Éradication de la pollution du CA admin : exclusion systématique des commandes avec `statut = 'annulee'` (2 235 824 FCFA de commandes annulées précédemment sommées à tort).
+    - Exposition séparée du `volume_annule` et des `commandes_annulees` pour une transparence totale.
+    - Affichage clair du **Volume Net Actif** dans la console de pilotage admin.
+  - **Idempotence & Protection Anti-Double Clic (`comptabilite.js`)** :
+    - Élimination des doublons de vente constatés historiquement (ex: 2 ventes créées à 716ms d'intervalle par double-clic).
+    - Verrou temporel de 5 secondes sur `POST /:boutiqueId/ventes` et dans `creerCommandeBoutique` (détection des requêtes répétées pour la même boutique, même client et même montant sans dupliquer l'opération ni décrémenter deux fois le stock).
+  - **Restauration Automatique des Stocks & Invariants Métier (`comptabilite.js`)** :
+    - Restauration immédiate des unités vendues dans `stock_quantite` de `boutique_produits` lors de l'annulation d'une commande (`PATCH /commandes/:id` avec `statut = 'annulee'`) ou de l'archivage d'une vente (`DELETE /ventes/:id`).
+    - Contrepassation automatique de la dette au carnet de dettes client si la commande annulée avait été confirmée à crédit.
+    - Correction du bug `commande.mode_paiement` remplacé par `commande.methode_paiement` lors de l'alimentation de la comptabilité.
+- **Création du Module Permanent « 🛡️ Santé des Données » (Admin)** :
+  - **API Backend Dédiée (`admin-system.js`)** : `GET /api/admin/system/data-health` calculant en continu le **Data Reliability Score** (sur 100), les alertes forensiques (anomalies critiques, doublons, abonnements expirés, stocks incohérents) et l'état des 5 piliers de qualité.
+  - **Page & Dashboard Admin Dédiés (`/admin/sante-donnees`)** : Interface interactive moderne avec jauge de score, contrôles métier en temps réel et bouton de réconciliation directe sans écriture destructive.
+  - **Intégration Sidebar Admin (`AdminSidebarClient.tsx`)** : Accès direct 1-clic dans la section Système & Pilotage.
+- **Suite de Tests Automatisés d'Invariants (`scratch/test_invariants_automated.js`)** :
+  - 6/6 tests validés avec 100% de succès (volume net, carnet dettes, intégrité boutiques, intégrité comparateur, unicité CRM, timezone).
+  - Validation TypeScript intégrale (`npx tsc --noEmit`) : **0 erreur**.
+

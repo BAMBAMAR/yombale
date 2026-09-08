@@ -65,6 +65,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
     {
       title: 'Système & Pilotage',
       items: [
+        { href: '/admin/sante-donnees', label: '🛡️ Santé des Données', icon: <ShieldCheck size={16} />, highlight: '#16a34a' },
         { href: '/admin/feature-flags', label: 'Feature Flags (No-Code)', icon: <Flag size={16} />, highlight: '#9333ea' },
         { href: '/admin/audit-logs', label: 'Audit Logs & Traçabilité', icon: <ShieldCheck size={16} />, highlight: '#059669' },
         { href: '/admin/system', label: 'Santé Système & Exports', icon: <Activity size={16} />, highlight: '#0284c7' },

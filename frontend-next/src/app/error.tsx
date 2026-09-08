@@ -55,7 +55,7 @@ export default function Error({
               })
             return
           } else {
-            window.location.reload()
+            (window as any).location.reload()
             return
           }
         }

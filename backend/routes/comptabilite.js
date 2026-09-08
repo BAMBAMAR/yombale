@@ -190,6 +190,22 @@ router.post(
 
       const montantTotal = Number(prix_unitaire) * Number(quantite) + fraisLivraison;
 
+      // Protection Anti-Double Clic / Idempotence (verrou 5 secondes)
+      const existingVente = await pool.query(
+        `SELECT * FROM ventes
+         WHERE boutique_id = $1
+           AND montant_total = $2
+           AND quantite = $3
+           AND COALESCE(produit_id::text, '') = COALESCE($4::text, '')
+           AND created_at >= NOW() - INTERVAL '5 seconds'
+         LIMIT 1`,
+        [req.params.boutiqueId, montantTotal, quantite, produit_id || '']
+      );
+      if (existingVente.rows[0]) {
+        console.warn(`[IDEMPOTENCE VENTE] Vente double-clic bloquée (ref existante: ${existingVente.rows[0].reference})`);
+        return res.status(200).json(existingVente.rows[0]);
+      }
+
       const { rows } = await pool.query(
         `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
                               zone_livraison_id, frais_livraison, montant_total, client_nom, client_telephone, methode_paiement)
@@ -323,7 +339,7 @@ router.put(
   }
 );
 
-// DELETE /api/comptabilite/:boutiqueId/ventes/:venteId — archiver (soft delete)
+// DELETE /api/comptabilite/:boutiqueId/ventes/:venteId — archiver (soft delete) & restaurer stock
 router.delete(
   '/:boutiqueId/ventes/:venteId',
   verifierToken,
@@ -333,12 +349,27 @@ router.delete(
     try {
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
-      const { rowCount } = await pool.query(
-        'UPDATE ventes SET archivee=true WHERE id=$1 AND boutique_id=$2',
+
+      const { rows: [vente] } = await pool.query(
+        'SELECT * FROM ventes WHERE id=$1 AND boutique_id=$2 AND archivee IS NOT TRUE',
         [req.params.venteId, req.params.boutiqueId]
       );
-      if (rowCount === 0) return res.status(404).json({ error: 'Vente introuvable' });
-      res.json({ message: 'Vente archivée' });
+      if (!vente) return res.status(404).json({ error: 'Vente introuvable ou déjà archivée' });
+
+      await pool.query('UPDATE ventes SET archivee=true WHERE id=$1', [vente.id]);
+
+      // Restauration du stock physique
+      if (vente.produit_id && vente.quantite > 0) {
+        await pool.query(
+          `UPDATE boutique_produits
+           SET stock_quantite = stock_quantite + $1,
+               en_stock = true
+           WHERE id = $2 AND stock_quantite IS NOT NULL`,
+          [vente.quantite, vente.produit_id]
+        ).catch(() => {});
+      }
+
+      res.json({ message: 'Vente archivée et stock restauré' });
     } catch (err) {
       res.status(500).json({ error: 'Erreur serveur' });
     }
@@ -663,6 +694,23 @@ async function creerCommandeBoutique({
     ).catch(() => {});
   }
 
+  // Protection Idempotence / Anti-Double Soumission Commande (verrou 5 secondes)
+  if (clientTelephone && actualBoutiqueId) {
+    const existingCmd = await pool.query(
+      `SELECT * FROM commandes_boutique
+       WHERE boutique_id = $1
+         AND client_telephone = $2
+         AND montant_total = $3
+         AND created_at >= NOW() - INTERVAL '5 seconds'
+       LIMIT 1`,
+      [actualBoutiqueId, clientTelephone, montantTotal]
+    );
+    if (existingCmd.rows[0]) {
+      console.warn(`[IDEMPOTENCE COMMANDE] Double soumission bloquée (ref existante: ${existingCmd.rows[0].reference})`);
+      return { commande: existingCmd.rows[0], boutique };
+    }
+  }
+
   const { rows: [commande] } = await pool.query(
     `INSERT INTO commandes_boutique
        (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
@@ -861,12 +909,95 @@ router.patch(
       const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
       if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
 
+      const { rows: [oldCmd] } = await pool.query(
+        'SELECT * FROM commandes_boutique WHERE id=$1 AND boutique_id=$2',
+        [req.params.commandeId, req.params.boutiqueId]
+      );
+      if (!oldCmd) return res.status(404).json({ error: 'Commande introuvable' });
+      const ancienStatut = oldCmd.statut;
+
       const { rows: [commande] } = await pool.query(
         `UPDATE commandes_boutique SET statut=$1, updated_at=NOW()
          WHERE id=$2 AND boutique_id=$3 RETURNING *`,
         [req.body.statut, req.params.commandeId, req.params.boutiqueId]
       );
       if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
+
+      // ── RESTAURATION DES STOCKS ET INVARIANTS LORS D'UNE ANNULATION ──
+      if (req.body.statut === 'annulee' && ancienStatut !== 'annulee') {
+        try {
+          // 1. Récupérer les articles de la commande (multi-articles ou article unique)
+          const itemsRes = await pool.query(
+            'SELECT produit_id, variante_id, quantite FROM commandes_boutique_items WHERE commande_id = $1',
+            [commande.id]
+          );
+
+          if (itemsRes.rows.length > 0) {
+            for (const it of itemsRes.rows) {
+              if (it.variante_id) {
+                await pool.query(
+                  `UPDATE boutique_produit_variantes
+                   SET stock_quantite = stock_quantite + $1
+                   WHERE id = $2 AND boutique_id = $3`,
+                  [it.quantite, it.variante_id, req.params.boutiqueId]
+                ).catch(() => {});
+              }
+              if (it.produit_id) {
+                await pool.query(
+                  `UPDATE boutique_produits
+                   SET stock_quantite = stock_quantite + $1,
+                       en_stock = true
+                   WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
+                  [it.quantite, it.produit_id, req.params.boutiqueId]
+                ).catch(() => {});
+              }
+            }
+          } else if (commande.produit_id && commande.quantite > 0) {
+            // Article unique historique
+            await pool.query(
+              `UPDATE boutique_produits
+               SET stock_quantite = stock_quantite + $1,
+                   en_stock = true
+               WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
+              [commande.quantite, commande.produit_id, req.params.boutiqueId]
+            ).catch(() => {});
+          }
+
+          // 2. Si la commande avait été enregistrée dans 'ventes' (statut précédent 'livree'), l'archiver
+          await pool.query(
+            `UPDATE ventes SET archivee = true WHERE reference = $1 AND boutique_id = $2`,
+            [commande.reference, req.params.boutiqueId]
+          ).catch(() => {});
+
+          // 3. Si la commande était à crédit et inscrite au carnet de dette, contrepasser le solde
+          const histCredit = await pool.query(
+            `SELECT h.*, c.solde as client_solde FROM caisse_credit_historique h
+             JOIN caisse_clients_credits c ON h.client_id = c.id
+             WHERE h.boutique_id = $1 AND h.note LIKE '%' || $2 || '%' AND h.type = 'vente_credit'
+             ORDER BY h.created_at DESC LIMIT 1`,
+            [req.params.boutiqueId, commande.reference || commande.id]
+          );
+          if (histCredit.rows[0]) {
+            const h = histCredit.rows[0];
+            const montantDette = Number(h.montant || 0);
+            if (montantDette > 0) {
+              await pool.query(
+                `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, relance_auto_whatsapp)
+                 VALUES ($1, $2, 'remboursement', $3, 'annulation', $4, false)`,
+                [h.client_id, req.params.boutiqueId, montantDette, `Annulation de la commande Réf: ${commande.reference || commande.id}`]
+              );
+              await pool.query(
+                `UPDATE caisse_clients_credits SET solde = GREATEST(0, solde - $1), updated_at = NOW() WHERE id = $2`,
+                [montantDette, h.client_id]
+              );
+              console.log(`[CARNET CONTREPASSATION] Commande ${commande.reference} annulée — Dette de ${montantDette} F contrepassée.`);
+            }
+          }
+          console.log(`[CMD ANNULATION] Commande ${commande.reference} annulée avec succès : Stocks restaurés.`);
+        } catch (eAnnul) {
+          console.error('[CMD ANNULATION RESTORE ERR]:', eAnnul.message);
+        }
+      }
 
       // Alimenter automatiquement le Carnet de dettes si la commande à crédit passe à "confirmee"
       let carnetNouveauSolde = null;
@@ -977,7 +1108,7 @@ router.patch(
               commande.montant_total,
               commande.client_nom || 'Client Web',
               commande.client_telephone || null,
-              commande.mode_paiement || 'cash'
+              commande.methode_paiement || 'cash'
             ]
           );
         } catch (eComptaCmd) {
