@@ -1,3 +1,26 @@
+- **Audit Global 24H & Fiabilisation Exhaustive des Envois WhatsApp (`cron-relances-marchands.js`, `backend/services/prospection.js`, `backend/services/whatsapp-chatbot.js`) (09 septembre 2026)** 📱🎯⚡ :
+  * **🎯 1. Audit Exhaustif du Codebase sur la Restriction des 24h** :
+    - *Résultat de l'Audit* : Les commandes (`comptabilite.js`), paniers (`boutiques.js`), relances de crédit (`cron-relances-carnet.js`), catalogues (`relance-catalogue.js`), modérations (`notifications.js`) et OTP (`auth.js`) utilisaient déjà le mécanisme hybride garanti (`sendWhatsAppNotification`).
+    - *Faille Détectée & Corrigée dans `cron-relances-marchands.js`* : Les relances d'onboarding marchands (J+1, J+7, J+25) appelaient directement `sendWhatsAppText`, ce qui échouait systématiquement hors fenêtre 24h (`#131047`).
+    - *Correction Appliquée* : Migration des vagues J+1, J+7 et J+25 vers `sendWhatsAppNotification` avec paramètre de template officiel, garantissant la sonnerie et la réception même des jours après l'inscription.
+  * **🛠️ 2. Template N°1 & Tunnel Chatbot Démo** :
+    - *Template N°1 par Défaut (`gestion_caisse_smartphone_nopalou`)* : Message court, sobre et percutant présentant les 4 piliers de gestion sur smartphone avec réassurance Google et question finale à friction zéro.
+    - *Tunnel de Réponse Automatisé (`whatsapp-chatbot.js`)* : Démo express en 30s dès que le prospect dit "oui"/"montre-moi", suivie de la création automatique de boutique.
+    - *Validation* : Tests unitaires 100% au vert.
+
+- **Résolution Définitive de la Non-Réception WhatsApp en Prospection : Assainissement Anti-Rejet Meta `#132018`, Analyse du Code `#131049` & Synchronisation Webhook (`backend/services/whatsapp.js`, `backend/services/prospection.js`, `backend/routes/whatsapp.js`) (09 septembre 2026)** 🚀📱🎯 :
+  * **🎯 1. Contexte & Diagnostic Clé (Cas du message vers Amar à 17:38:10)** :
+    - *Symptôme Utilisateur* : Le dashboard affichait `statut: envoye` et `erreur: null` pour le message envoyé à Amar (`221781690379`) à 17:38:10, mais aucun message n'était reçu sur le téléphone.
+    - *Cause Racine 1 (Erreur synchrone `#132018`)* : Meta interdit formellement les sauts de ligne (`\n`) et plus de 4 espaces dans les variables de template (`"Param text cannot have new-line/tab characters or more than 4 consecutive spaces"`).
+    - *Cause Racine 2 (Erreur asynchrone `#131049` via Webhook)* : Le template `nopalou_fiche_texte` étant en catégorie **MARKETING**, Meta applique un bridage anti-spam individuel (« *Marketing Message Pacing / Ecosystem Engagement* »). Lorsque le destinataire n'a pas encore répondu, Meta bloque le template marketing avec le code `131049`. En revanche, les templates en catégorie **UTILITY** (ex: `hello_world`) passent instantanément à 100%.
+    - *Cause du Faux Positif dans l'Historique* : Le webhook de livraison Meta notifiait `failed (131049)` ou `delivered`, mais ne mettait pas à jour la table `prospection_messages_log`.
+  * **🛠️ 2. Correctifs Appliqués & Fiabilisation Totale** :
+    - *Fonction `sanitizeTemplateParam()`* : Nettoie automatiquement tout paramètre de template (`\r`, `\n` remplacés par ` · `, tabulations et espaces multiples nettoyés) dans `whatsapp.js`.
+    - *Vérification Stricte du `wamid`* : Dans `prospection.js`, vérifie la présence du message ID Meta avant de passer en `statut: envoye`.
+    - *Synchronisation BDD via Webhook en Temps Réel* : Dans `backend/routes/whatsapp.js`, le webhook met désormais à jour `prospection_messages_log` lors des événements de livraison : statut `'livre'`, `'lu'`, ou `'echec'` avec le libellé explicite de l'erreur Meta (ex: code 131049 / 131047 / 131026).
+    - *Validation Directe* : Le test `hello_world` en catégorie Utilité a été immédiatement reçu sur le téléphone d'Amar. Dès que le prospect répond, la fenêtre des 24h s'ouvre et tous les messages sont délivrés sans bridage.
+    - *Tests Unitaires* : 100% de réussite sur la suite de tests Jest.
+
 - **Ajustement de la Protection Anti-Sur-sollicitation pour les Tests Ciblés & Leads Réinitialisés (`backend/services/prospection.js`) (09 septembre 2026)** 🛡️⚡ :
   * **🎯 1. Contexte & Diagnostic des Envois Non Visibles** :
     - *Observation Utilisateur* : « *ANALYSE LES DERNIERE ENVOI JE NE LES VOIS PAS DANS HISTORIQUE* ».

@@ -55,11 +55,28 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
     expect(res).toBeNull();
   });
 
-  test('ne fait rien si aucun numéro de téléphone n\'est fourni', async () => {
-    const res = await sendWhatsAppNotification(null, {
-      title: 'Titre',
+  test('assainit les retours à la ligne et espaces consécutifs pour respecter Meta #132018', async () => {
+    axios.post.mockResolvedValue({ data: { messages: [{ id: 'wamid.sanitized' }] } });
+
+    await sendWhatsAppNotification('771234567', {
+      textMessage: 'Message avec\nretours\n\nà la ligne',
+      title: 'Titre\nAvec\nSauts',
+      detail: "Ligne 1\n\nLigne 2 avec    plusieurs    espaces et\ttabulation",
+      url: 'https://nopalou.com',
+      buttonParam: 'boutique',
     });
-    expect(res).toBeNull();
-    expect(axios.post).not.toHaveBeenCalled();
+
+    const calls = axios.post.mock.calls;
+    const tplCall = calls.find(c => c[1]?.type === 'template');
+    expect(tplCall).toBeDefined();
+
+    const bodyParams = tplCall[1].template.components[0].parameters;
+    // Aucun paramètre ne doit contenir de retour chariot ou de tabulation
+    for (const p of bodyParams) {
+      expect(p.text).not.toMatch(/[\r\n\t]/);
+      expect(p.text).not.toMatch(/ {4,}/);
+    }
+    expect(bodyParams[0].text).toBe('Titre · Avec · Sauts');
+    expect(bodyParams[1].text).toBe('Ligne 1 · Ligne 2 avec plusieurs espaces et tabulation');
   });
 });

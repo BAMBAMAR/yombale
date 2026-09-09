@@ -1941,7 +1941,12 @@ async function handleIncomingInternal(msg) {
 
   // ── INTERCEPTION DES REPONSES DE PROSPECTION (OUI, BILAN, QUESTIONS) ─────────
   if (state === 'IDLE' || state === 'MENU' || !state) {
-    const estReponsePositiveProspection = ['oui', 'ok', 'waaw', 'waw', 'je veux', 'start', 'interessé', 'interesse', 'interessee', 'comment faire', 'coute combien', 'combien'].includes(normTxtLower);
+    const MOTS_POSITIFS_PROSPECTION = [
+      'oui', 'ok', 'waaw', 'waw', 'je veux', 'start', 'interessé', 'interesse', 'interessee',
+      'comment faire', 'coute combien', 'combien', 'daccord', "d'accord", 'yes', 'demo',
+      'demonstration', 'montre', 'montrez', 'montre moi', 'montrez moi', 'cest quoi', "c'est quoi"
+    ];
+    const estReponsePositiveProspection = MOTS_POSITIFS_PROSPECTION.some(m => normTxtLower === m || normTxtLower.startsWith(m) || normTxtLower.includes(m));
     
     if (estReponsePositiveProspection) {
       const bqExistante = await trouverBoutiqueMarchand(phone);
@@ -1999,7 +2004,13 @@ async function handleIncomingInternal(msg) {
         await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
         await sendWhatsAppText(
           phone,
-          "🚀 *Création de votre boutique Nopalou* en 30s !\n\nQuel est le *nom de votre boutique* ?\n_(ex: Top Mode, Électro Dakar, Mère Diallo...)_"
+          "Parfait ! 👋 Voici comment Nopalou simplifie votre commerce en 30 secondes :\n\n" +
+          "1️⃣ 📱 *Caisse tactile & Scanner* : Scannez les codes-barres avec la caméra de votre smartphone pour encaisser en 2 secondes.\n" +
+          "2️⃣ 🛍️ *Votre vitrine WhatsApp* : Vos clients commandent en direct (encaissement Wave & Orange Money à 0% de commission).\n" +
+          "3️⃣ 🧾 *Factures & Dettes* : Devis proformas et suivi des dettes en 1 clic.\n\n" +
+          "🎁 *Vos 30 premiers jours sont 100% offerts sans aucun engagement.*\n\n" +
+          "👉 Pour configurer votre accès test tout de suite, quel est le *nom de votre boutique* ?\n" +
+          "_(ex: Dakar Tech, Boutique Diallo, Mode Chic...)_"
         );
         return;
       }

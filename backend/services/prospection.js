@@ -58,6 +58,23 @@ const FOOTER_OPTOUT = '\n\n_Pour ne plus recevoir de message de notre part, rép
 // ── Templates de prospection sénégalaise haute performance ───────────────────
 const TEMPLATES_PAR_DEFAUT = [
   {
+    id: 'gestion_caisse_smartphone_nopalou',
+    titre: '📱 Gestion & Caisse Smartphone — Tout-en-un Nopalou sans ordinateur (Option 1)',
+    canal: 'whatsapp',
+    categorie: 'general',
+    texte: `Salam alaykoum ! 👋
+
+Vous gérez un commerce à Dakar ? Nous avons conçu Nopalou pour vous simplifier la gestion quotidienne directement sur votre smartphone (vous pouvez taper « Nopalou » sur Google pour voir notre plateforme 🇸🇳).
+
+En 30 secondes sur votre téléphone, vous profitez de :
+📱 Caisse tactile avec scanner de codes-barres par caméra
+🛍️ Votre boutique en ligne pour vendre en direct sur WhatsApp
+🧾 Devis & Factures proformas générés en 10 secondes
+📊 Bilan de vos ventes et carnet de dettes automatique
+
+Puis-je vous montrer une démonstration gratuite en 1 minute ici sur WhatsApp ?` + FOOTER_OPTOUT
+  },
+  {
     id: 'creation_whatsapp_30s',
     titre: '⚡ Création 100% WhatsApp en 30s — Zéro Ordinateur, Zéro Formulaire',
     canal: 'whatsapp',
@@ -1656,7 +1673,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 60) : '📱 Nopalou — Développez votre Commerce';
           const extraitMsg = messageFinal.slice(0, 950);
           
-          await sendWhatsAppNotification(lead.telephone, {
+          const metaResponse = await sendWhatsAppNotification(lead.telephone, {
             textMessage: messageFinal,
             title: titreNotif,
             detail: extraitMsg,
@@ -1664,10 +1681,34 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
             buttonParam: 'boutique'
           });
           
-          statutEnvoi = 'envoye';
-          nbSucces++;
+          // Vérification que Meta a bien accepté et retourné un message ID (wamid)
+          const metaMessageId = metaResponse?.messages?.[0]?.id || null;
+          if (metaResponse && metaResponse.success !== false && metaMessageId) {
+            statutEnvoi = 'envoye';
+            nbSucces++;
+            console.log(`[PROSPECTION ✅] ${lead.telephone} → Meta wamid: ${metaMessageId}`);
+          } else {
+            statutEnvoi = 'echec';
+            erreurEnvoi = metaResponse?.reason || 'Échec délivrance Meta (template rejeté ou fenêtre 24h)';
+            nbEchecs++;
+            console.warn(`[PROSPECTION ❌] ${lead.telephone}: ${erreurEnvoi}`);
+          }
         } catch (err) {
-          erreurEnvoi = err.response?.data?.error?.message || err.message;
+          const metaErr = err.response?.data?.error;
+          erreurEnvoi = metaErr?.message || err.message;
+          // Catégorisation de l'erreur pour diagnostic
+          const errCode = metaErr?.code;
+          if (errCode === 131047) {
+            console.warn(`[PROSPECTION ⚠️ 24H] ${lead.telephone}: Fenêtre 24h fermée ET template rejeté`);
+          } else if (errCode === 131026 || errCode === 131051) {
+            console.warn(`[PROSPECTION ⚠️ PHONE] ${lead.telephone}: Numéro invalide ou non-WhatsApp (code ${errCode})`);
+          } else if (errCode === 131056) {
+            console.warn(`[PROSPECTION ⚠️ RATE] ${lead.telephone}: Rate limit Meta atteint`);
+          } else if (errCode === 132018) {
+            console.warn(`[PROSPECTION ⚠️ FORMAT] ${lead.telephone}: Caractère invalide dans paramètre template (code 132018)`);
+          } else {
+            console.error(`[PROSPECTION ❌] ${lead.telephone}: ${erreurEnvoi} (code: ${errCode || 'N/A'})`);
+          }
           nbEchecs++;
         }
       } else {

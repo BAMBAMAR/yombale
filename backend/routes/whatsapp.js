@@ -62,10 +62,23 @@ router.post('/webhook', verifyHmac, async (req, res) => {
 
   if (entry.statuses && Array.isArray(entry.statuses)) {
     for (const statusObj of entry.statuses) {
-      console.log('[WHATSAPP] Statut livraison:', statusObj.status);
+      console.log('[WHATSAPP] Statut livraison:', statusObj.status, 'pour', statusObj.recipient_id);
       if (statusObj.status === 'failed') {
         const errFirst = statusObj.errors?.[0] || {};
-        console.log('[WHATSAPP] Erreur de livraison:', JSON.stringify(statusObj.errors, null, 2));
+        const errCode = errFirst.code;
+        const errMsg = errFirst.message || 'Échec de livraison Meta';
+        const errDetails = errFirst.error_data?.details || '';
+        let humanReason = errMsg;
+        if (errCode === 131049) {
+          humanReason = 'Rejet Meta 131049 : Plafond marketing Meta (Ecosystem Engagement). Répondre au bot ou utiliser un template Utilité.';
+        } else if (errCode === 131047) {
+          humanReason = 'Rejet Meta 131047 : Fenêtre 24h fermée.';
+        } else if (errCode === 131026 || errCode === 131051) {
+          humanReason = `Numéro invalide ou non-WhatsApp (Code ${errCode})`;
+        } else if (errDetails) {
+          humanReason = `${errMsg} (${errDetails})`;
+        }
+        console.log('[WHATSAPP] Erreur de livraison:', humanReason);
         whatsappHealth.recordFailure({
           code: errFirst.code,
           title: errFirst.title,
@@ -74,8 +87,51 @@ router.post('/webhook', verifyHmac, async (req, res) => {
           href: errFirst.href,
           recipient_id: statusObj.recipient_id,
         });
+
+        // Mettre à jour l'historique prospection_messages_log pour refléter l'échec réel
+        try {
+          const { pool } = require('../models/db');
+          const dest = statusObj.recipient_id;
+          if (dest) {
+            await pool.query(
+              `UPDATE prospection_messages_log
+               SET statut = 'echec', erreur = $1
+               WHERE id = (
+                 SELECT id FROM prospection_messages_log
+                 WHERE (destinataire = $2 OR destinataire = $3)
+                   AND created_at > NOW() - INTERVAL '2 hours'
+                 ORDER BY created_at DESC
+                 LIMIT 1
+               )`,
+              [humanReason, dest, dest.replace(/^221/, '')]
+            );
+          }
+        } catch (dbErr) {
+          console.error('[WHATSAPP STATUS DB ERR]:', dbErr.message);
+        }
       } else if (['sent', 'delivered', 'read'].includes(statusObj.status)) {
         whatsappHealth.recordSuccess();
+        if (statusObj.status === 'delivered' || statusObj.status === 'read') {
+          try {
+            const { pool } = require('../models/db');
+            const dest = statusObj.recipient_id;
+            if (dest) {
+              await pool.query(
+                `UPDATE prospection_messages_log
+                 SET statut = $1
+                 WHERE id = (
+                   SELECT id FROM prospection_messages_log
+                   WHERE (destinataire = $2 OR destinataire = $3)
+                     AND created_at > NOW() - INTERVAL '2 hours'
+                     AND statut NOT IN ('lu', 'echec')
+                   ORDER BY created_at DESC
+                   LIMIT 1
+                 )`,
+                [statusObj.status === 'read' ? 'lu' : 'livre', dest, dest.replace(/^221/, '')]
+              );
+            }
+          } catch {}
+        }
       }
     }
   }

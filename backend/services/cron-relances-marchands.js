@@ -1,13 +1,13 @@
 // backend/services/cron-relances-marchands.js — Moteur de relances et d'onboarding marchands (J+1, J+7, J+25)
 const { pool } = require('../models/db');
-let sendWhatsAppText;
+let sendWhatsAppNotification;
 let estDesinscrit;
 try {
   const ws = require('./whatsapp');
-  sendWhatsAppText = ws.sendWhatsAppText;
+  sendWhatsAppNotification = ws.sendWhatsAppNotification;
   estDesinscrit = ws.estDesinscrit;
 } catch (e) {
-  sendWhatsAppText = null;
+  sendWhatsAppNotification = null;
   estDesinscrit = async () => false;
 }
 
@@ -47,15 +47,22 @@ async function traiterRelancesMarchands() {
         `Vos clients pourront voir l'ensemble de vos articles et commander directement en 1 clic.\n\n` +
         `_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 
-      if (sendWhatsAppText && typeof sendWhatsAppText === 'function') {
+      if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
         try {
-          await sendWhatsAppText(b.telephone, msg);
+          const res = await sendWhatsAppNotification(b.telephone, {
+            textMessage: msg,
+            title: `🎉 1er jour sur Nopalou — ${b.nom}`.slice(0, 60),
+            detail: `Partagez votre vitrine sur WhatsApp : ${SITE}/boutiques/${b.slug} pour faire votre 1ère vente !`,
+            url: `${SITE}/boutiques/${b.slug}`,
+            buttonParam: b.slug || 'boutique',
+          });
+          const isSent = !!(res && res.messages?.[0]?.id);
           stats.j1++;
           stats.total++;
           await pool.query(
             `INSERT INTO prospection_messages_log (canal, destinataire, message_envoye, statut)
-             VALUES ('whatsapp', $1, $2, 'envoye')`,
-            [b.telephone, msg]
+             VALUES ('whatsapp', $1, $2, $3)`,
+            [b.telephone, msg, isSent ? 'envoye' : 'echec']
           );
         } catch (e) {
           stats.erreurs.push({ bq: b.nom, type: 'J+1', err: e.message });
@@ -89,15 +96,22 @@ async function traiterRelancesMarchands() {
         `👉 Accédez à votre caisse ici : ${SITE}/boutique/caisse\n\n` +
         `_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 
-      if (sendWhatsAppText && typeof sendWhatsAppText === 'function') {
+      if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
         try {
-          await sendWhatsAppText(b.telephone, msg);
+          const res = await sendWhatsAppNotification(b.telephone, {
+            textMessage: msg,
+            title: `📒 Caisse & Carnet de Dettes — ${b.nom}`.slice(0, 60),
+            detail: `Notez les crédits clients et relancez-les en 1 clic. Accédez à votre caisse : ${SITE}/boutique/caisse`,
+            url: `${SITE}/boutique/caisse`,
+            buttonParam: 'caisse',
+          });
+          const isSent = !!(res && res.messages?.[0]?.id);
           stats.j7++;
           stats.total++;
           await pool.query(
             `INSERT INTO prospection_messages_log (canal, destinataire, message_envoye, statut)
-             VALUES ('whatsapp', $1, $2, 'envoye')`,
-            [b.telephone, msg]
+             VALUES ('whatsapp', $1, $2, $3)`,
+            [b.telephone, msg, isSent ? 'envoye' : 'echec']
           );
         } catch (e) {
           stats.erreurs.push({ bq: b.nom, type: 'J+7', err: e.message });
@@ -133,15 +147,22 @@ async function traiterRelancesMarchands() {
         `👉 Renouvelez en 1 clic ici : ${SITE}/tarifs-boutique\n\n` +
         `_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 
-      if (sendWhatsAppText && typeof sendWhatsAppText === 'function') {
+      if (sendWhatsAppNotification && typeof sendWhatsAppNotification === 'function') {
         try {
-          await sendWhatsAppText(a.telephone, msg);
+          const res = await sendWhatsAppNotification(a.telephone, {
+            textMessage: msg,
+            title: `⏳ Fin d'essai dans 5 jours — ${a.nom}`.slice(0, 60),
+            detail: `Profitez de -25% (3 mois offerts) sur l'abonnement annuel avec Wave : ${SITE}/tarifs-boutique`,
+            url: `${SITE}/tarifs-boutique`,
+            buttonParam: 'tarifs',
+          });
+          const isSent = !!(res && res.messages?.[0]?.id);
           stats.j25++;
           stats.total++;
           await pool.query(
             `INSERT INTO prospection_messages_log (canal, destinataire, message_envoye, statut)
-             VALUES ('whatsapp', $1, $2, 'envoye')`,
-            [a.telephone, msg]
+             VALUES ('whatsapp', $1, $2, $3)`,
+            [a.telephone, msg, isSent ? 'envoye' : 'echec']
           );
         } catch (e) {
           stats.erreurs.push({ bq: a.nom, type: 'J+25', err: e.message });

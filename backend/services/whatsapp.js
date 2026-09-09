@@ -113,8 +113,36 @@ async function sendWhatsAppText(phone, message) {
   }
 }
 
+// ── Nettoyage des paramètres de template (Anti-Erreur Meta #132018) ────────────
+// Meta interdit formellement les sauts de ligne (\n, \r), tabulations (\t)
+// ou plus de 4 espaces consécutifs dans les variables de template {{1}}, {{2}}, etc.
+function sanitizeTemplateParam(val) {
+  if (val === null || val === undefined) return '';
+  return String(val)
+    .replace(/[\r\n]+/g, ' · ') // Remplacer les retours à la ligne par un séparateur lisible
+    .replace(/\t+/g, ' ')       // Remplacer les tabulations par des espaces
+    .replace(/ {2,}/g, ' ')     // Condenser les espaces consécutifs (Meta rejette > 4 espaces)
+    .trim();
+}
+
+const CAROUSEL_LANG = { nopalou_carousel_immo: 'en' };
+
 // ── Template simple (image ou texte) ─────────────────────────────────────────
 async function sendWhatsAppTemplate(phone, templateName, components = []) {
+  // Assainir automatiquement tous les paramètres texte pour respecter la contrainte Meta #132018
+  const sanitizedComponents = (components || []).map(comp => {
+    if (!comp || !Array.isArray(comp.parameters)) return comp;
+    return {
+      ...comp,
+      parameters: comp.parameters.map(param => {
+        if (param && param.type === 'text' && typeof param.text === 'string') {
+          return { ...param, text: sanitizeTemplateParam(param.text) };
+        }
+        return param;
+      }),
+    };
+  });
+
   return post({
     messaging_product: 'whatsapp',
     recipient_type: 'individual',
@@ -122,8 +150,8 @@ async function sendWhatsAppTemplate(phone, templateName, components = []) {
     type: 'template',
     template: {
       name: templateName,
-      language: { code: 'fr' },
-      components,
+      language: { code: CAROUSEL_LANG?.[templateName] || 'fr' },
+      components: sanitizedComponents,
     },
   });
 }
@@ -152,9 +180,10 @@ async function sendWhatsAppNotification(phone, {
   }
 
   // 2. Envoi garanti par Template Meta (contourne la restriction 24h de Meta)
-  const cleanTitle = (title || 'Notification Nopalou').slice(0, 60);
-  const cleanDetail = (detail || 'Consultez votre espace Nopalou pour plus de détails.').slice(0, 1000);
-  const cleanUrl = url || SITE;
+  // Assainissement strict pour respecter les contraintes Meta (#132018)
+  const cleanTitle = sanitizeTemplateParam(title || 'Notification Nopalou').slice(0, 60);
+  const cleanDetail = sanitizeTemplateParam(detail || 'Consultez votre espace Nopalou pour plus de détails.').slice(0, 1000);
+  const cleanUrl = (url || SITE).trim();
   // Le paramètre de bouton dynamique de nopalou_fiche_texte n'accepte qu'un identifiant sans caractères spéciaux
   let cleanParam = String(buttonParam || 'boutique').trim();
   if (cleanParam.includes('id=')) {
@@ -183,9 +212,26 @@ async function sendWhatsAppNotification(phone, {
         parameters: [{ type: 'text', text: cleanParam }],
       },
     ]);
+
+    // Vérification que Meta a bien accepté le message (pas un rejet silencieux type blacklist/guard)
+    if (!res || res.success === false) {
+      const reason = res?.reason || 'no_response';
+      console.error(`[WHATSAPP NOTIF TEMPLATE SILENT_FAIL] (${normPhone}): Meta n'a pas confirmé l'envoi (${reason})`);
+      throw new Error(`Template non délivré: ${reason}`);
+    }
+
+    // Vérification que Meta a retourné un message ID (preuve d'acceptation réelle)
+    const messageId = res?.messages?.[0]?.id;
+    if (messageId) {
+      console.log(`[WHATSAPP NOTIF OK] (${normPhone}): Message ID Meta = ${messageId}`);
+    } else {
+      console.warn(`[WHATSAPP NOTIF WARN] (${normPhone}): Réponse Meta sans message ID:`, JSON.stringify(res));
+    }
+
     return res;
   } catch (tErr) {
-    console.error(`[WHATSAPP NOTIF TEMPLATE ERR] (${normPhone}):`, tErr.response?.data?.error?.message || tErr.message);
+    const errMsg = tErr.response?.data?.error?.message || tErr.message;
+    console.error(`[WHATSAPP NOTIF TEMPLATE ERR] (${normPhone}):`, errMsg);
     return null;
   }
 }
@@ -197,8 +243,6 @@ async function sendWhatsAppNotification(phone, {
 // URL à 1 paramètre (l'id, l'URL de base étant fixée côté template Meta).
 // nopalou_carousel_immo a été approuvé par Meta en langue "en" (pas "fr").
 // cards = [{ title, detail, pageUrl }] (imageUrl ignoré — pas de header dans ce template)
-const CAROUSEL_LANG = { nopalou_carousel_immo: 'en' };
-
 async function sendWhatsAppCarousel(phone, templateName, cards) {
   let dernier;
   for (const c of cards) {
