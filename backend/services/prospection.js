@@ -1,6 +1,6 @@
 // backend/services/prospection.js — Moteur d'automatisation et de collecte de leads (Nopalou)
 const { pool } = require('../models/db');
-const { sendWhatsAppText, sendWhatsAppNotification, normalisePhone, estDesinscrit } = require('./whatsapp');
+const { sendWhatsAppText, sendWhatsAppNotification, sendWhatsAppProspectionDirecte, normalisePhone, estDesinscrit } = require('./whatsapp');
 
 // ── Normalisation des numéros de téléphone pour le Sénégal ───────────────────
 function normaliserTelephoneSenegal(rawPhone) {
@@ -1665,26 +1665,33 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     if (!simulation) {
       if (canal === 'whatsapp') {
         try {
-          // Pour la prospection (prospects froids ou hors fenêtre 24h), Meta N'ACHEMINE PAS le texte libre sans interaction préalable.
-          // L'envoi direct via le Template Certifié Meta garantit la sonnerie, la notification push et la réception 24h/24.
-          const enseigneAuth = estNomPropreAuthentique(lead.nom_boutique) ? lead.nom_boutique.trim() : null;
-          const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse Smartphone';
-          
-          // Anti-troncature Meta (#VoirPlus) : Pour garantir qu'aucun commerçant n'ait à toucher
-          // sur "... Voir plus" ou "... Lire plus" pour lire l'offre, le paramètre detail doit être
-          // ultra-concis (max 150 caractères) avec toutes les fonctionnalités visibles immédiatement.
-          let detailNotif = 'Caisse tactile, boutique WhatsApp, factures & carnet dettes. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour la démo 1 min.';
-          if (templateAdapte?.id !== 'gestion_caisse_smartphone_nopalou' && messageFinal.length < 160) {
-            detailNotif = messageFinal.slice(0, 160);
+          // Pour la prospection à froid (fenêtre 24h fermée), on utilise en priorité le template
+          // certifié pur texte sans bouton 'nopalou_contact_direct', ou le template certifié de service.
+          // IMPORTANT : On N'ENVOIE PAS de texte libre non-certifié (templateOnly: true), car Meta
+          // rejette systématiquement les textes libres hors fenêtre 24h avec l'erreur 131047.
+          let metaResponse = null;
+          try {
+            metaResponse = await sendWhatsAppProspectionDirecte(lead.telephone, {
+              features: 'Gérez votre commerce à Dakar sur smartphone avec Nopalou : Caisse tactile, boutique WhatsApp, factures & carnet de dettes.',
+              googleProof: 'Vérifiez notre plateforme sur Google en tapant Nopalou 🇸🇳.',
+            });
+          } catch (eDir) {
+            console.warn(`[PROSPECTION DIRECTE FAIL, FALLBACK NOTIF] ${lead.telephone}:`, eDir.message);
           }
-          
-          const metaResponse = await sendWhatsAppNotification(lead.telephone, {
-            textMessage: messageFinal,
-            title: titreNotif,
-            detail: detailNotif,
-            url: 'https://nopalou.com/tarifs-boutique',
-            buttonParam: 'boutique'
-          });
+
+          if (!metaResponse || metaResponse.success === false) {
+            const enseigneAuth = estNomPropreAuthentique(lead.nom_boutique) ? lead.nom_boutique.trim() : null;
+            const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse Smartphone';
+            const detailNotif = 'Caisse tactile, boutique WhatsApp, factures & carnet dettes. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour la démo 1 min.';
+            metaResponse = await sendWhatsAppNotification(lead.telephone, {
+              textMessage: null, // Pas de texte libre pour éviter l'erreur 131047
+              title: titreNotif,
+              detail: detailNotif,
+              url: 'https://nopalou.com/tarifs-boutique',
+              buttonParam: 'boutique',
+              templateOnly: true,
+            });
+          }
           
           // Vérification que Meta a bien accepté et retourné un message ID (wamid)
           const metaMessageId = metaResponse?.messages?.[0]?.id || null;
@@ -1694,7 +1701,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
             console.log(`[PROSPECTION ✅] ${lead.telephone} → Meta wamid: ${metaMessageId}`);
           } else {
             statutEnvoi = 'echec';
-            erreurEnvoi = metaResponse?.reason || 'Échec délivrance Meta (template rejeté ou fenêtre 24h)';
+            erreurEnvoi = metaResponse?.reason || 'Échec délivrance Meta (template rejeté)';
             nbEchecs++;
             console.warn(`[PROSPECTION ❌] ${lead.telephone}: ${erreurEnvoi}`);
           }
@@ -1729,9 +1736,9 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     try {
       await pool.query(`
         INSERT INTO prospection_messages_log (
-          campagne_id, lead_id, canal, destinataire, message_envoye, statut, variante, erreur
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      `, [campagneId || null, lead.id, canal, lead.telephone || lead.email, messageFinal, statutEnvoi, 'variante_A', erreurEnvoi]);
+          campagne_id, lead_id, canal, destinataire, message_envoye, statut, variante, erreur, meta_message_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `, [campagneId || null, lead.id, canal, lead.telephone || lead.email, messageFinal, statutEnvoi, 'variante_A', erreurEnvoi, metaMessageId]);
 
       // Mettre à jour le statut du lead et sa timeline si envoyé avec succès
       if (statutEnvoi === 'envoye') {

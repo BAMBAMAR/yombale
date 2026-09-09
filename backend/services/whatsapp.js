@@ -192,12 +192,13 @@ async function sendWhatsAppNotification(phone, {
   detail,
   url = SITE,
   buttonParam = 'boutique',
+  templateOnly = false,
 }) {
   if (!phone) return null;
   const normPhone = normalisePhone(phone);
 
-  // 1. Envoi du message texte libre (utile pour les clients actifs dans la fenêtre 24h)
-  if (textMessage) {
+  // 1. Envoi du message texte libre (uniquement si non exclu par templateOnly, actif si fenêtre 24h ouverte)
+  if (textMessage && !templateOnly) {
     sendWhatsAppText(normPhone, textMessage).catch(err => {
       console.warn(`[WHATSAPP NOTIF TEXT INFO] (${normPhone}):`, err.response?.data?.error?.message || err.message);
     });
@@ -510,10 +511,36 @@ async function sendFiche(type, id, phone) {
   throw new Error(`Type inconnu : ${type}`);
 }
 
+/**
+ * Envoi direct de prospection certifiée sans bouton externe (template officiel Meta `nopalou_contact_direct`).
+ * Rendu 100% natif comme un message WhatsApp normal.
+ * Zéro troncature 'Voir plus', zéro bouton externe perturbateur.
+ */
+async function sendWhatsAppProspectionDirecte(phone, {
+  features = 'Gérez votre commerce à Dakar sur smartphone avec Nopalou : Caisse tactile, boutique WhatsApp, factures & carnet de dettes.',
+  googleProof = 'Vérifiez notre plateforme sur Google en tapant Nopalou 🇸🇳.',
+} = {}) {
+  if (!phone) return null;
+  const normPhone = normalisePhone(phone);
+  const cleanFeatures = sanitizeTemplateParam(features).slice(0, 200);
+  const cleanProof = sanitizeTemplateParam(googleProof).slice(0, 150);
+
+  return sendWhatsAppTemplate(normPhone, 'nopalou_contact_direct', [
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: cleanFeatures },
+        { type: 'text', text: cleanProof },
+      ],
+    },
+  ]);
+}
+
 module.exports = {
   sendWhatsAppText,
   sendWhatsAppTemplate,
   sendWhatsAppNotification,
+  sendWhatsAppProspectionDirecte,
   sendWhatsAppCarousel,
   sendWhatsAppInteractive,
   sendWhatsAppButton,

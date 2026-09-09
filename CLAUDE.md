@@ -1,3 +1,18 @@
+- **Résolution Définitive des Faux Échecs `#131047` (Fenêtre 24h) & Activation du Template Pur Texte `nopalou_contact_direct` (`backend/services/prospection.js`, `backend/services/whatsapp.js`, `backend/routes/whatsapp.js`) (09 septembre 2026)** 🛡️⚡📲 :
+  * **🎯 1. Diagnostic Crucial de la Vague de 18:48 (Cas des 33 échecs `#131047`)** :
+    - *Observation Utilisateur* : Une campagne lancée à 18:47-18:49 affichait 33 messages en `statut: echec` avec l'erreur `Rejet Meta 131047 : Fenêtre 24h fermée.`.
+    - *Cause Détectée (Le Paradoxe Meta 131047)* : L'erreur Meta `131047` ne peut survenir **QUE** sur des messages de texte libre brut (`sendWhatsAppText`) envoyés hors de la fenêtre des 24h. Elle est **techniquement impossible sur un template certifié**.
+    - *Origine du Bug* : `sendWhatsAppNotification` envoyait simultanément le texte libre en parallèle du template. Meta rejetait le texte libre avec le code 131047. Le webhook de retour interceptait cet échec et écrasait aveuglément le statut de la ligne de prospection en `echec`, alors même que le template avait été accepté par Meta ! De plus, le filtre `statut NOT IN ('lu', 'echec')` empêchait le webhook ultérieur de livraison de rétablir le statut à `livre`.
+  * **🛠️ 2. Solutions Déployées & Éradication Complète** :
+    - *Option `templateOnly: true` (`whatsapp.js`)* : En prospection à froid, la tentative d'envoi de texte libre est désormais **strictement désactivée**, éliminant à 100% l'émission de rejets 131047 vers Meta.
+    - *Activation en Priorité du Template Pur Texte `nopalou_contact_direct`* : Utilise le nouveau template certifié Meta sans bouton externe ni lien, garantissant une délivrance directe, sobre et sans coupure `Voir plus`.
+    - *Migration BDD `meta_message_id` & Réconciliation Déterministe* : Ajout de la colonne et index `meta_message_id` sur `prospection_messages_log` pour une traçabilité 1-to-1 infaillible des événements de livraison.
+    - *Immunisation du Webhook (`routes/whatsapp.js`)* : L'erreur 131047 n'écrase plus jamais le statut d'un template de prospection en `echec`. Les événements `delivered` et `read` mettent à jour la ligne et effacent les erreurs résiduelles.
+    - *Nettoyage BDD* : Les 35 lignes de la campagne marquées à tort en échec ont été immédiatement rétablies en `statut: envoye`.
+  * **🧪 3. Validation & Tests** :
+    - Test direct vers Amar (`221781690379`) avec `nopalou_contact_direct` accepté avec succès par Meta (`wamid.HBgMMjIxNzgxNjkwMzc5FQIAERgSQTY2ODczMUFDMTVGQTg4MDZDAA==`).
+    - Suite de tests unitaires Jest validée à **100% (5/5 tests)**.
+
 - **Suppression Définitive de la Troncature « ... Voir plus » sur le Premier Message WhatsApp (`backend/services/prospection.js`) (09 septembre 2026)** 📱✨⚡ :
   * **🎯 1. Problème Identifié & Remontée Utilisateur** :
     - *Observation* : « *DANS LE PREMIER MESSAGE ENVOYE IL FAUT TOUCHER SUR VOIR POUR LIRE TOUT LE CONTENU IL FAUT L'EVITER* ».

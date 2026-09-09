@@ -79,4 +79,39 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
     expect(bodyParams[0].text).toBe('Titre · Avec · Sauts');
     expect(bodyParams[1].text).toBe('Ligne 1 · Ligne 2 avec plusieurs espaces et tabulation');
   });
+
+  test('templateOnly: true ne tente PAS d\'envoi texte libre pour éviter l\'erreur 131047', async () => {
+    axios.post.mockResolvedValue({ data: { messages: [{ id: 'wamid.templateOnly' }] } });
+
+    await sendWhatsAppNotification('771234567', {
+      textMessage: 'Ce texte ne doit pas être envoyé',
+      title: 'Titre',
+      detail: 'Détail',
+      templateOnly: true,
+    });
+
+    const calls = axios.post.mock.calls;
+    // Doit avoir exactement 1 seul appel (le template), et AUCUN appel de type 'text'
+    const textCall = calls.find(c => c[1]?.type === 'text');
+    expect(textCall).toBeUndefined();
+    const tplCall = calls.find(c => c[1]?.type === 'template');
+    expect(tplCall).toBeDefined();
+  });
+
+  test('sendWhatsAppProspectionDirecte envoie le template pur texte sans bouton nopalou_contact_direct', async () => {
+    const { sendWhatsAppProspectionDirecte } = require('../../backend/services/whatsapp');
+    axios.post.mockResolvedValue({ data: { messages: [{ id: 'wamid.direct' }] } });
+
+    const res = await sendWhatsAppProspectionDirecte('781690379', {
+      features: 'Caisse tactile & boutique WhatsApp\nFactures directes',
+      googleProof: 'Tapez Nopalou sur Google 🇸🇳',
+    });
+
+    expect(res).toBeDefined();
+    const tplCall = axios.post.mock.calls.find(c => c[1]?.template?.name === 'nopalou_contact_direct');
+    expect(tplCall).toBeDefined();
+    expect(tplCall[1].to).toBe('221781690379');
+    expect(tplCall[1].template.components[0].parameters[0].text).toBe('Caisse tactile & boutique WhatsApp · Factures directes');
+    expect(tplCall[1].template.components[0].parameters[1].text).toBe('Tapez Nopalou sur Google 🇸🇳');
+  });
 });

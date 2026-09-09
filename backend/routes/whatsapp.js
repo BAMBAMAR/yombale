@@ -88,26 +88,30 @@ router.post('/webhook', verifyHmac, async (req, res) => {
           recipient_id: statusObj.recipient_id,
         });
 
-        // Mettre à jour l'historique prospection_messages_log pour refléter l'échec réel
-        try {
-          const { pool } = require('../models/db');
-          const dest = statusObj.recipient_id;
-          if (dest) {
-            await pool.query(
-              `UPDATE prospection_messages_log
-               SET statut = 'echec', erreur = $1
-               WHERE id = (
-                 SELECT id FROM prospection_messages_log
-                 WHERE (destinataire = $2 OR destinataire = $3)
-                   AND created_at > NOW() - INTERVAL '2 hours'
-                 ORDER BY created_at DESC
-                 LIMIT 1
-               )`,
-              [humanReason, dest, dest.replace(/^221/, '')]
-            );
+        // Règle d'or Meta : L'erreur 131047 concerne EXCLUSIVEMENT le texte libre hors fenêtre 24h.
+        // Elle ne doit JAMAIS écraser ou marquer un message de prospection template en échec.
+        if (errCode !== 131047) {
+          try {
+            const { pool } = require('../models/db');
+            const dest = statusObj.recipient_id;
+            const wamid = statusObj.id;
+            if (dest) {
+              await pool.query(
+                `UPDATE prospection_messages_log
+                 SET statut = 'echec', erreur = $1
+                 WHERE id = (
+                   SELECT id FROM prospection_messages_log
+                   WHERE (meta_message_id = $4 OR destinataire = $2 OR destinataire = $3)
+                     AND created_at > NOW() - INTERVAL '2 hours'
+                   ORDER BY (meta_message_id = $4) DESC, created_at DESC
+                   LIMIT 1
+                 )`,
+                [humanReason, dest, dest.replace(/^221/, ''), wamid]
+              );
+            }
+          } catch (dbErr) {
+            console.error('[WHATSAPP STATUS DB ERR]:', dbErr.message);
           }
-        } catch (dbErr) {
-          console.error('[WHATSAPP STATUS DB ERR]:', dbErr.message);
         }
       } else if (['sent', 'delivered', 'read'].includes(statusObj.status)) {
         whatsappHealth.recordSuccess();
@@ -115,19 +119,20 @@ router.post('/webhook', verifyHmac, async (req, res) => {
           try {
             const { pool } = require('../models/db');
             const dest = statusObj.recipient_id;
+            const wamid = statusObj.id;
             if (dest) {
               await pool.query(
                 `UPDATE prospection_messages_log
-                 SET statut = $1
+                 SET statut = $1, erreur = NULL
                  WHERE id = (
                    SELECT id FROM prospection_messages_log
-                   WHERE (destinataire = $2 OR destinataire = $3)
+                   WHERE (meta_message_id = $4 OR destinataire = $2 OR destinataire = $3)
                      AND created_at > NOW() - INTERVAL '2 hours'
-                     AND statut NOT IN ('lu', 'echec')
-                   ORDER BY created_at DESC
+                     AND statut != 'lu'
+                   ORDER BY (meta_message_id = $4) DESC, created_at DESC
                    LIMIT 1
                  )`,
-                [statusObj.status === 'read' ? 'lu' : 'livre', dest, dest.replace(/^221/, '')]
+                [statusObj.status === 'read' ? 'lu' : 'livre', dest, dest.replace(/^221/, ''), wamid]
               );
             }
           } catch {}
