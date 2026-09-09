@@ -53,7 +53,7 @@ function normaliserTelephoneSenegal(rawPhone) {
   };
 }
 
-const FOOTER_OPTOUT = '\n\n_Pour ne plus recevoir de message de notre part, répondez simplement STOP._';
+const FOOTER_OPTOUT = '\n\n_STOP pour vous désinscrire._';
 
 // ── Templates de prospection sénégalaise haute performance ───────────────────
 const TEMPLATES_PAR_DEFAUT = [
@@ -64,15 +64,13 @@ const TEMPLATES_PAR_DEFAUT = [
     categorie: 'general',
     texte: `Salam alaykoum ! 👋
 
-Vous gérez un commerce à Dakar ? Nous avons conçu Nopalou pour vous simplifier la gestion quotidienne directement sur votre smartphone (vous pouvez taper « Nopalou » sur Google pour voir notre plateforme 🇸🇳).
+Gérez votre commerce à Dakar sur smartphone avec Nopalou :
+📱 Caisse tactile & scanner codes-barres
+🛍️ Boutique WhatsApp & encaissements Wave
+🧾 Factures, devis & carnet de dettes
+🇸🇳 Vérifiez sur Google : tapez « Nopalou »
 
-En 30 secondes sur votre téléphone, vous profitez de :
-📱 Caisse tactile avec scanner de codes-barres par caméra
-🛍️ Votre boutique en ligne pour vendre en direct sur WhatsApp
-🧾 Devis & Factures proformas générés en 10 secondes
-📊 Bilan de vos ventes et carnet de dettes automatique
-
-Puis-je vous montrer une démonstration gratuite en 1 minute ici sur WhatsApp ?` + FOOTER_OPTOUT
+Voulez-vous voir une démo gratuite en 1 min ? Répondez OUI` + FOOTER_OPTOUT
   },
   {
     id: 'creation_whatsapp_30s',
@@ -1670,13 +1668,20 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           // Pour la prospection (prospects froids ou hors fenêtre 24h), Meta N'ACHEMINE PAS le texte libre sans interaction préalable.
           // L'envoi direct via le Template Certifié Meta garantit la sonnerie, la notification push et la réception 24h/24.
           const enseigneAuth = estNomPropreAuthentique(lead.nom_boutique) ? lead.nom_boutique.trim() : null;
-          const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 60) : '📱 Nopalou — Développez votre Commerce';
-          const extraitMsg = messageFinal.slice(0, 950);
+          const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse Smartphone';
+          
+          // Anti-troncature Meta (#VoirPlus) : Pour garantir qu'aucun commerçant n'ait à toucher
+          // sur "... Voir plus" ou "... Lire plus" pour lire l'offre, le paramètre detail doit être
+          // ultra-concis (max 150 caractères) avec toutes les fonctionnalités visibles immédiatement.
+          let detailNotif = 'Caisse tactile, boutique WhatsApp, factures & carnet dettes. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour la démo 1 min.';
+          if (templateAdapte?.id !== 'gestion_caisse_smartphone_nopalou' && messageFinal.length < 160) {
+            detailNotif = messageFinal.slice(0, 160);
+          }
           
           const metaResponse = await sendWhatsAppNotification(lead.telephone, {
             textMessage: messageFinal,
             title: titreNotif,
-            detail: extraitMsg,
+            detail: detailNotif,
             url: 'https://nopalou.com/tarifs-boutique',
             buttonParam: 'boutique'
           });

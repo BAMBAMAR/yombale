@@ -1,3 +1,19 @@
+- **Suppression Définitive de la Troncature « ... Voir plus » sur le Premier Message WhatsApp (`backend/services/prospection.js`) (09 septembre 2026)** 📱✨⚡ :
+  * **🎯 1. Problème Identifié & Remontée Utilisateur** :
+    - *Observation* : « *DANS LE PREMIER MESSAGE ENVOYE IL FAUT TOUCHER SUR VOIR POUR LIRE TOUT LE CONTENU IL FAUT L'EVITER* ».
+    - *Cause Racine* : Le premier message comptait plus de 650 caractères. WhatsApp mobile tronque automatiquement tout texte dépassant ~250 caractères par un lien « *... Voir plus* » ou « *... Lire plus* », masquant les fonctionnalités clés (caisse, boutique, factures) et obligeant le commerçant à cliquer pour comprendre l'offre. De plus, le template comportait un bouton « *Voir les détails* » qui créait de la confusion.
+  * **🛠️ 2. Solutions Appliquées & Formatage Ultra-Percutant** :
+    - *Condensation Radicale du Template N°1 (`gestion_caisse_smartphone_nopalou`)* : Passage de 650 caractères à **270 caractères** ultra-lisibles (7 lignes courtes).
+    - *Contenu 100% Directement Visible* :
+      1. Salutation chaleureuse (« *Salam alaykoum ! 👋* »)
+      2. 4 fonctionnalités clés immédiatement affichées (Caisse tactile, boutique WhatsApp, factures & carnet dettes)
+      3. Réassurance Google (« *🇸🇳 Vérifiez sur Google : tapez « Nopalou »* »)
+      4. CTA sans friction (« *Voulez-vous voir une démo gratuite en 1 min ? Répondez OUI* »)
+    - *Condensation Anti-Troncature du Paramètre Meta (`detailNotif`)* : Limité strictement à **135 caractères** dans les templates certifiés Meta (`nopalou_service_commerce` et `nopalou_fiche_texte`), éliminant formellement l'apparition de « *... Voir plus* » sur tout modèle de smartphone.
+    - *Soumission du Template Pur Texte (`nopalou_contact_direct`)* : Soumis sur Meta WABA `901008702321523` sans aucun bouton URL pour un rendu 100% natif comme un message direct entre humains.
+  * **🧪 3. Validation** :
+    - Tests unitaires Jest validés à 100%.
+
 - **Soumission des Templates Officiels Meta en Catégorie UTILITY & Bascule Automatique Anti-Plafond 131049 (`backend/services/whatsapp.js`, Meta Graph API WABA `901008702321523`) (09 septembre 2026)** 🛡️⚡📲 :
   * **🎯 1. Problème Résolu (Bridage Marketing Meta `#131049`)** :
     - *Diagnostic* : Meta impose un bridage d'écosystème (« *Ecosystem Engagement / Marketing Frequency Capping* ») sur les templates classés en catégorie **MARKETING** (`nopalou_fiche_texte`) lorsqu'un destinataire reçoit plusieurs sollicitations sans jamais avoir répondu.
