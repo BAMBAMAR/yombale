@@ -1594,9 +1594,24 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
   for (const lead of leads) {
     index++;
 
-    // Vérification stricte de désinscription / Blacklist
+    // 1. Vérification stricte de désinscription / Blacklist
     if (lead.telephone && (await estDesinscrit(lead.telephone))) {
       await pool.query("UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE id = $1", [lead.id]);
+      continue;
+    }
+
+    // 2. Protection Anti-Sur-sollicitation & Anti-Spam Temporel (< 48h sauf simulation)
+    if (!simulation && lead.dernier_contact_at) {
+      const heuresDepuisContact = (Date.now() - new Date(lead.dernier_contact_at).getTime()) / (1000 * 3600);
+      if (heuresDepuisContact < 48) {
+        console.log(`[PROSPECTION THROTTLE] Ignoré : lead ${lead.telephone} déjà contacté il y a ${Math.round(heuresDepuisContact)}h (< 48h).`);
+        continue;
+      }
+    }
+
+    // 3. Protection absolue : Si le prospect a déjà une boutique active
+    if (lead.statut === 'converti') {
+      console.log(`[PROSPECTION CONVERTI] Ignoré : lead ${lead.telephone} a déjà créé sa boutique Nopalou.`);
       continue;
     }
 
@@ -1694,6 +1709,25 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
         const jitterMs = Math.floor(Math.random() * (4500 - 2500 + 1)) + 2500;
         await new Promise((r) => setTimeout(r, jitterMs));
       }
+    }
+  }
+
+  // Clôturer la campagne avec ses statistiques en base
+  if (campagneId) {
+    try {
+      await pool.query(`
+        UPDATE prospection_campagnes
+        SET
+          statut = 'terminee',
+          nb_envoyes = $1,
+          nb_succes = $2,
+          nb_echecs = $3,
+          taux_delivrabilite = CASE WHEN $1 > 0 THEN ROUND(($2::numeric / $1) * 100, 2) ELSE 0 END,
+          date_fin = NOW()
+        WHERE id = $4
+      `, [nbSucces + nbEchecs, nbSucces, nbEchecs, campagneId]);
+    } catch (cmpCloseErr) {
+      console.warn('[PROSPECTION] Fermeture campagne warning:', cmpCloseErr.message);
     }
   }
 

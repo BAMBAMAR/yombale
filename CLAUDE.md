@@ -1,3 +1,27 @@
+- **Renforcement du Moteur d'Exécution : Anti-Sur-sollicitation (< 48h), Verrouillage des Boutiques Clientes & Clôture Automatique des Campagnes (`backend/services/prospection.js`, `cloturer_campagnes_orphelines.js`) (09 septembre 2026)** 🛡️⏱️📊⚡ :
+  * **🎯 1. Demande & Diagnostic** :
+    - Suite à l'analyse du journal de prospection (cas Amar contacté 3 fois consécutivement en quelques minutes lors de tests manuels et campagnes restées indéfiniment en statut `en_cours`).
+  * **🛠️ 2. Correctifs Appliqués** :
+    - *Anti-Sur-sollicitation Temporelle Stricte* : Dans `lancerCampagne()`, saut automatique (`continue`) de tout prospect dont `dernier_contact_at` date de moins de 48 heures (hors mode simulation).
+    - *Exclusion Définitive des Boutiques Déjà Converties* : Protection automatique empêchant tout envoi de prospection vers un prospect ayant le statut `converti`.
+    - *Clôture Automatique & Statistiques de Campagne* : Mise à jour immédiate de `prospection_campagnes` à la fin de l'envoi (`statut = 'terminee'`, `nb_envoyes`, `nb_succes`, `nb_echecs`, `taux_delivrabilite`, `date_fin = NOW()`).
+    - *Nettoyage BDD* : 5 campagnes orphelines bloquées en `en_cours` clôturées avec succès.
+
+- **Réinitialisation Complète & Re-scoring des Prospects Non Reçus au Statut « Nouveau » (`reinitialiser_leads_a_nouveau.js`) (09 septembre 2026)** 🔄📋🎯⚡ :
+  * **🎯 1. Demande & Contexte Métier** :
+    - *Demande Utilisateur* : « METTRE A JOUR ALORS LA LISTE PROSPECT ET LES STATUT TOUT CEUX QUI NONT PAS RECU DOIVENT REPASSER A NOUVEAU ».
+    - *Objectif* : Permettre à tous les commerçants dont le message n'avait pas été délivré (en raison de la restriction de la fenêtre des 24h Meta sans template certifié) de redevenir éligibles aux prochaines vagues sans être pénalisés ni bloqués par le délai de contact antérieur.
+  * **🛠️ 2. Opérations Réalisées sur la Base PostgreSQL** :
+    - *Remise à zéro des contacts non délivrés* : 313 prospects au statut `contacte_wa` (sans réponse et sans boutique créée) sont repassés au statut `nouveau`, avec `nb_contacts = 0` et `dernier_contact_at = NULL`.
+    - *Sécurisation absolue des boutiques actives* : Détection et confirmation des 9 boutiques créées avec statut verrouillé `converti`, priority score à 0 et action `client_fideliser`.
+    - *Recalcul intégral multi-dimensions* : 931 leads rescannés et re-scorés (Lead Quality, Nopalou Fit, Engagement, Conversion, Contactability, Priority Score et Next Best Action).
+    - *Nouvelle distribution des statuts* :
+      * `nouveau` : **821 prospects**
+      * `invalide` : **100 profils hors-cible**
+      * `converti` : **9 boutiques clientes actives**
+      * `contacte_wa` : **1 prospect**
+      * **117 prospects prioritaires qualifiés** immédiatement prêts pour les prochaines vagues (Priority Score >= 60).
+
 - **Fiabilisation & Délivrabilité Garantie des Messages de Prospection WhatsApp (Résolution Restriction Meta 24H & Fallback Template Certifié) (`backend/services/prospection.js`) (09 septembre 2026)** 📲🛡️⚡ :
   * **🎯 1. Demande & Diagnostic Métier** :
     - *Observation Utilisateur* : Le message de prospection envoyé à 16:41:11 vers le lead Amar (`Salam alaykoum Amar ! 📱 Dans la téléphonie & tech à Dakar...`) était marqué `envoye` dans la base sans être reçu sur le WhatsApp du destinataire.
