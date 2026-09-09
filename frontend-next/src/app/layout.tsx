@@ -395,13 +395,19 @@ export default async function RootLayout({
 
           {/* Recherches populaires — maillage SEO */}
           <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Solutions Commerçants &amp; E-Commerce Sénégal</p>
+            <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13, marginBottom: 12 }}>
+              <a href="/creer-boutique-en-ligne" style={{ color: '#fed7aa', fontWeight: 700 }}>Créer une boutique en ligne Sénégal</a>
+              <a href="/alternative-shopify-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Alternative Shopify Sénégal</a>
+              <a href="/logiciel-caisse-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Logiciel de caisse Sénégal</a>
+              <a href="/vendre-sur-whatsapp" style={{ color: '#fed7aa', fontWeight: 700 }}>Vendre sur WhatsApp Sénégal</a>
+              <a href="/paiement-en-ligne-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Paiement Wave boutique en ligne</a>
+              <a href="/gestion-stock-carnet-dettes" style={{ color: '#fed7aa', fontWeight: 700 }}>Carnet de dettes commerçant</a>
+            </div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires Comparateur</p>
             <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13 }}>
               <a href="/pos">Caisse enregistreuse Dakar</a>
-              <a href="/pos">Caisse enregistreuse Prix Sénégal</a>
-              <a href="/pos">Caisse enregistreuse petit commerce</a>
-              <a href="/marchands">Créer une boutique en ligne Sénégal</a>
-              <a href="/whatsapp">Vendre sur WhatsApp Sénégal</a>
+              <a href="/pos">Caisse tactile petit commerce</a>
               <a href="/guide-sourcing-revente">Acheter sur Alibaba revendre Dakar</a>
               <a href="/categorie/tv-electro/climatiseurs">Climatiseur prix Dakar</a>
               <a href="/categorie/smartphones/iphone">iPhone prix Dakar</a>

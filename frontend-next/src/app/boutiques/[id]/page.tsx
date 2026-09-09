@@ -48,13 +48,21 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const b = await apiFetch<Boutique>(`/boutiques/${id}`)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
     const ogImageUrl = `${siteUrl}/assets/boutique/${b.id}/og`
-    const desc = b.description ? b.description.slice(0, 160) : `Découvrez le catalogue, les nouveautés et les promotions de ${b.nom} à ${b.ville}.`
+    const villeTxt = b.ville ? ` à ${b.ville}` : ' au Sénégal'
+    const catTxt = b.categorie ? ` (${b.categorie})` : ''
+    const titre = `${b.nom}${villeTxt} — Boutique & Catalogue en Ligne${catTxt} | Nopalou`
+    const desc = b.description
+      ? b.description.slice(0, 160)
+      : `Découvrez le catalogue, les nouveautés, prix et coordonnées WhatsApp de la boutique ${b.nom}${villeTxt}. Commandez directement en ligne.`
 
     return {
-      title: `${b.nom} — Vitrine Officielle`,
+      title: titre,
       description: desc,
+      alternates: {
+        canonical: `${siteUrl}/boutiques/${b.slug || b.id}`,
+      },
       openGraph: {
-        title: `${b.nom} — Vitrine Officielle`,
+        title: titre,
         description: desc,
         url: `${siteUrl}/boutiques/${b.slug || b.id}`,
         siteName: b.nom,
@@ -135,8 +143,30 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
     ? `https://wa.me/${contactNumber.replace(/\D/g, '')}`
     : null
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  const jsonLdStore = {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    name: b.nom,
+    description: b.description || `Boutique officielle ${b.nom} à ${b.ville}.`,
+    url: `${siteUrl}/boutiques/${b.slug || b.id}`,
+    telephone: contactNumber || undefined,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: b.ville || 'Dakar',
+      addressCountry: 'SN',
+      streetAddress: b.adresse || undefined,
+    },
+    ...(b.logo_url ? { image: b.logo_url } : {}),
+  }
+
   return (
-    <div className="page-container" style={{ maxWidth: 1440, paddingTop: 10, paddingBottom: '3rem' }}>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdStore) }}
+      />
+      <div className="page-container" style={{ maxWidth: 1440, paddingTop: 10, paddingBottom: '3rem' }}>
 
       {/* Fil d'Ariane & Retour Catalogue */}
       <nav
@@ -330,5 +360,6 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
         />
       </div>
     </div>
+    </>
   )
 }

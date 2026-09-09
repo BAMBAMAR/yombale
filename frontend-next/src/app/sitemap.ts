@@ -49,7 +49,14 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   })),
-  // Boutique, POS & Forfaits Vendeurs SEO
+  // Silos B2B Solutions Marchands & "Problème → Solution" SEO
+  { url: `${BASE}/creer-boutique-en-ligne`,     changeFrequency: 'weekly', priority: 0.98 },
+  { url: `${BASE}/alternative-shopify-senegal`, changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/logiciel-caisse-senegal`,     changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/vendre-sur-whatsapp`,         changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/paiement-en-ligne-senegal`,   changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/gestion-stock-carnet-dettes`, changeFrequency: 'weekly', priority: 0.95 },
+  // Boutique, POS & Forfaits Vendeurs existants
   { url: `${BASE}/marchands`,            changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/pos`,                  changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/whatsapp`,             changeFrequency: 'weekly', priority: 0.9 },
@@ -57,7 +64,7 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/pourquoi-nopalou`,     changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/creer-boutique`,       changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/tarifs-boutique`,      changeFrequency: 'weekly', priority: 0.9 },
-  { url: `${BASE}/guide-creer-boutique`, changeFrequency: 'monthly', priority: 0.8 },
+  { url: `${BASE}/guide-creer-boutique`, changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/guide-sourcing-revente`, changeFrequency: 'monthly', priority: 0.85 },
   // Guides
   { url: `${BASE}/guide-prix`,    changeFrequency: 'monthly', priority: 0.6 },
