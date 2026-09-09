@@ -12,6 +12,8 @@ import SimilRow from '@/components/SimilRow';
 import { sanitizeImgUrl } from '@/lib/sanitizeImg';
 import PageHeader from '@/components/PageHeader';
 
+export const dynamic = 'force-dynamic';
+
 // ── Types ────────────────────────────────────────────────────────
 
 interface AnnonceImmo {
@@ -113,6 +115,15 @@ export async function generateMetadata({
       },
     };
   } catch {
+    try {
+      const { id } = await params;
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
+      if (resolved?.found) {
+        return {
+          title: 'Redirection en cours... | Nopalou',
+        };
+      }
+    } catch {}
     return {
       title: 'Annonce introuvable',
     };

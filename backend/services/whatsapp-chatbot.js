@@ -552,6 +552,15 @@ async function envoyerCommandesMarchand(phone, boutique, offset = 0) {
       `Vous n'avez pas encore reçu de commande en ligne.\n\n` +
       `👉 Partagez votre vitrine sur vos Statuts WhatsApp pour recevoir vos premières commandes : ${SITE}/boutiques/${boutique.slug}`
     );
+    await sendWhatsAppButtons3(
+      phone,
+      'Que souhaitez-vous faire ?',
+      [
+        { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+        { id: 'marchand_vitrine', title: '📲 Statut WhatsApp' },
+        { id: 'menu_general', title: '🌐 Menu Nopalou' },
+      ]
+    ).catch(() => {});
     await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
     return;
   }
@@ -2488,6 +2497,46 @@ async function handleIncomingInternal(msg) {
     }
   }
 
+  if (interactiveId === 'marchand_commandes' || normTxtLower === 'mes commandes' || normTxtLower === 'commandes') {
+    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bq) {
+      await envoyerCommandesMarchand(phone, bq);
+      return;
+    }
+  }
+
+  if (interactiveId === 'marchand_stock' || normTxtLower === 'mes produits' || normTxtLower === 'mon stock') {
+    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bq) {
+      await envoyerStockMarchand(phone, bq);
+      return;
+    }
+  }
+
+  if (interactiveId === 'marchand_caisse' || normTxtLower === 'bilan caisse' || normTxtLower === 'caisse') {
+    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bq) {
+      await envoyerBilanCaisseMarchand(phone, bq);
+      return;
+    }
+  }
+
+  if (interactiveId === 'marchand_dettes' || normTxtLower === 'carnet dettes' || normTxtLower === 'bor') {
+    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bq) {
+      await envoyerCarnetDettesMarchand(phone, bq);
+      return;
+    }
+  }
+
+  if (interactiveId === 'marchand_vitrine' || normTxtLower === 'statut whatsapp') {
+    const bq = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bq) {
+      await envoyerVitrineStatutMarchand(phone, bq);
+      return;
+    }
+  }
+
   if (interactiveId === 'menu_boutique_retour' || normTxtLower === 'menu boutique') {
     if (context?.boutique) {
       await envoyerMenuBoutique(phone, context.boutique);
@@ -3945,13 +3994,19 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
-    if (txtClean.toLowerCase() === 'commandes' || txtClean.toLowerCase() === 'liste' || txtClean.toLowerCase() === 'retour') {
+    if (txtClean.toLowerCase() === 'commandes' || txtClean.toLowerCase() === 'liste' || txtClean.toLowerCase() === 'retour' || interactiveId === 'marchand_commandes') {
       await envoyerCommandesMarchand(phone, boutique, offset);
       return;
     }
 
-    if (txtClean.toLowerCase() === 'menu' || txtClean.toLowerCase() === 'marchand') {
+    if (txtClean.toLowerCase() === 'menu' || txtClean.toLowerCase() === 'marchand' || interactiveId === 'menu_marchand') {
       await envoyerMenuMarchand(phone, boutique);
+      return;
+    }
+
+    if (interactiveId === 'menu_general') {
+      await setSession(phone, 'MENU', {});
+      await sendMenu(phone);
       return;
     }
   }

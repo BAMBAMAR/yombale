@@ -1,3 +1,27 @@
+- **Amélioration Chatbot WhatsApp & Résolution Anti-404 des Boutons Meta (`whatsapp-chatbot.js`, `entites.js`, `whatsapp.js`, `immo/[id]/page.tsx`) (09 septembre 2026)** 🤖🏪🔘🔗 :
+  * **🎯 1. Demandes Utilisateur & Diagnostic** :
+    - *Demande 1 — Retours au menu systématiques* : *"APRES une reponse on doit pour avoir une option pour revenir au menu"*. Lorsqu'un commerçant consultait « Mes Commandes » (`📋 Mes Commandes`) et qu'aucune commande n'était encore reçue, le bot envoyait un simple texte d'encouragement et s'arrêtait là, laissant l'utilisateur sans aucun bouton ni option interactive pour revenir à son tableau de bord marchand.
+    - *Demande 2 — Audit Anti-404 des boutons Meta (« Voir les détails »)* : *"POURQUOI CES BOUTON VOIR RENVOI 404 bf62e118596c sur Nopalou. FAITE UN AUDIT SUR TOUT CES TYPDE DE BOUTON"*.
+      * **Cause Racine Meta** : Le template certifié `nopalou_fiche_texte` est configuré chez Meta avec l'URL de bouton fixe `https://nopalou.com/immo/{{1}}`.
+      * **Troncation du paramètre** : Lorsqu'un paramètre complexe (ex: `boutique?tab=produits&id=d6470623-2372-446c-9823-bf62e118596c`) était passé, le nettoyage `.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50)` coupait l'UUID en plein milieu, générant un fragment orphelin `bf62e118596c`.
+      * **Échec de résolution** : Le résolveur d'entités `/api/entites/resoudre/:id` exigeait un regex strict de 36 caractères (`UUID_RE`), rejetant toute fin d'UUID ou paramètre avec query string, ce qui renvoyait une 404 « Annonce introuvable ».
+  * **🛠️ 2. Correctifs Appliqués** :
+    - *Boutons de Retour Interactifs Systématiques (`whatsapp-chatbot.js`)* :
+      * Dans `envoyerCommandesMarchand`, envoi systématique de 3 boutons de réponse rapide après le message : `[ 🏪 Menu Marchand ]`, `[ 📲 Statut WhatsApp ]`, `[ 🌐 Menu Nopalou ]`.
+      * Déclencheurs globaux ajoutés pour que tous les boutons marchands (`menu_marchand`, `marchand_commandes`, `marchand_stock`, `marchand_caisse`, `marchand_dettes`, `marchand_vitrine`, `menu_general`) s'exécutent instantanément quel que soit l'état de la session (`MARCHAND_COMMANDES_LISTE`, `MARCHAND_COMMANDE_DETAIL`, etc.).
+    - *Extraction d'Identifiant Pur dans `sendWhatsAppNotification` (`whatsapp.js`)* :
+      * Extraction intelligente de l'ID ou du slug (`idMatch[1]` ou nom de boutique) sans laisser passer des paramètres de requête corrompus ou coupés à 50 caractères.
+    - *Résolveur Universel d'Entités Renforcé (`backend/routes/entites.js`)* :
+      * Support des fragments / queues d'UUID (ex: `bf62e118596c`) via `WHERE id::text ILIKE '%' || $1` sur les boutiques, produits de boutique, annonces immobilières, annonces classifiées et commandes.
+      * Prise en charge directe des URLs de type `boutique?tab=produits&id=...` et redirection immédiate vers la vitrine ou la gestion.
+    - *Redirection & Métadonnées Next.js (`frontend-next/src/app/immo/[id]/page.tsx`)* :
+      * Ajout de `export const dynamic = 'force-dynamic'`.
+      * Résolution dans `generateMetadata` et `FicheImmoPage` pour rediriger immédiatement vers l'entité résolue (`/boutiques/...`, `/boutique?tab=...`, `/suivi-commande...`) sans jamais afficher d'écran 404 ni « Annonce introuvable ».
+  * **🧪 3. Validation & Invariants** :
+    - Tests unitaires `relance-catalogue.test.js`, `whatsapp-notification.test.js`, `entites-resolver.test.js` : 100% validés.
+    - `npx tsc --noEmit` : 0 erreur de types.
+    - Règle absolue respectée : aucun git push sans instruction explicite de l'utilisateur.
+
 - **Fonctionnalité : Commande Directe & Générateur de Lien de Paiement Wave WhatsApp dans l'Onglet Commandes (`Commandes.tsx`, `ModalNouvelleCommandeWave.tsx`, `actions.ts`) (08 septembre 2026)** ⚡💳💬🧾 :
   * **🎯 1. Demande & Contexte Métier** :
     - L'utilisateur a demandé d'intégrer le circuit de vente issu de WhatsApp (ex: négociation suite à un post TikTok/Facebook/Instagram ou vente sur mesure) directement dans l'espace commerçant, spécifiquement dans l'onglet **Commandes** (et non dans la Caisse POS physique).

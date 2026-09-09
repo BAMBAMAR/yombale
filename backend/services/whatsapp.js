@@ -156,7 +156,15 @@ async function sendWhatsAppNotification(phone, {
   const cleanDetail = (detail || 'Consultez votre espace Nopalou pour plus de détails.').slice(0, 1000);
   const cleanUrl = url || SITE;
   // Le paramètre de bouton dynamique de nopalou_fiche_texte n'accepte qu'un identifiant sans caractères spéciaux
-  const cleanParam = String(buttonParam || 'boutique').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
+  let cleanParam = String(buttonParam || 'boutique').trim();
+  if (cleanParam.includes('id=')) {
+    const idMatch = cleanParam.match(/id=([a-zA-Z0-9_-]+)/i);
+    if (idMatch) cleanParam = idMatch[1];
+  } else if (cleanParam.includes('boutique?')) {
+    cleanParam = 'boutique';
+  } else {
+    cleanParam = cleanParam.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
+  }
 
   try {
     const res = await sendWhatsAppTemplate(normPhone, 'nopalou_fiche_texte', [

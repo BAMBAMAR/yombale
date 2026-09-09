@@ -37,7 +37,7 @@ function genererMessageRelance({ boutique, nbProduits = 0, template, titre }) {
     title: cleanTitle,
     detail,
     url: lienBoutique,
-    buttonParam: String(boutique.slug || boutique.id || 'boutique').slice(0, 50),
+    buttonParam: `boutique?tab=produits&id=${boutique.id}`,
   };
 }
 
