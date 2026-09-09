@@ -2924,50 +2924,52 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
             className="btn-npl btn-npl-primary"
             style={{
               flex: 1,
-              height: 40,
-              padding: '0 16px',
-              fontSize: 13,
-              fontWeight: 800,
+              height: 36,
+              padding: '0 14px',
+              fontSize: 12.5,
+              fontWeight: 700,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
-              borderRadius: 10,
-              boxShadow: '0 2px 8px rgba(199,91,0,0.25)',
+              gap: 6,
+              borderRadius: 8,
+              boxShadow: '0 2px 6px rgba(199,91,0,0.2)',
               background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
               color: '#ffffff',
               border: 'none',
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
             }}
           >
-            <Plus size={16} strokeWidth={2.5} />
+            <Plus size={15} strokeWidth={2.5} />
             <span>Ajouter un produit</span>
           </button>
 
           {/* Menu déroulant compact pour les options secondaires */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
             <button
               type="button"
               onClick={() => setShowMenuOptionsCatalogue(!showMenuOptionsCatalogue)}
               className="btn-npl btn-npl-secondary"
               style={{
-                height: 40,
-                padding: '0 12px',
-                fontSize: 12.5,
-                fontWeight: 700,
+                height: 36,
+                padding: '0 10px',
+                fontSize: 12,
+                fontWeight: 600,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
-                borderRadius: 10,
+                gap: 5,
+                borderRadius: 8,
                 background: '#ffffff',
-                border: '1.5px solid var(--border, #E8DDD2)',
+                border: '1px solid #cbd5e1',
                 color: 'var(--navy, #1C2B4A)',
                 cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}
               title="Plus d'actions (Import CSV, ajout détaillé)"
             >
               <span>⋯ Plus</span>
-              <ChevronDown size={14} />
+              <ChevronDown size={13} />
             </button>
 
             {showMenuOptionsCatalogue && (
@@ -3059,6 +3061,45 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         {/* Ligne 2 : Omni-Recherche & Filtres intégrés SaaS responsive */}
         {produits.length > 0 && (
           <div className="saas-toolbar-container">
+            {/* Pilules de filtres rapides (anti-troncature, harmonisé avec Réseau) */}
+            <div className="saas-filter-pills" style={{ marginBottom: 6 }}>
+              <button
+                type="button"
+                onClick={() => { setFiltreStock('tous'); setFiltreStatut('tous') }}
+                className={`saas-filter-pill ${filtreStock === 'tous' && filtreStatut === 'tous' ? 'active' : ''}`}
+              >
+                Tous ({produits.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltreStock(filtreStock === 'en_stock' ? 'tous' : 'en_stock')}
+                className={`saas-filter-pill ${filtreStock === 'en_stock' ? 'active' : ''}`}
+              >
+                ✅ En stock ({produits.filter(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q > 0 : p.en_stock !== false }).length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltreStock(filtreStock === 'rupture' ? 'tous' : 'rupture')}
+                className={`saas-filter-pill ${filtreStock === 'rupture' ? 'warning-active' : ''}`}
+                style={{
+                  color: filtreStock !== 'rupture' && produits.some(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q <= 0 : p.en_stock === false }) ? '#ea580c' : undefined,
+                  borderColor: filtreStock !== 'rupture' && produits.some(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q <= 0 : p.en_stock === false }) ? '#fed7aa' : undefined,
+                  background: filtreStock !== 'rupture' && produits.some(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q <= 0 : p.en_stock === false }) ? '#fff7ed' : undefined,
+                }}
+              >
+                ⚠️ Ruptures ({produits.filter(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q <= 0 : p.en_stock === false }).length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFiltreStatut(filtreStatut === 'synchronise' ? 'tous' : 'synchronise')}
+                className={`saas-filter-pill ${filtreStatut === 'synchronise' ? 'active' : ''}`}
+              >
+                💬 WhatsApp ({produits.filter(p => p.whatsapp_sync_statut === 'synchronise').length})
+              </button>
+            </div>
             <div className="saas-search-wrap saas-toolbar-full">
               <Search size={14} className="saas-search-icon" />
               <input
@@ -3144,8 +3185,8 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                   className={`saas-toolbar-btn ${selectedProdIds.size > 0 ? 'selected' : ''}`}
                   title={selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout cocher'}
                 >
-                  {selectedProdIds.size === produitsFiltres.length ? <CheckSquare size={14} /> : <Square size={14} />}
-                  <span>{selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout cocher'}</span>
+                  {selectedProdIds.size === produitsFiltres.length ? <CheckSquare size={13} /> : <Square size={13} />}
+                  <span>{selectedProdIds.size === produitsFiltres.length ? 'Désélectionner' : 'Tout cocher'}</span>
                 </button>
               )}
             </div>

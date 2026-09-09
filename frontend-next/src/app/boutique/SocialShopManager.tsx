@@ -997,7 +997,7 @@ export default function SocialShopManager({
         <div className="social-shop-compact-card">
           {/* Barre d'outils et filtres rapides */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%' }}>
               <div className="social-filter-pills">
                 <button
                   type="button"
@@ -1043,16 +1043,17 @@ export default function SocialShopManager({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 5,
+                  gap: 4,
                   background: '#fff7ed',
                   color: '#C75B00',
                   border: '1px solid #fed7aa',
                   borderRadius: 20,
-                  padding: '5px 12px',
+                  padding: '4px 10px',
                   fontSize: 11.5,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   flexShrink: 0,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <Plus size={12} />
@@ -1117,8 +1118,8 @@ export default function SocialShopManager({
                     className={`saas-toolbar-btn ${selectedPostIds.size > 0 ? 'selected' : ''}`}
                     title={selectedPostIds.size === displayedPosts.length ? 'Tout désélectionner' : 'Tout sélectionner'}
                   >
-                    {selectedPostIds.size === displayedPosts.length ? <CheckSquare size={14} /> : <Square size={14} />}
-                    <span>{selectedPostIds.size === displayedPosts.length ? 'Tout désélectionner' : 'Tout cocher'}</span>
+                    {selectedPostIds.size === displayedPosts.length ? <CheckSquare size={13} /> : <Square size={13} />}
+                    <span>{selectedPostIds.size === displayedPosts.length ? 'Désélectionner' : 'Tout cocher'}</span>
                   </button>
                 )}
               </div>
