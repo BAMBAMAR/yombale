@@ -1,3 +1,20 @@
+- **Optimisation & Refonte Responsive Mobile du Social Shop (Dashboard Marchand & Vitrine Publique) (`frontend-next/src/app/globals.css`, `frontend-next/src/app/boutique/SocialShopManager.tsx`, `frontend-next/src/app/boutiques/[id]/SocialShopFeed.tsx`) (09 septembre 2026)** 📱✨🛍️ :
+  * **🎯 1. Contexte & Diagnostic Clé** :
+    - *Observation Utilisateur* : « *revoir la version mobile pas bien adapte pour certaine mobile* » avec capture d'écran mobile.
+    - *Problème Majeur* : Les 4 indicateurs KPIs (*Publications en ligne*, *À associer à un produit*, *Vues sociales*, *Clics WhatsApp*) s'empilaient en une colonne verticale unique occupant plus de 60% de l'écran car `repeat(auto-fit, minmax(140px, 1fr))` basculait en 1 colonne sur les écrans < 292px utiles.
+    - *Problèmes Secondaires* : Paddings rigides `24px` en inline styles écrasant le contenu, bouton live flottant et asymétrique, risque de débordement horizontal causé par `minWidth: 280`, lignes de publications désordonnées sur mobile.
+  * **🛠️ 2. Solutions Appliquées** :
+    - *Grille 2×2 Compacte* : Ajout de `.social-kpi-grid` forçant 2 colonnes (`repeat(2, 1fr)`) sur mobile, réduisant la hauteur de 380px à 110px.
+    - *Paddings Responsives* : Classe `.social-shop-card` (14px sur mobile, 10px sur écrans < 400px).
+    - *CTA Pleine Largeur* : Bouton « Voir mon Social Shop en direct » pleine largeur et centré au pouce.
+    - *Anti-Débordement Formulaire* : Remplacement de `minWidth: 280` par `flex: '1 1 200px', minWidth: 0`.
+    - *Lignes de Publication & Barre Tactile* : Structure `.social-post-row` scindant aperçu visuel et barre d'actions tactile au bas de la carte.
+    - *Vitrine Publique 2 Colonnes* : Grille `.social-feed-grid-public` en 2 colonnes style Reels sur smartphone.
+  * **🧪 3. Validation** :
+    - 35/35 tests unitaires validés avec succès.
+    - Validation TypeScript `tsc --noEmit` à 100% (0 erreur).
+    - Build de production Next.js validé avec succès (`npm run build`).
+
 - **Résolution Définitive des Faux Échecs `#131047` (Fenêtre 24h) & Activation du Template Pur Texte `nopalou_contact_direct` (`backend/services/prospection.js`, `backend/services/whatsapp.js`, `backend/routes/whatsapp.js`) (09 septembre 2026)** 🛡️⚡📲 :
   * **🎯 1. Diagnostic Crucial de la Vague de 18:48 (Cas des 33 échecs `#131047`)** :
     - *Observation Utilisateur* : Une campagne lancée à 18:47-18:49 affichait 33 messages en `statut: echec` avec l'erreur `Rejet Meta 131047 : Fenêtre 24h fermée.`.

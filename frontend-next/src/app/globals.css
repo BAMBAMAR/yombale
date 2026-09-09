@@ -13639,3 +13639,317 @@ label,
     height: 36px;
   }
 }
+
+/* ==========================================================================
+   📱 SOCIAL SHOP & SOCIAL COMMERCE — RESPONSIVE DESIGN SYSTEM
+   ========================================================================== */
+
+.social-shop-manager-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.social-shop-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.social-shop-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.social-shop-header-title {
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.social-shop-live-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0f172a;
+  color: #ffffff !important;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.social-shop-live-btn:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+/* 4 KPIs Clés : 4 colonnes sur desktop, STRICTEMENT 2 colonnes sur mobile */
+.social-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.social-kpi-item {
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.social-kpi-label {
+  display: block;
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-kpi-value {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Ruban d'onglets pour les modes d'acquisition */
+.social-tabs-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.social-tabs-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.social-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+/* Grille des comptes sociaux */
+.social-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+.social-platform-card {
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Publications list item */
+.social-post-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.social-post-actions-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Grille de découverte de profil (Zéro lien) */
+.social-discovered-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Grille vitrine publique 2 colonnes mobile */
+.social-feed-grid-public {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* ── ADAPTATION TABLETTE & MOBILE (<= 768px) ── */
+@media (max-width: 768px) {
+  .social-shop-manager-wrap {
+    gap: 14px !important;
+  }
+
+  .social-shop-card {
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .social-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .social-kpi-item {
+    padding: 10px 12px !important;
+  }
+
+  .social-kpi-label {
+    font-size: 11px !important;
+  }
+
+  .social-kpi-value {
+    font-size: 19px !important;
+  }
+
+  .social-shop-header-row {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .social-shop-live-btn {
+    width: 100% !important;
+    padding: 11px 16px !important;
+    font-size: 13.5px !important;
+    box-sizing: border-box;
+  }
+
+  .social-platform-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .social-platform-card {
+    padding: 14px 12px !important;
+  }
+
+  .social-discovered-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .social-post-row {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+
+  .social-post-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .social-post-actions-toolbar {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+    margin-top: 2px;
+    gap: 6px !important;
+  }
+
+  .social-post-actions-toolbar > button,
+  .social-post-actions-toolbar > a {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 8px 6px !important;
+    font-size: 12px !important;
+  }
+
+  .social-feed-grid-public {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
+/* ── ADAPTATION EXTRA COMPACT (< 400px : iPhone SE, Android 360px, 320px) ── */
+@media (max-width: 400px) {
+  .social-shop-card {
+    padding: 14px 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .social-kpi-grid {
+    gap: 8px !important;
+  }
+
+  .social-kpi-item {
+    padding: 8px 10px !important;
+  }
+
+  .social-kpi-label {
+    font-size: 10.5px !important;
+  }
+
+  .social-kpi-value {
+    font-size: 17px !important;
+  }
+
+  .social-tab-btn {
+    padding: 7px 12px !important;
+    font-size: 12px !important;
+  }
+}
+

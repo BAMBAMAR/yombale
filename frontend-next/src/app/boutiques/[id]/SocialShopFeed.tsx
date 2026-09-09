@@ -413,9 +413,9 @@ export default function SocialShopFeed({
 
       {/* ── ÉTATS DE CHARGEMENT & EMPTY STATE ── */}
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', gap: 16 }}>
+        <div className="social-feed-grid-public">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} style={{ height: 380, borderRadius: 16, background: '#f1f5f9', animation: 'pulse 1.5s infinite ease-in-out' }} />
+            <div key={i} style={{ height: 320, borderRadius: 16, background: '#f1f5f9', animation: 'pulse 1.5s infinite ease-in-out' }} />
           ))}
         </div>
       ) : filteredPosts.length === 0 ? (
@@ -457,11 +457,7 @@ export default function SocialShopFeed({
         </div>
       ) : (
         /* ── GRILLE DE PUBLICATIONS SOCIAL SHOP (MOBILE-FIRST) ── */
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))',
-          gap: 16,
-        }}>
+        <div className="social-feed-grid-public">
           {filteredPosts.map(post => {
             const conf = PLATFORM_CONFIG[post.plateforme as keyof typeof PLATFORM_CONFIG] || PLATFORM_CONFIG.tiktok
             const hasProducts = post.produits_associes && post.produits_associes.length > 0

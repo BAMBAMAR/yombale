@@ -589,17 +589,11 @@ export default function SocialShopManager({
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="social-shop-manager-wrap">
       {/* ── HEADER ET STATS DE CONVERSION SOCIAL SHOP ── */}
-      <div style={{
-        background: '#ffffff',
-        borderRadius: 16,
-        padding: '24px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 20 }}>
-          <div>
+      <div className="social-shop-card">
+        <div className="social-shop-header-row">
+          <div className="social-shop-header-title">
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7f0', color: '#C75B00', padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
               <Sparkles size={13} /> Vitrine Social Commerce
             </div>
@@ -615,52 +609,40 @@ export default function SocialShopManager({
             href={`/boutiques/${boutiqueSlug || boutiqueId}?tab=social`}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: '#0f172a',
-              color: '#ffffff',
-              padding: '10px 18px',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 800,
-              textDecoration: 'none',
-              boxShadow: '0 4px 12px rgba(15,23,42,0.15)',
-            }}
+            className="social-shop-live-btn"
           >
             <span>Voir mon Social Shop en direct</span>
             <ExternalLink size={14} />
           </a>
         </div>
 
-        {/* 4 KPIs Clés */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-          <div style={{ background: '#f8fafc', padding: '14px', borderRadius: 12, border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 700 }}>Publications en ligne</span>
-            <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>
+        {/* 4 KPIs Clés : 4 colonnes sur desktop, 2x2 compact sur mobile */}
+        <div className="social-kpi-grid">
+          <div className="social-kpi-item">
+            <span className="social-kpi-label">Publications en ligne</span>
+            <p className="social-kpi-value" style={{ color: '#0f172a' }}>
               {stats.posts_affiches || 0}
               <span style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8' }}> / {stats.total_posts || 0}</span>
             </p>
           </div>
 
-          <div style={{ background: '#f8fafc', padding: '14px', borderRadius: 12, border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 700 }}>À associer à un produit</span>
-            <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 900, color: (stats.posts_sans_produits || 0) > 0 ? '#ea580c' : '#16a34a' }}>
+          <div className="social-kpi-item">
+            <span className="social-kpi-label">À associer à un produit</span>
+            <p className="social-kpi-value" style={{ color: (stats.posts_sans_produits || 0) > 0 ? '#ea580c' : '#16a34a' }}>
               {stats.posts_sans_produits || 0}
             </p>
           </div>
 
-          <div style={{ background: '#f8fafc', padding: '14px', borderRadius: 12, border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 700 }}>Vues sociales (30j)</span>
-            <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 900, color: '#2563eb' }}>
+          <div className="social-kpi-item">
+            <span className="social-kpi-label">Vues sociales (30j)</span>
+            <p className="social-kpi-value" style={{ color: '#2563eb' }}>
               {analytics.vues_sociales || 0}
             </p>
           </div>
 
-          <div style={{ background: '#f8fafc', padding: '14px', borderRadius: 12, border: '1px solid #f1f5f9' }}>
-            <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 700 }}>Clics WhatsApp générés</span>
-            <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 900, color: '#16a34a' }}>
+          <div className="social-kpi-item">
+            <span className="social-kpi-label">Clics WhatsApp</span>
+            <p className="social-kpi-value" style={{ color: '#16a34a' }}>
               {analytics.clics_whatsapp || 0}
             </p>
           </div>
@@ -668,17 +650,12 @@ export default function SocialShopManager({
       </div>
 
       {/* ── SECTION 1 : COMPTES SOCIAUX OFFICIELS MARCHAND ── */}
-      <div style={{
-        background: '#ffffff',
-        borderRadius: 16,
-        padding: '24px',
-        border: '1px solid #e2e8f0',
-      }}>
+      <div className="social-shop-card">
         <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
           1. Connecter mes profils officiels
         </h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
+        <div className="social-platform-grid">
           {[
             { key: 'instagram', label: 'Instagram', icon: '📸', placeholder: '@maboutique ou lien profil' },
             { key: 'tiktok', label: 'TikTok', icon: '🎵', placeholder: '@maboutique ou lien profil' },
@@ -690,14 +667,10 @@ export default function SocialShopManager({
             return (
               <div
                 key={plat.key}
+                className="social-platform-card"
                 style={{
                   background: acc ? '#f0fdf4' : '#f8fafc',
                   border: acc ? '1.5px solid #bbf7d0' : '1px solid #e2e8f0',
-                  borderRadius: 14,
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -792,7 +765,7 @@ export default function SocialShopManager({
                     </div>
 
                     {acc && (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed #bbf7d0', paddingTop: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, borderTop: '1px dashed #bbf7d0', paddingTop: 8 }}>
                         <button
                           type="button"
                           onClick={() => handleToggleAutoSync(acc)}
@@ -850,12 +823,7 @@ export default function SocialShopManager({
       {/* ── SECTION 2 : ACQUISITION DE PUBLICATIONS (3 MODES AU CHOIX) ── */}
       <div
         id="social-selection-section"
-        style={{
-          background: '#ffffff',
-          borderRadius: 16,
-          padding: '24px',
-          border: '1px solid #e2e8f0',
-        }}
+        className="social-shop-card"
       >
         <div style={{ marginBottom: 16 }}>
           <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
@@ -867,78 +835,47 @@ export default function SocialShopManager({
         </div>
 
         {/* Barre de navigation des 3 Modes */}
-        <div style={{
-          display: 'flex',
-          gap: 8,
-          marginBottom: 20,
-          borderBottom: '2px solid #f1f5f9',
-          paddingBottom: 8,
-          overflowX: 'auto',
-        }}>
+        <div className="social-tabs-nav">
           <button
             type="button"
             onClick={() => setImportMode('profile')}
+            className="social-tab-btn"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 16px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 800,
-              cursor: 'pointer',
-              border: 'none',
               background: importMode === 'profile' ? '#C75B00' : '#f8fafc',
               color: importMode === 'profile' ? '#ffffff' : '#475569',
               boxShadow: importMode === 'profile' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
             }}
           >
             <Sparkles size={15} />
-            <span>🔍 Aspirateur par @pseudo (Zéro lien)</span>
+            <span>🔍 Aspirateur @pseudo</span>
           </button>
 
           <button
             type="button"
             onClick={() => setImportMode('batch')}
+            className="social-tab-btn"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 16px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 800,
-              cursor: 'pointer',
-              border: 'none',
               background: importMode === 'batch' ? '#C75B00' : '#f8fafc',
               color: importMode === 'batch' ? '#ffffff' : '#475569',
               boxShadow: importMode === 'batch' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
             }}
           >
             <Layers size={15} />
-            <span>📋 Coller plusieurs liens (En lot)</span>
+            <span>📋 Liens en lot</span>
           </button>
 
           <button
             type="button"
             onClick={() => setImportMode('single')}
+            className="social-tab-btn"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 16px',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 800,
-              cursor: 'pointer',
-              border: 'none',
               background: importMode === 'single' ? '#C75B00' : '#f8fafc',
               color: importMode === 'single' ? '#ffffff' : '#475569',
               boxShadow: importMode === 'single' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
             }}
           >
             <Link2 size={15} />
-            <span>🔗 Lien unique rapide</span>
+            <span>🔗 Lien unique</span>
           </button>
         </div>
 
@@ -964,6 +901,7 @@ export default function SocialShopManager({
                   fontWeight: 700,
                   background: '#ffffff',
                   outline: 'none',
+                  flex: '0 0 auto',
                 }}
               >
                 <option value="tiktok">🎵 TikTok</option>
@@ -971,7 +909,7 @@ export default function SocialShopManager({
                 <option value="facebook">📘 Facebook</option>
               </select>
 
-              <div style={{ flex: 1, minWidth: 240, position: 'relative' }}>
+              <div style={{ flex: '1 1 200px', minWidth: 0, position: 'relative' }}>
                 <input
                   type="text"
                   placeholder="Ex: wax_dakar_chic ou @votre_boutique"
@@ -1004,7 +942,9 @@ export default function SocialShopManager({
                   cursor: exploringProfile ? 'not-allowed' : 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 8,
+                  flex: '1 1 auto',
                 }}
               >
                 {exploringProfile ? (
@@ -1139,7 +1079,7 @@ export default function SocialShopManager({
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, maxHeight: 380, overflowY: 'auto', paddingRight: 4 }}>
+                <div className="social-discovered-grid">
                   {discoveredPosts.map((post, idx) => {
                     const isSelected = selectedDiscoveredUrls.has(post.url)
                     return (
@@ -1205,7 +1145,7 @@ export default function SocialShopManager({
                   })}
                 </div>
 
-                <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     onClick={handleImportDiscovered}
@@ -1221,7 +1161,9 @@ export default function SocialShopManager({
                       cursor: importingDiscovered || selectedDiscoveredUrls.size === 0 ? 'not-allowed' : 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
                       gap: 8,
+                      flex: '1 1 auto',
                       boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
                     }}
                   >
@@ -1289,7 +1231,9 @@ export default function SocialShopManager({
                   cursor: batchImporting ? 'not-allowed' : 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 8,
+                  flex: '1 1 auto',
                   boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
                 }}
               >
@@ -1313,7 +1257,7 @@ export default function SocialShopManager({
         {importMode === 'single' && (
           <form onSubmit={handleImportUrl} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: 280, position: 'relative' }}>
+              <div style={{ flex: '1 1 200px', minWidth: 0, position: 'relative' }}>
                 <Link2 size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                 <input
                   type="url"
@@ -1347,7 +1291,9 @@ export default function SocialShopManager({
                   cursor: importing ? 'not-allowed' : 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 8,
+                  flex: '1 1 auto',
                   boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
                 }}
               >
@@ -1402,12 +1348,7 @@ export default function SocialShopManager({
       </div>
 
       {/* ── SECTION 3 : GESTION DES CONTENUS DU SOCIAL SHOP ── */}
-      <div style={{
-        background: '#ffffff',
-        borderRadius: 16,
-        padding: '24px',
-        border: '1px solid #e2e8f0',
-      }}>
+      <div className="social-shop-card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
             3. Gestion & Curation des publications ({posts.length})
@@ -1437,113 +1378,113 @@ export default function SocialShopManager({
             {posts.map(post => (
               <div
                 key={post.id}
+                className="social-post-row"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: '14px',
-                  borderRadius: 14,
                   background: post.visible ? '#ffffff' : '#f8fafc',
                   border: post.is_featured ? '2px solid #C75B00' : '1px solid #e2e8f0',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                  flexWrap: 'wrap',
                 }}
               >
-                {/* Miniature Vidéo / Photo */}
-                <div style={{ width: 70, height: 95, borderRadius: 10, background: '#0f172a', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                  {post.thumbnail_url ? (
-                    <ExternalImg src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 20 }}>
-                      🎬
-                    </div>
-                  )}
-                  <span style={{ position: 'absolute', top: 4, left: 4, fontSize: 10, background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>
-                    {post.plateforme.slice(0, 2).toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Métadonnées & Légende */}
-                <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#C75B00', textTransform: 'uppercase' }}>
-                      {post.plateforme}
+                <div className="social-post-main">
+                  {/* Miniature Vidéo / Photo */}
+                  <div style={{ width: 68, height: 90, borderRadius: 10, background: '#0f172a', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+                    {post.thumbnail_url ? (
+                      <ExternalImg src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 20 }}>
+                        🎬
+                      </div>
+                    )}
+                    <span style={{ position: 'absolute', top: 4, left: 4, fontSize: 10, background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>
+                      {post.plateforme.slice(0, 2).toUpperCase()}
                     </span>
-                    {post.auteur && (
-                      <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>
-                        par {post.auteur}
-                      </span>
-                    )}
-                    {post.is_featured && (
-                      <span style={{ fontSize: 10.5, background: '#fff7f0', color: '#C75B00', border: '1px solid #fed7aa', padding: '1px 6px', borderRadius: 10, fontWeight: 800 }}>
-                        ⭐ À la une
-                      </span>
-                    )}
                   </div>
 
-                  <p style={{ margin: '0 0 8px', fontSize: 13, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {post.caption || 'Publication sans légende'}
-                  </p>
-
-                  {/* Produits Associés à cette publication */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    {post.produits && post.produits.length > 0 ? (
-                      post.produits.map(prod => (
-                        <span
-                          key={prod.id}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            background: '#f1f5f9',
-                            border: '1px solid #cbd5e1',
-                            padding: '3px 8px',
-                            borderRadius: 6,
-                            fontSize: 11.5,
-                            fontWeight: 700,
-                            color: '#0f172a',
-                          }}
-                        >
-                          <ShoppingBag size={11} style={{ color: '#C75B00' }} />
-                          <span>{prod.nom} ({prod.prix ? fcfa(prod.prix) : '—'})</span>
-                          <button
-                            onClick={() => handleDissociateProduct(post.id, prod.id)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, marginLeft: 2 }}
-                            title="Dissocier ce produit"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))
-                    ) : (
-                      <span style={{ fontSize: 11.5, color: '#ea580c', fontWeight: 700 }}>
-                        ⚠️ Aucun produit associé
+                  {/* Métadonnées & Légende */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: '#C75B00', textTransform: 'uppercase' }}>
+                        {post.plateforme}
                       </span>
-                    )}
+                      {post.auteur && (
+                        <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>
+                          par {post.auteur}
+                        </span>
+                      )}
+                      {post.is_featured && (
+                        <span style={{ fontSize: 10.5, background: '#fff7f0', color: '#C75B00', border: '1px solid #fed7aa', padding: '1px 6px', borderRadius: 10, fontWeight: 800 }}>
+                          ⭐ À la une
+                        </span>
+                      )}
+                    </div>
 
-                    <button
-                      onClick={() => setSelectedPostForProduct(post)}
-                      style={{
-                        background: '#fff',
-                        border: '1px dashed #C75B00',
-                        color: '#C75B00',
-                        borderRadius: 6,
-                        padding: '3px 8px',
-                        fontSize: 11,
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Plus size={12} /> Associer un produit
-                    </button>
+                    <p style={{ margin: '0 0 8px', fontSize: 13, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {post.caption || 'Publication sans légende'}
+                    </p>
+
+                    {/* Produits Associés à cette publication */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {post.produits && post.produits.length > 0 ? (
+                        post.produits.map(prod => (
+                          <span
+                            key={prod.id}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              background: '#f1f5f9',
+                              border: '1px solid #cbd5e1',
+                              padding: '3px 8px',
+                              borderRadius: 6,
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              color: '#0f172a',
+                              maxWidth: '100%',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <ShoppingBag size={11} style={{ color: '#C75B00', flexShrink: 0 }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {prod.nom} ({prod.prix ? fcfa(prod.prix) : '—'})
+                            </span>
+                            <button
+                              onClick={() => handleDissociateProduct(post.id, prod.id)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, marginLeft: 2, flexShrink: 0 }}
+                              title="Dissocier ce produit"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: 11.5, color: '#ea580c', fontWeight: 700 }}>
+                          ⚠️ Aucun produit associé
+                        </span>
+                      )}
+
+                      <button
+                        onClick={() => setSelectedPostForProduct(post)}
+                        style={{
+                          background: '#fff',
+                          border: '1px dashed #C75B00',
+                          color: '#C75B00',
+                          borderRadius: 6,
+                          padding: '3px 8px',
+                          fontSize: 11,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <Plus size={12} /> Associer un produit
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Actions Marchand */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <div className="social-post-actions-toolbar">
                   <button
                     onClick={() => handleToggleVisible(post)}
                     style={{
