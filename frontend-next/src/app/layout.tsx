@@ -313,7 +313,7 @@ export default async function RootLayout({
               </a>
               <p className="footer-tagline">Le premier comparateur de prix dédié au marché sénégalais — produits, immobilier, forfaits télécom.</p>
               <div className="footer-social" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
-                <a href="https://www.tiktok.com/@nopalou.com?_r=1&_t=ZS-98f75NgDJNS" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok Officiel" className="footer-social-link footer-social-link--tiktok">
+                <a href="https://www.tiktok.com/@nopalou.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok Officiel" className="footer-social-link footer-social-link--tiktok">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-5.2-1.74 2.89 2.89 0 0 1 2.31-2.85V7.6a6.34 6.34 0 0 0-5.1 6.2 6.34 6.34 0 1 0 10.9-4.38v-3.7a8.16 8.16 0 0 0 4.31 1.25v-3.28a4.85 4.85 0 0 1-.03-.01z"/></svg>
                 </a>
                 <a href="https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33" target="_blank" rel="noopener noreferrer" aria-label="Canal WhatsApp" title="Canal WhatsApp Officiel" className="footer-social-link footer-social-link--whatsapp">
@@ -325,7 +325,7 @@ export default async function RootLayout({
                 <a href="https://www.instagram.com/nopalousn/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram" className="footer-social-link footer-social-link--instagram">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                 </a>
-                <a href="https://twitter.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X" title="Twitter / X" className="footer-social-link footer-social-link--twitter">
+                <a href="https://x.com/nopalou_sn" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X" title="Twitter / X" className="footer-social-link footer-social-link--twitter">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                 </a>
               </div>

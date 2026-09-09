@@ -27,7 +27,7 @@ async function envoyerAlertePrix(alerte, nouveauPrix) {
       title: `📉 Baisse de prix : ${alerte.produit_nom}`,
       detail: `Nouveau prix: ${prixFmt} FCFA (votre cible: ${cibleFmt} FCFA)`,
       url: `${SITE}/?produit=${alerte.produit_id}`,
-      buttonParam: `?produit=${alerte.produit_id}`,
+      buttonParam: String(alerte.produit_id),
     }).catch(() => {});
   }
 
@@ -37,13 +37,13 @@ async function envoyerAlertePrix(alerte, nouveauPrix) {
 async function confirmationCommande(telephone, reference) {
   console.log(`[COMMANDE] #${reference} confirmée → ${telephone}`);
   if (telephone) {
-    const textMsg = `✅ *Paiement confirmé — Nopalou*\n\nVotre paiement (réf. *${reference}*) a bien été reçu et traité. Merci de votre confiance !\n\n👉 ${SITE}`;
+    const textMsg = `✅ *Paiement confirmé — Nopalou*\n\nVotre paiement (réf. *${reference}*) a bien été reçu et traité. Merci de votre confiance !\n\n👉 ${SITE}/suivi-commande?ref=${encodeURIComponent(reference)}`;
     await sendWhatsAppNotification(telephone, {
       textMessage: textMsg,
       title: `✅ Paiement confirmé — Nopalou`,
       detail: `Votre paiement pour la commande réf. ${reference} a bien été reçu et validé.`,
-      url: SITE,
-      buttonParam: 'commandes',
+      url: `${SITE}/suivi-commande?ref=${encodeURIComponent(reference)}`,
+      buttonParam: String(reference),
     }).catch(() => {});
   }
 }

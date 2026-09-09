@@ -296,11 +296,11 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
               {[
-                { name: 'TikTok Officiel', handle: '@nopalou.com', url: 'https://www.tiktok.com/@nopalou.com?_r=1&_t=ZS-98f75NgDJNS', icon: '🎵', bg: '#000', color: '#fff' },
+                { name: 'TikTok Officiel', handle: '@nopalou.com', url: 'https://www.tiktok.com/@nopalou.com', icon: '🎵', bg: '#000', color: '#fff' },
                 { name: 'Canal WhatsApp', handle: 'Canal Nopalou.com', url: 'https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33', icon: '📢', bg: '#25D366', color: '#fff' },
                 { name: 'Facebook Page', handle: 'Nopalou Sénégal', url: 'https://www.facebook.com/profile.php?id=61591675701726', icon: '📘', bg: '#1877F2', color: '#fff' },
                 { name: 'Instagram', handle: '@nopalousn', url: 'https://www.instagram.com/nopalousn/', icon: '📸', bg: '#E4405F', color: '#fff' },
-                { name: 'Twitter / X', handle: '@nopalou_sn', url: 'https://twitter.com/nopalou_sn', icon: '𝕏', bg: '#0f172a', color: '#fff' },
+                { name: 'Twitter / X', handle: '@nopalou_sn', url: 'https://x.com/nopalou_sn', icon: '𝕏', bg: '#0f172a', color: '#fff' },
                 { name: 'WhatsApp Support', handle: '+221 70 871 79 42', url: 'https://wa.me/221708717942', icon: '💬', bg: '#128C7E', color: '#fff' },
               ].map(s => (
                 <div key={s.name} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px', background: '#fff', display: 'flex', flexDirection: 'column', gap: 10 }}>

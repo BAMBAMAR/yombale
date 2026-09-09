@@ -819,7 +819,7 @@ router.get('/:id', async (req, res) => {
          WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
          ORDER BY fin DESC LIMIT 1
        ) a ON true
-       WHERE (b.id::text = $1 OR b.slug = $1)`,
+       WHERE (b.id::text = $1 OR LOWER(b.slug) = LOWER($1))`,
       [param]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -1788,7 +1788,7 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
   try {
     const idParam = req.params.id;
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const boutiqueCondition = isUUID ? 'b.id=$2' : 'b.slug=$2';
+    const boutiqueCondition = isUUID ? 'b.id=$2' : 'LOWER(b.slug)=LOWER($2)';
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images,
               COALESCE(CASE WHEN p.stock_quantite IS NOT NULL THEN (p.stock_quantite > 0) ELSE p.en_stock END, true) AS en_stock,
@@ -5050,14 +5050,14 @@ router.post('/commandes/express', async (req, res) => {
         const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
         const titleTpl = `✅ Commande enregistrée — ${bqRes.rows[0].nom}`;
         const detailTpl = `Réf ${ref} : ${articlesStr} (${totalFmt} FCFA). Paiement: ${methodeLabel[methode_paiement] || methode_paiement}`;
-        const urlTpl = `${SITE}/boutiques/${bqRes.rows[0].slug || bqRes.rows[0].id}`;
+        const urlTpl = `${SITE}/suivi-commande?ref=${encodeURIComponent(ref)}`;
 
         sendWhatsAppNotification(client_telephone.trim(), {
           textMessage: msgClient,
           title: titleTpl,
           detail: detailTpl,
           url: urlTpl,
-          buttonParam: bqRes.rows[0].slug || bqRes.rows[0].id,
+          buttonParam: String(ref),
         })
           .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation envoyée au ${client_telephone}`))
           .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));

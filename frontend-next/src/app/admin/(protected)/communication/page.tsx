@@ -139,7 +139,7 @@ const TEXTES = [
     nom: '@nopalou.com',
     categorie: 'Compte professionnel · Créateur de contenu',
     bio: '🛒 Comparateur de prix N°1 au Sénégal 🇸🇳\n💰 Trouvez le prix le moins cher à Dakar en 1-clic !\n📲 nopalou.com',
-    site: 'https://www.tiktok.com/@nopalou.com?_r=1&_t=ZS-98f75NgDJNS',
+    site: 'https://www.tiktok.com/@nopalou.com',
     hashtags: '#Nopalou #Dakar #Sénégal #BonPlan #PrixMoinsCher #shopping #fyp #senegal',
   },
   {
@@ -157,7 +157,7 @@ const TEXTES = [
     nom: '@nopalou_sn',
     categorie: 'Compte officiel',
     bio: '⚡ Comparateur de prix N°1 au Sénégal. Produits, Immobilier, Télécom. Économisez sur vos achats à Dakar !',
-    site: 'https://twitter.com/nopalou_sn',
+    site: 'https://x.com/nopalou_sn',
     hashtags: '#Nopalou #Sénégal #Dakar',
   },
 ]
@@ -211,7 +211,7 @@ Vous en avez assez de payer trop cher ? Nopalou compare les prix de milliers de 
 
 👉 Comparez maintenant sur nopalou.com
 👉 Suivez notre Canal WhatsApp : https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33
-👉 Suivez-nous sur TikTok : https://www.tiktok.com/@nopalou.com?_r=1&_t=ZS-98f75NgDJNS
+👉 Suivez-nous sur TikTok : https://www.tiktok.com/@nopalou.com
 
 #Nopalou #Sénégal #Dakar #PrixMoinsCher #Shopping #BonPlan #fyp`,
   },

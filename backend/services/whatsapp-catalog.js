@@ -66,7 +66,7 @@ async function syncProduit(produit) {
     price:        Math.round((produit.prix || 0) * 100), // en centimes
     currency:     'XOF',
     availability: produit.en_stock !== false ? 'in stock' : 'out of stock',
-    url:          `${SITE}/boutiques/${produit.boutique_slug}/produits/${produit.id}`,
+    url:          `${SITE}/boutiques/${produit.boutique_slug || produit.boutique_id}/produits/${produit.id}`,
     image_url:    produit.images?.[0] || '',
     condition:    mapEtatToCondition(caracteristiques.etat),
   };

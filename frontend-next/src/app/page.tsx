@@ -667,7 +667,7 @@ export default async function HomePage({
 
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a
-                  href="https://www.tiktok.com/@nopalou.com?_r=1&_t=ZS-98f75NgDJNS"
+                  href="https://www.tiktok.com/@nopalou.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 20, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.15s ease' }}

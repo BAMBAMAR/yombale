@@ -1,3 +1,33 @@
+- **Résolution & Audit Exhaustif : Boutons « Voir... » WhatsApp, Résolveur Universel Anti-404 & Routage Suivi Commande (`entites.js`, `boutiques.js`, `comptabilite.js`, `paiement.js`, `notifications.js`, `whatsapp-chatbot.js`, `immo/[id]/page.tsx`, `cron-relances-carnet.js`) (09 septembre 2026)** 🔘🔗📲🛡️ :
+  * **🎯 1. Demande & Diagnostic** :
+    - *Demande Utilisateur* : « FAIRE un audit sur les bouton voir... dans whatsapp ca renvoi ves 404 ou vers une page incoherente »
+    - *Causes racines identifiées* :
+      1. **Nettoyage WhatsApp non-alphanumérique** : Le helper `sendWhatsAppNotification` applique `.replace(/[^a-zA-Z0-9_-]/g, '')`. Tout paramètre contenant un slash (ex: `boutiques/mon-shop`, `annonces/123`, `immo/456`) devenait un token concaténé collé (`boutiquesmon-shop`, `annonces123`, `immo456`), que le résolveur d'entités rejetait.
+      2. **Template Meta `nopalou_fiche_texte` rigide** : Le template WhatsApp certifié par Meta a pour URL dynamique fixe `https://nopalou.com/immo/{{1}}`. Si le paramètre n'était pas reconnu, la page `/immo/[id]` redirigeait aveuglément vers `/immo` (affichant des appartements/villas à des clients consultant une commande, une dette ou un smartphone).
+      3. **Boutons Notifications Commandes Client** : Plusieurs notifications (`comptabilite.js`, `paiement.js`, `boutiques.js`) passaient le slug de la boutique ou la chaîne `'commandes'` dans `buttonParam`, envoyant le client final vers l'espace marchand `/boutique?tab=commandes` (qui le redirigeait aussitôt vers `/connexion`).
+      4. **Boutiques sans slug (`slug: null`)** : Certaines boutiques en base avaient `slug = null`, générant des liens morts `/boutiques/null`.
+      5. **Casse des slugs en base** : Les requêtes SQL filtraient avec `slug = $1` sans `LOWER()`, provoquant des 404 si la casse variait dans le bouton.
+      6. **Alerte Baisse de Prix** : `buttonParam` envoyait `?produit=ID`, assaini en `produit123` et échouant à la résolution.
+  * **🛠️ 2. Correctifs Appliqués** :
+    - *Résolveur Universel Renforcé (`backend/routes/entites.js`)* :
+      * Prise en charge des préfixes collés issus du nettoyage WhatsApp : regex pour `^boutiques?([a-z0-9_-]+)`, `^annonces?([a-z0-9_-]+)`, `^immo([a-z0-9_-]+)`, `^produits?([a-z0-9_-]+)`, `^produit(\d+)`.
+      * Prise en charge des identifiants produits Meta Commerce (`nopalou-produit-[a-z0-9_-]+`).
+      * Prise en charge universelle des références commandes (`CMD-...`, `cmd_...`, `C-...`, `PAY-...`).
+      * Recherche insensible à la casse (`LOWER(slug) = LOWER($1)`).
+    - *Routage Suivi Commande Client Dédié* :
+      * Dans `comptabilite.js`, `paiement.js` et `boutiques.js`, remplacement du slug boutique par la référence de la commande (`commande.reference` ou `ref`).
+      * Le résolveur redirige directement le client final vers `/suivi-commande?ref=CMD-...` sans forcer de connexion ni afficher 404.
+    - *Protection Anti-404 Slugs Nulls & Fallbacks* :
+      * Dans `whatsapp-chatbot.js` et `whatsapp-catalog.js` : remplacement systématique de `boutique.slug` par `(boutique.slug || boutique.id)`.
+      * Dans `boutiques.js` : requêtes publiques insensibles à la casse (`LOWER(b.slug) = LOWER(...)`).
+      * Dans `frontend-next/src/app/immo/[id]/page.tsx` : si l'entité résolue n'est pas un bien immobilier, redirection propre vers l'accueil (`/`) au lieu de forcer `/immo`.
+    - *Bouton Chatbot « 🏪 Voir la boutique »* :
+      * Interception directe de l'action `boutique_<slugOrId>` pour ouvrir le menu boutique complet interactif (`envoyerMenuBoutique`).
+  * **🧪 3. Validation** :
+    - Tests unitaires `tests/unit/whatsapp-notification.test.js` & `tests/unit/entites-resolver.test.js` passés à 100%.
+    - Build Next.js de production `npm --prefix frontend-next run build` passé avec succès (code 0).
+    - Respect absolu des règles de déploiement et de sécurité.
+
 - **Refonte Écosystème Réseaux Sociaux & Social Commerce (`social-parser.js`, `boutiques.js`, `migrate-inline.js`, `BoutiqueClient.tsx`, `BoutiqueDetailClient.tsx`, `ModalPartageProduit.tsx`, `CommanderModal.tsx`, `AnalyticsClient.tsx`, `analytics.js`) (09 septembre 2026)** 📱🛒📊 :
   * **🎯 1. Contexte & Mission** :
     - Mission exhaustive : passer de "Nopalou a des liens vers les réseaux sociaux" à "Les réseaux sociaux sont une extension de la boutique Nopalou" en mode Social Commerce complet.

@@ -114,8 +114,8 @@ async function traiterRelancesAutomatiquesWhatsApp(boutiqueId = null) {
 
       const dateEchFmt = r.plus_ancienne_echeance ? new Date(r.plus_ancienne_echeance).toLocaleDateString('fr-FR') : 'échéance dépassée';
       const contactBq = r.boutique_whatsapp || r.boutique_tel || '';
-      const bqParam = r.boutique_slug ? `boutiques/${r.boutique_slug}` : `boutiques/${r.boutique_id}`;
-      const bqUrl = `${SITE}/${bqParam}`;
+      const bqParam = r.boutique_slug || r.boutique_id;
+      const bqUrl = `${SITE}/boutiques/${bqParam}`;
 
       const textMessage = `Bonjour ${r.client_nom},\n\n` +
         `Rappel amical de *${r.boutique_nom}* concernant votre carnet de crédit.\n` +

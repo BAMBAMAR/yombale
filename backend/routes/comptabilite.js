@@ -823,14 +823,14 @@ router.post(
           const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
           const titleTpl = `✅ Commande enregistrée — ${boutique.nom}`;
           const detailTpl = `Réf ${commande.reference} : ${commande.nom_produit} × ${commande.quantite} (${montantFmt} FCFA). Paiement: ${methodeLabel[commande.methode_paiement] || commande.methode_paiement}`;
-          const urlTpl = `${SITE}/boutiques/${boutique.slug || boutique.id}`;
+          const urlTpl = `${SITE}/suivi-commande?ref=${encodeURIComponent(commande.reference)}`;
 
           sendWhatsAppNotification(commande.client_telephone, {
             textMessage: msgClient,
             title: titleTpl,
             detail: detailTpl,
             url: urlTpl,
-            buttonParam: boutique.slug || boutique.id,
+            buttonParam: String(commande.reference),
           })
             .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation commande envoyée au ${commande.client_telephone}`))
             .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
@@ -1205,7 +1205,7 @@ router.patch(
             title: titleTpl,
             detail: detailTpl,
             url: urlTpl,
-            buttonParam: boutique.slug || boutique.id,
+            buttonParam: String(commande.reference),
           })
             .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Statut ${req.body.statut} envoyé au ${commande.client_telephone}`))
             .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));

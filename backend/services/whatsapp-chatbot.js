@@ -550,7 +550,7 @@ async function envoyerCommandesMarchand(phone, boutique, offset = 0) {
       phone,
       `📋 *Commandes — ${boutique.nom}*\n\n` +
       `Vous n'avez pas encore reçu de commande en ligne.\n\n` +
-      `👉 Partagez votre vitrine sur vos Statuts WhatsApp pour recevoir vos premières commandes : ${SITE}/boutiques/${boutique.slug}`
+      `👉 Partagez votre vitrine sur vos Statuts WhatsApp pour recevoir vos premières commandes : ${SITE}/boutiques/${boutique.slug || boutique.id}`
     );
     await sendWhatsAppButtons3(
       phone,
@@ -764,7 +764,7 @@ async function envoyerStockMarchand(phone, boutique) {
       phone,
       `📦 *Vos derniers produits — ${boutique.nom} :*\n\n` +
       `${lines.join('\n\n')}\n\n` +
-      `🔗 Vitrine : ${SITE}/boutiques/${boutique.slug}`
+      `🔗 Vitrine : ${SITE}/boutiques/${boutique.slug || boutique.id}`
     );
   }
 
@@ -894,7 +894,7 @@ async function envoyerVitrineStatutMarchand(phone, boutique) {
   const msgStatut =
     `✨ *${boutique.nom}* vous souhaite la bienvenue ! 🛍️\n\n` +
     `Découvrez nos nouveaux articles disponibles et commandez en ligne en 1 clic avec livraison rapide :\n` +
-    `👉 ${SITE}/boutiques/${boutique.slug}\n\n` +
+    `👉 ${SITE}/boutiques/${boutique.slug || boutique.id}\n\n` +
     `🚚 Livraison rapide & Paiement direct Wave / Orange Money / Espèces.`;
 
   await sendWhatsAppText(
@@ -2001,7 +2001,7 @@ async function handleIncomingInternal(msg) {
             `🏪 *${bqTrouvee.nom}*\n` +
             `📍 ${bqTrouvee.categorie || 'Commerce'}${bqTrouvee.ville ? ` — ${bqTrouvee.ville}` : ''}\n` +
             `${bqTrouvee.description ? `${bqTrouvee.description}\n` : ''}\n` +
-            `👉 *Vitrine en ligne :* ${SITE}/boutiques/${bqTrouvee.slug}`
+            `👉 *Vitrine en ligne :* ${SITE}/boutiques/${bqTrouvee.slug || bqTrouvee.id}`
           );
           await envoyerMenuBoutique(phone, bqTrouvee);
           return;
@@ -2255,6 +2255,31 @@ async function handleIncomingInternal(msg) {
     return;
   }
 
+  // Déclencheur Bouton '🏪 Voir la boutique' (suite à une recherche produit ou suggestion)
+  if (
+    interactiveId?.startsWith('boutique_') &&
+    !interactiveId?.startsWith('boutique_ajout_prod_') &&
+    !interactiveId?.startsWith('boutique_choisie_') &&
+    interactiveId !== 'boutique_produits_tous' &&
+    interactiveId !== 'boutique_recherche' &&
+    interactiveId !== 'boutique_categorie' &&
+    interactiveId !== 'boutique_contact' &&
+    interactiveId !== 'boutique_quitter'
+  ) {
+    const slugOrId = interactiveId.replace(/^boutique_/, '');
+    const isUUID = /^[0-9a-f-]{36}$/i.test(slugOrId);
+    const bqRes = await pool.query(
+      `SELECT id, nom, slug, categorie, ville, description, telephone, whatsapp 
+       FROM boutiques 
+       WHERE ${isUUID ? 'id=$1' : 'LOWER(slug)=LOWER($1)'} AND (actif IS NULL OR actif=true) LIMIT 1`,
+      [slugOrId]
+    );
+    if (bqRes.rows[0]) {
+      await envoyerMenuBoutique(phone, bqRes.rows[0]);
+      return;
+    }
+  }
+
   // Déclencheur Ajout de Produit Sécurisé (+produit ou clic sur bouton interactif)
   if (
     normTxtLower === '+produit' ||
@@ -2394,7 +2419,7 @@ async function handleIncomingInternal(msg) {
           `📦 Stock : ${stockLabel}\n` +
           `📸 Photo : *${imageUrl ? 'Photo enregistrée avec succès' : 'Sans photo'}*\n` +
           `🏪 Boutique : *${maBoutique.nom}*\n\n` +
-          `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${maBoutique.slug}\n\n` +
+          `🔗 *Fiche produit en ligne :*\n${SITE}/boutiques/${maBoutique.slug || maBoutique.id}\n\n` +
           `👉 *Astuce multi-photos :* Vous pouvez envoyer d'autres photos directement pour cet article !`
         );
         await setSession(phone, 'IDLE', {});
@@ -4632,10 +4657,11 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
       `nopalou-produit-${p.id}`,
       `${p.titre} — ${prixFmt(p.prix)}\n📍 ${p.boutique_nom}`
     ).catch(async () => {
-      await sendWhatsAppText(phone, `• *${p.titre}* — ${prixFmt(p.prix)}\n📍 *${p.boutique_nom}*\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`);
+      await sendWhatsAppText(phone, `• *${p.titre}* — ${prixFmt(p.prix)}\n📍 *${p.boutique_nom}*\n👉 ${SITE}/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}`);
     });
-    if (p.boutique_slug) {
-      await sendWhatsAppButton(phone, `Envie de voir tout le catalogue de ${p.boutique_nom} ?`, `boutique_${p.boutique_slug}`, '🏪 Voir la boutique').catch(() => {});
+    const bqIdent = p.boutique_slug || p.boutique_id;
+    if (bqIdent) {
+      await sendWhatsAppButton(phone, `Envie de voir tout le catalogue de ${p.boutique_nom} ?`, `boutique_${bqIdent}`, '🏪 Voir la boutique').catch(() => {});
     }
   }
 

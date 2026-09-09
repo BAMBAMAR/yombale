@@ -159,8 +159,8 @@ export default async function FicheImmoPage({
       if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
     }
 
-    // Redirection de repli sans 404
-    redirect('/immo');
+    // Si l'ID ne correspond à aucune annonce immo ni entité, rediriger vers l'accueil pour éviter une page incohérente
+    redirect('/');
   }
 
   await apiFetch<{ annonces: AnnonceSimilaire[] }>(`/immo/${id}/similaires`)

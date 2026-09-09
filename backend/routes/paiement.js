@@ -288,14 +288,14 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
               const msgClient = `🌊 *Paiement Wave Confirmé !*\n\nVotre commande *${cmd.reference}* (*${montantFmt} FCFA*)${boutique ? ` auprès de la boutique *${boutique.nom}*` : ''} a bien été réglée avec succès via Wave.\n\nMerci pour votre confiance !`;
               const titleClient = `🌊 Paiement Wave Confirmé — ${boutique?.nom || 'Nopalou'}`;
               const detailClient = `Réf ${cmd.reference} : Paiement de ${montantFmt} FCFA reçu avec succès via Wave.`;
-              const urlClient = boutique ? `${SITE}/boutiques/${boutique.slug || boutique.id}` : SITE;
+              const urlClient = `${SITE}/suivi-commande?ref=${encodeURIComponent(cmd.reference)}`;
 
               sendWhatsAppNotification(cmd.client_telephone, {
                 textMessage: msgClient,
                 title: titleClient,
                 detail: detailClient,
                 url: urlClient,
-                buttonParam: boutique ? (boutique.slug || boutique.id) : 'commandes',
+                buttonParam: String(cmd.reference),
               }).catch(err => console.error('[WAVE WEBHOOK NOTIF CLIENT ERR]:', err.message));
             }
 
