@@ -1114,14 +1114,7 @@ export default function SocialShopManager({
                   <button
                     type="button"
                     onClick={toggleSelectAllPosts}
-                    className="saas-batch-btn saas-batch-btn-ghost"
-                    style={{
-                      height: 38,
-                      background: selectedPostIds.size > 0 ? '#fff7ed' : '#f8fafc',
-                      color: selectedPostIds.size > 0 ? '#C75B00' : '#475569',
-                      border: `1.5px solid ${selectedPostIds.size > 0 ? '#fed7aa' : '#cbd5e1'}`,
-                      justifyContent: 'center',
-                    }}
+                    className={`saas-toolbar-btn ${selectedPostIds.size > 0 ? 'selected' : ''}`}
                     title={selectedPostIds.size === displayedPosts.length ? 'Tout désélectionner' : 'Tout sélectionner'}
                   >
                     {selectedPostIds.size === displayedPosts.length ? <CheckSquare size={14} /> : <Square size={14} />}

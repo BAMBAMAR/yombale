@@ -14422,11 +14422,12 @@ label,
 .saas-search-input {
   width: 100%;
   height: 38px;
-  border-radius: 10px;
-  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
   padding: 0 34px 0 34px;
   font-size: 13px;
+  font-family: inherit;
   color: #0f172a;
   outline: none;
   box-sizing: border-box;
@@ -14468,13 +14469,14 @@ label,
 .saas-select-control {
   width: 100%;
   height: 38px;
-  border-radius: 10px;
-  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
   padding: 0 10px;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #1e293b;
   outline: none;
   cursor: pointer;
   box-sizing: border-box;
@@ -14484,6 +14486,32 @@ label,
 .saas-select-control:focus {
   border-color: #C75B00;
   box-shadow: 0 0 0 3px rgba(199, 91, 0, 0.12);
+}
+
+.saas-toolbar-btn {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.saas-toolbar-btn.selected {
+  background: #fff7ed;
+  color: #C75B00;
+  border-color: #fed7aa;
 }
 
 /* Badges Raffinés (SaaS Badges) */
@@ -14579,14 +14607,15 @@ label,
 }
 
 .saas-card-btn-action {
-  height: 32px;
+  height: 34px;
   padding: 0 12px;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -14594,18 +14623,19 @@ label,
 }
 
 .saas-card-btn-more {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
-  background: #f1f5f9;
+  background: #f8fafc;
   border: 1px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: #475569;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
+  font-family: inherit;
   transition: all 0.15s ease;
   box-sizing: border-box;
 }
@@ -14613,6 +14643,57 @@ label,
 .saas-card-btn-more:hover {
   background: #e2e8f0;
   color: #0f172a;
+}
+
+/* ── DROPDOWN & MOBILE ACTION SHEET (MENU ⋯) ── */
+.bq-actions-dropdown {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px); /* Dropup : s'ouvre vers le HAUT pour ne jamais déborder sous l'écran */
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 6px;
+  z-index: 9999;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 210px;
+  font-family: inherit;
+  box-sizing: border-box;
+  animation: saasSlideDown 0.15s ease forwards;
+}
+
+.bq-actions-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.12s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bq-actions-item:hover {
+  background: #f1f5f9;
+}
+
+.bq-dropdown-mobile-header {
+  display: none;
+}
+
+.bq-dropdown-close-mobile {
+  display: none;
 }
 
 /* ── RESPONSIVE MOBILE / TABLETTE (<= 768px) ── */
@@ -14705,6 +14786,55 @@ label,
     width: 100% !important;
     border-top: 1px solid #f1f5f9 !important;
     padding-top: 6px !important;
+  }
+
+  /* Mobile Action Sheet pour le menu ⋯ */
+  .bq-actions-dropdown {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    min-width: unset !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+    border: none !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3) !important;
+    z-index: 99999 !important;
+    animation: saasSheetSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+
+  .bq-dropdown-mobile-header {
+    display: block !important;
+  }
+
+  .bq-actions-item {
+    padding: 11px 14px !important;
+    font-size: 13.5px !important;
+    border-radius: 10px !important;
+    background: #f8fafc !important;
+    margin-bottom: 4px !important;
+  }
+
+  .bq-actions-item:hover, .bq-actions-item:active {
+    background: #f1f5f9 !important;
+  }
+
+  .bq-dropdown-close-mobile {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+@keyframes saasSheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }
 

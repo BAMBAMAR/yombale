@@ -3141,15 +3141,8 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                 <button
                   type="button"
                   onClick={toggleSelectAll}
-                  className="saas-batch-btn saas-batch-btn-ghost"
-                  style={{
-                    height: 38,
-                    background: selectedProdIds.size > 0 ? '#fff7ed' : '#f8fafc',
-                    color: selectedProdIds.size > 0 ? '#C75B00' : '#475569',
-                    border: `1.5px solid ${selectedProdIds.size > 0 ? '#fed7aa' : '#cbd5e1'}`,
-                    justifyContent: 'center',
-                  }}
-                  title={selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                  className={`saas-toolbar-btn ${selectedProdIds.size > 0 ? 'selected' : ''}`}
+                  title={selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout cocher'}
                 >
                   {selectedProdIds.size === produitsFiltres.length ? <CheckSquare size={14} /> : <Square size={14} />}
                   <span>{selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout cocher'}</span>
@@ -3468,27 +3461,35 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                       <>
                         <div
                           onClick={() => setMenuActionsOuvertId(null)}
-                          style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
-                        />
-                        <div
-                          className="bq-actions-dropdown"
                           style={{
-                            position: 'absolute',
-                            right: 0,
-                            top: 'calc(100% + 4px)',
-                            background: '#ffffff',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: 10,
-                            padding: 6,
-                            zIndex: 9999,
-                            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 4,
-                            minWidth: 190,
+                            position: 'fixed',
+                            inset: 0,
+                            zIndex: 9998,
+                            background: 'rgba(15, 23, 42, 0.45)',
+                            backdropFilter: 'blur(2px)',
+                            WebkitBackdropFilter: 'blur(2px)',
                           }}
-                        >
+                        />
+                        <div className="bq-actions-dropdown">
+                          {/* En-tête mobile de l'Action Sheet */}
+                          <div className="bq-dropdown-mobile-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: 12, marginBottom: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '85%' }}>
+                                {p.nom}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setMenuActionsOuvertId(null)}
+                                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', cursor: 'pointer', fontSize: 14 }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+
                           <button
+                            type="button"
+                            className="bq-actions-item"
                             onClick={(e) => {
                               setMenuActionsOuvertId(null)
                               e.stopPropagation()
@@ -3525,13 +3526,15 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                               `)
                               printWin.document.close()
                             }}
-                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#0284c7', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
+                            style={{ color: '#0284c7' }}
                           >
-                            <Printer size={13} />
+                            <Printer size={15} />
                             <span>Imprimer code-barres</span>
                           </button>
 
                           <button
+                            type="button"
+                            className="bq-actions-item"
                             onClick={() => {
                               setMenuActionsOuvertId(null)
                               setProduitADupliquer(p)
@@ -3539,13 +3542,15 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                               setDupPrix(p.prix?.toString() || '')
                               setDupStock(p.stock_quantite?.toString() || '')
                             }}
-                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
+                            style={{ color: '#334155' }}
                           >
-                            <Copy size={13} />
+                            <Copy size={15} />
                             <span>Dupliquer</span>
                           </button>
 
                           <button
+                            type="button"
+                            className="bq-actions-item"
                             onClick={() => {
                               setMenuActionsOuvertId(null)
                               if (!confirm('Publier ce produit comme annonce classifiée ?')) return
@@ -3556,15 +3561,17 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                                 else { setSuccessMsg(res.message || 'Publié avec succès en annonce !') }
                               })
                             }}
-                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
+                            style={{ color: '#b45309' }}
                           >
-                            <Megaphone size={13} />
+                            <Megaphone size={15} />
                             <span>Publier en annonce</span>
                           </button>
 
-                          <div style={{ height: 1, background: '#f1f5f9', margin: '2px 0' }} />
+                          <div style={{ height: 1, background: '#f1f5f9', margin: '4px 0' }} />
 
                           <button
+                            type="button"
+                            className="bq-actions-item"
                             onClick={() => {
                               setMenuActionsOuvertId(null)
                               if (!confirm('Supprimer ce produit ?')) return
@@ -3575,10 +3582,29 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                                 else { setSuccessMsg('Produit supprimé.'); loadProduits() }
                               })
                             }}
-                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
+                            style={{ color: '#dc2626', fontWeight: 700 }}
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={15} />
                             <span>Supprimer</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="bq-dropdown-close-mobile"
+                            onClick={() => setMenuActionsOuvertId(null)}
+                            style={{
+                              marginTop: 8,
+                              height: 42,
+                              borderRadius: 10,
+                              background: '#f1f5f9',
+                              border: 'none',
+                              color: '#64748b',
+                              fontSize: 14,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Fermer
                           </button>
                         </div>
                       </>
