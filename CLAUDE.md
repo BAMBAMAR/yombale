@@ -1,3 +1,26 @@
+- **Audit Exhaustif Anti-404, Cohérence de Routage Frontend/Backend, Liens Internes & Proxies API (`AnnoncesImmoClient.tsx`, `partenaires/page.tsx`, `AccountNavLinks.tsx`, `AccountSidebarClient.tsx`, `Commandes.tsx`, `api/boutiques/[id]/[...path]/route.ts`, `ConfirmerSuccesEffect.tsx`, `ManualFallbackCard.tsx`) (09 septembre 2026)** 🛡️🔍🔗✅ :
+  * **🎯 1. Demande & Objectif Métier** :
+    - Audit complet et exhaustif de toutes les erreurs 404, 400, 401, 403, 500, anomalies de routage frontend/backend, liens internes cassés, deep-links, polices externes et assets statiques.
+    - Élimination intégrale de toute rupture de parcours utilisateur ou d'échec silencieux de navigation.
+  * **🛠️ 2. Correctifs Appliqués & Fiabilisation** :
+    - *Lien Modification Annonce Immo (`AnnoncesImmoClient.tsx`)* :
+      * Correction du lien d'édition pointant vers `/modifier-immo/:id` (404) remplacé par l'URL officielle Next.js `/mes-annonces-immo/:id/modifier`.
+    - *Lien Inscription Apporteur d'Affaires (`partenaires/page.tsx`)* :
+      * Remplacement du lien de CTA vers `/compte/apporteur/inscription` (404) par la route fonctionnelle `/compte/apporteur`.
+    - *Bouton Déconnexion (`AccountNavLinks.tsx` & `AccountSidebarClient.tsx`)* :
+      * Remplacement des balises mortes `<a href="/api/auth/deconnexion">` par la Server Action officielle `logout()` de `app/actions/auth.ts`, supprimant tout risque de 404 lors de la déconnexion utilisateur.
+    - *Route Paniers Abandonnés (`Commandes.tsx`)* :
+      * Remplacement de l'endpoint fictif `/api/compta-proxy/:id/paniers-abandonnes` (404 en console réseau) par la route réelle couverte par le proxy Next.js `/api/boutiques/:id/paniers-abandonnes`.
+    - *Transmission des En-Têtes de Téléchargement (`api/boutiques/[id]/[...path]/route.ts`)* :
+      * Préservation et propagation de l'en-tête `Content-Disposition: attachment` pour les réponses JSON (`/api/boutiques/:id/export-complet`) afin de garantir le téléchargement immédiat du fichier `.json`.
+    - *Fallbacks d'URL Backend en Dur (`ConfirmerSuccesEffect.tsx` & `ManualFallbackCard.tsx`)* :
+      * Remplacement de l'ancien domaine tiers `https://yombale.onrender.com` par une URL relative `/api/paiement/...` gérée par les rewrites Next.js en local et production.
+  * **🧪 3. Validation & Non-Régression** :
+    - Scan automatique de 447 fichiers sources et 426 liens internes.
+    - Matrice de 720 endpoints backend Express et 34 routes proxy Next.js vérifiée sans contradiction.
+    - Build complet de production Next.js 14 (`npm run build`) validé à 100% avec succès (106 pages compilées, code de sortie 0).
+    - Zéro push automatique exécuté (conformité absolue aux règles utilisateur).
+
 - **Audit Exhaustif & Fiabilisation de la Résilience Offline / Online de Nopalou (`db-offline.ts`, `sync-manager.ts`, `boutiques.js`, `CaisseClient.tsx`, `CarnetDettes.tsx`, `07-pos-offline-sync.spec.ts`) (09 septembre 2026)** 📡💾🛒⚡ :
   * **🎯 1. Demande & Objectif Métier** :
     - Audit complet des 4 niveaux d'expérience réseau : *1. Offline UI*, *2. Offline Read*, *3. Offline Write*, *4. Offline Transaction + Sync fiable*.

@@ -55,7 +55,7 @@ export default function PartenairesLandingPage() {
           </p>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/compte/apporteur/inscription" style={{
+            <Link href="/compte/apporteur" style={{
               background: '#C75B00', color: '#ffffff',
               padding: '16px 32px', borderRadius: 30,
               fontSize: 17, fontWeight: 900, textDecoration: 'none',

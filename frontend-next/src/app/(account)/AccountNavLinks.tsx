@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from '@/i18n/context'
+import { logout } from '@/app/actions/auth'
 
 interface NavLinkItem {
   href: string
@@ -503,15 +504,17 @@ function MobileBottomSheetNav({
                 </Link>
               </div>
 
-              <a
-                href="/api/auth/deconnexion"
-                className="mobile-bs-footer-link"
-                style={{ width: '100%', boxSizing: 'border-box', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FEE2E2', justifyContent: 'center', fontWeight: 800 }}
-                onClick={closeSheet}
-              >
-                <span>🚪</span>
-                <span>Se déconnecter</span>
-              </a>
+              <form action={logout} style={{ width: '100%', margin: 0 }}>
+                <button
+                  type="submit"
+                  className="mobile-bs-footer-link"
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FEE2E2', justifyContent: 'center', fontWeight: 800, cursor: 'pointer' }}
+                  onClick={closeSheet}
+                >
+                  <span>🚪</span>
+                  <span>Se déconnecter</span>
+                </button>
+              </form>
             </div>
           </div>
         </>

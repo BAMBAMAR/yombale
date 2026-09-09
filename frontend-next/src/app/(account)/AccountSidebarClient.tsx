@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import AccountNavLinks from './AccountNavLinks'
 import { useTranslation } from '@/i18n/context'
+import { logout } from '@/app/actions/auth'
 import { BookOpen, Store, LogOut, ChevronRight, ExternalLink, User } from 'lucide-react'
 
 interface Props {
@@ -188,34 +189,39 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
           <ExternalLink size={12} style={{ color: '#94A3B8' }} />
         </Link>
 
-        <a
-          href="/api/auth/deconnexion"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            padding: '8px 12px',
-            marginTop: 4,
-            fontSize: 12,
-            color: '#94A3B8',
-            textDecoration: 'none',
-            borderRadius: 8,
-            fontWeight: 600,
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.color = '#DC2626'
-            e.currentTarget.style.background = '#FEF2F2'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.color = '#94A3B8'
-            e.currentTarget.style.background = 'transparent'
-          }}
-        >
-          <LogOut size={13} style={{ flexShrink: 0 }} />
-          <span>{t('account.navLogout') || 'Déconnexion'}</span>
-        </a>
+        <form action={logout} style={{ width: '100%', margin: 0 }}>
+          <button
+            type="submit"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              width: '100%',
+              padding: '8px 12px',
+              marginTop: 4,
+              fontSize: 12,
+              color: '#94A3B8',
+              background: 'transparent',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = '#DC2626'
+              e.currentTarget.style.background = '#FEF2F2'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = '#94A3B8'
+              e.currentTarget.style.background = 'transparent'
+            }}
+          >
+            <LogOut size={13} style={{ flexShrink: 0 }} />
+            <span>{t('account.navLogout') || 'Déconnexion'}</span>
+          </button>
+        </form>
       </div>
     </aside>
   )

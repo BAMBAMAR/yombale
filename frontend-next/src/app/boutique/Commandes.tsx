@@ -442,7 +442,7 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
 
     if (filtre === 'abandonne') {
       try {
-        const res = await fetch(`/api/compta-proxy/${boutiqueId}/paniers-abandonnes`)
+        const res = await fetch(`/api/boutiques/${boutiqueId}/paniers-abandonnes`)
         let data
         if (!res.ok) {
           const directRes = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/paniers-abandonnes`, {

@@ -122,7 +122,7 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
                   <p className="mes-immo-price">{fcfa(a.prix)}</p>
                   
                   <div className="mes-immo-actions">
-                    <Link href={`/modifier-immo/${a.id}`} className="mes-immo-btn">{t('account.adActionEdit')}</Link>
+                    <Link href={`/mes-annonces-immo/${a.id}/modifier`} className="mes-immo-btn">{t('account.adActionEdit')}</Link>
                     <DeleteImmoButton id={a.id} />
                   </div>
                 </div>

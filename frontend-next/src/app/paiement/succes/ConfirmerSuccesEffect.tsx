@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 export function ConfirmerSuccesEffect({ reference }: { reference?: string }) {
   useEffect(() => {
     if (!reference) return
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://yombale.onrender.com'
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
     fetch(`${backendUrl}/api/paiement/confirmer-succes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

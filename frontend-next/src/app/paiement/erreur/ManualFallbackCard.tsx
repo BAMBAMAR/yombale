@@ -30,7 +30,7 @@ export function ManualFallbackCard({ reference }: { reference?: string }) {
     setLoading(true)
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://yombale.onrender.com'
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
       const res = await fetch(`${backendUrl}/api/paiement/manuel/declarer`, {
         method: 'POST',
         headers: {

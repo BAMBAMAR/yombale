@@ -27,16 +27,21 @@ async function proxy(req: NextRequest, boutiqueId: string, pathSegments: string[
     })
 
     const responseContentType = res.headers.get('content-type') || ''
+    const contentDisposition = res.headers.get('content-disposition')
+
     if (responseContentType.includes('application/json')) {
       const data = await res.json().catch(() => ({}))
-      return NextResponse.json(data, { status: res.status })
+      return NextResponse.json(data, {
+        status: res.status,
+        headers: contentDisposition ? { 'Content-Disposition': contentDisposition } : {},
+      })
     } else if (responseContentType.includes('application/pdf') || responseContentType.includes('text/csv')) {
       const blob = await res.blob()
       return new NextResponse(blob, {
         status: res.status,
         headers: {
           'Content-Type': responseContentType,
-          ...(res.headers.get('content-disposition') ? { 'Content-Disposition': res.headers.get('content-disposition')! } : {}),
+          ...(contentDisposition ? { 'Content-Disposition': contentDisposition } : {}),
         },
       })
     } else {
