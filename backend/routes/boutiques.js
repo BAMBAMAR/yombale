@@ -11,6 +11,7 @@ const multer = require('multer');
 const { syncProduit, deleteProduit } = require('../services/whatsapp-catalog');
 const cfg = require('../lib/settingsCache');
 const { enregistrerAuditLog } = require('../lib/auditLogger');
+const { normalizeSocialUrl } = require('../services/social-parser');
 
 async function checkBoutiqueAccess(boutiqueIdOrSlug, userId) {
   const isUUID = /^[0-9a-f-]{36}$/i.test(boutiqueIdOrSlug);
@@ -646,7 +647,7 @@ router.get('/mine', verifierToken, async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
-              b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.slug, b.couleur_theme,
+              b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.tiktok, b.youtube, b.slug, b.couleur_theme,
               COALESCE(b.actif, true) AS actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
               COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
@@ -793,7 +794,7 @@ router.get('/:id', async (req, res) => {
     // Recherche universelle par UUID ou par slug (toujours accessible via lien direct ou QR Code)
     const r = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
-              b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram,
+              b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram, b.tiktok, b.youtube,
               b.horaires, b.slug, b.utilisateur_id, b.created_at, b.actif, b.couleur_theme,
               COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
@@ -2318,7 +2319,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
     const existingRows = [boutique];
     const existing = { rows: existingRows };
 
-    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, horaires, couleur_theme, slug: slugInput } = req.body;
+    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, tiktok, youtube, horaires, couleur_theme, slug: slugInput } = req.body;
 
     let logo_url = existing.rows[0].logo_url;
     if (req.files?.logo?.[0]) {
@@ -2350,6 +2351,12 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
       newSlug = await uniqueSlug(slugBase, req.params.id);
     }
 
+    // Normalisation des URLs sociales : nettoyage des doubles préfixes, params tracking, format canonique
+    const fbUrl  = normalizeSocialUrl(facebook,  'facebook');
+    const igUrl  = normalizeSocialUrl(instagram, 'instagram');
+    const ttUrl  = normalizeSocialUrl(tiktok,    'tiktok');
+    const ytUrl  = normalizeSocialUrl(youtube,   'youtube');
+
     // UPDATE colonnes avancées & fiscales & remises POS
     try {
       const { regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
@@ -2370,37 +2377,37 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
 
       await pool.query(
         `UPDATE boutiques SET cover_url=$1, whatsapp=$2, site_web=$3, facebook=$4,
-         instagram=$5, horaires=$6, slug=$7,
-         regime_fiscal=COALESCE($8, regime_fiscal),
-         prix_tva_incluse=CASE WHEN $9::boolean IS NOT NULL THEN $9::boolean ELSE prix_tva_incluse END,
-         timbre_fiscal_applicable=CASE WHEN $10::boolean IS NOT NULL THEN $10::boolean ELSE timbre_fiscal_applicable END,
-         tva_taux_defaut=COALESCE($11, tva_taux_defaut),
-         rccm=COALESCE($12, rccm),
-         ninea=COALESCE($13, ninea),
-         forme_juridique=COALESCE($14, forme_juridique),
-         capital_social=COALESCE($15, capital_social),
-         compte_bancaire=COALESCE($16, compte_bancaire),
-         conditions_vente=COALESCE($17, conditions_vente),
-         pied_de_page_document=COALESCE($18, pied_de_page_document),
-         mode_fonctionnement=CASE WHEN $19::text IS NOT NULL THEN $19::text ELSE mode_fonctionnement END,
-         meta_pixel_id=COALESCE($20, meta_pixel_id),
-         tiktok_pixel_id=COALESCE($21, tiktok_pixel_id),
-         ga4_id=COALESCE($22, ga4_id),
-         actif=CASE WHEN $23::boolean IS NOT NULL THEN $23::boolean ELSE actif END,
-         message_bas_ticket=COALESCE($24, message_bas_ticket),
-         pos_remise_max_caissier=COALESCE($25, pos_remise_max_caissier),
-         pos_remise_seuil_auto_montant=COALESCE($26, pos_remise_seuil_auto_montant),
-         pos_remise_seuil_auto_pct=COALESCE($27, pos_remise_seuil_auto_pct),
-         pos_remise_motifs=COALESCE($28, pos_remise_motifs),
-         fidelite_actif=CASE WHEN $29::boolean IS NOT NULL THEN $29::boolean ELSE fidelite_actif END,
-         fidelite_type=COALESCE($30, fidelite_type),
-         fidelite_taux_cashback=COALESCE($31, fidelite_taux_cashback),
-         fidelite_tampons_max=COALESCE($32, fidelite_tampons_max),
-         fidelite_seuil_tampon=COALESCE($33, fidelite_seuil_tampon)
-         WHERE id=$34`,
+         instagram=$5, tiktok=$6, youtube=$7, horaires=$8, slug=$9,
+         regime_fiscal=COALESCE($10, regime_fiscal),
+         prix_tva_incluse=CASE WHEN $11::boolean IS NOT NULL THEN $11::boolean ELSE prix_tva_incluse END,
+         timbre_fiscal_applicable=CASE WHEN $12::boolean IS NOT NULL THEN $12::boolean ELSE timbre_fiscal_applicable END,
+         tva_taux_defaut=COALESCE($13, tva_taux_defaut),
+         rccm=COALESCE($14, rccm),
+         ninea=COALESCE($15, ninea),
+         forme_juridique=COALESCE($16, forme_juridique),
+         capital_social=COALESCE($17, capital_social),
+         compte_bancaire=COALESCE($18, compte_bancaire),
+         conditions_vente=COALESCE($19, conditions_vente),
+         pied_de_page_document=COALESCE($20, pied_de_page_document),
+         mode_fonctionnement=CASE WHEN $21::text IS NOT NULL THEN $21::text ELSE mode_fonctionnement END,
+         meta_pixel_id=COALESCE($22, meta_pixel_id),
+         tiktok_pixel_id=COALESCE($23, tiktok_pixel_id),
+         ga4_id=COALESCE($24, ga4_id),
+         actif=CASE WHEN $25::boolean IS NOT NULL THEN $25::boolean ELSE actif END,
+         message_bas_ticket=COALESCE($26, message_bas_ticket),
+         pos_remise_max_caissier=COALESCE($27, pos_remise_max_caissier),
+         pos_remise_seuil_auto_montant=COALESCE($28, pos_remise_seuil_auto_montant),
+         pos_remise_seuil_auto_pct=COALESCE($29, pos_remise_seuil_auto_pct),
+         pos_remise_motifs=COALESCE($30, pos_remise_motifs),
+         fidelite_actif=CASE WHEN $31::boolean IS NOT NULL THEN $31::boolean ELSE fidelite_actif END,
+         fidelite_type=COALESCE($32, fidelite_type),
+         fidelite_taux_cashback=COALESCE($33, fidelite_taux_cashback),
+         fidelite_tampons_max=COALESCE($34, fidelite_tampons_max),
+         fidelite_seuil_tampon=COALESCE($35, fidelite_seuil_tampon)
+         WHERE id=$36`,
         [
-          cover_url||null, whatsapp||null, site_web||null, facebook||null,
-          instagram||null, horairesJson, newSlug,
+          cover_url||null, whatsapp||null, site_web||null, fbUrl,
+          igUrl, ttUrl, ytUrl, horairesJson, newSlug,
           regime_fiscal || null,
           parseBoolVal(prix_tva_incluse),
           parseBoolVal(timbre_fiscal_applicable),
@@ -4836,7 +4843,8 @@ router.post('/:id/regenere-caisse-token', verifierToken, async (req, res) => {
 // ── Spec 02 : POST /api/boutiques/commandes/express — Checkout Web 1-Page Unifié
 router.post('/commandes/express', async (req, res) => {
   try {
-    const { boutique_id, client_nom, client_telephone, client_adresse, methode_paiement, note, frais_livraison, articles, code_promo, montant_reduction, remise } = req.body;
+    const { boutique_id, client_nom, client_telephone, client_adresse, methode_paiement, note, frais_livraison, articles, code_promo, montant_reduction, remise,
+      utm_source, utm_medium, utm_campaign, social_post_id } = req.body;
 
     if (!boutique_id) {
       return res.status(400).json({ error: 'Boutique introuvable ou ID requis.' });
@@ -4952,12 +4960,16 @@ router.post('/commandes/express', async (req, res) => {
         `INSERT INTO commandes_boutique (
           reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
           montant_total, client_nom, client_telephone, client_adresse, note,
-          statut, source, methode_paiement, frais_livraison, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, NOW())`,
+          statut, source, methode_paiement, frais_livraison,
+          utm_source, utm_medium, utm_campaign, social_post_id, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, $14, $15, $16, $17, NOW())`,
         [
           ref, actualBoutiqueId, item.validProdId, item.nomProd, item.qte, item.prix,
           item.totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, finalNote || null,
           methode_paiement || 'wave', fraisLiv,
+          utm_source || null, utm_medium || null, utm_campaign || null,
+          // social_post_id doit être un UUID valide ou null
+          (social_post_id && /^[0-9a-f-]{36}$/i.test(social_post_id)) ? social_post_id : null,
         ]
       );
     }

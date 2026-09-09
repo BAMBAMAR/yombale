@@ -1,4 +1,47 @@
+- **Refonte Écosystème Réseaux Sociaux & Social Commerce (`social-parser.js`, `boutiques.js`, `migrate-inline.js`, `BoutiqueClient.tsx`, `BoutiqueDetailClient.tsx`, `ModalPartageProduit.tsx`, `CommanderModal.tsx`, `AnalyticsClient.tsx`, `analytics.js`) (09 septembre 2026)** 📱🛒📊 :
+  * **🎯 1. Contexte & Mission** :
+    - Mission exhaustive : passer de "Nopalou a des liens vers les réseaux sociaux" à "Les réseaux sociaux sont une extension de la boutique Nopalou" en mode Social Commerce complet.
+    - Audit + corrections critiques + extension de l'écosystème boutique (TikTok, YouTube) + attribution UTM complète de bout en bout.
+  * **🚨 2. Corrections Critiques P0 (Sécurité Multi-Tenant)** :
+    - *Bug isolation Instagram/Facebook (`backend/services/social-parser.js`)* :
+      * `exploreProfile` utilisait `process.env.IG_USER_ID` (compte Nopalou) pour TOUS les marchands → renvoyait les posts officiels Nopalou au lieu des posts du marchand. Correction : désactivation totale des credentials Nopalou pour ce flux, mode oEmbed public exclusif.
+      * Même bug côté Facebook : `FB_PAGE_ID` global de Nopalou servait à toutes les boutiques. Corrigé.
+    - *Nouvelle fonction `normalizeSocialUrl(rawInput, platform)`* : élimine les doubles préfixes d'URL (`https://instagram.com/https://...`), les paramètres de tracking temporaires (`igsh`, `fbclid`, `_t`, `_r`), convertit les pseudos (`@maboutique`) en URLs canoniques. Utilisée systématiquement avant tout INSERT en base.
+  * **🗄️ 3. Migrations Base de Données** :
+    - `boutiques` : ajout colonnes `tiktok TEXT` et `youtube TEXT`.
+    - `commandes_boutique` : ajout colonnes `utm_source VARCHAR(100)`, `utm_medium VARCHAR(100)`, `utm_campaign VARCHAR(200)`, `social_post_id UUID REFERENCES social_posts(id) ON DELETE SET NULL` + index dédié.
+  * **🔧 4. Backend — Route Boutiques** :
+    - `PUT /api/boutiques/:id` : déstructuration + normalisation + persistance des champs `tiktok` et `youtube` via `normalizeSocialUrl`.
+    - `GET /api/boutiques/:id` (public) et `GET /api/boutiques/mine` : exposition de `b.tiktok, b.youtube` dans les SELECT.
+    - `POST /api/boutiques/commandes/express` : lecture de `utm_source`, `utm_medium`, `utm_campaign`, `social_post_id` dans le body et injection dans l'INSERT `commandes_boutique`.
+  * **📊 5. Backend — Route Analytics** :
+    - Nouveau bloc SQL d'attribution sociale : agrégation des commandes 90j par `utm_source` → retourné dans `attribution_sociale[]`.
+  * **🖥️ 6. Frontend — Interface Marchande** :
+    - `BoutiqueClient.tsx` : type `Boutique` enrichi (`tiktok`, `youtube`), formulaire paramètres avec 2 nouveaux champs, section statuts avec badges TikTok 🎵 et YouTube ▶️, copywriting corrigé ("Connectée" → "Renseignée").
+    - `BoutiqueDetailClient.tsx` (vitrine publique) : badges TikTok et YouTube affichés dans l'onglet "Infos & Contact" avec styles dédiés, condition d'affichage étendue aux 4 réseaux.
+    - `boutiques/[id]/page.tsx` : propagation des champs `tiktok`/`youtube` dans les props BoutiqueDetailClient.
+  * **📤 7. Frontend — Modale de Partage Produit (`ModalPartageProduit.tsx`)** :
+    - UTM automatiques injectés dans tous les liens de partage selon le template choisi :
+      * `promo` → `utm_source=social&utm_medium=share&utm_campaign=promo_boutique`
+      * `statut` → `utm_source=whatsapp&utm_medium=statut&utm_campaign=statut_produit`
+      * `credit` → `utm_source=whatsapp&utm_medium=credit&utm_campaign=paiement_echelonne`
+      * `reseaux` → `utm_source=instagram&utm_medium=reseaux&utm_campaign=post_social`
+    - Bouton **X/Twitter** ajouté (SVG officiel du logo X noir) avec UTM `twitter/social_share/tweet_produit`.
+    - Bouton Telegram avec UTM `telegram/social_share/telegram_produit`.
+    - Bouton Facebook avec UTM `facebook/social_share/fb_partage_produit`.
+  * **🛒 8. Frontend — Capture UTM à la Commande (`CommanderModal.tsx`)** :
+    - Lecture automatique des params UTM de l'URL (`window.location.search`) au montage du composant via `useRef`.
+    - Transmission transparente de `utm_source`, `utm_medium`, `utm_campaign` dans le payload de commande.
+  * **📈 9. Frontend — Dashboard Analytics (`AnalyticsClient.tsx`)** :
+    - Nouveau widget **"Attribution Sociale — D'où viennent vos commandes ?"** : barres de progression colorées par canal (Instagram 📸, TikTok 🎵, Facebook 📘, X/Twitter, Telegram ✈️, WhatsApp 💬, Direct 🏠), % du total et montant par canal (90 derniers jours).
+  * **🧪 10. Validation** :
+    - `npx tsc --noEmit` : **0 erreur TypeScript**.
+    - Isolation multi-tenant validée : aucun credential Nopalou ne fuit vers les marchands.
+    - Migration idempotente (IF NOT EXISTS) : safe à relancer.
+    - Règle absolue respectée : aucun `git push` sans instruction explicite.
+
 - **Amélioration Chatbot WhatsApp & Résolution Anti-404 des Boutons Meta (`whatsapp-chatbot.js`, `entites.js`, `whatsapp.js`, `immo/[id]/page.tsx`) (09 septembre 2026)** 🤖🏪🔘🔗 :
+
   * **🎯 1. Demandes Utilisateur & Diagnostic** :
     - *Demande 1 — Retours au menu systématiques* : *"APRES une reponse on doit pour avoir une option pour revenir au menu"*. Lorsqu'un commerçant consultait « Mes Commandes » (`📋 Mes Commandes`) et qu'aucune commande n'était encore reçue, le bot envoyait un simple texte d'encouragement et s'arrêtait là, laissant l'utilisateur sans aucun bouton ni option interactive pour revenir à son tableau de bord marchand.
     - *Demande 2 — Audit Anti-404 des boutons Meta (« Voir les détails »)* : *"POURQUOI CES BOUTON VOIR RENVOI 404 bf62e118596c sur Nopalou. FAITE UN AUDIT SUR TOUT CES TYPDE DE BOUTON"*.

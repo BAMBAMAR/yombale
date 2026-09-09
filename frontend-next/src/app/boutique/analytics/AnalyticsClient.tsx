@@ -29,13 +29,20 @@ interface Historique {
   clics_tel: string
 }
 
+interface AttributionSociale {
+  canal: string
+  nb_commandes: number
+  montant_total: number
+}
+
 export default function AnalyticsClient({ boutiques }: { boutiques: { id: string; nom: string }[] }) {
   const { t, isRtl } = useTranslation()
   const [boutiqueId, setBoutiqueId] = useState(boutiques[0]?.id ?? '')
-  const [stats, setStats]           = useState<Stats | null>(null)
-  const [historique, setHistorique] = useState<Historique[]>([])
-  const [loading, setLoading]       = useState(false)
-  const [erreur, setErreur]         = useState<string | null>(null)
+  const [stats, setStats]                   = useState<Stats | null>(null)
+  const [historique, setHistorique]         = useState<Historique[]>([])
+  const [attribution, setAttribution]       = useState<AttributionSociale[]>([])
+  const [loading, setLoading]               = useState(false)
+  const [erreur, setErreur]                 = useState<string | null>(null)
 
   useEffect(() => {
     if (!boutiqueId) return
@@ -58,7 +65,8 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
       .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error || r.status)).catch(() => Promise.reject(r.statusText)))
       .then(data => { 
         setStats(data.stats)
-        setHistorique(data.historique ?? []) 
+        setHistorique(data.historique ?? [])
+        setAttribution(data.attribution_sociale ?? [])
         localStorage.setItem(`nopalou_offline_analytics_${boutiqueId}`, JSON.stringify(data))
       })
       .catch((msg) => {
@@ -177,6 +185,54 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
               </div>
             </div>
           </div>
+
+          {/* Attribution Social Commerce — Tableau de bord UTM */}
+          {attribution.length > 0 && (
+            <div style={{ background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', borderRadius: 14, padding: '16px 20px', marginBottom: 24, boxShadow: 'var(--shadow-xs)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <span style={{ fontSize: 18 }}>📊</span>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Attribution Sociale — D'où viennent vos commandes ?</h3>
+              </div>
+              <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text2, #6B5E52)' }}>
+                Commandes 90 derniers jours par canal d'acquisition (partage produit avec UTM)
+              </p>
+              {(() => {
+                const CANAL_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
+                  instagram:  { label: 'Instagram',  icon: '📸', color: '#db2777', bg: '#fdf2f8' },
+                  tiktok:     { label: 'TikTok',     icon: '🎵', color: '#000',    bg: '#f8f8f8' },
+                  facebook:   { label: 'Facebook',   icon: '📘', color: '#1d4ed8', bg: '#eff6ff' },
+                  twitter:    { label: 'X/Twitter',  icon: '&#120143;',  color: '#000',    bg: '#f9f9f9' },
+                  telegram:   { label: 'Telegram',   icon: '✈️',    color: '#0284c7', bg: '#f0f9ff' },
+                  whatsapp:   { label: 'WhatsApp',   icon: '💬', color: '#16a34a', bg: '#f0fdf4' },
+                  social:     { label: 'Social',     icon: '🌐', color: '#7c3aed', bg: '#f5f3ff' },
+                  direct:     { label: 'Direct',     icon: '🏠', color: '#64748b', bg: '#f8fafc' },
+                };
+                const total = attribution.reduce((s, a) => s + a.nb_commandes, 0) || 1;
+                return attribution.map(a => {
+                  const meta = CANAL_META[a.canal] || { label: a.canal, icon: '📊', color: '#64748b', bg: '#f8fafc' };
+                  const pct = Math.round((a.nb_commandes / total) * 100);
+                  return (
+                    <div key={a.canal} style={{ marginBottom: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                          <span style={{ fontSize: 15 }}>{meta.icon}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>{meta.label}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontSize: 12, color: '#64748b' }}>{a.nb_commandes} cmd{a.nb_commandes > 1 ? 's' : ''}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a' }}>{Number(a.montant_total).toLocaleString('fr-FR')} F</span>
+                        </div>
+                      </div>
+                      <div style={{ background: '#f1f5f9', borderRadius: 6, height: 8, overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: meta.color, borderRadius: 6, transition: 'width 0.5s ease', minWidth: pct > 0 ? 4 : 0 }} />
+                      </div>
+                      <span style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 2, display: 'block' }}>{pct}% du total</span>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          )}
 
           {/* Historique 30j */}
           {historique.length > 0 && (

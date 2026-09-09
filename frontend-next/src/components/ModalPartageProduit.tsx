@@ -54,6 +54,11 @@ export default function ModalPartageProduit({
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
   const boutiqueIdentifier = boutique.slug || boutique.id
   const productUrl = `${siteUrl}/boutiques/${boutiqueIdentifier}/produits/${produit.id}`
+
+  // URL de partage avec paramètres UTM pour l'attribution social commerce
+  const buildShareUrl = (source: string, medium: string, campaign: string) =>
+    `${productUrl}?utm_source=${encodeURIComponent(source)}&utm_medium=${encodeURIComponent(medium)}&utm_campaign=${encodeURIComponent(campaign)}`
+
   const storyVisualUrl = `/assets/produit-boutique/${produit.id}/story?boutiqueId=${boutique.id}`
   const contactTel = boutique.whatsapp || boutique.telephone || ''
   const ville = boutique.ville || 'Dakar'
@@ -74,17 +79,22 @@ export default function ModalPartageProduit({
     const prixFmt = produit.prix ? fcfa(produit.prix) : 'Prix sur demande'
     const cleanBoutiqueNom = boutique.nom.replace(/[\s\-_]+/g, '')
     const cleanCat = (produit.categorie || 'Shopping').replace(/[\s\-_]+/g, '')
+    // URLs avec UTM par template
+    const urlPromo   = buildShareUrl('social',    'share',   'promo_boutique')
+    const urlStatut  = buildShareUrl('whatsapp',  'statut',  'statut_produit')
+    const urlCredit  = buildShareUrl('whatsapp',  'credit',  'paiement_echelonne')
+    const urlReseaux = buildShareUrl('instagram', 'reseaux', 'post_social')
 
     return {
       promo: remise
-        ? `🔥 OFFRE SPÉCIALE chez ${boutique.nom} !\n\n${produit.nom} est en promotion exceptionnelle à ${prixFmt} (au lieu de ${fcfa(produit.prix_barre!)} — remise -${remise}%) !\n\n🚚 Livraison rapide disponible à ${ville} et partout au Sénégal.\n👉 Voir le produit et commander : ${productUrl}\n${contactTel ? `💬 WhatsApp direct : ${contactTel}` : ''}`
-        : `🔥 NOUVEL ARRIVAGE chez ${boutique.nom} !\n\n${produit.nom} est maintenant disponible en stock à ${prixFmt}.\n\n🚚 Livraison rapide disponible.\n👉 Voir et commander : ${productUrl}\n${contactTel ? `💬 WhatsApp direct : ${contactTel}` : ''}`,
+        ? `🔥 OFFRE SPÉCIALE chez ${boutique.nom} !\n\n${produit.nom} est en promotion exceptionnelle à ${prixFmt} (au lieu de ${fcfa(produit.prix_barre!)} — remise -${remise}%) !\n\n🚚 Livraison rapide disponible à ${ville} et partout au Sénégal.\n👉 Voir le produit et commander : ${urlPromo}\n${contactTel ? `💬 WhatsApp direct : ${contactTel}` : ''}`
+        : `🔥 NOUVEL ARRIVAGE chez ${boutique.nom} !\n\n${produit.nom} est maintenant disponible en stock à ${prixFmt}.\n\n🚚 Livraison rapide disponible.\n👉 Voir et commander : ${urlPromo}\n${contactTel ? `💬 WhatsApp direct : ${contactTel}` : ''}`,
 
-      statut: `✨ ${produit.nom} disponible chez ${boutique.nom} !\n💰 Prix : ${prixFmt}${remise ? ` (-${remise}%)` : ''}\n📍 ${ville}\n📲 Commandez directement ici : ${productUrl}`,
+      statut: `✨ ${produit.nom} disponible chez ${boutique.nom} !\n💰 Prix : ${prixFmt}${remise ? ` (-${remise}%)` : ''}\n📍 ${ville}\n📲 Commandez directement ici : ${urlStatut}`,
 
-      credit: `🤝 Facilité de paiement chez ${boutique.nom} !\n\nBesoin de "${produit.nom}" (${prixFmt}) ?\nPassez votre commande ou demandez un paiement échelonné en magasin.\n\n👉 Accéder à la boutique : ${productUrl}\n${contactTel ? `💬 Contactez-nous : ${contactTel}` : ''}`,
+      credit: `🤝 Facilité de paiement chez ${boutique.nom} !\n\nBesoin de "${produit.nom}" (${prixFmt}) ?\nPassez votre commande ou demandez un paiement échelonné en magasin.\n\n👉 Accéder à la boutique : ${urlCredit}\n${contactTel ? `💬 Contactez-nous : ${contactTel}` : ''}`,
 
-      reseaux: `✨ Retrouvez "${produit.nom}" chez ${boutique.nom} !\n\n💰 Prix : ${prixFmt}${remise ? ` (Promo -${remise}%)` : ''}\n📍 ${ville}, Sénégal\n🚚 Livraison express disponible !\n\n👉 Lien pour commander dans notre bio ou ici : ${productUrl}\n\n#Dakar #Senegal #${cleanBoutiqueNom} #${cleanCat} #ShoppingDakar #BoutiqueDakar #BonPlanSenegal`,
+      reseaux: `✨ Retrouvez "${produit.nom}" chez ${boutique.nom} !\n\n💰 Prix : ${prixFmt}${remise ? ` (Promo -${remise}%)` : ''}\n📍 ${ville}, Sénégal\n🚚 Livraison express disponible !\n\n👉 Lien pour commander dans notre bio ou ici : ${urlReseaux}\n\n#Dakar #Senegal #${cleanBoutiqueNom} #${cleanCat} #ShoppingDakar #BoutiqueDakar #BonPlanSenegal`,
     }
   }, [produit, boutique, productUrl, contactTel, ville, remise])
 
@@ -475,22 +485,14 @@ export default function ModalPartageProduit({
           }}
         >
           {/* Partage direct web */}
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`}
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(buildShareUrl('facebook', 'social_share', 'fb_partage_produit'))}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                padding: '6px 10px',
-                borderRadius: 8,
-                background: '#eff6ff',
-                color: '#1d4ed8',
-                fontSize: 11.5,
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
+                padding: '6px 10px', borderRadius: 8, background: '#eff6ff', color: '#1d4ed8',
+                fontSize: 11.5, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
               }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
@@ -499,20 +501,26 @@ export default function ModalPartageProduit({
               <span>Facebook</span>
             </a>
             <a
-              href={`https://t.me/share/url?url=${encodeURIComponent(productUrl)}&text=${encodeURIComponent(customMessage)}`}
+              href={`https://x.com/intent/tweet?url=${encodeURIComponent(buildShareUrl('twitter', 'social_share', 'tweet_produit'))}&text=${encodeURIComponent(`${produit.nom} — ${boutique.nom}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                padding: '6px 10px',
-                borderRadius: 8,
-                background: '#f0f9ff',
-                color: '#0284c7',
-                fontSize: 11.5,
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
+                padding: '6px 10px', borderRadius: 8, background: '#000', color: '#fff',
+                fontSize: 11.5, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L2.25 2.25h6.98l4.259 5.632L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              <span>X / Twitter</span>
+            </a>
+            <a
+              href={`https://t.me/share/url?url=${encodeURIComponent(buildShareUrl('telegram', 'social_share', 'telegram_produit'))}&text=${encodeURIComponent(customMessage)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '6px 10px', borderRadius: 8, background: '#f0f9ff', color: '#0284c7',
+                fontSize: 11.5, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4,
               }}
             >
               <Send size={13} /> Telegram

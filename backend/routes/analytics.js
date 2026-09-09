@@ -90,6 +90,20 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
       GROUP BY jour ORDER BY jour ASC
     `, [req.params.id]);
 
+    // Attribution Social Commerce — Répartition des ventes par canal UTM
+    const { rows: attributionRows } = await pool.query(`
+      SELECT
+        COALESCE(utm_source, 'direct') AS canal,
+        COUNT(*) AS nb_commandes,
+        COALESCE(SUM(montant_total), 0) AS montant_total
+      FROM commandes_boutique
+      WHERE boutique_id=$1 AND statut != 'annulee'
+        AND created_at >= NOW() - INTERVAL '90 days'
+      GROUP BY COALESCE(utm_source, 'direct')
+      ORDER BY nb_commandes DESC
+      LIMIT 10
+    `, [req.params.id]);
+
     res.json({
       stats: {
         ...rows[0],
@@ -105,7 +119,12 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
         tiktok_pixel_active: !!bqRows[0]?.tiktok_pixel_id,
         ga4_active: !!bqRows[0]?.ga4_id,
       },
-      historique
+      historique,
+      attribution_sociale: attributionRows.map(r => ({
+        canal: r.canal,
+        nb_commandes: Number(r.nb_commandes),
+        montant_total: Number(r.montant_total),
+      })),
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

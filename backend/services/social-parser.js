@@ -334,7 +334,61 @@ async function getLiveMetaToken() {
 }
 
 /**
- * Explore un profil social public (@username) pour récupérer ses publications récentes
+ * Normalise et nettoie une URL de réseau social pour stockage en base.
+ * Élimine les doubles préfixes, paramètres de tracking temporaires, espaces.
+ * Exemples valides en sortie :
+ *   'https://instagram.com/dieteltouba'
+ *   'https://www.tiktok.com/@maboutique'
+ *   'https://www.facebook.com/maboutique'
+ *   '@maboutique' → conservé tel quel si pas d'URL
+ */
+function normalizeSocialUrl(rawInput, platform) {
+  if (!rawInput || typeof rawInput !== 'string') return null;
+  let u = rawInput.trim();
+  if (!u) return null;
+
+  // Cas où l'utilisateur colle une URL dans un champ URL :
+  // Supprimer les doubles préfixes du type https://instagram.com/https://www.instagram.com/...
+  const doubleUrlMatch = u.match(/https?:\/\/[^/]+\/(?:https?:\/\/(.+))/);
+  if (doubleUrlMatch) {
+    u = 'https://' + doubleUrlMatch[1];
+  }
+
+  // Si c'est juste un @pseudo ou un pseudo sans préfixe, construire l'URL canonique
+  if (!u.startsWith('http://') && !u.startsWith('https://')) {
+    const pseudo = u.replace(/^@+/, '').trim();
+    if (!pseudo) return null;
+    switch ((platform || '').toLowerCase()) {
+      case 'instagram': return `https://www.instagram.com/${pseudo}`;
+      case 'tiktok':    return `https://www.tiktok.com/@${pseudo}`;
+      case 'facebook':  return `https://www.facebook.com/${pseudo}`;
+      case 'youtube':   return `https://www.youtube.com/@${pseudo}`;
+      case 'twitter': case 'x': return `https://x.com/${pseudo}`;
+      default:          return `@${pseudo}`;
+    }
+  }
+
+  // Nettoyer les paramètres de tracking temporaires (?_r=1&_t=ZS-...) pour TikTok
+  try {
+    const parsed = new URL(u);
+    // Supprimer les params de tracking TikTok (_r, _t)
+    ['_r', '_t', 'igsh', 'igshid', 'fbclid'].forEach(p => parsed.searchParams.delete(p));
+    u = parsed.toString();
+  } catch (_) {}
+
+  return u;
+}
+
+/**
+ * Explore un profil social public (@username) pour récupérer ses publications récentes.
+ *
+ * SÉCURITÉ MULTI-TENANT : Cette fonction est appelée dans le contexte d'une boutique
+ * marchande spécifique. Elle ne doit JAMAIS utiliser les credentials Meta de Nopalou
+ * (IG_USER_ID, FB_PAGE_ID) car cela retournerait les posts officiels de Nopalou au
+ * lieu des posts du marchand.
+ * → Mode exclusif : oEmbed public + iframe placeholders de profil.
+ * L'API Graph officielle n'est utilisée que si le marchand a lui-même fourni son
+ * propre token OAuth via social_accounts.access_token (fonctionnalité future).
  */
 async function exploreProfile(platform, rawUser) {
   const username = cleanUsername(rawUser);
@@ -346,38 +400,14 @@ async function exploreProfile(platform, rawUser) {
 
   try {
     if (platform === 'instagram') {
-      // 1. Si Graph API est disponible dans l'environnement ou en base
-      const igUserId = process.env.IG_USER_ID;
-      const fbToken = await getLiveMetaToken();
+      // Sécurité : NE PAS utiliser process.env.IG_USER_ID ni getLiveMetaToken() ici.
+      // Ces credentials appartiennent au compte Nopalou et non au marchand.
+      // → Exploration publique uniquement via iframe embed placeholder.
+      const profileUrl = `https://www.instagram.com/${username}/`;
 
-      if (igUserId && fbToken) {
-        try {
-          const graphUrl = `https://graph.facebook.com/v19.0/${igUserId}/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&limit=15&access_token=${encodeURIComponent(fbToken)}`;
-          const graphData = await httpGetJson(graphUrl, 8000);
-          if (graphData && Array.isArray(graphData.data) && graphData.data.length > 0) {
-            for (const item of graphData.data) {
-              posts.push({
-                externalPostId: item.id,
-                url: item.permalink || `https://www.instagram.com/p/${item.id}/`,
-                platform: 'instagram',
-                mediaType: item.media_type === 'VIDEO' ? 'REEL' : 'IMAGE',
-                thumbnailUrl: item.thumbnail_url || item.media_url || null,
-                caption: item.caption || '',
-                author: `@${username}`,
-                publishedAt: item.timestamp || new Date().toISOString(),
-              });
-            }
-            return { success: true, platform: 'instagram', username, posts, source: 'graph_api' };
-          }
-        } catch (graphErr) {
-          console.warn('[EXPLORE_IG_GRAPH_WARN]', graphErr.message);
-        }
-      }
-
-      // 2. Exploration Web / Embeds fallback
       posts.push({
         externalPostId: `ig_${username}_latest_1`,
-        url: `https://www.instagram.com/${username}/`,
+        url: profileUrl,
         platform: 'instagram',
         mediaType: 'REEL',
         thumbnailUrl: null,
@@ -390,9 +420,8 @@ async function exploreProfile(platform, rawUser) {
     }
 
     if (platform === 'tiktok') {
-      // Pour TikTok : exploration du profil public ou oEmbed
+      // TikTok oEmbed public — pas de token requis, isolation garantie.
       const profileUrl = `https://www.tiktok.com/@${username}`;
-      
       const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
       const data = await httpGetJson(oembedUrl, 6000);
 
@@ -407,42 +436,27 @@ async function exploreProfile(platform, rawUser) {
           author: data.author_name ? `@${data.author_name}` : `@${username}`,
           source: 'oembed',
         });
+      } else {
+        // Fallback sans oEmbed
+        posts.push({
+          externalPostId: `tiktok_${username}_profile`,
+          url: profileUrl,
+          platform: 'tiktok',
+          mediaType: 'TIKTOK_VIDEO',
+          thumbnailUrl: null,
+          caption: `Vidéos de @${username}`,
+          author: `@${username}`,
+          isProfilePlaceholder: true,
+        });
       }
 
       return { success: true, platform: 'tiktok', username, posts, source: 'tiktok_discovery' };
     }
 
     if (platform === 'facebook') {
-      // 1. Si Graph API est disponible avec la page Meta connectée
-      const fbToken = await getLiveMetaToken();
-      const pageId = process.env.FB_PAGE_ID || '1190520027476281';
-
-      if (fbToken && pageId) {
-        try {
-          const graphUrl = `https://graph.facebook.com/v19.0/${pageId}/posts?fields=id,message,created_time,permalink_url,full_picture,attachments{media,type,url}&limit=15&access_token=${encodeURIComponent(fbToken)}`;
-          const graphData = await httpGetJson(graphUrl, 8000);
-          if (graphData && Array.isArray(graphData.data) && graphData.data.length > 0) {
-            for (const item of graphData.data) {
-              const isVideo = item.attachments?.data?.[0]?.type === 'video_inline' || (item.permalink_url && item.permalink_url.includes('/reel/'));
-              posts.push({
-                externalPostId: item.id,
-                url: item.permalink_url || `https://www.facebook.com/${item.id}`,
-                platform: 'facebook',
-                mediaType: isVideo ? 'REEL' : 'POST',
-                thumbnailUrl: item.full_picture || item.attachments?.data?.[0]?.media?.image?.src || null,
-                caption: item.message || '',
-                author: username,
-                publishedAt: item.created_time || new Date().toISOString(),
-              });
-            }
-            return { success: true, platform: 'facebook', username, posts, source: 'meta_graph_api' };
-          }
-        } catch (fbGraphErr) {
-          console.warn('[EXPLORE_FB_GRAPH_WARN]', fbGraphErr.message);
-        }
-      }
-
-      // 2. Fallback profil/page
+      // Sécurité : NE PAS utiliser le token FB global (getLiveMetaToken) ni FB_PAGE_ID.
+      // Cela retournerait les posts de la page officielle Nopalou, pas ceux du marchand.
+      // → Fallback iframe Plugin Facebook public uniquement.
       const pageUrl = `https://www.facebook.com/${username}`;
       posts.push({
         externalPostId: `fb_${username}_page`,
@@ -452,8 +466,24 @@ async function exploreProfile(platform, rawUser) {
         thumbnailUrl: null,
         caption: `Publications de la page ${username}`,
         author: username,
+        isProfilePlaceholder: true,
       });
       return { success: true, platform: 'facebook', username, posts, source: 'facebook_discovery' };
+    }
+
+    if (platform === 'youtube') {
+      const channelUrl = `https://www.youtube.com/@${username}`;
+      posts.push({
+        externalPostId: `yt_${username}_channel`,
+        url: channelUrl,
+        platform: 'youtube',
+        mediaType: 'VIDEO',
+        thumbnailUrl: null,
+        caption: `Chaîne YouTube de @${username}`,
+        author: `@${username}`,
+        isProfilePlaceholder: true,
+      });
+      return { success: true, platform: 'youtube', username, posts, source: 'youtube_discovery' };
     }
 
     return { success: false, error: 'Plateforme non supportée pour l\'exploration', posts: [] };
@@ -472,5 +502,6 @@ module.exports = {
   cleanUsername,
   parseBatchUrls,
   exploreProfile,
+  normalizeSocialUrl,
 };
 

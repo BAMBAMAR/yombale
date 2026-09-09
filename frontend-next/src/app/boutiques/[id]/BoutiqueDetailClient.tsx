@@ -320,6 +320,8 @@ export default function BoutiqueDetailClient({
     whatsapp: string | null
     facebook: string | null
     instagram: string | null
+    tiktok?: string | null
+    youtube?: string | null
     site_web: string | null
     horaires: Record<string, string> | null
     adresse: string | null
@@ -878,11 +880,11 @@ export default function BoutiqueDetailClient({
             </p>
 
             {/* Réseaux Sociaux & Site Web */}
-            {(boutique.instagram || boutique.facebook || boutique.site_web) && (
+            {(boutique.instagram || boutique.facebook || (boutique as any).tiktok || (boutique as any).youtube || boutique.site_web) && (
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
                 {boutique.instagram && (
                   <a href={boutique.instagram.startsWith('http') ? boutique.instagram : `https://instagram.com/${boutique.instagram}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fdf2f8', border: '1px solid #fbcfe8', padding: '6px 14px', borderRadius: 20, color: '#db2777', fontSize: 12, fontWeight: 700 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #fdf2f8, #fff7ed)', border: '1px solid #fbcfe8', padding: '6px 14px', borderRadius: 20, color: '#db2777', fontSize: 12, fontWeight: 700 }}>
                       <span>📸 Instagram</span>
                     </div>
                   </a>
@@ -891,6 +893,20 @@ export default function BoutiqueDetailClient({
                   <a href={boutique.facebook.startsWith('http') ? boutique.facebook : `https://facebook.com/${boutique.facebook}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', padding: '6px 14px', borderRadius: 20, color: '#1d4ed8', fontSize: 12, fontWeight: 700 }}>
                       <span>📘 Facebook</span>
+                    </div>
+                  </a>
+                )}
+                {(boutique as any).tiktok && (
+                  <a href={(boutique as any).tiktok.startsWith('http') ? (boutique as any).tiktok : `https://www.tiktok.com/@${(boutique as any).tiktok}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#f8f8f8', border: '1px solid #e2e8f0', padding: '6px 14px', borderRadius: 20, color: '#000', fontSize: 12, fontWeight: 700 }}>
+                      <span>🎵 TikTok</span>
+                    </div>
+                  </a>
+                )}
+                {(boutique as any).youtube && (
+                  <a href={(boutique as any).youtube.startsWith('http') ? (boutique as any).youtube : `https://www.youtube.com/@${(boutique as any).youtube}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fef2f2', border: '1px solid #fecaca', padding: '6px 14px', borderRadius: 20, color: '#dc2626', fontSize: 12, fontWeight: 700 }}>
+                      <span>▶️ YouTube</span>
                     </div>
                   </a>
                 )}

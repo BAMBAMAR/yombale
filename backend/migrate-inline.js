@@ -838,6 +838,8 @@ module.exports = async function migrateInline() {
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS site_web TEXT`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS facebook TEXT`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS instagram TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS tiktok TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS youtube TEXT`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS horaires JSONB DEFAULT '{}'`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS slug VARCHAR(100)`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS couleur_theme VARCHAR(50) DEFAULT '#1e3a5f'`,
@@ -1029,7 +1031,14 @@ module.exports = async function migrateInline() {
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS frais_livraison NUMERIC(12,2) DEFAULT 0`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS groupe_commande UUID`);
     await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS paiement_recu BOOLEAN DEFAULT false`);
+    // Attribution Social Commerce : canal d'acquisition (UTM) et post source
+    await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS utm_source VARCHAR(100)`);
+    await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS utm_medium VARCHAR(100)`);
+    await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS utm_campaign VARCHAR(200)`);
+    await pool.query(`ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS social_post_id UUID REFERENCES social_posts(id) ON DELETE SET NULL`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_commandes_boutique ON commandes_boutique(boutique_id, created_at DESC)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_commandes_groupe ON commandes_boutique(groupe_commande) WHERE groupe_commande IS NOT NULL`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_commandes_social ON commandes_boutique(social_post_id) WHERE social_post_id IS NOT NULL`);
     
     // Table des lignes d'articles par commande (Panier multi-produits avec stock et marges)
     await pool.query(`

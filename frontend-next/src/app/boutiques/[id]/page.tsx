@@ -27,6 +27,8 @@ interface Boutique {
   site_web: string | null
   facebook: string | null
   instagram: string | null
+  tiktok?: string | null
+  youtube?: string | null
   horaires: Record<string, string> | null
   utilisateur_id: string
   plan_actif: 'pro' | 'business' | null
@@ -311,6 +313,8 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
             whatsapp: b.whatsapp,
             facebook: b.facebook,
             instagram: b.instagram,
+            tiktok: (b as any).tiktok,
+            youtube: (b as any).youtube,
             site_web: b.site_web,
             horaires: b.horaires,
             adresse: b.adresse,

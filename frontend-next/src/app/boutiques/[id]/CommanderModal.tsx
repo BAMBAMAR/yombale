@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface Produit { id: string; nom: string; prix: number | null; images?: string[]; photo?: string }
 interface Zone { id: string; nom: string; prix: number }
@@ -61,6 +61,21 @@ export default function CommanderModal({
   const [cardCvc, setCardCvc] = useState('123');
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
+
+  // Capture des paramètres UTM depuis l'URL (attribution social commerce)
+  // Permet de savoir si la commande vient d'un partage Instagram, TikTok, Facebook, etc.
+  const utmRef = useRef<{ utm_source?: string; utm_medium?: string; utm_campaign?: string }>({});
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      const src = sp.get('utm_source') || undefined;
+      const med = sp.get('utm_medium') || undefined;
+      const cam = sp.get('utm_campaign') || undefined;
+      if (src || med || cam) {
+        utmRef.current = { utm_source: src, utm_medium: med, utm_campaign: cam };
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`${backendUrl}/api/comptabilite/${boutiqueId}/zones/public`)
@@ -202,6 +217,8 @@ export default function CommanderModal({
           articles: articlesPayload,
           code_promo: promoApplique?.code || undefined,
           montant_reduction: promoApplique?.reduction || undefined,
+          // Attribution social commerce UTM
+          ...utmRef.current,
         }),
       })
       const data = await res.json()

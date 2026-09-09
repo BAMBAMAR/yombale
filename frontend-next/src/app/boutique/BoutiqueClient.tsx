@@ -60,6 +60,8 @@ interface Boutique {
   site_web: string | null
   facebook: string | null
   instagram: string | null
+  tiktok?: string | null
+  youtube?: string | null
   slug: string | null
   mode_fonctionnement?: 'hybride_pos' | 'pure_player'
   meta_pixel_id?: string | null
@@ -540,6 +542,16 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         <div>
           <label style={labelStyle}>Instagram</label>
           <input name="instagram" type="url" defaultValue={boutique?.instagram ?? ''} style={inputStyle} placeholder="https://instagram.com/…" />
+        </div>
+      </div>
+      <div className="bq-form-grid-2">
+        <div>
+          <label style={labelStyle}>TikTok</label>
+          <input name="tiktok" type="url" defaultValue={(boutique as any)?.tiktok ?? ''} style={inputStyle} placeholder="https://www.tiktok.com/@maboutique" />
+        </div>
+        <div>
+          <label style={labelStyle}>YouTube</label>
+          <input name="youtube" type="url" defaultValue={(boutique as any)?.youtube ?? ''} style={inputStyle} placeholder="https://www.youtube.com/@machannel" />
         </div>
       </div>
 
@@ -2360,9 +2372,9 @@ function MarketingBoutique({
 
           {/* Page Facebook */}
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
-            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#1d4ed8' }}>🌐 Page Facebook</p>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#1d4ed8' }}>🌐 Facebook</p>
             <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).facebook ? '#16a34a' : '#94a3b8' }}>
-              {(boutique as any).facebook ? '✓ Connectée' : '⚪ Non renseignée'}
+              {(boutique as any).facebook ? '✓ Renseignée' : '⚪ Non renseignée'}
             </p>
           </div>
 
@@ -2370,7 +2382,23 @@ function MarketingBoutique({
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
             <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#e11d48' }}>📸 Instagram</p>
             <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).instagram ? '#16a34a' : '#94a3b8' }}>
-              {(boutique as any).instagram ? '✓ Connecté' : '⚪ Non renseigné'}
+              {(boutique as any).instagram ? '✓ Renseigné' : '⚪ Non renseigné'}
+            </p>
+          </div>
+
+          {/* TikTok */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#000000' }}>🎵 TikTok</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).tiktok ? '#16a34a' : '#94a3b8' }}>
+              {(boutique as any).tiktok ? '✓ Renseigné' : '⚪ Non renseigné'}
+            </p>
+          </div>
+
+          {/* YouTube */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#dc2626' }}>▶️ YouTube</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).youtube ? '#16a34a' : '#94a3b8' }}>
+              {(boutique as any).youtube ? '✓ Renseigné' : '⚪ Non renseigné'}
             </p>
           </div>
         </div>
