@@ -3056,10 +3056,10 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
           </div>
         </div>
 
-        {/* Ligne 2 : Omni-Recherche & Filtres intégrés sur une seule ligne */}
+        {/* Ligne 2 : Omni-Recherche & Filtres intégrés SaaS responsive */}
         {produits.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
-            <div className="saas-search-wrap">
+          <div className="saas-toolbar-container">
+            <div className="saas-search-wrap saas-toolbar-full">
               <Search size={14} className="saas-search-icon" />
               <input
                 type="text"
@@ -3080,81 +3080,85 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
               )}
             </div>
 
-            {/* Tri multi-critères */}
-            <select
-              value={triOption}
-              onChange={e => setTriOption(e.target.value as any)}
-              className="saas-select-control"
-              title="Trier les produits"
-            >
-              <option value="recent">🕒 Plus récents</option>
-              <option value="ancien">⏳ Plus anciens</option>
-              <option value="prix_asc">💰 Prix croissant</option>
-              <option value="prix_desc">💎 Prix décroissant</option>
-              <option value="stock_rupture">⚠️ Ruptures d&apos;abord</option>
-              <option value="stock_dispo">📦 En stock d&apos;abord</option>
-              <option value="alpha">🔤 Nom (A-Z)</option>
-            </select>
-
-            {/* Filtre Stock */}
-            <select
-              value={filtreStock}
-              onChange={e => setFiltreStock(e.target.value as any)}
-              className="saas-select-control"
-              title="Filtrer par disponibilité stock"
-            >
-              <option value="tous">📦 Tous stocks</option>
-              <option value="en_stock">✅ En stock</option>
-              <option value="rupture">❌ Rupture</option>
-            </select>
-
-            {/* Statut WhatsApp */}
-            <select
-              value={filtreStatut}
-              onChange={e => setFiltreStatut(e.target.value as typeof filtreStatut)}
-              className="saas-select-control"
-              title="Filtrer par statut WhatsApp"
-            >
-              <option value="tous">🌐 Statut: Tous</option>
-              <option value="synchronise">💬 Sur WhatsApp</option>
-              <option value="en_attente">⏳ En attente</option>
-              <option value="echec">⚠️ Échec synchro</option>
-              <option value="jamais_partage">🚫 Non partagés</option>
-            </select>
-
-            {/* Catégories */}
-            {categoriesDisponibles.length > 1 && (
+            <div className="saas-toolbar-grid">
+              {/* Tri multi-critères */}
               <select
-                value={filtreCategorie}
-                onChange={e => setFiltreCategorie(e.target.value)}
+                value={triOption}
+                onChange={e => setTriOption(e.target.value as any)}
                 className="saas-select-control"
-                title="Filtrer par catégorie"
+                title="Trier les produits"
               >
-                <option value="toutes">Catégories: Toutes</option>
-                {categoriesDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="recent">🕒 Plus récents</option>
+                <option value="ancien">⏳ Plus anciens</option>
+                <option value="prix_asc">💰 Prix croissant</option>
+                <option value="prix_desc">💎 Prix décroissant</option>
+                <option value="stock_rupture">⚠️ Ruptures d&apos;abord</option>
+                <option value="stock_dispo">📦 En stock d&apos;abord</option>
+                <option value="alpha">🔤 Nom (A-Z)</option>
               </select>
-            )}
 
-            {/* Bouton Tout cocher */}
-            {produitsFiltres.length > 0 && (
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                className="saas-batch-btn saas-batch-btn-ghost"
-                style={{
-                  height: 38,
-                  background: selectedProdIds.size > 0 ? '#fff7ed' : '#f8fafc',
-                  color: selectedProdIds.size > 0 ? '#C75B00' : '#475569',
-                  border: `1px solid ${selectedProdIds.size > 0 ? '#fed7aa' : '#cbd5e1'}`,
-                }}
-                title={selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+              {/* Filtre Stock */}
+              <select
+                value={filtreStock}
+                onChange={e => setFiltreStock(e.target.value as any)}
+                className="saas-select-control"
+                title="Filtrer par disponibilité stock"
               >
-                {selectedProdIds.size === produitsFiltres.length ? <CheckSquare size={14} /> : <Square size={14} />}
-                <span>{selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout cocher'}</span>
-              </button>
-            )}
+                <option value="tous">📦 Tous stocks</option>
+                <option value="en_stock">✅ En stock</option>
+                <option value="rupture">❌ Rupture</option>
+              </select>
+
+              {/* Statut WhatsApp */}
+              <select
+                value={filtreStatut}
+                onChange={e => setFiltreStatut(e.target.value as typeof filtreStatut)}
+                className="saas-select-control"
+                title="Filtrer par statut WhatsApp"
+              >
+                <option value="tous">🌐 Statut: Tous</option>
+                <option value="synchronise">💬 Sur WhatsApp</option>
+                <option value="en_attente">⏳ En attente</option>
+                <option value="echec">⚠️ Échec synchro</option>
+                <option value="jamais_partage">🚫 Non partagés</option>
+              </select>
+
+              {/* Catégories */}
+              {categoriesDisponibles.length > 1 && (
+                <select
+                  value={filtreCategorie}
+                  onChange={e => setFiltreCategorie(e.target.value)}
+                  className="saas-select-control"
+                  title="Filtrer par catégorie"
+                >
+                  <option value="toutes">Catégories: Toutes</option>
+                  {categoriesDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              )}
+
+              {/* Bouton Tout cocher */}
+              {produitsFiltres.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  className="saas-batch-btn saas-batch-btn-ghost"
+                  style={{
+                    height: 38,
+                    background: selectedProdIds.size > 0 ? '#fff7ed' : '#f8fafc',
+                    color: selectedProdIds.size > 0 ? '#C75B00' : '#475569',
+                    border: `1.5px solid ${selectedProdIds.size > 0 ? '#fed7aa' : '#cbd5e1'}`,
+                    justifyContent: 'center',
+                  }}
+                  title={selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                >
+                  {selectedProdIds.size === produitsFiltres.length ? <CheckSquare size={14} /> : <Square size={14} />}
+                  <span>{selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout cocher'}</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
+
       </div>
 
       {successMsg && (
@@ -3174,8 +3178,8 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
       {selectedProdIds.size > 0 && (
         <div className="saas-floating-batch-bar">
           <span className="saas-batch-counter">
-            <CheckSquare size={15} />
-            <span>{selectedProdIds.size} sélectionné(s)</span>
+            <CheckSquare size={14} />
+            <span>{selectedProdIds.size}</span>
           </span>
 
           <button
@@ -3186,7 +3190,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
             title="Partager les produits sélectionnés sur WhatsApp"
           >
             <MessageCircle size={13} />
-            <span>Partager WhatsApp</span>
+            <span>Partager</span>
           </button>
 
           <button
@@ -3208,7 +3212,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
             title="Marquer en rupture de stock"
           >
             <Package size={13} />
-            <span>En rupture</span>
+            <span>Rupture</span>
           </button>
 
           <button
@@ -3245,6 +3249,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
               padding: '4px',
               display: 'flex',
               alignItems: 'center',
+              flexShrink: 0,
             }}
             title="Désélectionner tout"
           >
@@ -3294,167 +3299,155 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                 key={p.id}
                 className={`saas-compact-product-card ${isSelected ? 'selected' : ''}`}
               >
-                {/* Case à cocher pour sélection groupée */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    const next = new Set(selectedProdIds)
-                    if (next.has(p.id)) next.delete(p.id)
-                    else next.add(p.id)
-                    setSelectedProdIds(next)
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '0 2px',
-                    color: isSelected ? '#C75B00' : '#94a3b8',
+                {/* Zone supérieure / principale du produit */}
+                <div className="saas-card-top">
+                  {/* Case à cocher pour sélection groupée */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const next = new Set(selectedProdIds)
+                      if (next.has(p.id)) next.delete(p.id)
+                      else next.add(p.id)
+                      setSelectedProdIds(next)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '0 2px',
+                      color: isSelected ? '#C75B00' : '#94a3b8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexShrink: 0,
+                    }}
+                    title="Sélectionner pour action par lot"
+                  >
+                    {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+                  </button>
+
+                  {/* Miniature Image 50x50 */}
+                  <div style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                     display: 'flex',
                     alignItems: 'center',
-                    flexShrink: 0,
-                  }}
-                  title="Sélectionner pour action par lot"
-                >
-                  {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
-                </button>
-
-                {/* Miniature Image 50x50 */}
-                <div style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                  flexShrink: 0,
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {p.images?.[0] ? (
-                    <ExternalImg src={p.images[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <Package size={20} style={{ color: '#94a3b8' }} />
-                  )}
-                </div>
-
-                {/* Contenu principal */}
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                    <h4 style={{
-                      margin: 0,
-                      fontWeight: 800,
-                      fontSize: 14,
-                      color: '#0f172a',
-                      lineHeight: 1.3,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      maxWidth: 320,
-                    }}>
-                      {p.nom}
-                    </h4>
-                    <span style={{ fontSize: 14, color: '#C75B00', fontWeight: 900, whiteSpace: 'nowrap' }}>
-                      {p.prix ? fcfa(p.prix) : 'Sur demande'}
-                    </span>
-                  </div>
-
-                  {/* Badges statut & stock */}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {/* Stock pill */}
-                    {editingStockId === p.id ? (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
-                        <input
-                          type="number"
-                          value={stockInputVal}
-                          onChange={e => setStockInputVal(e.target.value)}
-                          style={{ width: 55, padding: '2px 6px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 11, height: 22 }}
-                          autoFocus
-                        />
-                        <button onClick={() => saveStock(p.id)} style={{ padding: '2px 8px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}>OK</button>
-                        <button onClick={() => setEditingStockId(null)} style={{ padding: '2px 8px', background: '#9ca3af', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}>✕</button>
-                      </div>
+                    justifyContent: 'center',
+                  }}>
+                    {p.images?.[0] ? (
+                      <ExternalImg src={p.images[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEditingStockId(p.id)
-                          setStockInputVal(String(p.quantite_stock ?? p.stock_quantite ?? 0))
-                        }}
-                        className={`saas-badge-pill ${inStock ? 'saas-badge-success' : 'saas-badge-danger'}`}
-                        style={{ cursor: 'pointer' }}
-                        title="Cliquer pour ajuster le stock"
-                      >
-                        <Package size={11} />
-                        <span>{inStock ? `Stock: ${formatNumber(qty ?? 0)}` : 'Rupture'}</span>
-                      </span>
+                      <Package size={20} style={{ color: '#94a3b8' }} />
                     )}
+                  </div>
 
-                    {/* Catégorie */}
-                    {p.categorie && (
-                      <span className="saas-badge-pill saas-badge-neutral">
-                        <Tag size={10} />
-                        <span>{p.categorie}</span>
+                  {/* Contenu principal */}
+                  <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                      <h4 style={{
+                        margin: 0,
+                        fontWeight: 800,
+                        fontSize: 14,
+                        color: '#0f172a',
+                        lineHeight: 1.3,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        maxWidth: '100%',
+                      }}>
+                        {p.nom}
+                      </h4>
+                      <span style={{ fontSize: 14, color: '#C75B00', fontWeight: 900, whiteSpace: 'nowrap' }}>
+                        {p.prix ? fcfa(p.prix) : 'Sur demande'}
                       </span>
-                    )}
+                    </div>
 
-                    {/* Code-barres EAN */}
-                    {(p as any).code_barre && (
-                      <span className="saas-badge-pill saas-badge-info">
-                        <span>EAN: {(p as any).code_barre}</span>
-                      </span>
-                    )}
+                    {/* Badges statut & stock */}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                      {/* Stock pill */}
+                      {editingStockId === p.id ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
+                          <input
+                            type="number"
+                            value={stockInputVal}
+                            onChange={e => setStockInputVal(e.target.value)}
+                            style={{ width: 55, padding: '2px 6px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 11, height: 22 }}
+                            autoFocus
+                          />
+                          <button onClick={() => saveStock(p.id)} style={{ padding: '2px 8px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}>OK</button>
+                          <button onClick={() => setEditingStockId(null)} style={{ padding: '2px 8px', background: '#9ca3af', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}>✕</button>
+                        </div>
+                      ) : (
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingStockId(p.id)
+                            setStockInputVal(String(p.quantite_stock ?? p.stock_quantite ?? 0))
+                          }}
+                          className={`saas-badge-pill ${inStock ? 'saas-badge-success' : 'saas-badge-danger'}`}
+                          style={{ cursor: 'pointer' }}
+                          title="Cliquer pour ajuster le stock"
+                        >
+                          <Package size={11} />
+                          <span>{inStock ? `Stock: ${formatNumber(qty ?? 0)}` : 'Rupture'}</span>
+                        </span>
+                      )}
+
+                      {/* Catégorie */}
+                      {p.categorie && (
+                        <span className="saas-badge-pill saas-badge-neutral">
+                          <Tag size={10} />
+                          <span>{p.categorie}</span>
+                        </span>
+                      )}
+
+                      {/* Code-barres EAN */}
+                      {(p as any).code_barre && (
+                        <span className="saas-badge-pill saas-badge-info">
+                          <span>EAN: {(p as any).code_barre}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Actions Droite */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                {/* Actions Droite / Footer Mobile */}
+                <div className="saas-card-actions">
                   <button
                     type="button"
                     onClick={() => setMode({ editing: p })}
-                    className="btn-npl btn-npl-secondary"
+                    className="saas-card-btn-action"
                     style={{
-                      height: 32,
-                      padding: '0 10px',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      borderRadius: 8,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
                       background: '#f8fafc',
                       border: '1px solid #cbd5e1',
                       color: '#334155',
-                      cursor: 'pointer',
                     }}
                     title="Modifier ce produit"
                   >
                     <Edit size={12} />
-                    <span className="hide-mobile">Modifier</span>
+                    <span>Modifier</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPartageModalData({ produit: p, isNew: false })}
+                    className="saas-card-btn-action"
                     style={{
-                      height: 32,
-                      padding: '0 10px',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      borderRadius: 8,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
                       background: '#25D366',
-                      color: '#ffffff',
                       border: 'none',
-                      cursor: 'pointer',
+                      color: '#ffffff',
                     }}
                     title="Partager ce produit sur WhatsApp ou réseaux sociaux"
                   >
                     <MessageCircle size={13} />
-                    <span className="hide-mobile">Partager</span>
+                    <span>Partager</span>
                   </button>
 
                   {/* Menu déroulant actions 3-points */}
@@ -3465,18 +3458,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                         e.stopPropagation()
                         setMenuActionsOuvertId(menuActionsOuvertId === p.id ? null : p.id)
                       }}
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        background: '#f1f5f9',
-                        border: '1px solid #cbd5e1',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        color: '#475569',
-                      }}
+                      className="saas-card-btn-more"
                       title="Plus d'actions"
                     >
                       <span>⋯</span>
