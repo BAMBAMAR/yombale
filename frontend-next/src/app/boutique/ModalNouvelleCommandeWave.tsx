@@ -176,24 +176,28 @@ export default function ModalNouvelleCommandeWave({
   function genererMessageWhatsApp(cmd: any, payUrl: string) {
     const totalFmt = fcfa(Number(cmd.montant_total || montantTotal))
     const puFmt = fcfa(Number(cmd.prix_unitaire || prixUnitaire))
-    const nomClientAffiche = clientNom.trim() || 'cher client'
+    const cleanNom = clientNom.trim()
+    const salutation = cleanNom && cleanNom.toLowerCase() !== 'client whatsapp'
+      ? `Bonjour ${cleanNom} !`
+      : `Bonjour !`
 
-    let msg = `Bonjour ${nomClientAffiche} ! 👋\n\n` +
+    let msg = `${salutation}\n\n` +
       `Voici votre commande officielle Nopalou :\n` +
-      `📦 *${cmd.nom_produit}* × ${cmd.quantite} (${puFmt})\n`
+      `*Produit :* ${cmd.nom_produit} × ${cmd.quantite} (${puFmt})\n`
 
     if (montantFrais > 0) {
-      msg += `🚚 Livraison : ${fcfa(montantFrais)}\n`
+      msg += `*Livraison :* ${fcfa(montantFrais)}\n`
     }
 
-    msg += `💰 *TOTAL : ${totalFmt}*\n` +
-      `🔖 Référence : *${cmd.reference}*\n\n`
+    msg += `*TOTAL :* ${totalFmt}\n` +
+      `*Référence :* ${cmd.reference}\n\n`
 
     if (methodePaiement === 'wave') {
-      msg += `💳 *Pour régler directement en 1 clic par Wave sécurisé :*\n👉 ${payUrl}\n\n` +
+      msg += `*Pour régler directement en 1 clic par Wave sécurisé :*\n` +
+        `${payUrl}\n\n` +
         `_Dès votre validation Wave, votre commande est confirmée et votre reçu officiel vous est délivré instantanément._`
     } else {
-      msg += `💳 Mode convenu : ${methodePaiement === 'cash' ? '💵 Espèces à la livraison' : '🍊 Orange Money'}\n` +
+      msg += `*Mode de paiement :* ${methodePaiement === 'cash' ? 'Espèces à la livraison' : 'Orange Money'}\n` +
         `Merci pour votre confiance !`
     }
 

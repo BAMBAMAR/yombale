@@ -165,7 +165,16 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
                         }
                         const SITE = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
                         const payUrl = `${SITE}/checkout-express?produit=${(commande as any).produit_id || ''}&boutique=${boutiqueId}&phone=${cleanTel}&pay=wave&ref=${commande.reference}&auto=1`
-                        const msg = `Bonjour ${commande.client_nom} ! 👋\n\nVoici le rappel pour votre commande Nopalou :\n📦 *${commande.nom_produit}* × ${commande.quantite}\n💰 Total : *${fcfa(commande.montant_total)}*\n🔖 Référence : *${commande.reference}*\n\n💳 *Pour régler directement en 1 clic par Wave sécurisé :*\n👉 ${payUrl}\n\nMerci pour votre confiance !`
+                        const cleanNom = commande.client_nom?.trim()
+                        const salutation = cleanNom && cleanNom.toLowerCase() !== 'client whatsapp' ? `Bonjour ${cleanNom} !` : `Bonjour !`
+                        const msg = `${salutation}\n\n` +
+                          `Voici le rappel pour votre commande Nopalou :\n` +
+                          `*Produit :* ${commande.nom_produit} × ${commande.quantite}\n` +
+                          `*TOTAL :* ${fcfa(commande.montant_total)}\n` +
+                          `*Référence :* ${commande.reference}\n\n` +
+                          `*Pour régler directement en 1 clic par Wave sécurisé :*\n` +
+                          `${payUrl}\n\n` +
+                          `Merci pour votre confiance !`
                         window.open(`https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`, '_blank')
                       }}
                       style={{ padding: '6px 12px', background: '#25D366', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}

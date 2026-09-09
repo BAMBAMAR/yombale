@@ -11,6 +11,8 @@
       * Bouton vert vibrant **« ⚡ Nouvelle commande / Lien Wave 💬 »** ajouté dans la barre d'onglets de la page Commandes.
     - *Bouton de Relance Wave Directe* :
       * Sur les commandes en attente (`statut === 'en_attente'`), ajout du bouton rapide **« 💬 Relancer Wave »** pour ré-envoyer un rappel avec le lien de paiement Wave en un clic sur WhatsApp si le client tarde à payer.
+    - *Amélioration du Formatage WhatsApp Universel* :
+      * Remplacement des émojis 4-octets par un formatage typographique universel en gras (`*Produit :*`, `*TOTAL :*`, `*Référence :*`, `*Pour régler... :*`) évitant les caractères de remplacement (losanges avec point d'interrogation ``) constatés sur certains téléphones et sur WhatsApp Web.
     - *Action Serveur `creerCommandeDirecte` (`actions.ts`)* :
       * Communication directe avec l'API `/api/comptabilite/:boutiqueId/commandes` pour créer la commande et récupérer le lien Wave officiel généré par Wave API (`wave_url`).
   * **🧪 3. Validation & Invariants** :
