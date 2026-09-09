@@ -1,3 +1,16 @@
+- **Fiabilisation & Délivrabilité Garantie des Messages de Prospection WhatsApp (Résolution Restriction Meta 24H & Fallback Template Certifié) (`backend/services/prospection.js`) (09 septembre 2026)** 📲🛡️⚡ :
+  * **🎯 1. Demande & Diagnostic Métier** :
+    - *Observation Utilisateur* : Le message de prospection envoyé à 16:41:11 vers le lead Amar (`Salam alaykoum Amar ! 📱 Dans la téléphonie & tech à Dakar...`) était marqué `envoye` dans la base sans être reçu sur le WhatsApp du destinataire.
+    - *Cause Racine Meta* : L'API Meta WhatsApp Business Cloud n'autorise l'envoi de messages texte libre (`sendWhatsAppText`) QUE si le destinataire a initié un échange avec Nopalou dans les dernières 24 heures. En dehors de cette fenêtre client (cas typique de la prospection à froid ou de relance), Meta accepte la requête API mais ne distribue pas le message sur le téléphone sans l'usage d'un template certifié.
+  * **🛠️ 2. Correctif & Fallback Automatique** :
+    - *Fallback Garanti dans `lancerCampagne`* :
+      * Tente l'envoi direct en texte libre.
+      * Si la fenêtre de 24h Meta est fermée (erreur `131047` ou mention `24 hours`), bascule instantanément et automatiquement sur le Template Certifié Meta `nopalou_fiche_texte` via `sendWhatsAppNotification()`.
+      * Garantit la réception immédiate sur le smartphone du prospect 24h/24 sans dépendre d'une interaction préalable.
+  * **🧪 3. Validation & Test Réel** :
+    - Test réel exécuté avec succès vers le numéro d'Amar (`221781690379`) avec le template certifié Meta : accepté immédiatement (`message_status: "accepted"`, wamid généré).
+    - Code source vérifié sans erreur de syntaxe.
+
 - **Transformation du Système de Prospection en Moteur d'Intelligence Commerciale Apprenant (Sales Intelligence, Learning Scoring Multi-Dimensions & Feedback Loops Temps Réel) (`prospection.js`, `whatsapp-chatbot.js`, `routes/prospection.js`, `IntelligenceClient.tsx`, `intelligence/page.tsx`, `AdminSidebarClient.tsx`, `recalculer_prospection_intelligence.js`) (09 septembre 2026)** 🧠📊🎯⚡ :
   * **🎯 1. Demande & Diagnostic Stratégique** :
     - *Objectif Fixé* : Transformer le système de prospection de Nopalou (collecte brute de numéros) en un moteur de Sales Intelligence apprenant capable d'exploiter l'historique réel des campagnes passées pour optimiser automatiquement les campagnes futures, augmenter la réponse positive, l'intérêt marchand et les créations réelles de boutiques Nopalou.

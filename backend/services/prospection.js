@@ -1,6 +1,6 @@
 // backend/services/prospection.js — Moteur d'automatisation et de collecte de leads (Nopalou)
 const { pool } = require('../models/db');
-const { sendWhatsAppText, normalisePhone, estDesinscrit } = require('./whatsapp');
+const { sendWhatsAppText, sendWhatsAppNotification, normalisePhone, estDesinscrit } = require('./whatsapp');
 
 // ── Normalisation des numéros de téléphone pour le Sénégal ───────────────────
 function normaliserTelephoneSenegal(rawPhone) {
@@ -1609,12 +1609,34 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     if (!simulation) {
       if (canal === 'whatsapp') {
         try {
+          // 1. Tenter l'envoi texte libre direct
           await sendWhatsAppText(lead.telephone, messageFinal);
           statutEnvoi = 'envoye';
           nbSucces++;
         } catch (err) {
-          erreurEnvoi = err.response?.data?.error?.message || err.message;
-          nbEchecs++;
+          const metaErr = err.response?.data?.error;
+          // Si la fenêtre 24h Meta est fermée (code 131047 ou message 24 hours), basculer sur le Template Meta Certifié
+          if (metaErr?.code === 131047 || metaErr?.message?.includes('24 hours')) {
+            try {
+              const titreNotif = `📱 Nopalou — ${lead.nom_boutique || 'Commerce'}`.slice(0, 60);
+              const extraitMsg = messageFinal.slice(0, 950);
+              await sendWhatsAppNotification(lead.telephone, {
+                textMessage: messageFinal,
+                title: titreNotif,
+                detail: extraitMsg,
+                url: 'https://nopalou.com/creer-boutique?plan=pro',
+                buttonParam: 'boutique'
+              });
+              statutEnvoi = 'envoye';
+              nbSucces++;
+            } catch (tplErr) {
+              erreurEnvoi = tplErr.response?.data?.error?.message || tplErr.message;
+              nbEchecs++;
+            }
+          } else {
+            erreurEnvoi = metaErr?.message || err.message;
+            nbEchecs++;
+          }
         }
       } else {
         // Simulation pour canal autre que direct API
