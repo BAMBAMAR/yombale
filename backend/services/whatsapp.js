@@ -156,10 +156,34 @@ async function sendWhatsAppTemplate(phone, templateName, components = []) {
   });
 }
 
+let _utilityTemplateApproved = null;
+let _lastUtilityCheck = 0;
+
+async function isUtilityTemplateApproved() {
+  const now = Date.now();
+  if (_utilityTemplateApproved !== null && (now - _lastUtilityCheck < 60000)) {
+    return _utilityTemplateApproved;
+  }
+  if (!PHONE_ID || !TOKEN) return false;
+  try {
+    const WABA = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '901008702321523';
+    const { data } = await axios.get(`https://graph.facebook.com/v18.0/${WABA}/message_templates?fields=name,status`, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+      timeout: 3000,
+    });
+    const found = data?.data?.find(t => t.name === 'nopalou_service_commerce' && t.status === 'APPROVED');
+    _utilityTemplateApproved = !!found;
+    _lastUtilityCheck = now;
+  } catch {
+    _utilityTemplateApproved = false;
+  }
+  return _utilityTemplateApproved;
+}
+
 /**
  * Envoie une notification transactionnelle garantie à un numéro (client ou marchand).
  * 1. Tente d'envoyer le message texte libre détaillé (s'affichera si l'utilisateur a écrit dans les 24h).
- * 2. Envoie systématiquement le Template Meta certifié `nopalou_fiche_texte` pour garantir
+ * 2. Envoie systématiquement le Template Meta certifié pour garantir
  *    la réception 24h/24 même si la fenêtre des 24h Meta est fermée (anti-erreur 131047).
  */
 async function sendWhatsAppNotification(phone, {
@@ -195,8 +219,17 @@ async function sendWhatsAppNotification(phone, {
     cleanParam = cleanParam.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
   }
 
+  // Si le template officiel UTILITY nopalou_service_commerce est approuvé par Meta,
+  // on l'utilise en priorité absolue pour éliminer à 100% l'erreur 131049 (Marketing Capping).
+  let templateToUse = 'nopalou_fiche_texte';
   try {
-    const res = await sendWhatsAppTemplate(normPhone, 'nopalou_fiche_texte', [
+    if (await isUtilityTemplateApproved()) {
+      templateToUse = 'nopalou_service_commerce';
+    }
+  } catch {}
+
+  try {
+    const res = await sendWhatsAppTemplate(normPhone, templateToUse, [
       {
         type: 'body',
         parameters: [

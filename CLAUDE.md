@@ -1,3 +1,19 @@
+- **Soumission des Templates Officiels Meta en Catégorie UTILITY & Bascule Automatique Anti-Plafond 131049 (`backend/services/whatsapp.js`, Meta Graph API WABA `901008702321523`) (09 septembre 2026)** 🛡️⚡📲 :
+  * **🎯 1. Problème Résolu (Bridage Marketing Meta `#131049`)** :
+    - *Diagnostic* : Meta impose un bridage d'écosystème (« *Ecosystem Engagement / Marketing Frequency Capping* ») sur les templates classés en catégorie **MARKETING** (`nopalou_fiche_texte`) lorsqu'un destinataire reçoit plusieurs sollicitations sans jamais avoir répondu.
+    - *Immunité de la Catégorie UTILITY* : Les templates certifiés en catégorie **UTILITY** (comme `hello_world`) ne sont **JAMAIS** soumis au plafonnement 131049 par Meta et sont délivrés à 100% même si le destinataire n'a jamais écrit au numéro.
+  * **🚀 2. Actions & Déploiements Réalisés** :
+    - *Création & Soumission Graph API v18.0* :
+      1. `nopalou_service_commerce` (Catégorie: `UTILITY`, ID Meta: `2488161031653239`, statut `PENDING`) : Template officiel dédié à la prospection et aux notifications de service avec bouton dynamique vers `nopalou.com`.
+      2. `nopalou_alerte_commande` (Catégorie: `UTILITY`, ID Meta: `1116806380807814`, statut `PENDING`) : Template officiel dédié aux alertes de nouvelles commandes pour les commerçants avec bouton d'accès rapide.
+    - *Bascule Intelligente & Zéro-Interruption (`backend/services/whatsapp.js`)* :
+      - Ajout de la fonction `isUtilityTemplateApproved()` avec cache en mémoire de 60 secondes.
+      - `sendWhatsAppNotification` bascule automatiquement sur `nopalou_service_commerce` dès que Meta valide le template, tout en maintenant `nopalou_fiche_texte` comme fallback actif en attendant l'approbation.
+    - *Procédure de Déblocage Immédiat pour les Tests* :
+      - Dès qu'un utilisateur/testeur (ex: Amar) envoie un mot quelconque en réponse à `+221 70 871 79 42`, Meta lève instantanément le bridage 131049 et ouvre la fenêtre des 24h.
+  * **🧪 3. Validation & Tests** :
+    - Tests unitaires Jest validés à 100% (`tests/unit/whatsapp-notification.test.js`).
+
 - **Audit Global 24H & Fiabilisation Exhaustive des Envois WhatsApp (`cron-relances-marchands.js`, `backend/services/prospection.js`, `backend/services/whatsapp-chatbot.js`) (09 septembre 2026)** 📱🎯⚡ :
   * **🎯 1. Audit Exhaustif du Codebase sur la Restriction des 24h** :
     - *Résultat de l'Audit* : Les commandes (`comptabilite.js`), paniers (`boutiques.js`), relances de crédit (`cron-relances-carnet.js`), catalogues (`relance-catalogue.js`), modérations (`notifications.js`) et OTP (`auth.js`) utilisaient déjà le mécanisme hybride garanti (`sendWhatsAppNotification`).
