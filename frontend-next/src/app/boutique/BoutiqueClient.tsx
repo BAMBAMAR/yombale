@@ -28,7 +28,7 @@ import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import {
   Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square,
-  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info
+  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter
 } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
@@ -2535,6 +2535,92 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
   const [partageModalData, setPartageModalData] = useState<{ produit: Produit; isNew?: boolean } | null>(null)
   const [selectedProdIds, setSelectedProdIds] = useState<Set<string>>(new Set())
   const [showMenuOptionsCatalogue, setShowMenuOptionsCatalogue] = useState(false)
+  const [batchLoading, setBatchLoading] = useState(false)
+  const [triOption, setTriOption] = useState<'recent' | 'ancien' | 'prix_asc' | 'prix_desc' | 'stock_rupture' | 'stock_dispo' | 'alpha'>('recent')
+  const [filtreStock, setFiltreStock] = useState<'tous' | 'en_stock' | 'rupture'>('tous')
+
+  async function handleBatchStock(enStock: boolean) {
+    if (selectedProdIds.size === 0) return
+    try {
+      setBatchLoading(true)
+      const ids = Array.from(selectedProdIds)
+      const targetQty = enStock ? 10 : 0
+
+      setProduits(prev => prev.map(p => {
+        if (!selectedProdIds.has(p.id)) return p
+        return {
+          ...p,
+          en_stock: enStock,
+          stock_quantite: targetQty,
+          quantite_stock: targetQty,
+        }
+      }))
+
+      await Promise.all(
+        ids.map(id => updateStock(boutique.id, id, targetQty))
+      )
+
+      setSuccessMsg(`${ids.length} produit(s) marqué(s) comme ${enStock ? 'en stock' : 'en rupture'}.`)
+      setSelectedProdIds(new Set())
+      loadProduits()
+    } catch (err) {
+      console.error(err)
+      setDeleteError('Erreur lors de la mise à jour du stock par lot')
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  async function handleBatchDelete() {
+    if (selectedProdIds.size === 0) return
+    if (!confirm(`Supprimer définitivement les ${selectedProdIds.size} produits sélectionnés ?`)) return
+    try {
+      setBatchLoading(true)
+      setDeleteError(null)
+      const ids = Array.from(selectedProdIds)
+
+      await Promise.all(
+        ids.map(id => deleteProduit(boutique.id, id))
+      )
+
+      setProduits(prev => prev.filter(p => !selectedProdIds.has(p.id)))
+      setSuccessMsg(`${ids.length} produit(s) supprimé(s) avec succès.`)
+      setSelectedProdIds(new Set())
+      loadProduits()
+    } catch (err) {
+      console.error(err)
+      setDeleteError('Erreur lors de la suppression par lot')
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  function handleBatchShareWhatsApp() {
+    const prods = produits.filter(p => selectedProdIds.has(p.id))
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+    const contact = boutique.whatsapp || boutique.telephone || ''
+    const msg = `🛍️ *Découvrez notre sélection chez ${boutique.nom} !*\n\n` +
+      prods.map((p, i) => `${i + 1}. *${p.nom}* — ${p.prix ? fcfa(p.prix) : 'Prix sur demande'}\n👉 ${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`).join('\n\n') +
+      `\n\n🚚 Livraison disponible à ${boutique.ville || 'Dakar'}\n${contact ? `💬 Commandez directement au ${contact} !` : ''}`
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  function handleBatchCopyList() {
+    const prods = produits.filter(p => selectedProdIds.has(p.id))
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+    const msg = `🛍️ *Sélection ${boutique.nom}* :\n\n` +
+      prods.map((p, i) => `• ${p.nom} : ${p.prix ? fcfa(p.prix) : 'Prix sur demande'} (${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id})`).join('\n')
+    navigator.clipboard.writeText(msg)
+    setSuccessMsg('Liste des produits copiée dans le presse-papier !')
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedProdIds.size === produitsFiltres.length && produitsFiltres.length > 0) {
+      setSelectedProdIds(new Set())
+    } else {
+      setSelectedProdIds(new Set(produitsFiltres.map(p => p.id)))
+    }
+  }
 
   async function saveStock(produitId: string) {
     const val = Number(stockInputVal)
@@ -2656,13 +2742,68 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
 
   const categoriesDisponibles = Array.from(new Set(produits.map(p => p.categorie).filter(Boolean))) as string[]
 
-  const produitsFiltres = produits.filter(p => {
-    if (rechercheTexte.trim() && !p.nom.toLowerCase().includes(rechercheTexte.trim().toLowerCase())) return false
-    if (filtreStatut === 'jamais_partage') { if (p.partage_le) return false }
-    else if (filtreStatut !== 'tous' && (p.whatsapp_sync_statut || 'en_attente') !== filtreStatut) return false
-    if (filtreCategorie !== 'toutes' && p.categorie !== filtreCategorie) return false
-    return true
-  })
+  const produitsFiltres = produits
+    .filter(p => {
+      // 1. Recherche omni-champ (nom, description, categorie, code-barre, prix)
+      if (rechercheTexte.trim()) {
+        const q = rechercheTexte.toLowerCase().trim()
+        const matchNom = p.nom?.toLowerCase().includes(q) || false
+        const matchDesc = p.description?.toLowerCase().includes(q) || false
+        const matchCat = p.categorie?.toLowerCase().includes(q) || false
+        const matchCode = (p as any).code_barre ? String((p as any).code_barre).toLowerCase().includes(q) : false
+        const matchPrix = p.prix ? String(p.prix).includes(q) : false
+        if (!matchNom && !matchDesc && !matchCat && !matchCode && !matchPrix) return false
+      }
+
+      // 2. Filtre statut WhatsApp
+      if (filtreStatut === 'jamais_partage') {
+        if (p.partage_le) return false
+      } else if (filtreStatut !== 'tous' && (p.whatsapp_sync_statut || 'en_attente') !== filtreStatut) {
+        return false
+      }
+
+      // 3. Filtre catégorie
+      if (filtreCategorie !== 'toutes' && p.categorie !== filtreCategorie) return false
+
+      // 4. Filtre stock
+      if (filtreStock === 'en_stock') {
+        const qty = p.quantite_stock ?? p.stock_quantite
+        if (qty != null ? qty <= 0 : p.en_stock === false) return false
+      } else if (filtreStock === 'rupture') {
+        const qty = p.quantite_stock ?? p.stock_quantite
+        if (qty != null ? qty > 0 : p.en_stock !== false) return false
+      }
+
+      return true
+    })
+    .sort((a, b) => {
+      if (triOption === 'recent') {
+        return new Date((b as any).created_at || 0).getTime() - new Date((a as any).created_at || 0).getTime()
+      }
+      if (triOption === 'ancien') {
+        return new Date((a as any).created_at || 0).getTime() - new Date((b as any).created_at || 0).getTime()
+      }
+      if (triOption === 'prix_asc') {
+        return (a.prix || 0) - (b.prix || 0)
+      }
+      if (triOption === 'prix_desc') {
+        return (b.prix || 0) - (a.prix || 0)
+      }
+      if (triOption === 'stock_rupture') {
+        const aStock = (a.quantite_stock ?? a.stock_quantite ?? (a.en_stock !== false ? 1 : 0))
+        const bStock = (b.quantite_stock ?? b.stock_quantite ?? (b.en_stock !== false ? 1 : 0))
+        return aStock - bStock
+      }
+      if (triOption === 'stock_dispo') {
+        const aStock = (a.quantite_stock ?? a.stock_quantite ?? (a.en_stock !== false ? 1 : 0))
+        const bStock = (b.quantite_stock ?? b.stock_quantite ?? (b.en_stock !== false ? 1 : 0))
+        return bStock - aStock
+      }
+      if (triOption === 'alpha') {
+        return a.nom.localeCompare(b.nom)
+      }
+      return 0
+    })
 
   if (typeof mode === 'object' && ('creating' in mode || 'editing' in mode)) {
     const editing = 'editing' in mode ? mode.editing : undefined
@@ -2773,7 +2914,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         </div>
       )}
 
-      {/* ── BARRE D'ACTIONS DU CATALOGUE UNIFIÉE ET COMPACTE (2 LIGNES MAX) ── */}
+      {/* ── BARRE D'ACTIONS DU CATALOGUE UNIFIÉE ET COMPACTE (SAAS TOOLBAR) ── */}
       <div className="bq-toolbar-compact" style={{ marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* Ligne 1 : Bouton principal dominant + Menu d'options compact [⋯ Plus ▾] */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -2915,46 +3056,102 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
           </div>
         </div>
 
-        {/* Ligne 2 : Recherche et Filtres intégrés sur une seule ligne */}
+        {/* Ligne 2 : Omni-Recherche & Filtres intégrés sur une seule ligne */}
         {produits.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
+            <div className="saas-search-wrap">
+              <Search size={14} className="saas-search-icon" />
               <input
                 type="text"
                 placeholder={`Rechercher parmi ${produits.length} produit${produits.length > 1 ? 's' : ''}…`}
                 value={rechercheTexte}
                 onChange={e => setRechercheTexte(e.target.value)}
-                className="input-npl"
-                style={{ height: 38, fontSize: 12.5, paddingLeft: 34, width: '100%', boxSizing: 'border-box' }}
+                className="saas-search-input"
               />
-              <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3, #9C8E84)' }} />
+              {rechercheTexte && (
+                <button
+                  type="button"
+                  onClick={() => setRechercheTexte('')}
+                  className="saas-search-clear"
+                  title="Effacer la recherche"
+                >
+                  ×
+                </button>
+              )}
             </div>
 
+            {/* Tri multi-critères */}
+            <select
+              value={triOption}
+              onChange={e => setTriOption(e.target.value as any)}
+              className="saas-select-control"
+              title="Trier les produits"
+            >
+              <option value="recent">🕒 Plus récents</option>
+              <option value="ancien">⏳ Plus anciens</option>
+              <option value="prix_asc">💰 Prix croissant</option>
+              <option value="prix_desc">💎 Prix décroissant</option>
+              <option value="stock_rupture">⚠️ Ruptures d&apos;abord</option>
+              <option value="stock_dispo">📦 En stock d&apos;abord</option>
+              <option value="alpha">🔤 Nom (A-Z)</option>
+            </select>
+
+            {/* Filtre Stock */}
+            <select
+              value={filtreStock}
+              onChange={e => setFiltreStock(e.target.value as any)}
+              className="saas-select-control"
+              title="Filtrer par disponibilité stock"
+            >
+              <option value="tous">📦 Tous stocks</option>
+              <option value="en_stock">✅ En stock</option>
+              <option value="rupture">❌ Rupture</option>
+            </select>
+
+            {/* Statut WhatsApp */}
             <select
               value={filtreStatut}
               onChange={e => setFiltreStatut(e.target.value as typeof filtreStatut)}
-              className="input-npl"
-              style={{ height: 38, fontSize: 12, width: 'auto', flexShrink: 0, padding: '0 8px', maxWidth: 130 }}
+              className="saas-select-control"
               title="Filtrer par statut WhatsApp"
             >
-              <option value="tous">Statut: Tous</option>
-              <option value="synchronise">Sur WhatsApp</option>
-              <option value="en_attente">En attente</option>
-              <option value="echec">Échec synchro</option>
-              <option value="jamais_partage">Non partagés</option>
+              <option value="tous">🌐 Statut: Tous</option>
+              <option value="synchronise">💬 Sur WhatsApp</option>
+              <option value="en_attente">⏳ En attente</option>
+              <option value="echec">⚠️ Échec synchro</option>
+              <option value="jamais_partage">🚫 Non partagés</option>
             </select>
 
+            {/* Catégories */}
             {categoriesDisponibles.length > 1 && (
               <select
                 value={filtreCategorie}
                 onChange={e => setFiltreCategorie(e.target.value)}
-                className="input-npl"
-                style={{ height: 38, fontSize: 12, width: 'auto', flexShrink: 0, padding: '0 8px', maxWidth: 120 }}
+                className="saas-select-control"
                 title="Filtrer par catégorie"
               >
                 <option value="toutes">Catégories: Toutes</option>
                 {categoriesDisponibles.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+            )}
+
+            {/* Bouton Tout cocher */}
+            {produitsFiltres.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="saas-batch-btn saas-batch-btn-ghost"
+                style={{
+                  height: 38,
+                  background: selectedProdIds.size > 0 ? '#fff7ed' : '#f8fafc',
+                  color: selectedProdIds.size > 0 ? '#C75B00' : '#475569',
+                  border: `1px solid ${selectedProdIds.size > 0 ? '#fed7aa' : '#cbd5e1'}`,
+                }}
+                title={selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+              >
+                {selectedProdIds.size === produitsFiltres.length ? <CheckSquare size={14} /> : <Square size={14} />}
+                <span>{selectedProdIds.size === produitsFiltres.length ? 'Tout désélectionner' : 'Tout cocher'}</span>
+              </button>
             )}
           </div>
         )}
@@ -2973,103 +3170,86 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         </div>
       )}
 
-      {/* ── BARRE D'ACTIONS GROUPÉES DE SÉLECTION MULTIPLE ── */}
+      {/* ── BARRE D'ACTIONS GROUPÉES PAR LOT FLOTTANTE (SAAS FLOATING BATCH BAR) ── */}
       {selectedProdIds.size > 0 && (
-        <div
-          style={{
-            position: 'sticky',
-            top: 10,
-            zIndex: 30,
-            background: 'linear-gradient(135deg, #1C2B4A 0%, #0F1D35 100%)',
-            color: '#ffffff',
-            borderRadius: 14,
-            padding: '12px 18px',
-            marginBottom: 16,
-            boxShadow: '0 10px 25px rgba(15,29,53,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ShoppingBag size={18} style={{ color: 'var(--accent)' }} />
-            <span style={{ fontSize: 13.5, fontWeight: 800 }}>
-              {selectedProdIds.size} produit{selectedProdIds.size > 1 ? 's' : ''} sélectionné{selectedProdIds.size > 1 ? 's' : ''}
-            </span>
-          </div>
+        <div className="saas-floating-batch-bar">
+          <span className="saas-batch-counter">
+            <CheckSquare size={15} />
+            <span>{selectedProdIds.size} sélectionné(s)</span>
+          </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => {
-                const prods = produits.filter(p => selectedProdIds.has(p.id))
-                const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
-                const contact = boutique.whatsapp || boutique.telephone || ''
-                const msg = `🛍️ *Découvrez notre sélection chez ${boutique.nom} !*\n\n` +
-                  prods.map((p, i) => `${i + 1}. *${p.nom}* — ${p.prix ? fcfa(p.prix) : 'Prix sur demande'}\n👉 ${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`).join('\n\n') +
-                  `\n\n🚚 Livraison disponible à ${boutique.ville || 'Dakar'}\n${contact ? `💬 Commandez directement au ${contact} !` : ''}`
-                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
-              }}
-              style={{
-                background: '#25D366',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: 8,
-                padding: '7px 14px',
-                fontSize: 12.5,
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <MessageCircle size={15} />
-              <span>Partager sur WhatsApp</span>
-            </button>
+          <button
+            type="button"
+            onClick={handleBatchShareWhatsApp}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-primary"
+            title="Partager les produits sélectionnés sur WhatsApp"
+          >
+            <MessageCircle size={13} />
+            <span>Partager WhatsApp</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                const prods = produits.filter(p => selectedProdIds.has(p.id))
-                const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
-                const msg = `🛍️ *Sélection ${boutique.nom}* :\n\n` +
-                  prods.map((p, i) => `• ${p.nom} : ${p.prix ? fcfa(p.prix) : 'Prix sur demande'} (${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id})`).join('\n')
-                navigator.clipboard.writeText(msg)
-                alert('Liste copiée dans le presse-papier !')
-              }}
-              style={{
-                background: 'rgba(255,255,255,0.15)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.25)',
-                borderRadius: 8,
-                padding: '7px 12px',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              <Copy size={14} />
-            </button>
+          <button
+            type="button"
+            onClick={() => handleBatchStock(true)}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-ghost"
+            title="Marquer comme disponible en stock"
+          >
+            <Package size={13} />
+            <span>En stock</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setSelectedProdIds(new Set())}
-              style={{
-                background: 'none',
-                color: '#94a3b8',
-                border: 'none',
-                padding: '7px 8px',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              ✕ Annuler
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleBatchStock(false)}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-ghost"
+            title="Marquer en rupture de stock"
+          >
+            <Package size={13} />
+            <span>En rupture</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBatchCopyList}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-ghost"
+            title="Copier les liens et informations"
+          >
+            <Copy size={13} />
+            <span>Copier</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBatchDelete}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-danger"
+            title="Supprimer les produits sélectionnés"
+          >
+            <Trash2 size={13} />
+            <span>Supprimer</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedProdIds(new Set())}
+            disabled={batchLoading}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            title="Désélectionner tout"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 
@@ -3081,59 +3261,115 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
           <p style={{ color: '#6b7280', margin: '0 0 16px' }}>Aucun produit dans votre catalogue.</p>
           <button
             onClick={() => setMode({ creating: 'rapide' })}
-            style={{ background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: 'pointer' }}
+            style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: 'pointer' }}
           >
             Ajouter mon premier produit
           </button>
         </div>
+      ) : produitsFiltres.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '32px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
+          <p style={{ color: '#0f172a', fontWeight: 800, margin: '0 0 6px' }}>Aucun produit ne correspond à vos filtres</p>
+          <p style={{ color: '#64748b', fontSize: 13, margin: '0 0 14px' }}>Essayez de modifier votre recherche ou réinitialisez les critères.</p>
+          <button
+            type="button"
+            onClick={() => {
+              setRechercheTexte('')
+              setFiltreStock('tous')
+              setFiltreStatut('tous')
+              setFiltreCategorie('toutes')
+            }}
+            style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+          >
+            Réinitialiser les filtres
+          </button>
+        </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {produitsFiltres.map(p => (
-            <div key={p.id} className="bq-produit-card" style={{
-              background: '#ffffff', border: selectedProdIds.has(p.id) ? '1.5px solid #0284c7' : '1px solid #e2e8f0', borderRadius: 14,
-              padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.03)', transition: 'all 0.15s ease'
-            }}>
-              {/* Ligne Supérieure : Checkbox + Image + Nom + Prix + Badges */}
-              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                {/* Case à cocher pour partage groupé */}
-                <div style={{ display: 'flex', alignItems: 'center', height: 60 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedProdIds.has(p.id)}
-                    onChange={() => {
-                      const next = new Set(selectedProdIds)
-                      if (next.has(p.id)) next.delete(p.id)
-                      else next.add(p.id)
-                      setSelectedProdIds(next)
-                    }}
-                    style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#0284c7' }}
-                    title="Sélectionner pour le partage groupé"
-                  />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {produitsFiltres.map(p => {
+            const isSelected = selectedProdIds.has(p.id)
+            const qty = p.quantite_stock ?? p.stock_quantite
+            const inStock = qty != null ? qty > 0 : p.en_stock !== false
+            return (
+              <div
+                key={p.id}
+                className={`saas-compact-product-card ${isSelected ? 'selected' : ''}`}
+              >
+                {/* Case à cocher pour sélection groupée */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    const next = new Set(selectedProdIds)
+                    if (next.has(p.id)) next.delete(p.id)
+                    else next.add(p.id)
+                    setSelectedProdIds(next)
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0 2px',
+                    color: isSelected ? '#C75B00' : '#94a3b8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexShrink: 0,
+                  }}
+                  title="Sélectionner pour action par lot"
+                >
+                  {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+                </button>
+
+                {/* Miniature Image 50x50 */}
+                <div style={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {p.images?.[0] ? (
+                    <ExternalImg src={p.images[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <Package size={20} style={{ color: '#94a3b8' }} />
+                  )}
                 </div>
 
-                {/* Image */}
-                <div style={{ width: 60, height: 60, borderRadius: 10, overflow: 'hidden', flexShrink: 0, background: '#f8fafc', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ExternalImg src={p.images?.[0]} alt={p.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-
-                {/* Informations */}
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
-                    <h4 style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#0f172a', lineHeight: '1.25' }}>{p.nom}</h4>
-                    {p.prix && <span style={{ fontSize: 15, color: '#C75B00', fontWeight: 900, whiteSpace: 'nowrap' }}>{fcfa(p.prix)}</span>}
+                {/* Contenu principal */}
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                    <h4 style={{
+                      margin: 0,
+                      fontWeight: 800,
+                      fontSize: 14,
+                      color: '#0f172a',
+                      lineHeight: 1.3,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: 320,
+                    }}>
+                      {p.nom}
+                    </h4>
+                    <span style={{ fontSize: 14, color: '#C75B00', fontWeight: 900, whiteSpace: 'nowrap' }}>
+                      {p.prix ? fcfa(p.prix) : 'Sur demande'}
+                    </span>
                   </div>
 
-                  {/* Rangée des Badges (Stock, Code-Barres, WhatsApp) */}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 2 }}>
-                    {/* Stock */}
+                  {/* Badges statut & stock */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Stock pill */}
                     {editingStockId === p.id ? (
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={e => e.stopPropagation()}>
                         <input
                           type="number"
                           value={stockInputVal}
                           onChange={e => setStockInputVal(e.target.value)}
-                          style={{ width: 60, padding: '2px 6px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 11, height: 22 }}
+                          style={{ width: 55, padding: '2px 6px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 11, height: 22 }}
                           autoFocus
                         />
                         <button onClick={() => saveStock(p.id)} style={{ padding: '2px 8px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 700 }}>OK</button>
@@ -3141,201 +3377,235 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                       </div>
                     ) : (
                       <span
-                        onClick={(e) => { e.stopPropagation(); setEditingStockId(p.id); setStockInputVal(String(p.quantite_stock ?? p.stock_quantite ?? 0)) }}
-                        style={{
-                          fontSize: 11,
-                          padding: '2px 8px',
-                          borderRadius: 6,
-                          background: ((p.quantite_stock ?? p.stock_quantite) != null ? (p.quantite_stock ?? p.stock_quantite)! > 0 : p.en_stock !== false) ? '#f0fdf4' : '#fef2f2',
-                          color: ((p.quantite_stock ?? p.stock_quantite) != null ? (p.quantite_stock ?? p.stock_quantite)! > 0 : p.en_stock !== false) ? '#15803d' : '#dc2626',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          border: ((p.quantite_stock ?? p.stock_quantite) != null ? (p.quantite_stock ?? p.stock_quantite)! > 0 : p.en_stock !== false) ? '1px solid #bbf7d0' : '1px solid #fecaca'
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingStockId(p.id)
+                          setStockInputVal(String(p.quantite_stock ?? p.stock_quantite ?? 0))
                         }}
-                        title="Cliquez pour modifier le stock"
+                        className={`saas-badge-pill ${inStock ? 'saas-badge-success' : 'saas-badge-danger'}`}
+                        style={{ cursor: 'pointer' }}
+                        title="Cliquer pour ajuster le stock"
                       >
-                        📦 {t('shop.stockQty')}: {formatNumber(p.quantite_stock ?? p.stock_quantite ?? 0)} ✏️
+                        <Package size={11} />
+                        <span>{inStock ? `Stock: ${formatNumber(qty ?? 0)}` : 'Rupture'}</span>
+                      </span>
+                    )}
+
+                    {/* Catégorie */}
+                    {p.categorie && (
+                      <span className="saas-badge-pill saas-badge-neutral">
+                        <Tag size={10} />
+                        <span>{p.categorie}</span>
                       </span>
                     )}
 
                     {/* Code-barres EAN */}
-                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: (p as any).code_barre ? '#f0f9ff' : '#fff7ed', color: (p as any).code_barre ? '#0369a1' : '#c2410c', border: (p as any).code_barre ? '1px solid #bae6fd' : '1px solid #fed7aa' }}>
-                      {(p as any).code_barre ? `🏷️ CB: ${(p as any).code_barre}` : '⚠️ Sans EAN'}
-                    </span>
-
-                    {/* WhatsApp */}
-                    <span
-                      style={{
-                        fontSize: 11,
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                        fontWeight: 700,
-                        background: '#f0fdf4',
-                        color: '#166534',
-                        border: '1px solid #bbf7d0',
-                      }}
-                      title="Actif sur le Chatbot & prêt au partage WhatsApp 1-Clic"
-                    >
-                      💬 WhatsApp
-                    </span>
+                    {(p as any).code_barre && (
+                      <span className="saas-badge-pill saas-badge-info">
+                        <span>EAN: {(p as any).code_barre}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              {/* Rangée d'Actions Inférieure (Propre, Épurée & 100% Responsive) */}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 10, position: 'relative' }}>
-                {/* Actions Principales (Modifier & Partager) */}
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Actions Droite */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                   <button
+                    type="button"
                     onClick={() => setMode({ editing: p })}
-                    style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    className="btn-npl btn-npl-secondary"
+                    style={{
+                      height: 32,
+                      padding: '0 10px',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      borderRadius: 8,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      background: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      color: '#334155',
+                      cursor: 'pointer',
+                    }}
+                    title="Modifier ce produit"
                   >
-                    ✏️ {t('common.edit')}
+                    <Edit size={12} />
+                    <span className="hide-mobile">Modifier</span>
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setPartageModalData({ produit: p, isNew: false })}
                     style={{
-                      background: '#25D366',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: 8,
-                      padding: '6px 14px',
+                      height: 32,
+                      padding: '0 10px',
                       fontSize: 12,
                       fontWeight: 800,
-                      cursor: 'pointer',
+                      borderRadius: 8,
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 5,
-                      boxShadow: '0 1px 3px rgba(37,211,102,0.3)',
+                      background: '#25D366',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: 'pointer',
                     }}
-                    title="Partager ce produit (WhatsApp, Story HD, Réseaux)"
+                    title="Partager ce produit sur WhatsApp ou réseaux sociaux"
                   >
-                    <MessageCircle size={14} />
-                    <span>{t('common.share') || 'Partager'}</span>
-                  </button>
-                </div>
-
-                {/* Menu Déroulant Actions Secondaires */}
-                <div style={{ position: 'relative' }}>
-                  <button
-                    onClick={() => setMenuActionsOuvertId(menuActionsOuvertId === p.id ? null : p.id)}
-                    style={{
-                      background: '#f8fafc', color: '#334155', border: '1px solid #cbd5e1', borderRadius: 8,
-                      padding: '6px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4
-                    }}
-                  >
-                    <span>{t('shop.actionsMenu')}</span> ▾
+                    <MessageCircle size={13} />
+                    <span className="hide-mobile">Partager</span>
                   </button>
 
-                  {menuActionsOuvertId === p.id && (
-                    <>
-                      <div
-                        onClick={() => setMenuActionsOuvertId(null)}
-                        style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
-                      />
-                      <div className="bq-actions-dropdown" style={{
-                        position: 'absolute', right: 0, left: 'auto', bottom: 'calc(100% + 6px)', background: '#ffffff', border: '1px solid #cbd5e1',
-                        borderRadius: 10, padding: 6, zIndex: 9999, boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                        display: 'flex', flexDirection: 'column', gap: 4, minWidth: 200, maxWidth: 'calc(100vw - 32px)'
-                      }}>
-                        <button
-                          onClick={() => { setMenuActionsOuvertId(null); setMode({ editing: p }); }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
-                        >
-                          {t('shop.scanBarcodeModalTitle')}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            setMenuActionsOuvertId(null);
-                            e.stopPropagation();
-                            const ean = (p as any).code_barre || '2001234567891';
-                            const svgBarcode = genererSVGCodeBarresEAN13(ean);
-                            const printWin = window.open('', '_blank', 'width=480,height=400');
-                            if (!printWin) return;
-                            printWin.document.write(`
-                              <!DOCTYPE html>
-                              <html>
-                              <head>
-                                <title>Étiquette ${p.nom}</title>
-                                <style>
-                                  @page { size: 50mm 30mm; margin: 0; }
-                                  body {
-                                    font-family: Arial, sans-serif; margin: 0; padding: 4px 6px;
-                                    text-align: center; width: 50mm; height: 30mm; box-sizing: border-box;
-                                    display: flex; flex-direction: column; justify-content: center; align-items: center;
-                                  }
-                                  .title { font-size: 11px; font-weight: 800; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46mm; margin-bottom: 2px; }
-                                  .price { font-size: 13px; font-weight: 900; color: #000; margin-bottom: 4px; }
-                                  .barcode-num { font-family: monospace; font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-top: 2px; }
-                                  svg { display: block; margin: 0 auto; max-width: 44mm; height: auto; }
-                                </style>
-                              </head>
-                              <body>
-                                <div class="title">${p.nom}</div>
-                                <div class="price">${p.prix ? `${new Intl.NumberFormat('fr-FR').format(p.prix)} FCFA` : ''}</div>
-                                <div class="barcode-svg">${svgBarcode}</div>
-                                <div class="barcode-num">${ean}</div>
-                                <script>window.onload = () => { window.print(); window.close(); }</script>
-                              </body>
-                              </html>
-                            `);
-                            printWin.document.close();
+                  {/* Menu déroulant actions 3-points */}
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setMenuActionsOuvertId(menuActionsOuvertId === p.id ? null : p.id)
+                      }}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        background: '#f1f5f9',
+                        border: '1px solid #cbd5e1',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: '#475569',
+                      }}
+                      title="Plus d'actions"
+                    >
+                      <span>⋯</span>
+                    </button>
+
+                    {menuActionsOuvertId === p.id && (
+                      <>
+                        <div
+                          onClick={() => setMenuActionsOuvertId(null)}
+                          style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                        />
+                        <div
+                          className="bq-actions-dropdown"
+                          style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: 'calc(100% + 4px)',
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: 10,
+                            padding: 6,
+                            zIndex: 9999,
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 4,
+                            minWidth: 190,
                           }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#0284c7', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
                         >
-                          🖨️ {t('shop.printBarcodeLabels')}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setMenuActionsOuvertId(null);
-                            setProduitADupliquer(p);
-                            setDupNom(`${p.nom} (Copie)`);
-                            setDupPrix(p.prix?.toString() || '');
-                            setDupStock(p.stock_quantite?.toString() || '');
-                          }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
-                        >
-                          📄 {t('shop.duplicateProduct')}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setMenuActionsOuvertId(null);
-                            if (!confirm('Publier ce produit comme annonce classifiée ?')) return;
-                            startTransition(async () => {
-                              const res = await publierProduitAnnonce(boutique.id, p.id);
-                              if (res.error) alert(res.error);
-                              else if (res.besoin_paiement) alert(res.message);
-                              else { setSuccessMsg(res.message || 'Publié avec succès en annonce !'); }
-                            });
-                          }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
-                        >
-                          📢 {t('shop.publishAd')}
-                        </button>
-                        <div style={{ height: 1, background: '#f1f5f9', margin: '2px 0' }} />
-                        <button
-                          onClick={() => {
-                            setMenuActionsOuvertId(null);
-                            if (!confirm('Supprimer ce produit ?')) return;
-                            setDeleteError(null);
-                            startTransition(async () => {
-                              const res = await deleteProduit(boutique.id, p.id);
-                              if (res.error) setDeleteError(res.error);
-                              else { setSuccessMsg('Produit supprimé.'); loadProduits(); }
-                            });
-                          }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
-                        >
-                          🗑️ {t('common.delete')}
-                        </button>
-                      </div>
-                    </>
-                  )}
+                          <button
+                            onClick={(e) => {
+                              setMenuActionsOuvertId(null)
+                              e.stopPropagation()
+                              const ean = (p as any).code_barre || '2001234567891'
+                              const svgBarcode = genererSVGCodeBarresEAN13(ean)
+                              const printWin = window.open('', '_blank', 'width=480,height=400')
+                              if (!printWin) return
+                              printWin.document.write(`
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                  <title>Étiquette ${p.nom}</title>
+                                  <style>
+                                    @page { size: 50mm 30mm; margin: 0; }
+                                    body {
+                                      font-family: Arial, sans-serif; margin: 0; padding: 4px 6px;
+                                      text-align: center; width: 50mm; height: 30mm; box-sizing: border-box;
+                                      display: flex; flex-direction: column; justify-content: center; align-items: center;
+                                    }
+                                    .title { font-size: 11px; font-weight: 800; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46mm; margin-bottom: 2px; }
+                                    .price { font-size: 13px; font-weight: 900; color: #000; margin-bottom: 4px; }
+                                    .barcode-num { font-family: monospace; font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-top: 2px; }
+                                    svg { display: block; margin: 0 auto; max-width: 44mm; height: auto; }
+                                  </style>
+                                </head>
+                                <body>
+                                  <div class="title">${p.nom}</div>
+                                  <div class="price">${p.prix ? `${new Intl.NumberFormat('fr-FR').format(p.prix)} FCFA` : ''}</div>
+                                  <div class="barcode-svg">${svgBarcode}</div>
+                                  <div class="barcode-num">${ean}</div>
+                                  <script>window.onload = () => { window.print(); window.close(); }</script>
+                                </body>
+                                </html>
+                              `)
+                              printWin.document.close()
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#0284c7', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
+                          >
+                            <Printer size={13} />
+                            <span>Imprimer code-barres</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setMenuActionsOuvertId(null)
+                              setProduitADupliquer(p)
+                              setDupNom(`${p.nom} (Copie)`)
+                              setDupPrix(p.prix?.toString() || '')
+                              setDupStock(p.stock_quantite?.toString() || '')
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#334155', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
+                          >
+                            <Copy size={13} />
+                            <span>Dupliquer</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setMenuActionsOuvertId(null)
+                              if (!confirm('Publier ce produit comme annonce classifiée ?')) return
+                              startTransition(async () => {
+                                const res = await publierProduitAnnonce(boutique.id, p.id)
+                                if (res.error) alert(res.error)
+                                else if (res.besoin_paiement) alert(res.message)
+                                else { setSuccessMsg(res.message || 'Publié avec succès en annonce !') }
+                              })
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#b45309', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
+                          >
+                            <Megaphone size={13} />
+                            <span>Publier en annonce</span>
+                          </button>
+
+                          <div style={{ height: 1, background: '#f1f5f9', margin: '2px 0' }} />
+
+                          <button
+                            onClick={() => {
+                              setMenuActionsOuvertId(null)
+                              if (!confirm('Supprimer ce produit ?')) return
+                              setDeleteError(null)
+                              startTransition(async () => {
+                                const res = await deleteProduit(boutique.id, p.id)
+                                if (res.error) setDeleteError(res.error)
+                                else { setSuccessMsg('Produit supprimé.'); loadProduits() }
+                              })
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'none', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 6, textAlign: 'left', whiteSpace: 'nowrap' }}
+                          >
+                            <Trash2 size={13} />
+                            <span>Supprimer</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

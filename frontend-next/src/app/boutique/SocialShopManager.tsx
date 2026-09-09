@@ -85,6 +85,15 @@ export default function SocialShopManager({
   const [activeMainTab, setActiveMainTab] = useState<'posts' | 'import' | 'accounts'>('posts')
   const [postFilter, setPostFilter] = useState<'all' | 'unlinked' | 'featured' | 'hidden'>('all')
 
+  // Outils SaaS Pro : Recherche, Tri, Filtre plateforme, Sélection par lot
+  const [rechercheTexte, setRechercheTexte] = useState('')
+  const [triOption, setTriOption] = useState<'date_desc' | 'date_asc' | 'unlinked_first' | 'linked_first' | 'featured_first' | 'platform'>('date_desc')
+  const [filtrePlatform, setFiltrePlatform] = useState<'all' | 'instagram' | 'tiktok' | 'facebook'>('all')
+  const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(new Set())
+  const [batchLoading, setBatchLoading] = useState(false)
+  const [showBatchProductModal, setShowBatchProductModal] = useState(false)
+  const [batchProductSearch, setBatchProductSearch] = useState('')
+
   // 3 Modes d'importation : 'profile' (Aspirateur @pseudo) | 'batch' (Multi-liens) | 'single' (Lien unique)
   const [importMode, setImportMode] = useState<'profile' | 'batch' | 'single'>('profile')
 
@@ -558,6 +567,168 @@ export default function SocialShopManager({
     }
   }
 
+  // Gestion de la sélection par lot
+  const toggleSelectPost = (id: string) => {
+    setSelectedPostIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAllPosts = () => {
+    if (selectedPostIds.size === displayedPosts.length && displayedPosts.length > 0) {
+      setSelectedPostIds(new Set())
+    } else {
+      setSelectedPostIds(new Set(displayedPosts.map(p => p.id)))
+    }
+  }
+
+  const clearSelection = () => {
+    setSelectedPostIds(new Set())
+  }
+
+  // Actions par lot (SaaS Batch Actions)
+  async function handleBatchToggleVisibility(visible: boolean) {
+    if (selectedPostIds.size === 0) return
+    try {
+      setBatchLoading(true)
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+      const ids = Array.from(selectedPostIds)
+
+      await Promise.all(
+        ids.map(id =>
+          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ visible }),
+          })
+        )
+      )
+
+      setPosts(prev => prev.map(p => selectedPostIds.has(p.id) ? { ...p, visible } : p))
+      setMessage({
+        type: 'success',
+        text: `${ids.length} publication(s) ${visible ? 'affichée(s)' : 'masquée(s)'} avec succès.`,
+      })
+      clearSelection()
+    } catch (err) {
+      console.error(err)
+      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour par lot' })
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  async function handleBatchToggleFeatured(is_featured: boolean) {
+    if (selectedPostIds.size === 0) return
+    try {
+      setBatchLoading(true)
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+      const ids = Array.from(selectedPostIds)
+
+      await Promise.all(
+        ids.map(id =>
+          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ is_featured }),
+          })
+        )
+      )
+
+      setPosts(prev => prev.map(p => selectedPostIds.has(p.id) ? { ...p, is_featured } : p))
+      setMessage({
+        type: 'success',
+        text: `${ids.length} publication(s) ${is_featured ? 'mises à la une' : 'retirées de la une'}.`,
+      })
+      clearSelection()
+    } catch (err) {
+      console.error(err)
+      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour par lot' })
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  async function handleBatchDelete() {
+    if (selectedPostIds.size === 0) return
+    if (!confirm(`Supprimer définitivement les ${selectedPostIds.size} publications sélectionnées ?`)) return
+
+    try {
+      setBatchLoading(true)
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+      const ids = Array.from(selectedPostIds)
+
+      await Promise.all(
+        ids.map(id =>
+          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
+      )
+
+      setPosts(prev => prev.filter(p => !selectedPostIds.has(p.id)))
+      setMessage({
+        type: 'success',
+        text: `${ids.length} publication(s) supprimée(s).`,
+      })
+      clearSelection()
+    } catch (err) {
+      console.error(err)
+      setMessage({ type: 'error', text: 'Erreur lors de la suppression par lot' })
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  async function handleBatchAssociateProduct(productId: string) {
+    if (selectedPostIds.size === 0) return
+    try {
+      setBatchLoading(true)
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+      const ids = Array.from(selectedPostIds)
+
+      await Promise.all(
+        ids.map(postId =>
+          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}/produits`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ produit_id: productId, confidence_score: 1.0 }),
+          })
+        )
+      )
+
+      await loadAdminData()
+      setMessage({
+        type: 'success',
+        text: `Produit associé avec succès aux ${ids.length} publications.`,
+      })
+      setShowBatchProductModal(false)
+      clearSelection()
+    } catch (err) {
+      console.error(err)
+      setMessage({ type: 'error', text: "Erreur lors de l'association par lot" })
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
   // 7. Enregistrement compte officiel
   async function handleSaveAccount(platform: string) {
     if (!accountInput.trim()) return
@@ -593,16 +764,61 @@ export default function SocialShopManager({
     (p.categorie && p.categorie.toLowerCase().includes(productSearch.toLowerCase()))
   )
 
+  const filteredBatchCatalogue = catalogue.filter(p =>
+    p.nom.toLowerCase().includes(batchProductSearch.toLowerCase()) ||
+    (p.categorie && p.categorie.toLowerCase().includes(batchProductSearch.toLowerCase()))
+  )
+
   const postsWithoutProducts = posts.filter(p => !p.produits || p.produits.length === 0)
   const featuredPosts = posts.filter(p => p.is_featured)
   const hiddenPosts = posts.filter(p => !p.visible)
 
-  const displayedPosts = posts.filter(post => {
-    if (postFilter === 'unlinked') return !post.produits || post.produits.length === 0
-    if (postFilter === 'featured') return post.is_featured
-    if (postFilter === 'hidden') return !post.visible
-    return true
-  })
+  const displayedPosts = posts
+    .filter(post => {
+      // 1. Filtre onglet statut
+      if (postFilter === 'unlinked' && post.produits && post.produits.length > 0) return false
+      if (postFilter === 'featured' && !post.is_featured) return false
+      if (postFilter === 'hidden' && post.visible) return false
+
+      // 2. Filtre plateforme
+      if (filtrePlatform !== 'all' && post.plateforme !== filtrePlatform) return false
+
+      // 3. Recherche texte (caption, auteur, plateforme, nom de produit lié)
+      if (rechercheTexte.trim()) {
+        const q = rechercheTexte.toLowerCase().trim()
+        const matchCaption = post.caption?.toLowerCase().includes(q) || false
+        const matchAuteur = post.auteur?.toLowerCase().includes(q) || false
+        const matchPlateforme = post.plateforme?.toLowerCase().includes(q) || false
+        const matchProduit = post.produits?.some(p => p.nom.toLowerCase().includes(q)) || false
+        if (!matchCaption && !matchAuteur && !matchPlateforme && !matchProduit) return false
+      }
+      return true
+    })
+    .sort((a, b) => {
+      if (triOption === 'date_desc') {
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      }
+      if (triOption === 'date_asc') {
+        return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+      }
+      if (triOption === 'unlinked_first') {
+        const aUnlinked = !a.produits || a.produits.length === 0 ? 0 : 1
+        const bUnlinked = !b.produits || b.produits.length === 0 ? 0 : 1
+        return aUnlinked - bUnlinked
+      }
+      if (triOption === 'linked_first') {
+        const aLinked = a.produits && a.produits.length > 0 ? 0 : 1
+        const bLinked = b.produits && b.produits.length > 0 ? 0 : 1
+        return aLinked - bLinked
+      }
+      if (triOption === 'featured_first') {
+        return (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0)
+      }
+      if (triOption === 'platform') {
+        return a.plateforme.localeCompare(b.plateforme)
+      }
+      return 0
+    })
 
   return (
     <div className="social-shop-manager-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -780,67 +996,137 @@ export default function SocialShopManager({
       {activeMainTab === 'posts' && (
         <div className="social-shop-compact-card">
           {/* Barre d'outils et filtres rapides */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-            <div className="social-filter-pills">
-              <button
-                type="button"
-                onClick={() => setPostFilter('all')}
-                className={`social-filter-pill ${postFilter === 'all' ? 'active' : ''}`}
-              >
-                Toutes ({posts.length})
-              </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+              <div className="social-filter-pills">
+                <button
+                  type="button"
+                  onClick={() => setPostFilter('all')}
+                  className={`social-filter-pill ${postFilter === 'all' ? 'active' : ''}`}
+                >
+                  Toutes ({posts.length})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPostFilter('unlinked')}
+                  className={`social-filter-pill ${postFilter === 'unlinked' ? (postsWithoutProducts.length > 0 ? 'warning-active' : 'active') : ''}`}
+                  style={{
+                    color: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#ea580c' : undefined,
+                    borderColor: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#fed7aa' : undefined,
+                    background: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#fff7ed' : undefined,
+                  }}
+                >
+                  ⚠️ À associer ({postsWithoutProducts.length})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPostFilter('featured')}
+                  className={`social-filter-pill ${postFilter === 'featured' ? 'active' : ''}`}
+                >
+                  ⭐ À la une ({featuredPosts.length})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPostFilter('hidden')}
+                  className={`social-filter-pill ${postFilter === 'hidden' ? 'active' : ''}`}
+                >
+                  Masquées ({hiddenPosts.length})
+                </button>
+              </div>
 
               <button
                 type="button"
-                onClick={() => setPostFilter('unlinked')}
-                className={`social-filter-pill ${postFilter === 'unlinked' ? (postsWithoutProducts.length > 0 ? 'warning-active' : 'active') : ''}`}
+                onClick={() => setActiveMainTab('import')}
                 style={{
-                  color: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#ea580c' : undefined,
-                  borderColor: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#fed7aa' : undefined,
-                  background: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#fff7ed' : undefined,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  background: '#fff7ed',
+                  color: '#C75B00',
+                  border: '1px solid #fed7aa',
+                  borderRadius: 20,
+                  padding: '5px 12px',
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  flexShrink: 0,
                 }}
               >
-                ⚠️ À associer ({postsWithoutProducts.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPostFilter('featured')}
-                className={`social-filter-pill ${postFilter === 'featured' ? 'active' : ''}`}
-              >
-                ⭐ À la une ({featuredPosts.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPostFilter('hidden')}
-                className={`social-filter-pill ${postFilter === 'hidden' ? 'active' : ''}`}
-              >
-                Masquées ({hiddenPosts.length})
+                <Plus size={12} />
+                <span>Ajouter</span>
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setActiveMainTab('import')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                background: '#fff7ed',
-                color: '#C75B00',
-                border: '1px solid #fed7aa',
-                borderRadius: 20,
-                padding: '5px 12px',
-                fontSize: 11.5,
-                fontWeight: 800,
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-            >
-              <Plus size={12} />
-              <span>Ajouter</span>
-            </button>
+            {/* Ligne Omni-Recherche, Filtre Plateforme, Tri & Sélection Globale */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div className="saas-search-wrap">
+                <Search size={14} className="saas-search-icon" />
+                <input
+                  type="text"
+                  value={rechercheTexte}
+                  onChange={e => setRechercheTexte(e.target.value)}
+                  placeholder="Rechercher par mot-clé, produit, @auteur..."
+                  className="saas-search-input"
+                />
+                {rechercheTexte && (
+                  <button
+                    type="button"
+                    onClick={() => setRechercheTexte('')}
+                    className="saas-search-clear"
+                    title="Effacer la recherche"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              <select
+                value={filtrePlatform}
+                onChange={e => setFiltrePlatform(e.target.value as any)}
+                className="saas-select-control"
+                title="Filtrer par plateforme"
+              >
+                <option value="all">🌐 Toutes plateformes</option>
+                <option value="instagram">📷 Instagram</option>
+                <option value="tiktok">🎵 TikTok</option>
+                <option value="facebook">👥 Facebook</option>
+              </select>
+
+              <select
+                value={triOption}
+                onChange={e => setTriOption(e.target.value as any)}
+                className="saas-select-control"
+                title="Trier les publications"
+              >
+                <option value="date_desc">🕒 Plus récentes</option>
+                <option value="date_asc">⏳ Plus anciennes</option>
+                <option value="unlinked_first">⚠️ Non associées d&apos;abord</option>
+                <option value="linked_first">🛍️ Produits liés d&apos;abord</option>
+                <option value="featured_first">⭐ À la une d&apos;abord</option>
+                <option value="platform">🌐 Par plateforme</option>
+              </select>
+
+              {displayedPosts.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleSelectAllPosts}
+                  className="saas-batch-btn saas-batch-btn-ghost"
+                  style={{
+                    height: 38,
+                    background: selectedPostIds.size > 0 ? '#fff7ed' : '#f8fafc',
+                    color: selectedPostIds.size > 0 ? '#C75B00' : '#475569',
+                    border: `1px solid ${selectedPostIds.size > 0 ? '#fed7aa' : '#cbd5e1'}`,
+                  }}
+                  title={selectedPostIds.size === displayedPosts.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                >
+                  {selectedPostIds.size === displayedPosts.length ? <CheckSquare size={14} /> : <Square size={14} />}
+                  <span>{selectedPostIds.size === displayedPosts.length ? 'Tout désélectionner' : 'Tout cocher'}</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Liste des publications compactes */}
@@ -853,12 +1139,12 @@ export default function SocialShopManager({
               border: '1px dashed #cbd5e1',
             }}>
               <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 800, color: '#334155' }}>
-                {posts.length === 0 ? 'Aucune publication pour le moment' : 'Aucune publication dans ce filtre'}
+                {posts.length === 0 ? 'Aucune publication pour le moment' : 'Aucune publication ne correspond à vos critères'}
               </p>
               <p style={{ margin: '0 0 14px', fontSize: 12.5, color: '#64748b' }}>
                 {posts.length === 0
                   ? 'Importez une vidéo TikTok, Instagram ou Facebook pour commencer.'
-                  : 'Essayez de sélectionner un autre filtre ci-dessus.'}
+                  : 'Essayez de modifier votre recherche ou de réinitialiser vos filtres.'}
               </p>
               {posts.length === 0 ? (
                 <button
@@ -880,7 +1166,11 @@ export default function SocialShopManager({
               ) : (
                 <button
                   type="button"
-                  onClick={() => setPostFilter('all')}
+                  onClick={() => {
+                    setPostFilter('all')
+                    setFiltrePlatform('all')
+                    setRechercheTexte('')
+                  }}
                   style={{
                     background: '#f1f5f9',
                     color: '#334155',
@@ -892,191 +1182,218 @@ export default function SocialShopManager({
                     cursor: 'pointer',
                   }}
                 >
-                  Afficher toutes les publications
+                  Réinitialiser la recherche et filtres
                 </button>
               )}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {displayedPosts.map(post => (
-                <div
-                  key={post.id}
-                  className="social-compact-post-card"
-                  style={{
-                    border: post.is_featured ? '1.5px solid #fdba74' : undefined,
-                    background: !post.visible ? '#f8fafc' : '#ffffff',
-                    opacity: !post.visible ? 0.75 : 1,
-                  }}
-                >
-                  {/* Miniature vidéo */}
-                  <div className="social-compact-thumb">
-                    {post.thumbnail_url ? (
-                      <ExternalImg src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 18 }}>
-                        🎬
-                      </div>
-                    )}
-                    <span style={{
-                      position: 'absolute',
-                      top: 3,
-                      left: 3,
-                      fontSize: 9,
-                      background: 'rgba(0,0,0,0.75)',
-                      color: '#fff',
-                      padding: '1px 4px',
-                      borderRadius: 3,
-                      fontWeight: 900,
-                      textTransform: 'uppercase',
-                    }}>
-                      {post.plateforme === 'instagram' ? 'IG' : post.plateforme === 'tiktok' ? 'TT' : 'FB'}
-                    </span>
-                  </div>
+              {displayedPosts.map(post => {
+                const isSelected = selectedPostIds.has(post.id)
+                return (
+                  <div
+                    key={post.id}
+                    className={`social-compact-post-card ${isSelected ? 'selected' : ''}`}
+                    style={{
+                      border: isSelected ? '1.5px solid #C75B00' : post.is_featured ? '1.5px solid #fdba74' : undefined,
+                      background: isSelected ? '#fffbf7' : !post.visible ? '#f8fafc' : '#ffffff',
+                      opacity: !post.visible && !isSelected ? 0.75 : 1,
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {/* Checkbox de sélection par lot */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleSelectPost(post.id)
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '0 2px',
+                        color: isSelected ? '#C75B00' : '#94a3b8',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                      title={isSelected ? 'Désélectionner' : 'Sélectionner pour action par lot'}
+                    >
+                      {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+                    </button>
 
-                  {/* Infos & Produit */}
-                  <div className="social-compact-info">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 10.5, fontWeight: 900, color: '#C75B00', textTransform: 'uppercase' }}>
-                        {post.plateforme}
+                    {/* Miniature vidéo */}
+                    <div className="social-compact-thumb">
+                      {post.thumbnail_url ? (
+                        <ExternalImg src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 18 }}>
+                          🎬
+                        </div>
+                      )}
+                      <span style={{
+                        position: 'absolute',
+                        top: 3,
+                        left: 3,
+                        fontSize: 9,
+                        background: 'rgba(0,0,0,0.75)',
+                        color: '#fff',
+                        padding: '1px 4px',
+                        borderRadius: 3,
+                        fontWeight: 900,
+                        textTransform: 'uppercase',
+                      }}>
+                        {post.plateforme === 'instagram' ? 'IG' : post.plateforme === 'tiktok' ? 'TT' : 'FB'}
                       </span>
-                      {post.auteur && (
-                        <span style={{ fontSize: 10.5, color: '#64748b' }}>
-                          @{post.auteur}
-                        </span>
-                      )}
-                      {post.is_featured && (
-                        <span style={{ fontSize: 9.5, background: '#fff7ed', color: '#C75B00', border: '1px solid #fed7aa', padding: '0 5px', borderRadius: 8, fontWeight: 800 }}>
-                          ⭐ À la une
-                        </span>
-                      )}
-                      {!post.visible && (
-                        <span style={{ fontSize: 9.5, background: '#f1f5f9', color: '#64748b', padding: '0 5px', borderRadius: 8, fontWeight: 700 }}>
-                          ⚪ Masqué
-                        </span>
-                      )}
                     </div>
 
-                    <p style={{
-                      margin: 0,
-                      fontSize: 12.5,
-                      color: '#0f172a',
-                      fontWeight: 600,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {post.caption || 'Publication sans légende'}
-                    </p>
+                    {/* Infos & Produit */}
+                    <div className="social-compact-info">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 900, color: '#C75B00', textTransform: 'uppercase' }}>
+                          {post.plateforme}
+                        </span>
+                        {post.auteur && (
+                          <span style={{ fontSize: 10.5, color: '#64748b' }}>
+                            @{post.auteur}
+                          </span>
+                        )}
+                        {post.is_featured && (
+                          <span style={{ fontSize: 9.5, background: '#fff7ed', color: '#C75B00', border: '1px solid #fed7aa', padding: '0 5px', borderRadius: 8, fontWeight: 800 }}>
+                            ⭐ À la une
+                          </span>
+                        )}
+                        {!post.visible && (
+                          <span style={{ fontSize: 9.5, background: '#f1f5f9', color: '#64748b', padding: '0 5px', borderRadius: 8, fontWeight: 700 }}>
+                            ⚪ Masqué
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Pastilles de Produits associés */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
-                      {post.produits && post.produits.length > 0 ? (
-                        <>
-                          {post.produits.map(prod => (
-                            <span key={prod.id} className="social-prod-pill">
-                              <ShoppingBag size={10} style={{ color: '#C75B00', flexShrink: 0 }} />
-                              <span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {prod.nom} ({prod.prix ? fcfa(prod.prix) : '—'})
+                      <p style={{
+                        margin: 0,
+                        fontSize: 12.5,
+                        color: '#0f172a',
+                        fontWeight: 600,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {post.caption || 'Publication sans légende'}
+                      </p>
+
+                      {/* Pastilles de Produits associés */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
+                        {post.produits && post.produits.length > 0 ? (
+                          <>
+                            {post.produits.map(prod => (
+                              <span key={prod.id} className="social-prod-pill">
+                                <ShoppingBag size={10} style={{ color: '#C75B00', flexShrink: 0 }} />
+                                <span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {prod.nom} ({prod.prix ? fcfa(prod.prix) : '—'})
+                                </span>
+                                <button
+                                  onClick={() => handleDissociateProduct(post.id, prod.id)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, fontSize: 12, lineHeight: 1, marginLeft: 2 }}
+                                  title="Dissocier ce produit"
+                                >
+                                  ×
+                                </button>
                               </span>
-                              <button
-                                onClick={() => handleDissociateProduct(post.id, prod.id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, fontSize: 12, lineHeight: 1, marginLeft: 2 }}
-                                title="Dissocier ce produit"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
+                            ))}
+                            <button
+                              onClick={() => setSelectedPostForProduct(post)}
+                              style={{
+                                background: '#fff',
+                                border: '1px dashed #cbd5e1',
+                                color: '#64748b',
+                                borderRadius: 6,
+                                padding: '2px 5px',
+                                fontSize: 10,
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                              }}
+                              title="Associer un autre produit"
+                            >
+                              +
+                            </button>
+                          </>
+                        ) : (
                           <button
                             onClick={() => setSelectedPostForProduct(post)}
                             style={{
-                              background: '#fff',
-                              border: '1px dashed #cbd5e1',
-                              color: '#64748b',
+                              background: '#fff7ed',
+                              border: '1px solid #fed7aa',
+                              color: '#c2410c',
                               borderRadius: 6,
-                              padding: '2px 5px',
-                              fontSize: 10,
+                              padding: '2px 8px',
+                              fontSize: 11,
                               fontWeight: 800,
                               cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 3,
                             }}
-                            title="Associer un autre produit"
                           >
-                            +
+                            <Plus size={11} />
+                            <span>Associer un produit</span>
                           </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => setSelectedPostForProduct(post)}
-                          style={{
-                            background: '#fff7ed',
-                            border: '1px solid #fed7aa',
-                            color: '#c2410c',
-                            borderRadius: 6,
-                            padding: '2px 8px',
-                            fontSize: 11,
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 3,
-                          }}
-                        >
-                          <Plus size={11} />
-                          <span>Associer un produit</span>
-                        </button>
-                      )}
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions d'administration compactes */}
+                    <div className="social-compact-actions">
+                      <button
+                        onClick={() => handleToggleVisible(post)}
+                        className="social-compact-action-btn"
+                        style={{
+                          color: post.visible ? '#15803d' : '#94a3b8',
+                          background: post.visible ? '#f0fdf4' : '#f8fafc',
+                          borderColor: post.visible ? '#bbf7d0' : '#e2e8f0',
+                        }}
+                        title={post.visible ? 'Visible en boutique (cliquer pour masquer)' : 'Masqué (cliquer pour afficher)'}
+                      >
+                        {post.visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleFeatured(post)}
+                        className="social-compact-action-btn"
+                        style={{
+                          color: post.is_featured ? '#C75B00' : '#94a3b8',
+                          background: post.is_featured ? '#fff7ed' : '#f8fafc',
+                          borderColor: post.is_featured ? '#fed7aa' : '#e2e8f0',
+                        }}
+                        title={post.is_featured ? 'À la une (cliquer pour retirer)' : 'Mettre en vedette'}
+                      >
+                        <Star size={13} fill={post.is_featured ? '#C75B00' : 'none'} />
+                      </button>
+
+                      <a
+                        href={post.post_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="social-compact-action-btn"
+                        title="Voir la publication originale"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
+
+                      <button
+                        onClick={() => handleDeletePost(post.id)}
+                        className="social-compact-action-btn"
+                        style={{ color: '#ef4444' }}
+                        title="Supprimer la publication"
+                      >
+                        <Trash2 size={12} />
+                      </button>
                     </div>
                   </div>
-
-                  {/* Actions d'administration compactes */}
-                  <div className="social-compact-actions">
-                    <button
-                      onClick={() => handleToggleVisible(post)}
-                      className="social-compact-action-btn"
-                      style={{
-                        color: post.visible ? '#15803d' : '#94a3b8',
-                        background: post.visible ? '#f0fdf4' : '#f8fafc',
-                        borderColor: post.visible ? '#bbf7d0' : '#e2e8f0',
-                      }}
-                      title={post.visible ? 'Visible en boutique (cliquer pour masquer)' : 'Masqué (cliquer pour afficher)'}
-                    >
-                      {post.visible ? <Eye size={13} /> : <EyeOff size={13} />}
-                    </button>
-
-                    <button
-                      onClick={() => handleToggleFeatured(post)}
-                      className="social-compact-action-btn"
-                      style={{
-                        color: post.is_featured ? '#C75B00' : '#94a3b8',
-                        background: post.is_featured ? '#fff7ed' : '#f8fafc',
-                        borderColor: post.is_featured ? '#fed7aa' : '#e2e8f0',
-                      }}
-                      title={post.is_featured ? 'À la une (cliquer pour retirer)' : 'Mettre en vedette'}
-                    >
-                      <Star size={13} fill={post.is_featured ? '#C75B00' : 'none'} />
-                    </button>
-
-                    <a
-                      href={post.post_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="social-compact-action-btn"
-                      title="Voir la publication originale"
-                    >
-                      <ExternalLink size={12} />
-                    </a>
-
-                    <button
-                      onClick={() => handleDeletePost(post.id)}
-                      className="social-compact-action-btn"
-                      style={{ color: '#ef4444' }}
-                      title="Supprimer la publication"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -1841,6 +2158,254 @@ export default function SocialShopManager({
                     </div>
                   )
                 })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BARRE D'ACTION FLOTTANTE PAR LOT (SAAS FLOATING BATCH BAR) ── */}
+      {selectedPostIds.size > 0 && (
+        <div className="saas-floating-batch-bar">
+          <span className="saas-batch-counter">
+            <CheckSquare size={15} />
+            <span>{selectedPostIds.size} cochée(s)</span>
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setShowBatchProductModal(true)}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-primary"
+            title="Associer un produit du catalogue à toutes les publications sélectionnées"
+          >
+            <ShoppingBag size={13} />
+            <span>Associer produit</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleBatchToggleVisibility(true)}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-ghost"
+            title="Rendre visible en boutique"
+          >
+            <Eye size={13} />
+            <span>Afficher</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleBatchToggleVisibility(false)}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-ghost"
+            title="Masquer de la boutique"
+          >
+            <EyeOff size={13} />
+            <span>Masquer</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleBatchToggleFeatured(true)}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-ghost"
+            title="Mettre en vedette"
+          >
+            <Star size={13} />
+            <span>À la une</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBatchDelete}
+            disabled={batchLoading}
+            className="saas-batch-btn saas-batch-btn-danger"
+            title="Supprimer définitivement"
+          >
+            <Trash2 size={13} />
+            <span>Supprimer</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={clearSelection}
+            disabled={batchLoading}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            title="Désélectionner tout"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* ── MODAL D'ASSOCIATION DE PRODUIT PAR LOT ── */}
+      {showBatchProductModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+          onClick={() => setShowBatchProductModal(false)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 16,
+              maxWidth: 520,
+              width: '100%',
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              overflow: 'hidden',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Entête Modal */}
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#f8fafc',
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
+                  Associer un produit par lot
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
+                  Le produit choisi sera associé aux <strong>{selectedPostIds.size} publications</strong> cochées.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBatchProductModal(false)
+                  setBatchProductSearch('')
+                }}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: 8,
+                  width: 30,
+                  height: 30,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Recherche Produit */}
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>
+              <div className="saas-search-wrap">
+                <Search size={14} className="saas-search-icon" />
+                <input
+                  type="text"
+                  value={batchProductSearch}
+                  onChange={e => setBatchProductSearch(e.target.value)}
+                  placeholder="Rechercher par nom ou catégorie..."
+                  className="saas-search-input"
+                  autoFocus
+                />
+                {batchProductSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setBatchProductSearch('')}
+                    className="saas-search-clear"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Liste scrollable des produits */}
+            <div style={{ padding: '12px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {filteredBatchCatalogue.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: 24, color: '#94a3b8', fontSize: 13 }}>
+                  Aucun produit correspondant trouvé dans votre catalogue.
+                </p>
+              ) : (
+                filteredBatchCatalogue.map(prod => (
+                  <div
+                    key={prod.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div style={{ width: 42, height: 42, borderRadius: 6, background: '#fff', overflow: 'hidden', flexShrink: 0, border: '1px solid #cbd5e1' }}>
+                        {prod.images?.[0] ? (
+                          <ExternalImg src={cloudinaryHQ(prod.images[0], { width: 90 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ShoppingBag size={16} style={{ color: '#94a3b8' }} />
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {prod.nom}
+                        </p>
+                        <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#C75B00' }}>
+                          {prod.prix ? fcfa(prod.prix) : 'Sur demande'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleBatchAssociateProduct(prod.id)}
+                      disabled={batchLoading}
+                      style={{
+                        background: '#C75B00',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '7px 14px',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {batchLoading ? 'Association...' : 'Associer à la sélection'}
+                    </button>
+                  </div>
+                ))
               )}
             </div>
           </div>
