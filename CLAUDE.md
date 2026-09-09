@@ -1,3 +1,13 @@
+- **Ajustement de la Protection Anti-Sur-sollicitation pour les Tests Ciblés & Leads Réinitialisés (`backend/services/prospection.js`) (09 septembre 2026)** 🛡️⚡ :
+  * **🎯 1. Contexte & Diagnostic des Envois Non Visibles** :
+    - *Observation Utilisateur* : « *ANALYSE LES DERNIERE ENVOI JE NE LES VOIS PAS DANS HISTORIQUE* ».
+    - *Cause Détectée* : Le filtre anti-spam temporel strict (`< 48h`) mis en place précédemment bloquait silencieusement tout envoi vers un lead ayant déjà une valeur de `dernier_contact_at` renseignée en base (notamment le numéro test d'Amar lors d'un lancement unitaire ciblé).
+    - Les campagnes créées à 17:28 et 17:30 ignoraient donc le contact, n'écrivaient rien dans `prospection_messages_log` et restaient en statut `en_cours`.
+  * **🛠️ 2. Résolution Appliquée** :
+    - La barrière temporelle stricte des 48h ne s'applique désormais **QUE pour les campagnes de masse automatiques (> 5 leads)** et ne bloque plus les prospects dont le statut a été remis à `'nouveau'` ou les envois de tests manuels ciblés.
+    - Le lead de test Amar a été complètement réinitialisé (`dernier_contact_at = NULL`, `nb_contacts = 0`).
+    - Les campagnes orphelines ont été clôturées avec succès.
+
 - **Éradication Définitive des Noms Insensés & Salutations Génériques en Prospection (`backend/services/prospection.js`) (09 septembre 2026)** 🧼💬✨ :
   * **🎯 1. Contexte & Problème Résolu** :
     - *Observation Utilisateur* : Présence de formules de salutation incongrues générées par l'injection de catégories ou placeholders scrapés (ex: « *Bonjour Commerce Général !* », « *Salam Mode !* », « *Bonjour Véhicules !* »).

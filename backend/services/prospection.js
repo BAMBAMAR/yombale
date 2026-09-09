@@ -1626,8 +1626,8 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       continue;
     }
 
-    // 2. Protection Anti-Sur-sollicitation & Anti-Spam Temporel (< 48h sauf simulation)
-    if (!simulation && lead.dernier_contact_at) {
+    // 2. Protection Anti-Sur-sollicitation & Anti-Spam Temporel (uniquement pour les campagnes de masse automatiques et leads déjà contactés)
+    if (!simulation && lead.statut !== 'nouveau' && leads.length > 5 && lead.dernier_contact_at) {
       const heuresDepuisContact = (Date.now() - new Date(lead.dernier_contact_at).getTime()) / (1000 * 3600);
       if (heuresDepuisContact < 48) {
         console.log(`[PROSPECTION THROTTLE] Ignoré : lead ${lead.telephone} déjà contacté il y a ${Math.round(heuresDepuisContact)}h (< 48h).`);
