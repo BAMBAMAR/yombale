@@ -28,6 +28,13 @@ export function sanitizeImgUrl(url: string | null | undefined): string | null {
     return cleaned.replace(/^http:\/\//i, 'https://')
   }
 
+  // 4b. URLs médias Instagram directes (/p/.../media/) :
+  // Instagram bloque le hotlinking direct depuis les navigateurs (retourne 404 Not Found).
+  // On passe obligatoirement par le proxy CDN wsrv.nl qui résout la redirection 302 vers le CDN Facebook/Instagram
+  if (/instagram\.com\/(?:p|reel|tv)\/[^/]+\/media(?:\/|$|\?)/i.test(cleaned)) {
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleaned)}`
+  }
+
   // 5. URLs absolues avec https://, data:, blob:
   if (cleaned.startsWith('https://') || cleaned.startsWith('data:') || cleaned.startsWith('blob:')) {
     return cleaned

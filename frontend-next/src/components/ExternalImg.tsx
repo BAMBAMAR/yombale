@@ -50,7 +50,9 @@ export default function ExternalImg({
     setAttempt(0)
   }, [cleanSrc])
 
-  if (!cleanSrc || attempt >= 2) {
+  const isProxied = cleanSrc?.startsWith('https://wsrv.nl/')
+
+  if (!cleanSrc || attempt >= (isProxied ? 1 : 2)) {
     if (typeof fallback === 'string') {
       return (
         <span
@@ -65,7 +67,7 @@ export default function ExternalImg({
     return <>{fallback}</>
   }
 
-  const currentSrc = attempt === 1
+  const currentSrc = (attempt === 1 && !isProxied)
     ? `https://wsrv.nl/?url=${encodeURIComponent(cleanSrc)}`
     : cleanSrc
 

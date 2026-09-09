@@ -124,7 +124,8 @@ async function fetchOEmbedMetadata(url, platform) {
 
     if (postId) {
       const embedType = isReel ? 'reel' : 'p';
-      result.thumbnailUrl = `https://www.instagram.com/p/${postId}/media/?size=l`;
+      const rawIgMedia = `https://www.instagram.com/p/${postId}/media/?size=l`;
+      result.thumbnailUrl = `https://wsrv.nl/?url=${encodeURIComponent(rawIgMedia)}`;
       result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
     }
   } else if (platform === 'facebook') {
