@@ -1,3 +1,46 @@
+- **Transformation du Système de Prospection en Moteur d'Intelligence Commerciale Apprenant (Sales Intelligence, Learning Scoring Multi-Dimensions & Feedback Loops Temps Réel) (`prospection.js`, `whatsapp-chatbot.js`, `routes/prospection.js`, `IntelligenceClient.tsx`, `intelligence/page.tsx`, `AdminSidebarClient.tsx`, `recalculer_prospection_intelligence.js`) (09 septembre 2026)** 🧠📊🎯⚡ :
+  * **🎯 1. Demande & Diagnostic Stratégique** :
+    - *Objectif Fixé* : Transformer le système de prospection de Nopalou (collecte brute de numéros) en un moteur de Sales Intelligence apprenant capable d'exploiter l'historique réel des campagnes passées pour optimiser automatiquement les campagnes futures, augmenter la réponse positive, l'intérêt marchand et les créations réelles de boutiques Nopalou.
+    - *Audit de l'existant sur données réelles PostgreSQL* :
+      * 885 leads uniques, 296 messages envoyés, 11 campagnes passées.
+      * Ruptures identifiées sur les campagnes passées (notamment le 29/08 à 0 conversion) : arrosage d'un template unique de robe en soie à des vendeurs de voitures, courtiers immobiliers et vendeurs de canards à Thiès sans segmentation persona.
+      * Présence de 98 profils hors-cible (offres d'emploi, recherche de chauffeurs, particuliers).
+      * Absence de feedback loop automatique reliant la création d'une boutique sur WhatsApp au CRM de prospection.
+  * **🛠️ 2. Architecture & Innovations Techniques Réalisées** :
+    - *1. Modèle de Données Enrichi & Timeline Commerciale 360° (`prospection_lead_events`)* :
+      * Table d'événements reliant chaque prospect à son cycle de vie : `collecte`, `qualification`, `message_envoye`, `reponse_positive`, `optout`, `boutique_creee`.
+      * Extension de `prospection_campagnes` : métriques précises (`nb_contactables`, `nb_reponses`, `nb_reponses_positives`, `nb_sans_reponse`, `nb_boutiques_creees`, `taux_delivrabilite`, `taux_reponse`, `taux_conversion`, `taux_optout`, `diagnostic` JSONB).
+      * Extension de `prospection_leads` : `engagement_score`, `conversion_score`, `contactability_score`, `priority_score`, `next_best_action`, `scoring_details`, `nb_contacts`, `dernier_contact_at`, `derniere_reponse_at`.
+    - *2. Moteur d'Intelligence & Scoring Multi-Dimensions (0 à 100)* :
+      * `calculerLeadQualityScore` : complétude du profil, boutique physique, clarté du catalogue.
+      * `calculerNopalouFitScore` : adéquation avec le profil marchand idéal (e-commerce, retail, vendeurs WhatsApp/TikTok).
+      * `calculerEngagementScore` : interactions passées, réponses positives et questions posées.
+      * `calculerConversionScore` : probabilité statistique de passage à l'acte selon le secteur d'activité observé en base.
+      * `calculerContactabilityScore` : validité du numéro de mobile sénégalais (70, 75, 76, 77, 78) et absence de rebond.
+      * `evaluerLeadComplet` : synthèse algorithmique produisant le `priority_score` (0-100), la `next_best_action` (`contacter`, `relance_commerciale_personnalisee`, `pause_sollicitation`, `attendre_delai`, `client_fideliser`, `ne_plus_contacter`) et les explications en clair dans `scoring_details`.
+    - *3. Résolveur Dynamique de Template par Persona* :
+      * Détection automatique de non-concordance de template (`resoudreTemplatePourLead`) pour empêcher tout arrosage de modèle inadapté (remplacement automatique par le template adapté au segment métier).
+    - *4. Feedback Loops Temps Réel sur WhatsApp (`whatsapp-chatbot.js`)* :
+      * Hook de réponse positive : mise à jour immédiate en `en_discussion`, ré-évaluation du score d'engagement, création d'événement dans la timeline.
+      * Hook de conversion boutique : lors de la création d'une boutique via `CREATE_SHOP_VILLE`, réconciliation automatique par numéro de téléphone, passage en `converti`, priority_score remis à 0, next_best_action = `client_fideliser` et incrémentation du compteur de succès de la campagne parente.
+      * Hook de désinscription (`STOP`) : passage en `desinscrit`, blacklist immédiate et arrêt de toute sollicitation.
+    - *5. Endpoints d'Intelligence Backend (`routes/prospection.js`)* :
+      * `GET /api/prospection/intelligence/overview` : entonnoir macro, top segments réels, alertes automatiques.
+      * `GET /api/prospection/intelligence/recommandation` : calcul dynamique de la meilleure campagne à lancer.
+      * `GET /api/prospection/campagnes/:id/diagnostic` : audit post-mortem détaillé d'une vague passée.
+      * `GET /api/prospection/leads/:id/timeline` : vue chronologique 360° du prospect.
+    - *6. Interface Administrateur Dédiée (`/admin/prospection/intelligence`)* :
+      * Dashboard avec KPI d'entonnoir global, diagnostics des campagnes passées avec alertes de ciblage, comparateur des segments et sources de leads.
+      * Moteur de recommandation en direct avec sélection automatique du meilleur template et des 50 prospects les plus qualifiés.
+      * Modale de Timeline Commerciale 360° avec visualisation du parcours complet du prospect et décomposition transparente de ses 5 scores.
+  * **🧪 3. Validation & Données Recalculées** :
+    - Recalcul global exécuté avec succès sur les **885 leads de la base de données**.
+    - Analyse automatique des **11 campagnes passées**.
+    - Identification des segments champions réels en base : **Smartphones** (13.33% de conversion) et **Maison/Déco** (20% de conversion).
+    - Recommandation active pour la prochaine campagne : segment prioritaire identifié, template résolu et 50 prospects qualifiés sélectionnés.
+    - Build Next.js de production (`npm run build`) validé à 100% avec succès (107 pages compilées, 0 erreur TypeScript, 0 violation de polices CDN).
+    - **Aucun push git exécuté** (respect strict et absolu de la règle utilisateur).
+
 - **Audit Exhaustif Anti-404, Cohérence de Routage Frontend/Backend, Liens Internes & Proxies API (`AnnoncesImmoClient.tsx`, `partenaires/page.tsx`, `AccountNavLinks.tsx`, `AccountSidebarClient.tsx`, `Commandes.tsx`, `api/boutiques/[id]/[...path]/route.ts`, `ConfirmerSuccesEffect.tsx`, `ManualFallbackCard.tsx`) (09 septembre 2026)** 🛡️🔍🔗✅ :
   * **🎯 1. Demande & Objectif Métier** :
     - Audit complet et exhaustif de toutes les erreurs 404, 400, 401, 403, 500, anomalies de routage frontend/backend, liens internes cassés, deep-links, polices externes et assets statiques.

@@ -12,6 +12,10 @@ const {
   lancerCampagne,
   genererLienWhatsApp,
   nettoyerTousLesLeadsBdd,
+  diagnostiquerCampagne,
+  analyserToutesLesCampagnes,
+  recommanderProchaineCampagne,
+  obtenirTimelineLead,
 } = require('../services/prospection');
 
 // ── GET /api/prospection/leads ────────────────────────────────────────────────
@@ -68,8 +72,12 @@ router.get('/leads', adminOnly, async (req, res) => {
           COUNT(*) FILTER (WHERE statut = 'invalide') AS invalides,
           ROUND(AVG(score), 0) AS avg_score,
           ROUND(AVG(fit_score), 0) AS avg_fit_score,
+          ROUND(AVG(priority_score), 0) AS avg_priority_score,
           COUNT(*) FILTER (WHERE score >= 70) AS qualifies,
-          COUNT(*) FILTER (WHERE fit_score >= 70) AS haut_fit
+          COUNT(*) FILTER (WHERE fit_score >= 70) AS haut_fit,
+          COUNT(*) FILTER (WHERE priority_score >= 75) AS priorite_haute,
+          COUNT(*) FILTER (WHERE priority_score >= 50 AND priority_score < 75) AS priorite_moyenne,
+          COUNT(*) FILTER (WHERE priority_score < 50) AS priorite_basse
         FROM prospection_leads
       `),
       pool.query(`SELECT COUNT(*) AS total_blacklist FROM whatsapp_blacklist`),
@@ -90,8 +98,12 @@ router.get('/leads', adminOnly, async (req, res) => {
         invalides: parseInt(resStats.rows[0].invalides, 10) || 0,
         qualifies: parseInt(resStats.rows[0].qualifies, 10) || 0,
         haut_fit: parseInt(resStats.rows[0].haut_fit, 10) || 0,
+        priorite_haute: parseInt(resStats.rows[0].priorite_haute, 10) || 0,
+        priorite_moyenne: parseInt(resStats.rows[0].priorite_moyenne, 10) || 0,
+        priorite_basse: parseInt(resStats.rows[0].priorite_basse, 10) || 0,
         avg_score: parseFloat(resStats.rows[0].avg_score) || 0,
         avg_fit_score: parseFloat(resStats.rows[0].avg_fit_score) || 0,
+        avg_priority_score: parseFloat(resStats.rows[0].avg_priority_score) || 0,
         blacklist: parseInt(resBlacklist.rows[0]?.total_blacklist, 10) || 0,
       }
     });
@@ -660,5 +672,58 @@ router.get('/logs', adminOnly, async (req, res) => {
   }
 });
 
+// ── GET /api/prospection/intelligence/overview ────────────────────────────────
+// Vue 360° des performances, diagnostics, entonnoir global, top segments et top sources
+router.get('/intelligence/overview', adminOnly, async (_req, res) => {
+  try {
+    const data = await analyserToutesLesCampagnes();
+    res.json({ success: true, ...data });
+  } catch (err) {
+    console.error('[PROSPECTION INTELLIGENCE OVERVIEW ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/prospection/intelligence/recommandation ──────────────────────────
+// Recommandation intelligente de la prochaine campagne Nopalou
+router.get('/intelligence/recommandation', adminOnly, async (_req, res) => {
+  try {
+    const reco = await recommanderProchaineCampagne();
+    res.json({ success: true, recommandation: reco });
+  } catch (err) {
+    console.error('[PROSPECTION RECOMMANDATION ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/prospection/campagnes/:id/diagnostic ─────────────────────────────
+// Diagnostic d'une campagne spécifique
+router.get('/campagnes/:id/diagnostic', adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const diag = await diagnostiquerCampagne(id);
+    if (!diag) return res.status(404).json({ error: 'Campagne introuvable' });
+    res.json({ success: true, diagnostic: diag });
+  } catch (err) {
+    console.error('[PROSPECTION CAMPAGNE DIAGNOSTIC ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/prospection/leads/:id/timeline ───────────────────────────────────
+// Timeline chronologique et explication du score pour un lead spécifique
+router.get('/leads/:id/timeline', adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const timelineData = await obtenirTimelineLead(id);
+    if (!timelineData) return res.status(404).json({ error: 'Lead introuvable' });
+    res.json({ success: true, ...timelineData });
+  } catch (err) {
+    console.error('[PROSPECTION LEAD TIMELINE ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+
 

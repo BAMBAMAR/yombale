@@ -519,70 +519,280 @@ function estLeadEmploiOuInvalide(lead) {
 
 // ── Calcul du Score de Qualité de Donnée (/100) ──────────────────────────────
 function calculerLeadQualityScore(lead) {
-  if (estLeadEmploiOuInvalide(lead)) return 0;
+  if (estLeadEmploiOuInvalide(lead)) return { score: 0, details: ['Lead hors-cible ou emploi'] };
   let score = 0;
+  const details = [];
 
   const telNorm = normaliserTelephoneSenegal(lead.telephone || lead.telephone_brut);
   if (telNorm.valide && telNorm.operateur !== 'Fixe') {
     score += 25;
-    if (telNorm.operateur === 'Orange' || telNorm.operateur === 'Free (Yas)') score += 10;
+    details.push('+25 Numéro mobile valide');
+    if (telNorm.operateur === 'Orange' || telNorm.operateur === 'Free (Yas)') {
+      score += 10;
+      details.push(`+10 Opérateur digital prioritaire (${telNorm.operateur})`);
+    }
   }
 
   if (estNomPropreAuthentique(lead.nom_boutique)) {
     score += 25;
+    details.push('+25 Enseigne commerciale authentique');
   } else if (lead.nom_boutique && !['mode', 'véhicules', 'immobilière', 'commerce général', 'commerce & boutique', 'emploi'].includes(lead.nom_boutique.toLowerCase())) {
     score += 10;
+    details.push('+10 Nom semi-spécifique');
   }
 
   if (lead.ville && ['dakar', 'thiès', 'mbour', 'touba', 'saint-louis', 'ziguinchor', 'kaolack'].includes(lead.ville.toLowerCase())) {
     score += 15;
+    details.push(`+15 Ville commerciale active (${lead.ville})`);
   }
   if (lead.quartier && lead.quartier !== 'Dakar' && lead.quartier !== 'Tout Dakar & Régions') {
     score += 10;
+    details.push(`+10 Quartier identifié (${lead.quartier})`);
   }
 
   if (lead.contact_nom && estNomPropreAuthentique(lead.contact_nom)) {
     score += 15;
+    details.push('+15 Nom de contact nominatif');
   }
 
-  return Math.min(100, Math.max(0, score));
+  return {
+    score: Math.min(100, Math.max(0, score)),
+    details,
+  };
 }
 
 // ── Calcul du Score d'Affinité Commerciale Nopalou Fit Score (/100) ──────────
 function calculerNopalouFitScore(lead) {
-  if (estLeadEmploiOuInvalide(lead)) return 0;
+  if (estLeadEmploiOuInvalide(lead)) return { score: 0, details: ['Hors-cible Nopalou'] };
   let fit = 0;
+  const details = [];
   const cat = String(lead.categorie || '').toLowerCase();
 
   // 1. Potentiel selon la catégorie cible (+40)
   if (['mode', 'smartphones', 'tech', 'beaute', 'cosmetique', 'superette', 'alimentation'].includes(cat)) {
-    fit += 40; // Coeur de cible catalogue WhatsApp & Wave
+    fit += 40;
+    details.push('+40 Coeur de cible catalogue WhatsApp & encaissements');
   } else if (['maison', 'tv-electro', 'grossiste', 'quincaillerie'].includes(cat)) {
-    fit += 30; // Caisse POS magasin & inventaire
+    fit += 30;
+    details.push('+30 Caisse POS & gestion d\'inventaire');
   } else if (['auto-moto', 'immo'].includes(cat)) {
-    fit += 15; // Vitrine sans panier
+    fit += 15;
+    details.push('+15 Vitrine sans commande en ligne');
   } else {
     fit += 10;
+    details.push('+10 Commerce général');
   }
 
   // 2. Commerce établi avec enseigne identifiable (+30)
   if (estNomPropreAuthentique(lead.nom_boutique)) {
     fit += 30;
+    details.push('+30 Boutique établie avec enseigne');
   }
 
   // 3. Mobile WhatsApp réactif (Orange/Free) (+20)
   const telNorm = normaliserTelephoneSenegal(lead.telephone || lead.telephone_brut);
   if (telNorm.valide && (telNorm.operateur === 'Orange' || telNorm.operateur === 'Free (Yas)')) {
     fit += 20;
+    details.push('+20 Couverture Wave & WhatsApp max');
   }
 
   // 4. Bonus marché physique dakarois stratégique (+10)
   const q = String(lead.quartier || '').toLowerCase();
   if (['sandaga', 'hlm', 'colobane', 'maristes', 'plateau', 'tilène', 'centenaire'].some(m => q.includes(m))) {
     fit += 10;
+    details.push(`+10 Hub commercial stratégique (${lead.quartier})`);
   }
 
-  return Math.min(100, Math.max(0, fit));
+  return {
+    score: Math.min(100, Math.max(0, fit)),
+    details,
+  };
+}
+
+// ── Calcul du Score d'Engagement Passé (/100) ─────────────────────────────────
+function calculerEngagementScore(lead, historiqueEvents = []) {
+  if (lead.statut === 'converti') return { score: 100, details: ['Boutique active créée'] };
+  if (lead.statut === 'desinscrit') return { score: 0, details: ['Désinscrit / Opt-Out'] };
+
+  let eng = 20; // Base neutre pour lead jamais sollicité
+  const details = [];
+
+  const nbContacts = lead.nb_contacts || 0;
+  if (nbContacts === 0) {
+    details.push('+20 Prospect réceptif non encore sollicité');
+  } else {
+    // Si déjà contacté
+    if (lead.statut === 'en_discussion') {
+      eng += 50;
+      details.push('+50 Échange actif en cours sur WhatsApp');
+    }
+    if (lead.derniere_reponse_at) {
+      eng += 30;
+      details.push('+30 A déjà répondu positivement dans le passé');
+    }
+    // Si contacté plusieurs fois sans réponse
+    if (nbContacts >= 2 && !lead.derniere_reponse_at) {
+      eng -= 25;
+      details.push(`-25 Sans réponse après ${nbContacts} sollicitations`);
+    } else if (nbContacts === 1 && !lead.derniere_reponse_at) {
+      eng -= 10;
+      details.push('-10 Premier message resté sans réponse');
+    }
+  }
+
+  return {
+    score: Math.min(100, Math.max(0, eng)),
+    details,
+  };
+}
+
+// ── Calcul du Score de Probabilité de Conversion (/100) ──────────────────────
+function calculerConversionScore(lead, segmentStats = {}) {
+  if (lead.statut === 'converti') return { score: 100, details: ['Déjà converti en client Nopalou'] };
+  if (lead.statut === 'invalide' || lead.statut === 'desinscrit') return { score: 0, details: ['Inéligible à la conversion'] };
+
+  let conv = 15;
+  const details = [];
+  const cat = String(lead.categorie || '').toLowerCase();
+
+  // Les catégories qui convertissent le mieux empiriquement
+  if (['mode', 'beaute', 'maison', 'alimentation', 'superette', 'smartphones'].includes(cat)) {
+    conv += 35;
+    details.push('+35 Secteur à fort taux de création de boutique');
+  } else if (['tech', 'tv-electro', 'quincaillerie'].includes(cat)) {
+    conv += 25;
+    details.push('+25 Secteur caisse & gestion de stock');
+  }
+
+  if (estNomPropreAuthentique(lead.nom_boutique)) {
+    conv += 20;
+    details.push('+20 Marque ou enseigne commerciale réelle');
+  }
+
+  const q = String(lead.quartier || '').toLowerCase();
+  if (['sandaga', 'hlm', 'maristes', 'plateau', 'colobane'].some(m => q.includes(m))) {
+    conv += 15;
+    details.push('+15 Forte densité commerciale locale');
+  }
+
+  return {
+    score: Math.min(100, Math.max(0, conv)),
+    details,
+  };
+}
+
+// ── Calcul du Score de Joignabilité / Contactability (/100) ─────────────────
+function calculerContactabilityScore(lead) {
+  if (lead.statut === 'desinscrit') return { score: 0, details: ['Numéro sur liste noire / Opt-out'] };
+  let contact = 50;
+  const details = [];
+
+  const telNorm = normaliserTelephoneSenegal(lead.telephone || lead.telephone_brut);
+  if (!telNorm.valide) {
+    return { score: 0, details: ['Numéro de téléphone invalide'] };
+  }
+
+  contact += 30;
+  details.push('+30 Format E.164 sénégalais vérifié');
+
+  if (telNorm.operateur === 'Orange') {
+    contact += 20;
+    details.push('+20 Orange SN (99.8% joignabilité WhatsApp)');
+  } else if (telNorm.operateur === 'Free (Yas)') {
+    contact += 15;
+    details.push('+15 Free Sénégal (Très bonne délivrabilité)');
+  } else if (telNorm.operateur === 'Expresso') {
+    contact += 10;
+    details.push('+10 Expresso');
+  }
+
+  return {
+    score: Math.min(100, Math.max(0, contact)),
+    details,
+  };
+}
+
+// ── Calcul du Score de Priorité & Next Best Action Global ────────────────────
+function evaluerLeadComplet(lead, historiqueEvents = []) {
+  const qRes = calculerLeadQualityScore(lead);
+  const fRes = calculerNopalouFitScore(lead);
+  const eRes = calculerEngagementScore(lead, historiqueEvents);
+  const cRes = calculerConversionScore(lead);
+  const ctRes = calculerContactabilityScore(lead);
+
+  const quality = qRes.score;
+  const fit = fRes.score;
+  const engagement = eRes.score;
+  const conversion = cRes.score;
+  const contactability = ctRes.score;
+
+  // Calcul pondéré
+  let priority = Math.round(
+    (0.25 * quality) +
+    (0.30 * fit) +
+    (0.15 * engagement) +
+    (0.20 * conversion) +
+    (0.10 * contactability)
+  );
+
+  // Pénalités de sur-sollicitation temporelle
+  const detailsScoring = [
+    ...qRes.details,
+    ...fRes.details,
+    ...eRes.details,
+    ...cRes.details,
+    ...ctRes.details,
+  ];
+
+  let nextAction = 'contacter';
+
+  if (lead.statut === 'converti') {
+    priority = 0;
+    nextAction = 'client_fideliser';
+    detailsScoring.push('Sorti de prospection (Boutique déjà créée)');
+  } else if (lead.statut === 'desinscrit') {
+    priority = 0;
+    nextAction = 'ne_plus_contacter';
+    detailsScoring.push('Bloqué : Opt-out formulé');
+  } else if (lead.statut === 'invalide') {
+    priority = 0;
+    nextAction = 'exclure_hors_cible';
+    detailsScoring.push('Profil non commercial (Offre/Demande d\'emploi ou particulier)');
+  } else if (lead.statut === 'en_discussion') {
+    priority = 95;
+    nextAction = 'relance_commerciale_personnalisee';
+    detailsScoring.push('🔥 En discussion active — Priorité absolue suivi manuel');
+  } else if (lead.nb_contacts >= 3 && !lead.derniere_reponse_at) {
+    priority = Math.min(25, priority);
+    nextAction = 'pause_sollicitation';
+    detailsScoring.push('⚠️ 3 relances sans retour — Mise en veille');
+  } else if (lead.dernier_contact_at) {
+    const joursDepuis = Math.floor((Date.now() - new Date(lead.dernier_contact_at).getTime()) / (1000 * 3600 * 24));
+    if (joursDepuis < 7) {
+      priority = Math.max(10, priority - 30);
+      nextAction = 'attendre_delai';
+      detailsScoring.push(`-30 Sollicité il y a ${joursDepuis}j (Délai de courtoisie < 7j)`);
+    } else if (joursDepuis >= 7 && joursDepuis <= 21 && (lead.nb_contacts === 1)) {
+      priority = Math.min(90, priority + 15);
+      nextAction = 'relance_variante_b';
+      detailsScoring.push('+15 Fenêtre idéale pour 2ème relance avec proposition alternative');
+    }
+  } else if (lead.nb_contacts === 0 && fit >= 70 && quality >= 60) {
+    priority = Math.min(100, priority + 10);
+    nextAction = 'lancer_premiere_campagne';
+    detailsScoring.push('+10 Nouveau prospect qualifié à fort potentiel');
+  }
+
+  return {
+    score: quality,
+    fit_score: fit,
+    engagement_score: engagement,
+    conversion_score: conversion,
+    contactability_score: contactability,
+    priority_score: Math.min(100, Math.max(0, priority)),
+    next_best_action: nextAction,
+    scoring_details: detailsScoring,
+  };
 }
 
 function nettoyerEtEnrichirLead(lead) {
@@ -612,6 +822,7 @@ function nettoyerEtEnrichirLead(lead) {
   }
 
   const leadPourScore = {
+    ...lead,
     nom_boutique: nomPropre,
     contact_nom: contactNom,
     quartier: quartierFinal,
@@ -619,48 +830,32 @@ function nettoyerEtEnrichirLead(lead) {
     telephone: lead.telephone,
     telephone_brut: lead.telephone_brut,
     ville: lead.ville,
+    statut: estInvalide ? 'invalide' : lead.statut,
   };
 
-  const scoreQualite = calculerLeadQualityScore(leadPourScore);
-  const fitScore = calculerNopalouFitScore(leadPourScore);
+  const evalLead = evaluerLeadComplet(leadPourScore);
 
   return {
     nom_boutique: nomPropre,
     contact_nom: contactNom,
     quartier: quartierFinal,
     categorie: rawCat,
-    score: scoreQualite,
-    fit_score: fitScore,
+    score: evalLead.score,
+    fit_score: evalLead.fit_score,
+    engagement_score: evalLead.engagement_score,
+    conversion_score: evalLead.conversion_score,
+    contactability_score: evalLead.contactability_score,
+    priority_score: evalLead.priority_score,
+    next_best_action: evalLead.next_best_action,
+    scoring_details: JSON.stringify(evalLead.scoring_details),
     statut: estInvalide ? 'invalide' : (lead.statut === 'invalide' ? 'nouveau' : (lead.statut || 'nouveau')),
     notes: estInvalide ? (lead.notes ? `${lead.notes} | Hors-cible (Emploi/Recrutement)` : 'Hors-cible (Emploi/Recrutement)') : lead.notes,
   };
 }
 
 async function nettoyerTousLesLeadsBdd() {
-  // 1. Garantir l'existence de toutes les colonnes requises
-  try {
-    await pool.query(`
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS nom_boutique VARCHAR(255);
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS contact_nom VARCHAR(150);
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone VARCHAR(50);
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone_brut VARCHAR(100);
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS operateur VARCHAR(50) DEFAULT 'Orange';
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS email VARCHAR(255);
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS categorie VARCHAR(100) DEFAULT 'mode';
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS ville VARCHAR(100) DEFAULT 'Dakar';
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS quartier VARCHAR(150);
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS source VARCHAR(100) DEFAULT 'manuel';
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS statut VARCHAR(50) DEFAULT 'nouveau';
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS score INT DEFAULT 0;
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS fit_score INT DEFAULT 0;
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS notes TEXT;
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
-      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-    `);
-  } catch (errAlter) {
-    console.warn('[PROSPECTION] ALTER TABLE inline warning:', errAlter.message);
-  }
+  // 1. Garantir l'existence de toutes les tables et colonnes requises
+  await ensureProspectionTables();
 
   // 2. Dédoublonnage préalable universel des numéros existants
   try {
@@ -708,7 +903,12 @@ async function nettoyerTousLesLeadsBdd() {
           invalidesEmploi++;
         }
       }
-      if (enrichi.score !== lead.score || enrichi.fit_score !== lead.fit_score) {
+      if (
+        enrichi.score !== lead.score ||
+        enrichi.fit_score !== lead.fit_score ||
+        enrichi.priority_score !== lead.priority_score ||
+        enrichi.next_best_action !== lead.next_best_action
+      ) {
         changed = true;
       }
 
@@ -722,11 +922,33 @@ async function nettoyerTousLesLeadsBdd() {
             categorie = $4,
             score = $5,
             fit_score = $6,
-            statut = $7,
-            notes = $8,
+            engagement_score = $7,
+            conversion_score = $8,
+            contactability_score = $9,
+            priority_score = $10,
+            next_best_action = $11,
+            scoring_details = $12::jsonb,
+            statut = $13,
+            notes = $14,
             updated_at = NOW()
-          WHERE id = $9
-        `, [enrichi.nom_boutique, enrichi.contact_nom, enrichi.quartier, enrichi.categorie, enrichi.score, enrichi.fit_score, enrichi.statut, enrichi.notes, lead.id]);
+          WHERE id = $15
+        `, [
+          enrichi.nom_boutique,
+          enrichi.contact_nom,
+          enrichi.quartier,
+          enrichi.categorie,
+          enrichi.score,
+          enrichi.fit_score,
+          enrichi.engagement_score,
+          enrichi.conversion_score,
+          enrichi.contactability_score,
+          enrichi.priority_score,
+          enrichi.next_best_action,
+          enrichi.scoring_details,
+          enrichi.statut,
+          enrichi.notes,
+          lead.id
+        ]);
         nettoyes++;
       }
     } catch (rowErr) {
@@ -1164,30 +1386,91 @@ async function ensureProspectionTables() {
     await pool.query(`
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS score INT DEFAULT 0;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS fit_score INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS engagement_score INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS conversion_score INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS contactability_score INT DEFAULT 100;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS priority_score INT DEFAULT 50;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS next_best_action VARCHAR(100) DEFAULT 'contacter';
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS scoring_details JSONB DEFAULT '{}';
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS contact_nom VARCHAR(150);
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS telephone_brut VARCHAR(100);
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS operateur VARCHAR(50) DEFAULT 'Orange';
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS email VARCHAR(255);
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS notes TEXT;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS nb_contacts INT DEFAULT 0;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS dernier_contact_at TIMESTAMPTZ;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_reponse_at TIMESTAMPTZ;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
     `);
 
-    // 4. Table prospection_campagnes
+    // 4. Table prospection_campagnes (avec granularité et mémoire complète)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS prospection_campagnes (
-        id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        titre              VARCHAR(255) NOT NULL,
-        canal              VARCHAR(50) NOT NULL DEFAULT 'whatsapp',
-        statut             VARCHAR(50) NOT NULL DEFAULT 'brouillon',
-        template_message   TEXT NOT NULL,
-        sujet_email        VARCHAR(255),
-        nb_total           INT DEFAULT 0,
-        nb_envoyes         INT DEFAULT 0,
-        nb_succes          INT DEFAULT 0,
-        nb_echecs          INT DEFAULT 0,
-        metadonnees        JSONB DEFAULT '{}',
-        created_at         TIMESTAMPTZ DEFAULT NOW()
+        id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        titre                  VARCHAR(255) NOT NULL,
+        canal                  VARCHAR(50) NOT NULL DEFAULT 'whatsapp',
+        statut                 VARCHAR(50) NOT NULL DEFAULT 'brouillon',
+        template_message       TEXT NOT NULL,
+        sujet_email            VARCHAR(255),
+        segment_cible          VARCHAR(100),
+        categorie_cible        VARCHAR(100),
+        zone_cible             VARCHAR(100),
+        source_cible           VARCHAR(100),
+        variante_message       VARCHAR(50) DEFAULT 'variante_A',
+        nb_total               INT DEFAULT 0,
+        nb_contactables        INT DEFAULT 0,
+        nb_envoyes             INT DEFAULT 0,
+        nb_succes              INT DEFAULT 0,
+        nb_echecs              INT DEFAULT 0,
+        nb_reponses            INT DEFAULT 0,
+        nb_reponses_positives  INT DEFAULT 0,
+        nb_reponses_negatives  INT DEFAULT 0,
+        nb_sans_reponse        INT DEFAULT 0,
+        nb_interesses          INT DEFAULT 0,
+        nb_inscrits            INT DEFAULT 0,
+        nb_boutiques_creees    INT DEFAULT 0,
+        nb_boutiques_actives   INT DEFAULT 0,
+        nb_clients_payants     INT DEFAULT 0,
+        nb_optout              INT DEFAULT 0,
+        taux_delivrabilite     NUMERIC(5,2) DEFAULT 0,
+        taux_reponse           NUMERIC(5,2) DEFAULT 0,
+        taux_positif           NUMERIC(5,2) DEFAULT 0,
+        taux_conversion        NUMERIC(5,2) DEFAULT 0,
+        taux_optout            NUMERIC(5,2) DEFAULT 0,
+        diagnostic             JSONB DEFAULT '{}',
+        metadonnees            JSONB DEFAULT '{}',
+        date_debut             TIMESTAMPTZ,
+        date_fin               TIMESTAMPTZ,
+        created_at             TIMESTAMPTZ DEFAULT NOW()
       );
+    `);
+
+    // 4.b Migration à chaud des colonnes prospection_campagnes si elle existait déjà
+    await pool.query(`
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS segment_cible VARCHAR(100);
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS categorie_cible VARCHAR(100);
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS zone_cible VARCHAR(100);
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS source_cible VARCHAR(100);
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS variante_message VARCHAR(50) DEFAULT 'variante_A';
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_contactables INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_reponses INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_reponses_positives INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_reponses_negatives INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_sans_reponse INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_interesses INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_inscrits INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_boutiques_creees INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_boutiques_actives INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_clients_payants INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_optout INT DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_delivrabilite NUMERIC(5,2) DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_reponse NUMERIC(5,2) DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_positif NUMERIC(5,2) DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_conversion NUMERIC(5,2) DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS taux_optout NUMERIC(5,2) DEFAULT 0;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS diagnostic JSONB DEFAULT '{}';
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS date_debut TIMESTAMPTZ;
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS date_fin TIMESTAMPTZ;
     `);
 
     // 5. Table prospection_messages_log
@@ -1200,12 +1483,28 @@ async function ensureProspectionTables() {
         destinataire       VARCHAR(255) NOT NULL,
         message_envoye     TEXT NOT NULL,
         statut             VARCHAR(50) DEFAULT 'envoye',
+        variante           VARCHAR(50) DEFAULT 'A',
         erreur             TEXT,
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      ALTER TABLE prospection_messages_log ADD COLUMN IF NOT EXISTS variante VARCHAR(50) DEFAULT 'A';
+    `);
+
+    // 6. Table de la Timeline Commerciale du Prospect (prospection_lead_events)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS prospection_lead_events (
+        id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        lead_id            UUID NOT NULL REFERENCES prospection_leads(id) ON DELETE CASCADE,
+        campagne_id        UUID REFERENCES prospection_campagnes(id) ON DELETE SET NULL,
+        type_evenement     VARCHAR(50) NOT NULL, -- collecte, qualification, message_envoye, reponse, reponse_positive, reponse_negative, sans_reponse, relance, optout, visite_web, inscription, boutique_creee
+        canal              VARCHAR(50) DEFAULT 'whatsapp',
+        description        TEXT,
+        metadata           JSONB DEFAULT '{}',
         created_at         TIMESTAMPTZ DEFAULT NOW()
       );
     `);
 
-    // 6. Table whatsapp_blacklist
+    // 7. Table whatsapp_blacklist
     await pool.query(`
       CREATE TABLE IF NOT EXISTS whatsapp_blacklist (
         phone              VARCHAR(50) PRIMARY KEY,
@@ -1214,19 +1513,23 @@ async function ensureProspectionTables() {
       );
     `);
 
-    // 7. Index de performance
+    // 8. Index de performance avancés
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_tel ON prospection_leads(telephone);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_statut ON prospection_leads(statut);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_cat ON prospection_leads(categorie);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_date ON prospection_leads(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_score ON prospection_leads(score DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_leads_priority ON prospection_leads(priority_score DESC);
       CREATE INDEX IF NOT EXISTS idx_prospection_leads_fit ON prospection_leads(fit_score DESC);
       CREATE INDEX IF NOT EXISTS idx_prospection_target ON prospection_leads(statut, categorie, quartier);
       CREATE INDEX IF NOT EXISTS idx_prospection_campagnes_date ON prospection_campagnes(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_campagne ON prospection_messages_log(campagne_id);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_lead ON prospection_messages_log(lead_id);
       CREATE INDEX IF NOT EXISTS idx_prospection_log_date ON prospection_messages_log(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_prospection_events_lead ON prospection_lead_events(lead_id);
+      CREATE INDEX IF NOT EXISTS idx_prospection_events_type ON prospection_lead_events(type_evenement);
+      CREATE INDEX IF NOT EXISTS idx_prospection_events_date ON prospection_lead_events(created_at DESC);
     `);
   } catch (err) {
     console.warn('[PROSPECTION] ensureProspectionTables warning:', err.message);
@@ -1322,21 +1625,39 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       nbSucces++;
     }
 
-    // Logger le message
+    // Logger le message et l'événement dans la timeline
     try {
       await pool.query(`
         INSERT INTO prospection_messages_log (
-          campagne_id, lead_id, canal, destinataire, message_envoye, statut, erreur
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `, [campagneId || null, lead.id, canal, lead.telephone || lead.email, messageFinal, statutEnvoi, erreurEnvoi]);
+          campagne_id, lead_id, canal, destinataire, message_envoye, statut, variante, erreur
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, [campagneId || null, lead.id, canal, lead.telephone || lead.email, messageFinal, statutEnvoi, 'variante_A', erreurEnvoi]);
 
-      // Mettre à jour le statut du lead si envoyé avec succès
+      // Mettre à jour le statut du lead et sa timeline si envoyé avec succès
       if (statutEnvoi === 'envoye') {
         await pool.query(`
           UPDATE prospection_leads
-          SET statut = 'contacte_wa', derniere_action_at = NOW(), updated_at = NOW()
+          SET 
+            statut = 'contacte_wa',
+            nb_contacts = COALESCE(nb_contacts, 0) + 1,
+            dernier_contact_at = NOW(),
+            derniere_action_at = NOW(),
+            updated_at = NOW()
           WHERE id = $1
         `, [lead.id]);
+
+        // Enregistrement dans la Timeline Commerciale 360°
+        await pool.query(`
+          INSERT INTO prospection_lead_events (
+            lead_id, campagne_id, type_evenement, canal, description, metadata
+          ) VALUES ($1, $2, 'message_envoye', $3, $4, $5)
+        `, [
+          lead.id,
+          campagneId || null,
+          canal,
+          `Message de prospection envoyé sur WhatsApp (${lead.categorie || 'commerce'})`,
+          JSON.stringify({ simulation, destinataire: lead.telephone, extrait: messageFinal.slice(0, 120) })
+        ]);
       }
     } catch (dbErr) {
       console.error('[PROSPECTION LOG ERR]:', dbErr.message);
@@ -1354,24 +1675,360 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     }
   }
 
-  // Mettre à jour la campagne si présente
-  if (campagneId) {
-    try {
-      await pool.query(`
-        UPDATE prospection_campagnes
-        SET nb_envoyes = nb_envoyes + $1, nb_succes = nb_succes + $2, nb_echecs = nb_echecs + $3, statut = 'terminee'
-        WHERE id::text = $4::text
-      `, [leads.length, nbSucces, nbEchecs, String(campagneId)]);
-    } catch (cmpErr) {
-      console.warn('[PROSPECTION] Update campagne warning:', cmpErr.message);
+  return { nbSucces, nbEchecs, total: leads.length };
+}
+
+// ── Analytics & Diagnostic Automatique d'une Campagne ─────────────────────────
+async function diagnostiquerCampagne(campagneId) {
+  await ensureProspectionTables();
+  const { rows: cmpRows } = await pool.query('SELECT * FROM prospection_campagnes WHERE id::text = $1', [String(campagneId)]);
+  if (!cmpRows.length) return null;
+  const cmp = cmpRows[0];
+
+  // Calcul du funnel réel à partir des logs et des conversions
+  const { rows: logs } = await pool.query(`
+    SELECT 
+      l.destinataire, l.statut, l.erreur, p.id as lead_id, p.statut as lead_statut,
+      p.nom_boutique, p.categorie, p.quartier, p.source
+    FROM prospection_messages_log l
+    LEFT JOIN prospection_leads p ON l.lead_id = p.id
+    WHERE l.campagne_id::text = $1
+  `, [String(campagneId)]);
+
+  const total = logs.length;
+  const envoyes = logs.filter(l => l.statut === 'envoye').length;
+  const simules = logs.filter(l => l.statut === 'simule').length;
+  const echecs = logs.filter(l => l.statut === 'echec').length;
+
+  // Calcul des statuts actuels des leads de cette campagne
+  const convertis = logs.filter(l => l.lead_statut === 'converti').length;
+  const enDiscussion = logs.filter(l => l.lead_statut === 'en_discussion').length;
+  const desinscrits = logs.filter(l => l.lead_statut === 'desinscrit').length;
+  const invalides = logs.filter(l => l.lead_statut === 'invalide').length;
+
+  // Vérification si des réponses sont arrivées sur WhatsApp pour ces numéros
+  const phones = logs.map(l => l.destinataire).filter(Boolean);
+  let nbReponsesEstimees = enDiscussion + convertis;
+
+  const causesEchec = [];
+  const recommandations = [];
+
+  // Diagnostic intelligent des causes
+  if (total > 0 && convertis === 0) {
+    if (invalides / total > 0.15) {
+      causesEchec.push({
+        facteur: 'Qualité du Sourcing',
+        detail: `${Math.round((invalides / total) * 100)}% de profils hors-cible ou particuliers détectés dans ce lot`,
+        impact: 'Fort'
+      });
+      recommandations.push('Activer le filtre strict anti-emploi et exclure les particuliers avant le tir');
+    }
+
+    // Détection de mismatch persona / template
+    const categoriesDistinctes = [...new Set(logs.map(l => l.categorie).filter(Boolean))];
+    if (categoriesDistinctes.length > 3) {
+      causesEchec.push({
+        facteur: 'Segmentation Trop Hétérogène',
+        detail: `La campagne a arrosé ${categoriesDistinctes.length} catégories différentes avec un message générique`,
+        impact: 'Très Fort'
+      });
+      recommandations.push('Segmenter par métier (Mode vs Auto vs Immo vs High-Tech) avec les templates sectoriels Nopalou');
+    }
+
+    if (cmp.template_message && /robe|soie|taille/i.test(cmp.template_message) && categoriesDistinctes.some(c => ['auto-moto', 'immo'].includes(c))) {
+      causesEchec.push({
+        facteur: 'Inadéquation Message / Persona (Mismatch)',
+        detail: 'Un template de prêt-à-porter a été envoyé à des vendeurs auto ou des agents immobiliers',
+        impact: 'Critique'
+      });
+      recommandations.push('Utiliser le moteur de template dynamique contextuel (resoudreTemplatePourLead)');
+    }
+
+    if (envoyes > 0 && nbReponsesEstimees === 0) {
+      causesEchec.push({
+        facteur: 'Accroche ou Call-To-Action Faible',
+        detail: 'Aucun passage à l\'action enregistré (Le commerçant n\'a pas répondu OUI ou BILAN)',
+        impact: 'Moyen'
+      });
+      recommandations.push('Tester la Variante B axée sur le Bilan WhatsApp instantané ou la migration sans ordinateur');
+    }
+  }
+
+  const diagnosticResult = {
+    campagne_id: cmp.id,
+    titre: cmp.titre,
+    date: cmp.created_at,
+    canal: cmp.canal,
+    funnel: {
+      leads_collectes: cmp.nb_total || total,
+      messages_envoyes: envoyes + simules,
+      messages_delivres: envoyes,
+      reponses_recues: nbReponsesEstimees,
+      en_discussion: enDiscussion,
+      boutiques_creees: convertis,
+      taux_delivrabilite: total > 0 ? Number(((envoyes / total) * 100).toFixed(2)) : 0,
+      taux_reponse: envoyes > 0 ? Number(((nbReponsesEstimees / envoyes) * 100).toFixed(2)) : 0,
+      taux_conversion: envoyes > 0 ? Number(((convertis / envoyes) * 100).toFixed(2)) : 0,
+      taux_desinscription: total > 0 ? Number(((desinscrits / total) * 100).toFixed(2)) : 0,
+    },
+    point_de_rupture_principal: (envoyes === 0) ? 'Délivrabilité / Envoi' : ((nbReponsesEstimees === 0) ? 'Engagement / Première Réponse' : 'Activation Boutique'),
+    causes_echec: causesEchec,
+    recommandations: recommandations.length > 0 ? recommandations : ['Segmenter davantage et tester un horaire matinal (10h-12h)'],
+    echantillon_suffisant: total >= 30,
+    indice_confiance: total >= 100 ? 'Élevé' : (total >= 30 ? 'Moyen' : 'Faible (Échantillon restreint)')
+  };
+
+  // Sauvegarde du diagnostic dans prospection_campagnes
+  try {
+    await pool.query(`
+      UPDATE prospection_campagnes
+      SET 
+        diagnostic = $1::jsonb,
+        taux_delivrabilite = $2,
+        taux_reponse = $3,
+        taux_conversion = $4,
+        nb_boutiques_creees = $5,
+        nb_reponses = $6
+      WHERE id = $7
+    `, [
+      JSON.stringify(diagnosticResult),
+      diagnosticResult.funnel.taux_delivrabilite,
+      diagnosticResult.funnel.taux_reponse,
+      diagnosticResult.funnel.taux_conversion,
+      convertis,
+      nbReponsesEstimees,
+      cmp.id
+    ]);
+  } catch (_) {}
+
+  return diagnosticResult;
+}
+
+// ── Analyse Macro de Toutes les Campagnes et Apprentissage Historique ────────
+async function analyserToutesLesCampagnes() {
+  await ensureProspectionTables();
+  const { rows: campagnes } = await pool.query(`
+    SELECT * FROM prospection_campagnes
+    ORDER BY created_at DESC
+  `);
+
+  const diagnostics = [];
+  for (const c of campagnes) {
+    const diag = await diagnostiquerCampagne(c.id);
+    if (diag) diagnostics.push(diag);
+  }
+
+  // Agrégation des segments
+  const { rows: segmentAgg } = await pool.query(`
+    SELECT 
+      categorie,
+      COUNT(*) as total_leads,
+      COUNT(*) FILTER (WHERE statut LIKE 'contacte%') as contactes,
+      COUNT(*) FILTER (WHERE statut = 'converti') as convertis,
+      COUNT(*) FILTER (WHERE statut = 'en_discussion') as en_discussion,
+      COUNT(*) FILTER (WHERE statut = 'desinscrit') as desinscrits,
+      ROUND(AVG(score), 1) as avg_score,
+      ROUND(AVG(fit_score), 1) as avg_fit
+    FROM prospection_leads
+    GROUP BY categorie
+    ORDER BY convertis DESC, contactes DESC
+  `);
+
+  const segmentsPerformances = segmentAgg.map(s => {
+    const total = parseInt(s.total_leads, 10);
+    const contactes = parseInt(s.contactes, 10);
+    const conv = parseInt(s.convertis, 10);
+    const txConv = contactes > 0 ? Number(((conv / contactes) * 100).toFixed(2)) : (total > 0 ? Number(((conv / total) * 100).toFixed(2)) : 0);
+    return {
+      categorie: s.categorie,
+      total_leads: total,
+      contactes,
+      convertis: conv,
+      taux_conversion: txConv,
+      indice_confiance: contactes >= 50 ? 'Élevé' : (contactes >= 15 ? 'Moyen' : 'Faible (Faible échantillon)'),
+      recommandation: txConv >= 3 ? 'Segment Champion à scaler' : (contactes < 20 ? 'Segment prometteur à tester' : 'Revoir l\'offre et le ciblage'),
+    };
+  });
+
+  // Agrégation des sources
+  const { rows: sourceAgg } = await pool.query(`
+    SELECT 
+      source,
+      COUNT(*) as total_leads,
+      COUNT(*) FILTER (WHERE statut LIKE 'contacte%') as contactes,
+      COUNT(*) FILTER (WHERE statut = 'converti') as convertis,
+      COUNT(*) FILTER (WHERE statut = 'invalide') as invalides
+    FROM prospection_leads
+    GROUP BY source
+    ORDER BY convertis DESC, total_leads DESC
+    LIMIT 12
+  `);
+
+  const sourcesPerformances = sourceAgg.map(s => {
+    const total = parseInt(s.total_leads, 10);
+    const conv = parseInt(s.convertis, 10);
+    const inv = parseInt(s.invalides, 10);
+    const txInvalide = total > 0 ? Number(((inv / total) * 100).toFixed(1)) : 0;
+    let etoiles = '★★★☆☆';
+    if (conv >= 2) etoiles = '★★★★★';
+    else if (conv === 1) etoiles = '★★★★☆';
+    else if (txInvalide > 30) etoiles = '★☆☆☆☆';
+    else if (txInvalide > 15) etoiles = '★★☆☆☆';
+
+    return {
+      source: s.source,
+      total_leads: total,
+      contactes: parseInt(s.contactes, 10),
+      convertis: conv,
+      taux_invalide: txInvalide,
+      etoiles,
+      qualite_label: txInvalide > 25 ? 'Faible (Beaucoup de hors-cible)' : 'Bonne'
+    };
+  });
+
+  // Agrégation géographique
+  const { rows: geoAgg } = await pool.query(`
+    SELECT 
+      COALESCE(quartier, ville, 'Dakar') as localisation,
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE statut = 'converti') as convertis,
+      COUNT(*) FILTER (WHERE statut LIKE 'contacte%') as contactes
+    FROM prospection_leads
+    GROUP BY localisation
+    ORDER BY convertis DESC, total DESC
+    LIMIT 12
+  `);
+
+  return {
+    total_campagnes: campagnes.length,
+    campagnes_analysees: diagnostics,
+    top_segments: segmentsPerformances,
+    top_sources: sourcesPerformances,
+    top_zones: geoAgg,
+  };
+}
+
+// ── Moteur de Recommandation Contextuelle de Campagne ────────────────────────
+async function recommanderProchaineCampagne() {
+  await ensureProspectionTables();
+
+  // 1. Détecter les meilleurs prospects prioritaires en attente de contact
+  const { rows: topLeads } = await pool.query(`
+    SELECT id, nom_boutique, categorie, quartier, ville, telephone, operateur, priority_score, fit_score, score, next_best_action
+    FROM prospection_leads
+    WHERE statut = 'nouveau'
+      AND statut NOT IN ('desinscrit', 'invalide', 'converti')
+      AND (nb_contacts IS NULL OR nb_contacts = 0)
+    ORDER BY priority_score DESC, fit_score DESC, score DESC
+    LIMIT 150
+  `);
+
+  // 2. Déterminer la catégorie dominante dans ces prospects prioritaires
+  const countsCat = {};
+  for (const l of topLeads) {
+    countsCat[l.categorie] = (countsCat[l.categorie] || 0) + 1;
+  }
+  const topCat = Object.entries(countsCat).sort((a, b) => b[1] - a[1])[0]?.[0] || 'mode';
+
+  // 3. Déterminer la zone la plus représentée
+  const countsZone = {};
+  for (const l of topLeads) {
+    const z = l.quartier || l.ville || 'Dakar';
+    countsZone[z] = (countsZone[z] || 0) + 1;
+  }
+  const topZone = Object.entries(countsZone).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Dakar';
+
+  // 4. Sélectionner le template adapté
+  let templateRec = TEMPLATES_PAR_DEFAUT.find(t => t.categorie === topCat) || TEMPLATES_PAR_DEFAUT[0];
+
+  return {
+    segment_recommande: topCat.toUpperCase(),
+    categorie: topCat,
+    zone: topZone,
+    taille_lot_recommandee: Math.min(topLeads.length, 50),
+    canal_recommande: 'whatsapp',
+    template_id: templateRec.id,
+    template_titre: templateRec.titre,
+    template_texte: templateRec.texte,
+    variante_recommandee: 'Variante B (Bilan WhatsApp & Sans Ordinateur)',
+    creneau_horaire_recommande: 'Mardi ou Jeudi entre 10h30 et 12h00',
+    niveau_confiance: topLeads.length >= 30 ? 'Élevé' : 'Moyen',
+    justification_donnees: [
+      `Gisement de ${topLeads.length} prospects hautement qualifiés (Priority Score moyen : ${Math.round(topLeads.slice(0, 50).reduce((acc, l) => acc + (l.priority_score || 50), 0) / Math.max(1, Math.min(topLeads.length, 50)))})`,
+      `Secteur ${topCat} en tête du potentiel commercial Nopalou`,
+      'Respect strict du délai anti-sur-sollicitation (Zéro contact antérieur)',
+      'Couverture 100% numéros mobiles sénégalais vérifiés'
+    ],
+    prospects_prioritaires: topLeads.slice(0, 50),
+  };
+}
+
+// ── Consultation de la Timeline Commerciale 360° d'un Lead ───────────────────
+async function obtenirTimelineLead(leadId) {
+  await ensureProspectionTables();
+  const [resLead, resEvents, resMsgs] = await Promise.all([
+    pool.query('SELECT * FROM prospection_leads WHERE id::text = $1', [String(leadId)]),
+    pool.query(`
+      SELECT e.*, c.titre as campagne_titre
+      FROM prospection_lead_events e
+      LEFT JOIN prospection_campagnes c ON e.campagne_id = c.id
+      WHERE e.lead_id::text = $1
+      ORDER BY e.created_at ASC
+    `, [String(leadId)]),
+    pool.query(`
+      SELECT * FROM prospection_messages_log
+      WHERE lead_id::text = $1
+      ORDER BY created_at ASC
+    `, [String(leadId)])
+  ]);
+
+  if (!resLead.rows.length) return null;
+  const lead = resLead.rows[0];
+
+  // Reconstitution synthétique chronologique si événements vides
+  const events = [...resEvents.rows];
+  if (events.length === 0) {
+    events.push({
+      id: 'init-collecte',
+      type_evenement: 'collecte',
+      canal: 'source',
+      description: `Prospect collecté via la source [${lead.source}]`,
+      created_at: lead.created_at,
+    });
+    if (lead.score > 0) {
+      events.push({
+        id: 'init-qualification',
+        type_evenement: 'qualification',
+        canal: 'crm',
+        description: `Lead qualifié (Score: ${lead.score}/100, Fit: ${lead.fit_score}/100)`,
+        created_at: lead.created_at,
+      });
+    }
+    for (const m of resMsgs.rows) {
+      events.push({
+        id: m.id,
+        type_evenement: m.statut === 'envoye' ? 'message_envoye' : 'erreur_envoi',
+        canal: m.canal,
+        description: `Envoi message WhatsApp (${m.statut})`,
+        metadata: { message: m.message_envoye, erreur: m.erreur },
+        created_at: m.created_at,
+      });
+    }
+    if (lead.statut === 'converti') {
+      events.push({
+        id: 'init-converti',
+        type_evenement: 'boutique_creee',
+        canal: 'whatsapp',
+        description: 'Conversion réussie : Boutique en ligne Nopalou créée et active !',
+        created_at: lead.derniere_action_at || lead.updated_at,
+      });
     }
   }
 
   return {
-    total: leads.length,
-    nbSucces,
-    nbEchecs,
-    simulation,
+    lead,
+    scoring_explications: lead.scoring_details ? (typeof lead.scoring_details === 'string' ? JSON.parse(lead.scoring_details) : lead.scoring_details) : [],
+    timeline: events,
   };
 }
 
@@ -1394,8 +2051,16 @@ module.exports = {
   extraireLeadsDepuisTexte,
   calculerLeadQualityScore,
   calculerNopalouFitScore,
+  calculerEngagementScore,
+  calculerConversionScore,
+  calculerContactabilityScore,
+  evaluerLeadComplet,
   resoudreTemplatePourLead,
   autoSourcerDepuisAnnonces,
   genererRequetesDorking,
   lancerCampagne,
+  diagnostiquerCampagne,
+  analyserToutesLesCampagnes,
+  recommanderProchaineCampagne,
+  obtenirTimelineLead,
 };

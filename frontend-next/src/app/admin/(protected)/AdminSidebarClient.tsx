@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag, Crown, Activity, ShoppingBag } from 'lucide-react'
+import { LayoutDashboard, FileText, Home, Store, Smartphone, ShieldCheck, Users, Star, Receipt, DollarSign, Target, Rocket, Handshake, MousePointer, Link2, Briefcase, Tag, MessageCircle, BookOpen, Palette, Terminal, Search, User, LogOut, Menu, X, Layers, Flag, Crown, Activity, ShoppingBag, Sparkles } from 'lucide-react'
 
 interface AdminSidebarProps {
   logoutAction: () => Promise<void>
@@ -43,6 +43,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
       title: 'Marketing & Partenaires',
       items: [
         { href: '/admin/prospection', label: 'Prospection & Leads', icon: <Target size={16} />, highlight: '#16a34a' },
+        { href: '/admin/prospection/intelligence', label: '🧠 Intelligence Prospection', icon: <Sparkles size={16} />, highlight: '#7C3AED' },
         { href: '/admin/force-de-vente', label: 'Force de Vente Terrain', icon: <Rocket size={16} />, highlight: '#C75B00' },
         { href: '/admin/partenaires', label: 'Partenaires', icon: <Handshake size={16} /> },
         { href: '/admin/affiliation', label: 'Affiliation', icon: <MousePointer size={16} /> },

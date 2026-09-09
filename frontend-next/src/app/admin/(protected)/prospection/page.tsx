@@ -18,6 +18,15 @@ export interface Lead {
   statut: string
   score: number
   fit_score: number
+  engagement_score?: number
+  conversion_score?: number
+  contactability_score?: number
+  priority_score?: number
+  next_best_action?: string
+  scoring_details?: string[] | string
+  nb_contacts?: number
+  dernier_contact_at?: string | null
+  derniere_reponse_at?: string | null
   notes: string | null
   derniere_action_at: string | null
   created_at: string
@@ -33,8 +42,12 @@ export interface StatsLeads {
   invalides: number
   qualifies: number
   haut_fit: number
+  priorite_haute?: number
+  priorite_moyenne?: number
+  priorite_basse?: number
   avg_score: number
   avg_fit_score: number
+  avg_priority_score?: number
   blacklist: number
 }
 

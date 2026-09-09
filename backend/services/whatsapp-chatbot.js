@@ -1799,10 +1799,46 @@ async function handleIncomingInternal(msg) {
   if (MOTS_OPTOUT.includes(normaliserTexte(text).trim())) {
     const normPh = normalisePhone(phone);
     try {
-      await pool.query(
-        "UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE telephone = $1",
-        [normPh]
+      const rOpt = await pool.query(
+        `UPDATE prospection_leads 
+         SET 
+           statut = 'desinscrit', 
+           priority_score = 0,
+           contactability_score = 0,
+           next_best_action = 'ne_plus_contacter',
+           updated_at = NOW() 
+         WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
+         RETURNING id`,
+        [phone, normPh, phone.slice(-9)]
       );
+
+      if (rOpt.rows.length > 0) {
+        const leadId = rOpt.rows[0].id;
+        const rCamp = await pool.query(`
+          SELECT campagne_id FROM prospection_messages_log 
+          WHERE lead_id = $1 ORDER BY created_at DESC LIMIT 1
+        `, [leadId]);
+        const cId = rCamp.rows[0]?.campagne_id || null;
+
+        await pool.query(`
+          INSERT INTO prospection_lead_events (
+            lead_id, campagne_id, type_evenement, canal, description, metadata
+          ) VALUES ($1, $2, 'optout', 'whatsapp', $3, $4)
+        `, [
+          leadId,
+          cId,
+          `Opt-out / Désinscription demandée par l'utilisateur (${text})`,
+          JSON.stringify({ date: new Date().toISOString() })
+        ]);
+
+        if (cId) {
+          await pool.query(`
+            UPDATE prospection_campagnes 
+            SET nb_optout = COALESCE(nb_optout, 0) + 1 
+            WHERE id = $1
+          `, [cId]);
+        }
+      }
     } catch (_) {}
 
     await sendWhatsAppText(
@@ -1903,20 +1939,62 @@ async function handleIncomingInternal(msg) {
 
   // ── 3. DÉCLENCHEURS MARCHANDS WHATSAPP : CRÉATION DE BOUTIQUE & AJOUT PRODUIT ─
 
-  // ── INTERCEPTION DES REPONSES DE PROSPECTION (OUI, BILAN) ──────────────────
+  // ── INTERCEPTION DES REPONSES DE PROSPECTION (OUI, BILAN, QUESTIONS) ─────────
   if (state === 'IDLE' || state === 'MENU' || !state) {
-    if (normTxtLower === 'oui' || normTxtLower === 'ok' || normTxtLower === 'waaw' || normTxtLower === 'waw' || normTxtLower === 'je veux' || normTxtLower === 'start') {
+    const estReponsePositiveProspection = ['oui', 'ok', 'waaw', 'waw', 'je veux', 'start', 'interessé', 'interesse', 'interessee', 'comment faire', 'coute combien', 'combien'].includes(normTxtLower);
+    
+    if (estReponsePositiveProspection) {
       const bqExistante = await trouverBoutiqueMarchand(phone);
       if (!bqExistante && interactiveId !== 'sat_oui') {
-        // Enregistrer l'engagement dans le CRM prospection
+        // Enregistrer l'engagement dans le CRM prospection et la timeline
         try {
           const normPh = normalisePhone(phone);
-          await pool.query(
-            `UPDATE prospection_leads SET statut = 'en_discussion', derniere_action_at = NOW(), updated_at = NOW()
-             WHERE (telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3) AND (statut LIKE 'contacte%' OR statut = 'nouveau')`,
+          const rLead = await pool.query(
+            `UPDATE prospection_leads 
+             SET 
+               statut = 'en_discussion', 
+               derniere_reponse_at = NOW(), 
+               derniere_action_at = NOW(), 
+               engagement_score = LEAST(100, COALESCE(engagement_score, 0) + 40),
+               priority_score = 95,
+               next_best_action = 'relance_commerciale_personnalisee',
+               updated_at = NOW()
+             WHERE (telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3) AND (statut LIKE 'contacte%' OR statut = 'nouveau')
+             RETURNING id`,
             [phone, normPh, phone.slice(-9)]
           );
-        } catch (_) {}
+
+          if (rLead.rows.length > 0) {
+            const leadId = rLead.rows[0].id;
+            // Retrouver la dernière campagne ayant ciblé ce lead
+            const rCamp = await pool.query(`
+              SELECT campagne_id FROM prospection_messages_log 
+              WHERE lead_id = $1 ORDER BY created_at DESC LIMIT 1
+            `, [leadId]);
+            const cId = rCamp.rows[0]?.campagne_id || null;
+
+            await pool.query(`
+              INSERT INTO prospection_lead_events (
+                lead_id, campagne_id, type_evenement, canal, description, metadata
+              ) VALUES ($1, $2, 'reponse_positive', 'whatsapp', $3, $4)
+            `, [
+              leadId,
+              cId,
+              `Réponse positive reçue : "${text}"`,
+              JSON.stringify({ reponse: text, date: new Date().toISOString() })
+            ]);
+
+            if (cId) {
+              await pool.query(`
+                UPDATE prospection_campagnes 
+                SET nb_reponses = COALESCE(nb_reponses, 0) + 1, nb_reponses_positives = COALESCE(nb_reponses_positives, 0) + 1
+                WHERE id = $1
+              `, [cId]);
+            }
+          }
+        } catch (errHook) {
+          console.warn('[PROSPECTION WA HOOK ERR]:', errHook.message);
+        }
 
         await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
         await sendWhatsAppText(
@@ -3061,15 +3139,51 @@ async function handleIncomingInternal(msg) {
 
       const newBq = rBq.rows[0];
 
-      // Hook de conversion automatique CRM prospection
+      // Hook de conversion automatique CRM prospection & Timeline
       try {
         const normPh = normalisePhone(phone);
-        await pool.query(
+        const rLeadConv = await pool.query(
           `UPDATE prospection_leads 
-           SET statut = 'converti', derniere_action_at = NOW(), updated_at = NOW() 
-           WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3`,
+           SET 
+             statut = 'converti', 
+             priority_score = 0,
+             next_best_action = 'client_fideliser',
+             conversion_score = 100,
+             engagement_score = 100,
+             derniere_action_at = NOW(), 
+             updated_at = NOW() 
+           WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
+           RETURNING id`,
           [phone, normPh, phone.slice(-9)]
         );
+
+        if (rLeadConv.rows.length > 0) {
+          const leadId = rLeadConv.rows[0].id;
+          const rCamp = await pool.query(`
+            SELECT campagne_id FROM prospection_messages_log 
+            WHERE lead_id = $1 ORDER BY created_at DESC LIMIT 1
+          `, [leadId]);
+          const cId = rCamp.rows[0]?.campagne_id || null;
+
+          await pool.query(`
+            INSERT INTO prospection_lead_events (
+              lead_id, campagne_id, type_evenement, canal, description, metadata
+            ) VALUES ($1, $2, 'boutique_creee', 'whatsapp', $3, $4)
+          `, [
+            leadId,
+            cId,
+            `Boutique "${nom}" créée avec succès (${slug})`,
+            JSON.stringify({ boutique_id: newBq.id, nom, slug, date: new Date().toISOString() })
+          ]);
+
+          if (cId) {
+            await pool.query(`
+              UPDATE prospection_campagnes 
+              SET nb_boutiques_creees = COALESCE(nb_boutiques_creees, 0) + 1
+              WHERE id = $1
+            `, [cId]);
+          }
+        }
       } catch (errConv) {
         console.warn('[CRM CONVERSION HOOK ERR]:', errConv.message);
       }
