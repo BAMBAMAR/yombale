@@ -1,3 +1,25 @@
+- **Éradication Définitive des Noms Insensés & Salutations Génériques en Prospection (`backend/services/prospection.js`) (09 septembre 2026)** 🧼💬✨ :
+  * **🎯 1. Contexte & Problème Résolu** :
+    - *Observation Utilisateur* : Présence de formules de salutation incongrues générées par l'injection de catégories ou placeholders scrapés (ex: « *Bonjour Commerce Général !* », « *Salam Mode !* », « *Bonjour Véhicules !* »).
+    - *Demande Utilisateur* : « *YA TOUJOURS CE PROBLEME DE NOM INSENSE SINON SUPPRIME CETTE PARTIE* ».
+  * **🛠️ 2. Correctifs et Assainissement Radical** :
+    - *Templates par Défaut 100% Universels & Naturels* : Remplacement dans tous les templates WhatsApp par défaut (`TEMPLATES_PAR_DEFAUT`) des accroches rigides `{Salam|Bonjour} {nom_boutique} !` par la balise adaptative `{salutation}`.
+    - *Règle Stricte de Salutation Humaine* : Dans `interpolerMessage()`, les salutations personnalisées ne sont injectées QUE si le prospect possède un **véritable prénom humain physique vérifié** (`contact_nom`). Si le prospect n'a pas de prénom avéré, le message commence par une salutation sobre, polie et universelle dakaroise : « *Salam ! 👋* » ou « *Bonjour ! 👋* ».
+    - *Renforcement Drastique de `estNomPropreAuthentique()`* : Bannissement de toutes les variantes génériques (`commerce général`, `commerce general`, `alimentation générale`, `vente en ligne`, `boutique en ligne`, `prêt à porter`, `confection`, préfixes `mode`, `véhicules`, `immobilière`, suffixes de catégories, titres d'articles avec prix, marques autos, etc.).
+    - *Nettoyage du Titre Push Meta (`titreNotif`)* : N'affiche plus jamais d'enseigne suspecte ; bascule automatiquement sur un titre institutionnel sobre : « *📱 Nopalou — Développez votre Commerce* ».
+  * **🧪 3. Validation Complète** :
+    - Test unitaire sur les 9 templates avec `Commerce Général`, `Mode`, `Véhicules`, `Immobilière`, `Participant Anonyme`, `Tucson` -> Tous génèrent désormais impeccablement « *Bonjour ! 👋* » ou « *Salam ! 👋* » sans aucun nom insensé.
+    - Test sur vrai contact nominatif (`Amar`) -> Génère avec élégance « *Salam Amar ! 👋* ».
+
+- **Délivrabilité Systématique : Envoi Direct Garanti via Template Meta Certifié pour la Prospection à Froid (`backend/services/prospection.js`) (09 septembre 2026)** 📲🛡️⚡ :
+  * **🎯 1. Analyse & Diagnostic Clé (Cas 17h19 Commerce Général)** :
+    - L'analyse du log de 17:19:11 vers le lead `Commerce Général` (`221781693622`) a révélé le comportement exact de Meta : lorsque l'API reçoit un texte libre brut (`sendWhatsAppText`), elle renvoie un HTTP 200 avec identifiant `wamid` sans lever d'exception synchrone, mais **n'achemine pas le message sur le terminal du prospect** car la fenêtre des 24h est fermée côté Meta.
+    - Le fallback ne se déclenchait donc pas car l'appel ne levait pas d'erreur synchrone (silently dropped par Meta).
+  * **🛠️ 2. Solution Radicale & Définitive** :
+    - Dans `lancerCampagne()`, suppression de la tentative initiale en texte libre pour toute la prospection.
+    - **Envoi direct et systématique via le Template Certifié Meta `nopalou_fiche_texte`** avec le message commercial complet injecté dans le corps du template, le bouton dynamique et le lien Nopalou.
+    - Garantit la sonnerie, la notification push et la réception instantanée 24h/24 sur le smartphone du prospect, sans dépendre d'une interaction préalable.
+
 - **Renforcement du Moteur d'Exécution : Anti-Sur-sollicitation (< 48h), Verrouillage des Boutiques Clientes & Clôture Automatique des Campagnes (`backend/services/prospection.js`, `cloturer_campagnes_orphelines.js`) (09 septembre 2026)** 🛡️⏱️📊⚡ :
   * **🎯 1. Demande & Diagnostic** :
     - Suite à l'analyse du journal de prospection (cas Amar contacté 3 fois consécutivement en quelques minutes lors de tests manuels et campagnes restées indéfiniment en statut `en_cours`).

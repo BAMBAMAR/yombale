@@ -62,7 +62,7 @@ const TEMPLATES_PAR_DEFAUT = [
     titre: '⚡ Création 100% WhatsApp en 30s — Zéro Ordinateur, Zéro Formulaire',
     canal: 'whatsapp',
     categorie: 'general',
-    texte: `{Salam|Bonjour} {nom_boutique} ! 👋
+    texte: `{salutation}
 
 Saviez-vous que vous pouvez ouvrir votre boutique en ligne directement ici sur WhatsApp en moins de 30 secondes sans jamais toucher à un ordinateur ?
 
@@ -80,7 +80,7 @@ Répondez simplement « OUI » pour ouvrir votre boutique tout de suite !` + FOO
     titre: '📦 Migration 1-Clic — Quittez Shopify / WooCommerce / Excel sans ressaisie',
     canal: 'whatsapp',
     categorie: 'general',
-    texte: `{Salam alaykoum|Bonjour} {nom_boutique} ! 📦
+    texte: `{salutation}
 
 Vous en avez marre des frais Shopify en dollars ($29/mois), des blocages de cartes bancaires et des commissions exorbitantes ?
 
@@ -100,7 +100,7 @@ Pouvons-nous importer votre fichier ensemble en 2 minutes ?` + FOOTER_OPTOUT
     titre: '👗 Mode & Prêt-à-Porter — WhatsApp 1-Clic & 0% Commission',
     canal: 'whatsapp',
     categorie: 'mode',
-    texte: `{Salam|Bonjour} {nom_boutique} ! 👋
+    texte: `{salutation}
 
 {J'ai vu vos magnifiques modèles|J'ai découvert vos collections|Je suis tombé sur vos superbes articles} {quartier}. Vous perdez sûrement beaucoup de temps à envoyer les photos, tailles et prix un par un à chaque client sur WhatsApp.
 
@@ -120,7 +120,7 @@ Voulez-vous que je vous active votre lien test gratuit aujourd'hui ?` + FOOTER_O
     titre: '📱 Téléphonie & High-Tech — Comparateur & Scanner Codes-barres',
     canal: 'whatsapp',
     categorie: 'tech',
-    texte: `{Salam alaykoum|Bonjour} {nom_boutique} ! 📱
+    texte: `{salutation}
 
 Dans la téléphonie & tech à Dakar, les prix changent vite et les clients comparent tout.
 
@@ -140,7 +140,7 @@ Pouvons-nous configurer vos 3 premiers téléphones ensemble ?` + FOOTER_OPTOUT
     titre: '🚗 Véhicules & Concessionnaires — Vitrine Auto & Fiches WhatsApp',
     canal: 'whatsapp',
     categorie: 'auto-moto',
-    texte: `{Salam|Bonjour} {nom_boutique} ! 🚗
+    texte: `{salutation}
 
 Vous vendez des véhicules à Dakar ? Les clients demandent sans cesse le kilométrage, l'année, les photos et le prix net par message.
 
@@ -159,7 +159,7 @@ Pouvons-nous ajouter votre 1er véhicule disponible aujourd'hui ?` + FOOTER_OPTO
     titre: '🏠 Immobilier & Agences — Fiches Biens & Visites WhatsApp',
     canal: 'whatsapp',
     categorie: 'immo',
-    texte: `{Salam|Bonjour} {nom_boutique} ! 🏠
+    texte: `{salutation}
 
 Gérer les demandes de location et de vente d'appartements à Dakar demande un temps fou sur WhatsApp.
 
@@ -178,7 +178,7 @@ Avez-vous un bien disponible que nous pouvons mettre en avant cette semaine ?` +
     titre: '🛒 Commerce Général & Supérette — Caisse POS & Commandes WhatsApp',
     canal: 'whatsapp',
     categorie: 'general',
-    texte: `{Salam|Bonjour} {nom_boutique} ! 👋
+    texte: `{salutation}
 
 {J'ai découvert votre activité commerciale|Je suis tombé sur vos offres} {quartier}. Fini la perte de temps à calculer les totaux et gérer les crédits à la main.
 
@@ -198,7 +198,7 @@ Souhaitez-vous faire un essai rapide de 5 minutes ?` + FOOTER_OPTOUT
     titre: '📒 Carnet de Dettes ("Bor") — Relances Polies WhatsApp Automatiques',
     canal: 'whatsapp',
     categorie: 'general',
-    texte: `{Salam|Bonjour} {nom_boutique} ! 👋
+    texte: `{salutation}
 
 Combien d'argent dort dehors dans des dettes clients oubliées sur des cahiers papier ?
 
@@ -216,7 +216,7 @@ Testez gratuitement dès maintenant : https://nopalou.com/tarifs-boutique` + FOO
     titre: '📦 Arrivages Chine & Grossistes — Vente Flash sur WhatsApp',
     canal: 'whatsapp',
     categorie: 'grossiste',
-    texte: `{Bonjour|Salam} {nom_boutique} ! 📦
+    texte: `{salutation}
 
 Vous vendez des arrivages de Chine (Alibaba, AliExpress, Shein, 1688) ou Turquie ?
 
@@ -997,9 +997,10 @@ function traiterSpintax(texte) {
 }
 
 // ── Vérification si un nom est un nom propre / enseigne authentique ─────────
+// ── Vérification si un nom est un nom propre / enseigne authentique ─────────
 function estNomPropreAuthentique(nom) {
   if (!nom || typeof nom !== 'string') return false;
-  const str = nom.trim();
+  let str = nom.trim();
   if (str.length < 2 || str.length > 35) return false;
 
   const low = str.toLowerCase();
@@ -1012,39 +1013,58 @@ function estNomPropreAuthentique(nom) {
     'agence immobilière', 'agence immobiliere', 'immo', 'immobilier', 'téléphonie & tech',
     'telephonie & tech', 'tech', 'téléphonie', 'telephonie', 'informatique', 'boutique informatique',
     'électroménager', 'electromenager', 'boutique électroménager', 'maison & ameublement',
-    'maison', 'ameublement', 'alimentation & supérette', 'alimentation', 'superette',
+    'maison', 'ameublement', '& ameublement', 'alimentation & supérette', 'alimentation', 'superette',
     'beauté & cosmétique', 'beaute & cosmetique', 'grossiste arrivages', 'grossiste',
-    'services', 'service', 'de livraison', 'enseigne', 'divers', 'mixte', 'général', 'general'
+    'services', 'service', 'de livraison', 'enseigne', 'divers', 'mixte', 'général', 'general',
+    'commerce général', 'commerce general', 'alimentation générale', 'alimentation generale',
+    'vente en ligne', 'boutique en ligne', 'prêt à porter', 'pret a porter', 'confection',
+    'quincaillerie', 'bazar', 'dépôt', 'depot', 'magasin', 'boutik', 'affaire', 'affaires',
+    'marche', 'marché', 'point de vente', 'vente', 'achats', 'achat', 'promo', 'promos',
+    'arrivage', 'arrivages', 'chine', 'turquie', 'dubai', 'dubaï', 'grossiste', 'détail', 'detail'
   ];
 
   if (GENERIQUES.includes(low)) return false;
 
+  // Si le mot commence par un préfixe ou suffixe générique (ex: "Mode Plateau", "Véhicules Guédiawaye", "Immobilière Thiès")
+  if (
+    /^(mode|véhicules|vehicules|immobilière|immobiliere|téléphonie|telephonie|électroménager|electromenager|informatique|commerce|alimentation|beauté|beaute)\b/i.test(low) ||
+    /\b(général|general|ameublement|livraison)$/i.test(low)
+  ) {
+    return false;
+  }
+
   // Détection de catégories pures ou expressions génériques
   if (
-    /^(boutique|vendeur|commerce|magasin|agence|groupe|grossiste)\s+(mode|tech|informatique|auto|immo|véhicules|vehicules|electromenager|beaute|maison|alimentation)$/i.test(str) ||
+    /^(boutique|vendeur|commerce|magasin|agence|groupe|grossiste)\s+(mode|tech|informatique|auto|immo|véhicules|vehicules|electromenager|beaute|maison|alimentation|general|général)$/i.test(str) ||
     /^(agence\s+immobilière|vendeur\s+véhicules|boutique\s+mode|commerce\s+&\s+boutique)/i.test(str)
   ) {
     return false;
   }
 
-  // Pollutions techniques : numéros de téléphone, indicatifs, slashs, emails, urls
-  if (/\d{3,}/.test(str) || /\//.test(str) || /wa\.me/i.test(str) || /@/.test(str)) {
+  // Pollutions techniques : chiffres, indicatifs, slashs, emails, urls, extensions
+  if (/\d{2,}/.test(str) || /\//.test(str) || /wa\.me/i.test(str) || /@/.test(str) || /\.(com|sn|fr|org|net)\b/i.test(str)) {
     return false;
   }
 
-  // Pollutions de petites annonces et titres d'articles
+  // Pollutions de petites annonces et titres d'articles ou statuts
   if (
     /^(dakar|senegal|thies|mbour|touba)\s*,\s*/i.test(str) ||
     /^(dakar|senegal|thies|mbour|touba)\s+(ville|région|region|sn|senegal)\b/i.test(str) ||
-    /\b(disponible|disponibi|livraison|groupée|groupee|arrivage|promo|hyundai|tucson|lite\s*5g|galaxy|iphone|peugeot|terrain|appartement|chambre)\b/i.test(str)
+    /\b(disponible|disponibi|livraison|groupée|groupee|arrivage|promo|hyundai|tucson|lite\s*5g|galaxy|iphone|peugeot|terrain|appartement|chambre|chaise|chaises|visiteur|visiteurs|canard|moto|scooter|voiture|robe|sac|chaussure)\b/i.test(str) ||
+    /\b(très réactif|tres reactif|contenu ia|est à dakar|est a dakar|tel\b)/i.test(str)
   ) {
     return false;
   }
 
   // Noms issus de scraping WhatsApp non identifiés ou peu qualitatifs pour une salutation directe
   if (
-    /\b(anonyme|participant|membre|top|tops|sn|mbs|user|utilisateur|admin|inconnu|officiel|official)\b/i.test(str)
+    /\b(anonyme|participant|membre|top|tops|sn|mbs|user|utilisateur|admin|inconnu|officiel|official|buzness|business|busness|boutique|shop|store)\b/i.test(str)
   ) {
+    return false;
+  }
+
+  // Si le nom contient uniquement des caractères spéciaux ou de la ponctuation (ex: "55.", "...")
+  if (/^[^a-zA-ZÀ-ÿ]+$/.test(str) || str.length <= 2) {
     return false;
   }
 
@@ -1064,12 +1084,12 @@ function interpolerMessage(template, lead) {
   const estNomBoutiqueAuth = estNomPropreAuthentique(rawNom);
   const estPrenomAuth = estNomPropreAuthentique(rawPrenom);
 
-  // Nom ou prénom cible pour les salutations
+  // Pour la salutation directe : UNIQUEMENT un vrai prénom de personne physique.
+  // Les commerçants au Sénégal préfèrent 1000x un "Salam ! 👋" direct et respectueux
+  // plutôt qu'un "Salam NomDeBoutique !" artificiel et robotique.
   let salutationTarget = null;
   if (estPrenomAuth) {
     salutationTarget = toTitleCase(rawPrenom);
-  } else if (estNomBoutiqueAuth) {
-    salutationTarget = toTitleCase(rawNom);
   }
 
   // 2. Remplacement intelligent de {salutation}
@@ -1083,12 +1103,10 @@ function interpolerMessage(template, lead) {
     });
   }
 
-  // 3. Remplacement des formules de salutation directes contenant {nom_boutique} ou {prenom}
-  // Supprime proprement le nom s'il est générique (ex: "Salam Mode !" -> "Salam !")
+  // 3. Remplacement / Nettoyage radical des formules de salutation directes
+  // Si le template contient "{Salam|Bonjour} {nom_boutique} !", on supprime {nom_boutique}
+  // pour ne jamais avoir d'incongruité du type "Bonjour Commerce Général !"
   message = message.replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{prenom\}\s*\(\s*\{nom_boutique\}\s*\)\s*!/gi, (match, salut) => {
-    if (estPrenomAuth && estNomBoutiqueAuth) {
-      return `${salut} ${salutationTarget} (${toTitleCase(rawNom)}) !`;
-    }
     if (salutationTarget) {
       return `${salut} ${salutationTarget} !`;
     }
@@ -1107,6 +1125,14 @@ function interpolerMessage(template, lead) {
       return `${salut} ${salutationTarget} !`;
     }
     return `${salut} !`;
+  });
+
+  // Salutations suivies d'un émoji (ex: "{salut} {nom_boutique} ! 👋")
+  message = message.replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{nom_boutique\}\s*!\s*([👋📱📦🚗🏠🛒])/gi, (match, salut, emoji) => {
+    if (salutationTarget) {
+      return `${salut} ${salutationTarget} ! ${emoji}`;
+    }
+    return `${salut} ! ${emoji}`;
   });
 
   // 4. Préposition de lieu naturelle adaptée au quartier
@@ -1624,34 +1650,25 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     if (!simulation) {
       if (canal === 'whatsapp') {
         try {
-          // 1. Tenter l'envoi texte libre direct
-          await sendWhatsAppText(lead.telephone, messageFinal);
+          // Pour la prospection (prospects froids ou hors fenêtre 24h), Meta N'ACHEMINE PAS le texte libre sans interaction préalable.
+          // L'envoi direct via le Template Certifié Meta garantit la sonnerie, la notification push et la réception 24h/24.
+          const enseigneAuth = estNomPropreAuthentique(lead.nom_boutique) ? lead.nom_boutique.trim() : null;
+          const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 60) : '📱 Nopalou — Développez votre Commerce';
+          const extraitMsg = messageFinal.slice(0, 950);
+          
+          await sendWhatsAppNotification(lead.telephone, {
+            textMessage: messageFinal,
+            title: titreNotif,
+            detail: extraitMsg,
+            url: 'https://nopalou.com/tarifs-boutique',
+            buttonParam: 'boutique'
+          });
+          
           statutEnvoi = 'envoye';
           nbSucces++;
         } catch (err) {
-          const metaErr = err.response?.data?.error;
-          // Si la fenêtre 24h Meta est fermée (code 131047 ou message 24 hours), basculer sur le Template Meta Certifié
-          if (metaErr?.code === 131047 || metaErr?.message?.includes('24 hours')) {
-            try {
-              const titreNotif = `📱 Nopalou — ${lead.nom_boutique || 'Commerce'}`.slice(0, 60);
-              const extraitMsg = messageFinal.slice(0, 950);
-              await sendWhatsAppNotification(lead.telephone, {
-                textMessage: messageFinal,
-                title: titreNotif,
-                detail: extraitMsg,
-                url: 'https://nopalou.com/creer-boutique?plan=pro',
-                buttonParam: 'boutique'
-              });
-              statutEnvoi = 'envoye';
-              nbSucces++;
-            } catch (tplErr) {
-              erreurEnvoi = tplErr.response?.data?.error?.message || tplErr.message;
-              nbEchecs++;
-            }
-          } else {
-            erreurEnvoi = metaErr?.message || err.message;
-            nbEchecs++;
-          }
+          erreurEnvoi = err.response?.data?.error?.message || err.message;
+          nbEchecs++;
         }
       } else {
         // Simulation pour canal autre que direct API
