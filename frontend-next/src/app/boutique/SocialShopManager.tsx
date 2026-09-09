@@ -81,6 +81,10 @@ export default function SocialShopManager({
   const [autoMatch, setAutoMatch] = useState(true)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Navigation par onglets segmentés anti-longueur
+  const [activeMainTab, setActiveMainTab] = useState<'posts' | 'import' | 'accounts'>('posts')
+  const [postFilter, setPostFilter] = useState<'all' | 'unlinked' | 'featured' | 'hidden'>('all')
+
   // 3 Modes d'importation : 'profile' (Aspirateur @pseudo) | 'batch' (Multi-liens) | 'single' (Lien unique)
   const [importMode, setImportMode] = useState<'profile' | 'batch' | 'single'>('profile')
 
@@ -355,6 +359,7 @@ export default function SocialShopManager({
       setSyncingAccountId(acc.id)
       setMessage(null)
       setImportMode('profile')
+      setActiveMainTab('import')
       setProfilePlatform(acc.plateforme as any)
       setProfileUsername(acc.nom_compte)
 
@@ -588,163 +593,1094 @@ export default function SocialShopManager({
     (p.categorie && p.categorie.toLowerCase().includes(productSearch.toLowerCase()))
   )
 
+  const postsWithoutProducts = posts.filter(p => !p.produits || p.produits.length === 0)
+  const featuredPosts = posts.filter(p => p.is_featured)
+  const hiddenPosts = posts.filter(p => !p.visible)
+
+  const displayedPosts = posts.filter(post => {
+    if (postFilter === 'unlinked') return !post.produits || post.produits.length === 0
+    if (postFilter === 'featured') return post.is_featured
+    if (postFilter === 'hidden') return !post.visible
+    return true
+  })
+
   return (
-    <div className="social-shop-manager-wrap">
-      {/* ── HEADER ET STATS DE CONVERSION SOCIAL SHOP ── */}
-      <div className="social-shop-card">
-        <div className="social-shop-header-row">
-          <div className="social-shop-header-title">
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff7f0', color: '#C75B00', padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
-              <Sparkles size={13} /> Vitrine Social Commerce
+    <div className="social-shop-manager-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* ── HEADER COMPACT & SEGMENTED CONTROLS ANTI-LONGUEUR ── */}
+      <div className="social-shop-compact-card">
+        {/* Ligne Titre & CTA Vitrine */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #ea580c 0%, #C75B00 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: 18,
+              boxShadow: '0 2px 8px rgba(199,91,0,0.25)',
+              flexShrink: 0,
+            }}>
+              📱
             </div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#0f172a' }}>
-              📱 Réseaux Sociaux & Social Shop
-            </h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-              Transformez vos publications Instagram, TikTok et Facebook en catalogue interactif pour vos clients.
-            </p>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
+                  Social Shop
+                </h2>
+                <span style={{ fontSize: 10.5, background: '#dcfce7', color: '#15803d', padding: '1px 6px', borderRadius: 10, fontWeight: 800 }}>
+                  ● En direct
+                </span>
+              </div>
+              <p style={{ margin: '1px 0 0', fontSize: 11.5, color: '#64748b' }}>
+                Vitrine interactive TikTok, Instagram & Facebook
+              </p>
+            </div>
           </div>
 
           <a
             href={`/boutiques/${boutiqueSlug || boutiqueId}?tab=social`}
             target="_blank"
             rel="noopener noreferrer"
-            className="social-shop-live-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 20,
+              background: '#0f172a',
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 800,
+              textDecoration: 'none',
+              flexShrink: 0,
+              boxShadow: '0 2px 6px rgba(15,23,42,0.15)',
+            }}
           >
-            <span>Voir mon Social Shop en direct</span>
-            <ExternalLink size={14} />
+            <span>Voir ma vitrine</span>
+            <ExternalLink size={12} />
           </a>
         </div>
 
-        {/* 4 KPIs Clés : 4 colonnes sur desktop, 2x2 compact sur mobile */}
-        <div className="social-kpi-grid">
-          <div className="social-kpi-item">
-            <span className="social-kpi-label">Publications en ligne</span>
-            <p className="social-kpi-value" style={{ color: '#0f172a' }}>
+        {/* Barre de Micro-KPIs en 1 seule ligne compacte */}
+        <div className="social-micro-kpi-bar" style={{ marginTop: 12 }}>
+          <div
+            className="social-micro-kpi-item"
+            onClick={() => { setActiveMainTab('posts'); setPostFilter('all') }}
+            style={{ cursor: 'pointer' }}
+            title="Voir toutes les publications"
+          >
+            <span className="social-micro-kpi-val" style={{ color: '#0f172a' }}>
               {stats.posts_affiches || 0}
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8' }}> / {stats.total_posts || 0}</span>
-            </p>
+              <span style={{ fontSize: 10.5, fontWeight: 600, color: '#94a3b8' }}>/{stats.total_posts || 0}</span>
+            </span>
+            <span className="social-micro-kpi-lbl">en ligne</span>
           </div>
 
-          <div className="social-kpi-item">
-            <span className="social-kpi-label">À associer à un produit</span>
-            <p className="social-kpi-value" style={{ color: (stats.posts_sans_produits || 0) > 0 ? '#ea580c' : '#16a34a' }}>
-              {stats.posts_sans_produits || 0}
-            </p>
+          <div className="social-micro-kpi-divider" />
+
+          <div
+            className="social-micro-kpi-item"
+            onClick={() => { setActiveMainTab('posts'); setPostFilter('unlinked') }}
+            style={{ cursor: 'pointer' }}
+            title="Filtrer les publications sans produit"
+          >
+            <span className="social-micro-kpi-val" style={{ color: (stats.posts_sans_produits || 0) > 0 ? '#ea580c' : '#16a34a' }}>
+              {(stats.posts_sans_produits || 0) > 0 ? `⚠️ ${stats.posts_sans_produits}` : '0'}
+            </span>
+            <span className="social-micro-kpi-lbl">à associer</span>
           </div>
 
-          <div className="social-kpi-item">
-            <span className="social-kpi-label">Vues sociales (30j)</span>
-            <p className="social-kpi-value" style={{ color: '#2563eb' }}>
+          <div className="social-micro-kpi-divider" />
+
+          <div className="social-micro-kpi-item">
+            <span className="social-micro-kpi-val" style={{ color: '#2563eb' }}>
               {analytics.vues_sociales || 0}
-            </p>
+            </span>
+            <span className="social-micro-kpi-lbl">vues (30j)</span>
           </div>
 
-          <div className="social-kpi-item">
-            <span className="social-kpi-label">Clics WhatsApp</span>
-            <p className="social-kpi-value" style={{ color: '#16a34a' }}>
+          <div className="social-micro-kpi-divider" />
+
+          <div className="social-micro-kpi-item">
+            <span className="social-micro-kpi-val" style={{ color: '#16a34a' }}>
               {analytics.clics_whatsapp || 0}
-            </p>
+            </span>
+            <span className="social-micro-kpi-lbl">clics WA</span>
           </div>
+        </div>
+
+        {/* Ruban de navigation par onglets segmentés (Segmented Control) */}
+        <div className="social-segmented-nav" style={{ marginTop: 12 }}>
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('posts')}
+            className={`social-segment-btn ${activeMainTab === 'posts' ? 'active' : ''}`}
+          >
+            <span>🎬 Mes Publications</span>
+            <span className="social-segment-badge">{posts.length}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('import')}
+            className={`social-segment-btn ${activeMainTab === 'import' ? 'active' : ''}`}
+          >
+            <span>➕ Ajouter</span>
+            {discoveredPosts.length > 0 && (
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ea580c' }} />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('accounts')}
+            className={`social-segment-btn ${activeMainTab === 'accounts' ? 'active' : ''}`}
+          >
+            <span>⚙️ Profils</span>
+            <span className="social-segment-badge">
+              {accounts.filter(a => a.nom_compte).length}/3
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* ── SECTION 1 : COMPTES SOCIAUX OFFICIELS MARCHAND ── */}
-      <div className="social-shop-card">
-        <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
-          1. Connecter mes profils officiels
-        </h3>
+      {/* Notification Toast Globale */}
+      {message && (
+        <div style={{
+          padding: '10px 14px',
+          borderRadius: 10,
+          background: message.type === 'success' ? '#f0fdf4' : '#fef2f2',
+          border: `1px solid ${message.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
+          color: message.type === 'success' ? '#15803d' : '#b91c1c',
+          fontSize: 12.5,
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            {message.type === 'success' ? <CheckCircle2 size={16} style={{ flexShrink: 0 }} /> : <AlertCircle size={16} style={{ flexShrink: 0 }} />}
+            <span style={{ wordBreak: 'break-word' }}>{message.text}</span>
+          </div>
+          <button
+            onClick={() => setMessage(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, opacity: 0.7, flexShrink: 0 }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
 
-        <div className="social-platform-grid">
-          {[
-            { key: 'instagram', label: 'Instagram', icon: '📸', placeholder: '@maboutique ou lien profil' },
-            { key: 'tiktok', label: 'TikTok', icon: '🎵', placeholder: '@maboutique ou lien profil' },
-            { key: 'facebook', label: 'Facebook', icon: '📘', placeholder: 'Page ou profil Facebook' },
-          ].map(plat => {
-            const acc = accounts.find(a => a.plateforme === plat.key)
-            const isEditing = editingPlatform === plat.key
+      {/* ── ONGLET 1 : GESTION DES PUBLICATIONS ── */}
+      {activeMainTab === 'posts' && (
+        <div className="social-shop-compact-card">
+          {/* Barre d'outils et filtres rapides */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+            <div className="social-filter-pills">
+              <button
+                type="button"
+                onClick={() => setPostFilter('all')}
+                className={`social-filter-pill ${postFilter === 'all' ? 'active' : ''}`}
+              >
+                Toutes ({posts.length})
+              </button>
 
-            return (
-              <div
-                key={plat.key}
-                className="social-platform-card"
+              <button
+                type="button"
+                onClick={() => setPostFilter('unlinked')}
+                className={`social-filter-pill ${postFilter === 'unlinked' ? (postsWithoutProducts.length > 0 ? 'warning-active' : 'active') : ''}`}
                 style={{
-                  background: acc ? '#f0fdf4' : '#f8fafc',
-                  border: acc ? '1.5px solid #bbf7d0' : '1px solid #e2e8f0',
+                  color: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#ea580c' : undefined,
+                  borderColor: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#fed7aa' : undefined,
+                  background: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#fff7ed' : undefined,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 20 }}>{plat.icon}</span>
-                    <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{plat.label}</span>
+                ⚠️ À associer ({postsWithoutProducts.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPostFilter('featured')}
+                className={`social-filter-pill ${postFilter === 'featured' ? 'active' : ''}`}
+              >
+                ⭐ À la une ({featuredPosts.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPostFilter('hidden')}
+                className={`social-filter-pill ${postFilter === 'hidden' ? 'active' : ''}`}
+              >
+                Masquées ({hiddenPosts.length})
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setActiveMainTab('import')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                background: '#fff7ed',
+                color: '#C75B00',
+                border: '1px solid #fed7aa',
+                borderRadius: 20,
+                padding: '5px 12px',
+                fontSize: 11.5,
+                fontWeight: 800,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <Plus size={12} />
+              <span>Ajouter</span>
+            </button>
+          </div>
+
+          {/* Liste des publications compactes */}
+          {displayedPosts.length === 0 ? (
+            <div style={{
+              padding: '32px 16px',
+              textAlign: 'center',
+              background: '#f8fafc',
+              borderRadius: 12,
+              border: '1px dashed #cbd5e1',
+            }}>
+              <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 800, color: '#334155' }}>
+                {posts.length === 0 ? 'Aucune publication pour le moment' : 'Aucune publication dans ce filtre'}
+              </p>
+              <p style={{ margin: '0 0 14px', fontSize: 12.5, color: '#64748b' }}>
+                {posts.length === 0
+                  ? 'Importez une vidéo TikTok, Instagram ou Facebook pour commencer.'
+                  : 'Essayez de sélectionner un autre filtre ci-dessus.'}
+              </p>
+              {posts.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab('import')}
+                  style={{
+                    background: '#C75B00',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '8px 16px',
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ➕ Ajouter une vidéo
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPostFilter('all')}
+                  style={{
+                    background: '#f1f5f9',
+                    color: '#334155',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: 8,
+                    padding: '6px 12px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Afficher toutes les publications
+                </button>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {displayedPosts.map(post => (
+                <div
+                  key={post.id}
+                  className="social-compact-post-card"
+                  style={{
+                    border: post.is_featured ? '1.5px solid #fdba74' : undefined,
+                    background: !post.visible ? '#f8fafc' : '#ffffff',
+                    opacity: !post.visible ? 0.75 : 1,
+                  }}
+                >
+                  {/* Miniature vidéo */}
+                  <div className="social-compact-thumb">
+                    {post.thumbnail_url ? (
+                      <ExternalImg src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 18 }}>
+                        🎬
+                      </div>
+                    )}
+                    <span style={{
+                      position: 'absolute',
+                      top: 3,
+                      left: 3,
+                      fontSize: 9,
+                      background: 'rgba(0,0,0,0.75)',
+                      color: '#fff',
+                      padding: '1px 4px',
+                      borderRadius: 3,
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                    }}>
+                      {post.plateforme === 'instagram' ? 'IG' : post.plateforme === 'tiktok' ? 'TT' : 'FB'}
+                    </span>
                   </div>
-                  {acc ? (
-                    <span style={{ fontSize: 11, background: '#16a34a', color: '#fff', padding: '2px 8px', borderRadius: 12, fontWeight: 800 }}>
-                      🟢 Connecté
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: 11, background: '#e2e8f0', color: '#64748b', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
-                      Non renseigné
-                    </span>
-                  )}
+
+                  {/* Infos & Produit */}
+                  <div className="social-compact-info">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 900, color: '#C75B00', textTransform: 'uppercase' }}>
+                        {post.plateforme}
+                      </span>
+                      {post.auteur && (
+                        <span style={{ fontSize: 10.5, color: '#64748b' }}>
+                          @{post.auteur}
+                        </span>
+                      )}
+                      {post.is_featured && (
+                        <span style={{ fontSize: 9.5, background: '#fff7ed', color: '#C75B00', border: '1px solid #fed7aa', padding: '0 5px', borderRadius: 8, fontWeight: 800 }}>
+                          ⭐ À la une
+                        </span>
+                      )}
+                      {!post.visible && (
+                        <span style={{ fontSize: 9.5, background: '#f1f5f9', color: '#64748b', padding: '0 5px', borderRadius: 8, fontWeight: 700 }}>
+                          ⚪ Masqué
+                        </span>
+                      )}
+                    </div>
+
+                    <p style={{
+                      margin: 0,
+                      fontSize: 12.5,
+                      color: '#0f172a',
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {post.caption || 'Publication sans légende'}
+                    </p>
+
+                    {/* Pastilles de Produits associés */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
+                      {post.produits && post.produits.length > 0 ? (
+                        <>
+                          {post.produits.map(prod => (
+                            <span key={prod.id} className="social-prod-pill">
+                              <ShoppingBag size={10} style={{ color: '#C75B00', flexShrink: 0 }} />
+                              <span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {prod.nom} ({prod.prix ? fcfa(prod.prix) : '—'})
+                              </span>
+                              <button
+                                onClick={() => handleDissociateProduct(post.id, prod.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, fontSize: 12, lineHeight: 1, marginLeft: 2 }}
+                                title="Dissocier ce produit"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                          <button
+                            onClick={() => setSelectedPostForProduct(post)}
+                            style={{
+                              background: '#fff',
+                              border: '1px dashed #cbd5e1',
+                              color: '#64748b',
+                              borderRadius: 6,
+                              padding: '2px 5px',
+                              fontSize: 10,
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                            }}
+                            title="Associer un autre produit"
+                          >
+                            +
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedPostForProduct(post)}
+                          style={{
+                            background: '#fff7ed',
+                            border: '1px solid #fed7aa',
+                            color: '#c2410c',
+                            borderRadius: 6,
+                            padding: '2px 8px',
+                            fontSize: 11,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
+                          }}
+                        >
+                          <Plus size={11} />
+                          <span>Associer un produit</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions d'administration compactes */}
+                  <div className="social-compact-actions">
+                    <button
+                      onClick={() => handleToggleVisible(post)}
+                      className="social-compact-action-btn"
+                      style={{
+                        color: post.visible ? '#15803d' : '#94a3b8',
+                        background: post.visible ? '#f0fdf4' : '#f8fafc',
+                        borderColor: post.visible ? '#bbf7d0' : '#e2e8f0',
+                      }}
+                      title={post.visible ? 'Visible en boutique (cliquer pour masquer)' : 'Masqué (cliquer pour afficher)'}
+                    >
+                      {post.visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                    </button>
+
+                    <button
+                      onClick={() => handleToggleFeatured(post)}
+                      className="social-compact-action-btn"
+                      style={{
+                        color: post.is_featured ? '#C75B00' : '#94a3b8',
+                        background: post.is_featured ? '#fff7ed' : '#f8fafc',
+                        borderColor: post.is_featured ? '#fed7aa' : '#e2e8f0',
+                      }}
+                      title={post.is_featured ? 'À la une (cliquer pour retirer)' : 'Mettre en vedette'}
+                    >
+                      <Star size={13} fill={post.is_featured ? '#C75B00' : 'none'} />
+                    </button>
+
+                    <a
+                      href={post.post_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="social-compact-action-btn"
+                      title="Voir la publication originale"
+                    >
+                      <ExternalLink size={12} />
+                    </a>
+
+                    <button
+                      onClick={() => handleDeletePost(post.id)}
+                      className="social-compact-action-btn"
+                      style={{ color: '#ef4444' }}
+                      title="Supprimer la publication"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── ONGLET 2 : AJOUTER & IMPORTER DU CONTENU ── */}
+      {activeMainTab === 'import' && (
+        <div id="social-selection-section" className="social-shop-compact-card">
+          <div style={{ marginBottom: 14 }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 900, color: '#0f172a' }}>
+              ➕ Ajouter des Publications
+            </h3>
+            <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
+              Importez vos vidéos Instagram, TikTok et Facebook par profil ou par lien direct.
+            </p>
+          </div>
+
+          {/* Barre de navigation des 3 Sous-Modes */}
+          <div className="social-tabs-nav">
+            <button
+              type="button"
+              onClick={() => setImportMode('profile')}
+              className="social-tab-btn"
+              style={{
+                background: importMode === 'profile' ? '#C75B00' : '#f8fafc',
+                color: importMode === 'profile' ? '#ffffff' : '#475569',
+                boxShadow: importMode === 'profile' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
+              }}
+            >
+              <Sparkles size={14} />
+              <span>🔍 Aspirateur @pseudo</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setImportMode('batch')}
+              className="social-tab-btn"
+              style={{
+                background: importMode === 'batch' ? '#C75B00' : '#f8fafc',
+                color: importMode === 'batch' ? '#ffffff' : '#475569',
+                boxShadow: importMode === 'batch' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
+              }}
+            >
+              <Layers size={14} />
+              <span>📋 Liens en lot</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setImportMode('single')}
+              className="social-tab-btn"
+              style={{
+                background: importMode === 'single' ? '#C75B00' : '#f8fafc',
+                color: importMode === 'single' ? '#ffffff' : '#475569',
+                boxShadow: importMode === 'single' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
+              }}
+            >
+              <Link2 size={14} />
+              <span>🔗 Lien unique</span>
+            </button>
+          </div>
+
+          {/* Mode 1 : Aspirateur de profil (@pseudo) */}
+          {importMode === 'profile' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 10, padding: '10px 14px', fontSize: 12.5, color: '#9a3412', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Sparkles size={16} style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>Zéro copier-coller :</strong> Renseignez votre pseudo public. Nopalou explore votre compte et affiche vos vidéos dans une grille prête à cocher.
+                </span>
+              </div>
+
+              <form onSubmit={handleExploreProfile} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <select
+                  value={profilePlatform}
+                  onChange={e => setProfilePlatform(e.target.value as any)}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    background: '#ffffff',
+                    outline: 'none',
+                    flex: '0 0 auto',
+                  }}
+                >
+                  <option value="tiktok">🎵 TikTok</option>
+                  <option value="instagram">📸 Instagram</option>
+                  <option value="facebook">📘 Facebook</option>
+                </select>
+
+                <div style={{ flex: '1 1 180px', minWidth: 0, position: 'relative' }}>
+                  <input
+                    type="text"
+                    placeholder="Ex: @votre_boutique"
+                    value={profileUsername}
+                    onChange={e => setProfileUsername(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 13,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
                 </div>
 
-                {isEditing ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <input
-                      type="text"
-                      placeholder={plat.placeholder}
-                      value={accountInput}
-                      onChange={e => setAccountInput(e.target.value)}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: 8,
-                        border: '1.5px solid #C75B00',
-                        fontSize: 13,
-                        outline: 'none',
+                <button
+                  type="submit"
+                  disabled={exploringProfile || !profileUsername.trim()}
+                  style={{
+                    background: exploringProfile ? '#94a3b8' : '#0f172a',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '10px 18px',
+                    fontSize: 13,
+                    fontWeight: 900,
+                    cursor: exploringProfile ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    flex: '1 1 auto',
+                  }}
+                >
+                  {exploringProfile ? (
+                    <>
+                      <RefreshCw size={14} className="spin" />
+                      <span>Exploration…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search size={14} />
+                      <span>Aspirer les vidéos</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Raccourcis profils connectés */}
+              {accounts.filter(a => a.nom_compte).length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11.5, color: '#64748b' }}>Raccourcis :</span>
+                  {accounts.filter(a => a.nom_compte).map(acc => (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      onClick={() => {
+                        setProfilePlatform(acc.plateforme as any)
+                        setProfileUsername(acc.nom_compte)
                       }}
-                      autoFocus
-                    />
+                      style={{
+                        background: '#f1f5f9',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: 20,
+                        padding: '2px 8px',
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: '#334155',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      @{acc.nom_compte.replace(/^@/, '')} ({acc.plateforme})
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Grille des publications découvertes à cocher */}
+              {discoveredPosts.length > 0 && (
+                <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '14px', background: '#f8fafc' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                        {discoveredPosts.length} trouvée(s)
+                      </span>
+                      <span style={{ fontSize: 11.5, color: '#C75B00', background: '#fff7ed', padding: '1px 6px', borderRadius: 8, fontWeight: 700 }}>
+                        {selectedDiscoveredUrls.size} cochée(s)
+                      </span>
+                    </div>
+
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button
-                        onClick={() => handleSaveAccount(plat.key)}
+                        type="button"
+                        onClick={() => {
+                          const all = new Set<string>()
+                          discoveredPosts.forEach(p => all.add(p.url))
+                          setSelectedDiscoveredUrls(all)
+                        }}
                         style={{
-                          flex: 1,
-                          background: '#C75B00',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 8,
-                          padding: '6px',
-                          fontWeight: 800,
-                          fontSize: 12,
+                          background: '#fff',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: 6,
+                          padding: '3px 8px',
+                          fontSize: 11,
+                          fontWeight: 700,
                           cursor: 'pointer',
                         }}
                       >
-                        Enregistrer
+                        Tout cocher
                       </button>
                       <button
-                        onClick={() => { setEditingPlatform(null); setAccountInput('') }}
+                        type="button"
+                        onClick={() => setSelectedDiscoveredUrls(new Set())}
                         style={{
-                          background: '#e2e8f0',
-                          color: '#475569',
-                          border: 'none',
-                          borderRadius: 8,
-                          padding: '6px 12px',
+                          background: '#fff',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: 6,
+                          padding: '3px 8px',
+                          fontSize: 11,
                           fontWeight: 700,
-                          fontSize: 12,
                           cursor: 'pointer',
                         }}
                       >
-                        Annuler
+                        Décocher
                       </button>
                     </div>
                   </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: acc ? '#15803d' : '#64748b' }}>
-                        {acc ? acc.nom_compte : 'Aucun compte lié'}
-                      </span>
+
+                  {/* Grille 2 colonnes ultra-compacte */}
+                  <div className="social-discovered-grid">
+                    {discoveredPosts.map((p, idx) => {
+                      const isSelected = selectedDiscoveredUrls.has(p.url)
+                      return (
+                        <div
+                          key={p.url || idx}
+                          onClick={() => {
+                            if (p.is_already_imported) return
+                            const next = new Set(selectedDiscoveredUrls)
+                            if (next.has(p.url)) next.delete(p.url)
+                            else next.add(p.url)
+                            setSelectedDiscoveredUrls(next)
+                          }}
+                          style={{
+                            display: 'flex',
+                            gap: 8,
+                            padding: 8,
+                            borderRadius: 10,
+                            background: isSelected ? '#fff7ed' : '#ffffff',
+                            border: `1.5px solid ${isSelected ? '#C75B00' : '#e2e8f0'}`,
+                            cursor: p.is_already_imported ? 'default' : 'pointer',
+                            opacity: p.is_already_imported ? 0.6 : 1,
+                            position: 'relative',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          <div style={{ width: 44, height: 58, borderRadius: 6, background: '#0f172a', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+                            {p.thumbnailUrl ? (
+                              <ExternalImg src={p.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 16 }}>
+                                🎬
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <p style={{ margin: 0, fontSize: 11.5, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>
+                              {p.caption || 'Sans légende'}
+                            </p>
+                            <span style={{ fontSize: 10, color: p.is_already_imported ? '#16a34a' : isSelected ? '#C75B00' : '#64748b', fontWeight: 800 }}>
+                              {p.is_already_imported ? '✓ Déjà importé' : isSelected ? '✓ Sélectionné' : '+ Sélectionner'}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleImportDiscovered}
+                    disabled={importingDiscovered || selectedDiscoveredUrls.size === 0}
+                    style={{
+                      marginTop: 12,
+                      width: '100%',
+                      background: selectedDiscoveredUrls.size === 0 ? '#cbd5e1' : '#C75B00',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 10,
+                      padding: '11px',
+                      fontSize: 13,
+                      fontWeight: 900,
+                      cursor: selectedDiscoveredUrls.size === 0 || importingDiscovered ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    {importingDiscovered ? (
+                      <>
+                        <RefreshCw size={15} className="spin" />
+                        <span>Importation en cours…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={15} />
+                        <span>Importer les {selectedDiscoveredUrls.size} publications sélectionnées</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mode 2 : Import en lot (Multi-liens) */}
+          {importMode === 'batch' && (
+            <form onSubmit={handleImportBatch} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, padding: '10px 14px', fontSize: 12.5, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Layers size={16} style={{ flexShrink: 0 }} />
+                <span>
+                  Collez un ou plusieurs liens (un par ligne ou séparés par des espaces). TikTok, Instagram Reels ou Facebook Vidéos.
+                </span>
+              </div>
+
+              <textarea
+                rows={4}
+                placeholder="https://www.tiktok.com/@.../video/...&#10;https://www.instagram.com/reel/...&#10;https://www.facebook.com/watch/..."
+                value={batchUrlsText}
+                onChange={e => setBatchUrlsText(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  border: '1.5px solid #cbd5e1',
+                  fontSize: 12.5,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  fontFamily: 'monospace',
+                }}
+              />
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: (batchUrlsText.match(/https?:\/\/[^\s]+/g) || []).length > 0 ? '#C75B00' : '#64748b' }}>
+                  {(batchUrlsText.match(/https?:\/\/[^\s]+/g) || []).length} lien(s) détecté(s)
+                </span>
+
+                <button
+                  type="submit"
+                  disabled={batchImporting || !batchUrlsText.trim()}
+                  style={{
+                    background: batchImporting ? '#94a3b8' : '#C75B00',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '10px 20px',
+                    fontSize: 13,
+                    fontWeight: 900,
+                    cursor: batchImporting ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    flex: '1 1 auto',
+                  }}
+                >
+                  {batchImporting ? (
+                    <>
+                      <RefreshCw size={14} className="spin" />
+                      <span>Traitement en cours…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Layers size={14} />
+                      <span>⚡ Importer le lot en 1 clic</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Mode 3 : Lien unique rapide */}
+          {importMode === 'single' && (
+            <form onSubmit={handleImportUrl} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 180px', minWidth: 0, position: 'relative' }}>
+                  <Link2 size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input
+                    type="url"
+                    placeholder="https://www.tiktok.com/@... ou instagram.com/reel/..."
+                    value={importUrl}
+                    onChange={e => setImportUrl(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px 10px 36px',
+                      borderRadius: 10,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 13,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={importing || !importUrl.trim()}
+                  style={{
+                    background: importing ? '#94a3b8' : '#C75B00',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '10px 20px',
+                    fontSize: 13,
+                    fontWeight: 900,
+                    cursor: importing ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    flex: '1 1 auto',
+                  }}
+                >
+                  {importing ? (
+                    <>
+                      <RefreshCw size={14} className="spin" />
+                      <span>Analyse…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} />
+                      <span>Importer & Associer</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Option partagée : Smart Matching */}
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #f1f5f9' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#334155', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={autoMatch}
+                onChange={e => setAutoMatch(e.target.checked)}
+                style={{ accentColor: '#C75B00' }}
+              />
+              <span>Activer le <strong>Smart Matching</strong> automatique (+85% similarité nom/légende)</span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* ── ONGLET 3 : PROFILS SOCIAUX CONNECTÉS ── */}
+      {activeMainTab === 'accounts' && (
+        <div className="social-shop-compact-card">
+          <div style={{ marginBottom: 14 }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 900, color: '#0f172a' }}>
+              ⚙️ Profils Sociaux Connectés
+            </h3>
+            <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
+              Renseignez vos identifiants officiels pour aspirer vos publications en 1 clic et synchroniser votre catalogue.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { key: 'instagram', label: 'Instagram', icon: '📸', placeholder: '@maboutique ou lien profil' },
+              { key: 'tiktok', label: 'TikTok', icon: '🎵', placeholder: '@maboutique ou lien profil' },
+              { key: 'facebook', label: 'Facebook', icon: '📘', placeholder: 'Page ou profil Facebook' },
+            ].map(plat => {
+              const acc = accounts.find(a => a.plateforme === plat.key)
+              const isEditing = editingPlatform === plat.key
+
+              return (
+                <div
+                  key={plat.key}
+                  className={`social-account-row-compact ${acc ? 'connected' : ''}`}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: 22, flexShrink: 0 }}>{plat.icon}</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800, fontSize: 13.5, color: '#0f172a' }}>{plat.label}</span>
+                        {acc ? (
+                          <span style={{ fontSize: 10.5, background: '#16a34a', color: '#fff', padding: '1px 6px', borderRadius: 10, fontWeight: 800 }}>
+                            🟢 Connecté
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: 10.5, background: '#e2e8f0', color: '#64748b', padding: '1px 6px', borderRadius: 10, fontWeight: 700 }}>
+                            Non configuré
+                          </span>
+                        )}
+                      </div>
+
+                      {isEditing ? (
+                        <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                          <input
+                            type="text"
+                            placeholder={plat.placeholder}
+                            value={accountInput}
+                            onChange={e => setAccountInput(e.target.value)}
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: 8,
+                              border: '1.5px solid #C75B00',
+                              fontSize: 12.5,
+                              outline: 'none',
+                              flex: '1 1 180px',
+                              minWidth: 0,
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleSaveAccount(plat.key)}
+                            style={{
+                              background: '#C75B00',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: 8,
+                              padding: '6px 12px',
+                              fontWeight: 800,
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Enregistrer
+                          </button>
+                          <button
+                            onClick={() => { setEditingPlatform(null); setAccountInput('') }}
+                            style={{
+                              background: '#e2e8f0',
+                              color: '#475569',
+                              border: 'none',
+                              borderRadius: 8,
+                              padding: '6px 10px',
+                              fontWeight: 700,
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                          <span style={{ fontSize: 12.5, fontWeight: 700, color: acc ? '#15803d' : '#64748b' }}>
+                            {acc ? `@${acc.nom_compte.replace(/^@/, '')}` : 'Aucun compte associé'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {!isEditing && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      {acc && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAutoSync(acc)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              background: acc.auto_sync ? '#dcfce7' : '#f1f5f9',
+                              border: `1px solid ${acc.auto_sync ? '#86efac' : '#cbd5e1'}`,
+                              borderRadius: 8,
+                              padding: '5px 8px',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: acc.auto_sync ? '#15803d' : '#64748b',
+                              cursor: 'pointer',
+                            }}
+                            title="Activer/Désactiver la synchronisation automatique en arrière-plan"
+                          >
+                            <span>{acc.auto_sync ? '🟢 Auto-Sync ON' : '⚪ Auto-Sync OFF'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSyncAccount(acc)}
+                            disabled={syncingAccountId === acc.id}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              background: '#dcfce7',
+                              color: '#15803d',
+                              border: '1.5px solid #86efac',
+                              borderRadius: 8,
+                              padding: '5px 10px',
+                              fontSize: 11.5,
+                              fontWeight: 800,
+                              cursor: syncingAccountId === acc.id ? 'not-allowed' : 'pointer',
+                            }}
+                          >
+                            <RefreshCw size={11} className={syncingAccountId === acc.id ? 'spin' : ''} />
+                            <span>{syncingAccountId === acc.id ? 'Recherche…' : '🔄 Sync & Choisir'}</span>
+                          </button>
+                        </>
+                      )}
+
                       <button
                         onClick={() => {
                           setEditingPlatform(plat.key)
@@ -754,812 +1690,23 @@ export default function SocialShopManager({
                           background: '#ffffff',
                           border: '1px solid #cbd5e1',
                           borderRadius: 8,
-                          padding: '4px 10px',
-                          fontSize: 12,
+                          padding: '5px 10px',
+                          fontSize: 11.5,
                           fontWeight: 700,
                           cursor: 'pointer',
+                          color: '#334155',
                         }}
                       >
-                        {acc ? 'Modifier' : '+ Connecter'}
+                        {acc ? 'Modifier' : '+ Configurer'}
                       </button>
                     </div>
-
-                    {acc && (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, borderTop: '1px dashed #bbf7d0', paddingTop: 8 }}>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleAutoSync(acc)}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            background: 'transparent',
-                            border: 'none',
-                            fontSize: 11.5,
-                            fontWeight: 700,
-                            color: acc.auto_sync ? '#15803d' : '#94a3b8',
-                            cursor: 'pointer',
-                            padding: 0,
-                          }}
-                          title="Activer/Désactiver la synchronisation automatique en arrière-plan"
-                        >
-                          <span style={{ fontSize: 13 }}>{acc.auto_sync ? '🟢' : '⚪'}</span>
-                          <span>{acc.auto_sync ? 'Auto-Sync Actif' : 'Auto-Sync Inactif'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleSyncAccount(acc)}
-                          disabled={syncingAccountId === acc.id}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 5,
-                            background: '#dcfce7',
-                            color: '#15803d',
-                            border: '1.5px solid #86efac',
-                            borderRadius: 8,
-                            padding: '4px 10px',
-                            fontSize: 11.5,
-                            fontWeight: 800,
-                            cursor: syncingAccountId === acc.id ? 'not-allowed' : 'pointer',
-                            boxShadow: '0 1px 3px rgba(21,128,61,0.1)',
-                          }}
-                          title="Découvrir les publications de ce compte et choisir lesquelles ajouter"
-                        >
-                          <RefreshCw size={11} className={syncingAccountId === acc.id ? 'spin' : ''} />
-                          <span>{syncingAccountId === acc.id ? 'Recherche…' : '🔄 Synchroniser & Choisir'}</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* ── SECTION 2 : ACQUISITION DE PUBLICATIONS (3 MODES AU CHOIX) ── */}
-      <div
-        id="social-selection-section"
-        className="social-shop-card"
-      >
-        <div style={{ marginBottom: 16 }}>
-          <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
-            2. Ajouter du contenu à votre Social Shop
-          </h3>
-          <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>
-            Sélectionnez la méthode qui vous convient le mieux : aspiration par profil, import d&apos;une liste de liens ou ajout unitaire.
-          </p>
-        </div>
-
-        {/* Barre de navigation des 3 Modes */}
-        <div className="social-tabs-nav">
-          <button
-            type="button"
-            onClick={() => setImportMode('profile')}
-            className="social-tab-btn"
-            style={{
-              background: importMode === 'profile' ? '#C75B00' : '#f8fafc',
-              color: importMode === 'profile' ? '#ffffff' : '#475569',
-              boxShadow: importMode === 'profile' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
-            }}
-          >
-            <Sparkles size={15} />
-            <span>🔍 Aspirateur @pseudo</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setImportMode('batch')}
-            className="social-tab-btn"
-            style={{
-              background: importMode === 'batch' ? '#C75B00' : '#f8fafc',
-              color: importMode === 'batch' ? '#ffffff' : '#475569',
-              boxShadow: importMode === 'batch' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
-            }}
-          >
-            <Layers size={15} />
-            <span>📋 Liens en lot</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setImportMode('single')}
-            className="social-tab-btn"
-            style={{
-              background: importMode === 'single' ? '#C75B00' : '#f8fafc',
-              color: importMode === 'single' ? '#ffffff' : '#475569',
-              boxShadow: importMode === 'single' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
-            }}
-          >
-            <Link2 size={15} />
-            <span>🔗 Lien unique</span>
-          </button>
-        </div>
-
-        {/* ── MODE 1 : ASPIRATEUR DE PROFIL PAR @PSEUDO ── */}
-        {importMode === 'profile' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: '12px 16px', fontSize: 13, color: '#9a3412', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Sparkles size={18} style={{ flexShrink: 0 }} />
-              <span>
-                <strong>Zéro copier-coller :</strong> Renseignez votre identifiant public. Nopalou explore votre compte et affiche vos vidéos dans une grille prête à cocher.
-              </span>
-            </div>
-
-            <form onSubmit={handleExploreProfile} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <select
-                value={profilePlatform}
-                onChange={e => setProfilePlatform(e.target.value as any)}
-                style={{
-                  padding: '11px 14px',
-                  borderRadius: 10,
-                  border: '1.5px solid #cbd5e1',
-                  fontSize: 13.5,
-                  fontWeight: 700,
-                  background: '#ffffff',
-                  outline: 'none',
-                  flex: '0 0 auto',
-                }}
-              >
-                <option value="tiktok">🎵 TikTok</option>
-                <option value="instagram">📸 Instagram</option>
-                <option value="facebook">📘 Facebook</option>
-              </select>
-
-              <div style={{ flex: '1 1 200px', minWidth: 0, position: 'relative' }}>
-                <input
-                  type="text"
-                  placeholder="Ex: wax_dakar_chic ou @votre_boutique"
-                  value={profileUsername}
-                  onChange={e => setProfileUsername(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '11px 14px',
-                    borderRadius: 10,
-                    border: '1.5px solid #cbd5e1',
-                    fontSize: 13.5,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={exploringProfile || !profileUsername.trim()}
-                style={{
-                  background: exploringProfile ? '#94a3b8' : '#0f172a',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '11px 22px',
-                  fontSize: 13.5,
-                  fontWeight: 900,
-                  cursor: exploringProfile ? 'not-allowed' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  flex: '1 1 auto',
-                }}
-              >
-                {exploringProfile ? (
-                  <>
-                    <RefreshCw size={15} className="spin" />
-                    <span>Exploration…</span>
-                  </>
-                ) : (
-                  <>
-                    <Search size={15} />
-                    <span>Aspirer les publications</span>
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Raccourcis profils connectés */}
-            {accounts.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: '#64748b' }}>Comptes de votre boutique :</span>
-                {accounts.map(acc => (
-                  <button
-                    key={acc.id}
-                    type="button"
-                    onClick={() => {
-                      setProfilePlatform(acc.plateforme as any)
-                      setProfileUsername(acc.nom_compte)
-                    }}
-                    style={{
-                      background: '#f1f5f9',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 20,
-                      padding: '3px 10px',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: '#334155',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    @{acc.nom_compte} ({acc.plateforme})
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Grille des publications découvertes à cocher */}
-            {discoveredPosts.length > 0 && (
-              <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 14, padding: '16px', background: '#f8fafc' }}>
-                {/* Bandeau d'aide et raccourci Multi-liens */}
-                <div style={{
-                  background: '#f0f9ff',
-                  border: '1px solid #bae6fd',
-                  borderRadius: 10,
-                  padding: '10px 14px',
-                  marginBottom: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 10,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#0369a1' }}>
-                    <Sparkles size={16} style={{ flexShrink: 0 }} />
-                    <span>
-                      <strong>Cochez les publications</strong> ci-dessous que vous voulez ajouter à votre boutique. Vous pouvez aussi coller directement les liens de vos vidéos TikTok/Instagram/Facebook :
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setImportMode('batch')}
-                    style={{
-                      background: '#0284c7',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: 8,
-                      padding: '6px 12px',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                    }}
-                  >
-                    📋 Coller des liens de vidéos
-                  </button>
+                  )}
                 </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
-                      {discoveredPosts.length} publication(s) trouvée(s)
-                    </span>
-                    <span style={{ fontSize: 12, color: '#C75B00', background: '#fff7ed', padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>
-                      {selectedDiscoveredUrls.size} sélectionnée(s)
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const all = new Set<string>()
-                        discoveredPosts.forEach(p => all.add(p.url))
-                        setSelectedDiscoveredUrls(all)
-                      }}
-                      style={{
-                        background: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: 6,
-                        padding: '4px 10px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Tout cocher
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDiscoveredUrls(new Set())}
-                      style={{
-                        background: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: 6,
-                        padding: '4px 10px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Tout décocher
-                    </button>
-                  </div>
-                </div>
-
-                <div className="social-discovered-grid">
-                  {discoveredPosts.map((post, idx) => {
-                    const isSelected = selectedDiscoveredUrls.has(post.url)
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => {
-                          const next = new Set(selectedDiscoveredUrls)
-                          if (next.has(post.url)) {
-                            next.delete(post.url)
-                          } else {
-                            next.add(post.url)
-                          }
-                          setSelectedDiscoveredUrls(next)
-                        }}
-                        style={{
-                          background: '#ffffff',
-                          borderRadius: 10,
-                          border: isSelected ? '2px solid #C75B00' : '1px solid #e2e8f0',
-                          padding: '10px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 8,
-                          position: 'relative',
-                          boxShadow: isSelected ? '0 4px 12px rgba(199,91,0,0.15)' : 'none',
-                        }}
-                      >
-                        <div style={{ position: 'relative', height: 120, borderRadius: 8, overflow: 'hidden', background: '#0f172a' }}>
-                          {post.thumbnailUrl ? (
-                            <ExternalImg
-                              src={cloudinaryHQ(post.thumbnailUrl, { width: 300 })}
-                              alt=""
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                              <Video size={32} />
-                            </div>
-                          )}
-                          <div style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(0,0,0,0.7)', color: '#fff', borderRadius: 6, padding: '2px 6px', fontSize: 11, fontWeight: 800 }}>
-                            {post.platform.toUpperCase()}
-                          </div>
-                          {post.is_already_imported && (
-                            <div style={{ position: 'absolute', bottom: 6, left: 6, right: 6, background: '#16a34a', color: '#fff', textAlign: 'center', borderRadius: 4, padding: '2px', fontSize: 10, fontWeight: 800 }}>
-                              Déjà dans la boutique
-                            </div>
-                          )}
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => {}}
-                            style={{ accentColor: '#C75B00', marginTop: 3 }}
-                          />
-                          <p style={{ margin: 0, fontSize: 12, color: '#334155', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>
-                            {post.caption || 'Sans légende'}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={handleImportDiscovered}
-                    disabled={importingDiscovered || selectedDiscoveredUrls.size === 0}
-                    style={{
-                      background: importingDiscovered || selectedDiscoveredUrls.size === 0 ? '#94a3b8' : '#C75B00',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: 10,
-                      padding: '11px 24px',
-                      fontSize: 13.5,
-                      fontWeight: 900,
-                      cursor: importingDiscovered || selectedDiscoveredUrls.size === 0 ? 'not-allowed' : 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      flex: '1 1 auto',
-                      boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
-                    }}
-                  >
-                    {importingDiscovered ? (
-                      <>
-                        <RefreshCw size={16} className="spin" />
-                        <span>Importation du lot en cours…</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={16} />
-                        <span>🚀 Importer les ({selectedDiscoveredUrls.size}) publications sélectionnées</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
+              )
+            })}
           </div>
-        )}
-
-        {/* ── MODE 2 : IMPORT EN LOT MULTI-LIENS ── */}
-        {importMode === 'batch' && (
-          <form onSubmit={handleImportBatch} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px 16px', fontSize: 13, color: '#334155' }}>
-              Collez <strong>plusieurs liens à la fois</strong> (TikTok, Instagram, Facebook ou YouTube). Séparez chaque lien par un retour à la ligne.
-            </div>
-
-            <div style={{ position: 'relative' }}>
-              <textarea
-                rows={5}
-                placeholder={`Collez vos liens ici (un par ligne) :\nhttps://www.tiktok.com/@boutique/video/123...\nhttps://www.instagram.com/reel/abc...\nhttps://www.facebook.com/watch/?v=456...`}
-                value={batchUrlsText}
-                onChange={e => setBatchUrlsText(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  borderRadius: 10,
-                  border: '1.5px solid #cbd5e1',
-                  fontSize: 13,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  fontFamily: 'monospace',
-                }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: (batchUrlsText.match(/https?:\/\/[^\s]+/g) || []).length > 0 ? '#C75B00' : '#64748b' }}>
-                {(batchUrlsText.match(/https?:\/\/[^\s]+/g) || []).length} lien(s) détecté(s)
-              </span>
-
-              <button
-                type="submit"
-                disabled={batchImporting || !batchUrlsText.trim()}
-                style={{
-                  background: batchImporting ? '#94a3b8' : '#C75B00',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '11px 24px',
-                  fontSize: 13.5,
-                  fontWeight: 900,
-                  cursor: batchImporting ? 'not-allowed' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  flex: '1 1 auto',
-                  boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
-                }}
-              >
-                {batchImporting ? (
-                  <>
-                    <RefreshCw size={16} className="spin" />
-                    <span>Traitement du lot en cours…</span>
-                  </>
-                ) : (
-                  <>
-                    <Layers size={16} />
-                    <span>⚡ Importer tout le lot en 1 clic</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* ── MODE 3 : LIEN UNIQUE RAPIDE ── */}
-        {importMode === 'single' && (
-          <form onSubmit={handleImportUrl} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 200px', minWidth: 0, position: 'relative' }}>
-                <Link2 size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <input
-                  type="url"
-                  placeholder="Ex: https://www.tiktok.com/@boutique/video/123... ou https://www.instagram.com/reel/..."
-                  value={importUrl}
-                  onChange={e => setImportUrl(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px 12px 42px',
-                    borderRadius: 10,
-                    border: '1.5px solid #cbd5e1',
-                    fontSize: 13.5,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={importing || !importUrl.trim()}
-                style={{
-                  background: importing ? '#94a3b8' : '#C75B00',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '12px 24px',
-                  fontSize: 14,
-                  fontWeight: 900,
-                  cursor: importing ? 'not-allowed' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  flex: '1 1 auto',
-                  boxShadow: '0 4px 14px rgba(199,91,0,0.25)',
-                }}
-              >
-                {importing ? (
-                  <>
-                    <RefreshCw size={16} className="spin" />
-                    <span>Analyse en cours...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={16} />
-                    <span>Importer & Associer</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Option Partagée : Smart Matching */}
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f1f5f9' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#334155', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={autoMatch}
-              onChange={e => setAutoMatch(e.target.checked)}
-              style={{ accentColor: '#C75B00' }}
-            />
-            <span>Activer le <strong>Smart Matching</strong> automatique (associe automatiquement les produits correspondant au texte à +85%)</span>
-          </label>
         </div>
-
-        {/* Notification Toast */}
-        {message && (
-          <div style={{
-            marginTop: 14,
-            padding: '12px 16px',
-            borderRadius: 10,
-            background: message.type === 'success' ? '#f0fdf4' : '#fef2f2',
-            border: `1px solid ${message.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
-            color: message.type === 'success' ? '#15803d' : '#b91c1c',
-            fontSize: 13,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}>
-            {message.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-            <span>{message.text}</span>
-          </div>
-        )}
-      </div>
-
-      {/* ── SECTION 3 : GESTION DES CONTENUS DU SOCIAL SHOP ── */}
-      <div className="social-shop-card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
-            3. Gestion & Curation des publications ({posts.length})
-          </h3>
-          <span style={{ fontSize: 12, color: '#64748b' }}>
-            {posts.filter(p => p.visible).length} affichée(s) sur votre boutique publique
-          </span>
-        </div>
-
-        {posts.length === 0 ? (
-          <div style={{
-            padding: '40px 20px',
-            textAlign: 'center',
-            background: '#f8fafc',
-            borderRadius: 12,
-            border: '1px dashed #cbd5e1',
-          }}>
-            <p style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 800, color: '#334155' }}>
-              Aucune publication importée pour l&apos;instant
-            </p>
-            <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>
-              Collez un lien TikTok, Instagram ou Facebook dans le formulaire ci-dessus pour lancer votre Social Shop !
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {posts.map(post => (
-              <div
-                key={post.id}
-                className="social-post-row"
-                style={{
-                  background: post.visible ? '#ffffff' : '#f8fafc',
-                  border: post.is_featured ? '2px solid #C75B00' : '1px solid #e2e8f0',
-                }}
-              >
-                <div className="social-post-main">
-                  {/* Miniature Vidéo / Photo */}
-                  <div style={{ width: 68, height: 90, borderRadius: 10, background: '#0f172a', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                    {post.thumbnail_url ? (
-                      <ExternalImg src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 20 }}>
-                        🎬
-                      </div>
-                    )}
-                    <span style={{ position: 'absolute', top: 4, left: 4, fontSize: 10, background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>
-                      {post.plateforme.slice(0, 2).toUpperCase()}
-                    </span>
-                  </div>
-
-                  {/* Métadonnées & Légende */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: '#C75B00', textTransform: 'uppercase' }}>
-                        {post.plateforme}
-                      </span>
-                      {post.auteur && (
-                        <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>
-                          par {post.auteur}
-                        </span>
-                      )}
-                      {post.is_featured && (
-                        <span style={{ fontSize: 10.5, background: '#fff7f0', color: '#C75B00', border: '1px solid #fed7aa', padding: '1px 6px', borderRadius: 10, fontWeight: 800 }}>
-                          ⭐ À la une
-                        </span>
-                      )}
-                    </div>
-
-                    <p style={{ margin: '0 0 8px', fontSize: 13, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {post.caption || 'Publication sans légende'}
-                    </p>
-
-                    {/* Produits Associés à cette publication */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      {post.produits && post.produits.length > 0 ? (
-                        post.produits.map(prod => (
-                          <span
-                            key={prod.id}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              background: '#f1f5f9',
-                              border: '1px solid #cbd5e1',
-                              padding: '3px 8px',
-                              borderRadius: 6,
-                              fontSize: 11.5,
-                              fontWeight: 700,
-                              color: '#0f172a',
-                              maxWidth: '100%',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <ShoppingBag size={11} style={{ color: '#C75B00', flexShrink: 0 }} />
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {prod.nom} ({prod.prix ? fcfa(prod.prix) : '—'})
-                            </span>
-                            <button
-                              onClick={() => handleDissociateProduct(post.id, prod.id)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, marginLeft: 2, flexShrink: 0 }}
-                              title="Dissocier ce produit"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))
-                      ) : (
-                        <span style={{ fontSize: 11.5, color: '#ea580c', fontWeight: 700 }}>
-                          ⚠️ Aucun produit associé
-                        </span>
-                      )}
-
-                      <button
-                        onClick={() => setSelectedPostForProduct(post)}
-                        style={{
-                          background: '#fff',
-                          border: '1px dashed #C75B00',
-                          color: '#C75B00',
-                          borderRadius: 6,
-                          padding: '3px 8px',
-                          fontSize: 11,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                        }}
-                      >
-                        <Plus size={12} /> Associer un produit
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions Marchand */}
-                <div className="social-post-actions-toolbar">
-                  <button
-                    onClick={() => handleToggleVisible(post)}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #cbd5e1',
-                      background: post.visible ? '#f0fdf4' : '#f8fafc',
-                      color: post.visible ? '#15803d' : '#64748b',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    {post.visible ? <><Eye size={13} /> Affiché</> : <><EyeOff size={13} /> Masqué</>}
-                  </button>
-
-                  <button
-                    onClick={() => handleToggleFeatured(post)}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: 8,
-                      border: '1px solid #cbd5e1',
-                      background: post.is_featured ? '#fff7f0' : '#ffffff',
-                      color: post.is_featured ? '#C75B00' : '#64748b',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                    }}
-                    title="Mettre en avant"
-                  >
-                    <Star size={14} fill={post.is_featured ? '#C75B00' : 'none'} />
-                  </button>
-
-                  <a
-                    href={post.post_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: 8,
-                      border: '1px solid #cbd5e1',
-                      background: '#ffffff',
-                      color: '#334155',
-                      display: 'flex',
-                      alignItems: 'center',
-                      textDecoration: 'none',
-                    }}
-                    title="Voir l'original"
-                  >
-                    <ExternalLink size={14} />
-                  </a>
-
-                  <button
-                    onClick={() => handleDeletePost(post.id)}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: 8,
-                      border: '1px solid #fecaca',
-                      background: '#fff',
-                      color: '#dc2626',
-                      cursor: 'pointer',
-                    }}
-                    title="Supprimer"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* ── MODAL DE SÉLECTION D'UN PRODUIT À ASSOCIER ── */}
       {selectedPostForProduct && (

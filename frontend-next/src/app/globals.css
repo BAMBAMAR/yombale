@@ -13953,3 +13953,337 @@ label,
   }
 }
 
+/* ── SOCIAL SHOP : ARCHITECTURE ANTI-LONGUEUR, ONGLETS & MICRO-KPIS ── */
+.social-shop-compact-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Ruban de navigation par onglets segmentés (Segmented Control) */
+.social-segmented-nav {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.social-segment-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.social-segment-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.social-segment-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.social-segment-btn.active .social-segment-badge {
+  background: #fff7ed;
+  color: #C75B00;
+}
+
+/* Barre de Micro-KPIs en 1 seule ligne */
+.social-micro-kpi-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 14px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.social-micro-kpi-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.social-micro-kpi-item {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.social-micro-kpi-val {
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.social-micro-kpi-lbl {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.social-micro-kpi-divider {
+  width: 1px;
+  height: 14px;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+/* Filtres de publications (Pills) */
+.social-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  flex: 1;
+}
+
+.social-filter-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.social-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.social-filter-pill.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.social-filter-pill.warning-active {
+  background: #ea580c;
+  color: #ffffff;
+  border-color: #ea580c;
+}
+
+/* Carte de publication ultra-compacte */
+.social-compact-post-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.social-compact-post-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.social-compact-thumb {
+  width: 52px;
+  height: 68px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0f172a;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.social-compact-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.social-compact-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.social-compact-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  text-decoration: none;
+}
+
+.social-compact-action-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Pastille produit associé */
+.social-prod-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+  max-width: 100%;
+}
+
+/* Ligne de profil social compact (Format Réglages) */
+.social-account-row-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.social-account-row-compact.connected {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+/* ── ADAPTATION TABLETTE & MOBILE (<= 768px) ── */
+@media (max-width: 768px) {
+  .social-shop-compact-card {
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .social-segmented-nav {
+    padding: 3px !important;
+    gap: 3px !important;
+  }
+
+  .social-segment-btn {
+    padding: 7px 6px !important;
+    font-size: 12px !important;
+    gap: 4px !important;
+  }
+
+  .social-segment-badge {
+    font-size: 10px !important;
+    padding: 1px 5px !important;
+  }
+
+  .social-micro-kpi-bar {
+    padding: 7px 10px !important;
+    gap: 6px !important;
+  }
+
+  .social-micro-kpi-val {
+    font-size: 13px !important;
+  }
+
+  .social-micro-kpi-lbl {
+    font-size: 10.5px !important;
+  }
+
+  .social-compact-post-card {
+    padding: 8px 10px !important;
+    gap: 10px !important;
+  }
+
+  .social-compact-thumb {
+    width: 46px !important;
+    height: 60px !important;
+  }
+
+  .social-compact-action-btn {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .social-account-row-compact {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+  }
+}
+
+/* ── ADAPTATION EXTRA COMPACT (< 400px : iPhone SE, Android 360px) ── */
+@media (max-width: 400px) {
+  .social-segment-btn {
+    font-size: 11px !important;
+    padding: 6px 3px !important;
+  }
+
+  .social-compact-action-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .social-micro-kpi-item {
+    font-size: 11px !important;
+  }
+
+  .social-micro-kpi-val {
+    font-size: 12px !important;
+  }
+
+  .social-micro-kpi-lbl {
+    font-size: 10px !important;
+  }
+}
+
