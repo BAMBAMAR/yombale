@@ -1,3 +1,34 @@
+- **Audit Exhaustif & Fiabilisation de la Résilience Offline / Online de Nopalou (`db-offline.ts`, `sync-manager.ts`, `boutiques.js`, `CaisseClient.tsx`, `CarnetDettes.tsx`, `07-pos-offline-sync.spec.ts`) (09 septembre 2026)** 📡💾🛒⚡ :
+  * **🎯 1. Demande & Objectif Métier** :
+    - Audit complet des 4 niveaux d'expérience réseau : *1. Offline UI*, *2. Offline Read*, *3. Offline Write*, *4. Offline Transaction + Sync fiable*.
+    - Principe fondamental : *"OFFLINE WHEN POSSIBLE, ONLINE WHEN NECESSARY, SAFE ALWAYS."*
+    - Élimination des pertes de données, doubles ventes, doubles débits ou désynchronisations de carnet en cas de réseau flaky / 2G / coupure brutale.
+  * **🛠️ 2. Correctifs Architecturaux & Implémentation** :
+    - *IndexedDB v4 (`frontend-next/src/lib/db-offline.ts`)* :
+      * Passage de la base locale de `v3` à `v4`.
+      * Création du nouvel objectStore `dettes_queue` avec indexation composite `by_user_boutique` et `by_boutique_status` pour isoler strictement les dettes par utilisateur et boutique.
+      * Ajout des primitives : `ajouterDetteHorsLigne`, `obtenirDettesHorsLigne`, `marquerDetteSyncing`, `supprimerDetteHorsLigne`, `revertDetteSyncing`.
+    - *SyncManager Centralisé Multi-Entités (`frontend-next/src/lib/sync-manager.ts`)* :
+      * Extension du moteur de synchronisation pour traiter à la fois les ventes POS (`ventes_queue`) et les mouvements du carnet de dettes (`dettes_queue`).
+      * Verrou de synchronisation partagé par boutique (`syncLocks`).
+      * Protocole de retry avec backoff exponentiel (1s, 2s, 4s) et distinction stricte des erreurs réseau retryables vs erreurs métier 4xx non retryables.
+      * Suppression locale conditionnée à l'accusé de réception (ACK HTTP 200) ou doublon confirmé (`duplicate: true`).
+      * Exposition du compteur global `totalEnAttente`, `ventesEnAttente`, `dettesEnAttente` via `useSyncOffline`.
+    - *Idempotence Backend Transactionnelle (`backend/routes/boutiques.js`)* :
+      * Sécurisation de la route `POST /api/boutiques/:id/credits-clients/:clientId/transaction` avec `idempotency_key`.
+      * Auto-migration dynamique de la table `caisse_credit_historique` pour accueillir la colonne `reference VARCHAR(128)` indexée.
+      * Reconnexion résiliente : si une requête de dette a déjà été exécutée, le serveur renvoie immédiatement `{ success: true, duplicate: true }` sans ré-appliquer de delta sur le solde ni sur le stock.
+    - *Caisse Enregistreuse POS (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)* :
+      * Intégration de la vente à crédit hors-ligne dans `dettes_queue` avec mise à jour optimiste immédiate du solde client local.
+      * Badge réseau interactif dans l'en-tête affichant le total des opérations locales en attente et déclencheur manuel de synchronisation dès le retour de la connexion.
+    - *Carnet de Dettes & Crédits (`frontend-next/src/app/boutique/CarnetDettes.tsx`)* :
+      * Fallback local automatique dans IndexedDB lors de la validation d'une transaction financière (crédit ou remboursement) si le serveur ou la connexion internet est indisponible.
+      * Mise à jour optimiste du solde client et bouton de synchronisation visible dès qu'une dette est en attente.
+  * **🧪 3. Validation & Tests E2E** :
+    - Suite Playwright `tests/e2e/07-pos-offline-sync.spec.ts` enrichie avec le test complet de mise en file d'attente hors-ligne du carnet de dettes (`dettes_queue`).
+    - Build Next.js (`npm run build`) validé à 100% avec succès sans erreur de typage ni de compilation.
+    - Aucune commande `git push` exécutée (respect strict de la règle absolue).
+
 - **Résolution & Audit Exhaustif : Boutons « Voir... » WhatsApp, Résolveur Universel Anti-404 & Routage Suivi Commande (`entites.js`, `boutiques.js`, `comptabilite.js`, `paiement.js`, `notifications.js`, `whatsapp-chatbot.js`, `immo/[id]/page.tsx`, `cron-relances-carnet.js`) (09 septembre 2026)** 🔘🔗📲🛡️ :
   * **🎯 1. Demande & Diagnostic** :
     - *Demande Utilisateur* : « FAIRE un audit sur les bouton voir... dans whatsapp ca renvoi ves 404 ou vers une page incoherente »

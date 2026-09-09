@@ -7,6 +7,8 @@ import QrCodeShareModal from '@/components/QrCodeShareModal'
 import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { useTranslation } from '@/i18n/context'
 import { updateStatutCommande, listCommandes } from './actions'
+import { ajouterDetteHorsLigne } from '@/lib/db-offline'
+import { useSyncOffline } from '@/lib/sync-manager'
 
 interface ClientCredit {
   id: string
@@ -70,6 +72,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [recherche, setRecherche] = useState('')
   const [filtreStatus, setFiltreStatus] = useState<'tous' | 'retard' | 'credits'>('tous')
   const [isMobile, setIsMobile] = useState(false)
+
+  // Hook Offline & Synchronisation centralisé
+  const {
+    syncPending: syncingCarnet,
+    dettesEnAttente: dettesOfflineCount,
+    totalEnAttente: totalOfflineCount,
+    declencherSync: declencherSyncCarnet,
+    rafraichirCompteur: rafraichirCompteurCarnet,
+  } = useSyncOffline(boutique?.id || '', 'commercant')
   
   // Client sélectionné & Historique
   const [clientSelectionne, setClientSelectionne] = useState<ClientCredit | null>(null)
@@ -675,6 +686,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     }
 
     setSubmittingTrans(true)
+    const txIdempotency = `DEBT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
     try {
       const noteFinal = typeTransaction === 'vente_credit'
         ? `Vente à crédit (${produitsListe.length} article(s))`
@@ -684,6 +696,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          idempotency_key: txIdempotency,
           type: typeTransaction,
           montant: montantFinal,
           mode_paiement: modePaiement,
@@ -715,7 +728,45 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         alert(err.error || 'Erreur lors de l’enregistrement de la transaction.')
       }
     } catch (e) {
-      console.error('Erreur transaction carnet:', e)
+      console.warn('⚠️ [Carnet Dettes] Coupure réseau ou serveur inaccessible, bascule sur la file locale IndexedDB:', e)
+      try {
+        await ajouterDetteHorsLigne({
+          id_temporaire: txIdempotency,
+          boutique_id: boutique.id,
+          user_id: 'commercant',
+          client_id: clientSelectionne.id,
+          type: typeTransaction,
+          montant: montantFinal,
+          mode_paiement: modePaiement,
+          note: typeTransaction === 'vente_credit' ? `Vente à crédit (${produitsListe.length} article(s))` : (descriptionManuelle.trim() || 'Remboursement client'),
+          produits: produitsListe,
+          date_echeance: dateEcheance || null,
+          relance_auto_whatsapp: relanceAutoWa,
+          date: new Date().toISOString(),
+        })
+        rafraichirCompteurCarnet()
+        
+        // Calcul optimiste du nouveau solde
+        const delta = typeTransaction === 'vente_credit' ? montantFinal : -montantFinal
+        const optSolde = Number(clientSelectionne.solde || 0) + delta
+        setClientSelectionne(prev => prev ? { ...prev, solde: optSolde } : null)
+        setClients(prev => prev.map(c => c.id === clientSelectionne.id ? { ...c, solde: optSolde } : c))
+
+        setShowModalTransaction(false)
+        setPanierProduits({})
+        setItemsCustomPanier([])
+        setLibelleCustomInput('')
+        setPrixCustomInput('')
+        setQteCustomInput(1)
+        setMontantManuel('')
+        setDescriptionManuelle('')
+        setDateEcheance('')
+
+        alert('📡 Hors-Ligne : Opération enregistrée localement sur votre appareil. Elle sera automatiquement synchronisée dès le retour de la connexion.')
+      } catch (errDb) {
+        console.error('Erreur enregistrement local carnet:', errDb)
+        alert('Erreur critique de sauvegarde locale.')
+      }
     } finally {
       setSubmittingTrans(false)
     }
@@ -1086,6 +1137,32 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             gap: 8,
             width: isMobile ? '100%' : 'auto',
           }}>
+            {/* Bouton de synchronisation locale si des opérations sont en attente */}
+            {totalOfflineCount > 0 && (
+              <button
+                type="button"
+                onClick={() => declencherSyncCarnet()}
+                title="Synchroniser immédiatement les dettes ou ventes enregistrées hors-ligne"
+                style={{
+                  minHeight: 42,
+                  padding: '8px 12px',
+                  borderRadius: 10,
+                  fontSize: 12.5,
+                  fontWeight: 800,
+                  background: '#ea580c',
+                  color: '#ffffff',
+                  border: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
+                }}
+              >
+                <span>↻</span>
+                <span>{syncingCarnet ? 'Sync...' : `Sync (${totalOfflineCount})`}</span>
+              </button>
+            )}
             <button
               onClick={() => ouvrirModalTransaction('vente_credit')}
               className="npl-btn npl-btn-primary"

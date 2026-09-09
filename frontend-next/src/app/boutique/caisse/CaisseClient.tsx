@@ -15,6 +15,7 @@ import {
   sauvegarderClientsLocaux,
   obtenirClientsLocaux,
   ajouterVenteHorsLigne,
+  ajouterDetteHorsLigne,
 } from '@/lib/db-offline'
 import { useSyncOffline } from '@/lib/sync-manager'
 import { useTranslation } from '@/i18n/context'
@@ -120,10 +121,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [offlineModeActive, setOfflineModeActive] = useState<boolean>(false)
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'warning' } | null>(null)
 
-  // Hook centralisé : verrou par boutique, retry backoff, ACK avant suppression
+  // Hook centralisé : verrou par boutique, retry backoff, ACK avant suppression (Ventes + Dettes)
   const {
     syncPending: syncingOffline,
     ventesEnAttente: ventesHorsLigneCount,
+    dettesEnAttente: dettesHorsLigneCount,
+    totalEnAttente: totalHorsLigneCount,
     declencherSync: declencherSyncOffline,
     rafraichirCompteur: rafraichirCompteurOffline,
   } = useSyncOffline(boutiqueActiveId, userId || 'anonymous')
@@ -2067,27 +2070,74 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           return
         }
         if (boutiqueActiveId) {
-          try {
-            const resCredit = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCreditIdPOS}/transaction`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
+          const debtIdempotency = `DEBT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
+          const payloadCredit = {
+            idempotency_key: debtIdempotency,
+            type: 'vente_credit' as const,
+            montant: netAPayer,
+            produits: panier.map(i => ({ nom: i.produit.nom, quantite: i.quantite, prix: i.prixUnitaire })),
+            date_echeance: creditDateEcheancePOS || null,
+            note: creditNotePOS || 'Vente caisse POS à crédit',
+            mode_paiement: 'credit',
+            relance_auto_whatsapp: true,
+          }
+
+          if (!isReallyOnline || offlineModeActive) {
+            try {
+              await ajouterDetteHorsLigne({
+                id_temporaire: debtIdempotency,
+                boutique_id: boutiqueActiveId,
+                user_id: userId,
+                client_id: clientCreditIdPOS,
                 type: 'vente_credit',
                 montant: netAPayer,
-                produits: panier.map(i => ({ nom: i.produit.nom, quantite: i.quantite, prix: i.prixUnitaire })),
-                date_echeance: creditDateEcheancePOS || null,
-                note: creditNotePOS || 'Vente caisse POS à crédit',
                 mode_paiement: 'credit',
+                note: creditNotePOS || 'Vente caisse POS à crédit',
+                produits: payloadCredit.produits,
+                date_echeance: creditDateEcheancePOS || null,
+                relance_auto_whatsapp: true,
+                date: new Date().toISOString(),
               })
-            })
-            if (!resCredit.ok) {
-              const dataErr = await resCredit.json()
-              alert(dataErr.error || 'Erreur lors de l’enregistrement de la vente à crédit dans le carnet.')
-              return
+              rafraichirCompteurOffline()
+              // Mise à jour optimiste du solde client local
+              setClientsCredits(prev => prev.map(c => c.id === clientCreditIdPOS ? { ...c, solde: Number(c.solde || 0) + netAPayer } : c))
+            } catch (eOffDebt) {
+              console.error('📒 [Caisse POS] ❌ Erreur sauvegarde dette offline:', eOffDebt)
             }
-            await chargerClientsCredits(boutiqueActiveId)
-          } catch (e) {
-            console.error('Erreur enregistrement vente crédit carnet:', e)
+          } else {
+            try {
+              const resCredit = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCreditIdPOS}/transaction`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payloadCredit)
+              })
+              if (!resCredit.ok) {
+                const dataErr = await resCredit.json().catch(() => ({}))
+                alert(dataErr.error || 'Erreur lors de l’enregistrement de la vente à crédit dans le carnet.')
+                return
+              }
+              await chargerClientsCredits(boutiqueActiveId)
+            } catch (e) {
+              console.error('Erreur réseau vente crédit carnet, bascule secours offline:', e)
+              try {
+                await ajouterDetteHorsLigne({
+                  id_temporaire: debtIdempotency,
+                  boutique_id: boutiqueActiveId,
+                  user_id: userId,
+                  client_id: clientCreditIdPOS,
+                  type: 'vente_credit',
+                  montant: netAPayer,
+                  mode_paiement: 'credit',
+                  note: creditNotePOS || 'Vente caisse POS à crédit',
+                  produits: payloadCredit.produits,
+                  date_echeance: creditDateEcheancePOS || null,
+                  relance_auto_whatsapp: true,
+                  date: new Date().toISOString(),
+                })
+                rafraichirCompteurOffline()
+                setClientsCredits(prev => prev.map(c => c.id === clientCreditIdPOS ? { ...c, solde: Number(c.solde || 0) + netAPayer } : c))
+              } catch (eOffDebt2) {}
+            }
           }
         }
       }
@@ -3304,12 +3354,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </button>
           )}
 
-          {/* Badge Hors-Ligne (affiché uniquement si hors ligne) */}
-          {offlineModeActive && (
-            <div className="caisse-status-badge" title={`${ventesHorsLigneCount} vente(s) enregistrée(s) localement en attente de synchronisation`} style={{
+          {/* Badge Hors-Ligne & Sync (affiche le total des opérations locales : ventes + dettes) */}
+          {offlineModeActive ? (
+            <div className="caisse-status-badge" title={`${ventesHorsLigneCount} vente(s) et ${dettesHorsLigneCount} dette(s) locale(s) en attente de synchronisation`} style={{
               background: '#dc2626',
               color: '#fff',
-              padding: '3px 7px',
+              padding: '3px 8px',
               borderRadius: 6,
               fontWeight: 800,
               fontSize: 10,
@@ -3322,13 +3372,37 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             }}>
               <span>⚠️</span>
               <span className="caisse-label-desktop">Hors-Ligne</span>
-              {ventesHorsLigneCount > 0 && (
-                <span style={{ background: '#991b1b', padding: '1px 4px', borderRadius: 4, fontSize: 9.5, fontWeight: 900 }}>
-                  {ventesHorsLigneCount}
+              {totalHorsLigneCount > 0 && (
+                <span style={{ background: '#991b1b', padding: '1px 5px', borderRadius: 4, fontSize: 9.5, fontWeight: 900 }}>
+                  {totalHorsLigneCount}
                 </span>
               )}
             </div>
-          )}
+          ) : totalHorsLigneCount > 0 ? (
+            <button
+              type="button"
+              onClick={() => declencherSyncOffline()}
+              title="Cliquez pour synchroniser immédiatement les opérations locales en attente"
+              style={{
+                background: '#ea580c',
+                color: '#fff',
+                border: 'none',
+                padding: '3px 8px',
+                borderRadius: 6,
+                fontWeight: 800,
+                fontSize: 10,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                cursor: 'pointer',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span>↻</span>
+              <span>{syncingOffline ? 'Sync...' : `Sync (${totalHorsLigneCount})`}</span>
+            </button>
+          ) : null}
 
           {/* Badge & Sélecteur Boutique Pro (Toujours visible avec logo + nom lisible) */}
           {boutiques.length > 0 && (

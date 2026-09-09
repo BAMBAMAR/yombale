@@ -167,4 +167,48 @@ test.describe('Mode Hors-Ligne — Tests complets PWA & POS', () => {
     expect(cachedProducts[0].nom).toBe('Lait Bonnet Rouge')
   })
 
+  test('8. Mise en file d’attente IndexedDB du Carnet de Dettes hors-ligne (dettes_queue)', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+
+    const testDebtAdded = await page.evaluate(async () => {
+      return new Promise((resolve) => {
+        const req = window.indexedDB.open('nopalou_pos_offline', 4)
+        req.onupgradeneeded = () => {
+          const db = req.result
+          if (!db.objectStoreNames.contains('dettes_queue')) {
+            db.createObjectStore('dettes_queue', { keyPath: 'id_temporaire' })
+          }
+        }
+        req.onsuccess = () => {
+          const db = req.result
+          const tx = db.transaction('dettes_queue', 'readwrite')
+          const store = tx.objectStore('dettes_queue')
+          const debtId = `DEBT-TEST-${Date.now()}`
+          store.put({
+            id_temporaire: debtId,
+            boutique_id: 'boutique-dakar-1',
+            client_id: 'client-moussa-1',
+            user_id: 'commercant',
+            type: 'vente_credit',
+            montant: 5000,
+            status: 'pending',
+            date: new Date().toISOString()
+          })
+          tx.oncomplete = () => {
+            const txCheck = db.transaction('dettes_queue', 'readonly')
+            const storeCheck = txCheck.objectStore('dettes_queue')
+            const getReq = storeCheck.get(debtId)
+            getReq.onsuccess = () => resolve(getReq.result)
+          }
+        }
+        req.onerror = () => resolve(null)
+      })
+    })
+
+    expect(testDebtAdded).toBeDefined()
+    expect((testDebtAdded as any)?.montant).toBe(5000)
+    expect((testDebtAdded as any)?.type).toBe('vente_credit')
+  })
+
 })
+

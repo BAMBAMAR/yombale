@@ -1336,16 +1336,30 @@ router.delete('/:id/credits-clients/:clientId', verifierToken, async (req, res) 
   }
 });
 
+// Auto-migration de sécurité : s'assure que la colonne reference existe sur caisse_credit_historique
+let _creditRefMigrated = false;
+async function ensureCreditRefCol() {
+  if (_creditRefMigrated) return;
+  try {
+    await pool.query(`ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS reference VARCHAR(128)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_credit_hist_ref ON caisse_credit_historique(boutique_id, reference)`);
+    _creditRefMigrated = true;
+  } catch (e) {
+    _creditRefMigrated = true;
+  }
+}
+
 // ── POST /api/boutiques/:id/credits-clients/:clientId/transaction — Vente à crédit / Remboursement / Dépôt d'avance
 router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (req, res) => {
   try {
+    await ensureCreditRefCol();
     const { id, clientId } = req.params;
     const b = await checkBoutiqueAccess(id, req.user.userId);
     if (!b && !req.user?.is_admin) {
       return res.status(403).json({ error: 'Accès non autorisé pour enregistrer des transactions financières sur cette boutique' });
     }
 
-    const { type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp } = req.body; // 'vente_credit', 'remboursement', 'depot_avance'
+    const { type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp, idempotency_key } = req.body; // 'vente_credit', 'remboursement', 'depot_avance'
     const numMontant = Number(montant);
     if (!type || !numMontant || numMontant <= 0) {
       return res.status(400).json({ error: 'Type de transaction et montant valide (> 0) requis' });
@@ -1353,6 +1367,20 @@ router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (
 
     const bq = b;
     const bqId = b.id;
+    const idempotencyKey = typeof idempotency_key === 'string' && idempotency_key.length > 0 && idempotency_key.length <= 128
+      ? idempotency_key
+      : null;
+
+    // Idempotence : si cette transaction a déjà été enregistrée (coupure réseau post-commit)
+    if (idempotencyKey) {
+      const existingTx = await pool.query(
+        `SELECT id, montant, type FROM caisse_credit_historique WHERE boutique_id = $1 AND reference = $2 LIMIT 1`,
+        [bqId, idempotencyKey]
+      );
+      if (existingTx.rows[0]) {
+        return res.json({ success: true, duplicate: true, transaction: existingTx.rows[0] });
+      }
+    }
 
     const client = await pool.connect();
     try {
@@ -1383,19 +1411,19 @@ router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (
       // Mettre à jour le solde
       await client.query('UPDATE caisse_clients_credits SET solde=$1 WHERE id=$2', [nouveauSolde, clientId]);
 
-      // Enregistrer l'historique détaillé avec produits, date d'échéance et option relance whatsapp
+      // Enregistrer l'historique détaillé avec reference idempotence
       const autoRelance = relance_auto_whatsapp !== false;
       const hist = await client.query(
-        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [clientId, bqId, type, numMontant, mode_paiement || 'credit', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance]
+        `INSERT INTO caisse_credit_historique (client_id, boutique_id, type, montant, mode_paiement, note, produits, date_echeance, relance_auto_whatsapp, reference)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        [clientId, bqId, type, numMontant, mode_paiement || 'credit', note || null, JSON.stringify(produits || []), date_echeance || null, autoRelance, idempotencyKey]
       );
 
       // Si c'est une vente à crédit avec des articles du catalogue, décrémenter le stock et alimenter la Comptabilité
       if (type === 'vente_credit') {
         const clientNom = c.rows[0].nom || 'Client Carnet';
         const clientTel = c.rows[0].telephone || null;
-        const refCredit = `CR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+        const refCredit = idempotencyKey || `CR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
         if (Array.isArray(produits) && produits.length > 0) {
           for (let idx = 0; idx < produits.length; idx++) {
