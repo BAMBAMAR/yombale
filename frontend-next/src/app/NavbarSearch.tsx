@@ -5,6 +5,7 @@ import { useRef, useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
+import { createVoiceListener, cleanVoiceSearchQuery } from '@/lib/voice-assistant'
 
 interface ProduitResult {
   id: string
@@ -33,6 +34,48 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
   const [results, setResults] = useState<{ produits: ProduitResult[]; boutiques: BoutiqueResult[] }>({ produits: [], boutiques: [] })
   const [loading, setLoading] = useState(false)
   const [, startTransition] = useTransition()
+
+  // Recherche vocale Wolof / FR
+  const [isListeningVoice, setIsListeningVoice] = useState(false)
+  const voiceRecRef = useRef<any>(null)
+
+  const toggleVoiceSearch = () => {
+    if (isListeningVoice) {
+      voiceRecRef.current?.stop()
+      setIsListeningVoice(false)
+      return
+    }
+
+    if (!open && !alwaysOpen) {
+      setOpen(true)
+    }
+
+    const rec = createVoiceListener({
+      lang: 'fr-FR',
+      onStart: () => setIsListeningVoice(true),
+      onEnd: () => setIsListeningVoice(false),
+      onError: () => setIsListeningVoice(false),
+      onResult: (transcript) => {
+        setIsListeningVoice(false)
+        const cleaned = cleanVoiceSearchQuery(transcript)
+        if (cleaned) {
+          setQuery(cleaned)
+          inputRef.current?.focus()
+        }
+      }
+    })
+
+    if (rec) {
+      voiceRecRef.current = rec
+      try {
+        rec.start()
+      } catch (e) {
+        console.warn('Voice search start failed', e)
+      }
+    } else {
+      alert('La recherche vocale n’est pas disponible sur ce navigateur.')
+    }
+  }
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -113,6 +156,36 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
               color: 'var(--text1)'
             }}
           />
+        )}
+        {(open || alwaysOpen) && (
+          <button
+            type="button"
+            onClick={toggleVoiceSearch}
+            aria-label="Recherche vocale"
+            title={isListeningVoice ? "Arrêter l'écoute" : "Recherche vocale (Wolof / FR)"}
+            style={{
+              background: isListeningVoice ? '#ea580c' : 'none',
+              border: 'none',
+              borderRadius: '8px',
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: isListeningVoice ? '#ffffff' : '#64748b',
+              marginRight: 2,
+              flexShrink: 0,
+              transition: 'all 0.2s ease',
+              boxShadow: isListeningVoice ? '0 0 0 3px rgba(234, 88, 12, 0.25)' : 'none',
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="22" />
+            </svg>
+          </button>
         )}
         <button
           type={(open || alwaysOpen) ? 'submit' : 'button'}

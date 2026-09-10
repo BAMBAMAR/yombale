@@ -117,6 +117,7 @@ export default function CommanderModal({
   const total = Math.max(0, totalSansReduction - (promoApplique ? promoApplique.reduction : 0))
 
   const messageWhatsappDirect = `Bonjour ${nomBoutique ? nomBoutique : 'vendeur'} ! Je suis intéressé(e) par l'article "${produit.nom}"${produit.prix ? ` (${fcfa(produit.prix)})` : ''} vu sur Nopalou. Est-il disponible ?`
+  const messageWhatsappVocal = `Bonjour ${nomBoutique ? nomBoutique : 'vendeur'} ! Je souhaite commander l'article "${produit.nom}" (${fcfa(sousTotalMain)}). Je vous joins ma note vocale ci-dessous pour vous préciser ma taille / couleur / adresse exacte de livraison 🎙️`
 
   function toggleAddon(pId: string) {
     setSelectedAddons(prev => {
@@ -551,6 +552,55 @@ export default function CommanderModal({
               >
                 <span style={{ fontSize: 20 }}>💬</span> Ouvrir WhatsApp Maintenant ({fcfa(sousTotalMain)}) →
               </a>
+
+              {/* Option Note Vocale WhatsApp Directe */}
+              <div style={{
+                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                border: '2px dashed #22c55e',
+                borderRadius: 16,
+                padding: '14px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 22 }}>🎙️</span>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: 13.5, fontWeight: 900, color: '#15803d' }}>
+                      Commander par Note Vocale (Wolof ou Français)
+                    </h4>
+                    <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#166534', lineHeight: 1.35 }}>
+                      Pas besoin d&apos;écrire : ouvrez WhatsApp et dictez vos consignes au vendeur.
+                    </p>
+                  </div>
+                </div>
+
+                <a
+                  href={helperLienWhatsapp(whatsapp || '221777202086', messageWhatsappVocal)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    background: '#15803d',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 12,
+                    padding: '12px 16px',
+                    fontWeight: 800,
+                    fontSize: 14,
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 14px rgba(21, 128, 61, 0.25)',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span>🎙️</span> Envoyer une Note Vocale WhatsApp →
+                </a>
+              </div>
 
               {/* Alternative téléphonique */}
               {whatsapp && (

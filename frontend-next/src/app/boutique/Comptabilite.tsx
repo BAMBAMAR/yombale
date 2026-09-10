@@ -8,10 +8,11 @@ import {
   getPosSessions, getPosSessionDetail
 } from './actions'
 import { fcfa, formatNombre, fmtDate, fmtDateHeure } from '@/lib/format'
-import { exportToCSV, printPDFReport, printBilanComptablePDF, printInventairePDF, printPosSessionRapportZ_PDF } from '@/lib/export'
+import { exportToCSV, printPDFReport, printBilanComptablePDF, printInventairePDF, printPosSessionRapportZ_PDF, exportSyscohadaGeneralLedgerCSV } from '@/lib/export'
 import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
+import { createVoiceListener, parseSaisieExpressIntent } from '@/lib/voice-assistant'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
@@ -2135,6 +2136,23 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
     printPDFReport('Registre & Bilan des Ventes', `Boutique ${boutiqueId}`, headers, rows, summaryHtml)
   }
 
+  function exportVentesSyscohada() {
+    exportSyscohadaGeneralLedgerCSV(
+      `Boutique_${boutiqueId}`,
+      'Journal_Ventes',
+      ventes.map(v => ({
+        id: v.id,
+        reference: v.reference,
+        date: v.created_at,
+        nom_produit: v.nom_produit,
+        quantite: v.quantite,
+        montant_total: v.montant_total,
+        methode_paiement: v.methode_paiement,
+        client_nom: v.client_nom,
+      }))
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {editingVente && <EditVenteModal vente={editingVente} boutiqueId={boutiqueId} onClose={() => setEditingVente(null)} onDone={load} />}
@@ -2146,6 +2164,9 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
           </button>
           <button onClick={exportVentesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
             📄 {t('common.exportPdf')}
+          </button>
+          <button onClick={exportVentesSyscohada} style={{ fontSize: 12, color: '#1e3a5f', background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }} title="Exporter pour expert-comptable au format officiel SYSCOHADA (Sage, Odoo, Saari)">
+            🏛️ SYSCOHADA
           </button>
           <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
             + {t('shop.declareSaleBtn')}
@@ -2788,6 +2809,66 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   const [loading, setLoading] = useState(false)
   const [msgSuccess, setMsgSuccess] = useState('')
 
+  // Assistant Vocal Wolof / Français
+  const [isListeningVoice, setIsListeningVoice] = useState(false)
+  const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
+  const voiceRecognitionRef = useRef<any>(null)
+
+  const demarrerEcouteVocale = () => {
+    if (isListeningVoice) {
+      voiceRecognitionRef.current?.stop()
+      setIsListeningVoice(false)
+      return
+    }
+
+    setVoiceFeedback(null)
+    const rec = createVoiceListener({
+      lang: 'fr-FR',
+      onStart: () => setIsListeningVoice(true),
+      onEnd: () => setIsListeningVoice(false),
+      onError: (err) => {
+        setIsListeningVoice(false)
+        if (err !== 'no-speech') {
+          setVoiceFeedback(`Micro non disponible (${err}). Réessayez.`)
+        }
+      },
+      onResult: (transcript) => {
+        setIsListeningVoice(false)
+        const intent = parseSaisieExpressIntent(transcript)
+        if (intent.mode === 'depense') {
+          setMode('depense')
+          if (intent.montant) setMontantDepense(String(intent.montant))
+          if (intent.categorie) setCatDepense(intent.categorie)
+          if (intent.description) setDescDepense(intent.description)
+          setVoiceFeedback(`🎙️ Dépense reconnue : ${intent.description || intent.categorie} (${intent.montant ? fcfa(intent.montant) : '0 FCFA'})`)
+          jouerBipEtVibrer('succes')
+        } else {
+          setMode('vente')
+          setModeSaisie('libre')
+          if (intent.montant) setPrixCustomInput(String(intent.montant))
+          if (intent.libelleProduit) {
+            setLibelleCustomInput(intent.libelleProduit)
+          } else {
+            setLibelleCustomInput('Vente directe')
+          }
+          setVoiceFeedback(`🎙️ Vente reconnue : ${intent.libelleProduit || 'Vente directe'} (${intent.montant ? fcfa(intent.montant) : '0 FCFA'})`)
+          jouerBipEtVibrer('succes')
+        }
+      }
+    })
+
+    if (rec) {
+      voiceRecognitionRef.current = rec
+      try {
+        rec.start()
+      } catch (e) {
+        console.warn('Erreur start speech recognition', e)
+      }
+    } else {
+      alert('La reconnaissance vocale n’est pas disponible sur ce navigateur. Veuillez utiliser Google Chrome ou Safari.')
+    }
+  }
+
   // Scanner EAN Caméra
   const [modalScannerEan, setModalScannerEan] = useState(false)
   const [scannerEanStatus, setScannerEanStatus] = useState('Initialisation du scanner EAN…')
@@ -3132,6 +3213,62 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      {/* 🎙️ Assistant Vocal Wolof / Français Express */}
+      <div style={{
+        background: isListeningVoice ? '#fff7ed' : '#ffffff',
+        border: isListeningVoice ? '2px solid #ea580c' : '1px solid #e2e8f0',
+        borderRadius: 16,
+        padding: '14px 18px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        boxShadow: isListeningVoice ? '0 6px 20px rgba(234, 88, 12, 0.2)' : '0 2px 8px rgba(0,0,0,0.02)',
+        transition: 'all 0.2s ease',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button"
+            onClick={demarrerEcouteVocale}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              border: 'none',
+              background: isListeningVoice ? '#ea580c' : '#f8fafc',
+              color: isListeningVoice ? '#ffffff' : '#0f172a',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 22,
+              boxShadow: isListeningVoice ? '0 0 0 5px rgba(234, 88, 12, 0.25)' : '0 2px 6px rgba(0,0,0,0.06)',
+              transition: 'all 0.2s ease',
+              flexShrink: 0
+            }}
+            title={isListeningVoice ? "Arrêter l'écoute" : "Dicter une opération"}
+          >
+            {isListeningVoice ? '⏹️' : '🎙️'}
+          </button>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: isListeningVoice ? '#c2410c' : '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>{isListeningVoice ? "Écoute en cours… Parlez en Wolof ou Français !" : "Assistant Vocal Saisie Express"}</span>
+              {isListeningVoice && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ea580c', display: 'inline-block' }} />}
+            </div>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
+              Exemples : <em>« Dépense transport 2500 »</em>, <em>« Dépense benn téemeer essence »</em>, <em>« Vente 5000 »</em>, <em>« Vente ñaari junni »</em>
+            </p>
+          </div>
+        </div>
+
+        {voiceFeedback && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '6px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700 }}>
+            {voiceFeedback}
+          </div>
+        )}
+      </div>
+
       {/* Selector Mode Vente / Dépense */}
       <div style={{ display: 'flex', gap: 10, background: '#f1f5f9', padding: 6, borderRadius: 16, border: '1px solid #cbd5e1' }}>
         <button

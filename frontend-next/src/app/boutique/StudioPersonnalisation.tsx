@@ -564,8 +564,8 @@ export default function StudioPersonnalisation({
       )}
 
       {/* ── SÉLECTEUR MOBILE : ÉDITEUR / APERÇU ──────────────────────────────────── */}
-      <div className="lg:hidden" style={{
-        display: 'flex', background: '#F1F5F9', borderRadius: 12, padding: 3, marginBottom: 16,
+      <div className="studio-mobile-switcher" style={{
+        background: '#F1F5F9', borderRadius: 12, padding: 3, marginBottom: 16,
       }}>
         <button
           onClick={() => setActiveScreenTab('editeur')}
@@ -597,7 +597,7 @@ export default function StudioPersonnalisation({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 24, alignItems: 'start' }}>
         
         {/* COLONNE GAUCHE : LES CONTRÔLES SIMPLES DU MARCHAND */}
-        <div style={{ display: activeScreenTab === 'apercu' ? 'none' : 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className={`studio-editor-col ${activeScreenTab === 'apercu' ? 'studio-editor-hidden-mobile' : ''}`} style={{ flexDirection: 'column', gap: 20 }}>
           
           {/* BLOC 1 : CHOIX DU STYLE (EN 1 CLIC) */}
           <div style={{ background: '#fff', borderRadius: 16, padding: '20px 22px', border: '1.5px solid #E2E8F0' }}>
@@ -986,13 +986,15 @@ export default function StudioPersonnalisation({
         </div>
 
         {/* COLONNE DROITE : PRÉVISUALISATION TEMPS RÉEL (MOCKUP INTERACTIF) */}
-        <div style={{
-          position: 'sticky',
-          top: 80,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-        }}>
+        <div
+          className={`studio-preview-col ${activeScreenTab === 'editeur' ? 'studio-preview-hidden-mobile' : ''}`}
+          style={{
+            position: 'sticky',
+            top: 80,
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
           {/* Barre d'outils du Mockup */}
           <div style={{
             background: '#ffffff',

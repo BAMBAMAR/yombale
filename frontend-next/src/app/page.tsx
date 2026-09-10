@@ -369,18 +369,18 @@ export default async function HomePage({
                   </h3>
 
                   {/* 3 Atouts majeurs concis et distincts */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3.5, marginBottom: 6, fontSize: 11.5 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8, fontSize: 11.5 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: 12 }}>⚡</span>
-                      <span style={{ color: '#E2E8F0' }}><strong>Caisse tactile hors-ligne</strong> &amp; scan caméra</span>
+                      <span style={{ color: '#E2E8F0' }}><strong>Caisse tactile 100% hors-ligne</strong> &amp; scan caméra</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 12 }}>📲</span>
-                      <span style={{ color: '#E2E8F0' }}><strong>Relances impayés</strong> automatiques WhatsApp</span>
+                      <span style={{ fontSize: 12 }}>📒</span>
+                      <span style={{ color: '#E2E8F0' }}><strong>Carnet de dettes client</strong> &amp; relances Wave</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 12 }}>🪄</span>
-                      <span style={{ color: '#E2E8F0' }}><strong>Import Ali/SHEIN 1-clic</strong> • 0% commission</span>
+                      <span style={{ fontSize: 12 }}>💬</span>
+                      <span style={{ color: '#E2E8F0' }}><strong>WhatsApp Commerce</strong> • 0% commission Wave/OM</span>
                     </div>
                   </div>
                 </div>
@@ -388,7 +388,7 @@ export default async function HomePage({
                 <div>
                   {/* Tarification claire */}
                   <div style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 7 }}>
-                    Dès <strong style={{ color: '#FED7AA', fontSize: 12 }}>2 500 FCFA/mois</strong> après essai gratuit • Sans engagement
+                    Dès <strong style={{ color: '#FED7AA', fontSize: 12 }}>2 500 FCFA/mois</strong> après essai gratuit • Sans carte bancaire
                   </div>
 
                   {/* Boutons d'action distincts */}
@@ -396,8 +396,8 @@ export default async function HomePage({
                     <Link
                       href="/creer-boutique"
                       style={{
-                        flex: 1,
-                        padding: '7px 11px',
+                        flex: 1.2,
+                        padding: '8px 11px',
                         borderRadius: 8,
                         background: 'var(--accent, #C75B00)',
                         color: '#ffffff',
@@ -417,23 +417,25 @@ export default async function HomePage({
                       <span>→</span>
                     </Link>
 
-                    <a
-                      href="#forfaits-vendeurs"
+                    <Link
+                      href="/pos"
                       style={{
-                        padding: '7px 9px',
+                        flex: 1,
+                        padding: '8px 9px',
                         borderRadius: 8,
-                        background: 'rgba(255, 255, 255, 0.08)',
-                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                        background: 'rgba(255, 255, 255, 0.12)',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
                         color: '#F1F5F9',
                         fontWeight: 700,
                         fontSize: 11.5,
                         textDecoration: 'none',
                         whiteSpace: 'nowrap',
+                        textAlign: 'center',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      Forfaits ↓
-                    </a>
+                      Démo Caisse ⚡
+                    </Link>
                   </div>
                 </div>
               </div>

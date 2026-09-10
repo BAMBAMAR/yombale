@@ -6,8 +6,9 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import { ZonesView } from './Comptabilite'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
-import { Zap, MessageCircle } from 'lucide-react'
+import { Zap, MessageCircle, Bike } from 'lucide-react'
 import ModalNouvelleCommandeWave from './ModalNouvelleCommandeWave'
+import ModalDispatchLivreur, { CommandeDispatch } from './ModalDispatchLivreur'
 
 interface Commande {
   id: string; reference: string; nom_produit: string; quantite: number
@@ -52,7 +53,7 @@ function statutStyle(statut: string) {
   return s ? { color: s.color, background: s.bg, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 } : {}
 }
 
-function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; boutiqueId: string; onUpdate: () => void }) {
+function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande: Commande; boutiqueId: string; onUpdate: () => void; onDispatch?: (c: Commande) => void }) {
   const { t, formatPrice, formatNumber } = useTranslation()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -275,6 +276,27 @@ function CommandeCard({ commande, boutiqueId, onUpdate }: { commande: Commande; 
                 >
                   📲 WhatsApp
                 </a>
+
+                <button
+                  type="button"
+                  onClick={() => onDispatch?.(commande)}
+                  style={{
+                    padding: '6px 12px',
+                    background: '#FFF7ED',
+                    color: '#C75B00',
+                    border: '1.5px solid #FED7AA',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}
+                  title="Générer et envoyer la fiche de livraison au livreur moto Tiak-Tiak"
+                >
+                  <Bike size={13} /> Tiak-Tiak
+                </button>
               </div>
             </div>
 
@@ -347,7 +369,7 @@ function regrouperCommandes(commandes: Commande[]): (Commande | Commande[])[] {
   return resultat
 }
 
-function CommandeGroupeCard({ commandes, boutiqueId, onUpdate }: { commandes: Commande[]; boutiqueId: string; onUpdate: () => void }) {
+function CommandeGroupeCard({ commandes, boutiqueId, onUpdate, onDispatch }: { commandes: Commande[]; boutiqueId: string; onUpdate: () => void; onDispatch?: (c: Commande) => void }) {
   const { t, formatPrice, formatNumber } = useTranslation()
   const [open, setOpen] = useState(false)
   const fcfa = (n: number) => formatPrice(n)
@@ -385,7 +407,7 @@ function CommandeGroupeCard({ commandes, boutiqueId, onUpdate }: { commandes: Co
       {open && (
         <div style={{ borderTop: '1px solid #f3f4f6', padding: '14px 18px', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {commandes.map(c => (
-            <CommandeCard key={c.id} commande={c} boutiqueId={boutiqueId} onUpdate={onUpdate} />
+            <CommandeCard key={c.id} commande={c} boutiqueId={boutiqueId} onUpdate={onUpdate} onDispatch={onDispatch} />
           ))}
         </div>
       )}
@@ -403,11 +425,12 @@ interface PanierAbandonne {
   created_at: string
 }
 
-export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
+export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string; boutique?: any }) {
   const { t, formatPrice, formatNumber } = useTranslation()
   const [subTab, setSubTab] = useState<'commandes' | 'zones'>('commandes')
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
+  const [dispatchCommande, setDispatchCommande] = useState<Commande | null>(null)
   const [loading, setLoading] = useState(true)
   const [filtre, setFiltre] = useState('')
   const [filtreCanal, setFiltreCanal] = useState<'tous' | 'web' | 'caisse'>('tous')
@@ -837,8 +860,8 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {regrouperCommandes(commandesFiltrees).map((item, i) =>
             Array.isArray(item)
-              ? <CommandeGroupeCard key={item[0].groupe_commande ?? i} commandes={item} boutiqueId={boutiqueId} onUpdate={load} />
-              : <CommandeCard key={item.id} commande={item} boutiqueId={boutiqueId} onUpdate={load} />
+              ? <CommandeGroupeCard key={item[0].groupe_commande ?? i} commandes={item} boutiqueId={boutiqueId} onUpdate={load} onDispatch={setDispatchCommande} />
+              : <CommandeCard key={item.id} commande={item} boutiqueId={boutiqueId} onUpdate={load} onDispatch={setDispatchCommande} />
           )}
         </div>
       )}
@@ -851,6 +874,17 @@ export default function Commandes({ boutiqueId }: { boutiqueId: string }) {
         isOpen={showModalNouvelleCommande}
         onClose={() => setShowModalNouvelleCommande(false)}
         onSuccess={load}
+      />
+
+      {/* Modal Dispatch Livreur Moto (Tiak-Tiak) */}
+      <ModalDispatchLivreur
+        isOpen={Boolean(dispatchCommande)}
+        onClose={() => setDispatchCommande(null)}
+        commande={dispatchCommande}
+        boutique={boutique || { nom: 'Ma Boutique', adresse: 'Point de retrait', ville: 'Dakar' }}
+        onMarquerExpediee={(cId) => {
+          updateStatutCommande(boutiqueId, cId, 'expediee').then(() => load())
+        }}
       />
     </div>
   )

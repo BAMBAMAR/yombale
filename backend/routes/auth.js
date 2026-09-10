@@ -33,6 +33,12 @@ router.post('/inscription',
         [nom, email, hash, codeApporteur]
       );
       const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      res.cookie('nopalou_session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
       res.status(201).json({ user: rows[0], token });
 
       // Enregistrer le parrainage si un code ref est présent
@@ -94,6 +100,12 @@ router.post('/connexion',
       if (rows[0].suspendu) return res.status(403).json({ error: 'Compte suspendu. Contactez le support.' });
       if (rows[0].supprime_le) return res.status(403).json({ error: 'Ce compte est en cours de suppression.' });
       const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      res.cookie('nopalou_session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
       const { mot_de_passe_hash, suspendu, supprime_le, ...user } = rows[0];
       res.json({ user, token });
     } catch (err) {
@@ -102,6 +114,16 @@ router.post('/connexion',
     }
   }
 );
+
+// POST /api/auth/deconnexion — purge du cookie HttpOnly
+router.post('/deconnexion', (req, res) => {
+  res.clearCookie('nopalou_session', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+  res.json({ message: 'Déconnexion réussie' });
+});
 
 // POST /api/auth/renvoyer-verification — renvoyer l'email de vérification
 router.post('/renvoyer-verification', limiterAuth, verifierToken, async (req, res) => {

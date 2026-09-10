@@ -25,6 +25,10 @@ import PosNumpad from './components/PosNumpad'
 import PosRemiseModal from './components/PosRemiseModal'
 import PosBlindCloseModal from './components/PosBlindCloseModal'
 import PosFideliteModal, { ClientFidelite } from './components/PosFideliteModal'
+import PosSessionModal from './components/PosSessionModal'
+import PosScannerModal from './components/PosScannerModal'
+import PosHistoriqueModal from './components/PosHistoriqueModal'
+import PosVoiceInput from './components/PosVoiceInput'
 import { usePosShortcuts } from './hooks/usePosShortcuts'
 
 interface ProduitCaisse {
@@ -3898,6 +3902,15 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               >
                 <span>📱 Douchette</span>
               </button>
+
+              <PosVoiceInput
+                produits={produits}
+                onAjouterProduit={(p, q) => {
+                  for (let i = 0; i < q; i++) {
+                    ajouterAuPanier(p as any)
+                  }
+                }}
+              />
             </div>
           </div>
 
@@ -4891,218 +4904,31 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
       {/* Modale Historique des Opérations */}
       {modalHistorique && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 780, border: '1px solid #e2e8f0', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)', position: 'relative' }}>
-            
-            {/* Bouton de Fermeture Top-Right Fixe */}
-            <button
-              onClick={() => setModalHistorique(false)}
-              style={{
-                position: 'absolute',
-                top: 14,
-                right: 14,
-                background: '#f1f5f9',
-                border: 'none',
-                color: '#0f172a',
-                borderRadius: '50%',
-                width: 36,
-                height: 36,
-                fontSize: 18,
-                fontWeight: 900,
-                cursor: 'pointer',
-                zIndex: 10,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              title="Fermer la fenêtre"
-            >
-              ✕
-            </button>
-
-            {/* En-tête Modale */}
-            <div style={{ marginBottom: 14, paddingRight: 40 }}>
-              <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
-                📜 Historique des Opérations & Incidents de Caisse
-              </h2>
-              <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748b' }}>Journal des encaissements, annulations et remboursements.</p>
-            </div>
-
-            {/* Barre d'outils et d'exports */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14, background: '#f8fafc', padding: 10, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-              <select
-                value={formatTicketThermique}
-                onChange={e => setFormatTicketThermique(e.target.value as any)}
-                style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, fontWeight: 700, background: '#ffffff', color: '#0f172a' }}
-              >
-                <option value="80mm">🖨️ Format 80mm (Standard)</option>
-                <option value="58mm">🖨️ Format 58mm (Poche)</option>
-              </select>
-              <button
-                onClick={connecterImprimanteBluetooth}
-                style={{ background: btDeviceName ? '#f0fdf4' : '#f5f3ff', color: btDeviceName ? '#166534' : '#6d28d9', border: btDeviceName ? '1px solid #bbf7d0' : '1px solid #ddd6fe', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                title="Connecter une imprimante thermique Bluetooth direct ESC/POS"
-              >
-                📱 Bluetooth {btDeviceName ? `(${btDeviceName})` : ''}
-              </button>
-              <button
-                onClick={exporterHistoriqueCSV}
-                style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-              >
-                📥 Excel (CSV)
-              </button>
-              <button
-                onClick={exporterHistoriquePDF}
-                style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-              >
-                📄 Imprimer PDF
-              </button>
-            </div>
-
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {historiqueVentes.map(v => (
-                <div key={v.id} style={{ background: '#f8fafc', border: v.statut === 'annulee' ? '1px solid #fecaca' : '1px solid #e2e8f0', borderRadius: 10, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{v.id}</span>
-                      <span style={{ fontSize: 11, background: v.statut === 'annulee' ? '#fef2f2' : '#eff6ff', color: v.statut === 'annulee' ? '#991b1b' : '#1d4ed8', border: v.statut === 'annulee' ? '1px solid #fecaca' : '1px solid #bfdbfe', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
-                        {v.statut === 'annulee' ? '❌ ANNULÉ / REMBOURSÉ' : v.modePaiement.toUpperCase()}
-                      </span>
-                    </div>
-                    <p style={{ margin: '4px 0 0', fontSize: 12, color: '#64748b' }}>
-                      📅 {v.date} à {v.heure} • {v.caissier}
-                    </p>
-                    {v.motifAnnulation && (
-                      <p style={{ margin: '2px 0 0', fontSize: 11, color: '#dc2626', fontStyle: 'italic' }}>
-                        Motif: {v.motifAnnulation}
-                      </p>
-                    )}
-                    <p style={{ margin: '4px 0 0', fontSize: 12, color: '#334155' }}>
-                      Articles: {v.ticket.map(i => `${i.quantite}x ${i.produit.nom}`).join(', ')}
-                    </p>
-                  </div>
-
-                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                    <span style={{ fontSize: 16, fontWeight: 900, color: v.statut === 'annulee' ? '#dc2626' : '#16a34a' }}>
-                      {v.statut === 'annulee' ? `-${fcfa(v.total)}` : fcfa(v.total)}
-                    </span>
-
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {v.statut !== 'annulee' && (
-                        <button
-                          onClick={() => annulerRembourserVente(v.id)}
-                          style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          ❌ Annuler / Rembourser
-                        </button>
-                      )}
-                      <button
-                        onClick={() => imprimerTicketThermique(v)}
-                        style={{ background: '#0f172a', color: '#ffffff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                      >
-                        <Printer size={12} /> Ticket Thermique
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Pied de Modale avec Bouton Fermer */}
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => setModalHistorique(false)}
-                style={{ background: '#0f172a', color: '#ffffff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
-              >
-                Fermer la fenêtre
-              </button>
-            </div>
-          </div>
-        </div>
+        <PosHistoriqueModal
+          historiqueVentes={historiqueVentes}
+          formatTicketThermique={formatTicketThermique}
+          onChangeFormatTicket={(f) => setFormatTicketThermique(f)}
+          btDeviceName={btDeviceName}
+          onConnecterBluetooth={connecterImprimanteBluetooth}
+          onExporterCSV={exporterHistoriqueCSV}
+          onExporterPDF={exporterHistoriquePDF}
+          onAnnulerRembourserVente={annulerRembourserVente}
+          onImprimerTicket={imprimerTicketThermique}
+          onClose={() => setModalHistorique(false)}
+          formatPrice={formatPrice}
+        />
       )}
 
       {/* Modale Ouverture Session avec Fond de Caisse & PIN */}
       {modalSessionOuverture && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, border: '2px solid #16a34a', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', position: 'relative' }}>
-            <button
-              onClick={() => setModalSessionOuverture(false)}
-              style={{
-                position: 'absolute',
-                top: 14,
-                right: 14,
-                background: '#f1f5f9',
-                border: 'none',
-                color: '#0f172a',
-                borderRadius: '50%',
-                width: 32,
-                height: 32,
-                fontSize: 16,
-                fontWeight: 900,
-                cursor: 'pointer',
-                zIndex: 10,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              title="Fermer la fenêtre"
-            >
-              ✕
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, paddingRight: 34 }}>
-              <span style={{ fontSize: 24 }}>🔑</span>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>Ouverture de Session POS</h2>
-                <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>Identifiez-vous et saisissez le fond de caisse initial.</p>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 14, marginTop: 14 }}>
-              <label style={{ fontSize: 12, color: '#334155', display: 'block', marginBottom: 4, fontWeight: 700 }}>Caissier Connecté</label>
-              <div style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>👤</span> {caissierNom}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 12, color: '#334155', display: 'block', marginBottom: 6, fontWeight: 700 }}>Fond de Caisse de Départ (en FCFA)</label>
-              <input
-                type="number"
-                value={fondDeCaisseSaisi}
-                onChange={e => setFondDeCaisseSaisi(e.target.value)}
-                style={{ width: '100%', padding: '12px', borderRadius: 8, border: '2px solid #16a34a', background: '#f0fdf4', color: '#166534', fontSize: 18, fontWeight: 800, boxSizing: 'border-box', textAlign: 'center' }}
-              />
-
-              {/* Présélections Rapides */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 8 }}>
-                {['10000', '25000', '50000', '100000'].map(montant => (
-                  <button
-                    key={montant}
-                    onClick={() => setFondDeCaisseSaisi(montant)}
-                    style={{
-                      padding: '6px 4px', fontSize: 11, fontWeight: 800, borderRadius: 6, border: '1px solid #cbd5e1',
-                      background: fondDeCaisseSaisi === montant ? '#16a34a' : '#f8fafc',
-                      color: fondDeCaisseSaisi === montant ? '#fff' : '#334155',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {formatPrice(Number(montant))}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setModalSessionOuverture(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}>
-                Annuler
-              </button>
-              <button onClick={ouvrirSession} style={{ flex: 1.5, padding: '12px', background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 12px rgba(22,163,74,0.3)' }}>
-                🚀 Démarrer la Session →
-              </button>
-            </div>
-          </div>
-        </div>
+        <PosSessionModal
+          caissierNom={caissierNom}
+          fondDeCaisseSaisi={fondDeCaisseSaisi}
+          onChangeFondDeCaisse={setFondDeCaisseSaisi}
+          onDemarrerSession={ouvrirSession}
+          onClose={() => setModalSessionOuverture(false)}
+          formatPrice={formatPrice}
+        />
       )}
 
       {/* Modale Clôture Z à l'Aveugle */}
@@ -5174,86 +5000,26 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
       {/* Modale Scanner Code-Barres par Caméra Smartphone */}
       {modalScannerCamera && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(4px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: '20px 20px 16px', width: '100%', maxWidth: 460, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', textAlign: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Camera size={18} style={{ color: '#C75B00' }} /> Scanner Caisse (Mode Rafale)
-              </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const next = !scannerTorcheActive
-                    setScannerTorcheActive(next)
-                    if (html5QrcodeScannerRef.current) {
-                      try {
-                        const stream = (html5QrcodeScannerRef.current as any)?.localMediaStream
-                        await toggleTorcheCamera(stream, next)
-                      } catch (e) {}
-                    }
-                  }}
-                  style={{ background: scannerTorcheActive ? '#fef08a' : '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 8, padding: '4px 8px', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-                  title="Allumer la lampe torche"
-                >
-                  <span>🔦</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#0f172a' }}>{scannerTorcheActive ? 'ON' : 'OFF'}</span>
-                </button>
-                <button onClick={arreterScannerCamera} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer', padding: '0 4px' }}>✕</button>
-              </div>
-            </div>
-
-            {/* Viseur Caméra avec Laser et Flash de confirmation */}
-            <div style={{ position: 'relative', width: '100%', minHeight: 250, height: 260, borderRadius: 14, overflow: 'hidden', background: '#000', border: scannerFlashActif ? '3px solid #22c55e' : '1px solid #1e293b', transition: 'border 0.15s ease' }}>
-              <div id="nopalou-reader-scanner" style={{ width: '100%', height: '100%' }} />
-              {scannerFlashActif && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(34, 197, 94, 0.18)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ background: '#15803d', color: '#fff', padding: '6px 14px', borderRadius: 20, fontWeight: 900, fontSize: 13, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                    ✓ BIP VALIDÉ
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Statut & Dernier article scanné */}
-            <div style={{ background: '#f8fafc', borderRadius: 10, padding: '8px 12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left' }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: scannerFlashActif ? '#16a34a' : '#0f172a' }}>
-                {scannerCameraStatus}
-              </span>
-              {scannerDernierItem && (
-                <span style={{ fontSize: 11.5, color: '#475569', fontWeight: 600 }}>
-                  Dernier ajout : <strong>{scannerDernierItem.nom}</strong> ({fcfa(scannerDernierItem.prix)})
-                </span>
-              )}
-            </div>
-
-            {/* Résumé Panier en direct */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 10, padding: '8px 14px' }}>
-              <div style={{ textAlign: 'left' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#065f46', textTransform: 'uppercase' }}>Panier actuel</span>
-                <div style={{ fontSize: 14, fontWeight: 900, color: '#047857' }}>
-                  {panier.reduce((sum, item) => sum + item.quantite, 0)} article(s) • {fcfa(panier.reduce((sum, item) => sum + item.quantite * item.prixUnitaire, 0))}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={arreterScannerCamera}
-                style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 6px rgba(5,150,105,0.3)' }}
-              >
-                <span>✅ Encaisser</span>
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => { arreterScannerCamera(); setModalPairageSmartphone(true); }} style={{ flex: 1, background: '#f1f5f9', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 8, padding: '8px 10px', fontWeight: 700, fontSize: 11.5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                <span>📱</span> Douchette sans fil
-              </button>
-              <button onClick={arreterScannerCamera} style={{ background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 8, padding: '8px 14px', fontWeight: 700, fontSize: 11.5, cursor: 'pointer' }}>
-                Fermer
-              </button>
-            </div>
-          </div>
-        </div>
+        <PosScannerModal
+          scannerTorcheActive={scannerTorcheActive}
+          onToggleTorche={async () => {
+            const next = !scannerTorcheActive
+            setScannerTorcheActive(next)
+            if (html5QrcodeScannerRef.current) {
+              try {
+                const stream = (html5QrcodeScannerRef.current as any)?.localMediaStream
+                await toggleTorcheCamera(stream, next)
+              } catch (e) {}
+            }
+          }}
+          onClose={arreterScannerCamera}
+          scannerFlashActif={scannerFlashActif}
+          scannerCameraStatus={scannerCameraStatus}
+          scannerDernierItem={scannerDernierItem}
+          panierArticlesCount={panier.reduce((sum, item) => sum + item.quantite, 0)}
+          panierTotal={panier.reduce((sum, item) => sum + item.quantite * item.prixUnitaire, 0)}
+          formatPrice={formatPrice}
+        />
       )}
 
       {/* Modale Pairage Douchette Smartphone (Scan Remote) */}

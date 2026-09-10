@@ -1779,6 +1779,30 @@ async function handleIncomingInternal(msg) {
     return;
   }
 
+  // ── Note Vocale WhatsApp (msg.type === 'audio') ────────────────────────────
+  if (msg.type === 'audio' && msg.audio) {
+    await sendReadReceipt(msg.id, true).catch(() => {});
+    console.log('[WHATSAPP AUDIO]: Note vocale reçue de', phone, 'mediaId =', msg.audio.id);
+
+    let audioUrl = null;
+    try {
+      audioUrl = await telechargerMediaWhatsApp(msg.audio.id);
+    } catch (e) {
+      console.warn('[WHATSAPP AUDIO ERR]: Téléchargement audio échoué', e.message);
+    }
+
+    const { state, context } = await getSession(phone);
+    if (context && (context.boutique_id || context.boutique_nom || state?.startsWith('COMMANDE_'))) {
+      console.log('[WHATSAPP AUDIO]: Note vocale rattachée au contexte boutique', context.boutique_id);
+    }
+
+    await sendWhatsAppText(
+      phone,
+      `🎙️ *Note vocale bien reçue — Jërëjëf !*\n\nNous avons bien reçu votre message vocal. Si votre demande concerne une commande, le vendeur écoutera directement vos consignes (taille, couleur, adresse de livraison).\n\n💡 *Options rapides :*\n• Tapez *CATALOGUE* pour explorer les boutiques\n• Tapez *AIDE* pour contacter notre assistance\n• Ou écrivez votre message directement ici.`
+    );
+    return;
+  }
+
   // Read receipt + indicateur de frappe pendant le traitement
   await sendReadReceipt(msg.id, true).catch(() => {});
 

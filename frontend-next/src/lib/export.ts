@@ -588,5 +588,97 @@ export function printPosSessionRapportZ_PDF({
   printWindow.document.close()
 }
 
+export interface SyscohadaVente {
+  id: string
+  reference: string
+  date: string
+  nom_produit: string
+  quantite: number
+  montant_total: number
+  methode_paiement: string | null
+  client_nom?: string | null
+}
+
+/**
+ * Exporte le Journal Général des Ventes au format officiel SYSCOHADA révisé (OHADA),
+ * directement exploitable par les logiciels comptables (Sage, Saari, Odoo, QuickBooks).
+ */
+export function exportSyscohadaGeneralLedgerCSV(
+  boutiqueNom: string,
+  periodeLabel: string,
+  ventes: SyscohadaVente[]
+) {
+  const headers = [
+    'Date Écriture',
+    'N° Pièce / Référence',
+    'Code Journal',
+    'N° Compte Général',
+    'Intitulé du Compte',
+    'Libellé de l\'Écriture',
+    'Débit (FCFA)',
+    'Crédit (FCFA)',
+    'Mode Règlement',
+    'Tiers / Client',
+  ]
+
+  const rows: (string | number)[][] = []
+
+  for (const v of ventes) {
+    const dateFormatted = v.date ? new Date(v.date).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR')
+    const ref = v.reference || v.id.slice(0, 8)
+    const mode = (v.methode_paiement || 'cash').toLowerCase()
+    const client = v.client_nom || 'Client Comptoir'
+    const montant = Number(v.montant_total) || 0
+
+    // Détermination compte de trésorerie / tiers (Débit) selon Plan Comptable SYSCOHADA
+    let compteTresorerie = '571000'
+    let intituleTresorerie = 'Caisse Centrale Espèces'
+    if (mode === 'wave') {
+      compteTresorerie = '521100'
+      intituleTresorerie = 'Banque / Compte Wave Business'
+    } else if (mode === 'orange_money' || mode === 'om') {
+      compteTresorerie = '521200'
+      intituleTresorerie = 'Banque / Compte Orange Money'
+    } else if (mode === 'credit') {
+      compteTresorerie = '411100'
+      intituleTresorerie = 'Clients - Créances sur Ventes'
+    } else if (mode === 'virement' || mode === 'cb') {
+      compteTresorerie = '521000'
+      intituleTresorerie = 'Banque / Établissements Financiers'
+    }
+
+    // Écriture 1 : Débit Compte Trésorerie ou Tiers (Entrée d'argent ou créance)
+    rows.push([
+      dateFormatted,
+      ref,
+      'VT', // Journal des Ventes
+      compteTresorerie,
+      intituleTresorerie,
+      `Encaissement Vente #${ref} - ${v.nom_produit}`,
+      montant,
+      0,
+      mode.toUpperCase(),
+      client,
+    ])
+
+    // Écriture 2 : Crédit Compte 701 (Ventes de Marchandises)
+    rows.push([
+      dateFormatted,
+      ref,
+      'VT',
+      '701000',
+      'Ventes de Marchandises dans la Région (SYSCOHADA)',
+      `Chiffre d'affaires Vente #${ref} - ${v.nom_produit} (x${v.quantite})`,
+      0,
+      montant,
+      mode.toUpperCase(),
+      client,
+    ])
+  }
+
+  exportToCSV(`Grand_Livre_SYSCOHADA_${(boutiqueNom || 'Boutique').replace(/\s+/g, '_')}_${periodeLabel}`, headers, rows)
+}
+
+
 
 

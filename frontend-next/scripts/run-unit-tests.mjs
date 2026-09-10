@@ -14,6 +14,13 @@ import {
   champVisibleSelonVariante,
   nomParDefautPourCategorie,
 } from '../src/app/boutique/boutiqueHelpers.ts'
+import {
+  extraireMontantCFA,
+  parseSaisieExpressIntent,
+  parseDetteIntent,
+  cleanVoiceSearchQuery,
+  normaliserTexteVocal,
+} from '../src/lib/voice-assistant.ts'
 
 let passed = 0
 let failed = 0
@@ -412,6 +419,53 @@ it('i18n getDictionary: résout et applique le fallback', () => {
   assert.equal(getDictionary('en').common.save, 'Save')
   assert.equal(getDictionary('ar').common.save, 'حفظ')
   assert.equal(getDictionary('invalid').common.save, 'Enregistrer')
+})
+
+console.log('\n📦 8. Assistant Vocal & Parsing Wolof / FR (voice-assistant.ts)')
+it('extraireMontantCFA: devises Wolof et multiplicateurs (téemeer, junni)', () => {
+  assert.equal(extraireMontantCFA('benn teemeer'), 500)
+  assert.equal(extraireMontantCFA('naari junni'), 10000)
+  assert.equal(extraireMontantCFA('fukki junni'), 50000)
+  assert.equal(extraireMontantCFA('vente 2500 cfa'), 2500)
+  assert.equal(extraireMontantCFA('cinq mille'), 5000)
+})
+
+it('parseSaisieExpressIntent: détection automatique dépense / vente et catégories', () => {
+  const d1 = parseSaisieExpressIntent('Dépense transport 2500')
+  assert.equal(d1.mode, 'depense')
+  assert.equal(d1.categorie, 'transport')
+  assert.equal(d1.montant, 2500)
+
+  const d2 = parseSaisieExpressIntent('Dépense loyer cinquante mille')
+  assert.equal(d2.mode, 'depense')
+  assert.equal(d2.categorie, 'loyer')
+  assert.equal(d2.montant, 50000)
+
+  const v1 = parseSaisieExpressIntent('Vente café Touba 500')
+  assert.equal(v1.mode, 'vente')
+  assert.equal(v1.montant, 500)
+  assert.equal(v1.libelleProduit?.toLowerCase().includes('cafe touba'), true)
+})
+
+it('parseDetteIntent: détection crédit, remboursement et client', () => {
+  const c1 = parseDetteIntent('Dette Moussa 10 000', ['Moussa', 'Fatou'])
+  assert.equal(c1.type, 'vente_credit')
+  assert.equal(c1.nomClient, 'Moussa')
+  assert.equal(c1.montant, 10000)
+
+  const r1 = parseDetteIntent('Remboursement Fatou 5000', ['Moussa', 'Fatou'])
+  assert.equal(r1.type, 'remboursement')
+  assert.equal(r1.nomClient, 'Fatou')
+  assert.equal(r1.montant, 5000)
+
+  const s1 = parseDetteIntent('Moussa Diallo', ['Moussa Diallo'])
+  assert.equal(s1.type, 'recherche')
+  assert.equal(s1.nomClient, 'Moussa Diallo')
+})
+
+it('cleanVoiceSearchQuery: extraction propre du mot-clé produit', () => {
+  assert.equal(cleanVoiceSearchQuery('Cherche robe en wax'), 'robe en wax')
+  assert.equal(cleanVoiceSearchQuery('Trouve-moi des chaussures'), 'des chaussures')
 })
 
 console.log('\n──────────────────────────────────────────────────────────')

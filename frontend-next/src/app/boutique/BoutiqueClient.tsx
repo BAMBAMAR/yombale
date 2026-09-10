@@ -4003,6 +4003,12 @@ function BoutiqueDashboard({
   const [loading, setLoading] = useState(true)
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [onboardingDismissed, setOnboardingDismissed] = useState(false)
+  const [modeEssentiel, setModeEssentiel] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(`nopalou_mode_essentiel_${boutique.id}`) === 'true'
+    }
+    return false
+  })
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -4077,451 +4083,778 @@ function BoutiqueDashboard({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
       
-      {/* ── ASSISTANT D'ONBOARDING COMPACT & ESCAMOTABLE ── */}
-      {(!hasProducts || pctReady < 100 || isBienvenue) && !onboardingDismissed && (
-        <div style={{
-          background: 'linear-gradient(135deg, #FFFDF9 0%, #FFF7ED 100%)',
-          border: '1.5px solid #FED7AA',
-          borderRadius: 14,
-          padding: '12px 16px',
-          boxShadow: '0 2px 8px rgba(199,91,0,0.04)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 200 }}>
-              <span style={{ fontSize: 16 }}>🚀</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {pctReady === 100 ? 'Boutique 100% prête à vendre !' : `Boutique prête à ${pctReady}%`}
-              </span>
-              <button
-                type="button"
-                onClick={() => setOnboardingOpen(!onboardingOpen)}
-                style={{
-                  background: 'none', border: 'none', color: 'var(--accent, #C75B00)',
-                  fontSize: 12, fontWeight: 750, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0
-                }}
-              >
-                <span>{onboardingOpen ? 'Masquer détails ▴' : 'Voir les étapes ▾'}</span>
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setOnboardingDismissed(true)
-                if (typeof window !== 'undefined') localStorage.setItem(`nopalou_onboarding_dismissed_${boutique.id}`, 'true')
-              }}
-              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', padding: '2px 6px' }}
-              title="Ne plus afficher"
-            >
-              ✕
-            </button>
-          </div>
-
-          {onboardingOpen && (
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #FED7AA', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-              <div style={{ background: '#FFFFFF', border: hasProducts ? '1px solid #BBF7D0' : '1px solid #FED7AA', borderRadius: 10, padding: '10px 12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>📦 1. Produits</span>
-                  <span style={{ fontSize: 11, fontWeight: 750, color: hasProducts ? '#16A34A' : '#C75B00' }}>{hasProducts ? '✓ Prêt' : 'À ajouter'}</span>
-                </div>
-                <button type="button" onClick={() => onNavigate('produits')} className="btn-npl btn-npl-primary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5 }}>
-                  {hasProducts ? 'Gérer catalogue' : 'Ajouter un produit'}
-                </button>
-              </div>
-
-              <div style={{ background: '#FFFFFF', border: (hasLogoOrCover || hasDesc) ? '1px solid #BBF7D0' : '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>🎨 2. Profil</span>
-                  <span style={{ fontSize: 11, fontWeight: 750, color: (hasLogoOrCover || hasDesc) ? '#16A34A' : '#64748B' }}>{(hasLogoOrCover || hasDesc) ? '✓ Rempli' : 'Optionnel'}</span>
-                </div>
-                <button type="button" onClick={() => onNavigate('infos')} className="btn-npl btn-npl-secondary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5 }}>
-                  Modifier profil
-                </button>
-              </div>
-
-              <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>💬 3. WhatsApp</span>
-                  <span style={{ fontSize: 11, fontWeight: 750, color: '#16A34A' }}>⚡ 1-Clic</span>
-                </div>
-                <button type="button" onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')} className="btn-npl btn-npl-secondary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5, borderColor: '#FED7AA', color: '#C75B00', background: '#FFF7ED' }}>
-                  Partager vitrine
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── GRILLE DES 4 MÉTRIQUES OPÉRATIONNELLES (HERO KPIs) — Style Meta Dashboard ── */}
-      <div className="bq-kpi-grid">
-        {/* KPI 1 : Chiffre d'Affaires du Mois */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => onNavigate('compta')}
-          onKeyDown={e => e.key === 'Enter' && onNavigate('compta')}
-          className="bq-kpi-card"
-          style={{
-            background: '#FFFFFF',
-            border: '1.5px solid #E2E8F0',
-            borderRadius: 14,
-            padding: '16px 18px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: 6,
-            minHeight: 92,
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-          }}
-          title="Cliquez pour accéder au journal et au bilan comptable"
-        >
-          {/* Ligne 1 : Valeur Hero + Tendance/Statut sur la même baseline */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
-              {loading ? '...' : (caMois !== null ? `${formatPrice(caMois)}` : '0 FCFA')}
+      {/* ── SÉLECTEUR DE MODE MARCHAND (ESSENTIEL 4 BOUTONS vs GESTION COMPLÈTE) ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+        padding: '10px 14px',
+        background: '#FFFFFF',
+        border: '1.5px solid #E2E8F0',
+        borderRadius: 14,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 18 }}>{modeEssentiel ? '⚡' : '⚙️'}</span>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+              {modeEssentiel ? 'Mode Essentiel (Boutiquier)' : 'Mode Gestion Complète'}
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              ● Ce mois
-            </span>
-          </div>
-
-          {/* Ligne 2 : Libellé + Info-bulle ⓘ */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>Chiffre d&apos;affaires</span>
-            <span title="Total des encaissements enregistrés ce mois-ci (ventes caisse POS et commandes web)" style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
-            </span>
-            <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+            <p style={{ margin: 0, fontSize: 11.5, color: '#64748B' }}>
+              {modeEssentiel ? '4 actions capitales pour vendre vite au comptoir' : 'Vue 360° avec tous les indicateurs et modules'}
+            </p>
           </div>
         </div>
 
-        {/* KPI 2 : Commandes en attente */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => onNavigate('commandes')}
-          onKeyDown={e => e.key === 'Enter' && onNavigate('commandes')}
-          className="bq-kpi-card"
-          style={{
-            background: '#FFFFFF',
-            border: nbEnAttente > 0 ? '1.5px solid #FED7AA' : '1.5px solid #E2E8F0',
-            borderRadius: 14,
-            padding: '16px 18px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: 6,
-            minHeight: 92,
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-          }}
-          title="Cliquez pour gérer et préparer vos commandes"
-        >
-          {/* Ligne 1 : Valeur Hero + Tendance/Statut sur la même baseline */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: nbEnAttente > 0 ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
-              {formatNumber(nbEnAttente)}
-            </span>
-            {nbEnAttente > 0 ? (
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                ● {nbEnAttente} à traiter
-              </span>
-            ) : (
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                ✓ À jour
-              </span>
-            )}
-          </div>
-
-          {/* Ligne 2 : Libellé + Info-bulle ⓘ */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>{t('shop.pendingOrdersCount')}</span>
-            <span title="Commandes clients en attente de préparation ou d'expédition" style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
-            </span>
-            <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
-          </div>
-        </div>
-
-        {/* KPI 3 : Alertes Stock */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => onNavigate('produits')}
-          onKeyDown={e => e.key === 'Enter' && onNavigate('produits')}
-          className="bq-kpi-card"
-          style={{
-            background: '#FFFFFF',
-            border: stockAlertsCount && stockAlertsCount > 0 ? '1.5px solid #FCD34D' : '1.5px solid #E2E8F0',
-            borderRadius: 14,
-            padding: '16px 18px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: 6,
-            minHeight: 92,
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-          }}
-          title="Cliquez pour réapprovisionner ou ajuster vos stocks"
-        >
-          {/* Ligne 1 : Valeur Hero + Tendance/Statut sur la même baseline */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: stockAlertsCount && stockAlertsCount > 0 ? '#B45309' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
-              {loading ? '...' : formatNumber(stockAlertsCount ?? 0)}
-            </span>
-            {stockAlertsCount && stockAlertsCount > 0 ? (
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                ⚠️ Faible
-              </span>
-            ) : (
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                ✓ En stock
-              </span>
-            )}
-          </div>
-
-          {/* Ligne 2 : Libellé + Info-bulle ⓘ */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>{t('shop.stockAlerts')}</span>
-            <span title="Articles dont le stock est épuisé ou inférieur au seuil d'alerte configuré" style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
-            </span>
-            <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
-          </div>
-        </div>
-
-        {/* KPI 4 : Dettes Clients / Carnet */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => onNavigate(dettesTotal && dettesTotal > 0 ? 'carnet' : 'produits')}
-          onKeyDown={e => e.key === 'Enter' && onNavigate(dettesTotal && dettesTotal > 0 ? 'carnet' : 'produits')}
-          className="bq-kpi-card"
-          style={{
-            background: '#FFFFFF',
-            border: dettesTotal && dettesTotal > 0 ? '1.5px solid #FECACA' : '1.5px solid #E2E8F0',
-            borderRadius: 14,
-            padding: '16px 18px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: 6,
-            minHeight: 92,
-            cursor: 'pointer',
-            transition: 'all 0.18s ease',
-          }}
-          title="Cliquez pour consulter le carnet de dettes et relancer les clients"
-        >
-          {/* Ligne 1 : Valeur Hero + Tendance/Statut sur la même baseline */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: dettesTotal && dettesTotal > 0 ? '#DC2626' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
-              {loading ? '...' : (dettesTotal && dettesTotal > 0 ? `${formatPrice(dettesTotal)}` : `${formatNumber(produitsCount ?? 0)} art.`)}
-            </span>
-            {dettesTotal && dettesTotal > 0 ? (
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                ● À recouvrer
-              </span>
-            ) : (
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                ✓ Zéro dette
-              </span>
-            )}
-          </div>
-
-          {/* Ligne 2 : Libellé + Info-bulle ⓘ */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>
-              {dettesTotal && dettesTotal > 0 ? 'Dettes clients' : t('shop.catalog')}
-            </span>
-            <span title="Montant total des crédits et dettes clients en cours à recouvrer via relance WhatsApp" style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
-            </span>
-            <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
-          </div>
+        <div style={{ display: 'inline-flex', background: '#F1F5F9', borderRadius: 10, padding: 3, gap: 2 }}>
+          <button
+            type="button"
+            onClick={() => {
+              setModeEssentiel(false)
+              if (typeof window !== 'undefined') localStorage.setItem(`nopalou_mode_essentiel_${boutique.id}`, 'false')
+            }}
+            style={{
+              border: 'none',
+              borderRadius: 8,
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 750,
+              cursor: 'pointer',
+              background: !modeEssentiel ? '#FFFFFF' : 'transparent',
+              color: !modeEssentiel ? 'var(--navy, #1C2B4A)' : '#64748B',
+              boxShadow: !modeEssentiel ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            ⚙️ Mode Complet
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setModeEssentiel(true)
+              if (typeof window !== 'undefined') localStorage.setItem(`nopalou_mode_essentiel_${boutique.id}`, 'true')
+            }}
+            style={{
+              border: 'none',
+              borderRadius: 8,
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 750,
+              cursor: 'pointer',
+              background: modeEssentiel ? 'var(--accent, #C75B00)' : 'transparent',
+              color: modeEssentiel ? '#FFFFFF' : '#64748B',
+              boxShadow: modeEssentiel ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            ⚡ Mode Essentiel (4 Boutons)
+          </button>
         </div>
       </div>
 
-      {/* ── HUB D'ACTIONS RAPIDES TACTILES 1-TAP (Style Wave / Square) ── */}
-      <div style={{ background: 'var(--card, #ffffff)', border: '1px solid var(--border, #E8DDD2)', borderRadius: 'var(--r-xl, 16px)', padding: '18px 20px', boxShadow: 'var(--shadow-sm)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Zap size={18} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)', letterSpacing: '-0.01em' }}>
-              Actions rapides
-            </h3>
-          </div>
-          <span style={{ fontSize: 12, color: 'var(--text-subtle, #8C7E74)', fontWeight: 600 }}>1-Tap direct</span>
-        </div>
-
-        {/* Grille 4 tuiles tactiles */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))',
-          gap: 12,
-        }}>
-          {/* Tuile 1 : Vente Express */}
-          <button
-            type="button"
-            onClick={() => onNavigate('express')}
-            className="bq-action-tile"
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: '16px 12px', borderRadius: 14, background: '#F0FDF4', border: '1.5px solid #BBF7D0',
-              cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
-            }}
-          >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16A34A' }}>
-              <Zap size={22} />
-            </div>
+      {modeEssentiel ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {/* CARTE 1 : OUVRIR LA CAISSE POS TACTILE */}
+          <div style={{
+            background: 'linear-gradient(145deg, #FFF7ED 0%, #FFFFFF 100%)',
+            border: '2px solid #FED7AA',
+            borderRadius: 18,
+            padding: 22,
+            boxShadow: '0 4px 14px rgba(199,91,0,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: 16,
+          }}>
             <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Vente Express</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#15803D', fontWeight: 600 }}>Scan & Comptoir</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: '#FFEDD5', color: 'var(--accent, #C75B00)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ShoppingCart size={28} />
+                </div>
+                <span style={{ background: '#DCFCE7', color: '#166534', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
+                  ⚡ 100% Hors-Ligne
+                </span>
+              </div>
+              <h3 style={{ margin: '0 0 6px', fontSize: 19, fontWeight: 850, color: 'var(--navy, #1C2B4A)' }}>
+                1. Caisse POS Tactile
+              </h3>
+              <p style={{ margin: 0, fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
+                Encaissez vos clients en boutique par <strong>Espèces, Wave direct</strong> ou <strong>Orange Money</strong> (0% commission). Ventes rapides et tickets de caisse.
+              </p>
             </div>
-          </button>
-
-          {/* Tuile 2 : Caisse POS */}
-          {boutique.mode_fonctionnement !== 'pure_player' ? (
             <a
               href={`/boutique/caisse?b=${boutique.id}`}
-              className="bq-action-tile"
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                padding: '16px 12px', borderRadius: 14, background: '#FFF3E8', border: '1.5px solid #FED7AA',
-                cursor: 'pointer', textAlign: 'center', textDecoration: 'none', transition: 'all 0.15s ease', gap: 8,
-              }}
               onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: 'var(--accent, #C75B00)',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: 15,
+                padding: '14px 20px',
+                borderRadius: 12,
+                textDecoration: 'none',
+                boxShadow: '0 4px 12px rgba(199,91,0,0.25)',
+              }}
             >
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FFEDD5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent, #C75B00)' }}>
-                <ShoppingCart size={22} />
-              </div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Caisse POS</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--accent, #C75B00)', fontWeight: 600 }}>Plein écran</p>
-              </div>
+              <span>Encaisser Maintenant</span>
+              <span style={{ fontSize: 18 }}>→</span>
             </a>
-          ) : (
+          </div>
+
+          {/* CARTE 2 : AJOUTER & GÉRER LES PRODUITS */}
+          <div style={{
+            background: 'linear-gradient(145deg, #F0FDF4 0%, #FFFFFF 100%)',
+            border: '2px solid #BBF7D0',
+            borderRadius: 18,
+            padding: 22,
+            boxShadow: '0 4px 14px rgba(22,163,74,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: 16,
+          }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: '#DCFCE7', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ShoppingBag size={28} />
+                </div>
+                <span style={{ background: '#F1F5F9', color: '#334155', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
+                  {loading ? '...' : `${formatNumber(produitsCount ?? 0)} produits`}
+                </span>
+              </div>
+              <h3 style={{ margin: '0 0 6px', fontSize: 19, fontWeight: 850, color: 'var(--navy, #1C2B4A)' }}>
+                2. Mes Produits & Stocks
+              </h3>
+              <p style={{ margin: 0, fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
+                Prenez une photo de vos articles, fixez vos prix en FCFA, configurez vos variantes (tailles/couleurs) et suivez vos alertes stocks.
+              </p>
+              {stockAlertsCount && stockAlertsCount > 0 ? (
+                <p style={{ margin: '8px 0 0', fontSize: 12, color: '#D97706', fontWeight: 750 }}>
+                  ⚠️ {stockAlertsCount} article(s) bientôt en rupture
+                </p>
+              ) : null}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => onNavigate('produits')}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  background: '#16A34A',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: 14.5,
+                  padding: '14px 16px',
+                  borderRadius: 12,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(22,163,74,0.25)',
+                }}
+              >
+                <span>+ Ajouter Produit</span>
+              </button>
+            </div>
+          </div>
+
+          {/* CARTE 3 : MON CARNET DE DETTES CLIENTS */}
+          <div style={{
+            background: 'linear-gradient(145deg, #FEF2F2 0%, #FFFFFF 100%)',
+            border: '2px solid #FECACA',
+            borderRadius: 18,
+            padding: 22,
+            boxShadow: '0 4px 14px rgba(220,38,38,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: 16,
+          }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BookOpen size={28} />
+                </div>
+                <span style={{
+                  background: dettesTotal && dettesTotal > 0 ? '#FEE2E2' : '#DCFCE7',
+                  color: dettesTotal && dettesTotal > 0 ? '#B91C1C' : '#166534',
+                  padding: '4px 10px',
+                  borderRadius: 20,
+                  fontSize: 11,
+                  fontWeight: 800
+                }}>
+                  {dettesTotal && dettesTotal > 0 ? '⚠️ Dettes en cours' : '✓ Zéro impayé'}
+                </span>
+              </div>
+              <h3 style={{ margin: '0 0 6px', fontSize: 19, fontWeight: 850, color: 'var(--navy, #1C2B4A)' }}>
+                3. Carnet de Dettes & Crédits
+              </h3>
+              <p style={{ margin: 0, fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
+                Enregistrez les crédits accordés à vos clients de confiance et envoyez un <strong>rappel WhatsApp courtois</strong> avec lien de règlement Wave en 1 clic.
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: 14, fontWeight: 850, color: dettesTotal && dettesTotal > 0 ? '#DC2626' : '#16A34A' }}>
+                {loading ? '...' : (dettesTotal && dettesTotal > 0 ? `Total à recouvrer : ${formatPrice(dettesTotal)}` : 'Aucun crédit client en attente')}
+              </p>
+            </div>
             <button
               type="button"
-              onClick={() => onNavigate('commandes')}
-              className="bq-action-tile"
+              onClick={() => onNavigate('carnet')}
               style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                padding: '16px 12px', borderRadius: 14, background: '#EFF6FF', border: '1.5px solid #BFDBFE',
-                cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: '#DC2626',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: 15,
+                padding: '14px 20px',
+                borderRadius: 12,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(220,38,38,0.25)',
               }}
             >
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
-                <ClipboardList size={22} />
-              </div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Commandes</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#1D4ED8', fontWeight: 600 }}>Web & WhatsApp</p>
-              </div>
+              <span>Consulter le Carnet</span>
+              <span style={{ fontSize: 18 }}>→</span>
             </button>
+          </div>
+
+          {/* CARTE 4 : MES VENTES & CHIFFRE D'AFFAIRES */}
+          <div style={{
+            background: 'linear-gradient(145deg, #EFF6FF 0%, #FFFFFF 100%)',
+            border: '2px solid #BFDBFE',
+            borderRadius: 18,
+            padding: 22,
+            boxShadow: '0 4px 14px rgba(37,99,235,0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: 16,
+          }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: '#DBEAFE', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BarChart3 size={28} />
+                </div>
+                <span style={{ background: '#EFF6FF', color: '#1E40AF', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
+                  ● Ce mois
+                </span>
+              </div>
+              <h3 style={{ margin: '0 0 6px', fontSize: 19, fontWeight: 850, color: 'var(--navy, #1C2B4A)' }}>
+                4. Mes Ventes du Jour & du Mois
+              </h3>
+              <p style={{ margin: 0, fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
+                Consultez le total de vos encaissements (Espèces, Wave, Orange Money) et traitez les commandes reçues via votre vitrine web ou WhatsApp.
+              </p>
+              <div style={{ margin: '8px 0 0', display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                  {loading ? '...' : (caMois !== null ? `${formatPrice(caMois)}` : '0 FCFA')}
+                </span>
+                {nbEnAttente > 0 && (
+                  <span style={{ fontSize: 12, fontWeight: 750, color: '#DC2626' }}>
+                    ({nbEnAttente} commande(s) à préparer)
+                  </span>
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => onNavigate('compta')}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  background: '#2563EB',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: 14.5,
+                  padding: '14px 16px',
+                  borderRadius: 12,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
+                }}
+              >
+                <span>Bilan & Ventes</span>
+                <span style={{ fontSize: 18 }}>→</span>
+              </button>
+              {nbEnAttente > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('commandes')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#FEF2F2',
+                    color: '#DC2626',
+                    border: '1.5px solid #FECACA',
+                    fontWeight: 800,
+                    fontSize: 13,
+                    padding: '14px 16px',
+                    borderRadius: 12,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Commandes ({nbEnAttente})
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* ── ASSISTANT D'ONBOARDING COMPACT & ESCAMOTABLE ── */}
+          {(!hasProducts || pctReady < 100 || isBienvenue) && !onboardingDismissed && (
+            <div style={{
+              background: 'linear-gradient(135deg, #FFFDF9 0%, #FFF7ED 100%)',
+              border: '1.5px solid #FED7AA',
+              borderRadius: 14,
+              padding: '12px 16px',
+              boxShadow: '0 2px 8px rgba(199,91,0,0.04)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 200 }}>
+                  <span style={{ fontSize: 16 }}>🚀</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                    {pctReady === 100 ? 'Boutique 100% prête à vendre !' : `Boutique prête à ${pctReady}%`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setOnboardingOpen(!onboardingOpen)}
+                    style={{
+                      background: 'none', border: 'none', color: 'var(--accent, #C75B00)',
+                      fontSize: 12, fontWeight: 750, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0
+                    }}
+                  >
+                    <span>{onboardingOpen ? 'Masquer détails ▴' : 'Voir les étapes ▾'}</span>
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOnboardingDismissed(true)
+                    if (typeof window !== 'undefined') localStorage.setItem(`nopalou_onboarding_dismissed_${boutique.id}`, 'true')
+                  }}
+                  style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 14, cursor: 'pointer', padding: '2px 6px' }}
+                  title="Ne plus afficher"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {onboardingOpen && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #FED7AA', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+                  <div style={{ background: '#FFFFFF', border: hasProducts ? '1px solid #BBF7D0' : '1px solid #FED7AA', borderRadius: 10, padding: '10px 12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>📦 1. Produits</span>
+                      <span style={{ fontSize: 11, fontWeight: 750, color: hasProducts ? '#16A34A' : '#C75B00' }}>{hasProducts ? '✓ Prêt' : 'À ajouter'}</span>
+                    </div>
+                    <button type="button" onClick={() => onNavigate('produits')} className="btn-npl btn-npl-primary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5 }}>
+                      {hasProducts ? 'Gérer catalogue' : 'Ajouter un produit'}
+                    </button>
+                  </div>
+
+                  <div style={{ background: '#FFFFFF', border: (hasLogoOrCover || hasDesc) ? '1px solid #BBF7D0' : '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>🎨 2. Profil</span>
+                      <span style={{ fontSize: 11, fontWeight: 750, color: (hasLogoOrCover || hasDesc) ? '#16A34A' : '#64748B' }}>{(hasLogoOrCover || hasDesc) ? '✓ Rempli' : 'Optionnel'}</span>
+                    </div>
+                    <button type="button" onClick={() => onNavigate('infos')} className="btn-npl btn-npl-secondary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5 }}>
+                      Modifier profil
+                    </button>
+                  </div>
+
+                  <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>💬 3. WhatsApp</span>
+                      <span style={{ fontSize: 11, fontWeight: 750, color: '#16A34A' }}>⚡ 1-Clic</span>
+                    </div>
+                    <button type="button" onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')} className="btn-npl btn-npl-secondary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5, borderColor: '#FED7AA', color: '#C75B00', background: '#FFF7ED' }}>
+                      Partager vitrine
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Tuile 3 : Nouveau Produit */}
-          <button
-            type="button"
-            onClick={() => onNavigate('produits')}
-            className="bq-action-tile"
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: '16px 12px', borderRadius: 14, background: '#FAF8F5', border: '1.5px solid #E8DDD2',
-              cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
-            }}
-          >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--surface-muted, #F1F5F9)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--navy, #1C2B4A)' }}>
-              <PlusCircle size={22} />
+          {/* ── GRILLE DES 4 MÉTRIQUES OPÉRATIONNELLES (HERO KPIs) — Style Meta Dashboard ── */}
+          <div className="bq-kpi-grid">
+            {/* KPI 1 : Chiffre d'Affaires du Mois */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => onNavigate('compta')}
+              onKeyDown={e => e.key === 'Enter' && onNavigate('compta')}
+              className="bq-kpi-card"
+              style={{
+                background: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                borderRadius: 14,
+                padding: '16px 18px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 6,
+                minHeight: 92,
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+              }}
+              title="Cliquez pour accéder au journal et au bilan comptable"
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
+                  {loading ? '...' : (caMois !== null ? `${formatPrice(caMois)}` : '0 FCFA')}
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  ● Ce mois
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>Chiffre d&apos;affaires</span>
+                <span title="Total des encaissements enregistrés ce mois-ci (ventes caisse POS et commandes web)" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
+                </span>
+                <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+              </div>
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Ajouter Produit</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-subtle, #8C7E74)', fontWeight: 600 }}>Photo & Prix</p>
+
+            {/* KPI 2 : Commandes en attente */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => onNavigate('commandes')}
+              onKeyDown={e => e.key === 'Enter' && onNavigate('commandes')}
+              className="bq-kpi-card"
+              style={{
+                background: '#FFFFFF',
+                border: nbEnAttente > 0 ? '1.5px solid #FED7AA' : '1.5px solid #E2E8F0',
+                borderRadius: 14,
+                padding: '16px 18px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 6,
+                minHeight: 92,
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+              }}
+              title="Cliquez pour gérer et préparer vos commandes"
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: nbEnAttente > 0 ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
+                  {formatNumber(nbEnAttente)}
+                </span>
+                {nbEnAttente > 0 ? (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    ● {nbEnAttente} à traiter
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    ✓ À jour
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>{t('shop.pendingOrdersCount')}</span>
+                <span title="Commandes clients en attente de préparation ou d'expédition" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
+                </span>
+                <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+              </div>
             </div>
-          </button>
 
-          {/* Tuile 4 : Carnet de Dettes */}
-          <button
-            type="button"
-            onClick={() => onNavigate('carnet')}
-            className="bq-action-tile"
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: '16px 12px', borderRadius: 14, background: '#FEF2F2', border: '1.5px solid #FECACA',
-              cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
-            }}
-          >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626' }}>
-              <BookOpen size={22} />
+            {/* KPI 3 : Alertes Stock */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => onNavigate('produits')}
+              onKeyDown={e => e.key === 'Enter' && onNavigate('produits')}
+              className="bq-kpi-card"
+              style={{
+                background: '#FFFFFF',
+                border: stockAlertsCount && stockAlertsCount > 0 ? '1.5px solid #FCD34D' : '1.5px solid #E2E8F0',
+                borderRadius: 14,
+                padding: '16px 18px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 6,
+                minHeight: 92,
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+              }}
+              title="Cliquez pour réapprovisionner ou ajuster vos stocks"
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: stockAlertsCount && stockAlertsCount > 0 ? '#B45309' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
+                  {loading ? '...' : formatNumber(stockAlertsCount ?? 0)}
+                </span>
+                {stockAlertsCount && stockAlertsCount > 0 ? (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    ⚠️ Faible
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    ✓ En stock
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>{t('shop.stockAlerts')}</span>
+                <span title="Articles dont le stock est épuisé ou inférieur au seuil d'alerte configuré" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
+                </span>
+                <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+              </div>
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Carnet Dettes</p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#B91C1C', fontWeight: 600 }}>Crédit & Relance</p>
+
+            {/* KPI 4 : Dettes Clients / Carnet */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => onNavigate(dettesTotal && dettesTotal > 0 ? 'carnet' : 'produits')}
+              onKeyDown={e => e.key === 'Enter' && onNavigate(dettesTotal && dettesTotal > 0 ? 'carnet' : 'produits')}
+              className="bq-kpi-card"
+              style={{
+                background: '#FFFFFF',
+                border: dettesTotal && dettesTotal > 0 ? '1.5px solid #FECACA' : '1.5px solid #E2E8F0',
+                borderRadius: 14,
+                padding: '16px 18px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 6,
+                minHeight: 92,
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+              }}
+              title="Cliquez pour consulter le carnet de dettes et relancer les clients"
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                <span className="num-tabular" style={{ fontSize: 22, fontWeight: 850, color: dettesTotal && dettesTotal > 0 ? '#DC2626' : 'var(--navy, #1C2B4A)', lineHeight: '28px', letterSpacing: '-0.02em' }}>
+                  {loading ? '...' : (dettesTotal && dettesTotal > 0 ? `${formatPrice(dettesTotal)}` : `${formatNumber(produitsCount ?? 0)} art.`)}
+                </span>
+                {dettesTotal && dettesTotal > 0 ? (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#DC2626', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    ● À recouvrer
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    ✓ Zéro dette
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>
+                  {dettesTotal && dettesTotal > 0 ? 'Dettes clients' : t('shop.catalog')}
+                </span>
+                <span title="Montant total des crédits et dettes clients en cours à recouvrer via relance WhatsApp" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  <Info size={13} style={{ color: '#94A3B8', flexShrink: 0 }} />
+                </span>
+                <ChevronRight size={13} style={{ marginLeft: 'auto', color: '#CBD5E1' }} />
+              </div>
             </div>
-          </button>
-        </div>
+          </div>
 
-        {/* Puces secondaires compactes */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap', paddingTop: 12, borderTop: '1px solid var(--border-light, #F1E9E0)' }}>
-          <button
-            type="button"
-            onClick={() => onNavigate('documents')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
-              background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
-              color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
-            }}
-          >
-            <FileText size={13} style={{ color: 'var(--navy)' }} />
-            <span>Factures & Devis</span>
-          </button>
+          {/* ── HUB D'ACTIONS RAPIDES TACTILES 1-TAP (Style Wave / Square) ── */}
+          <div style={{ background: 'var(--card, #ffffff)', border: '1px solid var(--border, #E8DDD2)', borderRadius: 'var(--r-xl, 16px)', padding: '18px 20px', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Zap size={18} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)', letterSpacing: '-0.01em' }}>
+                  Actions rapides
+                </h3>
+              </div>
+              <span style={{ fontSize: 12, color: 'var(--text-subtle, #8C7E74)', fontWeight: 600 }}>1-Tap direct</span>
+            </div>
 
-          <button
-            type="button"
-            onClick={() => onNavigate('compta')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
-              background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
-              color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
-            }}
-          >
-            <Receipt size={13} style={{ color: '#16A34A' }} />
-            <span>Comptabilité</span>
-          </button>
+            {/* Grille 4 tuiles tactiles */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))',
+              gap: 12,
+            }}>
+              {/* Tuile 1 : Vente Express */}
+              <button
+                type="button"
+                onClick={() => onNavigate('express')}
+                className="bq-action-tile"
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  padding: '16px 12px', borderRadius: 14, background: '#F0FDF4', border: '1.5px solid #BBF7D0',
+                  cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
+                }}
+              >
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16A34A' }}>
+                  <Zap size={22} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Vente Express</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#15803D', fontWeight: 600 }}>Scan & Comptoir</p>
+                </div>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => onNavigate('analytics')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
-              background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
-              color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
-            }}
-          >
-            <BarChart3 size={13} style={{ color: 'var(--accent, #C75B00)' }} />
-            <span>Statistiques</span>
-          </button>
+              {/* Tuile 2 : Caisse POS */}
+              {boutique.mode_fonctionnement !== 'pure_player' ? (
+                <a
+                  href={`/boutique/caisse?b=${boutique.id}`}
+                  className="bq-action-tile"
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    padding: '16px 12px', borderRadius: 14, background: '#FFF3E8', border: '1.5px solid #FED7AA',
+                    cursor: 'pointer', textAlign: 'center', textDecoration: 'none', transition: 'all 0.15s ease', gap: 8,
+                  }}
+                  onClick={() => typeof window !== 'undefined' && localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)}
+                >
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FFEDD5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent, #C75B00)' }}>
+                    <ShoppingCart size={22} />
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Caisse POS</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--accent, #C75B00)', fontWeight: 600 }}>Plein écran</p>
+                  </div>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('commandes')}
+                  className="bq-action-tile"
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    padding: '16px 12px', borderRadius: 14, background: '#EFF6FF', border: '1.5px solid #BFDBFE',
+                    cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
+                  }}
+                >
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
+                    <ClipboardList size={22} />
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Commandes</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: '#1D4ED8', fontWeight: 600 }}>Web & WhatsApp</p>
+                  </div>
+                </button>
+              )}
 
-          <button
-            type="button"
-            onClick={() => onNavigate('equipe')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
-              background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
-              color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
-            }}
-          >
-            <Users size={13} style={{ color: '#6366F1' }} />
-            <span>Équipe</span>
-          </button>
-        </div>
-      </div>
+              {/* Tuile 3 : Nouveau Produit */}
+              <button
+                type="button"
+                onClick={() => onNavigate('produits')}
+                className="bq-action-tile"
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  padding: '16px 12px', borderRadius: 14, background: '#FAF8F5', border: '1.5px solid #E8DDD2',
+                  cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
+                }}
+              >
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--surface-muted, #F1F5F9)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--navy, #1C2B4A)' }}>
+                  <PlusCircle size={22} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Ajouter Produit</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-subtle, #8C7E74)', fontWeight: 600 }}>Photo & Prix</p>
+                </div>
+              </button>
+
+              {/* Tuile 4 : Carnet de Dettes */}
+              <button
+                type="button"
+                onClick={() => onNavigate('carnet')}
+                className="bq-action-tile"
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  padding: '16px 12px', borderRadius: 14, background: '#FEF2F2', border: '1.5px solid #FECACA',
+                  cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', gap: 8,
+                }}
+              >
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626' }}>
+                  <BookOpen size={22} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>Carnet Dettes</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#B91C1C', fontWeight: 600 }}>Crédit & Relance</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Puces secondaires compactes */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap', paddingTop: 12, borderTop: '1px solid var(--border-light, #F1E9E0)' }}>
+              <button
+                type="button"
+                onClick={() => onNavigate('documents')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
+                  background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
+                  color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
+                }}
+              >
+                <FileText size={13} style={{ color: 'var(--navy)' }} />
+                <span>Factures & Devis</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigate('compta')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
+                  background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
+                  color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
+                }}
+              >
+                <Receipt size={13} style={{ color: '#16A34A' }} />
+                <span>Comptabilité</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigate('analytics')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
+                  background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
+                  color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
+                }}
+              >
+                <BarChart3 size={13} style={{ color: 'var(--accent, #C75B00)' }} />
+                <span>Statistiques</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigate('equipe')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20,
+                  background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', fontSize: 12, fontWeight: 700,
+                  color: 'var(--navy, #1C2B4A)', cursor: 'pointer',
+                }}
+              >
+                <Users size={13} style={{ color: '#6366F1' }} />
+                <span>Équipe</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -5942,7 +6275,7 @@ function BoutiqueManage({
           <>
             {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={effectivePlan} nbEnAttente={nbEnAttente} onNavigate={handleNavigateFromDashboard} />}
             {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={effectivePlan} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
-            {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
+            {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} boutique={boutique} />}
             {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={effectivePlan} />}
             {tab === 'express'     && <SaisieExpressView boutiqueId={boutique.id} />}
             {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} boutiqueNom={boutique.nom} initialTab={subTabCompta as any} />}

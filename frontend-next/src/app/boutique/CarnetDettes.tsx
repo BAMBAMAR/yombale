@@ -9,6 +9,7 @@ import { useTranslation } from '@/i18n/context'
 import { updateStatutCommande, listCommandes } from './actions'
 import { ajouterDetteHorsLigne } from '@/lib/db-offline'
 import { useSyncOffline } from '@/lib/sync-manager'
+import { createVoiceListener, parseDetteIntent } from '@/lib/voice-assistant'
 
 interface ClientCredit {
   id: string
@@ -94,6 +95,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [showModalEditClient, setShowModalEditClient] = useState(false)
   const [showModalTransaction, setShowModalTransaction] = useState(false)
   const [typeTransaction, setTypeTransaction] = useState<'vente_credit' | 'remboursement'>('vente_credit')
+
+  // Assistant Vocal Carnet de Dettes (Wolof & Français)
+  const [isListeningVoice, setIsListeningVoice] = useState(false)
+  const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
+  const voiceRecognitionRef = useRef<any>(null)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -544,6 +550,81 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     setDateEcheance('')
     setModeSaisie(type === 'vente_credit' ? 'catalogue' : 'manuel')
     setShowModalTransaction(true)
+  }
+
+  const demarrerEcouteVocaleCarnet = () => {
+    if (isListeningVoice) {
+      voiceRecognitionRef.current?.stop()
+      setIsListeningVoice(false)
+      return
+    }
+
+    setVoiceFeedback(null)
+    const rec = createVoiceListener({
+      lang: 'fr-FR',
+      onStart: () => setIsListeningVoice(true),
+      onEnd: () => setIsListeningVoice(false),
+      onError: (err) => {
+        setIsListeningVoice(false)
+        if (err !== 'no-speech') {
+          setVoiceFeedback(`Micro indisponible (${err})`)
+        }
+      },
+      onResult: (transcript) => {
+        setIsListeningVoice(false)
+        const clientsNoms = clients.map(c => c.nom)
+        const intent = parseDetteIntent(transcript, clientsNoms)
+
+        let clientCible = intent.nomClient
+          ? clients.find(c => c.nom.toLowerCase().includes(intent.nomClient!.toLowerCase()))
+          : null
+
+        if (intent.type === 'recherche') {
+          setRecherche(intent.nomClient || '')
+          setVoiceFeedback(`🎙️ Recherche : "${intent.nomClient}"`)
+          jouerBipEtVibrer('succes')
+        } else if (intent.type === 'vente_credit') {
+          if (clientCible) {
+            ouvrirModalTransaction('vente_credit', clientCible)
+            if (intent.montant) {
+              setMontantManuel(String(intent.montant))
+              setDescriptionManuelle('Achat à crédit')
+              setModeSaisie('manuel')
+            }
+            setVoiceFeedback(`🎙️ Dette de ${clientCible.nom} (${intent.montant ? fcfa(intent.montant) : ''})`)
+            jouerBipEtVibrer('succes')
+          } else {
+            setRecherche(intent.nomClient || '')
+            setVoiceFeedback(`🎙️ Dette pour "${intent.nomClient}". Sélectionnez le client.`)
+          }
+        } else if (intent.type === 'remboursement') {
+          if (clientCible) {
+            ouvrirModalTransaction('remboursement', clientCible)
+            if (intent.montant) {
+              setMontantManuel(String(intent.montant))
+              setDescriptionManuelle('Remboursement')
+              setModeSaisie('manuel')
+            }
+            setVoiceFeedback(`🎙️ Remboursement de ${clientCible.nom} (${intent.montant ? fcfa(intent.montant) : ''})`)
+            jouerBipEtVibrer('succes')
+          } else {
+            setRecherche(intent.nomClient || '')
+            setVoiceFeedback(`🎙️ Remboursement pour "${intent.nomClient}". Sélectionnez le client.`)
+          }
+        }
+      }
+    })
+
+    if (rec) {
+      voiceRecognitionRef.current = rec
+      try {
+        rec.start()
+      } catch (e) {
+        console.warn('Erreur start voice reco', e)
+      }
+    } else {
+      alert('La reconnaissance vocale n’est pas disponible sur ce navigateur (utilisez Google Chrome ou Safari).')
+    }
   }
 
   // Calculs KPI généraux
@@ -1556,28 +1637,63 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         </div>
       )}
 
-      {/* Barre de Recherche & Filtres */}
+      {/* Barre de Recherche & Filtres avec Assistant Vocal Wolof / FR */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-        <div style={{ flex: '1 1 200px', minWidth: 0, width: '100%', position: 'relative' }}>
-          <input
-            type="text"
-            placeholder={`🔍 ${t('common.search')}...`}
-            value={recherche}
-            onChange={e => setRecherche(e.target.value)}
+        <div style={{ flex: '1 1 240px', minWidth: 0, width: '100%', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <input
+              type="text"
+              placeholder={`🔍 ${t('common.search')}...`}
+              value={recherche}
+              onChange={e => setRecherche(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 12,
+                border: '1px solid #cbd5e1',
+                fontSize: 14,
+                outline: 'none',
+                boxSizing: 'border-box',
+                background: '#ffffff',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                minHeight: 42
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={demarrerEcouteVocaleCarnet}
+            title={isListeningVoice ? "Arrêter l'écoute" : "Recherche ou dette vocale (ex: 'Dette Moussa 10 000', 'Bor Fatou 5000')"}
             style={{
-              width: '100%',
-              padding: '10px 14px',
+              height: 42,
+              padding: '0 14px',
               borderRadius: 12,
-              border: '1px solid #cbd5e1',
-              fontSize: 14,
-              outline: 'none',
-              boxSizing: 'border-box',
-              background: '#ffffff',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-              minHeight: 42
+              border: isListeningVoice ? '2px solid #ea580c' : '1px solid #cbd5e1',
+              background: isListeningVoice ? '#fff7ed' : '#ffffff',
+              color: isListeningVoice ? '#ea580c' : '#475569',
+              fontWeight: 800,
+              fontSize: 13,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: isListeningVoice ? '0 0 0 3px rgba(234, 88, 12, 0.25)' : 'none',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0
             }}
-          />
+          >
+            <span style={{ fontSize: 16 }}>{isListeningVoice ? '⏹️' : '🎙️'}</span>
+            <span>{isListeningVoice ? 'Écoute…' : 'Vocal'}</span>
+          </button>
         </div>
+
+        {voiceFeedback && (
+          <div style={{ width: '100%', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '6px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700 }}>
+            {voiceFeedback}
+          </div>
+        )}
 
         <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           {[

@@ -14868,3 +14868,33 @@ label,
   }
 }
 
+/* ── Studio Personnalisation Split-Screen Live Preview ───────────────────── */
+.studio-mobile-switcher {
+  display: flex;
+}
+.studio-preview-col {
+  display: flex;
+}
+.studio-editor-col {
+  display: flex;
+}
+@media (min-width: 901px) {
+  .studio-mobile-switcher {
+    display: none !important;
+  }
+  .studio-preview-col {
+    display: flex !important;
+  }
+  .studio-editor-col {
+    display: flex !important;
+  }
+}
+@media (max-width: 900px) {
+  .studio-preview-col.studio-preview-hidden-mobile {
+    display: none !important;
+  }
+  .studio-editor-col.studio-editor-hidden-mobile {
+    display: none !important;
+  }
+}
+

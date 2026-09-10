@@ -1355,6 +1355,14 @@ function demarrerCronsMetier() {
   } catch (e) {
     console.error('[CRON RELANCE INIT ERR]:', e.message);
   }
+  try {
+    const { relancerPaniersAbandonnes } = require('./relance-panier');
+    cron.schedule('*/30 * * * *', () => {
+      relancerPaniersAbandonnes().catch(err => console.error('[CRON RELANCE PANIER ERR]:', err.message));
+    });
+  } catch (e) {
+    console.error('[CRON RELANCE PANIER INIT ERR]:', e.message);
+  }
 }
 
 module.exports = { 
