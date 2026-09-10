@@ -44,6 +44,8 @@ async function traiterRelancesMarchands() {
         `💡 *Astuce N°1 pour faire votre première vente aujourd'hui :*\n` +
         `Partagez le lien de votre vitrine dans votre statut WhatsApp :\n` +
         `👉 ${SITE}/boutiques/${b.slug}\n\n` +
+        `🎨 *Conseil identité :* Personnalisez vos couleurs, votre slogan et votre bannière en 1 clic sur votre Studio :\n` +
+        `👉 ${SITE}/boutique?tab=personnaliser\n\n` +
         `Vos clients pourront voir l'ensemble de vos articles et commander directement en 1 clic.\n\n` +
         `_Pour ne plus recevoir de rappel, répondez simplement STOP._`;
 

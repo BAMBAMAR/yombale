@@ -360,7 +360,8 @@ async function trouverBoutiqueParTelephone(phoneStr) {
 
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
-            b.couleur_theme, b.logo_url, u.nom AS proprietaire_nom
+            b.couleur_theme, b.theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, b.banniere_url,
+            b.utilisateur_id, u.nom AS proprietaire_nom
      FROM boutiques b
      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
      WHERE (b.actif IS NULL OR b.actif = true)
@@ -384,9 +385,17 @@ async function trouverBoutiqueMarchand(phone) {
 
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
-            b.couleur_theme, b.logo_url, u.nom AS proprietaire_nom
+            b.couleur_theme, b.theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, b.banniere_url,
+            b.utilisateur_id, u.nom AS proprietaire_nom,
+            COALESCE(a.is_trial, false) AS is_trial, a.plan AS abonnement_plan, a.fin AS abonnement_fin
      FROM boutiques b
      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+     LEFT JOIN LATERAL (
+       SELECT plan, statut, is_trial, fin
+       FROM abonnements
+       WHERE utilisateur_id = b.utilisateur_id AND statut = 'actif'
+       ORDER BY created_at DESC LIMIT 1
+     ) a ON true
      WHERE (b.actif IS NULL OR b.actif = true)
        AND (
          REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
@@ -408,9 +417,17 @@ async function trouverToutesBoutiquesMarchand(phone) {
 
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
-            b.couleur_theme, b.logo_url, u.nom AS proprietaire_nom
+            b.couleur_theme, b.theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, b.banniere_url,
+            b.utilisateur_id, u.nom AS proprietaire_nom,
+            COALESCE(a.is_trial, false) AS is_trial, a.plan AS abonnement_plan, a.fin AS abonnement_fin
      FROM boutiques b
      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+     LEFT JOIN LATERAL (
+       SELECT plan, statut, is_trial, fin
+       FROM abonnements
+       WHERE utilisateur_id = b.utilisateur_id AND statut = 'actif'
+       ORDER BY created_at DESC LIMIT 1
+     ) a ON true
      WHERE (b.actif IS NULL OR b.actif = true)
        AND (
          REGEXP_REPLACE(COALESCE(b.whatsapp, ''), '\\D', '', 'g') LIKE '%' || $1
@@ -473,8 +490,16 @@ async function verifierCodePin(boutique, pinSaisi) {
 
 // ── Envoi du Menu Marchand Dédié & Authentifié ─────────────────────────────────
 async function envoyerMenuMarchand(phone, boutique) {
+  let trialBadge = '';
+  if (boutique.is_trial && boutique.abonnement_fin) {
+    const joursRestants = Math.max(0, Math.ceil((new Date(boutique.abonnement_fin) - new Date()) / (1000 * 60 * 60 * 24)));
+    trialBadge = `\n🎁 *Essai VIP : ${joursRestants} j restants (Accès 100% débloqué)*`;
+  } else if (boutique.is_trial) {
+    trialBadge = `\n🎁 *1er Mois Offert (Accès Total VIP Débloqué)*`;
+  }
+
   const header =
-    `🏪 *Espace Marchand — ${boutique.nom}*\n` +
+    `🏪 *Espace Marchand — ${boutique.nom}*${trialBadge}\n` +
     `✅ Accès sécurisé déverrouillé\n\n` +
     `Bienvenue dans votre tableau de bord WhatsApp ! Choisissez une option ci-dessous :`;
 
@@ -482,9 +507,10 @@ async function envoyerMenuMarchand(phone, boutique) {
 
   const toutesBoutiques = await trouverToutesBoutiquesMarchand(phone);
   const gestionRows = [
-    { id: 'marchand_dettes', title: '📒 Carnet de Dettes ("Bor")', description: 'Clients débiteurs & relances' },
+    { id: 'marchand_personnaliser', title: '🎨 Personnaliser', description: 'Thème, logo, slogan et bannière' },
+    { id: 'marchand_dettes', title: '📒 Carnet de Dettes', description: 'Clients débiteurs & relances ("Bor")' },
     { id: 'marchand_vitrine', title: '🔗 Statut WhatsApp & Lien', description: 'Message à partager pour vendre' },
-    { id: 'marchand_changer_pin', title: '⚙️ Changer mon Code PIN', description: 'Modifier votre code secret' },
+    { id: 'marchand_changer_pin', title: '⚙️ Code PIN', description: 'Modifier votre code secret' },
   ];
 
   if (toutesBoutiques.length > 1) {
@@ -889,10 +915,51 @@ async function envoyerCarnetDettesMarchand(phone, boutique) {
   await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
 }
 
+// ── Espace Personnalisation Vitrine Marchand ──────────────────────────────────
+async function envoyerPersonnalisationMarchand(phone, boutique) {
+  const urlStudio = `${SITE}/boutique?tab=personnaliser`;
+  const urlVitrine = `${SITE}/boutiques/${boutique.slug || boutique.id}`;
+
+  const themeNom = boutique.couleur_theme || 'Défaut Nopalou';
+  const sloganTxt = boutique.slogan ? `_« ${boutique.slogan} »_` : 'Non défini';
+  const promoTxt = (boutique.bandeau_promo_actif && boutique.bandeau_promo) ? `"${boutique.bandeau_promo}" (Actif)` : 'Désactivé';
+
+  const msg =
+    `🎨 *Studio de Personnalisation — ${boutique.nom}*\n\n` +
+    `Faites de votre vitrine un espace unique qui renforce la confiance de vos clients !\n\n` +
+    `✨ *Vos réglages actuels :*\n` +
+    `• Thème / Couleurs : ${themeNom}\n` +
+    `• Slogan : ${sloganTxt}\n` +
+    `• Bannière promo : ${promoTxt}\n\n` +
+    `🛠️ *Personnalisez en 1 clic (couleurs, slogan, bannières HD, réassurance) :*\n` +
+    `👉 ${urlStudio}\n\n` +
+    `👁️ *Aperçu de votre vitrine en direct :*\n` +
+    `👉 ${urlVitrine}`;
+
+  await sendWhatsAppText(phone, msg);
+  await sendWhatsAppButtons3(
+    phone,
+    'Options rapides :',
+    [
+      { id: 'marchand_vitrine', title: '🔗 Statut WhatsApp' },
+      { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+      { id: 'menu_general', title: '🌐 Menu Nopalou' },
+    ]
+  ).catch(() => {});
+  await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
+}
+
 // ── Message prêt pour le Statut WhatsApp du commerçant ────────────────────────
 async function envoyerVitrineStatutMarchand(phone, boutique) {
+  let sloganPart = boutique.slogan ? `\n_« ${boutique.slogan} »_\n` : '\n';
+  let promoPart = (boutique.bandeau_promo_actif && boutique.bandeau_promo)
+    ? `🔥 *Offre spéciale :* ${boutique.bandeau_promo}\n\n`
+    : '';
+
   const msgStatut =
-    `✨ *${boutique.nom}* vous souhaite la bienvenue ! 🛍️\n\n` +
+    `✨ *${boutique.nom}* vous souhaite la bienvenue ! 🛍️` +
+    sloganPart +
+    promoPart +
     `Découvrez nos nouveaux articles disponibles et commandez en ligne en 1 clic avec livraison rapide :\n` +
     `👉 ${SITE}/boutiques/${boutique.slug || boutique.id}\n\n` +
     `🚚 Livraison rapide & Paiement direct Wave / Orange Money / Espèces.`;
@@ -903,15 +970,17 @@ async function envoyerVitrineStatutMarchand(phone, boutique) {
     `Copiez ou transférez le message ci-dessous dans votre *Statut WhatsApp* pour attirer vos clients !\n` +
     `─────────────────────\n` +
     `${msgStatut}\n` +
-    `─────────────────────`
+    `─────────────────────\n\n` +
+    `🎨 *Envie de changer vos couleurs, votre slogan ou votre bannière ?*\n` +
+    `👉 ${SITE}/boutique?tab=personnaliser`
   );
   await sendWhatsAppButtons3(
     phone,
     'Accès rapide :',
     [
+      { id: 'marchand_personnaliser', title: '🎨 Personnaliser' },
       { id: 'marchand_ajout_produit', title: '➕ Ajouter produit' },
       { id: 'menu_marchand', title: '🏪 Menu Marchand' },
-      { id: 'menu_general', title: '🌐 Menu Nopalou' },
     ]
   ).catch(() => {});
   await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true });
@@ -972,8 +1041,12 @@ async function envoyerMenuBoutique(phone, boutique) {
 
   const infos = [boutique.categorie, boutique.ville].filter(Boolean).join(' — ');
   let entete = `🏪 *${boutique.nom}*`;
-  if (infos) entete += `\n${infos}`;
-  if (boutique.description) entete += `\n${boutique.description}`;
+  if (boutique.slogan) entete += `\n_« ${boutique.slogan} »_`;
+  if (infos) entete += `\n📍 ${infos}`;
+  if (boutique.bandeau_promo_actif && boutique.bandeau_promo) {
+    entete += `\n\n🔥 *PROMO :* ${boutique.bandeau_promo}`;
+  }
+  if (boutique.description) entete += `\n\n${boutique.description}`;
   await sendWhatsAppText(phone, entete);
 
   const sections = [
@@ -987,12 +1060,13 @@ async function envoyerMenuBoutique(phone, boutique) {
     },
   ];
 
-  // ⚠️ Option "➕ Ajouter un produit" UNIQUEMENT si le numéro correspond au propriétaire de CETTE boutique
+  // ⚠️ Option "➕ Ajouter un produit" & "🎨 Personnaliser" UNIQUEMENT si le numéro correspond au propriétaire de CETTE boutique
   if (isOwner) {
     sections.push({
       title: 'Gestion Marchand (Votre Boutique)',
       rows: [
         { id: `boutique_ajout_prod_${boutique.id}`, title: '➕ Ajouter un produit', description: 'Ajouter un article à votre boutique' },
+        { id: 'marchand_personnaliser', title: '🎨 Personnaliser', description: 'Thème, logo, slogan et bannières' },
       ],
     });
   }
@@ -2085,9 +2159,15 @@ async function handleIncomingInternal(msg) {
           }
         } else {
           // Client / Visiteur qui envoie ou recherche le numéro d'une boutique
+          let descExtra = '';
+          if (bqTrouvee.slogan) descExtra += `_« ${bqTrouvee.slogan} »_\n`;
+          if (bqTrouvee.bandeau_promo_actif && bqTrouvee.bandeau_promo) {
+            descExtra += `🔥 *Offre :* ${bqTrouvee.bandeau_promo}\n`;
+          }
           await sendWhatsAppText(
             phone,
             `🏪 *${bqTrouvee.nom}*\n` +
+            (descExtra ? `${descExtra}\n` : '') +
             `📍 ${bqTrouvee.categorie || 'Commerce'}${bqTrouvee.ville ? ` — ${bqTrouvee.ville}` : ''}\n` +
             `${bqTrouvee.description ? `${bqTrouvee.description}\n` : ''}\n` +
             `👉 *Vitrine en ligne :* ${SITE}/boutiques/${bqTrouvee.slug || bqTrouvee.id}`
@@ -2794,7 +2874,8 @@ async function handleIncomingInternal(msg) {
       const essaiJours = (await cfg.getNum('abonnement_essai_jours')) || 30;
 
       const msgText = `💎 *Forfaits & Abonnements Boutiques Nopalou*\n\n` +
-        `🎁 *Offre Spéciale : ${essaiJours} jours (${Math.round(essaiJours / 30)} mois) 100% OFFERTS sur TOUS nos forfaits !*\n\n` +
+        `🎁 *1er MOIS (${essaiJours} JOURS) 100% OFFERT SUR TOUS LES FORFAITS !*\n` +
+        `⚡ *Accès Total VIP inclus :* Vous profitez immédiatement de 100% des fonctionnalités (Caisse POS, Saisie Express, Factures PDF, Comptabilité & Catalogue illimité) sans restriction dès la création de votre boutique !\n\n` +
         `🌱 *${labelDecouverte} (${prixFmt(pxDecouverte)}/mois)*\n` +
         `• Catalogue produits illimité\n` +
         `• Encaissement direct Wave & Orange Money\n` +
@@ -2808,6 +2889,8 @@ async function handleIncomingInternal(msg) {
         `• Tout le contenu du plan ${labelPro} +\n` +
         `• Sponsoring & Bannière Page d'Accueil\n` +
         `• Multi-Magasins & Caisse Caissiers POS\n\n` +
+        `🎨 *Studio de personnalisation inclus sur tous les forfaits :*\n` +
+        `Thème, couleurs, logo, slogan et bannière promotionnelle.\n\n` +
         `👉 *Découvrir les détails et s'abonner :*\n${SITE}/tarifs-boutique`;
       await sendWhatsAppText(phone, msgText);
       await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
@@ -3007,7 +3090,8 @@ async function handleIncomingInternal(msg) {
         const essaiJours = (await cfg.getNum('abonnement_essai_jours')) || 30;
 
         const msgText = `💎 *Forfaits & Abonnements Boutiques Nopalou*\n\n` +
-          `🎁 *Offre Spéciale : ${essaiJours} jours (${Math.round(essaiJours / 30)} mois) 100% OFFERTS sur TOUS nos forfaits !*\n\n` +
+          `🎁 *1er MOIS (${essaiJours} JOURS) 100% OFFERT SUR TOUS LES FORFAITS !*\n` +
+          `⚡ *Accès Total VIP inclus :* Vous profitez immédiatement de 100% des fonctionnalités (Caisse POS, Saisie Express, Factures PDF, Comptabilité & Catalogue illimité) sans restriction dès la création de votre boutique !\n\n` +
           `🌱 *${labelDecouverte} (${prixFmt(pxDecouverte)}/mois)*\n` +
           `• Catalogue produits illimité\n` +
           `• Encaissement direct Wave & Orange Money\n` +
@@ -3021,6 +3105,8 @@ async function handleIncomingInternal(msg) {
           `• Tout le contenu du plan ${labelPro} +\n` +
           `• Sponsoring & Bannière Page d'Accueil\n` +
           `• Multi-Magasins & Caisse Caissiers POS\n\n` +
+          `🎨 *Studio de personnalisation inclus sur tous les forfaits :*\n` +
+          `Thème, couleurs, logo, slogan et bannière promotionnelle.\n\n` +
           `👉 *Découvrir les détails et s'abonner :*\n${SITE}/tarifs-boutique`;
         await sendWhatsAppText(phone, msgText);
         await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
@@ -3199,9 +3285,28 @@ async function handleIncomingInternal(msg) {
         console.warn('[CRM CONVERSION HOOK ERR]:', errConv.message);
       }
 
+      // 4. Créer l'abonnement d'essai de 30 jours offerts avec Accès Total VIP
+      const finEssai = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      try {
+        await pool.query(
+          `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
+          [userId]
+        );
+        await pool.query(
+          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref, is_trial)
+           VALUES ($1, 'decouverte', 'actif', 2500, $2, $3, TRUE)`,
+          [userId, finEssai, `wa_trial_${shortPh}_${Date.now().toString(36)}`]
+        );
+      } catch (eAbon) {
+        console.warn('[ABONNEMENT ESSAI WA WARN]:', eAbon.message);
+      }
+
       const msgSuccess =
-        `🎉 *Félicitations ! Votre boutique "${nom}" est officiellement ouverte et prête !* 🚀🇸🇳\n\n` +
+        `🎉 *Félicitations ! Votre boutique "${nom}" est officiellement ouverte !* 🚀🇸🇳\n\n` +
+        `🎁 *1er mois (30 jours) 100% OFFERT avec ACCÈS TOTAL VIP !*\n` +
+        `Toutes les fonctionnalités sont débloquées : Caisse POS, Saisie Express, Factures PDF, Comptabilité & Catalogue illimité !\n\n` +
         `🔗 *Votre lien direct :*\n${SITE}/boutiques/${slug}\n\n` +
+        `🎨 *Personnalisez votre vitrine (couleurs, slogan, bannière) :*\n${SITE}/boutique?tab=personnaliser\n\n` +
         `📱 *Votre espace de gestion :*\n${SITE}/boutique\n\n` +
         `✨ *Ajoutez votre 1er article dès maintenant :*\n` +
         `Tapez simplement le nom et le prix (ex: *Robe Soie 15000*) !`;
@@ -4051,8 +4156,10 @@ async function handleIncomingInternal(msg) {
         `🎉 *FÉLICITATIONS ! VOTRE BOUTIQUE EST CRÉÉE !* 🎉\n\n` +
         `🏪 *${bqCreee.nom}*\n` +
         `📍 ${quartier} — 0% de commission\n` +
-        `🎁 *1er mois (30 jours) 100% OFFERT*\n\n` +
+        `🎁 *1er mois (30 jours) 100% OFFERT avec ACCÈS TOTAL VIP !*\n` +
+        `Toutes les fonctionnalités sont débloquées : Caisse POS, Saisie Express, Factures PDF, Comptabilité & Catalogue illimité !\n\n` +
         `🌐 *Lien de votre vitrine web :*\n${SITE}/boutiques/${bqCreee.slug}\n\n` +
+        `🎨 *Personnalisez votre vitrine (couleurs, slogan, bannière) :*\n${SITE}/boutique?tab=personnaliser\n\n` +
         `📜 *Charte Vendeur & CGU :*\n${SITE}/cgu`;
 
       await sendWhatsAppText(phone, msgSucces);
@@ -4066,6 +4173,7 @@ async function handleIncomingInternal(msg) {
             title: 'Action Immédiate',
             rows: [
               { id: `boutique_ajout_prod_${bqCreee.id}`, title: '➕ Ajouter un produit', description: 'Publier votre premier article (1-clic)' },
+              { id: 'marchand_personnaliser', title: '🎨 Personnaliser', description: 'Couleurs, slogan, bannières HD' },
               { id: 'boutique_produits_tous', title: '🛍️ Voir le catalogue', description: 'Consulter votre vitrine' },
             ],
           },
@@ -4205,6 +4313,11 @@ async function handleIncomingInternal(msg) {
 
     if (action === 'marchand_vitrine' || action === '5' || action === 'vitrine' || action === 'statut') {
       await envoyerVitrineStatutMarchand(phone, boutique);
+      return;
+    }
+
+    if (action === 'marchand_personnaliser' || action === 'personnaliser' || action === 'personnalisation' || action === 'theme' || action === 'couleur' || action === 'slogan' || action === 'banniere') {
+      await envoyerPersonnalisationMarchand(phone, boutique);
       return;
     }
 
