@@ -286,6 +286,8 @@ app.use('/api/social-shop',     require('./routes/social-shop'));
 app.use('/api/boutiques',       require('./routes/social-shop'));
 app.use('/api',                 require('./routes/social-shop'));
 app.use('/api/admin/integrations', require('./routes/admin-integrations'));
+app.use('/api/paiement-sequestre', require('./routes/paiement-sequestre'));
+app.use('/api/flux-catalogue',  require('./routes/flux-catalogue-meta'));
 
 // ── Health check (Diagnostics & Liveness/Readiness Probes) ─────
 app.get(['/health', '/api/health'], async (req, res) => {

@@ -21,6 +21,11 @@ import {
   cleanVoiceSearchQuery,
   normaliserTexteVocal,
 } from '../src/lib/voice-assistant.ts'
+import {
+  estimerFraisLivraison,
+  ZONES_LIVRAISON_SENEGAL,
+  COMMUNES_LISTE,
+} from '../src/lib/logistique-senegal.ts'
 
 let passed = 0
 let failed = 0
@@ -466,6 +471,39 @@ it('parseDetteIntent: détection crédit, remboursement et client', () => {
 it('cleanVoiceSearchQuery: extraction propre du mot-clé produit', () => {
   assert.equal(cleanVoiceSearchQuery('Cherche robe en wax'), 'robe en wax')
   assert.equal(cleanVoiceSearchQuery('Trouve-moi des chaussures'), 'des chaussures')
+})
+
+console.log('\n📦 9. Logistique & Tarifs Tiak-Tiak Sénégal (logistique-senegal.ts)')
+it('estimerFraisLivraison: calcul exact par commune et zones', () => {
+  const f1 = estimerFraisLivraison('Plateau')
+  assert.equal(f1.montant, 1000)
+  assert.equal(f1.zoneNom.includes('Plateau'), true)
+
+  const f2 = estimerFraisLivraison('Almadies')
+  assert.equal(f2.montant, 1500)
+
+  const f3 = estimerFraisLivraison('Pikine')
+  assert.equal(f3.montant, 2200)
+
+  const f4 = estimerFraisLivraison('Thiès')
+  assert.equal(f4.montant, 3500)
+
+  const f5 = estimerFraisLivraison('Ziguinchor')
+  assert.equal(f5.montant, 5000)
+})
+
+it('estimerFraisLivraison: seuil de gratuité débloqué', () => {
+  const fg = estimerFraisLivraison('Almadies', { seuilGratuite: 25000, sousTotal: 30000 })
+  assert.equal(fg.montant, 0)
+  assert.equal(fg.estGratuit, true)
+  assert.equal(fg.economie, 1500)
+})
+
+it('ZONES_LIVRAISON_SENEGAL: intégrité des communes et transporteurs', () => {
+  assert.equal(ZONES_LIVRAISON_SENEGAL.length >= 7, true)
+  assert.equal(COMMUNES_LISTE.includes('Plateau'), true)
+  assert.equal(COMMUNES_LISTE.includes('Guédiawaye'), true)
+  assert.equal(COMMUNES_LISTE.includes('Touba'), true)
 })
 
 console.log('\n──────────────────────────────────────────────────────────')

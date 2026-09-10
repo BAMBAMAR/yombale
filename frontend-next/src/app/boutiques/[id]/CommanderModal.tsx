@@ -14,9 +14,13 @@ function helperLienWhatsapp(tel: string | null | undefined, message: string): st
 }
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'dakar-intra', nom: '📍 Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
-  { id: 'dakar-banlieue', nom: '📍 Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
-  { id: 'regions-senegal', nom: '🚚 Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
+  { id: 'dakar_centre', nom: '🛵 Dakar Centre & Plateau (Médina, Plateau, Fann, Point E) — 1 000 FCFA', prix: 1000 },
+  { id: 'dakar_residentiel', nom: '🛵 Dakar Almadies & Ouest (Almadies, Ouakam, Mermoz, Yoff) — 1 500 FCFA', prix: 1500 },
+  { id: 'dakar_peripherie', nom: '🛵 Grand Dakar & Parcelles (HLM, Liberté, Maristes, Parcelles) — 1 800 FCFA', prix: 1800 },
+  { id: 'banlieue_proche', nom: '🛵 Banlieue Tiak-Tiak (Pikine, Guédiawaye, Keur Massar) — 2 200 FCFA', prix: 2200 },
+  { id: 'grande_banlieue', nom: '🛵 Grande Banlieue (Rufisque, Bargny, Diamniadio) — 3 000 FCFA', prix: 3000 },
+  { id: 'regions_proches', nom: '🚚 Petite Côte & Thiès (Thiès, Mbour, Saly) — 3 500 FCFA', prix: 3500 },
+  { id: 'regions_eloignees', nom: '🚚 Régions Intérieures (St-Louis, Touba, Kaolack, Ziguinchor) — 5 000 FCFA', prix: 5000 },
   { id: 'retrait-boutique', nom: '🏬 Retrait gratuit en boutique', prix: 0 },
 ]
 
@@ -698,7 +702,7 @@ export default function CommanderModal({
                 </button>
               </div>
             ) : (
-              <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {error && (
                   <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 12, padding: '12px 16px', color: '#b91c1c', fontSize: 13.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span>⚠️</span>
@@ -706,18 +710,47 @@ export default function CommanderModal({
                   </div>
                 )}
 
+                {/* Jauge Dynamique Livraison Offerte */}
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 14,
+                  padding: '12px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, fontWeight: 700 }}>
+                    <span style={{ color: sousTotal >= 25000 ? '#15803d' : '#334155' }}>
+                      {sousTotal >= 25000 ? '🎉 Livraison offerte débloquée !' : `🚚 Plus que ${fcfa(Math.max(0, 25000 - sousTotal))} pour la livraison offerte !`}
+                    </span>
+                    <span style={{ color: '#64748b', fontSize: 11.5 }}>
+                      {Math.min(100, Math.round((sousTotal / 25000) * 100))}%
+                    </span>
+                  </div>
+                  <div style={{ width: '100%', height: 6, background: '#e2e8f0', borderRadius: 6, overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${Math.min(100, Math.round((sousTotal / 25000) * 100))}%`,
+                      height: '100%',
+                      background: sousTotal >= 25000 ? 'linear-gradient(90deg, #22c55e, #16a34a)' : 'linear-gradient(90deg, #C75B00, #ea580c)',
+                      borderRadius: 6,
+                      transition: 'width 0.4s ease'
+                    }} />
+                  </div>
+                </div>
+
                 {/* Section 1 : Vos Coordonnées */}
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <span>👤</span> 1. Vos Coordonnées
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
                     <div>
                       <input
                         required
                         value={nom}
                         onChange={e => setNom(e.target.value)}
-                        className="premium-input"
+                        className="npl-input-airy"
                         placeholder="Prénom & Nom *"
                       />
                     </div>
@@ -727,7 +760,7 @@ export default function CommanderModal({
                         type="tel"
                         value={tel}
                         onChange={e => setTel(e.target.value)}
-                        className="premium-input"
+                        className="npl-input-airy"
                         placeholder="Téléphone (ex: 77 123 45 67) *"
                       />
                     </div>
@@ -736,37 +769,37 @@ export default function CommanderModal({
 
                 {/* Section 2 : Quantité & Livraison */}
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <span>📍</span> 2. Quantité & Livraison
                   </label>
 
-                  <div style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #e2e8f0', borderRadius: 12, background: '#fff', padding: '2px 6px' }}>
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #cbd5e1', borderRadius: 12, background: '#fff', padding: '4px 8px', minHeight: 48, boxSizing: 'border-box' }}>
                       <button
                         type="button"
                         onClick={() => setQuantite(Math.max(1, quantite - 1))}
-                        style={{ width: 32, height: 36, border: 'none', background: 'none', fontSize: 18, fontWeight: 800, cursor: 'pointer', color: '#475569' }}
+                        style={{ width: 36, height: 38, border: 'none', background: 'none', fontSize: 20, fontWeight: 800, cursor: 'pointer', color: '#475569' }}
                       >
                         -
                       </button>
-                      <span style={{ minWidth: 32, textAlign: 'center', fontWeight: 800, fontSize: 14, color: '#0f172a' }}>
+                      <span style={{ minWidth: 36, textAlign: 'center', fontWeight: 800, fontSize: 15, color: '#0f172a' }}>
                         {quantite}
                       </span>
                       <button
                         type="button"
                         onClick={() => setQuantite(quantite + 1)}
-                        style={{ width: 32, height: 36, border: 'none', background: 'none', fontSize: 18, fontWeight: 800, cursor: 'pointer', color: '#475569' }}
+                        style={{ width: 36, height: 38, border: 'none', background: 'none', fontSize: 20, fontWeight: 800, cursor: 'pointer', color: '#475569' }}
                       >
                         +
                       </button>
                     </div>
 
-                    <div style={{ flex: 1 }}>
+                    <div style={{ flex: '1 1 200px' }}>
                       <select
                         value={zoneId}
                         onChange={e => setZoneId(e.target.value)}
-                        className="premium-input"
-                        style={{ height: 42, padding: '8px 12px' }}
+                        className="npl-input-airy"
+                        style={{ cursor: 'pointer' }}
                       >
                         <option value="">— Retrait gratuit en boutique —</option>
                         {zones.map(z => (
@@ -781,36 +814,49 @@ export default function CommanderModal({
                   <input
                     value={adresse}
                     onChange={e => setAdresse(e.target.value)}
-                    className="premium-input"
+                    className="npl-input-airy"
                     placeholder="Adresse précise (Quartier, rue, repère...)"
                   />
                 </div>
 
                 {/* Section 3 : Mode de Paiement */}
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                     <span>💳</span> 3. Mode de Paiement
                   </label>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
                     {[
-                      { value: 'wave', label: '🌊 Wave (Recommandé ⚡)', disabled: false },
-                      { value: 'cash', label: '💵 Espèces à la livraison', disabled: false },
-                      { value: 'credit', label: '💳 Demande d\'Achat à Crédit', disabled: false },
-                      { value: 'manuel', label: '🧾 Dépôt Manuel Wave/OM', disabled: false },
-                      { value: 'virement', label: '🏦 Virement bancaire', disabled: false },
-                      { value: 'carte_bancaire', label: '💳 Carte bancaire (Stripe)', disabled: false },
-                    ].map(m => (
-                      <button
-                        key={m.value}
-                        type="button"
-                        onClick={() => setPaiement(m.value)}
-                        className={`payment-card-btn ${paiement === m.value ? 'selected' : ''}`}
-                      >
-                        <span>{paiement === m.value ? '🔘' : '⚪'}</span>
-                        <span style={{ flex: 1 }}>{m.label}</span>
-                      </button>
-                    ))}
+                      { value: 'wave', label: '🌊 Wave', badge: 'Pay Safe Séquestre 🔒', activeClass: 'active-wave' },
+                      { value: 'cash', label: '💵 Espèces', badge: 'À la livraison', activeClass: 'active-cash' },
+                      { value: 'manuel', label: '🧾 Wave / OM Manuel', badge: 'Pay Safe Séquestre 🔒', activeClass: 'active-om' },
+                      { value: 'credit', label: '💳 Achat à Crédit', badge: 'Carnet Client', activeClass: 'active-wave' },
+                      { value: 'carte_bancaire', label: '💳 Carte Bancaire', badge: 'Stripe 🔒', activeClass: 'active-wave' },
+                    ].map(m => {
+                      const isSelected = paiement === m.value
+                      return (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => setPaiement(m.value)}
+                          className={`npl-tile-payment ${isSelected ? m.activeClass : ''}`}
+                          style={{ textAlign: 'left' }}
+                        >
+                          <span style={{ fontSize: 16 }}>{isSelected ? '🔘' : '⚪'}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a' }}>{m.label}</div>
+                            <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{m.badge}</div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '10px 14px' }}>
+                    <span style={{ fontSize: 18 }}>🔒</span>
+                    <div style={{ fontSize: 12, color: '#166534', lineHeight: 1.4 }}>
+                      <strong>Protection Nopalou Pay Safe incluse :</strong> vos fonds restent sécurisés sous séquestre et ne sont transmis au vendeur que lorsque vous donnez votre code PIN secret au livreur à la réception de votre colis.
+                    </div>
                   </div>
 
                   {paiement === 'credit' && (

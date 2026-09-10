@@ -27,6 +27,7 @@ import SocialShopManager from './SocialShopManager'
 import StudioPersonnalisation from './StudioPersonnalisation'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
+import ProductTourModal from './ProductTourModal'
 import {
   Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square,
   LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter, Palette
@@ -814,6 +815,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
     produit?.caracteristiques ?? {}
   )
   const [modeRapide, setModeRapide] = useState(modeInitial === 'rapide' && !produit)
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(!!produit)
   const [photos, setPhotos] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [imagesExistantes, setImagesExistantes] = useState<string[]>(produit?.images ?? [])
@@ -884,6 +886,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             : `✨ Fiche importée avec succès ! (Titre, Prix & Description remplis — ajoutez vos photos ci-dessous).`
         });
         setModeRapide(false); // Basculer pour afficher description et photos
+        setShowAdvanced(true);
       } else {
         setMagicFeedback({ type: 'error', text: data.error || 'Impossible d\'importer les détails depuis ce lien.' });
       }
@@ -1170,160 +1173,120 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
     setCarac(prev => ({ ...prev, [k]: v }))
   }
 
-  const hasCaracFields = cat && cat !== 'autre' && !modeRapide
+  const hasCaracFields = cat && cat !== 'autre' && showAdvanced
 
   return (
     <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 60 }}>
       <div ref={produitFormTopRef} />
-      <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 16, margin: 0 }}>
-        {produit ? t('shop.editProductTitle') : t('shop.addProductTitle')}
-      </h3>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 17, fontWeight: 800, margin: 0, color: '#0f172a' }}>
+          {produit ? t('shop.editProductTitle') : '🚀 Ajouter un produit (Mode Rapide 10s)'}
+        </h3>
+        {!produit && (
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '4px 10px', borderRadius: 20 }}>
+            ⚡ 3 champs suffisent pour vendre
+          </span>
+        )}
+      </div>
 
       {successMsg && (
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', color: '#166534', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '12px 16px', color: '#166534', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>{successMsg}</span>
         </div>
       )}
 
       {state.error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', fontSize: 13, fontWeight: 600 }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', color: '#dc2626', fontSize: 13, fontWeight: 600 }}>
           {state.error}
         </div>
       )}
 
-      {!produit && (
-        <div style={{ background: '#f0fdf4', padding: 18, borderRadius: 14, border: '1.5px dashed #22c55e', marginBottom: 16, boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <label style={{ fontSize: 13.5, fontWeight: 800, color: '#15803d', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>🌟</span>
-              <span>Baguette Magique (Import Rapide)</span>
-            </label>
-            <span style={{ fontSize: 11, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
-              AliExpress • SHEIN • Amazon • Shopify
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: '100%' }}>
-            <input
-              id="magic-url"
-              type="url"
-              value={magicUrl}
-              onChange={e => setMagicUrl(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); executerMagicImport(); } }}
-              placeholder="Collez le lien du produit (AliExpress, Shein, Amazon, Alibaba, etc.)..."
-              style={{
-                flex: '1 1 220px',
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '11px 14px',
-                borderRadius: 10,
-                border: '1px solid #86efac',
-                fontSize: 13.5,
-                background: '#ffffff',
-                outline: 'none',
-                color: '#0f172a'
-              }}
-            />
-            <button
-              type="button"
-              onClick={executerMagicImport}
-              disabled={magicLoading}
-              className="npl-btn npl-btn-success npl-btn-md"
-              style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 20px', borderRadius: 10, fontWeight: 800 }}
-            >
-              {magicLoading ? '⏳ Analyse en cours...' : '🪄 Importer'}
-            </button>
-          </div>
-
-          {magicFeedback && (
-            <div style={{
-              marginTop: 10,
-              padding: '8px 12px',
-              borderRadius: 8,
-              fontSize: 12.5,
-              fontWeight: 600,
-              background: magicFeedback.type === 'success' ? '#dcfce7' : '#fef2f2',
-              color: magicFeedback.type === 'success' ? '#166534' : '#dc2626',
-              border: `1px solid ${magicFeedback.type === 'success' ? '#bbf7d0' : '#fecaca'}`
-            }}>
-              {magicFeedback.text}
-            </div>
-          )}
-
-          {magicResult && (
-            <div style={{
-              marginTop: 12,
-              background: '#ffffff',
-              padding: 12,
-              borderRadius: 10,
-              border: '1px solid #bbf7d0',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, color: '#64748b' }}>
-                <span>Source détectée : <strong style={{ color: '#0f172a' }}>{magicResult.source_name || 'E-commerce'}</strong></span>
-                {magicResult.categorie && magicResult.categorie !== 'divers' && (
-                  <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, color: '#334155', fontWeight: 700 }}>
-                    Catégorie : {magicResult.categorie}
-                  </span>
-                )}
-              </div>
-
-              {magicResult.images && magicResult.images.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
-                  {magicResult.images.map((imgUrl: string, idx: number) => (
-                    <img
-                      key={idx}
-                      src={imgUrl}
-                      alt={`Aperçu ${idx + 1}`}
-                      style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', border: '1px solid #e2e8f0', flexShrink: 0 }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div style={{ fontSize: 12, color: '#15803d', fontWeight: 700 }}>
-                💡 Prix de vente suggéré : {magicResult.prix?.toLocaleString('fr-FR')} FCFA
-                {magicResult.prix_achat > 0 && (
-                  <span style={{ color: '#64748b', fontWeight: 500, marginLeft: 6 }}>
-                    (Coût d'achat estimé : {magicResult.prix_achat?.toLocaleString('fr-FR')} FCFA)
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          <p style={{ fontSize: 11.5, color: '#15803d', margin: '8px 0 0', lineHeight: 1.4 }}>
-            Récupère automatiquement le titre nettoyé, le prix converti en FCFA, la description et jusqu&apos;à 5 photos haute résolution.
-          </p>
-        </div>
-      )}
-
-      {/* Champs cachés pour caractéristiques + catégorie + code-barres + images */}
+      {/* Champs cachés pour le formulaire */}
       <input type="hidden" name="images" value={JSON.stringify(imagesExistantes)} />
       <input type="hidden" name="categorie" value={cat} />
       <input type="hidden" name="code_barre" value={codeBarreForm} />
       <input type="hidden" name="quantite_stock" value={stockQuantiteForm} />
       <input type="hidden" name="caracteristiques" value={JSON.stringify(carac)} />
       <input type="hidden" name="variantes" value={JSON.stringify(variantes.filter(v => v.nom.trim() && v.valeurs.length > 0))} />
+      <input type="hidden" name="en_stock" value={enStock ? 'true' : 'false'} />
 
-      {/* Catégorie */}
-      <div>
-        <label style={labelStyle}>{t('shop.productCategory')}</label>
-        <select
-          value={cat}
-          onChange={e => { setCat(e.target.value); setCarac({}) }}
-          style={inputStyle}
-        >
-          <option value="">— {t('shop.productCategory')} —</option>
-          {PRODUIT_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-        </select>
+      {/* ── 1. PHOTO DU PRODUIT ────────────────────────────────────────────── */}
+      <div style={{ background: '#ffffff', borderRadius: 14, border: '1.5px solid #e2e8f0', padding: 16 }}>
+        <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>📸 Photos de l&apos;article <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>(Max 5 — Recommandé)</span></span>
+          <span style={{ fontSize: 11.5, color: '#1d4ed8', fontWeight: 700 }}>
+            {imagesExistantes.length + photos.length}/5 photos
+          </span>
+        </label>
+        
+        <div className="photos-zone" style={{ marginTop: 8 }}>
+          {imagesExistantes.length + photos.length < 5 && (
+            <div
+              className="photos-dropzone"
+              onClick={() => fileRef.current?.click()}
+              onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
+              tabIndex={0}
+              role="button"
+              aria-label="Ajouter des photos"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                padding: '14px 18px',
+                minHeight: 64,
+                borderRadius: 12,
+                border: '2px dashed #93c5fd',
+                background: '#eff6ff',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span style={{ fontSize: 26 }}>📷</span>
+              <div style={{ textAlign: 'left' }}>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 13.5, color: '#1d4ed8' }}>
+                  Toucher pour ajouter une photo
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#64748b' }}>
+                  Prenez une photo ou choisissez depuis votre galerie
+                </p>
+              </div>
+            </div>
+          )}
+          <input
+            ref={fileRef}
+            name="photos"
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: 'none' }}
+            onChange={handlePhotos}
+          />
+
+          {(imagesExistantes.length > 0 || previews.length > 0) && (
+            <div className="photos-previews" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+              {imagesExistantes.map((src, i) => (
+                <div key={`existante-${i}`} className="photo-thumb" style={{ position: 'relative', width: 72, height: 72, borderRadius: 10, overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+                  <ExternalImg src={src} alt={`Photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button type="button" className="photo-remove" onClick={() => removeImageExistante(i)} aria-label="Supprimer" style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(0,0,0,0.65)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                </div>
+              ))}
+              {previews.map((src, i) => (
+                <div key={`nouvelle-${i}`} className="photo-thumb" style={{ position: 'relative', width: 72, height: 72, borderRadius: 10, overflow: 'hidden', border: '2px solid #3b82f6' }}>
+                  <ExternalImg src={src} alt={`Nouvelle photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button type="button" className="photo-remove" onClick={() => removeNouvellePhoto(i)} aria-label="Supprimer" style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(0,0,0,0.65)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Nom du produit (Affiche toujours avec Scan Nom, y compris en Ajout Rapide) */}
-      <div>
-        <label style={labelStyle}>{t('shop.productName')} <span style={{ color: '#dc2626' }}>*</span></label>
+      {/* ── 2. NOM DU PRODUIT ────────────────────────────────────────────── */}
+      <div style={{ background: '#ffffff', borderRadius: 14, border: '1.5px solid #e2e8f0', padding: 16 }}>
+        <label className="npl-label-airy">
+          🏷️ Nom du produit <span style={{ color: '#dc2626' }}>*</span>
+        </label>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             name="nom"
@@ -1331,14 +1294,15 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             maxLength={300}
             value={nomForm}
             onChange={e => setNomForm(e.target.value)}
-            style={{ ...inputStyle, flex: '1 1 200px', width: '100%', boxSizing: 'border-box' }}
-            placeholder="Ex: Eau Minérale Kirène 1.5L (ou scanné)"
+            className="npl-input-airy"
+            style={{ flex: '1 1 200px' }}
+            placeholder="Ex: Robe Bazin Brodé / Lait Candia 1L..."
           />
           <button
             type="button"
             onClick={() => demarrerFormScanner('nom')}
             className="npl-btn npl-btn-secondary npl-btn-md"
-            style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
+            style={{ flex: '0 0 auto', height: 48, whiteSpace: 'nowrap', borderRadius: 12, padding: '0 16px', fontWeight: 800 }}
             title="Scanner le nom écrit sur l'emballage du produit"
           >
             <span>📷</span>
@@ -1347,38 +1311,380 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
         </div>
       </div>
 
-      {/* Code-Barres EAN-13 (Affiche toujours avec Scan EAN & Générer EAN, y compris en Ajout Rapide) */}
-      <div>
-        <label style={labelStyle}>Code-Barres EAN-13 (Optionnel)</label>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* ── 3. PRIX DE VENTE (FCFA) ───────────────────────────────────────── */}
+      <div style={{ background: '#ffffff', borderRadius: 14, border: '1.5px solid #e2e8f0', padding: 16 }}>
+        <label className="npl-label-airy">
+          💰 Prix de vente (FCFA) <span style={{ color: '#dc2626' }}>*</span>
+        </label>
+        <div style={{ position: 'relative' }}>
           <input
-            value={codeBarreForm}
-            onChange={e => setCodeBarreForm(e.target.value)}
-            style={{ ...inputStyle, flex: '1 1 200px', width: '100%', boxSizing: 'border-box' }}
-            placeholder="Ex: 600123456789 (Scannez ou tapez)"
+            name="prix"
+            type="number"
+            min={0}
+            required
+            value={prixForm}
+            onChange={e => setPrixForm(e.target.value)}
+            className="npl-input-airy"
+            style={{ fontSize: 18, fontWeight: 800, paddingRight: 70, color: '#0f172a' }}
+            placeholder="Ex: 15 000"
           />
-          <button
-            type="button"
-            onClick={genererCodeBarreForm}
-            className="npl-btn npl-btn-secondary npl-btn-md"
-            style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
-            title="Générer un code EAN-13 valide automatiquement"
-          >
-            <span>🎲</span>
-            <span>Générer EAN</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => demarrerFormScanner('ean')}
-            className="npl-btn npl-btn-secondary npl-btn-md"
-            style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
-            title="Scanner le code-barres EAN avec la caméra"
-          >
-            <span>📷</span>
-            <span>Scan EAN</span>
-          </button>
+          <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#64748b', fontSize: 13, pointerEvents: 'none' }}>
+            FCFA
+          </span>
         </div>
       </div>
+
+      {/* ── ACCORDÉON PROGRESSIVE DISCLOSURE : OPTIONS AVANCÉES ───────────── */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced(!showAdvanced)}
+        className="npl-accordion-btn"
+        style={{ marginTop: 4, padding: '14px 18px', borderRadius: 14, border: '1.5px solid #cbd5e1' }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+          <span style={{ fontSize: 18 }}>⚙️</span>
+          <span>
+            <strong style={{ display: 'block', fontSize: 13.5, color: '#0f172a' }}>
+              Options avancées (Stock, Catégorie, Variantes, EAN, Description, Import)
+            </strong>
+            <span style={{ fontSize: 11.5, color: '#64748b', fontWeight: 500 }}>
+              {showAdvanced ? 'Cliquez pour masquer les champs secondaires' : 'Facultatif — à renseigner si nécessaire'}
+            </span>
+          </span>
+        </span>
+        <span style={{ fontSize: 14, fontWeight: 800, color: '#1d4ed8' }}>
+          {showAdvanced ? '▲ Replier' : '▼ Déplier'}
+        </span>
+      </button>
+
+      {showAdvanced && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: '#f8fafc', padding: 18, borderRadius: 16, border: '1px solid #e2e8f0' }}>
+          
+          {/* Baguette Magique (Import Rapide) */}
+          {!produit && (
+            <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 14, border: '1.5px dashed #22c55e', boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <label style={{ fontSize: 13.5, fontWeight: 800, color: '#15803d', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>🌟</span>
+                  <span>Baguette Magique (Import Rapide URL)</span>
+                </label>
+                <span style={{ fontSize: 11, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
+                  AliExpress • SHEIN • Amazon • Shopify
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: '100%' }}>
+                <input
+                  id="magic-url"
+                  type="url"
+                  value={magicUrl}
+                  onChange={e => setMagicUrl(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); executerMagicImport(); } }}
+                  placeholder="Collez le lien du produit (AliExpress, Shein, Amazon, Alibaba, etc.)..."
+                  className="npl-input-airy"
+                  style={{ flex: '1 1 220px', minHeight: 44, fontSize: 13 }}
+                />
+                <button
+                  type="button"
+                  onClick={executerMagicImport}
+                  disabled={magicLoading}
+                  className="npl-btn npl-btn-success npl-btn-md"
+                  style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 18px', borderRadius: 10, fontWeight: 800, height: 44 }}
+                >
+                  {magicLoading ? '⏳ Analyse en cours...' : '🪄 Importer'}
+                </button>
+              </div>
+
+              {magicFeedback && (
+                <div style={{
+                  marginTop: 10,
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  background: magicFeedback.type === 'success' ? '#dcfce7' : '#fef2f2',
+                  color: magicFeedback.type === 'success' ? '#166534' : '#dc2626',
+                  border: `1px solid ${magicFeedback.type === 'success' ? '#bbf7d0' : '#fecaca'}`
+                }}>
+                  {magicFeedback.text}
+                </div>
+              )}
+
+              {magicResult && (
+                <div style={{
+                  marginTop: 12,
+                  background: '#ffffff',
+                  padding: 12,
+                  borderRadius: 10,
+                  border: '1px solid #bbf7d0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, color: '#64748b' }}>
+                    <span>Source détectée : <strong style={{ color: '#0f172a' }}>{magicResult.source_name || 'E-commerce'}</strong></span>
+                    {magicResult.categorie && magicResult.categorie !== 'divers' && (
+                      <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: 6, color: '#334155', fontWeight: 700 }}>
+                        Catégorie : {magicResult.categorie}
+                      </span>
+                    )}
+                  </div>
+
+                  {magicResult.images && magicResult.images.length > 0 && (
+                    <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+                      {magicResult.images.map((imgUrl: string, idx: number) => (
+                        <img
+                          key={idx}
+                          src={imgUrl}
+                          alt={`Aperçu ${idx + 1}`}
+                          style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', border: '1px solid #e2e8f0', flexShrink: 0 }}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: 12, color: '#15803d', fontWeight: 700 }}>
+                    💡 Prix de vente suggéré : {magicResult.prix?.toLocaleString('fr-FR')} FCFA
+                    {magicResult.prix_achat > 0 && (
+                      <span style={{ color: '#64748b', fontWeight: 500, marginLeft: 6 }}>
+                        (Coût d'achat estimé : {magicResult.prix_achat?.toLocaleString('fr-FR')} FCFA)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Catégorie */}
+          <div>
+            <label className="npl-label-airy">{t('shop.productCategory')}</label>
+            <select
+              value={cat}
+              onChange={e => { setCat(e.target.value); setCarac({}) }}
+              className="npl-input-airy"
+            >
+              <option value="">— {t('shop.productCategory')} —</option>
+              {PRODUIT_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
+
+          {/* Code-Barres EAN-13 */}
+          <div>
+            <label className="npl-label-airy">Code-Barres EAN-13 (Optionnel)</label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                value={codeBarreForm}
+                onChange={e => setCodeBarreForm(e.target.value)}
+                className="npl-input-airy"
+                style={{ flex: '1 1 200px' }}
+                placeholder="Ex: 600123456789 (Scannez ou tapez)"
+              />
+              <button
+                type="button"
+                onClick={genererCodeBarreForm}
+                className="npl-btn npl-btn-secondary npl-btn-md"
+                style={{ flex: '0 0 auto', height: 48, whiteSpace: 'nowrap', borderRadius: 12 }}
+                title="Générer un code EAN-13 valide automatiquement"
+              >
+                <span>🎲</span>
+                <span>Générer EAN</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => demarrerFormScanner('ean')}
+                className="npl-btn npl-btn-secondary npl-btn-md"
+                style={{ flex: '0 0 auto', height: 48, whiteSpace: 'nowrap', borderRadius: 12 }}
+                title="Scanner le code-barres EAN avec la caméra"
+              >
+                <span>📷</span>
+                <span>Scan EAN</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Stock, Coût d'achat & Prix barré promo */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+            <div>
+              <label className="npl-label-airy">📦 Quantité en stock</label>
+              <input
+                name="stock_quantite"
+                type="number"
+                min={0}
+                value={stockQuantiteForm}
+                onChange={e => {
+                  setStockQuantiteForm(e.target.value)
+                  if (Number(e.target.value) > 0) setEnStock(true)
+                  else if (e.target.value === '0') setEnStock(false)
+                }}
+                className="npl-input-airy"
+                placeholder="Ex: 50"
+              />
+            </div>
+            <div>
+              <label className="npl-label-airy">Prix d&apos;achat / Coût (FCFA)</label>
+              <input
+                name="prix_achat"
+                type="number"
+                min={0}
+                value={prixAchatForm}
+                onChange={e => setPrixAchatForm(e.target.value)}
+                className="npl-input-airy"
+                placeholder="Ex: 10 000"
+              />
+            </div>
+            <div>
+              <label className="npl-label-airy">{t('shop.productPriceStrikethrough')}</label>
+              <input
+                name="prix_barre"
+                type="number"
+                min={0}
+                value={prixBarreForm}
+                onChange={e => setPrixBarreForm(e.target.value)}
+                className="npl-input-airy"
+                placeholder="Ex: 20 000"
+              />
+            </div>
+          </div>
+
+          {/* Toggle En stock */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
+            <button type="button" onClick={() => setEnStock(!enStock)} style={{
+              width: 44, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
+              background: enStock ? '#16a34a' : '#d1d5db', transition: 'background .2s', position: 'relative',
+            }}>
+              <span style={{
+                position: 'absolute', top: 3, left: enStock ? 21 : 3,
+                width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                transition: 'left .2s', display: 'block',
+              }} />
+            </button>
+            <span style={{ fontSize: 13.5, color: '#334155', fontWeight: 700 }}>
+              {enStock
+                ? (stockQuantiteForm && Number(stockQuantiteForm) > 0 ? `✅ En stock (${stockQuantiteForm} pcs)` : `✅ ${t('shop.inStock')}`)
+                : `❌ ${t('shop.outOfStock')}`}
+            </span>
+          </div>
+
+          {/* Caractéristiques dynamiques */}
+          {hasCaracFields && (
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 }}>
+              <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                Caractéristiques
+              </p>
+              <CaracteristiquesFields slug={cat} values={carac} onChange={handleCarac} typesVarianteActifs={typesDejaUtilises} />
+            </div>
+          )}
+
+          {/* Variantes */}
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 }}>
+            <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+              Variantes (optionnel)
+            </p>
+            <p style={{ margin: '0 0 12px', fontSize: 12, color: '#9ca3af' }}>
+              Ajoutez une option (ex: Couleur, Taille) puis choisissez les valeurs.
+            </p>
+
+            {variantes.map((v, i) => {
+              const type = TYPES_VARIANTE.find(t => t.id === v.typeId)
+              const estCouleur = v.typeId === 'couleur'
+              const estPersonnalise = !type || v.typeId === 'autre'
+
+              return (
+                <div key={i} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < variantes.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+                    {estPersonnalise ? (
+                      <input
+                        type="text" value={nomsPersonnalises[i] ?? v.nom} onChange={e => renommerOptionPersonnalisee(i, e.target.value)}
+                        className="npl-input-airy" style={{ flex: 1, minHeight: 40 }} placeholder="Nom de l'option (ex: Matière)"
+                      />
+                    ) : (
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: '#374151' }}>{type?.label}</span>
+                    )}
+                    <button type="button" onClick={() => retirerOption(i)} style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', fontSize: 12, cursor: 'pointer' }}>
+                      ✕
+                    </button>
+                  </div>
+
+                  {estCouleur ? (
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      {COULEURS_PALETTE.map(c => {
+                        const selectionnee = v.valeurs.includes(c.nom)
+                        return (
+                          <button
+                            key={c.nom} type="button" onClick={() => toggleValeur(i, c.nom)}
+                            title={c.nom}
+                            style={{
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                              background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                            }}
+                          >
+                            <span style={{
+                              width: 28, height: 28, borderRadius: '50%', background: c.hex,
+                              border: selectionnee ? '3px solid #C75B00' : '2px solid #d1d5db',
+                              boxShadow: c.hex === '#ffffff' ? 'inset 0 0 0 1px #e5e7eb' : undefined,
+                              display: 'block',
+                            }} />
+                            <span style={{ fontSize: 10, color: selectionnee ? '#C75B00' : '#6b7280', fontWeight: selectionnee ? 700 : 500 }}>{c.nom}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : type ? (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {type.suggestions.map(val => {
+                        const selectionnee = v.valeurs.includes(val)
+                        return (
+                          <button
+                            key={val} type="button" onClick={() => toggleValeur(i, val)}
+                            style={{
+                              padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                              border: selectionnee ? '2px solid #C75B00' : '1px solid #d1d5db',
+                              background: selectionnee ? '#fff7f0' : '#fff',
+                              color: selectionnee ? '#C75B00' : '#374151',
+                            }}
+                          >
+                            {val}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <ValeursLibres valeurs={v.valeurs} onAjouter={val => toggleValeur(i, val)} onRetirer={val => toggleValeur(i, val)} />
+                  )}
+                </div>
+              )
+            })}
+
+            {typesDisponibles.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: variantes.length > 0 ? 12 : 0 }}>
+                {typesDisponibles.map(t => (
+                  <button
+                    key={t.id} type="button" onClick={() => ajouterOption(t.id)}
+                    style={{ background: '#f1f5f9', border: '1px dashed #cbd5e1', borderRadius: 10, padding: '8px 14px', fontSize: 12.5, fontWeight: 700, color: '#334155', cursor: 'pointer' }}
+                  >
+                    + {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="npl-label-airy">{t('shop.descriptionLabel')}</label>
+            <textarea
+              name="description"
+              rows={3}
+              value={descForm}
+              onChange={e => setDescForm(e.target.value)}
+              className="npl-input-airy"
+              style={{ minHeight: 80, resize: 'vertical' }}
+              placeholder="Détails supplémentaires, conseils d'utilisation, garantie…"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Modale scanner caméra (Scan Nom ou Scan EAN) */}
       {modalFormScanner && (
@@ -1481,297 +1787,28 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
         </div>
       )}
 
-      {/* Caractéristiques dynamiques par catégorie */}
-      {hasCaracFields && (
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 16px' }}>
-          <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            Caractéristiques
-          </p>
-          <CaracteristiquesFields slug={cat} values={carac} onChange={handleCarac} typesVarianteActifs={typesDejaUtilises} />
-        </div>
-      )}
-
-      {/* Variantes (options + valeurs) */}
-      {!modeRapide && (
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 16px' }}>
-          <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            Variantes (optionnel)
-          </p>
-          <p style={{ margin: '0 0 12px', fontSize: 12, color: '#9ca3af' }}>
-            Ajoutez une option (ex: Couleur) puis cliquez sur les valeurs proposées.
-          </p>
-
-          {variantes.map((v, i) => {
-            const type = TYPES_VARIANTE.find(t => t.id === v.typeId)
-            const estCouleur = v.typeId === 'couleur'
-            const estPersonnalise = !type || v.typeId === 'autre'
-
-            return (
-              <div key={i} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < variantes.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-                  {estPersonnalise ? (
-                    <input
-                      type="text" value={nomsPersonnalises[i] ?? v.nom} onChange={e => renommerOptionPersonnalisee(i, e.target.value)}
-                      style={{ ...inputStyle, flex: 1 }} placeholder="Nom de l'option (ex: Matière)"
-                    />
-                  ) : (
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: '#374151' }}>{type?.label}</span>
-                  )}
-                  <button type="button" onClick={() => retirerOption(i)} style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}>
-                    ✕
-                  </button>
-                </div>
-
-                {estCouleur ? (
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    {COULEURS_PALETTE.map(c => {
-                      const selectionnee = v.valeurs.includes(c.nom)
-                      return (
-                        <button
-                          key={c.nom} type="button" onClick={() => toggleValeur(i, c.nom)}
-                          title={c.nom}
-                          style={{
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                            background: 'none', border: 'none', cursor: 'pointer', padding: 2,
-                          }}
-                        >
-                          <span style={{
-                            width: 28, height: 28, borderRadius: '50%', background: c.hex,
-                            border: selectionnee ? '3px solid #C75B00' : '2px solid #d1d5db',
-                            boxShadow: c.hex === '#ffffff' ? 'inset 0 0 0 1px #e5e7eb' : undefined,
-                            display: 'block',
-                          }} />
-                          <span style={{ fontSize: 10, color: selectionnee ? '#C75B00' : '#6b7280', fontWeight: selectionnee ? 700 : 500 }}>{c.nom}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                ) : type ? (
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {type.suggestions.map(val => {
-                      const selectionnee = v.valeurs.includes(val)
-                      return (
-                        <button
-                          key={val} type="button" onClick={() => toggleValeur(i, val)}
-                          style={{
-                            padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                            border: selectionnee ? '2px solid #C75B00' : '1px solid #d1d5db',
-                            background: selectionnee ? '#fff7f0' : '#fff',
-                            color: selectionnee ? '#C75B00' : '#374151',
-                          }}
-                        >
-                          {val}
-                        </button>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <ValeursLibres valeurs={v.valeurs} onAjouter={val => toggleValeur(i, val)} onRetirer={val => toggleValeur(i, val)} />
-                )}
-              </div>
-            )
-          })}
-
-          {typesDisponibles.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: variantes.length > 0 ? 12 : 0 }}>
-              {typesDisponibles.map(t => (
-                <button
-                  key={t.id} type="button" onClick={() => ajouterOption(t.id)}
-                  style={{ background: 'none', border: '1px dashed #d1d5db', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}
-                >
-                  + {t.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Description */}
-      {!modeRapide && (
-        <div>
-          <label style={labelStyle}>{t('shop.descriptionLabel')}</label>
-          <textarea
-            name="description"
-            rows={3}
-            value={descForm}
-            onChange={e => setDescForm(e.target.value)}
-            style={{ ...inputStyle, resize: 'vertical' }}
-            placeholder="Détails supplémentaires, accessoires inclus, garantie…"
-          />
-        </div>
-      )}
-
-      {/* Prix de Vente, Quantité en stock, Prix d'Achat (Coût) & Prix Barré */}
-      <div className={modeRapide ? '' : 'bq-form-grid-2'} style={{ display: 'grid', gridTemplateColumns: modeRapide ? 'repeat(auto-fit, minmax(130px, 1fr))' : 'repeat(auto-fit, minmax(135px, 1fr))', gap: 10, alignItems: 'end' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
-            <span>{t('shop.productPrice')} (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></span>
-          </label>
-          <input
-            name="prix"
-            type="number"
-            min={0}
-            value={prixForm}
-            onChange={e => setPrixForm(e.target.value)}
-            style={inputStyle}
-            placeholder="Ex: 15 000 (Vente)"
-          />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
-            <span>📦 Quantité en stock <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></span>
-          </label>
-          <input
-            name="stock_quantite"
-            type="number"
-            min={0}
-            value={stockQuantiteForm}
-            onChange={e => {
-              setStockQuantiteForm(e.target.value)
-              if (Number(e.target.value) > 0) setEnStock(true)
-              else if (e.target.value === '0') setEnStock(false)
-            }}
-            style={{
-              ...inputStyle,
-              borderColor: stockQuantiteForm && Number(stockQuantiteForm) > 0 ? '#86efac' : undefined,
-              background: stockQuantiteForm && Number(stockQuantiteForm) > 0 ? '#f0fdf4' : undefined,
-              fontWeight: 700
-            }}
-            placeholder="Ex: 50 (Unités)"
-            title="Nombre d'unités disponibles en stock (utilisé pour les alertes et l'inventaire)"
-          />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
-            <span>Prix d&apos;achat / Coût (FCFA) <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'})</span></span>
-          </label>
-          <input
-            name="prix_achat"
-            type="number"
-            min={0}
-            value={prixAchatForm}
-            onChange={e => setPrixAchatForm(e.target.value)}
-            style={inputStyle}
-            placeholder="Ex: 10 000 (Coût)"
-            title="Utilisé pour calculer vos marges et la valeur de votre stock"
-          />
-        </div>
-        {!modeRapide && (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <label style={{ ...labelStyle, minHeight: 34, display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
-              <span>{t('shop.productPriceStrikethrough')}</span>
-            </label>
-            <input
-              name="prix_barre"
-              type="number"
-              min={0}
-              value={prixBarreForm}
-              onChange={e => setPrixBarreForm(e.target.value)}
-              style={inputStyle}
-              placeholder="Ex: 20 000"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Photos */}
-      <div>
-        <label style={labelStyle}>{t('shop.photosLabel')} <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>({t('common.optional') || 'Optionnel'} — {t('shop.photosHelpText')})</span></label>
-        <div className="photos-zone">
-          {imagesExistantes.length + photos.length < 5 && (
-            <div
-              className="photos-dropzone"
-              onClick={() => fileRef.current?.click()}
-              onKeyDown={e => e.key === 'Enter' && fileRef.current?.click()}
-              tabIndex={0}
-              role="button"
-              aria-label="Ajouter des photos"
-            >
-              <span style={{ fontSize: 28 }}>📷</span>
-              <p>Cliquez pour ajouter des photos (Optionnel)</p>
-            </div>
-          )}
-          <input
-            ref={fileRef}
-            name="photos"
-            type="file"
-            accept="image/*"
-            multiple
-            style={{ display: 'none' }}
-            onChange={handlePhotos}
-          />
-
-          {(imagesExistantes.length > 0 || previews.length > 0) && (
-            <div className="photos-previews">
-              {imagesExistantes.map((src, i) => (
-                <div key={`existante-${i}`} className="photo-thumb">
-                  <ExternalImg src={src} alt={`Photo ${i + 1}`} />
-                  <button type="button" className="photo-remove" onClick={() => removeImageExistante(i)} aria-label="Supprimer">✕</button>
-                </div>
-              ))}
-              {previews.map((src, i) => (
-                <div key={`nouvelle-${i}`} className="photo-thumb">
-                  <ExternalImg src={src} alt={`Nouvelle photo ${i + 1}`} />
-                  <button type="button" className="photo-remove" onClick={() => removeNouvellePhoto(i)} aria-label="Supprimer">✕</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {modeRapide && (
-        <button
-          type="button"
-          onClick={() => setModeRapide(false)}
-          style={{ background: 'none', border: 'none', color: '#1d4ed8', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: 0 }}
-        >
-          Voir tous les champs (description, caractéristiques…)
-        </button>
-      )}
-
-      {/* En stock toggle */}
-      <input type="hidden" name="en_stock" value={enStock ? 'true' : 'false'} />
-      {!modeRapide && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button type="button" onClick={() => setEnStock(!enStock)} style={{
-            width: 40, height: 22, borderRadius: 11, border: 'none', cursor: 'pointer',
-            background: enStock ? '#16a34a' : '#d1d5db', transition: 'background .2s', position: 'relative',
-          }}>
-            <span style={{
-              position: 'absolute', top: 3, left: enStock ? 20 : 4,
-              width: 16, height: 16, borderRadius: '50%', background: '#fff',
-              transition: 'left .2s', display: 'block',
-            }} />
-          </button>
-          <span style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>
-            {enStock
-              ? (stockQuantiteForm && Number(stockQuantiteForm) > 0 ? `✅ En stock (${stockQuantiteForm} pcs)` : `✅ ${t('shop.inStock')}`)
-              : `❌ ${t('shop.outOfStock')}`}
-          </span>
-        </div>
-      )}
-
+      {/* ── BARRE D'ACTION STICKY EN BAS ─────────────────────────────────── */}
       <div style={{
         position: 'sticky',
         bottom: 12,
         zIndex: 40,
         background: '#ffffff',
-        padding: '12px 16px',
-        borderRadius: 12,
-        boxShadow: '0 4px 18px rgba(0,0,0,0.12)',
-        border: '1px solid #e5e7eb',
+        padding: '14px 18px',
+        borderRadius: 14,
+        boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+        border: '1.5px solid #cbd5e1',
         display: 'flex',
         gap: 12,
         alignItems: 'center',
         marginTop: 16,
         marginBottom: 20,
       }}>
-        <SubmitButton label={produit ? `💾 ${t('shop.saveProductBtn')}` : `➕ ${t('shop.newProduct')}`} />
+        <div style={{ flex: 1 }}>
+          <SubmitButton label={produit ? `💾 ${t('shop.saveProductBtn')}` : `🚀 Mettre en vente (10s)`} />
+        </div>
         <button type="button" onClick={onCancel} style={{
-          padding: '10px 20px', background: '#f3f4f6', border: '1px solid #d1d5db',
-          borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer',
+          minHeight: 48, padding: '0 20px', background: '#f1f5f9', border: '1.5px solid #cbd5e1',
+          borderRadius: 10, fontSize: 14, fontWeight: 700, color: '#475569', cursor: 'pointer',
         }}>
           {t('common.cancel')}
         </button>
@@ -6341,6 +6378,20 @@ export default function BoutiqueClient({
   useEffect(() => {
     setDashboardOffline(!isReallyOnline);
   }, [isReallyOnline]);
+
+  const [showProductTour, setShowProductTour] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const tourDone = localStorage.getItem('nopalou_merchant_tour_done')
+        if (!tourDone && boutiques.length > 0) {
+          const t = setTimeout(() => setShowProductTour(true), 1200)
+          return () => clearTimeout(t)
+        }
+      } catch (e) {}
+    }
+  }, [boutiques.length])
   // ── Plan actif : persistance offline ─────────────────────────────────────────
   // Sauvegarde le plan dès qu'il est connu (online) et le restaure depuis le
   // cache lorsque la prop serveur est null (mode hors-ligne / page non-SSR).
@@ -6679,6 +6730,29 @@ export default function BoutiqueClient({
             <span>{t('shop.openPosBtn')}</span>
           </Link>
 
+          <button
+            type="button"
+            onClick={() => setShowProductTour(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '10px 14px',
+              borderRadius: 10,
+              background: '#ffffff',
+              border: '1.5px solid #e2e8f0',
+              color: '#334155',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title="Revoir le guide de démarrage en 3 étapes"
+          >
+            <span>💡</span>
+            <span>Guide 3 étapes</span>
+          </button>
+
           {canCreate && (
             <button onClick={() => setMode('create')} style={{
               display: 'inline-flex',
@@ -6775,6 +6849,19 @@ export default function BoutiqueClient({
           <span>📡</span> Mode Hors-Ligne (Données en cache)
         </div>
       )}
+
+      {/* Product Tour Onboarding Marchand (Audit 94+/100) */}
+      <ProductTourModal
+        isOpen={showProductTour}
+        onClose={() => setShowProductTour(false)}
+        onAjouterProduitDirect={() => {
+          setShowProductTour(false)
+          if (boutiquesList.length > 0) {
+            setMode({ managing: boutiquesList[0] })
+            router.push(`/boutique?manage=${boutiquesList[0].id}&tab=produits`)
+          }
+        }}
+      />
     </main>
   )
 }

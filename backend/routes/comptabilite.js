@@ -1135,6 +1135,21 @@ router.patch(
             console.error('[AUTO PAYOUT WAVE ERR]:', autoErr.message);
           }
         }
+
+        // Déclencher le suivi de fidélité automatique (Audit 94+/100 : Coupon 10% au 5ème achat)
+        if (commande.client_telephone) {
+          try {
+            const { traiterFideliteApresVente } = require('../services/fidelite-whatsapp');
+            traiterFideliteApresVente(req.params.boutiqueId, {
+              telephone: commande.client_telephone,
+              nom: commande.client_nom,
+              montant: commande.montant_total,
+              referenceVente: commande.reference || `CMD-${commande.id}`
+            }).catch(err => console.warn('[FIDELITE CMD HOOK ERR]:', err.message));
+          } catch (fidErr) {
+            console.warn('[FIDELITE HOOK LOAD ERR]:', fidErr.message);
+          }
+        }
       }
 
       // Notifier le client du changement de statut sur WhatsApp avec garantie 24H Meta
