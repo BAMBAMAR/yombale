@@ -96,7 +96,7 @@ router.post('/webhook', verifyHmac, async (req, res) => {
             const dest = statusObj.recipient_id;
             const wamid = statusObj.id;
             if (dest) {
-              await pool.query(
+              const resLog = await pool.query(
                 `UPDATE prospection_messages_log
                  SET statut = 'echec', erreur = $1
                  WHERE id = (
@@ -105,9 +105,53 @@ router.post('/webhook', verifyHmac, async (req, res) => {
                      AND created_at > NOW() - INTERVAL '2 hours'
                    ORDER BY (meta_message_id = $4) DESC, created_at DESC
                    LIMIT 1
-                 )`,
+                 )
+                 RETURNING lead_id, campagne_id`,
                 [humanReason, dest, dest.replace(/^221/, ''), wamid]
               );
+
+              // Réconciliation automatique en temps réel des leads et des campagnes
+              const updatedLog = resLog.rows[0];
+              if (updatedLog && updatedLog.lead_id) {
+                const { rows: otherSuccess } = await pool.query(
+                  `SELECT 1 FROM prospection_messages_log 
+                   WHERE lead_id = $1 AND statut IN ('envoye', 'livre', 'lu') 
+                   LIMIT 1`,
+                  [updatedLog.lead_id]
+                );
+
+                if (otherSuccess.length === 0) {
+                  if (errCode === 131026 || errCode === 131051) {
+                    await pool.query(
+                      `UPDATE prospection_leads 
+                       SET statut = 'invalide', nb_contacts = 0, dernier_contact_at = NULL, updated_at = NOW() 
+                       WHERE id = $1 AND statut = 'contacte_wa'`,
+                      [updatedLog.lead_id]
+                    );
+                  } else {
+                    await pool.query(
+                      `UPDATE prospection_leads 
+                       SET statut = 'nouveau', nb_contacts = 0, dernier_contact_at = NULL, updated_at = NOW() 
+                       WHERE id = $1 AND statut = 'contacte_wa'`,
+                      [updatedLog.lead_id]
+                    );
+                  }
+                }
+
+                // Ajuster les stats de la campagne si rattachée
+                if (updatedLog.campagne_id) {
+                  await pool.query(
+                    `UPDATE prospection_campagnes
+                     SET nb_succes = GREATEST(0, nb_succes - 1),
+                         nb_echecs = nb_echecs + 1,
+                         taux_delivrabilite = CASE WHEN (nb_succes + nb_echecs) > 0 
+                           THEN ROUND((GREATEST(0, nb_succes - 1)::numeric / (nb_succes + nb_echecs)::numeric) * 100, 2)
+                           ELSE 0 END
+                     WHERE id = $1`,
+                    [updatedLog.campagne_id]
+                  );
+                }
+              }
             }
           } catch (dbErr) {
             console.error('[WHATSAPP STATUS DB ERR]:', dbErr.message);
