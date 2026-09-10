@@ -100,6 +100,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [isListeningVoice, setIsListeningVoice] = useState(false)
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
   const voiceRecognitionRef = useRef<any>(null)
+  const [showGuideCarnet, setShowGuideCarnet] = useState(false)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -540,8 +541,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     if (client) {
       setClientSelectionne(client)
       chargerHistoriqueClient(client.id)
-    } else if (!clientSelectionne && clients.length > 0) {
+    } else if (clientSelectionne) {
+      chargerHistoriqueClient(clientSelectionne.id)
+    } else if (clients.length > 0) {
       setClientSelectionne(clients[0])
+      chargerHistoriqueClient(clients[0].id)
+    } else {
+      // Aucun client n'a encore été créé
+      setShowModalNouveauClient(true)
+      return
     }
     setTypeTransaction(type)
     setMontantManuel('')
@@ -1563,6 +1571,77 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           </div>
         )}
 
+        {/* Guide d'aide Pédagogique Rapide Dépliable */}
+        <div style={{
+          background: '#f8fafc',
+          border: '1.5px solid #e2e8f0',
+          borderRadius: 14,
+          padding: '12px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+          boxSizing: 'border-box',
+          width: '100%'
+        }}>
+          <div
+            onClick={() => setShowGuideCarnet(!showGuideCarnet)}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18 }}>💡</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                Comment fonctionne le Carnet de Dettes &amp; Crédits ?
+              </span>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#0284c7' }}>
+              {showGuideCarnet ? '▲ Masquer' : '▼ Comprendre en 30 secondes'}
+            </span>
+          </div>
+
+          {showGuideCarnet && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gap: 12,
+              paddingTop: 8,
+              borderTop: '1px solid #e2e8f0'
+            }}>
+              <div style={{ background: '#ffffff', borderRadius: 10, padding: 12, border: '1px solid #fed7aa' }}>
+                <div style={{ fontWeight: 800, fontSize: 13, color: '#c2410c', marginBottom: 4 }}>
+                  1. Donner à crédit (Bor) 📦
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
+                  Cliquez sur <strong>+ Vente crédit</strong>. Le client prend des articles sans payer : son solde devient rouge (<strong>« Doit X FCFA »</strong>).
+                </p>
+              </div>
+
+              <div style={{ background: '#ffffff', borderRadius: 10, padding: 12, border: '1px solid #bbf7d0' }}>
+                <div style={{ fontWeight: 800, fontSize: 13, color: '#15803d', marginBottom: 4 }}>
+                  2. Rembourser (Fey bor) 💵
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
+                  Quand le client vient verser de l'argent, cliquez sur <strong>Encaisser / Rembourser</strong>. Sa dette diminue jusqu'à <strong>0 FCFA (À jour)</strong>.
+                </p>
+              </div>
+
+              <div style={{ background: '#ffffff', borderRadius: 10, padding: 12, border: '1px solid #bae6fd' }}>
+                <div style={{ fontWeight: 800, fontSize: 13, color: '#0369a1', marginBottom: 4 }}>
+                  3. Avance ou Relance WhatsApp 📲
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
+                  S'il verse une provision, son solde devient vert (<strong>« Avance »</strong>). En 1 clic sur l'icône WhatsApp, envoyez un rappel poli avec le solde exact.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Cartes KPI Épurées */}
         <div style={{
           display: 'grid',
@@ -1795,23 +1874,23 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           </div>
         )}
 
-        <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+        <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', alignItems: 'center' }}>
           {[
-            { id: 'tous', label: `${t('common.all')} (${clients.length})` },
-            { id: 'retard', label: `🔴 ${t('shop.filterDebtors')} (${nbClientsDebiteurs})` },
-            { id: 'credits', label: `🟢 ${t('shop.filterAdvances')}` },
+            { id: 'tous', label: `Tous (${clients.length})` },
+            { id: 'retard', label: `🔴 Doivent la boutique (${nbClientsDebiteurs})` },
+            { id: 'credits', label: `🟢 En avance (${clients.filter(c => Number(c.solde) < 0).length})` },
           ].map(f => (
             <button
               key={f.id}
               onClick={() => setFiltreStatus(f.id as any)}
               style={{
-                padding: '7px 12px',
+                padding: '7px 14px',
                 borderRadius: 20,
                 border: filtreStatus === f.id ? '2px solid var(--navy)' : '1px solid var(--border)',
                 background: filtreStatus === f.id ? 'var(--navy)' : 'var(--card)',
                 color: filtreStatus === f.id ? '#ffffff' : 'var(--text2)',
-                fontSize: 12,
-                fontWeight: 700,
+                fontSize: 12.5,
+                fontWeight: 750,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 minHeight: 34,
@@ -1924,7 +2003,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           color: estDebiteur ? '#dc2626' : estAvance ? '#16a34a' : 'var(--text2)',
                           fontVariantNumeric: 'tabular-nums'
                         }}>
-                          {estDebiteur ? `+ ${fcfa(soldeNum)}` : estAvance ? `- ${fcfa(Math.abs(soldeNum))}` : '0 FCFA'}
+                          {estDebiteur ? `Doit : ${fcfa(soldeNum)}` : estAvance ? `Avance : ${fcfa(Math.abs(soldeNum))}` : '0 FCFA (À jour)'}
                         </div>
                         <div style={{ marginTop: 4 }}>
                           {estDebiteur ? (
@@ -2195,7 +2274,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   fontWeight: 900,
                   color: Number(clientSelectionne.solde) > 0 ? '#dc2626' : Number(clientSelectionne.solde) < 0 ? '#16a34a' : '#0f172a'
                 }}>
-                  {fcfa(clientSelectionne.solde)}
+                  {Number(clientSelectionne.solde) > 0 ? `Doit : ${fcfa(clientSelectionne.solde)}` : Number(clientSelectionne.solde) < 0 ? `Avance : ${fcfa(Math.abs(Number(clientSelectionne.solde)))}` : '0 FCFA (À jour)'}
                 </div>
               </div>
             </div>
@@ -2679,9 +2758,35 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 <h3 style={{ margin: 0, fontSize: isMobile ? 15.5 : 18, fontWeight: 900, color: '#0f172a' }}>
                   {typeTransaction === 'vente_credit' ? t('shop.newCreditSaleModalTitle') : t('shop.collectRepaymentModalTitle')}
                 </h3>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
-                  {t('shop.clientLabel')} : <strong>{clientSelectionne.nom}</strong> ({clientSelectionne.telephone})
-                </p>
+                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 12.5, color: '#475569', fontWeight: 700 }}>👤 Client :</span>
+                  <select
+                    value={clientSelectionne.id}
+                    onChange={(e) => {
+                      const c = clients.find(cl => cl.id === e.target.value)
+                      if (c) {
+                        setClientSelectionne(c)
+                        chargerHistoriqueClient(c.id)
+                      }
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 8,
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: 12.5,
+                      fontWeight: 800,
+                      background: '#fff',
+                      color: '#0f172a',
+                      maxWidth: 280
+                    }}
+                  >
+                    {clients.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.nom} ({c.telephone}) — {Number(c.solde) > 0 ? `Doit ${fcfa(c.solde)}` : Number(c.solde) < 0 ? `Avance ${fcfa(Math.abs(c.solde))}` : 'À jour (0 F)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <button
                 type="button"
