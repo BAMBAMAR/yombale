@@ -265,7 +265,11 @@ export default function ProspectionClient({
       const data = await res.json()
       if (res.ok && data.success) {
         setAutoCollecteResult(data)
-        showToast(`🎉 Collecte terminée : +${data.totalAjoutes} nouveaux commerces ajoutés !`)
+        if (data.totalAjoutes > 0) {
+          showToast(`🎉 Collecte terminée : +${data.totalAjoutes} nouveaux commerces ajoutés !`)
+        } else {
+          showToast(`ℹ️ Base déjà à jour : ${data.totalTraites || 0} commerces géolocalisés vérifiés (tous déjà présents)`)
+        }
         await reloadLeads()
       } else {
         showToast(`❌ Erreur: ${data.error || 'Échec de la collecte'}`)
@@ -1715,11 +1719,16 @@ Boutique Parcelles, 70 111 22 33`}
               {autoCollecteResult && (
                 <div style={{
                   marginTop: 16, padding: '12px 16px', borderRadius: 10,
-                  background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)',
+                  background: (autoCollecteResult.totalAjoutes || 0) > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                  border: `1px solid ${(autoCollecteResult.totalAjoutes || 0) > 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
                   fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8
                 }}>
                   <span>
-                    🎉 <strong>{autoCollecteResult.totalAjoutes} nouveaux commerces ajoutés</strong> avec succès dans votre base CRM ! ({autoCollecteResult.totalIgnores} doublons/invalides filtrés)
+                    {(autoCollecteResult.totalAjoutes || 0) > 0 ? (
+                      <>🎉 <strong>+{autoCollecteResult.totalAjoutes} nouveaux commerces ajoutés</strong> avec succès dans votre base CRM ! ({autoCollecteResult.totalIgnores} déjà présents ou filtrés)</>
+                    ) : (
+                      <>ℹ️ <strong>Votre base CRM est 100% à jour !</strong> Les {autoCollecteResult.totalTraites || autoCollecteResult.totalIgnores || 0} commerces analysés sont déjà tous enregistrés dans votre base sans doublon.</>
+                    )}
                   </span>
                   <span style={{ fontSize: 11, opacity: 0.8 }}>
                     ⚡ Exécuté en {Math.round(autoCollecteResult.dureeMs / 100) / 10}s • RAM: +{autoCollecteResult.ramDeltaMb} Mo
@@ -2195,23 +2204,27 @@ Boutique Parcelles, 70 111 22 33`}
                           <th style={{ padding: '10px 12px', fontWeight: 800 }}>Date</th>
                           <th style={{ padding: '10px 12px', fontWeight: 800 }}>Titre</th>
                           <th style={{ padding: '10px 12px', fontWeight: 800 }}>Statut</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Ciblés</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Envoyés</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Succès</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Échecs</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Diagnostic</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800, textAlign: 'center' }}>Ciblés</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800, textAlign: 'center' }}>Envoyés</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800, textAlign: 'center' }}>Succès</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800, textAlign: 'center' }}>Échecs</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800, textAlign: 'center' }}>Réponses</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800, textAlign: 'center' }}>Conversions</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Diagnostic &amp; Événements</th>
                         </tr>
                       </thead>
                       <tbody>
                         {campagnesList.slice(0, 20).map((c: any) => {
                           const diag = c.diagnostic || {}
                           const isZeroSend = c.statut === 'terminee' && (c.nb_envoyes || 0) === 0 && (c.nb_succes || 0) === 0
+                          const nbReps = c.nb_reponses || c.nb_en_discussion || diag.nb_reponses || 0
+                          const nbConv = c.nb_convertis || diag.nb_convertis || 0
                           return (
                             <tr key={c.id} style={{ borderBottom: '1px solid #F1F5F9', background: isZeroSend ? '#FFF7ED' : undefined }}>
                               <td style={{ padding: '10px 12px', color: '#64748B', whiteSpace: 'nowrap' }}>
                                 {new Date(c.created_at).toLocaleString('fr-FR')}
                               </td>
-                              <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1C2B4A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1C2B4A', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {c.titre}
                               </td>
                               <td style={{ padding: '10px 12px' }}>
@@ -2227,7 +2240,25 @@ Boutique Parcelles, 70 111 22 33`}
                               <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center', color: (c.nb_envoyes || 0) > 0 ? '#2563EB' : '#94A3B8' }}>{c.nb_envoyes || 0}</td>
                               <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center', color: (c.nb_succes || 0) > 0 ? '#16A34A' : '#94A3B8' }}>{c.nb_succes || 0}</td>
                               <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center', color: (c.nb_echecs || 0) > 0 ? '#DC2626' : '#94A3B8' }}>{c.nb_echecs || 0}</td>
-                              <td style={{ padding: '10px 12px', fontSize: 11, color: isZeroSend ? '#B45309' : '#64748B', maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center' }}>
+                                {nbReps > 0 ? (
+                                  <span style={{ background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800 }}>
+                                    💬 {nbReps}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#94A3B8' }}>0</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center' }}>
+                                {nbConv > 0 ? (
+                                  <span style={{ background: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800 }}>
+                                    🏪 {nbConv} boutique{nbConv > 1 ? 's' : ''}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#94A3B8' }}>—</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '10px 12px', fontSize: 11, color: isZeroSend ? '#B45309' : '#64748B', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {diag.message || (isZeroSend ? 'Tous les prospects étaient déjà contactés' : diag.nb_ignores ? `${diag.nb_ignores} doublons ignorés` : '—')}
                               </td>
                             </tr>

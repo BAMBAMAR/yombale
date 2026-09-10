@@ -427,6 +427,8 @@ router.get('/campagnes', adminOnly, async (_req, res) => {
         END AS taux_delivrabilite,
         COALESCE(c.nb_reponses, 0)::int AS nb_reponses,
         COALESCE(c.nb_reponses_positives, 0)::int AS nb_reponses_positives,
+        COALESCE(conv.nb_convertis, 0)::int AS nb_convertis,
+        COALESCE(conv.nb_en_discussion, 0)::int AS nb_en_discussion,
         c.created_at,
         c.date_fin,
         jsonb_build_object(
@@ -434,7 +436,13 @@ router.get('/campagnes', adminOnly, async (_req, res) => {
           'nb_lus', COALESCE(l.nb_lus, 0),
           'nb_livres', COALESCE(l.nb_livres, 0),
           'nb_echecs', COALESCE(l.nb_echecs, c.nb_echecs, 0),
+          'nb_reponses', COALESCE(c.nb_reponses, 0),
+          'nb_convertis', COALESCE(conv.nb_convertis, 0),
           'message', CASE 
+            WHEN COALESCE(conv.nb_convertis, 0) > 0
+              THEN CONCAT('🎉 ', COALESCE(conv.nb_convertis, 0), ' boutique(s) créée(s) ! • ', COALESCE(l.nb_succes, c.nb_succes, 0), ' délivrés')
+            WHEN COALESCE(conv.nb_en_discussion, 0) > 0 OR COALESCE(c.nb_reponses, 0) > 0
+              THEN CONCAT('💬 ', GREATEST(COALESCE(c.nb_reponses, 0), COALESCE(conv.nb_en_discussion, 0)), ' réponse(s) / discussion(s) en cours • ', COALESCE(l.nb_succes, c.nb_succes, 0), ' délivrés')
             WHEN COALESCE(l.total_logs, c.nb_envoyes, 0) = 0 AND COALESCE((c.diagnostic->>'nb_ignores')::int, 0) > 0 
               THEN 'Tous les prospects étaient déjà contactés (anti-doublon)'
             WHEN COALESCE(l.nb_echecs, c.nb_echecs, 0) > 0 
@@ -460,6 +468,16 @@ router.get('/campagnes', adminOnly, async (_req, res) => {
         WHERE campagne_id IS NOT NULL
         GROUP BY campagne_id
       ) l ON l.campagne_id = c.id
+      LEFT JOIN (
+        SELECT 
+          l.campagne_id,
+          COUNT(DISTINCT l.lead_id) FILTER (WHERE p.statut = 'converti') AS nb_convertis,
+          COUNT(DISTINCT l.lead_id) FILTER (WHERE p.statut = 'en_discussion') AS nb_en_discussion
+        FROM prospection_messages_log l
+        JOIN prospection_leads p ON l.lead_id = p.id
+        WHERE l.campagne_id IS NOT NULL
+        GROUP BY l.campagne_id
+      ) conv ON conv.campagne_id = c.id
       ORDER BY c.created_at DESC
       LIMIT 50
     `);
