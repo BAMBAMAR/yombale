@@ -385,12 +385,68 @@ router.get('/dorking', adminOnly, (req, res) => {
 });
 
 // ── GET /api/prospection/campagnes ────────────────────────────────────────────
-// Liste des campagnes de prospection
+// Liste des campagnes de prospection réconciliée en direct avec les logs réels
 router.get('/campagnes', adminOnly, async (_req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT * FROM prospection_campagnes
-      ORDER BY created_at DESC
+      SELECT 
+        c.id,
+        c.titre,
+        c.canal,
+        CASE 
+          WHEN c.statut = 'en_cours' AND (COALESCE(l.total_logs, 0) >= c.nb_total OR c.created_at < NOW() - INTERVAL '15 minutes')
+          THEN 'terminee'
+          ELSE c.statut
+        END AS statut,
+        c.template_message,
+        c.sujet_email,
+        c.nb_total,
+        COALESCE(l.total_logs, c.nb_envoyes, 0)::int AS nb_envoyes,
+        COALESCE(l.nb_succes, c.nb_succes, 0)::int AS nb_succes,
+        COALESCE(l.nb_echecs, c.nb_echecs, 0)::int AS nb_echecs,
+        COALESCE(l.nb_lus, 0)::int AS nb_lus,
+        COALESCE(l.nb_livres, 0)::int AS nb_livres,
+        CASE 
+          WHEN COALESCE(l.total_logs, c.nb_envoyes, 0) > 0 
+          THEN ROUND((COALESCE(l.nb_succes, c.nb_succes, 0)::numeric / COALESCE(l.total_logs, c.nb_envoyes, 0)::numeric) * 100, 2)
+          ELSE 0 
+        END AS taux_delivrabilite,
+        COALESCE(c.nb_reponses, 0)::int AS nb_reponses,
+        COALESCE(c.nb_reponses_positives, 0)::int AS nb_reponses_positives,
+        c.created_at,
+        c.date_fin,
+        jsonb_build_object(
+          'nb_ignores', COALESCE((c.diagnostic->>'nb_ignores')::int, 0),
+          'nb_lus', COALESCE(l.nb_lus, 0),
+          'nb_livres', COALESCE(l.nb_livres, 0),
+          'nb_echecs', COALESCE(l.nb_echecs, c.nb_echecs, 0),
+          'message', CASE 
+            WHEN COALESCE(l.total_logs, c.nb_envoyes, 0) = 0 AND COALESCE((c.diagnostic->>'nb_ignores')::int, 0) > 0 
+              THEN 'Tous les prospects étaient déjà contactés (anti-doublon)'
+            WHEN COALESCE(l.nb_echecs, c.nb_echecs, 0) > 0 
+              THEN CONCAT(
+                COALESCE(l.nb_succes, c.nb_succes, 0), ' délivrés (', COALESCE(l.nb_lus, 0), ' lus, ', COALESCE(l.nb_livres, 0), ' livrés) • ',
+                COALESCE(l.nb_echecs, c.nb_echecs, 0), ' rejetés par Meta'
+              )
+            WHEN COALESCE(l.total_logs, c.nb_envoyes, 0) > 0 
+              THEN CONCAT(COALESCE(l.nb_succes, c.nb_succes, 0), ' messages délivrés avec succès (100%)')
+            ELSE COALESCE(c.diagnostic->>'message', '—')
+          END
+        ) AS diagnostic
+      FROM prospection_campagnes c
+      LEFT JOIN (
+        SELECT 
+          campagne_id,
+          COUNT(*) AS total_logs,
+          COUNT(*) FILTER (WHERE statut IN ('envoye', 'livre', 'lu')) AS nb_succes,
+          COUNT(*) FILTER (WHERE statut = 'echec') AS nb_echecs,
+          COUNT(*) FILTER (WHERE statut = 'lu') AS nb_lus,
+          COUNT(*) FILTER (WHERE statut = 'livre') AS nb_livres
+        FROM prospection_messages_log
+        WHERE campagne_id IS NOT NULL
+        GROUP BY campagne_id
+      ) l ON l.campagne_id = c.id
+      ORDER BY c.created_at DESC
       LIMIT 50
     `);
     res.json({ campagnes: rows });

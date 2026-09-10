@@ -1800,12 +1800,40 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     }
   }
 
-  // Clôturer la campagne avec ses statistiques en base
+  // Clôturer la campagne avec ses statistiques en base réconciliées depuis les logs
   if (campagneId) {
     try {
-      const diagnosticCampagne = nbIgnores > 0 && nbSucces === 0 && nbEchecs === 0
-        ? { message: `Tous les ${nbIgnores} prospects ciblés avaient déjà été contactés. Aucun nouveau message envoyé.`, raison: 'doublons_bloques', nb_ignores: nbIgnores }
-        : { nb_ignores: nbIgnores };
+      const { rows: statsLogs } = await pool.query(`
+        SELECT 
+          COUNT(*)::int as total,
+          COUNT(*) FILTER (WHERE statut IN ('envoye', 'livre', 'lu'))::int as succes,
+          COUNT(*) FILTER (WHERE statut = 'echec')::int as echecs,
+          COUNT(*) FILTER (WHERE statut = 'lu')::int as lus,
+          COUNT(*) FILTER (WHERE statut = 'livre')::int as livres
+        FROM prospection_messages_log
+        WHERE campagne_id = $1
+      `, [campagneId]);
+
+      const logTotal = statsLogs[0]?.total ?? (nbSucces + nbEchecs);
+      const logSucces = statsLogs[0]?.succes ?? nbSucces;
+      const logEchecs = statsLogs[0]?.echecs ?? nbEchecs;
+      const logLus = statsLogs[0]?.lus ?? 0;
+      const logLivres = statsLogs[0]?.livres ?? 0;
+
+      let msgDiag = nbIgnores > 0 && logTotal === 0
+        ? `Tous les ${nbIgnores} prospects ciblés avaient déjà été contactés (anti-doublon).`
+        : logEchecs > 0
+          ? `${logSucces} délivrés (${logLus} lus, ${logLivres} livrés) • ${logEchecs} rejetés par Meta`
+          : `${logSucces} messages délivrés avec succès (100%)`;
+
+      const diagnosticCampagne = {
+        message: msgDiag,
+        nb_ignores: nbIgnores,
+        nb_lus: logLus,
+        nb_livres: logLivres,
+        nb_echecs: logEchecs,
+      };
+
       await pool.query(`
         UPDATE prospection_campagnes
         SET
@@ -1817,7 +1845,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           diagnostic = $5::jsonb,
           date_fin = NOW()
         WHERE id = $4
-      `, [nbSucces + nbEchecs, nbSucces, nbEchecs, campagneId, JSON.stringify(diagnosticCampagne)]);
+      `, [logTotal, logSucces, logEchecs, campagneId, JSON.stringify(diagnosticCampagne)]);
     } catch (cmpCloseErr) {
       console.warn('[PROSPECTION] Fermeture campagne warning:', cmpCloseErr.message);
     }
