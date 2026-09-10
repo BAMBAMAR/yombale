@@ -1661,6 +1661,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     const messageFinal = interpolerMessage(templateAdapte, lead);
     let statutEnvoi = simulation ? 'simule' : 'echec';
     let erreurEnvoi = null;
+    let metaMessageId = null;
 
     if (!simulation) {
       if (canal === 'whatsapp') {
@@ -1694,7 +1695,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           }
           
           // Vérification que Meta a bien accepté et retourné un message ID (wamid)
-          const metaMessageId = metaResponse?.messages?.[0]?.id || null;
+          metaMessageId = metaResponse?.messages?.[0]?.id || null;
           if (metaResponse && metaResponse.success !== false && metaMessageId) {
             statutEnvoi = 'envoye';
             nbSucces++;
@@ -1789,10 +1790,10 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
         UPDATE prospection_campagnes
         SET
           statut = 'terminee',
-          nb_envoyes = $1,
-          nb_succes = $2,
-          nb_echecs = $3,
-          taux_delivrabilite = CASE WHEN $1 > 0 THEN ROUND(($2::numeric / $1) * 100, 2) ELSE 0 END,
+          nb_envoyes = $1::int,
+          nb_succes = $2::int,
+          nb_echecs = $3::int,
+          taux_delivrabilite = CASE WHEN $1::int > 0 THEN ROUND(($2::numeric / $1::numeric) * 100, 2) ELSE 0 END,
           date_fin = NOW()
         WHERE id = $4
       `, [nbSucces + nbEchecs, nbSucces, nbEchecs, campagneId]);
