@@ -75,6 +75,7 @@ export interface TemplateMsg {
 }
 
 export interface DorkingRequete {
+  key?: string
   titre: string
   query: string
   urlGoogle: string

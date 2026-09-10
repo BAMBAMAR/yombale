@@ -253,14 +253,17 @@ export default function ProspectionClient({
     }
   }
 
-  const handleLancerAutoCollecte = async (source: 'all' | 'osm' | 'dorking' = 'all') => {
+  const [collectingTarget, setCollectingTarget] = useState<string | null>(null)
+
+  const handleLancerAutoCollecte = async (source: 'all' | 'osm' | 'dorking' = 'all', target: string = 'all') => {
     setIsAutoCollecting(true)
+    setCollectingTarget(target)
     setAutoCollecteResult(null)
     try {
       const res = await fetch('/api/prospection/auto-collecte', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
-        body: JSON.stringify({ source }),
+        body: JSON.stringify({ source, target }),
       })
       const data = await res.json()
       if (res.ok && data.success) {
@@ -278,6 +281,7 @@ export default function ProspectionClient({
       showToast(`❌ Erreur réseau: ${e.message}`)
     } finally {
       setIsAutoCollecting(false)
+      setCollectingTarget(null)
     }
   }
 
@@ -1737,42 +1741,150 @@ Boutique Parcelles, 70 111 22 33`}
               )}
             </div>
 
-            <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Search size={20} color="#C75B00" /> Requêtes Dorking Manuelles (Google, Instagram, TikTok)
-            </h2>
-            <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px' }}>
-              Ou lancez des recherches manuelles ciblées sur Google, Instagram et TikTok pour inspecter les profils :
-            </p>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap',
+              gap: 12, margin: '0 0 16px'
+            }}>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Zap size={20} color="#F59E0B" /> Auto-Aspiration Directe par Réseaux & Marketplaces (1-Clic)
+                </h2>
+                <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>
+                  Aspirez automatiquement les vendeurs et boutiques de Dakar en base CRM avec numéros WhatsApp vérifiés, sans aucun effort manuel.
+                </p>
+              </div>
+
+              {/* Master Button pour tout aspirer en 1 clic */}
+              <button
+                onClick={() => handleLancerAutoCollecte('dorking', 'all')}
+                disabled={isAutoCollecting}
+                style={{
+                  padding: '10px 18px',
+                  background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontWeight: 900,
+                  fontSize: 13,
+                  cursor: isAutoCollecting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                  transition: 'all 0.2s',
+                  opacity: isAutoCollecting ? 0.7 : 1
+                }}
+              >
+                {isAutoCollecting && (collectingTarget === 'all' || !collectingTarget) ? (
+                  <>
+                    <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                    Aspiration globale en cours...
+                  </>
+                ) : (
+                  <>
+                    <Zap size={16} />
+                    ⚡ TOUT ASPIRER EN 1 CLIC (5 Canaux)
+                  </>
+                )}
+              </button>
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {dorking.map((req, idx) => (
-                <div key={idx} style={{
-                  background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12,
-                  padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }}>
-                  <div>
-                    <strong style={{ fontSize: 13, color: '#1C2B4A', display: 'block', marginBottom: 2 }}>
-                      {req.titre}
-                    </strong>
-                    <span style={{ fontSize: 11, color: '#64748B', fontFamily: 'monospace' }}>
-                      {req.plateforme} · {req.query.slice(0, 45)}...
-                    </span>
-                  </div>
+              {dorking.map((req, idx) => {
+                const isThisTargetCollecting = isAutoCollecting && (collectingTarget === req.key || collectingTarget === 'all')
+                const platformColors: Record<string, { bg: string; text: string; border: string }> = {
+                  Instagram: { bg: '#FDF2F8', text: '#DB2777', border: '#FBCFE8' },
+                  TikTok: { bg: '#F1F5F9', text: '#0F172A', border: '#CBD5E1' },
+                  'Google Maps': { bg: '#EFF6FF', text: '#2563EB', border: '#BFDBFE' },
+                  Facebook: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
+                }
+                const platStyle = platformColors[req.plateforme] || { bg: '#F8FAFC', text: '#475569', border: '#E2E8F0' }
 
-                  <a
-                    href={req.urlGoogle}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      padding: '6px 12px', background: '#FFF7ED', color: '#C75B00',
-                      border: '1px solid #FED7AA', borderRadius: 8, fontSize: 12,
-                      fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4,
-                    }}
-                  >
-                    Ouvrir <ExternalLink size={13} />
-                  </a>
-                </div>
-              ))}
+                return (
+                  <div key={idx} style={{
+                    background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12,
+                    padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    flexWrap: 'wrap', gap: 12,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                  }}>
+                    <div style={{ flex: '1 1 320px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <strong style={{ fontSize: 14, color: '#1C2B4A' }}>
+                          {req.titre}
+                        </strong>
+                        <span style={{
+                          fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 12,
+                          background: platStyle.bg, color: platStyle.text, border: `1px solid ${platStyle.border}`
+                        }}>
+                          {req.plateforme}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 11, color: '#64748B', fontFamily: 'monospace', display: 'block' }}>
+                        {req.query.slice(0, 60)}...
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {/* Bouton d'Aspiration Automatique Directe */}
+                      <button
+                        onClick={() => handleLancerAutoCollecte('dorking', req.key || 'all')}
+                        disabled={isAutoCollecting}
+                        style={{
+                          padding: '8px 14px',
+                          background: isThisTargetCollecting ? '#10B981' : '#1E293B',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 8,
+                          fontSize: 12,
+                          fontWeight: 800,
+                          cursor: isAutoCollecting ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          transition: 'all 0.2s',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        {isThisTargetCollecting ? (
+                          <>
+                            <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                            Aspiration en cours...
+                          </>
+                        ) : (
+                          <>
+                            <Zap size={13} color="#FBBF24" />
+                            ⚡ Aspirer ce canal (IA)
+                          </>
+                        )}
+                      </button>
+
+                      {/* Lien secondaire de recherche Google manuelle pour inspection */}
+                      <a
+                        href={req.urlGoogle}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Ouvrir la recherche sur Google pour inspection manuelle"
+                        style={{
+                          padding: '7px 11px',
+                          background: '#fff',
+                          color: '#64748B',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: 8,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        Inspecter <ExternalLink size={12} />
+                      </a>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

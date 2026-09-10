@@ -1358,30 +1358,35 @@ function genererRequetesDorking(categorie = 'tous', quartier = 'Dakar') {
   const ville = quartier || 'Dakar';
   return [
     {
+      key: 'mode',
       titre: `👗 Vendeurs Mode & Vêtements sur Instagram (${ville})`,
       query: `site:instagram.com ("77" OR "78" OR "76" OR "70") ("${ville}" OR "Sénégal") ("boutique" OR "mode" OR "robe" OR "chaussures" OR "livraison")`,
       urlGoogle: `https://www.google.com/search?q=${encodeURIComponent(`site:instagram.com ("77" OR "78" OR "76" OR "70") ("${ville}" OR "Sénégal") ("boutique" OR "mode" OR "livraison")`)}`,
       plateforme: 'Instagram'
     },
     {
+      key: 'smartphones',
       titre: `📱 Commerces Téléphonie & High-Tech (${ville})`,
       query: `site:tiktok.com ("wa.me" OR "77" OR "78" OR "76") ("${ville}" OR "Sénégal") ("iphone" OR "samsung" OR "téléphone" OR "accessoires")`,
       urlGoogle: `https://www.google.com/search?q=${encodeURIComponent(`site:tiktok.com ("wa.me" OR "77" OR "78" OR "76") ("${ville}" OR "Sénégal") ("téléphone" OR "iphone" OR "accessoires")`)}`,
       plateforme: 'TikTok'
     },
     {
+      key: 'quincaillerie',
       titre: `🔨 Quincailleries & Matériaux (${ville}) sur Google Maps`,
       query: `Quincaillerie matériaux ${ville} Sénégal`,
       urlGoogle: `https://www.google.com/maps/search/${encodeURIComponent(`Quincaillerie matériaux ${ville} Sénégal`)}`,
       plateforme: 'Google Maps'
     },
     {
+      key: 'grossiste',
       titre: `📦 Grossistes & Importateurs Chine-Dakar sur Facebook`,
       query: `site:facebook.com ("groupe" OR "arrivage") ("Chine" OR "Alibaba" OR "Shein") ("Dakar" OR "Sénégal") ("77" OR "78" OR "76")`,
       urlGoogle: `https://www.google.com/search?q=${encodeURIComponent(`site:facebook.com ("arrivage" OR "grossiste") ("Chine" OR "Alibaba") ("Dakar" OR "Sénégal") ("77" OR "78" OR "76")`)}`,
       plateforme: 'Facebook'
     },
     {
+      key: 'beaute',
       titre: `💄 Cosmétique, Beauté & Parfumerie (${ville})`,
       query: `site:instagram.com ("77" OR "78" OR "76") ("${ville}" OR "Sénégal") ("cosmétique" OR "savon" OR "parfum" OR "gamme" OR "soin")`,
       urlGoogle: `https://www.google.com/search?q=${encodeURIComponent(`site:instagram.com ("77" OR "78" OR "76") ("${ville}" OR "Sénégal") ("cosmétique" OR "parfum" OR "beauté")`)}`,
