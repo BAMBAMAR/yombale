@@ -51,6 +51,16 @@ const CAT_ICONS: Record<string, string> = {
   services: '🛠', alimentation: '🥗', beaute: '💄', autre: '🏪',
 }
 
+function getContrastColor(hexColor?: string | null): string {
+  if (!hexColor) return '#ffffff'
+  const cleanHex = hexColor.replace('#', '')
+  const r = parseInt(cleanHex.substring(0, 2), 16) || 0
+  const g = parseInt(cleanHex.substring(2, 4), 16) || 0
+  const b = parseInt(cleanHex.substring(4, 6), 16) || 0
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000
+  return yiq >= 140 ? '#111827' : '#ffffff'
+}
+
 function ProduitCard({
   p,
   boutiqueId,
@@ -58,6 +68,9 @@ function ProduitCard({
   whatsapp,
   viewMode = 'grid',
   onQuickView,
+  couleurTheme = '#C75B00',
+  contrastBtnText = '#ffffff',
+  currentRadius = '10px',
 }: {
   p: Produit
   boutiqueId: string
@@ -65,6 +78,9 @@ function ProduitCard({
   whatsapp?: string | null
   viewMode?: 'grid' | 'list'
   onQuickView: (p: Produit) => void
+  couleurTheme?: string
+  contrastBtnText?: string
+  currentRadius?: string
 }) {
   const { addToCart } = useCart()
   const [addedCart, setAddedCart] = useState(false)
@@ -128,7 +144,7 @@ function ProduitCard({
           )}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 6 }}>
             {displayPrice ? (
-              <span style={{ fontWeight: 900, fontSize: 17, color: 'var(--accent)' }}>
+              <span style={{ fontWeight: 900, fontSize: 17, color: couleurTheme }}>
                 {isVariablePrice ? `Dès ${fcfa(displayPrice)}` : fcfa(displayPrice)}
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)' }}>{uniteSuffix}</span>
               </span>
@@ -142,7 +158,7 @@ function ProduitCard({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
           <button
             onClick={() => onQuickView(p)}
-            style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ padding: '7px 12px', borderRadius: currentRadius, border: '1px solid #d1d5db', background: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
           >
             <Eye size={14} /> Aperçu
           </button>
@@ -157,8 +173,21 @@ function ProduitCard({
               }
             }}
             disabled={!isEnStock}
-            className={`btn-premium ${addedCart ? 'btn-premium-success' : 'btn-premium-primary'}`}
-            style={{ padding: '8px 14px', fontSize: 12, opacity: isEnStock ? 1 : 0.6 }}
+            style={{
+              padding: '8px 14px',
+              fontSize: 12,
+              opacity: isEnStock ? 1 : 0.6,
+              background: addedCart ? '#f0fdf4' : couleurTheme,
+              color: addedCart ? '#166534' : contrastBtnText,
+              borderRadius: currentRadius,
+              border: addedCart ? '1px solid #bbf7d0' : 'none',
+              fontWeight: 800,
+              cursor: isEnStock ? 'pointer' : 'not-allowed',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
           >
             {addedCart ? '✅ Ajouté' : (isEnStock ? (p.variantes && p.variantes.length > 0 ? 'Choisir options' : <><ShoppingCart size={14} /> Ajouter</>) : 'Rupture')}
           </button>
@@ -244,7 +273,7 @@ function ProduitCard({
         )}
         <div style={{ paddingTop: 8, display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
           {displayPrice ? (
-            <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--accent)' }}>
+            <span style={{ fontWeight: 800, fontSize: 16, color: couleurTheme }}>
               {isVariablePrice ? `Dès ${fcfa(displayPrice)}` : fcfa(displayPrice)}
               <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text3)' }}>{uniteSuffix}</span>
             </span>
@@ -268,7 +297,6 @@ function ProduitCard({
             }
           }}
           disabled={!isEnStock}
-          className={`btn-npl ${addedCart ? 'btn-npl-secondary' : 'btn-npl-primary'}`}
           style={{
             width: '100%',
             fontSize: '12.5px',
@@ -276,8 +304,16 @@ function ProduitCard({
             height: 38,
             padding: '0 8px',
             gap: 5,
-            fontWeight: 700,
+            fontWeight: 800,
             letterSpacing: '-0.01em',
+            background: addedCart ? '#f0fdf4' : couleurTheme,
+            color: addedCart ? '#166534' : contrastBtnText,
+            borderRadius: currentRadius,
+            border: addedCart ? '1px solid #bbf7d0' : 'none',
+            cursor: isEnStock ? 'pointer' : 'not-allowed',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           {addedCart ? (
@@ -329,12 +365,26 @@ export default function BoutiqueDetailClient({
     categorie: string | null
     description: string | null
     plan_actif: 'pro' | 'business' | null
+    couleur_theme?: string | null
+    couleur_secondaire?: string | null
+    slogan?: string | null
+    theme_style?: string | null
+    forme_boutons?: string | null
+    bandeau_promo?: string | null
+    bandeau_promo_actif?: boolean
+    message_accueil?: string | null
+    disposition_catalogue?: string | null
   }
   produits: Produit[]
   annonces: Annonce[]
   initialSocialPosts?: SocialPost[]
   initialSocialAccounts?: SocialAccount[]
 }) {
+  const couleurTheme = boutique.couleur_theme || '#C75B00'
+  const contrastBtnText = getContrastColor(couleurTheme)
+  const radiusMap: Record<string, string> = { droit: '4px', squircle: '10px', arrondi: '14px', pill: '9999px' }
+  const currentRadius = radiusMap[boutique.forme_boutons || 'squircle'] || '10px'
+
   const [tab, setTab] = useState<'produits' | 'social' | 'annonces' | 'infos'>('produits')
   const [commanderProduit, setCommanderProduit] = useState<Produit | null>(null)
   const [quickViewProduct, setQuickViewProduct] = useState<Produit | null>(null)
@@ -346,7 +396,8 @@ export default function BoutiqueDetailClient({
   const [priceFilter, setPriceFilter] = useState<string>('')
   const [stockOnly, setStockOnly] = useState(false)
   const [sortOption, setSortOption] = useState<string>('recent')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const defaultViewMode = boutique.disposition_catalogue === 'liste' ? 'list' : 'grid'
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(defaultViewMode)
   
   // 📌 Sticky Bar au défilement
   const [isSticky, setIsSticky] = useState(false)
@@ -457,8 +508,8 @@ export default function BoutiqueDetailClient({
   const tabStyle = (active: boolean) => ({
     padding: '12px 24px', border: 'none', background: 'none', cursor: 'pointer',
     fontSize: 14, fontWeight: active ? 800 : 600,
-    color: active ? '#C75B00' : '#6b7280',
-    borderBottom: active ? '3px solid #C75B00' : '3px solid transparent',
+    color: active ? couleurTheme : '#6b7280',
+    borderBottom: active ? `3px solid ${couleurTheme}` : '3px solid transparent',
     transition: 'all .15s',
   })
 
@@ -500,12 +551,12 @@ export default function BoutiqueDetailClient({
             )}
             <button
               onClick={() => openCart(boutiqueKey, boutique.id)}
-              style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ background: couleurTheme, color: contrastBtnText, border: 'none', borderRadius: currentRadius, padding: '7px 14px', fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
             >
               <ShoppingCart size={15} />
               <span>Panier</span>
               {cartCount > 0 && (
-                <span style={{ background: '#fff', color: '#C75B00', padding: '1px 6px', borderRadius: 10, fontSize: 11, fontWeight: 900 }}>
+                <span style={{ background: '#fff', color: couleurTheme, padding: '1px 6px', borderRadius: 10, fontSize: 11, fontWeight: 900 }}>
                   {cartCount}
                 </span>
               )}
@@ -546,21 +597,21 @@ export default function BoutiqueDetailClient({
         <button
           onClick={() => setTab('produits')}
           style={{
-            flex: '0 0 auto', padding: '8px 14px', borderRadius: 10, border: 'none',
+            flex: '0 0 auto', padding: '8px 14px', borderRadius: currentRadius, border: 'none',
             background: tab === 'produits' ? '#fff' : 'transparent',
-            color: tab === 'produits' ? '#C75B00' : '#64748b',
+            color: tab === 'produits' ? couleurTheme : '#64748b',
             fontWeight: tab === 'produits' ? 900 : 600, fontSize: 12.5, cursor: 'pointer',
             boxShadow: tab === 'produits' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             transition: 'all 0.15s ease', whiteSpace: 'nowrap',
           }}
         >
-          <Tag size={15} style={{ color: tab === 'produits' ? '#C75B00' : '#94a3b8' }} />
+          <Tag size={15} style={{ color: tab === 'produits' ? couleurTheme : '#94a3b8' }} />
           <span>Produits</span>
           {produits.length > 0 && (
             <span style={{
-              background: tab === 'produits' ? '#fff7f0' : '#e2e8f0',
-              color: tab === 'produits' ? '#C75B00' : '#475569',
+              background: tab === 'produits' ? `${couleurTheme}15` : '#e2e8f0',
+              color: tab === 'produits' ? couleurTheme : '#475569',
               padding: '1px 6px', borderRadius: 10, fontSize: 11, fontWeight: 800,
             }}>
               {produits.length}
@@ -571,9 +622,9 @@ export default function BoutiqueDetailClient({
         <button
           onClick={() => setTab('social')}
           style={{
-            flex: '0 0 auto', padding: '8px 14px', borderRadius: 10, border: 'none',
+            flex: '0 0 auto', padding: '8px 14px', borderRadius: currentRadius, border: 'none',
             background: tab === 'social' ? '#fff' : 'transparent',
-            color: tab === 'social' ? '#C75B00' : '#64748b',
+            color: tab === 'social' ? couleurTheme : '#64748b',
             fontWeight: tab === 'social' ? 900 : 600, fontSize: 12.5, cursor: 'pointer',
             boxShadow: tab === 'social' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -584,8 +635,8 @@ export default function BoutiqueDetailClient({
           <span>Autres produits</span>
           {initialSocialPosts.length > 0 && (
             <span style={{
-              background: tab === 'social' ? '#fff7f0' : '#e2e8f0',
-              color: tab === 'social' ? '#C75B00' : '#475569',
+              background: tab === 'social' ? `${couleurTheme}15` : '#e2e8f0',
+              color: tab === 'social' ? couleurTheme : '#475569',
               padding: '1px 6px', borderRadius: 10, fontSize: 11, fontWeight: 800,
             }}>
               {initialSocialPosts.length}
@@ -639,9 +690,29 @@ export default function BoutiqueDetailClient({
       {tab === 'produits' && (
         <div>
 
+          {/* 👋 MESSAGE D'ACCUEIL PERSONNALISÉ */}
+          {boutique.message_accueil && (
+            <div style={{
+              background: boutique.couleur_secondaire || '#f8fafc',
+              border: '1px solid rgba(0,0,0,0.06)',
+              borderRadius: currentRadius,
+              padding: '14px 18px',
+              marginBottom: 14,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            }}>
+              <span style={{ fontSize: 22, flexShrink: 0 }}>👋</span>
+              <p style={{ margin: 0, fontSize: 13.5, color: '#334155', fontWeight: 500, lineHeight: 1.5 }}>
+                {boutique.message_accueil}
+              </p>
+            </div>
+          )}
+
           {/* 🔍 OUTILS DE RECHERCHE, FILTRES ET TRI INTERNE BOUTIQUE */}
           {produits.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 12, padding: '12px 14px', border: '1px solid #e5e7eb', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ background: '#fff', borderRadius: currentRadius, padding: '12px 14px', border: '1px solid #e5e7eb', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
               
               {/* Barre de Recherche Intérieure */}
               <div style={{ position: 'relative', width: '100%' }}>
@@ -653,7 +724,7 @@ export default function BoutiqueDetailClient({
                   placeholder={`Rechercher chez ${boutique.nom}...`}
                   style={{
                     width: '100%', paddingLeft: 38, paddingRight: searchQuery ? 36 : 12, height: 38,
-                    borderRadius: 8, border: '1px solid #d1d5db', fontSize: 13.5, outline: 'none', background: '#f8fafc',
+                    borderRadius: currentRadius, border: '1px solid #d1d5db', fontSize: 13.5, outline: 'none', background: '#f8fafc',
                   }}
                 />
                 {searchQuery && (
@@ -673,7 +744,7 @@ export default function BoutiqueDetailClient({
                     onClick={() => setCatFilter('')}
                     style={{
                       padding: '4px 10px', borderRadius: 16, fontSize: 11.5, fontWeight: !catFilter ? 800 : 600,
-                      background: !catFilter ? '#1e3a5f' : '#f1f5f9', color: !catFilter ? '#fff' : '#374151',
+                      background: !catFilter ? couleurTheme : '#f1f5f9', color: !catFilter ? contrastBtnText : '#374151',
                       border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                     }}
                   >
@@ -685,7 +756,7 @@ export default function BoutiqueDetailClient({
                       onClick={() => setCatFilter(catFilter === c ? '' : c)}
                       style={{
                         padding: '4px 10px', borderRadius: 16, fontSize: 11.5, fontWeight: catFilter === c ? 800 : 600,
-                        background: catFilter === c ? '#1e3a5f' : '#f1f5f9', color: catFilter === c ? '#fff' : '#374151',
+                        background: catFilter === c ? couleurTheme : '#f1f5f9', color: catFilter === c ? contrastBtnText : '#374151',
                         border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                       }}
                     >
@@ -711,8 +782,8 @@ export default function BoutiqueDetailClient({
                       onClick={() => setPriceFilter(priceFilter === p.id ? '' : p.id)}
                       style={{
                         padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: priceFilter === p.id ? 800 : 600,
-                        background: priceFilter === p.id ? '#fff7f0' : '#fff', color: priceFilter === p.id ? '#C75B00' : '#4b5563',
-                        border: priceFilter === p.id ? '1.5px solid #C75B00' : '1px solid #e5e7eb', cursor: 'pointer',
+                        background: priceFilter === p.id ? `${couleurTheme}15` : '#fff', color: priceFilter === p.id ? couleurTheme : '#4b5563',
+                        border: priceFilter === p.id ? `1.5px solid ${couleurTheme}` : '1px solid #e5e7eb', cursor: 'pointer',
                       }}
                     >
                       {p.label}
@@ -749,14 +820,14 @@ export default function BoutiqueDetailClient({
                   <div style={{ display: 'flex', border: '1px solid #d1d5db', borderRadius: 6, overflow: 'hidden' }}>
                     <button
                       onClick={() => setViewMode('grid')}
-                      style={{ padding: '4px 6px', background: viewMode === 'grid' ? '#1e3a5f' : '#fff', color: viewMode === 'grid' ? '#fff' : '#6b7280', border: 'none', cursor: 'pointer' }}
+                      style={{ padding: '4px 6px', background: viewMode === 'grid' ? couleurTheme : '#fff', color: viewMode === 'grid' ? contrastBtnText : '#6b7280', border: 'none', cursor: 'pointer' }}
                       title="Vue Grille"
                     >
                       <Grid size={14} />
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      style={{ padding: '4px 6px', background: viewMode === 'list' ? '#1e3a5f' : '#fff', color: viewMode === 'list' ? '#fff' : '#6b7280', border: 'none', cursor: 'pointer' }}
+                      style={{ padding: '4px 6px', background: viewMode === 'list' ? couleurTheme : '#fff', color: viewMode === 'list' ? contrastBtnText : '#6b7280', border: 'none', cursor: 'pointer' }}
                       title="Vue Liste"
                     >
                       <List size={14} />
@@ -775,7 +846,7 @@ export default function BoutiqueDetailClient({
               {whatsappUrl && (
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
                   style={{ display: 'inline-block', marginTop: 16, background: '#25d366', color: '#fff',
-                    padding: '10px 24px', borderRadius: 10, textDecoration: 'none', fontWeight: 700 }}>
+                    padding: '10px 24px', borderRadius: currentRadius, textDecoration: 'none', fontWeight: 700 }}>
                   💬 Contacter via WhatsApp
                 </a>
               )}
@@ -786,7 +857,7 @@ export default function BoutiqueDetailClient({
               <p style={{ margin: '0 0 12px', fontWeight: 700 }}>Aucun produit ne correspond à vos filtres</p>
               <button
                 onClick={() => { setSearchQuery(''); setCatFilter(''); setPriceFilter(''); setStockOnly(false); }}
-                style={{ background: '#C75B00', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}
+                style={{ background: couleurTheme, color: contrastBtnText, border: 'none', padding: '8px 16px', borderRadius: currentRadius, fontWeight: 700, cursor: 'pointer' }}
               >
                 Réinitialiser tous les filtres
               </button>
@@ -802,6 +873,9 @@ export default function BoutiqueDetailClient({
                   whatsapp={boutique.whatsapp || boutique.telephone}
                   viewMode={viewMode}
                   onQuickView={setQuickViewProduct}
+                  couleurTheme={couleurTheme}
+                  contrastBtnText={contrastBtnText}
+                  currentRadius={currentRadius}
                 />
               ))}
             </div>
@@ -1023,7 +1097,7 @@ export default function BoutiqueDetailClient({
 
             <div style={{ padding: 22 }}>
               <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 900, color: '#111827' }}>{quickViewProduct.nom}</h3>
-              <p style={{ margin: '0 0 14px', fontSize: 20, fontWeight: 900, color: '#C75B00' }}>
+              <p style={{ margin: '0 0 14px', fontSize: 20, fontWeight: 900, color: couleurTheme }}>
                 {quickViewProduct.prix ? fcfa(quickViewProduct.prix) : 'Prix sur demande'}
               </p>
               {quickViewProduct.description && (
@@ -1037,13 +1111,13 @@ export default function BoutiqueDetailClient({
                     setQuickViewProduct(null)
                   }}
                   disabled={!((quickViewProduct.quantite_stock ?? quickViewProduct.stock_quantite) != null ? Number(quickViewProduct.quantite_stock ?? quickViewProduct.stock_quantite) > 0 : quickViewProduct.en_stock !== false)}
-                  style={{ flex: 1, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  style={{ flex: 1, background: couleurTheme, color: contrastBtnText, border: 'none', borderRadius: currentRadius, padding: '12px', fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   <ShoppingCart size={16} /> Ajouter au panier
                 </button>
                 <Link
                   href={`/boutiques/${boutiqueKey}/produits/${quickViewProduct.id}`}
-                  style={{ background: '#f1f5f9', color: '#1e3a5f', padding: '12px 18px', borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}
+                  style={{ background: '#f1f5f9', color: '#1e3a5f', padding: '12px 18px', borderRadius: currentRadius, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}
                 >
                   Voir fiche complète →
                 </Link>
@@ -1052,6 +1126,25 @@ export default function BoutiqueDetailClient({
           </div>
         </div>
       )}
+
+      {/* 🛡️ PIED DE PAGE IDENTITÉ & RÉASSURANCE */}
+      <div style={{
+        marginTop: 48,
+        padding: '24px 16px 36px',
+        borderTop: '1px solid #e5e7eb',
+        textAlign: 'center',
+        color: '#6b7280',
+        fontSize: 12.5,
+      }}>
+        <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#374151' }}>
+          Vitrine officielle de <strong>{boutique.nom}</strong>
+        </p>
+        <p style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span>🔒 Paiements sécurisés Wave & Orange Money</span>
+          <span>•</span>
+          <span>⚡ Propulsé par Nopalou</span>
+        </p>
+      </div>
 
       {/* Modal commande */}
       {commanderProduit && (

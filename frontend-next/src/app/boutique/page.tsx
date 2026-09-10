@@ -25,6 +25,10 @@ interface Boutique {
   sponsorise: boolean | null
   sponsor_jusqu_au: string | null
   created_at: string
+  plan_actif?: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
+  plan_souscrit?: string | null
+  is_trial?: boolean
+  jours_restants_essai?: number
 }
 
 interface PlanActif {
@@ -50,7 +54,12 @@ export default async function BoutiquePage({
       .catch(() => {}),
     backendFetch('/api/abonnements/mon-plan')
       .then(r => r.ok ? r.json() : null)
-      .then((d: { abonnement: { plan: string } | null } | null) => { if (d?.abonnement) planActif = d.abonnement.plan })
+      .then((d: { abonnement: { plan: string; is_trial?: boolean; plan_effectif?: string } | null } | null) => {
+        if (d?.abonnement) {
+          // Pendant l'essai gratuit 1er mois, accès effectif total 'business'
+          planActif = d.abonnement.is_trial ? 'business' : (d.abonnement.plan_effectif || d.abonnement.plan)
+        }
+      })
       .catch(() => {}),
   ])
 

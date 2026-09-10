@@ -4038,8 +4038,8 @@ async function handleIncomingInternal(msg) {
           [userId]
         );
         await pool.query(
-          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
-           VALUES ($1, 'decouverte', 'actif', 2500, $2, $3)`,
+          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref, is_trial)
+           VALUES ($1, 'decouverte', 'actif', 2500, $2, $3, TRUE)`,
           [userId, finEssai, `wa_trial_${normPh}_${Date.now().toString(36)}`]
         );
       } catch (eAbon) {

@@ -17,13 +17,28 @@ async function getPlans() {
 router.get('/mon-plan', verifierToken, async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, plan, statut, prix_mensuel, debut, fin
+      `SELECT id, plan, statut, prix_mensuel, debut, fin,
+              COALESCE(is_trial, false) AS is_trial,
+              GREATEST(0, CEIL(EXTRACT(EPOCH FROM (fin - NOW())) / 86400))::int AS jours_restants
        FROM abonnements
        WHERE utilisateur_id = $1 AND statut = 'actif' AND fin > NOW()
        ORDER BY fin DESC LIMIT 1`,
       [req.user.userId]
     );
-    res.json({ abonnement: rows[0] || null });
+    if (!rows[0]) {
+      return res.json({ abonnement: null });
+    }
+    const abo = rows[0];
+    const isTrial = Boolean(abo.is_trial);
+    res.json({
+      abonnement: {
+        ...abo,
+        is_trial: isTrial,
+        // Pendant l'essai gratuit 1er mois, accès VIP Business total
+        plan_effectif: isTrial ? 'business' : abo.plan,
+        acces_total: isTrial || abo.plan === 'business',
+      }
+    });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

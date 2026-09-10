@@ -166,6 +166,57 @@ router.get('/catalogues-standards', async (req, res) => {
   }
 });
 
+// ── GET /api/boutiques/modeles-couvertures — Bibliothèque de modèles de couvertures HD par catégorie
+router.get('/modeles-couvertures', (req, res) => {
+  const modeles = {
+    mode: [
+      { id: 'mode-1', titre: 'Boutique Chic & Élégance', url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80', style: 'Élégant' },
+      { id: 'mode-2', titre: 'Atelier Coutures & Bazin', url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80', style: 'Traditionnel' },
+      { id: 'mode-3', titre: 'Mode Pastel & Tendance', url: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1200&q=80', style: 'Moderne' },
+      { id: 'mode-4', titre: 'Maroquinerie & Chaussures', url: 'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=1200&q=80', style: 'Luxe' },
+    ],
+    smartphones: [
+      { id: 'tel-1', titre: 'Showroom Mobiles Récent', url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80', style: 'Tech' },
+      { id: 'tel-2', titre: 'Accessoires & Réparation Pro', url: 'https://images.unsplash.com/photo-1565849904461-04a58ad377e0?auto=format&fit=crop&w=1200&q=80', style: 'Atelier' },
+      { id: 'tel-3', titre: 'Mobiles Haute Définition', url: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=1200&q=80', style: 'Futuriste' },
+    ],
+    informatique: [
+      { id: 'it-1', titre: 'Setup Tech & Laptops', url: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1200&q=80', style: 'Pro' },
+      { id: 'it-2', titre: 'Bureautique & Écrans', url: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&w=1200&q=80', style: 'Business' },
+      { id: 'it-3', titre: 'Gaming & Performance', url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80', style: 'Gaming' },
+    ],
+    alimentation: [
+      { id: 'alim-1', titre: 'Épicerie Fine & Fruits Frais', url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80', style: 'Naturel' },
+      { id: 'alim-2', titre: 'Rayons Propres & Épicerie', url: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=1200&q=80', style: 'Moderne' },
+      { id: 'alim-3', titre: 'Marché Frais & Saveurs', url: 'https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&w=1200&q=80', style: 'Traditionnel' },
+    ],
+    beaute: [
+      { id: 'beaute-1', titre: 'Cosmétiques & Soins', url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80', style: 'Douceur' },
+      { id: 'beaute-2', titre: 'Parfumerie & Luxe Doré', url: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80', style: 'Luxe' },
+      { id: 'beaute-3', titre: 'Institut & Esthétique', url: 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?auto=format&fit=crop&w=1200&q=80', style: 'Élégant' },
+    ],
+    'auto-moto': [
+      { id: 'auto-1', titre: 'Garage & Pièces Détachées', url: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1200&q=80', style: 'Mécanique' },
+      { id: 'auto-2', titre: 'Véhicules & Showroom Auto', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80', style: 'Prestige' },
+      { id: 'auto-3', titre: 'Entretien & Lubrifiants', url: 'https://images.unsplash.com/photo-1635784065399-c020521e6490?auto=format&fit=crop&w=1200&q=80', style: 'Pro' },
+    ],
+    quincaillerie: [
+      { id: 'quin-1', titre: 'Outillage & BTP Professionnel', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80', style: 'Pro' },
+      { id: 'quin-2', titre: 'Matériaux & Équipements', url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1200&q=80', style: 'Bricolage' },
+    ],
+    maison: [
+      { id: 'maison-1', titre: 'Décoration Intérieure Design', url: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80', style: 'Design' },
+      { id: 'maison-2', titre: 'Mobilier & Salon Chaleureux', url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=80', style: 'Confort' },
+    ],
+    default: [
+      { id: 'def-1', titre: 'Concept Store Moderne', url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80', style: 'Moderne' },
+      { id: 'def-2', titre: 'Galerie Marchande Lumineuse', url: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=1200&q=80', style: 'Commercial' },
+      { id: 'def-3', titre: 'Vitrine Épurée & Chic', url: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80', style: 'Élégant' },
+    ],
+  };
+  res.json({ success: true, modeles });
+});
+
 // ── GET /api/boutiques/admin/toutes — toutes les boutiques (admin)
 router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   try {
@@ -537,8 +588,8 @@ router.post('/taf-taf', async (req, res) => {
     );
 
     await pool.query(
-      `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin)
-       VALUES ($1, $2, 'actif', $3, NOW() + INTERVAL '1 day' * $4)`,
+      `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, is_trial)
+       VALUES ($1, $2, 'actif', $3, NOW() + INTERVAL '1 day' * $4, TRUE)`,
       [user.id, planChoisi, prix, essaiJours]
     );
 
@@ -648,6 +699,9 @@ router.get('/mine', verifierToken, async (req, res) => {
     const rows = await pool.query(
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.site_web, b.facebook, b.instagram, b.tiktok, b.youtube, b.slug, b.couleur_theme,
+              b.slogan, COALESCE(b.theme_style, 'moderne') AS theme_style, COALESCE(b.couleur_secondaire, '#F8F5F0') AS couleur_secondaire,
+              COALESCE(b.forme_boutons, 'squircle') AS forme_boutons, b.bandeau_promo, COALESCE(b.bandeau_promo_actif, false) AS bandeau_promo_actif,
+              b.message_accueil, COALESCE(b.disposition_catalogue, 'grille') AS disposition_catalogue,
               COALESCE(b.actif, true) AS actif, b.sponsorise, b.sponsor_jusqu_au, b.whatsapp_catalog_id, b.created_at,
               COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
@@ -667,10 +721,32 @@ router.get('/mine', verifierToken, async (req, res) => {
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               (b.utilisateur_id = $1) AS is_owner,
               (
-                SELECT a.plan FROM abonnements a
+                SELECT CASE 
+                  WHEN a.is_trial = true THEN 'business' 
+                  ELSE a.plan 
+                END
+                FROM abonnements a
                 WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
                 ORDER BY a.fin DESC LIMIT 1
-              ) AS plan_actif
+              ) AS plan_actif,
+              (
+                SELECT a.plan
+                FROM abonnements a
+                WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
+                ORDER BY a.fin DESC LIMIT 1
+              ) AS plan_souscrit,
+              (
+                SELECT COALESCE(a.is_trial, false)
+                FROM abonnements a
+                WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
+                ORDER BY a.fin DESC LIMIT 1
+              ) AS is_trial,
+              (
+                SELECT GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.fin - NOW())) / 86400))::int
+                FROM abonnements a
+                WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
+                ORDER BY a.fin DESC LIMIT 1
+              ) AS jours_restants_essai
        FROM boutiques b
        LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
        WHERE b.utilisateur_id = $1 OR bu.utilisateur_id = $1
@@ -796,6 +872,9 @@ router.get('/:id', async (req, res) => {
       `SELECT b.id, b.nom, b.description, b.categorie, b.telephone, b.adresse, b.ville,
               b.logo_url, b.cover_url, b.whatsapp, b.site_web, b.facebook, b.instagram, b.tiktok, b.youtube,
               b.horaires, b.slug, b.utilisateur_id, b.created_at, b.actif, b.couleur_theme,
+              b.slogan, COALESCE(b.theme_style, 'moderne') AS theme_style, COALESCE(b.couleur_secondaire, '#F8F5F0') AS couleur_secondaire,
+              COALESCE(b.forme_boutons, 'squircle') AS forme_boutons, b.bandeau_promo, COALESCE(b.bandeau_promo_actif, false) AS bandeau_promo_actif,
+              b.message_accueil, COALESCE(b.disposition_catalogue, 'grille') AS disposition_catalogue,
               COALESCE(b.mode_fonctionnement, 'hybride_pos') AS mode_fonctionnement,
               COALESCE(b.devise_defaut, 'XOF') AS devise_defaut,
               b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
@@ -2308,12 +2387,12 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
       );
     } catch (_) { /* colonnes pas encore migrées — ignoré */ }
 
-    // Activer le plan découverte (1 mois gratuit) par défaut
+    // Activer le plan découverte (1 mois gratuit avec accès total VIP) par défaut
     try {
       const essaiJours = await cfg.getNum('abonnement_essai_jours') || 30;
       await pool.query(
-        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin)
-         VALUES ($1, 'decouverte', 'actif', 2500, NOW() + INTERVAL '1 day' * $2)`,
+        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, is_trial)
+         VALUES ($1, 'decouverte', 'actif', 2500, NOW() + INTERVAL '1 day' * $2, TRUE)`,
         [userId, essaiJours]
       );
     } catch (errAbo) {
@@ -2347,13 +2426,18 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
     const existingRows = [boutique];
     const existing = { rows: existingRows };
 
-    const { nom, description, categorie, telephone, adresse, ville, whatsapp, site_web, facebook, instagram, tiktok, youtube, horaires, couleur_theme, slug: slugInput } = req.body;
+    const {
+      nom, description, categorie, telephone, adresse, ville, whatsapp, site_web,
+      facebook, instagram, tiktok, youtube, horaires, couleur_theme, slug: slugInput,
+      slogan, theme_style, couleur_secondaire, forme_boutons, bandeau_promo,
+      bandeau_promo_actif, message_accueil, disposition_catalogue, cover_url: coverUrlBody
+    } = req.body;
 
     let logo_url = existing.rows[0].logo_url;
     if (req.files?.logo?.[0]) {
       try { logo_url = await uploadBuffer(req.files.logo[0].buffer, 'boutiques'); } catch {}
     }
-    let cover_url = existing.rows[0].cover_url;
+    let cover_url = coverUrlBody !== undefined ? coverUrlBody : existing.rows[0].cover_url;
     if (req.files?.cover?.[0]) {
       try { cover_url = await uploadBuffer(req.files.cover[0].buffer, 'boutiques_cover'); } catch {}
     }
@@ -2363,14 +2447,31 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
       try { horairesJson = typeof horaires === 'string' ? JSON.parse(horaires) : horaires; } catch {}
     }
 
-    // UPDATE colonnes de base (toujours présentes)
+    // UPDATE colonnes de base & personnalisation
     await pool.query(
       `UPDATE boutiques SET nom=$1, description=$2, categorie=$3, telephone=$4, adresse=$5,
-       ville=$6, logo_url=$7, couleur_theme=COALESCE($8, couleur_theme), updated_at=NOW()
-       WHERE id=$9 AND utilisateur_id=$10`,
-      [nom||existing.rows[0].nom, description||null, categorie||null,
-       telephone||null, adresse||null, ville||'Dakar', logo_url,
-       couleur_theme||null, req.params.id, req.user.userId]
+       ville=$6, logo_url=$7, couleur_theme=COALESCE($8, couleur_theme),
+       slogan=COALESCE($9, slogan),
+       theme_style=COALESCE($10, theme_style),
+       couleur_secondaire=COALESCE($11, couleur_secondaire),
+       forme_boutons=COALESCE($12, forme_boutons),
+       bandeau_promo=$13,
+       bandeau_promo_actif=CASE WHEN $14::boolean IS NOT NULL THEN $14::boolean ELSE bandeau_promo_actif END,
+       message_accueil=$15,
+       disposition_catalogue=COALESCE($16, disposition_catalogue),
+       updated_at=NOW()
+       WHERE id=$17 AND utilisateur_id=$18`,
+      [
+        nom || existing.rows[0].nom, description !== undefined ? description : existing.rows[0].description,
+        categorie || existing.rows[0].categorie, telephone || null, adresse || null, ville || 'Dakar',
+        logo_url, couleur_theme || null,
+        slogan !== undefined ? slogan : null, theme_style || null,
+        couleur_secondaire || null, forme_boutons || null,
+        bandeau_promo !== undefined ? bandeau_promo : null,
+        bandeau_promo_actif !== undefined ? (bandeau_promo_actif === 'true' || bandeau_promo_actif === true || bandeau_promo_actif === '1') : null,
+        message_accueil !== undefined ? message_accueil : null, disposition_catalogue || null,
+        req.params.id, req.user.userId
+      ]
     );
     // Slug : garder l'existant si aucun input, sinon re-générer
     let newSlug = existing.rows[0].slug;

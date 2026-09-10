@@ -33,6 +33,14 @@ interface Boutique {
   utilisateur_id: string
   plan_actif: 'pro' | 'business' | null
   couleur_theme?: string | null
+  couleur_secondaire?: string | null
+  slogan?: string | null
+  theme_style?: string | null
+  forme_boutons?: string | null
+  bandeau_promo?: string | null
+  bandeau_promo_actif?: boolean
+  message_accueil?: string | null
+  disposition_catalogue?: string | null
   created_at: string
 }
 
@@ -228,6 +236,29 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
         </Link>
       </nav>
 
+      {/* Bandeau promotionnel du marchand si configuré */}
+      {b.bandeau_promo_actif && b.bandeau_promo && (
+        <div style={{
+          background: b.couleur_theme || '#C75B00',
+          color: '#ffffff',
+          padding: '10px 16px',
+          textAlign: 'center',
+          fontSize: '13px',
+          fontWeight: 800,
+          letterSpacing: '0.02em',
+          borderRadius: 12,
+          marginBottom: 12,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+        }}>
+          <span>🔥</span>
+          <span>{b.bandeau_promo}</span>
+        </div>
+      )}
+
       {/* Cover photo HD responsive */}
       <div className="bq-public-cover">
         <ExternalImg
@@ -271,11 +302,16 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                   </span>
                 )}
                 {b.plan_actif === 'pro' && (
-                  <span style={{ fontSize: 11, background: '#C75B00', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
+                  <span style={{ fontSize: 11, background: b.couleur_theme || '#C75B00', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
                     ⭐ Vendeur Pro
                   </span>
                 )}
               </div>
+              {b.slogan && (
+                <p style={{ margin: '3px 0 0', fontSize: 13.5, color: '#1E293B', fontWeight: 700, fontStyle: 'italic' }}>
+                  « {b.slogan} »
+                </p>
+              )}
               <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {[b.categorie, b.adresse, b.ville].filter(Boolean).join(' · ')}
               </p>
@@ -352,6 +388,15 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
             categorie: b.categorie,
             description: b.description,
             plan_actif: b.plan_actif,
+            couleur_theme: b.couleur_theme,
+            couleur_secondaire: b.couleur_secondaire,
+            slogan: b.slogan,
+            theme_style: b.theme_style,
+            forme_boutons: b.forme_boutons,
+            bandeau_promo: b.bandeau_promo,
+            bandeau_promo_actif: b.bandeau_promo_actif,
+            message_accueil: b.message_accueil,
+            disposition_catalogue: b.disposition_catalogue,
           }}
           produits={produits}
           annonces={annonces}

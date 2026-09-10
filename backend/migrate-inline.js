@@ -766,6 +766,8 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_abonnements_user   ON abonnements(utilisateur_id, statut);
       CREATE INDEX IF NOT EXISTS idx_abonnements_fin    ON abonnements(fin) WHERE statut = 'actif';
       ALTER TABLE abonnements DROP CONSTRAINT IF EXISTS abonnements_plan_check;
+      ALTER TABLE abonnements ADD COLUMN IF NOT EXISTS is_trial BOOLEAN DEFAULT FALSE;
+      CREATE INDEX IF NOT EXISTS idx_abonnements_is_trial ON abonnements(is_trial) WHERE statut = 'actif';
     `);
     console.log('[MIGRATE] ✅ Table abonnements OK');
   } catch (e) { console.warn('[MIGRATE] abonnements:', e.message); }
@@ -849,6 +851,14 @@ module.exports = async function migrateInline() {
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS ga4_id VARCHAR(50)`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS devise_defaut VARCHAR(10) DEFAULT 'XOF'`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS code_pin VARCHAR(10) DEFAULT '1234'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS slogan VARCHAR(255)`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS theme_style VARCHAR(50) DEFAULT 'moderne'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS couleur_secondaire VARCHAR(50) DEFAULT '#F8F5F0'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS forme_boutons VARCHAR(30) DEFAULT 'squircle'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS bandeau_promo TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS bandeau_promo_actif BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS message_accueil TEXT`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS disposition_catalogue VARCHAR(30) DEFAULT 'grille'`,
   ];
   for (const sql of colonnesBoutiqueAvancees) {
     try { await pool.query(sql); }

@@ -24,11 +24,12 @@ import GestionDocuments from './GestionDocuments'
 import GestionFournisseurs from './GestionFournisseurs'
 import BoutiqueLogs from './BoutiqueLogs'
 import SocialShopManager from './SocialShopManager'
+import StudioPersonnalisation from './StudioPersonnalisation'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import {
   Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square,
-  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter
+  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter, Palette
 } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
@@ -79,7 +80,21 @@ interface Boutique {
   pos_remise_seuil_auto_montant?: number
   pos_remise_seuil_auto_pct?: number
   pos_remise_motifs?: any
+  couleur_theme?: string | null
+  couleur_secondaire?: string | null
+  slogan?: string | null
+  theme_style?: string | null
+  forme_boutons?: string | null
+  bandeau_promo?: string | null
+  bandeau_promo_actif?: boolean
+  message_accueil?: string | null
+  disposition_catalogue?: string | null
+  horaires?: Record<string, string> | null
   created_at: string
+  plan_actif?: 'pro' | 'business' | 'decouverte' | 'taf_taf' | null
+  plan_souscrit?: string | null
+  is_trial?: boolean
+  jours_restants_essai?: number
 }
 
 interface Variante {
@@ -2720,7 +2735,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
 
   useEffect(() => { loadProduits() }, [boutique.id])
 
-  if (!planActif) {
+  if (!planActif && !boutique.is_trial) {
     return (
       <div style={{ textAlign: 'center', padding: '32px 20px', background: '#fffbeb', borderRadius: 12, border: '1px solid #fcd34d' }}>
         <span style={{ fontSize: 36, display: 'block', marginBottom: 12 }}>⭐</span>
@@ -2738,7 +2753,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
     )
   }
 
-  const quota = planActif === 'business' ? '∞' : '50'
+  const quota = (planActif === 'business' || boutique.is_trial) ? '∞' : '50'
 
   const categoriesDisponibles = Array.from(new Set(produits.map(p => p.categorie).filter(Boolean))) as string[]
 
@@ -3730,10 +3745,18 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
             <div style={{ minWidth: 0, overflow: 'hidden' }}>
               <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 18, margin: '0 0 6px', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.nom}</h2>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {planActif === 'business' && <span className="badge-premium" style={{ background: '#1e3a8a', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>💼 Business</span>}
-                {planActif === 'pro'      && <span className="badge-premium" style={{ background: '#C75B00', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>⭐ Pro</span>}
-                {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#22c55e', color: '#064e3b', fontSize: 10, padding: '2px 6px', border: 'none' }}>⚡ Taf Taf</span>}
-                {(!planActif || (planActif as any) === 'gratuit') && <span className="badge-premium" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', fontSize: 10, padding: '2px 6px' }}>🌱 Gratuit</span>}
+                {boutique.is_trial ? (
+                  <span className="badge-premium" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff', fontSize: 10, padding: '2px 8px', border: 'none' }}>
+                    🎁 1er mois Offert (VIP)
+                  </span>
+                ) : (
+                  <>
+                    {planActif === 'business' && <span className="badge-premium" style={{ background: '#1e3a8a', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>💼 Business</span>}
+                    {planActif === 'pro'      && <span className="badge-premium" style={{ background: '#C75B00', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>⭐ Pro</span>}
+                    {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#22c55e', color: '#064e3b', fontSize: 10, padding: '2px 6px', border: 'none' }}>⚡ Taf Taf</span>}
+                    {(!planActif || (planActif as any) === 'gratuit') && <span className="badge-premium" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', fontSize: 10, padding: '2px 6px' }}>🌱 Gratuit</span>}
+                  </>
+                )}
                 {boutique.mode_fonctionnement === 'pure_player' ? (
                   <span className="badge-premium" style={{ background: '#fff7ed', color: '#c75b00', borderColor: '#ffedd5', fontSize: 10, padding: '2px 6px' }}>Web</span>
                 ) : (
@@ -3957,7 +3980,7 @@ function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
   )
 }
 
-type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite'
+type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite'
 
 function BoutiqueDashboard({
   boutique,
@@ -4843,7 +4866,7 @@ function BoutiqueManage({
   const router = useRouter()
   const { t, formatNumber } = useTranslation()
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false)
-  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','infos','marketing','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite']
+  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','personnaliser','infos','marketing','social','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   // ── Navigation Progressive : Essentiel (visible par défaut) + Avancé (sur demande) ──
@@ -4866,8 +4889,9 @@ function BoutiqueManage({
     },
     {
       icon: Megaphone,
-      title: t('shop.navGroupMarketingSettings') || 'Marketing & Réseaux',
+      title: t('shop.navGroupMarketingSettings') || 'Vitrine & Personnalisation',
       items: [
+        { key: 'personnaliser', icon: Palette, label: '🎨 Personnaliser ma boutique' },
         { key: 'social',      icon: Share2, label: '📱 Réseaux sociaux & Social Shop' },
         { key: 'marketing',   icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
         { key: 'infos',       icon: Settings, label: t('shop.settings') || 'Paramètres' },
@@ -4988,13 +5012,24 @@ function BoutiqueManage({
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
-  const planColor = planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : planActif === 'decouverte' || planActif === 'taf_taf' ? '#16a34a' : '#6b7280'
-  const planLabel = planActif === 'business' ? '💼 Business' : planActif === 'pro' ? '⭐ Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? '⚡ Taf Taf' : 'Gratuit'
+  const isTrialActive = Boolean(boutique.is_trial)
+  const joursRestantsEssai = boutique.jours_restants_essai ?? 30
+  const effectivePlan = isTrialActive ? 'business' : planActif
+
+  const planColor = isTrialActive
+    ? '#4f46e5'
+    : planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : planActif === 'decouverte' || planActif === 'taf_taf' ? '#16a34a' : '#6b7280'
+
+  const planLabel = isTrialActive
+    ? `🎁 1er mois Offert (${joursRestantsEssai}j)`
+    : planActif === 'business' ? '💼 Business' : planActif === 'pro' ? '⭐ Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? '⚡ Taf Taf' : 'Gratuit'
 
   const isAllowed = (minPlan?: 'pro' | 'business') => {
+    // RÈGLE D'OR : Pour le 1er mois gratuit, tous les forfaits ont accès à toutes les fonctionnalités
+    if (isTrialActive) return true
     if (!minPlan) return true
-    if (planActif === 'business') return true
-    if (minPlan === 'pro' && planActif === 'pro') return true
+    if (effectivePlan === 'business') return true
+    if (minPlan === 'pro' && effectivePlan === 'pro') return true
     return false
   }
 
@@ -5051,6 +5086,7 @@ function BoutiqueManage({
     fournisseurs: { icon: Truck, title: t('shop.suppliers'), desc: t('shop.suppliersDesc') },
     fiscalite:   { icon: Scale, title: t('shop.taxSettings'), desc: t('shop.taxSettingsDesc') },
     fidelite:    { icon: Gift, title: t('shop.fidelitePromos') || 'Fidélité & Promotions', desc: t('shop.fidelitePromosDesc') || 'Configurez le programme de fidélité, le cashback, les plafonds de remise caisse et les codes promo.' },
+    personnaliser: { icon: Palette, title: 'Personnaliser ma vitrine', desc: 'Définissez l\'ambiance, les couleurs, la bannière et le slogan uniques de votre boutique en ligne.' },
     journal:     { icon: ScrollText, title: t('shop.auditLog'), desc: t('shop.auditLogDesc') },
     developer:   { icon: Code2, title: t('shop.developer'), desc: t('shop.developerDesc') },
   }
@@ -5280,13 +5316,13 @@ function BoutiqueManage({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 3,
-                        background: planActif === 'business' ? '#FEF3C7' : planActif === 'pro' ? '#FFF3E8' : '#F1F5F9',
-                        color: planActif === 'business' ? '#B45309' : planActif === 'pro' ? '#C75B00' : '#475569',
-                        border: planActif === 'business' ? '1px solid #FCD34D' : planActif === 'pro' ? '1px solid #FED7AA' : '1px solid #E2E8F0',
+                        background: isTrialActive ? '#EEF2FF' : planActif === 'business' ? '#FEF3C7' : planActif === 'pro' ? '#FFF3E8' : '#F1F5F9',
+                        color: isTrialActive ? '#4338CA' : planActif === 'business' ? '#B45309' : planActif === 'pro' ? '#C75B00' : '#475569',
+                        border: isTrialActive ? '1px solid #C7D2FE' : planActif === 'business' ? '1px solid #FCD34D' : planActif === 'pro' ? '1px solid #FED7AA' : '1px solid #E2E8F0',
                         flexShrink: 0,
                       }}
                     >
-                      {planActif === 'business' ? '⭐ VIP' : planActif.toUpperCase()}
+                      {isTrialActive ? '🎁 ESSAI VIP' : planActif === 'business' ? '⭐ VIP' : planActif.toUpperCase()}
                     </span>
                   )}
                 </div>
@@ -5440,19 +5476,45 @@ function BoutiqueManage({
               </div>
             </div>
 
-            {/* Ligne 2 : Actions Rapides SaaS Vectorielles (QR Code + Voir vitrine) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, paddingTop: 6, borderTop: '1px solid rgba(232,221,210,0.6)' }}>
+            {/* Ligne 2 : Actions Rapides Ma Boutique (Vitrine + Personnaliser + QR) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 6, paddingTop: 6, borderTop: '1px solid rgba(232,221,210,0.6)' }}>
+              <a
+                href={`/boutiques/${boutique.slug || boutique.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: boutique.couleur_theme || '#C75B00',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '7px 8px',
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 5,
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Voir la vitrine publique telle que la voient vos clients"
+              >
+                <Eye size={13} style={{ flexShrink: 0 }} />
+                <span>Ma vitrine ↗</span>
+              </a>
+
               <button
                 type="button"
-                onClick={() => setShowQrModal(true)}
+                onClick={() => handleNavigateTab('personnaliser')}
                 style={{
-                  background: '#ffffff',
-                  border: '1.5px solid #E2E8F0',
+                  background: tab === 'personnaliser' ? '#f0fdf4' : '#ffffff',
+                  border: tab === 'personnaliser' ? '1.5px solid #16a34a' : '1.5px solid #E2E8F0',
                   borderRadius: 8,
-                  padding: '6px 8px',
+                  padding: '7px 8px',
                   fontSize: 11.5,
                   fontWeight: 750,
-                  color: 'var(--navy, #1C2B4A)',
+                  color: tab === 'personnaliser' ? '#166534' : 'var(--navy, #1C2B4A)',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -5461,37 +5523,11 @@ function BoutiqueManage({
                   boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
                   transition: 'all 0.15s ease',
                 }}
-                title="Afficher le QR Code et partager la vitrine de la boutique"
+                title="Personnaliser les couleurs, le style et la bannière"
               >
-                <QrCode size={13} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-                <span>QR Code</span>
+                <Palette size={13} style={{ color: boutique.couleur_theme || '#C75B00', flexShrink: 0 }} />
+                <span>Design</span>
               </button>
-
-              <a
-                href={`/boutiques/${boutique.slug || boutique.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  background: '#ffffff',
-                  border: '1.5px solid #E2E8F0',
-                  borderRadius: 8,
-                  padding: '6px 8px',
-                  fontSize: 11.5,
-                  fontWeight: 750,
-                  color: 'var(--navy, #1C2B4A)',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Voir la vitrine publique telle que la voient vos clients"
-              >
-                <ExternalLink size={12} style={{ color: '#64748B', flexShrink: 0 }} />
-                <span>Vitrine ↗</span>
-              </a>
             </div>
           </div>
         </div>
@@ -5811,6 +5847,60 @@ function BoutiqueManage({
           </div>
         )}
 
+        {/* 🎁 BANDEAU OFFICIEL 1ER MOIS GRATUIT — ACCÈS TOTAL VIP */}
+        {isTrialActive && (
+          <div style={{
+            background: 'linear-gradient(135deg, #1e3a5f 0%, #312e81 100%)',
+            color: '#ffffff',
+            borderRadius: 14,
+            padding: '14px 18px',
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+            boxShadow: '0 4px 16px rgba(30,58,95,0.15)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10,
+                background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0
+              }}>
+                🎁
+              </div>
+              <div>
+                <p style={{ margin: 0, fontWeight: 900, fontSize: 14, letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span>1er Mois 100% Offert — Accès Total VIP Actif</span>
+                  <span style={{ background: '#22c55e', color: '#064e3b', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800 }}>
+                    {joursRestantsEssai} jour{joursRestantsEssai > 1 ? 's' : ''} restant{joursRestantsEssai > 1 ? 's' : ''}
+                  </span>
+                </p>
+                <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#e0e7ff', lineHeight: 1.4 }}>
+                  Toutes les fonctionnalités Nopalou sont débloquées (Caisse POS tactile, Saisie Express, Compta, Factures PDF, Équipe, API). Profitez-en pour digitaliser 100% de votre boutique !
+                </p>
+              </div>
+            </div>
+            <a
+              href="/boutique/abonnement"
+              style={{
+                background: '#ffffff',
+                color: '#1e3a5f',
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 12.5,
+                fontWeight: 800,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+              }}
+            >
+              Voir les formules →
+            </a>
+          </div>
+        )}
+
         {/* Titre de section Desktop */}
         <div className="bq-main-tab-header" style={{ marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
@@ -5850,19 +5940,22 @@ function BoutiqueManage({
           </div>
         ) : (
           <>
-            {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={planActif} nbEnAttente={nbEnAttente} onNavigate={handleNavigateFromDashboard} />}
-            {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={planActif} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
+            {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={effectivePlan} nbEnAttente={nbEnAttente} onNavigate={handleNavigateFromDashboard} />}
+            {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={effectivePlan} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
             {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} />}
-            {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={planActif} />}
+            {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={effectivePlan} />}
             {tab === 'express'     && <SaisieExpressView boutiqueId={boutique.id} />}
             {tab === 'compta'      && <Comptabilite boutiqueId={boutique.id} boutiqueNom={boutique.nom} initialTab={subTabCompta as any} />}
             {tab === 'analytics'   && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
+            {tab === 'personnaliser' && (
+              <StudioPersonnalisation boutique={boutique as any} onSaved={handleBoutiqueSaved} />
+            )}
             {tab === 'infos'       && (
               <div style={{ maxWidth: 580 }}>
                 <BoutiqueForm boutique={boutique} onCancel={onBack} onSuccess={handleBoutiqueSaved} />
               </div>
             )}
-            {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} onOpenQrModal={() => setShowQrModal(true)} onNavigate={(t) => setTab(t)} planActif={planActif} />}
+            {tab === 'marketing'   && <MarketingBoutique boutique={boutique} onVoirJamaisPartages={() => { setFiltreProduitsMarketing('jamais_partage'); setTab('produits') }} onOpenQrModal={() => setShowQrModal(true)} onNavigate={(t) => setTab(t)} planActif={effectivePlan} />}
             {tab === 'social'      && <SocialShopManager boutiqueId={boutique.id} boutiqueNom={boutique.nom} boutiqueSlug={boutique.slug} />}
             {tab === 'equipe'      && <BoutiqueEquipe boutiqueId={boutique.id} />}
             {tab === 'admins'      && <BoutiqueAdmins boutiqueId={boutique.id} />}
@@ -5872,7 +5965,7 @@ function BoutiqueManage({
             {tab === 'fiscalite'   && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
             {tab === 'fidelite'    && <ParametresFidelitePromos boutique={boutique} onUpdate={() => router.refresh()} />}
             {tab === 'journal'     && <BoutiqueLogs boutiqueId={boutique.id} />}
-            {tab === 'developer'   && <PortailDeveloppeurBoutique boutiqueId={boutique.id} planActif={planActif || 'decouverte'} />}
+            {tab === 'developer'   && <PortailDeveloppeurBoutique boutiqueId={boutique.id} planActif={effectivePlan || 'decouverte'} />}
           </>
         )}
       </main>

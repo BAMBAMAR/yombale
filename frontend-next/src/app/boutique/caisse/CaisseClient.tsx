@@ -93,6 +93,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     id: string;
     nom: string;
     plan_actif?: string | null;
+    is_trial?: boolean;
     regime_fiscal?: string;
     prix_tva_incluse?: boolean;
     timbre_fiscal_applicable?: boolean;
@@ -2404,7 +2405,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   // ── ÉCRAN DE VERROUILLAGE SI BOUTIQUE NON AUTORISÉE À LA CAISSE POS ──────
   if (!estBoutiqueAutorisee) {
-    const boutiquesAutorisees = boutiques.filter(b => b.plan_actif === 'pro' || b.plan_actif === 'business')
+    const boutiquesAutorisees = boutiques.filter(b => b.is_trial || b.plan_actif === 'pro' || b.plan_actif === 'business')
     return (
       <div style={{
         minHeight: '100vh',
@@ -3476,7 +3477,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   >
                     {boutiques.map(b => (
                       <option key={b.id} value={b.id}>
-                        {b.plan_actif === 'pro' || b.plan_actif === 'business' ? '🟢' : '🏪'} {b.nom}
+                        {b.is_trial || b.plan_actif === 'pro' || b.plan_actif === 'business' ? '🟢' : '🏪'} {b.nom}
                       </option>
                     ))}
                   </select>
