@@ -12,7 +12,7 @@ import { exportToCSV, printPDFReport, printBilanComptablePDF, printInventairePDF
 import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
-import { createVoiceListener, parseSaisieExpressIntent } from '@/lib/voice-assistant'
+import { createVoiceListener, parseSaisieExpressIntent, demanderPermissionMicrophone, getMessageErreurMicro } from '@/lib/voice-assistant'
 
 interface Zone    { id: string; nom: string; prix: number }
 interface Vente   { id: string; reference: string; nom_produit: string; quantite: number; prix_unitaire: number; frais_livraison: number; montant_total: number; client_nom: string | null; methode_paiement: string; created_at: string; justificatif_url: string | null }
@@ -2814,23 +2814,33 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
   const voiceRecognitionRef = useRef<any>(null)
 
-  const demarrerEcouteVocale = () => {
+  const demarrerEcouteVocale = async () => {
     if (isListeningVoice) {
-      voiceRecognitionRef.current?.stop()
+      try {
+        voiceRecognitionRef.current?.stop()
+      } catch {}
       setIsListeningVoice(false)
       return
     }
 
     setVoiceFeedback(null)
+
+    // 1. Demande de permission native au microphone pour éviter l'erreur not-allowed
+    const perm = await demanderPermissionMicrophone()
+    if (!perm.ok) {
+      setIsListeningVoice(false)
+      setVoiceFeedback(getMessageErreurMicro(perm.error || 'not-allowed'))
+      return
+    }
+
+    // 2. Initialisation de l'écoute vocale
     const rec = createVoiceListener({
       lang: 'fr-FR',
       onStart: () => setIsListeningVoice(true),
       onEnd: () => setIsListeningVoice(false),
       onError: (err) => {
         setIsListeningVoice(false)
-        if (err !== 'no-speech') {
-          setVoiceFeedback(`Micro non disponible (${err}). Réessayez.`)
-        }
+        setVoiceFeedback(getMessageErreurMicro(err))
       },
       onResult: (transcript) => {
         setIsListeningVoice(false)
@@ -2861,11 +2871,12 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
       voiceRecognitionRef.current = rec
       try {
         rec.start()
-      } catch (e) {
-        console.warn('Erreur start speech recognition', e)
+      } catch (e: any) {
+        setIsListeningVoice(false)
+        setVoiceFeedback(getMessageErreurMicro(e?.name || 'not-allowed'))
       }
     } else {
-      alert('La reconnaissance vocale n’est pas disponible sur ce navigateur. Veuillez utiliser Google Chrome ou Safari.')
+      setVoiceFeedback("La reconnaissance vocale n'est pas supportée par ce navigateur. Utilisez Chrome, Edge ou Safari.")
     }
   }
 
@@ -3263,7 +3274,23 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
         </div>
 
         {voiceFeedback && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '6px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700 }}>
+          <div style={{
+            background: voiceFeedback.includes('bloqué') || voiceFeedback.includes('indisponible') || voiceFeedback.includes('Erreur') || voiceFeedback.includes('Microphone')
+              ? '#fef2f2'
+              : '#f0fdf4',
+            border: voiceFeedback.includes('bloqué') || voiceFeedback.includes('indisponible') || voiceFeedback.includes('Erreur') || voiceFeedback.includes('Microphone')
+              ? '1.5px solid #fecaca'
+              : '1px solid #bbf7d0',
+            color: voiceFeedback.includes('bloqué') || voiceFeedback.includes('indisponible') || voiceFeedback.includes('Erreur') || voiceFeedback.includes('Microphone')
+              ? '#991b1b'
+              : '#166534',
+            padding: '8px 14px',
+            borderRadius: 10,
+            fontSize: 12.5,
+            fontWeight: 700,
+            maxWidth: 520,
+            lineHeight: 1.4
+          }}>
             {voiceFeedback}
           </div>
         )}

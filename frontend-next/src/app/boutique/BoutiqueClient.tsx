@@ -38,6 +38,7 @@ import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer, rechercherInfosProduitEan, toggleTorcheCamera } from '@/lib/scanner-helper'
 
 import { CATEGORIES, PRODUIT_CATEGORIES } from '@/lib/categories'
+import { createVoiceListener, parseAjoutProduitIntent, demanderPermissionMicrophone, getMessageErreurMicro } from '@/lib/voice-assistant'
 import { CaracChips } from '@/components/CaracChips'
 import {
   type TypeVarianteId,
@@ -904,6 +905,68 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
     }
   }, [cat])
 
+  // Assistant Vocal Ajout Produit (Wolof & Français)
+  const [isListeningNom, setIsListeningNom] = useState<boolean>(false)
+  const [voiceNomFeedback, setVoiceNomFeedback] = useState<string | null>(null)
+  const voiceNomRecognitionRef = useRef<any>(null)
+
+  const demarrerEcouteVocaleNom = async () => {
+    if (isListeningNom) {
+      try {
+        voiceNomRecognitionRef.current?.stop()
+      } catch {}
+      setIsListeningNom(false)
+      return
+    }
+
+    setVoiceNomFeedback(null)
+
+    // 1. Demande de permission microphone au navigateur
+    const perm = await demanderPermissionMicrophone()
+    if (!perm.ok) {
+      setIsListeningNom(false)
+      setVoiceNomFeedback(getMessageErreurMicro(perm.error || 'not-allowed'))
+      return
+    }
+
+    // 2. Lancement du listener universel
+    const rec = createVoiceListener({
+      lang: 'fr-FR',
+      onStart: () => setIsListeningNom(true),
+      onEnd: () => setIsListeningNom(false),
+      onError: (err) => {
+        setIsListeningNom(false)
+        setVoiceNomFeedback(getMessageErreurMicro(err))
+      },
+      onResult: (transcript) => {
+        setIsListeningNom(false)
+        const parsed = parseAjoutProduitIntent(transcript)
+        if (parsed.nom) {
+          setNomForm(parsed.nom)
+        }
+        if (parsed.prix !== null && parsed.prix > 0) {
+          setPrixForm(String(parsed.prix))
+          setVoiceNomFeedback(`✨ Dictée réussie : "${parsed.nom}" · Prix : ${fcfa(parsed.prix)}`)
+        } else {
+          setVoiceNomFeedback(`✨ Nom dicté : "${parsed.nom}"`)
+        }
+        jouerBipEtVibrer('succes')
+      }
+    })
+
+    if (rec) {
+      voiceNomRecognitionRef.current = rec
+      try {
+        rec.start()
+      } catch (e: any) {
+        setIsListeningNom(false)
+        setVoiceNomFeedback(getMessageErreurMicro(e?.name || 'not-allowed'))
+      }
+    } else {
+      setVoiceNomFeedback("Votre navigateur ne supporte pas la reconnaissance vocale. Utilisez Chrome, Edge ou Safari.")
+    }
+  }
+
   const [modalFormScanner, setModalFormScanner] = useState<boolean>(false)
   const [scannerTarget, setScannerTarget] = useState<'nom' | 'ean'>('nom')
   const [scannerStatus, setScannerStatus] = useState<string>('Initialisation de la caméra...')
@@ -1283,10 +1346,23 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
       </div>
 
       {/* ── 2. NOM DU PRODUIT ────────────────────────────────────────────── */}
-      <div style={{ background: '#ffffff', borderRadius: 14, border: '1.5px solid #e2e8f0', padding: 16 }}>
-        <label className="npl-label-airy">
-          🏷️ Nom du produit <span style={{ color: '#dc2626' }}>*</span>
-        </label>
+      <div style={{
+        background: '#ffffff',
+        borderRadius: 14,
+        border: isListeningNom ? '2px solid #ea580c' : '1.5px solid #e2e8f0',
+        padding: 16,
+        boxShadow: isListeningNom ? '0 4px 18px rgba(234, 88, 12, 0.15)' : 'none',
+        transition: 'all 0.2s ease'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
+          <label className="npl-label-airy" style={{ margin: 0 }}>
+            🏷️ Nom du produit <span style={{ color: '#dc2626' }}>*</span>
+          </label>
+          <span style={{ fontSize: 12, color: '#ea580c', fontWeight: 700 }}>
+            🎙️ Dictez en Wolof ou Français (« Nom seul » ou « Nom + Prix »)
+          </span>
+        </div>
+
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             name="nom"
@@ -1298,6 +1374,35 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             style={{ flex: '1 1 200px' }}
             placeholder="Ex: Robe Bazin Brodé / Lait Candia 1L..."
           />
+
+          {/* Bouton Vocal Proéminent */}
+          <button
+            type="button"
+            onClick={demarrerEcouteVocaleNom}
+            className="npl-btn npl-btn-md"
+            style={{
+              flex: '0 0 auto',
+              height: 48,
+              whiteSpace: 'nowrap',
+              borderRadius: 12,
+              padding: '0 16px',
+              fontWeight: 800,
+              background: isListeningNom ? '#ea580c' : '#fff7ed',
+              color: isListeningNom ? '#ffffff' : '#c2410c',
+              border: isListeningNom ? '2px solid #9a3412' : '1.5px solid #fdba74',
+              boxShadow: isListeningNom ? '0 0 0 4px rgba(234, 88, 12, 0.25)' : 'none',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.2s ease'
+            }}
+            title={isListeningNom ? "Arrêter l'écoute" : "Dicter le nom ou le nom + prix (ex: 'Robe Bazin 15000', 'Lait Candia benn téemeer')"}
+          >
+            <span>{isListeningNom ? '⏹️' : '🎙️'}</span>
+            <span>{isListeningNom ? 'Écoute…' : 'Dicter'}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => demarrerFormScanner('nom')}
@@ -1309,6 +1414,48 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             <span>Scan Nom</span>
           </button>
         </div>
+
+        {/* Message d'écoute active */}
+        {isListeningNom && (
+          <div style={{
+            marginTop: 10,
+            padding: '8px 12px',
+            background: '#fff7ed',
+            border: '1px solid #fed7aa',
+            borderRadius: 8,
+            fontSize: 12.5,
+            color: '#9a3412',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ea580c', display: 'inline-block' }} />
+            <span>Écoute en cours… Dites le nom (ex: <em>« Robe Bazin »</em>) ou avec le prix (ex: <em>« Robe Bazin 15 000 »</em>)</span>
+          </div>
+        )}
+
+        {/* Feedback vocal ou alerte cadenas */}
+        {voiceNomFeedback && (
+          <div style={{
+            marginTop: 10,
+            padding: '9px 13px',
+            background: voiceNomFeedback.includes('bloqué') || voiceNomFeedback.includes('indisponible') || voiceNomFeedback.includes('Erreur') || voiceNomFeedback.includes('Microphone')
+              ? '#fef2f2'
+              : '#f0fdf4',
+            border: voiceNomFeedback.includes('bloqué') || voiceNomFeedback.includes('indisponible') || voiceNomFeedback.includes('Erreur') || voiceNomFeedback.includes('Microphone')
+              ? '1.5px solid #fecaca'
+              : '1px solid #bbf7d0',
+            borderRadius: 8,
+            fontSize: 12.5,
+            color: voiceNomFeedback.includes('bloqué') || voiceNomFeedback.includes('indisponible') || voiceNomFeedback.includes('Erreur') || voiceNomFeedback.includes('Microphone')
+              ? '#991b1b'
+              : '#166534',
+            fontWeight: 700,
+            lineHeight: 1.4
+          }}>
+            {voiceNomFeedback}
+          </div>
+        )}
       </div>
 
       {/* ── 3. PRIX DE VENTE (FCFA) ───────────────────────────────────────── */}

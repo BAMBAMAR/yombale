@@ -20,6 +20,8 @@ import {
   parseDetteIntent,
   cleanVoiceSearchQuery,
   normaliserTexteVocal,
+  parseAjoutProduitIntent,
+  getMessageErreurMicro,
 } from '../src/lib/voice-assistant.ts'
 import {
   estimerFraisLivraison,
@@ -471,6 +473,26 @@ it('parseDetteIntent: détection crédit, remboursement et client', () => {
 it('cleanVoiceSearchQuery: extraction propre du mot-clé produit', () => {
   assert.equal(cleanVoiceSearchQuery('Cherche robe en wax'), 'robe en wax')
   assert.equal(cleanVoiceSearchQuery('Trouve-moi des chaussures'), 'des chaussures')
+})
+
+it('parseAjoutProduitIntent: extraction nom et prix mixte Wolof / Français', () => {
+  const p1 = parseAjoutProduitIntent('Robe Bazin brodée 15000')
+  assert.equal(p1.prix, 15000)
+  assert.equal(p1.nom.toLowerCase().includes('robe bazin brod'), true)
+
+  const p2 = parseAjoutProduitIntent('Lait Bonnet Rouge benn teemeer')
+  assert.equal(p2.prix, 500)
+  assert.equal(p2.nom.toLowerCase().includes('lait bonnet rouge'), true)
+
+  const p3 = parseAjoutProduitIntent('Chaussures de sport Nike')
+  assert.equal(p3.prix, null)
+  assert.equal(p3.nom, 'Chaussures de sport Nike')
+})
+
+it('getMessageErreurMicro: aide claire pour not-allowed et cadenas', () => {
+  const msg = getMessageErreurMicro('not-allowed')
+  assert.equal(msg.includes('cadenas'), true)
+  assert.equal(msg.includes('Microphone'), true)
 })
 
 console.log('\n📦 9. Logistique & Tarifs Tiak-Tiak Sénégal (logistique-senegal.ts)')

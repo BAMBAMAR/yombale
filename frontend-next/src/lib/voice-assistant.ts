@@ -323,6 +323,91 @@ export function cleanVoiceSearchQuery(transcript: string): string {
     .trim()
 }
 
+/**
+ * Analyse une dictée pour l'ajout ou la mise en vente d'un produit.
+ * Exemples :
+ * - "Robe Bazin brodé quinze mille" -> { nom: "Robe Bazin brodé", prix: 15000 }
+ * - "Lait Bonnet Rouge 1L 500" -> { nom: "Lait Bonnet Rouge 1L", prix: 500 }
+ * - "Sac à main en cuir ñaari junni" -> { nom: "Sac à main en cuir", prix: 10000 }
+ * - "Chaussure de sport Nike" -> { nom: "Chaussure de sport Nike", prix: null }
+ */
+export function parseAjoutProduitIntent(transcript: string): { nom: string; prix: number | null } {
+  const montant = extraireMontantCFA(transcript)
+
+  let nomClean = transcript.trim()
+
+  // Supprimer les verbes ou mots d'amorce éventuels
+  nomClean = nomClean.replace(/^(ajouter|mettre en vente|creer|nouveau produit|produit|article)\s+/i, '')
+
+  // Si un montant a été extrait, retirer la partie correspondant au prix à la fin ou dans le texte
+  if (montant !== null) {
+    // Retirer les nombres en chiffres purs
+    nomClean = nomClean.replace(new RegExp(`\\b${montant}\\b`, 'g'), '')
+    // Retirer les devises wolof éventuelles
+    nomClean = nomClean.replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs)\b/gi, '')
+    // Retirer les mots de prix écrits en lettres (ex: "quinze mille", "dix mille", "deux mille", "mille")
+    nomClean = nomClean.replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt|trente|quarante|cinquante|cent|mille|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, '')
+  }
+
+  // Nettoyer les espaces résiduels et la ponctuation
+  nomClean = nomClean.replace(/\s+/g, ' ').replace(/^[\s\-–—:]+|[\s\-–—:]+$/g, '').trim()
+
+  // Si après extraction du prix le nom est devenu vide, garder la transcription originale
+  if (!nomClean) {
+    nomClean = transcript.trim()
+  }
+
+  // Première lettre en majuscule
+  const nomFinal = nomClean.charAt(0).toUpperCase() + nomClean.slice(1)
+
+  return {
+    nom: nomFinal,
+    prix: montant
+  }
+}
+
+/**
+ * Message d'aide pédagogique pour débloquer le microphone dans le navigateur
+ */
+export function getMessageErreurMicro(err: string): string {
+  if (err === 'not-allowed' || err === 'PermissionDeniedError' || err === 'NotAllowedError') {
+    return "Microphone bloqué par votre navigateur. Cliquez sur l'icône de cadenas 🔒 (ou de réglages) à gauche de l'adresse du site (URL) -> Autorisez le Microphone, puis réessayez."
+  }
+  if (err === 'no-speech') {
+    return "Aucune voix détectée. Veuillez parler plus près de votre micro."
+  }
+  if (err === 'network') {
+    return "Erreur réseau. Vérifiez votre connexion Internet pour la reconnaissance vocale."
+  }
+  if (err === 'audio-capture') {
+    return "Aucun microphone détecté sur cet appareil. Branchez un micro ou des écouteurs."
+  }
+  return `Micro indisponible (${err}). Réessayez ou vérifiez les autorisations de votre navigateur.`
+}
+
+/**
+ * Tente d'obtenir la permission du micro via getUserMedia (déclenche la demande native du navigateur si besoin)
+ */
+export async function demanderPermissionMicrophone(): Promise<{ ok: boolean; error?: string }> {
+  if (typeof window === 'undefined') return { ok: false, error: 'window-undefined' }
+
+  // Si navigator.mediaDevices est indisponible (ex: HTTP au lieu de HTTPS), on prévient gentiment
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    return { ok: true }
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    // Arrêter immédiatement les pistes audio
+    stream.getTracks().forEach(track => track.stop())
+    return { ok: true }
+  } catch (err: any) {
+    const errName = err?.name || err?.message || 'not-allowed'
+    console.warn('[VOICE PERMISSION] getUserMedia refusal:', errName)
+    return { ok: false, error: errName }
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Gestionnaire d'écoute Web Speech API universel
 // ─────────────────────────────────────────────────────────────────────────────
@@ -374,3 +459,4 @@ export function createVoiceListener({
 
   return recognition
 }
+

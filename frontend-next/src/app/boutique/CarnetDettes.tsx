@@ -8,8 +8,7 @@ import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } fr
 import { useTranslation } from '@/i18n/context'
 import { updateStatutCommande, listCommandes } from './actions'
 import { ajouterDetteHorsLigne } from '@/lib/db-offline'
-import { useSyncOffline } from '@/lib/sync-manager'
-import { createVoiceListener, parseDetteIntent } from '@/lib/voice-assistant'
+import { createVoiceListener, parseDetteIntent, demanderPermissionMicrophone, getMessageErreurMicro } from '@/lib/voice-assistant'
 
 interface ClientCredit {
   id: string
@@ -552,23 +551,33 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     setShowModalTransaction(true)
   }
 
-  const demarrerEcouteVocaleCarnet = () => {
+  const demarrerEcouteVocaleCarnet = async () => {
     if (isListeningVoice) {
-      voiceRecognitionRef.current?.stop()
+      try {
+        voiceRecognitionRef.current?.stop()
+      } catch {}
       setIsListeningVoice(false)
       return
     }
 
     setVoiceFeedback(null)
+
+    // 1. Demande préalable de permission microphone au navigateur
+    const perm = await demanderPermissionMicrophone()
+    if (!perm.ok) {
+      setIsListeningVoice(false)
+      setVoiceFeedback(getMessageErreurMicro(perm.error || 'not-allowed'))
+      return
+    }
+
+    // 2. Lancement du listener universel
     const rec = createVoiceListener({
       lang: 'fr-FR',
       onStart: () => setIsListeningVoice(true),
       onEnd: () => setIsListeningVoice(false),
       onError: (err) => {
         setIsListeningVoice(false)
-        if (err !== 'no-speech') {
-          setVoiceFeedback(`Micro indisponible (${err})`)
-        }
+        setVoiceFeedback(getMessageErreurMicro(err))
       },
       onResult: (transcript) => {
         setIsListeningVoice(false)
@@ -581,7 +590,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
         if (intent.type === 'recherche') {
           setRecherche(intent.nomClient || '')
-          setVoiceFeedback(`🎙️ Recherche : "${intent.nomClient}"`)
+          setVoiceFeedback(`🎙️ Recherche client : "${intent.nomClient}"`)
           jouerBipEtVibrer('succes')
         } else if (intent.type === 'vente_credit') {
           if (clientCible) {
@@ -591,11 +600,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               setDescriptionManuelle('Achat à crédit')
               setModeSaisie('manuel')
             }
-            setVoiceFeedback(`🎙️ Dette de ${clientCible.nom} (${intent.montant ? fcfa(intent.montant) : ''})`)
+            setVoiceFeedback(`🎙️ Dette reconnue pour ${clientCible.nom} (${intent.montant ? fcfa(intent.montant) : ''})`)
             jouerBipEtVibrer('succes')
           } else {
             setRecherche(intent.nomClient || '')
-            setVoiceFeedback(`🎙️ Dette pour "${intent.nomClient}". Sélectionnez le client.`)
+            setVoiceFeedback(`🎙️ Dette pour "${intent.nomClient}". Sélectionnez le client dans la liste.`)
           }
         } else if (intent.type === 'remboursement') {
           if (clientCible) {
@@ -605,7 +614,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               setDescriptionManuelle('Remboursement')
               setModeSaisie('manuel')
             }
-            setVoiceFeedback(`🎙️ Remboursement de ${clientCible.nom} (${intent.montant ? fcfa(intent.montant) : ''})`)
+            setVoiceFeedback(`🎙️ Remboursement reconnu pour ${clientCible.nom} (${intent.montant ? fcfa(intent.montant) : ''})`)
             jouerBipEtVibrer('succes')
           } else {
             setRecherche(intent.nomClient || '')
@@ -619,11 +628,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       voiceRecognitionRef.current = rec
       try {
         rec.start()
-      } catch (e) {
-        console.warn('Erreur start voice reco', e)
+      } catch (e: any) {
+        setIsListeningVoice(false)
+        setVoiceFeedback(getMessageErreurMicro(e?.name || 'not-allowed'))
       }
     } else {
-      alert('La reconnaissance vocale n’est pas disponible sur ce navigateur (utilisez Google Chrome ou Safari).')
+      setVoiceFeedback("La reconnaissance vocale n'est pas supportée par ce navigateur. Utilisez Chrome, Edge ou Safari.")
     }
   }
 
@@ -1295,6 +1305,35 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <span>+ Client</span>
             </button>
 
+            {/* Bouton Vocal Wolof & Français immédiatement visible */}
+            <button
+              type="button"
+              onClick={demarrerEcouteVocaleCarnet}
+              title={isListeningVoice ? "Arrêter l'écoute" : "Dicter une dette ou rechercher un client en Wolof ou Français"}
+              style={{
+                minHeight: 42,
+                padding: '8px 14px',
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                whiteSpace: 'nowrap',
+                background: isListeningVoice ? '#ea580c' : '#fff7ed',
+                color: isListeningVoice ? '#ffffff' : '#c2410c',
+                border: isListeningVoice ? '2px solid #9a3412' : '1.5px solid #fdba74',
+                boxShadow: isListeningVoice ? '0 0 0 4px rgba(234, 88, 12, 0.25)' : '0 2px 6px rgba(0,0,0,0.04)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                flex: isMobile ? 1 : 'initial'
+              }}
+            >
+              <span>{isListeningVoice ? '⏹️' : '🎙️'}</span>
+              <span>{isListeningVoice ? 'Écoute…' : 'Parler (Dette / Client)'}</span>
+            </button>
+
             {/* Menu Déroulant [⋯ Plus ▾] pour QR, Import CSV, Exports */}
             <div className="npl-dettes-options-dropdown" style={{ position: 'relative' }}>
               <button
@@ -1304,39 +1343,38 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   minHeight: 42,
                   padding: '8px 12px',
                   borderRadius: 10,
-                  fontSize: 12.5,
-                  fontWeight: 750,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  border: '1.5px solid var(--border, #E5E7EB)',
+                  background: '#ffffff',
+                  color: 'var(--navy, #1C2B4A)',
+                  cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 4,
-                  background: showMenuOptionsDettes ? '#e2e8f0' : '#ffffff',
-                  border: '1.5px solid #cbd5e1',
-                  color: 'var(--navy, #1C2B4A)',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
-                title="Options et exports du carnet"
               >
-                <span>⋯ Plus</span>
-                <span style={{ fontSize: 10 }}>▾</span>
+                <span>⋯ Plus ▾</span>
               </button>
 
               {showMenuOptionsDettes && (
                 <div style={{
                   position: 'absolute',
-                  right: 0,
                   top: '100%',
+                  right: 0,
                   marginTop: 6,
-                  width: 220,
                   background: '#ffffff',
                   borderRadius: 12,
-                  boxShadow: '0 10px 28px rgba(0,0,0,0.15)',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
                   border: '1px solid #e2e8f0',
-                  padding: '6px',
-                  zIndex: 50,
+                  padding: 8,
+                  zIndex: 100,
+                  minWidth: 210,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 2,
+                  gap: 4
                 }}>
                   <button
                     type="button"
@@ -1386,7 +1424,6 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                   <button
                     type="button"
-                    disabled={relancantEcheances}
                     onClick={() => { setShowMenuOptionsDettes(false); handleRelancerEcheances(); }}
                     style={{
                       display: 'flex',
@@ -1396,21 +1433,18 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       borderRadius: 8,
                       fontSize: 12.5,
                       fontWeight: 700,
-                      color: '#c2410c',
-                      background: '#fff7ed',
+                      color: '#b45309',
+                      background: '#fefce8',
                       border: 'none',
-                      cursor: 'pointer',
+                      cursor: relancantEcheances ? 'not-allowed' : 'pointer',
                       textAlign: 'left',
                       width: '100%',
-                      opacity: relancantEcheances ? 0.6 : 1,
+                      opacity: relancantEcheances ? 0.6 : 1
                     }}
-                    title="Envoyer les relances automatiques WhatsApp pour toutes les créances échues"
                   >
-                    <span>🔔</span>
-                    <span>{relancantEcheances ? 'Relance en cours…' : 'Relances créances échues'}</span>
+                    <span>⏰</span>
+                    <span>{relancantEcheances ? 'Relances en cours...' : 'Relancer échéances dépassées'}</span>
                   </button>
-
-                  <div style={{ height: 1, background: '#f1f5f9', margin: '3px 0' }} />
 
                   <button
                     type="button"
@@ -1462,6 +1496,71 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             </div>
           </div>
         </div>
+
+        {/* Bandeau Vocal Supérieur (si écoute en cours ou message/erreur) */}
+        {(isListeningVoice || voiceFeedback) && (
+          <div style={{
+            background: isListeningVoice
+              ? '#fff7ed'
+              : voiceFeedback?.includes('bloqué') || voiceFeedback?.includes('indisponible') || voiceFeedback?.includes('Erreur') || voiceFeedback?.includes('Microphone')
+              ? '#fef2f2'
+              : '#f0fdf4',
+            border: isListeningVoice
+              ? '2px solid #ea580c'
+              : voiceFeedback?.includes('bloqué') || voiceFeedback?.includes('indisponible') || voiceFeedback?.includes('Erreur') || voiceFeedback?.includes('Microphone')
+              ? '1.5px solid #fecaca'
+              : '1.5px solid #bbf7d0',
+            borderRadius: 12,
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            width: '100%',
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 22 }}>{isListeningVoice ? '🎙️' : voiceFeedback?.includes('bloqué') ? '🔒' : '✨'}</span>
+              <div>
+                <div style={{
+                  fontSize: 13.5,
+                  fontWeight: 800,
+                  color: isListeningVoice
+                    ? '#9a3412'
+                    : voiceFeedback?.includes('bloqué') || voiceFeedback?.includes('indisponible') || voiceFeedback?.includes('Erreur') || voiceFeedback?.includes('Microphone')
+                    ? '#991b1b'
+                    : '#166534'
+                }}>
+                  {isListeningVoice ? "Écoute en cours… Parlez en Wolof ou Français !" : voiceFeedback}
+                </div>
+                {isListeningVoice && (
+                  <div style={{ fontSize: 12, color: '#c2410c', marginTop: 2 }}>
+                    Dites par ex : <em>« Bor Moussa 10 000 »</em>, <em>« Dette Fatou ñaari junni »</em> ou <em>« Client Alioune »</em>
+                  </div>
+                )}
+              </div>
+            </div>
+            {isListeningVoice && (
+              <button
+                type="button"
+                onClick={() => { try { voiceRecognitionRef.current?.stop() } catch {}; setIsListeningVoice(false); }}
+                style={{
+                  background: '#ea580c',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: 'pointer'
+                }}
+              >
+                Arrêter
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Cartes KPI Épurées */}
         <div style={{
