@@ -517,8 +517,8 @@ async function sendFiche(type, id, phone) {
  * Zéro troncature 'Voir plus', zéro bouton externe perturbateur.
  */
 async function sendWhatsAppProspectionDirecte(phone, {
-  features = 'Gérez votre commerce à Dakar sur smartphone avec Nopalou : Caisse tactile, boutique WhatsApp, factures & carnet de dettes.',
-  googleProof = 'Vérifiez notre plateforme sur Google en tapant Nopalou 🇸🇳.',
+  features = '📱 Caisse tactile, boutique WhatsApp & encaissements Wave.',
+  googleProof = '🧾 Factures & carnet de dettes (tapez Nopalou sur Google 🇸🇳)',
 } = {}) {
   if (!phone) return null;
   const normPhone = normalisePhone(phone);

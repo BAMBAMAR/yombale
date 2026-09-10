@@ -512,8 +512,13 @@ export default function ProspectionClient({
       ? leads.filter((l) => selectedLeadIds.includes(l.id))
       : filteredLeads
     
-    // Exclure systématiquement les désinscrits et invalides des campagnes
-    base = base.filter((l) => l.statut !== 'desinscrit' && l.statut !== 'invalide')
+    // RÈGLE STRICTE : On ne doit JAMAIS envoyer au même numéro plusieurs fois
+    // Exclure systématiquement les prospects déjà contactés, convertis, désinscrits ou invalides
+    base = base.filter((l) => 
+      l.statut === 'nouveau' && 
+      !l.dernier_contact_at && 
+      (l.nb_contacts || 0) === 0
+    )
 
     if (campagneLimit !== 'tous' && typeof campagneLimit === 'number') {
       return base.slice(0, campagneLimit)
@@ -1975,6 +1980,22 @@ Boutique Parcelles, 70 111 22 33`}
                     fontSize: 13, outline: 'none', lineHeight: 1.5,
                   }}
                 />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, fontSize: 11, flexWrap: 'wrap', gap: 6 }}>
+                  <div>
+                    {campagneMessage.length <= 190 ? (
+                      <span style={{ color: '#16A34A', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        🟢 <strong>Seuil optimal respecté ({campagneMessage.length}/190 car.)</strong> : 100% visible sans bouton « Voir plus » sur smartphone
+                      </span>
+                    ) : (
+                      <span style={{ color: '#D97706', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        ⚠️ <strong>Attention ({campagneMessage.length} car. — seuil recommandé 190)</strong> : risque d&apos;apparition de « ... Voir plus » sur mobile
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ color: '#64748B', fontWeight: 600 }}>
+                    Seuil anti-troncature mobile : max ~190 car.
+                  </span>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: 12 }}>

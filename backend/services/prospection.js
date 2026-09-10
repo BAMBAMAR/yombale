@@ -64,13 +64,11 @@ const TEMPLATES_PAR_DEFAUT = [
     categorie: 'general',
     texte: `Salam alaykoum ! 👋
 
-Gérez votre commerce à Dakar sur smartphone avec Nopalou :
-📱 Caisse tactile & scanner codes-barres
-🛍️ Boutique WhatsApp & encaissements Wave
-🧾 Factures, devis & carnet de dettes
-🇸🇳 Vérifiez sur Google : tapez « Nopalou »
+📱 Caisse tactile, boutique WhatsApp & encaissements Wave.
 
-Voulez-vous voir une démo gratuite en 1 min ? Répondez OUI` + FOOTER_OPTOUT
+🧾 Factures & carnet de dettes (tapez Nopalou sur Google 🇸🇳)
+
+Répondez OUI pour voir la démo en 1 min !` + FOOTER_OPTOUT
   },
   {
     id: 'creation_whatsapp_30s',
@@ -1641,19 +1639,37 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       continue;
     }
 
-    // 2. Protection Anti-Sur-sollicitation & Anti-Spam Temporel (uniquement pour les campagnes de masse automatiques et leads déjà contactés)
-    if (!simulation && lead.statut !== 'nouveau' && leads.length > 5 && lead.dernier_contact_at) {
-      const heuresDepuisContact = (Date.now() - new Date(lead.dernier_contact_at).getTime()) / (1000 * 3600);
-      if (heuresDepuisContact < 48) {
-        console.log(`[PROSPECTION THROTTLE] Ignoré : lead ${lead.telephone} déjà contacté il y a ${Math.round(heuresDepuisContact)}h (< 48h).`);
+    // 2. Protection Anti-Doublon Absolue : ON NE DOIT JAMAIS ENVOYER AU MÊME NUMÉRO PLUSIEURS FOIS
+    if (!simulation) {
+      // a) Si le prospect a déjà été contacté ou n'est plus "nouveau"
+      if (lead.statut !== 'nouveau' || lead.dernier_contact_at || (lead.nb_contacts && lead.nb_contacts > 0)) {
+        console.log(`[PROSPECTION DOUBLON BLOQUÉ] Ignoré : lead ${lead.telephone} déjà contacté (statut: ${lead.statut}, dernier_contact: ${lead.dernier_contact_at}).`);
         continue;
       }
-    }
 
-    // 3. Protection absolue : Si le prospect a déjà une boutique active
-    if (lead.statut === 'converti') {
-      console.log(`[PROSPECTION CONVERTI] Ignoré : lead ${lead.telephone} a déjà créé sa boutique Nopalou.`);
-      continue;
+      // b) Si le prospect a déjà une boutique active
+      if (lead.statut === 'converti') {
+        console.log(`[PROSPECTION CONVERTI] Ignoré : lead ${lead.telephone} a déjà créé sa boutique Nopalou.`);
+        continue;
+      }
+
+      // c) Vérification historique directe en base de données sur prospection_messages_log
+      // Garantit à 100% qu'aucun message n'a déjà été envoyé ou délivré à ce numéro
+      if (lead.telephone) {
+        const norm = normalisePhone(lead.telephone);
+        const { rows: dejaEnvoye } = await pool.query(
+          `SELECT id FROM prospection_messages_log 
+           WHERE (destinataire = $1 OR destinataire = $2) 
+             AND statut IN ('envoye', 'livre', 'lu') 
+           LIMIT 1`,
+          [norm, norm.replace(/^221/, '')]
+        );
+        if (dejaEnvoye.length > 0) {
+          console.log(`[PROSPECTION DOUBLON BLOQUÉ] Ignoré : le numéro ${lead.telephone} a déjà reçu un message par le passé.`);
+          await pool.query("UPDATE prospection_leads SET statut = 'contacte_wa', updated_at = NOW() WHERE id = $1 AND statut = 'nouveau'", [lead.id]);
+          continue;
+        }
+      }
     }
 
     // Résolution contextuelle du template (Persona matching)
@@ -1666,15 +1682,13 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     if (!simulation) {
       if (canal === 'whatsapp') {
         try {
-          // Pour la prospection à froid (fenêtre 24h fermée), on utilise en priorité le template
-          // certifié pur texte sans bouton 'nopalou_contact_direct', ou le template certifié de service.
-          // IMPORTANT : On N'ENVOIE PAS de texte libre non-certifié (templateOnly: true), car Meta
-          // rejette systématiquement les textes libres hors fenêtre 24h avec l'erreur 131047.
+          // Pour la prospection à froid (fenêtre 24h fermée), on utilise le template pur texte nopalou_contact_direct.
+          // Paramètres ultra-courts pour éliminer 100% l'apparition de '... Voir plus' sur smartphone.
           let metaResponse = null;
           try {
             metaResponse = await sendWhatsAppProspectionDirecte(lead.telephone, {
-              features: 'Gérez votre commerce à Dakar sur smartphone avec Nopalou : Caisse tactile, boutique WhatsApp, factures & carnet de dettes.',
-              googleProof: 'Vérifiez notre plateforme sur Google en tapant Nopalou 🇸🇳.',
+              features: '📱 Caisse tactile, boutique WhatsApp & encaissements Wave.',
+              googleProof: '🧾 Factures & carnet de dettes (tapez Nopalou sur Google 🇸🇳)',
             });
           } catch (eDir) {
             console.warn(`[PROSPECTION DIRECTE FAIL, FALLBACK NOTIF] ${lead.telephone}:`, eDir.message);
@@ -1682,8 +1696,8 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
 
           if (!metaResponse || metaResponse.success === false) {
             const enseigneAuth = estNomPropreAuthentique(lead.nom_boutique) ? lead.nom_boutique.trim() : null;
-            const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse Smartphone';
-            const detailNotif = 'Caisse tactile, boutique WhatsApp, factures & carnet dettes. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour la démo 1 min.';
+            const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse & Gestion';
+            const detailNotif = '📱 Caisse tactile, boutique WhatsApp, factures & Wave. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour la démo 1 min.';
             metaResponse = await sendWhatsAppNotification(lead.telephone, {
               textMessage: null, // Pas de texte libre pour éviter l'erreur 131047
               title: titreNotif,
