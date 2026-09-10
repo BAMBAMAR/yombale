@@ -1872,7 +1872,9 @@ async function diagnostiquerCampagne(campagneId) {
   `, [String(campagneId)]);
 
   const total = logs.length;
-  const envoyes = logs.filter(l => l.statut === 'envoye').length;
+  const envoyes = logs.filter(l => ['envoye', 'livre', 'lu'].includes(l.statut)).length;
+  const lus = logs.filter(l => l.statut === 'lu').length;
+  const livres = logs.filter(l => l.statut === 'livre').length;
   const simules = logs.filter(l => l.statut === 'simule').length;
   const echecs = logs.filter(l => l.statut === 'echec').length;
 

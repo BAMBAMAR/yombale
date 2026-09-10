@@ -1033,7 +1033,7 @@ export default function ProspectionClient({
             { label: '📨 Contactés', val: stats.contactes, color: '#C75B00', bg: '#FFF7ED', icon: Send, pct: stats.total ? Math.round(stats.contactes / stats.total * 100) : 0 },
             { label: '💬 En Discussion', val: stats.en_discussion, color: '#D97706', bg: '#FFFBEB', icon: MessageSquare, pct: stats.total ? Math.round(stats.en_discussion / stats.total * 100) : 0 },
             { label: '🏪 Boutiques Créées', val: stats.convertis, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2, pct: stats.contactes ? Math.round(stats.convertis / stats.contactes * 100) : 0 },
-            { label: '🚫 Désinscrits', val: stats.desinscrits + stats.invalides, color: '#64748B', bg: '#F1F5F9', icon: Ban, pct: stats.total ? Math.round((stats.desinscrits + stats.invalides) / stats.total * 100) : 0 },
+            { label: '🚫 Invalides / Hors cible', val: stats.invalides + (stats.desinscrits || 0), color: '#64748B', bg: '#F1F5F9', icon: Ban, pct: stats.total ? Math.round((stats.invalides + (stats.desinscrits || 0)) / stats.total * 100) : 0 },
           ].map((kpi, idx) => {
             const Icon = kpi.icon
             return (
