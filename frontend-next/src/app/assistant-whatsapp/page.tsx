@@ -4,8 +4,8 @@ import Link from 'next/link'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
-  title: 'Assistant WhatsApp — Comparez les prix par message',
-  description: `L'assistant WhatsApp de Nopalou : recherchez un produit, recevez les meilleurs prix au Sénégal, créez des alertes et consultez l'immobilier, directement sur WhatsApp.`,
+  title: 'Assistant WhatsApp Nopalou — Acheter, Comparer & Suivre ses Commandes',
+  description: `L'assistant WhatsApp officiel de Nopalou : achetez auprès de boutiques partenaires, comparez les prix réels au Sénégal, suivez vos commandes et gérez votre activité directement sur WhatsApp.`,
   alternates: { canonical: `${BASE}/assistant-whatsapp` },
 }
 
@@ -89,7 +89,7 @@ export default function AssistantWhatsAppPage() {
         </Link>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)' }}>💬 Assistant WhatsApp Nopalou</div>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Comparez les prix directement depuis votre chat, sans installer d&apos;application.</div>
+          <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Achetez, comparez les offres et suivez vos commandes directement depuis WhatsApp.</div>
         </div>
       </div>
 

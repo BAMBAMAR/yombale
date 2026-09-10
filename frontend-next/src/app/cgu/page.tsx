@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation — Nopalou",
-  description: "Conditions générales d'utilisation du comparateur de prix Nopalou.",
+  description: "Conditions générales d'utilisation de la plateforme de commerce digital Nopalou (comparateur, boutiques en ligne et services marchands).",
 }
 
 export default async function CguPage() {
@@ -37,7 +37,7 @@ export default async function CguPage() {
 
       <section className="legal-section">
         <h2>1. Objet</h2>
-        <p>Les présentes CGU régissent l&apos;utilisation du site Nopalou, comparateur de prix en ligne opérant au Sénégal, accessible à l&apos;adresse <strong>nopalou.com</strong>.</p>
+        <p>Les présentes CGU régissent l&apos;utilisation de la plateforme de commerce digital Nopalou (comparateur de prix, marketplace de boutiques indépendantes, caisse POS et services marchands opérant au Sénégal), accessible à l&apos;adresse <strong>nopalou.com</strong>.</p>
       </section>
 
       <section className="legal-section">

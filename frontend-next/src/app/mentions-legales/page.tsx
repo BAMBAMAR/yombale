@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Mentions légales',
-  description: 'Mentions légales du comparateur de prix Nopalou au Sénégal.',
+  description: 'Mentions légales de la plateforme de commerce digital Nopalou au Sénégal.',
 }
 
 export default function MentionsLegalesPage() {
@@ -13,7 +13,7 @@ export default function MentionsLegalesPage() {
 
       <section className="legal-section">
         <h2>Éditeur du site</h2>
-        <p>Le site <strong>Nopalou</strong> (nopalou.com), comparateur de prix en ligne opérant au Sénégal, est édité par <strong>SKYROAD SARL</strong>.</p>
+        <p>Le site <strong>Nopalou</strong> (nopalou.com), plateforme de commerce digital (comparateur de prix, marketplace de boutiques et solutions de caisse POS opérant au Sénégal), est édité par <strong>SKYROAD SARL</strong>.</p>
         <p>N.I.N.E.A. : 011847714</p>
         <p>Siège social : Cité Khandar Ouest, T Foirelot 10 N°106, Yoff, Dakar, Sénégal</p>
         <p>Téléphone : <a href="tel:+221777202086">+221 77 720 20 86</a></p>

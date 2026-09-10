@@ -58,7 +58,7 @@ export function organizationSchema() {
     name: 'Nopalou',
     url: 'https://nopalou.com',
     logo: 'https://nopalou.com/icons/icon-512.svg',
-    description: 'Comparateur de prix N°1 au Sénégal',
+    description: 'Plateforme de commerce digital, comparateur de prix et solutions marchandes au Sénégal',
     sameAs: [
       'https://www.facebook.com/profile.php?id=61591675701726',
       'https://twitter.com/nopalou_sn',

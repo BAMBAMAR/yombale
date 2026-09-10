@@ -54,23 +54,23 @@ export function GET() {
         </div>
         <div
           style={{
-            fontSize: '36px',
-            color: 'rgba(255, 255, 255, 0.90)',
-            fontWeight: '500',
-            marginBottom: '12px',
+            fontSize: '34px',
+            color: 'rgba(255, 255, 255, 0.95)',
+            fontWeight: '700',
+            marginBottom: '10px',
             textAlign: 'center',
           }}
         >
-          Comparateur de prix N°1 au Sénégal
+          Plateforme de Commerce Digital au Sénégal
         </div>
         <div
           style={{
-            fontSize: '24px',
-            color: 'rgba(255, 255, 255, 0.65)',
+            fontSize: '22px',
+            color: 'rgba(255, 255, 255, 0.75)',
             textAlign: 'center',
           }}
         >
-          Produits · Immobilier · Télécom · nopalou.com
+          Acheter au meilleur prix · Vendre · Caisse POS · nopalou.com
         </div>
       </div>
     ),

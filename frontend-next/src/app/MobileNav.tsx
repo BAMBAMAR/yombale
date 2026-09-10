@@ -267,10 +267,10 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           )}
 
           {/* ── 2. SERVICES PRINCIPAUX NOPALOU ── */}
-          <div className="mobile-nav-section">Services</div>
+          <div className="mobile-nav-section">Acheter &amp; Explorer</div>
           <a href="/" className="mobile-nav-link" onClick={close}>
             <ShoppingBag size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
-            <span>Produits &amp; Catalogue</span>
+            <span>Produits &amp; Comparatifs</span>
           </a>
           <a href="/immo" className="mobile-nav-link" onClick={close}>
             <Home size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
@@ -286,12 +286,12 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           </a>
           <a href="/boutiques" className="mobile-nav-link" onClick={close}>
             <Store size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
-            <span>Annuaire des Boutiques</span>
+            <span>Boutiques Vérifiées</span>
           </a>
 
           {/* ── 2.5 SOLUTIONS MARCHANDS & FORFAITS ── */}
           <div className="mobile-nav-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>Commerçants &amp; POS</span>
+            <span>Solutions Commerçants &amp; POS</span>
             <span style={{ fontSize: 10, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8, fontWeight: 800 }}>1m Offert</span>
           </div>
           <a href="/tarifs-boutique" className="mobile-nav-link" onClick={close}>

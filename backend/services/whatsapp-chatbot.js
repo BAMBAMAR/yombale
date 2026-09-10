@@ -2591,7 +2591,7 @@ async function handleIncomingInternal(msg) {
   if (state === 'IDLE') {
     await sendWhatsAppText(
       phone,
-      '👋 Bienvenue sur *Nopalou* !\n\nJe suis votre assistant — je peux comparer des prix, vous montrer des annonces immo ou des offres télécom, créer une alerte de prix, suivre une commande ou répondre à vos questions sur le site. 100% gratuit, disponible 24h/24.'
+      '👋 Bienvenue sur *Nopalou* !\n\nJe suis votre assistant shopping & commerce. Je vous aide à dénicher les meilleurs prix, commander auprès de nos boutiques partenaires, suivre vos colis, ou gérer et développer votre activité marchande. 100% gratuit, disponible 24h/24.'
     );
     await setSession(phone, 'MENU', {});
     await sendMenu(phone);

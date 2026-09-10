@@ -52,7 +52,7 @@ router.post('/inscription',
         to: email,
         subject: 'Bienvenue sur Nopalou 🇸🇳 — vérifiez votre email',
         html: `<p>Bonjour ${nom},</p>
-               <p>Bienvenue sur Nopalou, le comparateur de prix du Sénégal !</p>
+               <p>Bienvenue sur Nopalou, votre plateforme de commerce digital au Sénégal !</p>
                <p><a href="${lien}">Cliquez ici pour vérifier votre adresse email</a> (lien valide 24h).</p>
                <p>À bientôt sur Nopalou 👋</p>`,
       }).catch(() => {});

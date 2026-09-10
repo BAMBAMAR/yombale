@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = 'Nopalou — Comparateur de prix au Sénégal'
+export const alt = 'Nopalou — Plateforme de Commerce Digital au Sénégal'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -57,19 +57,25 @@ export default function OgImage() {
         {/* Tagline */}
         <p style={{
           fontSize: 32, color: '#E2E8F0', margin: 0, textAlign: 'center',
+          maxWidth: 800, lineHeight: 1.3, fontWeight: 700,
+        }}>
+          Plateforme de Commerce Digital au Sénégal
+        </p>
+        <p style={{
+          fontSize: 20, color: '#CBD5E1', margin: '10px 0 0', textAlign: 'center',
           maxWidth: 700, lineHeight: 1.3,
         }}>
-          Comparateur de prix N°1 au Sénégal
+          Acheter au meilleur prix · Vendre · Caisse POS &amp; WhatsApp
         </p>
 
         {/* Stats */}
         <div style={{
-          display: 'flex', gap: 48, marginTop: 48,
+          display: 'flex', gap: 48, marginTop: 36,
         }}>
-          {[['3 000+', 'Produits'], ['9+', 'Marchands'], ['100%', 'Gratuit']].map(([n, l]) => (
+          {[['6 800+', 'Offres & Produits'], ['Boutiques', 'Vérifiées'], ['Caisse POS', '100% Offline']].map(([n, l]) => (
             <div key={l} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: 36, fontWeight: 800, color: '#C75B00' }}>{n}</span>
-              <span style={{ fontSize: 16, color: '#94A3B8', marginTop: 4 }}>{l}</span>
+              <span style={{ fontSize: 30, fontWeight: 800, color: '#C75B00' }}>{n}</span>
+              <span style={{ fontSize: 15, color: '#94A3B8', marginTop: 4 }}>{l}</span>
             </div>
           ))}
         </div>

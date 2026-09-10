@@ -76,7 +76,7 @@ export default function NavbarGuides() {
             <MessageCircle size={18} style={{ color: '#0A5C36', flexShrink: 0 }} />
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Assistant WhatsApp</span>
-              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Comparez les prix depuis WhatsApp</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Achetez, comparez et suivez vos commandes</span>
             </span>
           </Link>
           <Link href="/tarifs-boutique" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#fff7ed', borderRadius: 8 }}>

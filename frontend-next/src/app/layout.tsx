@@ -53,12 +53,16 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: 'Nopalou — Comparateur de prix Sénégal',
+    default: 'Nopalou — Commerce Digital au Sénégal : Acheter, Vendre & Développer son Commerce',
     template: '%s | Nopalou',
   },
   description:
-    'Comparez les prix de milliers de produits, annonces immo et forfaits télécom au Sénégal. Trouvez les meilleures offres à Dakar.',
-  keywords: ['comparateur prix', 'Sénégal', 'Dakar', 'achat en ligne', 'immobilier', 'forfait télécom', 'Nopalou'],
+    'La plateforme de commerce digital au Sénégal : découvrez des boutiques, comparez les offres au meilleur prix, commandez sur WhatsApp et propulsez votre commerce avec notre boutique en ligne et caisse tactile POS.',
+  keywords: [
+    'commerce digital sénégal', 'comparateur prix sénégal', 'boutique en ligne sénégal',
+    'caisse pos dakar', 'vendre sur whatsapp', 'Dakar', 'achat en ligne',
+    'immobilier', 'forfait télécom', 'Nopalou',
+  ],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'),
   alternates: {
     canonical: process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com',
@@ -69,13 +73,13 @@ export const metadata: Metadata = {
     siteName: 'Nopalou',
     locale: 'fr_SN',
     type: 'website',
-    images: [{ url: '/api/og-image', width: 1200, height: 630, alt: 'Nopalou — Comparateur de prix Sénégal' }],
+    images: [{ url: '/api/og-image', width: 1200, height: 630, alt: 'Nopalou — Plateforme de Commerce Digital au Sénégal' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@nopalou_sn',
-    title: 'Nopalou — Comparateur de prix Sénégal',
-    description: 'Comparez les prix de milliers de produits au Sénégal.',
+    title: 'Nopalou — Commerce Digital au Sénégal : Acheter, Vendre & Développer',
+    description: 'Découvrez des boutiques, comparez les offres au meilleur prix et développez votre commerce au Sénégal.',
     images: ['/api/og-image'],
   },
   manifest: '/manifest.json',
@@ -107,7 +111,7 @@ const ORG_JSON_LD = {
   name: 'Nopalou',
   url: 'https://nopalou.com',
   logo: 'https://nopalou.com/icons/icon-512.svg',
-  description: 'Comparateur de prix N°1 au Sénégal — trouvez le prix le moins cher à Dakar pour téléphones, TV, électroménager, informatique.',
+  description: 'Plateforme de commerce digital, comparateur de prix et solutions marchandes au Sénégal (boutiques en ligne, caisse tactile POS, commandes WhatsApp).',
   inLanguage: 'fr',
   potentialAction: {
     '@type': 'SearchAction',
@@ -237,7 +241,7 @@ export default async function RootLayout({
         <header role="banner">
           <nav className="navbar" aria-label="Navigation principale">
             <div className="navbar-top-row">
-              <a href="/" className="logo" aria-label="Nopalou - Comparateur de prix au Sénégal">
+              <a href="/" className="logo" aria-label="Nopalou - Plateforme de commerce digital et comparateur au Sénégal">
                 <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
                 <span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>
               </a>
@@ -311,7 +315,7 @@ export default async function RootLayout({
                 <Image src="/icons/logo-mark.svg" alt="" width={28} height={28} style={{ borderRadius: 7, flexShrink: 0 }} />
                 <span className="footer-logo-name"><span style={{ color: '#fff' }}>Nopa</span><span style={{ color: '#C75B00' }}>lou</span></span>
               </a>
-              <p className="footer-tagline">Le premier comparateur de prix dédié au marché sénégalais — produits, immobilier, forfaits télécom.</p>
+              <p className="footer-tagline">La plateforme de commerce digital au Sénégal : comparez les offres au meilleur prix, achetez auprès de boutiques vérifiées et propulsez votre activité commerciale.</p>
               <div className="footer-social" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
                 <a href="https://www.tiktok.com/@nopalou.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok" title="TikTok Officiel" className="footer-social-link footer-social-link--tiktok">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-5.2-1.74 2.89 2.89 0 0 1 2.31-2.85V7.6a6.34 6.34 0 0 0-5.1 6.2 6.34 6.34 0 1 0 10.9-4.38v-3.7a8.16 8.16 0 0 0 4.31 1.25v-3.28a4.85 4.85 0 0 1-.03-.01z"/></svg>
@@ -404,7 +408,7 @@ export default async function RootLayout({
               <a href="/paiement-en-ligne-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Paiement Wave boutique en ligne</a>
               <a href="/gestion-stock-carnet-dettes" style={{ color: '#fed7aa', fontWeight: 700 }}>Carnet de dettes commerçant</a>
             </div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires Comparateur</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires &amp; Comparatifs d&apos;achats</p>
             <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13 }}>
               <a href="/pos">Caisse enregistreuse Dakar</a>
               <a href="/pos">Caisse tactile petit commerce</a>
@@ -423,9 +427,9 @@ export default async function RootLayout({
 
           {/* Bandeau confiance */}
           <div className="footer-trust">
-            <div className="footer-trust-item">✅ <strong>Gratuit</strong> &amp; indépendant</div>
-            <div className="footer-trust-item">🔄 Prix mis à jour <strong>toutes les 6h</strong></div>
-            <div className="footer-trust-item">🇸🇳 <strong>100% Sénégal</strong></div>
+            <div className="footer-trust-item">✅ <strong>Impartial</strong> &amp; 0% commission</div>
+            <div className="footer-trust-item">🔄 Prix vérifiés <strong>toutes les 6h</strong></div>
+            <div className="footer-trust-item">🇸🇳 <strong>100% Commerce Sénégal</strong></div>
           </div>
 
           <div className="footer-bottom">

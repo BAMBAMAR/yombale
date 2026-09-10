@@ -16,13 +16,13 @@ import { apiFetch } from '@/lib/api'
 import HeroWhatsAppCarousel from './HeroWhatsAppCarousel'
 
 export const metadata: Metadata = {
-  title: 'Comparateur de prix au Sénégal · Dakar',
+  title: 'Nopalou · Acheter au meilleur prix, Vendre & Développer son commerce au Sénégal',
   description:
-    'Nopalou est le comparateur de prix N°1 au Sénégal. Trouvez le prix le moins cher pour vos achats à Dakar : téléphones, TV, électroménager, informatique. Gratuit et mis à jour toutes les 6h.',
+    'Nopalou est la plateforme de commerce digital au Sénégal. Comparez les prix à Dakar, commandez directement auprès de boutiques vérifiées, ou lancez votre propre boutique avec caisse POS tactile.',
   keywords: [
-    'comparateur de prix Sénégal', 'comparateur prix Dakar', 'prix moins cher Sénégal',
-    'meilleur prix Dakar', 'comparer prix Sénégal', 'achat pas cher Dakar',
-    'prix téléphone Sénégal', 'prix TV Dakar', 'Nopalou',
+    'commerce digital Sénégal', 'comparateur de prix Sénégal', 'comparateur prix Dakar',
+    'boutique en ligne Sénégal', 'caisse pos Sénégal', 'prix moins cher Sénégal',
+    'meilleur prix Dakar', 'achat pas cher Dakar', 'vendre en ligne Dakar', 'Nopalou',
   ],
 }
 
@@ -192,7 +192,7 @@ export default async function HomePage({
                   fontSize: 11, fontWeight: 800, marginBottom: 5, border: '1px solid #FFEDD5',
                   letterSpacing: '0.01em',
                 }}>
-                  <span>✨ 1er comparateur de prix au Sénégal</span>
+                  <span>🇸🇳 L&apos;Écosystème de Commerce Digital au Sénégal</span>
                 </div>
 
                 <h1 style={{
@@ -203,7 +203,7 @@ export default async function HomePage({
                   lineHeight: 1.2,
                   letterSpacing: '-0.02em'
                 }}>
-                  Achetez au meilleur prix à Dakar &amp; au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
+                  Achetez au meilleur prix. Vendez &amp; développez votre <span style={{ color: 'var(--accent, #C75B00)' }}>commerce</span>
                 </h1>
 
                 <p style={{
@@ -213,7 +213,7 @@ export default async function HomePage({
                   maxWidth: 520,
                   lineHeight: 1.3
                 }}>
-                  Comparez des milliers de prix et boutiques vérifiées • 100% gratuit &amp; actualisé toutes les 6h
+                  Comparez des milliers d&apos;offres et boutiques vérifiées • Commandez sur WhatsApp • Caisse POS &amp; Gestion
                 </p>
               </div>
 
@@ -606,23 +606,23 @@ export default async function HomePage({
               6800+ produits · mis à jour toutes les 6h
             </span>
             <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 32, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: 0, lineHeight: 1.2 }}>
-              Le comparateur de prix N°1 au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
+              L&apos;écosystème de commerce digital N°1 au <span style={{ color: 'var(--accent, #C75B00)' }}>Sénégal</span>
             </h2>
           </div>
 
           {/* Grille de texte moderne */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32, marginBottom: 48 }}>
             <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
-              <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>📊</span>
+              <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>🛍️</span>
               <p style={{ margin: 0, color: 'var(--text-body, #4A3F36)', fontSize: 14, lineHeight: 1.7 }}>
-                <strong>Nopalou</strong> est le premier comparateur de prix dédié au marché sénégalais. Vous cherchez le <strong>prix le moins cher</strong> pour un téléphone, une télévision, un réfrigérateur ou un ordinateur ? Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands en ligne au Sénégal.
+                <strong>Nopalou</strong> réunit acheteurs et commerçants sur une plateforme unique au Sénégal. Pour les <strong>acheteurs</strong>, Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands et boutiques locales à Dakar, Thiès, Saint-Louis et dans tout le pays. Trouvez le <strong>meilleur prix vérifié</strong> et commandez en direct en toute confiance.
               </p>
             </div>
             
             <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
-              <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>📍</span>
+              <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>🏪</span>
               <p style={{ margin: 0, color: 'var(--text-body, #4A3F36)', fontSize: 14, lineHeight: 1.7 }}>
-                Que vous soyez à <strong>Dakar</strong>, Thiès, Saint-Louis, Ziguinchor ou Kaolack — trouvez le meilleur prix avant d&apos;acheter. Nos prix sont mis à jour automatiquement toutes les 6 heures depuis Jumia, Expat-Dakar, CoinAfrique et d&apos;autres. <strong>Gratuit, sans inscription, sans pub.</strong>
+                Pour les <strong>commerçants</strong>, Nopalou offre une suite complète pour réussir : création de boutique en ligne en 2 minutes, <strong>caisse tactile POS 100% hors-ligne</strong> pour votre magasin, synchronisation de stocks, carnet de crédits/dettes avec relances Wave, et visibilité automatique de vos produits sur le comparateur de prix le plus consulté du Sénégal.
               </p>
             </div>
           </div>

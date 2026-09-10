@@ -6,12 +6,16 @@ Guide officiel des actifs de marque, spécifications techniques et règles d'uti
 
 ## 1. Fondations de la Marque
 
-Nopalou est le premier comparateur de prix de référence au Sénégal (produits e-commerce, immobilier, forfaits télécom).
+**Nopalou** est la **plateforme de commerce digital de référence au Sénégal**, articulée autour de deux univers complémentaires :
+- **Pour les Acheteurs** : rechercher des produits, comparer les offres et prix réels de multiples boutiques, commander en ligne ou sur WhatsApp, suivre leurs commandes et bénéficier d'alertes prix transparentes.
+- **Pour les Commerçants** : créer leur boutique en ligne en 2 minutes, encaisser via Wave et Orange Money (0% commission), gérer leurs stocks, opérer une caisse tactile POS 100% hors-ligne, tenir leur carnet de crédits/dettes clients avec relances automatiques et bénéficier du trafic qualifié du moteur de recherche.
+
+**Slogan Officiel :** « Acheter simplement. Vendre intelligemment. »
 
 L'identité visuelle véhicule :
-- **Clarté & Efficacité** : accès immédiat au meilleur prix sans friction.
-- **Fiabilité Commerciale** : ancrage local fort, sérieux institutionnel et transparence.
-- **Modernité & Performance** : actifs 100 % vectoriels, légers et ultra-lisibles sur tous les écrans.
+- **Clarté & Efficacité** : accès immédiat au meilleur prix et gestion commerciale sans friction.
+- **Fiabilité & Ancrage Local** : sérieux institutionnel, transparence des prix et intégration native des usages sénégalais (Wave, WhatsApp, FCFA, Offline).
+- **Modernité & Performance** : actifs 100 % vectoriels, légers et ultra-lisibles sur tous les écrans (desktop, mobile, caisse POS, PWA).
 
 ---
 

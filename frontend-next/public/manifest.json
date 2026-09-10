@@ -1,9 +1,9 @@
 {
   "id": "https://nopalou.com/",
-  "name": "Nopalou — Super-Comparateur & Caisse POS Sénégal",
+  "name": "Nopalou — Plateforme de Commerce Digital au Sénégal",
   "short_name": "Nopalou",
   "version": "17",
-  "description": "Comparez les prix de milliers de produits au Sénégal. Caisse POS tactile, gestion des dettes et commandes WhatsApp directes.",
+  "description": "Plateforme de commerce digital au Sénégal : comparez les offres, achetez auprès de boutiques vérifiées et gérez votre commerce avec caisse POS tactile.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -50,7 +50,7 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Nopalou — Super-Comparateur de Prix à Dakar (Desktop)"
+      "label": "Nopalou — Recherche et Comparatif d'Offres à Dakar (Desktop)"
     },
     {
       "src": "/screenshots/mobile-1.png",
@@ -86,7 +86,7 @@
       "name": "Assistant WhatsApp",
       "short_name": "WhatsApp",
       "url": "/assistant-whatsapp",
-      "description": "Ouvrir le chatbot comparateur WhatsApp",
+      "description": "Ouvrir l'assistant shopping et commandes WhatsApp",
       "icons": [{ "src": "/icons/icon-192.png?v=17", "sizes": "192x192" }]
     }
   ],
