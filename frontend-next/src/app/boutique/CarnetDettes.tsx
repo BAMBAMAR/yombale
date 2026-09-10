@@ -9,7 +9,7 @@ import { useTranslation } from '@/i18n/context'
 import { updateStatutCommande, listCommandes } from './actions'
 import { ajouterDetteHorsLigne } from '@/lib/db-offline'
 import { useSyncOffline } from '@/lib/sync-manager'
-import { createVoiceListener, parseDetteIntent, demanderPermissionMicrophone, getMessageErreurMicro } from '@/lib/voice-assistant'
+import { createVoiceListener, parseDetteIntent, demanderPermissionMicrophone, getMessageErreurMicro, normaliserTexteVocal } from '@/lib/voice-assistant'
 
 interface ClientCredit {
   id: string
