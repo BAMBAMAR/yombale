@@ -497,6 +497,16 @@ it('parseDetteIntent: détection crédit, remboursement et client', () => {
   assert.equal(c4.nomClient, 'Moussa')
   assert.equal(c4.montant, 10000)
 
+  const c5 = parseDetteIntent('Bord Moussa 10 mille', ['Moussa', 'Fatou'])
+  assert.equal(c5.type, 'vente_credit')
+  assert.equal(c5.nomClient, 'Moussa')
+  assert.equal(c5.montant, 10000)
+
+  const c6 = parseDetteIntent('Moussa dix mille', ['Moussa', 'Fatou'])
+  assert.equal(c6.type, 'vente_credit')
+  assert.equal(c6.nomClient, 'Moussa')
+  assert.equal(c6.montant, 10000)
+
   const r1 = parseDetteIntent('Remboursement Fatou 5000', ['Moussa', 'Fatou'])
   assert.equal(r1.type, 'remboursement')
   assert.equal(r1.nomClient, 'Fatou')
@@ -506,6 +516,11 @@ it('parseDetteIntent: détection crédit, remboursement et client', () => {
   assert.equal(r2.type, 'remboursement')
   assert.equal(r2.nomClient, 'Fatou')
   assert.equal(r2.montant, 5000)
+
+  const r3 = parseDetteIntent('Fatou faillite 5000', ['Moussa', 'Fatou'])
+  assert.equal(r3.type, 'remboursement')
+  assert.equal(r3.nomClient, 'Fatou')
+  assert.equal(r3.montant, 5000)
 
   const s1 = parseDetteIntent('Moussa Diallo', ['Moussa Diallo'])
   assert.equal(s1.type, 'recherche')

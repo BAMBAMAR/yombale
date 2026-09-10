@@ -102,6 +102,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     client?: ClientCredit
     nomClientPropose?: string
     montant: number
+    transcriptRaw?: string
     description?: string
   }
   const [voiceActionPending, setVoiceActionPending] = useState<VoiceActionPending | null>(null)
@@ -662,74 +663,54 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         setIsListeningVoice(false)
         setVoiceFeedback(getMessageErreurMicro(err))
       },
-      onResult: (transcript) => {
+      onResult: (transcript, alternatives) => {
         setIsListeningVoice(false)
         const clientsNoms = clients.map(c => c.nom)
-        const intent = parseDetteIntent(transcript, clientsNoms)
+        const intent = parseDetteIntent(transcript, clientsNoms, alternatives || [])
 
         // Chercher le client correspondant
         let clientCible: ClientCredit | null = null
         if (intent.nomClient) {
-          const q = intent.nomClient.toLowerCase()
-          clientCible = clients.find(c => c.nom.toLowerCase() === q)
-            || clients.find(c => c.nom.toLowerCase().includes(q))
+          const q = normaliserTexteVocal(intent.nomClient)
+          clientCible = clients.find(c => normaliserTexteVocal(c.nom) === q)
+            || clients.find(c => normaliserTexteVocal(c.nom).includes(q))
+            || clients.find(c => q.includes(normaliserTexteVocal(c.nom)))
+            || clients.find(c => {
+                 const tokens = normaliserTexteVocal(c.nom).split(/\s+/).filter(t => t.length >= 3)
+                 return tokens.some(t => q.includes(t))
+               })
             || null
         }
 
-        if (intent.type === 'recherche') {
+        // Si l'utilisateur n'a dicté aucun montant ni mot d'action (ex: recherche d'un client "Moussa")
+        if (intent.type === 'recherche' && (!intent.montant || intent.montant <= 0)) {
           if (clientCible) {
-            setRecherche(clientCible.nom)
             ouvrirFicheClient(clientCible)
-            setVoiceFeedback(`🔍 Fiche client ouverte : "${clientCible.nom}"`)
+            setVoiceFeedback(`👤 Fiche de ${clientCible.nom} ouverte`)
             jouerBipEtVibrer('succes')
           } else {
-            setRecherche(intent.nomClient || '')
-            setVoiceFeedback(`🔍 Recherche client : "${intent.nomClient}"`)
-            jouerBipEtVibrer('succes')
+            // Ne jamais écraser le filtre textuel pour ne pas vider la liste !
+            setVoiceFeedback(`🔍 Aucun client trouvé pour « ${intent.nomClient || transcript} »`)
+            jouerBipEtVibrer('erreur')
           }
-        } else if (intent.type === 'vente_credit') {
-          if (clientCible && intent.montant && intent.montant > 0) {
-            setVoiceActionPending({
-              type: 'vente_credit',
-              client: clientCible,
-              montant: intent.montant,
-              description: 'Achat à crédit'
-            })
-            setVoiceFeedback(null)
-            jouerBipEtVibrer('succes')
-          } else if (clientCible) {
-            ouvrirModalTransaction('vente_credit', clientCible)
-            setVoiceFeedback(`🎙️ Indiquez les articles ou le montant pour ${clientCible.nom}`)
-            jouerBipEtVibrer('succes')
-          } else {
-            setVoiceActionPending({
-              type: 'nouveau_client',
-              nomClientPropose: intent.nomClient || '',
-              montant: intent.montant || 0,
-              description: 'Achat à crédit'
-            })
-            setVoiceFeedback(null)
-            jouerBipEtVibrer('succes')
-          }
-        } else if (intent.type === 'remboursement') {
-          if (clientCible && intent.montant && intent.montant > 0) {
-            setVoiceActionPending({
-              type: 'remboursement',
-              client: clientCible,
-              montant: intent.montant,
-              description: 'Remboursement'
-            })
-            setVoiceFeedback(null)
-            jouerBipEtVibrer('succes')
-          } else if (clientCible) {
-            ouvrirModalTransaction('remboursement', clientCible)
-            setVoiceFeedback(`🎙️ Indiquez le montant du versement pour ${clientCible.nom}`)
-            jouerBipEtVibrer('succes')
-          } else {
-            setRecherche(intent.nomClient || '')
-            setVoiceFeedback(`⚠️ Client "${intent.nomClient || ''}" introuvable pour ce remboursement.`)
-          }
+          return
         }
+
+        // Pour TOUTE transaction (avec montant ou mot-clé dette/remboursement) :
+        // On affiche directement la carte d'action vocale sans jamais polluer la recherche
+        const typeFinal = intent.type === 'remboursement' ? 'remboursement' : 'vente_credit'
+        const montantFinal = intent.montant || 0
+
+        setVoiceActionPending({
+          type: clientCible ? typeFinal : (intent.nomClient ? 'nouveau_client' : typeFinal),
+          client: clientCible || undefined,
+          nomClientPropose: intent.nomClient || (clientCible ? clientCible.nom : ''),
+          montant: montantFinal,
+          transcriptRaw: transcript,
+          description: typeFinal === 'remboursement' ? 'Remboursement' : 'Achat à crédit'
+        })
+        setVoiceFeedback(null)
+        jouerBipEtVibrer('succes')
       }
     })
 
@@ -1695,7 +1676,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 26 }}>
+                <span style={{ fontSize: 28 }}>
                   {voiceActionPending.type === 'remboursement' ? '💵' : voiceActionPending.type === 'nouveau_client' ? '👤' : '📦'}
                 </span>
                 <div>
@@ -1706,7 +1687,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     letterSpacing: 0.5,
                     color: voiceActionPending.type === 'remboursement' ? '#166534' : voiceActionPending.type === 'nouveau_client' ? '#1d4ed8' : '#9a3412'
                   }}>
-                    🎙️ Action Vocale Reconnue
+                    🎙️ Action Vocale Détectée
                   </div>
                   <h4 style={{ margin: '2px 0 0', fontSize: isMobile ? 15 : 17, fontWeight: 900, color: '#0f172a' }}>
                     {voiceActionPending.type === 'remboursement'
@@ -1740,41 +1721,146 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               </button>
             </div>
 
-            {/* Détails clairs du client et solde */}
-            {voiceActionPending.type !== 'nouveau_client' && voiceActionPending.client && (
+            {/* Transcription brute entendue pour une transparence totale */}
+            {voiceActionPending.transcriptRaw && (
+              <div style={{
+                fontSize: 12,
+                color: '#475569',
+                background: 'rgba(255,255,255,0.7)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: '1px dashed rgba(0,0,0,0.12)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6
+              }}>
+                <span>🗣️</span>
+                <span>Texte entendu par le micro : <strong>« {voiceActionPending.transcriptRaw} »</strong></span>
+              </div>
+            )}
+
+            {/* Bascule immédiate Dette vs Remboursement si l'utilisateur veut corriger */}
+            {voiceActionPending.type !== 'nouveau_client' && (
+              <div style={{ display: 'flex', gap: 6, background: '#ffffff', padding: 4, borderRadius: 10, border: '1px solid rgba(0,0,0,0.08)', width: 'fit-content' }}>
+                <button
+                  type="button"
+                  onClick={() => setVoiceActionPending(prev => prev ? { ...prev, type: 'vente_credit', description: 'Achat à crédit' } : null)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: 'none',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    background: voiceActionPending.type === 'vente_credit' ? '#ea580c' : 'transparent',
+                    color: voiceActionPending.type === 'vente_credit' ? '#ffffff' : '#64748b'
+                  }}
+                >
+                  📦 Donner à crédit (Dette)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVoiceActionPending(prev => prev ? { ...prev, type: 'remboursement', description: 'Remboursement' } : null)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: 'none',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    background: voiceActionPending.type === 'remboursement' ? '#16a34a' : 'transparent',
+                    color: voiceActionPending.type === 'remboursement' ? '#ffffff' : '#64748b'
+                  }}
+                >
+                  💵 Encaisser versement
+                </button>
+              </div>
+            )}
+
+            {/* Détails éditables du client, montant et solde */}
+            {voiceActionPending.type !== 'nouveau_client' && (
               <div style={{
                 background: '#ffffff',
                 borderRadius: 10,
-                padding: '10px 14px',
+                padding: '12px 14px',
                 border: '1px solid rgba(0,0,0,0.08)',
                 display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-                gap: 8,
+                gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1.1fr 1.5fr',
+                gap: 12,
+                alignItems: 'center',
                 fontSize: 13
               }}>
                 <div>
-                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700 }}>Client :</span>
-                  <strong style={{ color: '#0f172a', fontSize: 14 }}>{voiceActionPending.client.nom}</strong>
-                  {voiceActionPending.client.telephone && (
-                    <span style={{ color: '#64748b', fontSize: 11, marginLeft: 4 }}>({voiceActionPending.client.telephone})</span>
+                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700, marginBottom: 3 }}>Client :</span>
+                  {clients.length > 0 ? (
+                    <select
+                      value={voiceActionPending.client?.id || ''}
+                      onChange={(e) => {
+                        const cl = clients.find(c => c.id === e.target.value)
+                        setVoiceActionPending(prev => prev ? { ...prev, client: cl, nomClientPropose: cl?.nom } : null)
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        borderRadius: 8,
+                        border: '1px solid #cbd5e1',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: '#0f172a',
+                        background: '#fff'
+                      }}
+                    >
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.nom} ({c.telephone})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <strong style={{ color: '#0f172a' }}>{voiceActionPending.nomClientPropose || 'Client'}</strong>
                   )}
                 </div>
+
                 <div>
-                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700 }}>Solde actuel :</span>
-                  <strong style={{ color: Number(voiceActionPending.client.solde) > 0 ? '#dc2626' : Number(voiceActionPending.client.solde) < 0 ? '#16a34a' : '#475569' }}>
-                    {Number(voiceActionPending.client.solde) > 0 ? `Doit ${fcfa(voiceActionPending.client.solde)}` : Number(voiceActionPending.client.solde) < 0 ? `Avance ${fcfa(Math.abs(voiceActionPending.client.solde))}` : 'À jour (0 FCFA)'}
-                  </strong>
+                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700, marginBottom: 3 }}>Montant (FCFA) :</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <input
+                      type="number"
+                      min="0"
+                      value={voiceActionPending.montant || ''}
+                      onChange={(e) => {
+                        const val = Number(e.target.value) || 0
+                        setVoiceActionPending(prev => prev ? { ...prev, montant: val } : null)
+                      }}
+                      style={{
+                        padding: '5px 8px',
+                        borderRadius: 8,
+                        border: '1.5px solid #0284c7',
+                        fontSize: 14,
+                        fontWeight: 900,
+                        color: '#0f172a',
+                        width: '100%',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700 }}>Nouveau solde calculé :</span>
-                  <strong style={{ color: voiceActionPending.type === 'remboursement' ? '#16a34a' : '#dc2626', fontSize: 14 }}>
+                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700, marginBottom: 3 }}>Nouveau solde calculé :</span>
+                  <strong style={{ color: voiceActionPending.type === 'remboursement' ? '#16a34a' : '#dc2626', fontSize: 13.5 }}>
                     {(() => {
-                      const actuel = Number(voiceActionPending.client.solde) || 0
-                      const diff = voiceActionPending.type === 'vente_credit' ? voiceActionPending.montant : -voiceActionPending.montant
+                      const actuel = voiceActionPending.client ? (Number(voiceActionPending.client.solde) || 0) : 0
+                      const diff = voiceActionPending.type === 'vente_credit' ? (voiceActionPending.montant || 0) : -(voiceActionPending.montant || 0)
                       const futur = actuel + diff
                       return futur > 0 ? `Doit ${fcfa(futur)}` : futur < 0 ? `Avance ${fcfa(Math.abs(futur))}` : 'À jour (0 FCFA)'
                     })()}
                   </strong>
+                  {voiceActionPending.client && (
+                    <span style={{ fontSize: 11, color: '#64748b', display: 'block' }}>
+                      (Solde actuel : {Number(voiceActionPending.client.solde) > 0 ? `Doit ${fcfa(voiceActionPending.client.solde)}` : Number(voiceActionPending.client.solde) < 0 ? `Avance ${fcfa(Math.abs(voiceActionPending.client.solde))}` : '0 FCFA'})
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -1783,17 +1869,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <div style={{
                 background: '#ffffff',
                 borderRadius: 10,
-                padding: '10px 14px',
+                padding: '12px 14px',
                 border: '1px solid rgba(0,0,0,0.08)',
                 fontSize: 13,
                 color: '#334155',
-                lineHeight: 1.4
+                lineHeight: 1.5
               }}>
-                Ce client n'est pas encore dans votre carnet. En cliquant sur le bouton ci-dessous, sa fiche sera pré-remplie avec le nom <strong>« {voiceActionPending.nomClientPropose} »</strong> et sa dette initiale.
+                Ce client n'est pas encore enregistré dans votre carnet. En cliquant sur le bouton ci-dessous, sa fiche sera pré-remplie avec le nom <strong>« {voiceActionPending.nomClientPropose} »</strong> et sa dette initiale de <strong>{fcfa(voiceActionPending.montant)}</strong>.
               </div>
             )}
 
-            {/* Boutons d'action */}
+            {/* Boutons d'action rapides */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               {voiceActionPending.type === 'nouveau_client' ? (
                 <button
@@ -1815,7 +1901,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6
+                    gap: 6,
+                    boxShadow: '0 2px 8px rgba(37,99,235,0.25)'
                   }}
                 >
                   <span>➕</span>
@@ -1825,21 +1912,22 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 <>
                   <button
                     type="button"
-                    disabled={voiceActionLoading}
+                    disabled={voiceActionLoading || !voiceActionPending.client || !voiceActionPending.montant}
                     onClick={() => validerActionVocaleDirecte(voiceActionPending)}
                     style={{
                       background: voiceActionPending.type === 'remboursement' ? '#16a34a' : '#ea580c',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: 10,
-                      padding: '10px 20px',
+                      padding: '11px 22px',
                       fontSize: 13.5,
                       fontWeight: 800,
-                      cursor: voiceActionLoading ? 'not-allowed' : 'pointer',
+                      cursor: voiceActionLoading || !voiceActionPending.client || !voiceActionPending.montant ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: 6,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                      opacity: voiceActionLoading || !voiceActionPending.client || !voiceActionPending.montant ? 0.6 : 1
                     }}
                   >
                     <span>{voiceActionLoading ? '⏳' : '✅'}</span>
@@ -1871,7 +1959,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     }}
                   >
                     <span>✏️</span>
-                    <span>Modifier / Détails</span>
+                    <span>Articles catalogue / Détails</span>
                   </button>
                 </>
               )}

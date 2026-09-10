@@ -53,19 +53,21 @@ export const DEVISES_WOLOF: Record<string, number> = {
 }
 
 /**
- * Nettoie et normalise une chaîne transcrite (minuscules, sans accents, sans ponctuation excessive).
+ * Nettoie et normalise une chaîne transcrite (minuscules, sans accents, sans ponctuation excessive, espaces insécables).
  */
 export function normaliserTexteVocal(texte: string): string {
+  if (!texte) return ''
   let res = texte
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'’]/g, ' ')
+    .replace(/[\u00a0\u202f\u2007\u2009\u200a]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 
-  // Fusionner les milliers écrits avec un espace (ex: "10 000" -> "10000", "5 000" -> "5000")
-  res = res.replace(/\b(\d+)\s+(\d{3})\b/g, '$1$2')
+  // Fusionner les milliers écrits avec un espace (ex: "10 000" -> "10000", "5 000" -> "5000", "150 000" -> "150000")
+  res = res.replace(/\b(\d{1,4})\s+(\d{3})\b/g, '$1$2')
   return res
 }
 
@@ -85,19 +87,18 @@ export function extraireQuantite(cleanText: string): number {
 /**
  * Extrait un montant financier en Francs CFA à partir d'un texte mixte Wolof / Français.
  * Gère les syntaxes :
- * - "benn téemeer" -> 500
- * - "ñaari junni" -> 10 000
- * - "fukki junni" -> 50 000
+ * - "benn téemeer" -> 500, "ñaari junni" -> 10 000
  * - "10 000", "2500", "50000"
- * - "cinq mille" -> 5000
+ * - "10 mille", "10k", "2.5 mille" -> 10000, 2500
+ * - "dix mille", "quinze mille", "vingt-cinq mille", "cinquante mille", "cent mille"
  */
 export function extraireMontantCFA(cleanText: string): number | null {
+  if (!cleanText) return null
   const clean = normaliserTexteVocal(cleanText)
 
   // 1. Détection des devises Wolof (téemeer, junni) avec multiplicateur
   for (const [motW, baseVal] of Object.entries(DEVISES_WOLOF)) {
     if (clean.includes(motW)) {
-      // Trouver le mot précédent pour le multiplicateur
       const mots = clean.split(/\s+/)
       const idx = mots.indexOf(motW)
       let mult = 1
@@ -105,43 +106,81 @@ export function extraireMontantCFA(cleanText: string): number | null {
         const motAvant = mots[idx - 1]
         if (NOMBRES_MAPPING[motAvant]) {
           mult = NOMBRES_MAPPING[motAvant]
+        } else if (/^\d+$/.test(motAvant)) {
+          mult = parseInt(motAvant, 10)
         }
       }
       return mult * baseVal
     }
   }
 
-  // 2. Détection de nombres directs écrits en chiffres (ex: 2500, 10000, 50000)
-  const regexChiffres = /\b(\d{2,7})\b/g
+  // 2. Détection de notation "chiffre + mille" ou "chiffre + k" (ex: "10 mille", "10k", "2.5 mille")
+  const matchChiffreMille = clean.match(/\b(\d+(?:[.,]\d+)?)\s*(?:k|mille|mil)\b/i)
+  if (matchChiffreMille) {
+    const val = parseFloat(matchChiffreMille[1].replace(',', '.'))
+    return Math.round(val * 1000)
+  }
+
+  // 3. Détection de nombres composés en lettres (priorité aux plus grands)
+  const motsMille = [
+    { pattern: /\b(un|benn)\s+million\b/i, val: 1000000 },
+    { pattern: /\b(cinq\s+cent\s+mille|500\s+mille)\b/i, val: 500000 },
+    { pattern: /\b(deux\s+cent\s+mille|200\s+mille)\b/i, val: 200000 },
+    { pattern: /\b(cent\s+mille|100\s+mille)\b/i, val: 100000 },
+    { pattern: /\b(soixante\s+dix\s+mille|70\s+mille)\b/i, val: 70000 },
+    { pattern: /\b(soixante\s+mille|60\s+mille)\b/i, val: 60000 },
+    { pattern: /\b(cinquante\s+mille|50\s+mille)\b/i, val: 50000 },
+    { pattern: /\b(quarante\s+cinq\s+mille|45\s+mille)\b/i, val: 45000 },
+    { pattern: /\b(quarante\s+mille|40\s+mille)\b/i, val: 40000 },
+    { pattern: /\b(trente\s+cinq\s+mille|35\s+mille)\b/i, val: 35000 },
+    { pattern: /\b(trente\s+mille|30\s+mille)\b/i, val: 30000 },
+    { pattern: /\b(vingt\s+cinq\s+mille|25\s+mille)\b/i, val: 25000 },
+    { pattern: /\b(vingt\s+mille|20\s+mille)\b/i, val: 20000 },
+    { pattern: /\b(dix\s+huit\s+mille|18\s+mille)\b/i, val: 18000 },
+    { pattern: /\b(dix\s+sept\s+mille|17\s+mille)\b/i, val: 17000 },
+    { pattern: /\b(seize\s+mille|16\s+mille)\b/i, val: 16000 },
+    { pattern: /\b(quinze\s+mille|15\s+mille)\b/i, val: 15000 },
+    { pattern: /\b(quatorze\s+mille|14\s+mille)\b/i, val: 14000 },
+    { pattern: /\b(treize\s+mille|13\s+mille)\b/i, val: 13000 },
+    { pattern: /\b(douze\s+mille|12\s+mille)\b/i, val: 12000 },
+    { pattern: /\b(onze\s+mille|11\s+mille)\b/i, val: 11000 },
+    { pattern: /\b(dix\s+mille|10\s+mille)\b/i, val: 10000 },
+    { pattern: /\b(neuf\s+mille|9\s+mille)\b/i, val: 9000 },
+    { pattern: /\b(huit\s+mille|8\s+mille)\b/i, val: 8000 },
+    { pattern: /\b(sept\s+mille|7\s+mille)\b/i, val: 7000 },
+    { pattern: /\b(six\s+mille|6\s+mille)\b/i, val: 6000 },
+    { pattern: /\b(cinq\s+mille|5\s+mille)\b/i, val: 5000 },
+    { pattern: /\b(quatre\s+mille|4\s+mille)\b/i, val: 4000 },
+    { pattern: /\b(trois\s+mille|3\s+mille)\b/i, val: 3000 },
+    { pattern: /\b(deux\s+mille\s+cinq\s+cent(?:s)?)\b/i, val: 2500 },
+    { pattern: /\b(deux\s+mille|2\s+mille)\b/i, val: 2000 },
+    { pattern: /\b(mille\s+cinq\s+cent(?:s)?|1500)\b/i, val: 1500 },
+    { pattern: /\b(mille|1\s+mille)\b/i, val: 1000 },
+    { pattern: /\b(sept\s+cent\s+cinquante|750)\b/i, val: 750 },
+    { pattern: /\b(cinq\s+cent(?:s)?|500)\b/i, val: 500 },
+  ]
+
+  for (const item of motsMille) {
+    if (item.pattern.test(clean)) {
+      return item.val
+    }
+  }
+
+  // 4. Détection de nombres écrits en chiffres directs (ex: 2500, 10000, 50000)
+  const regexChiffres = /\b(\d{3,8})\b/g
   const matches = clean.match(regexChiffres)
   if (matches && matches.length > 0) {
-    // Prendre le plus grand nombre si plusieurs (généralement le montant)
     const nombres = matches.map(n => parseInt(n, 10))
     return Math.max(...nombres)
   }
 
-  // 3. Détection de nombres composés écrits en lettres (ex: "dix mille", "deux mille")
-  if (clean.includes('mille')) {
-    const mots = clean.split(/\s+/)
-    const idx = mots.indexOf('mille')
-    let mult = 1
-    if (idx > 0) {
-      const avant = mots[idx - 1]
-      if (NOMBRES_MAPPING[avant]) mult = NOMBRES_MAPPING[avant]
-    }
-    return mult * 1000
-  }
-
-  // 4. Détection de nombres simples (ex: "cent", "deux cents")
-  if (clean.includes('cent')) {
-    const mots = clean.split(/\s+/)
-    const idx = mots.indexOf('cent')
-    let mult = 1
-    if (idx > 0) {
-      const avant = mots[idx - 1]
-      if (NOMBRES_MAPPING[avant]) mult = NOMBRES_MAPPING[avant]
-    }
-    return mult * 100
+  // 5. Nombres 2 chiffres (ex: 50, 75, 100) si aucun plus grand
+  const regexPetitsChiffres = /\b(\d{2})\b/g
+  const matchPetits = clean.match(regexPetitsChiffres)
+  if (matchPetits && matchPetits.length > 0) {
+    const nombres = matchPetits.map(n => parseInt(n, 10))
+    const nonTel = nombres.filter(n => n !== 77 && n !== 78 && n !== 76 && n !== 75 && n !== 70 && n !== 33)
+    if (nonTel.length > 0) return Math.max(...nonTel)
   }
 
   return null
@@ -283,56 +322,58 @@ export interface DetteIntent {
  * - "Fey bor Aminata 2500" -> remboursement, client "Aminata", 2500
  * - "Moussa Diallo" -> recherche
  */
-export function parseDetteIntent(transcript: string, listeClientsConnus: string[] = []): DetteIntent {
-  const clean = normaliserTexteVocal(transcript)
-  const montant = extraireMontantCFA(clean)
+export function parseDetteIntent(transcript: string, listeClientsConnus: string[] = [], alternatives: string[] = []): DetteIntent {
+  // Essayer d'abord avec le transcript principal, puis avec les alternatives si besoin
+  const listesATester = [transcript, ...(alternatives.filter(a => a && a !== transcript))]
 
-  const isRemboursement = /\b(remboursement|rembourser|rembourse|fey|feyna|feye|payer|paye|payé|payee|a paye|a payé|versement|verser|verse|versé|regler|regle|reglé|rendu|rendre)\b/i.test(clean)
-  const isCredit = /\b(dette|dettes|credit|credits|bor|bore|keredit|doit|doivent|doive|preter|avancer)\b/i.test(clean)
+  for (const phrase of listesATester) {
+    const clean = normaliserTexteVocal(phrase)
+    const montant = extraireMontantCFA(clean)
 
-  // 1. Chercher d'abord parmi les clients connus (recherche exacte puis par prénom)
-  let clientTrouve: string | undefined
+    // Mots clés de remboursement avec variantes phonétiques fréquentes issues de la reconnaissance vocale
+    // Wolof "fey" / "feyna" souvent transcrit par les moteurs FR en "faye", "faillite", "fait", "fais", "paye"
+    const isRemboursement = /\b(remboursement|remboursements|rembourser|rembourse|fey|feyna|feye|faye|faillite|payer|paye|payé|payee|a paye|a payé|versement|versements|verser|verse|versé|regler|regle|reglé|rendu|rendre)\b/i.test(clean)
 
-  for (const cNom of listeClientsConnus) {
-    const cClean = normaliserTexteVocal(cNom)
-    if (clean.includes(cClean)) {
-      clientTrouve = cNom
-      break
-    }
-  }
+    // Mots clés de dette / crédit avec variantes phonétiques fréquentes issues de la reconnaissance vocale
+    // Wolof "bor" souvent transcrit par les moteurs FR en "bord", "bore", "boire", "bon", "port", "pour"
+    // Français "doit" souvent transcrit en "dois", "doigt"
+    // Français "dette" souvent transcrit en "date", "dates", "d'aide"
+    const isCredit = /\b(dette|dettes|date|dates|credit|credits|keredit|bor|bore|bord|borde|boire|bon|port|pour|doit|dois|doigt|prete|preter|avancer|avance|achat)\b/i.test(clean)
 
-  if (!clientTrouve) {
+    // 1. Chercher d'abord parmi les clients connus
+    let clientTrouve: string | undefined
+
+    // a) Correspondance directe ou inclusion du nom
     for (const cNom of listeClientsConnus) {
-      const parts = cNom.split(/\s+/).map(p => normaliserTexteVocal(p)).filter(p => p.length >= 3)
-      for (const part of parts) {
-        const regex = new RegExp(`\\b${part}\\b`, 'i')
-        if (regex.test(clean)) {
-          clientTrouve = cNom
-          break
-        }
-      }
-      if (clientTrouve) break
-    }
-  }
-
-  // 2. Si le client n'est pas dans la liste des clients connus, extraire le nom à partir des mots restants
-  if (!clientTrouve) {
-    const matchApresMotCle = clean.match(/\b(?:dette|dettes|credit|credits|bor|bore|remboursement|fey|feyna)\s+(?:de\s+|bu\s+)?([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\b/i)
-    if (matchApresMotCle && matchApresMotCle[1]) {
-      const candidat = matchApresMotCle[1].trim()
-      const premierMot = candidat.split(/\s+/)[0]
-      if (!NOMBRES_MAPPING[premierMot] && !DEVISES_WOLOF[premierMot] && premierMot !== 'cfa' && premierMot !== 'fcfa') {
-        clientTrouve = candidat.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      const cClean = normaliserTexteVocal(cNom)
+      if (clean.includes(cClean)) {
+        clientTrouve = cNom
+        break
       }
     }
 
+    // b) Correspondance sur chaque mot (prénom ou nom de famille >= 3 lettres)
     if (!clientTrouve) {
-      // Nettoyer tous les mots-clés d'actions, montants, chiffres
+      for (const cNom of listeClientsConnus) {
+        const parts = cNom.split(/\s+/).map(p => normaliserTexteVocal(p)).filter(p => p.length >= 3)
+        for (const part of parts) {
+          const regex = new RegExp(`\\b${part}\\b`, 'i')
+          if (regex.test(clean)) {
+            clientTrouve = cNom
+            break
+          }
+        }
+        if (clientTrouve) break
+      }
+    }
+
+    // 2. Si pas trouvé dans les clients connus, extraire le prénom/nom dicté
+    if (!clientTrouve) {
       const sansMotsCles = clean
-        .replace(/\b(dette|dettes|credit|credits|bor|bore|keredit|doit|doivent|doive|preter|avancer|remboursement|rembourser|rembourse|fey|feyna|payer|paye|payé|versement|verser|regler|cherche|trouve|voir|client|pour|de|du|des|le|la|bu|ci|ak)\b/gi, ' ')
+        .replace(/\b(dette|dettes|date|dates|credit|credits|bor|bore|bord|borde|boire|bon|port|pour|keredit|doit|dois|doigt|doivent|doive|prete|preter|avancer|remboursement|remboursements|rembourser|rembourse|fey|feyna|faye|faillite|payer|paye|payé|versement|versements|verser|regler|cherche|trouve|voir|client|pour|de|du|des|le|la|bu|ci|ak)\b/gi, ' ')
         .replace(/\b(\d{1,8})\b/g, ' ')
-        .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs|f)\b/gi, ' ')
-        .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt|trente|quarante|cinquante|cent|mille|million|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, ' ')
+        .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs|f|euro|euros)\b/gi, ' ')
+        .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|mille|million|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, ' ')
         .replace(/\s+/g, ' ')
         .trim()
 
@@ -343,28 +384,38 @@ export function parseDetteIntent(transcript: string, listeClientsConnus: string[
           .join(' ')
       }
     }
-  }
 
-  // 3. Déterminer l'intention finale
-  if (isRemboursement) {
-    return {
-      type: 'remboursement',
-      nomClient: clientTrouve,
-      montant: montant || null
+    // Si on a trouvé un montant OU un client OU un mot clé fort dans cette alternative, on renvoie le résultat
+    if (montant || isCredit || isRemboursement || clientTrouve) {
+      if (isRemboursement) {
+        return {
+          type: 'remboursement',
+          nomClient: clientTrouve,
+          montant: montant || null
+        }
+      }
+
+      // Règle d'or : si un montant est mentionné dans le carnet, c'est TOUJOURS une vente à crédit (dette) sauf mot de remboursement
+      if (isCredit || (montant && montant > 0)) {
+        return {
+          type: 'vente_credit',
+          nomClient: clientTrouve,
+          montant: montant || null
+        }
+      }
+
+      return {
+        type: 'recherche',
+        nomClient: clientTrouve,
+        montant: null
+      }
     }
   }
 
-  if (isCredit || (montant && montant > 0)) {
-    return {
-      type: 'vente_credit',
-      nomClient: clientTrouve,
-      montant: montant || null
-    }
-  }
-
+  // Si rien de concluant
   return {
     type: 'recherche',
-    nomClient: clientTrouve,
+    nomClient: undefined,
     montant: null
   }
 }
@@ -472,7 +523,7 @@ export async function demanderPermissionMicrophone(): Promise<{ ok: boolean; err
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface VoiceListenerOptions {
-  onResult: (transcript: string) => void
+  onResult: (transcript: string, alternatives?: string[]) => void
   onError?: (error: string) => void
   onStart?: () => void
   onEnd?: () => void
@@ -496,6 +547,7 @@ export function createVoiceListener({
   const recognition = new SpeechRecognition()
   recognition.continuous = false
   recognition.interimResults = false
+  recognition.maxAlternatives = 5
   recognition.lang = lang
 
   recognition.onstart = () => {
@@ -503,8 +555,17 @@ export function createVoiceListener({
   }
 
   recognition.onresult = (event: any) => {
-    const transcript = event.results[0][0].transcript.trim()
-    onResult(transcript)
+    const alts: string[] = []
+    if (event.results && event.results[0]) {
+      for (let i = 0; i < event.results[0].length; i++) {
+        const item = event.results[0][i]
+        if (item && item.transcript) {
+          alts.push(item.transcript.trim())
+        }
+      }
+    }
+    const transcript = alts[0] || ''
+    onResult(transcript, alts)
   }
 
   recognition.onerror = (event: any) => {
