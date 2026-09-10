@@ -97,6 +97,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [typeTransaction, setTypeTransaction] = useState<'vente_credit' | 'remboursement'>('vente_credit')
 
   // Assistant Vocal Carnet de Dettes (Wolof & Français)
+  interface VoiceActionPending {
+    type: 'vente_credit' | 'remboursement' | 'nouveau_client'
+    client?: ClientCredit
+    nomClientPropose?: string
+    montant: number
+    description?: string
+  }
+  const [voiceActionPending, setVoiceActionPending] = useState<VoiceActionPending | null>(null)
+  const [voiceActionLoading, setVoiceActionLoading] = useState(false)
   const [isListeningVoice, setIsListeningVoice] = useState(false)
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
   const voiceRecognitionRef = useRef<any>(null)
@@ -560,6 +569,71 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     setShowModalTransaction(true)
   }
 
+  // Validation directe en 1 clic d'une transaction vocale
+  const validerActionVocaleDirecte = async (action: VoiceActionPending) => {
+    if (!action.client) return
+    setVoiceActionLoading(true)
+    const txIdempotency = `VOICE-TX-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+
+    try {
+      const produitsListe = action.type === 'vente_credit'
+        ? [{ nom: action.description || 'Achat à crédit', quantite: 1, prix: action.montant }]
+        : [{ nom: 'Remboursement', quantite: 1, prix: action.montant }]
+
+      const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${action.client.id}/transaction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idempotency_key: txIdempotency,
+          type: action.type,
+          montant: action.montant,
+          mode_paiement: 'especes',
+          note: action.type === 'vente_credit' ? 'Vente à crédit (dictée vocale)' : 'Remboursement (dicté vocal)',
+          produits: produitsListe,
+          date_echeance: null,
+          relance_auto_whatsapp: true,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setVoiceActionPending(null)
+        setVoiceFeedback(`🎉 ${action.type === 'vente_credit' ? 'Dette' : 'Remboursement'} de ${fcfa(action.montant)} validé(e) pour ${action.client.nom} !`)
+        jouerBipEtVibrer('succes')
+        await chargerDonnees()
+        if (data.client) {
+          setClientSelectionne(data.client)
+          await chargerHistoriqueClient(data.client.id)
+        }
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Erreur lors de l’enregistrement vocal.')
+      }
+    } catch (e) {
+      console.error('Erreur validation vocale carnet:', e)
+      alert('Une erreur est survenue lors de l’enregistrement.')
+    } finally {
+      setVoiceActionLoading(false)
+    }
+  }
+
+  const modifierDepuisVocal = (action: VoiceActionPending) => {
+    setVoiceActionPending(null)
+    if (!action.client) return
+    ouvrirModalTransaction(action.type === 'remboursement' ? 'remboursement' : 'vente_credit', action.client)
+    setMontantManuel(String(action.montant))
+    setDescriptionManuelle(action.description || (action.type === 'remboursement' ? 'Remboursement' : 'Achat à crédit'))
+    if (action.type === 'vente_credit') {
+      setModeSaisie('manuel')
+      setItemsCustomPanier([{
+        id: 'custom_' + Date.now(),
+        nom: action.description || 'Achat à crédit',
+        prix: action.montant,
+        quantite: 1
+      }])
+    }
+  }
+
   const demarrerEcouteVocaleCarnet = async () => {
     if (isListeningVoice) {
       try {
@@ -593,41 +667,67 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         const clientsNoms = clients.map(c => c.nom)
         const intent = parseDetteIntent(transcript, clientsNoms)
 
-        let clientCible = intent.nomClient
-          ? clients.find(c => c.nom.toLowerCase().includes(intent.nomClient!.toLowerCase()))
-          : null
+        // Chercher le client correspondant
+        let clientCible: ClientCredit | null = null
+        if (intent.nomClient) {
+          const q = intent.nomClient.toLowerCase()
+          clientCible = clients.find(c => c.nom.toLowerCase() === q)
+            || clients.find(c => c.nom.toLowerCase().includes(q))
+            || null
+        }
 
         if (intent.type === 'recherche') {
-          setRecherche(intent.nomClient || '')
-          setVoiceFeedback(`🎙️ Recherche client : "${intent.nomClient}"`)
-          jouerBipEtVibrer('succes')
-        } else if (intent.type === 'vente_credit') {
           if (clientCible) {
-            ouvrirModalTransaction('vente_credit', clientCible)
-            if (intent.montant) {
-              setMontantManuel(String(intent.montant))
-              setDescriptionManuelle('Achat à crédit')
-              setModeSaisie('manuel')
-            }
-            setVoiceFeedback(`🎙️ Dette reconnue pour ${clientCible.nom} (${intent.montant ? fcfa(intent.montant) : ''})`)
+            setRecherche(clientCible.nom)
+            ouvrirFicheClient(clientCible)
+            setVoiceFeedback(`🔍 Fiche client ouverte : "${clientCible.nom}"`)
             jouerBipEtVibrer('succes')
           } else {
             setRecherche(intent.nomClient || '')
-            setVoiceFeedback(`🎙️ Dette pour "${intent.nomClient}". Sélectionnez le client dans la liste.`)
+            setVoiceFeedback(`🔍 Recherche client : "${intent.nomClient}"`)
+            jouerBipEtVibrer('succes')
+          }
+        } else if (intent.type === 'vente_credit') {
+          if (clientCible && intent.montant && intent.montant > 0) {
+            setVoiceActionPending({
+              type: 'vente_credit',
+              client: clientCible,
+              montant: intent.montant,
+              description: 'Achat à crédit'
+            })
+            setVoiceFeedback(null)
+            jouerBipEtVibrer('succes')
+          } else if (clientCible) {
+            ouvrirModalTransaction('vente_credit', clientCible)
+            setVoiceFeedback(`🎙️ Indiquez les articles ou le montant pour ${clientCible.nom}`)
+            jouerBipEtVibrer('succes')
+          } else {
+            setVoiceActionPending({
+              type: 'nouveau_client',
+              nomClientPropose: intent.nomClient || '',
+              montant: intent.montant || 0,
+              description: 'Achat à crédit'
+            })
+            setVoiceFeedback(null)
+            jouerBipEtVibrer('succes')
           }
         } else if (intent.type === 'remboursement') {
-          if (clientCible) {
+          if (clientCible && intent.montant && intent.montant > 0) {
+            setVoiceActionPending({
+              type: 'remboursement',
+              client: clientCible,
+              montant: intent.montant,
+              description: 'Remboursement'
+            })
+            setVoiceFeedback(null)
+            jouerBipEtVibrer('succes')
+          } else if (clientCible) {
             ouvrirModalTransaction('remboursement', clientCible)
-            if (intent.montant) {
-              setMontantManuel(String(intent.montant))
-              setDescriptionManuelle('Remboursement')
-              setModeSaisie('manuel')
-            }
-            setVoiceFeedback(`🎙️ Remboursement reconnu pour ${clientCible.nom} (${intent.montant ? fcfa(intent.montant) : ''})`)
+            setVoiceFeedback(`🎙️ Indiquez le montant du versement pour ${clientCible.nom}`)
             jouerBipEtVibrer('succes')
           } else {
             setRecherche(intent.nomClient || '')
-            setVoiceFeedback(`🎙️ Remboursement pour "${intent.nomClient}". Sélectionnez le client.`)
+            setVoiceFeedback(`⚠️ Client "${intent.nomClient || ''}" introuvable pour ce remboursement.`)
           }
         }
       }
@@ -661,7 +761,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const totalPanierCustom = itemsCustomPanier.reduce((sum, item) => sum + (item.prix * item.quantite), 0)
 
   const totalTransactionCourante = typeTransaction === 'vente_credit' 
-    ? (totalPanierCatalogue + totalPanierCustom) 
+    ? (totalPanierCatalogue + totalPanierCustom + (Number(montantManuel) || 0)) 
     : (Number(montantManuel) || 0)
 
   // Gestion Création Client
@@ -779,6 +879,14 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         quantite: item.quantite,
         prix: item.prix,
       }))
+      if (Number(montantManuel) > 0) {
+        itemsCustom.push({
+          id: 'manuel_' + Date.now(),
+          nom: descriptionManuelle.trim() || 'Achat à crédit',
+          quantite: 1,
+          prix: Number(montantManuel),
+        })
+      }
       produitsListe = [...itemsCatalogue, ...itemsCustom]
     } else {
       const nomParDefaut = 'Remboursement'
@@ -1571,6 +1679,222 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           </div>
         )}
 
+        {/* CARTE D'ACTION VOCALE INSTANTANÉE (Confirmation en 1 clic sans friction) */}
+        {voiceActionPending && (
+          <div style={{
+            background: voiceActionPending.type === 'remboursement' ? '#f0fdf4' : voiceActionPending.type === 'nouveau_client' ? '#eff6ff' : '#fff7ed',
+            border: voiceActionPending.type === 'remboursement' ? '2px solid #22c55e' : voiceActionPending.type === 'nouveau_client' ? '2px solid #3b82f6' : '2px solid #ea580c',
+            borderRadius: 16,
+            padding: isMobile ? '14px 16px' : '16px 20px',
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+            width: '100%',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 26 }}>
+                  {voiceActionPending.type === 'remboursement' ? '💵' : voiceActionPending.type === 'nouveau_client' ? '👤' : '📦'}
+                </span>
+                <div>
+                  <div style={{
+                    fontSize: 11.5,
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                    color: voiceActionPending.type === 'remboursement' ? '#166534' : voiceActionPending.type === 'nouveau_client' ? '#1d4ed8' : '#9a3412'
+                  }}>
+                    🎙️ Action Vocale Reconnue
+                  </div>
+                  <h4 style={{ margin: '2px 0 0', fontSize: isMobile ? 15 : 17, fontWeight: 900, color: '#0f172a' }}>
+                    {voiceActionPending.type === 'remboursement'
+                      ? `Remboursement de ${fcfa(voiceActionPending.montant)}`
+                      : voiceActionPending.type === 'nouveau_client'
+                      ? `Nouveau client : « ${voiceActionPending.nomClientPropose || 'Client'} »`
+                      : `Vente à crédit de ${fcfa(voiceActionPending.montant)}`}
+                  </h4>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setVoiceActionPending(null)}
+                style={{
+                  background: 'rgba(0,0,0,0.06)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 28,
+                  height: 28,
+                  cursor: 'pointer',
+                  fontWeight: 900,
+                  fontSize: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#475569'
+                }}
+                title="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Détails clairs du client et solde */}
+            {voiceActionPending.type !== 'nouveau_client' && voiceActionPending.client && (
+              <div style={{
+                background: '#ffffff',
+                borderRadius: 10,
+                padding: '10px 14px',
+                border: '1px solid rgba(0,0,0,0.08)',
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                gap: 8,
+                fontSize: 13
+              }}>
+                <div>
+                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700 }}>Client :</span>
+                  <strong style={{ color: '#0f172a', fontSize: 14 }}>{voiceActionPending.client.nom}</strong>
+                  {voiceActionPending.client.telephone && (
+                    <span style={{ color: '#64748b', fontSize: 11, marginLeft: 4 }}>({voiceActionPending.client.telephone})</span>
+                  )}
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700 }}>Solde actuel :</span>
+                  <strong style={{ color: Number(voiceActionPending.client.solde) > 0 ? '#dc2626' : Number(voiceActionPending.client.solde) < 0 ? '#16a34a' : '#475569' }}>
+                    {Number(voiceActionPending.client.solde) > 0 ? `Doit ${fcfa(voiceActionPending.client.solde)}` : Number(voiceActionPending.client.solde) < 0 ? `Avance ${fcfa(Math.abs(voiceActionPending.client.solde))}` : 'À jour (0 FCFA)'}
+                  </strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', fontSize: 11, display: 'block', fontWeight: 700 }}>Nouveau solde calculé :</span>
+                  <strong style={{ color: voiceActionPending.type === 'remboursement' ? '#16a34a' : '#dc2626', fontSize: 14 }}>
+                    {(() => {
+                      const actuel = Number(voiceActionPending.client.solde) || 0
+                      const diff = voiceActionPending.type === 'vente_credit' ? voiceActionPending.montant : -voiceActionPending.montant
+                      const futur = actuel + diff
+                      return futur > 0 ? `Doit ${fcfa(futur)}` : futur < 0 ? `Avance ${fcfa(Math.abs(futur))}` : 'À jour (0 FCFA)'
+                    })()}
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {voiceActionPending.type === 'nouveau_client' && (
+              <div style={{
+                background: '#ffffff',
+                borderRadius: 10,
+                padding: '10px 14px',
+                border: '1px solid rgba(0,0,0,0.08)',
+                fontSize: 13,
+                color: '#334155',
+                lineHeight: 1.4
+              }}>
+                Ce client n'est pas encore dans votre carnet. En cliquant sur le bouton ci-dessous, sa fiche sera pré-remplie avec le nom <strong>« {voiceActionPending.nomClientPropose} »</strong> et sa dette initiale.
+              </div>
+            )}
+
+            {/* Boutons d'action */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              {voiceActionPending.type === 'nouveau_client' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nom = voiceActionPending.nomClientPropose || ''
+                    setVoiceActionPending(null)
+                    setNomClient(nom)
+                    setShowModalNouveauClient(true)
+                  }}
+                  style={{
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '10px 18px',
+                    fontSize: 13.5,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                >
+                  <span>➕</span>
+                  <span>Créer la fiche de « {voiceActionPending.nomClientPropose || 'Client'} »</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={voiceActionLoading}
+                    onClick={() => validerActionVocaleDirecte(voiceActionPending)}
+                    style={{
+                      background: voiceActionPending.type === 'remboursement' ? '#16a34a' : '#ea580c',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 10,
+                      padding: '10px 20px',
+                      fontSize: 13.5,
+                      fontWeight: 800,
+                      cursor: voiceActionLoading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <span>{voiceActionLoading ? '⏳' : '✅'}</span>
+                    <span>
+                      {voiceActionLoading
+                        ? 'Validation en cours…'
+                        : voiceActionPending.type === 'remboursement'
+                        ? `Valider le versement de ${fcfa(voiceActionPending.montant)}`
+                        : `Enregistrer la dette de ${fcfa(voiceActionPending.montant)}`}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={voiceActionLoading}
+                    onClick={() => modifierDepuisVocal(voiceActionPending)}
+                    style={{
+                      background: '#ffffff',
+                      color: '#334155',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: 10,
+                      padding: '10px 14px',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6
+                    }}
+                  >
+                    <span>✏️</span>
+                    <span>Modifier / Détails</span>
+                  </button>
+                </>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setVoiceActionPending(null)}
+                style={{
+                  background: 'transparent',
+                  color: '#64748b',
+                  border: 'none',
+                  padding: '10px 12px',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Guide d'aide Pédagogique Rapide Dépliable */}
         <div style={{
           background: '#f8fafc',
@@ -1607,7 +1931,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           {showGuideCarnet && (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(210px, 1fr))',
               gap: 12,
               paddingTop: 8,
               borderTop: '1px solid #e2e8f0'
@@ -1636,6 +1960,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
                   S'il verse une provision, son solde devient vert (<strong>« Avance »</strong>). En 1 clic sur l'icône WhatsApp, envoyez un rappel poli avec le solde exact.
+                </p>
+              </div>
+
+              <div style={{ background: '#ffffff', borderRadius: 10, padding: 12, border: '1px solid #fde047' }}>
+                <div style={{ fontWeight: 800, fontSize: 13, color: '#854d0e', marginBottom: 4 }}>
+                  4. Mode Vocal (Micro 🎙️) 🗣️
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
+                  Dites <em>« Bor Moussa 10 000 »</em> pour une dette ou <em>« Moussa feyna 5000 »</em> pour un remboursement. Une carte s'affiche pour valider en 1 clic !
                 </p>
               </div>
             </div>

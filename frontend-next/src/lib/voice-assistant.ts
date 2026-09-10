@@ -287,11 +287,12 @@ export function parseDetteIntent(transcript: string, listeClientsConnus: string[
   const clean = normaliserTexteVocal(transcript)
   const montant = extraireMontantCFA(clean)
 
-  const isRemboursement = /\b(remboursement|rembourser|fey|payer|versement|regler)\b/.test(clean)
-  const isCredit = /\b(dette|credit|bor|keredit|preter|avancer)\b/.test(clean)
+  const isRemboursement = /\b(remboursement|rembourser|rembourse|fey|feyna|feye|payer|paye|payé|payee|a paye|a payé|versement|verser|verse|versé|regler|regle|reglé|rendu|rendre)\b/i.test(clean)
+  const isCredit = /\b(dette|dettes|credit|credits|bor|bore|keredit|doit|doivent|doive|preter|avancer)\b/i.test(clean)
 
-  // Chercher si un nom de client connu est présent
+  // 1. Chercher d'abord parmi les clients connus (recherche exacte puis par prénom)
   let clientTrouve: string | undefined
+
   for (const cNom of listeClientsConnus) {
     const cClean = normaliserTexteVocal(cNom)
     if (clean.includes(cClean)) {
@@ -300,18 +301,51 @@ export function parseDetteIntent(transcript: string, listeClientsConnus: string[
     }
   }
 
-  // Si pas dans la liste, extraire le mot après "dette / bor / remboursement"
   if (!clientTrouve) {
-    const match = clean.match(/\b(?:dette|credit|bor|remboursement|fey)\s+(?:de\s+|bu\s+)?([a-zA-Z]+)\b/)
-    if (match && match[1]) {
-      const mot = match[1]
-      // S'assurer que ce n'est pas un chiffre
-      if (!NOMBRES_MAPPING[mot] && !DEVISES_WOLOF[mot]) {
-        clientTrouve = mot.charAt(0).toUpperCase() + mot.slice(1)
+    for (const cNom of listeClientsConnus) {
+      const parts = cNom.split(/\s+/).map(p => normaliserTexteVocal(p)).filter(p => p.length >= 3)
+      for (const part of parts) {
+        const regex = new RegExp(`\\b${part}\\b`, 'i')
+        if (regex.test(clean)) {
+          clientTrouve = cNom
+          break
+        }
+      }
+      if (clientTrouve) break
+    }
+  }
+
+  // 2. Si le client n'est pas dans la liste des clients connus, extraire le nom à partir des mots restants
+  if (!clientTrouve) {
+    const matchApresMotCle = clean.match(/\b(?:dette|dettes|credit|credits|bor|bore|remboursement|fey|feyna)\s+(?:de\s+|bu\s+)?([a-zA-Z]+(?:\s+[a-zA-Z]+)?)\b/i)
+    if (matchApresMotCle && matchApresMotCle[1]) {
+      const candidat = matchApresMotCle[1].trim()
+      const premierMot = candidat.split(/\s+/)[0]
+      if (!NOMBRES_MAPPING[premierMot] && !DEVISES_WOLOF[premierMot] && premierMot !== 'cfa' && premierMot !== 'fcfa') {
+        clientTrouve = candidat.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      }
+    }
+
+    if (!clientTrouve) {
+      // Nettoyer tous les mots-clés d'actions, montants, chiffres
+      const sansMotsCles = clean
+        .replace(/\b(dette|dettes|credit|credits|bor|bore|keredit|doit|doivent|doive|preter|avancer|remboursement|rembourser|rembourse|fey|feyna|payer|paye|payé|versement|verser|regler|cherche|trouve|voir|client|pour|de|du|des|le|la|bu|ci|ak)\b/gi, ' ')
+        .replace(/\b(\d{1,8})\b/g, ' ')
+        .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs|f)\b/gi, ' ')
+        .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt|trente|quarante|cinquante|cent|mille|million|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+      if (sansMotsCles && sansMotsCles.length >= 2) {
+        clientTrouve = sansMotsCles
+          .split(/\s+/)
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')
       }
     }
   }
 
+  // 3. Déterminer l'intention finale
   if (isRemboursement) {
     return {
       type: 'remboursement',
@@ -320,7 +354,7 @@ export function parseDetteIntent(transcript: string, listeClientsConnus: string[
     }
   }
 
-  if (isCredit) {
+  if (isCredit || (montant && montant > 0)) {
     return {
       type: 'vente_credit',
       nomClient: clientTrouve,
@@ -328,27 +362,9 @@ export function parseDetteIntent(transcript: string, listeClientsConnus: string[
     }
   }
 
-  if (clientTrouve) {
-    return {
-      type: 'recherche',
-      nomClient: clientTrouve,
-      montant: null
-    }
-  }
-
-  // Par défaut, simple recherche d'un client par son prénom/nom
-  const nomIsole = clean
-    .replace(/\b(cherche|trouve|voir|client)\b/g, '')
-    .trim()
-
-  const nomFormate = nomIsole
-    .split(/\s+/)
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
-
   return {
     type: 'recherche',
-    nomClient: nomFormate || undefined,
+    nomClient: clientTrouve,
     montant: null
   }
 }
