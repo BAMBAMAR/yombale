@@ -67,8 +67,13 @@ out center tags ${parseInt(limite, 10) || 500};`;
 
       // Normalisation du téléphone sénégalais
       const norm = normaliserTelephoneSenegal(telBrut);
-      // On ne retient que les téléphones mobiles / WhatsApp (77, 78, 76, 75, 70), pas les fixes (33)
-      if (!norm.valide || norm.operateur === 'Fixe / Autre' || norm.national.startsWith('22133')) {
+      // On ne retient que les téléphones mobiles / WhatsApp (77, 78, 76, 75, 70), pas les fixes (33, 30, etc.)
+      if (
+        !norm.valide ||
+        norm.operateur === 'Fixe' ||
+        norm.operateur === 'Autre' ||
+        !/^(221)?(77|78|76|75|70)/.test(norm.national)
+      ) {
         ignores++;
         continue;
       }
