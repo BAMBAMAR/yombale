@@ -438,16 +438,38 @@ it('extraireMontantCFA: devises Wolof et multiplicateurs (téemeer, junni)', () 
 })
 
 it('parseSaisieExpressIntent: détection automatique dépense / vente et catégories', () => {
+  // Singulier et pluriel
   const d1 = parseSaisieExpressIntent('Dépense transport 2500')
   assert.equal(d1.mode, 'depense')
   assert.equal(d1.categorie, 'transport')
   assert.equal(d1.montant, 2500)
 
-  const d2 = parseSaisieExpressIntent('Dépense loyer cinquante mille')
+  const d1Pluriel = parseSaisieExpressIntent('Dépenses transport 2500')
+  assert.equal(d1Pluriel.mode, 'depense')
+  assert.equal(d1Pluriel.categorie, 'transport')
+  assert.equal(d1Pluriel.montant, 2500)
+
+  // Catégorie directe sans le mot "dépense"
+  const d2 = parseSaisieExpressIntent('Loyer cinquante mille')
   assert.equal(d2.mode, 'depense')
   assert.equal(d2.categorie, 'loyer')
   assert.equal(d2.montant, 50000)
 
+  const d3 = parseSaisieExpressIntent('Essence 2000')
+  assert.equal(d3.mode, 'depense')
+  assert.equal(d3.categorie, 'transport')
+  assert.equal(d3.montant, 2000)
+
+  // Mode contextuel (l'utilisateur est déjà sur l'onglet Dépense)
+  const d4 = parseSaisieExpressIntent('Repas midi 1500', 'depense')
+  assert.equal(d4.mode, 'depense')
+  assert.equal(d4.montant, 1500)
+
+  const d5 = parseSaisieExpressIntent('2500', 'depense')
+  assert.equal(d5.mode, 'depense')
+  assert.equal(d5.montant, 2500)
+
+  // Vente explicite
   const v1 = parseSaisieExpressIntent('Vente café Touba 500')
   assert.equal(v1.mode, 'vente')
   assert.equal(v1.montant, 500)

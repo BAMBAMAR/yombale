@@ -161,61 +161,104 @@ export interface SaisieExpressIntent {
 
 /**
  * Parse vocal pour la Saisie Express Comptable :
- * Exemples :
- * - "Dépense transport 2500" -> depense, transport, 2500
- * - "Dépense essence benn téemeer" -> depense, transport, 500
- * - "Dépense loyer cinquante mille" -> depense, loyer, 50000
- * - "Vente café Touba 500" -> vente, 500, libellé "café Touba"
- * - "Vente 10 000" -> vente, 10000
+ * Exemples Dépenses :
+ * - "Dépense transport 2500" / "Dépenses transport 2500" -> depense, transport, 2500
+ * - "Dépens benn téemeer essence" -> depense, transport, 500
+ * - "Essence 2000" / "Transport 1500" / "Loyer 50000" -> depense automatique
+ * - "Senelec 10000" / "Woyofal 5000" / "Repas midi 2000" -> depense automatique
+ * - Si l'utilisateur est déjà sur l'onglet Dépense (modeActuel === 'depense'), toute dictée reste une dépense sauf mot Vente explicite.
+ *
+ * Exemples Ventes :
+ * - "Vente café Touba 500" -> vente, 500, libellé "Café Touba"
+ * - "Vente 10 000" / "Jaay 5000" -> vente
  */
-export function parseSaisieExpressIntent(transcript: string): SaisieExpressIntent {
+export function parseSaisieExpressIntent(transcript: string, modeActuel?: 'vente' | 'depense'): SaisieExpressIntent {
   const clean = normaliserTexteVocal(transcript)
   const montant = extraireMontantCFA(clean)
 
-  // Détection intention Dépense
-  const isDepense = /\b(depense|depenser|charge|sortie|payer|facture|frais)\b/.test(clean)
+  // 1. Détection explicite des mots-clés de Dépense (singulier, pluriel, wolof, variantes)
+  const hasMotCleDepense = /\b(depense|depenses|depans|depanse|depanser|depanseur|charge|charges|sortie|sorties|payer|paiement|paiements|facture|factures|frais|perte|pertes|decaissement|decaissements)\b/i.test(clean)
+
+  // 2. Détection des catégories typiquement Dépenses même sans le mot "dépense"
+  const isTransport = /\b(transport|transports|essence|carburant|gasoil|gazoil|diesel|taxi|taxis|tiak|tiaktiak|clando|peage|autoroute)\b/i.test(clean)
+  const isLoyer = /\b(loyer|loyers|magasin|bail|locataire)\b/i.test(clean)
+  const isFourniture = /\b(fourniture|fournitures|sachet|sachets|emballage|emballages|carton|cartons|papier|papiers|scotch|etiquette|etiquettes)\b/i.test(clean)
+  const isSalaire = /\b(salaire|salaires|employe|employes|personnel|gardien|commission|commissions|avance salaire)\b/i.test(clean)
+  const isTaxes = /\b(taxe|taxes|impot|impots|patente|mairie|douane|fiscalite)\b/i.test(clean)
+  const isChargesCourantes = /\b(woyofal|senelec|sde|sen eau|seneau|electricite|eau|sonatel|orange|wifi|forfait|credit telephone|repas|dejeuner|diner|manger|thieb|ndekki|nourriture|recharge)\b/i.test(clean)
+  const isAchatStock = /\b(achat stock|achat fournisseur|achat marchandise|approvisionnement|reappro)\b/i.test(clean)
+
+  // 3. Détection explicite de Vente (singulier, pluriel, wolof)
+  const hasMotCleVente = /\b(vente|ventes|jaay|jaaye|jaayi|vendre|vendu|vendus|encaissement|recette|recettes)\b/i.test(clean)
+
+  // Détermination du mode :
+  // - Si mot-clé explicite dépense OU catégorie typique de dépense -> DÉPENSE
+  // - Si mot-clé explicite de vente (ex: "Vente...") -> VENTE
+  // - Si aucun mot-clé explicite, respecter le mode sélectionné par l'utilisateur (onglet Dépense vs Vente)
+  let isDepense = false
+  if (hasMotCleDepense || isTransport || isLoyer || isFourniture || isSalaire || isTaxes || isChargesCourantes || isAchatStock) {
+    isDepense = true
+  } else if (hasMotCleVente) {
+    isDepense = false
+  } else if (modeActuel === 'depense') {
+    isDepense = true
+  } else {
+    isDepense = false
+  }
 
   if (isDepense) {
     let cat: SaisieExpressIntent['categorie'] = 'autre'
-    let desc = 'Dépense vocale'
+    let descDefaut = 'Dépense'
 
-    if (/\b(transport|essence|taxi|tiak|clando|car|gasoil)\b/.test(clean)) {
+    if (isTransport) {
       cat = 'transport'
-      desc = 'Frais de transport'
-    } else if (/\b(loyer|boutique|magasin|bail)\b/.test(clean)) {
+      descDefaut = 'Frais de transport'
+    } else if (isLoyer) {
       cat = 'loyer'
-      desc = 'Paiement loyer'
-    } else if (/\b(stock|marchandise|fournisseur|achat|colis|produits)\b/.test(clean)) {
+      descDefaut = 'Paiement loyer'
+    } else if (isAchatStock || /\b(stock|marchandise|fournisseur|achat|colis)\b/i.test(clean)) {
       cat = 'stock'
-      desc = 'Achat de stock'
-    } else if (/\b(salaire|salaires|employe|personnel|commission)\b/.test(clean)) {
+      descDefaut = 'Achat de stock'
+    } else if (isSalaire) {
       cat = 'salaires'
-      desc = 'Salaires / Équipe'
-    } else if (/\b(marketing|pub|publicite|sponsor|flyer)\b/.test(clean)) {
+      descDefaut = 'Salaires / Équipe'
+    } else if (/\b(marketing|pub|publicite|sponsor|flyer|flyers)\b/i.test(clean)) {
       cat = 'marketing'
-      desc = 'Marketing / Publicité'
-    } else if (/\b(fourniture|fournitures|sachet|emballage|papier)\b/.test(clean)) {
+      descDefaut = 'Marketing / Publicité'
+    } else if (isFourniture) {
       cat = 'fournitures'
-      desc = 'Fournitures / Emballages'
-    } else if (/\b(taxe|impot|patente|mairie)\b/.test(clean)) {
+      descDefaut = 'Fournitures / Emballages'
+    } else if (isTaxes) {
       cat = 'taxes'
-      desc = 'Taxes / Impôts'
+      descDefaut = 'Taxes / Impôts'
     }
+
+    // Extraire une description propre à partir des mots dictés
+    let descClean = clean
+      .replace(/\b(depense|depenses|depans|depanse|depanser|pour|de|du|des|le|la|les|un|une)\b/gi, '')
+      .replace(/\b(\d{2,7})\b/g, '')
+      .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs)\b/gi, '')
+      .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt|trente|quarante|cinquante|cent|mille|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    let descFinale = descClean ? descClean.charAt(0).toUpperCase() + descClean.slice(1) : descDefaut
 
     return {
       mode: 'depense',
       montant: montant || 0,
       categorie: cat,
-      description: desc
+      description: descFinale
     }
   }
 
-  // Sinon intention Vente
-  // Nettoyer les mots déclencheurs pour trouver le libellé du produit s'il y en a un
+  // Intention Vente
   let libelle = clean
-    .replace(/\b(vente|jaay|encaisser|vendre|ajouter)\b/g, '')
+    .replace(/\b(vente|ventes|jaay|jaaye|jaayi|encaisser|vendre|ajouter|pour|de|du|des)\b/gi, '')
     .replace(/\b(\d{2,7})\b/g, '')
-    .replace(/\b(teemeer|téemeer|temeer|junni|djunni)\b/g, '')
+    .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs)\b/gi, '')
+    .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|quinze|vingt|trente|quarante|cinquante|cent|mille|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, '')
+    .replace(/\s+/g, ' ')
     .trim()
 
   return {

@@ -2844,10 +2844,10 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
       },
       onResult: (transcript) => {
         setIsListeningVoice(false)
-        const intent = parseSaisieExpressIntent(transcript)
+        const intent = parseSaisieExpressIntent(transcript, mode)
         if (intent.mode === 'depense') {
           setMode('depense')
-          if (intent.montant) setMontantDepense(String(intent.montant))
+          if (intent.montant && intent.montant > 0) setMontantDepense(String(intent.montant))
           if (intent.categorie) setCatDepense(intent.categorie)
           if (intent.description) setDescDepense(intent.description)
           setVoiceFeedback(`🎙️ Dépense reconnue : ${intent.description || intent.categorie} (${intent.montant ? fcfa(intent.montant) : '0 FCFA'})`)
