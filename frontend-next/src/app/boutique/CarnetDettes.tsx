@@ -8,6 +8,7 @@ import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } fr
 import { useTranslation } from '@/i18n/context'
 import { updateStatutCommande, listCommandes } from './actions'
 import { ajouterDetteHorsLigne } from '@/lib/db-offline'
+import { useSyncOffline } from '@/lib/sync-manager'
 import { createVoiceListener, parseDetteIntent, demanderPermissionMicrophone, getMessageErreurMicro } from '@/lib/voice-assistant'
 
 interface ClientCredit {
