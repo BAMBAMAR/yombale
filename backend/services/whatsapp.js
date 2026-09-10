@@ -511,21 +511,46 @@ async function sendFiche(type, id, phone) {
   throw new Error(`Type inconnu : ${type}`);
 }
 
+let _directTemplateName = null;
+let _lastDirectCheck = 0;
+
+async function getDirectProspectionTemplate() {
+  const now = Date.now();
+  if (_directTemplateName && (now - _lastDirectCheck < 60000)) {
+    return _directTemplateName;
+  }
+  if (!PHONE_ID || !TOKEN) return 'nopalou_contact_direct';
+  try {
+    const WABA = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '901008702321523';
+    const { data } = await axios.get(`https://graph.facebook.com/v18.0/${WABA}/message_templates?fields=name,status`, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+      timeout: 3000,
+    });
+    const accesDirect = data?.data?.find(t => t.name === 'nopalou_acces_direct' && t.status === 'APPROVED');
+    _directTemplateName = accesDirect ? 'nopalou_acces_direct' : 'nopalou_contact_direct';
+    _lastDirectCheck = now;
+  } catch {
+    _directTemplateName = 'nopalou_contact_direct';
+  }
+  return _directTemplateName;
+}
+
 /**
- * Envoi direct de prospection certifiée sans bouton externe (template officiel Meta `nopalou_contact_direct`).
+ * Envoi direct de prospection certifiée sans bouton externe (template officiel Meta `nopalou_acces_direct` ou `nopalou_contact_direct`).
  * Rendu 100% natif comme un message WhatsApp normal.
  * Zéro troncature 'Voir plus', zéro bouton externe perturbateur.
  */
 async function sendWhatsAppProspectionDirecte(phone, {
-  features = '📱 Caisse tactile, boutique WhatsApp & encaissements Wave.',
-  googleProof = '🧾 Factures & carnet de dettes (tapez Nopalou sur Google 🇸🇳)',
+  features = '📱 Vendez & encaissez par Wave / OM sans commission sur mobile.',
+  googleProof = '🎁 30 jours offerts & factures (tapez Nopalou sur Google 🇸🇳)',
 } = {}) {
   if (!phone) return null;
   const normPhone = normalisePhone(phone);
   const cleanFeatures = sanitizeTemplateParam(features).slice(0, 200);
   const cleanProof = sanitizeTemplateParam(googleProof).slice(0, 150);
+  const templateName = await getDirectProspectionTemplate();
 
-  return sendWhatsAppTemplate(normPhone, 'nopalou_contact_direct', [
+  return sendWhatsAppTemplate(normPhone, templateName, [
     {
       type: 'body',
       parameters: [

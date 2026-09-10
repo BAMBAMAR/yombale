@@ -59,16 +59,16 @@ const FOOTER_OPTOUT = '\n\n_STOP pour vous désinscrire._';
 const TEMPLATES_PAR_DEFAUT = [
   {
     id: 'gestion_caisse_smartphone_nopalou',
-    titre: '📱 Gestion & Caisse Smartphone — Tout-en-un Nopalou sans ordinateur (Option 1)',
+    titre: '📱 Vente & Caisse Smartphone — 0% Commission & 30j offerts (Recommandé)',
     canal: 'whatsapp',
     categorie: 'general',
     texte: `Salam alaykoum ! 👋
 
-📱 Caisse tactile, boutique WhatsApp & encaissements Wave.
+📱 Vendez & encaissez par Wave / OM sans commission sur mobile.
 
-🧾 Factures & carnet de dettes (tapez Nopalou sur Google 🇸🇳)
+🎁 30 jours offerts & factures (tapez Nopalou sur Google 🇸🇳)
 
-Répondez OUI pour voir la démo en 1 min !` + FOOTER_OPTOUT
+Répondez OUI pour ouvrir votre boutique en 30 secondes !` + FOOTER_OPTOUT
   },
   {
     id: 'creation_whatsapp_30s',
@@ -1690,8 +1690,8 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           let metaResponse = null;
           try {
             metaResponse = await sendWhatsAppProspectionDirecte(lead.telephone, {
-              features: '📱 Caisse tactile, boutique WhatsApp & encaissements Wave.',
-              googleProof: '🧾 Factures & carnet de dettes (tapez Nopalou sur Google 🇸🇳)',
+              features: '📱 Vendez & encaissez par Wave / OM sans commission sur mobile.',
+              googleProof: '🎁 30 jours offerts & factures (tapez Nopalou sur Google 🇸🇳)',
             });
           } catch (eDir) {
             console.warn(`[PROSPECTION DIRECTE FAIL, FALLBACK NOTIF] ${lead.telephone}:`, eDir.message);
@@ -1700,7 +1700,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           if (!metaResponse || metaResponse.success === false) {
             const enseigneAuth = estNomPropreAuthentique(lead.nom_boutique) ? lead.nom_boutique.trim() : null;
             const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse & Gestion';
-            const detailNotif = '📱 Caisse tactile, boutique WhatsApp, factures & Wave. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour la démo 1 min.';
+            const detailNotif = '📱 Vendez & encaissez par Wave / OM sans commission. 30 jours offerts. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour ouvrir votre boutique en 30s.';
             metaResponse = await sendWhatsAppNotification(lead.telephone, {
               textMessage: null, // Pas de texte libre pour éviter l'erreur 131047
               title: titreNotif,
