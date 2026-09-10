@@ -1319,143 +1319,163 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             </div>
           </div>
 
-          {/* Barre d'outils responsive épurée : 2 boutons majeurs + 1 menu compact [⋯ Plus ▾] */}
+          {/* Barre d'outils responsive : 2 rangées optimisées sur mobile, 1 ligne sur desktop */}
           <div style={{
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
             gap: 8,
             width: isMobile ? '100%' : 'auto',
           }}>
-            {/* Bouton de synchronisation locale si des opérations sont en attente */}
-            {totalOfflineCount > 0 && (
+            {/* Ligne 1 : Boutons d'action principaux (Vente crédit & Nouveau client) */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              width: isMobile ? '100%' : 'auto',
+              flex: isMobile ? '1 1 auto' : 'initial'
+            }}>
+              {/* Bouton de synchronisation locale si des opérations sont en attente */}
+              {totalOfflineCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => declencherSyncCarnet()}
+                  title="Synchroniser immédiatement les dettes ou ventes enregistrées hors-ligne"
+                  style={{
+                    minHeight: 42,
+                    padding: '8px 12px',
+                    borderRadius: 10,
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    background: '#ea580c',
+                    color: '#ffffff',
+                    border: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
+                    flexShrink: 0
+                  }}
+                >
+                  <span>↻</span>
+                  <span>{syncingCarnet ? 'Sync...' : `Sync (${totalOfflineCount})`}</span>
+                </button>
+              )}
+
               <button
-                type="button"
-                onClick={() => declencherSyncCarnet()}
-                title="Synchroniser immédiatement les dettes ou ventes enregistrées hors-ligne"
+                onClick={() => ouvrirModalTransaction('vente_credit')}
+                className="npl-btn npl-btn-primary"
                 style={{
-                  minHeight: 42,
-                  padding: '8px 12px',
-                  borderRadius: 10,
-                  fontSize: 12.5,
-                  fontWeight: 800,
-                  background: '#ea580c',
-                  color: '#ffffff',
-                  border: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
-                }}
-              >
-                <span>↻</span>
-                <span>{syncingCarnet ? 'Sync...' : `Sync (${totalOfflineCount})`}</span>
-              </button>
-            )}
-            <button
-              onClick={() => ouvrirModalTransaction('vente_credit')}
-              className="npl-btn npl-btn-primary"
-              style={{
-                flex: isMobile ? 1.2 : 'initial',
-                minHeight: 42,
-                padding: '8px 14px',
-                borderRadius: 10,
-                fontSize: 13,
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                whiteSpace: 'nowrap',
-                background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
-                color: '#ffffff',
-                border: 'none',
-                boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
-                cursor: 'pointer'
-              }}
-            >
-              <span>⚡</span>
-              <span>+ Vente crédit</span>
-            </button>
-
-            <button
-              onClick={() => setShowModalNouveauClient(true)}
-              className="npl-btn npl-btn-secondary"
-              style={{
-                flex: isMobile ? 1 : 'initial',
-                minHeight: 42,
-                padding: '8px 14px',
-                borderRadius: 10,
-                fontSize: 13,
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                whiteSpace: 'nowrap',
-                background: 'var(--navy, #1C2B4A)',
-                color: '#ffffff',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <span>👤</span>
-              <span>+ Client</span>
-            </button>
-
-            {/* Bouton Vocal Wolof & Français immédiatement visible */}
-            <button
-              type="button"
-              onClick={demarrerEcouteVocaleCarnet}
-              title={isListeningVoice ? "Arrêter l'écoute" : "Dicter une dette ou rechercher un client en Wolof ou Français"}
-              style={{
-                minHeight: 42,
-                padding: '8px 14px',
-                borderRadius: 10,
-                fontSize: 13,
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                whiteSpace: 'nowrap',
-                background: isListeningVoice ? '#ea580c' : '#fff7ed',
-                color: isListeningVoice ? '#ffffff' : '#c2410c',
-                border: isListeningVoice ? '2px solid #9a3412' : '1.5px solid #fdba74',
-                boxShadow: isListeningVoice ? '0 0 0 4px rgba(234, 88, 12, 0.25)' : '0 2px 6px rgba(0,0,0,0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                flex: isMobile ? 1 : 'initial'
-              }}
-            >
-              <span>{isListeningVoice ? '⏹️' : '🎙️'}</span>
-              <span>{isListeningVoice ? 'Écoute…' : 'Parler (Dette / Client)'}</span>
-            </button>
-
-            {/* Menu Déroulant [⋯ Plus ▾] pour QR, Import CSV, Exports */}
-            <div className="npl-dettes-options-dropdown" style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setShowMenuOptionsDettes(!showMenuOptionsDettes)}
-                style={{
+                  flex: isMobile ? 1 : 'initial',
                   minHeight: 42,
                   padding: '8px 12px',
                   borderRadius: 10,
                   fontSize: 13,
-                  fontWeight: 700,
-                  border: '1.5px solid var(--border, #E5E7EB)',
-                  background: '#ffffff',
-                  color: 'var(--navy, #1C2B4A)',
-                  cursor: 'pointer',
+                  fontWeight: 800,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
+                  justifyContent: 'center',
+                  gap: 6,
                   whiteSpace: 'nowrap',
-                  flexShrink: 0
+                  background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
+                  cursor: 'pointer'
                 }}
               >
-                <span>⋯ Plus ▾</span>
+                <span>⚡</span>
+                <span>+ Vente crédit</span>
               </button>
+
+              <button
+                onClick={() => setShowModalNouveauClient(true)}
+                className="npl-btn npl-btn-secondary"
+                style={{
+                  flex: isMobile ? 1 : 'initial',
+                  minHeight: 42,
+                  padding: '8px 12px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  background: 'var(--navy, #1C2B4A)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <span>👤</span>
+                <span>+ Client</span>
+              </button>
+            </div>
+
+            {/* Ligne 2 : Assistant Vocal (Parler) & Menu d'options (Plus) */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              width: isMobile ? '100%' : 'auto',
+              flex: isMobile ? '1 1 auto' : 'initial'
+            }}>
+              {/* Bouton Vocal Wolof & Français immédiatement visible */}
+              <button
+                type="button"
+                onClick={demarrerEcouteVocaleCarnet}
+                title={isListeningVoice ? "Arrêter l'écoute" : "Dicter une dette ou rechercher un client en Wolof ou Français"}
+                style={{
+                  minHeight: 42,
+                  padding: '8px 14px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  background: isListeningVoice ? '#ea580c' : '#fff7ed',
+                  color: isListeningVoice ? '#ffffff' : '#c2410c',
+                  border: isListeningVoice ? '2px solid #9a3412' : '1.5px solid #fdba74',
+                  boxShadow: isListeningVoice ? '0 0 0 4px rgba(234, 88, 12, 0.25)' : '0 2px 6px rgba(0,0,0,0.04)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  flex: isMobile ? 1 : 'initial'
+                }}
+              >
+                <span>{isListeningVoice ? '⏹️' : '🎙️'}</span>
+                <span>{isListeningVoice ? 'Écoute…' : 'Parler (Dette / Client)'}</span>
+              </button>
+
+              {/* Menu Déroulant [⋯ Plus ▾] pour QR, Import CSV, Exports */}
+              <div className="npl-dettes-options-dropdown" style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowMenuOptionsDettes(!showMenuOptionsDettes)}
+                  style={{
+                    minHeight: 42,
+                    padding: '8px 12px',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    border: '1.5px solid var(--border, #E5E7EB)',
+                    background: '#ffffff',
+                    color: 'var(--navy, #1C2B4A)',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
+                  }}
+                >
+                  <span>⋯ Plus ▾</span>
+                </button>
 
               {showMenuOptionsDettes && (
                 <div style={{
@@ -1594,6 +1614,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             </div>
           </div>
         </div>
+      </div>
 
         {/* Bandeau Vocal Supérieur (si écoute en cours ou message/erreur) */}
         {(isListeningVoice || voiceFeedback) && (

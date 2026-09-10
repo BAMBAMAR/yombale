@@ -1796,9 +1796,35 @@ async function handleIncomingInternal(msg) {
       console.log('[WHATSAPP AUDIO]: Note vocale rattachée au contexte boutique', context.boutique_id);
     }
 
+    // 1. Détection Commerçant (Boutique Yombale / Nopalou)
+    const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
+    if (bqMarchand) {
+      await sendWhatsAppText(
+        phone,
+        `🎙️ *Note vocale bien reçue — Espace Marchand (${bqMarchand.nom})*\n\n` +
+        `Pour piloter votre commerce par commandes directes WhatsApp :\n` +
+        `• Tapez *PRODUIT* : ajouter un article (avec photo et prix)\n` +
+        `• Tapez *COMMANDES* : voir vos commandes clients récentes\n` +
+        `• Tapez *CAISSE* : bilan des encaissements du jour (Wave / OM / Cash)\n` +
+        `• Tapez *DETTES* : carnet de crédit & impayés clients\n` +
+        `• Tapez *MENU* : ouvrir votre espace de gestion complet`
+      );
+      return;
+    }
+
+    // 2. Client / Acheteur
+    const msgContexte = context?.boutique_nom
+      ? `Votre consigne vocale a bien été enregistrée pour la boutique *${context.boutique_nom}*. Le vendeur l'écoutera directement pour votre commande.\n\n`
+      : `Si votre note vocale concerne une commande, le commerçant écoutera directement vos consignes (taille, couleur, adresse de livraison).\n\n`;
+
     await sendWhatsAppText(
       phone,
-      `🎙️ *Note vocale bien reçue — Jërëjëf !*\n\nNous avons bien reçu votre message vocal. Si votre demande concerne une commande, le vendeur écoutera directement vos consignes (taille, couleur, adresse de livraison).\n\n💡 *Options rapides :*\n• Tapez *CATALOGUE* pour explorer les boutiques\n• Tapez *AIDE* pour contacter notre assistance\n• Ou écrivez votre message directement ici.`
+      `🎙️ *Note vocale bien reçue — Jërëjëf !*\n\n` +
+      msgContexte +
+      `💡 *Options rapides :*\n` +
+      `• Tapez *CATALOGUE* ou *BOUTIQUES* pour explorer nos boutiques partenaires\n` +
+      `• Tapez *COMMANDES* pour le suivi de votre commande\n` +
+      `• Tapez *AIDE* pour contacter l'assistance ou afficher le menu`
     );
     return;
   }
@@ -2426,6 +2452,23 @@ async function handleIncomingInternal(msg) {
         return;
       }
     }
+  }
+
+  // ── DÉCLENCHEUR CATALOGUE & BOUTIQUES PARTENAIRES ──────────────────────────
+  const MOTS_CATALOGUE = [
+    'catalogue', 'catalogues', 'boutique', 'boutiques', 'nos boutiques',
+    'les boutiques', 'magasin', 'magasins', 'explorer', 'explorer boutiques',
+    'voir boutiques', 'toutes les boutiques', 'liste boutiques'
+  ];
+  if (
+    MOTS_CATALOGUE.includes(normTxtLower) ||
+    interactiveId === 'catalogue' ||
+    interactiveId === 'catalogue_boutiques' ||
+    interactiveId === 'boutiques_toutes' ||
+    interactiveId === 'boutiques_liste'
+  ) {
+    await envoyerToutesLesBoutiques(phone);
+    return;
   }
 
   // Déclencheur Création de Boutique Taf-Taf
@@ -4874,6 +4917,13 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
   }
 
   const cleanQ = query.trim();
+  const normQ = normaliserTexte(cleanQ).trim();
+
+  // Redirection directe vers la liste des boutiques si l'utilisateur demande le catalogue
+  if (['catalogue', 'catalogues', 'boutique', 'boutiques', 'nos boutiques', 'magasin', 'magasins', 'explorer'].includes(normQ)) {
+    await envoyerToutesLesBoutiques(phone);
+    return;
+  }
 
   // Si la recherche commence sans pagination et correspond au nom exact ou partiel d'une boutique
   if (excludeIds.length === 0 && cleanQ.length >= 3) {

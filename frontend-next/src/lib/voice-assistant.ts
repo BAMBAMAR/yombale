@@ -370,7 +370,7 @@ export function parseDetteIntent(transcript: string, listeClientsConnus: string[
     // 2. Si pas trouvé dans les clients connus, extraire le prénom/nom dicté
     if (!clientTrouve) {
       const sansMotsCles = clean
-        .replace(/\b(dette|dettes|date|dates|credit|credits|bor|bore|bord|borde|boire|bon|port|pour|keredit|doit|dois|doigt|doivent|doive|prete|preter|avancer|remboursement|remboursements|rembourser|rembourse|fey|feyna|faye|faillite|payer|paye|payé|versement|versements|verser|regler|cherche|trouve|voir|client|pour|de|du|des|le|la|bu|ci|ak)\b/gi, ' ')
+        .replace(/\b(dette|dettes|date|dates|credit|credits|bor|bore|bord|borde|boire|bon|port|pour|keredit|doit|dois|doigt|doivent|doive|prete|preter|avancer|avance|remboursement|remboursements|rembourser|rembourse|fey|feyna|faye|faillite|payer|paye|payé|versement|versements|verser|regler|cherche|trouve|voir|client|pour|de|du|des|le|la|bu|ci|ak|ajoute|ajouter|ajout|mettre|met|donne|donner|note|noter|enregistre|enregistrer|nouveau|nouvelle|prend|prendre|pris)\b/gi, ' ')
         .replace(/\b(\d{1,8})\b/g, ' ')
         .replace(/\b(teemeer|téemeer|temeer|junni|djunni|cfa|fcfa|frs|francs|f|euro|euros)\b/gi, ' ')
         .replace(/\b(un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingt|trente|quarante|cinquante|soixante|cent|mille|million|benn|naar|ñaar|nett|ñett|juroom|fukk)\b/gi, ' ')
