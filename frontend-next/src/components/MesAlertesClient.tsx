@@ -161,27 +161,37 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
             }}
           >
             {/* Haut de la carte: Titre & Suppression */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-              <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, width: '100%' }}>
+              <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                 <Link
                   href={`/produit/${alerte.produit_id}`}
                   target="_blank"
                   rel="noreferrer"
+                  title={nomProduit}
                   style={{
                     display: 'inline-flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     gap: 6,
                     color: 'var(--navy, #1C2B4A)',
                     fontWeight: 800,
                     fontSize: 14,
                     textDecoration: 'none',
-                    lineHeight: 1.4,
+                    lineHeight: 1.35,
+                    maxWidth: '100%',
+                    wordBreak: 'break-word',
                   }}
                 >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    wordBreak: 'break-word',
+                  }}>
                     {nomProduit}
                   </span>
-                  <ExternalLink size={13} style={{ color: '#64748B', flexShrink: 0 }} />
+                  <ExternalLink size={13} style={{ color: '#64748B', flexShrink: 0, marginTop: 3 }} />
                 </Link>
               </div>
 
@@ -197,13 +207,15 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
                   color: '#DC2626',
                   borderRadius: 8,
                   padding: '6px 10px',
+                  minHeight: 32,
                   cursor: deletingId === alerte.id ? 'not-allowed' : 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
+                  gap: 5,
                   fontSize: 12,
                   fontWeight: 700,
                   flexShrink: 0,
+                  alignSelf: 'flex-start',
                   transition: 'all 0.12s ease',
                 }}
               >
@@ -226,18 +238,18 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
               gap: 10,
               flexWrap: 'wrap',
               borderTop: '1px solid #F0ECE6',
-              paddingTop: 8,
+              paddingTop: 10,
             }}>
               {/* Prix cible */}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>Prix cible :</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Prix cible :</span>
                 <span style={{ fontSize: 15, fontWeight: 900, color: '#C75B00' }}>
                   {fcfa(alerte.prix_cible)}
                 </span>
               </div>
 
-              {/* Badges de canaux */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* Badges de canaux & Date */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 {alerte.telephone && (
                   <span
                     style={{
@@ -279,7 +291,7 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
                 )}
 
                 {/* Date */}
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: '#94A3B8', marginLeft: 4 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, color: '#94A3B8', marginLeft: 2 }}>
                   <Clock size={11} />
                   <span>{dateCreation}</span>
                 </span>

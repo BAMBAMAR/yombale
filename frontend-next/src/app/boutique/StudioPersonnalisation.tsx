@@ -429,31 +429,31 @@ export default function StudioPersonnalisation({
   const currentRadius = radiusMap[formeBoutons] || '12px'
 
   return (
-    <div style={{ maxWidth: 1400, margin: '0 auto', paddingBottom: 60 }}>
+    <div style={{ maxWidth: 1400, margin: '0 auto', paddingBottom: 90 }}>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
       {/* ── EN-TÊTE DU STUDIO AVEC SCORE D'ATTRACTIVITÉ ────────────────────────── */}
       <div style={{
         background: '#ffffff',
         borderRadius: 18,
-        padding: '20px 24px',
+        padding: '16px 18px',
         border: '1.5px solid #E2E8F0',
         boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-        marginBottom: 20,
+        marginBottom: 18,
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         alignItems: 'center',
-        gap: 16,
+        gap: 14,
       }}>
-        <div style={{ minWidth: 260 }}>
+        <div style={{ minWidth: 0, flex: '1 1 240px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 24 }}>🎨</span>
             <div>
-              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 20, fontWeight: 850, margin: 0, color: '#0F172A' }}>
+              <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 19, fontWeight: 850, margin: 0, color: '#0F172A', lineHeight: 1.25 }}>
                 Personnaliser ma boutique
               </h1>
-              <p style={{ margin: '2px 0 0', fontSize: 13, color: '#64748B' }}>
+              <p style={{ margin: '2px 0 0', fontSize: 12.5, color: '#64748B' }}>
                 Donnez à <strong>{boutique.nom}</strong> son identité visuelle unique et séduisez vos clients.
               </p>
             </div>
@@ -465,22 +465,23 @@ export default function StudioPersonnalisation({
           background: scoreData.score >= 80 ? '#F0FDF4' : '#FFF7ED',
           border: `1.5px solid ${scoreData.score >= 80 ? '#BBF7D0' : '#FED7AA'}`,
           borderRadius: 14,
-          padding: '10px 16px',
+          padding: '8px 14px',
           display: 'flex',
           alignItems: 'center',
-          gap: 14,
+          gap: 12,
+          flex: '0 1 auto',
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: scoreData.score >= 80 ? '#166534' : '#9A3412' }}>
-                ✨ Attractivité de votre boutique
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 800, color: scoreData.score >= 80 ? '#166534' : '#9A3412' }}>
+                ✨ Attractivité
               </span>
-              <span style={{ fontSize: 14, fontWeight: 900, color: scoreData.score >= 80 ? '#15803D' : '#C2410C' }}>
+              <span style={{ fontSize: 13, fontWeight: 900, color: scoreData.score >= 80 ? '#15803D' : '#C2410C' }}>
                 {scoreData.score}%
               </span>
             </div>
             {/* Barre de progression */}
-            <div style={{ width: 160, height: 7, background: '#e2e8f0', borderRadius: 10, marginTop: 5, overflow: 'hidden' }}>
+            <div style={{ width: 140, height: 6, background: '#e2e8f0', borderRadius: 10, marginTop: 4, overflow: 'hidden' }}>
               <div style={{
                 width: `${scoreData.score}%`,
                 height: '100%',
@@ -493,50 +494,50 @@ export default function StudioPersonnalisation({
         </div>
 
         {/* Boutons d'Action Rapide */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', flex: '0 0 auto' }}>
           <a
             href={publicShopUrl}
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              padding: '8px 14px',
+              padding: '8px 12px',
               borderRadius: 10,
               background: '#F8FAFC',
               border: '1.5px solid #CBD5E1',
               color: '#1E293B',
-              fontSize: 12.5,
+              fontSize: 12,
               fontWeight: 750,
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 5,
             }}
           >
-            <ExternalLink size={14} />
-            <span>Voir ma boutique en ligne</span>
+            <ExternalLink size={13} />
+            <span>Voir vitrine</span>
           </a>
 
           <button
             onClick={handleEnregistrer}
             disabled={isSaving}
             style={{
-              padding: '9px 18px',
+              padding: '8px 16px',
               borderRadius: 10,
               background: couleurTheme,
               color: contrastBtnText,
               border: 'none',
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: 800,
               cursor: isSaving ? 'wait' : 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 8,
+              gap: 6,
               boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
               opacity: isSaving ? 0.7 : 1,
             }}
           >
-            {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} strokeWidth={3} />}
-            <span>{isSaving ? 'Enregistrement…' : 'Publier les modifications'}</span>
+            {isSaving ? <RefreshCw size={13} className="animate-spin" /> : <Check size={13} strokeWidth={3} />}
+            <span>{isSaving ? 'Enregistrement…' : 'Publier'}</span>
           </button>
         </div>
       </div>
@@ -594,13 +595,13 @@ export default function StudioPersonnalisation({
       </div>
 
       {/* ── CORPS PRINCIPAL DU STUDIO : 2 COLONNES (Éditeur à gauche, Mockup à droite) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 24, alignItems: 'start' }}>
+      <div className="studio-main-grid">
         
         {/* COLONNE GAUCHE : LES CONTRÔLES SIMPLES DU MARCHAND */}
-        <div className={`studio-editor-col ${activeScreenTab === 'apercu' ? 'studio-editor-hidden-mobile' : ''}`} style={{ flexDirection: 'column', gap: 20 }}>
+        <div className={`studio-editor-col ${activeScreenTab === 'apercu' ? 'studio-editor-hidden-mobile' : ''}`} style={{ flexDirection: 'column', gap: 16 }}>
           
           {/* BLOC 1 : CHOIX DU STYLE (EN 1 CLIC) */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: '20px 22px', border: '1.5px solid #E2E8F0' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -613,7 +614,7 @@ export default function StudioPersonnalisation({
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+            <div className="studio-presets-grid">
               {STYLES_PRESETS.map(preset => {
                 const isSelected = styleActif === preset.id
                 return (
@@ -665,7 +666,7 @@ export default function StudioPersonnalisation({
           </div>
 
           {/* BLOC 2 : COULEUR SUR-MESURE & LOGO */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: '20px 22px', border: '1.5px solid #E2E8F0' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span>🎨</span>
               <span>2. Couleur principale de votre marque</span>
@@ -746,24 +747,26 @@ export default function StudioPersonnalisation({
             </div>
 
             {/* Sélecteur personnalisé HEX */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-              <input
-                type="color"
-                value={couleurTheme}
-                onChange={e => setCouleurTheme(e.target.value)}
-                style={{ width: 44, height: 38, borderRadius: 8, border: '1px solid #D1D5DB', cursor: 'pointer', padding: 2 }}
-              />
-              <input
-                type="text"
-                value={couleurTheme}
-                onChange={e => setCouleurTheme(e.target.value)}
-                maxLength={7}
-                placeholder="#C75B00"
-                style={{
-                  width: 100, height: 38, borderRadius: 8, border: '1px solid #D1D5DB',
-                  padding: '0 10px', fontSize: 13, fontWeight: 700, fontFamily: 'monospace',
-                }}
-              />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="color"
+                  value={couleurTheme}
+                  onChange={e => setCouleurTheme(e.target.value)}
+                  style={{ width: 44, height: 38, borderRadius: 8, border: '1px solid #D1D5DB', cursor: 'pointer', padding: 2 }}
+                />
+                <input
+                  type="text"
+                  value={couleurTheme}
+                  onChange={e => setCouleurTheme(e.target.value)}
+                  maxLength={7}
+                  placeholder="#C75B00"
+                  style={{
+                    width: 100, height: 38, borderRadius: 8, border: '1px solid #D1D5DB',
+                    padding: '0 10px', fontSize: 13, fontWeight: 700, fontFamily: 'monospace',
+                  }}
+                />
+              </div>
               <span style={{ fontSize: 12, color: '#64748B' }}>
                 Couleur personnalisée (Code Hex)
               </span>
@@ -771,7 +774,7 @@ export default function StudioPersonnalisation({
           </div>
 
           {/* BLOC 3 : PHOTO DE COUVERTURE INTELLIGENTE */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: '20px 22px', border: '1.5px solid #E2E8F0' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span>🖼️</span>
               <span>3. Photo de couverture & Bannière</span>
@@ -824,7 +827,7 @@ export default function StudioPersonnalisation({
               <p style={{ fontSize: 12, fontWeight: 800, color: '#475569', margin: '0 0 8px' }}>
                 Modèles thématiques adaptés à votre secteur :
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+              <div className="studio-covers-grid">
                 {(COUVERTURES_MODELES[activeCategoryCoversTab] || COUVERTURES_MODELES['mode']).map((m, idx) => {
                   const isCurrent = coverUrl === m.url && !coverPreviewLocal
                   return (
@@ -874,7 +877,7 @@ export default function StudioPersonnalisation({
           </div>
 
           {/* BLOC 4 : SLOGAN & BANDEAU PROMO COMMERCIALE */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: '20px 22px', border: '1.5px solid #E2E8F0' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span>📢</span>
               <span>4. Slogan & Annonces Commerciales</span>
@@ -943,7 +946,7 @@ export default function StudioPersonnalisation({
           </div>
 
           {/* BLOC 5 : FORME DES BOUTONS & DISPOSITION */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: '20px 22px', border: '1.5px solid #E2E8F0' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span>📐</span>
               <span>5. Forme des boutons & Catalogue</span>
@@ -952,7 +955,7 @@ export default function StudioPersonnalisation({
               Harmonisez l&apos;ergonomie visuelle de vos boutons de commande.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8 }}>
+            <div className="studio-buttons-grid">
               {[
                 { id: 'squircle', nom: 'Squircle (Doux)', radius: '10px' },
                 { id: 'pill', nom: 'Pilule (Rond)', radius: '999px' },
@@ -1042,16 +1045,19 @@ export default function StudioPersonnalisation({
           </div>
 
           {/* CHÂSSIS DE PRÉVISUALISATION DU SMARTPHONE OU DESKTOP */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: previewMode === 'mobile' ? 32 : 16,
-            border: previewMode === 'mobile' ? '8px solid #0F172A' : '2px solid #E2E8F0',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-            maxWidth: previewMode === 'mobile' ? 360 : '100%',
-            margin: '0 auto',
-            width: '100%',
-          }}>
+          <div
+            className="studio-mockup-frame-mobile"
+            style={{
+              background: '#ffffff',
+              borderRadius: previewMode === 'mobile' ? 32 : 16,
+              border: previewMode === 'mobile' ? '8px solid #0F172A' : '2px solid #E2E8F0',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+              overflow: 'hidden',
+              maxWidth: previewMode === 'mobile' ? 360 : '100%',
+              margin: '0 auto',
+              width: '100%',
+            }}
+          >
             
             {/* Écran Mockup */}
             <div style={{ background: '#FAF9F6', minHeight: 480, overflowY: 'auto' }}>
@@ -1223,6 +1229,68 @@ export default function StudioPersonnalisation({
           </div>
         </div>
 
+      </div>
+
+      {/* ── BARRE MOBILE STICKY BOTTOM : ENREGISTRER & BASCULE RAPIDE ── */}
+      <div className="studio-mobile-bottom-bar">
+        <button
+          type="button"
+          onClick={() => setActiveScreenTab(activeScreenTab === 'editeur' ? 'apercu' : 'editeur')}
+          style={{
+            flex: '0 0 auto',
+            padding: '9px 14px',
+            borderRadius: 10,
+            border: '1.5px solid #CBD5E1',
+            background: '#F8FAFC',
+            color: '#1E293B',
+            fontSize: 12.5,
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          {activeScreenTab === 'editeur' ? (
+            <>
+              <Eye size={15} style={{ color: couleurTheme }} />
+              <span>Aperçu direct</span>
+            </>
+          ) : (
+            <>
+              <Sliders size={15} style={{ color: couleurTheme }} />
+              <span>Modifier</span>
+            </>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleEnregistrer}
+          disabled={isSaving}
+          style={{
+            flex: '1 1 auto',
+            minWidth: 0,
+            padding: '10px 16px',
+            borderRadius: 10,
+            background: couleurTheme,
+            color: contrastBtnText,
+            border: 'none',
+            fontSize: 13,
+            fontWeight: 850,
+            cursor: isSaving ? 'wait' : 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+            opacity: isSaving ? 0.7 : 1,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} strokeWidth={3} />}
+          <span>{isSaving ? 'Enregistrement…' : 'Publier modifications'}</span>
+        </button>
       </div>
 
     </div>

@@ -87,43 +87,49 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
           type="button"
           onClick={() => setCanal('whatsapp')}
           style={{
-            flex: 1, padding: '7px 8px', borderRadius: 8, border: 'none',
-            fontSize: 12, fontWeight: 800, cursor: 'pointer',
+            flex: '1 1 0', minWidth: 0, padding: '7px 4px', borderRadius: 8, border: 'none',
+            fontSize: 11.5, fontWeight: 800, cursor: 'pointer',
             background: canal === 'whatsapp' ? '#25D366' : 'transparent',
             color: canal === 'whatsapp' ? '#ffffff' : '#475569',
             boxShadow: canal === 'whatsapp' ? '0 2px 6px rgba(37,211,102,0.3)' : 'none',
-            transition: 'all 0.15s ease'
+            transition: 'all 0.15s ease',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            whiteSpace: 'nowrap',
           }}
         >
-          💬 WhatsApp
+          <span>💬</span> <span>WhatsApp</span>
         </button>
         <button
           type="button"
           onClick={() => setCanal('email')}
           style={{
-            flex: 1, padding: '7px 8px', borderRadius: 8, border: 'none',
-            fontSize: 12, fontWeight: 800, cursor: 'pointer',
+            flex: '1 1 0', minWidth: 0, padding: '7px 4px', borderRadius: 8, border: 'none',
+            fontSize: 11.5, fontWeight: 800, cursor: 'pointer',
             background: canal === 'email' ? 'var(--navy)' : 'transparent',
             color: canal === 'email' ? '#ffffff' : '#475569',
             boxShadow: canal === 'email' ? '0 2px 6px rgba(28,43,74,0.25)' : 'none',
-            transition: 'all 0.15s ease'
+            transition: 'all 0.15s ease',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            whiteSpace: 'nowrap',
           }}
         >
-          📧 Email
+          <span>📧</span> <span>Email</span>
         </button>
         <button
           type="button"
           onClick={() => setCanal('les_deux')}
           style={{
-            flex: 1, padding: '7px 8px', borderRadius: 8, border: 'none',
-            fontSize: 12, fontWeight: 800, cursor: 'pointer',
+            flex: '1 1 0', minWidth: 0, padding: '7px 4px', borderRadius: 8, border: 'none',
+            fontSize: 11.5, fontWeight: 800, cursor: 'pointer',
             background: canal === 'les_deux' ? '#7c3aed' : 'transparent',
             color: canal === 'les_deux' ? '#ffffff' : '#475569',
             boxShadow: canal === 'les_deux' ? '0 2px 6px rgba(124,58,237,0.3)' : 'none',
-            transition: 'all 0.15s ease'
+            transition: 'all 0.15s ease',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            whiteSpace: 'nowrap',
           }}
         >
-          🔔 Les deux
+          <span>🔔</span> <span>Les deux</span>
         </button>
       </div>
 
