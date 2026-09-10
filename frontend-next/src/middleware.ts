@@ -120,7 +120,7 @@ export async function middleware(req: NextRequest) {
   if (!isDev) {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
   }
-  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()')
+  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()')
 
   // ── 3. Edge CDN Caching pour routes de catalogue publiques ────
   if (
