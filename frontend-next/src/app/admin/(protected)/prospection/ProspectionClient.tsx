@@ -149,6 +149,8 @@ export default function ProspectionClient({
   // Auto-Sourcing & Nettoyage IA
   const [isAutoSourcing, setIsAutoSourcing] = useState(false)
   const [isCleaningLeads, setIsCleaningLeads] = useState(false)
+  const [isAutoCollecting, setIsAutoCollecting] = useState(false)
+  const [autoCollecteResult, setAutoCollecteResult] = useState<any>(null)
 
   // Campagne Dispatcher
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateMsg>(templates[0] || {
@@ -248,6 +250,30 @@ export default function ProspectionClient({
       showToast(`❌ Erreur: ${e.message}`)
     } finally {
       setIsRelancing(false)
+    }
+  }
+
+  const handleLancerAutoCollecte = async (source: 'all' | 'osm' | 'dorking' = 'all') => {
+    setIsAutoCollecting(true)
+    setAutoCollecteResult(null)
+    try {
+      const res = await fetch('/api/prospection/auto-collecte', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+        body: JSON.stringify({ source }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setAutoCollecteResult(data)
+        showToast(`🎉 Collecte terminée : +${data.totalAjoutes} nouveaux commerces ajoutés !`)
+        await reloadLeads()
+      } else {
+        showToast(`❌ Erreur: ${data.error || 'Échec de la collecte'}`)
+      }
+    } catch (e: any) {
+      showToast(`❌ Erreur réseau: ${e.message}`)
+    } finally {
+      setIsAutoCollecting(false)
     }
   }
 
@@ -1626,13 +1652,87 @@ Boutique Parcelles, 70 111 22 33`}
             </div>
           </div>
 
-          {/* Bloc 2 : Requêtes Google Dorking & Réseaux Sociaux */}
+          {/* Bloc 2 : Requêtes Google Dorking & Réseaux Sociaux + Auto-Collecteur */}
           <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
+            {/* Bannière Auto-Collecte Intelligente Sans Navigateur */}
+            <div style={{
+              background: 'linear-gradient(135deg, #0F172A, #1E293B)',
+              borderRadius: 14, padding: '20px 22px', color: '#fff',
+              marginBottom: 24, boxShadow: '0 4px 15px rgba(15, 23, 42, 0.12)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+                <div style={{ maxWidth: 650 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <Zap size={22} color="#FBBF24" />
+                    <span style={{ fontSize: 16, fontWeight: 900, color: '#F8FAFC' }}>
+                      Auto-Collecte Intelligente Directe (Zéro Impact RAM Render)
+                    </span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 800, background: 'rgba(16, 185, 129, 0.2)',
+                      color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.4)',
+                      padding: '2px 8px', borderRadius: 20
+                    }}>
+                      🛡️ &lt; 3 Mo RAM
+                    </span>
+                  </div>
+                  <p style={{ fontSize: 13, color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
+                    Aspire automatiquement les commerces réels de Dakar (OpenStreetMap Places &amp; Dorking API) sans lancer aucun navigateur lourd Chromium. Consomme moins de 3 Mo de mémoire pour protéger à 100% votre serveur Render.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => handleLancerAutoCollecte('osm')}
+                    disabled={isAutoCollecting}
+                    style={{
+                      padding: '10px 16px', background: 'rgba(255,255,255,0.1)', color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10,
+                      fontWeight: 800, fontSize: 13, cursor: isAutoCollecting ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
+                    }}
+                  >
+                    📍 Places Dakar (Gratuit)
+                  </button>
+
+                  <button
+                    onClick={() => handleLancerAutoCollecte('all')}
+                    disabled={isAutoCollecting}
+                    style={{
+                      padding: '10px 20px', background: '#10B981', color: '#fff',
+                      border: 'none', borderRadius: 10, fontWeight: 900, fontSize: 13,
+                      cursor: isAutoCollecting ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)'
+                    }}
+                  >
+                    <Zap size={16} />
+                    {isAutoCollecting ? 'Collecte en cours (2-3s)...' : '🚀 Lancer Tout (A + B)'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Résultat visuel si exécuté */}
+              {autoCollecteResult && (
+                <div style={{
+                  marginTop: 16, padding: '12px 16px', borderRadius: 10,
+                  background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)',
+                  fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8
+                }}>
+                  <span>
+                    🎉 <strong>{autoCollecteResult.totalAjoutes} nouveaux commerces ajoutés</strong> avec succès dans votre base CRM ! ({autoCollecteResult.totalIgnores} doublons/invalides filtrés)
+                  </span>
+                  <span style={{ fontSize: 11, opacity: 0.8 }}>
+                    ⚡ Exécuté en {Math.round(autoCollecteResult.dureeMs / 100) / 10}s • RAM: +{autoCollecteResult.ramDeltaMb} Mo
+                  </span>
+                </div>
+              )}
+            </div>
+
             <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Search size={20} color="#C75B00" /> Générateur de Requêtes Dorking (Dakar &amp; Sénégal)
+              <Search size={20} color="#C75B00" /> Requêtes Dorking Manuelles (Google, Instagram, TikTok)
             </h2>
             <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px' }}>
-              Cliquez pour lancer des recherches ciblées sur Google, Instagram et TikTok qui révèlent directement les numéros WhatsApp de vendeurs à Dakar.
+              Ou lancez des recherches manuelles ciblées sur Google, Instagram et TikTok pour inspecter les profils :
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

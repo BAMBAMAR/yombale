@@ -324,6 +324,20 @@ router.post('/leads/auto-source', adminOnly, async (req, res) => {
   }
 });
 
+// ── POST /api/prospection/auto-collecte ───────────────────────────────────────
+// Auto-collecte ultra-légère pour Render (< 3 MB RAM, 0 Chromium) : OpenStreetMap Places & Dorking API
+router.post('/auto-collecte', adminOnly, async (req, res) => {
+  try {
+    const { source = 'all' } = req.body;
+    const { lancerAutoCollecte } = require('../services/auto-collecte');
+    const resultats = await lancerAutoCollecte({ source });
+    res.json({ success: true, ...resultats });
+  } catch (err) {
+    console.error('[PROSPECTION AUTO-COLLECTE ERR]:', err);
+    res.status(500).json({ error: err.message || 'Erreur lors de l\'auto-collecte' });
+  }
+});
+
 // ── POST /api/prospection/leads/import-vrac ───────────────────────────────────
 // Importation de texte brut / exports de groupes WhatsApp / CSV
 router.post('/leads/import-vrac', adminOnly, async (req, res) => {
