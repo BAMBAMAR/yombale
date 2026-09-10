@@ -163,8 +163,9 @@ export default function ProspectionClient({
   const [campagneTitre, setCampagneTitre] = useState('Campagne WhatsApp Prospection Dakar')
   const [isSending, setIsSending] = useState(false)
 
-  // Logs
+  // Logs & Campagnes
   const [logs, setLogs] = useState<any[]>([])
+  const [campagnesList, setCampagnesList] = useState<any[]>([])
   const [loadingLogs, setLoadingLogs] = useState(false)
 
   // Centre de Contrôle & Crons
@@ -789,12 +790,17 @@ export default function ProspectionClient({
   const loadLogs = async () => {
     setLoadingLogs(true)
     try {
-      const res = await fetch('/api/prospection/logs', {
-        headers: { 'x-admin-secret': secret },
-      })
-      if (res.ok) {
-        const data = await res.json()
+      const [resLogs, resCampagnes] = await Promise.all([
+        fetch('/api/prospection/logs', { headers: { 'x-admin-secret': secret } }),
+        fetch('/api/prospection/campagnes', { headers: { 'x-admin-secret': secret } }),
+      ])
+      if (resLogs.ok) {
+        const data = await resLogs.json()
         setLogs(data.logs || [])
+      }
+      if (resCampagnes.ok) {
+        const data = await resCampagnes.json()
+        setCampagnesList((data.campagnes || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
       }
     } catch (_) {}
     setLoadingLogs(false)
@@ -2074,10 +2080,73 @@ Boutique Parcelles, 70 111 22 33`}
 
           {loadingLogs ? (
             <p style={{ color: '#94A3B8', textAlign: 'center', padding: '30px' }}>Chargement des logs...</p>
-          ) : logs.length === 0 ? (
-            <p style={{ color: '#94A3B8', textAlign: 'center', padding: '30px' }}>Aucun message envoyé pour l&apos;instant.</p>
           ) : (
+            <>
+              {/* ── Récapitulatif des Campagnes ── */}
+              {campagnesList.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 800, color: '#334155', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    📋 Récapitulatif des Campagnes ({campagnesList.length})
+                  </h3>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ background: '#F1F5F9', borderBottom: '2px solid #E2E8F0' }}>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Date</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Titre</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Statut</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Ciblés</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Envoyés</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Succès</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Échecs</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 800 }}>Diagnostic</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {campagnesList.slice(0, 20).map((c: any) => {
+                          const diag = c.diagnostic || {}
+                          const isZeroSend = c.statut === 'terminee' && (c.nb_envoyes || 0) === 0 && (c.nb_succes || 0) === 0
+                          return (
+                            <tr key={c.id} style={{ borderBottom: '1px solid #F1F5F9', background: isZeroSend ? '#FFF7ED' : undefined }}>
+                              <td style={{ padding: '10px 12px', color: '#64748B', whiteSpace: 'nowrap' }}>
+                                {new Date(c.created_at).toLocaleString('fr-FR')}
+                              </td>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1C2B4A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {c.titre}
+                              </td>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span style={{
+                                  fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
+                                  background: c.statut === 'terminee' ? (isZeroSend ? '#FEF3C7' : '#DCFCE7') : c.statut === 'en_cours' ? '#DBEAFE' : '#F1F5F9',
+                                  color: c.statut === 'terminee' ? (isZeroSend ? '#92400E' : '#166534') : c.statut === 'en_cours' ? '#1E40AF' : '#64748B',
+                                }}>
+                                  {c.statut === 'terminee' ? (isZeroSend ? '⚠️ 0 envoi' : '✅ Terminée') : c.statut === 'en_cours' ? '🔄 En cours' : c.statut}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center' }}>{c.nb_total || 0}</td>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center', color: (c.nb_envoyes || 0) > 0 ? '#2563EB' : '#94A3B8' }}>{c.nb_envoyes || 0}</td>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center', color: (c.nb_succes || 0) > 0 ? '#16A34A' : '#94A3B8' }}>{c.nb_succes || 0}</td>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center', color: (c.nb_echecs || 0) > 0 ? '#DC2626' : '#94A3B8' }}>{c.nb_echecs || 0}</td>
+                              <td style={{ padding: '10px 12px', fontSize: 11, color: isZeroSend ? '#B45309' : '#64748B', maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {diag.message || (isZeroSend ? 'Tous les prospects étaient déjà contactés' : diag.nb_ignores ? `${diag.nb_ignores} doublons ignorés` : '—')}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Journal des Messages Individuels ── */}
+              {logs.length === 0 ? (
+                <p style={{ color: '#94A3B8', textAlign: 'center', padding: '30px' }}>Aucun message envoyé pour l&apos;instant.</p>
+              ) : (
             <div style={{ overflowX: 'auto' }}>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: '#334155', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                📨 Messages Individuels ({logs.length})
+              </h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
@@ -2117,6 +2186,8 @@ Boutique Parcelles, 70 111 22 33`}
                 </tbody>
               </table>
             </div>
+          )}
+            </>
           )}
         </div>
       )}

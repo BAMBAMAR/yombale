@@ -1628,6 +1628,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
 
   let nbSucces = 0;
   let nbEchecs = 0;
+  let nbIgnores = 0;
   let index = 0;
 
   for (const lead of leads) {
@@ -1644,12 +1645,14 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       // a) Si le prospect a déjà été contacté ou n'est plus "nouveau"
       if (lead.statut !== 'nouveau' || lead.dernier_contact_at || (lead.nb_contacts && lead.nb_contacts > 0)) {
         console.log(`[PROSPECTION DOUBLON BLOQUÉ] Ignoré : lead ${lead.telephone} déjà contacté (statut: ${lead.statut}, dernier_contact: ${lead.dernier_contact_at}).`);
+        nbIgnores++;
         continue;
       }
 
       // b) Si le prospect a déjà une boutique active
       if (lead.statut === 'converti') {
         console.log(`[PROSPECTION CONVERTI] Ignoré : lead ${lead.telephone} a déjà créé sa boutique Nopalou.`);
+        nbIgnores++;
         continue;
       }
 
@@ -1666,7 +1669,7 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
         );
         if (dejaEnvoye.length > 0) {
           console.log(`[PROSPECTION DOUBLON BLOQUÉ] Ignoré : le numéro ${lead.telephone} a déjà reçu un message par le passé.`);
-          await pool.query("UPDATE prospection_leads SET statut = 'contacte_wa', updated_at = NOW() WHERE id = $1 AND statut = 'nouveau'", [lead.id]);
+          nbIgnores++;
           continue;
         }
       }
@@ -1800,6 +1803,9 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
   // Clôturer la campagne avec ses statistiques en base
   if (campagneId) {
     try {
+      const diagnosticCampagne = nbIgnores > 0 && nbSucces === 0 && nbEchecs === 0
+        ? { message: `Tous les ${nbIgnores} prospects ciblés avaient déjà été contactés. Aucun nouveau message envoyé.`, raison: 'doublons_bloques', nb_ignores: nbIgnores }
+        : { nb_ignores: nbIgnores };
       await pool.query(`
         UPDATE prospection_campagnes
         SET
@@ -1808,15 +1814,16 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
           nb_succes = $2::int,
           nb_echecs = $3::int,
           taux_delivrabilite = CASE WHEN $1::int > 0 THEN ROUND(($2::numeric / $1::numeric) * 100, 2) ELSE 0 END,
+          diagnostic = $5::jsonb,
           date_fin = NOW()
         WHERE id = $4
-      `, [nbSucces + nbEchecs, nbSucces, nbEchecs, campagneId]);
+      `, [nbSucces + nbEchecs, nbSucces, nbEchecs, campagneId, JSON.stringify(diagnosticCampagne)]);
     } catch (cmpCloseErr) {
       console.warn('[PROSPECTION] Fermeture campagne warning:', cmpCloseErr.message);
     }
   }
 
-  return { nbSucces, nbEchecs, total: leads.length };
+  return { nbSucces, nbEchecs, nbIgnores, total: leads.length };
 }
 
 // ── Analytics & Diagnostic Automatique d'une Campagne ─────────────────────────
