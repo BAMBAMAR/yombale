@@ -32,11 +32,26 @@ function normaliserTelephoneSenegal(rawPhone) {
 
   const prefix = num.slice(0, 2);
   let operateur = 'Autre';
-  if (prefix === '77' || prefix === '78') operateur = 'Orange';
-  else if (prefix === '76') operateur = 'Free (Yas)';
-  else if (prefix === '70') operateur = 'Expresso';
-  else if (prefix === '75') operateur = 'Promobile';
-  else if (prefix === '33' || prefix === '30') operateur = 'Fixe';
+  let estMobileWhatsApp = false;
+  if (prefix === '77' || prefix === '78') {
+    operateur = 'Orange';
+    estMobileWhatsApp = true;
+  } else if (prefix === '76') {
+    operateur = 'Free (Yas)';
+    estMobileWhatsApp = true;
+  } else if (prefix === '70') {
+    operateur = 'Expresso';
+    estMobileWhatsApp = true;
+  } else if (prefix === '75') {
+    operateur = 'Promobile';
+    estMobileWhatsApp = true;
+  } else if (prefix === '72') {
+    operateur = 'Mobile (72)';
+    estMobileWhatsApp = true;
+  } else if (prefix === '33' || prefix === '30' || prefix === '36') {
+    operateur = 'Fixe';
+    estMobileWhatsApp = false;
+  }
 
   const national = '221' + num;
   const e164 = '+221' + num;
@@ -44,6 +59,7 @@ function normaliserTelephoneSenegal(rawPhone) {
 
   return {
     valide: true,
+    estMobileWhatsApp,
     local: num,
     national,
     e164,
@@ -819,7 +835,10 @@ function nettoyerEtEnrichirLead(lead) {
     rawCat = catDetectee;
   }
 
-  const estInvalide = estLeadEmploiOuInvalide(lead);
+  const normTel = normaliserTelephoneSenegal(lead.telephone);
+  const estNumeroInvalide = !normTel.valide || !normTel.estMobileWhatsApp;
+  const estHorsCible = estLeadEmploiOuInvalide(lead);
+  const estInvalide = estHorsCible || estNumeroInvalide;
   
   // 2. Détection du quartier dans le nom, notes, quartier brut
   const qDetecte = detecterQuartier(`${rawNom} ${lead.notes || ''} ${rawQuartier}`);
@@ -840,13 +859,19 @@ function nettoyerEtEnrichirLead(lead) {
     contact_nom: contactNom,
     quartier: quartierFinal,
     categorie: rawCat,
-    telephone: lead.telephone,
+    telephone: normTel.national || lead.telephone,
     telephone_brut: lead.telephone_brut,
     ville: lead.ville,
     statut: estInvalide ? 'invalide' : lead.statut,
   };
 
   const evalLead = evaluerLeadComplet(leadPourScore);
+
+  let notesFinales = lead.notes;
+  if (estInvalide) {
+    const motifInvalide = estNumeroInvalide ? 'Numéro fixe ou non-WhatsApp' : 'Hors-cible (Emploi/Recrutement)';
+    notesFinales = lead.notes ? `${lead.notes} | ${motifInvalide}` : motifInvalide;
+  }
 
   return {
     nom_boutique: nomPropre,
@@ -861,8 +886,8 @@ function nettoyerEtEnrichirLead(lead) {
     priority_score: evalLead.priority_score,
     next_best_action: evalLead.next_best_action,
     scoring_details: JSON.stringify(evalLead.scoring_details),
-    statut: estInvalide ? 'invalide' : (lead.statut === 'invalide' ? 'nouveau' : (lead.statut || 'nouveau')),
-    notes: estInvalide ? (lead.notes ? `${lead.notes} | Hors-cible (Emploi/Recrutement)` : 'Hors-cible (Emploi/Recrutement)') : lead.notes,
+    statut: estInvalide ? 'invalide' : (lead.statut === 'invalide' ? 'invalide' : (lead.statut || 'nouveau')),
+    notes: notesFinales,
   };
 }
 
@@ -1635,17 +1660,50 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
   let nbEchecs = 0;
   let nbIgnores = 0;
   let index = 0;
+  const numerosTraitesCeRun = new Set();
 
   for (const lead of leads) {
     index++;
 
-    // 1. Vérification stricte de désinscription / Blacklist
-    if (lead.telephone && (await estDesinscrit(lead.telephone))) {
-      await pool.query("UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE id = $1", [lead.id]);
+    // 1. Prospect déjà classé invalide ou sans WhatsApp
+    if (lead.statut === 'invalide') {
+      console.log(`[PROSPECTION INVALIDE BLOQUÉ] Ignoré : lead ${lead.telephone} déjà classé invalide.`);
+      nbIgnores++;
       continue;
     }
 
-    // 2. Protection Anti-Doublon Absolue : ON NE DOIT JAMAIS ENVOYER AU MÊME NUMÉRO PLUSIEURS FOIS
+    // 2. Validation stricte du numéro de téléphone sénégalais (mobiles uniquement)
+    if (!lead.telephone) {
+      nbIgnores++;
+      continue;
+    }
+    const normTel = normaliserTelephoneSenegal(lead.telephone);
+    if (!normTel.valide || !normTel.estMobileWhatsApp) {
+      console.warn(`[PROSPECTION NON-WHATSAPP BLOQUÉ] Ignoré : ${lead.telephone} (${normTel.erreur || normTel.operateur})`);
+      await pool.query(
+        "UPDATE prospection_leads SET statut = 'invalide', notes = COALESCE(notes, '') || ' | Numéro fixe ou non-WhatsApp', updated_at = NOW() WHERE id = $1",
+        [lead.id]
+      ).catch(() => {});
+      nbIgnores++;
+      continue;
+    }
+
+    // 3. Dédoublonnage absolu au sein du même lot de campagne
+    if (numerosTraitesCeRun.has(normTel.national)) {
+      console.log(`[PROSPECTION DOUBLON LOT BLOQUÉ] Ignoré : le numéro ${normTel.national} (${lead.nom_boutique}) a déjà été traité dans cette campagne.`);
+      nbIgnores++;
+      continue;
+    }
+    numerosTraitesCeRun.add(normTel.national);
+
+    // 4. Vérification stricte de désinscription / Blacklist
+    if (await estDesinscrit(normTel.national)) {
+      await pool.query("UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE id = $1", [lead.id]).catch(() => {});
+      nbIgnores++;
+      continue;
+    }
+
+    // 5. Protection Anti-Doublon Absolue : ON NE DOIT JAMAIS ENVOYER AU MÊME NUMÉRO PLUSIEURS FOIS
     if (!simulation) {
       // a) Si le prospect a déjà été contacté ou n'est plus "nouveau"
       if (lead.statut !== 'nouveau' || lead.dernier_contact_at || (lead.nb_contacts && lead.nb_contacts > 0)) {
@@ -1662,21 +1720,17 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       }
 
       // c) Vérification historique directe en base de données sur prospection_messages_log
-      // Garantit à 100% qu'aucun message n'a déjà été envoyé ou délivré à ce numéro
-      if (lead.telephone) {
-        const norm = normalisePhone(lead.telephone);
-        const { rows: dejaEnvoye } = await pool.query(
-          `SELECT id FROM prospection_messages_log 
-           WHERE (destinataire = $1 OR destinataire = $2) 
-             AND statut IN ('envoye', 'livre', 'lu') 
-           LIMIT 1`,
-          [norm, norm.replace(/^221/, '')]
-        );
-        if (dejaEnvoye.length > 0) {
-          console.log(`[PROSPECTION DOUBLON BLOQUÉ] Ignoré : le numéro ${lead.telephone} a déjà reçu un message par le passé.`);
-          nbIgnores++;
-          continue;
-        }
+      const { rows: dejaEnvoye } = await pool.query(
+        `SELECT id FROM prospection_messages_log 
+         WHERE (destinataire = $1 OR destinataire = $2) 
+           AND statut IN ('envoye', 'livre', 'lu') 
+         LIMIT 1`,
+        [normTel.national, normTel.local]
+      );
+      if (dejaEnvoye.length > 0) {
+        console.log(`[PROSPECTION DOUBLON BLOQUÉ] Ignoré : le numéro ${lead.telephone} a déjà reçu un message par le passé.`);
+        nbIgnores++;
+        continue;
       }
     }
 
@@ -1793,13 +1847,15 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
       console.error('[PROSPECTION LOG ERR]:', dbErr.message);
     }
 
-    // Cadence Anti-Ban intelligente (Jitter aléatoire entre 2.5s et 4.5s si envoi réel)
+    // Cadence Anti-Ban intelligente (Pacing humain & respectueux des plafonds Meta)
     if (!simulation && canal === 'whatsapp') {
-      // Pause de respiration de 12s tous les 25 envois
-      if (index > 0 && index % 25 === 0) {
-        await new Promise((r) => setTimeout(r, 12000));
+      // Pause de respiration de 40s tous les 10 envois réels pour éviter l'alerte Meta 131049
+      if (index > 0 && index % 10 === 0) {
+        console.log(`[PROSPECTION PACING] Pause de respiration anti-ban de 40s après ${index} messages traités...`);
+        await new Promise((r) => setTimeout(r, 40000));
       } else {
-        const jitterMs = Math.floor(Math.random() * (4500 - 2500 + 1)) + 2500;
+        // Jitter humain aléatoire entre 10s et 18s entre deux messages
+        const jitterMs = Math.floor(Math.random() * (18000 - 10000 + 1)) + 10000;
         await new Promise((r) => setTimeout(r, jitterMs));
       }
     }

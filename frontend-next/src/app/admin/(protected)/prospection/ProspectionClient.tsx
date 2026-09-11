@@ -2415,11 +2415,16 @@ Boutique Parcelles, 70 111 22 33`}
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{
                           fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 6,
-                          background: log.statut === 'envoye' ? '#DCFCE7' : log.statut === 'simule' ? '#EFF6FF' : '#FEE2E2',
-                          color: log.statut === 'envoye' ? '#166534' : log.statut === 'simule' ? '#1E40AF' : '#991B1B',
+                          background: log.statut === 'envoye' ? '#DCFCE7' : log.statut === 'livre' ? '#D1FAE5' : log.statut === 'lu' ? '#DBEAFE' : log.statut === 'simule' ? '#EFF6FF' : '#FEE2E2',
+                          color: log.statut === 'envoye' ? '#166534' : log.statut === 'livre' ? '#065F46' : log.statut === 'lu' ? '#1E40AF' : log.statut === 'simule' ? '#1E40AF' : '#991B1B',
                         }}>
                           {log.statut}
                         </span>
+                        {log.erreur && (
+                          <div style={{ fontSize: 11, color: '#DC2626', marginTop: 4, maxWidth: 220, lineHeight: 1.25, fontWeight: 500 }}>
+                            {log.erreur}
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {log.message_envoye}
