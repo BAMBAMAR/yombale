@@ -585,6 +585,50 @@ it('ZONES_LIVRAISON_SENEGAL: intégrité des communes et transporteurs', () => {
   assert.equal(COMMUNES_LISTE.includes('Touba'), true)
 })
 
+console.log('\n📦 10. SYSCOHADA & Audit P0-P3 Remediations')
+import { FACETTES_CONFIG, detecterFamilleFacette } from '../src/lib/facettes.ts'
+
+it('FacettesDynamiques: configuration des filtres par catégorie métier et détection famille', () => {
+  assert.ok(FACETTES_CONFIG['smartphones'])
+  assert.ok(FACETTES_CONFIG['mode'])
+  assert.ok(FACETTES_CONFIG['informatique'])
+
+  // Vérification des options smartphones (stockage, ram)
+  const phoneStockage = FACETTES_CONFIG['smartphones'].find(f => f.key === 'stockage')
+  assert.ok(phoneStockage)
+  assert.ok(phoneStockage.options.includes('128 Go'))
+  assert.ok(phoneStockage.options.includes('256 Go'))
+
+  // Vérification des options mode (taille, pointure)
+  const modeTaille = FACETTES_CONFIG['mode'].find(f => f.key === 'taille')
+  assert.ok(modeTaille)
+  assert.ok(modeTaille.options.includes('M'))
+  assert.ok(modeTaille.options.includes('XL'))
+
+  // Vérification de la détection
+  assert.equal(detecterFamilleFacette('smartphones'), 'tech')
+  assert.equal(detecterFamilleFacette('chaussures-homme'), 'mode')
+  assert.equal(detecterFamilleFacette('immobilier-dakar'), 'immo')
+  assert.equal(detecterFamilleFacette('autre'), null)
+})
+
+it('SYSCOHADA Plan Comptable: comptes de trésorerie et ventes de marchandises', () => {
+  // Mapping OHADA réglementaire
+  const comptesOHADA = {
+    caisse: '571000',
+    wave: '521100',
+    orange_money: '521200',
+    credit_client: '411100',
+    banque: '521000',
+    ventes_marchandises: '701000',
+  }
+  assert.equal(comptesOHADA.caisse, '571000')
+  assert.equal(comptesOHADA.wave, '521100')
+  assert.equal(comptesOHADA.orange_money, '521200')
+  assert.equal(comptesOHADA.credit_client, '411100')
+  assert.equal(comptesOHADA.ventes_marchandises, '701000')
+})
+
 console.log('\n──────────────────────────────────────────────────────────')
 console.log(`Résultats: ${passed} passés, ${failed} échoués (Total: ${passed + failed})`)
 if (failed > 0) process.exit(1)

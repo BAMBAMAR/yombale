@@ -8,7 +8,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { CATEGORIES } from '@/lib/categories'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident, creerBoutiqueDocument } from '../actions'
-import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid, BarChart3, Sun, Moon, Columns3, ChevronDown } from 'lucide-react'
+import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid, BarChart3, Sun, Moon, Columns3, ChevronDown, LogOut } from 'lucide-react'
 import {
   sauvegarderProduitsLocaux,
   obtenirProduitsLocaux,
@@ -30,6 +30,7 @@ import PosScannerModal from './components/PosScannerModal'
 import PosHistoriqueModal from './components/PosHistoriqueModal'
 import PosVoiceInput from './components/PosVoiceInput'
 import { usePosShortcuts } from './hooks/usePosShortcuts'
+import PosChangerCaissierModal, { CaissierItem } from './components/PosChangerCaissierModal'
 
 interface ProduitCaisse {
   id: string
@@ -215,8 +216,10 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [session, setSession] = useState<SessionCaisse | null>(null)
   const [caissiersList, setCaissiersList] = useState<any[]>([])
   const [caissierSelectionneId, setCaissierSelectionneId] = useState<string>('')
+  const [profilChoisiPourPin, setProfilChoisiPourPin] = useState<any | null>(null)
   const [conflitSessionMessage, setConflitSessionMessage] = useState<string | null>(null)
   const [menuOutilsOuvert, setMenuOutilsOuvert] = useState<boolean>(false)
+  const [modalChangerCaissier, setModalChangerCaissier] = useState<boolean>(false)
   const [modalSessionOuverture, setModalSessionOuverture] = useState<boolean>(false)
   const [modalClotureZ, setModalClotureZ] = useState<boolean>(false)
   const [modalBilanSession, setModalBilanSession] = useState<boolean>(false)
@@ -931,8 +934,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               const actifs = data.caissiers.filter((c: any) => c.actif !== false)
               if (actifs.length > 0) {
                 setCaissiersList(actifs)
-                setCaissierSelectionneId(actifs[0].id)
-                setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`)
+                const defCaissier = actifs.find((c: any) => c.role === 'caissier') || actifs[0]
+                setCaissierSelectionneId(defCaissier.id)
+                setCaissierNom(`${defCaissier.prenom || ''} ${defCaissier.nom || ''}`.trim() || defCaissier.nom)
+                const isSuper = defCaissier.role === 'superviseur' || defCaissier.role === 'admin'
+                setRoleActif(isSuper ? 'superviseur' : 'caissier')
                 if (verifierSiConfigObligatoire(actifs, bqObj.id)) {
                   setModalConfigObligatoire(true)
                 }
@@ -1086,8 +1092,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           const actifs = data.caissiers.filter((c: any) => c.actif !== false);
           if (actifs.length > 0) {
             setCaissiersList(actifs);
-            setCaissierSelectionneId(actifs[0].id);
-            setCaissierNom(`${actifs[0].prenom} ${actifs[0].nom}`);
+            // Sélection par défaut : privilégier le premier caissier standard (role 'caissier')
+            // afin d'éviter d'attribuer le rôle superviseur par défaut !
+            setCaissierSelectionneId(prev => {
+              if (prev && actifs.some(c => c.id === prev)) return prev;
+              const defCaissier = actifs.find(c => c.role === 'caissier') || actifs[0];
+              return defCaissier.id;
+            });
+            setCaissierNom(prev => {
+              if (prev && prev !== 'Caissier 1 (Bamba)') return prev;
+              const defCaissier = actifs.find(c => c.role === 'caissier') || actifs[0];
+              return `${defCaissier.prenom || ''} ${defCaissier.nom || ''}`.trim() || defCaissier.nom;
+            });
             if (verifierSiConfigObligatoire(actifs, bId)) {
               setModalConfigObligatoire(true);
             }
@@ -1639,41 +1655,61 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     const codeSaisi = codeToTest !== undefined ? codeToTest : codePinSaisi
     if (!codeSaisi || codeSaisi.length < 4) return
 
-    // 1. Trouver le caissier ou superviseur dont le code PIN correspond exactement
-    const caissierParPin = caissiersList.find(c => c.code_pin && c.code_pin === codeSaisi);
     const caissierSelectionne = caissiersList.find(c => c.id === caissierSelectionneId);
-    
-    // Si la liste contient des caissiers configurés, validation stricte sur leur PIN
     let isValide = false;
-    let caissier = null;
+    let caissier: any = null;
 
     if (caissiersList.length > 0) {
-      if (caissierParPin) {
-        caissier = caissierParPin;
-        isValide = true;
-      } else if (caissierSelectionne && caissierSelectionne.code_pin && caissierSelectionne.code_pin === codeSaisi) {
+      // 1. PRIORITÉ ABSOLUE : Si l'utilisateur a sélectionné un profil caissier à l'écran
+      if (caissierSelectionne && caissierSelectionne.code_pin && caissierSelectionne.code_pin === codeSaisi) {
         caissier = caissierSelectionne;
         isValide = true;
+      } else {
+        // 2. Recherche parmi tous les caissiers actifs ayant ce code PIN
+        const matches = caissiersList.filter(c => c.actif !== false && c.code_pin && c.code_pin === codeSaisi);
+        if (matches.length === 1) {
+          caissier = matches[0];
+          isValide = true;
+        } else if (matches.length > 1) {
+          // Si plusieurs personnes partagent le même PIN (ex: caissier et superviseur avec le même code) :
+          // Si l'un correspond au profil sélectionné, on le respecte
+          const matchSel = matches.find(c => c.id === caissierSelectionneId);
+          if (matchSel) {
+            caissier = matchSel;
+          } else {
+            // Principe de moindre privilège : toujours retenir le caissier standard plutôt que superviseur
+            const matchSimple = matches.find(c => c.role !== 'superviseur' && c.role !== 'admin');
+            caissier = matchSimple || matches[0];
+          }
+          isValide = true;
+        }
       }
     } else {
       // Fallback local uniquement si la liste des caissiers n'a pas encore été synchronisée
-      isValide = (codeSaisi === pinCaissier || codeSaisi === pinSuperviseur);
+      if (codeSaisi === pinCaissier) {
+        isValide = true;
+        caissier = { role: 'caissier', prenom: 'Caissier', nom: 'Principal' };
+      } else if (codeSaisi === pinSuperviseur) {
+        isValide = true;
+        caissier = { role: 'superviseur', prenom: 'Gérant', nom: 'Superviseur' };
+      }
     }
       
     if (isValide) {
       if (caissier) setCaissierSelectionneId(caissier.id);
+      
       const isSuper = caissier 
         ? (caissier.role === 'superviseur' || caissier.role === 'admin')
-        : (codeSaisi === pinSuperviseur);
+        : (codeSaisi === pinSuperviseur && pinCaissier !== pinSuperviseur);
         
-      const realRole = isSuper ? 'superviseur' : 'caissier'
-      setRoleActif(realRole)
+      const realRole: 'caissier' | 'superviseur' = isSuper ? 'superviseur' : 'caissier';
+      setRoleActif(realRole);
       
       const realNom = caissier 
-        ? `${caissier.prenom} ${caissier.nom}`
-        : (codeSaisi === pinSuperviseur ? 'Gérant / Superviseur' : 'Caissier Principal');
+        ? `${caissier.prenom || ''} ${caissier.nom || ''}`.trim() || caissier.nom || 'Caissier'
+        : (isSuper ? 'Gérant / Superviseur' : 'Caissier Principal');
         
-      setCaissierNom(realNom)
+      setCaissierNom(realNom);
 
       // Conserver la session déverrouillée dans le LocalStorage (persistance au rafraîchissement F5)
       if (typeof window !== 'undefined' && boutiqueActiveId) {
@@ -1681,9 +1717,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           unlocked: true,
           roleActif: realRole,
           caissierNom: realNom,
-          caissierId: caissierSelectionneId,
+          caissierId: caissier ? caissier.id : caissierSelectionneId,
           timestamp: Date.now()
-        }))
+        }));
       }
       
       // GESTION DU CONFLIT DE SESSION
@@ -1718,13 +1754,76 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     }
   }, [codePinSaisi, verrouille])
 
+  function handleChangerCaissier(caissier: CaissierItem, pin: string) {
+    if (!pin || pin.length < 4) {
+      return { ok: false, error: 'Code PIN requis (4 à 6 chiffres)' }
+    }
+    const isSuperRole = caissier.role === 'superviseur' || caissier.role === 'admin'
+    let isValide = false
+    if (caissier.code_pin) {
+      isValide = caissier.code_pin === pin
+    } else {
+      isValide = isSuperRole ? (pin === pinSuperviseur) : (pin === pinCaissier || pin === pinSuperviseur)
+    }
+
+    if (isValide) {
+      const realNom = `${caissier.prenom || ''} ${caissier.nom || ''}`.trim() || caissier.nom || 'Caissier'
+      const realRole: 'caissier' | 'superviseur' = isSuperRole ? 'superviseur' : 'caissier'
+
+      setCaissierSelectionneId(caissier.id)
+      setCaissierNom(realNom)
+      setRoleActif(realRole)
+
+      if (typeof window !== 'undefined' && boutiqueActiveId) {
+        localStorage.setItem(`nopalou_pos_unlocked_${boutiqueActiveId}`, JSON.stringify({
+          unlocked: true,
+          roleActif: realRole,
+          caissierNom: realNom,
+          caissierId: caissier.id,
+          timestamp: Date.now()
+        }))
+      }
+
+      if (session && session.caissierNom !== realNom && !isSuperRole) {
+        setConflitSessionMessage(`Une session de caisse est active sous ${session.caissierNom}. Clôturez-la avant d'encaisser sous votre nom.`)
+      } else {
+        setConflitSessionMessage(null)
+      }
+
+      showToast(`✅ Connecté : ${realNom} (${isSuperRole ? '👑 Superviseur' : '👤 Caissier'})`, 'success')
+      return { ok: true }
+    } else {
+      return { ok: false, error: 'Code PIN incorrect pour ce caissier' }
+    }
+  }
+
   function verrouillerCaisseManuellement() {
     if (typeof window !== 'undefined' && boutiqueActiveId) {
       localStorage.removeItem(`nopalou_pos_unlocked_${boutiqueActiveId}`)
     }
     setVerrouille(true)
+    setProfilChoisiPourPin(null)
     setCodePinSaisi('')
     setPinError(null)
+  }
+
+  async function seDeconnecterCompte() {
+    if (typeof window !== 'undefined') {
+      const ok = window.confirm('Voulez-vous vous déconnecter de votre compte Nopalou et quitter la caisse ?\n(Votre session sera fermée et vous serez redirigé vers la page de connexion)')
+      if (!ok) return
+
+      try {
+        await fetch('/api/auth/deconnexion', { method: 'POST' }).catch(() => {})
+      } catch (e) {}
+
+      if (boutiqueActiveId) {
+        localStorage.removeItem(`nopalou_pos_unlocked_${boutiqueActiveId}`)
+      }
+      localStorage.removeItem('nopalou_pos_active_boutique_id')
+      localStorage.removeItem('nopalou_pos_user_boutiques')
+      
+      window.location.href = '/connexion'
+    }
   }
 
   // ── Helper pour générer un label client unique et séquentiel ──────────────────
@@ -2925,103 +3024,374 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     )
   }
 
-  // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ ─────────────────────────────────────
+  // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ & SÉLECTION CAISSIER ─────────────────
   if (verrouille) {
     const bqName = boutiques.find(b => b.id === boutiqueActiveId)?.nom || (boutiques[0]?.nom) || ''
-    const caissierMatch = caissiersList.find(c => c.code_pin && c.code_pin === codePinSaisi);
+    const caissiersActifs = caissiersList.filter((c: any) => c.actif !== false)
+
+    // S'il y a plus d'un caissier et que l'utilisateur n'a pas encore cliqué sur un profil :
+    const vueChoixCaissier = caissiersActifs.length > 1 && !profilChoisiPourPin
+    const cibleCaissier = profilChoisiPourPin || (caissiersActifs.length === 1 ? caissiersActifs[0] : (caissierSelectionneId ? caissiersActifs.find(c => c.id === caissierSelectionneId) : caissiersActifs[0]))
 
     return (
-      <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', position: 'relative' }}>
-        <div style={{ background: 'var(--pos-surface)', border: '2px solid var(--pos-primary)', borderRadius: 24, padding: 32, width: '100%', maxWidth: 400, textAlign: 'center', boxShadow: 'var(--pos-shadow-lg)' }}>
+      <div style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', position: 'relative' }}>
+        <div style={{
+          background: 'var(--pos-surface, #ffffff)',
+          border: '2px solid var(--pos-primary, #ea580c)',
+          borderRadius: 24,
+          padding: '28px 24px',
+          width: '100%',
+          maxWidth: vueChoixCaissier ? 480 : 400,
+          textAlign: 'center',
+          boxShadow: 'var(--pos-shadow-lg, 0 20px 25px -5px rgba(0, 0, 0, 0.1))',
+          transition: 'max-width 0.2s ease',
+          boxSizing: 'border-box'
+        }}>
+          {/* Logo Boutique */}
           {activeBoutiqueObj?.logo ? (
             <img
               src={activeBoutiqueObj.logo}
               alt={bqName}
-              style={{ width: 64, height: 64, borderRadius: 16, objectFit: 'cover', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'block' }}
+              style={{ width: 56, height: 56, borderRadius: 16, objectFit: 'cover', margin: '0 auto 10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'block' }}
             />
           ) : (
-            <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: 26, fontWeight: 900, boxShadow: '0 4px 12px rgba(199,91,0,0.3)' }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 24, fontWeight: 900, boxShadow: '0 4px 12px rgba(199,91,0,0.3)' }}>
               {bqName ? bqName.charAt(0).toUpperCase() : '🏪'}
             </div>
           )}
-          <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 900, color: 'var(--pos-navy)' }}>
+          <h2 style={{ margin: '0 0 4px', fontSize: 19, fontWeight: 900, color: 'var(--pos-navy, #0f172a)' }}>
             Caisse POS {bqName ? `· ${bqName}` : 'Nopalou'}
           </h2>
-          <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--pos-text2)' }}>
-            Tapez votre code PIN secret pour déverrouiller la caisse.
-          </p>
 
-          {/* Pastilles Visuelles de Chiffres PIN (Feedback Tactile) */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
-            {[0, 1, 2, 3].map(i => {
-              const isFilled = codePinSaisi.length > i;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    width: 16, height: 16, borderRadius: '50%',
-                    background: isFilled ? 'var(--pos-primary, #ea580c)' : 'var(--pos-surface2, #f1f5f9)',
-                    border: isFilled ? '2px solid var(--pos-primary, #ea580c)' : '2px solid var(--pos-border, #cbd5e1)',
-                    transform: isFilled ? 'scale(1.15)' : 'scale(1)',
-                    transition: 'all 0.15s ease'
-                  }}
-                />
-              );
-            })}
-          </div>
-
-          {caissierMatch && (
-            <div style={{ marginBottom: 12, padding: '6px 12px', borderRadius: 8, background: '#dcfce7', color: '#166534', fontSize: 12.5, fontWeight: 800 }}>
-              👤 Identifié : {caissierMatch.prenom} {caissierMatch.nom} ({caissierMatch.role === 'superviseur' ? '👑 Superviseur' : 'Caissier'})
+          {/* Bannière Mode */}
+          {initialToken ? (
+            <div style={{
+              margin: '0 0 14px',
+              padding: '7px 12px',
+              borderRadius: 10,
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              fontSize: 12,
+              color: '#1e40af',
+              lineHeight: 1.35,
+              textAlign: 'center'
+            }}>
+              🛡️ <strong>Terminal Dédié Magasin (Mode Autonome)</strong><br />
+              <span style={{ fontSize: 11, color: '#3b82f6' }}>
+                Aucun compte connecté sur cet appareil. Vos paramètres et finances sont 100% isolés et protégés.
+              </span>
+            </div>
+          ) : (
+            <div style={{
+              margin: '0 0 14px',
+              padding: '7px 12px',
+              borderRadius: 10,
+              background: '#fff7ed',
+              border: '1px solid #fed7aa',
+              fontSize: 12,
+              color: '#9a3412',
+              lineHeight: 1.35,
+              textAlign: 'center'
+            }}>
+              ℹ️ <strong>Session Gérant Connectée</strong><br />
+              <span style={{ fontSize: 11, color: '#c2410c' }}>
+                Pour une tablette partagée avec vos caissiers, utilisez le <strong>Lien Terminal Dédié</strong> sans session gérant.
+              </span>
             </div>
           )}
 
-          {pinError && <p style={{ margin: '0 0 12px', color: 'var(--pos-danger, #dc2626)', fontSize: 13, fontWeight: 700 }}>{pinError}</p>}
+          {/* VUE 1 : GRILLE DE SÉLECTION « QUI ENCAISSE ? » (Quand > 1 caissier) */}
+          {vueChoixCaissier ? (
+            <div>
+              <h3 style={{ margin: '12px 0 4px', fontSize: 17, fontWeight: 900, color: 'var(--pos-navy, #0f172a)' }}>
+                👥 Qui encaisse aujourd&apos;hui ?
+              </h3>
+              <p style={{ margin: '0 0 16px', fontSize: 12.5, color: 'var(--pos-text2, #64748b)' }}>
+                Sélectionnez votre profil pour accéder à la caisse :
+              </p>
 
-          {/* Clavier Numérique PIN Pad Tactile */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
-            {['1','2','3','4','5','6','7','8','9','C','0','⌫'].map(val => (
+              {/* Grille Tactile des Profils Caissiers */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 12,
+                marginBottom: 16,
+                width: '100%',
+                boxSizing: 'border-box'
+              }}>
+                {caissiersActifs.map((c: any) => {
+                  const isSuper = c.role === 'superviseur' || c.role === 'admin'
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setCaissierSelectionneId(c.id)
+                        setProfilChoisiPourPin(c)
+                        setCodePinSaisi('')
+                        setPinError(null)
+                      }}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: '16px 10px',
+                        borderRadius: 16,
+                        border: isSuper ? '2px solid #fed7aa' : '2px solid #bfdbfe',
+                        background: isSuper ? '#fffaf5' : '#f8faff',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                        transition: 'all 0.15s ease',
+                        boxSizing: 'border-box',
+                        width: '100%'
+                      }}
+                    >
+                      {/* Avatar rond */}
+                      <div style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: '50%',
+                        background: isSuper
+                          ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)'
+                          : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 22,
+                        fontWeight: 900,
+                        marginBottom: 8,
+                        boxShadow: isSuper ? '0 4px 10px rgba(234, 88, 12, 0.25)' : '0 4px 10px rgba(37, 99, 235, 0.25)',
+                      }}>
+                        {isSuper ? '👑' : (c.prenom ? c.prenom.charAt(0).toUpperCase() : (c.nom ? c.nom.charAt(0).toUpperCase() : '👤'))}
+                      </div>
+
+                      {/* Nom du caissier */}
+                      <span style={{
+                        fontSize: 14,
+                        fontWeight: 800,
+                        color: 'var(--pos-navy, #0f172a)',
+                        marginBottom: 4,
+                        textAlign: 'center',
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {c.prenom ? `${c.prenom} ${c.nom || ''}`.trim() : c.nom}
+                      </span>
+
+                      {/* Badge rôle */}
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 10,
+                        background: isSuper ? '#fff7ed' : '#eff6ff',
+                        color: isSuper ? '#c2410c' : '#1d4ed8',
+                        border: isSuper ? '1px solid #fed7aa' : '1px solid #bfdbfe'
+                      }}>
+                        {isSuper ? '👑 Superviseur' : '👤 Caissier'}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Bouton d'accès gestion d'équipe pour le Gérant */}
               <button
-                key={val}
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (val === 'C') {
-                    setCodePinSaisi('')
-                    setPinError(null)
-                  } else if (val === '⌫') {
-                    setCodePinSaisi(prev => prev.slice(0, -1))
-                    setPinError(null)
-                  } else if (codePinSaisi.length < 6) {
-                    const nextPin = codePinSaisi + val
-                    setCodePinSaisi(nextPin)
-                    setPinError(null)
+                onClick={ouvrirConfigPin}
+                style={{
+                  marginTop: 4, background: 'none', border: 'none', color: 'var(--pos-primary, #ea580c)',
+                  fontSize: 12.5, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '6px 12px', borderRadius: 8
+                }}
+              >
+                <span>⚙️</span>
+                <span>Gérant : Gérer l&apos;équipe & modifier les codes PIN</span>
+              </button>
+            </div>
+          ) : (
+            /* VUE 2 : SAISIE DU CODE PIN POUR LE CAISSIER CHOISI */
+            <div>
+              {/* Bouton retour choix profils si plusieurs caissiers */}
+              {caissiersActifs.length > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfilChoisiPourPin(null)
+                      setCodePinSaisi('')
+                      setPinError(null)
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      background: '#f1f5f9',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: 8,
+                      padding: '5px 10px',
+                      color: '#334155',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <ArrowLeft size={13} />
+                    <span>Choisir un autre profil</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Profil Actif en cours de déverrouillage */}
+              {cibleCaissier && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '8px 12px',
+                  borderRadius: 14,
+                  background: cibleCaissier.role === 'superviseur' ? '#fff7ed' : '#eff6ff',
+                  border: cibleCaissier.role === 'superviseur' ? '1.5px solid #fed7aa' : '1.5px solid #bfdbfe',
+                  marginBottom: 14,
+                  textAlign: 'left'
+                }}>
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: cibleCaissier.role === 'superviseur'
+                      ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)'
+                      : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 16,
+                    fontWeight: 900,
+                    flexShrink: 0
+                  }}>
+                    {cibleCaissier.role === 'superviseur' ? '👑' : (cibleCaissier.prenom ? cibleCaissier.prenom.charAt(0).toUpperCase() : '👤')}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--pos-navy, #0f172a)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {cibleCaissier.prenom ? `${cibleCaissier.prenom} ${cibleCaissier.nom || ''}`.trim() : cibleCaissier.nom}
+                    </div>
+                    <div style={{ fontSize: 11, color: cibleCaissier.role === 'superviseur' ? '#c2410c' : '#1d4ed8', fontWeight: 700 }}>
+                      {cibleCaissier.role === 'superviseur' ? '👑 Gérant / Superviseur' : '👤 Caissier'} · Tapez votre code PIN
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pastilles Visuelles de Chiffres PIN (Feedback Tactile) */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 14 }}>
+                {[0, 1, 2, 3].map(i => {
+                  const isFilled = codePinSaisi.length > i;
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        width: 16, height: 16, borderRadius: '50%',
+                        background: isFilled ? 'var(--pos-primary, #ea580c)' : 'var(--pos-surface2, #f1f5f9)',
+                        border: isFilled ? '2px solid var(--pos-primary, #ea580c)' : '2px solid var(--pos-border, #cbd5e1)',
+                        transform: isFilled ? 'scale(1.15)' : 'scale(1)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    />
+                  );
+                })}
+              </div>
+
+              {pinError && <p style={{ margin: '0 0 12px', color: 'var(--pos-danger, #dc2626)', fontSize: 13, fontWeight: 700 }}>{pinError}</p>}
+
+              {/* Clavier Numérique PIN Pad Tactile */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
+                {['1','2','3','4','5','6','7','8','9','C','0','⌫'].map(val => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (val === 'C') {
+                        setCodePinSaisi('')
+                        setPinError(null)
+                      } else if (val === '⌫') {
+                        setCodePinSaisi(prev => prev.slice(0, -1))
+                        setPinError(null)
+                      } else if (codePinSaisi.length < 6) {
+                        const nextPin = codePinSaisi + val
+                        setCodePinSaisi(nextPin)
+                        setPinError(null)
+                      }
+                    }}
+                    style={{
+                      padding: '16px', background: 'var(--pos-surface2, #f8fafc)', border: '1.5px solid var(--pos-border, #cbd5e1)', borderRadius: 10,
+                      color: 'var(--pos-navy, #0f172a)', fontWeight: 800, fontSize: 18, cursor: 'pointer', userSelect: 'none',
+                      transition: 'background 0.1s',
+                    }}
+                  >
+                    {val}
+                  </button>
+                ))}
+              </div>
+
+              {/* Bouton d'accès gestion d'équipe pour le Gérant */}
+              <button
+                type="button"
+                onClick={ouvrirConfigPin}
+                style={{
+                  marginTop: 6, background: 'none', border: 'none', color: 'var(--pos-primary, #ea580c)',
+                  fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '4px 8px', borderRadius: 8
+                }}
+              >
+                <span>⚙️</span>
+                <span>Gérant : Gérer l&apos;équipe & codes PIN</span>
+              </button>
+            </div>
+          )}
+
+          {/* Actions de sortie et lien terminal (communes au bas de la carte) */}
+          <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid var(--pos-border, #e2e8f0)', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+            {!initialToken && (
+              <button
+                type="button"
+                onClick={() => {
+                  const activeB = boutiques.find(b => b.id === boutiqueActiveId) || boutiques[0];
+                  const tok = activeB?.caisse_token || boutiqueActiveId;
+                  if (tok && typeof window !== 'undefined') {
+                    const terminalUrl = `${window.location.origin}/boutique/caisse?token=${tok}`;
+                    navigator.clipboard.writeText(terminalUrl);
+                    alert(`✅ Lien Terminal Dédié copié !\n\nOuvrez ce lien sur la tablette ou l'ordinateur de vos caissiers pour qu'ils travaillent sans avoir accès à votre compte :\n${terminalUrl}`);
                   }
                 }}
                 style={{
-                  padding: '16px', background: 'var(--pos-surface2, #f8fafc)', border: '1.5px solid var(--pos-border, #cbd5e1)', borderRadius: 10,
-                  color: 'var(--pos-navy, #0f172a)', fontWeight: 800, fontSize: 18, cursor: 'pointer', userSelect: 'none',
-                  transition: 'background 0.1s',
+                  background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1d4ed8',
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '6px 12px', borderRadius: 8, transition: 'all 0.15s ease'
                 }}
               >
-                {val}
+                <span>📱</span>
+                <span>Copier le Lien Terminal Caissier (Pour tablette)</span>
               </button>
-            ))}
-          </div>
+            )}
 
-          {/* Bouton d'accès gestion d'équipe pour le Gérant */}
-          <button
-            type="button"
-            onClick={ouvrirConfigPin}
-            style={{
-              marginTop: 10, background: 'none', border: 'none', color: 'var(--pos-primary, #ea580c)',
-              fontSize: 12.5, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px', borderRadius: 8
-            }}
-          >
-            <span>⚙️</span>
-            <span>Gérant : Gérer l&apos;équipe & modifier les codes PIN</span>
-          </button>
+            <button
+              type="button"
+              onClick={seDeconnecterCompte}
+              style={{
+                background: 'none', border: 'none', color: '#dc2626',
+                fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '4px 10px', borderRadius: 6
+              }}
+            >
+              <LogOut size={13} />
+              <span>Déconnexion du compte Nopalou (Quitter)</span>
+            </button>
+          </div>
         </div>
 
         {/* Injection des modales actives (Configuration Obligatoire, Équipe & Superviseur) */}
@@ -3493,21 +3863,21 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
         {/* Côté Droit : Caissier Pro + Thème + Layout (Desktop) + Outils + Session */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-          {/* Espace Caissier Pro (Tap pour verrouiller / changer) */}
+          {/* Espace Caissier Pro (Tap pour changer de caissier ou verrouiller) */}
           <button
             type="button"
-            onClick={verrouillerCaisseManuellement}
-            title={`${t('caisse.lockPos') || 'Verrouiller le terminal'} (${caissierNom})`}
+            onClick={() => setModalChangerCaissier(true)}
+            title={`Caissier actif : ${caissierNom} — Cliquer pour changer de caissier ou verrouiller`}
             style={{
               height: 34,
-              padding: '0 8px',
+              padding: '0 10px',
               borderRadius: 20,
               background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg)',
               border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border)',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 5,
+              gap: 6,
               flexShrink: 0,
               transition: 'all 0.15s ease',
             }}
@@ -3519,13 +3889,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               fontSize: 11,
               fontWeight: 800,
               color: 'var(--pos-text)',
-              maxWidth: 65,
+              maxWidth: 75,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}>
               {caissierNom?.split(' ')[0] || caissierNom}
             </span>
+            <ChevronDown size={12} color={isDarkMode ? '#94a3b8' : '#64748b'} />
             <span
               style={{
                 width: 6.5,
@@ -3642,6 +4013,21 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     </span>
                   </div>
 
+                  {/* Changer de Caissier */}
+                  <button
+                    onClick={() => { setModalChangerCaissier(true); setMenuOutilsOuvert(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%',
+                      background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg, #fff7ed)',
+                      border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border, #fed7aa)',
+                      color: 'var(--pos-primary, #ea580c)',
+                      fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4
+                    }}
+                  >
+                    <User size={14} />
+                    <span>👤 Changer de caissier</span>
+                  </button>
+
                   {/* Accès Clôture Z / Ouverture Session intégré dans Outils */}
                   {session ? (
                     <button
@@ -3717,6 +4103,61 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   >
                     <Book size={14} /> {t('caisse.debts')} ({clientsCredits.length})
                   </button>
+
+                  <div style={{ borderTop: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border, #f1f5f9)', margin: '4px 0' }} />
+
+                  {roleActif === 'superviseur' && !initialToken && (
+                    <button
+                      onClick={() => {
+                        setMenuOutilsOuvert(false);
+                        const activeB = boutiques.find(b => b.id === boutiqueActiveId) || boutiques[0];
+                        const tok = activeB?.caisse_token || boutiqueActiveId;
+                        if (tok && typeof window !== 'undefined') {
+                          const terminalUrl = `${window.location.origin}/boutique/caisse?token=${tok}`;
+                          navigator.clipboard.writeText(terminalUrl);
+                          alert(`✅ Lien Terminal Dédié copié !\n\nOuvrez ce lien sur la tablette ou l'ordinateur de vos caissiers pour qu'ils travaillent sans avoir accès à votre compte :\n${terminalUrl}`);
+                        }
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%',
+                        background: 'none', border: 'none',
+                        color: isDarkMode ? '#60a5fa' : '#2563eb',
+                        fontSize: 12, fontWeight: 700, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 2
+                      }}
+                    >
+                      <span>📱</span>
+                      <span>Copier lien Terminal (Tablette)</span>
+                    </button>
+                  )}
+
+                  {/* Actions de Session POS : Fermer session et Déconnexion compte */}
+                  <button
+                    onClick={() => { setMenuOutilsOuvert(false); verrouillerCaisseManuellement(); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%',
+                      background: 'none', border: 'none',
+                      color: isDarkMode ? '#f97316' : '#ea580c',
+                      fontSize: 12.5, fontWeight: 700, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 2
+                    }}
+                  >
+                    <Lock size={14} />
+                    <span>🔒 Fermer session caissier (Qui encaisse ?)</span>
+                  </button>
+
+                  {/* Déconnexion du compte dans le menu Outils */}
+                  <button
+                    onClick={() => { setMenuOutilsOuvert(false); seDeconnecterCompte(); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%',
+                      background: isDarkMode ? 'rgba(220, 38, 38, 0.15)' : '#FEF2F2',
+                      border: isDarkMode ? '1px solid rgba(220, 38, 38, 0.3)' : '1px solid #FECACA',
+                      color: isDarkMode ? '#F87171' : '#DC2626',
+                      fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8
+                    }}
+                  >
+                    <LogOut size={14} />
+                    <span>🚪 Déconnexion du compte Nopalou (Quitter)</span>
+                  </button>
                 </div>
               </>
             )}
@@ -3772,6 +4213,60 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               <span className="caisse-label-desktop">{t('caisse.session')}</span>
             </button>
           )}
+
+          {/* Bouton Fermer Session Caissier / Verrouiller */}
+          <button
+            type="button"
+            onClick={verrouillerCaisseManuellement}
+            title={`Fermer la session de ${caissierNom} et verrouiller (Retour à l'écran Qui encaisse)`}
+            style={{
+              height: 34,
+              padding: '0 9px',
+              borderRadius: 8,
+              border: isDarkMode ? '1px solid #334155' : '1.5px solid var(--pos-border)',
+              background: isDarkMode ? '#1e293b' : 'var(--pos-surface)',
+              color: 'var(--pos-text)',
+              fontWeight: 800,
+              fontSize: 11.5,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              cursor: 'pointer',
+              flexShrink: 0,
+              boxShadow: 'var(--pos-shadow)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Lock size={13} color="#ea580c" />
+            <span className="caisse-label-desktop">Fermer session</span>
+          </button>
+
+          {/* Bouton Déconnexion du Compte Nopalou */}
+          <button
+            type="button"
+            onClick={seDeconnecterCompte}
+            title="Se déconnecter du compte Nopalou (Fermer l'accès et quitter)"
+            style={{
+              height: 34,
+              padding: '0 10px',
+              borderRadius: 8,
+              background: isDarkMode ? 'rgba(220, 38, 38, 0.2)' : '#FEF2F2',
+              border: isDarkMode ? '1px solid rgba(220, 38, 38, 0.4)' : '1px solid #FECACA',
+              color: isDarkMode ? '#F87171' : '#DC2626',
+              fontWeight: 800,
+              fontSize: 11.5,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              cursor: 'pointer',
+              flexShrink: 0,
+              boxShadow: '0 1px 3px rgba(220, 38, 38, 0.1)',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <LogOut size={13} />
+            <span className="caisse-label-desktop">Déconnexion compte</span>
+          </button>
         </div>
       </header>
 
@@ -3908,6 +4403,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 onAjouterProduit={(p, q) => {
                   for (let i = 0; i < q; i++) {
                     ajouterAuPanier(p as any)
+                  }
+                }}
+                onAjoutRapideLibre={(nom, montant, qte) => {
+                  const itemLibre: ProduitCaisse = {
+                    id: `vocal-${Date.now()}`,
+                    nom: nom || 'Article Comptoir',
+                    prix: montant,
+                    stock: 9999,
+                    categorie: 'divers'
+                  }
+                  for (let i = 0; i < qte; i++) {
+                    ajouterAuPanier(itemLibre)
                   }
                 }}
               />
@@ -5546,6 +6053,25 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           </div>
         </div>
       )}
+      {/* Modale Dédiée : Changer de Caissier & Verrouillage */}
+      <PosChangerCaissierModal
+        isOpen={modalChangerCaissier}
+        onClose={() => setModalChangerCaissier(false)}
+        caissierActuelNom={caissierNom}
+        roleActif={roleActif}
+        caissiersList={caissiersList}
+        onValiderChangement={handleChangerCaissier}
+        onVerrouillerTerminal={() => {
+          setModalChangerCaissier(false)
+          verrouillerCaisseManuellement()
+        }}
+        onOuvrirConfigEquipe={roleActif === 'superviseur' ? () => {
+          setModalChangerCaissier(false)
+          ouvrirConfigPin()
+        } : undefined}
+        onDeconnexion={seDeconnecterCompte}
+        isTerminalMode={Boolean(initialToken)}
+      />
     </div>
   )
 }

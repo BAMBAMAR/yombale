@@ -3,7 +3,7 @@
 import React, { Suspense } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
-import { Home, Heart, User, Store, Plus } from 'lucide-react'
+import { Home, Heart, User, Store, Plus, Zap } from 'lucide-react'
 
 interface Props {
   isLoggedIn?: boolean
@@ -77,23 +77,42 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
         <span>Boutiques</span>
       </Link>
 
-      {/* 3. Créer Boutique (Bouton central parfaitement aligné) */}
-      <Link
-        href="/creer-boutique"
-        className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreerBoutique ? ' active' : ''}`}
-        aria-label="Créer une boutique"
-        title="Créer une boutique"
-        aria-current={isCreerBoutique ? 'page' : undefined}
-      >
-        <div className="mobile-bottom-nav-icon-wrap">
-          <div className="mobile-bottom-nav-cta-btn">
-            <Plus size={14} strokeWidth={3} />
+      {/* 3. Bouton central adaptatif : Caisse POS si commerçant, Créer si visiteur */}
+      {effectiveIsMerchant ? (
+        <Link
+          href="/boutique/caisse"
+          className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${pathname.startsWith('/boutique/caisse') ? ' active' : ''}`}
+          aria-label="Caisse POS rapide"
+          title="Caisse POS"
+          aria-current={pathname.startsWith('/boutique/caisse') ? 'page' : undefined}
+        >
+          <div className="mobile-bottom-nav-icon-wrap">
+            <div className="mobile-bottom-nav-cta-btn" style={{ background: 'var(--accent, #C75B00)', boxShadow: '0 2px 8px rgba(199,91,0,0.4)' }}>
+              <Zap size={15} strokeWidth={2.8} fill="#ffffff" color="#ffffff" />
+            </div>
           </div>
-        </div>
-        <span style={{ fontWeight: 700, color: isCreerBoutique ? 'var(--accent, #C75B00)' : 'inherit', whiteSpace: 'nowrap' }}>
-          Créer
-        </span>
-      </Link>
+          <span style={{ fontWeight: 800, color: 'var(--accent, #C75B00)', whiteSpace: 'nowrap' }}>
+            Caisse
+          </span>
+        </Link>
+      ) : (
+        <Link
+          href="/creer-boutique"
+          className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreerBoutique ? ' active' : ''}`}
+          aria-label="Créer une boutique"
+          title="Créer une boutique"
+          aria-current={isCreerBoutique ? 'page' : undefined}
+        >
+          <div className="mobile-bottom-nav-icon-wrap">
+            <div className="mobile-bottom-nav-cta-btn">
+              <Plus size={14} strokeWidth={3} />
+            </div>
+          </div>
+          <span style={{ fontWeight: 700, color: isCreerBoutique ? 'var(--accent, #C75B00)' : 'inherit', whiteSpace: 'nowrap' }}>
+            Créer
+          </span>
+        </Link>
+      )}
 
       {/* 4. Favoris */}
       <Link
@@ -157,10 +176,17 @@ function MobileBottomNavFallback({ isLoggedIn = false, isMerchant = false }: Pro
         <div className="mobile-bottom-nav-icon-wrap"><Store size={20} /></div>
         <span>Boutiques</span>
       </Link>
-      <Link href="/creer-boutique" className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreerBoutique ? ' active' : ''}`} aria-label="Créer">
-        <div className="mobile-bottom-nav-icon-wrap"><div className="mobile-bottom-nav-cta-btn"><Plus size={14} strokeWidth={3} /></div></div>
-        <span>Créer</span>
-      </Link>
+      {isMerchant ? (
+        <Link href="/boutique/caisse" className="mobile-bottom-nav-item mobile-bottom-nav-item--cta" aria-label="Caisse POS">
+          <div className="mobile-bottom-nav-icon-wrap"><div className="mobile-bottom-nav-cta-btn" style={{ background: 'var(--accent, #C75B00)' }}><Zap size={15} strokeWidth={2.8} fill="#ffffff" color="#ffffff" /></div></div>
+          <span style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Caisse</span>
+        </Link>
+      ) : (
+        <Link href="/creer-boutique" className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreerBoutique ? ' active' : ''}`} aria-label="Créer">
+          <div className="mobile-bottom-nav-icon-wrap"><div className="mobile-bottom-nav-cta-btn"><Plus size={14} strokeWidth={3} /></div></div>
+          <span>Créer</span>
+        </Link>
+      )}
       <Link href={favHref} className={`mobile-bottom-nav-item${isFavorites ? ' active' : ''}`} aria-label="Mes favoris">
         <div className="mobile-bottom-nav-icon-wrap"><Heart size={20} /></div>
         <span>Favoris</span>

@@ -6269,3 +6269,82 @@ Voici les URLs et les modifications apportées aux outils d'administration inter
   - 6/6 tests validés avec 100% de succès (volume net, carnet dettes, intégrité boutiques, intégrité comparateur, unicité CRM, timezone).
   - Validation TypeScript intégrale (`npx tsc --noEmit`) : **0 erreur**.
 
+---
+
+# 📜 DIRECTIVES PERMANENTES : TESTS MINUTIEUX, MOBILE-FIRST & PROTOCOLES WHATSAPP (Septembre 2026)
+
+## 1. Exigence Impérative : Rigueur et Minutie Absolue des Tests
+Toute modification, correctif ou nouvelle fonctionnalité sur Nopalou doit satisfaire aux critères d'exhaustivité suivants avant d'être candidate à une mise en production :
+1. **Tests Unitaires Backend (`npm run test:unit`)** :
+   - Chaque nouvelle route ou service métier doit être accompagné de sa suite de tests dans `tests/unit/`.
+   - Couverture impérative : cas passant (nominal), rejets de sécurité (401/403), validations de payload (400), cas limites (stock nul, solde négatif, idempotence).
+   - Aucun mock superficiel : tester les requêtes SQL réelles ou vérifier précisément les arguments injectés dans le pool PostgreSQL.
+   - 100% de passage obligatoire sur l'ensemble des suites (actuellement 24 suites et 209 tests).
+2. **Tests Unitaires Frontend (`npm test` dans `frontend-next`)** :
+   - Tester tous les calculs financiers (arrondis FCFA, devise, TVA, remises), parsers d'intention vocale Wolof/Français, filtres de catalogue et helpers d'état.
+   - 100% de passage obligatoire (actuellement 46 tests validés).
+3. **Workflow de Branche Dédiée** :
+   - Tout développement multi-composants doit être réalisé sur une branche locale isolée (ex: `feature/...`).
+   - Ne jamais fusionner ni pousser sur `main` sans validation préalable de l'utilisateur et sans exécution complète de la batterie de tests.
+
+---
+
+## 2. Standards d'Excellence Mobile-First (Écosystème Sénégal & Afrique de l'Ouest)
+Plus de 85% du trafic e-commerce et des transactions commerçants sur Nopalou s'effectue sur smartphone (réseaux 3G/4G, écrans de 320px à 412px) :
+1. **Garantie Zéro Débordement Horizontal (320px Strict)** :
+   - La largeur utile minimale de référence est **320px** (iPhone SE 1re gen, smartphones Android d'entrée de gamme).
+   - Tout conteneur, carte, tableau, modal ou bottom-sheet doit respecter `max-width: 100vw; overflow-x: hidden;`.
+   - Audit mobile automatisé obligatoire via Playwright (`npm run test:mobile` dans `frontend-next`) contrôlant 5 largeurs d'écran : **320px, 360px, 375px, 390px et 412px**. Aucun overflow scrollable horizontal n'est toléré.
+2. **Ergonomie Tactile & Thumb Zone (Zone du Pouce)** :
+   - Boutons et cibles interactives d'au moins **44 × 44 px** de surface tactile conforme aux normes d'accessibilité WCAG et Apple HIG.
+   - Navigation mobile inférieure adaptative (`MobileBottomNav`) : le bouton central doit s'adapter au profil (Action *Panier* pour les acheteurs, *⚡ Caisse POS* pour les marchands).
+   - Les formulaires rapides de vente ou de caisse doivent privilégier les claviers numériques tactiles dédiés (`PosNumpad`), avec auto-déverrouillage dès 4 chiffres pour éviter l'ouverture gênante du clavier virtuel de l'OS.
+
+---
+
+## 3. Protocoles & Fiabilité Entreprise WhatsApp (Meta Cloud API WABA)
+WhatsApp est le canal de conversion, d'encaissement et de relation client numéro un au Sénégal. Tout échange automatisé doit respecter une tolérance de panne zéro :
+1. **Délivrabilité Hors Fenêtre 24h Meta & Templates Certifiés** :
+   - Meta interdit l'envoi de texte libre hors de la fenêtre d'interaction client de 24 heures (erreur `#131047`).
+   - Toute notification transactionnelle proactive (nouvelle commande, relance panier abandonné, code 2FA, invitation marchand) doit **exclusivement employer des templates officiels pré-approuvés par Meta** (catégorie `UTILITY`, immunisée contre le bridage marketing `#131049`).
+   - Formatage strict des paramètres de templates : interdiction des sauts de ligne `\n` ou plus de 4 espaces consécutifs (erreur `#132018`). Utiliser `sanitizeTemplateParam()`.
+2. **Relance Intelligente de Panier Abandonné** :
+   - Détection des commandes `en_attente` entre 45 minutes et 24 heures.
+   - Envoi d'un récapitulatif clair avec lien Wave / Orange Money direct pour paiement en un tap.
+   - Protection anti-harcèlement : marquage systématique `relance_panier_envoyee = TRUE` pour garantir **une seule et unique relance** par commande.
+3. **Double Authentification 2FA par WhatsApp (Sécurité Marchande)** :
+   - Génération de code OTP à 6 chiffres aléatoires.
+   - Stockage déterministe sous forme d'empreinte **SHA-256 avec sel cryptographique**.
+   - Expiration rigoureuse à **10 minutes** et blocage définitif après **3 tentatives échouées**.
+4. **Respect des Utilisateurs & Conformité Anti-Spam** :
+   - Vérification systématique du désabonnement (`estDesinscrit(phone)`). Tout mot-clé `STOP` stoppe immédiatement et définitivement toute notification automatique vers ce numéro.
+
+---
+
+## 4. Consignation des Remédiations Exhaustives P0 à P3 (Audit Global Nopalou) (11 septembre 2026) 🚀💎
+Toutes les remédiations du plan stratégique ont été menées à bien, intégrées et validées à 100% sur la branche `feature/nopalou-master-fixes-p0-p3` :
+- **P0.1 Dual-Track Hero & Navigation Adaptative** :
+  - Composant [`HeroDualTrack.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/HeroDualTrack.tsx) sur la page d'accueil pour commuter instantanément Acheteur/Comparateur vs Commerçant/Caisse POS.
+  - Commutation dynamique du bouton central de [`MobileBottomNav.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/components/MobileBottomNav.tsx) vers **⚡ Caisse** pour les marchands.
+- **P0.4 & P0.5 Sécurité Session & Idempotence Caisse Hors-Ligne** :
+  - Sécurisation des cookies `nopalou_session` HttpOnly et en-têtes CSP/HSTS.
+  - Index SQL unique `(boutique_id, reference)` dans `boutiques.js` et migration `20260911_idempotency_caisse.sql` pour éliminer tout risque de double-vente lors des resynchronisations offline/online.
+- **P1.1 Dashboard Facile Marchand ("Mode Taf-Taf")** :
+  - Composant [`DashboardFacile.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/components/DashboardFacile.tsx) avec 4 dalles géantes (Encaisser, Ajouter Produit, Carnet de Dettes, Ventes du Jour) et toggle persistant dans `BoutiqueClient.tsx`.
+- **P1.2 Séquestre Garanti ("Nopalou Pay Safe")** :
+  - Option séquestre au checkout express [`checkout-express/page.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/checkout-express/page.tsx) et génération de PIN sécurisé dans `backend/routes/paiement-sequestre.js` avec consigne de validation remise au livreur.
+- **P1.3 Relance Automatique WhatsApp Panier Abandonné** :
+  - Service [`backend/services/relance-panier.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/services/relance-panier.js) et cron périodique (30 min) avec lien de finalisation Wave.
+- **P1.4 Double Authentification 2FA par OTP WhatsApp** :
+  - Service [`backend/services/otp.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/services/otp.js) et modale tactile [`ModalConfirmationOtp.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/components/ModalConfirmationOtp.tsx).
+- **P2 Facettes Dynamiques par Catégorie Métier** :
+  - Module [`facettes.ts`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/lib/facettes.ts) et composant [`FacettesDynamiques.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/components/FacettesDynamiques.tsx) (Stockage/RAM en Tech, Tailles/Pointures en Mode).
+- **P3 Caisse Vocale Wolof & Export Comptable SYSCOHADA** :
+  - Intégration de la reconnaissance des devises Wolof (*téemeer*, *junni*) et saisie libre dans [`CaisseClient.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/caisse/CaisseClient.tsx).
+  - Export officiel du Grand Livre SYSCOHADA (OHADA) : endpoint `GET /api/comptabilite/:boutiqueId/export/syscohada` dans `backend/routes/comptabilite.js` et utilitaire dans `frontend-next/src/lib/export.ts` (comptes 571000, 521100, 521200, 411100, 701000).
+- **Validation Globale des Tests** :
+  - **Backend** : 24/24 suites passées, 209/209 tests validés (0 échec).
+  - **Frontend** : 46/46 tests unitaires validés (0 échec).
+  - **Mobile Playwright** : 55/55 contrôles validés sur 5 viewports (320px à 412px) sans aucun débordement horizontal.
+
+

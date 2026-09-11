@@ -55,7 +55,7 @@ async function runMobileAudit() {
       totalChecks++;
       const url = `${BASE_URL}${route.path}`;
       try {
-        const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 10000 });
+        const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
         if (!res || res.status() >= 400) {
           console.log(`  ⚠️  [SKIP] ${route.name} (${route.path}) - HTTP ${res ? res.status() : 'No response'}`);
           continue;

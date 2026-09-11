@@ -53,6 +53,8 @@ function CheckoutExpressContent() {
   const [success, setSuccess] = useState<boolean>(false)
   const [orderRef, setOrderRef] = useState<string>('')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [useSequestre, setUseSequestre] = useState<boolean>(true)
+  const [sequestrePin, setSequestrePin] = useState<string | null>(null)
 
   const autoParam = searchParams.get('auto') === '1'
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
@@ -164,6 +166,29 @@ function CheckoutExpressContent() {
       const referenceToUse = data.reference || `CMD-${Date.now().toString(36).toUpperCase()}`
       setOrderRef(referenceToUse)
 
+      if (useSequestre) {
+        try {
+          const seqRes = await fetch(`${backendUrl}/api/paiement-sequestre/activer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reference: referenceToUse,
+              telephoneClient: clientTel.trim(),
+              montantTotal: totalGlobal,
+              nomBoutique: produitInfo?.boutiqueNom || 'Boutique Partenaire',
+            }),
+          }).catch(() => null)
+          if (seqRes && seqRes.ok) {
+            const seqData = await seqRes.json().catch(() => ({}))
+            if (seqData.pin) {
+              setSequestrePin(seqData.pin)
+            }
+          }
+        } catch (sErr) {
+          console.warn('[SEQUESTRE ERR]', sErr)
+        }
+      }
+
       if (methodePaiement === 'wave') {
         try {
           const waveRes = await fetch(`${backendUrl}/api/paiement/wave/initier-express`, {
@@ -231,6 +256,30 @@ function CheckoutExpressContent() {
             <p style={{ margin: '0 0 4px', color: '#334155' }}>• Mode de paiement: <strong>{methodePaiement.toUpperCase()}</strong></p>
             <p style={{ margin: 0, color: '#334155' }}>• Tél: {clientTel}</p>
           </div>
+
+          {useSequestre && (
+            <div style={{ background: '#FFF3E8', borderRadius: 14, padding: 18, border: '2px solid #C75B00', margin: '16px 0', textAlign: 'center' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#C75B00', fontWeight: 800, fontSize: 13.5, marginBottom: 8 }}>
+                <ShieldCheck size={18} />
+                <span>Protection Séquestre Nopalou Pay Safe Active</span>
+              </div>
+              <p style={{ margin: '0 0 10px', fontSize: 13, color: '#1A1612' }}>
+                Vos fonds sont retenus en sécurité. Voici votre code secret de déblocage :
+              </p>
+              {sequestrePin ? (
+                <div style={{ display: 'inline-block', letterSpacing: '0.25em', fontSize: 24, fontWeight: 900, background: '#fff', color: '#1C2B4A', padding: '8px 20px', borderRadius: 10, border: '2px dashed #C75B00', marginBottom: 8 }}>
+                  {sequestrePin}
+                </div>
+              ) : (
+                <div style={{ fontSize: 12.5, color: '#16A34A', fontWeight: 700, marginBottom: 8 }}>
+                  Envoyé par WhatsApp sur votre téléphone
+                </div>
+              )}
+              <p style={{ margin: 0, fontSize: 11.5, color: '#5A4E42', lineHeight: 1.3 }}>
+                ⚠️ <strong>Ne communiquez ce code au livreur qu&apos;après avoir vérifié votre colis !</strong>
+              </p>
+            </div>
+          )}
 
           <a
             href={`https://wa.me/221777202086?text=${encodeURIComponent(`Bonjour, je souhaite suivre ma commande ${orderRef}`)}`}
@@ -431,6 +480,44 @@ function CheckoutExpressContent() {
                 >
                   Espèces
                 </button>
+              </div>
+            </div>
+
+            {/* Toggle Protection Séquestre Nopalou Pay Safe */}
+            <div
+              onClick={() => setUseSequestre(!useSequestre)}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+                padding: '12px 14px',
+                borderRadius: 12,
+                border: useSequestre ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                background: useSequestre ? 'var(--orange2, #FFF3E8)' : '#FFFFFF',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                marginTop: 4,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={useSequestre}
+                onChange={e => setUseSequestre(e.target.checked)}
+                style={{ marginTop: 3, accentColor: 'var(--accent, #C75B00)' }}
+              />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <ShieldCheck size={16} color="var(--accent, #C75B00)" />
+                  <strong style={{ fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>
+                    Activer Nopalou Pay Safe (Séquestre Anti-Arnaque)
+                  </strong>
+                  <span style={{ fontSize: 9.5, fontWeight: 900, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8 }}>
+                    GRATUIT
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
+                  Fonds bloqués et versés au marchand uniquement après confirmation de livraison avec votre code PIN secret.
+                </p>
               </div>
             </div>
 

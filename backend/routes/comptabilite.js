@@ -376,6 +376,118 @@ router.delete(
   }
 );
 
+// GET /api/comptabilite/:boutiqueId/export/syscohada — Export Grand Livre / Journal des Ventes SYSCOHADA (OHADA)
+router.get(
+  '/:boutiqueId/export/syscohada',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+      const { debut, fin } = req.query;
+      let query = 'SELECT * FROM ventes WHERE boutique_id=$1 AND archivee IS NOT TRUE';
+      const params = [req.params.boutiqueId];
+
+      if (debut) {
+        params.push(debut);
+        query += ` AND created_at >= $${params.length}`;
+      }
+      if (fin) {
+        params.push(fin);
+        query += ` AND created_at <= $${params.length}`;
+      }
+      query += ' ORDER BY created_at ASC';
+
+      const { rows: ventes } = await pool.query(query, params);
+
+      const headers = [
+        'Date Écriture',
+        'N° Pièce / Référence',
+        'Code Journal',
+        'N° Compte Général',
+        'Intitulé du Compte',
+        'Libellé de l\'Écriture',
+        'Débit (FCFA)',
+        'Crédit (FCFA)',
+        'Mode Règlement',
+        'Tiers / Client',
+      ];
+
+      const escapeCSV = (val) => {
+        if (val === null || val === undefined) return '""';
+        const str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+      };
+
+      const csvLines = [headers.map(escapeCSV).join(';')];
+
+      for (const v of ventes) {
+        const dateFormatted = v.created_at ? new Date(v.created_at).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
+        const ref = v.reference || (v.id ? v.id.slice(0, 8) : 'REF');
+        const mode = (v.methode_paiement || 'cash').toLowerCase();
+        const client = v.client_nom || 'Client Comptoir';
+        const montant = Math.round(Number(v.montant_total) || 0);
+
+        let compteTresorerie = '571000';
+        let intituleTresorerie = 'Caisse Centrale Espèces';
+        if (mode === 'wave') {
+          compteTresorerie = '521100';
+          intituleTresorerie = 'Banque / Compte Wave Business';
+        } else if (mode === 'orange_money' || mode === 'om') {
+          compteTresorerie = '521200';
+          intituleTresorerie = 'Banque / Compte Orange Money';
+        } else if (mode === 'credit') {
+          compteTresorerie = '411100';
+          intituleTresorerie = 'Clients - Créances sur Ventes';
+        } else if (mode === 'virement' || mode === 'cb' || mode === 'carte') {
+          compteTresorerie = '521000';
+          intituleTresorerie = 'Banque / Établissements Financiers';
+        }
+
+        // Ligne Débit (Trésorerie / Client)
+        csvLines.push([
+          dateFormatted,
+          ref,
+          'VT',
+          compteTresorerie,
+          intituleTresorerie,
+          `Encaissement Vente #${ref} - ${v.nom_produit || 'Article'}`,
+          montant,
+          0,
+          mode.toUpperCase(),
+          client,
+        ].map(escapeCSV).join(';'));
+
+        // Ligne Crédit (Compte 701 - Ventes de Marchandises)
+        csvLines.push([
+          dateFormatted,
+          ref,
+          'VT',
+          '701000',
+          'Ventes de Marchandises dans la Région (SYSCOHADA)',
+          `Chiffre d'affaires Vente #${ref} - ${v.nom_produit || 'Article'} (x${v.quantite || 1})`,
+          0,
+          montant,
+          mode.toUpperCase(),
+          client,
+        ].map(escapeCSV).join(';'));
+      }
+
+      const csvContent = '\uFEFF' + csvLines.join('\r\n');
+      const filename = `journal_syscohada_${(boutique.nom || 'boutique').replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.csv`;
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      return res.status(200).send(csvContent);
+    } catch (err) {
+      console.error('[SYSCOHADA EXPORT ERR]', err);
+      return res.status(500).json({ error: 'Erreur lors de la génération de l\'export comptable SYSCOHADA' });
+    }
+  }
+);
+
 // GET /api/comptabilite/:boutiqueId/ventes/:venteId/facture.pdf
 router.get(
   '/:boutiqueId/ventes/:venteId/facture.pdf',

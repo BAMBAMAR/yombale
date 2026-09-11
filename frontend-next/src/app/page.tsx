@@ -14,6 +14,8 @@ import ShowcaseTabs from './ShowcaseTabs'
 import { apiFetch } from '@/lib/api'
 
 import HeroWhatsAppCarousel from './HeroWhatsAppCarousel'
+import HeroDualTrack from './HeroDualTrack'
+import FacettesDynamiques from '@/components/FacettesDynamiques'
 
 export const metadata: Metadata = {
   title: 'Nopalou · Acheter au meilleur prix, Vendre & Développer son commerce au Sénégal',
@@ -215,6 +217,11 @@ export default async function HomePage({
                 }}>
                   Comparez des milliers d&apos;offres et boutiques vérifiées • Commandez sur WhatsApp • Caisse POS &amp; Gestion
                 </p>
+              </div>
+
+              {/* DUAL-TRACK SWITCHER (ACHETEUR VS COMMERÇANT) */}
+              <div style={{ width: '100%', maxWidth: 520 }}>
+                <HeroDualTrack prixTafTaf={prixTafTaf} />
               </div>
 
               {/* BARRE DE RECHERCHE COMPACTE */}
@@ -482,6 +489,9 @@ export default async function HomePage({
             </Link>
           </div>
         )}
+
+        {/* FACETTES DYNAMIQUES PAR CATÉGORIE (TECH / MODE / IMMO) */}
+        {categorie && <FacettesDynamiques categorie={categorie} />}
 
         {/* ── BARRE DE FILTRES EN 2 LIGNES STRICTES SANS AUCUN RETOUR À LA LIGNE ────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>

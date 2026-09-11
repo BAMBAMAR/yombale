@@ -2755,6 +2755,8 @@ async function ensureRefColSize() {
     await pool.query(`ALTER TABLE ventes ALTER COLUMN reference TYPE VARCHAR(100)`);
     await pool.query(`ALTER TABLE commandes_boutique ALTER COLUMN reference TYPE VARCHAR(100)`);
     await pool.query(`ALTER TABLE caisse_documents ALTER COLUMN reference TYPE VARCHAR(100)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_caisse_docs_boutique_ref ON caisse_documents(boutique_id, reference)`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_ventes_boutique_ref ON ventes(boutique_id, reference)`);
     _refColMigrated = true;
   } catch (e) {
     // Ignore si déjà correcte ou si erreur de permission

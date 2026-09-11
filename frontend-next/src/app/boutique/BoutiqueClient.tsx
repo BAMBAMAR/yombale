@@ -28,6 +28,7 @@ import StudioPersonnalisation from './StudioPersonnalisation'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import ProductTourModal from './ProductTourModal'
+import DashboardFacile from './components/DashboardFacile'
 import {
   Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square,
   LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter, Palette
@@ -5529,6 +5530,9 @@ function BoutiqueManage({
   const [filtreProduitsMarketing, setFiltreProduitsMarketing] = useState<'jamais_partage' | undefined>(undefined)
   const [nbEnAttente, setNbEnAttente] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
+  const [isModeFacile, setIsModeFacile] = useState<boolean>(() => {
+    try { return localStorage.getItem('nopalou_dashboard_mode_facile') === 'true' } catch { return false }
+  })
   const isTrialActive = Boolean(boutique.is_trial)
   const joursRestantsEssai = boutique.jours_restants_essai ?? 30
   const effectivePlan = isTrialActive ? 'business' : planActif
@@ -6457,7 +6461,49 @@ function BoutiqueManage({
           </div>
         ) : (
           <>
-            {tab === 'dashboard'   && <BoutiqueDashboard boutique={boutique} planActif={effectivePlan} nbEnAttente={nbEnAttente} onNavigate={handleNavigateFromDashboard} />}
+            {tab === 'dashboard'   && (
+              isModeFacile ? (
+                <DashboardFacile
+                  boutiqueNom={boutique.nom}
+                  boutiqueId={boutique.id}
+                  onOuvrirAjoutProduit={() => { setFiltreProduitsMarketing(undefined); setTab('produits'); }}
+                  onNaviguerOnglet={(t) => setTab(t as any)}
+                  onBasculerModeComplet={() => {
+                    setIsModeFacile(false);
+                    try { localStorage.setItem('nopalou_dashboard_mode_facile', 'false'); } catch {}
+                  }}
+                />
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsModeFacile(true);
+                        try { localStorage.setItem('nopalou_dashboard_mode_facile', 'true'); } catch {}
+                      }}
+                      style={{
+                        background: 'var(--orange2, #FFF3E8)',
+                        border: '1px solid #FED7AA',
+                        color: 'var(--accent, #C75B00)',
+                        borderRadius: 10,
+                        padding: '6px 14px',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        boxShadow: '0 1px 3px rgba(199,91,0,0.1)'
+                      }}
+                    >
+                      <span>⚡ Activer le Mode Facile (Caisse Taf-Taf)</span>
+                    </button>
+                  </div>
+                  <BoutiqueDashboard boutique={boutique} planActif={effectivePlan} nbEnAttente={nbEnAttente} onNavigate={handleNavigateFromDashboard} />
+                </>
+              )
+            )}
             {tab === 'produits'    && <CatalogueProduits boutique={boutique} planActif={effectivePlan} prixPro={prixPro} filtreInitial={filtreProduitsMarketing} />}
             {tab === 'commandes'   && <Commandes boutiqueId={boutique.id} boutique={boutique} />}
             {tab === 'carnet'      && <CarnetDettes boutique={boutique} planActif={effectivePlan} />}

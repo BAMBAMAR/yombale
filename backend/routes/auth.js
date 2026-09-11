@@ -564,4 +564,37 @@ router.post('/magic-login', limiterAuth, async (req, res) => {
   }
 });
 
+// ── POST /api/auth/2fa/demander — Générer et envoyer un code OTP WhatsApp
+router.post('/2fa/demander', verifierToken, async (req, res) => {
+  try {
+    const { action = 'operation_sensible', label = 'valider votre opération' } = req.body;
+    const { rows } = await pool.query('SELECT id, telephone, nom FROM utilisateurs WHERE id = $1', [req.user.userId]);
+    if (!rows.length || !rows[0].telephone) {
+      return res.status(400).json({ error: 'Numéro de téléphone introuvable sur votre compte' });
+    }
+    const { genererOtp, envoyerOtpWhatsApp } = require('../services/otp');
+    const code = await genererOtp(req.user.userId, action, rows[0].telephone);
+    await envoyerOtpWhatsApp(rows[0].telephone, code, label);
+    res.json({ success: true, message: 'Code de sécurité envoyé sur votre WhatsApp', telephone_masque: rows[0].telephone.slice(-4) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/auth/2fa/valider — Vérifier le code OTP saisi
+router.post('/2fa/valider', verifierToken, async (req, res) => {
+  try {
+    const { action = 'operation_sensible', code } = req.body;
+    if (!code) return res.status(400).json({ error: 'Code requis' });
+    const { verifierOtp } = require('../services/otp');
+    const result = await verifierOtp(req.user.userId, action, code);
+    if (!result.valide) {
+      return res.status(400).json({ error: result.error });
+    }
+    res.json({ success: true, message: 'Opération validée avec succès' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
