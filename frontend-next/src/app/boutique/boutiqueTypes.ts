@@ -54,6 +54,21 @@ export interface Variante {
   typeId?: string
 }
 
+export interface VarianteSku {
+  id?: string
+  produit_id?: string
+  sku?: string | null
+  code_barre?: string | null
+  attributs: Record<string, string>
+  prix?: number | null
+  prix_barre?: number | null
+  prix_achat?: number | null
+  stock_quantite?: number | null
+  image_url?: string | null
+  actif?: boolean
+  ordre?: number
+}
+
 export interface Produit {
   id: string
   nom: string
@@ -69,6 +84,7 @@ export interface Produit {
   categorie: string | null
   caracteristiques: Record<string, string> | null
   variantes: Variante[] | null
+  variantes_skus?: VarianteSku[] | null
   whatsapp_sync_statut: 'synchronise' | 'en_attente' | 'echec' | null
   whatsapp_sync_erreur: string | null
   partage_le: string | null

@@ -17,7 +17,7 @@ import {
   nomParDefautPourCategorie,
   genererSVGCodeBarresEAN13,
 } from './boutiqueHelpers'
-import type { Boutique, Variante, Produit } from './boutiqueTypes'
+import type { Boutique, Variante, Produit, VarianteSku } from './boutiqueTypes'
 import { Eye } from 'lucide-react'
 
 export const inputStyle = {
@@ -735,6 +735,106 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
     }))
   }
 
+  // ── Matrice 3D de Variantes (Combinaisons Cartésiennes, SKU & Stocks) ────────
+  const [variantesSkus, setVariantesSkus] = useState<VarianteSku[]>(produit?.variantes_skus ?? [])
+
+  useEffect(() => {
+    const optionsValides = variantes.filter(o => o.nom && o.nom.trim() && o.valeurs && o.valeurs.length > 0)
+    if (optionsValides.length === 0) {
+      setVariantesSkus([])
+      return
+    }
+
+    // Produit cartésien multi-dimensions (Taille × Couleur × Matière...)
+    const combinaisons = optionsValides.reduce<Record<string, string>[]>(
+      (acc, opt) => {
+        const res: Record<string, string>[] = []
+        for (const comb of acc) {
+          for (const val of opt.valeurs) {
+            res.push({ ...comb, [opt.nom.trim()]: val })
+          }
+        }
+        return res
+      },
+      [{}]
+    )
+
+    setVariantesSkus(prev => {
+      const basePrix = Number(prixForm) || produit?.prix || 0
+      const baseStock = Number(stockQuantiteForm) || 0
+      const slugProduit = (nomForm || 'ART').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'PROD'
+
+      return combinaisons.map((comb, idx) => {
+        const existing = prev.find(item => {
+          const keys = Object.keys(comb)
+          const itemKeys = Object.keys(item.attributs || {})
+          return keys.length === itemKeys.length && keys.every(k => item.attributs[k] === comb[k])
+        }) || (produit?.variantes_skus || []).find(item => {
+          const keys = Object.keys(comb)
+          const itemKeys = Object.keys(item.attributs || {})
+          return keys.length === itemKeys.length && keys.every(k => item.attributs[k] === comb[k])
+        })
+
+        if (existing) {
+          return {
+            ...existing,
+            attributs: comb,
+            ordre: idx,
+          }
+        }
+
+        const codeSuffix = Object.values(comb).map(v => v.slice(0, 3).toUpperCase()).join('-')
+        const autoSku = `${slugProduit}-${codeSuffix}`
+
+        return {
+          sku: autoSku,
+          code_barre: '',
+          attributs: comb,
+          prix: basePrix,
+          stock_quantite: baseStock,
+          actif: true,
+          ordre: idx,
+        }
+      })
+    })
+  }, [variantes, nomForm, prixForm, stockQuantiteForm, produit?.variantes_skus, produit?.prix])
+
+  function updateVarianteSku(index: number, champ: keyof VarianteSku, val: any) {
+    setVariantesSkus(prev => prev.map((item, i) => i === index ? { ...item, [champ]: val } : item))
+  }
+
+  function alignerTousLesPrix() {
+    const p = Number(prixForm) || produit?.prix || 0
+    setVariantesSkus(prev => prev.map(item => ({ ...item, prix: p })))
+  }
+
+  function alignerTousLesStocks() {
+    const s = Number(stockQuantiteForm) || 0
+    setVariantesSkus(prev => prev.map(item => ({ ...item, stock_quantite: s })))
+  }
+
+  function regenererTousLesSkus() {
+    const slugProduit = (nomForm || 'ART').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'PROD'
+    setVariantesSkus(prev => prev.map((item) => {
+      const codeSuffix = Object.values(item.attributs || {}).map(v => v.slice(0, 3).toUpperCase()).join('-')
+      return {
+        ...item,
+        sku: `${slugProduit}-${codeSuffix}`,
+      }
+    }))
+  }
+
+  function genererEanPourVariante(index: number) {
+    const prefix = '200' + Math.floor(Math.random() * 900000000 + 100000000).toString()
+    let sum = 0
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(prefix[i], 10) * (i % 2 === 0 ? 1 : 3)
+    }
+    const checkDigit = (10 - (sum % 10)) % 10
+    const code = prefix + checkDigit
+    updateVarianteSku(index, 'code_barre', code)
+  }
+
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const produitFormTopRef = useRef<HTMLDivElement>(null)
   const handledRef = useRef<any>(null)
@@ -796,6 +896,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
       <input type="hidden" name="quantite_stock" value={stockQuantiteForm} />
       <input type="hidden" name="caracteristiques" value={JSON.stringify(carac)} />
       <input type="hidden" name="variantes" value={JSON.stringify(variantes.filter(v => v.nom.trim() && v.valeurs.length > 0))} />
+      <input type="hidden" name="variantes_skus" value={JSON.stringify(variantesSkus)} />
       <input type="hidden" name="en_stock" value={enStock ? 'true' : 'false'} />
 
       {/* ── 1. PHOTO DU PRODUIT ────────────────────────────────────────────── */}
@@ -1338,6 +1439,155 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                     + {t.label}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* ── Matrice 3D des Combinaisons (SKU, Prix, Stock individualisés) ── */}
+            {variantesSkus.length > 0 && (
+              <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1.5px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>🧊 Matrice 3D des Combinaisons</span>
+                      <span style={{ fontSize: 11, background: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: 999 }}>
+                        {variantesSkus.length} {variantesSkus.length > 1 ? 'combinaisons' : 'combinaison'}
+                      </span>
+                    </h4>
+                    <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#64748b' }}>
+                      Gérez les stocks, prix et codes SKU individualisés par combinaison (Taille × Couleur × Matière...).
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={alignerTousLesPrix}
+                      title="Copier le prix principal sur toutes les variantes"
+                      style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 6, padding: '5px 9px', fontSize: 11, fontWeight: 600, color: '#334155', cursor: 'pointer' }}
+                    >
+                      ⚡ Aligner prix ({prixForm || 0} F)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={alignerTousLesStocks}
+                      title="Copier la quantité en stock principale sur toutes les variantes"
+                      style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 6, padding: '5px 9px', fontSize: 11, fontWeight: 600, color: '#334155', cursor: 'pointer' }}
+                    >
+                      📦 Aligner stock ({stockQuantiteForm || 0})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={regenererTousLesSkus}
+                      title="Régénérer automatiquement les codes SKU"
+                      style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 6, padding: '5px 9px', fontSize: 11, fontWeight: 600, color: '#334155', cursor: 'pointer' }}
+                    >
+                      🔢 SKU auto
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                  <table style={{ width: '100%', minWidth: 640, borderCollapse: 'collapse', fontSize: 12, textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
+                        <th style={{ padding: '8px 12px' }}>Combinaison</th>
+                        <th style={{ padding: '8px 12px', width: 140 }}>Code SKU</th>
+                        <th style={{ padding: '8px 12px', width: 120 }}>Prix (FCFA)</th>
+                        <th style={{ padding: '8px 12px', width: 90 }}>Stock</th>
+                        <th style={{ padding: '8px 12px', width: 150 }}>Code-barres</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {variantesSkus.map((skuItem, idx) => (
+                        <tr key={idx} style={{ borderBottom: idx < variantesSkus.length - 1 ? '1px solid #f1f5f9' : 'none', background: idx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
+                          <td style={{ padding: '8px 12px' }}>
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                              {Object.entries(skuItem.attributs || {}).map(([cle, val]) => (
+                                <span
+                                  key={cle}
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                                    background: '#f1f5f9', border: '1px solid #e2e8f0',
+                                    borderRadius: 6, padding: '2px 6px', fontSize: 11, fontWeight: 600, color: '#1e293b'
+                                  }}
+                                >
+                                  <span style={{ color: '#64748b', fontSize: 10 }}>{cle}:</span>
+                                  <span>{val}</span>
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+
+                          <td style={{ padding: '6px 8px' }}>
+                            <input
+                              type="text"
+                              value={skuItem.sku ?? ''}
+                              onChange={e => updateVarianteSku(idx, 'sku', e.target.value)}
+                              placeholder="SKU-001"
+                              style={{
+                                width: '100%', padding: '6px 8px', fontSize: 11.5,
+                                fontFamily: 'monospace', borderRadius: 6, border: '1px solid #cbd5e1',
+                                background: '#ffffff', boxSizing: 'border-box'
+                              }}
+                            />
+                          </td>
+
+                          <td style={{ padding: '6px 8px' }}>
+                            <input
+                              type="number"
+                              min={0}
+                              value={skuItem.prix ?? ''}
+                              onChange={e => updateVarianteSku(idx, 'prix', e.target.value === '' ? null : Number(e.target.value))}
+                              placeholder={prixForm || '0'}
+                              style={{
+                                width: '100%', padding: '6px 8px', fontSize: 12, fontWeight: 600,
+                                borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', boxSizing: 'border-box'
+                              }}
+                            />
+                          </td>
+
+                          <td style={{ padding: '6px 8px' }}>
+                            <input
+                              type="number"
+                              min={0}
+                              value={skuItem.stock_quantite ?? ''}
+                              onChange={e => updateVarianteSku(idx, 'stock_quantite', e.target.value === '' ? 0 : Number(e.target.value))}
+                              placeholder="0"
+                              style={{
+                                width: '100%', padding: '6px 8px', fontSize: 12, fontWeight: 700,
+                                color: (skuItem.stock_quantite ?? 0) > 0 ? '#166534' : '#991b1b',
+                                borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', boxSizing: 'border-box'
+                              }}
+                            />
+                          </td>
+
+                          <td style={{ padding: '6px 8px' }}>
+                            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                              <input
+                                type="text"
+                                value={skuItem.code_barre ?? ''}
+                                onChange={e => updateVarianteSku(idx, 'code_barre', e.target.value)}
+                                placeholder="EAN13"
+                                style={{
+                                  flex: 1, padding: '6px 6px', fontSize: 11,
+                                  borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', boxSizing: 'border-box'
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => genererEanPourVariante(idx)}
+                                title="Générer EAN13 aléatoire"
+                                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 6, padding: '5px 6px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                ⚡
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
