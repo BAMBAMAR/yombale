@@ -267,6 +267,19 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     chargerDonnees()
   }, [boutiqueId])
 
+  const envoyerBonCommandeWhatsApp = (fournisseur: any, articles: any[]) => {
+    if (!fournisseur?.telephone) {
+      alert('Veuillez renseigner le numéro de téléphone de ce fournisseur.')
+      return
+    }
+    const cleanTel = fournisseur.telephone.replace(/\D/g, '')
+    const telNorm = cleanTel.length === 9 && ['77', '78', '76', '75', '70'].some(p => cleanTel.startsWith(p)) ? `221${cleanTel}` : cleanTel
+    const lignes = articles.map((a, i) => `${i + 1}. *${a.nom}* — *Qté souhaitée : 20 pcs* (Stock restant : ${a.stock_quantite ?? 0} pcs)`).join('\n')
+    const message = `Bonjour ${fournisseur.nom},\n\nNous avons un besoin urgent de réapprovisionnement pour notre boutique :\n\n📦 *Articles à réapprovisionner :*\n${lignes}\n\nMerci de nous confirmer la disponibilité, vos prix et le délai de livraison.\n_Envoyé via Nopalou Business_`
+    const url = `https://wa.me/${telNorm}?text=${encodeURIComponent(message)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
   const handleSoumettreFormFournisseur = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!fouNom) return
@@ -551,6 +564,79 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               ➕ {t('shop.newSupplierBtn')}
             </button>
           </div>
+
+          {/* Bannière Alerte Réassort Critique & Bon de Commande Grossiste 1-Clic */}
+          {(() => {
+            const prodsCritiques = produits.filter((p: any) => p.stock_quantite != null && p.stock_quantite <= (p.seuil_alerte_stock || 5))
+            if (prodsCritiques.length === 0) return null
+
+            return (
+              <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 22 }}>🚨</span>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: 14.5, fontWeight: 800, color: '#92400e' }}>
+                        {prodsCritiques.length} article(s) en stock critique
+                      </h4>
+                      <p style={{ margin: '2px 0 0', fontSize: 12, color: '#b45309' }}>
+                        Ces produits risquent la rupture. Générez un bon de commande direct vers vos grossistes.
+                      </p>
+                    </div>
+                  </div>
+                  {fournisseurs.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => envoyerBonCommandeWhatsApp(fournisseurs[0], prodsCritiques)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: '#25D366',
+                        color: '#ffffff',
+                        fontSize: 12.5,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <span>🛵 Bon de commande WhatsApp ({fournisseurs[0].nom})</span>
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {prodsCritiques.slice(0, 6).map((p: any) => (
+                    <span
+                      key={p.id}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #fcd34d',
+                        borderRadius: 8,
+                        padding: '4px 10px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: '#78350f',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <span>📦 {p.nom}</span>
+                      <span style={{ color: '#dc2626', fontWeight: 800 }}>({p.stock_quantite ?? 0} restant)</span>
+                    </span>
+                  ))}
+                  {prodsCritiques.length > 6 && (
+                    <span style={{ fontSize: 12, color: '#92400e', alignSelf: 'center', fontWeight: 600 }}>
+                      +{prodsCritiques.length - 6} autres…
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
 
           {loading ? (
             <p style={{ color: '#6b7280', fontSize: 14 }}>{t('common.loading')}</p>

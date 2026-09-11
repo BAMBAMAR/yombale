@@ -70,6 +70,19 @@ interface SocialShopManagerProps {
   boutiqueSlug?: string | null
 }
 
+function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  const token = typeof window !== 'undefined' ? (localStorage.getItem('nopalou_token') || localStorage.getItem('token') || '') : ''
+  const headers = new Headers(init.headers)
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+  return fetch(input, {
+    credentials: 'include',
+    ...init,
+    headers,
+  })
+}
+
 export default function SocialShopManager({
   boutiqueId,
   boutiqueNom,
@@ -134,13 +147,13 @@ export default function SocialShopManager({
       const token = localStorage.getItem('nopalou_token') || ''
 
       const [overviewRes, postsRes, prodsRes] = await Promise.all([
-        fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/overview`, {
+        authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/overview`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts`, {
+        authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`, {
+        authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ])
@@ -192,7 +205,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/import-url`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/import-url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -238,7 +251,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/explore-profile`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/explore-profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -288,7 +301,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/import-batch`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/import-batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -331,7 +344,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/import-batch`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/import-batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -381,7 +394,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/explore-profile`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/explore-profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -435,7 +448,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/accounts/${acc.id}/toggle-sync`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/accounts/${acc.id}/toggle-sync`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -455,7 +468,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${post.id}`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${post.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -478,7 +491,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${post.id}`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${post.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -503,7 +516,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -524,7 +537,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${selectedPostForProduct.id}/produits`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${selectedPostForProduct.id}/produits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -548,7 +561,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}/produits/${productId}`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}/produits/${productId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -600,7 +613,7 @@ export default function SocialShopManager({
 
       await Promise.all(
         ids.map(id =>
-          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
+          authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -635,7 +648,7 @@ export default function SocialShopManager({
 
       await Promise.all(
         ids.map(id =>
-          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
+          authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -672,7 +685,7 @@ export default function SocialShopManager({
 
       await Promise.all(
         ids.map(id =>
-          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
+          authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` },
           })
@@ -703,7 +716,7 @@ export default function SocialShopManager({
 
       await Promise.all(
         ids.map(postId =>
-          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}/produits`, {
+          authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}/produits`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -737,7 +750,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/accounts`, {
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/accounts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
