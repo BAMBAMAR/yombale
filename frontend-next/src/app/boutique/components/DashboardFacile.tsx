@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Zap, Plus, BookOpen, BarChart3, ShoppingBag, ArrowRight, ShieldCheck, Phone, CheckCircle2 } from 'lucide-react'
+import { Zap, Plus, BookOpen, BarChart3, ShoppingBag, ArrowRight, ShieldCheck, Phone, CheckCircle2, Gift, QrCode } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 
 interface Props {
@@ -392,6 +392,154 @@ export default function DashboardFacile({
             }}
           >
             <span>Voir l&apos;Historique</span>
+            <ArrowRight size={14} />
+          </div>
+        </div>
+
+        {/* TUILE 5 : FIDÉLITÉ CLIENTS & RÉCOMPENSES */}
+        <div
+          onClick={() => onNaviguerOnglet('promotions')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && onNaviguerOnglet('promotions')}
+          style={{
+            background: '#FFFFFF',
+            color: 'var(--navy, #1C2B4A)',
+            borderRadius: 18,
+            padding: '22px 20px',
+            boxShadow: '0 4px 16px rgba(26,22,18,0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            minHeight: 160,
+            border: '1px solid var(--border, #E8DDD2)',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            cursor: 'pointer',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: '#FDF4FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#9333EA',
+                }}
+              >
+                <Gift size={22} strokeWidth={2.4} />
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 900,
+                  color: '#9333EA',
+                  background: '#FDF4FF',
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                }}
+              >
+                Auto WhatsApp 🎁
+              </span>
+            </div>
+            <h2 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+              5. Fidélité &amp; Récompenses
+            </h2>
+            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
+              Cagnotte automatique et coupons de -10% offerts au 5ème achat pour fidéliser vos clients.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12.5,
+              fontWeight: 800,
+              color: '#9333EA',
+              marginTop: 14,
+            }}
+          >
+            <span>Gérer la Fidélité</span>
+            <ArrowRight size={14} />
+          </div>
+        </div>
+
+        {/* TUILE 6 : DIFFUSION VITRINE & QR CODE */}
+        <div
+          onClick={() => onNaviguerOnglet('marketing')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => e.key === 'Enter' && onNaviguerOnglet('marketing')}
+          style={{
+            background: '#FFFFFF',
+            color: 'var(--navy, #1C2B4A)',
+            borderRadius: 18,
+            padding: '22px 20px',
+            boxShadow: '0 4px 16px rgba(26,22,18,0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            minHeight: 160,
+            border: '1px solid var(--border, #E8DDD2)',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            cursor: 'pointer',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: '#EFF6FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#2563EB',
+                }}
+              >
+                <QrCode size={22} strokeWidth={2.4} />
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 900,
+                  color: '#2563EB',
+                  background: '#EFF6FF',
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                }}
+              >
+                Vitrine &amp; Comptoir 📱
+              </span>
+            </div>
+            <h2 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+              6. Partage Vitrine &amp; QR Code
+            </h2>
+            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
+              Diffusez votre lien sur WhatsApp et imprimez votre QR code pour le comptoir de votre boutique.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12.5,
+              fontWeight: 800,
+              color: '#2563EB',
+              marginTop: 14,
+            }}
+          >
+            <span>Partager ma Vitrine</span>
             <ArrowRight size={14} />
           </div>
         </div>
