@@ -691,7 +691,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           } else {
             // Ne jamais écraser le filtre textuel pour ne pas vider la liste !
             setVoiceFeedback(`🔍 Aucun client trouvé pour « ${intent.nomClient || transcript} »`)
-            jouerBipEtVibrer('erreur')
+            jouerBipEtVibrer('alerte')
           }
           return
         }

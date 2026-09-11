@@ -7,6 +7,7 @@
     "build": "next build && node scripts/postbuild.js",
     "start": "next start -p ${PORT:-3000}",
     "lint": "next lint",
+    "lint:slop": "node scripts/lint-ai-slop.mjs",
     "test": "node --experimental-strip-types scripts/run-unit-tests.mjs",
     "test:mobile": "node scripts/audit-mobile-responsiveness.mjs"
   },

@@ -217,14 +217,15 @@ function adminPageGuard(req, res, next) {
 }
 
 app.get('/admin-telecom.html', adminPageGuard);
-app.get('/admin-immo.html',    adminPageGuard);
-app.get('/admin-partenaires.html', adminPageGuard);
-app.get('/admin-annonces.html', adminPageGuard);
-app.get('/admin.html', adminPageGuard);
-
-
-// ── Fichiers statiques frontend ───────────────────────────────
-app.use(express.static(path.join(__dirname, '../frontend')));
+// ── API Root & Santé (API pure JSON - frontend découplé sur Next.js) ──
+app.get('/', (req, res) => {
+  res.json({
+    service: 'nopalou-api',
+    version: '1.0.0',
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // ── Login admin — cookie httpOnly (8h) ───────────────────────
 app.post('/api/admin/login', (req, res) => {
@@ -333,10 +334,14 @@ app.all('/api/*', (req, res) => {
   res.status(404).json({ error: `Endpoint API introuvable : ${req.method} ${req.originalUrl}` });
 });
 
-// ── Catch-all → SPA frontend ──────────────────────────────────
-app.get('*', (req, res) =>
-  res.sendFile(path.join(__dirname, '../frontend/index.html'))
-);
+// ── Catch-all 404 JSON (API pure) ─────────────────────────────
+app.all('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `Ressource introuvable : ${req.method} ${req.originalUrl}`,
+    code: 'NOT_FOUND'
+  });
+});
 
 // ── Gestion erreurs globale ───────────────────────────────────
 // Sentry error handler — DOIT être APRÈS toutes les routes, AVANT les autres error handlers

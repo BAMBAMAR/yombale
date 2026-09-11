@@ -1,3 +1,29 @@
+- **Grand Chantier Anti-IA-Slop & Standard Ingénieur Senior (P0-P3) (`backend/`, `frontend-next/`, `AGENTS.md`) (11 septembre 2026)** 🛡️🏗️✨ :
+  * **🎯 1. Contexte & Diagnostic de l'Audit Exhaustif** :
+    - *Objectif* : Éliminer les symptômes de mauvaise utilisation de l'IA (monolithes de 6 000 lignes, 3 159 béquilles émojis dans l'UI, 345 couleurs hex injectées au hasard, API servant du HTML sur les 404, failles IDOR potentielles) pour hisser Nopalou au rang de produit SaaS de classe mondiale.
+    - *Résultat du Scanner Initial* : Score AI-Slop de 51.5/100 (zone critique) sur 32 critères d'ingénierie et d'UX.
+  * **🛠️ 2. Réalisations & Déploiements P0 - P3** :
+    - **P0 - Sécurité Multi-Tenant & Isolation Legacy** :
+      * Création du middleware `backend/middlewares/tenantSecurity.js` (`checkBoutiqueAccess`, `requireBoutiqueOwnership`) pour immuniser les routes contre les attaques IDOR.
+      * Refonte de `backend/app.js` : suppression du catch-all statique legacy (`../frontend/index.html`) qui masquait les erreurs API en retournant du HTML 200. Déploiement d'un handler JSON 404 strict (`{ success: false, error: 'Not Found' }`).
+    - **P1 - Modularisation du Monolithe Caisse POS** :
+      * Extraction de `PosModalGestionPins.tsx` (523 lignes) : gestion complète du trousseau de PINs, des rôles caissier/superviseur, design épuré, zéro emoji, icônes Lucide.
+      * Extraction de `PosPanierSidebar.tsx` (552 lignes) : colonne latérale de commande, grille de modes de paiement vectorielle, Fast Tender, total HT/TVA/TTC, clôture et encaissement.
+      * Déport de 200 lignes de styles globaux inline `<style jsx global>` vers `frontend-next/src/app/boutique/caisse/caisse.css`.
+      * Réduction nette de plus de 900 lignes dans `CaisseClient.tsx`.
+      * Dédoublonnage et nettoyage de la keyframe `@keyframes modalPop` dans `globals.css`.
+    - **P2 - ADN de Marque & Remplacement des Béquilles Emojis** :
+      * Modernisation de `DashboardFacile.tsx` : suppression des émojis (`🏪`, `⚡`), remplacement de la numérotation scolaire par des badges statut `.badge-npl`, intégration du vocabulaire marchand ouest-africain authentique.
+      * Modernisation de `PageHeader.tsx` : suppression du fond `#0f172a` au profit du token `--navy: #1C2B4A`, stylisation des boutons d'action via `.btn-npl`.
+      * Modernisation de `HeroDualTrack.tsx` : suppression des tailles de police arbitraires (`12.5px`, `9.5px`), suppression des drapeaux emojis superflus, intégration des classes du Design System.
+    - **P3 - Outillage Qualité & Standard Ingénieur Senior** :
+      * Création de `frontend-next/scripts/lint-ai-slop.mjs` (disponible via `npm run lint:slop`) : linter automatisé scannant les composants monolithiques (>800 lignes), les émojis dans le JSX et les catch silencieux.
+      * Intégration des 4 Règles d'Or Anti-IA-Slop dans `AGENTS.md`.
+  * **🧪 3. Validation & Tests** :
+    - 24/24 suites de tests unitaires Jest exécutées et validées avec succès (**209/209 tests passed**).
+    - Validation TypeScript `tsc --noEmit` à **100% (0 erreur)** sur l'intégralité de `frontend-next`.
+    - Linter `npm run lint:slop` opérationnel et intégré aux scripts de `package.json`.
+
 - **Optimisation & Refonte Responsive Mobile du Social Shop (Dashboard Marchand & Vitrine Publique) (`frontend-next/src/app/globals.css`, `frontend-next/src/app/boutique/SocialShopManager.tsx`, `frontend-next/src/app/boutiques/[id]/SocialShopFeed.tsx`) (09 septembre 2026)** 📱✨🛍️ :
   * **🎯 1. Contexte & Diagnostic Clé** :
     - *Observation Utilisateur* : « *revoir la version mobile pas bien adapte pour certaine mobile* » avec capture d'écran mobile.

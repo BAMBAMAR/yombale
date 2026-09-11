@@ -121,20 +121,20 @@ export default function HeroDualTrack({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 7,
-              padding: '7px 16px',
+              gap: 8,
+              padding: '8px 18px',
               borderRadius: '9999px',
-              fontSize: 12.5,
+              fontSize: 13,
               fontWeight: activeTab === 'acheteur' ? 800 : 600,
               border: 'none',
               cursor: 'pointer',
               background: activeTab === 'acheteur' ? '#FFFFFF' : 'transparent',
               color: activeTab === 'acheteur' ? 'var(--navy, #1C2B4A)' : 'var(--text2, #5A4E42)',
-              boxShadow: activeTab === 'acheteur' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+              boxShadow: activeTab === 'acheteur' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.15s ease'
             }}
           >
-            <ShoppingBag size={15} color={activeTab === 'acheteur' ? 'var(--accent, #C75B00)' : 'currentColor'} />
+            <ShoppingBag size={16} color={activeTab === 'acheteur' ? 'var(--accent, #C75B00)' : 'currentColor'} />
             <span>Acheteur &amp; Comparateur</span>
           </button>
 
@@ -146,32 +146,22 @@ export default function HeroDualTrack({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 7,
-              padding: '7px 16px',
+              gap: 8,
+              padding: '8px 18px',
               borderRadius: '9999px',
-              fontSize: 12.5,
+              fontSize: 13,
               fontWeight: activeTab === 'marchand' ? 800 : 600,
               border: 'none',
               cursor: 'pointer',
               background: activeTab === 'marchand' ? 'var(--navy, #1C2B4A)' : 'transparent',
               color: activeTab === 'marchand' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
-              boxShadow: activeTab === 'marchand' ? '0 3px 10px rgba(28,43,74,0.3)' : 'none',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+              boxShadow: activeTab === 'marchand' ? '0 3px 10px rgba(28,43,74,0.25)' : 'none',
+              transition: 'all 0.15s ease'
             }}
           >
-            <Store size={15} color={activeTab === 'marchand' ? '#FED7AA' : 'currentColor'} />
+            <Store size={16} color={activeTab === 'marchand' ? '#FED7AA' : 'currentColor'} />
             <span>Commerçant &amp; Caisse POS</span>
-            <span
-              style={{
-                fontSize: 9.5,
-                fontWeight: 900,
-                background: 'var(--accent, #C75B00)',
-                color: '#fff',
-                padding: '1.5px 6px',
-                borderRadius: 8,
-                letterSpacing: '0.02em'
-              }}
-            >
+            <span className="badge-npl badge-npl-accent" style={{ fontSize: 10, padding: '2px 6px' }}>
               PRO
             </span>
           </button>
@@ -187,13 +177,10 @@ export default function HeroDualTrack({
             {/* Colonne Gauche : Recherche et Catégories */}
             <div className="hero-split-left">
               <div>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'var(--orange2, #FFF3E8)', color: 'var(--accent, #C75B00)', padding: '3px 10px', borderRadius: 16,
-                  fontSize: 11, fontWeight: 800, marginBottom: 6, border: '1px solid #FFEDD5',
-                  letterSpacing: '0.01em',
-                }}>
-                  <span>🇸🇳 Le 1er Comparateur &amp; Marketplace du Sénégal</span>
+                <div style={{ marginBottom: 8 }}>
+                  <span className="badge-npl badge-npl-accent" style={{ fontSize: 11 }}>
+                    Plateforme Officielle · Comparateur &amp; Boutiques Dakar
+                  </span>
                 </div>
 
                 <h1 style={{

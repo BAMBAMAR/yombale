@@ -33,6 +33,9 @@ import { usePosShortcuts } from './hooks/usePosShortcuts'
 import PosChangerCaissierModal, { CaissierItem } from './components/PosChangerCaissierModal'
 import PosPairageModal from './components/PosPairageModal'
 import PosTicketsAttenteBar from './components/PosTicketsAttenteBar'
+import PosModalGestionPins from './components/PosModalGestionPins'
+import PosPanierSidebar from './components/PosPanierSidebar'
+import './caisse.css'
 
 interface ProduitCaisse {
   id: string
@@ -1097,13 +1100,13 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             // Sélection par défaut : privilégier le premier caissier standard (role 'caissier')
             // afin d'éviter d'attribuer le rôle superviseur par défaut !
             setCaissierSelectionneId(prev => {
-              if (prev && actifs.some(c => c.id === prev)) return prev;
-              const defCaissier = actifs.find(c => c.role === 'caissier') || actifs[0];
+              if (prev && actifs.some((c: any) => c.id === prev)) return prev;
+              const defCaissier = actifs.find((c: any) => c.role === 'caissier') || actifs[0];
               return defCaissier.id;
             });
             setCaissierNom(prev => {
               if (prev && prev !== 'Caissier 1 (Bamba)') return prev;
-              const defCaissier = actifs.find(c => c.role === 'caissier') || actifs[0];
+              const defCaissier = actifs.find((c: any) => c.role === 'caissier') || actifs[0];
               return `${defCaissier.prenom || ''} ${defCaissier.nom || ''}`.trim() || defCaissier.nom;
             });
             if (verifierSiConfigObligatoire(actifs, bId)) {
@@ -2637,359 +2640,37 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   function renderModalesGestionPin() {
     return (
       <>
-        {/* ── Modale de Configuration Initiale Obligatoire des Codes PIN ────── */}
-        {modalConfigObligatoire && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.88)', backdropFilter: 'blur(6px)', zIndex: 12000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <div style={{ background: '#ffffff', borderRadius: 20, padding: 32, width: '100%', maxWidth: 480, border: '2px solid #ea580c', boxShadow: '0 25px 60px -15px rgba(234,88,12,0.3)', textAlign: 'center' }}>
-              <div style={{ width: 64, height: 64, borderRadius: 16, background: '#fff7ed', border: '1.5px solid #fed7aa', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 16px' }}>
-                🛡️
-              </div>
-              
-              <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 900, color: '#0f172a' }}>
-                Sécurisation Obligatoire du POS
-              </h2>
-              <p style={{ margin: '0 0 20px', fontSize: 13, color: '#475569', lineHeight: 1.5 }}>
-                Pour protéger vos recettes et empêcher tout accès avec les codes d&apos;usine, personnalisez vos <strong>codes PIN secrets</strong> avant d&apos;encaisser.
-              </p>
+        {/* Modale Configuration Obligatoire */}
+        <PosModalGestionPins
+          isOpen={modalConfigObligatoire}
+          isObligatoire={true}
+          boutiqueId={boutiqueActiveId}
+          caissiersList={caissiersList}
+          onClose={() => setModalConfigObligatoire(false)}
+          onSuccess={() => {
+            setModalConfigObligatoire(false)
+            if (boutiqueActiveId) chargerCaissiersEtSession(boutiqueActiveId)
+          }}
+          onRefreshCaissiers={() => {
+            if (boutiqueActiveId) chargerCaissiersEtSession(boutiqueActiveId)
+          }}
+        />
 
-              {erreurConfigObligatoire && (
-                <div style={{ padding: '10px 14px', borderRadius: 10, fontSize: 12.5, fontWeight: 700, marginBottom: 16, background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', textAlign: 'left' }}>
-                  ⚠️ {erreurConfigObligatoire}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 24, textAlign: 'left' }}>
-                <div style={{ background: '#fff7ed', padding: 14, borderRadius: 12, border: '1px solid #fed7aa' }}>
-                  <label style={{ fontSize: 12, color: '#9a3412', display: 'block', fontWeight: 800, marginBottom: 4 }}>
-                    👑 1. Code PIN Superviseur / Gérant (4 à 6 chiffres)
-                  </label>
-                  <span style={{ fontSize: 11, color: '#c2410c', display: 'block', marginBottom: 8 }}>
-                    Autorise les remises, annulations et clôtures Z.
-                  </span>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="••••"
-                    value={pinObligatoireSuperviseur}
-                    onChange={e => setPinObligatoireSuperviseur(e.target.value.replace(/\D/g, ''))}
-                    style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1.5px solid #ea580c', background: '#ffffff', color: '#0f172a', fontSize: 22, fontWeight: 900, letterSpacing: '0.3em', boxSizing: 'border-box', textAlign: 'center' }}
-                  />
-                </div>
-
-                <div style={{ background: '#f8fafc', padding: 14, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                  <label style={{ fontSize: 12, color: '#334155', display: 'block', fontWeight: 800, marginBottom: 4 }}>
-                    👤 2. Code PIN Caissier Principal (4 à 6 chiffres)
-                  </label>
-                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 8 }}>
-                    Code utilisé quotidiennement pour enregistrer les ventes.
-                  </span>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="••••"
-                    value={pinObligatoireCaissier}
-                    onChange={e => setPinObligatoireCaissier(e.target.value.replace(/\D/g, ''))}
-                    style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1.5px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 22, fontWeight: 900, letterSpacing: '0.3em', boxSizing: 'border-box', textAlign: 'center' }}
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={soumettreConfigObligatoire}
-                disabled={savingConfigObligatoire || pinObligatoireSuperviseur.length < 4 || pinObligatoireCaissier.length < 4}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: 12,
-                  background: (pinObligatoireSuperviseur.length >= 4 && pinObligatoireCaissier.length >= 4) ? '#ea580c' : '#cbd5e1',
-                  color: '#ffffff', border: 'none', fontWeight: 900, fontSize: 15, cursor: (pinObligatoireSuperviseur.length >= 4 && pinObligatoireCaissier.length >= 4) ? 'pointer' : 'not-allowed',
-                  boxShadow: '0 4px 14px rgba(234,88,12,0.3)', transition: 'background 0.15s'
-                }}
-              >
-                {savingConfigObligatoire ? '⏳ Enregistrement sécurisé...' : '🔒 Valider et Activer la Caisse POS →'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Modale Avancée : Gestion de l'Équipe & Modification des PINs ─── */}
-        {modalConfigPin && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)', zIndex: 11000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-            <div style={{ background: '#ffffff', borderRadius: 20, width: '100%', maxWidth: 580, maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: '1.5px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
-              
-              {/* Header */}
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, background: '#fff7ed', border: '1px solid #fed7aa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-                    👥
-                  </div>
-                  <div>
-                    <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a' }}>
-                      Équipe & Modification des PINs
-                    </h2>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
-                      Espace d&apos;administration réservé au Gérant
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setModalConfigPin(false)}
-                  style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: 8, color: '#64748b', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Navigation par Onglets */}
-              <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', padding: '6px 16px 0' }}>
-                <button
-                  onClick={() => setOngletConfigPin('liste')}
-                  style={{
-                    padding: '10px 16px', background: 'none', border: 'none',
-                    borderBottom: ongletConfigPin === 'liste' ? '2.5px solid #ea580c' : '2.5px solid transparent',
-                    color: ongletConfigPin === 'liste' ? '#ea580c' : '#64748b',
-                    fontWeight: 800, fontSize: 13, cursor: 'pointer'
-                  }}
-                >
-                  👥 Membres de l&apos;Équipe ({caissiersList.length})
-                </button>
-                <button
-                  onClick={() => setOngletConfigPin('ajouter')}
-                  style={{
-                    padding: '10px 16px', background: 'none', border: 'none',
-                    borderBottom: ongletConfigPin === 'ajouter' ? '2.5px solid #ea580c' : '2.5px solid transparent',
-                    color: ongletConfigPin === 'ajouter' ? '#ea580c' : '#64748b',
-                    fontWeight: 800, fontSize: 13, cursor: 'pointer'
-                  }}
-                >
-                  ➕ Ajouter un Caissier
-                </button>
-              </div>
-
-              {/* Corps défilable */}
-              <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
-                {ongletConfigPin === 'liste' ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ padding: '10px 12px', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', color: '#1e40af', fontSize: 12, lineHeight: 1.4 }}>
-                      💡 <strong>Sécurité</strong> : Chaque membre dispose de son propre code PIN secret. Modifiez-le à tout moment ci-dessous.
-                    </div>
-
-                    {caissiersList.map((c: any) => {
-                      const isSuper = c.role === 'superviseur' || c.role === 'admin';
-                      const isTrivial = CODES_PIN_TRIVIAUX.includes(String(c.code_pin || '').trim());
-                      const showPin = showPinState[c.id] || false;
-                      const isEditing = editPinsState[c.id] !== undefined;
-
-                      return (
-                        <div key={c.id} style={{
-                          background: '#f8fafc', border: isTrivial ? '1.5px solid #fca5a5' : '1px solid #e2e8f0',
-                          borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div style={{
-                                width: 36, height: 36, borderRadius: '50%',
-                                background: isSuper ? '#fef3c7' : '#e0e7ff',
-                                color: isSuper ? '#b45309' : '#4338ca',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontWeight: 800, fontSize: 14
-                              }}>
-                                {(c.nom || 'C').charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>
-                                    {c.prenom} {c.nom}
-                                  </span>
-                                  <span style={{
-                                    fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 6,
-                                    background: isSuper ? '#fff7ed' : '#f1f5f9',
-                                    color: isSuper ? '#c2410c' : '#475569',
-                                    border: isSuper ? '1px solid #fed7aa' : '1px solid #e2e8f0'
-                                  }}>
-                                    {isSuper ? '👑 Superviseur' : '👤 Caissier'}
-                                  </span>
-                                </div>
-                                {isTrivial && (
-                                  <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 700, display: 'block', marginTop: 2 }}>
-                                    ⚠️ Code PIN par défaut — À personnaliser d&apos;urgence !
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={() => toggleActifCaissier(c.id, c.actif !== false)}
-                              style={{
-                                padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700,
-                                background: c.actif !== false ? '#dcfce7' : '#f1f5f9',
-                                color: c.actif !== false ? '#166534' : '#64748b',
-                                border: 'none', cursor: 'pointer'
-                              }}
-                            >
-                              {c.actif !== false ? '✅ Actif' : 'Désactivé'}
-                            </button>
-                          </div>
-
-                          {/* Modification Inline du PIN */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #e2e8f0', paddingTop: 10 }}>
-                            {isEditing ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-                                <input
-                                  type={showPin ? 'text' : 'password'}
-                                  inputMode="numeric"
-                                  maxLength={6}
-                                  placeholder="Nouveau PIN"
-                                  value={editPinsState[c.id]}
-                                  onChange={e => {
-                                    const val = e.target.value.replace(/\D/g, '');
-                                    setEditPinsState(prev => ({ ...prev, [c.id]: val }));
-                                  }}
-                                  style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1.5px solid #ea580c', background: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '0.15em' }}
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowPinState(prev => ({ ...prev, [c.id]: !prev[c.id] }))}
-                                  style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, padding: '8px', cursor: 'pointer', fontSize: 14 }}
-                                >
-                                  {showPin ? '🙈' : '👁️'}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => modifierPinCaissier(c.id)}
-                                  disabled={savingPinId === c.id || (editPinsState[c.id]?.length || 0) < 4}
-                                  style={{ padding: '8px 14px', borderRadius: 8, background: '#ea580c', color: '#fff', border: 'none', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
-                                >
-                                  {savingPinId === c.id ? '...' : '💾 Enregistrer'}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditPinsState(prev => {
-                                      const copy = { ...prev };
-                                      delete copy[c.id];
-                                      return copy;
-                                    });
-                                  }}
-                                  style={{ padding: '8px 10px', borderRadius: 8, background: '#e2e8f0', color: '#475569', border: 'none', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Code PIN :</span>
-                                  <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', letterSpacing: '0.15em', background: '#e2e8f0', padding: '2px 8px', borderRadius: 4 }}>
-                                    {showPin ? c.code_pin : '••••'}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowPinState(prev => ({ ...prev, [c.id]: !prev[c.id] }))}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, padding: '0 4px' }}
-                                    title="Afficher/Masquer le code PIN"
-                                  >
-                                    {showPin ? '🙈' : '👁️'}
-                                  </button>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditPinsState(prev => ({ ...prev, [c.id]: '' }));
-                                  }}
-                                  style={{ padding: '4px 10px', borderRadius: 6, background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
-                                >
-                                  ✏️ Modifier le PIN
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  /* Formulaire d'Ajout d'un Nouveau Caissier */
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div>
-                        <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Prénom</label>
-                        <input
-                          type="text"
-                          placeholder="ex: Aminata"
-                          value={nouveauCaissierPrenom}
-                          onChange={e => setNouveauCaissierPrenom(e.target.value)}
-                          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Nom *</label>
-                        <input
-                          type="text"
-                          placeholder="ex: Diallo"
-                          value={nouveauCaissierNom}
-                          onChange={e => setNouveauCaissierNom(e.target.value)}
-                          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Rôle de Sécurité</label>
-                      <select
-                        value={nouveauCaissierRole}
-                        onChange={e => setNouveauCaissierRole(e.target.value as any)}
-                        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', boxSizing: 'border-box' }}
-                      >
-                        <option value="caissier">👤 Caissier Standard (Encaissement uniquement)</option>
-                        <option value="superviseur">👑 Gérant / Superviseur (Remises, Annulations, Clôtures)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>Code PIN Secret (4 à 6 chiffres) *</label>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={6}
-                        placeholder="•••• (ex: 5829)"
-                        value={nouveauCaissierPin}
-                        onChange={e => setNouveauCaissierPin(e.target.value.replace(/\D/g, ''))}
-                        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1.5px solid #cbd5e1', fontSize: 18, fontWeight: 800, textAlign: 'center', letterSpacing: '0.2em', boxSizing: 'border-box' }}
-                      />
-                      <span style={{ fontSize: 11, color: '#64748b', display: 'block', marginTop: 4 }}>
-                        ⚠️ Les codes triviaux (1234, 0000, 9999...) sont automatiquement rejetés.
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={ajouterNouveauCaissier}
-                      disabled={addingCaissierState || !nouveauCaissierNom || nouveauCaissierPin.length < 4}
-                      style={{
-                        marginTop: 10, padding: '12px', borderRadius: 10, background: '#ea580c', color: '#fff', border: 'none',
-                        fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-                      }}
-                    >
-                      <span>{addingCaissierState ? '⏳' : '🏪 +'}</span>
-                      <span>{addingCaissierState ? 'Création en cours...' : 'Ajouter ce membre à l\'équipe'}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div style={{ padding: '14px 24px', borderTop: '1px solid #f1f5f9', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setModalConfigPin(false)}
-                  style={{ padding: '10px 18px', borderRadius: 8, background: '#e2e8f0', color: '#475569', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-                >
-                  Fermer
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Modale Gestion Équipe / Modification des PINs */}
+        <PosModalGestionPins
+          isOpen={modalConfigPin}
+          isObligatoire={false}
+          boutiqueId={boutiqueActiveId}
+          caissiersList={caissiersList}
+          onClose={() => setModalConfigPin(false)}
+          onSuccess={() => {
+            setModalConfigPin(false)
+            if (boutiqueActiveId) chargerCaissiersEtSession(boutiqueActiveId)
+          }}
+          onRefreshCaissiers={() => {
+            if (boutiqueActiveId) chargerCaissiersEtSession(boutiqueActiveId)
+          }}
+        />
 
         {/* Modale de Validation Superviseur */}
         {modalSuperviseur && (
@@ -3026,7 +2707,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     )
   }
 
-  // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ & SÉLECTION CAISSIER ─────────────────
+    // ── ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ & SÉLECTION CAISSIER ─────────────────
   if (verrouille) {
     const bqName = boutiques.find(b => b.id === boutiqueActiveId)?.nom || (boutiques[0]?.nom) || ''
     const caissiersActifs = caissiersList.filter((c: any) => c.actif !== false)
@@ -3363,7 +3044,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 type="button"
                 onClick={() => {
                   const activeB = boutiques.find(b => b.id === boutiqueActiveId) || boutiques[0];
-                  const tok = activeB?.caisse_token || boutiqueActiveId;
+                  const tok = (activeB as any)?.caisse_token || boutiqueActiveId;
                   if (tok && typeof window !== 'undefined') {
                     const terminalUrl = `${window.location.origin}/boutique/caisse?token=${tok}`;
                     navigator.clipboard.writeText(terminalUrl);
@@ -3446,212 +3127,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
       )}
 
-      {/* Styles Globaux Caisse POS (Plein Écran, 3 Colonnes & Thèmes) */}
-      <style jsx global>{`
-        @media screen {
-          body header[role="banner"],
-          body nav.navbar,
-          body .navbar,
-          body .mobile-nav,
-          body .bottom-bars,
-          body footer,
-          body .site-footer {
-            display: none !important;
-          }
-
-          .caisse-main-layout.has-3-cols {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1.35fr) 280px minmax(420px, 1fr) !important;
-            height: calc(100vh - 52px) !important;
-            max-height: calc(100vh - 52px) !important;
-            overflow: hidden !important;
-          }
-
-          .caisse-main-layout.has-2-cols {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1.15fr) minmax(460px, 1fr) !important;
-            height: calc(100vh - 52px) !important;
-            max-height: calc(100vh - 52px) !important;
-            overflow: hidden !important;
-          }
-
-          @media (max-width: 1200px) {
-            .caisse-main-layout.has-3-cols {
-              grid-template-columns: minmax(0, 1.15fr) minmax(460px, 1fr) !important;
-            }
-            .caisse-center-dock {
-              display: none !important;
-            }
-          }
-
-          @media (max-width: 1024px) {
-            .caisse-main-layout.has-3-cols,
-            .caisse-main-layout.has-2-cols {
-              grid-template-columns: 1fr !important;
-              height: auto !important;
-              max-height: none !important;
-              overflow-y: auto !important;
-            }
-          }
-
-          /* Mode Nuit & Mode Jour Variables */
-          .pos-theme-dark {
-            --pos-bg: #090d16 !important;
-            --pos-surface: #131b2e !important;
-            --pos-surface2: #1e293b !important;
-            --pos-surface3: #334155 !important;
-            --pos-text: #ffffff !important;
-            --pos-text2: #cbd5e1 !important;
-            --pos-text3: #94a3b8 !important;
-            --pos-navy: #ffffff !important;
-            --pos-border: #29354d !important;
-            --pos-primary: #f97316 !important;
-            --pos-primary-bg: rgba(249, 115, 22, 0.16) !important;
-            --pos-shadow: 0 4px 14px rgba(0,0,0,0.5) !important;
-            --pos-shadow-lg: 0 10px 30px rgba(0,0,0,0.6) !important;
-          }
-
-          .pos-theme-light {
-            --pos-bg: #f8fafc !important;
-            --pos-surface: #ffffff !important;
-            --pos-surface2: #f1f5f9 !important;
-            --pos-surface3: #e2e8f0 !important;
-            --pos-text: #0f172a !important;
-            --pos-text2: #475569 !important;
-            --pos-text3: #94a3b8 !important;
-            --pos-navy: #1e3a5f !important;
-            --pos-border: #e2e8f0 !important;
-            --pos-primary: #C75B00 !important;
-            --pos-primary-bg: #fff7ed !important;
-            --pos-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
-            --pos-shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1) !important;
-          }
-
-          .pos-theme-dark .pos-btn-ghost {
-            background-color: #1e293b !important;
-            color: #cbd5e1 !important;
-            border: 1px solid #334155 !important;
-          }
-          .pos-theme-dark .pos-btn-ghost:hover {
-            background-color: #334155 !important;
-            color: #ffffff !important;
-          }
-          .pos-theme-dark .pos-produit-card {
-            background: #131b2e !important;
-            border-color: #29354d !important;
-          }
-          .pos-theme-dark .pos-produit-card:hover {
-            border-color: #f97316 !important;
-            box-shadow: 0 4px 16px rgba(249,115,22,0.25) !important;
-          }
-
-          .caisse-btn-retour {
-            transition: all 0.15s ease;
-          }
-          .pos-theme-dark .caisse-btn-retour {
-            background-color: #1e293b !important;
-            color: #ffffff !important;
-            border: 1px solid #475569 !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
-          }
-          .pos-theme-dark .caisse-btn-retour:hover {
-            background-color: #334155 !important;
-            border-color: #f97316 !important;
-            color: #ffffff !important;
-          }
-          .pos-theme-light .caisse-btn-retour {
-            background-color: #1e3a5f !important;
-            color: #ffffff !important;
-            border: 1px solid #1e3a5f !important;
-            box-shadow: 0 2px 6px rgba(28,43,74,0.25) !important;
-          }
-          .pos-theme-light .caisse-btn-retour:hover {
-            background-color: #152840 !important;
-          }
-
-          .pos-theme-dark .caisse-boutique-select {
-            background-color: #1e293b !important;
-            color: #ffffff !important;
-            border-color: #475569 !important;
-          }
-
-          .pos-theme-dark .pos-btn-danger {
-            background: rgba(220, 38, 38, 0.2) !important;
-            color: #f87171 !important;
-            border-color: rgba(220, 38, 38, 0.4) !important;
-          }
-          .pos-theme-dark .pos-btn-danger:hover {
-            background: rgba(220, 38, 38, 0.3) !important;
-          }
-          .pos-theme-dark .pos-btn-success {
-            background: rgba(22, 163, 74, 0.2) !important;
-            color: #4ade80 !important;
-            border-color: rgba(22, 163, 74, 0.4) !important;
-          }
-          .pos-theme-dark .pos-btn-success:hover {
-            background: rgba(22, 163, 74, 0.3) !important;
-          }
-
-          .caisse-desktop-only {
-            display: inline-flex !important;
-          }
-
-          @media (max-width: 640px) {
-            .caisse-desktop-only {
-              display: none !important;
-            }
-          }
-
-          .hover-bg-slate:hover {
-            background-color: var(--pos-surface2) !important;
-          }
-          .ticket-print-container {
-            display: none !important;
-          }
-        }
-        @media print {
-          html, body {
-            background: #ffffff !important;
-            color: #000000 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            height: auto !important;
-            min-height: 0 !important;
-            overflow: visible !important;
-          }
-          header,
-          footer,
-          nav,
-          .site-header,
-          .site-footer,
-          .navbar-icon-actions,
-          .caisse-header,
-          .caisse-main-layout,
-          .btn-premium,
-          button,
-          input,
-          select {
-            display: none !important;
-          }
-          .ticket-print-container, .ticket-print-container * {
-            visibility: visible !important;
-          }
-          .ticket-print-container {
-            display: block !important;
-            position: static !important;
-            width: 80mm !important;
-            font-family: 'Courier New', Courier, monospace !important;
-            font-size: 12px !important;
-            line-height: 1.4 !important;
-            color: #000000 !important;
-            background: #ffffff !important;
-            padding: 10px !important;
-            margin: 0 auto !important;
-            box-sizing: border-box !important;
-            page-break-inside: avoid !important;
-          }
-        }
-      `}</style>
+      {/* Styles Globaux Caisse POS (Plein Écran, 3 Colonnes & Thèmes) -> styles déportés dans ./caisse.css */}
 
       {/* En-tête MOBILE-FIRST NOPALOU POS — Style Terminal POS Pro (Shopify/Square) */}
       <header className="caisse-header no-print" style={{
@@ -4113,7 +3589,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                       onClick={() => {
                         setMenuOutilsOuvert(false);
                         const activeB = boutiques.find(b => b.id === boutiqueActiveId) || boutiques[0];
-                        const tok = activeB?.caisse_token || boutiqueActiveId;
+                        const tok = (activeB as any)?.caisse_token || boutiqueActiveId;
                         if (tok && typeof window !== 'undefined') {
                           const terminalUrl = `${window.location.origin}/boutique/caisse?token=${tok}`;
                           navigator.clipboard.writeText(terminalUrl);
@@ -4662,426 +4138,52 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         )}
 
         {/* Côté Droit : Ticket Panier & Encaissement POS */}
-        <div className={`ticket-section ${tabMobile === 'ticket' ? 'mobile-active' : 'mobile-hidden'}`} style={{ background: 'var(--pos-surface)', padding: '12px 10px 20px 10px', display: 'flex', flexDirection: 'column', gap: 8, boxSizing: 'border-box', maxWidth: '100%', height: '100%', minHeight: 0, overflowY: 'auto' }}>
-          {/* Bouton retour au catalogue sur Mobile */}
-          <button
-            type="button"
-            onClick={() => setTabMobile('catalogue')}
-            className="caisse-back-to-catalogue-btn no-print"
-          >
-            ⬅️ Revenir au Catalogue produits ({produitsFiltres.length})
-          </button>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--pos-border)', paddingBottom: 10, gap: 8, flexShrink: 0 }}>
-            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: 'var(--pos-text)', flexShrink: 0 }}>🛒 {t('caisse.currentTicket')}</h2>
-
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-              {panier.length > 0 && (
-                <button
-                  onClick={mettrePanierEnAttente}
-                  title="Mettre en attente le ticket pour servir le client suivant"
-                  style={{ background: 'var(--pos-primary)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  ⏸️ {t('caisse.onHold')}
-                </button>
-              )}
-              {panier.length > 0 && (
-                <button onClick={viderPanier} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: '2px 4px', whiteSpace: 'nowrap' }}>
-                  {t('caisse.clear')}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Contenu Panier */}
-          <div style={{ flex: 1, minHeight: 140, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 2px' }}>
-            {!session ? (
-              <div style={{
-                background: 'linear-gradient(135deg, var(--pos-navy) 0%, #243860 100%)',
-                color: '#ffffff',
-                borderRadius: 16,
-                padding: '24px 18px',
-                textAlign: 'center',
-                boxShadow: 'var(--pos-shadow-lg)',
-                margin: 'auto 0'
-              }}>
-                <div style={{ fontSize: 36, marginBottom: 8 }}>🔒</div>
-                <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 900, color: '#ffffff' }}>Session de Caisse Fermée</h3>
-                <p style={{ margin: '0 0 16px', fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>
-                  Déclarez votre fond de caisse initial pour ouvrir la session et commencer à encaisser vos clients.
-                </p>
-                <button
-                  onClick={() => setModalSessionOuverture(true)}
-                  className="pos-btn pos-btn-lg pos-btn-success"
-                  style={{ width: '100%', fontSize: 14 }}
-                >
-                  🔓 Ouvrir la Session de Caisse →
-                </button>
-              </div>
-            ) : panier.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--pos-text3)' }}>
-                {/* Mini-strip KPI Session si active et sans panier */}
-                {session?.ventes && (
-                  <div style={{ background: 'var(--pos-surface2)', border: '1.5px solid var(--pos-border)', borderRadius: 12, padding: '10px 14px', marginBottom: 16, display: 'flex', justifyContent: 'space-around', alignItems: 'center', fontSize: 12, fontWeight: 700, color: 'var(--pos-text)', boxShadow: 'var(--pos-shadow)' }}>
-                    <div>💰 CA Session: <span style={{ color: 'var(--pos-primary)', fontWeight: 900, fontSize: 14 }}>{fcfa(session.ventes.total)}</span></div>
-                    <div style={{ opacity: 0.3 }}>|</div>
-                    <div>🧾 <span style={{ fontWeight: 800 }}>{session.ventes.nbVentes}</span> vente{session.ventes.nbVentes > 1 ? 's' : ''}</div>
-                    <div style={{ opacity: 0.3 }}>|</div>
-                    <div>💵 Cash: <span style={{ fontWeight: 800 }}>{fcfa(session.ventes.especes)}</span></div>
-                  </div>
-                )}
-                <span style={{ fontSize: 36, display: 'block', marginBottom: 4 }}>🧾</span>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--pos-text)' }}>{t('caisse.emptyTicketTitle')}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--pos-text3)' }}>{t('caisse.emptyTicketDesc')}</p>
-              </div>
-            ) : (
-              panier.map(item => (
-                <div key={item.produit.id} style={{ background: 'var(--pos-surface2)', border: item.quantite > item.produit.stock ? '1px solid #f59e0b' : '1px solid var(--pos-border)', borderRadius: 10, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, boxSizing: 'border-box', minHeight: 48, flexShrink: 0 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: '0 0 3px', fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: 'var(--pos-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.produit.nom}
-                    </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 11, color: 'var(--pos-primary)', fontWeight: 800 }}>{fcfa(item.prixUnitaire)}</span>
-                      {typeof item.produit.stock === 'number' && !isNaN(item.produit.stock) && item.quantite > item.produit.stock && (
-                        <span style={{ fontSize: 9, background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.4)', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>
-                          👑 Dépassement
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--pos-surface)', padding: '3px 6px', borderRadius: 6, border: '1px solid var(--pos-border)' }}>
-                      <button onClick={() => modifierQuantite(item.produit.id, -1)} style={{ background: 'none', border: 'none', color: 'var(--pos-text)', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}>-</button>
-                      <span style={{ fontSize: 13, fontWeight: 800, minWidth: 16, textAlign: 'center', color: 'var(--pos-text)' }}>{item.quantite}</span>
-                      <button onClick={() => modifierQuantite(item.produit.id, 1)} style={{ background: 'none', border: 'none', color: 'var(--pos-text)', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}>+</button>
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--pos-text)', textAlign: 'right', whiteSpace: 'nowrap' }}>{fcfa(item.prixUnitaire * item.quantite)}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Mode de Paiement */}
-          <div style={{ borderTop: '1px solid var(--pos-border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--pos-text2)', flexShrink: 0 }}>{t('caisse.paymentModeTitle')}</label>
-              
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                {/* Bouton Fidélité */}
-                <button
-                  type="button"
-                  onClick={() => setModalFidelite(true)}
-                  style={{
-                    background: clientFidelite ? 'var(--pos-primary-bg)' : 'var(--pos-surface2)',
-                    border: clientFidelite ? '1px solid var(--pos-primary)' : '1px solid var(--pos-border)',
-                    color: clientFidelite ? 'var(--pos-primary)' : 'var(--pos-text2)',
-                    borderRadius: 6,
-                    padding: '3px 8px',
-                    fontSize: 10.5,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  <span>⭐</span>
-                  <span>{clientFidelite ? clientFidelite.nom.split(' ')[0] : 'Fidélité'}</span>
-                  {cagnotteDeduite > 0 && <span style={{ color: '#16a34a' }}>(-{fcfa(cagnotteDeduite)})</span>}
-                </button>
-
-                {/* Bouton Remise */}
-                {panier.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={ouvrirModalRemise}
-                    style={{
-                      background: remisePourcentage > 0 ? 'var(--pos-primary-bg)' : 'var(--pos-surface2)',
-                      border: remisePourcentage > 0 ? '1px solid var(--pos-primary)' : '1px solid var(--pos-border)',
-                      color: remisePourcentage > 0 ? 'var(--pos-primary)' : 'var(--pos-text2)',
-                      borderRadius: 6,
-                      padding: '3px 8px',
-                      fontSize: 10.5,
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    <span>🏷️</span>
-                    <span>{remisePourcentage > 0 ? `Remise (${remisePourcentage}%)` : 'Remise'}</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Badge Fidélité Actif si client rattaché */}
-            {clientFidelite && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '4px 8px', borderRadius: 6, fontSize: 11 }}>
-                <span style={{ color: '#166534', fontWeight: 700 }}>
-                  👤 {clientFidelite.nom} ({clientFidelite.telephone})
-                </span>
-                <span style={{ color: '#15803d', fontWeight: 800 }}>
-                  Cagnotte: {fcfa(clientFidelite.cagnotte_fcfa)}
-                </span>
-              </div>
-            )}
-
-            <div className="paiement-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-              {[
-                { id: 'especes', label: '💵', text: t('caisse.cash') },
-                { id: 'wave', label: '🌊', text: t('caisse.wave') },
-                { id: 'orange_money', label: '🍊', text: t('caisse.orangeMoney') },
-                { id: 'carte', label: '💳', text: t('caisse.card') },
-                { id: 'mixte', label: '🔀', text: t('caisse.mixed') },
-                { id: 'credit_client', label: '📝', text: t('caisse.credit') },
-              ].map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setModePaiement(m.id as any)}
-                  style={{
-                    minHeight: 48, borderRadius: 10,
-                    background: modePaiement === m.id ? 'var(--pos-primary)' : 'var(--pos-surface)',
-                    color: modePaiement === m.id ? '#fff' : 'var(--pos-text2)',
-                    fontWeight: modePaiement === m.id ? 800 : 600,
-                    fontSize: 11, cursor: 'pointer',
-                    border: modePaiement === m.id ? '2px solid var(--pos-primary)' : '1.5px solid var(--pos-border)',
-                    boxShadow: modePaiement === m.id ? '0 3px 10px rgba(199,91,0,.28)' : 'none',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: 2, padding: '6px 4px',
-                    transition: 'all 0.12s ease',
-                  }}
-                >
-                  <span style={{ fontSize: 16, lineHeight: 1 }}>{m.label}</span>
-                  <span style={{ fontSize: 10, fontWeight: 'inherit', lineHeight: 1 }}>{m.text}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Saisie Espèces Standard + Fast Tender */}
-            {modePaiement === 'especes' && totalPanier > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', padding: 8, borderRadius: 8 }}>
-                  <input
-                    type="number"
-                    placeholder="Montant reçu (Espèces)..."
-                    value={montantRecu}
-                    onChange={e => setMontantRecu(e.target.value)}
-                    style={{ flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 13, fontWeight: 700 }}
-                  />
-                  <div style={{ fontSize: 12, textAlign: 'right' }}>
-                    <span style={{ color: '#64748b', display: 'block' }}>{t('caisse.changeToReturn')}</span>
-                    <span style={{ fontWeight: 900, color: '#16a34a', fontSize: 14 }}>{fcfa(monnaieARendre)}</span>
-                  </div>
-                </div>
-
-                {/* Boutons d'appoints automatiques Fast Tender */}
-                <PosFastTender
-                  totalNet={netAPayer}
-                  montantRecu={montantRecu}
-                  onSelectMontant={m => setMontantRecu(String(m))}
-                />
-              </div>
-            )}
-
-            {/* Saisie Paiement Mixte Partagé */}
-            {modePaiement === 'mixte' && totalPanier > 0 && (
-              <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ margin: 0, fontSize: 12, fontWeight: 800, color: '#c2410c' }}>🔀 Répartition Paiement Mixte</p>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 10, color: '#9a3412', display: 'block', marginBottom: 2 }}>Montant Espèces (FCFA)</label>
-                    <input
-                      type="number"
-                      placeholder="Ex: 5000"
-                      value={montantEspecesMixte}
-                      onChange={e => setMontantEspecesMixte(e.target.value)}
-                      style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 13, fontWeight: 700, boxSizing: 'border-box' }}
-                    />
-                  </div>
-
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 10, color: '#9a3412', display: 'block', marginBottom: 2 }}>Second Mode</label>
-                    <select
-                      value={secondModeMixte}
-                      onChange={e => setSecondModeMixte(e.target.value as any)}
-                      style={{ width: '100%', padding: '6px 8px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 13, fontWeight: 700, boxSizing: 'border-box' }}
-                    >
-                      <option value="wave">🌊 Wave</option>
-                      <option value="orange_money">🍊 Orange Money</option>
-                      <option value="carte">💳 Carte Bancaire</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderTop: '1px solid #fed7aa', paddingTop: 6 }}>
-                  <span style={{ color: '#9a3412' }}>Reste en {secondModeMixte.toUpperCase()} :</span>
-                  <span style={{ fontWeight: 900, color: '#0284c7' }}>{fcfa(resteAPayerMixte)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Saisie Vente à Crédit / Carnet Client */}
-            {modePaiement === 'credit_client' && totalPanier > 0 && (
-              <div style={{ background: 'var(--pos-surface2)', border: '1px solid var(--pos-border)', padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--pos-primary)' }}>📒 Client à débiter dans le carnet</span>
-                  <button
-                    type="button"
-                    onClick={() => { setModalCarnet(true); setAfficherFormNouveauClient(true); }}
-                    style={{ background: 'var(--pos-primary)', color: '#fff', border: 'none', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    + Nouveau Client
-                  </button>
-                </div>
-
-                <select
-                  value={clientCreditIdPOS}
-                  onChange={e => setClientCreditIdPOS(e.target.value)}
-                  style={{ width: '100%', padding: '8px', borderRadius: 8, border: '1px solid var(--pos-border)', background: 'var(--pos-surface)', fontSize: 13, fontWeight: 700, color: 'var(--pos-text)' }}
-                >
-                  <option value="">-- Choisir un client du carnet --</option>
-                  {clientsCredits.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.nom} ({c.telephone}) — Solde: {c.solde > 0 ? `Dette: ${fcfa(c.solde)}` : c.solde < 0 ? `Avance: ${fcfa(Math.abs(c.solde))}` : '0 FCFA'}
-                    </option>
-                  ))}
-                </select>
-
-                {clientCreditIdPOS && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--pos-primary)', display: 'block', marginBottom: 2 }}>Promesse / Échéance</label>
-                        <input
-                          type="date"
-                          value={creditDateEcheancePOS}
-                          onChange={e => setCreditDateEcheancePOS(e.target.value)}
-                          style={{ width: '100%', padding: '6px', borderRadius: 6, border: '1px solid var(--pos-border)', background: 'var(--pos-surface)', color: 'var(--pos-text)', fontSize: 12 }}
-                        />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--pos-primary)', display: 'block', marginBottom: 2 }}>Note / Justification</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: Pris par son fils..."
-                          value={creditNotePOS}
-                          onChange={e => setCreditNotePOS(e.target.value)}
-                          style={{ width: '100%', padding: '6px', borderRadius: 6, border: '1px solid var(--pos-border)', background: 'var(--pos-surface)', color: 'var(--pos-text)', fontSize: 12 }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Récapitulatif Total & Taxes */}
-            <div style={{ background: 'var(--pos-surface2)', padding: 12, borderRadius: 10, marginBottom: 12, border: '1px solid var(--pos-border)', fontSize: 13, color: 'var(--pos-text2)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {regimeFiscal === 'reel' && !estExonereClient && (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>{t('caisse.totalHT')}</span>
-                    <span style={{ color: 'var(--pos-text)', fontWeight: 800 }}>{fcfa(totalHT)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>{t('caisse.tax')} ({tvaDefaut}%)</span>
-                    <span style={{ color: 'var(--pos-text)', fontWeight: 800 }}>{fcfa(totalTVA)}</span>
-                  </div>
-                </>
-              )}
-              {regimeFiscal === 'non_assujetti' && (
-                <div style={{ fontSize: 11, color: 'var(--pos-text3)', fontStyle: 'italic', textAlign: 'center', marginBottom: 4 }}>
-                  TVA non applicable - Art. 286 du CGI
-                </div>
-              )}
-              {timbreFiscal > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f59e0b', fontWeight: 800 }}>
-                  <span>Timbre Fiscal (1% cash)</span>
-                  <span>{fcfa(timbreFiscal)}</span>
-                </div>
-              )}
-              {remisePourcentage > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f87171', fontWeight: 800 }}>
-                  <span>{t('caisse.discount')} ({remisePourcentage}%)</span>
-                  <span>-{fcfa(montantRemise)}</span>
-                </div>
-              )}
-            </div>
-
-            {/* ── Zone Sticky : Total + Actions + Bouton ENCAISSER ── */}
-            <div style={{ position: 'sticky', bottom: 0, background: 'var(--pos-surface)', paddingTop: 10, borderTop: '1px solid var(--pos-border)', zIndex: 10, marginTop: 'auto' }}>
-
-              {/* Bannière Total Panier — Grand Format */}
-              {panier.length > 0 && (
-                <div className="pos-total-banner" style={{ marginBottom: 10 }}>
-                  <span className="pos-total-banner-label">{t('caisse.totalToCollect')}</span>
-                  <span className="pos-total-banner-amount">{fcfa(netAPayer)}</span>
-                  <div className="pos-total-banner-details">
-                    <span>{panier.reduce((s, i) => s + i.quantite, 0)} {panier.reduce((s, i) => s + i.quantite, 0) > 1 ? t('caisse.articlesPlural') : t('caisse.articleSingle')}</span>
-                    {remisePourcentage > 0 && <span>{t('caisse.discount')} {remisePourcentage}%</span>}
-                    {regimeFiscal === 'reel' && !estExonereClient && totalTVA > 0 && <span>{t('caisse.tax')} {tvaDefaut}% {t('caisse.vatIncluded')}</span>}
-                  </div>
-                </div>
-              )}
-
-              {panier.length === 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, padding: '0 4px' }}>
-                  <span style={{ fontSize: 13, color: 'var(--pos-text3)', fontWeight: 600 }}>{t('caisse.total')}</span>
-                  <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--pos-text2)' }}>0 FCFA</span>
-                </div>
-              )}
-
-              {/* Actions Devis / Proforma */}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8, padding: '0 4px' }}>
-                <button
-                  onClick={() => enregistrerDocumentCaisse('devis')}
-                  disabled={netAPayer === 0}
-                  className="pos-btn pos-btn-md pos-btn-ghost"
-                  style={{ flex: 1, fontWeight: 700, fontSize: 12, opacity: netAPayer === 0 ? 0.4 : 1 }}
-                >
-                  📄 {t('caisse.quoteBtn')}
-                </button>
-                <button
-                  onClick={() => enregistrerDocumentCaisse('proforma')}
-                  disabled={netAPayer === 0}
-                  className="pos-btn pos-btn-md pos-btn-ghost"
-                  style={{ flex: 1, fontWeight: 700, fontSize: 12, opacity: netAPayer === 0 ? 0.4 : 1 }}
-                >
-                  📄 {t('caisse.proformaBtn')}
-                </button>
-              </div>
-
-              {/* Bouton ENCAISSER — Dominant avec spinner loading */}
-              <div style={{ padding: '0 4px 14px' }}>
-                <button
-                  onClick={encaisserVente}
-                  disabled={netAPayer === 0 || encaissementEnCours}
-                  className="pos-btn-encaisser"
-                >
-                  {encaissementEnCours && netAPayer > 0 ? (
-                    <>
-                      <span className="pos-spinner" />
-                      <span>{t('common.loading')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M13 6l6 6-6 6"/>
-                      </svg>
-                      {t('caisse.checkoutAction')}
-                      {netAPayer > 0 && <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, marginLeft: 2 }}>· {fcfa(netAPayer)}</span>}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PosPanierSidebar
+          tabMobile={tabMobile}
+          onBackToCatalogue={() => setTabMobile('catalogue')}
+          panier={panier}
+          session={session}
+          produitsFiltresCount={produitsFiltres.length}
+          onMettreEnAttente={mettrePanierEnAttente}
+          onViderPanier={viderPanier}
+          onOuvrirSession={() => setModalSessionOuverture(true)}
+          onModifierQuantite={modifierQuantite}
+          onOuvrirRemise={() => setModalRemise(true)}
+          remisePourcentage={remisePourcentage}
+          montantRemise={montantRemise}
+          clientFidelite={clientFidelite}
+          cagnotteDeduite={cagnotteDeduite}
+          onOuvrirFidelite={() => setModalFidelite(true)}
+          modePaiement={modePaiement}
+          onSelectModePaiement={(mode: any) => setModePaiement(mode)}
+          montantRecu={montantRecu}
+          onSetMontantRecu={setMontantRecu}
+          monnaieARendre={monnaieARendre}
+          montantEspecesMixte={montantEspecesMixte}
+          onSetMontantEspecesMixte={setMontantEspecesMixte}
+          secondModeMixte={secondModeMixte}
+          onSetSecondModeMixte={(mode: any) => setSecondModeMixte(mode)}
+          resteAPayerMixte={resteAPayerMixte}
+          clientCreditIdPOS={clientCreditIdPOS}
+          onSetClientCreditIdPOS={setClientCreditIdPOS}
+          clientsCredits={clientsCredits}
+          creditDateEcheancePOS={creditDateEcheancePOS}
+          onSetCreditDateEcheancePOS={setCreditDateEcheancePOS}
+          creditNotePOS={creditNotePOS}
+          onSetCreditNotePOS={setCreditNotePOS}
+          regimeFiscal={regimeFiscal}
+          estExonereClient={estExonereClient}
+          totalHT={totalHT}
+          totalTVA={totalTVA}
+          tvaDefaut={tvaDefaut}
+          timbreFiscal={timbreFiscal}
+          netAPayer={netAPayer}
+          totalPanier={totalPanier}
+          encaissementEnCours={encaissementEnCours}
+          onEnregistrerDocument={enregistrerDocumentCaisse}
+          onEncaisser={encaisserVente}
+          t={t as any}
+        />
       </div>
 
       {/* MODALE ÉDITION CLIENT CARNET POS */}

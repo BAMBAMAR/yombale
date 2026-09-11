@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Zap, Plus, BookOpen, BarChart3, ShoppingBag, ArrowRight, ShieldCheck, Phone, CheckCircle2, Gift, QrCode } from 'lucide-react'
+import { Store, Zap, Plus, BookOpen, BarChart3, ShoppingBag, ArrowRight, ShieldCheck, Phone, CheckCircle2, Gift, QrCode } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 
 interface Props {
@@ -44,56 +44,33 @@ export default function DashboardFacile({
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: 12,
-          background: '#FFFFFF',
-          borderRadius: 16,
+          background: 'var(--npl-card, #FFFFFF)',
+          borderRadius: 'var(--r-xl, 16px)',
           padding: '16px 20px',
           border: '1px solid var(--border, #E8DDD2)',
-          boxShadow: '0 2px 8px rgba(26,22,18,0.05)',
+          boxShadow: 'var(--shadow-sm)',
           marginBottom: 20,
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <span style={{ fontSize: 18 }}>🏪</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <Store size={20} color="var(--accent, #C75B00)" />
             <h1 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
               {boutiqueNom || 'Ma Boutique'}
             </h1>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                background: 'var(--orange2, #FFF3E8)',
-                color: 'var(--accent, #C75B00)',
-                padding: '2px 8px',
-                borderRadius: 12,
-                border: '1px solid #FED7AA',
-              }}
-            >
-              Mode Facile ⚡
+            <span className="badge-npl badge-npl-accent" style={{ fontSize: 11 }}>
+              Mode Simplifié
             </span>
           </div>
-          <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text2, #5A4E42)' }}>
-            Les 4 outils indispensables pour gérer votre commerce au quotidien.
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--text2, #5A4E42)' }}>
+            Les outils essentiels pour gérer votre commerce au quotidien.
           </p>
         </div>
 
         <button
           type="button"
           onClick={onBasculerModeComplet}
-          style={{
-            background: 'var(--bg, #F8F5F0)',
-            border: '1px solid var(--border, #E8DDD2)',
-            borderRadius: 10,
-            padding: '8px 14px',
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--navy, #1C2B4A)',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            transition: 'all 0.15s ease',
-          }}
+          className="btn-npl btn-npl-sm btn-npl-secondary"
         >
           <span>Basculer en Mode Expert</span>
           <ArrowRight size={14} />
@@ -158,10 +135,10 @@ export default function DashboardFacile({
               </span>
             </div>
             <h2 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: '#FFFFFF' }}>
-              1. Encaisser (Caisse POS)
+              Encaisser (Caisse POS)
             </h2>
-            <p style={{ margin: 0, fontSize: 12.5, color: '#E2E8F0', lineHeight: 1.4 }}>
-              Scannez les articles, encaissez par Wave / Orange Money / Espèces et imprimez le ticket.
+            <p style={{ margin: 0, fontSize: 13, color: '#E2E8F0', lineHeight: 1.4 }}>
+              Scannez les articles, encaissez par Wave, Orange Money ou Espèces et imprimez le ticket.
             </p>
           </div>
 
@@ -170,7 +147,7 @@ export default function DashboardFacile({
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              fontSize: 12.5,
+              fontSize: 13,
               fontWeight: 800,
               color: '#FED7AA',
               marginTop: 14,
@@ -188,16 +165,16 @@ export default function DashboardFacile({
           tabIndex={0}
           onKeyDown={e => e.key === 'Enter' && onOuvrirAjoutProduit()}
           style={{
-            background: '#FFFFFF',
+            background: 'var(--npl-card, #FFFFFF)',
             color: 'var(--navy, #1C2B4A)',
-            borderRadius: 18,
-            padding: '22px 20px',
-            boxShadow: '0 4px 16px rgba(26,22,18,0.06)',
+            borderRadius: 'var(--r-xl, 16px)',
+            padding: '20px',
+            boxShadow: 'var(--shadow-sm)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
             minHeight: 160,
-            border: '2px solid #FED7AA',
+            border: '1.5px solid var(--border, #E8DDD2)',
             transition: 'transform 0.15s ease, box-shadow 0.15s ease',
             cursor: 'pointer',
           }}
@@ -206,27 +183,27 @@ export default function DashboardFacile({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: 'var(--orange2, #FFF3E8)',
+                  width: 42,
+                  height: 42,
+                  borderRadius: 10,
+                  background: 'var(--npl-accent-light, #FFF3E8)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'var(--accent, #C75B00)',
                 }}
               >
-                <Plus size={24} strokeWidth={2.8} />
+                <Plus size={22} strokeWidth={2.8} />
               </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>
-                En 30 secondes ⚡
+              <span className="badge-npl badge-npl-accent" style={{ fontSize: 10.5 }}>
+                Saisie Rapide
               </span>
             </div>
             <h2 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
-              2. Ajouter un Produit
+              Ajouter un Article
             </h2>
-            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
-              Prenez une photo, saisissez le nom et le prix. Le produit apparaît immédiatement en caisse.
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
+              Prenez une photo, saisissez le nom et le prix. L&apos;article est disponible instantanément en caisse.
             </p>
           </div>
 
@@ -235,7 +212,7 @@ export default function DashboardFacile({
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              fontSize: 12.5,
+              fontSize: 13,
               fontWeight: 800,
               color: 'var(--accent, #C75B00)',
               marginTop: 14,
@@ -271,9 +248,9 @@ export default function DashboardFacile({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
+                  width: 42,
+                  height: 42,
+                  borderRadius: 10,
                   background: '#FEF3C7',
                   display: 'flex',
                   alignItems: 'center',
@@ -284,25 +261,16 @@ export default function DashboardFacile({
                 <BookOpen size={22} strokeWidth={2.4} />
               </div>
               {dettesTotales > 0 && (
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 800,
-                    background: '#FEE2E2',
-                    color: '#DC2626',
-                    padding: '2px 8px',
-                    borderRadius: 10,
-                  }}
-                >
-                  {fcfa(dettesTotales)} dûs
+                <span className="badge-npl badge-npl-danger" style={{ fontSize: 11 }}>
+                  {fcfa(dettesTotales)} dus
                 </span>
               )}
             </div>
             <h2 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
-              3. Carnet de Dettes
+              Carnet de Crédit Clients
             </h2>
-            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
-              Notez qui vous doit, envoyez des rappels polis sur WhatsApp avec lien de paiement Wave.
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
+              Suivez les arriérés de vos clients réguliers et envoyez des rappels avec lien de paiement Wave.
             </p>
           </div>
 
@@ -311,13 +279,13 @@ export default function DashboardFacile({
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              fontSize: 12.5,
+              fontSize: 13,
               fontWeight: 800,
               color: '#B45309',
               marginTop: 14,
             }}
           >
-            <span>Consulter les Dettes</span>
+            <span>Gérer les Crédits</span>
             <ArrowRight size={14} />
           </div>
         </div>
@@ -329,11 +297,11 @@ export default function DashboardFacile({
           tabIndex={0}
           onKeyDown={e => e.key === 'Enter' && onNaviguerOnglet('commandes')}
           style={{
-            background: '#FFFFFF',
+            background: 'var(--npl-card, #FFFFFF)',
             color: 'var(--navy, #1C2B4A)',
-            borderRadius: 18,
-            padding: '22px 20px',
-            boxShadow: '0 4px 16px rgba(26,22,18,0.06)',
+            borderRadius: 'var(--r-xl, 16px)',
+            padding: '20px',
+            boxShadow: 'var(--shadow-sm)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -347,9 +315,9 @@ export default function DashboardFacile({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div
                 style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
+                  width: 42,
+                  height: 42,
+                  borderRadius: 10,
                   background: '#E6F4EC',
                   display: 'flex',
                   alignItems: 'center',
@@ -359,24 +327,15 @@ export default function DashboardFacile({
               >
                 <BarChart3 size={22} strokeWidth={2.4} />
               </div>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 900,
-                  color: 'var(--price, #0A5C36)',
-                  background: '#E6F4EC',
-                  padding: '2px 8px',
-                  borderRadius: 10,
-                }}
-              >
+              <span className="badge-npl badge-npl-success" style={{ fontSize: 11 }}>
                 {nbVentesJour} vente{nbVentesJour > 1 ? 's' : ''}
               </span>
             </div>
             <h2 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
-              4. Mes Ventes &amp; Commandes
+              Activité &amp; Commandes
             </h2>
-            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
-              CA du jour : <strong>{fcfa(caJour)}</strong>. Consultez vos encaissements et commandes reçues.
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
+              CA du jour : <strong>{fcfa(caJour)}</strong>. Consultez l&apos;historique complet des encaissements.
             </p>
           </div>
 
@@ -385,13 +344,13 @@ export default function DashboardFacile({
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              fontSize: 12.5,
+              fontSize: 13,
               fontWeight: 800,
               color: 'var(--price, #0A5C36)',
               marginTop: 14,
             }}
           >
-            <span>Voir l&apos;Historique</span>
+            <span>Consulter l&apos;Activité</span>
             <ArrowRight size={14} />
           </div>
         </div>

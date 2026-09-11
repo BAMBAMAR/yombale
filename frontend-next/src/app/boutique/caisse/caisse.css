@@ -1,0 +1,207 @@
+/* frontend-next/src/app/boutique/caisse/caisse.css */
+/* Styles dédiés au Terminal Caisse POS Nopalou (Plein Écran, Colonnes & Thèmes) */
+
+@media screen {
+  body.in-caisse-pos header[role="banner"],
+  body.in-caisse-pos nav.navbar,
+  body.in-caisse-pos .navbar,
+  body.in-caisse-pos .mobile-nav,
+  body.in-caisse-pos .bottom-bars,
+  body.in-caisse-pos footer,
+  body.in-caisse-pos .site-footer {
+    display: none !important;
+  }
+
+  .caisse-main-layout.has-3-cols {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.35fr) 280px minmax(420px, 1fr) !important;
+    height: calc(100vh - 52px) !important;
+    max-height: calc(100vh - 52px) !important;
+    overflow: hidden !important;
+  }
+
+  .caisse-main-layout.has-2-cols {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.15fr) minmax(460px, 1fr) !important;
+    height: calc(100vh - 52px) !important;
+    max-height: calc(100vh - 52px) !important;
+    overflow: hidden !important;
+  }
+
+  @media (max-width: 1200px) {
+    .caisse-main-layout.has-3-cols {
+      grid-template-columns: minmax(0, 1.15fr) minmax(460px, 1fr) !important;
+    }
+    .caisse-center-dock {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .caisse-main-layout.has-3-cols,
+    .caisse-main-layout.has-2-cols {
+      grid-template-columns: 1fr !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow-y: auto !important;
+    }
+  }
+
+  /* Mode Nuit & Mode Jour Variables */
+  .pos-theme-dark {
+    --pos-bg: #090d16 !important;
+    --pos-surface: #131b2e !important;
+    --pos-surface2: #1e293b !important;
+    --pos-surface3: #334155 !important;
+    --pos-text: #ffffff !important;
+    --pos-text2: #cbd5e1 !important;
+    --pos-text3: #94a3b8 !important;
+    --pos-navy: #ffffff !important;
+    --pos-border: #29354d !important;
+    --pos-primary: #f97316 !important;
+    --pos-primary-bg: rgba(249, 115, 22, 0.16) !important;
+    --pos-shadow: 0 4px 14px rgba(0,0,0,0.5) !important;
+    --pos-shadow-lg: 0 10px 30px rgba(0,0,0,0.6) !important;
+  }
+
+  .pos-theme-light {
+    --pos-bg: #f8fafc !important;
+    --pos-surface: #ffffff !important;
+    --pos-surface2: #f1f5f9 !important;
+    --pos-surface3: #e2e8f0 !important;
+    --pos-text: #0f172a !important;
+    --pos-text2: #475569 !important;
+    --pos-text3: #94a3b8 !important;
+    --pos-navy: #1e3a5f !important;
+    --pos-border: #e2e8f0 !important;
+    --pos-primary: #C75B00 !important;
+    --pos-primary-bg: #fff7ed !important;
+    --pos-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+    --pos-shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1) !important;
+  }
+
+  .pos-theme-dark .pos-btn-ghost {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #334155 !important;
+  }
+  .pos-theme-dark .pos-btn-ghost:hover {
+    background-color: #334155 !important;
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-produit-card {
+    background: #131b2e !important;
+    border-color: #29354d !important;
+  }
+  .pos-theme-dark .pos-produit-card:hover {
+    border-color: #f97316 !important;
+    box-shadow: 0 4px 16px rgba(249,115,22,0.25) !important;
+  }
+
+  .caisse-btn-retour {
+    transition: all 0.15s ease;
+  }
+  .pos-theme-dark .caisse-btn-retour {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border: 1px solid #475569 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+  }
+  .pos-theme-dark .caisse-btn-retour:hover {
+    background-color: #334155 !important;
+    border-color: #f97316 !important;
+    color: #ffffff !important;
+  }
+  .pos-theme-light .caisse-btn-retour {
+    background-color: #1e3a5f !important;
+    color: #ffffff !important;
+    border: 1px solid #1e3a5f !important;
+    box-shadow: 0 2px 6px rgba(28,43,74,0.25) !important;
+  }
+  .pos-theme-light .caisse-btn-retour:hover {
+    background-color: #152840 !important;
+  }
+
+  .pos-theme-dark .caisse-boutique-select {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border-color: #475569 !important;
+  }
+
+  .pos-theme-dark .pos-btn-danger {
+    background: rgba(220, 38, 38, 0.2) !important;
+    color: #f87171 !important;
+    border-color: rgba(220, 38, 38, 0.4) !important;
+  }
+  .pos-theme-dark .pos-btn-danger:hover {
+    background: rgba(220, 38, 38, 0.3) !important;
+  }
+  .pos-theme-dark .pos-btn-success {
+    background: rgba(22, 163, 74, 0.2) !important;
+    color: #4ade80 !important;
+    border-color: rgba(22, 163, 74, 0.4) !important;
+  }
+  .pos-theme-dark .pos-btn-success:hover {
+    background: rgba(22, 163, 74, 0.3) !important;
+  }
+
+  .caisse-desktop-only {
+    display: inline-flex !important;
+  }
+
+  @media (max-width: 640px) {
+    .caisse-desktop-only {
+      display: none !important;
+    }
+  }
+
+  .hover-bg-slate:hover {
+    background-color: var(--pos-surface2) !important;
+  }
+  .ticket-print-container {
+    display: none !important;
+  }
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  header,
+  footer,
+  nav,
+  .site-header,
+  .site-footer,
+  .navbar-icon-actions,
+  .caisse-header,
+  .caisse-main-layout,
+  .btn-premium,
+  button,
+  input,
+  select {
+    display: none !important;
+  }
+  .ticket-print-container, .ticket-print-container * {
+    visibility: visible !important;
+  }
+  .ticket-print-container {
+    display: block !important;
+    position: static !important;
+    width: 80mm !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    padding: 10px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+  }
+}

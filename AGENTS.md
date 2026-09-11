@@ -16,3 +16,25 @@
 - **Token Disponible** : Le jeton d'authentification GitHub (`GITHUB_TOKEN=<VOIR_DANS_.ENV>`) est disponible dans le fichier `.env` à la racine.
 - **Utilisation pour les Push** : Lors d'une demande de `git push`, si l'environnement demande une authentification ou si vous devez configurer le remote URL pour pousser les modifications de manière automatisée, vous DEVEZ utiliser ce token.
 - **Exemple de Remote** : `https://<TOKEN>@github.com/<utilisateur>/<repo>.git`
+
+## 🛡️ Les 4 Règles d'Or Anti-IA-Slop & Standard Ingénieur Senior
+
+1. **Bannissement des Béquilles Emojis dans l'UI** :
+   - Les composants React / Next.js ne doivent pas utiliser d'émojis Unicode (`🏪`, `👑`, `⚡`, `💳`, `📦`, etc.) comme icônes d'interface ou de bouton.
+   - Utiliser exclusivement les icônes vectorielles SVG de `lucide-react` avec un dimensionnement précis (14px, 16px, 18px).
+   - *Linter* : `npm run lint:slop` dans `frontend-next`.
+
+2. **Plafond de Taille des Composants & Modularisation** :
+   - Aucun nouveau composant React ne doit dépasser 450 lignes.
+   - Les blocs fonctionnels (modales, barres latérales de panier, claviers numériques, tableaux de données) doivent être extraits dans des sous-composants indépendants dans un sous-dossier `components/`.
+   - Les styles globaux d'écrans majeurs doivent être logés dans des fichiers `.css` dédiés (ex: `caisse.css`), jamais dans des balises `<style jsx global>` monolithiques de 200 lignes.
+
+3. **Respect Strict du Design System Nopalou (Zéro Couleurs Arbitraires)** :
+   - Utiliser exclusivement les tokens CSS déclarés (`--navy: #1C2B4A`, `--accent: #C75B00`, `--price: #0A5C36`, `--bg: #F8F5F0`, `--border: #E8DDD2`) et les classes d'utilité globales (`.btn-npl`, `.badge-npl`).
+   - Interdiction d'inventer des codes hex ad-hoc (`#0f172a`, `#ea580c`, `#22c55e`, etc.) en inline styles `style={{ color: '...' }}` qui bypassent les thèmes clair/sombre.
+
+4. **Sécurité Multi-Tenant & Anti-IDOR Obligatoire (Backend & Actions)** :
+   - Toute route d'API Express ou Server Action manipulant des données de boutique (`/api/boutiques/:id/...`) DOIT IMPÉRATIVEMENT valider l'appartenance avec le middleware `requireBoutiqueOwnership` ou `checkBoutiqueAccess` (`backend/middlewares/tenantSecurity.js`).
+   - Ne jamais faire confiance aveuglément à un `boutiqueId` transmis dans l'URL ou dans le corps de requête sans vérifier qu'il appartient bien à l'utilisateur authentifié (`req.user.id`).
+   - Toutes les routes 404 de l'API backend doivent retourner un payload JSON strict (`{ success: false, error: 'Not Found' }`) et ne JAMAIS servir une page HTML de fallback qui masque les erreurs côté client.
+
