@@ -234,7 +234,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setActiveBoutiqueId(null)
     try {
       localStorage.removeItem('nopalou_carts')
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:CartContext:L237]', err); }
   }
 
   function getCartTotal(boutiqueId: string, alternateId?: string): number {

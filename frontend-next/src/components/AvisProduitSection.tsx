@@ -68,7 +68,7 @@ export default function AvisProduitSection({ boutiqueId, produitId }: AvisProdui
       if (!res.ok) {
         setMsgError(data.error || 'Erreur lors de la publication de votre avis.')
       } else {
-        setMsgSuccess('✅ Votre avis a été publié avec succès !')
+        setMsgSuccess('Votre avis a été publié avec succès !')
         setAvis(prev => [data.avis, ...prev])
         setTotalAvis(prev => prev + 1)
         setClientNom('')
@@ -83,7 +83,7 @@ export default function AvisProduitSection({ boutiqueId, produitId }: AvisProdui
   }
 
   function renderStars(n: number) {
-    return '⭐'.repeat(n)
+    return ''.repeat(n)
   }
 
   return (
@@ -97,7 +97,7 @@ export default function AvisProduitSection({ boutiqueId, produitId }: AvisProdui
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 16, fontWeight: 700, color: '#1C2B4A', margin: 0 }}>
-            ⭐ Avis Clients Vérifiés
+            Avis Clients Vérifiés
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>
             {totalAvis > 0 ? `${totalAvis} avis d'acheteurs certifiés` : 'Soyez le premier à donner votre avis !'}
@@ -107,7 +107,7 @@ export default function AvisProduitSection({ boutiqueId, produitId }: AvisProdui
         {totalAvis > 0 && (
           <div style={{ background: '#fef3c7', padding: '6px 14px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 16, fontWeight: 800, color: '#d97706' }}>{noteMoyenne}</span>
-            <span style={{ fontSize: 13, color: '#b45309' }}>/ 5 ⭐</span>
+            <span style={{ fontSize: 13, color: '#b45309' }}>/ 5 </span>
           </div>
         )}
       </div>
@@ -115,7 +115,7 @@ export default function AvisProduitSection({ boutiqueId, produitId }: AvisProdui
       {/* Formulaire de dépôt d'avis */}
       <form onSubmit={handleSubmit} style={{ background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 20 }}>
         <h4 style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: '#334155' }}>
-          💬 Donner votre avis sur ce produit
+          Donner votre avis sur ce produit
         </h4>
 
         {msgSuccess && <p style={{ color: '#16a34a', fontSize: 12, fontWeight: 700, margin: '0 0 10px' }}>{msgSuccess}</p>}
@@ -134,17 +134,17 @@ export default function AvisProduitSection({ boutiqueId, produitId }: AvisProdui
             />
           </div>
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 4 }}>Note (1 à 5 ⭐) *</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 4 }}>Note (1 à 5 ) *</label>
             <select
               value={noteForm}
               onChange={e => setNoteForm(Number(e.target.value))}
               style={{ width: '100%', padding: '7px 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff' }}
             >
-              <option value={5}>⭐⭐⭐⭐⭐ (5/5 Parfait)</option>
-              <option value={4}>⭐⭐⭐⭐ (4/5 Très Bon)</option>
-              <option value={3}>⭐⭐⭐ (3/3 Moyen)</option>
-              <option value={2}>⭐⭐ (2/5 Passable)</option>
-              <option value={1}>⭐ (1/5 Décevant)</option>
+              <option value={5}>(5/5 Parfait)</option>
+              <option value={4}>(4/5 Très Bon)</option>
+              <option value={3}>(3/3 Moyen)</option>
+              <option value={2}>(2/5 Passable)</option>
+              <option value={1}>(1/5 Décevant)</option>
             </select>
           </div>
           <div>

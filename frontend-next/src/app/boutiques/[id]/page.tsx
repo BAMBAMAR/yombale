@@ -45,9 +45,9 @@ interface Boutique {
 }
 
 const CAT_ICONS: Record<string, string> = {
-  smartphones: '📱', informatique: '💻', 'tv-electro': '📺',
-  mode: '👗', maison: '🏠', 'auto-moto': '🚗', jeux: '🎮',
-  services: '🛠', alimentation: '🥗', beaute: '💄', autre: '🏪',
+  smartphones: '', informatique: '', 'tv-electro': '📺',
+  mode: '👗', maison: '', 'auto-moto': '', jeux: '🎮',
+  services: '', alimentation: '🥗', beaute: '💄', autre: '',
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -254,7 +254,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
           justifyContent: 'center',
           gap: 8,
         }}>
-          <span>🔥</span>
+          <span></span>
           <span>{b.bandeau_promo}</span>
         </div>
       )}
@@ -298,12 +298,12 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                 </h1>
                 {b.plan_actif === 'business' && (
                   <span style={{ fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-                    💼 Business
+                    Business
                   </span>
                 )}
                 {b.plan_actif === 'pro' && (
                   <span style={{ fontSize: 11, background: b.couleur_theme || '#C75B00', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-                    ⭐ Vendeur Pro
+                    Vendeur Pro
                   </span>
                 )}
               </div>
@@ -326,7 +326,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                 target="_blank" rel="noopener noreferrer"
                 className="bq-public-btn-whatsapp"
               >
-                💬 WhatsApp
+                WhatsApp
               </a>
             )}
             {b.telephone && (
@@ -334,7 +334,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                 href={`tel:${b.telephone}`}
                 className="bq-public-btn-tel"
               >
-                📞 {b.telephone}
+                {b.telephone}
               </a>
             )}
             <BoutonPartager
@@ -350,7 +350,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                 target="_blank" rel="noopener noreferrer"
                 className="bq-public-btn-site"
               >
-                🌐 Site web
+                Site web
               </a>
             )}
           </div>
@@ -362,7 +362,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
         {/* Fil d'Ariane ultra-compact */}
         <nav aria-label="Fil d'Ariane" className="bq-breadcrumb-compact">
           <Link href="/boutiques" style={{ color: 'var(--text2, #6B5E52)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span>🏪 Toutes les boutiques</span>
+            <span>Toutes les boutiques</span>
           </Link>
           <span style={{ color: '#cbd5e1' }}>›</span>
           <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 700 }}>

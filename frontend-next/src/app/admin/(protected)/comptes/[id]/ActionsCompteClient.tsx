@@ -61,7 +61,7 @@ export default function ActionsCompteClient({ id, emailVerifie, suspendu, suppri
           color: msg.ok ? '#16a34a' : '#dc2626',
           border: `1px solid ${msg.ok ? '#bbf7d0' : '#fecaca'}`,
         }}>
-          {msg.ok ? '✅' : '❌'} {msg.text}
+          {msg.ok ? '' : ''} {msg.text}
         </div>
       )}
 
@@ -82,11 +82,11 @@ export default function ActionsCompteClient({ id, emailVerifie, suspendu, suppri
           )}
           {!emailVerifie && (
             <button disabled={isPending} onClick={() => run(() => renvoyerVerification(id))} style={btnStyle('#eff6ff', '#1d4ed8', '#bfdbfe')}>
-              ✉️ Renvoyer email de vérification
+              Renvoyer email de vérification
             </button>
           )}
           <button disabled={isPending} onClick={() => run(() => genererLienReset(id))} style={btnStyle('#fffbeb', '#d97706', '#fde68a')}>
-            🔑 Générer lien de reset
+            Générer lien de reset
           </button>
         </div>
       </div>
@@ -154,13 +154,13 @@ export default function ActionsCompteClient({ id, emailVerifie, suspendu, suppri
             onClick={() => { if (confirm('Marquer ce compte pour suppression ? Il sera désactivé immédiatement et purgé définitivement après 30 jours (réversible pendant cette période).')) run(() => marquerSupprime(id)) }}
             style={btnStyle('#fef2f2', '#dc2626', '#fecaca')}
           >
-            🗑 Marquer pour suppression
+            Marquer pour suppression
           </button>
         )}
         {supprimeLe && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <p style={{ fontSize: 13, color: '#d97706', fontWeight: 600 }}>
-              ⏳ Période de grâce en cours — {joursRestants} jour(s) restant(s) avant purge possible.
+              Période de grâce en cours — {joursRestants} jour(s) restant(s) avant purge possible.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button disabled={isPending} onClick={() => run(() => restaurerCompte(id))} style={btnStyle('#f0fdf4', '#16a34a', '#bbf7d0')}>

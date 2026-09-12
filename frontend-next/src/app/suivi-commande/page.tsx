@@ -91,7 +91,7 @@ function SuiviCommandeContent() {
 
         <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '28px 24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', marginBottom: 24 }}>
           <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 22, fontWeight: 800, color: '#1C2B4A', margin: '0 0 8px' }}>
-            📦 Suivre ma Commande
+            Suivre ma Commande
           </h1>
           <p style={{ fontSize: 14, color: '#64748b', margin: '0 0 20px', lineHeight: 1.5 }}>
             Entrez votre numéro de référence (ex: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>CMD-2026-XXXX</code>) ou votre numéro de téléphone.
@@ -120,14 +120,14 @@ function SuiviCommandeContent() {
               className="npl-btn npl-btn-primary npl-btn-lg"
               style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 22px' }}
             >
-              <span>{loading ? '⏳' : '🔍'}</span>
+              <span>{loading ? '' : ''}</span>
               <span>{loading ? 'Recherche...' : 'Rechercher'}</span>
             </button>
           </form>
 
           {error && (
             <div style={{ marginTop: 16, padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>⚠️</span>
+              <span></span>
               <span>{error}</span>
             </div>
           )}
@@ -151,10 +151,10 @@ function SuiviCommandeContent() {
                   {/* Timeline des 4 étapes */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
                     {[
-                      { step: 1, label: 'En attente', icon: '📋' },
-                      { step: 2, label: 'En préparation', icon: '📦' },
-                      { step: 3, label: 'En livraison', icon: '🚚' },
-                      { step: 4, label: 'Livrée', icon: '✅' },
+                      { step: 1, label: 'En attente', icon: '' },
+                      { step: 2, label: 'En préparation', icon: '' },
+                      { step: 3, label: 'En livraison', icon: '' },
+                      { step: 4, label: 'Livrée', icon: '' },
                     ].map(st => {
                       const isActive = currentStep >= st.step
                       return (
@@ -183,7 +183,7 @@ function SuiviCommandeContent() {
                         rel="noopener noreferrer"
                         style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
                       >
-                        💬 Contacter le livreur
+                        Contacter le livreur
                       </a>
                     )}
                   </div>

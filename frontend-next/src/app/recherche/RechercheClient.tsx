@@ -53,7 +53,7 @@ function ResultCard({ href, image, titre, sub1, sub2, badge }: {
 function EmptyState({ q }: { q: string }) {
   return (
     <div style={{ textAlign: 'center', padding: '48px 20px', color: '#6b7280' }}>
-      <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+      <div style={{ fontSize: 48, marginBottom: 12 }}></div>
       <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Aucun résultat pour « {q} »</p>
       <p style={{ fontSize: 13 }}>Vérifiez l&apos;orthographe ou essayez un terme plus général.</p>
     </div>
@@ -84,11 +84,11 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
   } : null
 
   const tabs: { key: Tab; label: string; emoji: string }[] = [
-    { key: 'tout', label: 'Tout', emoji: '🔍' },
-    { key: 'produits', label: 'Produits', emoji: '🛒' },
-    { key: 'boutiques', label: 'Boutiques', emoji: '🏪' },
-    { key: 'annonces', label: 'Annonces', emoji: '📌' },
-    { key: 'immo', label: 'Immobilier', emoji: '🏠' },
+    { key: 'tout', label: 'Tout', emoji: '' },
+    { key: 'produits', label: 'Produits', emoji: '' },
+    { key: 'boutiques', label: 'Boutiques', emoji: '' },
+    { key: 'annonces', label: 'Annonces', emoji: '' },
+    { key: 'immo', label: 'Immobilier', emoji: '' },
   ]
 
   return (
@@ -119,7 +119,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
 
       {!query && (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: '#9ca3af' }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+          <div style={{ fontSize: 48, marginBottom: 12 }}></div>
           <p style={{ fontSize: 15 }}>Tapez un mot-clé pour chercher partout sur Nopalou.</p>
         </div>
       )}
@@ -173,7 +173,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
               {/* Produits marketplace */}
               {(tab === 'tout' || tab === 'produits') && data.produits.length > 0 && (
                 <section style={{ marginBottom: 28 }}>
-                  {tab === 'tout' && <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>🛒 Produits marketplace</h2>}
+                  {tab === 'tout' && <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>Produits marketplace</h2>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {data.produits.map(p => (
                       <ResultCard
@@ -197,7 +197,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
               {/* Boutiques & produits boutique */}
               {(tab === 'tout' || tab === 'boutiques') && data.boutiques.length > 0 && (
                 <section style={{ marginBottom: 28 }}>
-                  {tab === 'tout' && <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>🏪 Boutiques</h2>}
+                  {tab === 'tout' && <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>Boutiques</h2>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {data.boutiques.map(b => (
                       <ResultCard
@@ -217,7 +217,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
               {/* Annonces classées */}
               {(tab === 'tout' || tab === 'annonces') && data.annonces.length > 0 && (
                 <section style={{ marginBottom: 28 }}>
-                  {tab === 'tout' && <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>📌 Annonces</h2>}
+                  {tab === 'tout' && <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>Annonces</h2>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {data.annonces.map(a => (
                       <ResultCard
@@ -241,7 +241,7 @@ function RechercheClientInner({ query, data }: { query: string; data: SearchData
               {/* Immobilier */}
               {(tab === 'tout' || tab === 'immo') && data.immo.length > 0 && (
                 <section style={{ marginBottom: 28 }}>
-                  {tab === 'tout' && <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>🏠 Immobilier</h2>}
+                  {tab === 'tout' && <h2 style={{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>Immobilier</h2>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {data.immo.map(i => (
                       <ResultCard

@@ -36,7 +36,7 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
         setEffectiveIsMerchant(true)
         setEffectiveIsLoggedIn(true)
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:MobileBottomNav:L39]', err); }
   }, [pathname])
 
   const currentTab = pathname === '/compte' ? searchParams.get('tab') : null

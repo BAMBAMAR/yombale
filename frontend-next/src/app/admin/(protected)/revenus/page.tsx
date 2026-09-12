@@ -42,12 +42,12 @@ function fcfa(v: string | number) {
 }
 
 function typeLabel(ref: string) {
-  if (ref.startsWith('ann_'))   return '📢 Annonce'
+  if (ref.startsWith('ann_'))   return 'Annonce'
   if (ref.startsWith('immo_'))  return '🏘 Immo sponsoring'
-  if (ref.startsWith('bout_'))  return '🏪 Boutique sponsoring'
-  if (ref.startsWith('prod_'))  return '🛒 Produit sponsoring'
-  if (ref.startsWith('boost_')) return '🚀 Boost annonce'
-  if (ref.startsWith('abmt_'))  return '⭐ Abonnement'
+  if (ref.startsWith('bout_'))  return 'Boutique sponsoring'
+  if (ref.startsWith('prod_'))  return 'Produit sponsoring'
+  if (ref.startsWith('boost_')) return 'Boost annonce'
+  if (ref.startsWith('abmt_'))  return 'Abonnement'
   return '—'
 }
 
@@ -68,7 +68,7 @@ export default async function AdminRevenusPage() {
     if (resStats.ok) stats = await resStats.json()
     if (resVentes.ok) ventes = await resVentes.json()
     if (resSettings.ok) prixAnnonce = Number((await resSettings.json()).prix_annonce) || 1500
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L71]', err); }
 
   if (!stats) {
     return (
@@ -119,7 +119,7 @@ export default async function AdminRevenusPage() {
         <h2 className="admin-section-titre">Répartition</h2>
         <div className="admin-stats-grid">
           <div className="admin-stat-card admin-stat-card--navy">
-            <p className="admin-stat-value">🌊 {txWave}</p>
+            <p className="admin-stat-value">{txWave}</p>
             <p className="admin-stat-label">Paiements Wave</p>
           </div>
           <div className="admin-stat-card admin-stat-card--navy">
@@ -127,11 +127,11 @@ export default async function AdminRevenusPage() {
             <p className="admin-stat-label">Paiements Orange Money</p>
           </div>
           <div className="admin-stat-card admin-stat-card--navy">
-            <p className="admin-stat-value">📢 {annonces}</p>
+            <p className="admin-stat-value">{annonces}</p>
             <p className="admin-stat-label">Annonces activées ({prixAnnonce.toLocaleString('fr-FR')} FCFA)</p>
           </div>
           <div className="admin-stat-card admin-stat-card--navy">
-            <p className="admin-stat-value">⭐ {immoSponsor + boutSponsor}</p>
+            <p className="admin-stat-value">{immoSponsor + boutSponsor}</p>
             <p className="admin-stat-label">Sponsorings ({immoSponsor} immo + {boutSponsor} boutiques)</p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export default async function AdminRevenusPage() {
       {ventes && (
         <>
           <div className="admin-section" style={{ marginBottom: 32 }}>
-            <h2 className="admin-section-titre">🏪 Ventes boutiques (comptabilité)</h2>
+            <h2 className="admin-section-titre">Ventes boutiques (comptabilité)</h2>
             <div className="admin-stats-grid" style={{ marginBottom: 20 }}>
               <div className="admin-stat-card admin-stat-card--green">
                 <p className="admin-stat-value">{fcfa(ventes.global.chiffre_affaires_total)}</p>
@@ -238,7 +238,7 @@ export default async function AdminRevenusPage() {
                     <td style={{ fontWeight: 700, color: 'var(--green)' }}>{fcfa(tx.montant)}</td>
                     <td>
                       <span className={`admin-badge ${tx.methode_paiement === 'wave' ? 'admin-badge--blue' : tx.methode_paiement === 'orange' ? 'admin-badge--green' : 'admin-badge--gray'}`}>
-                        {tx.methode_paiement === 'wave' ? '🌊 Wave' : tx.methode_paiement === 'orange' ? '🟠 Orange' : '🧾 Manuel'}
+                        {tx.methode_paiement === 'wave' ? 'Wave' : tx.methode_paiement === 'orange' ? '🟠 Orange' : 'Manuel'}
                       </span>
                     </td>
                   </tr>

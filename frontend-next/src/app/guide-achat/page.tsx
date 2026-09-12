@@ -25,7 +25,7 @@ export default async function Page() {
     if (res.ok) {
       categoriesActives = await res.json()
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[Nopalou:page:L28]', e); }
 
   return <GuideAchatPage categoriesActives={categoriesActives} />
 }

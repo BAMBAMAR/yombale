@@ -34,32 +34,32 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
     {
       id: 'vue-dashboard',
       title: 'Mon Espace',
-      icon: '🏠',
+      icon: '',
       items: [
-        { href: '/compte', label: 'Tableau de bord', emoji: '🏠', tab: 'accueil' },
+        { href: '/compte', label: 'Tableau de bord', emoji: '', tab: 'accueil' },
       ],
     },
     {
       id: 'annonces-achats',
       title: t('account.groupAdsPurchases'),
-      icon: '📦',
+      icon: '',
       items: [
-        { href: '/compte?tab=suivi-commande',    label: t('account.navTrackOrder'),     emoji: '📦', tab: 'suivi-commande' },
-        { href: '/compte?tab=mes-annonces',      label: t('account.navMyAds'),          emoji: '📋', tab: 'mes-annonces' },
-        { href: '/compte?tab=mes-annonces-immo', label: t('account.navMyRealEstate'),   emoji: '🏠', tab: 'mes-annonces-immo' },
-        { href: '/compte?tab=mes-alertes',       label: t('account.navPriceAlerts'),    emoji: '🔔', tab: 'mes-alertes' },
+        { href: '/compte?tab=suivi-commande',    label: t('account.navTrackOrder'),     emoji: '', tab: 'suivi-commande' },
+        { href: '/compte?tab=mes-annonces',      label: t('account.navMyAds'),          emoji: '', tab: 'mes-annonces' },
+        { href: '/compte?tab=mes-annonces-immo', label: t('account.navMyRealEstate'),   emoji: '', tab: 'mes-annonces-immo' },
+        { href: '/compte?tab=mes-alertes',       label: t('account.navPriceAlerts'),    emoji: '', tab: 'mes-alertes' },
         { href: '/compte?tab=favoris',           label: t('account.navFavorites'),      emoji: '♥',  tab: 'favoris' },
       ],
     },
     {
       id: 'boutique-caisse',
       title: t('account.groupShop'),
-      icon: '🏪',
+      icon: '',
       items: [
         {
           href: '/boutique',
           label: t('account.navMyShop'),
-          emoji: '🏪',
+          emoji: '',
           isShop: true,
           badgeText: t('account.manageShopBadge'),
           badgeBg: 'var(--accent, #C75B00)',
@@ -68,7 +68,7 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
         {
           href: '/boutique/caisse',
           label: t('caisse.posTitle') || 'Caisse POS',
-          emoji: '🛒',
+          emoji: '',
           badgeText: 'POS',
           badgeBg: '#16a34a',
           badgeColor: '#ffffff',
@@ -78,9 +78,9 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
     {
       id: 'compte-parrainage',
       title: t('account.groupAccount'),
-      icon: '⚙️',
+      icon: '',
       items: [
-        { href: '/compte?tab=profil',         label: t('account.navMyProfile'),      emoji: '✏️', tab: 'profil' },
+        { href: '/compte?tab=profil',         label: t('account.navMyProfile'),      emoji: '', tab: 'profil' },
         {
           href: '/compte?tab=apporteur',
           label: t('account.navBusinessPartner'),
@@ -96,12 +96,12 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
     {
       id: 'actions-publier',
       title: 'Publier & Déposer',
-      icon: '➕',
+      icon: '',
       items: [
         {
           href: '/deposer-annonce',
           label: t('account.navPublishAd'),
-          emoji: '➕',
+          emoji: '',
           isCta: true,
           badgeText: t('common.new'),
           badgeBg: '#DCFCE7',
@@ -110,7 +110,7 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
         {
           href: '/deposer-immo',
           label: t('account.navPublishRealEstate'),
-          emoji: '🏡',
+          emoji: '',
           isCta: true,
           badgeText: t('common.new'),
           badgeBg: '#E0F2FE',
@@ -366,7 +366,7 @@ function MobileBottomSheetNav({
 
   // Trouver l'item actif pour la barre compacte
   const activeItem = groupes.flatMap(g => g.items).find(item => isItemActive(item))
-  const currentIcon = activeItem?.emoji || '🏠'
+  const currentIcon = activeItem?.emoji || ''
   const currentLabel = activeItem?.label || 'Tableau de bord'
 
   function openSheet() {
@@ -499,7 +499,7 @@ function MobileBottomSheetNav({
                   style={{ flex: 1, background: '#F1F5F9', color: 'var(--navy, #1C2B4A)', border: '1px solid #E2E8F0', justifyContent: 'center' }}
                   onClick={closeSheet}
                 >
-                  <span>🏪</span>
+                  <span></span>
                   <span>Boutique</span>
                 </Link>
               </div>

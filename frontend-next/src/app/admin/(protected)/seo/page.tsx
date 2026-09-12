@@ -134,7 +134,7 @@ export default async function AdminSeoPage() {
 
       {/* Radar Opportunités SEO */}
       <div className="admin-section" style={{ marginBottom: 32 }}>
-        <h2 className="admin-section-titre">🔥 Radar Opportunités SEO « Problème → Solution » (Sénégal)</h2>
+        <h2 className="admin-section-titre">Radar Opportunités SEO « Problème → Solution » (Sénégal)</h2>
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
@@ -174,19 +174,19 @@ export default async function AdminSeoPage() {
         <h2 className="admin-section-titre">Outils de référencement & Validation technique</h2>
         <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: 12 }}>
           <a href={`${SITE}/sitemap.xml`} target="_blank" rel="noopener noreferrer" className="admin-action-btn">
-            📄 Sitemap XML Dynamique
+            Sitemap XML Dynamique
           </a>
           <a href={`${SITE}/robots.txt`} target="_blank" rel="noopener noreferrer" className="admin-action-btn">
-            🤖 Robots.txt (Anti-Scrape IA actif)
+            Robots.txt (Anti-Scrape IA actif)
           </a>
           <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer" className="admin-action-btn">
-            📊 Google Search Console
+            Google Search Console
           </a>
           <a href={`https://pagespeed.web.dev/report?url=${encodeURIComponent(SITE)}`} target="_blank" rel="noopener noreferrer" className="admin-action-btn">
-            ⚡ PageSpeed Insights (Mobile First)
+            PageSpeed Insights (Mobile First)
           </a>
           <a href={`https://validator.schema.org/?url=${encodeURIComponent(SITE)}`} target="_blank" rel="noopener noreferrer" className="admin-action-btn">
-            🔍 Schema Validator (Product & Software)
+            Schema Validator (Product & Software)
           </a>
         </div>
       </div>

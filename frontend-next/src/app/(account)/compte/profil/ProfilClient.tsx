@@ -67,7 +67,7 @@ export default function ProfilClient({ nom, email }: Props) {
               className="profil-reset-btn"
               style={{ fontSize: 13, padding: '6px 14px' }}
             >
-              ✏️ {t('common.edit')}
+              {t('common.edit')}
             </button>
           )}
         </div>
@@ -138,7 +138,7 @@ export default function ProfilClient({ nom, email }: Props) {
 
         {resetSent ? (
           <div className="profil-success-box">
-            ✅ {t('auth.resetLinkSent')}
+            {t('auth.resetLinkSent')}
           </div>
         ) : (
           <>
@@ -151,7 +151,7 @@ export default function ProfilClient({ nom, email }: Props) {
               disabled={isPending}
               className="profil-reset-btn"
             >
-              {isPending ? t('common.pleaseWait') : `🔑 ${t('auth.sendResetLink')}`}
+              {isPending ? t('common.pleaseWait') : `${t('auth.sendResetLink')}`}
             </button>
           </>
         )}

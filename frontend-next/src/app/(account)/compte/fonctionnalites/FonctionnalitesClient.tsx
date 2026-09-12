@@ -19,7 +19,7 @@ const DUREES: DureeOption[] = [
   { mois: 1, label: '1 mois', sousTitre: 'Tarif mensuel', remise: 0, badge: null },
   { mois: 3, label: '3 mois', sousTitre: 'Trimestriel', remise: 0.10, badge: '-10%' },
   { mois: 6, label: '6 mois', sousTitre: 'Semestriel', remise: 0.15, badge: '-15%' },
-  { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: 0.25, badge: '🔥 -25% (3 mois offerts)' },
+  { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: 0.25, badge: '-25% (3 mois offerts)' },
 ]
 
 export default function FonctionnalitesClient() {
@@ -38,7 +38,7 @@ export default function FonctionnalitesClient() {
         setPlanActif(d.planActif)
         setSettings(d.settings)
         setLoading(false)
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:FonctionnalitesClient:L41]', e); }
     }
 
     Promise.all([

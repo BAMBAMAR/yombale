@@ -44,12 +44,12 @@ function getRemainingDays(fin: string) {
 
 const badge = (plan: string) => {
   if (plan === 'business') {
-    return <span style={{ background: '#7E22CE', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 800 }}>👑 BUSINESS</span>
+    return <span style={{ background: '#7E22CE', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 800 }}>BUSINESS</span>
   }
   if (plan === 'pro') {
-    return <span style={{ background: '#C75B00', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 800 }}>⭐ PRO</span>
+    return <span style={{ background: '#C75B00', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 800 }}>PRO</span>
   }
-  return <span style={{ background: '#1D4ED8', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 800 }}>⚡ TAF TAF</span>
+  return <span style={{ background: '#1D4ED8', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 800 }}>TAF TAF</span>
 }
 
 export default function AbonnementsTableClient({ abonnements }: { abonnements: Abonnement[] }) {
@@ -157,7 +157,7 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
     for (const id of selectedIds) {
       try {
         await prolongerAbonnement(id, 30)
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:AbonnementsTableClient:L160]', err); }
     }
     setSelectedIds([])
     setLoadingBatch(false)
@@ -169,7 +169,7 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
     for (const id of selectedIds) {
       try {
         await annulerAbonnement(id)
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:AbonnementsTableClient:L172]', err); }
     }
     setSelectedIds([])
     setLoadingBatch(false)
@@ -230,7 +230,7 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
           <div style={{ position: 'relative', flex: '1 1 300px', minWidth: 260 }}>
             <input
               type="text"
-              placeholder="🔍 Rechercher par nom, email, téléphone, boutique, réf..."
+              placeholder="Rechercher par nom, email, téléphone, boutique, réf..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
@@ -242,7 +242,7 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
                 outline: 'none',
               }}
             />
-            <span style={{ position: 'absolute', left: 12, top: 11, color: '#94a3b8', fontSize: 15 }}>🔍</span>
+            <span style={{ position: 'absolute', left: 12, top: 11, color: '#94a3b8', fontSize: 15 }}></span>
             {search && (
               <button
                 onClick={() => setSearch('')}
@@ -260,10 +260,10 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
               onChange={e => setPlanFilter(e.target.value as any)}
               style={{ padding: '9px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13, background: '#fff', fontWeight: 600, color: '#334155' }}
             >
-              <option value="tous">📦 Tous les plans</option>
-              <option value="pro">⭐ Boutique Pro</option>
-              <option value="business">👑 Boutique Business</option>
-              <option value="decouverte">⚡ Boutique Taf Taf</option>
+              <option value="tous">Tous les plans</option>
+              <option value="pro">Boutique Pro</option>
+              <option value="business">Boutique Business</option>
+              <option value="decouverte">Boutique Taf Taf</option>
             </select>
 
             <select
@@ -271,17 +271,17 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
               onChange={e => setSortBy(e.target.value as any)}
               style={{ padding: '9px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13, background: '#fff', color: '#334155' }}
             >
-              <option value="fin_asc">⏳ Échéance (plus proche)</option>
-              <option value="fin_desc">⏳ Échéance (plus lointaine)</option>
-              <option value="created_desc">📅 Inscription récente</option>
-              <option value="prix_desc">💰 Montant décroissant</option>
+              <option value="fin_asc">Échéance (plus proche)</option>
+              <option value="fin_desc">Échéance (plus lointaine)</option>
+              <option value="created_desc">Inscription récente</option>
+              <option value="prix_desc">Montant décroissant</option>
             </select>
 
             <button
               onClick={exportCSV}
               style={{ padding: '9px 14px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              📥 Exporter CSV
+              Exporter CSV
             </button>
           </div>
         </div>
@@ -290,8 +290,8 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
           {[
             { key: 'tous', label: 'Tous', count: counts.tous, color: '#64748b' },
-            { key: 'actifs', label: '🟢 Actifs', count: counts.actifs, color: '#16a34a' },
-            { key: 'bientot', label: '⏳ Expire bientôt (< 7j)', count: counts.bientot, color: '#d97706' },
+            { key: 'actifs', label: 'Actifs', count: counts.actifs, color: '#16a34a' },
+            { key: 'bientot', label: 'Expire bientôt (< 7j)', count: counts.bientot, color: '#d97706' },
             { key: 'expires', label: '⚫ Expirés', count: counts.expires, color: '#64748b' },
             { key: 'annules', label: '🚫 Annulés', count: counts.annules, color: '#dc2626' },
           ].map(t => {
@@ -365,7 +365,7 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
               {filteredAbonnements.length === 0 && (
                 <tr>
                   <td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}></div>
                     Aucun abonnement ne correspond à vos critères de recherche.
                   </td>
                 </tr>
@@ -391,14 +391,14 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
                     <td style={{ padding: '12px 14px' }}>
                       <div style={{ fontWeight: 700, color: '#1e293b' }}>{a.utilisateur_nom || 'Sans nom'}</div>
                       <div style={{ color: '#64748b', fontSize: 12 }}>{a.utilisateur_email}</div>
-                      {a.telephone && <div style={{ color: '#0284c7', fontSize: 12, fontWeight: 600 }}>📞 {a.telephone}</div>}
+                      {a.telephone && <div style={{ color: '#0284c7', fontSize: 12, fontWeight: 600 }}>{a.telephone}</div>}
                     </td>
 
                     {/* Boutique reliée */}
                     <td style={{ padding: '12px 14px' }}>
                       {a.boutique_nom ? (
                         <div>
-                          <div style={{ fontWeight: 700, color: '#0f172a' }}>🏪 {a.boutique_nom}</div>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{a.boutique_nom}</div>
                           {a.boutique_slug && (
                             <Link
                               href={`/boutiques/${a.boutique_slug}`}
@@ -423,11 +423,11 @@ export default function AbonnementsTableClient({ abonnements }: { abonnements: A
                         {isActif ? (
                           isBientot ? (
                             <span style={{ background: '#fef3c7', color: '#b45309', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800, width: 'fit-content' }}>
-                              ⏳ Expire dans {days} j
+                              Expire dans {days} j
                             </span>
                           ) : (
                             <span style={{ background: '#dcfce7', color: '#15803d', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800, width: 'fit-content' }}>
-                              🟢 Actif ({days} j restants)
+                              Actif ({days} j restants)
                             </span>
                           )
                         ) : a.statut === 'annule' ? (

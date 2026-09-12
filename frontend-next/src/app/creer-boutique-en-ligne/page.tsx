@@ -346,13 +346,13 @@ export default function CreerBoutiquePage() {
                 📟 Caisse POS sans Internet
               </Link>
               <Link href="/vendre-sur-whatsapp" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                💬 Commandes WhatsApp
+                Commandes WhatsApp
               </Link>
               <Link href="/paiement-en-ligne-senegal" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                💳 Paiements Wave & Orange Money
+                Paiements Wave & Orange Money
               </Link>
               <Link href="/gestion-stock-carnet-dettes" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                📒 Carnet de Dettes & Stock
+                Carnet de Dettes & Stock
               </Link>
             </div>
           </div>

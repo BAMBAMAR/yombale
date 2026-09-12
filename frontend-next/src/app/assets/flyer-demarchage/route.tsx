@@ -66,12 +66,12 @@ export async function GET() {
             padding: '48px 80px 0',
           }}>
             {[
-              '🎁 30 jours d\'essai Formule Pro 100% offerts',
-              '⚡ Caisse POS Tactile (3 Scanners : Caméra, Cloud <100ms, Douchette USB)',
-              '📒 Carnet de Dettes Client & Relance WhatsApp 1-Clic',
-              '🏷️ Générateur de Stickers Codes-Barres EAN-13 GS1 Modulo 10',
-              '🛍️ Commandes clients reçues directement sur WhatsApp sans commission',
-              '🌐 Démo Commerciale POS interactive en 1-clic : nopalou.com/demo',
+              '30 jours d\'essai Formule Pro 100% offerts',
+              'Caisse POS Tactile (3 Scanners : Caméra, Cloud <100ms, Douchette USB)',
+              'Carnet de Dettes Client & Relance WhatsApp 1-Clic',
+              'Générateur de Stickers Codes-Barres EAN-13 GS1 Modulo 10',
+              'Commandes clients reçues directement sur WhatsApp sans commission',
+              'Démo Commerciale POS interactive en 1-clic : nopalou.com/demo',
             ].map(txt => (
               <div key={txt} style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
                 <div style={{

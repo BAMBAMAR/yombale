@@ -14,13 +14,13 @@ function helperLienWhatsapp(tel: string | null | undefined, message: string): st
 }
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'dakar_centre', nom: '🛵 Dakar Centre & Plateau (Médina, Plateau, Fann, Point E) — 1 000 FCFA', prix: 1000 },
-  { id: 'dakar_residentiel', nom: '🛵 Dakar Almadies & Ouest (Almadies, Ouakam, Mermoz, Yoff) — 1 500 FCFA', prix: 1500 },
-  { id: 'dakar_peripherie', nom: '🛵 Grand Dakar & Parcelles (HLM, Liberté, Maristes, Parcelles) — 1 800 FCFA', prix: 1800 },
-  { id: 'banlieue_proche', nom: '🛵 Banlieue Tiak-Tiak (Pikine, Guédiawaye, Keur Massar) — 2 200 FCFA', prix: 2200 },
-  { id: 'grande_banlieue', nom: '🛵 Grande Banlieue (Rufisque, Bargny, Diamniadio) — 3 000 FCFA', prix: 3000 },
-  { id: 'regions_proches', nom: '🚚 Petite Côte & Thiès (Thiès, Mbour, Saly) — 3 500 FCFA', prix: 3500 },
-  { id: 'regions_eloignees', nom: '🚚 Régions Intérieures (St-Louis, Touba, Kaolack, Ziguinchor) — 5 000 FCFA', prix: 5000 },
+  { id: 'dakar_centre', nom: 'Dakar Centre & Plateau (Médina, Plateau, Fann, Point E) — 1 000 FCFA', prix: 1000 },
+  { id: 'dakar_residentiel', nom: 'Dakar Almadies & Ouest (Almadies, Ouakam, Mermoz, Yoff) — 1 500 FCFA', prix: 1500 },
+  { id: 'dakar_peripherie', nom: 'Grand Dakar & Parcelles (HLM, Liberté, Maristes, Parcelles) — 1 800 FCFA', prix: 1800 },
+  { id: 'banlieue_proche', nom: 'Banlieue Tiak-Tiak (Pikine, Guédiawaye, Keur Massar) — 2 200 FCFA', prix: 2200 },
+  { id: 'grande_banlieue', nom: 'Grande Banlieue (Rufisque, Bargny, Diamniadio) — 3 000 FCFA', prix: 3000 },
+  { id: 'regions_proches', nom: 'Petite Côte & Thiès (Thiès, Mbour, Saly) — 3 500 FCFA', prix: 3500 },
+  { id: 'regions_eloignees', nom: 'Régions Intérieures (St-Louis, Touba, Kaolack, Ziguinchor) — 5 000 FCFA', prix: 5000 },
   { id: 'retrait-boutique', nom: '🏬 Retrait gratuit en boutique', prix: 0 },
 ]
 
@@ -98,7 +98,7 @@ export default function CommanderModal({
       if (savedNom) setNom(savedNom)
       if (savedTel) setTel(savedTel)
       if (savedAdresse) setAdresse(savedAdresse)
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:CommanderModal:L101]', err); }
 
     // Chargement des suggestions Cross-Sell
     fetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits/${produit.id}/cross-sell`)
@@ -121,7 +121,7 @@ export default function CommanderModal({
   const total = Math.max(0, totalSansReduction - (promoApplique ? promoApplique.reduction : 0))
 
   const messageWhatsappDirect = `Bonjour ${nomBoutique ? nomBoutique : 'vendeur'} ! Je suis intéressé(e) par l'article "${produit.nom}"${produit.prix ? ` (${fcfa(produit.prix)})` : ''} vu sur Nopalou. Est-il disponible ?`
-  const messageWhatsappVocal = `Bonjour ${nomBoutique ? nomBoutique : 'vendeur'} ! Je souhaite commander l'article "${produit.nom}" (${fcfa(sousTotalMain)}). Je vous joins ma note vocale ci-dessous pour vous préciser ma taille / couleur / adresse exacte de livraison 🎙️`
+  const messageWhatsappVocal = `Bonjour ${nomBoutique ? nomBoutique : 'vendeur'} ! Je souhaite commander l'article "${produit.nom}" (${fcfa(sousTotalMain)}). Je vous joins ma note vocale ci-dessous pour vous préciser ma taille / couleur / adresse exacte de livraison `
 
   function toggleAddon(pId: string) {
     setSelectedAddons(prev => {
@@ -134,7 +134,7 @@ export default function CommanderModal({
 
   async function appliquerCodePromo() {
     if (!codePromo.trim()) {
-      setPromoError('⚠️ Veuillez saisir un code promo')
+      setPromoError('Veuillez saisir un code promo')
       setPromoApplique(null)
       return
     }
@@ -236,7 +236,7 @@ export default function CommanderModal({
 
       if (data.fallback_manuel) {
         setPaiement('manuel')
-        setError('💡 L\'API Wave direct étant momentanément indisponible, votre commande a été enregistrée. Effectuez votre transfert manuel vers le 77 720 20 86 (Wave/OM).')
+        setError('L\'API Wave direct étant momentanément indisponible, votre commande a été enregistrée. Effectuez votre transfert manuel vers le 77 720 20 86 (Wave/OM).')
         setLoading(false)
         return
       }
@@ -246,7 +246,7 @@ export default function CommanderModal({
         if (nom) localStorage.setItem('nopalou_client_nom', nom)
         if (tel) localStorage.setItem('nopalou_client_tel', tel)
         if (adresse) localStorage.setItem('nopalou_client_adresse', adresse)
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:CommanderModal:L249]', err); }
 
       setSuccess(true)
     } catch {
@@ -368,7 +368,7 @@ export default function CommanderModal({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: '#C75B00', background: '#ffedd5', padding: '2px 8px', borderRadius: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                🏪 {nomBoutique || 'Boutique Certifiée'}
+                {nomBoutique || 'Boutique Certifiée'}
               </span>
             </div>
             <h2 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', margin: 0 }}>
@@ -402,7 +402,7 @@ export default function CommanderModal({
         {/* 2. Mini Carte Produit & Récapitulatif Rapide */}
         <div style={{ padding: '12px 24px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <span style={{ fontSize: 24, padding: '6px 10px', background: '#ffffff', borderRadius: 10, border: '1px solid #e2e8f0' }}>🛍️</span>
+            <span style={{ fontSize: 24, padding: '6px 10px', background: '#ffffff', borderRadius: 10, border: '1px solid #e2e8f0' }}></span>
             <div style={{ minWidth: 0 }}>
               <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {produit.nom}
@@ -421,7 +421,7 @@ export default function CommanderModal({
         {/* 3. Sélecteur d'Onglets Premium & Visible (Choix du canal) */}
         <div style={{ padding: '16px 24px 8px' }}>
           <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>👉</span> Choisissez comment vous souhaitez commander :
+            <span></span> Choisissez comment vous souhaitez commander :
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -438,7 +438,7 @@ export default function CommanderModal({
                   color: mode === 'whatsapp' ? '#ffffff' : '#64748b',
                   letterSpacing: '0.04em'
                 }}>
-                  ⚡ 1-CLIC RAPIDE
+                  1-CLIC RAPIDE
                 </span>
                 <span style={{
                   fontSize: 13, width: 20, height: 20, borderRadius: '50%',
@@ -451,7 +451,7 @@ export default function CommanderModal({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <span style={{ fontSize: 20 }}>💬</span>
+                <span style={{ fontSize: 20 }}></span>
                 <div>
                   <h4 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: mode === 'whatsapp' ? '#15803d' : '#1e293b' }}>
                     WhatsApp Direct
@@ -476,7 +476,7 @@ export default function CommanderModal({
                   color: mode === 'formulaire' ? '#ffffff' : '#64748b',
                   letterSpacing: '0.04em'
                 }}>
-                  💳 PAIEMENT DIRECT
+                  PAIEMENT DIRECT
                 </span>
                 <span style={{
                   fontSize: 13, width: 20, height: 20, borderRadius: '50%',
@@ -489,7 +489,7 @@ export default function CommanderModal({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <span style={{ fontSize: 20 }}>📋</span>
+                <span style={{ fontSize: 20 }}></span>
                 <div>
                   <h4 style={{ margin: 0, fontSize: 14, fontWeight: 900, color: mode === 'formulaire' ? '#9a3412' : '#1e293b' }}>
                     Formulaire & Paiement
@@ -510,7 +510,7 @@ export default function CommanderModal({
           {mode === 'whatsapp' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.2s ease-out' }}>
               <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 16, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 28, lineHeight: 1 }}>📲</span>
+                <span style={{ fontSize: 28, lineHeight: 1 }}></span>
                 <div>
                   <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: '#15803d' }}>
                     Commande instantanée avec le vendeur
@@ -523,7 +523,7 @@ export default function CommanderModal({
 
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '14px 16px' }}>
                 <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  💬 Message prêt à envoyer :
+                  Message prêt à envoyer :
                 </p>
                 <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 13, color: '#334155', fontStyle: 'italic', lineHeight: 1.45 }}>
                   &ldquo;{messageWhatsappDirect}&rdquo;
@@ -554,7 +554,7 @@ export default function CommanderModal({
                   transition: 'all 0.2s ease',
                 }}
               >
-                <span style={{ fontSize: 20 }}>💬</span> Ouvrir WhatsApp Maintenant ({fcfa(sousTotalMain)}) →
+                <span style={{ fontSize: 20 }}></span> Ouvrir WhatsApp Maintenant ({fcfa(sousTotalMain)}) →
               </a>
 
               {/* Option Note Vocale WhatsApp Directe */}
@@ -568,7 +568,7 @@ export default function CommanderModal({
                 gap: 10
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 22 }}>🎙️</span>
+                  <span style={{ fontSize: 22 }}></span>
                   <div>
                     <h4 style={{ margin: 0, fontSize: 13.5, fontWeight: 900, color: '#15803d' }}>
                       Commander par Note Vocale (Wolof ou Français)
@@ -602,7 +602,7 @@ export default function CommanderModal({
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <span>🎙️</span> Envoyer une Note Vocale WhatsApp →
+                  <span></span> Envoyer une Note Vocale WhatsApp →
                 </a>
               </div>
 
@@ -626,7 +626,7 @@ export default function CommanderModal({
                     textAlign: 'center',
                   }}
                 >
-                  <span>📞</span> Appeler la boutique directement
+                  <span></span> Appeler la boutique directement
                 </a>
               )}
             </div>
@@ -640,7 +640,7 @@ export default function CommanderModal({
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36,
                   boxShadow: paiement === 'credit' ? '0 8px 20px rgba(2,132,199,0.2)' : '0 8px 20px rgba(22,163,74,0.2)'
                 }}>
-                  {paiement === 'credit' ? '💳' : '🎉'}
+                  {paiement === 'credit' ? '' : ''}
                 </div>
 
                 <div>
@@ -705,7 +705,7 @@ export default function CommanderModal({
               <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {error && (
                   <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 12, padding: '12px 16px', color: '#b91c1c', fontSize: 13.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>⚠️</span>
+                    <span></span>
                     <span>{error}</span>
                   </div>
                 )}
@@ -722,7 +722,7 @@ export default function CommanderModal({
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5, fontWeight: 700 }}>
                     <span style={{ color: sousTotal >= 25000 ? '#15803d' : '#334155' }}>
-                      {sousTotal >= 25000 ? '🎉 Livraison offerte débloquée !' : `🚚 Plus que ${fcfa(Math.max(0, 25000 - sousTotal))} pour la livraison offerte !`}
+                      {sousTotal >= 25000 ? 'Livraison offerte débloquée !' : `Plus que ${fcfa(Math.max(0, 25000 - sousTotal))} pour la livraison offerte !`}
                     </span>
                     <span style={{ color: '#64748b', fontSize: 11.5 }}>
                       {Math.min(100, Math.round((sousTotal / 25000) * 100))}%
@@ -742,7 +742,7 @@ export default function CommanderModal({
                 {/* Section 1 : Vos Coordonnées */}
                 <div>
                   <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <span>👤</span> 1. Vos Coordonnées
+                    <span></span> 1. Vos Coordonnées
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
                     <div>
@@ -770,7 +770,7 @@ export default function CommanderModal({
                 {/* Section 2 : Quantité & Livraison */}
                 <div>
                   <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <span>📍</span> 2. Quantité & Livraison
+                    <span></span> 2. Quantité & Livraison
                   </label>
 
                   <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -822,16 +822,16 @@ export default function CommanderModal({
                 {/* Section 3 : Mode de Paiement */}
                 <div>
                   <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                    <span>💳</span> 3. Mode de Paiement
+                    <span></span> 3. Mode de Paiement
                   </label>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
                     {[
-                      { value: 'wave', label: '🌊 Wave', badge: 'Pay Safe Séquestre 🔒', activeClass: 'active-wave' },
-                      { value: 'cash', label: '💵 Espèces', badge: 'À la livraison', activeClass: 'active-cash' },
-                      { value: 'manuel', label: '🧾 Wave / OM Manuel', badge: 'Pay Safe Séquestre 🔒', activeClass: 'active-om' },
-                      { value: 'credit', label: '💳 Achat à Crédit', badge: 'Carnet Client', activeClass: 'active-wave' },
-                      { value: 'carte_bancaire', label: '💳 Carte Bancaire', badge: 'Stripe 🔒', activeClass: 'active-wave' },
+                      { value: 'wave', label: 'Wave', badge: 'Pay Safe Séquestre ', activeClass: 'active-wave' },
+                      { value: 'cash', label: 'Espèces', badge: 'À la livraison', activeClass: 'active-cash' },
+                      { value: 'manuel', label: 'Wave / OM Manuel', badge: 'Pay Safe Séquestre ', activeClass: 'active-om' },
+                      { value: 'credit', label: 'Achat à Crédit', badge: 'Carnet Client', activeClass: 'active-wave' },
+                      { value: 'carte_bancaire', label: 'Carte Bancaire', badge: 'Stripe ', activeClass: 'active-wave' },
                     ].map(m => {
                       const isSelected = paiement === m.value
                       return (
@@ -853,7 +853,7 @@ export default function CommanderModal({
                   </div>
 
                   <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '10px 14px' }}>
-                    <span style={{ fontSize: 18 }}>🔒</span>
+                    <span style={{ fontSize: 18 }}></span>
                     <div style={{ fontSize: 12, color: '#166534', lineHeight: 1.4 }}>
                       <strong>Protection Nopalou Pay Safe incluse :</strong> vos fonds restent sécurisés sous séquestre et ne sont transmis au vendeur que lorsque vous donnez votre code PIN secret au livreur à la réception de votre colis.
                     </div>
@@ -868,7 +868,7 @@ export default function CommanderModal({
                   {paiement === 'carte_bancaire' && (
                     <div style={{ marginTop: 10, background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div style={{ fontSize: 12, fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        🔒 Simulation Paiement Sécurisé Carte Bancaire (Stripe)
+                        Simulation Paiement Sécurisé Carte Bancaire (Stripe)
                       </div>
                       <div>
                         <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>Numéro de carte</label>
@@ -912,13 +912,13 @@ export default function CommanderModal({
                 {/* Section 4 : Code Promo */}
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: '12px 14px' }}>
                   <label style={{ fontSize: 12, fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <span>🏷️</span> Code Promo (optionnel)
+                    <span></span> Code Promo (optionnel)
                   </label>
 
                   {promoApplique ? (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 10, padding: '10px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 16 }}>✅</span>
+                        <span style={{ fontSize: 16 }}></span>
                         <div>
                           <strong style={{ fontSize: 14, color: '#166534' }}>{promoApplique.code}</strong>
                           <span style={{ fontSize: 13, color: '#15803d', marginLeft: 8, fontWeight: 700 }}>(-{fcfa(promoApplique.reduction)})</span>
@@ -966,7 +966,7 @@ export default function CommanderModal({
                 {crossSell.length > 0 && (
                   <div style={{ background: '#fffbeb', border: '1.5px solid #fef3c7', borderRadius: 14, padding: '12px 14px' }}>
                     <p style={{ margin: '0 0 8px', fontSize: 11.5, fontWeight: 900, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      🔥 Ajouter un article complémentaire (1-Clic) :
+                      Ajouter un article complémentaire (1-Clic) :
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {crossSell.map(c => {
@@ -984,7 +984,7 @@ export default function CommanderModal({
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontSize: 16 }}>{isSelected ? '✅' : '➕'}</span>
+                              <span style={{ fontSize: 16 }}>{isSelected ? '' : ''}</span>
                               <span style={{ fontSize: 13, fontWeight: isSelected ? 800 : 600, color: '#1e293b' }}>{c.nom}</span>
                             </div>
                             <span style={{ fontSize: 13, fontWeight: 900, color: '#C75B00' }}>
@@ -1076,7 +1076,7 @@ export default function CommanderModal({
                 </button>
 
                 <p style={{ margin: '0 auto', fontSize: 11.5, color: '#64748b', textAlign: 'center', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>🔒</span> Données protégées & Commande sécurisée par Nopalou
+                  <span></span> Données protégées & Commande sécurisée par Nopalou
                 </p>
               </form>
             )

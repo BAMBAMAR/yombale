@@ -126,7 +126,7 @@ export async function GET() {
             fontSize: 26, fontWeight: 900, letterSpacing: 0.5,
             boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
           }}>
-            👉 nopalou.com
+            nopalou.com
           </div>
           <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.8)', fontWeight: 700 }}>
             Trouvez les meilleurs prix en 1 clic

@@ -185,7 +185,7 @@ export default function MarchandsLandingPage() {
               background: '#ecfdf5', color: '#059669', fontSize: 11, fontWeight: 900,
               padding: '3px 10px', borderRadius: 12, border: '1px solid #a7f3d0'
             }}>
-              🟢 EN LIGNE · SYNCHRO TEMPS RÉEL
+              EN LIGNE · SYNCHRO TEMPS RÉEL
             </span>
           </div>
 
@@ -202,9 +202,9 @@ export default function MarchandsLandingPage() {
                 348 500 <span style={{ fontSize: 16, fontWeight: 700 }}>FCFA</span>
               </div>
               <div style={{ display: 'flex', gap: 8, fontSize: 12, color: '#64748b', flexWrap: 'wrap' }}>
-                <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>🌊 Wave : 210 000 F</span>
+                <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>Wave : 210 000 F</span>
                 <span style={{ background: '#fff7ed', color: '#c2410c', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>🟠 OM : 85 000 F</span>
-                <span style={{ background: '#f0fdf4', color: '#15803d', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>💵 Cash : 53 500 F</span>
+                <span style={{ background: '#f0fdf4', color: '#15803d', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>Cash : 53 500 F</span>
               </div>
             </div>
 
@@ -215,7 +215,7 @@ export default function MarchandsLandingPage() {
                 <span style={{ fontSize: 11, fontWeight: 900, background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: 8 }}>Mode Hors-Ligne Prêt</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f1f5f9', padding: 10, borderRadius: 10, marginBottom: 8 }}>
-                <span style={{ fontSize: 20 }}>📱</span>
+                <span style={{ fontSize: 20 }}></span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>iPhone 13 128 Go (Neuf)</div>
                   <div style={{ fontSize: 11, color: '#64748b' }}>Scan Caméra &bull; Code: 200849201</div>
@@ -223,7 +223,7 @@ export default function MarchandsLandingPage() {
                 <span style={{ fontSize: 13, fontWeight: 900, color: '#C75B00' }}>320 000 F</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, fontWeight: 800, color: '#059669', paddingTop: 6 }}>
-                <span>✅ Ticket imprimé &bull; Facture OHADA générée</span>
+                <span>Ticket imprimé &bull; Facture OHADA générée</span>
               </div>
             </div>
 
@@ -241,7 +241,7 @@ export default function MarchandsLandingPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
                   <span style={{ fontSize: 11, color: '#78350f' }}>Échéance : 30 Août</span>
                   <span style={{ background: '#25D366', color: '#fff', fontSize: 10, fontWeight: 900, padding: '3px 8px', borderRadius: 6 }}>
-                    💬 Relancer sur WhatsApp
+                    Relancer sur WhatsApp
                   </span>
                 </div>
               </div>

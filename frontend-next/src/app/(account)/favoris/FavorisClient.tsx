@@ -124,7 +124,7 @@ export default function FavorisClient() {
       setEntries(next)
       setItems(its => its.filter(it => !(it.id === id && it.type === type)))
       window.dispatchEvent(new CustomEvent('nopalou:fav', { detail: { adding: false, nom: '', count: next.length } }))
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:FavorisClient:L127]', err); }
   }
 
   if (loading) {

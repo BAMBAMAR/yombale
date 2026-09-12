@@ -46,9 +46,9 @@ export interface Annonce {
 }
 
 const CAT_ICONS: Record<string, string> = {
-  smartphones: '📱', informatique: '💻', 'tv-electro': '📺',
-  mode: '👗', maison: '🏠', 'auto-moto': '🚗', jeux: '🎮',
-  services: '🛠', alimentation: '🥗', beaute: '💄', autre: '🏪',
+  smartphones: '', informatique: '', 'tv-electro': '📺',
+  mode: '👗', maison: '', 'auto-moto': '', jeux: '🎮',
+  services: '', alimentation: '🥗', beaute: '💄', autre: '',
 }
 
 function getContrastColor(hexColor?: string | null): string {
@@ -189,7 +189,7 @@ function ProduitCard({
               gap: 6,
             }}
           >
-            {addedCart ? '✅ Ajouté' : (isEnStock ? (p.variantes && p.variantes.length > 0 ? 'Choisir options' : <><ShoppingCart size={14} /> Ajouter</>) : 'Rupture')}
+            {addedCart ? 'Ajouté' : (isEnStock ? (p.variantes && p.variantes.length > 0 ? 'Choisir options' : <><ShoppingCart size={14} /> Ajouter</>) : 'Rupture')}
           </button>
         </div>
       </div>
@@ -523,7 +523,7 @@ export default function BoutiqueDetailClient({
 
   return (
     <div>
-      {/* 📌 BARRE STICKY D'EN-TÊTE AU DÉFILEMENT */}
+      {/* BARRE STICKY D'EN-TÊTE AU DÉFILEMENT */}
       {isSticky && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 900,
@@ -565,11 +565,11 @@ export default function BoutiqueDetailClient({
         </div>
       )}
 
-      {/* 💳 BANNIÈRE DEMANDE DE CRÉDIT CLIENT EN BOUTIQUE */}
+      {/* BANNIÈRE DEMANDE DE CRÉDIT CLIENT EN BOUTIQUE */}
       {isCreditMode && (
         <div style={{ background: '#f0f9ff', border: '1.5px solid #0284c7', padding: '14px 18px', borderRadius: 16, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 24 }}>💳</span>
+            <span style={{ fontSize: 24 }}></span>
             <div>
               <p style={{ margin: 0, fontWeight: 900, fontSize: 14.5, color: '#0369a1' }}>
                 Mode Demande d&apos;Achat à Crédit (Carnet Client)
@@ -686,11 +686,11 @@ export default function BoutiqueDetailClient({
         </button>
       </div>
 
-      {/* 🛍 ONGLET PRODUITS / CATALOGUE */}
+      {/* ONGLET PRODUITS / CATALOGUE */}
       {tab === 'produits' && (
         <div>
 
-          {/* 👋 MESSAGE D'ACCUEIL PERSONNALISÉ */}
+          {/* MESSAGE D'ACCUEIL PERSONNALISÉ */}
           {boutique.message_accueil && (
             <div style={{
               background: boutique.couleur_secondaire || '#f8fafc',
@@ -703,14 +703,14 @@ export default function BoutiqueDetailClient({
               gap: 12,
               boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
             }}>
-              <span style={{ fontSize: 22, flexShrink: 0 }}>👋</span>
+              <span style={{ fontSize: 22, flexShrink: 0 }}></span>
               <p style={{ margin: 0, fontSize: 13.5, color: '#334155', fontWeight: 500, lineHeight: 1.5 }}>
                 {boutique.message_accueil}
               </p>
             </div>
           )}
 
-          {/* 🔍 OUTILS DE RECHERCHE, FILTRES ET TRI INTERNE BOUTIQUE */}
+          {/* OUTILS DE RECHERCHE, FILTRES ET TRI INTERNE BOUTIQUE */}
           {produits.length > 0 && (
             <div style={{ background: '#fff', borderRadius: currentRadius, padding: '12px 14px', border: '1px solid #e5e7eb', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
               
@@ -799,7 +799,7 @@ export default function BoutiqueDetailClient({
                       display: 'flex', alignItems: 'center', gap: 3,
                     }}
                   >
-                    ⚡ En stock
+                    En stock
                   </button>
                 </div>
 
@@ -841,13 +841,13 @@ export default function BoutiqueDetailClient({
           {/* Grille ou Liste des Produits */}
           {produits.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 20px', color: '#9ca3af' }}>
-              <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>📦</span>
+              <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}></span>
               <p style={{ margin: 0 }}>Aucun produit dans le catalogue pour l&apos;instant.</p>
               {whatsappUrl && (
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
                   style={{ display: 'inline-block', marginTop: 16, background: '#25d366', color: '#fff',
                     padding: '10px 24px', borderRadius: currentRadius, textDecoration: 'none', fontWeight: 700 }}>
-                  💬 Contacter via WhatsApp
+                  Contacter via WhatsApp
                 </a>
               )}
             </div>
@@ -901,13 +901,13 @@ export default function BoutiqueDetailClient({
                       {img
                         // eslint-disable-next-line @next/next/no-img-element
                         ? <img src={cloudinaryHQ(img, { width: 400 })} alt={a.titre} loading="lazy" />
-                        : <span>{CAT_ICONS[a.categorie_slug] ?? '📦'}</span>
+                        : <span>{CAT_ICONS[a.categorie_slug] ?? ''}</span>
                       }
                     </div>
                     <div className="boutique-annonce-body">
                       <p className="boutique-annonce-titre">{a.titre}</p>
                       <p className="boutique-annonce-prix">{a.prix ? fcfa(a.prix) : 'Prix à négocier'}</p>
-                      {a.ville && <p className="boutique-annonce-ville">📍 {[a.quartier, a.ville].filter(Boolean).join(', ')}</p>}
+                      {a.ville && <p className="boutique-annonce-ville">{[a.quartier, a.ville].filter(Boolean).join(', ')}</p>}
                     </div>
                   </Link>
                 )
@@ -959,7 +959,7 @@ export default function BoutiqueDetailClient({
                 {boutique.instagram && (
                   <a href={boutique.instagram.startsWith('http') ? boutique.instagram : `https://instagram.com/${boutique.instagram}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #fdf2f8, #fff7ed)', border: '1px solid #fbcfe8', padding: '6px 14px', borderRadius: 20, color: '#db2777', fontSize: 12, fontWeight: 700 }}>
-                      <span>📸 Instagram</span>
+                      <span>Instagram</span>
                     </div>
                   </a>
                 )}
@@ -1007,7 +1007,7 @@ export default function BoutiqueDetailClient({
                   <MapPin size={20} style={{ color: '#C75B00', marginTop: 2, flexShrink: 0 }} />
                   <div>
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>{boutique.adresse}</p>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b', fontWeight: 600 }}>📍 Ville : {boutique.ville}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b', fontWeight: 600 }}>Ville : {boutique.ville}</p>
                   </div>
                 </div>
               )}
@@ -1079,7 +1079,7 @@ export default function BoutiqueDetailClient({
         </div>
       )}
 
-      {/* 🔍 MODAL APERÇU RAPIDE / QUICK VIEW */}
+      {/* MODAL APERÇU RAPIDE / QUICK VIEW */}
       {quickViewProduct && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1050, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setQuickViewProduct(null)}>
           <div style={{ width: '100%', maxWidth: 540, background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.25)', animation: 'fadeIn 0.2s ease-out' }} onClick={e => e.stopPropagation()}>
@@ -1127,7 +1127,7 @@ export default function BoutiqueDetailClient({
         </div>
       )}
 
-      {/* 🛡️ PIED DE PAGE IDENTITÉ & RÉASSURANCE */}
+      {/* PIED DE PAGE IDENTITÉ & RÉASSURANCE */}
       <div style={{
         marginTop: 48,
         padding: '24px 16px 36px',
@@ -1140,9 +1140,9 @@ export default function BoutiqueDetailClient({
           Vitrine officielle de <strong>{boutique.nom}</strong>
         </p>
         <p style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span>🔒 Paiements sécurisés Wave & Orange Money</span>
+          <span>Paiements sécurisés Wave & Orange Money</span>
           <span>•</span>
-          <span>⚡ Propulsé par Nopalou</span>
+          <span>Propulsé par Nopalou</span>
         </p>
       </div>
 

@@ -161,7 +161,7 @@ export default async function ComparaisonPage({
         if (infA.produit.id === infB.produit.id) return
         if (infA.specs?.ram_go && infB.specs?.ram_go && infA.specs.ram_go > infB.specs.ram_go) {
           techBullets.push({
-            icon: '⚡',
+            icon: '',
             text: <><strong>{infA.produit.nom}</strong> possède plus de mémoire vive ({infA.specs.ram_go} Go RAM contre {infB.specs.ram_go} Go).</>
           })
         }
@@ -198,7 +198,7 @@ export default async function ComparaisonPage({
         if (infA.specs?.etat === 'neuf' && infB.specs?.etat && infB.specs.etat !== 'neuf') {
           const etatLabel = infB.specs.etat === 'occasion' ? 'd\'occasion' : 'reconditionné'
           techBullets.push({
-            icon: '✨',
+            icon: '',
             text: <><strong>{infA.produit.nom}</strong> est disponible en état neuf, alors que le meilleur prix de <strong>{infB.produit.nom}</strong> est en état {etatLabel}.</>
           })
         }
@@ -208,7 +208,7 @@ export default async function ComparaisonPage({
     const sortedByOffres = [...infos].sort((a, b) => b.offres.length - a.offres.length)
     if (sortedByOffres[0].offres.length > sortedByOffres[1].offres.length + 1) {
       techBullets.push({
-        icon: '🏪',
+        icon: '',
         text: <><strong>{sortedByOffres[0].produit.nom}</strong> offre plus de choix de marchands ({sortedByOffres[0].offres.length} vendeurs contre {sortedByOffres[1].offres.length}).</>
       })
     }
@@ -229,10 +229,10 @@ export default async function ComparaisonPage({
           <div className="comp-verdict-grid">
             {budgetVerdictText && (
               <div className="comp-verdict-col">
-                <div className="comp-verdict-subtitle">💰 Budget</div>
+                <div className="comp-verdict-subtitle">Budget</div>
                 <ul className="comp-verdict-list">
                   <li className="comp-verdict-item">
-                    <span className="comp-verdict-bullet">🏷️</span>
+                    <span className="comp-verdict-bullet"></span>
                     <span>{budgetVerdictText}</span>
                   </li>
                 </ul>
@@ -240,7 +240,7 @@ export default async function ComparaisonPage({
             )}
             {techBullets.length > 0 && (
               <div className="comp-verdict-col">
-                <div className="comp-verdict-subtitle">⚡ Avantages techniques & Offre</div>
+                <div className="comp-verdict-subtitle">Avantages techniques & Offre</div>
                 <ul className="comp-verdict-list">
                   {techBullets.slice(0, 3).map((bullet, idx) => (
                     <li key={idx} className="comp-verdict-item">
@@ -363,7 +363,7 @@ export default async function ComparaisonPage({
                 const enStock = offres.some(o => o.stock === true)
                 return (
                   <td key={produit.id} className="comp-td">
-                    {enStock ? '✅ Oui' : '❓ Non vérifié'}
+                    {enStock ? 'Oui' : '❓ Non vérifié'}
                   </td>
                 )
               })}

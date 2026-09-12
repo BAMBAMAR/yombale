@@ -494,7 +494,7 @@ export default function MerchantShowcase({ prixTafTaf = 2500 }: Props) {
                 </div>
 
                 <div style={{ background: '#15803D', borderRadius: 8, padding: '9px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, fontWeight: 800, marginBottom: 10 }}>
-                  <span>💵 Espèces : 150 000 F</span>
+                  <span>Espèces : 150 000 F</span>
                   <span>Monnaie à rendre : <strong>20 000 F</strong></span>
                 </div>
 
@@ -513,7 +513,7 @@ export default function MerchantShowcase({ prixTafTaf = 2500 }: Props) {
                       textDecoration: 'none'
                     }}
                   >
-                    ⚡ Ouvrir la Caisse
+                    Ouvrir la Caisse
                   </Link>
                   <Link
                     href="/demo?role=marchand"
@@ -539,7 +539,7 @@ export default function MerchantShowcase({ prixTafTaf = 2500 }: Props) {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 10, marginBottom: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#A7F3D0' }}>
-                    <span>🔒 nopalou.com/b/dakar-tech</span>
+                    <span>nopalou.com/b/dakar-tech</span>
                   </div>
                   <span style={{ fontSize: 10, background: '#16A34A', color: '#fff', padding: '2px 6px', borderRadius: 6, fontWeight: 900 }}>
                     0% COMMISSION
@@ -580,14 +580,14 @@ export default function MerchantShowcase({ prixTafTaf = 2500 }: Props) {
                 </div>
 
                 <div style={{ background: '#064E3B', borderRadius: 10, padding: 12, marginBottom: 10, fontSize: 11.5, lineHeight: 1.45, borderLeft: '3px solid #22C55E' }}>
-                  <div style={{ fontWeight: 800, color: '#A7F3D0', marginBottom: 4 }}>📦 NOUVELLE COMMANDE REÇUE :</div>
+                  <div style={{ fontWeight: 800, color: '#A7F3D0', marginBottom: 4 }}>NOUVELLE COMMANDE REÇUE :</div>
                   <div>Client : Aminata Fall (+221 77 123 45 67)</div>
                   <div>Article : Robe Wax Moderne (Taille L)</div>
                   <div style={{ fontWeight: 800, color: '#FED7AA' }}>Total : 18 500 FCFA • Livr. Point E</div>
                 </div>
 
                 <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 12, fontSize: 11.5, lineHeight: 1.45, borderLeft: '3px solid #3B82F6' }}>
-                  <div style={{ fontWeight: 800, color: '#93C5FD', marginBottom: 4 }}>📒 RELANCE DETTE 1-CLIC :</div>
+                  <div style={{ fontWeight: 800, color: '#93C5FD', marginBottom: 4 }}>RELANCE DETTE 1-CLIC :</div>
                   <div>&laquo; Bonjour Ousmane, solde restant de 25 000 F. Cliquez ici pour régler par Wave : wave.me/pay/dakar-tech &raquo;</div>
                 </div>
               </div>
@@ -608,7 +608,7 @@ export default function MerchantShowcase({ prixTafTaf = 2500 }: Props) {
                   <div style={{ fontSize: 12, fontWeight: 800 }}>products_export.csv (Shopify)</div>
                   <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 2 }}>142 produits &bull; 380 photos &bull; Tailles S, M, L, XL</div>
                   <div style={{ marginTop: 6, fontSize: 10.5, color: '#86EFAC', fontWeight: 900 }}>
-                    ✅ Prêt à être importé en 1 clic
+                    Prêt à être importé en 1 clic
                   </div>
                 </div>
 
@@ -650,7 +650,7 @@ export default function MerchantShowcase({ prixTafTaf = 2500 }: Props) {
                 <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                   <th style={{ padding: '14px 16px', fontWeight: 900, color: 'var(--navy, #1C2B4A)', width: '28%' }}>Critère Clé</th>
                   <th style={{ padding: '14px 16px', fontWeight: 900, color: 'var(--accent, #C75B00)', background: '#FFF7ED', width: '26%' }}>
-                    🌟 Nopalou Retail &amp; POS
+                    Nopalou Retail &amp; POS
                   </th>
                   <th style={{ padding: '14px 16px', fontWeight: 800, color: '#64748B', width: '15%' }}>WhatsApp Seul</th>
                   <th style={{ padding: '14px 16px', fontWeight: 800, color: '#64748B', width: '15%' }}>Cahier Papier</th>
@@ -667,17 +667,17 @@ export default function MerchantShowcase({ prixTafTaf = 2500 }: Props) {
                 </tr>
                 <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
                   <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Caisse POS Hors-Ligne (Sans Net)</td>
-                  <td style={{ padding: '12px 16px', background: '#FFF7ED', fontWeight: 900, color: '#16A34A' }}>✅ 100% Hors-Ligne (PWA)</td>
-                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>❌ Dépend d&apos;Internet</td>
-                  <td style={{ padding: '12px 16px', color: '#16A34A' }}>✅ Manuel</td>
-                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>❌ Connexion requise</td>
+                  <td style={{ padding: '12px 16px', background: '#FFF7ED', fontWeight: 900, color: '#16A34A' }}>100% Hors-Ligne (PWA)</td>
+                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>Dépend d&apos;Internet</td>
+                  <td style={{ padding: '12px 16px', color: '#16A34A' }}>Manuel</td>
+                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>Connexion requise</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
                   <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Carnet Dettes &amp; Relance Wave</td>
-                  <td style={{ padding: '12px 16px', background: '#FFF7ED', fontWeight: 900, color: '#16A34A' }}>✅ Relances 1-Clic Wave</td>
-                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>❌ Messages manuels</td>
-                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>❌ Oublis fréquents</td>
-                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>❌ Non adapté Sénégal</td>
+                  <td style={{ padding: '12px 16px', background: '#FFF7ED', fontWeight: 900, color: '#16A34A' }}>Relances 1-Clic Wave</td>
+                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>Messages manuels</td>
+                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>Oublis fréquents</td>
+                  <td style={{ padding: '12px 16px', color: '#DC2626' }}>Non adapté Sénégal</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
                   <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Matériel supplémentaire requis</td>

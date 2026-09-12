@@ -27,18 +27,18 @@ type TabStatus = 'toutes' | 'attente' | 'actives' | 'boostees' | 'rejetees'
 type TriOption = 'recent' | 'ancien' | 'prix_asc' | 'prix_desc'
 
 const CATEGORIES_LABELS: Record<string, string> = {
-  smartphones: '📱 Smartphones & Tablettes',
-  informatique: '💻 Informatique & Laptops',
+  smartphones: 'Smartphones & Tablettes',
+  informatique: 'Informatique & Laptops',
   'tv-electro': '📺 TV & Électroménager',
   mode: '👗 Mode & Vetements',
-  maison: '🏠 Maison & Déco',
-  'auto-moto': '🚗 Auto & Moto',
+  maison: 'Maison & Déco',
+  'auto-moto': 'Auto & Moto',
   jeux: '🎮 Jeux vidéo & Consoles',
-  services: '🛠️ Services & Prestations',
-  immo: '🏢 Immobilier',
-  beaute: '✨ Beauté & Cosmétiques',
-  emploi: '💼 Emploi & Recrutement',
-  divers: '📦 Divers',
+  services: 'Services & Prestations',
+  immo: 'Immobilier',
+  beaute: 'Beauté & Cosmétiques',
+  emploi: 'Emploi & Recrutement',
+  divers: 'Divers',
 }
 
 const VILLES_POPULAIRES = [
@@ -83,7 +83,7 @@ function StatutBadge({ annonce }: { annonce: Annonce }) {
           alignItems: 'center',
           gap: 4
         }}>
-          ⚡ Boosté ({new Date(annonce.boost_until!).toLocaleDateString('fr-FR')})
+          Boosté ({new Date(annonce.boost_until!).toLocaleDateString('fr-FR')})
         </span>
       )}
     </div>
@@ -170,15 +170,15 @@ function AnnonceRow({
               {CATEGORIES_LABELS[annonce.categorie_slug] || annonce.categorie_slug}
             </span>
             <span className="admin-annonce-meta-sep">·</span>
-            <span>📍 {annonce.ville || 'Dakar'}</span>
+            <span>{annonce.ville || 'Dakar'}</span>
           </div>
 
           <div className="admin-annonce-meta">
-            <span>👤 {annonce.auteur_nom || 'Anonyme'}</span>
+            <span>{annonce.auteur_nom || 'Anonyme'}</span>
             <span className="admin-annonce-meta-sep">·</span>
-            <span>✉️ {annonce.auteur_email || '—'}</span>
+            <span>{annonce.auteur_email || '—'}</span>
             <span className="admin-annonce-meta-sep">·</span>
-            <span>📞 {annonce.contact_tel}</span>
+            <span>{annonce.contact_tel}</span>
           </div>
 
           <p className="admin-annonce-date">Déposée le {formatDate(annonce.created_at)}</p>
@@ -237,7 +237,7 @@ function AnnonceRow({
               cursor: 'pointer'
             }}
           >
-            {isBooste ? '⚡ +7j Boost' : '⚡ Booster 7j'}
+            {isBooste ? '+7j Boost' : 'Booster 7j'}
           </button>
 
           <button
@@ -246,7 +246,7 @@ function AnnonceRow({
             className="admin-btn admin-btn--rejeter"
             style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
           >
-            🗑️ Supprimer
+            Supprimer
           </button>
         </div>
       </div>
@@ -460,14 +460,14 @@ export default function AdminAnnoncesClient({
     {
       key: 'approuver',
       label: 'Approuver les sélectionnées',
-      icon: '✅',
+      icon: '',
       color: 'green',
       onClick: handleBatchApprouver,
     },
     {
       key: 'booster',
-      label: '⚡ Booster 7 jours',
-      icon: '⚡',
+      label: 'Booster 7 jours',
+      icon: '',
       color: 'amber',
       onClick: handleBatchBoost,
     },
@@ -481,7 +481,7 @@ export default function AdminAnnoncesClient({
     {
       key: 'supprimer',
       label: 'Supprimer définitivement',
-      icon: '🗑️',
+      icon: '',
       color: 'red',
       confirmMsg: 'Êtes-vous sûr de vouloir supprimer définitivement ces annonces ?',
       onClick: handleBatchSupprimer,
@@ -514,7 +514,7 @@ export default function AdminAnnoncesClient({
         {/* Champ de recherche principal */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#94a3b8' }}>🔍</span>
+            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#94a3b8' }}></span>
             <input
               type="text"
               value={q}
@@ -564,7 +564,7 @@ export default function AdminAnnoncesClient({
                 gap: 6
               }}
             >
-              🔄 Réinitialiser
+              Réinitialiser
             </button>
           )}
         </div>
@@ -625,7 +625,7 @@ export default function AdminAnnoncesClient({
               }}
             >
               <option value="">Tous les types</option>
-              <option value="payee">💎 Payée</option>
+              <option value="payee">Payée</option>
               <option value="gratuite">🆓 Gratuite / Quota</option>
             </select>
           </div>
@@ -643,10 +643,10 @@ export default function AdminAnnoncesClient({
                 fontSize: 13, background: '#fff', color: '#1e293b', cursor: 'pointer'
               }}
             >
-              <option value="recent">📅 Les plus récentes</option>
-              <option value="ancien">⏳ Les plus anciennes</option>
-              <option value="prix_asc">🏷️ Prix croissant</option>
-              <option value="prix_desc">🏷️ Prix décroissant</option>
+              <option value="recent">Les plus récentes</option>
+              <option value="ancien">Les plus anciennes</option>
+              <option value="prix_asc">Prix croissant</option>
+              <option value="prix_desc">Prix décroissant</option>
             </select>
           </div>
         </div>
@@ -673,7 +673,7 @@ export default function AdminAnnoncesClient({
             transition: 'all 0.15s ease'
           }}
         >
-          ⏳ En attente
+          En attente
           <span style={{
             background: activeTab === 'attente' ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
             padding: '2px 8px', borderRadius: 12, fontSize: 12
@@ -701,7 +701,7 @@ export default function AdminAnnoncesClient({
             transition: 'all 0.15s ease'
           }}
         >
-          ✅ Actives
+          Actives
           <span style={{
             background: activeTab === 'actives' ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
             padding: '2px 8px', borderRadius: 12, fontSize: 12
@@ -729,7 +729,7 @@ export default function AdminAnnoncesClient({
             transition: 'all 0.15s ease'
           }}
         >
-          ⚡ Boostées
+          Boostées
           <span style={{
             background: activeTab === 'boostees' ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
             padding: '2px 8px', borderRadius: 12, fontSize: 12
@@ -757,7 +757,7 @@ export default function AdminAnnoncesClient({
             transition: 'all 0.15s ease'
           }}
         >
-          ❌ Rejetées
+          Rejetées
           <span style={{
             background: activeTab === 'rejetees' ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
             padding: '2px 8px', borderRadius: 12, fontSize: 12
@@ -785,7 +785,7 @@ export default function AdminAnnoncesClient({
             transition: 'all 0.15s ease'
           }}
         >
-          📋 Toutes
+          Toutes
           <span style={{
             background: activeTab === 'toutes' ? 'rgba(255,255,255,0.3)' : '#e2e8f0',
             padding: '2px 8px', borderRadius: 12, fontSize: 12

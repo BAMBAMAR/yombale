@@ -103,31 +103,31 @@ export default function MarketingBoutique({
   const modelesCampagnes = [
     {
       id: 'lancement',
-      icon: '🚀',
+      icon: '',
       titre: 'Lancement & Présentation de la vitrine',
       desc: 'Idéal pour annoncer votre vitrine à tous vos contacts et groupes WhatsApp.',
-      message: `Bonjour ! 👋\n\nDécouvrez notre vitrine officielle en ligne chez *${boutique.nom}* !\n\n🛍️ Retrouvez tous nos articles avec photos, prix et stock à jour.\n👉 Accéder au catalogue et commander : ${lienBoutique}\n\n🚚 Livraison rapide disponible à ${ville} et partout au Sénégal.\n${contactTel ? `💬 Contact WhatsApp direct : ${contactTel}` : ''}`,
+      message: `Bonjour ! \n\nDécouvrez notre vitrine officielle en ligne chez *${boutique.nom}* !\n\nRetrouvez tous nos articles avec photos, prix et stock à jour.\nAccéder au catalogue et commander : ${lienBoutique}\n\nLivraison rapide disponible à ${ville} et partout au Sénégal.\n${contactTel ? `Contact WhatsApp direct : ${contactTel}` : ''}`,
     },
     {
       id: 'promo',
-      icon: '🔥',
+      icon: '',
       titre: 'Vente Flash & Promo du Week-End',
       desc: 'Pour booster vos ventes rapidement avec une offre à durée limitée.',
-      message: `🔥 *VENTE FLASH CHEZ ${boutique.nom.toUpperCase()} !* 🔥\n\nProfitez de réductions exclusives sur notre sélection d'articles en stock ce week-end !\n\n👉 Découvrez les promotions ici : ${lienBoutique}\n\n⚠️ Offre valable dans la limite des stocks disponibles.\n💬 Commandez directement en répondant à ce message ou sur notre vitrine !`,
+      message: `*VENTE FLASH CHEZ ${boutique.nom.toUpperCase()} !* \n\nProfitez de réductions exclusives sur notre sélection d'articles en stock ce week-end !\n\nDécouvrez les promotions ici : ${lienBoutique}\n\nOffre valable dans la limite des stocks disponibles.\nCommandez directement en répondant à ce message ou sur notre vitrine !`,
     },
     {
       id: 'arrivage',
-      icon: '📦',
+      icon: '',
       titre: 'Nouvel Arrivage & Nouveautés',
       desc: 'Pour notifier vos clients fidèles de l\'arrivée de nouveaux articles.',
-      message: `✨ *NOUVEAUX ARRIVAGES DISPONIBLES !* ✨\n\nDe nouveaux articles viennent d'arriver chez *${boutique.nom}* !\n\n👉 Découvrez toutes les nouveautés en photo : ${lienBoutique}\n\n📦 Stock limité — premier arrivé, premier servi !\n${contactTel ? `💬 WhatsApp : ${contactTel}` : ''}`,
+      message: `*NOUVEAUX ARRIVAGES DISPONIBLES !* \n\nDe nouveaux articles viennent d'arriver chez *${boutique.nom}* !\n\nDécouvrez toutes les nouveautés en photo : ${lienBoutique}\n\nStock limité — premier arrivé, premier servi !\n${contactTel ? `WhatsApp : ${contactTel}` : ''}`,
     },
     {
       id: 'fetes',
-      icon: '🎉',
+      icon: '',
       titre: 'Fêtes & Événements (Tabaski / Magal / Fin d\'année)',
       desc: 'Pour souhaiter de bonnes fêtes et proposer votre sélection spéciale.',
-      message: `✨ Toute l'équipe de *${boutique.nom}* vous souhaite d'excellentes fêtes !\n\nPour préparer vos cadeaux et vos achats en toute sérénité, découvrez notre sélection spéciale :\n👉 ${lienBoutique}\n\n🚚 Livraison garantie à ${ville} et dans toutes les régions.\n💬 Écrivez-nous pour réserver dès maintenant !`,
+      message: `Toute l'équipe de *${boutique.nom}* vous souhaite d'excellentes fêtes !\n\nPour préparer vos cadeaux et vos achats en toute sérénité, découvrez notre sélection spéciale :\n${lienBoutique}\n\nLivraison garantie à ${ville} et dans toutes les régions.\nÉcrivez-nous pour réserver dès maintenant !`,
     },
   ]
 
@@ -193,7 +193,7 @@ export default function MarketingBoutique({
           >
             <Star size={18} style={{ color: '#facc15' }} />
             <span style={{ fontSize: 12.5, fontWeight: 800, color: '#fef08a' }}>
-              ⭐ Sponsorisé actif jusqu&apos;au {dateFinSponsoring}
+              Sponsorisé actif jusqu&apos;au {dateFinSponsoring}
             </span>
           </div>
         ) : null}
@@ -211,7 +211,7 @@ export default function MarketingBoutique({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <span style={{ fontSize: 20 }}>🌐</span>
+          <span style={{ fontSize: 20 }}></span>
           <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a' }}>
             1. Liens de la Vitrine &amp; Partage 1-Clic
           </h3>
@@ -249,7 +249,7 @@ export default function MarketingBoutique({
                 {boutique.logo_url ? (
                   <ExternalImg src={boutique.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ fontSize: 24 }}>🏪</span>
+                  <span style={{ fontSize: 24 }}></span>
                 )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -336,7 +336,7 @@ export default function MarketingBoutique({
                   flexShrink: 0,
                 }}
               >
-                <span style={{ fontSize: 24 }}>🤖</span>
+                <span style={{ fontSize: 24 }}></span>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontWeight: 800, fontSize: 14, color: '#166534' }}>
@@ -392,7 +392,7 @@ export default function MarketingBoutique({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <span style={{ fontSize: 20 }}>⚡</span>
+          <span style={{ fontSize: 20 }}></span>
           <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a' }}>
             2. Messages Prêts à l&apos;Emploi (Générateur 1-Clic)
           </h3>
@@ -509,7 +509,7 @@ export default function MarketingBoutique({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <span style={{ fontSize: 20 }}>📢</span>
+          <span style={{ fontSize: 20 }}></span>
           <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a' }}>
             3. Suivi &amp; Diffusion des Produits du Catalogue
           </h3>
@@ -532,7 +532,7 @@ export default function MarketingBoutique({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-              <span style={{ fontSize: 24, flexShrink: 0 }}>⚠️</span>
+              <span style={{ fontSize: 24, flexShrink: 0 }}></span>
               <div style={{ minWidth: 0 }}>
                 <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#92400e' }}>
                   {nbJamaisPartages} produit{nbJamaisPartages > 1 ? 's' : ''} sur {totalProduits} n&apos;{nbJamaisPartages > 1 ? 'ont' : 'a'} jamais été partagé{nbJamaisPartages > 1 ? 's' : ''}
@@ -571,7 +571,7 @@ export default function MarketingBoutique({
               gap: 12,
             }}
           >
-            <span style={{ fontSize: 24, flexShrink: 0 }}>✅</span>
+            <span style={{ fontSize: 24, flexShrink: 0 }}></span>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#166534' }}>
               Bravo ! Tous vos produits ({totalProduits}) ont déjà été partagés au moins une fois.
             </p>
@@ -592,7 +592,7 @@ export default function MarketingBoutique({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 20 }}>🎯</span>
+            <span style={{ fontSize: 20 }}></span>
             <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, color: '#0f172a' }}>
               4. Réseaux Sociaux &amp; Pixels Publicitaires
             </h3>
@@ -611,7 +611,7 @@ export default function MarketingBoutique({
                 cursor: 'pointer',
               }}
             >
-              ⚙️ Configurer mes pixels &amp; réseaux
+              Configurer mes pixels &amp; réseaux
             </button>
           )}
         </div>
@@ -635,7 +635,7 @@ export default function MarketingBoutique({
 
           {/* Page Facebook */}
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
-            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#1d4ed8' }}>🌐 Page Facebook</p>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#1d4ed8' }}>Page Facebook</p>
             <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).facebook ? '#16a34a' : '#94a3b8' }}>
               {(boutique as any).facebook ? '✓ Connectée' : '⚪ Non renseignée'}
             </p>
@@ -643,7 +643,7 @@ export default function MarketingBoutique({
 
           {/* Compte Instagram */}
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 12px' }}>
-            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#e11d48' }}>📸 Instagram</p>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 800, color: '#e11d48' }}>Instagram</p>
             <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 700, color: (boutique as any).instagram ? '#16a34a' : '#94a3b8' }}>
               {(boutique as any).instagram ? '✓ Connecté' : '⚪ Non renseigné'}
             </p>
@@ -671,7 +671,7 @@ export default function MarketingBoutique({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 20 }}>📱</span>
+              <span style={{ fontSize: 20 }}></span>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>
                 QR Code Comptoir &amp; Vitrine
               </h3>
@@ -699,7 +699,7 @@ export default function MarketingBoutique({
               gap: 8,
             }}
           >
-            <span>📱 Ouvrir &amp; Télécharger le QR Code</span>
+            <span>Ouvrir &amp; Télécharger le QR Code</span>
           </button>
         </div>
 
@@ -720,7 +720,7 @@ export default function MarketingBoutique({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 20 }}>⭐</span>
+              <span style={{ fontSize: 20 }}></span>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#92400e' }}>
                 Booster de Visibilité (Sponsoring)
               </h3>
@@ -749,7 +749,7 @@ export default function MarketingBoutique({
               gap: 8,
             }}
           >
-            <span>{sponsoringEnCours ? 'Initialisation…' : '🚀 Activer le Sponsoring Wave'}</span>
+            <span>{sponsoringEnCours ? 'Initialisation…' : 'Activer le Sponsoring Wave'}</span>
           </button>
         </div>
       </div>

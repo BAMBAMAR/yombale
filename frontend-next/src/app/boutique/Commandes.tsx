@@ -110,7 +110,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
         setPinErreur(data.error || 'Code PIN incorrect')
         return
       }
-      alert('🎉 ' + (data.message || 'Fonds débloqués avec succès ! Commande validée comme livrée.'))
+      alert('' + (data.message || 'Fonds débloqués avec succès ! Commande validée comme livrée.'))
       setShowPinModal(false)
       onUpdate()
     } catch {
@@ -158,19 +158,19 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
               <a href={`tel:${commande.client_telephone}`} style={{ fontSize: 13, color: '#1d4ed8' }}>{commande.client_telephone}</a>
               <br />
               <a href={`https://wa.me/${commande.client_telephone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
-                style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>💬 WhatsApp</a>
+                style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>WhatsApp</a>
             </div>
             <div>
               <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>{t('shop.orders').toUpperCase()}</p>
               <p style={{ margin: 0, fontSize: 13 }}>{t('shop.orderReference')} : <strong>{commande.reference}</strong></p>
               <p style={{ margin: 0, fontSize: 13 }}>{commande.quantite} × {fcfa(commande.prix_unitaire)}</p>
-              {commande.frais_livraison > 0 && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>🚚 {t('shop.deliveryZoneLabel')} : {fcfa(commande.frais_livraison)}</p>}
+              {commande.frais_livraison > 0 && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>{t('shop.deliveryZoneLabel')} : {fcfa(commande.frais_livraison)}</p>}
               {commande.methode_paiement && (
                 <p style={{ margin: '2px 0 0', fontSize: 12, color: commande.methode_paiement === 'credit' ? '#0369a1' : '#6b7280', fontWeight: commande.methode_paiement === 'credit' ? 800 : 400 }}>
-                  💳 {({ wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: t('shop.transactionCreditSale') } as Record<string,string>)[commande.methode_paiement] ?? commande.methode_paiement}
+                  {({ wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: t('shop.transactionCreditSale') } as Record<string,string>)[commande.methode_paiement] ?? commande.methode_paiement}
                 </p>
               )}
-              {commande.client_adresse && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>📍 {commande.client_adresse}</p>}
+              {commande.client_adresse && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{commande.client_adresse}</p>}
             </div>
           </div>
           {commande.note && (
@@ -184,7 +184,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
             <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 10, padding: '12px 14px', marginBottom: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>🛡️</span>
+                  <span style={{ fontSize: 18 }}></span>
                   <div>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#166534' }}>
                       Nopalou Pay Safe — Paiement sous séquestre
@@ -273,7 +273,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                   </div>
                   {pinErreur && (
                     <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#dc2626' }}>
-                      ⚠️ {pinErreur}
+                      {pinErreur}
                     </p>
                   )}
                 </div>
@@ -285,7 +285,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* Actions Rapides Marchand */}
             <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 11.5, fontWeight: 800, color: '#334155' }}>⚡ {t('shop.quickActions')} :</span>
+              <span style={{ fontSize: 11.5, fontWeight: 800, color: '#334155' }}>{t('shop.quickActions')} :</span>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {commande.statut === 'en_attente' && (
                   <>
@@ -294,7 +294,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                       disabled={loading}
                       style={{ padding: '6px 12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                     >
-                      ✅ {t('shop.statusConfirmed')}
+                      {t('shop.statusConfirmed')}
                     </button>
 
                     <button
@@ -354,7 +354,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                               const cleanTel = commande.client_telephone.replace(/\D/g, '')
                               const msgWa = encodeURIComponent(`Bonjour ${commande.client_nom}, votre demande d'achat à crédit de ${fcfa(commande.montant_total)} (${commande.nom_produit}) a été approuvée par la boutique et ajoutée à votre Carnet !`)
                               
-                              if (confirm(`✅ Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée au Carnet client avec succès !\n\nSouhaitez-vous ouvrir WhatsApp pour envoyer la confirmation au client ?`)) {
+                              if (confirm(`Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée au Carnet client avec succès !\n\nSouhaitez-vous ouvrir WhatsApp pour envoyer la confirmation au client ?`)) {
                                 window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
                               }
                             } catch (err) {
@@ -366,7 +366,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                           disabled={loading}
                           style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                         >
-                          📒 {t('shop.debts')}
+                          {t('shop.debts')}
                         </button>
 
                         <button
@@ -377,7 +377,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                           disabled={loading}
                           style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                         >
-                          ❌ {t('shop.cancelOrder')}
+                          {t('shop.cancelOrder')}
                         </button>
                       </>
                     )}
@@ -405,7 +405,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                   disabled={loading}
                   style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                 >
-                  📄 {t('shop.createInvoiceAction')}
+                  {t('shop.createInvoiceAction')}
                 </button>
 
                 <a
@@ -414,7 +414,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                   rel="noreferrer"
                   style={{ padding: '6px 12px', background: '#25D366', color: '#fff', textDecoration: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}
                 >
-                  📲 WhatsApp
+                  WhatsApp
                 </a>
 
                 <button
@@ -526,7 +526,7 @@ function CommandeGroupeCard({ commandes, boutiqueId, onUpdate, onDispatch }: { c
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
           <span style={{ background: '#C75B00', color: '#fff', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
-            🛒 {t('shop.cartTitle')} · {formatNumber(commandes.length)} {t('common.details')}
+            {t('shop.cartTitle')} · {formatNumber(commandes.length)} {t('common.details')}
           </span>
           <div style={{ minWidth: 0 }}>
             <p style={{ margin: 0, fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -599,7 +599,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
         const parsed = JSON.parse(cached)
         if (filtre === 'abandonne') setPaniersAbandonnes(parsed)
         else setCommandes(parsed)
-      } catch(e) {}
+      } catch (e) { console.warn('[Nopalou:Commandes:L602]', e); }
     }
     if (!cached) setLoading(true)
 
@@ -718,7 +718,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
               color: subTab === 'commandes' ? '#C75B00' : '#475569', borderBottom: subTab === 'commandes' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
             }}
           >
-            📋 {t('shop.ordersTitle')}
+            {t('shop.ordersTitle')}
           </button>
           <button
             onClick={() => setSubTab('zones')}
@@ -727,7 +727,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
               color: subTab === 'zones' ? '#C75B00' : '#475569', borderBottom: subTab === 'zones' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
             }}
           >
-            🚚 {t('shop.deliveryZonesTitle')}
+            {t('shop.deliveryZonesTitle')}
           </button>
         </div>
 
@@ -751,7 +751,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
             }}
           >
             <Zap size={15} />
-            <span>⚡ Nouvelle commande / Lien Wave 💬</span>
+            <span>Nouvelle commande / Lien Wave </span>
           </button>
         )}
       </div>
@@ -763,7 +763,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
           {/* Stats rapides */}
       {stats.en_attente > 0 && filtre !== 'abandonne' && (
         <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: '#92400e', fontWeight: 600 }}>
-          ⏳ {formatNumber(stats.en_attente)} {t('shop.pendingOrdersCount')}
+          {formatNumber(stats.en_attente)} {t('shop.pendingOrdersCount')}
         </div>
       )}
 
@@ -788,7 +788,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
               color: filtreCanal === 'web' ? '#1d4ed8' : '#475569',
               fontSize: 12, fontWeight: 700, cursor: 'pointer',
             }}>
-              🌐 Web
+              Web
             </button>
             <button onClick={() => setFiltreCanal('caisse')} style={{
               padding: '4px 10px', borderRadius: 14, border: '1px solid',
@@ -797,7 +797,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
               color: filtreCanal === 'caisse' ? '#c75b00' : '#475569',
               fontSize: 12, fontWeight: 700, cursor: 'pointer',
             }}>
-              🛒 {t('shop.pos')}
+              {t('shop.pos')}
             </button>
           </div>
 
@@ -820,7 +820,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
                 gap: 5,
               }}
             >
-              <span>📥 Exporter</span>
+              <span>Exporter</span>
               <span style={{ fontSize: 10 }}>▾</span>
             </button>
 
@@ -864,7 +864,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
                       width: '100%',
                     }}
                   >
-                    <span>📥</span>
+                    <span></span>
                     <span>{t('common.exportCsv')} (Excel)</span>
                   </button>
                   <button
@@ -885,7 +885,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
                       width: '100%',
                     }}
                   >
-                    <span>📄</span>
+                    <span></span>
                     <span>{t('common.exportPdf')} (Registre)</span>
                   </button>
                 </div>
@@ -933,7 +933,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
             transition: 'all 0.15s ease',
           }}
         >
-          📢 {t('shop.cartTitle')} (Abandonnés)
+          {t('shop.cartTitle')} (Abandonnés)
         </button>
       </div>
 
@@ -946,7 +946,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
       ) : filtre === 'abandonne' ? (
         paniersAbandonnes.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
-            <p style={{ fontSize: 32, marginBottom: 12 }}>🎉</p>
+            <p style={{ fontSize: 32, marginBottom: 12 }}></p>
             <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>{t('common.noData')}</p>
           </div>
         ) : (
@@ -984,7 +984,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
                       display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 6px rgba(37,211,102,.25)'
                     }}
                   >
-                    💬 WhatsApp (-5%) →
+                    WhatsApp (-5%) →
                   </button>
                 </div>
               </div>
@@ -993,7 +993,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
         )
       ) : commandesFiltrees.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
-          <p style={{ fontSize: 32, marginBottom: 12 }}>📋</p>
+          <p style={{ fontSize: 32, marginBottom: 12 }}></p>
           <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>
             {t('shop.noOrdersFound')}
           </p>

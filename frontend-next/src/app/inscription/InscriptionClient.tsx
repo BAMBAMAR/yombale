@@ -24,10 +24,10 @@ export default function InscriptionClient() {
           </h2>
           <p className="auth-visual-desc">{t('auth.registerDesc')}</p>
           <ul className="auth-visual-list">
-            <li>✅ {t('auth.visualBullet1')}</li>
-            <li>✅ {t('auth.visualBullet2')}</li>
-            <li>✅ {t('auth.visualBullet3')}</li>
-            <li>✅ {t('auth.visualBullet4')}</li>
+            <li>{t('auth.visualBullet1')}</li>
+            <li>{t('auth.visualBullet2')}</li>
+            <li>{t('auth.visualBullet3')}</li>
+            <li>{t('auth.visualBullet4')}</li>
           </ul>
         </div>
         <p className="auth-visual-footer">© {new Date().getFullYear()} {t('auth.visualFooter')}</p>

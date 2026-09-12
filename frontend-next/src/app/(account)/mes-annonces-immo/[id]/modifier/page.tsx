@@ -49,7 +49,7 @@ export default async function ModifierImmoPage({
           { label: 'Mes biens immo', href: '/mes-annonces-immo' },
           { label: 'Modifier' }
         ]}
-        emoji="🏡"
+        emoji=""
         titre="Modifier le bien"
         compteur="Toute modification soumettra votre annonce à une nouvelle validation."
       />

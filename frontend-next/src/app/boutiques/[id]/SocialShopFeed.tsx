@@ -60,7 +60,7 @@ interface SocialShopFeedProps {
 const PLATFORM_CONFIG = {
   instagram: {
     label: 'Instagram',
-    icon: '📸',
+    icon: '',
     color: '#e1306c',
     bg: '#fdf2f8',
     border: '#fbcfe8',
@@ -97,7 +97,7 @@ function formatHandle(raw?: string | null): string {
       const parts = parsed.pathname.split('/').filter(Boolean)
       u = parts[0] || ''
     }
-  } catch (_) {}
+  } catch (err) { console.warn('[Nopalou:SocialShopFeed:L100]', err); }
   const cleaned = u.replace(/^@+/, '').replace(/\/+$/, '').trim()
   return cleaned ? `@${cleaned}` : raw
 }
@@ -216,11 +216,11 @@ export default function SocialShopFeed({
     const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
     const postLink = `${siteUrl}/boutiques/${boutiqueKey}?post=${post.id}`
 
-    let msg = `Bonjour ${boutiqueNom} ! 👋\n`
+    let msg = `Bonjour ${boutiqueNom} ! \n`
     if (produit) {
       msg += `Je souhaite commander cet article vu sur votre publication ${post.plateforme.toUpperCase()} :\n`
-      msg += `🛍️ Produit : *${produit.nom}*\n`
-      if (produit.prix) msg += `💰 Prix : *${fcfa(produit.prix)}*\n`
+      msg += `Produit : *${produit.nom}*\n`
+      if (produit.prix) msg += `Prix : *${fcfa(produit.prix)}*\n`
     } else {
       msg += `Je souhaite commander l'article présenté dans votre publication ${post.plateforme.toUpperCase()} :\n`
       if (post.caption) {
@@ -630,7 +630,7 @@ export default function SocialShopFeed({
                   </div>
                 </div>
 
-                {/* 🛍️ SECTION ACCROCHE PRODUIT ATTACHÉ SOUS LA CARTE */}
+                {/* SECTION ACCROCHE PRODUIT ATTACHÉ SOUS LA CARTE */}
                 {firstProduct ? (
                   <div style={{ padding: '10px 12px', background: '#fafaf9', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
@@ -902,7 +902,7 @@ export default function SocialShopFeed({
                     boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
                     border: '2px solid rgba(255,255,255,0.2)',
                   }}>
-                    {selectedPost.plateforme === 'instagram' ? '📸' : selectedPost.plateforme === 'tiktok' ? '🎵' : '📘'}
+                    {selectedPost.plateforme === 'instagram' ? '' : selectedPost.plateforme === 'tiktok' ? '🎵' : '📘'}
                   </div>
                   <h4 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 900, color: '#ffffff' }}>
                     {selectedPost.auteur || `@${boutiqueNom}`}

@@ -20,17 +20,17 @@ export default function GuideUtilisationClient() {
   }
 
   const SECTIONS = [
-    { id: 'intro', label: '🚀 Démarrage & Inscription', icon: Zap },
-    { id: 'compte', label: '👤 Espace Compte Utilisateur', icon: User },
-    { id: 'catalogue', label: '📦 Catalogue & Produits', icon: ShoppingBag },
+    { id: 'intro', label: 'Démarrage & Inscription', icon: Zap },
+    { id: 'compte', label: 'Espace Compte Utilisateur', icon: User },
+    { id: 'catalogue', label: 'Catalogue & Produits', icon: ShoppingBag },
     { id: 'caisse', label: '🖥️ Caisse POS & Hors-Ligne', icon: ShoppingCart },
-    { id: 'dettes', label: '📒 Carnet de Dettes WhatsApp', icon: CreditCard },
+    { id: 'dettes', label: 'Carnet de Dettes WhatsApp', icon: CreditCard },
     { id: 'factures', label: '📑 Facturation OHADA (PDF)', icon: FileText },
-    { id: 'fournisseurs', label: '🚚 Fournisseurs & Scan OCR', icon: Truck },
-    { id: 'commandes', label: '🛒 Commandes & Paniers', icon: Store },
-    { id: 'compta', label: '⚡ Saisie Express & Compta', icon: Zap },
+    { id: 'fournisseurs', label: 'Fournisseurs & Scan OCR', icon: Truck },
+    { id: 'commandes', label: 'Commandes & Paniers', icon: Store },
+    { id: 'compta', label: 'Saisie Express & Compta', icon: Zap },
     { id: 'marketing', label: '📣 Marketing & Stories HD', icon: Share2 },
-    { id: 'tarifs', label: '⭐ Forfaits & Abonnements', icon: Award },
+    { id: 'tarifs', label: 'Forfaits & Abonnements', icon: Award },
     { id: 'faq', label: '❓ Questions Fréquentes', icon: HelpCircle },
   ]
 
@@ -175,7 +175,7 @@ export default function GuideUtilisationClient() {
           {(activeTab === 'intro' || searchQuery) && (
             <div style={{ marginBottom: 40 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ fontSize: 28 }}>🚀</span>
+                <span style={{ fontSize: 28 }}></span>
                 <h2 style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
                   1. Démarrage Express : Ouvrir son Compte &amp; Créer sa Boutique
                 </h2>
@@ -226,7 +226,7 @@ export default function GuideUtilisationClient() {
           {(activeTab === 'compte' || searchQuery) && (
             <div style={{ marginBottom: 40, borderTop: activeTab !== 'compte' ? '1px solid #E2E8F0' : 'none', paddingTop: activeTab !== 'compte' ? 32 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ fontSize: 28 }}>👤</span>
+                <span style={{ fontSize: 28 }}></span>
                 <h2 style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
                   2. Comprendre l&apos;Espace Compte Utilisateur
                 </h2>
@@ -234,28 +234,28 @@ export default function GuideUtilisationClient() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: '18px' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 6px' }}>📋 Mes Annonces Classifiées</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 6px' }}>Mes Annonces Classifiées</h3>
                   <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, margin: 0 }}>
                     Publiez des annonces de vente (téléphones, autos, mode, électro). Vous pouvez activer le <strong>Boost 7 Jours en 1 clic Wave</strong> pour apparaître en tête de liste sur le site.
                   </p>
                 </div>
 
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: '18px' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 6px' }}>🏠 Mes Biens Immobiliers</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 6px' }}>Mes Biens Immobiliers</h3>
                   <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, margin: 0 }}>
                     Publiez vos appartements, villas et terrains à louer ou à vendre avec photos HD, localisation exacte et contact direct sans intermédiaire masqué.
                   </p>
                 </div>
 
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: '18px' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 6px' }}>💼 Espace Apporteur d&apos;Affaires (20%)</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 6px' }}>Espace Apporteur d&apos;Affaires (20%)</h3>
                   <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, margin: 0 }}>
                     Activez votre code d&apos;apporteur unique, partagez votre lien et touchez <strong>20% de commission récurrente à vie</strong> sur chaque boutique abonnée, payés directement par Wave / Orange Money.
                   </p>
                 </div>
 
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: '18px' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 6px' }}>🔔 Alertes Prix &amp; Favoris</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 6px' }}>Alertes Prix &amp; Favoris</h3>
                   <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, margin: 0 }}>
                     Sauvegardez vos articles préférés et recevez des notifications automatiques dès qu&apos;un prix baisse chez un marchand.
                   </p>
@@ -268,7 +268,7 @@ export default function GuideUtilisationClient() {
           {(activeTab === 'catalogue' || searchQuery) && (
             <div style={{ marginBottom: 40, borderTop: activeTab !== 'catalogue' ? '1px solid #E2E8F0' : 'none', paddingTop: activeTab !== 'catalogue' ? 32 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ fontSize: 28 }}>📦</span>
+                <span style={{ fontSize: 28 }}></span>
                 <h2 style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
                   3. Gestion du Catalogue &amp; Fiches Produits
                 </h2>
@@ -277,7 +277,7 @@ export default function GuideUtilisationClient() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ background: '#FFF7ED', border: '1.5px solid #FFEDD5', borderRadius: 14, padding: '18px 22px' }}>
                   <h3 style={{ fontSize: 16, fontWeight: 900, color: '#C75B00', margin: '0 0 8px' }}>
-                    ✨ 5 Façons Rapides d&apos;Ajouter vos Produits :
+                    5 Façons Rapides d&apos;Ajouter vos Produits :
                   </h3>
                   <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: '#1C2B4A', lineHeight: 1.8 }}>
                     <li><strong>Mode Express en 5 secondes</strong> : Saisie ultra-rapide (Nom + Prix + Photo) activée par défaut.</li>
@@ -290,7 +290,7 @@ export default function GuideUtilisationClient() {
 
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: '18px 22px' }}>
                   <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: '0 0 8px' }}>
-                    📲 Partage Instantané 100% Marque Blanche Marchand :
+                    Partage Instantané 100% Marque Blanche Marchand :
                   </h3>
                   <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, margin: 0 }}>
                     Dès l&apos;ajout d&apos;un produit, générez en 1 clic une <strong>Story HD 1080×1920</strong> au nom et logo exclusifs de votre boutique (sans logo Nopalou) pour vos statuts WhatsApp, Instagram et TikTok, avec message rédigé et lien de commande directe.
@@ -314,7 +314,7 @@ export default function GuideUtilisationClient() {
                 background: '#F0FDF4', border: '2px solid #BBF7D0', borderRadius: 16, padding: '22px', marginBottom: 18,
               }}>
                 <span style={{ fontSize: 18, fontWeight: 900, color: '#166534' }}>
-                  🟢 Fonctionne à 100% même en cas de coupure Internet (Offline First)
+                  Fonctionne à 100% même en cas de coupure Internet (Offline First)
                 </span>
                 <p style={{ fontSize: 14, color: '#14532D', marginTop: 8, lineHeight: 1.6, margin: '8px 0 0' }}>
                   La caisse Nopalou est une Progressive Web App (PWA). Votre catalogue et vos prix sont stockés sur votre appareil. Vous pouvez scanner, encaisser et imprimer des tickets sans aucune connexion. Dès que le réseau revient, vos ventes se synchronisent automatiquement !
@@ -323,17 +323,17 @@ export default function GuideUtilisationClient() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px' }}>
-                  <span style={{ fontSize: 24 }}>📷</span>
+                  <span style={{ fontSize: 24 }}></span>
                   <h4 style={{ fontSize: 15, fontWeight: 800, color: '#1C2B4A', margin: '8px 0 4px' }}>Scanner Caméra</h4>
                   <p style={{ fontSize: 12, color: '#64748B', margin: 0 }}>Utilisez directement l&apos;appareil photo de votre smartphone ou tablette.</p>
                 </div>
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px' }}>
-                  <span style={{ fontSize: 24 }}>⚡</span>
+                  <span style={{ fontSize: 24 }}></span>
                   <h4 style={{ fontSize: 15, fontWeight: 800, color: '#1C2B4A', margin: '8px 0 4px' }}>Scanner Cloud &lt;100ms</h4>
                   <p style={{ fontSize: 12, color: '#64748B', margin: 0 }}>Détection instantanée et synchronisation ultrarapide en boutique.</p>
                 </div>
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px' }}>
-                  <span style={{ fontSize: 24 }}>🔌</span>
+                  <span style={{ fontSize: 24 }}></span>
                   <h4 style={{ fontSize: 15, fontWeight: 800, color: '#1C2B4A', margin: '8px 0 4px' }}>Douchette USB / Bluetooth</h4>
                   <p style={{ fontSize: 12, color: '#64748B', margin: 0 }}>Branchez votre lecteur laser standard pour un encaissement à la chaîne.</p>
                 </div>
@@ -345,7 +345,7 @@ export default function GuideUtilisationClient() {
           {(activeTab === 'dettes' || searchQuery) && (
             <div style={{ marginBottom: 40, borderTop: activeTab !== 'dettes' ? '1px solid #E2E8F0' : 'none', paddingTop: activeTab !== 'dettes' ? 32 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ fontSize: 28 }}>📒</span>
+                <span style={{ fontSize: 28 }}></span>
                 <h2 style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
                   5. Carnet de Dettes &amp; Relance WhatsApp 1-Clic
                 </h2>
@@ -371,7 +371,7 @@ export default function GuideUtilisationClient() {
                 <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
                   <CheckCircle2 size={22} color="#D97706" />
                   <span style={{ fontSize: 14, color: '#92400E', fontWeight: 700 }}>
-                    Bouton vert « 💬 Relancer sur WhatsApp » : envoie un message poli et professionnel avec le détail du solde et lien de paiement Wave.
+                    Bouton vert « Relancer sur WhatsApp » : envoie un message poli et professionnel avec le détail du solde et lien de paiement Wave.
                   </span>
                 </div>
                 <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -419,7 +419,7 @@ export default function GuideUtilisationClient() {
           {(activeTab === 'fournisseurs' || searchQuery) && (
             <div style={{ marginBottom: 40, borderTop: activeTab !== 'fournisseurs' ? '1px solid #E2E8F0' : 'none', paddingTop: activeTab !== 'fournisseurs' ? 32 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ fontSize: 28 }}>🚚</span>
+                <span style={{ fontSize: 28 }}></span>
                 <h2 style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
                   7. Fournisseurs, Bons de Commande &amp; Scan OCR
                 </h2>
@@ -435,7 +435,7 @@ export default function GuideUtilisationClient() {
           {(activeTab === 'commandes' || searchQuery) && (
             <div style={{ marginBottom: 40, borderTop: activeTab !== 'commandes' ? '1px solid #E2E8F0' : 'none', paddingTop: activeTab !== 'commandes' ? 32 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ fontSize: 28 }}>🛒</span>
+                <span style={{ fontSize: 28 }}></span>
                 <h2 style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
                   8. Commandes Web &amp; Relance des Paniers Abandonnés
                 </h2>
@@ -451,7 +451,7 @@ export default function GuideUtilisationClient() {
           {(activeTab === 'tarifs' || searchQuery) && (
             <div style={{ marginBottom: 40, borderTop: activeTab !== 'tarifs' ? '1px solid #E2E8F0' : 'none', paddingTop: activeTab !== 'tarifs' ? 32 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ fontSize: 28 }}>⭐</span>
+                <span style={{ fontSize: 28 }}></span>
                 <h2 style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
                   9. Grille Tarifaire &amp; Abonnements
                 </h2>
@@ -469,7 +469,7 @@ export default function GuideUtilisationClient() {
                 </div>
 
                 <div style={{ background: '#FFF7ED', border: '2px solid #C75B00', borderRadius: 14, padding: '18px' }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: '#C75B00' }}>⭐ LE PLUS POPULAIRE</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#C75B00' }}>LE PLUS POPULAIRE</span>
                   <h4 style={{ fontSize: 20, fontWeight: 900, color: '#1C2B4A', margin: '4px 0' }}>Boutique Pro</h4>
                   <span style={{ fontSize: 22, fontWeight: 900, color: '#C75B00' }}>5 000 F</span>
                   <span style={{ fontSize: 12, color: '#64748B' }}> / mois</span>

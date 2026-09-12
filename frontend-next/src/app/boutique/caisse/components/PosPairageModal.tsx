@@ -15,7 +15,7 @@ export default function PosPairageModal({ sessionScannerId, boutiqueActiveId, on
       <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 480, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-            📱 Douchette Smartphone Distante (WiFi)
+            Douchette Smartphone Distante (WiFi)
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
         </div>

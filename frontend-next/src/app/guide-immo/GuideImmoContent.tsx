@@ -13,11 +13,11 @@ import { IMMO_LANDINGS } from '@/app/immo/landing-data'
 const API = ''
 
 const PROFILS = [
-  { id: 'locataire',    label: '🏠 Je cherche à louer',  desc: 'Location — prix mensuel, confort, localisation', transaction: 'location', poids: { prix:3, surface:3, localisation:3 } },
-  { id: 'acheteur',     label: '🔑 Premier achat',        desc: 'Acquisition résidence principale — budget maîtrisé', transaction: 'vente', poids: { prix:4, surface:2, localisation:3 } },
-  { id: 'investisseur', label: '💼 Investisseur',          desc: 'Achat locatif — rentabilité et emplacement',   transaction: 'vente',    poids: { prix:2, surface:4, localisation:5 } },
+  { id: 'locataire',    label: 'Je cherche à louer',  desc: 'Location — prix mensuel, confort, localisation', transaction: 'location', poids: { prix:3, surface:3, localisation:3 } },
+  { id: 'acheteur',     label: 'Premier achat',        desc: 'Acquisition résidence principale — budget maîtrisé', transaction: 'vente', poids: { prix:4, surface:2, localisation:3 } },
+  { id: 'investisseur', label: 'Investisseur',          desc: 'Achat locatif — rentabilité et emplacement',   transaction: 'vente',    poids: { prix:2, surface:4, localisation:5 } },
   { id: 'expatrie',     label: '✈️ Expatrié / Diaspora',  desc: 'Logement moderne, bien situé, meublé si possible', transaction: 'location', poids: { prix:2, surface:3, localisation:4 } },
-  { id: 'decouverte',   label: '🔍 Je cherche des idées', desc: 'Exploration large — toutes options', transaction: '',          poids: { prix:3, surface:3, localisation:3 } },
+  { id: 'decouverte',   label: 'Je cherche des idées', desc: 'Exploration large — toutes options', transaction: '',          poids: { prix:3, surface:3, localisation:3 } },
 ]
 
 const TYPES_BIEN = ['Appartement', 'Villa', 'Studio', 'Chambre', 'Bureau', 'Terrain', 'Duplex']
@@ -144,7 +144,7 @@ export default function GuideImmoPage() {
           { label: 'Accueil', href: '/' },
           { label: 'Guide Immo' },
         ]}
-        emoji="🏡"
+        emoji=""
         titre="Guide immobilier intelligent"
         compteur={`${results.length} annonces correspondantes`}
         centered={true}
@@ -175,7 +175,7 @@ export default function GuideImmoPage() {
 
           <div className="guide-section-label">Type de projet</div>
           <div className="guide-profil-row" style={{ marginBottom: 16 }}>
-            {[{ val: 'location', label: '🏠 Location' }, { val: 'vente', label: '🔑 Achat' }, { val: '', label: '🔍 Tous' }].map(t => (
+            {[{ val: 'location', label: 'Location' }, { val: 'vente', label: 'Achat' }, { val: '', label: 'Tous' }].map(t => (
               <button
                 key={t.val}
                 className={`guide-profil-btn guide-profil-btn--sm${transaction === t.val ? ' active' : ''}`}
@@ -187,7 +187,7 @@ export default function GuideImmoPage() {
           </div>
 
           <div className="guide-field">
-            <label className="guide-label">💰 Budget max (FCFA{transaction === 'location' ? '/mois' : ''})</label>
+            <label className="guide-label">Budget max (FCFA{transaction === 'location' ? '/mois' : ''})</label>
             <input
               className="guide-input" type="number"
               placeholder={transaction === 'location' ? 'ex: 300 000' : 'ex: 50 000 000'}
@@ -235,7 +235,7 @@ export default function GuideImmoPage() {
           <div className="guide-field">
             <label className="guide-label">Meublé</label>
             <div className="guide-profil-row">
-              {[{ val: '', label: '🔍 Tous' }, { val: 'oui', label: '✅ Meublé' }, { val: 'non', label: '❌ Non meublé' }].map(m => (
+              {[{ val: '', label: 'Tous' }, { val: 'oui', label: 'Meublé' }, { val: 'non', label: 'Non meublé' }].map(m => (
                 <button
                   key={m.val}
                   className={`guide-profil-btn guide-profil-btn--sm${meuble === m.val ? ' active' : ''}`}
@@ -250,7 +250,7 @@ export default function GuideImmoPage() {
           <div className="guide-divider" />
 
           {[
-            { id: 'prix',    label: '💰 Importance du prix',    val: poidsPrix,    set: setPoidsPrix    },
+            { id: 'prix',    label: 'Importance du prix',    val: poidsPrix,    set: setPoidsPrix    },
             { id: 'surface', label: '📐 Importance de la surface', val: poidsSurface, set: setPoidsSurface },
           ].map(s => (
             <div key={s.id} className="guide-slider-wrap">
@@ -269,7 +269,7 @@ export default function GuideImmoPage() {
           <div style={{ flex: 1, minHeight: 16 }} />
 
           <button className="guide-lancer-btn" onClick={lancer} disabled={loading}>
-            {loading ? '⏳ Analyse en cours…' : '🏡 Trouver mon logement idéal'}
+            {loading ? 'Analyse en cours…' : 'Trouver mon logement idéal'}
           </button>
         </div>
 
@@ -284,7 +284,7 @@ export default function GuideImmoPage() {
 
           {!loading && !results.length && !error && (
             <div className="guide-empty">
-              <div style={{ fontSize: 52, opacity: .2, marginBottom: 16 }}>🏡</div>
+              <div style={{ fontSize: 52, opacity: .2, marginBottom: 16 }}></div>
               <div className="guide-empty-titre">Configurez votre recherche</div>
               <div className="guide-empty-sub">Choisissez votre profil, votre budget et votre ville,<br />puis cliquez <strong>Trouver</strong>.</div>
             </div>
@@ -301,7 +301,7 @@ export default function GuideImmoPage() {
                 <div className="guide-tri-btns">
                   {(['score', 'prix', 'surface', 'recent'] as const).map(t => (
                     <button key={t} className={`guide-tri-btn${triPar === t ? ' active' : ''}`} onClick={() => setTriPar(t)}>
-                      {t === 'score' ? '🏆 Score' : t === 'prix' ? '💰 Prix' : t === 'surface' ? '📐 Surface' : '🆕 Récent'}
+                      {t === 'score' ? 'Score' : t === 'prix' ? 'Prix' : t === 'surface' ? '📐 Surface' : '🆕 Récent'}
                     </button>
                   ))}
                 </div>
@@ -318,10 +318,10 @@ export default function GuideImmoPage() {
                         {fcfa(a.prix)}{a.transaction === 'location' ? '/mois' : ''}
                       </p>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12, color: 'var(--text2)', marginBottom: 6 }}>
-                        {a.ville    && <span>📍 {a.ville}</span>}
+                        {a.ville    && <span>{a.ville}</span>}
                         {a.surface  && <span>📐 {a.surface} m²</span>}
                         {a.nb_pieces && <span>🚪 {a.nb_pieces} pièce{a.nb_pieces > 1 ? 's' : ''}</span>}
-                        {a.type_bien && <span>🏷 {a.type_bien}</span>}
+                        {a.type_bien && <span>{a.type_bien}</span>}
                       </div>
 
                       <div className="guide-score-big">
@@ -331,7 +331,7 @@ export default function GuideImmoPage() {
 
                       <div className="guide-bars">
                         <div className="guide-bar-row">
-                          <span>💰 Prix</span>
+                          <span>Prix</span>
                           <div className="guide-bar-track">
                             <div className="guide-bar-fill" style={{ width: `${a._sPrix}%`, background: '#2563eb' }} />
                           </div>
@@ -372,7 +372,7 @@ export default function GuideImmoPage() {
       <SeoCard
         titre="Pourquoi utiliser le guide immobilier intelligent Nopalou ?"
         blurbs={[
-          { emoji: '🏡', text: 'Choisissez un profil (locataire, premier achat, investisseur, expatrié…) et le guide applique automatiquement des réglages adaptés à votre projet, sans avoir à tout paramétrer vous-même.' },
+          { emoji: '', text: 'Choisissez un profil (locataire, premier achat, investisseur, expatrié…) et le guide applique automatiquement des réglages adaptés à votre projet, sans avoir à tout paramétrer vous-même.' },
           { emoji: '📐', text: 'Ajustez librement l\'importance du prix et de la surface : le score de chaque annonce est recalculé en direct selon vos priorités, pour repérer le meilleur compromis en un coup d\'œil.' },
         ]}
         chipRows={[
@@ -380,7 +380,7 @@ export default function GuideImmoPage() {
             label: 'Recherches populaires',
             chips: Object.entries(IMMO_LANDINGS).map(([slug, cfg]) => ({
               href: `/immo/${slug}`,
-              emoji: cfg.transaction === 'location' ? '🏠' : '🔑',
+              emoji: cfg.transaction === 'location' ? '' : '',
               label: cfg.label,
             })),
           },

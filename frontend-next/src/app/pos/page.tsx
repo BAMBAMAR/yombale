@@ -177,7 +177,7 @@ export default function PosLandingPage() {
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ background: '#15803d', color: '#fff', fontSize: 11, fontWeight: 900, padding: '3px 10px', borderRadius: 10 }}>
-                ⚡ Mode Offline Actif
+                Mode Offline Actif
               </span>
               <span style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 10 }}>
                 Caissier : Ousmane S.
@@ -191,7 +191,7 @@ export default function PosLandingPage() {
             {/* Colonne Catalogue Rapide */}
             <div style={{ background: '#ffffff', borderRadius: 16, padding: 16, border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: 13, fontWeight: 800, color: '#475569', marginBottom: 12 }}>
-                🎯 Articles Fréquents (Toucher pour ajouter)
+                Articles Fréquents (Toucher pour ajouter)
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                 {[
@@ -241,10 +241,10 @@ export default function PosLandingPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   <button style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '10px 6px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
-                    💵 Espèces
+                    Espèces
                   </button>
                   <button style={{ background: '#1d4ed8', color: '#fff', border: 'none', padding: '10px 6px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
-                    🌊 Wave
+                    Wave
                   </button>
                   <button style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '10px 6px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
                     🟠 OM
@@ -347,9 +347,9 @@ export default function PosLandingPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
           {[
             { em: '👗', t: 'Prêt-à-Porter & Chaussures', d: 'Gestion intuitive des variantes de tailles, couleurs, arrivages et étiquetage codes-barres en magasin.' },
-            { em: '📱', t: 'Téléphonie & High-Tech', d: 'Suivi des numéros IMEI, accessoires, garanties et factures officielles proforma conformes.' },
+            { em: '', t: 'Téléphonie & High-Tech', d: 'Suivi des numéros IMEI, accessoires, garanties et factures officielles proforma conformes.' },
             { em: '💄', t: 'Cosmétiques & Parfumerie', d: 'Encaissement rapide au comptoir, gestion des gammes capillaires, mèches et remises clients.' },
-            { em: '🛠️', t: 'Quincaillerie & Électro', d: 'Émission de devis, factures avec NINEA/RCCM et TVA pour vos clients professionnels et particuliers.' },
+            { em: '', t: 'Quincaillerie & Électro', d: 'Émission de devis, factures avec NINEA/RCCM et TVA pour vos clients professionnels et particuliers.' },
             { em: '🍏', t: 'Épicerie & Alimentation', d: 'Scan code-barres ultra rapide, calcul instantané de la monnaie et impression tickets thermiques.' },
             { em: '🍽️', t: 'Snacks & Restauration', d: 'Prise de commande rapide, encaissement direct Wave/OM ou espèces et suivi des ventes journalières.' },
           ].map(s => (

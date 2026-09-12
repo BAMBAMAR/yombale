@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { formatPhone, formatNomPropre, fcfa, formatNombre, decodeHtml, escapeHtml } from '../src/lib/format.ts'
+import { safeJsonParse } from '../src/lib/errorHandler.ts'
 import {
   calculerKpisCarnet,
   determinerActionClient,
@@ -627,6 +628,19 @@ it('SYSCOHADA Plan Comptable: comptes de trésorerie et ventes de marchandises',
   assert.equal(comptesOHADA.orange_money, '521200')
   assert.equal(comptesOHADA.credit_client, '411100')
   assert.equal(comptesOHADA.ventes_marchandises, '701000')
+})
+
+it('ErrorHandler & Resilience: safeJsonParse parse correctement ou retourne le fallback sécurisé', () => {
+  const parsed = safeJsonParse('{"ok":true,"val":123}', { ok: false, val: 0 })
+  assert.equal(parsed.ok, true)
+  assert.equal(parsed.val, 123)
+
+  const fallback = safeJsonParse('invalid-json', { ok: false, val: 999 }, 'unit-test')
+  assert.equal(fallback.ok, false)
+  assert.equal(fallback.val, 999)
+
+  const nullVal = safeJsonParse(null, 'default')
+  assert.equal(nullVal, 'default')
 })
 
 console.log('\n──────────────────────────────────────────────────────────')

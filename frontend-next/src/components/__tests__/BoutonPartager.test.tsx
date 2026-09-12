@@ -13,7 +13,7 @@ describe('BoutonPartager', () => {
     vi.restoreAllMocks()
   })
 
-  it('clic sur le bouton 💬 Partager appelle window.open avec l\'URL WhatsApp encodée', () => {
+  it('clic sur le bouton Partager appelle window.open avec l\'URL WhatsApp encodée', () => {
     const message = 'iPhone 13 — 250 000 FCFA'
     render(
       <BoutonPartager
@@ -22,7 +22,7 @@ describe('BoutonPartager', () => {
         lienVisuel="/assets/produit-boutique/p1/story"
       />
     )
-    fireEvent.click(screen.getByText('💬 Partager'))
+    fireEvent.click(screen.getByText('Partager'))
     expect(window.open).toHaveBeenCalledWith(
       `https://wa.me/?text=${encodeURIComponent(message)}`,
       '_blank',
@@ -39,17 +39,17 @@ describe('BoutonPartager', () => {
       />
     )
     // Menu fermé au départ, ces actions n'existent pas
-    expect(screen.queryByText('📋 Copier le lien')).not.toBeInTheDocument()
+    expect(screen.queryByText('Copier le lien')).not.toBeInTheDocument()
     expect(screen.queryByText('🖼 Télécharger le visuel')).not.toBeInTheDocument()
 
     // Clic sur ⋯ ouvre le menu
     fireEvent.click(screen.getByLabelText('Plus d\'options de partage'))
 
     // Menu ouvert, les 2 actions sont visibles
-    expect(screen.getByText('📋 Copier le lien')).toBeInTheDocument()
+    expect(screen.getByText('Copier le lien')).toBeInTheDocument()
     expect(screen.getByText('🖼 Télécharger le visuel')).toBeInTheDocument()
     // WhatsApp n'est PAS dans le menu (il est le bouton principal)
-    expect(screen.queryByText('💬 Partager sur WhatsApp')).not.toBeInTheDocument()
+    expect(screen.queryByText('Partager sur WhatsApp')).not.toBeInTheDocument()
   })
 
   it('copie le lien dans le presse-papier au clic sur "Copier le lien"', async () => {
@@ -62,7 +62,7 @@ describe('BoutonPartager', () => {
       />
     )
     fireEvent.click(screen.getByLabelText('Plus d\'options de partage'))
-    fireEvent.click(screen.getByText('📋 Copier le lien'))
+    fireEvent.click(screen.getByText('Copier le lien'))
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(lien)
     })
@@ -91,7 +91,7 @@ describe('BoutonPartager', () => {
         onPartage={onPartage}
       />
     )
-    fireEvent.click(screen.getByText('💬 Partager'))
+    fireEvent.click(screen.getByText('Partager'))
     expect(onPartage).toHaveBeenCalled()
   })
 
@@ -106,7 +106,7 @@ describe('BoutonPartager', () => {
       />
     )
     fireEvent.click(screen.getByLabelText('Plus d\'options de partage'))
-    fireEvent.click(screen.getByText('📋 Copier le lien'))
+    fireEvent.click(screen.getByText('Copier le lien'))
     await waitFor(() => {
       expect(onPartage).toHaveBeenCalled()
     })

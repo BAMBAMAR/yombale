@@ -156,7 +156,7 @@ export default function ConnexionForm() {
       <div style={{ marginBottom: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <label style={{ fontSize: 13, fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>⚡</span>
+            <span></span>
             <span>{t('auth.chooseMethodLabel') || 'Mode de connexion :'}</span>
           </label>
           <span style={{
@@ -209,7 +209,7 @@ export default function ConnexionForm() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
-              <span style={{ fontSize: 18 }}>💬</span>
+              <span style={{ fontSize: 18 }}></span>
               <span>WhatsApp</span>
             </div>
             <span style={{
@@ -217,7 +217,7 @@ export default function ConnexionForm() {
               fontWeight: 700,
               color: loginMethod === 'whatsapp' ? '#166534' : '#94a3b8'
             }}>
-              ⚡ {t('auth.waFastMethodDesc') || '1 clic sans mot de passe'}
+              {t('auth.waFastMethodDesc') || '1 clic sans mot de passe'}
             </span>
           </button>
 
@@ -245,7 +245,7 @@ export default function ConnexionForm() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
-              <span style={{ fontSize: 16 }}>✉️</span>
+              <span style={{ fontSize: 16 }}></span>
               <span>Email</span>
             </div>
             <span style={{
@@ -272,7 +272,7 @@ export default function ConnexionForm() {
           <div className="auth-field">
             <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon">✉</span>
+              <span className="auth-input-icon"></span>
               <input
                 id="email"
                 name="email"
@@ -291,7 +291,7 @@ export default function ConnexionForm() {
               <Link href="/mot-de-passe-oublie" className="auth-forgot">{t('auth.forgotPassword')}</Link>
             </div>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon">🔒</span>
+              <span className="auth-input-icon"></span>
               <input
                 id="password"
                 name="password"
@@ -328,7 +328,7 @@ export default function ConnexionForm() {
               lineHeight: 1.5,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 6 }}>
-                <span>⚠️</span>
+                <span></span>
                 <span>Service WhatsApp momentanément indisponible</span>
               </div>
               <p style={{ margin: '0 0 10px 0' }}>
@@ -351,7 +351,7 @@ export default function ConnexionForm() {
                   gap: 6
                 }}
               >
-                <span>✉️</span>
+                <span></span>
                 <span>Se connecter par Email & Mot de passe</span>
               </button>
             </div>
@@ -390,7 +390,7 @@ export default function ConnexionForm() {
                   gap: 6
                 }}
               >
-                <span>✨</span>
+                <span></span>
                 <span>Créer mon compte avec ce numéro</span>
               </Link>
             </div>
@@ -407,7 +407,7 @@ export default function ConnexionForm() {
             <div className="auth-field">
               <label htmlFor="telephone" className="auth-label">{t('auth.waPhoneLabel')}</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon">📱</span>
+                <span className="auth-input-icon"></span>
                 <input
                   id="telephone"
                   type="tel"
@@ -424,7 +424,7 @@ export default function ConnexionForm() {
             <div className="auth-field">
               <label htmlFor="code" className="auth-label">{t('auth.waCodeLabel')}</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon">💬</span>
+                <span className="auth-input-icon"></span>
                 <input
                   id="code"
                   type="text"

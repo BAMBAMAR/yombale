@@ -74,7 +74,7 @@ export default function KitComClient({
 
   const copyToClipboard = (txt: string, label: string) => {
     navigator.clipboard.writeText(txt)
-    showToast(`✅ ${label} copié dans le presse-papier !`)
+    showToast(`${label} copié dans le presse-papier !`)
   }
 
   const handlePublierFb = async (texte: string, imageUrl?: string) => {
@@ -94,10 +94,10 @@ export default function KitComClient({
         const errData = await res.json().catch(() => ({}))
         throw new Error(errData.error || 'Erreur d\'envoi')
       }
-      showToast('🚀 Post transmis au module Publications Facebook (/admin/publications) !')
+      showToast('Post transmis au module Publications Facebook (/admin/publications) !')
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Erreur'
-      showToast(`⚠️ Impossible d'envoyer le post : ${msg}`)
+      showToast(`Impossible d'envoyer le post : ${msg}`)
     } finally {
       setPubliEnCours(false)
     }
@@ -110,29 +110,29 @@ export default function KitComClient({
   const scriptOralPerso = `🚨 [ACCROCHE - 15 sec]
 "Bonjour ${agentNameFormatted}, partenaire certifié Nopalou. Vous savez, aujourd'hui vos clients comparent tout sur leur téléphone avant d'acheter. Nopalou, c'est l'outil qui vous permet de ne plus jamais rater une vente."
 
-💡 [LA DOULEUR & LA SOLUTION - 30 sec]
+[LA DOULEUR & LA SOLUTION - 30 sec]
 "Actuellement, gérer les commandes WhatsApp et tenir un carnet de dettes, c'est un casse-tête. Avec Nopalou, on vous donne une vraie Caisse Enregistreuse sur votre téléphone (qui marche même sans internet) et une Vitrine en ligne automatique. Vous scannez les articles, envoyez les reçus par WhatsApp, et encaissez directement sur votre Wave ou Orange Money."
 
-🎁 [OFFRE IRRÉFUSABLE - 15 sec]
+[OFFRE IRRÉFUSABLE - 15 sec]
 "Le 1er mois est 100% OFFERT. Pas besoin de carte bancaire, zéro commission sur vos ventes. Après, c'est à partir de seulement ${fcfa(prixPro)}/mois. C'est l'équivalent d'un bon repas pour digitaliser tout votre commerce."
 
-🔥 [APPEL À L'ACTION - 10 sec]
+[APPEL À L'ACTION - 10 sec]
 "Je vous active votre mois offert tout de suite ? C'est prêt en 2 minutes. (Renseigner le code : ${agentCodeFormatted})"`
 
-  const apporteurTextePerso = `💼 OPPORTUNITÉ : Devenez Partenaire Nopalou !
+  const apporteurTextePerso = `OPPORTUNITÉ : Devenez Partenaire Nopalou !
 
 Vous avez un réseau de commerçants à Dakar ? Vous cherchez un revenu passif fiable ?
 Gagnez ${tauxApporteur}% de commission RÉCURRENTE sur chaque abonnement. Pas une seule fois, mais CHAQUE MOIS à vie !
 
-🚀 Ce que vous gagnez :
+Ce que vous gagnez :
 - ${fcfa(Math.round(prixPro * tauxApporteur / 100))} à ${fcfa(Math.round(prixBusiness * tauxApporteur / 100))}/mois par boutique active.
 - Paiement garanti le 5 du mois via Wave ou OM.
 - 0 investissement de départ.
 
-✅ Vente facile :
+Vente facile :
 Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votre code : *${agentCodeFormatted}*
 
-📲 Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPhoneFormatted} pour obtenir votre Kit de Démarrage.`
+Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPhoneFormatted} pour obtenir votre Kit de Démarrage.`
 
   // Construction dynamique de l'URL du visuel selon le type sélectionné
   let generateurUrl = `/assets/produit-promo?type=${typeVisuel}`
@@ -149,23 +149,23 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
   // Légende automatique associée au visuel
   let legendePublication = ''
   if (typeVisuel === 'forfait_pro') {
-    legendePublication = `🚀 STOP AUX GESTIONS BROUILLONNES ! Digitalisez votre magasin aujourd'hui.\n\nFini les carnets perdus et les dettes oubliées. Pour seulement ${fcfa(prixPro)}/mois, transformez votre téléphone en véritable Caisse Tactile :\n\n📱 Mode Hors-Ligne (Même sans réseau !)\n📸 Scannez les codes-barres avec votre caméra\n🧾 Éditez des factures et devis pros (PDF)\n💸 Encaissez par Wave/OM sans commission\n\n🎁 OFFRE SPÉCIALE : 30 Jours 100% OFFERTS (Sans carte bancaire)\n👉 Cliquez ici pour créer votre boutique : nopalou.com/boutique (Code : ${agentCodeFormatted})`
+    legendePublication = `STOP AUX GESTIONS BROUILLONNES ! Digitalisez votre magasin aujourd'hui.\n\nFini les carnets perdus et les dettes oubliées. Pour seulement ${fcfa(prixPro)}/mois, transformez votre téléphone en véritable Caisse Tactile :\n\nMode Hors-Ligne (Même sans réseau !)\nScannez les codes-barres avec votre caméra\nÉditez des factures et devis pros (PDF)\nEncaissez par Wave/OM sans commission\n\nOFFRE SPÉCIALE : 30 Jours 100% OFFERTS (Sans carte bancaire)\nCliquez ici pour créer votre boutique : nopalou.com/boutique (Code : ${agentCodeFormatted})`
   } else if (typeVisuel === 'forfait_taftaf') {
-    legendePublication = `⚡ Votre vitrine en ligne prête en 30 secondes chrono !\n\nVous vendez sur WhatsApp ? Ne perdez plus de temps à répondre aux mêmes questions. Pour ${fcfa(prixDecouverte)}/mois :\n\n✅ Lien personnalisé pour vos clients\n✅ Commandes pré-remplies directement sur WhatsApp\n✅ Zéro commission, l'argent tombe sur votre Wave/OM\n\n🎁 TESTEZ GRATUITEMENT pendant 1 mois !\n👉 Créez votre boutique : nopalou.com/creer-boutique`
+    legendePublication = `Votre vitrine en ligne prête en 30 secondes chrono !\n\nVous vendez sur WhatsApp ? Ne perdez plus de temps à répondre aux mêmes questions. Pour ${fcfa(prixDecouverte)}/mois :\n\nLien personnalisé pour vos clients\nCommandes pré-remplies directement sur WhatsApp\nZéro commission, l'argent tombe sur votre Wave/OM\n\nTESTEZ GRATUITEMENT pendant 1 mois !\nCréez votre boutique : nopalou.com/creer-boutique`
   } else if (typeVisuel === 'forfait_business') {
-    legendePublication = `👑 GESTION VIP POUR GROSSISTES ET GRANDES ENSEIGNES\n\nVous avez plusieurs employés ou boutiques ? Sécurisez votre business :\n\n🔐 Accès caissiers sécurisés par code PIN\n📊 Clôtures de caisse automatiques\n🏢 Gestion multi-magasins\n\n🎁 1er mois 100% OFFERT !\n👉 Demandez une démo : nopalou.com/boutique`
+    legendePublication = `GESTION VIP POUR GROSSISTES ET GRANDES ENSEIGNES\n\nVous avez plusieurs employés ou boutiques ? Sécurisez votre business :\n\n🔐 Accès caissiers sécurisés par code PIN\nClôtures de caisse automatiques\nGestion multi-magasins\n\n1er mois 100% OFFERT !\nDemandez une démo : nopalou.com/boutique`
   } else if (typeVisuel === 'chatbot_wa') {
-    legendePublication = `🤖 Nopalou dans votre WhatsApp 24h/24 !\n\nEnvie de connaître le prix d'un produit sans scroller pendant des heures ?\n\n💬 Envoyez "MENU" au +221 70 871 79 42\n👉 Notre IA vous donne les meilleurs prix du Sénégal en 2 secondes !\n✅ 100% Gratuit et sans application à télécharger.`
+    legendePublication = `Nopalou dans votre WhatsApp 24h/24 !\n\nEnvie de connaître le prix d'un produit sans scroller pendant des heures ?\n\nEnvoyez "MENU" au +221 70 871 79 42\nNotre IA vous donne les meilleurs prix du Sénégal en 2 secondes !\n100% Gratuit et sans application à télécharger.`
   } else if (typeVisuel === 'immo') {
-    legendePublication = `🏠 Marre des courtiers fantômes à Dakar ?\n\nTrouvez votre prochain appartement ou terrain directement sur Nopalou Immo.\n✅ Annonces 100% vérifiées\n✅ Contacts directs sans intermédiaires cachés\n\n👉 Découvrez les offres du jour : nopalou.com/immo`
+    legendePublication = `Marre des courtiers fantômes à Dakar ?\n\nTrouvez votre prochain appartement ou terrain directement sur Nopalou Immo.\nAnnonces 100% vérifiées\nContacts directs sans intermédiaires cachés\n\nDécouvrez les offres du jour : nopalou.com/immo`
   } else if (typeVisuel === 'telecom') {
-    legendePublication = `📉 Arrêtez de gaspiller votre crédit !\n\nOrange, Free, Expresso... Lequel offre le meilleur pass internet aujourd'hui ?\nDécouvrez notre comparateur magique qui calcule le VRAI coût au Go.\n\n👉 Faites le test gratuit : nopalou.com/telecom`
+    legendePublication = `Arrêtez de gaspiller votre crédit !\n\nOrange, Free, Expresso... Lequel offre le meilleur pass internet aujourd'hui ?\nDécouvrez notre comparateur magique qui calcule le VRAI coût au Go.\n\nFaites le test gratuit : nopalou.com/telecom`
   } else if (typeVisuel === 'apporteur') {
-    legendePublication = `💰 REVENUS PASSIFS : Devenez Partenaire Nopalou\n\nRecommandez le meilleur outil de gestion aux commerçants et gagnez ${tauxApporteur}% de commission CHAQUE MOIS sur leurs abonnements !\n\n✅ 0 FCFA d'investissement\n✅ Paiement assuré par Wave/OM le 5 du mois\n\n👉 Rejoignez l'équipe : nopalou.com/compte/apporteur`
+    legendePublication = `REVENUS PASSIFS : Devenez Partenaire Nopalou\n\nRecommandez le meilleur outil de gestion aux commerçants et gagnez ${tauxApporteur}% de commission CHAQUE MOIS sur leurs abonnements !\n\n0 FCFA d'investissement\nPaiement assuré par Wave/OM le 5 du mois\n\nRejoignez l'équipe : nopalou.com/compte/apporteur`
   } else if (typeVisuel === 'comparatif_paliers') {
-    legendePublication = `📊 3 Façons de booster votre commerce avec Nopalou :\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/m) : Pour vendre vite sur WhatsApp\n2️⃣ Pro (${fcfa(prixPro)}/m) : La caisse enregistreuse tactile complète\n3️⃣ Business (${fcfa(prixBusiness)}/m) : Pour gérer vos employés et fournisseurs\n\n🎁 Testez la solution de votre choix GRATUITEMENT pendant 30 jours !\n👉 Voir les détails : nopalou.com/boutique`
+    legendePublication = `3 Façons de booster votre commerce avec Nopalou :\n\n1️⃣ Taf Taf (${fcfa(prixDecouverte)}/m) : Pour vendre vite sur WhatsApp\n2️⃣ Pro (${fcfa(prixPro)}/m) : La caisse enregistreuse tactile complète\n3️⃣ Business (${fcfa(prixBusiness)}/m) : Pour gérer vos employés et fournisseurs\n\nTestez la solution de votre choix GRATUITEMENT pendant 30 jours !\nVoir les détails : nopalou.com/boutique`
   } else {
-    legendePublication = `🔥 DINGUERIE DU JOUR !\n\n📱 ${genNom}\n💥 PRIX CHOC : ${fcfa(parseInt(genPrix) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre) || 0)})\n🏪 Vendeur vérifié : ${genBoutique}\n\n👉 Commandez vite avant rupture sur nopalou.com !`
+    legendePublication = `DINGUERIE DU JOUR !\n\n${genNom}\n💥 PRIX CHOC : ${fcfa(parseInt(genPrix) || 0)} (au lieu de ${fcfa(parseInt(genPrixBarre) || 0)})\nVendeur vérifié : ${genBoutique}\n\nCommandez vite avant rupture sur nopalou.com !`
   }
 
   return (
@@ -200,7 +200,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
         display: 'flex', flexDirection: 'column', gap: 16
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 20 }}>👤</span>
+          <span style={{ fontSize: 20 }}></span>
           <div>
             <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: '#0f172a' }}>Identité Apporteur</h3>
             <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0' }}>Personnalisez les scripts avec vos informations.</p>
@@ -262,12 +262,12 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
       {/* Navigation par Onglets (6 Tabs) */}
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', borderBottom: '2px solid #E2E8F0', paddingBottom: 2, marginBottom: 32 }}>
         {[
-          { id: 'reseaux', label: '📱 Réseaux & Contenus', emoji: '📱' },
-          { id: 'demarchage', label: '🏪 Démarchage B2B & POS', emoji: '🏪' },
-          { id: 'battlecard', label: '🎯 Kit Terrain & Objections', emoji: '🎯' },
-          { id: 'apporteur', label: '💼 Apporteurs d\'Affaires', emoji: '💼' },
-          { id: 'whatsapp', label: '💬 Écosystème WhatsApp', emoji: '💬' },
-          { id: 'generateur', label: '⚡ Générateur Affiches Nopalou', emoji: '⚡' },
+          { id: 'reseaux', label: 'Réseaux & Contenus', emoji: '' },
+          { id: 'demarchage', label: 'Démarchage B2B & POS', emoji: '' },
+          { id: 'battlecard', label: 'Kit Terrain & Objections', emoji: '' },
+          { id: 'apporteur', label: 'Apporteurs d\'Affaires', emoji: '' },
+          { id: 'whatsapp', label: 'Écosystème WhatsApp', emoji: '' },
+          { id: 'generateur', label: 'Générateur Affiches Nopalou', emoji: '' },
         ].map(t => (
           <button
             key={t.id}
@@ -292,16 +292,16 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           {/* Section Liens Officiels Tous Réseaux */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              🌐 Liens Officiels des Réseaux Nopalou
+              Liens Officiels des Réseaux Nopalou
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
               {[
                 { name: 'TikTok Officiel', handle: '@nopalou.com', url: 'https://www.tiktok.com/@nopalou.com', icon: '🎵', bg: '#000', color: '#fff' },
-                { name: 'Canal WhatsApp', handle: 'Canal Nopalou.com', url: 'https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33', icon: '📢', bg: '#25D366', color: '#fff' },
+                { name: 'Canal WhatsApp', handle: 'Canal Nopalou.com', url: 'https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33', icon: '', bg: '#25D366', color: '#fff' },
                 { name: 'Facebook Page', handle: 'Nopalou Sénégal', url: 'https://www.facebook.com/profile.php?id=61591675701726', icon: '📘', bg: '#1877F2', color: '#fff' },
-                { name: 'Instagram', handle: '@nopalousn', url: 'https://www.instagram.com/nopalousn/', icon: '📸', bg: '#E4405F', color: '#fff' },
+                { name: 'Instagram', handle: '@nopalousn', url: 'https://www.instagram.com/nopalousn/', icon: '', bg: '#E4405F', color: '#fff' },
                 { name: 'Twitter / X', handle: '@nopalou_sn', url: 'https://x.com/nopalou_sn', icon: '𝕏', bg: '#0f172a', color: '#fff' },
-                { name: 'WhatsApp Support', handle: '+221 70 871 79 42', url: 'https://wa.me/221708717942', icon: '💬', bg: '#128C7E', color: '#fff' },
+                { name: 'WhatsApp Support', handle: '+221 70 871 79 42', url: 'https://wa.me/221708717942', icon: '', bg: '#128C7E', color: '#fff' },
               ].map(s => (
                 <div key={s.name} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px', background: '#fff', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -318,7 +318,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                       onClick={() => copyToClipboard(s.url, s.name)}
                       style={{ flex: 1, padding: '7px', background: '#F1F5F9', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#1C2B4A', cursor: 'pointer' }}
                     >
-                      📋 Copier lien
+                      Copier lien
                     </button>
                     <a
                       href={s.url}
@@ -391,14 +391,14 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                         onClick={() => copyToClipboard(p.texte, p.titre)}
                         style={{ padding: '6px 12px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#1C2B4A', cursor: 'pointer' }}
                       >
-                        📋 Copier
+                        Copier
                       </button>
                       <button
                         onClick={() => handlePublierFb(p.texte)}
                         disabled={publiEnCours}
                         style={{ padding: '6px 14px', background: '#1877F2', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, color: '#fff', cursor: 'pointer' }}
                       >
-                        🚀 Publier FB / IG
+                        Publier FB / IG
                       </button>
                       <button
                         onClick={() => {
@@ -407,7 +407,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                         }}
                         style={{ padding: '6px 14px', background: '#25D366', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, color: '#fff', cursor: 'pointer' }}
                       >
-                        📢 Diffuser Canal WA
+                        Diffuser Canal WA
                       </button>
                     </div>
                   </div>
@@ -439,7 +439,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                       onClick={() => copyToClipboard(`${t.bio}\n\n${t.site}\n${t.hashtags}`, `Bio ${t.reseau}`)}
                       style={{ padding: '6px 12px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#1C2B4A', cursor: 'pointer' }}
                     >
-                      📋 Copier Bio
+                      Copier Bio
                     </button>
                   </div>
                   <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 10px' }}><strong>Pseudo :</strong> {t.nom} · <strong>Catégorie :</strong> {t.categorie}</p>
@@ -460,17 +460,17 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           {/* Argumentaire POS & Commerce */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              💼 7 Arguments Vendeurs POS, OHADA &amp; Magasin
+              7 Arguments Vendeurs POS, OHADA &amp; Magasin
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
                 { t: '🖥️ Caisse Enregistreuse POS Tactile & 3 Scanners', d: 'Ventes en magasin, scan Caméra Smartphone, Cloud Sync (<100ms) ou Douchette USB + impression tickets.' },
                 { t: '📶 Mode Caisse PWA Hors-Ligne (Offline First)', d: 'Continuez d\'encaisser même en cas de coupure Internet ou 4G à Dakar. Synchronisation automatique au retour de la connexion.' },
-                { t: '🧾 Factures Proforma & Devis OHADA en PDF', d: 'Émission de documents fiscaux sénégalais conformes (NINEA, RCCM, TVA, Timbre fiscal) avec envoi WhatsApp immédiat.' },
-                { t: '📦 Gestion Fournisseurs & Scan OCR', d: 'Enregistrez vos fournisseurs, créez des bons de commande et scannez automatiquement les factures d\'achat avec l\'IA.' },
+                { t: 'Factures Proforma & Devis OHADA en PDF', d: 'Émission de documents fiscaux sénégalais conformes (NINEA, RCCM, TVA, Timbre fiscal) avec envoi WhatsApp immédiat.' },
+                { t: 'Gestion Fournisseurs & Scan OCR', d: 'Enregistrez vos fournisseurs, créez des bons de commande et scannez automatiquement les factures d\'achat avec l\'IA.' },
                 { t: '📓 Carnet de Dettes Client & Relances WhatsApp', d: 'Enregistrement des crédits clients et relance en 1-clic sur WhatsApp avec solde exact et lien de paiement.' },
-                { t: '👥 Multi-Caissiers & Clôtures de Caisse Z', d: 'Chaque vendeur a son code PIN. Historique des ventes, contrôle des écarts de caisse et clôture Z automatique.' },
-                { t: '🎁 1er Mois 100% Offert & Remises -25%', d: `Démarrez sans payer le 1er mois. Formule Pro à ${fcfa(prixPro)}/mois ou Business à ${fcfa(prixBusiness)}/mois avec jusqu'à 3 mois offerts sur l'abonnement annuel.` },
+                { t: 'Multi-Caissiers & Clôtures de Caisse Z', d: 'Chaque vendeur a son code PIN. Historique des ventes, contrôle des écarts de caisse et clôture Z automatique.' },
+                { t: '1er Mois 100% Offert & Remises -25%', d: `Démarrez sans payer le 1er mois. Formule Pro à ${fcfa(prixPro)}/mois ou Business à ${fcfa(prixBusiness)}/mois avec jusqu'à 3 mois offerts sur l'abonnement annuel.` },
               ].map((a, i) => (
                 <div key={a.t} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 18, background: '#fff', display: 'flex', gap: 14 }}>
                   <span style={{ width: 28, height: 28, borderRadius: '50%', background: '#FFF7ED', color: '#C75B00', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -489,13 +489,13 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           <section>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
-                🎙️ Script de Présentation Orale (2 min) — Personnalisé Agent
+                Script de Présentation Orale (2 min) — Personnalisé Agent
               </h2>
               <button
                 onClick={() => copyToClipboard(scriptOralPerso, 'Script Oral')}
                 style={{ padding: '6px 14px', background: '#C75B00', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
               >
-                📋 Copier Script
+                Copier Script
               </button>
             </div>
             <pre style={{
@@ -510,12 +510,12 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           {/* Sticker & Chevalet QR Code Caisse POS Imprimable */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              🏷️ Sticker &amp; Chevalet de Caisse POS Imprimables
+              Sticker &amp; Chevalet de Caisse POS Imprimables
             </h2>
             <div style={{ border: '1px solid #E2E8F0', borderRadius: 14, padding: 24, background: '#fff', display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center' }}>
               <div style={{ width: 180, height: 240, border: '3px solid #C75B00', borderRadius: 16, background: '#FFF7ED', padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center' }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: '#C75B00' }}>Nopalou POS</span>
-                <span style={{ fontSize: 48 }}>📲</span>
+                <span style={{ fontSize: 48 }}></span>
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#1C2B4A' }}>Scannez pour payer par Wave/OM ou voir le catalogue</span>
               </div>
               <div style={{ flex: 1, minWidth: 240 }}>
@@ -545,7 +545,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           {/* Grille Commission Unique Sync DB */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              💰 Grille de Commission Récurrente (${tauxApporteur}%)
+              Grille de Commission Récurrente (${tauxApporteur}%)
             </h2>
             <div style={{ border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', background: '#fff', marginBottom: 16 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -582,7 +582,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
 
             {/* Remises multi-durées appliquées aux commerçants */}
             <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: 14, display: 'flex', gap: 20, alignItems: 'center', fontSize: 13, color: '#475569' }}>
-              <span style={{ fontWeight: 800, color: '#1C2B4A' }}>🏷️ Remises commerçants :</span>
+              <span style={{ fontWeight: 800, color: '#1C2B4A' }}>Remises commerçants :</span>
               <span>3 mois (-10%)</span>
               <span>·</span>
               <span>6 mois (-15%)</span>
@@ -595,13 +595,13 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           <section>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
-                📢 Texte de Recrutement Apporteur (Personnalisé)
+                Texte de Recrutement Apporteur (Personnalisé)
               </h2>
               <button
                 onClick={() => copyToClipboard(apporteurTextePerso, 'Texte Recrutement')}
                 style={{ padding: '6px 14px', background: '#C75B00', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
               >
-                📋 Copier Texte
+                Copier Texte
               </button>
             </div>
             <pre style={{ fontSize: 13, color: '#1C2B4A', whiteSpace: 'pre-wrap', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: 20, margin: 0, lineHeight: 1.8 }}>
@@ -613,7 +613,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           <section>
             <div style={{ border: '1.5px solid #25D366', background: '#F0FDF4', borderRadius: 12, padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: '#166534' }}>📄 Brochure PDF Apporteur (13 Pages)</h3>
+                <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: '#166534' }}>Brochure PDF Apporteur (13 Pages)</h3>
                 <p style={{ margin: 0, fontSize: 13, color: '#15803D' }}>Présentation complète imprimable pour démarcher votre réseau.</p>
               </div>
               <a href="/brochure-apporteur.pdf" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 18px', background: '#25D366', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 800, textDecoration: 'none' }}>
@@ -629,13 +629,13 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
         <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              💬 4 Piliers du Chatbot WhatsApp Meta (24h/24)
+              4 Piliers du Chatbot WhatsApp Meta (24h/24)
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
               {[
-                { t: '🔍 Recherche Unifiée Instantanée', d: 'Tapez "iPhone 15" -> renvoie les prix comparés marketplace, boutiques Nopalou et biens immo.' },
-                { t: '🛍️ Panier Multi-Produits (Meta)', d: 'Composez un panier avec plusieurs articles depuis le catalogue WhatsApp et envoyez en 1 clic.' },
-                { t: '🔔 Alertes Baisse de Prix', d: 'Recevez un message WhatsApp automatique dès qu\'un produit atteint votre prix cible.' },
+                { t: 'Recherche Unifiée Instantanée', d: 'Tapez "iPhone 15" -> renvoie les prix comparés marketplace, boutiques Nopalou et biens immo.' },
+                { t: 'Panier Multi-Produits (Meta)', d: 'Composez un panier avec plusieurs articles depuis le catalogue WhatsApp et envoyez en 1 clic.' },
+                { t: 'Alertes Baisse de Prix', d: 'Recevez un message WhatsApp automatique dès qu\'un produit atteint votre prix cible.' },
                 { t: '📓 Carnet Dettes POS Client', d: 'Le marchand enregistre le crédit et le client reçoit son récapitulatif par message WhatsApp.' },
               ].map(f => (
                 <div key={f.t} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 18, background: '#fff' }}>
@@ -649,7 +649,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           <section>
             <div style={{ border: '1px solid #E2E8F0', borderRadius: 14, padding: 24, background: '#fff', display: 'flex', alignItems: 'center', gap: 24 }}>
               <div style={{ width: 100, height: 100, borderRadius: 20, background: '#25D366', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, fontWeight: 900 }}>
-                💬
+                
               </div>
               <div>
                 <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: '#1C2B4A' }}>Tester le Bot WhatsApp Nopalou</h3>
@@ -672,7 +672,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: 0 }}>
-                  📄 Fiche Commerciale Terrain A5 (Imprimable Recto/Verso)
+                  Fiche Commerciale Terrain A5 (Imprimable Recto/Verso)
                 </h2>
                 <p style={{ fontSize: 13, color: '#64748b', margin: '2px 0 0' }}>
                   Support officiel pour les visites de boutiques et marchés à Dakar.
@@ -686,7 +686,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                   cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8
                 }}
               >
-                🖨️ Imprimer la Fiche A5
+                Imprimer la Fiche A5
               </button>
             </div>
 
@@ -707,7 +707,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ background: '#16a34a', color: '#fff', fontSize: 11, fontWeight: 900, padding: '4px 12px', borderRadius: 20 }}>
-                    🎁 1ER MOIS 100% OFFERT
+                    1ER MOIS 100% OFFERT
                   </span>
                   <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>Zéro carte bancaire requise</div>
                 </div>
@@ -738,10 +738,10 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
               {/* Pied de Fiche avec Coordonnées Agent */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px 16px', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#334155' }}>
                 <div>
-                  👤 Conseiller : <strong>{agentNameFormatted}</strong> &bull; 📲 WhatsApp : <strong>{agentPhoneFormatted}</strong>
+                  Conseiller : <strong>{agentNameFormatted}</strong> &bull; WhatsApp : <strong>{agentPhoneFormatted}</strong>
                 </div>
                 <div>
-                  ⚡ Code Partenaire : <strong style={{ color: '#C75B00' }}>{agentCodeFormatted}</strong> (1 mois offert)
+                  Code Partenaire : <strong style={{ color: '#C75B00' }}>{agentCodeFormatted}</strong> (1 mois offert)
                 </div>
               </div>
             </div>
@@ -750,7 +750,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           {/* Section 2 : Battlecard Complète des 11 Objections Commerciales */}
           <section>
             <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', marginBottom: 16 }}>
-              🛡️ Battlecard Commerciale : Traitement des 11 Objections
+              Battlecard Commerciale : Traitement des 11 Objections
             </h2>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -817,7 +817,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 10 }}>
                     <div>
-                      <span style={{ fontSize: 14, fontWeight: 900, color: '#dc2626' }}>❌ Objection : </span>
+                      <span style={{ fontSize: 14, fontWeight: 900, color: '#dc2626' }}>Objection : </span>
                       <strong style={{ fontSize: 14, color: '#0f172a' }}>{obj.q}</strong>
                     </div>
                     <button
@@ -827,17 +827,17 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                         borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0
                       }}
                     >
-                      📋 Copier
+                      Copier
                     </button>
                   </div>
                   <div style={{ fontSize: 11.5, color: '#64748b', fontStyle: 'italic', marginBottom: 8 }}>
-                    💡 Réalité psychologique : {obj.peur}
+                    Réalité psychologique : {obj.peur}
                   </div>
                   <div style={{
                     background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8,
                     padding: '10px 14px', fontSize: 13, color: '#166534', lineHeight: 1.5, fontWeight: 600
                   }}>
-                    ✅ Réponse recommandée : {obj.r}
+                    Réponse recommandée : {obj.r}
                   </div>
                 </div>
               ))}
@@ -847,14 +847,14 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
           {/* Section 3 : Scripts WhatsApp Terrain & Relance */}
           <section>
             <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', marginBottom: 16 }}>
-              💬 Bibliothèque des 5 Scripts WhatsApp Terrain &amp; Relance
+              Bibliothèque des 5 Scripts WhatsApp Terrain &amp; Relance
             </h2>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[
                 {
                   titre: "1. Premier Contact Froid (Prospection)",
-                  msg: `« Bonjour [Nom_Boutique] ! 👋\n\nJ'ai vu votre superbe collection sur les réseaux. Nous aidons les commerçants à Dakar à automatiser leurs commandes WhatsApp et à tenir leur caisse magasin sur téléphone sans cahier papier.\n\n👉 Exemple de vitrine en 30s : nopalou.com/demo\n\nVous bénéficiez de 30 jours 100% offerts sans engagement. Souhaitez-vous que je configure vos premiers articles gratuitement aujourd'hui ? »`
+                  msg: `« Bonjour [Nom_Boutique] ! \n\nJ'ai vu votre superbe collection sur les réseaux. Nous aidons les commerçants à Dakar à automatiser leurs commandes WhatsApp et à tenir leur caisse magasin sur téléphone sans cahier papier.\n\nExemple de vitrine en 30s : nopalou.com/demo\n\nVous bénéficiez de 30 jours 100% offerts sans engagement. Souhaitez-vous que je configure vos premiers articles gratuitement aujourd'hui ? »`
                 },
                 {
                   titre: "2. Relance Démo (Commerçant Intéressé)",
@@ -862,7 +862,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                 },
                 {
                   titre: "3. Activation Boutique 0 Produit (Post-Inscription)",
-                  msg: `« Félicitations pour la création de votre boutique [Nom_Boutique] sur Nopalou ! 🎉\n\nIl ne vous reste qu'une étape : ajouter vos 3 premiers articles pour pouvoir partager votre lien à vos clients.\n\n💡 Envoyez-moi simplement les photos et les prix ici, notre équipe s'occupe de la mise en ligne pour vous en 5 minutes ! »`
+                  msg: `« Félicitations pour la création de votre boutique [Nom_Boutique] sur Nopalou ! \n\nIl ne vous reste qu'une étape : ajouter vos 3 premiers articles pour pouvoir partager votre lien à vos clients.\n\nEnvoyez-moi simplement les photos et les prix ici, notre équipe s'occupe de la mise en ligne pour vous en 5 minutes ! »`
                 },
                 {
                   titre: "4. Fin d'Essai (Conversion Payante Wave)",
@@ -870,7 +870,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                 },
                 {
                   titre: "5. Message de Parrainage (Pour vos Commerçants Actifs)",
-                  msg: `« Vous appréciez Nopalou ? Partagez votre lien de parrainage à vos amis commerçants ! 🎁\n\nPour chaque boutique qui s'abonne grâce à vous, vous touchez ${tauxApporteur}% de commission chaque mois directement sur votre Wave.\n\n👉 Votre lien de parrainage : nopalou.com/creer-boutique?apporteur=${agentCodeFormatted} »`
+                  msg: `« Vous appréciez Nopalou ? Partagez votre lien de parrainage à vos amis commerçants ! \n\nPour chaque boutique qui s'abonne grâce à vous, vous touchez ${tauxApporteur}% de commission chaque mois directement sur votre Wave.\n\nVotre lien de parrainage : nopalou.com/creer-boutique?apporteur=${agentCodeFormatted} »`
                 }
               ].map((sc, idx) => (
                 <div key={idx} style={{
@@ -886,7 +886,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                         onClick={() => copyToClipboard(sc.msg, sc.titre)}
                         style={{ padding: '6px 12px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                       >
-                        📋 Copier
+                        Copier
                       </button>
                       <button
                         onClick={() => {
@@ -895,7 +895,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                         }}
                         style={{ padding: '6px 12px', background: '#25D366', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                       >
-                        💬 Envoyer WA
+                        Envoyer WA
                       </button>
                     </div>
                   </div>
@@ -917,21 +917,21 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              ⚡ Générateur d&apos;Affiches Officiel Nopalou (8 Types de Visuels)
+              Générateur d&apos;Affiches Officiel Nopalou (8 Types de Visuels)
             </h2>
 
             {/* Sélecteur de type d'affiche */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
               {[
                 { id: 'forfait_pro', label: '🖥️ Formule Pro (Caisse POS)', bg: '#FFF7ED', color: '#C75B00' },
-                { id: 'forfait_taftaf', label: '⚡ Formule Taf Taf (2 500 F)', bg: '#EFF6FF', color: '#1D4ED8' },
-                { id: 'forfait_business', label: '👑 Formule Business (PIN)', bg: '#FDF4FF', color: '#7E22CE' },
-                { id: 'chatbot_wa', label: '🤖 Chatbot WhatsApp Meta 24/7', bg: '#F0FDF4', color: '#166534' },
-                { id: 'immo', label: '🏠 Immobilier Dakar & Sénégal', bg: '#EEF2FF', color: '#4338CA' },
+                { id: 'forfait_taftaf', label: 'Formule Taf Taf (2 500 F)', bg: '#EFF6FF', color: '#1D4ED8' },
+                { id: 'forfait_business', label: 'Formule Business (PIN)', bg: '#FDF4FF', color: '#7E22CE' },
+                { id: 'chatbot_wa', label: 'Chatbot WhatsApp Meta 24/7', bg: '#F0FDF4', color: '#166534' },
+                { id: 'immo', label: 'Immobilier Dakar & Sénégal', bg: '#EEF2FF', color: '#4338CA' },
                 { id: 'telecom', label: '📶 Pass & Forfaits Télécom', bg: '#F0F9FF', color: '#0369A1' },
-                { id: 'apporteur', label: '💰 Apporteurs d\'Affaires (20%)', bg: '#F0FDF4', color: '#15803D' },
-                { id: 'comparatif_paliers', label: '📊 Tableau Synthétique Formules', bg: '#FFF7ED', color: '#C75B00' },
-                { id: 'bon_plan', label: '🔥 Bon Plan Prix Comparatif', bg: '#FEF3C7', color: '#92400E' },
+                { id: 'apporteur', label: 'Apporteurs d\'Affaires (20%)', bg: '#F0FDF4', color: '#15803D' },
+                { id: 'comparatif_paliers', label: 'Tableau Synthétique Formules', bg: '#FFF7ED', color: '#C75B00' },
+                { id: 'bon_plan', label: 'Bon Plan Prix Comparatif', bg: '#FEF3C7', color: '#92400E' },
               ].map(b => (
                 <button
                   key={b.id}
@@ -980,7 +980,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                     onClick={() => copyToClipboard(legendePublication, 'Légende')}
                     style={{ padding: '8px 12px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                   >
-                    📋 Copier la légende du visuel
+                    Copier la légende du visuel
                   </button>
                 </div>
               )}
@@ -1004,7 +1004,7 @@ Le 1er mois est 100% offert pour le commerçant. Vous n'avez qu'à partager votr
                     disabled={publiEnCours}
                     style={{ flex: 1, padding: '10px', background: '#1877F2', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                   >
-                    🚀 Publier FB/IG
+                    Publier FB/IG
                   </button>
                 </div>
               </div>

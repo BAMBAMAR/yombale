@@ -43,9 +43,9 @@ interface MotifRemise {
 
 const MOTIFS_DEFAUT: MotifRemise[] = [
   { id: 'anti_gaspi', nom: '🍌 Date courte / Anti-gaspi', pct: 30 },
-  { id: 'defaut', nom: '📦 Défaut emballage', pct: 15 },
-  { id: 'personnel', nom: '👥 Personnel / Employé', pct: 10 },
-  { id: 'geste', nom: '👑 Geste commercial', pct: 5 },
+  { id: 'defaut', nom: 'Défaut emballage', pct: 15 },
+  { id: 'personnel', nom: 'Personnel / Employé', pct: 10 },
+  { id: 'geste', nom: 'Geste commercial', pct: 5 },
 ]
 
 export default function ParametresFidelitePromos({
@@ -75,7 +75,7 @@ export default function ParametresFidelitePromos({
         return typeof boutique.pos_remise_motifs === 'string'
           ? JSON.parse(boutique.pos_remise_motifs)
           : boutique.pos_remise_motifs
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:ParametresFidelitePromos:L78]', err); }
     }
     return MOTIFS_DEFAUT
   })
@@ -96,14 +96,14 @@ export default function ParametresFidelitePromos({
       try {
         const parsed = typeof boutique.pos_remise_motifs === 'string' ? JSON.parse(boutique.pos_remise_motifs) : boutique.pos_remise_motifs
         if (Array.isArray(parsed)) setMotifs(parsed)
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:ParametresFidelitePromos:L99]', err); }
     }
   }, [boutique])
 
   useEffect(() => {
     if (state.success && handledRef.current !== state) {
       handledRef.current = state
-      setSavedMessage('✅ Paramètres enregistrés avec succès !')
+      setSavedMessage('Paramètres enregistrés avec succès !')
       onUpdate()
       const tId = setTimeout(() => setSavedMessage(null), 5000)
       return () => clearTimeout(tId)
@@ -266,7 +266,7 @@ export default function ParametresFidelitePromos({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>🎁</span> Statut du Programme de Fidélité
+                  <span></span> Statut du Programme de Fidélité
                 </h3>
                 <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b' }}>
                   Permet à vos clients d&apos;accumuler des avantages automatiquement lors de leurs achats en caisse ou sur votre boutique.
@@ -279,8 +279,8 @@ export default function ParametresFidelitePromos({
                 onChange={e => setFideliteActif(e.target.value === 'true')}
                 style={{ ...inputStyle, width: 'auto', fontWeight: 700, padding: '8px 14px' }}
               >
-                <option value="true">🟢 Programme Actif</option>
-                <option value="false">🔴 Programme Désactivé</option>
+                <option value="true">Programme Actif</option>
+                <option value="false">Programme Désactivé</option>
               </select>
             </div>
 
@@ -306,7 +306,7 @@ export default function ParametresFidelitePromos({
                         checked={fideliteType === 'cagnotte'}
                         onChange={() => setFideliteType('cagnotte')}
                       />
-                      <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>💰 Cagnotte Cashback (% sur les achats)</span>
+                      <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>Cagnotte Cashback (% sur les achats)</span>
                     </div>
                     <span style={{ fontSize: 12, color: '#64748b', lineHeight: 1.4 }}>
                       Chaque dépense crédite un pourcentage directement dans le solde FCFA du client, utilisable comme moyen de paiement en caisse.
@@ -470,7 +470,7 @@ export default function ParametresFidelitePromos({
 
             <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 18 }}>
               <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
-                🏷️ Motifs de Remises Rapides Prédéfinis
+                Motifs de Remises Rapides Prédéfinis
               </h4>
               <p style={{ margin: '0 0 14px', fontSize: 12.5, color: '#64748b' }}>
                 Ces raccourcis apparaissent sur le clavier de la caisse POS pour justifier immédiatement les rabais accordés.
@@ -514,7 +514,7 @@ export default function ParametresFidelitePromos({
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', background: '#f1f5f9', padding: 12, borderRadius: 10 }}>
                 <input
                   type="text"
-                  placeholder="Nom du motif (ex: 🌟 Client VIP, 📦 Boîte abîmée...)"
+                  placeholder="Nom du motif (ex: Client VIP, Boîte abîmée...)"
                   value={nouveauMotifNom}
                   onChange={e => setNouveauMotifNom(e.target.value)}
                   style={{ ...inputStyle, flex: 2, minWidth: 200 }}
@@ -596,9 +596,9 @@ export default function ParametresFidelitePromos({
                 <div>
                   <label style={labelStyle}>Type de Réduction *</label>
                   <select name="type_remise" defaultValue="pourcentage" style={{ ...inputStyle, fontWeight: 700 }}>
-                    <option value="pourcentage">📉 Pourcentage (%)</option>
-                    <option value="fixe">💰 Montant Fixe (FCFA)</option>
-                    <option value="livraison_offerte">🚚 Livraison Offerte</option>
+                    <option value="pourcentage">Pourcentage (%)</option>
+                    <option value="fixe">Montant Fixe (FCFA)</option>
+                    <option value="livraison_offerte">Livraison Offerte</option>
                   </select>
                 </div>
 
@@ -669,7 +669,7 @@ export default function ParametresFidelitePromos({
           {/* Tableau des codes promo */}
           <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 22, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
             <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#0f172a' }}>
-              📋 Vos Codes Promo Actifs ({promotions.length})
+              Vos Codes Promo Actifs ({promotions.length})
             </h3>
 
             {loadingPromos ? (
@@ -716,7 +716,7 @@ export default function ParametresFidelitePromos({
                           <td style={{ padding: '12px' }}>
                             {p.type_remise === 'pourcentage' && <span style={{ fontWeight: 700, color: '#dc2626' }}>-{p.valeur}%</span>}
                             {p.type_remise === 'fixe' && <span style={{ fontWeight: 700, color: '#dc2626' }}>-{fcfa(Number(p.valeur))}</span>}
-                            {p.type_remise === 'livraison_offerte' && <span style={{ fontWeight: 700, color: '#16a34a' }}>🚚 Livraison offerte</span>}
+                            {p.type_remise === 'livraison_offerte' && <span style={{ fontWeight: 700, color: '#16a34a' }}>Livraison offerte</span>}
                           </td>
                           <td style={{ padding: '12px', color: '#475569' }}>
                             {Number(p.min_achat) > 0 ? fcfa(Number(p.min_achat)) : 'Aucun'}

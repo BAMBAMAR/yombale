@@ -12,24 +12,24 @@ import SeoCard from '@/components/SeoCard'
 const API = ''  // utilise le proxy Next.js /api/* → backend
 
 const CATEGORIES = [
-  { slug: 'smartphones',  label: 'Téléphones',       icon: '📱' },
-  { slug: 'informatique', label: 'Informatique',      icon: '💻' },
+  { slug: 'smartphones',  label: 'Téléphones',       icon: '' },
+  { slug: 'informatique', label: 'Informatique',      icon: '' },
   { slug: 'tv-electro',   label: 'TV & Électro',      icon: '📺' },
   { slug: 'mode',         label: 'Mode',              icon: '👗' },
-  { slug: 'maison',       label: 'Maison',            icon: '🏠' },
-  { slug: 'auto-moto',    label: 'Auto & Moto',       icon: '🛵' },
+  { slug: 'maison',       label: 'Maison',            icon: '' },
+  { slug: 'auto-moto',    label: 'Auto & Moto',       icon: '' },
   { slug: 'jeux',         label: 'Jeux',              icon: '🎮' },
   { slug: 'beaute',       label: 'Beauté & Santé',    icon: '💄' },
-  { slug: 'telecom',      label: 'Télécom',           icon: '📡', href: '/telecom' },
+  { slug: 'telecom',      label: 'Télécom',           icon: '', href: '/telecom' },
   { slug: 'immo',         label: 'Immobilier',        icon: '🏘', href: '/immo' },
-  { slug: 'annonces',     label: 'Annonces',          icon: '📢', href: '/annonces' },
+  { slug: 'annonces',     label: 'Annonces',          icon: '', href: '/annonces' },
 ]
 
 const PROFILS = [
-  { id: 'prix',    label: '💰 Meilleur prix',   desc: 'Priorité au prix le plus bas',        poids: { prix:5, specs:1, dispo:2 } },
-  { id: 'rapport', label: '⭐ Rapport Q/P',      desc: 'Équilibre prix et caractéristiques',  poids: { prix:3, specs:4, dispo:2 } },
-  { id: 'haut',    label: '🚀 Haut de gamme',   desc: 'Priorité aux meilleures specs',       poids: { prix:1, specs:5, dispo:2 } },
-  { id: 'dispo',   label: '🏪 Bien distribué',  desc: 'Disponible chez plusieurs marchands', poids: { prix:2, specs:3, dispo:5 } },
+  { id: 'prix',    label: 'Meilleur prix',   desc: 'Priorité au prix le plus bas',        poids: { prix:5, specs:1, dispo:2 } },
+  { id: 'rapport', label: 'Rapport Q/P',      desc: 'Équilibre prix et caractéristiques',  poids: { prix:3, specs:4, dispo:2 } },
+  { id: 'haut',    label: 'Haut de gamme',   desc: 'Priorité aux meilleures specs',       poids: { prix:1, specs:5, dispo:2 } },
+  { id: 'dispo',   label: 'Bien distribué',  desc: 'Disponible chez plusieurs marchands', poids: { prix:2, specs:3, dispo:5 } },
 ]
 
 const POIDS_LABELS = ['', 'Peu important', 'Secondaire', 'Équilibré', 'Important', 'Prioritaire']
@@ -186,7 +186,7 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
           { label: 'Accueil', href: '/' },
           { label: 'Guide d\'achat' },
         ]}
-        emoji="🏆"
+        emoji=""
         titre="Guide d'achat intelligent"
         compteur="Scoring personnalisé · 4 profils d'achat"
         centered={true}
@@ -278,9 +278,9 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
           <div className="guide-divider" />
 
           {[
-            { id: 'prix',  label: '💰 Importance du prix',              val: poidsPrix,  set: setPoidsPrix  },
-            { id: 'specs', label: '📊 Importance des caractéristiques', val: poidsSpecs, set: setPoidsSpecs },
-            { id: 'dispo', label: '🏪 Importance de la disponibilité',  val: poidsDispo, set: setPoidsDispo },
+            { id: 'prix',  label: 'Importance du prix',              val: poidsPrix,  set: setPoidsPrix  },
+            { id: 'specs', label: 'Importance des caractéristiques', val: poidsSpecs, set: setPoidsSpecs },
+            { id: 'dispo', label: 'Importance de la disponibilité',  val: poidsDispo, set: setPoidsDispo },
           ].map(s => (
             <div key={s.id} className="guide-slider-wrap">
               <div className="guide-slider-header">
@@ -298,7 +298,7 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
           <div style={{ flex: 1, minHeight: 16 }} />
 
           <button className="guide-lancer-btn" onClick={lancer} disabled={loading}>
-            {loading ? '⏳ Analyse en cours…' : '🔍 Trouver les meilleurs produits'}
+            {loading ? 'Analyse en cours…' : 'Trouver les meilleurs produits'}
           </button>
         </div>
 
@@ -313,7 +313,7 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
 
           {!loading && !results.length && !error && (
             <div className="guide-empty">
-              <div style={{ fontSize: 52, opacity: .2, marginBottom: 16 }}>🏆</div>
+              <div style={{ fontSize: 52, opacity: .2, marginBottom: 16 }}></div>
               <div className="guide-empty-titre">Configurez vos critères</div>
               <div className="guide-empty-sub">Choisissez un profil ou ajustez les paramètres,<br />puis cliquez <strong>Trouver</strong>.</div>
             </div>
@@ -333,7 +333,7 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
                     <div className="guide-tri-btns" style={{ display: 'inline-flex' }}>
                       {(['score', 'prix', 'dispo'] as const).map(t => (
                         <button key={t} className={`guide-tri-btn${triPar === t ? ' active' : ''}`} onClick={() => setTriPar(t)}>
-                          {t === 'score' ? '🏆 Score' : t === 'prix' ? '💰 Prix' : '🏪 Dispo'}
+                          {t === 'score' ? 'Score' : t === 'prix' ? 'Prix' : 'Dispo'}
                         </button>
                       ))}
                     </div>
@@ -372,14 +372,14 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
 
                       <div className="guide-bars">
                         <div className="guide-bar-row">
-                          <span>💰 Prix</span>
+                          <span>Prix</span>
                           <div className="guide-bar-track">
                             <div className="guide-bar-fill" style={{ width: `${p._sPrix}%`, background: '#2563eb' }} />
                           </div>
                           <span>{p._sPrix}%</span>
                         </div>
                         <div className="guide-bar-row">
-                          <span>🏪 Dispo</span>
+                          <span>Dispo</span>
                           <div className="guide-bar-track">
                             <div className="guide-bar-fill" style={{ width: `${p._sDispo}%`, background: '#10b981' }} />
                           </div>
@@ -412,8 +412,8 @@ export default function GuideAchatPage({ categoriesActives }: { categoriesActive
       <SeoCard
         titre="Pourquoi utiliser le guide d'achat intelligent Nopalou ?"
         blurbs={[
-          { emoji: '🏆', text: 'Choisissez un profil (meilleur prix, rapport qualité/prix, haut de gamme, bien distribué…) et pondérez librement le prix, les caractéristiques et la disponibilité selon vos priorités.' },
-          { emoji: '📊', text: 'Le score de chaque produit est recalculé en direct à partir des offres réelles des marchands du comparateur — jamais de classement sponsorisé.' },
+          { emoji: '', text: 'Choisissez un profil (meilleur prix, rapport qualité/prix, haut de gamme, bien distribué…) et pondérez librement le prix, les caractéristiques et la disponibilité selon vos priorités.' },
+          { emoji: '', text: 'Le score de chaque produit est recalculé en direct à partir des offres réelles des marchands du comparateur — jamais de classement sponsorisé.' },
         ]}
         chipRows={[
           {

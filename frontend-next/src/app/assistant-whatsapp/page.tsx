@@ -13,20 +13,20 @@ const WA_LINK = 'https://wa.me/221708717942?text=' + encodeURIComponent('menu')
 
 const FONCTIONS = [
   {
-    groupe: '🔍 Recherche & comparaison',
+    groupe: 'Recherche & comparaison',
     items: [
       {
-        icon: '🔍', couleur: '#1d4ed8',
+        icon: '', couleur: '#1d4ed8',
         titre: 'Rechercher un produit, une boutique ou une annonce',
         texte: "Tapez le nom d'un produit (ex : \"iPhone 14\", \"climatiseur Haier\") et l'assistant vous répond avec les prix trouvés chez les marchands partenaires, dans les boutiques Nopalou, une annonce classifiée ou un bien immo correspondant — avec le lien direct vers la fiche.",
       },
       {
-        icon: '🏠', couleur: '#059669',
+        icon: '', couleur: '#059669',
         titre: 'Parcourir les annonces immo',
         texte: "Recevez directement dans la conversation les dernières annonces immobilières (appartements, villas, terrains) avec photo, prix et lien vers l'annonce complète.",
       },
       {
-        icon: '📱', couleur: '#7c3aed',
+        icon: '', couleur: '#7c3aed',
         titre: 'Comparer les offres télécom',
         texte: "Consultez les derniers forfaits mobiles Orange, Yas, Expresso et Promobile sans quitter WhatsApp.",
       },
@@ -38,25 +38,25 @@ const FONCTIONS = [
     ],
   },
   {
-    groupe: '🛍️ Boutiques & achat',
+    groupe: 'Boutiques & achat',
     items: [
       {
-        icon: '🏪', couleur: '#25D366',
+        icon: '', couleur: '#25D366',
         titre: 'Commander directement sur WhatsApp',
         texte: "Parcourez une boutique via son lien ou par catégorie, choisissez vos produits — même plusieurs à la fois grâce au panier WhatsApp — et passez commande sans quitter la conversation. Le vendeur reçoit tout instantanément.",
       },
     ],
   },
   {
-    groupe: '🔔 Alertes & suivi',
+    groupe: 'Alertes & suivi',
     items: [
       {
-        icon: '🔔', couleur: '#f59e0b',
+        icon: '', couleur: '#f59e0b',
         titre: 'Créer une alerte de prix',
         texte: "Dites à l'assistant quel produit vous intéresse et à quel prix vous voulez être alerté — vous serez notifié par WhatsApp dès que le prix cible est atteint, sans avoir de compte.",
       },
       {
-        icon: '📦', couleur: '#0891b2',
+        icon: '', couleur: '#0891b2',
         titre: 'Suivre une commande',
         texte: "Entrez votre référence de commande (ex : PAY-12345) pour connaître son statut et son montant, à tout moment.",
       },
@@ -66,12 +66,12 @@ const FONCTIONS = [
     groupe: '❓ FAQ & support',
     items: [
       {
-        icon: '💬', couleur: '#C75B00',
+        icon: '', couleur: '#C75B00',
         titre: 'Poser une question sur le site',
         texte: "Gratuit ou payant, comment publier une annonce, créer une boutique, comparer les prix... L'assistant répond directement aux questions les plus courantes, et vous donne les coordonnées de l'équipe Nopalou si besoin.",
       },
       {
-        icon: '🗑️', couleur: '#dc2626',
+        icon: '', couleur: '#dc2626',
         titre: 'Supprimer vos annonces ou votre numéro (Désinscription)',
         texte: "Envoyez \"supprimer\" pour désactiver instantanément vos annonces et votre numéro de téléphone du site Nopalou. Envoyez \"STOP\" pour vous désinscrire définitivement de tous les messages WhatsApp.",
       },
@@ -88,7 +88,7 @@ export default function AssistantWhatsAppPage() {
           ← Accueil
         </Link>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)' }}>💬 Assistant WhatsApp Nopalou</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)' }}>Assistant WhatsApp Nopalou</div>
           <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Achetez, comparez les offres et suivez vos commandes directement depuis WhatsApp.</div>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default function AssistantWhatsAppPage() {
             display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0,
           }}
         >
-          💬 Discuter sur WhatsApp
+          Discuter sur WhatsApp
         </a>
       </div>
 
@@ -146,7 +146,7 @@ export default function AssistantWhatsAppPage() {
       </div>
 
       <div className="guide-emploi-footer">
-        <div className="guide-emploi-footer-titre">✅ Comment lancer une conversation</div>
+        <div className="guide-emploi-footer-titre">Comment lancer une conversation</div>
         <div className="guide-emploi-footer-texte">
           Enregistrez le numéro <strong>+221 70 871 79 42</strong> ou cliquez sur le bouton ci-dessus,
           puis envoyez n&apos;importe quel message — l&apos;assistant vous présente le menu automatiquement.

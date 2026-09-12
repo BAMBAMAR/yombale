@@ -35,6 +35,9 @@ import PosPairageModal from './components/PosPairageModal'
 import PosTicketsAttenteBar from './components/PosTicketsAttenteBar'
 import PosModalGestionPins from './components/PosModalGestionPins'
 import PosPanierSidebar from './components/PosPanierSidebar'
+import PosNonAutoriseScreen from './components/PosNonAutoriseScreen'
+import PosBilanRapportXModal from './components/PosBilanRapportXModal'
+import PosTransactionCarnetModal from './components/PosTransactionCarnetModal'
 import './caisse.css'
 
 interface ProduitCaisse {
@@ -164,20 +167,20 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     setOfflineModeActive(prev => {
       if (prev !== newOffline) {
         if (newOffline) {
-          console.warn('🔴 [Diagnostic Caisse] Mode caisse locale ACTIVÉ (ping échoué).')
+          console.warn('[Diagnostic Caisse] Mode caisse locale ACTIVÉ (ping échoué).')
           showToast('Vous êtes hors-ligne. Mode caisse locale activé.', 'warning')
         } else {
           showToast('Connexion internet rétablie ! Synchronisation en cours...', 'success')
           // Déclencher la sync via le SyncManager centralisé (avec verrou + retry + ACK)
           declencherSyncOffline().then((result) => {
             if (result.synced > 0) {
-              showToast(`✅ ${result.synced} vente(s) synchronisée(s)`, 'success')
+              showToast(`${result.synced} vente(s) synchronisée(s)`, 'success')
               getPosHistorique(boutiqueActiveId).then((hist) => {
                 if (hist && hist.length > 0) setHistoriqueVentes(hist)
               }).catch(() => {})
             }
             if (result.failed > 0) {
-              showToast(`⚠️ ${result.failed} vente(s) non synchronisée(s). Réessai automatique.`, 'warning')
+              showToast(`${result.failed} vente(s) non synchronisée(s). Réessai automatique.`, 'warning')
             }
           }).catch(() => {})
         }
@@ -271,7 +274,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
           setPanier(parsed)
-          console.log(`🛒 [POS CAISSE] Panier en cours restauré automatiquement (${parsed.length} articles)`)
+          console.log(`[POS CAISSE] Panier en cours restauré automatiquement (${parsed.length} articles)`)
         }
       }
     } catch (e) {
@@ -290,7 +293,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       } else {
         localStorage.removeItem(`nopalou_pos_cart_${boutiqueActiveId}`)
       }
-    } catch (e) {}
+    } catch (e) { console.warn('[Nopalou:CaisseClient:L293]', e); }
   }, [panier, boutiqueActiveId])
 
   // 3. Avertissement si l'utilisateur tente de quitter l'onglet alors qu'une vente est en cours
@@ -445,7 +448,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [modalScannerCamera, setModalScannerCamera] = useState<boolean>(false)
   const [modalPairageSmartphone, setModalPairageSmartphone] = useState<boolean>(false)
   const [sessionScannerId] = useState<string>(() => `SCAN-${Math.floor(100000 + Math.random() * 900000)}`)
-  const [scannerCameraStatus, setScannerCameraStatus] = useState<string>('📷 Prêt pour le scan continu...')
+  const [scannerCameraStatus, setScannerCameraStatus] = useState<string>('Prêt pour le scan continu...')
   const [formatTicketThermique, setFormatTicketThermique] = useState<'80mm' | '58mm'>('80mm')
   const [scannerTorcheActive, setScannerTorcheActive] = useState<boolean>(false)
   const [scannerDernierItem, setScannerDernierItem] = useState<{ nom: string; prix: number } | null>(null)
@@ -469,7 +472,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             })
           }
         }
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:CaisseClient:L472]', e); }
     }, 1200)
     return () => clearInterval(timer)
   }, [boutiqueActiveId, sessionScannerId])
@@ -503,7 +506,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   async function demarrerScannerCamera() {
     setModalScannerCamera(true)
-    setScannerCameraStatus('📷 Mode Rafale Continu actif. Présentez les articles…')
+    setScannerCameraStatus('Mode Rafale Continu actif. Présentez les articles…')
     setScannerDernierItem(null)
     setScannerTorcheActive(false)
     dernierCodeScanneRef.current = ''
@@ -517,7 +520,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           try {
             await html5QrcodeScannerRef.current.stop()
             html5QrcodeScannerRef.current.clear()
-          } catch (e) {}
+          } catch (e) { console.warn('[Nopalou:CaisseClient:L520]', e); }
           html5QrcodeScannerRef.current = null
         }
 
@@ -540,12 +543,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {})
           } catch (errUser: any) {
             console.error('Erreur lancement caméra:', errUser)
-            setScannerCameraStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur.')
+            setScannerCameraStatus('Impossible d’accéder à la caméra. Vérifiez les permissions de votre navigateur.')
           }
         }
       } catch (err: any) {
         console.error('Erreur module scanner:', err)
-        setScannerCameraStatus('❌ Impossible d’initialiser le scanner.')
+        setScannerCameraStatus('Impossible d’initialiser le scanner.')
       }
     }, 250)
   }
@@ -555,7 +558,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       try {
         await html5QrcodeScannerRef.current.stop()
         html5QrcodeScannerRef.current.clear()
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:CaisseClient:L558]', e); }
       html5QrcodeScannerRef.current = null
     }
     setModalScannerCamera(false)
@@ -631,11 +634,11 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       setScannerDernierItem({ nom: pFound.nom, prix: pFound.prix })
       setScannerFlashActif(true)
       setTimeout(() => setScannerFlashActif(false), 450)
-      setScannerCameraStatus(`✅ +1 ${pFound.nom} (${fcfa(pFound.prix)})`)
+      setScannerCameraStatus(`+1 ${pFound.nom} (${fcfa(pFound.prix)})`)
       // La caméra reste ouverte pour scanner les articles suivants en continu !
     } else {
       jouerBipEtVibrer('alerte')
-      setScannerCameraStatus(`⚠️ Code inconnu : "${codeClean}"`)
+      setScannerCameraStatus(`Code inconnu : "${codeClean}"`)
       setRecherche(codeClean)
     }
   }
@@ -829,7 +832,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             if (parsed.caissierNom) setCaissierNom(parsed.caissierNom)
             if (parsed.caissierId) setCaissierSelectionneId(parsed.caissierId)
           }
-        } catch (e) {}
+        } catch (e) { console.warn('[Nopalou:CaisseClient:L832]', e); }
       }
     }
   }, [boutiqueActiveId])
@@ -852,7 +855,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             setPanier(parsedPanier)
           }
         }
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:CaisseClient:L855]', e); }
 
       try {
         const savedTickets = localStorage.getItem(`nopalou_pos_tickets_attente_${boutiqueActiveId}`)
@@ -862,7 +865,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             setTicketsEnAttente(parsedTickets)
           }
         }
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:CaisseClient:L865]', e); }
     }
   }, [boutiqueActiveId])
 
@@ -908,7 +911,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           if (parsed && parsed.statut === 'ouverte') {
             setSession(parsed)
           }
-        } catch (e) {}
+        } catch (e) { console.warn('[Nopalou:CaisseClient:L911]', e); }
       }
     }
   }, [boutiqueActiveId])
@@ -1023,7 +1026,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 await chargerReglesRemises(bId)
                 return
               }
-            } catch (eCache) {}
+            } catch (eCache) { console.warn('[Nopalou:CaisseClient:L1026]', eCache); }
           }
           setBoutiques([])
           setLoadingProduits(false)
@@ -1173,7 +1176,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         if (Array.isArray(parsed) && parsed.length > 0) {
           setHistoriqueVentes(parsed)
         }
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:CaisseClient:L1176]', err); }
     }
 
     const localProds = localStorage.getItem(`nopalou_pos_produits_${bId}`)
@@ -1183,7 +1186,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         if (Array.isArray(parsedP) && parsedP.length > 0) {
           setProduits(parsedP)
         }
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:CaisseClient:L1186]', err); }
     }
 
     // 2. Charger depuis l'API backend via Action Serveur
@@ -1236,7 +1239,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           }
         } else {
           // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
-          console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits ou réponse vide hors-ligne. Bascule sur le cache IndexedDB.')
+          console.warn('[Diagnostic Caisse] Échec de la récupération réseau des produits ou réponse vide hors-ligne. Bascule sur le cache IndexedDB.')
           const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
           if (cached && cached.length > 0) {
             setProduits(cached)
@@ -1246,12 +1249,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               if (Array.isArray(parsedP) && parsedP.length > 0) {
                 setProduits(parsedP)
               }
-            } catch {}
+            } catch (err) { console.warn('[Nopalou:CaisseClient:L1249]', err); }
           }
         }
       } else {
         // En cas d'échec réseau ou réponse vide hors-ligne, restaurer le cache local scopé par bId
-        console.warn('📡 [Diagnostic Caisse] Échec de la récupération réseau des produits. Bascule sur le cache IndexedDB.')
+        console.warn('[Diagnostic Caisse] Échec de la récupération réseau des produits. Bascule sur le cache IndexedDB.')
         const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
         if (cached && cached.length > 0) {
           setProduits(cached)
@@ -1261,12 +1264,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             if (Array.isArray(parsedP) && parsedP.length > 0) {
               setProduits(parsedP)
             }
-          } catch {}
+          } catch (err) { console.warn('[Nopalou:CaisseClient:L1264]', err); }
         }
       }
     } catch (e) {
-      console.error('🔴 [Diagnostic Caisse] Erreur réseau lors du chargement des produits:', e)
-      console.info('📡 [Diagnostic Caisse] Bascule d\'urgence sur les caches locaux.')
+      console.error('[Diagnostic Caisse] Erreur réseau lors du chargement des produits:', e)
+      console.info('[Diagnostic Caisse] Bascule d\'urgence sur les caches locaux.')
       const cached = await obtenirProduitsLocaux(bId, userId).catch(() => [])
       if (cached && cached.length > 0) {
         setProduits(cached)
@@ -1276,7 +1279,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           if (Array.isArray(parsedP) && parsedP.length > 0) {
             setProduits(parsedP)
           }
-        } catch {}
+        } catch (err) { console.warn('[Nopalou:CaisseClient:L1279]', err); }
       }
     } finally {
       setLoadingProduits(false)
@@ -1285,7 +1288,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   async function changerBoutiqueActive(newBId: string) {
     if (session) {
-      alert("⚠️ Vous avez une session de caisse (Fonds de caisse) en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.");
+      alert("Vous avez une session de caisse (Fonds de caisse) en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.");
       return;
     }
     setBoutiqueActiveId(newBId)
@@ -1308,7 +1311,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   function demanderChangementBoutique(newBId: string) {
     if (newBId === boutiqueActiveId) return;
     if (session) {
-      alert("⚠️ Vous avez une session de caisse (Fonds de caisse) en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.");
+      alert("Vous avez une session de caisse (Fonds de caisse) en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.");
       return;
     }
     if (roleActif === 'superviseur') {
@@ -1337,7 +1340,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     const resetInactivityTimer = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        console.info('🔒 [POS Inactivité] Verrouillage automatique après 5 minutes sans interaction.');
+        console.info('[POS Inactivité] Verrouillage automatique après 5 minutes sans interaction.');
         verrouillerCaisseManuellement();
       }, 5 * 60 * 1000); // 5 minutes
     };
@@ -1396,9 +1399,9 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     )
     if (p) {
       ajouterAuPanier(p)
-      showToast(`✅ ${p.nom} ajouté`, 'success')
+      showToast(`${p.nom} ajouté`, 'success')
     } else {
-      showToast(`⚠️ Produit introuvable pour "${code}"`, 'warning')
+      showToast(`Produit introuvable pour "${code}"`, 'warning')
     }
   }
 
@@ -1480,7 +1483,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       }
 
       setModalConfigObligatoire(false);
-      showToast('🎉 Configuration de sécurité réussie ! La caisse est prête.', 'success');
+      showToast('Configuration de sécurité réussie ! La caisse est prête.', 'success');
     } catch (err: any) {
       setErreurConfigObligatoire('Erreur lors de l\'enregistrement. Vérifiez votre connexion.');
     } finally {
@@ -1534,7 +1537,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         delete copy[caissierId];
         return copy;
       });
-      showToast('✅ Code PIN mis à jour avec succès !', 'success');
+      showToast('Code PIN mis à jour avec succès !', 'success');
     } catch (err: any) {
       showToast(err.message || 'Erreur modification PIN', 'warning');
     } finally {
@@ -1583,7 +1586,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       setNouveauCaissierPrenom('');
       setNouveauCaissierPin('');
       setOngletConfigPin('liste');
-      showToast('✅ Nouveau membre ajouté avec succès !', 'success');
+      showToast('Nouveau membre ajouté avec succès !', 'success');
     } catch (err: any) {
       showToast(err.message || 'Erreur création caissier', 'warning');
     } finally {
@@ -1747,7 +1750,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         setModalSessionOuverture(true)
       }
     } else {
-      setPinError('❌ Code PIN incorrect. Veuillez vérifier votre saisie.')
+      setPinError('Code PIN incorrect. Veuillez vérifier votre saisie.')
       setCodePinSaisi('')
     }
   }
@@ -1795,7 +1798,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         setConflitSessionMessage(null)
       }
 
-      showToast(`✅ Connecté : ${realNom} (${isSuperRole ? '👑 Superviseur' : '👤 Caissier'})`, 'success')
+      showToast(`Connecté : ${realNom} (${isSuperRole ? 'Superviseur' : 'Caissier'})`, 'success')
       return { ok: true }
     } else {
       return { ok: false, error: 'Code PIN incorrect pour ce caissier' }
@@ -1819,7 +1822,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
       try {
         await fetch('/api/auth/deconnexion', { method: 'POST' }).catch(() => {})
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:CaisseClient:L1822]', e); }
 
       if (boutiqueActiveId) {
         localStorage.removeItem(`nopalou_pos_unlocked_${boutiqueActiveId}`)
@@ -2060,7 +2063,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     if (seuilMontant > 0 && seuilPct > 0 && sousTotalPanier >= seuilMontant) {
       if (remisePourcentage < seuilPct && (!remiseMotif || remiseMotif.includes('Auto'))) {
         setRemisePourcentage(seuilPct)
-        setRemiseMotif(`⚡ Remise Seuil Panier Auto (≥ ${fcfa(seuilMontant)})`)
+        setRemiseMotif(`Remise Seuil Panier Auto (≥ ${fcfa(seuilMontant)})`)
       }
     } else if (seuilMontant > 0 && sousTotalPanier < seuilMontant && remiseMotif.includes('Auto')) {
       setRemisePourcentage(0)
@@ -2211,7 +2214,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               // Mise à jour optimiste du solde client local
               setClientsCredits(prev => prev.map(c => c.id === clientCreditIdPOS ? { ...c, solde: Number(c.solde || 0) + netAPayer } : c))
             } catch (eOffDebt) {
-              console.error('📒 [Caisse POS] ❌ Erreur sauvegarde dette offline:', eOffDebt)
+              console.error('[Caisse POS] Erreur sauvegarde dette offline:', eOffDebt)
             }
           } else {
             try {
@@ -2245,7 +2248,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 })
                 rafraichirCompteurOffline()
                 setClientsCredits(prev => prev.map(c => c.id === clientCreditIdPOS ? { ...c, solde: Number(c.solde || 0) + netAPayer } : c))
-              } catch (eOffDebt2) {}
+              } catch (eOffDebt2) { console.warn('[Nopalou:CaisseClient:L2248]', eOffDebt2); }
             }
           }
         }
@@ -2288,7 +2291,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             })
             rafraichirCompteurOffline()
           } catch (eOff) {
-            console.error('🛒 [Caisse POS] ❌ Erreur stockage local vente:', eOff)
+            console.error('[Caisse POS] Erreur stockage local vente:', eOff)
           }
         } else {
           try {
@@ -2297,7 +2300,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               throw new Error(result.error || 'Impossible d\'enregistrer la vente')
             }
           } catch (e) {
-            console.error('🛒 [Caisse POS] ⚠️ Échec direct serveur, bascule secours sur IndexedDB local:', e)
+            console.error('[Caisse POS] Échec direct serveur, bascule secours sur IndexedDB local:', e)
             try {
               const temporaryId = payloadVente.idempotency_key
               await ajouterVenteHorsLigne({
@@ -2314,7 +2317,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 date: new Date().toISOString()
               })
               rafraichirCompteurOffline()
-            } catch (eOff2) {}
+            } catch (eOff2) { console.warn('[Nopalou:CaisseClient:L2317]', eOff2); }
           }
         }
       }
@@ -2429,7 +2432,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         return { ...prev, ventes: stats }
       })
 
-      alert(`✅ Ticket ${venteId} annulé et remboursé avec succès ! Les stocks ont été réintégrés.`)
+      alert(`Ticket ${venteId} annulé et remboursé avec succès ! Les stocks ont été réintégrés.`)
     })
   }
 
@@ -2456,7 +2459,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       v.caissier,
       v.modePaiement.toUpperCase(),
       `${v.total.toLocaleString('fr-FR')} FCFA`,
-      v.statut === 'annulee' ? '❌ ANNULÉE' : '✅ VALIDÉE'
+      v.statut === 'annulee' ? 'ANNULÉE' : 'VALIDÉE'
     ])
     const totalCA = historiqueVentes.filter(v => v.statut !== 'annulee').reduce((s, v) => s + v.total, 0)
     const summaryHtml = `
@@ -2513,126 +2516,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   // ── ÉCRAN DE VERROUILLAGE SI BOUTIQUE NON AUTORISÉE À LA CAISSE POS ──────
   if (!estBoutiqueAutorisee) {
-    const boutiquesAutorisees = boutiques.filter(b => b.is_trial || b.plan_actif === 'pro' || b.plan_actif === 'business')
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#f8fafc',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px 16px',
-        fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif'
-      }}>
-        <div style={{
-          maxWidth: 580,
-          width: '100%',
-          background: '#ffffff',
-          borderRadius: 24,
-          padding: '40px 32px',
-          boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.1)',
-          border: '1px solid #e2e8f0',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            width: 72,
-            height: 72,
-            borderRadius: '50%',
-            background: '#fff7ed',
-            border: '2px solid #ffedd5',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#c75b00',
-            marginBottom: 20
-          }}>
-            <Lock size={36} />
-          </div>
-
-          <div style={{
-            display: 'inline-block',
-            background: '#fff7ed',
-            color: '#c75b00',
-            fontWeight: 800,
-            fontSize: 11,
-            padding: '4px 12px',
-            borderRadius: 20,
-            marginBottom: 12,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}>
-            🔒 Caisse POS Non Autorisée Pour Cette Boutique
-          </div>
-
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0f172a', margin: '0 0 12px' }}>
-            La boutique &quot;{activeBoutiqueObj?.nom || 'Sélectionnée'}&quot; n&apos;a pas d&apos;Abonnement POS
-          </h1>
-
-          <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.6, margin: '0 0 24px' }}>
-            L&apos;accès à la caisse enregistreuse tactile POS est réservé aux boutiques disposant d&apos;un abonnement <strong>Pro</strong> ou <strong>Business</strong> actif.
-          </p>
-
-          {/* Sélecteur de secours si le marchand possède au moins une boutique autorisée */}
-          {boutiquesAutorisees.length > 0 && (
-            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 14, padding: 16, marginBottom: 24, textAlign: 'left' }}>
-              <label style={{ fontSize: 12, fontWeight: 800, color: '#166534', display: 'block', marginBottom: 6 }}>
-                💡 Basculer vers une boutique autorisée :
-              </label>
-              <select
-                value=""
-                onChange={e => changerBoutiqueActive(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #86efac', background: '#ffffff', color: '#0f172a', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-              >
-                <option value="">-- Sélectionner une boutique avec caisse autorisée --</option>
-                {boutiquesAutorisees.map(b => (
-                  <option key={b.id} value={b.id}>
-                    🟢 {b.nom} ({b.plan_actif?.toUpperCase()})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {initialToken ? (
-              <div style={{ padding: '14px 18px', background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: 12, color: '#c2410c', fontSize: 13, fontWeight: 700, lineHeight: 1.5 }}>
-                ℹ️ La caisse enregistreuse de cette boutique nécessite l&apos;activation d&apos;un abonnement Pro ou Business auprès du gérant/propriétaire. Veuillez contacter l&apos;administrateur du magasin.
-              </div>
-            ) : (
-              <>
-                <Link
-                  href="/boutique/abonnement"
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '14px 20px',
-                    borderRadius: 12,
-                    background: 'linear-gradient(135deg, #c75b00 0%, #ea580c 100%)',
-                    color: '#ffffff',
-                    fontWeight: 800,
-                    fontSize: 14,
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 12px rgba(199, 91, 0, 0.25)'
-                  }}
-                >
-                  Activer l&apos;Abonnement Pro (5 000 FCFA/mois) →
-                </Link>
-                <Link
-                  href={boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique'}
-                  className="annonce-back"
-                  style={{ margin: '0 auto', textDecoration: 'none' }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                  </svg>
-                  <span>Retour au tableau de bord boutique</span>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+      <PosNonAutoriseScreen
+        boutiques={boutiques}
+        activeBoutiqueNom={activeBoutiqueObj?.nom}
+        boutiqueActiveId={boutiqueActiveId}
+        initialToken={initialToken}
+        onChangerBoutique={changerBoutiqueActive}
+      />
     )
   }
 
@@ -2676,7 +2567,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         {modalSuperviseur && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 12500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 380, border: '2px solid #ea580c', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}>👑</div>
+              <div style={{ fontSize: 40, marginBottom: 8 }}></div>
               <h3 style={{ margin: '0 0 6px', fontSize: 17, color: '#0f172a', fontWeight: 800 }}>Autorisation Superviseur Requise</h3>
               <p style={{ margin: '0 0 16px', fontSize: 13, color: '#c2410c', fontWeight: 600 }}>{superviseurTitre}</p>
 
@@ -2739,7 +2630,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             />
           ) : (
             <div style={{ width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg, #C75B00 0%, #ea580c 100%)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontSize: 24, fontWeight: 900, boxShadow: '0 4px 12px rgba(199,91,0,0.3)' }}>
-              {bqName ? bqName.charAt(0).toUpperCase() : '🏪'}
+              {bqName ? bqName.charAt(0).toUpperCase() : ''}
             </div>
           )}
           <h2 style={{ margin: '0 0 4px', fontSize: 19, fontWeight: 900, color: 'var(--pos-navy, #0f172a)' }}>
@@ -2759,7 +2650,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               lineHeight: 1.35,
               textAlign: 'center'
             }}>
-              🛡️ <strong>Terminal Dédié Magasin (Mode Autonome)</strong><br />
+              <strong>Terminal Dédié Magasin (Mode Autonome)</strong><br />
               <span style={{ fontSize: 11, color: '#3b82f6' }}>
                 Aucun compte connecté sur cet appareil. Vos paramètres et finances sont 100% isolés et protégés.
               </span>
@@ -2787,7 +2678,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           {vueChoixCaissier ? (
             <div>
               <h3 style={{ margin: '12px 0 4px', fontSize: 17, fontWeight: 900, color: 'var(--pos-navy, #0f172a)' }}>
-                👥 Qui encaisse aujourd&apos;hui ?
+                Qui encaisse aujourd&apos;hui ?
               </h3>
               <p style={{ margin: '0 0 16px', fontSize: 12.5, color: 'var(--pos-text2, #64748b)' }}>
                 Sélectionnez votre profil pour accéder à la caisse :
@@ -2846,7 +2737,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                         marginBottom: 8,
                         boxShadow: isSuper ? '0 4px 10px rgba(234, 88, 12, 0.25)' : '0 4px 10px rgba(37, 99, 235, 0.25)',
                       }}>
-                        {isSuper ? '👑' : (c.prenom ? c.prenom.charAt(0).toUpperCase() : (c.nom ? c.nom.charAt(0).toUpperCase() : '👤'))}
+                        {isSuper ? '' : (c.prenom ? c.prenom.charAt(0).toUpperCase() : (c.nom ? c.nom.charAt(0).toUpperCase() : ''))}
                       </div>
 
                       {/* Nom du caissier */}
@@ -2874,7 +2765,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                         color: isSuper ? '#c2410c' : '#1d4ed8',
                         border: isSuper ? '1px solid #fed7aa' : '1px solid #bfdbfe'
                       }}>
-                        {isSuper ? '👑 Superviseur' : '👤 Caissier'}
+                        {isSuper ? 'Superviseur' : 'Caissier'}
                       </span>
                     </button>
                   )
@@ -2891,7 +2782,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   padding: '6px 12px', borderRadius: 8
                 }}
               >
-                <span>⚙️</span>
+                <span></span>
                 <span>Gérant : Gérer l&apos;équipe & modifier les codes PIN</span>
               </button>
             </div>
@@ -2956,14 +2847,14 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     fontWeight: 900,
                     flexShrink: 0
                   }}>
-                    {cibleCaissier.role === 'superviseur' ? '👑' : (cibleCaissier.prenom ? cibleCaissier.prenom.charAt(0).toUpperCase() : '👤')}
+                    {cibleCaissier.role === 'superviseur' ? '' : (cibleCaissier.prenom ? cibleCaissier.prenom.charAt(0).toUpperCase() : '')}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--pos-navy, #0f172a)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {cibleCaissier.prenom ? `${cibleCaissier.prenom} ${cibleCaissier.nom || ''}`.trim() : cibleCaissier.nom}
                     </div>
                     <div style={{ fontSize: 11, color: cibleCaissier.role === 'superviseur' ? '#c2410c' : '#1d4ed8', fontWeight: 700 }}>
-                      {cibleCaissier.role === 'superviseur' ? '👑 Gérant / Superviseur' : '👤 Caissier'} · Tapez votre code PIN
+                      {cibleCaissier.role === 'superviseur' ? 'Gérant / Superviseur' : 'Caissier'} · Tapez votre code PIN
                     </div>
                   </div>
                 </div>
@@ -3031,7 +2922,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   padding: '4px 8px', borderRadius: 8
                 }}
               >
-                <span>⚙️</span>
+                <span></span>
                 <span>Gérant : Gérer l&apos;équipe & codes PIN</span>
               </button>
             </div>
@@ -3048,7 +2939,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   if (tok && typeof window !== 'undefined') {
                     const terminalUrl = `${window.location.origin}/boutique/caisse?token=${tok}`;
                     navigator.clipboard.writeText(terminalUrl);
-                    alert(`✅ Lien Terminal Dédié copié !\n\nOuvrez ce lien sur la tablette ou l'ordinateur de vos caissiers pour qu'ils travaillent sans avoir accès à votre compte :\n${terminalUrl}`);
+                    alert(`Lien Terminal Dédié copié !\n\nOuvrez ce lien sur la tablette ou l'ordinateur de vos caissiers pour qu'ils travaillent sans avoir accès à votre compte :\n${terminalUrl}`);
                   }
                 }}
                 style={{
@@ -3057,7 +2948,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   padding: '6px 12px', borderRadius: 8, transition: 'all 0.15s ease'
                 }}
               >
-                <span>📱</span>
+                <span></span>
                 <span>Copier le Lien Terminal Caissier (Pour tablette)</span>
               </button>
             )}
@@ -3085,6 +2976,76 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
 
 
+  async function handleValiderTransCarnet() {
+    const totalPanierCatalogueCarnet = Object.entries(panierCarnet).reduce((sum, [pId, qte]) => {
+      const p = produits.find(item => item.id === pId)
+      const prix = p ? Number(p.prix || 0) : 0
+      return sum + (prix * qte)
+    }, 0)
+
+    const num = (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue') 
+      ? totalPanierCatalogueCarnet 
+      : (Number(montantTransCarnet) || 0)
+
+    if (!num || num <= 0) {
+      alert('Veuillez ajouter au moins un produit du catalogue ou saisir un montant valide.')
+      return
+    }
+    if (boutiqueActiveId && clientCarnetSelectionne) {
+      setSubmittingCarnetTrans(true)
+      try {
+        let prodsArr: any[] = []
+        if (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue') {
+          prodsArr = Object.entries(panierCarnet).map(([pId, qte]) => {
+            const p = produits.find(item => item.id === pId)
+            return {
+              id: pId,
+              nom: p?.nom || 'Article catalogue',
+              quantite: qte,
+              prix: Number(p?.prix || 0),
+            }
+          })
+        } else {
+          const nomDefaut = typeTransCarnet === 'remboursement' ? 'Remboursement client' : 'Vente directe'
+          prodsArr = [{ nom: produitsTransCarnet.trim() || nomDefaut, quantite: 1, prix: num }]
+        }
+
+        const noteCalcul = (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue')
+          ? `Achat catalogue (${prodsArr.length} article(s))`
+          : (noteTransCarnet.trim() || (typeTransCarnet === 'remboursement' ? 'Remboursement client' : 'Vente directe'))
+
+        const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCarnetSelectionne.id}/transaction`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: typeTransCarnet,
+            montant: num,
+            mode_paiement: modePaiementTransCarnet,
+            note: noteCalcul,
+            date_echeance: dateEcheanceTransCarnet || null,
+            relance_auto_whatsapp: relanceAutoWaCarnet,
+            produits: prodsArr,
+          })
+        })
+
+        if (res.ok) {
+          const dataTrans = await res.json()
+          setClientCarnetSelectionne((prev: any) => prev ? { ...prev, solde: dataTrans.nouveauSolde } : null)
+          await chargerClientsCredits(boutiqueActiveId)
+          await chargerHistoriqueClientSelectionne(clientCarnetSelectionne.id)
+          setModalTransCarnet(false)
+        } else {
+          const errData = await res.json()
+          alert(errData.error || 'Erreur lors de l’enregistrement.')
+        }
+      } catch (e) {
+        console.error('Erreur transaction carnet:', e)
+      } finally {
+        setSubmittingCarnetTrans(false)
+      }
+    }
+  }
+
   return (
     <div className={`caisse-root ${isDarkMode ? 'pos-theme-dark' : 'pos-theme-light'}`} style={{ background: 'var(--pos-bg)', color: 'var(--pos-text)', minHeight: '100vh', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
 
@@ -3099,7 +3060,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           display: 'flex', alignItems: 'center', gap: 10, fontWeight: 700, fontSize: 14,
           animation: 'slideUp 0.3s ease-out'
         }}>
-          {toastMsg.type === 'warning' ? '⚠️' : '✅'}
+          {toastMsg.type === 'warning' ? '' : ''}
           {toastMsg.text}
         </div>
       )}
@@ -3108,7 +3069,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       {conflitSessionMessage && (
         <div className="no-print" style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 32, width: '100%', maxWidth: 460, textAlign: 'center', border: '2px solid #dc2626', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}></div>
             <h2 style={{ margin: 0, fontSize: 18, color: '#dc2626', fontWeight: 900 }}>Conflit de Session POS</h2>
             <p style={{ marginTop: 12, fontSize: 14, color: '#475569', lineHeight: 1.6 }}>{conflitSessionMessage}</p>
             
@@ -3163,7 +3124,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 boxShadow: '0 2px 6px rgba(29,78,216,0.3)'
               }}
             >
-              <span>📱</span>
+              <span></span>
               <span className="caisse-label-desktop">{t('caisse.terminalCashier')}</span>
             </div>
           ) : (
@@ -3223,7 +3184,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               whiteSpace: 'nowrap',
               animation: 'pulse 1.5s infinite'
             }}>
-              <span>⚠️</span>
+              <span></span>
               <span className="caisse-label-desktop">Hors-Ligne</span>
               {totalHorsLigneCount > 0 && (
                 <span style={{ background: '#991b1b', padding: '1px 5px', borderRadius: 4, fontSize: 9.5, fontWeight: 900 }}>
@@ -3295,7 +3256,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   fontWeight: 900,
                   flexShrink: 0,
                 }}>
-                  {activeBoutiqueObj?.nom ? activeBoutiqueObj.nom.charAt(0).toUpperCase() : '🏪'}
+                  {activeBoutiqueObj?.nom ? activeBoutiqueObj.nom.charAt(0).toUpperCase() : ''}
                 </span>
               )}
 
@@ -3329,7 +3290,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   >
                     {boutiques.map(b => (
                       <option key={b.id} value={b.id}>
-                        {b.is_trial || b.plan_actif === 'pro' || b.plan_actif === 'business' ? '🟢' : '🏪'} {b.nom}
+                        {b.is_trial || b.plan_actif === 'pro' || b.plan_actif === 'business' ? '' : ''} {b.nom}
                       </option>
                     ))}
                   </select>
@@ -3361,7 +3322,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             }}
           >
             <span style={{ fontSize: 13, lineHeight: 1 }}>
-              {roleActif === 'superviseur' ? '👑' : <User size={13} color="var(--pos-primary)" />}
+              {roleActif === 'superviseur' ? '' : <User size={13} color="var(--pos-primary)" />}
             </span>
             <span style={{
               fontSize: 11,
@@ -3503,7 +3464,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     }}
                   >
                     <User size={14} />
-                    <span>👤 Changer de caissier</span>
+                    <span>Changer de caissier</span>
                   </button>
 
                   {/* Accès Clôture Z / Ouverture Session intégré dans Outils */}
@@ -3593,7 +3554,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                         if (tok && typeof window !== 'undefined') {
                           const terminalUrl = `${window.location.origin}/boutique/caisse?token=${tok}`;
                           navigator.clipboard.writeText(terminalUrl);
-                          alert(`✅ Lien Terminal Dédié copié !\n\nOuvrez ce lien sur la tablette ou l'ordinateur de vos caissiers pour qu'ils travaillent sans avoir accès à votre compte :\n${terminalUrl}`);
+                          alert(`Lien Terminal Dédié copié !\n\nOuvrez ce lien sur la tablette ou l'ordinateur de vos caissiers pour qu'ils travaillent sans avoir accès à votre compte :\n${terminalUrl}`);
                         }
                       }}
                       style={{
@@ -3603,7 +3564,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                         fontSize: 12, fontWeight: 700, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 2
                       }}
                     >
-                      <span>📱</span>
+                      <span></span>
                       <span>Copier lien Terminal (Tablette)</span>
                     </button>
                   )}
@@ -3619,7 +3580,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     }}
                   >
                     <Lock size={14} />
-                    <span>🔒 Fermer session caissier (Qui encaisse ?)</span>
+                    <span>Fermer session caissier (Qui encaisse ?)</span>
                   </button>
 
                   {/* Déconnexion du compte dans le menu Outils */}
@@ -3755,17 +3716,17 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           onClick={() => setTabMobile('catalogue')}
           className={`caisse-mobile-tab-btn ${tabMobile === 'catalogue' ? 'active' : ''}`}
         >
-          🛍️ Catalogue ({produitsFiltres.length})
+          Catalogue ({produitsFiltres.length})
         </button>
         <button
           type="button"
           onClick={() => setTabMobile('ticket')}
           className={`caisse-mobile-tab-btn ${tabMobile === 'ticket' ? 'active' : ''} ${panier.length > 0 ? 'has-items' : ''}`}
         >
-          🛒 Ticket ({panier.reduce((sum, item) => sum + item.quantite, 0)}) • {fcfa(netAPayer)}
+          Ticket ({panier.reduce((sum, item) => sum + item.quantite, 0)}) • {fcfa(netAPayer)}
           {ticketsEnAttente.length > 0 && (
             <span style={{ marginLeft: 6, background: '#c2410c', color: '#fff', padding: '2px 7px', borderRadius: 10, fontSize: 10, fontWeight: 800 }}>
-              👥 {ticketsEnAttente.length} en attente
+              {ticketsEnAttente.length} en attente
             </span>
           )}
         </button>
@@ -3834,7 +3795,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 title="Scanner avec la caméra"
               >
                 <Camera size={18} />
-                <span>📷 Scanner</span>
+                <span>Scanner</span>
               </button>
 
               <button
@@ -3848,7 +3809,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                 }}
                 title="Connecter la caméra de votre smartphone comme douchette sans fil"
               >
-                <span>📱 Douchette</span>
+                <span>Douchette</span>
               </button>
 
               <PosVoiceInput
@@ -3930,7 +3891,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             </div>
           ) : produitsFiltres.length === 0 ? (
             <div style={{ background: 'var(--pos-surface)', border: '1px dashed var(--pos-border)', borderRadius: 16, padding: 40, textAlign: 'center' }}>
-              <div style={{ fontSize: 44, marginBottom: 8 }}>📦</div>
+              <div style={{ fontSize: 44, marginBottom: 8 }}></div>
               <h3 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: 'var(--pos-text)' }}>
                 Aucun produit dans le catalogue de cette boutique
               </h3>
@@ -3997,7 +3958,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                             title="Générer / Imprimer étiquette code-barres EAN"
                             style={{ background: 'var(--pos-surface2)', border: '1px solid var(--pos-border)', borderRadius: 4, padding: '1px 4px', fontSize: 9, cursor: 'pointer', color: 'var(--pos-text2)', fontWeight: 700, flexShrink: 0 }}
                           >
-                            🏷️
+                            
                           </button>
                         )}
                       </div>
@@ -4013,7 +3974,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                             title="Générer / Imprimer étiquette code-barres EAN"
                             style={{ background: 'var(--pos-surface2)', border: '1px solid var(--pos-border)', borderRadius: 4, padding: '1px 4px', fontSize: 9, cursor: 'pointer', color: 'var(--pos-text2)', fontWeight: 700, flexShrink: 0 }}
                           >
-                            🏷️
+                            
                           </button>
                         )}
                         {isStockValide && (
@@ -4064,7 +4025,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             {/* Raccourcis et Actions Métier Rapides */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 'auto' }}>
               <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--pos-text2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                ⚡ Raccourcis Opérations
+                Raccourcis Opérations
               </span>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -4081,7 +4042,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   }}
                   title="Appliquer une remise commerciale (Superviseur)"
                 >
-                  <span>🏷️</span> Remise
+                  <span></span> Remise
                 </button>
 
                 <button
@@ -4097,7 +4058,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   }}
                   title="Identifier un client fidélité par numéro WhatsApp"
                 >
-                  <span>⭐</span> Fidélité
+                  <span></span> Fidélité
                 </button>
               </div>
 
@@ -4116,7 +4077,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   }}
                   title="Mettre le panier en attente pour servir le client suivant (F8)"
                 >
-                  <span>👥</span> Attente (F8)
+                  <span></span> Attente (F8)
                 </button>
 
                 <button
@@ -4198,7 +4159,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>
-                ✏️ Modifier la fiche client
+                Modifier la fiche client
               </h3>
               <button onClick={() => setModalEditClientCarnet(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#94a3b8' }}>✕</button>
             </div>
@@ -4316,7 +4277,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       {tabMobile === 'catalogue' && panier.length > 0 && (
         <div className="caisse-sticky-bottom-bar no-print">
           <div className="caisse-sticky-bottom-info">
-            <span className="caisse-sticky-count">🛒 {panier.reduce((sum, item) => sum + item.quantite, 0)} article{panier.reduce((sum, item) => sum + item.quantite, 0) > 1 ? 's' : ''}</span>
+            <span className="caisse-sticky-count">{panier.reduce((sum, item) => sum + item.quantite, 0)} article{panier.reduce((sum, item) => sum + item.quantite, 0) > 1 ? 's' : ''}</span>
             <span className="caisse-sticky-total">{fcfa(netAPayer)}</span>
           </div>
           <button
@@ -4324,7 +4285,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             onClick={() => setTabMobile('ticket')}
             className="caisse-sticky-btn"
           >
-            🛒 VOIR TICKET & ENCAISSER →
+            VOIR TICKET & ENCAISSER →
           </button>
         </div>
       )}
@@ -4443,7 +4404,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           {/* Section Fidélité Reçu */}
           {clientFidelite && (
             <div style={{ borderBottom: '1px dashed #000', padding: '4px 0', fontSize: 10 }}>
-              <div style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>⭐ FIDÉLITÉ CLIENT :</div>
+              <div style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>FIDÉLITÉ CLIENT :</div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>Client :</span>
                 <span>{clientFidelite.nom}</span>
@@ -4595,7 +4556,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               try {
                 const stream = (html5QrcodeScannerRef.current as any)?.localMediaStream
                 await toggleTorcheCamera(stream, next)
-              } catch (e) {}
+              } catch (e) { console.warn('[Nopalou:CaisseClient:L4598]', e); }
             }
           }}
           onClose={arreterScannerCamera}
@@ -4669,434 +4630,45 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
       )}
 
       {/* Modale d'enregistrement de Transaction Carnet (Catalogue Direct & Remboursement) */}
-      {modalTransCarnet && clientCarnetSelectionne && (() => {
-        const totalPanierCatalogueCarnet = Object.entries(panierCarnet).reduce((sum, [pId, qte]) => {
-          const p = produits.find(item => item.id === pId)
-          const prix = p ? Number(p.prix || 0) : 0
-          return sum + (prix * qte)
-        }, 0)
-
-        const totalTransactionCouranteCarnet = (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue') 
-          ? totalPanierCatalogueCarnet 
-          : (Number(montantTransCarnet) || 0)
-
-        const prodsFiltresCarnet = produits.filter(p => {
-          if (!rechercheProdCarnet.trim()) return true
-          const q = rechercheProdCarnet.toLowerCase()
-          return p.nom.toLowerCase().includes(q) || (p.code_barre && p.code_barre.includes(q))
-        })
-
-        return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.75)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 640, maxHeight: '90vh', display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottom: '1px solid #f1f5f9', paddingBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {typeTransCarnet === 'vente_credit' ? '⚡ Nouvelle Vente à Crédit' : '💸 Encaisser un Remboursement'}
-                </h3>
-                <button onClick={() => setModalTransCarnet(false)} style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, fontSize: 16, fontWeight: 800, cursor: 'pointer' }}>✕</button>
-              </div>
-
-              <div style={{ background: '#f8fafc', borderRadius: 12, padding: '10px 14px', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0' }}>
-                <div>
-                  <span style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>Client sélectionné</span>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 900, color: '#0f172a' }}>{clientCarnetSelectionne.nom}</p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>Solde actuel</span>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 900, color: clientCarnetSelectionne.solde > 0 ? '#dc2626' : '#16a34a' }}>
-                    {clientCarnetSelectionne.solde > 0 ? fcfa(clientCarnetSelectionne.solde) : `${fcfa(Math.abs(clientCarnetSelectionne.solde))} (Avance)`}
-                  </p>
-                </div>
-              </div>
-
-              {typeTransCarnet === 'vente_credit' && (
-                <div style={{ display: 'flex', background: '#f1f5f9', padding: 4, borderRadius: 12, marginBottom: 16, gap: 4 }}>
-                  <button
-                    onClick={() => setModeSaisieCarnet('catalogue')}
-                    style={{
-                      flex: 1, padding: '8px 12px', borderRadius: 8, border: 'none',
-                      background: modeSaisieCarnet === 'catalogue' ? '#ffffff' : 'transparent',
-                      color: modeSaisieCarnet === 'catalogue' ? '#0f172a' : '#64748b',
-                      fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                      boxShadow: modeSaisieCarnet === 'catalogue' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
-                    }}
-                  >
-                    🛍️ Choisir du Catalogue
-                  </button>
-                  <button
-                    onClick={() => setModeSaisieCarnet('manuel')}
-                    style={{
-                      flex: 1, padding: '8px 12px', borderRadius: 8, border: 'none',
-                      background: modeSaisieCarnet === 'manuel' ? '#ffffff' : 'transparent',
-                      color: modeSaisieCarnet === 'manuel' ? '#0f172a' : '#64748b',
-                      fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                      boxShadow: modeSaisieCarnet === 'manuel' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
-                    }}
-                  >
-                    ✍️ Saisie Libre / Hors-Catalogue
-                  </button>
-                </div>
-              )}
-
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 4 }}>
-                {typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue' && (
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="🔍 Rechercher un produit du catalogue..."
-                      value={rechercheProdCarnet}
-                      onChange={e => setRechercheProdCarnet(e.target.value)}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, marginBottom: 12, boxSizing: 'border-box' }}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
-                      {prodsFiltresCarnet.map(p => {
-                        const qte = panierCarnet[p.id] || 0
-                        return (
-                          <div
-                            key={p.id}
-                            style={{
-                              border: qte > 0 ? '2px solid #ef4444' : '1px solid #e2e8f0',
-                              borderRadius: 10, padding: 8, background: qte > 0 ? '#fef2f2' : '#f8fafc',
-                              display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                            }}
-                          >
-                            <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 800, color: '#0f172a', lineHeight: 1.3 }}>{p.nom}</p>
-                            <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 900, color: '#ef4444' }}>{fcfa(p.prix)}</p>
-                            {qte === 0 ? (
-                              <button
-                                onClick={() => setPanierCarnet(prev => ({ ...prev, [p.id]: 1 }))}
-                                style={{ width: '100%', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 0', fontSize: 11, fontWeight: 800, cursor: 'pointer', minHeight: 36 }}
-                              >
-                                + Ajouter
-                              </button>
-                            ) : (
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderRadius: 6, border: '1px solid #fecaca', padding: 2 }}>
-                                <button onClick={() => setPanierCarnet(prev => { const n = { ...prev }; if (n[p.id] > 1) n[p.id]--; else delete n[p.id]; return n })} style={{ border: 'none', background: '#fee2e2', color: '#dc2626', width: 28, height: 28, borderRadius: 4, fontWeight: 900, cursor: 'pointer' }}>-</button>
-                                <span style={{ fontSize: 12, fontWeight: 900 }}>{qte}</span>
-                                <button onClick={() => setPanierCarnet(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))} style={{ border: 'none', background: '#ef4444', color: '#fff', width: 28, height: 28, borderRadius: 4, fontWeight: 900, cursor: 'pointer' }}>+</button>
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {(typeTransCarnet === 'remboursement' || modeSaisieCarnet === 'manuel') && (
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Montant (FCFA) *</label>
-                    <input
-                      type="number"
-                      placeholder="Ex: 5000"
-                      value={montantTransCarnet}
-                      onChange={e => setMontantTransCarnet(e.target.value)}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, fontWeight: 900, boxSizing: 'border-box' }}
-                    />
-                  </div>
-                )}
-
-                {typeTransCarnet === 'remboursement' && (
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Mode de Paiement Reçu</label>
-                    <select
-                      value={modePaiementTransCarnet}
-                      onChange={e => setModePaiementTransCarnet(e.target.value)}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
-                    >
-                      <option value="especes">💵 Espèces Cash</option>
-                      <option value="wave">🌊 Wave Senegal</option>
-                      <option value="orange_money">🍊 Orange Money</option>
-                    </select>
-                  </div>
-                )}
-
-                {typeTransCarnet === 'vente_credit' && (
-                  <>
-                    {modeSaisieCarnet === 'manuel' && (
-                      <div>
-                        <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Description / Articles informels</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: 2x Sac de riz, 1 Carton d'huile..."
-                          value={produitsTransCarnet}
-                          onChange={e => setProduitsTransCarnet(e.target.value)}
-                          style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Date d'échéance / Promesse de règlement</label>
-                      <input
-                        type="date"
-                        value={dateEcheanceTransCarnet}
-                        onChange={e => setDateEcheanceTransCarnet(e.target.value)}
-                        style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
-                      />
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, color: '#0f172a', cursor: 'pointer', background: '#f8fafc', padding: 10, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-                      <input
-                        type="checkbox"
-                        checked={relanceAutoWaCarnet}
-                        onChange={e => setRelanceAutoWaCarnet(e.target.checked)}
-                      />
-                      <span>🔔 Activer la relance automatique WhatsApp à la date d'échéance</span>
-                    </label>
-                  </>
-                )}
-
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Note / Justification (Optionnelle)</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Remboursement partiel par sa sœur, avance, etc."
-                    value={noteTransCarnet}
-                    onChange={e => setNoteTransCarnet(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5e1', fontSize: 13, boxSizing: 'border-box' }}
-                  />
-                </div>
-              </div>
-
-              {/* Pied de modale : Total et validation */}
-              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <div>
-                  <span style={{ fontSize: 11, color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>TOTAL TRANSACTION</span>
-                  <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: typeTransCarnet === 'vente_credit' ? '#ef4444' : '#16a34a' }}>
-                    {fcfa(totalTransactionCouranteCarnet)}
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button onClick={() => setModalTransCarnet(false)} style={{ padding: '10px 16px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}>
-                    Annuler
-                  </button>
-                  <button
-                    disabled={submittingCarnetTrans}
-                    onClick={async () => {
-                      const num = totalTransactionCouranteCarnet
-                      if (!num || num <= 0) {
-                        alert('Veuillez ajouter au moins un produit du catalogue ou saisir un montant valide.')
-                        return
-                      }
-                      if (boutiqueActiveId && clientCarnetSelectionne) {
-                        setSubmittingCarnetTrans(true)
-                        try {
-                          let prodsArr: any[] = []
-                          if (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue') {
-                            prodsArr = Object.entries(panierCarnet).map(([pId, qte]) => {
-                              const p = produits.find(item => item.id === pId)
-                              return {
-                                id: pId,
-                                nom: p?.nom || 'Article catalogue',
-                                quantite: qte,
-                                prix: Number(p?.prix || 0),
-                              }
-                            })
-                          } else {
-                            const nomDefaut = typeTransCarnet === 'remboursement' ? 'Remboursement client' : 'Vente directe'
-                            prodsArr = [{ nom: produitsTransCarnet.trim() || nomDefaut, quantite: 1, prix: num }]
-                          }
-
-                          const noteCalcul = (typeTransCarnet === 'vente_credit' && modeSaisieCarnet === 'catalogue')
-                            ? `Achat catalogue (${prodsArr.length} article(s))`
-                            : (noteTransCarnet.trim() || (typeTransCarnet === 'remboursement' ? 'Remboursement client' : 'Vente directe'))
-
-                          const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCarnetSelectionne.id}/transaction`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              type: typeTransCarnet,
-                              montant: num,
-                              mode_paiement: modePaiementTransCarnet,
-                              note: noteCalcul,
-                              date_echeance: dateEcheanceTransCarnet || null,
-                              relance_auto_whatsapp: relanceAutoWaCarnet,
-                              produits: prodsArr,
-                            })
-                          })
-
-                          if (res.ok) {
-                            const dataTrans = await res.json()
-                            setClientCarnetSelectionne((prev: any) => prev ? { ...prev, solde: dataTrans.nouveauSolde } : null)
-                            await chargerClientsCredits(boutiqueActiveId)
-                            await chargerHistoriqueClientSelectionne(clientCarnetSelectionne.id)
-                            setModalTransCarnet(false)
-                          } else {
-                            const errData = await res.json()
-                            alert(errData.error || 'Erreur lors de l’enregistrement.')
-                          }
-                        } catch (e) {
-                          console.error('Erreur transaction carnet:', e)
-                        } finally {
-                          setSubmittingCarnetTrans(false)
-                        }
-                      }
-                    }}
-                    style={{
-                      padding: '10px 20px',
-                      background: typeTransCarnet === 'remboursement' ? '#16a34a' : '#ef4444',
-                      color: '#ffffff', border: 'none', borderRadius: 10, fontWeight: 900, cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {submittingCarnetTrans ? 'Enregistrement...' : typeTransCarnet === 'remboursement' ? '✓ Encaisser' : '✓ Valider la Dette'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
-      {/* MODALE BILAN / SYNTHÈSE DE SESSION CAISSIER (RAPPORT X) */}
-      {modalBilanSession && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, maxWidth: 540, width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #cbd5e1' }}>
-            
-            {/* En-tête Modale */}
-            <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#ffffff', padding: '18px 20px', borderTopLeftRadius: 15, borderTopRightRadius: 15, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  📊 Bilan de Session Caissier (Rapport X)
-                </h3>
-                <p style={{ margin: '3px 0 0', fontSize: 12, color: '#94a3b8' }}>
-                  Synthèse d&apos;activité intermédiaire sans clôture de la caisse
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalBilanSession(false)}
-                style={{ background: 'rgba(255,255,255,0.1)', color: '#ffffff', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 16, fontWeight: 900, cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Corps Modale */}
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              
-              {/* Carte Identité Session & Caissier */}
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-                <div>
-                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>👤 Caissier Titulaire</span>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{caissierNom} ({roleActif === 'superviseur' ? '👑 Superviseur' : 'Caissier'})</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>🏪 Boutique</span>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{activeBoutiqueObj?.nom || 'Nopalou POS'}</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>⏰ Ouverture Session</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
-                    {session?.dateOuverture
-                      ? (session.dateOuverture.includes(':') && !session.dateOuverture.includes('T')
-                          ? `Aujourd'hui à ${session.dateOuverture}`
-                          : session.dateOuverture)
-                      : 'Session Active'}
-                  </span>
-                </div>
-                <div>
-                  <span style={{ fontSize: 11, color: '#64748b', display: 'block', fontWeight: 600 }}>🟢 Statut Session</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: 6, display: 'inline-block' }}>● Active en cours</span>
-                </div>
-              </div>
-
-              {/* Chiffres Clés Synthétiques */}
-              {(() => {
-                const fondInitial = session?.fondDeCaisse || 0
-                const totalVentes = (session?.ventes?.total ?? (panier.length > 0 ? netAPayer : 0)) || 0
-                const nbVentes = session?.ventes?.nbVentes ?? 0
-                const totalEspeces = session?.ventes?.especes ?? 0
-                const totalWave = session?.ventes?.wave ?? 0
-                const totalOM = session?.ventes?.orangeMoney ?? 0
-                const totalCarte = session?.ventes?.carte ?? 0
-                const totalMixte = session?.ventes?.mixte ?? 0
-
-                return (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-                      <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12, padding: 12, textAlign: 'center' }}>
-                        <span style={{ fontSize: 11, color: '#1e40af', fontWeight: 700, display: 'block' }}>💵 Fond de Caisse Initial</span>
-                        <span style={{ fontSize: 16, fontWeight: 900, color: '#1e3a5f' }}>{fcfa(fondInitial)}</span>
-                      </div>
-
-                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: 12, textAlign: 'center' }}>
-                        <span style={{ fontSize: 11, color: '#166534', fontWeight: 700, display: 'block' }}>⚡ Total Ventes (CA)</span>
-                        <span style={{ fontSize: 16, fontWeight: 900, color: '#15803d' }}>{fcfa(totalVentes)}</span>
-                      </div>
-
-                      <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 12, padding: 12, textAlign: 'center' }}>
-                        <span style={{ fontSize: 11, color: '#9a3412', fontWeight: 700, display: 'block' }}>🧾 Nombre de Tickets</span>
-                        <span style={{ fontSize: 16, fontWeight: 900, color: '#c2410c' }}>{nbVentes} vente{nbVentes > 1 ? 's' : ''}</span>
-                      </div>
-
-                      <div style={{ background: '#fefce8', border: '1px solid #fef08a', borderRadius: 12, padding: 12, textAlign: 'center' }}>
-                        <span style={{ fontSize: 11, color: '#854d0e', fontWeight: 700, display: 'block' }}>💰 Espèces Théoriques Caisse</span>
-                        <span style={{ fontSize: 16, fontWeight: 900, color: '#a16207' }}>{fcfa(fondInitial + totalEspeces)}</span>
-                      </div>
-                    </div>
-
-                    {/* Ventilation Détaillée par Mode de Paiement */}
-                    <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, background: '#ffffff' }}>
-                      <h4 style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 800, color: '#0f172a', borderBottom: '1px solid #f1f5f9', paddingBottom: 6 }}>
-                        💳 Ventilation des Encaissements par Mode de Règlement
-                      </h4>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
-                          <span style={{ fontWeight: 700, color: '#334155' }}>💵 Ventes en Espèces</span>
-                          <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalEspeces)}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
-                          <span style={{ fontWeight: 700, color: '#0284c7' }}>🌊 Ventes Wave Mobile</span>
-                          <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalWave)}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
-                          <span style={{ fontWeight: 700, color: '#ea580c' }}>🍊 Ventes Orange Money</span>
-                          <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalOM)}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
-                          <span style={{ fontWeight: 700, color: '#4f46e5' }}>💳 Ventes Carte Bancaire</span>
-                          <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalCarte)}</span>
-                        </div>
-
-                        {totalMixte > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: '#f8fafc', borderRadius: 6 }}>
-                            <span style={{ fontWeight: 700, color: '#9333ea' }}>🔀 Ventes Paiement Mixte</span>
-                            <span style={{ fontWeight: 900, color: '#0f172a' }}>{fcfa(totalMixte)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )
-              })()}
-
-              {/* Boutons d'Action */}
-              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  style={{ flex: 1, padding: '12px', background: '#1e3a5f', color: '#ffffff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                >
-                  🖨️ Imprimer Rapport X (80mm)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModalBilanSession(false)}
-                  style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
-                >
-                  Fermer
-                </button>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
+      <PosTransactionCarnetModal
+        isOpen={modalTransCarnet && Boolean(clientCarnetSelectionne)}
+        onClose={() => setModalTransCarnet(false)}
+        client={clientCarnetSelectionne}
+        typeTrans={typeTransCarnet}
+        modeSaisie={modeSaisieCarnet}
+        setModeSaisie={setModeSaisieCarnet}
+        panierCarnet={panierCarnet}
+        setPanierCarnet={setPanierCarnet}
+        produits={produits}
+        rechercheProd={rechercheProdCarnet}
+        setRechercheProd={setRechercheProdCarnet}
+        montantTrans={montantTransCarnet}
+        setMontantTrans={setMontantTransCarnet}
+        modePaiementTrans={modePaiementTransCarnet}
+        setModePaiementTrans={setModePaiementTransCarnet}
+        produitsTrans={produitsTransCarnet}
+        setProduitsTrans={setProduitsTransCarnet}
+        dateEcheanceTrans={dateEcheanceTransCarnet}
+        setDateEcheanceTrans={setDateEcheanceTransCarnet}
+        relanceAutoWa={relanceAutoWaCarnet}
+        setRelanceAutoWa={setRelanceAutoWaCarnet}
+        noteTrans={noteTransCarnet}
+        setNoteTrans={setNoteTransCarnet}
+        submitting={submittingCarnetTrans}
+        onSubmit={handleValiderTransCarnet}
+        fcfa={fcfa}
+      />
+      <PosBilanRapportXModal
+        isOpen={modalBilanSession}
+        onClose={() => setModalBilanSession(false)}
+        caissierNom={caissierNom}
+        roleActif={roleActif}
+        boutiqueNom={activeBoutiqueObj?.nom}
+        session={session}
+        netAPayer={netAPayer}
+        panierLength={panier.length}
+        fcfa={fcfa}
+      />
       {/* Modale Dédiée : Changer de Caissier & Verrouillage */}
       <PosChangerCaissierModal
         isOpen={modalChangerCaissier}

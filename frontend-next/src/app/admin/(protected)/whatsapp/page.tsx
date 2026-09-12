@@ -27,7 +27,7 @@ export default async function AdminWhatsAppPage() {
     if (r1.ok) status = await r1.json()
     if (r2.ok) sessions = await r2.json()
     if (r3.ok) supportDemandes = await r3.json()
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L30]', err); }
 
   return (
     <div className="admin-content">

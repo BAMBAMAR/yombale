@@ -153,7 +153,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         </div>
       )}
 
-      {card('💰 Prix et quotas des annonces', <>
+      {card('Prix et quotas des annonces', <>
         {field('quota_annonces_gratuit', 'Quota d\'annonces gratuites par compte', 'number', 'annonces')}
         {field('prix_annonce', 'Publication annonce classifiée', 'number', 'FCFA')}
         {field('prix_sponsoring', 'Mise en avant (immo / boutique / produit) — 30j', 'number', 'FCFA')}
@@ -161,7 +161,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         {field('boost_duree_jours', 'Durée du boost', 'number', 'jours')}
       </>)}
 
-      {card('📦 Plans d\'abonnement boutiques', <>
+      {card('Plans d\'abonnement boutiques', <>
         {field('plan_decouverte_label', 'Nom plan Taf Taf (Découverte)', 'text')}
         {field('plan_decouverte_prix', 'Prix plan Taf Taf (mensuel)', 'number', 'FCFA/mois')}
         {field('abonnement_essai_jours', 'Durée essai gratuit / 1er mois offert', 'number', 'jours')}
@@ -173,32 +173,32 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         {field('plan_business_prix', 'Prix plan Boutique Business (mensuel)', 'number', 'FCFA/mois')}
         {field('commission_business', 'Commission plan Boutique Business', 'number', '%')}
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px dashed #e5e7eb' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 12 }}>🏷️ Réductions multi-durées engagées :</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 12 }}>Réductions multi-durées engagées :</div>
           {field('reduc_3_mois', 'Réduction engagement 3 Mois', 'number', '%')}
           {field('reduc_6_mois', 'Réduction engagement 6 Mois', 'number', '%')}
           {field('reduc_12_mois', 'Réduction engagement 12 Mois (1 an)', 'number', '%')}
         </div>
       </>)}
 
-      {card('💳 Méthodes de paiement', <>
+      {card('Méthodes de paiement', <>
         {toggle('paiement_wave', 'Wave Senegal')}
         {toggle('paiement_orange', 'Orange Money')}
       </>)}
 
-      {card('🧾 Paiement manuel (dépôt Wave/Orange)', <>
+      {card('Paiement manuel (dépôt Wave/Orange)', <>
         {toggle('paiement_manuel_actif', 'Paiement manuel activé')}
         {field('paiement_manuel_numero_wave', 'Numéro Wave pour dépôt', 'text')}
         {field('paiement_manuel_numero_om', 'Numéro Orange Money pour dépôt', 'text')}
       </>)}
 
-      {card('🎁 Code promo Plateforme (Abonnements)', <>
+      {card('Code promo Plateforme (Abonnements)', <>
         {toggle('promo_active', 'Promotion active')}
         {field('promo_code', 'Code promo (ex: NOPALOU25)', 'text')}
         {field('promo_reduction', 'Réduction', 'number', '%')}
         {field('promo_expiry', 'Expiration (YYYY-MM-DD)', 'date')}
         {form.promo_active === 'true' && form.promo_code && (
           <div style={{ padding: '10px 14px', background: '#fef9c3', borderRadius: 8, fontSize: 13, color: '#854d0e', marginTop: 8 }}>
-            ⚠️ Code actif : <strong>{form.promo_code}</strong> — {form.promo_reduction}% de réduction
+            Code actif : <strong>{form.promo_code}</strong> — {form.promo_reduction}% de réduction
             {form.promo_expiry ? ` jusqu'au ${form.promo_expiry}` : ''}
           </div>
         )}
@@ -208,17 +208,17 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         {field('max_boutiques_par_compte', 'Nombre max de boutiques par compte utilisateur', 'number', 'boutiques')}
         {field('max_boutiques_par_telephone', 'Nombre max de boutiques associées au même téléphone / email', 'number', 'boutiques')}
         <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 0' }}>
-          💡 Empêche les utilisateurs de créer plus de boutiques que la limite autorisée, même en créant plusieurs comptes avec le même numéro ou e-mail.
+          Empêche les utilisateurs de créer plus de boutiques que la limite autorisée, même en créant plusieurs comptes avec le même numéro ou e-mail.
         </p>
       </>)}
 
-      {card('🔔 Alertes et relances d\'expiration de forfaits', <>
+      {card('Alertes et relances d\'expiration de forfaits', <>
         {field('alertes_abonnement_jours_avant', 'Délai de première alerte avant expiration', 'number', 'jours avant')}
         {toggle('alertes_abonnement_email', 'Relance par E-mail')}
         {toggle('alertes_abonnement_whatsapp', 'Relance par WhatsApp')}
       </>)}
 
-      {card('📜 Contrat Vendeur & Charte Marchand (CGU Dynamiques)', <>
+      {card('Contrat Vendeur & Charte Marchand (CGU Dynamiques)', <>
         {toggle('contrat_vendeur_requis', 'Acceptation du contrat obligatoire lors de la création de boutique')}
         <div style={{ marginTop: 12 }}>
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: 13, color: '#374151' }}>
@@ -231,7 +231,7 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
             style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.5, resize: 'vertical' }}
           />
           <p style={{ fontSize: 12, color: '#6b7280', margin: '6px 0 0' }}>
-            💡 Ce texte est affiché en direct dans la modale d'acceptation lors de la création de boutique et sur la page des CGU. Vous pouvez modifier les clauses et commissions à tout moment.
+            Ce texte est affiché en direct dans la modale d'acceptation lors de la création de boutique et sur la page des CGU. Vous pouvez modifier les clauses et commissions à tout moment.
           </p>
         </div>
       </>)}

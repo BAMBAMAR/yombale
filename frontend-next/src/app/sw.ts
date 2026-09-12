@@ -243,7 +243,7 @@ const serwist = new Serwist({
             if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {
               return false;
             }
-          } catch {}
+          } catch (err) { console.warn('[Nopalou:sw:L246]', err); }
           return true;
         },
       },

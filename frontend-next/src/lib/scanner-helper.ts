@@ -167,7 +167,7 @@ export function capturerZoneViseurExacte(
         d[i + 2] = val
       }
       ctx.putImageData(imgData, 0, 0)
-    } catch (e) {}
+    } catch (e) { console.warn('[Nopalou:scanner-helper:L170]', e); }
   }
 
   return canvas.toDataURL('image/jpeg', 0.88)
@@ -188,7 +188,7 @@ export function jouerBipEtVibrer(type: 'succes' | 'alerte' = 'succes') {
         navigator.vibrate([30, 40, 30])
       }
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[Nopalou:scanner-helper:L191]', e); }
 
   // 2. Bip sonore immédiat via Web Audio API
   try {
@@ -219,7 +219,7 @@ export function jouerBipEtVibrer(type: 'succes' | 'alerte' = 'succes') {
       osc.start()
       osc.stop(ctx.currentTime + 0.12)
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[Nopalou:scanner-helper:L222]', e); }
 }
 
 /**
@@ -265,6 +265,6 @@ export async function toggleTorcheCamera(stream: MediaStream | null, enable: boo
       })
       return true
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[Nopalou:scanner-helper:L268]', e); }
   return false
 }

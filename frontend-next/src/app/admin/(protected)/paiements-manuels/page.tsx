@@ -14,7 +14,7 @@ export default async function AdminPaiementsManuelsPage() {
       headers: { 'X-Admin-Secret': secret }, cache: 'no-store',
     })
     if (res.ok) paiements = (await res.json()).paiements
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L17]', err); }
 
   return (
     <div className="admin-content">

@@ -39,7 +39,7 @@ export default async function PayerAnnoncePage({ params }: { params: Promise<{ i
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>🔍</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Annonce introuvable.</p>
           <Link href="/mes-annonces" className="budget-pill active" style={{ marginTop: 8 }}>
             Mes annonces
@@ -54,7 +54,7 @@ export default async function PayerAnnoncePage({ params }: { params: Promise<{ i
     return (
       <div className="page-container" style={{ paddingTop: '3rem', maxWidth: 600 }}>
         <div className="paiement-succes-mini">
-          <span style={{ fontSize: 56 }}>✅</span>
+          <span style={{ fontSize: 56 }}></span>
           <h2>Annonce déjà active</h2>
           <p>Votre annonce &quot;{annonce.titre}&quot; est déjà publiée et visible.</p>
           <Link href="/mes-annonces" className="budget-pill active">
@@ -85,7 +85,7 @@ export default async function PayerAnnoncePage({ params }: { params: Promise<{ i
           { label: 'Mes annonces', href: '/mes-annonces' },
           { label: 'Activer' }
         ]}
-        emoji="🚀"
+        emoji=""
         titre="Activer votre annonce"
         compteur={`Votre quota gratuit est atteint. Activez votre annonce pour ${(Number(settings.prix_annonce) || 1500).toLocaleString('fr-FR')} FCFA.`}
       />

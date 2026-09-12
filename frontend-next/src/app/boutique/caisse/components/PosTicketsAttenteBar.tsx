@@ -20,7 +20,7 @@ export default function PosTicketsAttenteBar({ tickets, onReprendre }: PosTicket
     <div className="no-print" style={{ padding: '10px 14px', background: 'var(--pos-surface)', borderBottom: '1px solid var(--pos-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--pos-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span>👥</span> Clients en file d&apos;attente ({tickets.length}) :
+          <span></span> Clients en file d&apos;attente ({tickets.length}) :
         </span>
         <span style={{ fontSize: 11, color: 'var(--pos-text2)', fontWeight: 600 }}>Cliquez pour reprendre un panier</span>
       </div>

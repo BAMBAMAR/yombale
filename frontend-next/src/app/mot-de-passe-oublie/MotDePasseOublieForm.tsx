@@ -35,7 +35,7 @@ function FormDemande() {
   if (done) {
     return (
       <div className="auth-success">
-        <p className="auth-success-icon">✅</p>
+        <p className="auth-success-icon"></p>
         <p>{t('auth.resetLinkSent')}</p>
         <Link href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>{t('auth.backToLogin')}</Link>
       </div>
@@ -48,7 +48,7 @@ function FormDemande() {
       <div className="auth-field">
         <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
         <div className="auth-input-wrap">
-          <span className="auth-input-icon">✉</span>
+          <span className="auth-input-icon"></span>
           <input
             id="email"
             type="email"
@@ -102,7 +102,7 @@ function FormReinit({ token }: { token: string }) {
   if (done) {
     return (
       <div className="auth-success">
-        <p className="auth-success-icon">✅</p>
+        <p className="auth-success-icon"></p>
         <p>{t('account.profileUpdated')}</p>
         <Link href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>{t('auth.loginLink')}</Link>
       </div>
@@ -115,7 +115,7 @@ function FormReinit({ token }: { token: string }) {
       <div className="auth-field">
         <label htmlFor="password" className="auth-label">{t('auth.passwordLabel')}</label>
         <div className="auth-input-wrap">
-          <span className="auth-input-icon">🔒</span>
+          <span className="auth-input-icon"></span>
           <input
             id="password"
             type={showPassword ? 'text' : 'password'}

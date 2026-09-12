@@ -64,7 +64,7 @@ export default function AlertesClientTab({ userId }: { userId: string }) {
       }}>
         <Info size={18} style={{ flexShrink: 0 }} />
         <span>
-          💡 <strong>Astuce :</strong> Vous pouvez également configurer une alerte en un clic directement depuis n’importe quelle fiche produit du catalogue !
+          <strong>Astuce :</strong> Vous pouvez également configurer une alerte en un clic directement depuis n’importe quelle fiche produit du catalogue !
         </span>
       </div>
 
@@ -84,7 +84,7 @@ export default function AlertesClientTab({ userId }: { userId: string }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 18 }}>➕</span>
+            <span style={{ fontSize: 18 }}></span>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
               {t('account.createAlert') || 'Créer une alerte prix'}
             </h2>
@@ -101,7 +101,7 @@ export default function AlertesClientTab({ userId }: { userId: string }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 18 }}>🔔</span>
+            <span style={{ fontSize: 18 }}></span>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
               {t('account.myActiveAlerts') || 'Mes alertes actives'}
             </h2>

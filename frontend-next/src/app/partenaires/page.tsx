@@ -67,7 +67,7 @@ export default function PartenairesLandingPage() {
             </Link>
           </div>
           <div style={{ marginTop: 24, fontSize: 13, color: '#94a3b8', fontWeight: 600 }}>
-            💰 Paiements garantis par Wave ou Orange Money, le 5 de chaque mois.
+            Paiements garantis par Wave ou Orange Money, le 5 de chaque mois.
           </div>
         </div>
       </section>
@@ -77,7 +77,7 @@ export default function PartenairesLandingPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
           
           <div style={{ background: '#ffffff', padding: 32, borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>📈</div>
+            <div style={{ fontSize: 40, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 12 }}>20% de revenus récurrents</h3>
             <p style={{ color: '#475569', lineHeight: 1.6, fontSize: 15 }}>
               Ce n'est pas un gain unique (one-shot). Vous touchez votre commission <strong>chaque mois</strong> sur l'abonnement SaaS (Pro ou Business) du commerçant, à vie !
@@ -93,7 +93,7 @@ export default function PartenairesLandingPage() {
           </div>
 
           <div style={{ background: '#ffffff', padding: 32, borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>⚡</div>
+            <div style={{ fontSize: 40, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 12 }}>Vente ultra-simple</h3>
             <p style={{ color: '#475569', lineHeight: 1.6, fontSize: 15 }}>
               Nopalou se vend tout seul : le 1er mois est <strong>100% offert</strong> sans carte bancaire pour le marchand. Il vous suffit de partager votre lien d'affiliation.

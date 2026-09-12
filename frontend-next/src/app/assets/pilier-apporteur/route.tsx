@@ -41,7 +41,7 @@ export async function GET() {
             background: '#F3E8FF', border: '2px solid #7C3AED',
             borderRadius: 9999, padding: '10px 24px', fontSize: 17, fontWeight: 900, color: '#7C3AED', display: 'flex',
           }}>
-            💼 PILIER 3 : APPORTEUR 20%
+            PILIER 3 : APPORTEUR 20%
           </div>
         </div>
 
@@ -69,7 +69,7 @@ export async function GET() {
             <div style={{
               width: 68, height: 68, borderRadius: 18, background: '#F3E8FF', border: '1.5px solid #7C3AED',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, flexShrink: 0
-            }}>💰</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 24, fontWeight: 900, color: '#7C3AED', letterSpacing: -0.5 }}>Commissions 20% Récurrentes à Vie</span>
               <span style={{ fontSize: 17, color: '#334155', fontWeight: 650, marginTop: 4, lineHeight: 1.4 }}>
@@ -86,7 +86,7 @@ export async function GET() {
             <div style={{
               width: 68, height: 68, borderRadius: 18, background: '#FFF7ED', border: '1.5px solid #C75B00',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, flexShrink: 0
-            }}>📄</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 24, fontWeight: 900, color: '#C75B00', letterSpacing: -0.5 }}>Brochure PDF 13 Pages &amp; Kit Commercial</span>
               <span style={{ fontSize: 17, color: '#334155', fontWeight: 650, marginTop: 4, lineHeight: 1.4 }}>
@@ -103,7 +103,7 @@ export async function GET() {
             <div style={{
               width: 68, height: 68, borderRadius: 18, background: '#F8FAFC', border: '1.5px solid #1C2B4A',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, flexShrink: 0
-            }}>📊</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 24, fontWeight: 900, color: '#1C2B4A', letterSpacing: -0.5 }}>Dashboard &amp; Code Apporteur Personnel</span>
               <span style={{ fontSize: 17, color: '#334155', fontWeight: 650, marginTop: 4, lineHeight: 1.4 }}>
@@ -120,7 +120,7 @@ export async function GET() {
             <div style={{
               width: 68, height: 68, borderRadius: 18, background: '#F3E8FF', border: '1.5px solid #7C3AED',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, flexShrink: 0
-            }}>🚀</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 24, fontWeight: 900, color: '#7C3AED', letterSpacing: -0.5 }}>0 FCFA d&apos;Investissement · Sans Plafond</span>
               <span style={{ fontSize: 17, color: '#334155', fontWeight: 650, marginTop: 4, lineHeight: 1.4 }}>

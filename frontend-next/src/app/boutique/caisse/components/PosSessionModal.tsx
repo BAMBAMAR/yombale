@@ -47,7 +47,7 @@ export default function PosSessionModal({
           ✕
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, paddingRight: 34 }}>
-          <span style={{ fontSize: 24 }}>🔑</span>
+          <span style={{ fontSize: 24 }}></span>
           <div>
             <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>Ouverture de Session POS</h2>
             <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>Identifiez-vous et saisissez le fond de caisse initial.</p>
@@ -57,7 +57,7 @@ export default function PosSessionModal({
         <div style={{ marginBottom: 14, marginTop: 14 }}>
           <label style={{ fontSize: 12, color: '#334155', display: 'block', marginBottom: 4, fontWeight: 700 }}>Caissier Connecté</label>
           <div style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#f8fafc', color: '#0f172a', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>👤</span> {caissierNom}
+            <span></span> {caissierNom}
           </div>
         </div>
 
@@ -94,7 +94,7 @@ export default function PosSessionModal({
             Annuler
           </button>
           <button onClick={onDemarrerSession} style={{ flex: 1.5, padding: '12px', background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 12px rgba(22,163,74,0.3)' }}>
-            🚀 Démarrer la Session →
+            Démarrer la Session →
           </button>
         </div>
       </div>

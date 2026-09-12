@@ -146,8 +146,8 @@ export default async function CategoriePage({
   // 'pertinence' est la sentinelle historique "aucun paramètre tri envoyé au backend"
   // (voir buildLink / construction de qs plus haut) — le défaut backend est désormais prix croissant.
   const TRIS = [
-    { val: 'pertinence', label: '💰 Prix ↑' },
-    { val: 'populaire',  label: '⭐ Populaires' },
+    { val: 'pertinence', label: 'Prix ↑' },
+    { val: 'populaire',  label: 'Populaires' },
     { val: 'prix_desc',  label: 'Prix ↓' },
   ]
 
@@ -272,7 +272,7 @@ export default async function CategoriePage({
           titre={`Pourquoi comparer les prix ${cat.label.toLowerCase()} sur Nopalou ?`}
           blurbs={[
             {
-              emoji: '📊',
+              emoji: '',
               text: (
                 <>
                   <p>
@@ -288,7 +288,7 @@ export default async function CategoriePage({
               ),
             },
             {
-              emoji: '📍',
+              emoji: '',
               text: (
                 <>
                   {cat.contenu.map((para, i) => (
@@ -305,8 +305,8 @@ export default async function CategoriePage({
                 ...Object.entries(SOUS_CATEGORIES)
                   .filter(([, sc]) => sc.categorie === slug)
                   .map(([key, sc]) => ({ href: `/categorie/${key}`, emoji: sc.emoji, label: sc.label })),
-                { href: `/categorie/${slug}/moins-de-50000`, emoji: '💰', label: 'Moins de 50 000 FCFA' },
-                { href: `/categorie/${slug}/moins-de-100000`, emoji: '💰', label: 'Moins de 100 000 FCFA' },
+                { href: `/categorie/${slug}/moins-de-50000`, emoji: '', label: 'Moins de 50 000 FCFA' },
+                { href: `/categorie/${slug}/moins-de-100000`, emoji: '', label: 'Moins de 100 000 FCFA' },
               ],
             },
             {

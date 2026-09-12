@@ -27,7 +27,7 @@ export default async function PayerSponsoringImmoPage({ params }: { params: Prom
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>🏠</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Annonce immobilière introuvable.</p>
           <Link href="/immo" className="budget-pill active" style={{ marginTop: 8 }}>
             Retour
@@ -57,7 +57,7 @@ export default async function PayerSponsoringImmoPage({ params }: { params: Prom
           { label: 'Immobilier', href: `/immo/${id}` },
           { label: 'Sponsoriser' }
         ]}
-        emoji="⭐"
+        emoji=""
         titre="Sponsoriser votre bien immobilier"
         compteur={`Mettez "${titreCourt}" en vedette pour 30 jours (Apparaîtra en haut de la liste).`}
       />

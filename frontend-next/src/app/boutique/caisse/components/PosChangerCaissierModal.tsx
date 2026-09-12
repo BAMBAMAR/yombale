@@ -139,7 +139,7 @@ export default function PosChangerCaissierModal({
                 <ArrowLeft size={16} />
               </button>
             ) : (
-              <span style={{ fontSize: 20 }}>👤</span>
+              <span style={{ fontSize: 20 }}></span>
             )}
             <div>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#ffffff' }}>
@@ -208,7 +208,7 @@ export default function PosChangerCaissierModal({
                 color: roleActif === 'superviseur' ? '#92400e' : '#0369a1',
               }}
             >
-              {roleActif === 'superviseur' ? '👑 Gérant' : '👤 Caissier'}
+              {roleActif === 'superviseur' ? 'Gérant' : 'Caissier'}
             </span>
           </div>
 
@@ -268,7 +268,7 @@ export default function PosChangerCaissierModal({
                               fontWeight: 900,
                             }}
                           >
-                            {isSuper ? '👑' : '👤'}
+                            {isSuper ? '' : ''}
                           </div>
                           <div>
                             <span style={{ fontSize: 13.5, fontWeight: 850, color: '#0f172a', display: 'block' }}>

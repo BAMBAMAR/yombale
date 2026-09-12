@@ -58,7 +58,7 @@ export default function DeleteImmoButton({ id }: { id: string }) {
         cursor: 'pointer', marginTop: 8,
       }}
     >
-      🗑 {t('account.adActionDelete')}
+      {t('account.adActionDelete')}
     </button>
   )
 }

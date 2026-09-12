@@ -143,7 +143,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
       try {
         setBilan(JSON.parse(cached))
         setLoading(false)
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:Comptabilite:L146]', e); }
     }
 
     try {
@@ -204,14 +204,14 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
   }
 
   const presetsList: { id: DatePreset; label: string }[] = [
-    { id: 'today', label: '⚡ Aujourd\'hui' },
-    { id: 'yesterday', label: '📅 Hier' },
-    { id: '7d', label: '🗓️ 7 jours' },
-    { id: '30d', label: '🗓️ 30 jours' },
-    { id: 'this_month', label: '📊 Ce mois-ci' },
-    { id: 'last_month', label: '📆 Mois dernier' },
-    { id: 'this_year', label: '🏛️ Cette année' },
-    { id: 'custom', label: '⚙️ Période libre' },
+    { id: 'today', label: 'Aujourd\'hui' },
+    { id: 'yesterday', label: 'Hier' },
+    { id: '7d', label: '7 jours' },
+    { id: '30d', label: '30 jours' },
+    { id: 'this_month', label: 'Ce mois-ci' },
+    { id: 'last_month', label: 'Mois dernier' },
+    { id: 'this_year', label: 'Cette année' },
+    { id: 'custom', label: 'Période libre' },
   ]
 
   const modeLabels: Record<string, string> = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', carte: 'Carte bancaire' }
@@ -223,7 +223,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
       <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 18 }}>📅</span>
+            <span style={{ fontSize: 18 }}></span>
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#1e293b' }}>
               Période d&apos;analyse : <span style={{ color: '#C75B00' }}>{activeRange.label}</span>
             </h3>
@@ -236,7 +236,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
               disabled={loading || !bilan}
               style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <span>📄</span>
+              <span></span>
               <span>Bilan PDF</span>
             </button>
             <button
@@ -245,7 +245,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
               disabled={loading || !bilan}
               style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #16a34a', background: '#f0fdf4', color: '#15803d', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <span>📊</span>
+              <span></span>
               <span>Export CSV</span>
             </button>
           </div>
@@ -326,10 +326,10 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
               style={{ ...inputStyle, padding: '7px 10px', fontSize: 13 }}
             >
               <option value="">Tous les règlements</option>
-              <option value="wave">🌊 Wave</option>
-              <option value="orange_money">🍊 Orange Money</option>
-              <option value="cash">💵 Espèces</option>
-              <option value="carte">💳 Carte Bancaire</option>
+              <option value="wave">Wave</option>
+              <option value="orange_money">Orange Money</option>
+              <option value="cash">Espèces</option>
+              <option value="carte">Carte Bancaire</option>
               <option value="virement">🏦 Virement</option>
             </select>
           </div>
@@ -345,14 +345,14 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
       ) : !bilan ? (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <p style={{ color: '#b91c1c', fontSize: 13.5, margin: 0, fontWeight: 600 }}>
-            ⚠️ {errorMessage || 'Impossible de charger le bilan comptable pour le moment.'}
+            {errorMessage || 'Impossible de charger le bilan comptable pour le moment.'}
           </p>
           <button
             type="button"
             onClick={loadBilan}
             style={{ padding: '6px 14px', borderRadius: 8, background: '#dc2626', color: '#fff', border: 'none', fontWeight: 700, fontSize: 12.5, cursor: 'pointer' }}
           >
-            🔄 Réessayer
+            Réessayer
           </button>
         </div>
       ) : (
@@ -394,7 +394,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
             {/* Répartition des encaissements */}
             <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <p style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: '#1e293b' }}>💳 Modes de Règlement</p>
+                <p style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: '#1e293b' }}>Modes de Règlement</p>
                 <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Total : {fcfa(bilan.financier.ca_total)}</span>
               </div>
 
@@ -427,7 +427,7 @@ function BilanView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueId: st
 
             {/* Top Produits Vendus */}
             <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px 20px' }}>
-              <p style={{ margin: '0 0 14px', fontSize: 13.5, fontWeight: 800, color: '#1e293b' }}>🏆 Top Articles sur la période</p>
+              <p style={{ margin: '0 0 14px', fontSize: 13.5, fontWeight: 800, color: '#1e293b' }}>Top Articles sur la période</p>
               {bilan.financier.top_produits.length === 0 ? (
                 <p style={{ color: '#94a3b8', fontSize: 12.5, margin: 0 }}>Aucune vente d&apos;article sur la période sélectionnée.</p>
               ) : (
@@ -476,7 +476,7 @@ function InventaireView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueI
       try {
         setProduits(JSON.parse(cached))
         setLoading(false)
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:Comptabilite:L479]', e); }
     }
 
     try {
@@ -601,7 +601,7 @@ function InventaireView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueI
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: '1 1 240px' }}>
             <input
               type="text"
-              placeholder="🔍 Rechercher un article, catégorie, code-barres…"
+              placeholder="Rechercher un article, catégorie, code-barres…"
               value={filtreRecherche}
               onChange={e => setFiltreRecherche(e.target.value)}
               style={{ ...inputStyle, padding: '8px 12px', fontSize: 13 }}
@@ -614,7 +614,7 @@ function InventaireView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueI
               onClick={handlePrintPDF}
               style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #0284c7', background: '#f0f9ff', color: '#0369a1', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <span>🖨️</span>
+              <span></span>
               <span>Fiche Pointage PDF</span>
             </button>
             <button
@@ -622,7 +622,7 @@ function InventaireView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueI
               onClick={handleExportExcel}
               style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #16a34a', background: '#f0fdf4', color: '#15803d', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <span>📊</span>
+              <span></span>
               <span>Export Excel</span>
             </button>
           </div>
@@ -632,8 +632,8 @@ function InventaireView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { boutiqueI
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
             { id: 'tous', label: `Tous (${totalReferences})` },
-            { id: 'alerte', label: `⚠️ Ruptures & Alertes (${stockAlertesCount})` },
-            { id: 'en_stock', label: `✅ En stock normal` },
+            { id: 'alerte', label: `Ruptures & Alertes (${stockAlertesCount})` },
+            { id: 'en_stock', label: `En stock normal` },
           ].map(f => (
             <button
               key={f.id}
@@ -774,7 +774,7 @@ function PerformancesCaissiersView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: 
       try {
         setBilan(JSON.parse(cached))
         setLoading(false)
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:Comptabilite:L777]', e); }
     }
 
     getBilanComptable(boutiqueId, { from: activeRange.from, to: activeRange.to })
@@ -846,7 +846,7 @@ function PerformancesCaissiersView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: 
           disabled={loading || !bilan}
           style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #16a34a', background: '#f0fdf4', color: '#15803d', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          <span>📊</span>
+          <span></span>
           <span>Export Classement CSV</span>
         </button>
       </div>
@@ -856,7 +856,7 @@ function PerformancesCaissiersView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: 
         <p style={{ color: '#94a3b8' }}>Chargement des statistiques caissiers…</p>
       ) : !bilan || bilan.caissiers.length === 0 ? (
         <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 12, padding: 32, textAlign: 'center', color: '#64748b' }}>
-          <p style={{ fontSize: 24, margin: '0 0 8px' }}>👤</p>
+          <p style={{ fontSize: 24, margin: '0 0 8px' }}></p>
           <p style={{ margin: 0, fontWeight: 700 }}>Aucune vente enregistrée par un caissier sur cette période.</p>
         </div>
       ) : (
@@ -897,7 +897,7 @@ function PerformancesCaissiersView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: 
                         {c.part_ca_pct}%
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, color: '#64748b' }}>
-                        <span>💵 {fcfa(c.ca_especes)}</span> · <span style={{ color: '#0284c7' }}>📱 {fcfa(c.ca_digital)}</span>
+                        <span>{fcfa(c.ca_especes)}</span> · <span style={{ color: '#0284c7' }}>{fcfa(c.ca_digital)}</span>
                       </td>
                     </tr>
                   )
@@ -960,7 +960,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
       try {
         setSessions(JSON.parse(cached))
         setLoading(false)
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:Comptabilite:L963]', e); }
     }
 
     try {
@@ -977,7 +977,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
         }
       }
     } catch (e) {
-      console.warn(`📊 [Clôtures Z] Mode hors-ligne : utilisation du cache (${cached ? 'disponible' : 'vide'}).`)
+      console.warn(`[Clôtures Z] Mode hors-ligne : utilisation du cache (${cached ? 'disponible' : 'vide'}).`)
     } finally {
       setLoading(false)
     }
@@ -1090,14 +1090,14 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
   }
 
   const presetsList: { id: DatePreset; label: string }[] = [
-    { id: 'today', label: '⚡ Aujourd\'hui' },
-    { id: 'yesterday', label: '📅 Hier' },
+    { id: 'today', label: 'Aujourd\'hui' },
+    { id: 'yesterday', label: 'Hier' },
     { id: '7d', label: '7 derniers jours' },
     { id: '30d', label: '30 derniers jours' },
     { id: 'this_month', label: 'Ce mois-ci' },
     { id: 'last_month', label: 'Mois dernier' },
     { id: 'this_year', label: 'Cette année' },
-    { id: 'custom', label: '⚙️ Période libre' },
+    { id: 'custom', label: 'Période libre' },
   ]
 
   return (
@@ -1107,7 +1107,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-              🧾 Historique des Sessions & Rapports Z
+              Historique des Sessions & Rapports Z
             </h3>
             <p style={{ margin: '4px 0 0', fontSize: 12.5, color: '#64748b' }}>
               Consultez, ré-imprimez et exportez les clôtures journalières et tickets de fin de service
@@ -1125,7 +1125,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
                 display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.15s'
               }}
             >
-              📊 Export CSV Synthèse
+              Export CSV Synthèse
             </button>
             <button
               type="button"
@@ -1136,7 +1136,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
               }}
               title="Actualiser les données"
             >
-              🔄
+              
             </button>
           </div>
         </div>
@@ -1186,7 +1186,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
 
           {caissiersList.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>👤 Caissier :</span>
+              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Caissier :</span>
               <select
                 value={selectedCaissier}
                 onChange={e => setSelectedCaissier(e.target.value)}
@@ -1201,14 +1201,14 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>🏷️ Statut :</span>
+            <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Statut :</span>
             <select
               value={selectedStatut}
               onChange={e => setSelectedStatut(e.target.value as any)}
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, background: '#fff', fontWeight: 600 }}
             >
               <option value="tous">Tous les statuts</option>
-              <option value="cloturee">🟢 Clôturées Z</option>
+              <option value="cloturee">Clôturées Z</option>
               <option value="ouverte">🟡 En cours</option>
             </select>
           </div>
@@ -1249,7 +1249,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
         </div>
       ) : sessions.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 20px', background: '#ffffff', borderRadius: 16, border: '1px dashed #cbd5e1', color: '#64748b' }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>🧾</div>
+          <div style={{ fontSize: 36, marginBottom: 8 }}></div>
           <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#0f172a' }}>Aucune session de caisse trouvée</p>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
             Ajustez vos filtres de dates ou effectuez des encaissements sur la caisse POS pour générer des sessions.
@@ -1284,9 +1284,9 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
                         <div style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>#{s.id.slice(0, 8)}</div>
                       </td>
                       <td style={{ padding: '14px 12px', fontSize: 12, color: '#475569' }}>
-                        <div>🟢 {s.date_ouverture ? new Date(s.date_ouverture).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</div>
+                        <div>{s.date_ouverture ? new Date(s.date_ouverture).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</div>
                         <div style={{ color: isCloturee ? '#64748b' : '#C75B00', fontWeight: isCloturee ? 400 : 700 }}>
-                          {isCloturee ? `🏁 ${new Date(s.date_cloture!).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : '⚡ En cours'}
+                          {isCloturee ? `🏁 ${new Date(s.date_cloture!).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : 'En cours'}
                         </div>
                       </td>
                       <td style={{ padding: '14px 12px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>
@@ -1334,7 +1334,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
                             }}
                             title="Imprimer / Télécharger le Rapport Z en PDF"
                           >
-                            {isPrinting ? '⏳' : '🧾'} Rapport Z
+                            {isPrinting ? '' : ''} Rapport Z
                           </button>
                           <button
                             type="button"
@@ -1356,7 +1356,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
                             }}
                             title="Exporter les ventes de cette session en CSV"
                           >
-                            📥
+                            
                           </button>
                         </div>
                       </td>
@@ -1377,7 +1377,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
               <div>
                 <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
-                  🧾 Ventes de la Session #{modalSessionVentes.session.id.slice(0, 8)}
+                  Ventes de la Session #{modalSessionVentes.session.id.slice(0, 8)}
                 </h4>
                 <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748b' }}>
                   Caissier : <strong>{modalSessionVentes.session.caissier_nom}</strong> · {modalSessionVentes.ventes.length} ticket(s) réalisé(s)
@@ -1445,7 +1445,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
                 onClick={() => handleExportSessionCSV(modalSessionVentes.session)}
                 style={{ padding: '8px 14px', borderRadius: 8, background: '#fff', border: '1px solid #cbd5e1', color: '#0f172a', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
               >
-                📊 Exporter en CSV
+                Exporter en CSV
               </button>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -1453,7 +1453,7 @@ export function RapportsZView({ boutiqueId, boutiqueNom = 'Ma Boutique' }: { bou
                   onClick={() => handlePrintRapportZ(modalSessionVentes.session)}
                   style={{ padding: '8px 16px', borderRadius: 8, background: '#C75B00', color: '#fff', border: 'none', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
                 >
-                  🧾 Imprimer Rapport Z
+                  Imprimer Rapport Z
                 </button>
                 <button
                   type="button"
@@ -1516,7 +1516,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
   // ── Scanner EAN ──
   const demarrerScannerEan = async () => {
     setModalScannerEan(true)
-    setScannerEanStatus('📷 Initialisation du scanner EAN…')
+    setScannerEanStatus('Initialisation du scanner EAN…')
 
     setTimeout(async () => {
       try {
@@ -1525,7 +1525,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
           try {
             await html5ScannerRef.current.stop()
             html5ScannerRef.current.clear()
-          } catch (e) {}
+          } catch (e) { console.warn('[Nopalou:Comptabilite:L1528]', e); }
           html5ScannerRef.current = null
         }
 
@@ -1547,11 +1547,11 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
           if (prodTrouve) {
             handleProduit(prodTrouve.id)
             jouerBipEtVibrer('succes')
-            setScannerEanStatus(`✅ Produit trouvé : "${prodTrouve.nom}"`)
+            setScannerEanStatus(`Produit trouvé : "${prodTrouve.nom}"`)
             setTimeout(() => arreterScannerEan(), 600)
           } else {
             jouerBipEtVibrer('alerte')
-            setScannerEanStatus(`⚠️ Code "${decodedText}" inconnu dans le catalogue.`)
+            setScannerEanStatus(`Code "${decodedText}" inconnu dans le catalogue.`)
             if (confirm(`Code-barres "${decodedText}" non trouvé. L'ajouter comme article libre ?`)) {
               setProduitId('')
               setNomLibre(`Article EAN-${decodedText}`)
@@ -1563,17 +1563,17 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
 
         try {
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
-          setScannerEanStatus('📷 Cadrez le code-barres dans le rectangle.')
+          setScannerEanStatus('Cadrez le code-barres dans le rectangle.')
         } catch (errEnv) {
           try {
             await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {})
-            setScannerEanStatus('📷 Caméra active ! Placez le code-barres.')
+            setScannerEanStatus('Caméra active ! Placez le code-barres.')
           } catch (errUser) {
-            setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+            setScannerEanStatus('Impossible d’accéder à la caméra.')
           }
         }
       } catch (err) {
-        setScannerEanStatus('❌ Erreur de chargement du module de scan.')
+        setScannerEanStatus('Erreur de chargement du module de scan.')
       }
     }, 250)
   }
@@ -1583,7 +1583,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
       try {
         html5ScannerRef.current.stop()
         html5ScannerRef.current.clear()
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:Comptabilite:L1586]', e); }
       html5ScannerRef.current = null
     }
     setModalScannerEan(false)
@@ -1593,7 +1593,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
   const demarrerScannerNom = async () => {
     setModalScannerNom(true)
     setOcrDetections([])
-    setStatusScannerNom('📷 Cadrez le nom sur l’emballage du produit…')
+    setStatusScannerNom('Cadrez le nom sur l’emballage du produit…')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
       streamNomRef.current = stream
@@ -1602,7 +1602,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
         await videoNomRef.current.play().catch(() => {})
       }
     } catch (e) {
-      setStatusScannerNom('❌ Impossible d’accéder à la caméra.')
+      setStatusScannerNom('Impossible d’accéder à la caméra.')
     }
   }
 
@@ -1617,7 +1617,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
   const capturerNomOCR = async () => {
     if (!videoNomRef.current) return
     setOcrLoading(true)
-    setStatusScannerNom('🔍 Analyse OCR en cours…')
+    setStatusScannerNom('Analyse OCR en cours…')
 
     const imageBase64 = capturerZoneViseurExacte(videoNomRef.current, {
       boxTopRatio: 0.15,
@@ -1628,7 +1628,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
 
     if (!imageBase64) {
       setOcrLoading(false)
-      setStatusScannerNom('❌ Échec de la capture d’image.')
+      setStatusScannerNom('Échec de la capture d’image.')
       return
     }
 
@@ -1647,16 +1647,16 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
           setOcrDetections(data.detections)
         }
         jouerBipEtVibrer('succes')
-        setStatusScannerNom(`✅ Nom capturé : "${data.nom}"`)
+        setStatusScannerNom(`Nom capturé : "${data.nom}"`)
         setTimeout(() => arreterScannerNom(), 1000)
       } else {
         jouerBipEtVibrer('alerte')
-        setStatusScannerNom(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
+        setStatusScannerNom(`${data.error || 'Aucun texte lisible détecté.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
       jouerBipEtVibrer('alerte')
-      setStatusScannerNom('❌ Erreur de lecture OCR.')
+      setStatusScannerNom('Erreur de lecture OCR.')
     }
   }
 
@@ -1706,7 +1706,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
   return (
     <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 10 }}>
-        <p style={{ margin: 0, fontWeight: 900, fontSize: 16, color: '#0f172a' }}>💰 {t('shop.declareSaleBtn')}</p>
+        <p style={{ margin: 0, fontWeight: 900, fontSize: 16, color: '#0f172a' }}>{t('shop.declareSaleBtn')}</p>
         <span style={{ fontSize: 11, background: '#eff6ff', color: '#1d4ed8', padding: '3px 8px', borderRadius: 8, fontWeight: 700 }}>
           {t('shop.transactionSale')}
         </span>
@@ -1829,7 +1829,7 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
             )}
           </div>
           {stock !== null && stock !== undefined && stock <= 3 && (
-            <p style={{ fontSize: 11, color: '#b45309', margin: 0 }}>⚠️ {t('shop.lowStockAlert')} : {stock} {t('shop.remainingLabel')}</p>
+            <p style={{ fontSize: 11, color: '#b45309', margin: 0 }}>{t('shop.lowStockAlert')} : {stock} {t('shop.remainingLabel')}</p>
           )}
         </div>
       ) : (
@@ -1901,9 +1901,9 @@ function VenteForm({ boutiqueId, produits, zones, onDone }: { boutiqueId: string
       <div>
         <label style={labelStyle}>{t('shop.paymentModePrompt')}</label>
         <select value={paiement} onChange={e => setPaiement(e.target.value)} style={inputStyle}>
-          <option value="cash">💵 Espèces</option>
-          <option value="wave">🌊 Wave</option>
-          <option value="orange_money">🍊 Orange Money</option>
+          <option value="cash">Espèces</option>
+          <option value="wave">Wave</option>
+          <option value="orange_money">Orange Money</option>
           <option value="virement">🏦 Virement</option>
         </select>
       </div>
@@ -2066,8 +2066,8 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
     const cachedV = localStorage.getItem(cacheKeyV)
     const cachedZ = localStorage.getItem(cacheKeyZ)
 
-    if (cachedV) { try { setVentes(JSON.parse(cachedV)) } catch(e) {} }
-    if (cachedZ) { try { setZones(JSON.parse(cachedZ)) } catch(e) {} }
+    if (cachedV) { try { setVentes(JSON.parse(cachedV)) } catch (e) { console.warn('[Nopalou:Comptabilite:L2069]', e); } }
+    if (cachedZ) { try { setZones(JSON.parse(cachedZ)) } catch (e) { console.warn('[Nopalou:Comptabilite:L2070]', e); } }
 
     try {
       const [v, z, p] = await Promise.all([
@@ -2079,7 +2079,7 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
       if (Array.isArray(z)) { setZones(z); localStorage.setItem(cacheKeyZ, JSON.stringify(z)) }
       if (Array.isArray(p)) setProduits(p)
     } catch (err) {
-      console.warn(`📊 [Comptabilité] Mode hors-ligne : utilisation du cache local ventes/zones (${cachedV ? 'disponible' : 'vide'}).`)
+      console.warn(`[Comptabilité] Mode hors-ligne : utilisation du cache local ventes/zones (${cachedV ? 'disponible' : 'vide'}).`)
     } finally {
       setLoading(false)
     }
@@ -2160,13 +2160,13 @@ function VentesView({ boutiqueId }: { boutiqueId: string }) {
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{ventes.length} {t('shop.totalSales').toLowerCase()}</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button onClick={exportVentesCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📥 {t('common.exportCsv')}
+            {t('common.exportCsv')}
           </button>
           <button onClick={exportVentesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📄 {t('common.exportPdf')}
+            {t('common.exportPdf')}
           </button>
           <button onClick={exportVentesSyscohada} style={{ fontSize: 12, color: '#1e3a5f', background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }} title="Exporter pour expert-comptable au format officiel SYSCOHADA (Sage, Odoo, Saari)">
-            🏛️ SYSCOHADA
+            SYSCOHADA
           </button>
           <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#C75B00', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
             + {t('shop.declareSaleBtn')}
@@ -2366,7 +2366,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   const demarrerScannerTicket = async () => {
     setModalScannerTicket(true)
     setOcrDetectionsTicket([])
-    setStatusScannerTicket('📷 Cadrez le ticket ou la facturette…')
+    setStatusScannerTicket('Cadrez le ticket ou la facturette…')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
       streamTicketRef.current = stream
@@ -2375,7 +2375,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
         await videoTicketRef.current.play().catch(() => {})
       }
     } catch (e) {
-      setStatusScannerTicket('❌ Impossible d’accéder à la caméra.')
+      setStatusScannerTicket('Impossible d’accéder à la caméra.')
     }
   }
 
@@ -2390,7 +2390,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
   const capturerTicketOCR = async () => {
     if (!videoTicketRef.current) return
     setOcrLoadingTicket(true)
-    setStatusScannerTicket('🔍 Lecture OCR du ticket / facturette…')
+    setStatusScannerTicket('Lecture OCR du ticket / facturette…')
 
     const imageBase64 = capturerZoneViseurExacte(videoTicketRef.current, {
       boxTopRatio: 0.15,
@@ -2401,7 +2401,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
 
     if (!imageBase64) {
       setOcrLoadingTicket(false)
-      setStatusScannerTicket('❌ Échec de la capture d’image.')
+      setStatusScannerTicket('Échec de la capture d’image.')
       return
     }
 
@@ -2420,23 +2420,23 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
           setOcrDetectionsTicket(data.detections)
         }
         jouerBipEtVibrer('succes')
-        setStatusScannerTicket(`✅ Texte extrait : "${data.nom}"`)
+        setStatusScannerTicket(`Texte extrait : "${data.nom}"`)
         setTimeout(() => arreterScannerTicket(), 1000)
       } else {
         jouerBipEtVibrer('alerte')
-        setStatusScannerTicket(`⚠️ ${data.error || 'Aucun texte lisible détecté.'}`)
+        setStatusScannerTicket(`${data.error || 'Aucun texte lisible détecté.'}`)
       }
     } catch (err) {
       setOcrLoadingTicket(false)
       jouerBipEtVibrer('alerte')
-      setStatusScannerTicket('❌ Erreur de lecture OCR.')
+      setStatusScannerTicket('Erreur de lecture OCR.')
     }
   }
 
   async function load() {
     const cacheKey = `nopalou_offline_compta_depenses_${boutiqueId}`
     const cached = localStorage.getItem(cacheKey)
-    if (cached) { try { setDepenses(JSON.parse(cached)) } catch(e) {} }
+    if (cached) { try { setDepenses(JSON.parse(cached)) } catch (e) { console.warn('[Nopalou:Comptabilite:L2439]', e); } }
 
     try {
       const d = await listDepenses(boutiqueId)
@@ -2445,7 +2445,7 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
         localStorage.setItem(cacheKey, JSON.stringify(d))
       }
     } catch (err) {
-      console.warn(`📊 [Comptabilité] Mode hors-ligne : utilisation du cache local dépenses (${cached ? 'disponible' : 'vide'}).`)
+      console.warn(`[Comptabilité] Mode hors-ligne : utilisation du cache local dépenses (${cached ? 'disponible' : 'vide'}).`)
     } finally {
       setLoading(false)
     }
@@ -2513,10 +2513,10 @@ function DepensesView({ boutiqueId }: { boutiqueId: string }) {
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{t('shop.expenses')} : <strong style={{ color: '#dc2626' }}>{fcfa(total)}</strong></p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button onClick={exportDepensesCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📥 {t('common.exportCsv')}
+            {t('common.exportCsv')}
           </button>
           <button onClick={exportDepensesPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📄 {t('common.exportPdf')}
+            {t('common.exportPdf')}
           </button>
           <button onClick={() => setShowForm(!showForm)} style={{ fontSize: 13, background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, cursor: 'pointer' }}>
             + {t('shop.declareExpenseBtn')}
@@ -2656,7 +2656,7 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
           try {
             const parsed = JSON.parse(cache)
             if (Array.isArray(parsed)) setProduits(parsed)
-          } catch {}
+          } catch (err) { console.warn('[Nopalou:Comptabilite:L2659]', err); }
         }
       }
     } catch (e) {
@@ -2666,7 +2666,7 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
         try {
           const parsed = JSON.parse(cache)
           if (Array.isArray(parsed)) setProduits(parsed)
-        } catch {}
+        } catch (err) { console.warn('[Nopalou:Comptabilite:L2669]', err); }
       }
     } finally {
       setLoading(false)
@@ -2704,7 +2704,7 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
       p.nom,
       p.prix ? `${p.prix.toLocaleString('fr-FR')} FCFA` : '—',
       (p.quantite_stock ?? p.stock_quantite) ?? 'Non suivi',
-      (p.quantite_stock ?? p.stock_quantite) === null ? 'Non suivi' : (p.quantite_stock ?? p.stock_quantite)! <= 3 ? '⚠️ BAS' : '✅ OK'
+      (p.quantite_stock ?? p.stock_quantite) === null ? 'Non suivi' : (p.quantite_stock ?? p.stock_quantite)! <= 3 ? 'BAS' : 'OK'
     ])
     printPDFReport('Inventaire État des Stocks', `Boutique ${boutiqueId}`, headers, rows)
   }
@@ -2723,10 +2723,10 @@ export function StockView({ boutiqueId }: { boutiqueId: string }) {
         <p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>{t('shop.inventoryRefTitle')} ({produits.length} {t('shop.catalog').toLowerCase()})</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={exportStockCSV} style={{ fontSize: 12, color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📥 {t('common.exportCsv')}
+            {t('common.exportCsv')}
           </button>
           <button onClick={exportStockPDF} style={{ fontSize: 12, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, padding: '5px 12px', fontWeight: 700, cursor: 'pointer' }}>
-            📄 {t('common.exportPdf')}
+            {t('common.exportPdf')}
           </button>
         </div>
       </div>
@@ -2818,7 +2818,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
     if (isListeningVoice) {
       try {
         voiceRecognitionRef.current?.stop()
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:Comptabilite:L2821]', err); }
       setIsListeningVoice(false)
       return
     }
@@ -2850,7 +2850,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           if (intent.montant && intent.montant > 0) setMontantDepense(String(intent.montant))
           if (intent.categorie) setCatDepense(intent.categorie)
           if (intent.description) setDescDepense(intent.description)
-          setVoiceFeedback(`🎙️ Dépense reconnue : ${intent.description || intent.categorie} (${intent.montant ? fcfa(intent.montant) : '0 FCFA'})`)
+          setVoiceFeedback(`Dépense reconnue : ${intent.description || intent.categorie} (${intent.montant ? fcfa(intent.montant) : '0 FCFA'})`)
           jouerBipEtVibrer('succes')
         } else {
           setMode('vente')
@@ -2861,7 +2861,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           } else {
             setLibelleCustomInput('Vente directe')
           }
-          setVoiceFeedback(`🎙️ Vente reconnue : ${intent.libelleProduit || 'Vente directe'} (${intent.montant ? fcfa(intent.montant) : '0 FCFA'})`)
+          setVoiceFeedback(`Vente reconnue : ${intent.libelleProduit || 'Vente directe'} (${intent.montant ? fcfa(intent.montant) : '0 FCFA'})`)
           jouerBipEtVibrer('succes')
         }
       }
@@ -2959,7 +2959,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   // ── Scanner EAN Caméra ───────────────────────────────────────────────────
   const demarrerScannerEan = async () => {
     setModalScannerEan(true)
-    setScannerEanStatus('📷 Scanner EAN prêt (Mode Continu)…')
+    setScannerEanStatus('Scanner EAN prêt (Mode Continu)…')
     dernierScanComptaRef.current = { code: '', time: 0 }
 
     setTimeout(async () => {
@@ -2969,7 +2969,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           try {
             await html5ScannerRef.current.stop()
             html5ScannerRef.current.clear()
-          } catch (e) {}
+          } catch (e) { console.warn('[Nopalou:Comptabilite:L2972]', e); }
           html5ScannerRef.current = null
         }
 
@@ -3002,13 +3002,13 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           if (prodTrouve) {
             handleAjouterProduitCatalogue(prodTrouve, 1)
             jouerBipEtVibrer('succes')
-            setScannerEanStatus(`✅ +1 "${prodTrouve.nom}" (${fcfa(prodTrouve.prix_promo || prodTrouve.prix || 0)})`)
+            setScannerEanStatus(`+1 "${prodTrouve.nom}" (${fcfa(prodTrouve.prix_promo || prodTrouve.prix || 0)})`)
             if (!scanContinu) {
               setTimeout(() => arreterScannerEan(), 600)
             }
           } else {
             jouerBipEtVibrer('alerte')
-            setScannerEanStatus(`⚠️ Code "${decodedText}" inconnu dans le catalogue.`)
+            setScannerEanStatus(`Code "${decodedText}" inconnu dans le catalogue.`)
             if (confirm(`Code-barres "${decodedText}" non trouvé. L'ajouter comme article libre ?`)) {
               setLibelleCustomInput(`Article EAN-${decodedText}`)
               setModeSaisie('libre')
@@ -3019,17 +3019,17 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
         try {
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
-          setScannerEanStatus('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          setScannerEanStatus('Caméra active ! Placez le code-barres dans le cadre.')
         } catch (errEnv) {
           try {
             await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-            setScannerEanStatus('📷 Caméra active ! Placez le code-barres dans le cadre.')
+            setScannerEanStatus('Caméra active ! Placez le code-barres dans le cadre.')
           } catch (errUser) {
-            setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+            setScannerEanStatus('Impossible d’accéder à la caméra.')
           }
         }
       } catch (err) {
-        setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+        setScannerEanStatus('Impossible d’accéder à la caméra.')
       }
     }, 200)
   }
@@ -3039,7 +3039,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
       try {
         html5ScannerRef.current.stop()
         html5ScannerRef.current.clear()
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:Comptabilite:L3042]', e); }
       html5ScannerRef.current = null
     }
     setModalScannerEan(false)
@@ -3050,7 +3050,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
     setModalScannerNom(true)
     setOcrDetections([])
     setImageFligeeComptaNom(null)
-    setStatusScannerNom('📷 Cadrez le nom sur l’emballage du produit…')
+    setStatusScannerNom('Cadrez le nom sur l’emballage du produit…')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -3061,7 +3061,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
         await videoNomRef.current.play().catch(() => {})
       }
     } catch (e) {
-      setStatusScannerNom('❌ Impossible d’accéder à la caméra.')
+      setStatusScannerNom('Impossible d’accéder à la caméra.')
     }
   }
 
@@ -3077,7 +3077,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
   const capturerNomOCR = async () => {
     if (!videoNomRef.current) return
     setOcrLoading(true)
-    setStatusScannerNom('🔍 Analyse OCR en cours…')
+    setStatusScannerNom('Analyse OCR en cours…')
 
     const imageBase64 = capturerZoneViseurExacte(videoNomRef.current, {
       boxTopRatio: 0.15,
@@ -3088,7 +3088,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
     if (!imageBase64) {
       setOcrLoading(false)
-      setStatusScannerNom('❌ Échec de la capture d’image.')
+      setStatusScannerNom('Échec de la capture d’image.')
       return
     }
 
@@ -3110,15 +3110,15 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           setOcrDetections(data.detections)
         }
         jouerBipEtVibrer('succes')
-        setStatusScannerNom(`✅ Nom capturé : "${data.nom}"`)
+        setStatusScannerNom(`Nom capturé : "${data.nom}"`)
       } else {
         jouerBipEtVibrer('alerte')
-        setStatusScannerNom(`⚠️ ${data.error || 'Aucun texte lisible détecté. Réessayez.'}`)
+        setStatusScannerNom(`${data.error || 'Aucun texte lisible détecté. Réessayez.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
       jouerBipEtVibrer('alerte')
-      setStatusScannerNom('❌ Erreur de lecture OCR. Réessayez.')
+      setStatusScannerNom('Erreur de lecture OCR. Réessayez.')
     }
   }
 
@@ -3172,7 +3172,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
     setLoading(false)
     if (erreurs === 0) {
-      setMsgSuccess(`⚡ Vente de ${nbArticlesTotal} article(s) (${fcfa(totalVente)}) enregistrée avec succès !`)
+      setMsgSuccess(`Vente de ${nbArticlesTotal} article(s) (${fcfa(totalVente)}) enregistrée avec succès !`)
       setPanierProduits({})
       setItemsCustomPanier([])
       setClientNom('')
@@ -3200,7 +3200,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
     setLoading(false)
     if (res.success) {
-      setMsgSuccess('⚡ Dépense enregistrée avec succès !')
+      setMsgSuccess('Dépense enregistrée avec succès !')
       setMontantDepense('')
       setDescDepense('')
       setTimeout(() => setMsgSuccess(''), 3000)
@@ -3224,7 +3224,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-      {/* 🎙️ Assistant Vocal Wolof / Français Express */}
+      {/* Assistant Vocal Wolof / Français Express */}
       <div style={{
         background: isListeningVoice ? '#fff7ed' : '#ffffff',
         border: isListeningVoice ? '2px solid #ea580c' : '1px solid #e2e8f0',
@@ -3260,7 +3260,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             }}
             title={isListeningVoice ? "Arrêter l'écoute" : "Dicter une opération"}
           >
-            {isListeningVoice ? '⏹️' : '🎙️'}
+            {isListeningVoice ? '' : ''}
           </button>
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: isListeningVoice ? '#c2410c' : '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -3311,7 +3311,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             transition: 'all 0.2s ease',
           }}
         >
-          ⚡ + {t('shop.quickSaleEncashment')}
+          + {t('shop.quickSaleEncashment')}
         </button>
 
         <button
@@ -3327,7 +3327,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
             transition: 'all 0.2s ease',
           }}
         >
-          ⚡ - {t('shop.quickExpenseCashOut')}
+          - {t('shop.quickExpenseCashOut')}
         </button>
       </div>
 
@@ -3342,14 +3342,14 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: 14, flexWrap: 'wrap', gap: 10 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-                💰 {t('shop.quickSaleTitle')}
+                {t('shop.quickSaleTitle')}
               </h3>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
                 {t('shop.quickSaleSubtitle')}
               </p>
             </div>
             <span style={{ fontSize: 11, fontWeight: 800, background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: 12, border: '1px solid #bbf7d0' }}>
-              ⚡ {t('shop.expressEntryTitle')}
+              {t('shop.expressEntryTitle')}
             </span>
           </div>
 
@@ -3583,7 +3583,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                             onClick={() => handleAjouterProduitCatalogue(p, 1)}
                             style={{ marginTop: 6, padding: '3px 6px', fontSize: 11, fontWeight: 700, background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, color: '#475569', cursor: 'pointer' }}
                           >
-                            ➕ {t('common.add')}
+                            {t('common.add')}
                           </button>
                         )}
                       </div>
@@ -3692,7 +3692,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  ➕ {t('common.add')}
+                  {t('common.add')}
                 </button>
               </div>
             </div>
@@ -3702,7 +3702,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={{ fontSize: 12.5, fontWeight: 800, color: '#0369a1' }}>
-                🛒 {t('shop.articlesInSale')} ({nbArticlesTotal} {t('shop.catalog').toLowerCase()} • {t('shop.totalCollectedLabel')} : {fcfa(totalVente)}) :
+                {t('shop.articlesInSale')} ({nbArticlesTotal} {t('shop.catalog').toLowerCase()} • {t('shop.totalCollectedLabel')} : {fcfa(totalVente)}) :
               </span>
               {nbArticlesTotal > 0 && (
                 <button
@@ -3791,11 +3791,11 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 onChange={e => setMethodePaiement(e.target.value)}
                 style={{ ...inputStyle, borderRadius: 12, padding: '10px 12px', height: 44 }}
               >
-                <option value="especes">💵 Espèces</option>
-                <option value="wave">🌊 Wave</option>
-                <option value="orange_money">🍊 Orange Money</option>
-                <option value="carte">💳 Carte bancaire</option>
-                <option value="cheque">📜 Chèque</option>
+                <option value="especes">Espèces</option>
+                <option value="wave">Wave</option>
+                <option value="orange_money">Orange Money</option>
+                <option value="carte">Carte bancaire</option>
+                <option value="cheque">Chèque</option>
               </select>
             </div>
 
@@ -3839,17 +3839,17 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               transition: 'all 0.2s ease',
             }}
           >
-            {loading ? t('common.loading') : `⚡ ${t('shop.validateCashInBtn')} (${fcfa(totalVente)})`}
+            {loading ? t('common.loading') : `${t('shop.validateCashInBtn')} (${fcfa(totalVente)})`}
           </button>
         </form>
       ) : (
         <form onSubmit={handleValiderDepenseRapide} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 8px 25px rgba(0,0,0,0.04)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: 14 }}>
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-              💸 {t('shop.quickExpenseTitle')}
+              {t('shop.quickExpenseTitle')}
             </h3>
             <span style={{ fontSize: 11, fontWeight: 800, background: '#fef2f2', color: '#dc2626', padding: '4px 10px', borderRadius: 12, border: '1px solid #fecaca' }}>
-              ⚡ {t('shop.expressExpenseTitle')}
+              {t('shop.expressExpenseTitle')}
             </span>
           </div>
 
@@ -3876,13 +3876,13 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 onChange={e => setCatDepense(e.target.value)}
                 style={{ ...inputStyle, borderRadius: 12, padding: '10px 12px', height: 44 }}
               >
-                <option value="stock">📦 {t('shop.catStock')}</option>
-                <option value="loyer">🏠 {t('shop.catRent')}</option>
-                <option value="salaire">👥 {t('shop.catSalaries')}</option>
-                <option value="transport">🚚 {t('shop.catTransport')}</option>
+                <option value="stock">{t('shop.catStock')}</option>
+                <option value="loyer">{t('shop.catRent')}</option>
+                <option value="salaire">{t('shop.catSalaries')}</option>
+                <option value="transport">{t('shop.catTransport')}</option>
                 <option value="marketing">📣 {t('shop.catMarketing')}</option>
                 <option value="fournitures">📑 {t('shop.catOfficeSupplies')}</option>
-                <option value="taxes">🏛️ {t('shop.catTaxes')}</option>
+                <option value="taxes">{t('shop.catTaxes')}</option>
                 <option value="autre">🔖 {t('shop.catOther')}</option>
               </select>
             </div>
@@ -3944,7 +3944,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
               transition: 'all 0.2s ease',
             }}
           >
-            {loading ? t('common.loading') : `⚡ ${t('shop.validateExpenseBtn')}`}
+            {loading ? t('common.loading') : `${t('shop.validateExpenseBtn')}`}
           </button>
         </form>
       )}
@@ -4004,7 +4004,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                 onClick={capturerNomOCR}
                 style={{ flex: 1, padding: '11px', background: ocrLoading ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: ocrLoading ? 'not-allowed' : 'pointer' }}
               >
-                {ocrLoading ? t('common.loading') : (imageFligeeComptaNom ? '🔄 Reprendre la photo' : t('shop.captureAndExtractNameBtn'))}
+                {ocrLoading ? t('common.loading') : (imageFligeeComptaNom ? 'Reprendre la photo' : t('shop.captureAndExtractNameBtn'))}
               </button>
               {imageFligeeComptaNom && (
                 <button
@@ -4012,7 +4012,7 @@ export function SaisieExpressView({ boutiqueId }: { boutiqueId: string }) {
                   onClick={arreterScannerNom}
                   style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
                 >
-                  ✅ Valider
+                  Valider
                 </button>
               )}
             </div>
@@ -4068,12 +4068,12 @@ export default function Comptabilite({
   return (
     <div>
       <div ref={comptaTabRef} className="nopalou-scroll-tabs horizontal-scroll-fade" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', gap: 4 }}>
-        {tabBtn('bilan',      `📈 Bilan & Rentabilité`)}
-        {tabBtn('ventes',     `💰 Journal des Ventes`)}
-        {tabBtn('depenses',   `📉 Dépenses`)}
-        {tabBtn('sessions',   `🧾 Clôtures Caisse (Rapport Z)`)}
+        {tabBtn('bilan',      `Bilan & Rentabilité`)}
+        {tabBtn('ventes',     `Journal des Ventes`)}
+        {tabBtn('depenses',   `Dépenses`)}
+        {tabBtn('sessions',   `Clôtures Caisse (Rapport Z)`)}
         {(tab === 'inventaire' || tab === 'caissiers' || tab === 'zones') && (
-          tabBtn(tab, tab === 'inventaire' ? '📦 Inventaire' : tab === 'caissiers' ? '👤 Caissiers' : '🚚 Zones de Livraison')
+          tabBtn(tab, tab === 'inventaire' ? 'Inventaire' : tab === 'caissiers' ? 'Caissiers' : 'Zones de Livraison')
         )}
       </div>
 
@@ -4108,7 +4108,7 @@ export function ZonesView({ boutiqueId }: { boutiqueId: string }) {
       try {
         setZones(JSON.parse(cachedZ))
         setLoading(false)
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:Comptabilite:L4111]', e); }
     }
 
     try {
@@ -4120,7 +4120,7 @@ export function ZonesView({ boutiqueId }: { boutiqueId: string }) {
         }
       }
     } catch (err) {
-      console.warn('🚚 [Zones] Mode hors-ligne : utilisation du cache local.')
+      console.warn('[Zones] Mode hors-ligne : utilisation du cache local.')
     } finally {
       setLoading(false)
     }

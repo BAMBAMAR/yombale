@@ -109,7 +109,7 @@ export default function AdminAuditLogsClient({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
           <h1 className="admin-page-titre" style={{ margin: 0 }}>
-            🛡️ Audit Logs & Traçabilité
+            Audit Logs & Traçabilité
             <span className="admin-page-count">{total}</span>
           </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
@@ -313,7 +313,7 @@ export default function AdminAuditLogsClient({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#1e293b' }}>
-                🔍 Détail de l'Action & Diff
+                Détail de l'Action & Diff
               </h2>
               <button
                 onClick={() => setSelectedLog(null)}

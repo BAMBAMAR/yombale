@@ -8,10 +8,10 @@ export interface PartnerLogosProps {
 }
 
 const PARTNERS = [
-  { name: 'Jumia Senegal', emoji: '🛒' },
-  { name: 'CoinAfrique', emoji: '🏪' },
-  { name: 'Expat-Dakar', emoji: '📦' },
-  { name: 'Dakar-Deal', emoji: '🛍' },
+  { name: 'Jumia Senegal', emoji: '' },
+  { name: 'CoinAfrique', emoji: '' },
+  { name: 'Expat-Dakar', emoji: '' },
+  { name: 'Dakar-Deal', emoji: '' },
   { name: 'SenMarket', emoji: '🏬' },
 ];
 

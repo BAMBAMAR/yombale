@@ -31,7 +31,7 @@ export default function VerifyEmailToast() {
       aria-live="polite"
       style={{ background: 'var(--success, #10b981)', bottom: 100, right: 20 }}
     >
-      <span className="fav-toast-icon">✅</span>
+      <span className="fav-toast-icon"></span>
       <span className="fav-toast-msg">
         <strong>Email vérifié</strong>
         Vous pouvez maintenant publier vos annonces.

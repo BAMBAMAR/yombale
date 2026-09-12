@@ -38,7 +38,7 @@ export default function SearchWithAnchor({ action, defaultValue, placeholder, hi
         placeholder={placeholder}
         className="annonces-search-input"
       />
-      <button type="submit" className="annonces-search-btn">🔍 Rechercher</button>
+      <button type="submit" className="annonces-search-btn">Rechercher</button>
       {defaultValue && (
         <Link href={clearLink} className="budget-pill budget-pill--reset">
           ✕ Recherche

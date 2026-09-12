@@ -51,11 +51,11 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
       )
       if (res.ok) {
         setIsSuccess(true)
-        setMsg('🎉 Alerte créée avec succès ! Vous recevrez une notification instantanée dès que le prix baisse.')
+        setMsg('Alerte créée avec succès ! Vous recevrez une notification instantanée dès que le prix baisse.')
         setTimeout(() => setOpen(false), 3500)
       } else {
         setIsSuccess(false)
-        setMsg(`❌ ${res.error || 'Erreur lors de la création de l\'alerte.'}`)
+        setMsg(`${res.error || 'Erreur lors de la création de l\'alerte.'}`)
       }
     })
   }
@@ -63,7 +63,7 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
   if (!open) {
     return (
       <button className="alerte-trigger" onClick={() => setOpen(true)} title="Recevoir une alerte WhatsApp/Email si le prix baisse">
-        🔔 Activer une alerte baisse de prix
+        Activer une alerte baisse de prix
       </button>
     )
   }
@@ -72,7 +72,7 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
     <div className="alerte-box" style={{ background: '#ffffff', borderRadius: 14, border: '1px solid #e2e8f0', padding: 16, boxShadow: '0 10px 25px rgba(0,0,0,0.08)' }}>
       <div className="alerte-box-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <span style={{ fontWeight: 900, fontSize: 14, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
-          🔔 Alerte baisse de prix
+          Alerte baisse de prix
         </span>
         <button onClick={() => setOpen(false)} className="alerte-close" aria-label="Fermer" style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#64748b' }}>✕</button>
       </div>
@@ -97,7 +97,7 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
             whiteSpace: 'nowrap',
           }}
         >
-          <span>💬</span> <span>WhatsApp</span>
+          <span></span> <span>WhatsApp</span>
         </button>
         <button
           type="button"
@@ -113,7 +113,7 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
             whiteSpace: 'nowrap',
           }}
         >
-          <span>📧</span> <span>Email</span>
+          <span></span> <span>Email</span>
         </button>
         <button
           type="button"
@@ -129,7 +129,7 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
             whiteSpace: 'nowrap',
           }}
         >
-          <span>🔔</span> <span>Les deux</span>
+          <span></span> <span>Les deux</span>
         </button>
       </div>
 
@@ -207,7 +207,7 @@ export default function AlertePrix({ produitId, prixMin, email = '', telephone =
             boxShadow: '0 4px 12px rgba(16,185,129,0.25)', marginTop: 6
           }}
         >
-          {isPending ? '⏳ Création de l\'alerte…' : '🔔 Activer l\'Alerte Baisse de Prix'}
+          {isPending ? 'Création de l\'alerte…' : 'Activer l\'Alerte Baisse de Prix'}
         </button>
       </form>
     </div>

@@ -67,7 +67,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     if (statsInitiales !== undefined) return
     const cacheKey = 'nopalou_offline_apporteur_stats'
     const cached = localStorage.getItem(cacheKey)
-    if (cached) { try { setStats(JSON.parse(cached)); setLoading(false) } catch(e) {} }
+    if (cached) { try { setStats(JSON.parse(cached)); setLoading(false) } catch (e) { console.warn('[Nopalou:ApporteurClient:L70]', e); } }
 
     import('./actions').then(m => {
       m.getMesStatsApporteur().then(fraiches => {
@@ -159,7 +159,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
       label: 'Mode & Prêt-à-Porter',
       emoji: '👗',
       sans_app: {
-        pitch: `« Bonjour ! Fini d'envoyer vos photos et tailles une par une sur WhatsApp. Avec Nopalou, vous avez votre vitrine en ligne et vos clientes commandent directement sur votre WhatsApp. 🎁 1er mois 100% offert : ${lien} »`,
+        pitch: `« Bonjour ! Fini d'envoyer vos photos et tailles une par une sur WhatsApp. Avec Nopalou, vous avez votre vitrine en ligne et vos clientes commandent directement sur votre WhatsApp. 1er mois 100% offert : ${lien} »`,
         demo: 'Créer un article avec 3 tailles (S, M, L) en 20s et générer la Story HD marque blanche.',
         objection: 'Générez des stories automatiques sans logo Nopalou pour vos statuts WhatsApp.',
       },
@@ -171,9 +171,9 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     },
     tech: {
       label: 'Téléphonie & High-Tech',
-      emoji: '📱',
+      emoji: '',
       sans_app: {
-        pitch: `« Bonjour chef ! Soyez visible sur le comparateur N°1 au Sénégal, scannez les codes-barres par caméra et gérez vos garanties sans carnet papier. 🎁 1er mois offert : ${lien} »`,
+        pitch: `« Bonjour chef ! Soyez visible sur le comparateur N°1 au Sénégal, scannez les codes-barres par caméra et gérez vos garanties sans carnet papier. 1er mois offert : ${lien} »`,
         demo: 'Scanner un code-barres par caméra en 0.5s pour afficher le prix.',
         objection: 'Sécurise vos ventes et stocks même quand vous n\'êtes pas au magasin.',
       },
@@ -185,7 +185,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     },
     superette: {
       label: 'Supérette & Alimentation',
-      emoji: '🛒',
+      emoji: '',
       sans_app: {
         pitch: `« Salam alaykoum ! Transformez votre smartphone en Caisse tactile ultrarapide qui marche même sans connexion internet, avec carnet de dettes et relance WhatsApp 1-clic : ${lien} »`,
         demo: 'Faire une vente hors-ligne en mode avion et relancer une dette par WhatsApp.',
@@ -241,7 +241,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
     },
     grossiste: {
       label: 'Grossiste & Demi-Gros',
-      emoji: '📦',
+      emoji: '',
       sans_app: {
         pitch: `« Salam alaykoum chef ! Gérez vos prix de gros par quantité, vos acomptes clients et votre inventaire sans erreur sur smartphone : ${lien} »`,
         demo: 'Import de 1 000 articles Excel en 3 secondes.',
@@ -305,10 +305,10 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
         }}
       >
         {[
-          { id: 'kit', label: '🚀 Boîte à Outils Terrain', icon: Zap },
-          { id: 'pitchs', label: '💬 Pitchs Personnalisés', icon: MessageSquare },
-          { id: 'supports', label: '📄 Supports Imprimables', icon: Printer },
-          { id: 'stats', label: `🏪 Boutiques Recrutées (${stats.boutiques.length})`, icon: Store },
+          { id: 'kit', label: 'Boîte à Outils Terrain', icon: Zap },
+          { id: 'pitchs', label: 'Pitchs Personnalisés', icon: MessageSquare },
+          { id: 'supports', label: 'Supports Imprimables', icon: Printer },
+          { id: 'stats', label: `Boutiques Recrutées (${stats.boutiques.length})`, icon: Store },
         ].map((t) => {
           const Icon = t.icon
           const isActive = activeSubTab === t.id
@@ -394,7 +394,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
               <div>
                 <span style={{ fontSize: 15, fontWeight: 900, color: '#1C2B4A', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>💰</span>
+                  <span></span>
                   <span>Simulateur de Revenus Passifs (20% Récurrent)</span>
                 </span>
                 <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>
@@ -411,7 +411,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               {/* Forfait 1 : Taf Taf */}
               <div style={{ background: '#ffffff', border: '1px solid #FED7AA', borderRadius: 12, padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A' }}>🚀 Forfait Taf Taf</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A' }}>Forfait Taf Taf</span>
                   <span style={{ fontSize: 10, fontWeight: 800, color: '#C75B00', background: '#FFF7ED', padding: '2px 6px', borderRadius: 6 }}>
                     2 500 F/m
                   </span>
@@ -453,7 +453,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               {/* Forfait 2 : Pro */}
               <div style={{ background: '#ffffff', border: '1.5px solid #C75B00', borderRadius: 12, padding: '14px', display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', boxShadow: '0 2px 8px rgba(199,91,0,0.08)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 900, color: '#1C2B4A' }}>⭐ Forfait Pro</span>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: '#1C2B4A' }}>Forfait Pro</span>
                   <span style={{ fontSize: 10, fontWeight: 800, color: '#ffffff', background: '#C75B00', padding: '2px 6px', borderRadius: 6 }}>
                     5 000 F/m
                   </span>
@@ -495,7 +495,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
               {/* Forfait 3 : Business VIP */}
               <div style={{ background: '#ffffff', border: '1px solid #BAE6FD', borderRadius: 12, padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A' }}>👑 Business VIP</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A' }}>Business VIP</span>
                   <span style={{ fontSize: 10, fontWeight: 800, color: '#0369A1', background: '#E0F2FE', padding: '2px 6px', borderRadius: 6 }}>
                     10 000 F/m
                   </span>
@@ -621,7 +621,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
                     fontWeight: 800, fontSize: 12, cursor: 'pointer',
                   }}
                 >
-                  ❌ N&apos;a pas d&apos;application
+                  N&apos;a pas d&apos;application
                 </button>
                 <button
                   onClick={() => setSelectedEquip('avec_app')}
@@ -633,7 +633,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
                     fontWeight: 800, fontSize: 12, cursor: 'pointer',
                   }}
                 >
-                  ✅ A déjà un logiciel / Excel
+                  A déjà un logiciel / Excel
                 </button>
               </div>
             </div>
@@ -671,7 +671,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
             </div>
 
             <div style={{ fontSize: 13, color: '#475569' }}>
-              <strong>📱 Démo à montrer :</strong> {pitchActuel.demo}
+              <strong>Démo à montrer :</strong> {pitchActuel.demo}
             </div>
           </div>
         </div>

@@ -32,7 +32,7 @@ export async function GET(
   const logo = boutique?.logo_url ?? null
   const contact = boutique?.whatsapp || boutique?.telephone || null
   const adresse = boutique?.adresse || null
-  const initiale = nom.trim().charAt(0).toUpperCase() || '🏪'
+  const initiale = nom.trim().charAt(0).toUpperCase() || ''
 
   return new ImageResponse(
     (
@@ -158,7 +158,7 @@ export async function GET(
                 gap: 8,
               }}
             >
-              <span>🏪 VITRINE OFFICIELLE</span>
+              <span>VITRINE OFFICIELLE</span>
             </div>
             <div
               style={{
@@ -201,7 +201,7 @@ export async function GET(
                   display: 'flex',
                 }}
               >
-                🏷️ {categorie}
+                {categorie}
               </span>
               <span
                 style={{
@@ -211,7 +211,7 @@ export async function GET(
                   display: 'flex',
                 }}
               >
-                📍 {adresse ? `${adresse}, ${ville}` : ville}
+                {adresse ? `${adresse}, ${ville}` : ville}
               </span>
             </div>
           </div>
@@ -239,7 +239,7 @@ export async function GET(
                   display: 'flex',
                 }}
               >
-                🛍️ Découvrez notre catalogue en ligne
+                Découvrez notre catalogue en ligne
               </span>
               <span
                 style={{

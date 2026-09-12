@@ -24,15 +24,15 @@ export interface AnnonceImmo {
 }
 
 export const TYPE_ICONS: Record<string, string> = {
-  appartement:        '🏢',
-  appartement_meuble: '🏢',
-  villa:              '🏡',
-  maison:             '🏠',
+  appartement:        '',
+  appartement_meuble: '',
+  villa:              '',
+  maison:             '',
   studio:             '🛏',
   chambre:            '🛏',
   chambre_meuble:     '🛏',
   terrain:            '🌿',
-  bureau:             '🏢',
+  bureau:             '',
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -45,7 +45,7 @@ const SOURCE_LABELS: Record<string, string> = {
 export default function ImmoCard({ a }: { a: AnnonceImmo }) {
   const img = Array.isArray(a.photos) ? a.photos[0] ?? null : null
   const localisation = [a.quartier, a.ville].filter(Boolean).join(', ') || 'Sénégal'
-  const typeIcon = TYPE_ICONS[a.type_bien ?? ''] ?? '🏠'
+  const typeIcon = TYPE_ICONS[a.type_bien ?? ''] ?? ''
   const isVente = a.transaction === 'vente'
 
   return (
@@ -73,7 +73,7 @@ export default function ImmoCard({ a }: { a: AnnonceImmo }) {
           <span className="immo-type-tag">{typeIcon} {a.type_bien}</span>
         )}
         <h3 className="immo-titre">{a.titre}</h3>
-        <p className="immo-localisation">📍 {localisation}</p>
+        <p className="immo-localisation">{localisation}</p>
 
         <div className="immo-specs">
           {a.surface_m2 && (

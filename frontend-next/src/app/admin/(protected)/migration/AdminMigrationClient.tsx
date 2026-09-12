@@ -124,7 +124,7 @@ export default function AdminMigrationClient({
       const result = await res.json()
       if (res.ok) {
         setShopifyResult(result)
-        showToast('ok', `🎉 ${result.ajoutes} produits importés avec succès depuis Shopify !`)
+        showToast('ok', `${result.ajoutes} produits importés avec succès depuis Shopify !`)
         reloadData()
       } else {
         showToast('err', result.error || 'Erreur lors de l\'aspiration Shopify.')
@@ -189,7 +189,7 @@ export default function AdminMigrationClient({
       const result = await res.json()
       if (res.ok) {
         setCsvResult(result)
-        showToast('ok', `✅ ${result.ajoutes} produits importés par lot CSV !`)
+        showToast('ok', `${result.ajoutes} produits importés par lot CSV !`)
         reloadData()
       } else {
         showToast('err', result.error || 'Erreur lors de l\'import CSV.')
@@ -275,7 +275,7 @@ export default function AdminMigrationClient({
       const result = await res.json()
       if (res.ok) {
         setDettesResult(result)
-        showToast('ok', `👥 ${result.ajoutes} clients et dettes migrés vers la Caisse POS !`)
+        showToast('ok', `${result.ajoutes} clients et dettes migrés vers la Caisse POS !`)
         setDettesText('')
       } else {
         showToast('err', result.error || 'Erreur lors de la migration des clients.')
@@ -355,7 +355,7 @@ export default function AdminMigrationClient({
             <Rocket size={14} /> Hub Concierge Onboarding
           </div>
           <h1 className="admin-page-titre" style={{ margin: 0 }}>
-            🚀 Centre de Migration & Onboarding Marchand 360°
+            Centre de Migration & Onboarding Marchand 360°
           </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
             Aspirez des catalogues Shopify en 1 clic, importez des fichiers CSV universels, convertissez les prix en FCFA et générez les kits d'accueil.
@@ -399,7 +399,7 @@ export default function AdminMigrationClient({
       >
         <div>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
-            🏪 1. Boutique Cible Nopalou
+            1. Boutique Cible Nopalou
           </label>
           <select
             value={selectedBoutiqueId}
@@ -458,7 +458,7 @@ export default function AdminMigrationClient({
 
         <div>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
-            🏷️ 3. Majoration / Marge (%)
+            3. Majoration / Marge (%)
           </label>
           <input
             type="number"
@@ -477,7 +477,7 @@ export default function AdminMigrationClient({
 
         <div>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
-            ✨ 4. Arrondi Psychologique (FCFA)
+            4. Arrondi Psychologique (FCFA)
           </label>
           <select
             value={arrondi}
@@ -525,7 +525,7 @@ export default function AdminMigrationClient({
             color: activeTab === 'shopify' ? '#ffffff' : '#64748b',
           }}
         >
-          <Zap size={16} /> ⚡ Aspirateur Shopify (1-Clic)
+          <Zap size={16} /> Aspirateur Shopify (1-Clic)
         </button>
 
         <button
@@ -544,7 +544,7 @@ export default function AdminMigrationClient({
             color: activeTab === 'csv' ? '#ffffff' : '#64748b',
           }}
         >
-          <FileSpreadsheet size={16} /> 📊 Import CSV / Excel Universel
+          <FileSpreadsheet size={16} /> Import CSV / Excel Universel
         </button>
 
         <button
@@ -582,7 +582,7 @@ export default function AdminMigrationClient({
             color: activeTab === 'dettes' ? '#ffffff' : '#64748b',
           }}
         >
-          <Users size={16} /> 👥 Carnet de Dettes & Clients POS
+          <Users size={16} /> Carnet de Dettes & Clients POS
         </button>
 
         <button
@@ -604,7 +604,7 @@ export default function AdminMigrationClient({
             color: activeTab === 'kit' ? '#ffffff' : '#64748b',
           }}
         >
-          <QrCode size={16} /> 🖨️ Kit Vitrine & WhatsApp
+          <QrCode size={16} /> Kit Vitrine & WhatsApp
         </button>
       </div>
 
@@ -823,7 +823,7 @@ export default function AdminMigrationClient({
               )}
               <div>
                 <div style={{ color: '#16a34a', fontWeight: 700, fontSize: 15 }}>
-                  🎉 {magicResult.produit?.nom}
+                  {magicResult.produit?.nom}
                 </div>
                 <div style={{ fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
                   Prix calculé : {fcfa(magicResult.produit?.prix)}
@@ -972,7 +972,7 @@ export default function AdminMigrationClient({
               {/* Carte Flyer & QR Code Vitrine */}
               <div style={{ background: '#f8fafc', padding: 20, borderRadius: 10, border: '1px solid #e2e8f0', textAlign: 'center' }}>
                 <span style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', display: 'block', marginBottom: 12 }}>
-                  📱 Vitrine & QR Code Comptoir
+                  Vitrine & QR Code Comptoir
                 </span>
 
                 <div style={{ background: '#ffffff', padding: 20, borderRadius: 12, border: '2px dashed #cbd5e1', display: 'inline-block', marginBottom: 16 }}>

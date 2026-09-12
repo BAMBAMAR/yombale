@@ -68,7 +68,7 @@ const STYLES_PRESETS: StylePreset[] = [
     couleurSecondaire: '#F8FAFC',
     formeBoutons: 'squircle',
     disposition: 'grille',
-    icon: '✨',
+    icon: '',
     exemples: 'Parfait pour les smartphones, ordinateurs et équipements connectés.',
   },
   {
@@ -92,7 +92,7 @@ const STYLES_PRESETS: StylePreset[] = [
     couleurSecondaire: '#FFF7ED',
     formeBoutons: 'pill',
     disposition: 'grille',
-    icon: '🔥',
+    icon: '',
     exemples: 'Idéal pour les boutiques à fort volume, promos régulières et articles populaires.',
   },
   {
@@ -104,7 +104,7 @@ const STYLES_PRESETS: StylePreset[] = [
     couleurSecondaire: '#F8FAFC',
     formeBoutons: 'droit',
     disposition: 'compact',
-    icon: '💼',
+    icon: '',
     exemples: 'Recommandé pour quincaillerie, pièces automobiles, outillage et services pro.',
   },
   {
@@ -259,17 +259,17 @@ export default function StudioPersonnalisation({
       if (ratio < 1.2) {
         setPhotoFeedback({
           type: 'warn',
-          msg: '💡 Votre image est au format portrait ou carré. Pour une bannière optimale, un format horizontal (16:9 ou panoramique) est recommandé afin d\'éviter un rognage important.',
+          msg: 'Votre image est au format portrait ou carré. Pour une bannière optimale, un format horizontal (16:9 ou panoramique) est recommandé afin d\'éviter un rognage important.',
         })
       } else if (img.width < 600) {
         setPhotoFeedback({
           type: 'warn',
-          msg: '⚠️ La résolution de cette image est inférieure à 600px. Elle pourrait apparaître floue sur les grands écrans.',
+          msg: 'La résolution de cette image est inférieure à 600px. Elle pourrait apparaître floue sur les grands écrans.',
         })
       } else {
         setPhotoFeedback({
           type: 'ok',
-          msg: '✨ Superbe photo ! La résolution et le cadrage panoramique sont parfaitement adaptés à votre vitrine.',
+          msg: 'Superbe photo ! La résolution et le cadrage panoramique sont parfaitement adaptés à votre vitrine.',
         })
       }
     }
@@ -474,7 +474,7 @@ export default function StudioPersonnalisation({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: scoreData.score >= 80 ? '#166534' : '#9A3412' }}>
-                ✨ Attractivité
+                Attractivité
               </span>
               <span style={{ fontSize: 13, fontWeight: 900, color: scoreData.score >= 80 ? '#15803D' : '#C2410C' }}>
                 {scoreData.score}%
@@ -550,7 +550,7 @@ export default function StudioPersonnalisation({
           marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <CheckCircle2 size={18} />
-          <span>✅ Modifications enregistrées et publiées avec succès sur votre vitrine !</span>
+          <span>Modifications enregistrées et publiées avec succès sur votre vitrine !</span>
         </div>
       )}
       {saveError && (
@@ -578,7 +578,7 @@ export default function StudioPersonnalisation({
             boxShadow: activeScreenTab === 'editeur' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
           }}
         >
-          ✏️ Personnaliser
+          Personnaliser
         </button>
         <button
           onClick={() => setActiveScreenTab('apercu')}
@@ -605,7 +605,7 @@ export default function StudioPersonnalisation({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>🎯</span>
+                  <span></span>
                   <span>1. Quel style représente votre boutique ?</span>
                 </h2>
                 <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>
@@ -879,7 +879,7 @@ export default function StudioPersonnalisation({
           {/* BLOC 4 : SLOGAN & BANDEAU PROMO COMMERCIALE */}
           <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📢</span>
+              <span></span>
               <span>4. Slogan & Annonces Commerciales</span>
             </h2>
             <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px' }}>
@@ -913,7 +913,7 @@ export default function StudioPersonnalisation({
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 800, color: '#9A3412', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>🔥</span>
+                  <span></span>
                   <span>Bandeau d&apos;Annonce Promotionnel</span>
                 </span>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#9A3412' }}>

@@ -27,8 +27,8 @@ interface AnnonceImmo {
 }
 
 const TYPE_ICONS: Record<string, string> = {
-  appartement: '🏢', villa: '🏡', maison: '🏠',
-  studio: '🛏', terrain: '🌿', bureau: '🏢',
+  appartement: '', villa: '', maison: '',
+  studio: '🛏', terrain: '🌿', bureau: '',
 }
 
 function prixParM2(a: AnnonceImmo): number | null {
@@ -48,7 +48,7 @@ export default async function ImmoComparaisonPage({
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>🏡</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Sélectionnez au moins 2 annonces à comparer depuis la liste.</p>
           <Link href="/immo" className="budget-pill active" style={{ marginTop: 8 }}>
             Parcourir les annonces
@@ -71,7 +71,7 @@ export default async function ImmoComparaisonPage({
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>🏡</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Impossible de charger les annonces demandées.</p>
           <Link href="/immo" className="budget-pill active" style={{ marginTop: 8 }}>Parcourir les annonces</Link>
         </div>
@@ -93,9 +93,9 @@ export default async function ImmoComparaisonPage({
     { label: 'Surface',       render: (a: AnnonceImmo) => a.surface_m2 ? `${a.surface_m2} m²` : '—' },
     { label: 'Pièces',        render: (a: AnnonceImmo) => a.nb_pieces ?? '—' },
     { label: 'Chambres',      render: (a: AnnonceImmo) => a.nb_chambres ?? '—' },
-    { label: 'Type de bien',  render: (a: AnnonceImmo) => a.type_bien ? `${TYPE_ICONS[a.type_bien] ?? '🏠'} ${a.type_bien}` : '—' },
+    { label: 'Type de bien',  render: (a: AnnonceImmo) => a.type_bien ? `${TYPE_ICONS[a.type_bien] ?? ''} ${a.type_bien}` : '—' },
     { label: 'Ville',         render: (a: AnnonceImmo) => [a.quartier, a.ville].filter(Boolean).join(', ') || '—' },
-    { label: 'Transaction',   render: (a: AnnonceImmo) => a.transaction === 'vente' ? '🔑 Vente' : '🏠 Location' },
+    { label: 'Transaction',   render: (a: AnnonceImmo) => a.transaction === 'vente' ? 'Vente' : 'Location' },
   ]
 
   return (
@@ -120,10 +120,10 @@ export default async function ImmoComparaisonPage({
                   <th key={a.id} className={`comp-th${i === meilleursIndex ? ' comp-th--best' : ''}`}>
                     {i === meilleursIndex && <div className="comp-best-badge">Meilleur prix</div>}
                     <div className="comp-prod-img">
-                      <ExternalImg src={img} alt={a.titre} fallback={TYPE_ICONS[a.type_bien ?? ''] ?? '🏠'} fallbackClassName="comp-img-placeholder" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <ExternalImg src={img} alt={a.titre} fallback={TYPE_ICONS[a.type_bien ?? ''] ?? ''} fallbackClassName="comp-img-placeholder" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <Link href={`/immo/${a.id}`} className="comp-prod-nom">{a.titre}</Link>
-                    {a.ville && <span className="comp-prod-marque">📍 {a.ville}</span>}
+                    {a.ville && <span className="comp-prod-marque">{a.ville}</span>}
                   </th>
                 )
               })}

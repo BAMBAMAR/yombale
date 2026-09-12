@@ -50,12 +50,12 @@ export default function ModalDispatchLivreur({
   const cleanTelClient = commande.client_telephone ? commande.client_telephone.replace(/\s+/g, '') : ''
   const telClientLien = cleanTelClient.startsWith('+') ? cleanTelClient : `+221${cleanTelClient.replace(/^00221|^221/, '')}`
 
-  const messageCourse = `🛵 *COURSE TIAK-TIAK — NOPALOU EXPRESS*
+  const messageCourse = `*COURSE TIAK-TIAK — NOPALOU EXPRESS*
 ━━━━━━━━━━━━━━━━━━━━━
-📦 *Colis :* ${commande.nom_produit} (Qté : ${commande.quantite})
+*Colis :* ${commande.nom_produit} (Qté : ${commande.quantite})
 🔖 *Réf Commande :* #${commande.reference}
 
-📍 *1. POINT DE RAMASSAGE (BOUTIQUE) :*
+*1. POINT DE RAMASSAGE (BOUTIQUE) :*
 • *Boutique :* ${boutique.nom}
 • *Adresse :* ${boutique.adresse || 'Point de retrait boutique'}, ${boutique.ville || 'Dakar'}
 • *Tél Commerçant :* ${boutique.telephone || 'Non renseigné'}
@@ -65,10 +65,10 @@ export default function ModalDispatchLivreur({
 • *Téléphone :* ${commande.client_telephone} (${telClientLien})
 • *Adresse :* ${commande.client_adresse || 'Adresse à préciser par téléphone'}
 ${commande.note ? `• *Précision :* ${commande.note}\n` : ''}
-💰 *3. ENCAISSEMENT CLIENT :*
+*3. ENCAISSEMENT CLIENT :*
 ${dejaPaye 
-  ? `✅ *COMMANDE DÉJÀ RÉGLÉE EN LIGNE*\n➡️ *NE RIEN ENCAISSER AU CLIENT* (seulement vos frais de course convenus).` 
-  : `💵 *MONTANT MARCHANDISE À RÉCUPÉRER :* *${fcfa(montantAEncaisser)}*\n(À reverser intégralement à la boutique à votre retour ou par Wave).`
+  ? `*COMMANDE DÉJÀ RÉGLÉE EN LIGNE*\n➡️ *NE RIEN ENCAISSER AU CLIENT* (seulement vos frais de course convenus).` 
+  : `*MONTANT MARCHANDISE À RÉCUPÉRER :* *${fcfa(montantAEncaisser)}*\n(À reverser intégralement à la boutique à votre retour ou par Wave).`
 }
 ━━━━━━━━━━━━━━━━━━━━━
 _Généré via Nopalou — Système d'Exploitation Commercial_`
@@ -176,7 +176,7 @@ _Généré via Nopalou — Système d'Exploitation Commercial_`
                 </span>
               ) : (
                 <span style={{ color: '#991B1B', fontWeight: 700 }}>
-                  ⚠️ Paiement à la livraison : Le livreur doit impérativement encaisser <strong>{fcfa(montantAEncaisser)}</strong> en espèces.
+                  Paiement à la livraison : Le livreur doit impérativement encaisser <strong>{fcfa(montantAEncaisser)}</strong> en espèces.
                 </span>
               )}
             </div>
@@ -204,7 +204,7 @@ _Généré via Nopalou — Système d'Exploitation Commercial_`
               />
             </div>
             <p style={{ margin: '4px 0 0', fontSize: 11.5, color: '#64748B' }}>
-              💡 Si vide, WhatsApp s'ouvrira pour vous laisser sélectionner n'importe quel livreur de vos contacts.
+              Si vide, WhatsApp s'ouvrira pour vous laisser sélectionner n'importe quel livreur de vos contacts.
             </p>
           </div>
 
@@ -286,7 +286,7 @@ _Généré via Nopalou — Système d'Exploitation Commercial_`
               }}
             >
               <Send size={16} />
-              <span>Envoyer sur WhatsApp 🛵</span>
+              <span>Envoyer sur WhatsApp </span>
             </button>
           </div>
         </div>

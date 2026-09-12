@@ -122,7 +122,7 @@ export default function PaiementErreurPage({
   return (
     <div className="page-container" style={{ paddingTop: '4rem', maxWidth: 560 }}>
       <div className="paiement-succes-page">
-        <div className="paiement-succes-icon" style={{ background: '#FEF2F2' }}>❌</div>
+        <div className="paiement-succes-icon" style={{ background: '#FEF2F2' }}></div>
         <h1 className="paiement-succes-titre" style={{ color: 'var(--red)' }}>
           {titre}
         </h1>

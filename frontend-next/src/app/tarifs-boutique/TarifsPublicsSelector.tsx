@@ -14,7 +14,7 @@ const DUREES: DureeOption[] = [
   { mois: 1, label: '1 mois', sousTitre: 'Tarif mensuel', remise: 0, badge: null },
   { mois: 3, label: '3 mois', sousTitre: 'Trimestriel', remise: 0.10, badge: '-10%' },
   { mois: 6, label: '6 mois', sousTitre: 'Semestriel', remise: 0.15, badge: '-15%' },
-  { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: 0.25, badge: '🔥 -25% (3 mois offerts)' },
+  { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: 0.25, badge: '-25% (3 mois offerts)' },
 ]
 
 interface PlanConfig {
@@ -41,12 +41,12 @@ const PLANS_CONFIG: PlanConfig[] = [
     prixMensuelBase: 2500,
     populaire: true,
     features: [
-      '⚡ Création 100% WhatsApp & Ajout express par photo/texte',
-      '📦 Import Intelligent Multi-Plateformes (Shopify, WooCommerce, Excel)',
-      '📒 Carnet de dettes client & historique des paiements',
-      '💬 Assistant Marchand WhatsApp (Bilan du jour, alertes stock)',
-      '🌊 Encaissement direct Wave & Orange Money (0% commission)',
-      '🎁 1er mois 100% offert',
+      'Création 100% WhatsApp & Ajout express par photo/texte',
+      'Import Intelligent Multi-Plateformes (Shopify, WooCommerce, Excel)',
+      'Carnet de dettes client & historique des paiements',
+      'Assistant Marchand WhatsApp (Bilan du jour, alertes stock)',
+      'Encaissement direct Wave & Orange Money (0% commission)',
+      '1er mois 100% offert',
     ],
     ctaText: 'Choisir cette formule (1 mois offert)',
     ctaHref: '/creer-boutique?plan=decouverte',
@@ -59,13 +59,13 @@ const PLANS_CONFIG: PlanConfig[] = [
     prixMensuelBase: 5000,
     recommande: true,
     features: [
-      '⭐️ Tout le contenu de la formule Taf Taf',
+      '️ Tout le contenu de la formule Taf Taf',
       '🖥️ Caisse enregistreuse POS magasin tactile (Offline First)',
-      '📥 Import par lot du Carnet Clients & Dettes (CSV/Excel)',
-      '📒 Relances WhatsApp 1-Clic personnalisées avec lien Wave',
+      'Import par lot du Carnet Clients & Dettes (CSV/Excel)',
+      'Relances WhatsApp 1-Clic personnalisées avec lien Wave',
       '🥇 Référencement prioritaire comparateur & Badge Vendeur Pro',
       '💾 Export intégral de votre boutique en 1 clic (.JSON)',
-      '🎁 1er mois 100% offert',
+      '1er mois 100% offert',
     ],
     ctaText: 'Devenir Vendeur Pro (1 mois offert)',
     ctaHref: '/creer-boutique?plan=pro',
@@ -77,16 +77,16 @@ const PLANS_CONFIG: PlanConfig[] = [
     description: 'Pour les grandes enseignes, chaînes de magasins, grossistes et marques d\'importation.',
     prixMensuelBase: 10000,
     features: [
-      '👑 Tout le contenu de la formule Pro',
-      '🔔 Relances WhatsApp automatiques selon l\'échéance du Carnet',
-      '🤖 Automation WhatsApp Relance Paniers Abandonnés',
-      '👥 Caisse POS Multi-Caissiers (PIN & Clôtures Z)',
-      '🏪 Multi-Magasins & Transferts de stock inter-boutiques',
-      '🔌 Portail Développeur API REST & Webhooks',
-      '🧾 Comptabilité avancée (Bons d\'achat, Fournisseurs)',
+      'Tout le contenu de la formule Pro',
+      'Relances WhatsApp automatiques selon l\'échéance du Carnet',
+      'Automation WhatsApp Relance Paniers Abandonnés',
+      'Caisse POS Multi-Caissiers (PIN & Clôtures Z)',
+      'Multi-Magasins & Transferts de stock inter-boutiques',
+      'Portail Développeur API REST & Webhooks',
+      'Comptabilité avancée (Bons d\'achat, Fournisseurs)',
       '📣 Bannière publicitaire sponsorisée prioritaire',
-      '⚡ Account Manager VIP dédié 7j/7',
-      '🎁 1er mois 100% offert',
+      'Account Manager VIP dédié 7j/7',
+      '1er mois 100% offert',
     ],
     ctaText: 'Rejoindre le Business VIP (1 mois offert)',
     ctaHref: '/creer-boutique?plan=business',
@@ -136,7 +136,7 @@ export default function TarifsPublicsSelector() {
             { mois: 1, label: '1 mois', sousTitre: 'Tarif mensuel', remise: 0, badge: null },
             { mois: 3, label: '3 mois', sousTitre: 'Trimestriel', remise: r3, badge: `-${r3 * 100}%` },
             { mois: 6, label: '6 mois', sousTitre: 'Semestriel', remise: r6, badge: `-${r6 * 100}%` },
-            { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: r12, badge: `🔥 -${r12 * 100}%` },
+            { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: r12, badge: `-${r12 * 100}%` },
           ]);
         }
       })
@@ -269,7 +269,7 @@ export default function TarifsPublicsSelector() {
                     textTransform: 'uppercase',
                   }}
                 >
-                  ⭐ Recommandé
+                  Recommandé
                 </span>
               )}
 
@@ -323,7 +323,7 @@ export default function TarifsPublicsSelector() {
                         borderRadius: 10,
                       }}
                     >
-                      🎉 Économisez {economie.toLocaleString('fr-FR')} FCFA ({optionDuree.badge})
+                      Économisez {economie.toLocaleString('fr-FR')} FCFA ({optionDuree.badge})
                     </div>
                   )}
                 </div>

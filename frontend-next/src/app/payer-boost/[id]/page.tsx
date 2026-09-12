@@ -39,7 +39,7 @@ export default async function PayerBoostPage({ params }: { params: Promise<{ id:
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>🔍</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Annonce introuvable.</p>
           <Link href="/mes-annonces" className="budget-pill active" style={{ marginTop: 8 }}>
             Mes annonces
@@ -69,7 +69,7 @@ export default async function PayerBoostPage({ params }: { params: Promise<{ id:
           { label: 'Mes annonces', href: '/mes-annonces' },
           { label: 'Booster' }
         ]}
-        emoji="🚀"
+        emoji=""
         titre="Booster votre annonce"
         compteur={`Mettez votre annonce "${titreCourt}" en haut des résultats pendant 7 jours.`}
       />

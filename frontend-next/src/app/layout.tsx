@@ -383,7 +383,7 @@ export default async function RootLayout({
                 <a href="/assistant-whatsapp" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <MessageCircle size={13} style={{ color: '#25D366' }} /> Assistant WhatsApp
                 </a>
-                <a href="/guide-sourcing-revente">📦 Sourcing Alibaba, AliExpress &amp; Shein</a>
+                <a href="/guide-sourcing-revente">Sourcing Alibaba, AliExpress &amp; Shein</a>
                 <a href="/guide-creer-boutique">Guide Vendeur &amp; Sourcing</a>
                 <a href="/cgu#suppression-donnees" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <Trash2 size={13} style={{ color: 'var(--red, #B91C1C)' }} /> Supprimer annonce / numéro
@@ -427,8 +427,8 @@ export default async function RootLayout({
 
           {/* Bandeau confiance */}
           <div className="footer-trust">
-            <div className="footer-trust-item">✅ <strong>Impartial</strong> &amp; 0% commission</div>
-            <div className="footer-trust-item">🔄 Prix vérifiés <strong>toutes les 6h</strong></div>
+            <div className="footer-trust-item"><strong>Impartial</strong> &amp; 0% commission</div>
+            <div className="footer-trust-item">Prix vérifiés <strong>toutes les 6h</strong></div>
             <div className="footer-trust-item">🇸🇳 <strong>100% Commerce Sénégal</strong></div>
           </div>
 

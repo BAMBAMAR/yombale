@@ -67,7 +67,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
 
   const demarrerScannerEanCmd = async () => {
     setModalScannerEanCmd(true)
-    setScannerEanStatusCmd('📷 Scanner EAN prêt (Mode Continu)…')
+    setScannerEanStatusCmd('Scanner EAN prêt (Mode Continu)…')
     dernierScanFouRef.current = { code: '', time: 0 }
     setTimeout(async () => {
       try {
@@ -76,7 +76,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
           try {
             await html5ScannerCmdRef.current.stop()
             html5ScannerCmdRef.current.clear()
-          } catch (e) {}
+          } catch (e) { console.warn('[Nopalou:GestionFournisseurs:L79]', e); }
           html5ScannerCmdRef.current = null
         }
         const container = document.getElementById('fou-ean-scanner-reader')
@@ -111,10 +111,10 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               return [...prev, { produitId: prodTrouve.id, quantite: 1, prixAchat: Number(prodTrouve.prix || 0) }]
             })
             jouerBipEtVibrer('succes')
-            setScannerEanStatusCmd(`✅ +1 "${prodTrouve.nom}"`)
+            setScannerEanStatusCmd(`+1 "${prodTrouve.nom}"`)
           } else {
             jouerBipEtVibrer('alerte')
-            setScannerEanStatusCmd(`⚠️ Code "${decodedText}" non trouvé.`)
+            setScannerEanStatusCmd(`Code "${decodedText}" non trouvé.`)
             if (confirm(`Code "${decodedText}" inconnu dans le catalogue. Ajouter en article libre ?`)) {
               setCmdLignes(prev => [...prev, { produitId: 'custom', nomLibre: `Article EAN-${decodedText}`, quantite: 1, prixAchat: 0 }])
               arreterScannerEanCmd()
@@ -123,17 +123,17 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         }
         try {
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
-          setScannerEanStatusCmd('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          setScannerEanStatusCmd('Caméra active ! Placez le code-barres dans le cadre.')
         } catch (errEnv) {
           try {
             await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-            setScannerEanStatusCmd('📷 Caméra active ! Placez le code-barres dans le cadre.')
+            setScannerEanStatusCmd('Caméra active ! Placez le code-barres dans le cadre.')
           } catch (errUser) {
-            setScannerEanStatusCmd('❌ Impossible d’accéder à la caméra.')
+            setScannerEanStatusCmd('Impossible d’accéder à la caméra.')
           }
         }
       } catch (err) {
-        setScannerEanStatusCmd('❌ Impossible d’accéder à la caméra.')
+        setScannerEanStatusCmd('Impossible d’accéder à la caméra.')
       }
     }, 200)
   }
@@ -143,7 +143,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
       try {
         html5ScannerCmdRef.current.stop()
         html5ScannerCmdRef.current.clear()
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:GestionFournisseurs:L146]', e); }
       html5ScannerCmdRef.current = null
     }
     setModalScannerEanCmd(false)
@@ -153,7 +153,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     setIdxLigneScanNom(ligneIdx)
     setModalScannerNomCmd(true)
     setImageFligeeFournisseurNom(null)
-    setStatusScannerNomCmd('📷 Cadrez le nom sur l’emballage…')
+    setStatusScannerNomCmd('Cadrez le nom sur l’emballage…')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -164,7 +164,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
         await videoNomCmdRef.current.play().catch(() => {})
       }
     } catch (e) {
-      setStatusScannerNomCmd('❌ Impossible d’accéder à la caméra.')
+      setStatusScannerNomCmd('Impossible d’accéder à la caméra.')
     }
   }
 
@@ -180,7 +180,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
   const capturerNomOCRCmd = async () => {
     if (!videoNomCmdRef.current) return
     setOcrLoadingCmd(true)
-    setStatusScannerNomCmd('🔍 Analyse OCR en cours…')
+    setStatusScannerNomCmd('Analyse OCR en cours…')
     const imageBase64 = capturerZoneViseurExacte(videoNomCmdRef.current, {
       boxTopRatio: 0.15,
       boxLeftRatio: 0.05,
@@ -189,7 +189,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     })
     if (!imageBase64) {
       setOcrLoadingCmd(false)
-      setStatusScannerNomCmd('❌ Échec de la capture.')
+      setStatusScannerNomCmd('Échec de la capture.')
       return
     }
 
@@ -209,15 +209,15 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
           handleModifierLigneCmd(idxLigneScanNom, 'nomLibre', data.nom)
         }
         jouerBipEtVibrer('succes')
-        setStatusScannerNomCmd(`✅ Nom capturé : "${data.nom}"`)
+        setStatusScannerNomCmd(`Nom capturé : "${data.nom}"`)
       } else {
         jouerBipEtVibrer('alerte')
-        setStatusScannerNomCmd(`⚠️ ${data.error || 'Aucun nom lisible détecté.'}`)
+        setStatusScannerNomCmd(`${data.error || 'Aucun nom lisible détecté.'}`)
       }
     } catch (err) {
       setOcrLoadingCmd(false)
       jouerBipEtVibrer('alerte')
-      setStatusScannerNomCmd('❌ Erreur de lecture OCR. Réessayez.')
+      setStatusScannerNomCmd('Erreur de lecture OCR. Réessayez.')
     }
   }
 
@@ -234,11 +234,11 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     const cacheKeyProds = `nopalou_offline_prods_${boutiqueId}`
 
     const cFous = localStorage.getItem(cacheKeyFous)
-    if (cFous) { try { setFournisseurs(JSON.parse(cFous)) } catch(e) {} }
+    if (cFous) { try { setFournisseurs(JSON.parse(cFous)) } catch (e) { console.warn('[Nopalou:GestionFournisseurs:L237]', e); } }
     const cCmds = localStorage.getItem(cacheKeyCmds)
-    if (cCmds) { try { setCommandes(JSON.parse(cCmds)) } catch(e) {} }
+    if (cCmds) { try { setCommandes(JSON.parse(cCmds)) } catch (e) { console.warn('[Nopalou:GestionFournisseurs:L239]', e); } }
     const cProds = localStorage.getItem(cacheKeyProds)
-    if (cProds) { try { setProduits(JSON.parse(cProds)) } catch(e) {} }
+    if (cProds) { try { setProduits(JSON.parse(cProds)) } catch (e) { console.warn('[Nopalou:GestionFournisseurs:L241]', e); } }
 
     if (!cFous || !cCmds) setLoading(true)
 
@@ -275,7 +275,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
     const cleanTel = fournisseur.telephone.replace(/\D/g, '')
     const telNorm = cleanTel.length === 9 && ['77', '78', '76', '75', '70'].some(p => cleanTel.startsWith(p)) ? `221${cleanTel}` : cleanTel
     const lignes = articles.map((a, i) => `${i + 1}. *${a.nom}* — *Qté souhaitée : 20 pcs* (Stock restant : ${a.stock_quantite ?? 0} pcs)`).join('\n')
-    const message = `Bonjour ${fournisseur.nom},\n\nNous avons un besoin urgent de réapprovisionnement pour notre boutique :\n\n📦 *Articles à réapprovisionner :*\n${lignes}\n\nMerci de nous confirmer la disponibilité, vos prix et le délai de livraison.\n_Envoyé via Nopalou Business_`
+    const message = `Bonjour ${fournisseur.nom},\n\nNous avons un besoin urgent de réapprovisionnement pour notre boutique :\n\n*Articles à réapprovisionner :*\n${lignes}\n\nMerci de nous confirmer la disponibilité, vos prix et le délai de livraison.\n_Envoyé via Nopalou Business_`
     const url = `https://wa.me/${telNorm}?text=${encodeURIComponent(message)}`
     window.open(url, '_blank', 'noopener,noreferrer')
   }
@@ -514,7 +514,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             whiteSpace: 'nowrap', transition: 'all 0.15s ease',
           }}
         >
-          📦 {t('shop.subTabStockInventory')}
+          {t('shop.subTabStockInventory')}
         </button>
         <button
           onClick={(e) => {
@@ -527,7 +527,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             whiteSpace: 'nowrap', transition: 'all 0.15s ease',
           }}
         >
-          👤 {t('shop.subTabSuppliersList')} ({fournisseurs.length})
+          {t('shop.subTabSuppliersList')} ({fournisseurs.length})
         </button>
         <button
           onClick={(e) => {
@@ -561,7 +561,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               onClick={() => { resetFouForm(); setModalFOUOuvert(true); }}
               style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              ➕ {t('shop.newSupplierBtn')}
+              {t('shop.newSupplierBtn')}
             </button>
           </div>
 
@@ -602,7 +602,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                         gap: 6,
                       }}
                     >
-                      <span>🛵 Bon de commande WhatsApp ({fournisseurs[0].nom})</span>
+                      <span>Bon de commande WhatsApp ({fournisseurs[0].nom})</span>
                     </button>
                   )}
                 </div>
@@ -624,7 +624,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                         gap: 6,
                       }}
                     >
-                      <span>📦 {p.nom}</span>
+                      <span>{p.nom}</span>
                       <span style={{ color: '#dc2626', fontWeight: 800 }}>({p.stock_quantite ?? 0} restant)</span>
                     </span>
                   ))}
@@ -653,7 +653,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
             if (fournisseursFiltrés.length === 0) {
               return (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
-                  👤 {t('common.noData')}
+                  {t('common.noData')}
                 </div>
               )
             }
@@ -666,9 +666,9 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 6 }}>{f.nom}</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', fontSize: 13, color: '#6b7280' }}>
-                        {f.telephone && <span>📞 {f.telephone}</span>}
-                        {f.email && <span>✉️ {f.email}</span>}
-                        {f.adresse && <span>📍 {f.adresse}</span>}
+                        {f.telephone && <span>{f.telephone}</span>}
+                        {f.email && <span>{f.email}</span>}
+                        {f.adresse && <span>{f.adresse}</span>}
                         {!f.telephone && !f.email && !f.adresse && <span style={{ fontStyle: 'italic' }}>—</span>}
                       </div>
                     </div>
@@ -684,13 +684,13 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                         }}
                         style={{ padding: '5px 10px', borderRadius: 6, background: '#f0f9ff', color: '#0284c7', border: '1px solid #bae6fd', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                       >
-                        ✏️ {t('common.edit')}
+                        {t('common.edit')}
                       </button>
                       <button
                         onClick={() => handleSupprimerFournisseur(f.id, f.nom)}
                         style={{ padding: '5px 10px', borderRadius: 6, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                       >
-                        🗑️
+                        
                       </button>
                     </div>
                   </div>
@@ -728,7 +728,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
               onClick={() => { resetCmdForm(); setModalCMDOuvert(true); }}
               style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              ➕ {t('shop.newPurchaseOrderBtn')}
+              {t('shop.newPurchaseOrderBtn')}
             </button>
           </div>
 
@@ -794,7 +794,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                 onClick={() => ouvrirModalReception(cmd)}
                                 style={{ padding: '5px 10px', borderRadius: 6, background: '#10b981', color: '#ffffff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                               >
-                                📥 {t('shop.receiveNowBtn')}
+                                {t('shop.receiveNowBtn')}
                               </button>
                             )}
                             {!isRecue && (
@@ -802,7 +802,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                                 onClick={() => ouvrirEditionCommande(cmd)}
                                 style={{ padding: '5px 10px', borderRadius: 6, background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                               >
-                                ✏️ {t('common.edit')}
+                                {t('common.edit')}
                               </button>
                             )}
                             <button
@@ -816,7 +816,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                               style={{ padding: '5px 10px', borderRadius: 6, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                               title="Supprimer"
                             >
-                              🗑️
+                              
                             </button>
                           </div>
                         </td>
@@ -1256,7 +1256,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                 onClick={capturerNomOCRCmd}
                 style={{ flex: 1, padding: '11px', background: ocrLoadingCmd ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: ocrLoadingCmd ? 'not-allowed' : 'pointer' }}
               >
-                {ocrLoadingCmd ? t('shop.ocrAnalyzingDoc') : (imageFligeeFournisseurNom ? '🔄 Reprendre la photo' : t('shop.extractNameDocBtn'))}
+                {ocrLoadingCmd ? t('shop.ocrAnalyzingDoc') : (imageFligeeFournisseurNom ? 'Reprendre la photo' : t('shop.extractNameDocBtn'))}
               </button>
               {imageFligeeFournisseurNom && (
                 <button
@@ -1264,7 +1264,7 @@ export default function GestionFournisseurs({ boutiqueId }: { boutiqueId: string
                   onClick={arreterScannerNomCmd}
                   style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
                 >
-                  ✅ Valider
+                  Valider
                 </button>
               )}
             </div>

@@ -64,7 +64,7 @@ export default async function AdminComptesPage({
       utilisateurs = data.utilisateurs ?? []
       total = data.total ?? 0
     }
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L67]', err); }
 
   function buildHref(overrides: Record<string, string>) {
     const params = new URLSearchParams({ q, statut, type, tri, ...overrides })
@@ -77,7 +77,7 @@ export default async function AdminComptesPage({
         ? <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>✓ vérifié</span>
         : <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>non vérifié</span>}
       {u.suspendu && <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626' }}>🚫 suspendu</span>}
-      {u.supprime_le && <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706' }}>⏳ en suppression</span>}
+      {u.supprime_le && <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706' }}>en suppression</span>}
     </div>
   )
 

@@ -28,7 +28,7 @@ export default async function CguPage() {
 
       {contratTexte && (
         <section className="legal-section" style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: 24, borderRadius: 16, marginBottom: 32 }}>
-          <h2 style={{ color: '#C75B00', marginTop: 0 }}>📜 Charte Vendeur &amp; Contrat d&apos;Utilisation Marchand</h2>
+          <h2 style={{ color: '#C75B00', marginTop: 0 }}>Charte Vendeur &amp; Contrat d&apos;Utilisation Marchand</h2>
           <div style={{ whiteSpace: 'pre-line', fontSize: 14, lineHeight: 1.6, color: '#334155' }}>
             {contratTexte}
           </div>
@@ -65,7 +65,7 @@ export default async function CguPage() {
 
       <section className="legal-section" id="suppression-donnees" style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e2e8f0', margin: '24px 0' }}>
         <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-          🗑️ Droit de Retrait, Désinscription &amp; Suppression de Téléphone / Annonce
+          Droit de Retrait, Désinscription &amp; Suppression de Téléphone / Annonce
         </h2>
         <p>Conformément aux réglementations relatives à la protection des données personnelles (APDP / RGPD) et au droit à l&apos;oubli :</p>
         <ul>

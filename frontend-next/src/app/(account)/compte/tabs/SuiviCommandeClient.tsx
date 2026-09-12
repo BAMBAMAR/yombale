@@ -67,7 +67,7 @@ export default function SuiviCommandeClient() {
     <div style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A', margin: '0 0 8px' }}>
-          📦 {t('account.trackOrderTitle')}
+          {t('account.trackOrderTitle')}
         </h2>
         <p style={{ fontSize: 14, color: '#64748b', margin: '0 0 20px', lineHeight: 1.5 }}>
           {t('account.trackOrderDesc')}
@@ -96,14 +96,14 @@ export default function SuiviCommandeClient() {
             className="npl-btn npl-btn-primary npl-btn-lg"
             style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 22px' }}
           >
-            <span>{loading ? '⏳' : '🔍'}</span>
+            <span>{loading ? '' : ''}</span>
             <span>{loading ? t('account.trackOrderSearching') : t('account.trackOrderSearch')}</span>
           </button>
         </form>
 
         {error && (
           <div style={{ marginTop: 16, padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>⚠️</span>
+            <span></span>
             <span>{error}</span>
           </div>
         )}
@@ -125,10 +125,10 @@ export default function SuiviCommandeClient() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
                   {[
-                    { step: 1, label: t('account.stepPending'), icon: '📋' },
-                    { step: 2, label: t('account.stepPreparing'), icon: '📦' },
-                    { step: 3, label: t('account.stepDelivering'), icon: '🚚' },
-                    { step: 4, label: t('account.stepDelivered'), icon: '✅' },
+                    { step: 1, label: t('account.stepPending'), icon: '' },
+                    { step: 2, label: t('account.stepPreparing'), icon: '' },
+                    { step: 3, label: t('account.stepDelivering'), icon: '' },
+                    { step: 4, label: t('account.stepDelivered'), icon: '' },
                   ].map(st => {
                     const isActive = currentStep >= st.step
                     return (

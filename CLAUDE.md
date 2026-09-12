@@ -1,3 +1,23 @@
+- **Chantier Anti-AI-Slop & Démantèlement Modulaire Caisse POS (P0-P2) (`frontend-next/`) (12 septembre 2026)** 🛡️🏗️✨ :
+  * **🎯 1. Contexte & Objectif de Session** :
+    - Éradication des symptômes majeurs d'IA-Slop identifiés lors de l'audit approfondi sur 32 critères : éradication des 127 silent catches (`catch(e) {}`), réduction massive des béquilles emojis dans l'UI, et amorçage du démantèlement du monolithe [CaisseClient.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/caisse/CaisseClient.tsx) (>5 000 lignes).
+  * **🛠️ 2. Réalisations & Déploiements P0-P2** :
+    - **P0 - Éradication Intégrale des Silent Catches (127 -> 0)** :
+      * Création de `frontend-next/src/lib/errorHandler.ts` fournissant `safeJsonParse`, `safeStorageGet`, `safeStorageSet` et `handleClientError` avec logging structuré `[Nopalou:Context]` et notifications utilisateur non-bloquantes.
+      * Remplacement systématique de tous les `catch (e) {}` vides dans 58 fichiers du front-end par du logging contextuel typé.
+      * Création de `frontend-next/src/lib/__tests__/errorHandler.test.ts` et intégration dans la suite de tests officielle `scripts/run-unit-tests.mjs` (47/47 tests unitaires passés à 100%).
+      * Score `lint:slop` sur les silent catches : **0 restant** (validé par `npm run lint:slop`).
+    - **P1 - Éradication Massive des Emojis UI (3 598 -> 1 309, -63.6%)** :
+      * Nettoyage automatique en deux passes des préfixes d'emojis superflus (`✅`, `❌`, `⚠️`, `🎉`, `⚡`, `👑`, `👤`, `📦`, `📱`, `💵`, `💳`, `🛒`, `🌊`, `🍊`, `💡`, `📊`, `🖨️`, etc.) dans les labels, boutons, options et notifications de plus de 200 fichiers.
+    - **P2 - Début de Modularisation de `CaisseClient.tsx` (5 122 -> 4 694 lignes, -428 lignes)** :
+      * Extraction de `PosNonAutoriseScreen.tsx` (196 lignes) : écran complet d'interdiction d'accès au POS pour les boutiques sans forfait actif, avec tokens CSS et icônes Lucide.
+      * Extraction de `PosBilanRapportXModal.tsx` (250 lignes) : modale dédiée à la synthèse d'activité intermédiaire et ventilation par mode de règlement (Espèces, Wave, OM, Carte).
+      * Extraction de `PosTransactionCarnetModal.tsx` (490 lignes) : modale d'enregistrement de vente à crédit / remboursement client depuis la caisse tactile avec support catalogue et saisie manuelle.
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - Tests unitaires : 47/47 validés avec succès (**100% de réussite**).
+    - Validation TypeScript : `npx tsc --noEmit` exécuté avec **0 erreur**.
+    - Qualité de code : `npm run lint:slop` exécuté avec **0 silent catch**.
+
 - **Grand Chantier Anti-IA-Slop & Standard Ingénieur Senior (P0-P3) (`backend/`, `frontend-next/`, `AGENTS.md`) (11 septembre 2026)** 🛡️🏗️✨ :
   * **🎯 1. Contexte & Diagnostic de l'Audit Exhaustif** :
     - *Objectif* : Éliminer les symptômes de mauvaise utilisation de l'IA (monolithes de 6 000 lignes, 3 159 béquilles émojis dans l'UI, 345 couleurs hex injectées au hasard, API servant du HTML sur les 404, failles IDOR potentielles) pour hisser Nopalou au rang de produit SaaS de classe mondiale.

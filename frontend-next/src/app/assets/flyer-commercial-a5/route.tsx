@@ -207,7 +207,7 @@ export async function GET(request: Request) {
                 Tarifs ultra-accessibles après le mois d&apos;essai offert :
               </span>
               <span style={{ fontSize: 14.5, color: '#64748B', marginTop: 3, fontWeight: 600 }}>
-                ⚡ Taf Taf : 2 500 F/m · ⭐ Boutique Pro : 5 000 F/m · 👑 Business VIP : 10 000 F/m
+                Taf Taf : 2 500 F/m · Boutique Pro : 5 000 F/m · Business VIP : 10 000 F/m
               </span>
             </div>
             <div style={{
@@ -255,7 +255,7 @@ export async function GET(request: Request) {
               </span>
             </div>
             <span style={{ fontSize: 14, color: '#CBD5E1', fontWeight: 600, marginTop: 2 }}>
-              🌐 Démo interactive immédiate sans inscription : <strong>nopalou.com/demo</strong>
+              Démo interactive immédiate sans inscription : <strong>nopalou.com/demo</strong>
             </span>
           </div>
 

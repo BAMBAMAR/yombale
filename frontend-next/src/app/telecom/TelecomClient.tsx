@@ -27,7 +27,7 @@ const OP_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
 }
 
 const OP_ICONS: Record<string, string> = {
-  Orange: '🟠', Free: '🔴', Expresso: '🟢', Wave: '🔵',
+  Orange: '🟠', Free: '', Expresso: '', Wave: '🔵',
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -62,7 +62,7 @@ function validiteOrder(label: string): number {
 
 function ForfaitCard({ f, isRecommande }: { f: Forfait; isRecommande: boolean }) {
   const colors = OP_COLORS[f.operateur] ?? { bg: '#F8F5F0', text: '#1C2B4A', badge: '#1C2B4A' }
-  const icon = OP_ICONS[f.operateur] ?? '📡'
+  const icon = OP_ICONS[f.operateur] ?? ''
   const typeLabel = TYPE_LABELS[f.type] ?? f.type
 
   return (
@@ -70,7 +70,7 @@ function ForfaitCard({ f, isRecommande }: { f: Forfait; isRecommande: boolean })
       <div className={`forfait-card${isRecommande ? ' forfait-card--recommande' : ''}`} style={{ position: 'relative' }}>
         <CardActions id={f.id} nom={f.nom} type="telecom" />
         {isRecommande && (
-          <div className="forfait-recommande-ribbon">🏆 Recommandé</div>
+          <div className="forfait-recommande-ribbon">Recommandé</div>
         )}
         <div className="forfait-card-header" style={{ background: colors.bg }}>
           <div className="forfait-op-badge" style={{ color: colors.text, borderColor: colors.badge }}>
@@ -194,7 +194,7 @@ export default function TelecomClient({
         compteur={total > 0
           ? `${total} forfait${total > 1 ? 's' : ''} · Comparez les offres internet et appels des opérateurs au Sénégal`
           : 'Comparez les forfaits internet et appels des opérateurs au Sénégal'}
-        cta={{ label: '🎯 Trouver mon forfait', onClick: () => setShowWizard(true) }}
+        cta={{ label: 'Trouver mon forfait', onClick: () => setShowWizard(true) }}
       />
 
       {/* Filtres */}
@@ -208,7 +208,7 @@ export default function TelecomClient({
           },
           ...operateurs.map(op => ({
             key: `op-${op}`,
-            label: `${OP_ICONS[op] ?? '📡'} ${op}`,
+            label: `${OP_ICONS[op] ?? ''} ${op}`,
             href: buildLink({ operateur: op, page: '1' }),
             active: currentOperateur === op,
           })),
@@ -230,7 +230,7 @@ export default function TelecomClient({
       {/* Grille : recommandés + tous les forfaits */}
       {forfaits.length === 0 ? (
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>📡</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Aucun forfait trouvé pour ces critères.</p>
           <Link href="/telecom" className="budget-pill active" style={{ marginTop: 8 }}>
             Voir tous les forfaits
@@ -243,13 +243,13 @@ export default function TelecomClient({
           {recommandeGroups.length > 0 && (
             <div className="telecom-section">
               <div className="telecom-section-header">
-                <h2 className="telecom-section-titre">🏆 Recommandés — Meilleur rapport qualité/prix</h2>
+                <h2 className="telecom-section-titre">Recommandés — Meilleur rapport qualité/prix</h2>
                 <p className="telecom-section-sub">Un forfait par opérateur, sélectionné selon votre budget</p>
               </div>
               {recommandeGroups.map(group => (
                 <div key={group.label} className="telecom-groupe">
                   <h3 className="telecom-groupe-titre">
-                    📅 <span>{group.label}</span>
+                    <span>{group.label}</span>
                     <span className="telecom-groupe-count">{group.items.length} opérateur{group.items.length > 1 ? 's' : ''}</span>
                   </h3>
                   <div className="forfaits-grid">
@@ -266,7 +266,7 @@ export default function TelecomClient({
           {reste.length > 0 && (
             <div className="telecom-section">
               <div className="telecom-section-header">
-                <h2 className="telecom-section-titre">📋 Tous les forfaits</h2>
+                <h2 className="telecom-section-titre">Tous les forfaits</h2>
                 <span className="telecom-groupe-count" style={{ fontSize: 13 }}>{reste.length} offre{reste.length > 1 ? 's' : ''}</span>
               </div>
               <div className="forfaits-grid">
@@ -284,7 +284,7 @@ export default function TelecomClient({
         titre="Pourquoi comparer les forfaits télécom sur Nopalou ?"
         blurbs={[
           {
-            emoji: '📡',
+            emoji: '',
             text: (
               <>
                 Nopalou compare les forfaits internet, appels et SMS de tous les opérateurs du Sénégal —
@@ -294,7 +294,7 @@ export default function TelecomClient({
             ),
           },
           {
-            emoji: '🎯',
+            emoji: '',
             text: (
               <>
                 Utilisez l&apos;assistant <strong>« Trouver mon forfait »</strong> pour une recommandation personnalisée
@@ -309,8 +309,8 @@ export default function TelecomClient({
             chips: [
               { href: '/telecom/orange', emoji: '🟠', label: 'Forfaits Orange' },
               { href: '/telecom/yas', emoji: '🔵', label: 'Forfaits Yas' },
-              { href: '/telecom/expresso', emoji: '🟢', label: 'Forfaits Expresso' },
-              { href: '/telecom/promobile', emoji: '📡', label: 'Forfaits ProMobile' },
+              { href: '/telecom/expresso', emoji: '', label: 'Forfaits Expresso' },
+              { href: '/telecom/promobile', emoji: '', label: 'Forfaits ProMobile' },
             ],
           },
         ]}

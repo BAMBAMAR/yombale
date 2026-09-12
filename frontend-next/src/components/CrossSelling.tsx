@@ -73,7 +73,7 @@ export default function CrossSelling({
   return (
     <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 20, marginTop: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <span style={{ fontSize: 20 }}>💡</span>
+        <span style={{ fontSize: 20 }}></span>
         <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'var(--font-archivo), sans-serif', color: '#111827' }}>
           {t('shop.bundleTitle')}
         </h3>

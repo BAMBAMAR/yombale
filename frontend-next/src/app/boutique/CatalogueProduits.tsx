@@ -112,16 +112,16 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
     const prods = produits.filter(p => selectedProdIds.has(p.id))
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
     const contact = boutique.whatsapp || boutique.telephone || ''
-    const msg = `🛍️ *Découvrez notre sélection chez ${boutique.nom} !*\n\n` +
-      prods.map((p, i) => `${i + 1}. *${p.nom}* — ${p.prix ? fcfa(p.prix) : 'Prix sur demande'}\n👉 ${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`).join('\n\n') +
-      `\n\n🚚 Livraison disponible à ${boutique.ville || 'Dakar'}\n${contact ? `💬 Commandez directement au ${contact} !` : ''}`
+    const msg = `*Découvrez notre sélection chez ${boutique.nom} !*\n\n` +
+      prods.map((p, i) => `${i + 1}. *${p.nom}* — ${p.prix ? fcfa(p.prix) : 'Prix sur demande'}\n${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id}`).join('\n\n') +
+      `\n\nLivraison disponible à ${boutique.ville || 'Dakar'}\n${contact ? `Commandez directement au ${contact} !` : ''}`
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   function handleBatchCopyList() {
     const prods = produits.filter(p => selectedProdIds.has(p.id))
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
-    const msg = `🛍️ *Sélection ${boutique.nom}* :\n\n` +
+    const msg = `*Sélection ${boutique.nom}* :\n\n` +
       prods.map((p, i) => `• ${p.nom} : ${p.prix ? fcfa(p.prix) : 'Prix sur demande'} (${siteUrl}/boutiques/${boutique.slug || boutique.id}/produits/${p.id})`).join('\n')
     navigator.clipboard.writeText(msg)
     setSuccessMsg('Liste des produits copiée dans le presse-papier !')
@@ -185,7 +185,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
               try {
                 const parsed = JSON.parse(localProds)
                 if (Array.isArray(parsed)) setProduits(parsed)
-              } catch {}
+              } catch (err) { console.warn('[Nopalou:CatalogueProduits:L188]', err); }
             }
           }
         }
@@ -236,7 +236,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
   if (!planActif && !boutique.is_trial) {
     return (
       <div style={{ textAlign: 'center', padding: '32px 20px', background: '#fffbeb', borderRadius: 12, border: '1px solid #fcd34d' }}>
-        <span style={{ fontSize: 36, display: 'block', marginBottom: 12 }}>⭐</span>
+        <span style={{ fontSize: 36, display: 'block', marginBottom: 12 }}></span>
         <p style={{ fontWeight: 700, marginBottom: 6 }}>Catalogue disponible en Boutique Pro</p>
         <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
           Ajoutez vos produits avec photos et prix. Vos clients peuvent parcourir votre catalogue directement sur Nopalou.
@@ -330,7 +330,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
           onCancel={() => setMode('list')}
           onSuccess={(produitCree) => {
             setMode('list')
-            setSuccessMsg(editing ? '✅ Produit modifié !' : '✅ Produit ajouté au catalogue !')
+            setSuccessMsg(editing ? 'Produit modifié !' : 'Produit ajouté au catalogue !')
             loadProduits()
             if (!editing && produitCree) {
               setPartageModalData({ produit: produitCree, isNew: true })
@@ -354,7 +354,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
       {produitADupliquer && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <h2 style={{ margin: '0 0 6px', fontSize: 18, color: '#0f172a', fontWeight: 800 }}>📄 Dupliquer le produit</h2>
+            <h2 style={{ margin: '0 0 6px', fontSize: 18, color: '#0f172a', fontWeight: 800 }}>Dupliquer le produit</h2>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b' }}>Personnalisez le nouveau produit avant de le créer.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
@@ -420,7 +420,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                 }}
                 style={{ flex: 1.5, padding: '10px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, cursor: 'pointer' }}
               >
-                🚀 Confirmer
+                Confirmer
               </button>
             </div>
           </div>
@@ -589,7 +589,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                 onClick={() => setFiltreStock(filtreStock === 'en_stock' ? 'tous' : 'en_stock')}
                 className={`saas-filter-pill ${filtreStock === 'en_stock' ? 'active' : ''}`}
               >
-                ✅ En stock ({produits.filter(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q > 0 : p.en_stock !== false }).length})
+                En stock ({produits.filter(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q > 0 : p.en_stock !== false }).length})
               </button>
 
               <button
@@ -602,7 +602,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                   background: filtreStock !== 'rupture' && produits.some(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q <= 0 : p.en_stock === false }) ? '#fff7ed' : undefined,
                 }}
               >
-                ⚠️ Ruptures ({produits.filter(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q <= 0 : p.en_stock === false }).length})
+                Ruptures ({produits.filter(p => { const q = p.quantite_stock ?? p.stock_quantite; return q != null ? q <= 0 : p.en_stock === false }).length})
               </button>
 
               <button
@@ -610,7 +610,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                 onClick={() => setFiltreStatut(filtreStatut === 'synchronise' ? 'tous' : 'synchronise')}
                 className={`saas-filter-pill ${filtreStatut === 'synchronise' ? 'active' : ''}`}
               >
-                💬 WhatsApp ({produits.filter(p => p.whatsapp_sync_statut === 'synchronise').length})
+                WhatsApp ({produits.filter(p => p.whatsapp_sync_statut === 'synchronise').length})
               </button>
             </div>
             <div className="saas-search-wrap saas-toolbar-full">
@@ -643,11 +643,11 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                 title="Trier les produits"
               >
                 <option value="recent">🕒 Plus récents</option>
-                <option value="ancien">⏳ Plus anciens</option>
-                <option value="prix_asc">💰 Prix croissant</option>
-                <option value="prix_desc">💎 Prix décroissant</option>
-                <option value="stock_rupture">⚠️ Ruptures d&apos;abord</option>
-                <option value="stock_dispo">📦 En stock d&apos;abord</option>
+                <option value="ancien">Plus anciens</option>
+                <option value="prix_asc">Prix croissant</option>
+                <option value="prix_desc">Prix décroissant</option>
+                <option value="stock_rupture">Ruptures d&apos;abord</option>
+                <option value="stock_dispo">En stock d&apos;abord</option>
                 <option value="alpha">🔤 Nom (A-Z)</option>
               </select>
 
@@ -658,9 +658,9 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                 className="saas-select-control"
                 title="Filtrer par disponibilité stock"
               >
-                <option value="tous">📦 Tous stocks</option>
-                <option value="en_stock">✅ En stock</option>
-                <option value="rupture">❌ Rupture</option>
+                <option value="tous">Tous stocks</option>
+                <option value="en_stock">En stock</option>
+                <option value="rupture">Rupture</option>
               </select>
 
               {/* Statut WhatsApp */}
@@ -670,10 +670,10 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
                 className="saas-select-control"
                 title="Filtrer par statut WhatsApp"
               >
-                <option value="tous">🌐 Statut: Tous</option>
-                <option value="synchronise">💬 Sur WhatsApp</option>
-                <option value="en_attente">⏳ En attente</option>
-                <option value="echec">⚠️ Échec synchro</option>
+                <option value="tous">Statut: Tous</option>
+                <option value="synchronise">Sur WhatsApp</option>
+                <option value="en_attente">En attente</option>
+                <option value="echec">Échec synchro</option>
                 <option value="jamais_partage">🚫 Non partagés</option>
               </select>
 
@@ -809,7 +809,7 @@ function CatalogueProduits({ boutique, planActif, prixPro, filtreInitial, userId
         <p style={{ color: '#9ca3af', fontSize: 14 }}>Chargement…</p>
       ) : produits.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
-          <span style={{ fontSize: 36, display: 'block', marginBottom: 12 }}>📦</span>
+          <span style={{ fontSize: 36, display: 'block', marginBottom: 12 }}></span>
           <p style={{ color: '#6b7280', margin: '0 0 16px' }}>Aucun produit dans votre catalogue.</p>
           <button
             onClick={() => setMode({ creating: 'rapide' })}

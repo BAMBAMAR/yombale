@@ -48,7 +48,7 @@ export default async function AdminCompteDetailPage({ params }: { params: Promis
       cache: 'no-store',
     })
     if (res.ok) data = await res.json()
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L51]', err); }
 
   if (!data) return notFound()
 
@@ -66,17 +66,17 @@ export default async function AdminCompteDetailPage({ params }: { params: Promis
           ? <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', background: '#f0fdf4', padding: '4px 10px', borderRadius: 6 }}>✓ Email vérifié</span>
           : <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', background: '#f1f5f9', padding: '4px 10px', borderRadius: 6 }}>Email non vérifié</span>}
         {u.suspendu && <span style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', background: '#fef2f2', padding: '4px 10px', borderRadius: 6 }}>🚫 Suspendu</span>}
-        {u.supprime_le && !u.anonymise_le && <span style={{ fontSize: 12, fontWeight: 700, color: '#d97706', background: '#fffbeb', padding: '4px 10px', borderRadius: 6 }}>⏳ En suppression depuis le {dateF(u.supprime_le)}</span>}
+        {u.supprime_le && !u.anonymise_le && <span style={{ fontSize: 12, fontWeight: 700, color: '#d97706', background: '#fffbeb', padding: '4px 10px', borderRadius: 6 }}>En suppression depuis le {dateF(u.supprime_le)}</span>}
         {u.anonymise_le && <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', background: '#f9fafb', padding: '4px 10px', borderRadius: 6 }}>Purgé le {dateF(u.anonymise_le)}</span>}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 18 }}>
           <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Résumé d&apos;activité</h2>
-          <p style={{ fontSize: 13, color: '#374151', margin: '4px 0' }}>📋 {activite.nb_annonces} annonce(s) classifiée(s)</p>
-          <p style={{ fontSize: 13, color: '#374151', margin: '4px 0' }}>🏠 {activite.nb_immo} bien(s) immo</p>
-          <p style={{ fontSize: 13, color: '#374151', margin: '4px 0' }}>🏪 {activite.a_boutique ? 'A une boutique' : 'Pas de boutique'}</p>
-          <p style={{ fontSize: 13, color: '#374151', margin: '4px 0' }}>💼 {activite.est_apporteur ? `Apporteur (${u.code_apporteur})` : 'Pas apporteur'}</p>
+          <p style={{ fontSize: 13, color: '#374151', margin: '4px 0' }}>{activite.nb_annonces} annonce(s) classifiée(s)</p>
+          <p style={{ fontSize: 13, color: '#374151', margin: '4px 0' }}>{activite.nb_immo} bien(s) immo</p>
+          <p style={{ fontSize: 13, color: '#374151', margin: '4px 0' }}>{activite.a_boutique ? 'A une boutique' : 'Pas de boutique'}</p>
+          <p style={{ fontSize: 13, color: '#374151', margin: '4px 0' }}>{activite.est_apporteur ? `Apporteur (${u.code_apporteur})` : 'Pas apporteur'}</p>
         </div>
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 18 }}>
           <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>Abonnement</h2>

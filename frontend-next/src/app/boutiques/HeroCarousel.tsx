@@ -13,7 +13,7 @@ const SLIDES = [
     badgeBg: 'rgba(199,91,0,0.2)',
     badgeColor: '#fed7aa',
     badgeBorder: '1px solid rgba(199,91,0,0.3)',
-    badgeText: '🚀 NOUVEAU',
+    badgeText: 'NOUVEAU',
     title: 'Boutique Taf Taf',
     desc: 'Créez votre boutique complète en 30 secondes chrono pour 2 500 FCFA !',
     features: [
@@ -34,7 +34,7 @@ const SLIDES = [
     badgeBg: '#dcfce7',
     badgeColor: '#166534',
     badgeBorder: '1px solid #bbf7d0',
-    badgeText: '🏪 GRATUIT',
+    badgeText: 'GRATUIT',
     title: 'Gérez vos ventes (POS)',
     desc: 'Un système de caisse ultra-rapide pour gérer vos ventes physiques et en ligne au même endroit.',
     features: [
@@ -55,7 +55,7 @@ const SLIDES = [
     badgeBg: '#ffedd5',
     badgeColor: '#9a3412',
     badgeBorder: '1px solid #fdba74',
-    badgeText: '💬 DIRECT',
+    badgeText: 'DIRECT',
     title: '0% de Commission',
     desc: 'Les clients vous contactent et commandent directement sur votre numéro WhatsApp.',
     features: [
@@ -76,7 +76,7 @@ const SLIDES = [
     badgeBg: '#e0f2fe',
     badgeColor: '#0369a1',
     badgeBorder: '1px solid #bae6fd',
-    badgeText: '🛡️ CONFIANCE',
+    badgeText: 'CONFIANCE',
     title: 'Vendeurs Vérifiés',
     desc: 'Achetez en toute confiance. Nos marchands "Pro" et "Business" sont rigoureusement vérifiés.',
     features: [

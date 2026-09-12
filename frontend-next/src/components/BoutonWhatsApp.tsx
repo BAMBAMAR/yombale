@@ -47,7 +47,7 @@ export default function BoutonWhatsApp({ type, id, isConnecte }: Props) {
         className="bouton-whatsapp-fiche"
         aria-label="Recevoir cette fiche par WhatsApp"
       >
-        {sent ? '✅ Envoyé !' : loading ? 'Envoi…' : '📩 Recevoir par WhatsApp'}
+        {sent ? 'Envoyé !' : loading ? 'Envoi…' : '📩 Recevoir par WhatsApp'}
       </button>
       {showModal && (
         <ModalWhatsApp type={type} id={id} onClose={() => setShowModal(false)} />

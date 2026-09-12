@@ -123,7 +123,7 @@ export async function generateMetadata({
           title: 'Redirection en cours... | Nopalou',
         };
       }
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:page:L126]', err); }
     return {
       title: 'Annonce introuvable',
     };
@@ -213,11 +213,11 @@ export default async function FicheImmoPage({
           <div className="meilleur-choix-img">
             {meilleurBien.photos?.[0]
               ? <img src={sanitizeImgUrl(meilleurBien.photos[0])!} alt={meilleurBien.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <span>🏠</span>
+              : <span></span>
             }
           </div>
           <div className="meilleur-choix-info">
-            <span className="meilleur-choix-label">✨ Meilleur choix pour vous</span>
+            <span className="meilleur-choix-label">Meilleur choix pour vous</span>
             <span className="meilleur-choix-nom">{meilleurBien.titre}</span>
             <span className="meilleur-choix-prix">
               {fcfa(meilleurBien.prix)}
@@ -361,7 +361,7 @@ export default async function FicheImmoPage({
             {annonce.transaction && (
               <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
                 <span>Transaction</span>
-                <strong style={{ color: 'var(--text1)' }}>{annonce.transaction === 'vente' ? '🔑 Vente' : '🏠 Location'}</strong>
+                <strong style={{ color: 'var(--text1)' }}>{annonce.transaction === 'vente' ? 'Vente' : 'Location'}</strong>
               </div>
             )}
 
@@ -380,18 +380,18 @@ export default async function FicheImmoPage({
               <div style={{ background: 'var(--navy)', color: '#fff', borderRadius: 10, padding: '16px 20px', marginTop: 12 }}>
                 {annonce.contact_nom && <p style={{ fontWeight: 700, marginBottom: 8 }}>{annonce.contact_nom}</p>}
                 <a href={`tel:${annonce.contact_tel}`} style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>
-                  📞 {annonce.contact_tel}
+                  {annonce.contact_tel}
                 </a>
                 <a
                   href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par :\n\n*${annonce.titre}*${annonce.prix ? ` — ${fcfa(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo/${annonce.id}`)}`}
                   target="_blank" rel="noopener noreferrer"
                   style={{ display: 'block', marginTop: 8, color: '#25d366', fontWeight: 600 }}
                 >
-                  💬 WhatsApp
+                  WhatsApp
                 </a>
                 <BoutonWhatsApp type="immo" id={annonce.id} isConnecte={!!session} />
                 <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed rgba(255,255,255,0.2)', fontSize: '0.76rem', color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: '1.4' }}>
-                  🗑️ Pour retirer ce bien ou votre numéro : envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#25d366', textDecoration: 'underline' }}>WhatsApp</a> ou <a href="/cgu#suppression-donnees" style={{ color: '#60a5fa', textDecoration: 'underline' }}>consultez les CGU</a>.
+                  Pour retirer ce bien ou votre numéro : envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#25d366', textDecoration: 'underline' }}>WhatsApp</a> ou <a href="/cgu#suppression-donnees" style={{ color: '#60a5fa', textDecoration: 'underline' }}>consultez les CGU</a>.
                 </div>
               </div>
             )}
@@ -424,7 +424,7 @@ export default async function FicheImmoPage({
                 {isSponsorise ? (
                   <div style={{ padding: '14px 18px', background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 10, marginBottom: 12 }}>
                     <p style={{ fontWeight: 700, color: '#854D0E' }}>
-                      ⭐ Mise en avant active jusqu&apos;au{' '}
+                      Mise en avant active jusqu&apos;au{' '}
                       {new Date(annonce.sponsorisee_jusqu_au!).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
@@ -447,7 +447,7 @@ export default async function FicheImmoPage({
                     marginTop: 10,
                   }}
                 >
-                  ✏️ Modifier ou 🗑️ Supprimer ce bien
+                  Modifier ou Supprimer ce bien
                 </Link>
               </div>
             )}
@@ -471,11 +471,11 @@ export default async function FicheImmoPage({
 
         return (
           <section className="similaires-section">
-            <h2 className="similaires-titre">📊 Biens comparables dans le secteur</h2>
+            <h2 className="similaires-titre">Biens comparables dans le secteur</h2>
             <p className="similaires-sous-titre">
               {courantEstMeilleur
-                ? '✅ Cette annonce a le prix le plus bas parmi les biens comparables.'
-                : `💡 Un bien comparable est disponible à partir de ${fcfa(meilleurPrix)} — voir ci-dessous.`}
+                ? 'Cette annonce a le prix le plus bas parmi les biens comparables.'
+                : `Un bien comparable est disponible à partir de ${fcfa(meilleurPrix)} — voir ci-dessous.`}
             </p>
             <table className="similaires-table">
               <thead>
@@ -499,7 +499,7 @@ export default async function FicheImmoPage({
                           <div className="simil-img-wrap">
                             {l.photo
                               ? <img src={sanitizeImgUrl(l.photo)!} alt={l.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              : <span>🏠</span>
+                              : <span></span>
                             }
                           </div>
                           <div>
@@ -512,7 +512,7 @@ export default async function FicheImmoPage({
                       <td>
                         <span className={`simil-prix-val${isBest ? ' simil-prix-val--best' : ''}`}>
                           {l.prix ? fcfa(l.prix) : '—'}
-                          {isBest && <span className="simil-best-ico"> 🏆</span>}
+                          {isBest && <span className="simil-best-ico"> </span>}
                         </span>
                       </td>
                       <td>

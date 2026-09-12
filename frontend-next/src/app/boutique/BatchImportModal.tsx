@@ -172,14 +172,14 @@ export default function BatchImportModal({
         const headerRow = decouperLigneCSV(lines[0], sep).map(h => normaliserChaine(h))
 
         // Détection de la plateforme source
-        let plateformeDetectee = 'Fichier Excel / CSV standard 📊'
+        let plateformeDetectee = 'Fichier Excel / CSV standard '
         const headerText = headerRow.join(' ')
         if (headerText.includes('variant price') || headerText.includes('body html') || headerText.includes('handle')) {
-          plateformeDetectee = 'Boutique Shopify 🛍️'
+          plateformeDetectee = 'Boutique Shopify '
         } else if (headerText.includes('post title') || headerText.includes('regular price') || headerText.includes('product cat')) {
-          plateformeDetectee = 'Catalogue WooCommerce 🛒'
+          plateformeDetectee = 'Catalogue WooCommerce '
         } else if (headerText.includes('prix de vente ttc') || headerText.includes('nom *') || headerText.includes('reference #')) {
-          plateformeDetectee = 'Catalogue PrestaShop 🏪'
+          plateformeDetectee = 'Catalogue PrestaShop '
         } else if (headerText.includes('designation') || headerText.includes('pu') || headerText.includes('qte')) {
           plateformeDetectee = 'Tableur Excel / Google Sheets 📑'
         }
@@ -445,7 +445,7 @@ export default function BatchImportModal({
         totalImported += (data.count || chunk.length)
       }
 
-      setSuccessMsg(`🎉 Félicitations ! ${totalImported} produit(s) ont été importés avec succès dans votre boutique.`)
+      setSuccessMsg(`Félicitations ! ${totalImported} produit(s) ont été importés avec succès dans votre boutique.`)
       setTimeout(() => {
         onSuccess()
         onClose()
@@ -568,7 +568,7 @@ export default function BatchImportModal({
         <div style={{ padding: 24, overflowY: 'auto', flex: 1, background: '#f8fafc' }}>
           {error && (
             <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', color: '#dc2626', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>⚠️</span>
+              <span></span>
               <span>{error}</span>
             </div>
           )}
@@ -586,7 +586,7 @@ export default function BatchImportModal({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFDF9', border: '1.5px solid #FED7AA', padding: '14px 18px', borderRadius: 14, flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#9A3412' }}>
-                    💡 Vous partez de zéro ou d'un carnet papier ?
+                    Vous partez de zéro ou d'un carnet papier ?
                   </p>
                   <p style={{ margin: '3px 0 0', fontSize: 12, color: '#C2410C' }}>
                     Téléchargez notre modèle de tableau simplifié pré-rempli avec des exemples.
@@ -632,7 +632,7 @@ export default function BatchImportModal({
                 </label>
                 {nomFichier && (
                   <p style={{ margin: '12px 0 0', fontSize: 12, fontWeight: 700, color: '#1E40AF' }}>
-                    📄 Fichier sélectionné : {nomFichier}
+                    Fichier sélectionné : {nomFichier}
                   </p>
                 )}
               </div>
@@ -643,7 +643,7 @@ export default function BatchImportModal({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 16 }}>🎉</span>
+                        <span style={{ fontSize: 16 }}></span>
                         <span style={{ fontWeight: 900, fontSize: 15, color: '#0F172A' }}>
                           {diagnostic.totalDetecte} articles détectés
                         </span>
@@ -817,7 +817,7 @@ export default function BatchImportModal({
                 display: 'inline-flex', alignItems: 'center', gap: 8,
               }}
             >
-              {submitting ? 'Importation en cours...' : `Importer dans ma boutique (${nbArticlesSelectionnes}) 🚀`}
+              {submitting ? 'Importation en cours...' : `Importer dans ma boutique (${nbArticlesSelectionnes}) `}
             </button>
           </div>
         </div>

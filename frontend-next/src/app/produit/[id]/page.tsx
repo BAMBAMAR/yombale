@@ -76,17 +76,17 @@ const CAT_SLUGS: Record<string, string> = {
 }
 
 const MARCHAND_ICONS: Record<string, string> = {
-  'Jumia':       '🛒',
-  'Expat-Dakar': '📦',
-  'CoinAfrique': '🏪',
-  'Dakar-Deal':  '🛍',
+  'Jumia':       '',
+  'Expat-Dakar': '',
+  'CoinAfrique': '',
+  'Dakar-Deal':  '',
   'Soumari':     '🏬',
-  'Cdiscount':   '🛒',
+  'Cdiscount':   '',
 }
 
 function icon(nom: string | null) {
-  if (!nom) return '🏪'
-  return MARCHAND_ICONS[nom] ?? '🏪'
+  if (!nom) return ''
+  return MARCHAND_ICONS[nom] ?? ''
 }
 
 function parseSpecsFromName(name: string) {
@@ -156,7 +156,7 @@ function HistoriqueChart({ data }: { data: HistoriquePoint[] }) {
   return (
     <div className="historique-section">
       <div className="historique-header">
-        <h2 className="offres-titre">📈 Historique des prix <span>{pts.length} jours</span></h2>
+        <h2 className="offres-titre">Historique des prix <span>{pts.length} jours</span></h2>
         <span className={`historique-variation ${variation <= 0 ? 'historique-variation--good' : 'historique-variation--bad'}`}>
           {variation <= 0 ? '↓' : '↑'} {Math.abs(variation).toFixed(1)}%
         </span>
@@ -465,7 +465,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
                       className="produit-hero-cta"
                       aria-label={`Acheter au meilleur prix${best.marchand_nom ? ` chez ${best.marchand_nom}` : ''}`}
                     >
-                      <span>🛒 Acheter au meilleur prix</span>
+                      <span>Acheter au meilleur prix</span>
                       <span>→</span>
                     </a>
                   )}
@@ -587,13 +587,13 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
                   <div className="comp-verdict-grid">
                     {budgetBullets.length > 0 && (
                       <div className="comp-verdict-col">
-                        <div className="comp-verdict-subtitle">💰 Budget & Évolution</div>
+                        <div className="comp-verdict-subtitle">Budget & Évolution</div>
                         <ul className="comp-verdict-list">{budgetBullets}</ul>
                       </div>
                     )}
                     {techBullets.length > 0 && (
                       <div className="comp-verdict-col">
-                        <div className="comp-verdict-subtitle">⚡ Caractéristiques & Choix</div>
+                        <div className="comp-verdict-subtitle">Caractéristiques & Choix</div>
                         <ul className="comp-verdict-list">{techBullets}</ul>
                       </div>
                     )}
@@ -606,7 +606,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
                         <ExternalImg src={meilleurSimilaire.image_url} alt={meilleurSimilaire.nom} />
                       </div>
                       <div className="comp-verdict-alternative-info">
-                        <span className="comp-verdict-alternative-title">✨ Alternative moins chère conseillée</span>
+                        <span className="comp-verdict-alternative-title">Alternative moins chère conseillée</span>
                         Le modèle similaire <strong>{meilleurSimilaire.nom}</strong> est disponible à partir de <strong>{fcfa(meilleurSimilaire.px)}</strong>
                         {prixMin && (
                           <span> (soit <strong>-{Math.round((prixMin - meilleurSimilaire.px) / prixMin * 100)}%</strong> d'économie).</span>
@@ -630,7 +630,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
             {valides.length > 0 && (
               <div className="offres-section">
                 <h2 className="offres-titre">
-                  📊 Comparer les prix <span>{valides.length} offre{valides.length > 1 ? 's' : ''}</span>
+                  Comparer les prix <span>{valides.length} offre{valides.length > 1 ? 's' : ''}</span>
                   {nbExclues > 0 && (
                     <span className="offres-exclues" title="Prix trop éloignés de la fourchette principale, probablement d'autres modèles">
                       · {nbExclues} hors fourchette
@@ -646,7 +646,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
                       <div key={o.id} className={`offre-row-fiche ${bgClass}`}>
                         <div className="offre-icon">{icon(o.marchand_nom)}</div>
                         <div className="offre-info">
-                          {isBest && <span className="offre-badge-best">🏆 Meilleur prix</span>}
+                          {isBest && <span className="offre-badge-best">Meilleur prix</span>}
                           {o._suspect && <span className="offre-badge-suspect">⚠ Prix suspect</span>}
                           <p className="offre-marchand">
                             {o.site_url
@@ -725,7 +725,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
               )}
               {best?.url_achat && (
                 <a href={`/api/click/${best.id}`} target="_blank" rel="noopener noreferrer" className="sidebar-cta">
-                  🛒 Meilleur prix chez {best.marchand_nom ?? '—'}
+                  Meilleur prix chez {best.marchand_nom ?? '—'}
                 </a>
               )}
               {session ? (
@@ -736,7 +736,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
                 />
               ) : (
                 <Link href="/connexion" className="alerte-trigger-login">
-                  🔔 Alertes prix (connexion requise)
+                  Alertes prix (connexion requise)
                 </Link>
               )}
               {session && (
@@ -787,11 +787,11 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
 
           return (
             <section className="similaires-section">
-              <h2 className="similaires-titre">📊 Comparer les prix du marché</h2>
+              <h2 className="similaires-titre">Comparer les prix du marché</h2>
               <p className="similaires-sous-titre">
                 {courantEstMeilleur
-                  ? '✅ Ce produit a le meilleur prix de sa catégorie parmi les références comparées.'
-                  : `💡 Un produit similaire est disponible à partir de ${fcfa(meilleuxPrix!)} — voir ci-dessous.`}
+                  ? 'Ce produit a le meilleur prix de sa catégorie parmi les références comparées.'
+                  : `Un produit similaire est disponible à partir de ${fcfa(meilleuxPrix!)} — voir ci-dessous.`}
               </p>
               <table className="similaires-table">
                 <thead>
@@ -844,7 +844,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
                         <td>
                           <span className={`simil-prix-val${isBest ? ' simil-prix-val--best' : ''}`}>
                             {l.px ? fcfa(l.px) : '—'}
-                            {isBest && <span className="simil-best-ico"> 🏆</span>}
+                            {isBest && <span className="simil-best-ico"> </span>}
                           </span>
                         </td>
                         <td>

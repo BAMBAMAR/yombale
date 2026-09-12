@@ -36,7 +36,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   async function fetchCaissiers() {
     const cached = localStorage.getItem(`nopalou_offline_caissiers_${boutiqueId}`)
     if (cached) {
-      try { setCaissiers(JSON.parse(cached)) } catch(e) {}
+      try { setCaissiers(JSON.parse(cached)) } catch (e) { console.warn('[Nopalou:BoutiqueCaissiers:L39]', e); }
     }
     if (!cached) setLoading(true)
 
@@ -84,7 +84,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
       setNewPrenom('')
       setNewPin('')
       setNewRole('caissier')
-      setSuccessMsg('✅ Nouveau caissier ajouté avec succès !')
+      setSuccessMsg('Nouveau caissier ajouté avec succès !')
       setTimeout(() => setSuccessMsg(null), 4000)
       await fetchCaissiers()
     } catch (err: any) {
@@ -154,7 +154,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
       }
       setEditingId(null)
       setEditPin('')
-      setSuccessMsg('✅ Code PIN mis à jour avec succès !')
+      setSuccessMsg('Code PIN mis à jour avec succès !')
       setTimeout(() => setSuccessMsg(null), 4000)
       await fetchCaissiers()
     } catch (err: any) {
@@ -211,7 +211,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
           gap: 12,
           boxShadow: '0 2px 8px rgba(234, 88, 12, 0.06)'
         }}>
-          <span style={{ fontSize: 22 }}>🛡️</span>
+          <span style={{ fontSize: 22 }}></span>
           <div>
             <h4 style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 800, color: '#9a3412' }}>
               Action requise : Personnalisez les codes PIN de votre équipe
@@ -243,7 +243,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 18, flexShrink: 0
           }}>
-            📱
+            
           </div>
           <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#1e40af' }}>
             {t('caisse.terminalCashier')}
@@ -287,7 +287,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
                 className="npl-btn npl-btn-primary npl-btn-md"
                 style={{ flex: '1 1 180px', color: '#ffffff' }}
               >
-                <span>{copie ? '✅' : '📋'}</span>
+                <span>{copie ? '' : ''}</span>
                 <span>{copie ? t('account.copied') : t('account.copyLink')}</span>
               </button>
 
@@ -308,7 +308,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
 
       {error && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: 10, marginBottom: 20, fontSize: 13 }}>
-          ⚠️ {error}
+          {error}
         </div>
       )}
 
@@ -420,7 +420,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
           className="npl-btn npl-btn-primary npl-btn-md"
           style={{ width: '100%', color: '#ffffff', justifySelf: 'stretch' }}
         >
-          <span>{adding ? '⏳' : '🏪 +'}</span>
+          <span>{adding ? '' : '+'}</span>
           <span>{adding ? t('common.loading') : t('shop.addCashier')}</span>
         </button>
       </form>
@@ -469,7 +469,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
                     </span>
                     {caissier.role === 'superviseur' && (
                       <span className="npl-badge npl-badge-warning" style={{ fontSize: 11 }}>
-                        👑 {t('shop.roleCashierSupervisor')}
+                        {t('shop.roleCashierSupervisor')}
                       </span>
                     )}
                     {isTrivial && (
@@ -477,7 +477,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
                         fontSize: 10.5, fontWeight: 800, color: '#dc2626', background: '#fef2f2',
                         padding: '2px 8px', borderRadius: 6, border: '1px solid #fecaca'
                       }}>
-                        ⚠️ PIN d&apos;usine à changer
+                        PIN d&apos;usine à changer
                       </span>
                     )}
                   </div>
@@ -526,7 +526,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
                           onClick={() => { setEditingId(caissier.id); setEditPin(''); setShowEditPin(false); }}
                           style={{ background: 'none', border: 'none', color: '#ea580c', textDecoration: 'underline', cursor: 'pointer', fontSize: 11.5, fontWeight: 700, padding: '0 4px' }}
                         >
-                          ✏️ Modifier le PIN
+                          Modifier le PIN
                         </button>
                       </div>
                     )}
@@ -548,7 +548,7 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
                   className="npl-btn npl-btn-danger npl-btn-sm"
                   title="Supprimer ce caissier"
                 >
-                  🗑️
+                  
                 </button>
               </div>
             </div>

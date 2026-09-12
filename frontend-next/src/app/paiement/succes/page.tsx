@@ -133,7 +133,7 @@ export default function PaiementSuccesPage({
     <div className="page-container" style={{ paddingTop: '4rem', maxWidth: 560 }}>
       <ConfirmerSuccesEffect reference={ref} />
       <div className="paiement-succes-page">
-        <div className="paiement-succes-icon">✅</div>
+        <div className="paiement-succes-icon"></div>
         <h1 className="paiement-succes-titre">Paiement confirmé{methode} !</h1>
         <p className="paiement-succes-desc">{desc}</p>
         {ref && (

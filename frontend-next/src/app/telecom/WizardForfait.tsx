@@ -23,8 +23,8 @@ interface Props {
 
 const PROFILS = [
   { val: 'internet', label: '📶 Internet', desc: 'Réseaux sociaux, streaming, navigation' },
-  { val: 'appels',  label: '📞 Appels',   desc: 'Appels nationaux, familiaux' },
-  { val: 'mixte',   label: '⚡ Mixte',    desc: 'Internet + appels équilibrés' },
+  { val: 'appels',  label: 'Appels',   desc: 'Appels nationaux, familiaux' },
+  { val: 'mixte',   label: 'Mixte',    desc: 'Internet + appels équilibrés' },
 ]
 
 const OP_COLORS: Record<string, string> = {
@@ -91,7 +91,7 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
 
         {step === 1 ? (
           <>
-            <h2 className="wizard-titre">🎯 Trouver mon forfait</h2>
+            <h2 className="wizard-titre">Trouver mon forfait</h2>
             <p className="wizard-sous-titre">Répondez à 2 questions pour voir les meilleures offres pour vous.</p>
 
             {/* Budget */}
@@ -137,7 +137,7 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
               <label className="wizard-label">Durée de validité</label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {[
-                  { val: '',   label: '📆 Peu importe' },
+                  { val: '',   label: 'Peu importe' },
                   { val: '1',  label: '1 jour' },
                   { val: '7',  label: '7 jours' },
                   { val: '30', label: '30 jours' },
@@ -165,7 +165,7 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
                   className={`budget-pill${operateur === '' ? ' active' : ''}`}
                   style={{ fontSize: 13 }}
                 >
-                  📡 Peu importe
+                  Peu importe
                 </button>
                 {operateurs.map(op => (
                   <button
@@ -194,7 +194,7 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
         ) : (
           <>
             <div className="wizard-results-header">
-              <h2 className="wizard-titre">✨ Meilleurs forfaits pour vous</h2>
+              <h2 className="wizard-titre">Meilleurs forfaits pour vous</h2>
               <p className="wizard-sous-titre">
                 Budget : <strong>{fcfa(budget)}</strong> · Profil : <strong>{PROFILS.find(p => p.val === profil)?.label}</strong>
                 {operateur && <> · Opérateur : <strong>{operateur}</strong></>}
@@ -215,15 +215,15 @@ export default function WizardForfait({ onClose, operateurs }: Props) {
                   const isTop = i === 0
                   return (
                     <div key={f.id} className={`wizard-result-card${isTop ? ' wizard-result-card--top' : ''}`}>
-                      {isTop && <span className="wizard-recommande-badge">🏆 Meilleur rapport qualité/prix</span>}
+                      {isTop && <span className="wizard-recommande-badge">Meilleur rapport qualité/prix</span>}
                       <div className="wizard-result-header">
                         <span className="wizard-result-op" style={{ color }}>{f.operateur}</span>
                         <span className="wizard-result-nom">{f.nom}</span>
                       </div>
                       <div className="wizard-result-specs">
                         {f.data_mo != null && <span>📶 {formatData(f.data_mo)}</span>}
-                        {f.minutes != null && <span>📞 {f.minutes === -1 ? '∞' : `${f.minutes} min`}</span>}
-                        {f.validite_jours != null && <span>📅 {f.validite_jours}j</span>}
+                        {f.minutes != null && <span>{f.minutes === -1 ? '∞' : `${f.minutes} min`}</span>}
+                        {f.validite_jours != null && <span>{f.validite_jours}j</span>}
                       </div>
                       <div className="wizard-result-footer">
                         <span className="wizard-result-prix">{fcfa(f.prix)}</span>

@@ -60,7 +60,7 @@ export default function ShowcaseTabs({
               { m: 1, label: '1 mois (30j offerts)', badge: null },
               { m: 3, label: '3 mois', badge: '-10%' },
               { m: 6, label: '6 mois', badge: '-15%' },
-              { m: 12, label: '12 mois', badge: '🔥 -25% (3m offerts)' },
+              { m: 12, label: '12 mois', badge: '-25% (3m offerts)' },
             ].map(d => (
               <button
                 key={d.m}
@@ -97,7 +97,7 @@ export default function ShowcaseTabs({
         }}>
           <div style={{ textAlign: 'center', marginBottom: 14 }}>
             <span style={{ fontSize: 12, fontWeight: 900, color: '#9a3412', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              ⚡ Chaîne de Valeur Complète Vendeurs &amp; Client
+              Chaîne de Valeur Complète Vendeurs &amp; Client
             </span>
             <h3 style={{ margin: '4px 0 0', fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
               De la Recherche du Produit jusqu&apos;à la Remise en Main Propre par le Livreur
@@ -113,19 +113,19 @@ export default function ShowcaseTabs({
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Comparateur &amp; WhatsApp Bot</div>
             </div>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>🛒 2. Commande</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>2. Commande</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Panier Web, WhatsApp &amp; POS</div>
             </div>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>💳 3. Paiement</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>3. Paiement</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Wave, Cash, Crédit ou Manuel</div>
             </div>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>📦 4. Préparation</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>4. Préparation</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Gestion des statuts de stock</div>
             </div>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>🚚 5. Livraison</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>5. Livraison</div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Suivi &amp; Alerte client WhatsApp</div>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function ShowcaseTabs({
             boxShadow: '0 4px 16px rgba(0,0,0,0.03)', position: 'relative'
           }}>
             <div style={{ display: 'inline-block', background: '#f1f5f9', color: '#334155', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800, marginBottom: 12, width: 'fit-content' }}>
-              ⚡ Débutant &amp; Vente WhatsApp
+              Débutant &amp; Vente WhatsApp
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Boutique Taf Taf</h3>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b', lineHeight: 1.4 }}>
@@ -156,7 +156,7 @@ export default function ShowcaseTabs({
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
-                🎁 1er mois 100% GRATUIT
+                1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
                 <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
@@ -168,19 +168,19 @@ export default function ShowcaseTabs({
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>🌟 Baguette Magique (Import Ali/SHEIN) :</strong> Recopie auto titre, prix &amp; photos en 1 clic</span>
+                <span><strong>Baguette Magique (Import Ali/SHEIN) :</strong> Recopie auto titre, prix &amp; photos en 1 clic</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📢 Produit → Annonce en 1 Clic :</strong> Diffusion directe en Petite Annonce sponsorisée</span>
+                <span><strong>Produit → Annonce en 1 Clic :</strong> Diffusion directe en Petite Annonce sponsorisée</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📱 Catalogue Web &amp; Panier WhatsApp :</strong> Commandes pré-remplies dans votre WhatsApp</span>
+                <span><strong>Catalogue Web &amp; Panier WhatsApp :</strong> Commandes pré-remplies dans votre WhatsApp</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📦 Produits &amp; Photos Illimités :</strong> Gestion facile des stocks &amp; prix barrés</span>
+                <span><strong>Produits &amp; Photos Illimités :</strong> Gestion facile des stocks &amp; prix barrés</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
@@ -188,7 +188,7 @@ export default function ShowcaseTabs({
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>🚚 Suivi Commande &amp; Livraison WhatsApp :</strong> Alerte automatique du client à l&apos;expédition</span>
+                <span><strong>Suivi Commande &amp; Livraison WhatsApp :</strong> Alerte automatique du client à l&apos;expédition</span>
               </div>
             </div>
 
@@ -215,11 +215,11 @@ export default function ShowcaseTabs({
               padding: '4px 14px', borderRadius: 20, fontSize: 11, fontWeight: 900, textTransform: 'uppercase',
               boxShadow: '0 4px 10px rgba(199,91,0,0.3)'
             }}>
-              ⭐ Recommandé Magasins
+              Recommandé Magasins
             </div>
 
             <div style={{ display: 'inline-block', background: '#fff7ed', color: '#C75B00', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800, marginBottom: 12, width: 'fit-content' }}>
-              🛒 Caisse POS &amp; Gestion Magasin
+              Caisse POS &amp; Gestion Magasin
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Vendeur Pro</h3>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b', lineHeight: 1.4 }}>
@@ -234,7 +234,7 @@ export default function ShowcaseTabs({
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
-                🎁 1er mois 100% GRATUIT
+                1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
                 <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
@@ -250,15 +250,15 @@ export default function ShowcaseTabs({
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>🛒 Caisse POS Enregistreuse Tactile :</strong> Sur smartphone, tablette ou ordinateur PC</span>
+                <span><strong>Caisse POS Enregistreuse Tactile :</strong> Sur smartphone, tablette ou ordinateur PC</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📷 Scan Codes-Barres EAN-13 par Caméra :</strong> Scan 1-clic avec l&apos;appareil photo</span>
+                <span><strong>Scan Codes-Barres EAN-13 par Caméra :</strong> Scan 1-clic avec l&apos;appareil photo</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>🏷️ Édition &amp; Impression Stickers (50x30mm) :</strong> Imprimez vos codes-barres étiquettes</span>
+                <span><strong>Édition &amp; Impression Stickers (50x30mm) :</strong> Imprimez vos codes-barres étiquettes</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
@@ -266,15 +266,15 @@ export default function ShowcaseTabs({
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📄 Factures &amp; Devis PDF Pro :</strong> Envoi 1-clic direct sur WhatsApp avec logo</span>
+                <span><strong>Factures &amp; Devis PDF Pro :</strong> Envoi 1-clic direct sur WhatsApp avec logo</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📦 Suivi &amp; Préparation de Commande :</strong> Statuts en direct (Attente → Préparation → Prêt → En Livraison)</span>
+                <span><strong>Suivi &amp; Préparation de Commande :</strong> Statuts en direct (Attente → Préparation → Prêt → En Livraison)</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>⭐ Badge Vendeur Pro Verified :</strong> Placement prioritaire dans l&apos;annuaire</span>
+                <span><strong>Badge Vendeur Pro Verified :</strong> Placement prioritaire dans l&apos;annuaire</span>
               </div>
             </div>
 
@@ -297,7 +297,7 @@ export default function ShowcaseTabs({
             boxShadow: '0 4px 16px rgba(0,0,0,0.03)', position: 'relative'
           }}>
             <div style={{ display: 'inline-block', background: '#f8fafc', color: '#0f172a', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 800, marginBottom: 12, width: 'fit-content', border: '1px solid #e2e8f0' }}>
-              💼 Équipes &amp; Multi-Caissiers
+              Équipes &amp; Multi-Caissiers
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Business VIP</h3>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b', lineHeight: 1.4 }}>
@@ -312,7 +312,7 @@ export default function ShowcaseTabs({
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#64748b' }}>FCFA / mois</span>
               </div>
               <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 800, color: '#15803d' }}>
-                🎁 1er mois 100% GRATUIT
+                1er mois 100% GRATUIT
               </p>
               {duree > 1 && (
                 <p style={{ margin: '4px 0 0', fontSize: 11, fontWeight: 700, color: '#9a3412' }}>
@@ -328,23 +328,23 @@ export default function ShowcaseTabs({
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>👥 Multi-Caissiers &amp; Droits Équipe :</strong> PIN caissiers, sessions Z &amp; gestion des vendeurs</span>
+                <span><strong>Multi-Caissiers &amp; Droits Équipe :</strong> PIN caissiers, sessions Z &amp; gestion des vendeurs</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>🏪 Multi-Magasins &amp; Transferts :</strong> Gestion dépôts multiples &amp; mouvements stock</span>
+                <span><strong>Multi-Magasins &amp; Transferts :</strong> Gestion dépôts multiples &amp; mouvements stock</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>🔌 Portail Développeur API &amp; Webhooks :</strong> Clés API REST &amp; intégration sur mesure</span>
+                <span><strong>Portail Développeur API &amp; Webhooks :</strong> Clés API REST &amp; intégration sur mesure</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📊 Analytics CA &amp; Marges Nettes :</strong> Calcul des bénéfices, dettes &amp; classement vendeurs</span>
+                <span><strong>Analytics CA &amp; Marges Nettes :</strong> Calcul des bénéfices, dettes &amp; classement vendeurs</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>🤖 WhatsApp Automation :</strong> Relances automatiques des paniers abandonnés</span>
+                <span><strong>WhatsApp Automation :</strong> Relances automatiques des paniers abandonnés</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
@@ -352,7 +352,7 @@ export default function ShowcaseTabs({
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>⚡ Support WhatsApp VIP 7j/7 :</strong> Ligne directe avec un conseiller technique</span>
+                <span><strong>Support WhatsApp VIP 7j/7 :</strong> Ligne directe avec un conseiller technique</span>
               </div>
             </div>
 
@@ -381,7 +381,7 @@ export default function ShowcaseTabs({
               background: '#25D366', color: '#0f172a', fontSize: 12, fontWeight: 900,
               padding: '4px 14px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 6
             }}>
-              💬 NOPALOU × WHATSAPP ECOSYSTEM
+              NOPALOU × WHATSAPP ECOSYSTEM
             </span>
             <h3 style={{ fontSize: 'clamp(20px, 3.5vw, 28px)', fontWeight: 900, margin: '10px 0 6px', color: '#fff' }}>
               Tout ce que vous pouvez faire avec <span style={{ color: '#25D366' }}>WhatsApp</span> sur Nopalou
@@ -396,38 +396,38 @@ export default function ShowcaseTabs({
             {/* Blocs Acheteurs */}
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800, color: '#25D366', marginBottom: 12 }}>
-                <span>🛒 Pour les Acheteurs</span>
+                <span>Pour les Acheteurs</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li>🛒 <strong>Commande WhatsApp 1-Clic :</strong> Votre panier web est converti en bon de commande WhatsApp structuré.</li>
-                <li>🔑 <strong>Connexion OTP sans mot de passe :</strong> Recevez un code de validation sécurisé sur votre WhatsApp.</li>
-                <li>🤖 <strong>Assistant Bot Nopalou (`+221 70 871 79 42`) :</strong> Envoyez le nom d&apos;un produit sur WhatsApp et recevez le comparatif des prix de Dakar.</li>
-                <li>🔔 <strong>Alertes Prix Automatiques :</strong> Recevez une alerte directe sur WhatsApp dès qu&apos;un article baisse de prix.</li>
+                <li><strong>Commande WhatsApp 1-Clic :</strong> Votre panier web est converti en bon de commande WhatsApp structuré.</li>
+                <li><strong>Connexion OTP sans mot de passe :</strong> Recevez un code de validation sécurisé sur votre WhatsApp.</li>
+                <li><strong>Assistant Bot Nopalou (`+221 70 871 79 42`) :</strong> Envoyez le nom d&apos;un produit sur WhatsApp et recevez le comparatif des prix de Dakar.</li>
+                <li><strong>Alertes Prix Automatiques :</strong> Recevez une alerte directe sur WhatsApp dès qu&apos;un article baisse de prix.</li>
               </ul>
             </div>
 
             {/* Blocs Commerçants */}
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800, color: '#25D366', marginBottom: 12 }}>
-                <span>🏪 Pour les Commerçants</span>
+                <span>Pour les Commerçants</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li>📲 <strong>Alertes Commande Instantanées :</strong> Recevez chaque commande client pré-remplie directement sur votre WhatsApp.</li>
-                <li>💬 <strong>Relance Impayés en 1 Clic :</strong> Depuis la Caisse POS, relancez les clients débiteurs avec leur solde exact par message.</li>
-                <li>📄 <strong>Envoi Factures &amp; Devis PDF :</strong> Transmettez des factures professionnelles avec votre logo directement sur WhatsApp.</li>
-                <li>⚡ <strong>Support Technologique VIP 7j/7 :</strong> Assistance prioritaire directe avec l&apos;équipe technique Nopalou.</li>
+                <li><strong>Alertes Commande Instantanées :</strong> Recevez chaque commande client pré-remplie directement sur votre WhatsApp.</li>
+                <li><strong>Relance Impayés en 1 Clic :</strong> Depuis la Caisse POS, relancez les clients débiteurs avec leur solde exact par message.</li>
+                <li><strong>Envoi Factures &amp; Devis PDF :</strong> Transmettez des factures professionnelles avec votre logo directement sur WhatsApp.</li>
+                <li><strong>Support Technologique VIP 7j/7 :</strong> Assistance prioritaire directe avec l&apos;équipe technique Nopalou.</li>
               </ul>
             </div>
 
             {/* Blocs Apporteurs */}
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800, color: '#25D366', marginBottom: 12 }}>
-                <span>💼 Pour les Apporteurs &amp; Parrains</span>
+                <span>Pour les Apporteurs &amp; Parrains</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <li>🔗 <strong>Partage Statut &amp; Groupes WhatsApp :</strong> Diffusez votre lien de parrainage en 1 clic à vos contacts commerçants.</li>
-                <li>💰 <strong>Notifications de Commission :</strong> Soyez notifié sur WhatsApp dès qu&apos;une boutique parrainée s&apos;abonne.</li>
-                <li>📲 <strong>Demande de Retrait Mobile Money :</strong> Demandez vos paiements de commission directement par messagerie.</li>
+                <li><strong>Notifications de Commission :</strong> Soyez notifié sur WhatsApp dès qu&apos;une boutique parrainée s&apos;abonne.</li>
+                <li><strong>Demande de Retrait Mobile Money :</strong> Demandez vos paiements de commission directement par messagerie.</li>
               </ul>
             </div>
 
@@ -436,7 +436,7 @@ export default function ShowcaseTabs({
 
         {/* Note de réassurance */}
         <div style={{ textAlign: 'center', fontSize: 12, color: '#64748b', borderTop: '1px solid #f1f5f9', paddingTop: 20 }}>
-          🔒 Paiement sécurisé via Wave ou Manuel · Sans engagement de durée · Annulation en 1 clic
+          Paiement sécurisé via Wave ou Manuel · Sans engagement de durée · Annulation en 1 clic
         </div>
       </div>
     </section>

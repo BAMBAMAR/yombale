@@ -173,7 +173,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
               whiteSpace: 'nowrap',
             }}
           >
-            <span>💬</span> <span>WhatsApp</span>
+            <span></span> <span>WhatsApp</span>
           </button>
           <button
             type="button"
@@ -198,7 +198,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
               whiteSpace: 'nowrap',
             }}
           >
-            <span>📧</span> <span>Email</span>
+            <span></span> <span>Email</span>
           </button>
           <button
             type="button"
@@ -223,7 +223,7 @@ export default function FormAlerte({ userId }: FormAlerteProps) {
               whiteSpace: 'nowrap',
             }}
           >
-            <span>🔔</span> <span>{t('account.bothChannels') || 'Les deux'}</span>
+            <span></span> <span>{t('account.bothChannels') || 'Les deux'}</span>
           </button>
         </div>
       </div>

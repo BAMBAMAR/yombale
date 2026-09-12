@@ -52,7 +52,7 @@ export default async function PayerSponsoringBoutiquePage({ params }: { params: 
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>🏪</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Boutique introuvable.</p>
           <Link href="/boutique" className="budget-pill active" style={{ marginTop: 8 }}>
             Mes boutiques
@@ -82,7 +82,7 @@ export default async function PayerSponsoringBoutiquePage({ params }: { params: 
           { label: 'Ma boutique', href: '/boutique' },
           { label: 'Mettre en avant' }
         ]}
-        emoji="⭐"
+        emoji=""
         titre="Mettre en avant votre boutique"
         compteur={`Mettez votre boutique "${nomCourt}" en vedette pour 30 jours (Apparaîtra dans la section Boutiques Pro).`}
       />

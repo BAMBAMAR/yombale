@@ -236,7 +236,7 @@ export default function AdminSystemClient({
         </button>
       </div>
 
-      {/* 📊 BLOC SANTÉ SERVEUR & SERVICES */}
+      {/* BLOC SANTÉ SERVEUR & SERVICES */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 28 }}>
         <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -244,7 +244,7 @@ export default function AdminSystemClient({
             <Database size={18} color="#0284c7" />
           </div>
           <div style={{ fontSize: 22, fontWeight: 800, color: data?.services?.database?.status === 'ok' ? '#16a34a' : '#dc2626' }}>
-            {data?.services?.database?.status === 'ok' ? '🟢 Opérationnelle' : '🔴 Dégradée'}
+            {data?.services?.database?.status === 'ok' ? 'Opérationnelle' : 'Dégradée'}
           </div>
           <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
             Latence : <strong>{data?.services?.database?.latencyMs ?? 0} ms</strong>
@@ -296,7 +296,7 @@ export default function AdminSystemClient({
         </div>
       </div>
 
-      {/* 📥 BLOC EXPORTS CSV / EXCEL */}
+      {/* BLOC EXPORTS CSV / EXCEL */}
       <div style={{ background: '#fff', borderRadius: 14, padding: 22, border: '1px solid #e2e8f0', marginBottom: 28, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
         <h2 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
           <FileSpreadsheet size={18} color="#16a34a" /> Centre d'Exportation Données (CSV / Excel)
@@ -322,7 +322,7 @@ export default function AdminSystemClient({
               justifyContent: 'space-between',
             }}
           >
-            <span>👥 Utilisateurs ({data?.counts?.utilisateurs || 0})</span>
+            <span>Utilisateurs ({data?.counts?.utilisateurs || 0})</span>
             <Download size={15} />
           </button>
 
@@ -342,7 +342,7 @@ export default function AdminSystemClient({
               justifyContent: 'space-between',
             }}
           >
-            <span>🏪 Boutiques ({data?.counts?.boutiques || 0})</span>
+            <span>Boutiques ({data?.counts?.boutiques || 0})</span>
             <Download size={15} />
           </button>
 
@@ -362,7 +362,7 @@ export default function AdminSystemClient({
               justifyContent: 'space-between',
             }}
           >
-            <span>🧾 Ventes POS ({data?.counts?.ventes_pos || 0})</span>
+            <span>Ventes POS ({data?.counts?.ventes_pos || 0})</span>
             <Download size={15} />
           </button>
 
@@ -382,7 +382,7 @@ export default function AdminSystemClient({
               justifyContent: 'space-between',
             }}
           >
-            <span>🛍️ Commandes ({data?.counts?.commandes || 0})</span>
+            <span>Commandes ({data?.counts?.commandes || 0})</span>
             <Download size={15} />
           </button>
 
@@ -402,7 +402,7 @@ export default function AdminSystemClient({
               justifyContent: 'space-between',
             }}
           >
-            <span>💎 Abonnements ({data?.counts?.abonnements_actifs || 0})</span>
+            <span>Abonnements ({data?.counts?.abonnements_actifs || 0})</span>
             <Download size={15} />
           </button>
 
@@ -422,13 +422,13 @@ export default function AdminSystemClient({
               justifyContent: 'space-between',
             }}
           >
-            <span>🎯 Leads Prospection</span>
+            <span>Leads Prospection</span>
             <Download size={15} />
           </button>
         </div>
       </div>
 
-      {/* 🛠️ BLOCS MAINTENANCE & BANNIÈRE SYSTÈME */}
+      {/* BLOCS MAINTENANCE & BANNIÈRE SYSTÈME */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
         {/* Mode Maintenance */}
         <div style={{ background: '#fff', borderRadius: 14, padding: 22, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
@@ -449,7 +449,7 @@ export default function AdminSystemClient({
                 style={{ width: 18, height: 18, cursor: 'pointer' }}
               />
               <label htmlFor="maintCheck" style={{ fontSize: 14, fontWeight: 700, color: maintActive ? '#dc2626' : '#334155', cursor: 'pointer' }}>
-                {maintActive ? '🔴 Mode Maintenance ACTIF' : '⚪ Mode Maintenance DÉSACTIVÉ'}
+                {maintActive ? 'Mode Maintenance ACTIF' : '⚪ Mode Maintenance DÉSACTIVÉ'}
               </label>
             </div>
 
@@ -513,7 +513,7 @@ export default function AdminSystemClient({
               </label>
               <input
                 type="text"
-                placeholder="Ex: 🎉 Offre spéciale Tabaski : 1er mois offert sur tous les forfaits !"
+                placeholder="Ex: Offre spéciale Tabaski : 1er mois offert sur tous les forfaits !"
                 value={bannerText}
                 onChange={e => setBannerText(e.target.value)}
                 style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 13 }}
@@ -530,8 +530,8 @@ export default function AdminSystemClient({
                 style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 13 }}
               >
                 <option value="info">ℹ️ Information (Bleu)</option>
-                <option value="success">🎉 Succès / Promotion (Vert)</option>
-                <option value="warning">⚠️ Avertissement (Orange)</option>
+                <option value="success">Succès / Promotion (Vert)</option>
+                <option value="warning">Avertissement (Orange)</option>
                 <option value="critical">🚨 Urgent / Alerte (Rouge)</option>
               </select>
             </div>

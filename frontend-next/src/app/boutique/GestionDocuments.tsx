@@ -79,11 +79,11 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     const cacheKeyProds = `nopalou_offline_prods_${boutiqueId}`
 
     const cDocs = localStorage.getItem(cacheKeyDocs)
-    if (cDocs) { try { setDocuments(JSON.parse(cDocs)) } catch(e) {} }
+    if (cDocs) { try { setDocuments(JSON.parse(cDocs)) } catch (e) { console.warn('[Nopalou:GestionDocuments:L82]', e); } }
     const cClients = localStorage.getItem(cacheKeyClients)
-    if (cClients) { try { setClients(JSON.parse(cClients)) } catch(e) {} }
+    if (cClients) { try { setClients(JSON.parse(cClients)) } catch (e) { console.warn('[Nopalou:GestionDocuments:L84]', e); } }
     const cProds = localStorage.getItem(cacheKeyProds)
-    if (cProds) { try { setProduits(JSON.parse(cProds)) } catch(e) {} }
+    if (cProds) { try { setProduits(JSON.parse(cProds)) } catch (e) { console.warn('[Nopalou:GestionDocuments:L86]', e); } }
 
     if (!cDocs) setLoading(true)
 
@@ -149,7 +149,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       return prev
     })
     jouerBipEtVibrer('succes')
-    afficherToast(`✅ ${prod.nom} ajouté`)
+    afficherToast(`${prod.nom} ajouté`)
   }
 
   const handleDiminuerProduitCatalogue = (prodId: string) => {
@@ -192,7 +192,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     ])
 
     jouerBipEtVibrer('succes')
-    afficherToast(`✅ Article libre "${libelle}" ajouté`)
+    afficherToast(`Article libre "${libelle}" ajouté`)
     setLibelleLibreInput('')
     setPrixLibreInput('')
     setQteLibreInput(1)
@@ -225,7 +225,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   // ── Scanner EAN Caméra (Html5Qrcode) ─────────────────────────────────────
   const demarrerScannerEan = async () => {
     setModalScannerEan(true)
-    setScannerEanStatus('📷 Scanner EAN prêt (Mode Continu)…')
+    setScannerEanStatus('Scanner EAN prêt (Mode Continu)…')
     dernierScanDocRef.current = { code: '', time: 0 }
 
     setTimeout(async () => {
@@ -235,7 +235,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
           try {
             await html5ScannerRef.current.stop()
             html5ScannerRef.current.clear()
-          } catch (e) {}
+          } catch (e) { console.warn('[Nopalou:GestionDocuments:L238]', e); }
           html5ScannerRef.current = null
         }
 
@@ -253,17 +253,17 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
 
         try {
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
-          setScannerEanStatus('📷 Caméra active ! Placez le code-barres (EAN) dans le cadre.')
+          setScannerEanStatus('Caméra active ! Placez le code-barres (EAN) dans le cadre.')
         } catch (errEnv) {
           try {
             await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-            setScannerEanStatus('📷 Caméra active ! Placez le code-barres dans le cadre.')
+            setScannerEanStatus('Caméra active ! Placez le code-barres dans le cadre.')
           } catch (errUser) {
-            setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+            setScannerEanStatus('Impossible d’accéder à la caméra.')
           }
         }
       } catch (err) {
-        setScannerEanStatus('❌ Impossible d’accéder à la caméra.')
+        setScannerEanStatus('Impossible d’accéder à la caméra.')
       }
     }, 200)
   }
@@ -273,7 +273,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
       try {
         html5ScannerRef.current.stop()
         html5ScannerRef.current.clear()
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:GestionDocuments:L276]', e); }
       html5ScannerRef.current = null
     }
     setModalScannerEan(false)
@@ -299,13 +299,13 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     if (prodTrouve) {
       handleAjouterProduitCatalogue(prodTrouve, 1)
       jouerBipEtVibrer('succes')
-      setScannerEanStatus(`✅ +1 "${prodTrouve.nom}" (${fcfa(prodTrouve.prix_promo || prodTrouve.prix)})`)
+      setScannerEanStatus(`+1 "${prodTrouve.nom}" (${fcfa(prodTrouve.prix_promo || prodTrouve.prix)})`)
       if (!scanContinu) {
         setTimeout(() => arreterScannerEan(), 600)
       }
     } else {
       jouerBipEtVibrer('alerte')
-      setScannerEanStatus(`⚠️ Code "${barcodeStr}" inconnu dans le catalogue.`)
+      setScannerEanStatus(`Code "${barcodeStr}" inconnu dans le catalogue.`)
       // Proposer d'ajouter en libre
       if (confirm(`Le code-barres "${barcodeStr}" n'existe pas dans votre catalogue. Voulez-vous l'ajouter comme article libre ?`)) {
         setLibelleLibreInput(`Article EAN-${barcodeStr}`)
@@ -320,7 +320,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
     setModalScannerNom(true)
     setOcrDetections([])
     setImageFligeeDocNom(null)
-    setStatusScannerNom('📷 Cadrez le nom sur l’emballage du produit…')
+    setStatusScannerNom('Cadrez le nom sur l’emballage du produit…')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -331,7 +331,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
         await videoNomRef.current.play().catch(() => {})
       }
     } catch (e) {
-      setStatusScannerNom('❌ Impossible d’accéder à la caméra.')
+      setStatusScannerNom('Impossible d’accéder à la caméra.')
     }
   }
 
@@ -347,7 +347,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
   const capturerNomOCR = async () => {
     if (!videoNomRef.current) return
     setOcrLoading(true)
-    setStatusScannerNom('🔍 Analyse OCR en cours…')
+    setStatusScannerNom('Analyse OCR en cours…')
 
     const imageBase64 = capturerZoneViseurExacte(videoNomRef.current, {
       boxTopRatio: 0.15,
@@ -358,7 +358,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
 
     if (!imageBase64) {
       setOcrLoading(false)
-      setStatusScannerNom('❌ Échec de la capture d’image.')
+      setStatusScannerNom('Échec de la capture d’image.')
       return
     }
 
@@ -380,15 +380,15 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
           setOcrDetections(data.detections)
         }
         jouerBipEtVibrer('succes')
-        setStatusScannerNom(`✅ Nom capturé : "${data.nom}"`)
+        setStatusScannerNom(`Nom capturé : "${data.nom}"`)
       } else {
         jouerBipEtVibrer('alerte')
-        setStatusScannerNom(`⚠️ ${data.error || 'Aucun nom lisible détecté. Réessayez avec un meilleur éclairage.'}`)
+        setStatusScannerNom(`${data.error || 'Aucun nom lisible détecté. Réessayez avec un meilleur éclairage.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
       jouerBipEtVibrer('alerte')
-      setStatusScannerNom('❌ Erreur de lecture OCR. Réessayez.')
+      setStatusScannerNom('Erreur de lecture OCR. Réessayez.')
     }
   }
 
@@ -587,15 +587,15 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             type="text"
             value={rechercheDoc}
             onChange={e => setRechercheDoc(e.target.value)}
-            placeholder={`🔍 ${t('common.search')}...`}
+            placeholder={`${t('common.search')}...`}
             style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, minWidth: 200, flex: 1, outline: 'none' }}
           />
           <div ref={docFilterRef} className="nopalou-scroll-tabs horizontal-scroll-fade" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {[
               { key: 'tous', label: `📁 ${t('shop.filterDocAll')}` },
-              { key: 'facture', label: `🧾 ${t('shop.filterDocInvoices')}` },
+              { key: 'facture', label: `${t('shop.filterDocInvoices')}` },
               { key: 'devis', label: `📝 ${t('shop.filterDocQuotes')}` },
-              { key: 'proforma', label: `📋 ${t('shop.filterDocProformas')}` },
+              { key: 'proforma', label: `${t('shop.filterDocProformas')}` },
             ].map(item => (
               <button
                 key={item.key}
@@ -621,9 +621,9 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff', outline: 'none' }}
           >
             <option value="tous">{t('common.all')}</option>
-            <option value="brouillon">⏳ {t('shop.statusDraft')}</option>
-            <option value="valide">✅ {t('shop.statusValidated')}</option>
-            <option value="paye">💵 {t('shop.statusPaid')}</option>
+            <option value="brouillon">{t('shop.statusDraft')}</option>
+            <option value="valide">{t('shop.statusValidated')}</option>
+            <option value="paye">{t('shop.statusPaid')}</option>
             <option value="envoye">📩 {t('shop.statusShipped')}</option>
           </select>
         </div>
@@ -631,7 +631,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
           onClick={() => { setDocumentEnEdition(null); resetForm(); setModalOuvert(true); }}
           style={{ padding: '8px 16px', borderRadius: 8, background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
         >
-          ➕ {t('shop.newDocumentBtn')}
+          {t('shop.newDocumentBtn')}
         </button>
       </div>
 
@@ -733,7 +733,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#0f172a' }}>
-                  {documentEnEdition ? `✏️ ${t('shop.editDocumentModalTitle')} ${documentEnEdition.reference}` : t('shop.newDocumentModalTitle')}
+                  {documentEnEdition ? `${t('shop.editDocumentModalTitle')} ${documentEnEdition.reference}` : t('shop.newDocumentModalTitle')}
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: 12.5, color: '#64748b' }}>
                   {t('shop.docModalSubtitle')}
@@ -1407,7 +1407,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                   cursor: ocrLoading ? 'not-allowed' : 'pointer'
                 }}
               >
-                {ocrLoading ? t('shop.ocrAnalyzingDoc') : (imageFligeeDocNom ? '🔄 Reprendre la photo' : t('shop.extractNameDocBtn'))}
+                {ocrLoading ? t('shop.ocrAnalyzingDoc') : (imageFligeeDocNom ? 'Reprendre la photo' : t('shop.extractNameDocBtn'))}
               </button>
               {imageFligeeDocNom && (
                 <button
@@ -1415,7 +1415,7 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                   onClick={arreterScannerNom}
                   style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
                 >
-                  ✅ Valider
+                  Valider
                 </button>
               )}
             </div>

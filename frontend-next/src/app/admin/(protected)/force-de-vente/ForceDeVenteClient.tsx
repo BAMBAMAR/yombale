@@ -56,7 +56,7 @@ export default function ForceDeVenteClient({
 
   const copyToClipboard = (txt: string, label: string) => {
     navigator.clipboard.writeText(txt)
-    showToast(`✅ ${label} copié dans le presse-papier !`)
+    showToast(`${label} copié dans le presse-papier !`)
   }
 
   // Calculs Rémunération Simulateur
@@ -119,7 +119,7 @@ export default function ForceDeVenteClient({
     },
     tech: {
       label: 'Téléphonie, High-Tech & Accessoires',
-      emoji: '📱',
+      emoji: '',
       sans_app: {
         pitch: `« Bonjour chef ! Dans la téléphonie, les prix changent vite et la concurrence est rude à Dakar. Avec Nopalou, votre boutique est visible sur le comparateur N°1 au Sénégal, vous scannez les codes-barres par caméra et vous gérez vos garanties et dettes clients sans carnet papier. 1er mois offert ! »`,
         diagnostic: [
@@ -151,7 +151,7 @@ export default function ForceDeVenteClient({
     },
     superette: {
       label: 'Supérettes, Alimentation & Épiceries',
-      emoji: '🛒',
+      emoji: '',
       sans_app: {
         pitch: `« Salam alaykoum ! Gérer une épicerie demande une rapidité totale à la caisse et une maîtrise des dettes de quartier à la fin du mois. Nopalou transforme votre smartphone en Caisse tactile ultrarapide qui marche même sans connexion internet, avec un carnet de dettes qui relance les clients sur WhatsApp en 1 clic ! »`,
         diagnostic: [
@@ -270,7 +270,7 @@ export default function ForceDeVenteClient({
     },
     grossiste: {
       label: 'Grossistes & Semi-Grossistes',
-      emoji: '📦',
+      emoji: '',
       sans_app: {
         pitch: `« Salam alaykoum grand patron ! Gérer des centaines de cartons et des millions de FCFA de dettes clients sur des cahiers est risqué. Nopalou sécurise votre commerce : import de catalogue par lot, gestion multi-caissiers PIN, et factures OHADA en PDF. 1er mois offert ! »`,
         diagnostic: [
@@ -392,7 +392,7 @@ export default function ForceDeVenteClient({
         </div>
 
         <h1 style={{ fontSize: 30, fontWeight: 900, margin: '0 0 8px' }}>
-          🚀 Force de Vente Terrain &amp; Déploiement Commercial
+          Force de Vente Terrain &amp; Déploiement Commercial
         </h1>
         <p style={{ fontSize: 15, color: '#CBD5E1', maxWidth: 840, lineHeight: 1.5, margin: 0 }}>
           Pilotez la prospection des commerces au Sénégal, formez vos commerciaux, accédez à la matrice décisionnelle par catégorie, générez des kits personnalisés et téléchargez tous les supports imprimables haute définition.
@@ -405,13 +405,13 @@ export default function ForceDeVenteClient({
         paddingBottom: 2, marginBottom: 28,
       }}>
         {[
-          { id: 'strategie', label: '🎯 1. Stratégie & Zones', icon: Target },
+          { id: 'strategie', label: '1. Stratégie & Zones', icon: Target },
           { id: 'formation', label: '🎓 2. Académie & Formation', icon: Award },
-          { id: 'pitchs', label: '💬 3. Matrice Pitchs & Objections', icon: MessageSquare },
+          { id: 'pitchs', label: '3. Matrice Pitchs & Objections', icon: MessageSquare },
           { id: 'guide', label: '📖 4. Guide Marchand', icon: BookOpen },
-          { id: 'supports', label: '📄 5. Supports Print HD', icon: Printer },
-          { id: 'generateur', label: '📱 6. Kit Personnalisé Agent', icon: UserCheck },
-          { id: 'simulateur', label: '💰 7. Simulateur de Gains', icon: Calculator },
+          { id: 'supports', label: '5. Supports Print HD', icon: Printer },
+          { id: 'generateur', label: '6. Kit Personnalisé Agent', icon: UserCheck },
+          { id: 'simulateur', label: '7. Simulateur de Gains', icon: Calculator },
         ].map((t) => {
           const Icon = t.icon
           const isActive = activeTab === t.id
@@ -508,7 +508,7 @@ export default function ForceDeVenteClient({
                   <strong>17h30 - 18h00 :</strong> Debriefing, enregistrement des boutiques onboardées, envoi des messages de bienvenue WhatsApp.
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', background: '#1C2B4A', color: '#fff', padding: '12px 16px', borderRadius: 10, fontWeight: 800, marginTop: 4 }}>
-                  <span>🎯 Objectif quotidien par commercial :</span>
+                  <span>Objectif quotidien par commercial :</span>
                   <span style={{ color: '#38BDF8' }}>15 à 20 visites · 5 à 8 boutiques onboardées / jour</span>
                 </div>
               </div>
@@ -566,7 +566,7 @@ export default function ForceDeVenteClient({
               </div>
               {quizScore !== null && (
                 <div style={{ background: quizScore >= 3 ? '#16A34A' : '#DC2626', color: '#fff', padding: '8px 16px', borderRadius: 12, fontWeight: 900, fontSize: 16 }}>
-                  Score : {quizScore} / {QUIZ_QUESTIONS.length} {quizScore >= 3 ? '🎉 Validé !' : '⚠️ À réviser'}
+                  Score : {quizScore} / {QUIZ_QUESTIONS.length} {quizScore >= 3 ? 'Validé !' : 'À réviser'}
                 </div>
               )}
             </div>
@@ -613,7 +613,7 @@ export default function ForceDeVenteClient({
                     </div>
                     {isAnswered && (
                       <p style={{ fontSize: 12, color: '#64748B', marginTop: 8, marginBottom: 0, fontStyle: 'italic' }}>
-                        💡 {q.explication}
+                        {q.explication}
                       </p>
                     )}
                   </div>
@@ -678,7 +678,7 @@ export default function ForceDeVenteClient({
                     fontWeight: 800, fontSize: 14, cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  ❌ N&apos;a PAS d&apos;application (Carnet papier / Mémoire)
+                  N&apos;a PAS d&apos;application (Carnet papier / Mémoire)
                 </button>
 
                 <button
@@ -691,7 +691,7 @@ export default function ForceDeVenteClient({
                     fontWeight: 800, fontSize: 14, cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  ✅ A DÉJÀ une application / logiciel (Excel / Desktop)
+                  A DÉJÀ une application / logiciel (Excel / Desktop)
                 </button>
               </div>
             </div>
@@ -737,7 +737,7 @@ export default function ForceDeVenteClient({
             {/* Pitch */}
             <div style={{ background: '#FFF7ED', border: '1.5px solid #FFEDD5', borderRadius: 12, padding: '16px 20px' }}>
               <span style={{ fontSize: 13, fontWeight: 900, color: '#C75B00', display: 'block', marginBottom: 6 }}>
-                ⚡ PITCH D&apos;ACCROCHE (À RÉCITER OU ENVOYER) :
+                PITCH D&apos;ACCROCHE (À RÉCITER OU ENVOYER) :
               </span>
               <p style={{ fontSize: 15, color: '#1C2B4A', lineHeight: 1.6, margin: 0, fontWeight: 600 }}>
                 {currentMatrice.pitch}
@@ -747,7 +747,7 @@ export default function ForceDeVenteClient({
             {/* 3 Questions Diagnostic */}
             <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px 20px' }}>
               <span style={{ fontSize: 13, fontWeight: 900, color: '#1C2B4A', display: 'block', marginBottom: 8 }}>
-                🎯 LES 3 QUESTIONS DE DIAGNOSTIC À POSER :
+                LES 3 QUESTIONS DE DIAGNOSTIC À POSER :
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {currentMatrice.diagnostic.map((d, i) => (
@@ -762,7 +762,7 @@ export default function ForceDeVenteClient({
             {/* Démo Live Recommandée */}
             <div style={{ background: '#EFF6FF', border: '1.5px solid #BFDBFE', borderRadius: 12, padding: '16px 20px' }}>
               <span style={{ fontSize: 13, fontWeight: 900, color: '#1E40AF', display: 'block', marginBottom: 6 }}>
-                📱 DÉMO LIVE À EXÉCUTER SUR PLACE (60 SECONDES) :
+                DÉMO LIVE À EXÉCUTER SUR PLACE (60 SECONDES) :
               </span>
               <p style={{ fontSize: 14, color: '#1E3A8A', margin: 0, lineHeight: 1.5 }}>
                 {currentMatrice.demo}
@@ -772,7 +772,7 @@ export default function ForceDeVenteClient({
             {/* Objection & Parade */}
             <div style={{ background: '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: 12, padding: '16px 20px' }}>
               <span style={{ fontSize: 13, fontWeight: 900, color: '#DC2626', display: 'block', marginBottom: 6 }}>
-                🛡️ L&apos;OBJECTION CLÉ DE CE PROFIL &amp; SA PARADE :
+                L&apos;OBJECTION CLÉ DE CE PROFIL &amp; SA PARADE :
               </span>
               <p style={{ fontSize: 14, color: '#991B1B', fontWeight: 800, margin: '0 0 6px' }}>
                 Objection : {currentMatrice.objection.q}
@@ -852,7 +852,7 @@ export default function ForceDeVenteClient({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
             <h2 style={{ fontSize: 20, fontWeight: 900, color: '#1C2B4A', margin: '0 0 6px' }}>
-              📄 Galerie des Supports Imprimables Haute Résolution (Print HD)
+              Galerie des Supports Imprimables Haute Résolution (Print HD)
             </h2>
             <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 20px' }}>
               Tous les visuels sont générés dynamiquement en haute résolution, prêts pour l&apos;imprimerie ou le partage numérique.
@@ -938,7 +938,7 @@ export default function ForceDeVenteClient({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '24px' }}>
             <h2 style={{ fontSize: 20, fontWeight: 900, color: '#1C2B4A', margin: '0 0 6px' }}>
-              📱 Générateur de Kit Commercial Sur-Mesure
+              Générateur de Kit Commercial Sur-Mesure
             </h2>
             <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 20px' }}>
               Saisissez les coordonnées d&apos;un commercial pour lui générer instantanément sa boîte à outils complète avec ses liens de parrainage et ses supports personnalisés.
@@ -1001,16 +1001,16 @@ export default function ForceDeVenteClient({
 
               <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A' }}>💬 Message d&apos;Accroche WhatsApp Personnalisé :</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#1C2B4A' }}>Message d&apos;Accroche WhatsApp Personnalisé :</span>
                   <button
-                    onClick={() => copyToClipboard(`👋 Bonjour ! C'est ${agentNom}, conseiller Nopalou. Digitalisez votre boutique à Dakar avec notre Caisse POS tactile hors-ligne, carnet de dettes WhatsApp et factures OHADA. 🎁 1er mois 100% offert : https://nopalou.com/creer-boutique?ref=${agentCode}`, 'Message')}
+                    onClick={() => copyToClipboard(`Bonjour ! C'est ${agentNom}, conseiller Nopalou. Digitalisez votre boutique à Dakar avec notre Caisse POS tactile hors-ligne, carnet de dettes WhatsApp et factures OHADA. 1er mois 100% offert : https://nopalou.com/creer-boutique?ref=${agentCode}`, 'Message')}
                     style={{ padding: '4px 10px', background: '#25D366', color: '#fff', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                   >
                     Copier Message
                   </button>
                 </div>
                 <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.5 }}>
-                  « 👋 Bonjour ! C&apos;est {agentNom}, conseiller Nopalou. Digitalisez votre boutique à Dakar avec notre Caisse POS tactile hors-ligne, carnet de dettes WhatsApp et factures OHADA. 🎁 1er mois 100% offert : https://nopalou.com/creer-boutique?ref={agentCode} »
+                  « Bonjour ! C&apos;est {agentNom}, conseiller Nopalou. Digitalisez votre boutique à Dakar avec notre Caisse POS tactile hors-ligne, carnet de dettes WhatsApp et factures OHADA. 1er mois 100% offert : https://nopalou.com/creer-boutique?ref={agentCode} »
                 </p>
               </div>
             </div>

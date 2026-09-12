@@ -184,7 +184,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
   useEffect(() => {
     if (state.success && handledRef.current !== state) {
       handledRef.current = state
-      setSuccessMsg(boutique ? '✅ Paramètres de la boutique enregistrés avec succès !' : '✅ Boutique créée avec succès !')
+      setSuccessMsg(boutique ? 'Paramètres de la boutique enregistrés avec succès !' : 'Boutique créée avec succès !')
       if (formTopRef.current) {
         formTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
@@ -218,7 +218,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       )}
 
-      <SectionTitle>🏪 Comment fonctionne votre boutique ?</SectionTitle>
+      <SectionTitle>Comment fonctionne votre boutique ?</SectionTitle>
       <input type="hidden" name="mode_fonctionnement" value={modeSelect} />
       <div>
         <label style={labelStyle}>Choisissez la configuration de votre tableau de bord</label>
@@ -236,7 +236,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
               style={{ display: 'none' }}
             />
             <span style={{ fontWeight: 800, fontSize: 13, color: '#1C2B4A', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🏪 Magasin + Vente en ligne
+              Magasin + Vente en ligne
             </span>
             <span style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
               Vendez en boutique avec la caisse, gérez vos dettes clients et recevez aussi des commandes en ligne.
@@ -256,7 +256,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
               style={{ display: 'none' }}
             />
             <span style={{ fontWeight: 800, fontSize: 13, color: '#C75B00', display: 'flex', alignItems: 'center', gap: 6 }}>
-              ⚡ 100% Vente en ligne
+              100% Vente en ligne
             </span>
             <span style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
               Votre boutique est uniquement en ligne. Vous recevez des commandes par le site et WhatsApp.
@@ -265,7 +265,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       </div>
 
-      <SectionTitle>📋 Informations</SectionTitle>
+      <SectionTitle>Informations</SectionTitle>
 
       <div>
         <label style={labelStyle}>Nom de la boutique *</label>
@@ -288,7 +288,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
         <p style={{ fontSize: 11, color: '#64748b', margin: '4px 0 0' }}>
-          💡 Définit votre rayon principal dans l&apos;annuaire Nopalou et adapte automatiquement les attributs suggérés lors de l&apos;ajout de nouveaux produits.
+          Définit votre rayon principal dans l&apos;annuaire Nopalou et adapte automatiquement les attributs suggérés lors de l&apos;ajout de nouveaux produits.
         </p>
       </div>
       <div className="bq-form-grid-2">
@@ -302,7 +302,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       </div>
 
-      <SectionTitle>📞 Contact</SectionTitle>
+      <SectionTitle>Contact</SectionTitle>
 
       <div className="bq-form-grid-2">
         <div>
@@ -339,7 +339,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       </div>
 
-      <SectionTitle>📊 Publicité en ligne (optionnel)</SectionTitle>
+      <SectionTitle>Publicité en ligne (optionnel)</SectionTitle>
 
       <div className="bq-form-grid-2">
         <div>
@@ -350,7 +350,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           <label style={labelStyle}>
             TikTok Pixel ID
             <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: 4, marginLeft: 6, fontWeight: 700 }}>
-              Pixel Actif · Sync Catalogue Direct (⏳ Bientôt)
+              Pixel Actif · Sync Catalogue Direct (Bientôt)
             </span>
           </label>
           <input name="tiktok_pixel_id" defaultValue={boutique?.tiktok_pixel_id ?? ''} style={inputStyle} placeholder="Ex: C1234567890ABC" />
@@ -369,8 +369,8 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           defaultValue={boutique?.actif !== false ? 'true' : 'false'}
           style={inputStyle}
         >
-          <option value="true">🟢 Active (Visible dans le catalogue public et la recherche Nopalou)</option>
-          <option value="false">🔴 Désactivée (Masquée du catalogue public et hors-ligne pour les clients)</option>
+          <option value="true">Active (Visible dans le catalogue public et la recherche Nopalou)</option>
+          <option value="false">Désactivée (Masquée du catalogue public et hors-ligne pour les clients)</option>
         </select>
         <p style={{ fontSize: 11, color: '#6b7280', margin: '4px 0 0' }}>
           Une boutique désactivée ne sera plus visible par les visiteurs sur /boutiques mais reste totalement accessible pour votre gestion interne et votre caisse POS.
@@ -425,7 +425,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         </div>
       </div>
 
-      <SectionTitle>📦 Export & Portabilité des données</SectionTitle>
+      <SectionTitle>Export & Portabilité des données</SectionTitle>
       <div style={{ background: '#FFFDF9', border: '1.5px solid #FED7AA', borderRadius: 14, padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#9A3412' }}>
@@ -441,7 +441,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
           className="btn-npl btn-npl-secondary btn-npl-sm"
           style={{ borderColor: '#FED7AA', color: '#9A3412', background: '#FFF7ED', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
-          <span>📥</span>
+          <span></span>
           <span>Exporter ma boutique (.JSON)</span>
         </a>
       </div>
@@ -461,7 +461,7 @@ function BoutiqueForm({ boutique, onCancel, onSuccess, codeApporteurDefaut }: {
         marginTop: 16,
         marginBottom: 20,
       }}>
-        <SubmitButton label={boutique ? '💾 Enregistrer la boutique' : '✨ Créer la boutique'} />
+        <SubmitButton label={boutique ? '💾 Enregistrer la boutique' : 'Créer la boutique'} />
         <button type="button" onClick={onCancel} style={{
           padding: '10px 20px', background: '#f3f4f6', border: '1px solid #d1d5db',
           borderRadius: 8, fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer',
@@ -533,13 +533,13 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {boutique.is_trial ? (
                   <span className="badge-premium" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff', fontSize: 10, padding: '2px 8px', border: 'none' }}>
-                    🎁 1er mois Offert (VIP)
+                    1er mois Offert (VIP)
                   </span>
                 ) : (
                   <>
-                    {planActif === 'business' && <span className="badge-premium" style={{ background: '#1e3a8a', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>💼 Business</span>}
-                    {planActif === 'pro'      && <span className="badge-premium" style={{ background: '#C75B00', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>⭐ Pro</span>}
-                    {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#22c55e', color: '#064e3b', fontSize: 10, padding: '2px 6px', border: 'none' }}>⚡ Taf Taf</span>}
+                    {planActif === 'business' && <span className="badge-premium" style={{ background: '#1e3a8a', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>Business</span>}
+                    {planActif === 'pro'      && <span className="badge-premium" style={{ background: '#C75B00', color: '#fff', fontSize: 10, padding: '2px 6px', border: 'none' }}>Pro</span>}
+                    {(planActif === 'decouverte' || planActif === 'taf_taf') && <span className="badge-premium" style={{ background: '#22c55e', color: '#064e3b', fontSize: 10, padding: '2px 6px', border: 'none' }}>Taf Taf</span>}
                     {(!planActif || (planActif as any) === 'gratuit') && <span className="badge-premium" style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', fontSize: 10, padding: '2px 6px' }}>🌱 Gratuit</span>}
                   </>
                 )}
@@ -573,7 +573,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
               }}
             >
               <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: boutique.actif !== false ? '#22c55e' : '#94a3b8', display: 'inline-block' }}></span>
-              {boutique.actif !== false ? '🟢 Active' : '⚪ Inactive'}
+              {boutique.actif !== false ? 'Active' : '⚪ Inactive'}
             </button>
             <div style={{ display: 'flex', gap: 6 }}>
               <a href={`/boutiques/${boutique.slug || boutique.id}`} target="_blank" rel="noreferrer" title="Voir la boutique" style={{ width: 32, height: 32, borderRadius: 8, background: '#f8fafc', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', transition: 'all 0.2s', border: '1px solid #e2e8f0' }}>
@@ -636,7 +636,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
                 transition: 'all 0.15s ease'
               }}
             >
-              <span>⭐</span>
+              <span></span>
               <span>Mettre en avant</span>
             </Link>
             <Link
@@ -660,7 +660,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
                 transition: 'all 0.15s ease'
               }}
             >
-              <span>💳</span>
+              <span></span>
               <span>{t('shop.subscription')}</span>
             </Link>
           </div>
@@ -776,7 +776,7 @@ function BoutiqueDashboard({
         if (typeof ca === 'number') setCaMois(ca)
         if (typeof dettes === 'number') setDettesTotal(dettes)
         setLoading(false)
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:BoutiqueClient:L779]', e); }
     }
 
     // Chargement parallèle sécurisé via Server Actions (évite les erreurs 401 en client-side)
@@ -811,7 +811,7 @@ function BoutiqueDashboard({
 
       try {
         localStorage.setItem(cacheKey, JSON.stringify({ count, alerts, ca, dettes }))
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:BoutiqueClient:L814]', err); }
       setLoading(false)
     })
 
@@ -844,7 +844,7 @@ function BoutiqueDashboard({
         boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 18 }}>{modeEssentiel ? '⚡' : '⚙️'}</span>
+          <span style={{ fontSize: 18 }}>{modeEssentiel ? '' : ''}</span>
           <div>
             <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
               {modeEssentiel ? 'Mode Essentiel (Boutiquier)' : 'Mode Gestion Complète'}
@@ -875,7 +875,7 @@ function BoutiqueDashboard({
               transition: 'all 0.15s ease'
             }}
           >
-            ⚙️ Mode Complet
+            Mode Complet
           </button>
           <button
             type="button"
@@ -896,7 +896,7 @@ function BoutiqueDashboard({
               transition: 'all 0.15s ease'
             }}
           >
-            ⚡ Mode Essentiel (4 Boutons)
+            Mode Essentiel (4 Boutons)
           </button>
         </div>
       </div>
@@ -921,7 +921,7 @@ function BoutiqueDashboard({
                   <ShoppingCart size={28} />
                 </div>
                 <span style={{ background: '#DCFCE7', color: '#166534', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
-                  ⚡ 100% Hors-Ligne
+                  100% Hors-Ligne
                 </span>
               </div>
               <h3 style={{ margin: '0 0 6px', fontSize: 19, fontWeight: 850, color: 'var(--navy, #1C2B4A)' }}>
@@ -983,7 +983,7 @@ function BoutiqueDashboard({
               </p>
               {stockAlertsCount && stockAlertsCount > 0 ? (
                 <p style={{ margin: '8px 0 0', fontSize: 12, color: '#D97706', fontWeight: 750 }}>
-                  ⚠️ {stockAlertsCount} article(s) bientôt en rupture
+                  {stockAlertsCount} article(s) bientôt en rupture
                 </p>
               ) : null}
             </div>
@@ -1038,7 +1038,7 @@ function BoutiqueDashboard({
                   fontSize: 11,
                   fontWeight: 800
                 }}>
-                  {dettesTotal && dettesTotal > 0 ? '⚠️ Dettes en cours' : '✓ Zéro impayé'}
+                  {dettesTotal && dettesTotal > 0 ? 'Dettes en cours' : '✓ Zéro impayé'}
                 </span>
               </div>
               <h3 style={{ margin: '0 0 6px', fontSize: 19, fontWeight: 850, color: 'var(--navy, #1C2B4A)' }}>
@@ -1174,7 +1174,7 @@ function BoutiqueDashboard({
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 200 }}>
-                  <span style={{ fontSize: 16 }}>🚀</span>
+                  <span style={{ fontSize: 16 }}></span>
                   <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
                     {pctReady === 100 ? 'Boutique 100% prête à vendre !' : `Boutique prête à ${pctReady}%`}
                   </span>
@@ -1206,7 +1206,7 @@ function BoutiqueDashboard({
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #FED7AA', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
                   <div style={{ background: '#FFFFFF', border: hasProducts ? '1px solid #BBF7D0' : '1px solid #FED7AA', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>📦 1. Produits</span>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>1. Produits</span>
                       <span style={{ fontSize: 11, fontWeight: 750, color: hasProducts ? '#16A34A' : '#C75B00' }}>{hasProducts ? '✓ Prêt' : 'À ajouter'}</span>
                     </div>
                     <button type="button" onClick={() => onNavigate('produits')} className="btn-npl btn-npl-primary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5 }}>
@@ -1226,8 +1226,8 @@ function BoutiqueDashboard({
 
                   <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>💬 3. WhatsApp</span>
-                      <span style={{ fontSize: 11, fontWeight: 750, color: '#16A34A' }}>⚡ 1-Clic</span>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>3. WhatsApp</span>
+                      <span style={{ fontSize: 11, fontWeight: 750, color: '#16A34A' }}>1-Clic</span>
                     </div>
                     <button type="button" onClick={() => onOpenQrModal ? onOpenQrModal() : onNavigate('marketing')} className="btn-npl btn-npl-secondary btn-npl-sm" style={{ width: '100%', height: 28, fontSize: 11.5, borderColor: '#FED7AA', color: '#C75B00', background: '#FFF7ED' }}>
                       Partager vitrine
@@ -1357,7 +1357,7 @@ function BoutiqueDashboard({
                 </span>
                 {stockAlertsCount && stockAlertsCount > 0 ? (
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                    ⚠️ Faible
+                    Faible
                   </span>
                 ) : (
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -1801,7 +1801,7 @@ function BoutiqueMobileBottomSheet({
                           boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                         }}
                       >
-                        <span>🏪 {b.nom}</span>
+                        <span>{b.nom}</span>
                         {isCurrent && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a' }} />}
                       </button>
                     );
@@ -1839,7 +1839,7 @@ function BoutiqueMobileBottomSheet({
                             <span className="mobile-bs-item-label">{item.label}</span>
                             {!allowed && (
                               <span className={`mobile-bs-item-badge ${item.minPlan === 'business' ? 'mobile-bs-item-badge--lock-business' : 'mobile-bs-item-badge--lock'}`}>
-                                🔒 {item.minPlan === 'business' ? 'Business' : 'Pro'}
+                                {item.minPlan === 'business' ? 'Business' : 'Pro'}
                               </span>
                             )}
                             {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
@@ -1972,7 +1972,7 @@ function BoutiqueManage({
       title: t('shop.navGroupMarketingSettings') || 'Vitrine & Personnalisation',
       items: [
         { key: 'personnaliser', icon: Palette, label: '🎨 Personnaliser ma boutique' },
-        { key: 'social',      icon: Share2, label: '📱 Réseaux sociaux & Social Shop' },
+        { key: 'social',      icon: Share2, label: 'Réseaux sociaux & Social Shop' },
         { key: 'marketing',   icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
         { key: 'infos',       icon: Settings, label: t('shop.settings') || 'Paramètres' },
       ],
@@ -2104,8 +2104,8 @@ function BoutiqueManage({
     : planActif === 'business' ? '#1e3a5f' : planActif === 'pro' ? '#C75B00' : planActif === 'decouverte' || planActif === 'taf_taf' ? '#16a34a' : '#6b7280'
 
   const planLabel = isTrialActive
-    ? `🎁 1er mois Offert (${joursRestantsEssai}j)`
-    : planActif === 'business' ? '💼 Business' : planActif === 'pro' ? '⭐ Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? '⚡ Taf Taf' : 'Gratuit'
+    ? `1er mois Offert (${joursRestantsEssai}j)`
+    : planActif === 'business' ? 'Business' : planActif === 'pro' ? 'Pro' : planActif === 'decouverte' || planActif === 'taf_taf' ? 'Taf Taf' : 'Gratuit'
 
   const isAllowed = (minPlan?: 'pro' | 'business') => {
     // RÈGLE D'OR : Pour le 1er mois gratuit, tous les forfaits ont accès à toutes les fonctionnalités
@@ -2139,7 +2139,7 @@ function BoutiqueManage({
         const { count } = await res.json()
         if (lastCount >= 0 && count > lastCount) {
           const diff = count - lastCount
-          setToast(`🛒 ${diff} nouvelle${diff > 1 ? 's' : ''} commande${diff > 1 ? 's' : ''} en attente !`)
+          setToast(`${diff} nouvelle${diff > 1 ? 's' : ''} commande${diff > 1 ? 's' : ''} en attente !`)
           setTimeout(() => setToast(null), 6000)
         }
         lastCount = count
@@ -2191,7 +2191,7 @@ function BoutiqueManage({
           animation: 'slideUp .3s ease',
         }}
       >
-        <span style={{ fontSize: 24 }}>🛒</span>
+        <span style={{ fontSize: 24 }}></span>
         <div>
           <p style={{ margin: 0 }}>{toast}</p>
           <p style={{ margin: '2px 0 0', fontSize: 12, opacity: .75 }}>Cliquer pour voir</p>
@@ -2405,7 +2405,7 @@ function BoutiqueManage({
                         flexShrink: 0,
                       }}
                     >
-                      {isTrialActive ? '🎁 ESSAI VIP' : planActif === 'business' ? '⭐ VIP' : planActif.toUpperCase()}
+                      {isTrialActive ? 'ESSAI VIP' : planActif === 'business' ? 'VIP' : planActif.toUpperCase()}
                     </span>
                   )}
                 </div>
@@ -2732,7 +2732,7 @@ function BoutiqueManage({
                       </span>
                       {!allowed && (
                         <span style={{ fontSize: 9, background: item.minPlan === 'business' ? 'var(--navy)' : 'var(--accent)', color: '#fff', padding: '2px 5px', borderRadius: 4, fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 'auto' }}>
-                          🔒 {item.minPlan === 'business' ? 'Business' : 'Pro'}
+                          {item.minPlan === 'business' ? 'Business' : 'Pro'}
                         </span>
                       )}
                       {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
@@ -2821,7 +2821,7 @@ function BoutiqueManage({
                           </span>
                           {!allowed && (
                             <span style={{ fontSize: 8.5, background: item.minPlan === 'business' ? 'var(--navy, #1C2B4A)' : 'var(--accent, #C75B00)', color: '#fff', padding: '1px 4px', borderRadius: 3, fontWeight: 800 }}>
-                              🔒
+                              
                             </span>
                           )}
                         </button>
@@ -2930,7 +2930,7 @@ function BoutiqueManage({
           </div>
         )}
 
-        {/* 🎁 BANDEAU OFFICIEL 1ER MOIS GRATUIT — ACCÈS TOTAL VIP */}
+        {/* BANDEAU OFFICIEL 1ER MOIS GRATUIT — ACCÈS TOTAL VIP */}
         {isTrialActive && (
           <div style={{
             background: 'linear-gradient(135deg, #1e3a5f 0%, #312e81 100%)',
@@ -2951,7 +2951,7 @@ function BoutiqueManage({
                 background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0
               }}>
-                🎁
+                
               </div>
               <div>
                 <p style={{ margin: 0, fontWeight: 900, fontSize: 14, letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -3032,7 +3032,7 @@ function BoutiqueManage({
                   onNaviguerOnglet={(t) => setTab(t as any)}
                   onBasculerModeComplet={() => {
                     setIsModeFacile(false);
-                    try { localStorage.setItem('nopalou_dashboard_mode_facile', 'false'); } catch {}
+                    try { localStorage.setItem('nopalou_dashboard_mode_facile', 'false'); } catch (err) { console.warn('[Nopalou:BoutiqueClient:L3035]', err); }
                   }}
                 />
               ) : (
@@ -3042,7 +3042,7 @@ function BoutiqueManage({
                       type="button"
                       onClick={() => {
                         setIsModeFacile(true);
-                        try { localStorage.setItem('nopalou_dashboard_mode_facile', 'true'); } catch {}
+                        try { localStorage.setItem('nopalou_dashboard_mode_facile', 'true'); } catch (err) { console.warn('[Nopalou:BoutiqueClient:L3045]', err); }
                       }}
                       style={{
                         background: 'var(--orange2, #FFF3E8)',
@@ -3059,7 +3059,7 @@ function BoutiqueManage({
                         boxShadow: '0 1px 3px rgba(199,91,0,0.1)'
                       }}
                     >
-                      <span>⚡ Activer le Mode Facile (Caisse Taf-Taf)</span>
+                      <span>Activer le Mode Facile (Caisse Taf-Taf)</span>
                     </button>
                   </div>
                   <BoutiqueDashboard boutique={boutique} planActif={effectivePlan} nbEnAttente={nbEnAttente} onNavigate={handleNavigateFromDashboard} />
@@ -3144,7 +3144,7 @@ export default function BoutiqueClient({
           const t = setTimeout(() => setShowProductTour(true), 1200)
           return () => clearTimeout(t)
         }
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:BoutiqueClient:L3147]', e); }
     }
   }, [boutiques.length])
   // ── Plan actif : persistance offline ─────────────────────────────────────────
@@ -3187,7 +3187,7 @@ export default function BoutiqueClient({
           if (cached && Array.isArray(cached) && cached.length > 0) {
             setBoutiquesList(cached)
           }
-        } catch (e) {}
+        } catch (e) { console.warn('[Nopalou:BoutiqueClient:L3190]', e); }
       }
     }
   }, [boutiques])
@@ -3504,7 +3504,7 @@ export default function BoutiqueClient({
             }}
             title="Revoir le guide de démarrage en 3 étapes"
           >
-            <span>💡</span>
+            <span></span>
             <span>Guide 3 étapes</span>
           </button>
 
@@ -3551,7 +3551,7 @@ export default function BoutiqueClient({
           border: '1px solid #f59e0b', borderRadius: 14,
           padding: '16px 20px', marginBottom: 24, textDecoration: 'none',
         }}>
-          <span style={{ fontSize: 32, flexShrink: 0 }}>⭐</span>
+          <span style={{ fontSize: 32, flexShrink: 0 }}></span>
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#92400e' }}>{t('shop.proBannerTitle')}</p>
             <p style={{ margin: '2px 0 0', fontSize: 13, color: '#b45309' }}>{t('shop.proBannerDesc')} — {prixPro.toLocaleString('fr-FR')} FCFA/mois</p>
@@ -3562,7 +3562,7 @@ export default function BoutiqueClient({
 
       {boutiquesList.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px dashed #d1d5db' }}>
-          <p style={{ fontSize: 48, marginBottom: 16 }}>🏪</p>
+          <p style={{ fontSize: 48, marginBottom: 16 }}></p>
           <p style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>{t('shop.createShopPrompt')}</p>
           <p style={{ fontSize: 14, color: '#9ca3af', marginBottom: 24 }}>{t('shop.createShopDesc')}</p>
           <button onClick={() => setMode('create')} style={{
@@ -3601,7 +3601,7 @@ export default function BoutiqueClient({
           fontWeight: 700, fontSize: 14, zIndex: 999999, boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
           display: 'flex', alignItems: 'center', gap: 10, whiteSpace: 'nowrap'
         }}>
-          <span>📡</span> Mode Hors-Ligne (Données en cache)
+          <span></span> Mode Hors-Ligne (Données en cache)
         </div>
       )}
 

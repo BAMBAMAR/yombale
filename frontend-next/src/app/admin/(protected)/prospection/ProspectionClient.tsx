@@ -40,36 +40,36 @@ const OPERATEUR_COLORS: Record<string, { color: string; bg: string }> = {
 const CATEGORIES_OPTIONS = [
   { value: 'tous', label: 'Toutes les catégories' },
   { value: 'mode', label: '👗 Mode & Prêt-à-porter' },
-  { value: 'auto-moto', label: '🚗 Véhicules & Auto-Moto' },
-  { value: 'immo', label: '🏠 Immobilier & Terrains' },
-  { value: 'smartphones', label: '📱 Téléphonie & Tech' },
+  { value: 'auto-moto', label: 'Véhicules & Auto-Moto' },
+  { value: 'immo', label: 'Immobilier & Terrains' },
+  { value: 'smartphones', label: 'Téléphonie & Tech' },
   { value: 'tv-electro', label: '📺 Électroménager & TV' },
-  { value: 'informatique', label: '💻 Informatique & Ordis' },
+  { value: 'informatique', label: 'Informatique & Ordis' },
   { value: 'maison', label: '🛋️ Maison & Ameublement' },
   { value: 'beaute', label: '💄 Cosmétique & Beauté' },
-  { value: 'superette', label: '🛒 Alimentation & Supérette' },
+  { value: 'superette', label: 'Alimentation & Supérette' },
   { value: 'quincaillerie', label: '🔨 Quincaillerie & BTP' },
-  { value: 'grossiste', label: '📦 Grossistes & Import Chine' },
-  { value: 'services', label: '🛠️ Services & Prestations' },
-  { value: 'divers', label: '🛍️ Commerce Général / Mixte' },
-  { value: 'emploi', label: '💼 Offres & Demandes d\'Emploi' },
+  { value: 'grossiste', label: 'Grossistes & Import Chine' },
+  { value: 'services', label: 'Services & Prestations' },
+  { value: 'divers', label: 'Commerce Général / Mixte' },
+  { value: 'emploi', label: 'Offres & Demandes d\'Emploi' },
 ]
 
 const SOURCES_OPTIONS = [
   { value: 'tous', label: 'Toutes les sources' },
-  { value: 'annonces_classifiees', label: '🏷️ Annonces Nopalou' },
-  { value: 'scraper_auto', label: '🤖 Scraper Automatisé' },
-  { value: 'facebook', label: '👥 Groupes Facebook Dakar' },
-  { value: 'import_vrac', label: '📥 Import Vrac' },
+  { value: 'annonces_classifiees', label: 'Annonces Nopalou' },
+  { value: 'scraper_auto', label: 'Scraper Automatisé' },
+  { value: 'facebook', label: 'Groupes Facebook Dakar' },
+  { value: 'import_vrac', label: 'Import Vrac' },
   { value: 'manuel', label: '✍️ Ajout Manuel' },
 ]
 
 const OPERATEURS_OPTIONS = [
   { value: 'tous', label: 'Tous les opérateurs' },
   { value: 'Orange', label: '🟠 Orange' },
-  { value: 'Free (Yas)', label: '🔴 Free (Yas)' },
+  { value: 'Free (Yas)', label: 'Free (Yas)' },
   { value: 'Expresso', label: '🟣 Expresso' },
-  { value: 'Promobile', label: '🟢 Promobile' },
+  { value: 'Promobile', label: 'Promobile' },
 ]
 
 export default function ProspectionClient({
@@ -197,7 +197,7 @@ export default function ProspectionClient({
         const data = await res.json()
         setCronData(data)
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:ProspectionClient:L200]', err); }
     finally {
       setLoadingCronData(false)
     }
@@ -215,14 +215,14 @@ export default function ProspectionClient({
       const data = await res.json()
       if (res.ok) {
         setScrapingResult(data)
-        showToast(`🎉 Scraping terminé : ${data.ajoutes} nouveaux leads ajoutés`)
+        showToast(`Scraping terminé : ${data.ajoutes} nouveaux leads ajoutés`)
         await reloadLeads()
         await fetchCronStatus()
       } else {
-        showToast(`❌ Erreur scraping: ${data.error}`)
+        showToast(`Erreur scraping: ${data.error}`)
       }
     } catch (e: any) {
-      showToast(`❌ Erreur: ${e.message}`)
+      showToast(`Erreur: ${e.message}`)
     } finally {
       setIsScraping(false)
     }
@@ -241,13 +241,13 @@ export default function ProspectionClient({
       if (res.ok) {
         setRelancesResult(data)
         const total = (data.resultats?.marchands?.stats?.total || 0) + (data.resultats?.dettes?.relancesEnvoyees || 0)
-        showToast(`✅ Relances exécutées : ${total} messages WhatsApp envoyés`)
+        showToast(`Relances exécutées : ${total} messages WhatsApp envoyés`)
         await fetchCronStatus()
       } else {
-        showToast(`❌ Erreur relances: ${data.error}`)
+        showToast(`Erreur relances: ${data.error}`)
       }
     } catch (e: any) {
-      showToast(`❌ Erreur: ${e.message}`)
+      showToast(`Erreur: ${e.message}`)
     } finally {
       setIsRelancing(false)
     }
@@ -269,16 +269,16 @@ export default function ProspectionClient({
       if (res.ok && data.success) {
         setAutoCollecteResult(data)
         if (data.totalAjoutes > 0) {
-          showToast(`🎉 Collecte terminée : +${data.totalAjoutes} nouveaux commerces ajoutés !`)
+          showToast(`Collecte terminée : +${data.totalAjoutes} nouveaux commerces ajoutés !`)
         } else {
           showToast(`ℹ️ Base déjà à jour : ${data.totalTraites || 0} commerces géolocalisés vérifiés (tous déjà présents)`)
         }
         await reloadLeads()
       } else {
-        showToast(`❌ Erreur: ${data.error || 'Échec de la collecte'}`)
+        showToast(`Erreur: ${data.error || 'Échec de la collecte'}`)
       }
     } catch (e: any) {
-      showToast(`❌ Erreur réseau: ${e.message}`)
+      showToast(`Erreur réseau: ${e.message}`)
     } finally {
       setIsAutoCollecting(false)
       setCollectingTarget(null)
@@ -300,7 +300,7 @@ export default function ProspectionClient({
         setLeads(data.leads || [])
         setStats(data.stats || stats)
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:ProspectionClient:L303]', err); }
     finally {
       setLoadingLeads(false)
     }
@@ -337,14 +337,14 @@ export default function ProspectionClient({
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setLeads((prev) => prev.map((l) => (l.id === editForm.id ? { ...l, ...data } : l)))
-        showToast('✅ Prospect mis à jour avec succès dans la base !')
+        showToast('Prospect mis à jour avec succès dans la base !')
         setShowEditModal(false)
         await reloadLeads()
       } else {
-        showToast(`❌ ${data.error || `Erreur de modification (${res.status})`}`)
+        showToast(`${data.error || `Erreur de modification (${res.status})`}`)
       }
     } catch (err: any) {
-      showToast(`❌ Erreur: ${err.message || 'Erreur de connexion'}`)
+      showToast(`Erreur: ${err.message || 'Erreur de connexion'}`)
     } finally {
       setIsSavingEdit(false)
     }
@@ -361,7 +361,7 @@ export default function ProspectionClient({
         const data = await res.json()
         setBlacklist(data.blacklist || [])
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:ProspectionClient:L364]', err); }
     finally {
       setLoadingBlacklist(false)
     }
@@ -371,7 +371,7 @@ export default function ProspectionClient({
   const handleAddBlacklist = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!blacklistAddForm.phone.trim()) {
-      showToast('⚠️ Numéro de téléphone requis')
+      showToast('Numéro de téléphone requis')
       return
     }
     setIsAddingBlacklist(true)
@@ -389,10 +389,10 @@ export default function ProspectionClient({
         await loadBlacklist()
         await reloadLeads()
       } else {
-        showToast(`❌ ${data.error}`)
+        showToast(`${data.error}`)
       }
     } catch (err: any) {
-      showToast(`❌ Erreur: ${err.message}`)
+      showToast(`Erreur: ${err.message}`)
     } finally {
       setIsAddingBlacklist(false)
     }
@@ -411,10 +411,10 @@ export default function ProspectionClient({
         showToast(`🔓 Numéro +${phone} débloqué et retiré de la liste noire`)
         await reloadLeads()
       } else {
-        showToast('❌ Erreur lors du déblocage')
+        showToast('Erreur lors du déblocage')
       }
     } catch (_) {
-      showToast('❌ Erreur réseau')
+      showToast('Erreur réseau')
     }
   }
 
@@ -609,12 +609,12 @@ export default function ProspectionClient({
         setLeads((prev) =>
           prev.map((l) => (l.id === leadId ? { ...l, statut: newStatut } : l))
         )
-        showToast('✅ Statut du prospect mis à jour')
+        showToast('Statut du prospect mis à jour')
       } else {
-        showToast(`❌ ${data.error || 'Erreur lors de la mise à jour'}`)
+        showToast(`${data.error || 'Erreur lors de la mise à jour'}`)
       }
     } catch (err: any) {
-      showToast(`❌ Erreur: ${err.message || 'Erreur de connexion'}`)
+      showToast(`Erreur: ${err.message || 'Erreur de connexion'}`)
     }
   }
 
@@ -629,13 +629,13 @@ export default function ProspectionClient({
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setLeads((prev) => prev.filter((l) => l.id !== leadId))
-        showToast('✅ Prospect supprimé')
+        showToast('Prospect supprimé')
         await reloadLeads()
       } else {
-        showToast(`❌ ${data.error || 'Erreur lors de la suppression'}`)
+        showToast(`${data.error || 'Erreur lors de la suppression'}`)
       }
     } catch (err: any) {
-      showToast(`❌ Erreur: ${err.message || 'Erreur de connexion'}`)
+      showToast(`Erreur: ${err.message || 'Erreur de connexion'}`)
     }
   }
 
@@ -652,9 +652,9 @@ export default function ProspectionClient({
       if (res.ok) {
         setLeads((prev) => prev.filter((l) => !selectedLeadIds.includes(l.id)))
         setSelectedLeadIds([])
-        showToast(`✅ ${selectedLeadIds.length} prospects supprimés`)
+        showToast(`${selectedLeadIds.length} prospects supprimés`)
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:ProspectionClient:L657]', err); }
   }
 
   // Auto-Sourcing
@@ -667,13 +667,13 @@ export default function ProspectionClient({
       })
       const data = await res.json()
       if (res.ok) {
-        showToast(`🎉 Auto-sourcing terminé : ${data.inseres} nouveaux leads ajoutés (${data.doublons} déjà existants)`)
+        showToast(`Auto-sourcing terminé : ${data.inseres} nouveaux leads ajoutés (${data.doublons} déjà existants)`)
         await reloadLeads()
       } else {
-        showToast(`❌ Erreur: ${data.error}`)
+        showToast(`Erreur: ${data.error}`)
       }
     } catch (e: any) {
-      showToast(`❌ Échec de l'auto-sourcing: ${e.message}`)
+      showToast(`Échec de l'auto-sourcing: ${e.message}`)
     } finally {
       setIsAutoSourcing(false)
     }
@@ -682,7 +682,7 @@ export default function ProspectionClient({
   // Import Vrac
   const handleImportVrac = async () => {
     if (!rawImportText.trim()) {
-      showToast('⚠️ Veuillez coller du texte ou une liste de numéros')
+      showToast('Veuillez coller du texte ou une liste de numéros')
       return
     }
     setIsImporting(true)
@@ -700,15 +700,15 @@ export default function ProspectionClient({
       })
       const data = await res.json()
       if (res.ok) {
-        showToast(`🎉 ${data.inseres} nouveaux prospects importés avec succès (${data.doublons} doublons ignorés)`)
+        showToast(`${data.inseres} nouveaux prospects importés avec succès (${data.doublons} doublons ignorés)`)
         setRawImportText('')
         await reloadLeads()
         setActiveTab('crm')
       } else {
-        showToast(`❌ ${data.error}`)
+        showToast(`${data.error}`)
       }
     } catch (e: any) {
-      showToast(`❌ Erreur d'importation: ${e.message}`)
+      showToast(`Erreur d'importation: ${e.message}`)
     } finally {
       setIsImporting(false)
     }
@@ -724,13 +724,13 @@ export default function ProspectionClient({
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
-        showToast(data.message || '🎉 Base de leads nettoyée et enrichie avec succès !')
+        showToast(data.message || 'Base de leads nettoyée et enrichie avec succès !')
         await reloadLeads()
       } else {
-        showToast(`❌ ${data.error || 'Erreur lors du nettoyage'}`)
+        showToast(`${data.error || 'Erreur lors du nettoyage'}`)
       }
     } catch (e: any) {
-      showToast(`❌ Échec du nettoyage: ${e.message}`)
+      showToast(`Échec du nettoyage: ${e.message}`)
     } finally {
       setIsCleaningLeads(false)
     }
@@ -747,7 +747,7 @@ export default function ProspectionClient({
       })
       const data = await res.json()
       if (res.ok) {
-        showToast('✅ Prospect ajouté avec succès !')
+        showToast('Prospect ajouté avec succès !')
         setShowAddModal(false)
         setAddForm({
           nom_boutique: '',
@@ -761,10 +761,10 @@ export default function ProspectionClient({
         })
         await reloadLeads()
       } else {
-        showToast(`❌ ${data.error}`)
+        showToast(`${data.error}`)
       }
     } catch (err: any) {
-      showToast(`❌ ${err.message}`)
+      showToast(`${err.message}`)
     }
   }
 
@@ -772,7 +772,7 @@ export default function ProspectionClient({
   const handleLancerCampagne = async (simulation: boolean) => {
     const targetIds = campaignTargetLeads.map((l) => l.id)
     if (!targetIds.length) {
-      showToast('⚠️ Aucun prospect valide ciblé pour cette campagne')
+      showToast('Aucun prospect valide ciblé pour cette campagne')
       return
     }
 
@@ -780,9 +780,9 @@ export default function ProspectionClient({
     if (simulation) {
       confirmMsg = `🧪 Simuler l'envoi de la campagne sur ${targetIds.length} prospects ciblés ?`
     } else if (nbDejaContactes > 0) {
-      confirmMsg = `⚠️ ATTENTION RELANCE :\n\nCette campagne cible ${targetIds.length} prospects, dont ${nbDejaContactes} DÉJÀ CONTACTÉS auparavant !\n\nConfirmez-vous l'envoi de ce nouveau message à ces ${nbDejaContactes} marchands déjà prospectés ?`
+      confirmMsg = `ATTENTION RELANCE :\n\nCette campagne cible ${targetIds.length} prospects, dont ${nbDejaContactes} DÉJÀ CONTACTÉS auparavant !\n\nConfirmez-vous l'envoi de ce nouveau message à ces ${nbDejaContactes} marchands déjà prospectés ?`
     } else {
-      confirmMsg = `🚀 LANCER EN RÉEL l'envoi de la campagne sur ${targetIds.length} NOUVEAUX prospects (100% jamais contactés auparavant) ?`
+      confirmMsg = `LANCER EN RÉEL l'envoi de la campagne sur ${targetIds.length} NOUVEAUX prospects (100% jamais contactés auparavant) ?`
     }
 
     if (!confirm(confirmMsg)) {
@@ -805,16 +805,16 @@ export default function ProspectionClient({
       const data = await res.json()
       if (res.ok) {
         if (data.resultat?.en_arriere_plan) {
-          showToast(`🎉 ${data.resultat.message}`)
+          showToast(`${data.resultat.message}`)
         } else {
-          showToast(`🎉 Campagne terminée : ${data.resultat.nbSucces} envoyés (${data.resultat.nbEchecs} échecs)`)
+          showToast(`Campagne terminée : ${data.resultat.nbSucces} envoyés (${data.resultat.nbEchecs} échecs)`)
         }
         await reloadLeads()
       } else {
-        showToast(`❌ ${data.error}`)
+        showToast(`${data.error}`)
       }
     } catch (e: any) {
-      showToast(`❌ Erreur de campagne: ${e.message}`)
+      showToast(`Erreur de campagne: ${e.message}`)
     } finally {
       setIsSending(false)
     }
@@ -836,7 +836,7 @@ export default function ProspectionClient({
         const data = await resCampagnes.json()
         setCampagnesList((data.campagnes || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:ProspectionClient:L839]', err); }
     setLoadingLogs(false)
   }
 
@@ -921,7 +921,7 @@ export default function ProspectionClient({
 
   // Salutation intelligente
   if (/\{salutation\}/i.test(previewText)) {
-    previewText = previewText.replace(/\{salutation\}/gi, salutationTarget ? `Salam ${salutationTarget} ! 👋` : 'Salam ! 👋')
+    previewText = previewText.replace(/\{salutation\}/gi, salutationTarget ? `Salam ${salutationTarget} ! ` : 'Salam ! ')
   }
 
   previewText = previewText
@@ -970,7 +970,7 @@ export default function ProspectionClient({
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    showToast('📥 Fichier CSV exporté avec succès !')
+    showToast('Fichier CSV exporté avec succès !')
   }
 
   return (
@@ -1006,7 +1006,7 @@ export default function ProspectionClient({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <h1 style={{ fontSize: 30, fontWeight: 900, margin: '0 0 8px' }}>
-              🎯 CRM Leads &amp; Moteur de Prospection Automatisée
+              CRM Leads &amp; Moteur de Prospection Automatisée
             </h1>
             <p style={{ fontSize: 15, color: '#CBD5E1', maxWidth: 840, lineHeight: 1.5, margin: 0 }}>
               Collectez des contacts qualifiés de commerçants à Dakar, normalisez les numéros (+221 Orange / Free / Expresso), générez des requêtes Dorking et dispatchez des messages WhatsApp &amp; E-mail personnalisés.
@@ -1024,7 +1024,7 @@ export default function ProspectionClient({
               }}
             >
               <Sparkles size={18} />
-              <span>{isCleaningLeads ? 'Nettoyage en cours...' : '✨ Nettoyer & Enrichir Base'}</span>
+              <span>{isCleaningLeads ? 'Nettoyage en cours...' : 'Nettoyer & Enrichir Base'}</span>
             </button>
 
             <button
@@ -1037,7 +1037,7 @@ export default function ProspectionClient({
               }}
             >
               <Sparkles size={18} />
-              <span>{isAutoSourcing ? 'Auto-Sourcing...' : '⚡ Auto-Sourcing'}</span>
+              <span>{isAutoSourcing ? 'Auto-Sourcing...' : 'Auto-Sourcing'}</span>
             </button>
 
             <button
@@ -1062,11 +1062,11 @@ export default function ProspectionClient({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
           {[
             { label: 'Total Collectés', val: stats.total, color: '#1C2B4A', bg: '#F8FAFC', icon: Users, pct: null },
-            { label: '🎯 Qualifiés (Score ≥70)', val: stats.qualifies, color: '#7C3AED', bg: '#F5F3FF', icon: Sparkles, pct: stats.total ? Math.round(stats.qualifies / stats.total * 100) : 0 },
-            { label: '✉️ Nouveaux', val: stats.nouveaux, color: '#2563EB', bg: '#EFF6FF', icon: UserPlus, pct: stats.total ? Math.round(stats.nouveaux / stats.total * 100) : 0 },
+            { label: 'Qualifiés (Score ≥70)', val: stats.qualifies, color: '#7C3AED', bg: '#F5F3FF', icon: Sparkles, pct: stats.total ? Math.round(stats.qualifies / stats.total * 100) : 0 },
+            { label: 'Nouveaux', val: stats.nouveaux, color: '#2563EB', bg: '#EFF6FF', icon: UserPlus, pct: stats.total ? Math.round(stats.nouveaux / stats.total * 100) : 0 },
             { label: '📨 Contactés', val: stats.contactes, color: '#C75B00', bg: '#FFF7ED', icon: Send, pct: stats.total ? Math.round(stats.contactes / stats.total * 100) : 0 },
-            { label: '💬 En Discussion', val: stats.en_discussion, color: '#D97706', bg: '#FFFBEB', icon: MessageSquare, pct: stats.total ? Math.round(stats.en_discussion / stats.total * 100) : 0 },
-            { label: '🏪 Boutiques Créées', val: stats.convertis, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2, pct: stats.contactes ? Math.round(stats.convertis / stats.contactes * 100) : 0 },
+            { label: 'En Discussion', val: stats.en_discussion, color: '#D97706', bg: '#FFFBEB', icon: MessageSquare, pct: stats.total ? Math.round(stats.en_discussion / stats.total * 100) : 0 },
+            { label: 'Boutiques Créées', val: stats.convertis, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2, pct: stats.contactes ? Math.round(stats.convertis / stats.contactes * 100) : 0 },
             { label: '🚫 Invalides / Hors cible', val: stats.invalides + (stats.desinscrits || 0), color: '#64748B', bg: '#F1F5F9', icon: Ban, pct: stats.total ? Math.round((stats.invalides + (stats.desinscrits || 0)) / stats.total * 100) : 0 },
           ].map((kpi, idx) => {
             const Icon = kpi.icon
@@ -1100,21 +1100,21 @@ export default function ProspectionClient({
         {/* Ligne 2 : Qualité & Fit Score */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           <div style={{ background: 'linear-gradient(135deg, #1C2B4A, #2D4A8A)', borderRadius: 14, padding: '16px 20px', color: '#fff' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>📊 Score Qualité Moyen</div>
+            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>Score Qualité Moyen</div>
             <div style={{ fontSize: 30, fontWeight: 900 }}>{stats.avg_score}<span style={{ fontSize: 16, opacity: 0.7 }}>/100</span></div>
             <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 6, height: 6 }}>
               <div style={{ width: `${stats.avg_score}%`, background: '#60A5FA', borderRadius: 6, height: 6, transition: 'width 0.6s' }} />
             </div>
           </div>
           <div style={{ background: 'linear-gradient(135deg, #059669, #16A34A)', borderRadius: 14, padding: '16px 20px', color: '#fff' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>⭐ Nopalou Fit Score Moyen</div>
+            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>Nopalou Fit Score Moyen</div>
             <div style={{ fontSize: 30, fontWeight: 900 }}>{stats.avg_fit_score}<span style={{ fontSize: 16, opacity: 0.7 }}>/100</span></div>
             <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.15)', borderRadius: 6, height: 6 }}>
               <div style={{ width: `${stats.avg_fit_score}%`, background: '#6EE7B7', borderRadius: 6, height: 6, transition: 'width 0.6s' }} />
             </div>
           </div>
           <div style={{ background: 'linear-gradient(135deg, #7C3AED, #9333EA)', borderRadius: 14, padding: '16px 20px', color: '#fff' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>🔥 Leads Haut Fit (≥70%)</div>
+            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.8, marginBottom: 4 }}>Leads Haut Fit (≥70%)</div>
             <div style={{ fontSize: 30, fontWeight: 900 }}>{stats.haut_fit}</div>
             <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
               Taux de conversion estimé : {stats.haut_fit && stats.total ? Math.round(stats.haut_fit / stats.total * 100) : 0}% de la base
@@ -1129,10 +1129,10 @@ export default function ProspectionClient({
         padding: '6px', borderRadius: 16, marginBottom: 28, border: '1px solid #E2E8F0'
       }}>
         {[
-          { id: 'crm', label: `📋 1. Base CRM Leads (${stats.total || filteredLeads.length})`, icon: Users },
-          { id: 'import', label: '📥 2. Collecteur & Import Vrac', icon: Layers },
-          { id: 'campagnes', label: '💬 3. Dispatcher & Campagnes', icon: Send },
-          { id: 'logs', label: '📊 4. Historique d\'Envois', icon: History },
+          { id: 'crm', label: `1. Base CRM Leads (${stats.total || filteredLeads.length})`, icon: Users },
+          { id: 'import', label: '2. Collecteur & Import Vrac', icon: Layers },
+          { id: 'campagnes', label: '3. Dispatcher & Campagnes', icon: Send },
+          { id: 'logs', label: '4. Historique d\'Envois', icon: History },
           { id: 'control', label: '🎛️ 5. Centre de Contrôle & Crons', icon: ShieldCheck },
           { id: 'blacklist', label: `🚫 6. Liste Noire (${stats.blacklist !== undefined ? stats.blacklist : blacklist.length})`, icon: Ban },
         ].map((t) => {
@@ -1284,12 +1284,12 @@ export default function ProspectionClient({
                   color: statutFilter !== 'tous' ? '#1D4ED8' : '#1E293B',
                 }}
               >
-                <option value="tous">🎯 Tous les statuts</option>
+                <option value="tous">Tous les statuts</option>
                 <option value="nouveau">🔹 Nouveau</option>
-                <option value="contacte_wa">🟢 Contacté WhatsApp</option>
+                <option value="contacte_wa">Contacté WhatsApp</option>
                 <option value="en_discussion">🟠 En discussion</option>
-                <option value="converti">✅ Converti (Actif)</option>
-                <option value="desinscrit">⛔ Désinscrit</option>
+                <option value="converti">Converti (Actif)</option>
+                <option value="desinscrit">Désinscrit</option>
                 <option value="invalide">⚪ Invalide (Emploi / Hors Cible)</option>
               </select>
 
@@ -1333,7 +1333,7 @@ export default function ProspectionClient({
                   color: quartierFilter !== 'tous' ? '#1D4ED8' : '#1E293B',
                 }}
               >
-                <option value="tous">📍 Tous les quartiers ({uniqueQuartiers.length})</option>
+                <option value="tous">Tous les quartiers ({uniqueQuartiers.length})</option>
                 {uniqueQuartiers.map((q) => (
                   <option key={q} value={q}>{q}</option>
                 ))}
@@ -1348,10 +1348,10 @@ export default function ProspectionClient({
                   fontSize: 12, fontWeight: 700, background: '#F0FDF4', color: '#16A34A',
                 }}
               >
-                <option value="priorite">🔥 Priorité Commerciale</option>
-                <option value="fit">⭐ Nopalou Fit Score</option>
-                <option value="qualite">📊 Score Qualité</option>
-                <option value="date">📅 Date Ajout</option>
+                <option value="priorite">Priorité Commerciale</option>
+                <option value="fit">Nopalou Fit Score</option>
+                <option value="qualite">Score Qualité</option>
+                <option value="date">Date Ajout</option>
               </select>
 
               {/* Bouton Réinitialiser si filtres actifs */}
@@ -1407,7 +1407,7 @@ export default function ProspectionClient({
                     <th style={{ padding: '14px 16px', fontWeight: 800 }}>Catégorie / Zone</th>
                     <th style={{ padding: '14px 16px', fontWeight: 800 }}>Statut</th>
                     <th style={{ padding: '14px 16px', fontWeight: 800 }}>Source</th>
-                    <th style={{ padding: '14px 16px', fontWeight: 800, whiteSpace: 'nowrap' }}>⭐ Score / Fit</th>
+                    <th style={{ padding: '14px 16px', fontWeight: 800, whiteSpace: 'nowrap' }}>Score / Fit</th>
                     <th style={{ padding: '14px 16px', fontWeight: 800, textAlign: 'right' }}>Actions 1-Clic</th>
                   </tr>
                 </thead>
@@ -1415,7 +1415,7 @@ export default function ProspectionClient({
                   {filteredLeads.length === 0 ? (
                     <tr>
                       <td colSpan={8} style={{ padding: '40px 20px', textAlign: 'center', color: '#94A3B8' }}>
-                        Aucun prospect trouvé. Utilisez <strong>« ⚡ Auto-Sourcing Annonces »</strong> ou <strong>« 📥 Import Vrac »</strong> pour alimenter votre base.
+                        Aucun prospect trouvé. Utilisez <strong>« Auto-Sourcing Annonces »</strong> ou <strong>« Import Vrac »</strong> pour alimenter votre base.
                       </td>
                     </tr>
                   ) : (
@@ -1447,7 +1447,7 @@ export default function ProspectionClient({
                               {lead.nom_boutique}
                             </strong>
                             {lead.contact_nom && (
-                              <span style={{ fontSize: 12, color: '#64748B' }}>👤 {lead.contact_nom}</span>
+                              <span style={{ fontSize: 12, color: '#64748B' }}>{lead.contact_nom}</span>
                             )}
                             {lead.notes && (
                               <span style={{ fontSize: 11, color: '#94A3B8', display: 'block', fontStyle: 'italic', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1466,14 +1466,14 @@ export default function ProspectionClient({
                               </span>
                             </div>
                             {lead.email && (
-                              <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>✉️ {lead.email}</span>
+                              <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>{lead.email}</span>
                             )}
                           </td>
                           <td style={{ padding: '14px 16px' }}>
                             <span style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', textTransform: 'capitalize' }}>
-                              🏷️ {lead.categorie}
+                              {lead.categorie}
                             </span>
-                            <span style={{ fontSize: 12, color: '#94A3B8' }}>📍 {lead.quartier || lead.ville}</span>
+                            <span style={{ fontSize: 12, color: '#94A3B8' }}>{lead.quartier || lead.ville}</span>
                           </td>
                           <td style={{ padding: '14px 16px' }}>
                             <select
@@ -1515,7 +1515,7 @@ export default function ProspectionClient({
                                     </div>
                                   </div>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                    <span style={{ fontSize: 10, fontWeight: 800, color: fcColor, minWidth: 22 }}>⭐{fc}</span>
+                                    <span style={{ fontSize: 10, fontWeight: 800, color: fcColor, minWidth: 22 }}>{fc}</span>
                                     <div style={{ flex: 1, background: '#E2E8F0', borderRadius: 4, height: 5 }}>
                                       <div style={{ width: `${fc}%`, background: fcColor, borderRadius: 4, height: 5 }} />
                                     </div>
@@ -1655,7 +1655,7 @@ Boutique Parcelles, 70 111 22 33`}
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
-                {isImporting ? 'Extraction en cours...' : '⚡ Extraire & Importer les Leads'}
+                {isImporting ? 'Extraction en cours...' : 'Extraire & Importer les Leads'}
               </button>
             </div>
           </div>
@@ -1680,7 +1680,7 @@ Boutique Parcelles, 70 111 22 33`}
                       color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.4)',
                       padding: '2px 8px', borderRadius: 20
                     }}>
-                      🛡️ &lt; 3 Mo RAM
+                      &lt; 3 Mo RAM
                     </span>
                   </div>
                   <p style={{ fontSize: 13, color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
@@ -1699,7 +1699,7 @@ Boutique Parcelles, 70 111 22 33`}
                       display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
                     }}
                   >
-                    📍 Places Dakar (Gratuit)
+                    Places Dakar (Gratuit)
                   </button>
 
                   <button
@@ -1714,7 +1714,7 @@ Boutique Parcelles, 70 111 22 33`}
                     }}
                   >
                     <Zap size={16} />
-                    {isAutoCollecting ? 'Collecte en cours (2-3s)...' : '🚀 Lancer Tout (A + B)'}
+                    {isAutoCollecting ? 'Collecte en cours (2-3s)...' : 'Lancer Tout (A + B)'}
                   </button>
                 </div>
               </div>
@@ -1729,13 +1729,13 @@ Boutique Parcelles, 70 111 22 33`}
                 }}>
                   <span>
                     {(autoCollecteResult.totalAjoutes || 0) > 0 ? (
-                      <>🎉 <strong>+{autoCollecteResult.totalAjoutes} nouveaux commerces ajoutés</strong> avec succès dans votre base CRM ! ({autoCollecteResult.totalIgnores} déjà présents ou filtrés)</>
+                      <><strong>+{autoCollecteResult.totalAjoutes} nouveaux commerces ajoutés</strong> avec succès dans votre base CRM ! ({autoCollecteResult.totalIgnores} déjà présents ou filtrés)</>
                     ) : (
                       <>ℹ️ <strong>Votre base CRM est 100% à jour !</strong> Les {autoCollecteResult.totalTraites || autoCollecteResult.totalIgnores || 0} commerces analysés sont déjà tous enregistrés dans votre base sans doublon.</>
                     )}
                   </span>
                   <span style={{ fontSize: 11, opacity: 0.8 }}>
-                    ⚡ Exécuté en {Math.round(autoCollecteResult.dureeMs / 100) / 10}s • RAM: +{autoCollecteResult.ramDeltaMb} Mo
+                    Exécuté en {Math.round(autoCollecteResult.dureeMs / 100) / 10}s • RAM: +{autoCollecteResult.ramDeltaMb} Mo
                   </span>
                 </div>
               )}
@@ -1783,7 +1783,7 @@ Boutique Parcelles, 70 111 22 33`}
                 ) : (
                   <>
                     <Zap size={16} />
-                    ⚡ TOUT ASPIRER EN 1 CLIC (5 Canaux)
+                    TOUT ASPIRER EN 1 CLIC (5 Canaux)
                   </>
                 )}
               </button>
@@ -1853,7 +1853,7 @@ Boutique Parcelles, 70 111 22 33`}
                         ) : (
                           <>
                             <Zap size={13} color="#FBBF24" />
-                            ⚡ Aspirer ce canal (IA)
+                            Aspirer ce canal (IA)
                           </>
                         )}
                       </button>
@@ -1916,7 +1916,7 @@ Boutique Parcelles, 70 111 22 33`}
                   background: campaignTargetLeads.length > 0 ? '#DCFCE7' : '#FEE2E2',
                   color: campaignTargetLeads.length > 0 ? '#166534' : '#991B1B',
                 }}>
-                  🎯 {campaignTargetLeads.length} prospect{campaignTargetLeads.length > 1 ? 's' : ''} ciblé{campaignTargetLeads.length > 1 ? 's' : ''}
+                  {campaignTargetLeads.length} prospect{campaignTargetLeads.length > 1 ? 's' : ''} ciblé{campaignTargetLeads.length > 1 ? 's' : ''}
                 </span>
               </div>
 
@@ -1929,7 +1929,7 @@ Boutique Parcelles, 70 111 22 33`}
                   <AlertTriangle size={20} color="#DC2626" style={{ flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 900, color: '#991B1B' }}>
-                      ⚠️ {nbDejaContactes} prospect{nbDejaContactes > 1 ? 's' : ''} DÉJÀ CONTACTÉ{nbDejaContactes > 1 ? 'S' : ''} dans cette sélection
+                      {nbDejaContactes} prospect{nbDejaContactes > 1 ? 's' : ''} DÉJÀ CONTACTÉ{nbDejaContactes > 1 ? 'S' : ''} dans cette sélection
                     </div>
                     <div style={{ fontSize: 11, color: '#B91C1C', marginTop: 1 }}>
                       Ils ont déjà reçu un message WhatsApp lors d&apos;une campagne précédente. Ils ne sont inclus que parce que vous avez explicitement élargi le filtre de statut ou coché leurs cases.
@@ -1943,7 +1943,7 @@ Boutique Parcelles, 70 111 22 33`}
                 }}>
                   <ShieldCheck size={16} color="#16A34A" style={{ flexShrink: 0 }} />
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#166534' }}>
-                    🛡️ <strong>Protection Anti-Doublon Active :</strong> 100% des {campaignTargetLeads.length} prospects ciblés sont <strong>NOUVEAUX</strong> (jamais contactés). Aucun marchand déjà prospecté ne sera relancé sans votre accord.
+                    <strong>Protection Anti-Doublon Active :</strong> 100% des {campaignTargetLeads.length} prospects ciblés sont <strong>NOUVEAUX</strong> (jamais contactés). Aucun marchand déjà prospecté ne sera relancé sans votre accord.
                   </span>
                 </div>
               )}
@@ -1954,7 +1954,7 @@ Boutique Parcelles, 70 111 22 33`}
                   borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
                 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#1E40AF' }}>
-                    📌 Mode Sélection Manuelle : <strong>{selectedLeadIds.length}</strong> prospect{selectedLeadIds.length > 1 ? 's' : ''} coché{selectedLeadIds.length > 1 ? 's' : ''} dans la table.
+                    Mode Sélection Manuelle : <strong>{selectedLeadIds.length}</strong> prospect{selectedLeadIds.length > 1 ? 's' : ''} coché{selectedLeadIds.length > 1 ? 's' : ''} dans la table.
                   </span>
                   <button
                     onClick={() => setSelectedLeadIds([])}
@@ -2020,10 +2020,10 @@ Boutique Parcelles, 70 111 22 33`}
                       style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
                     >
                       <option value="nouveau">🔹 Nouveau (Recommandé)</option>
-                      <option value="tous">🎯 Tous les statuts</option>
-                      <option value="contacte_wa">🟢 Contacté WhatsApp</option>
+                      <option value="tous">Tous les statuts</option>
+                      <option value="contacte_wa">Contacté WhatsApp</option>
                       <option value="en_discussion">🟠 En discussion</option>
-                      <option value="converti">✅ Converti</option>
+                      <option value="converti">Converti</option>
                     </select>
                   </div>
 
@@ -2069,7 +2069,7 @@ Boutique Parcelles, 70 111 22 33`}
                       onChange={(e) => setQuartierFilter(e.target.value)}
                       style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
                     >
-                      <option value="tous">📍 Tous les quartiers</option>
+                      <option value="tous">Tous les quartiers</option>
                       {uniqueQuartiers.map((q) => (
                         <option key={q} value={q}>{q}</option>
                       ))}
@@ -2148,7 +2148,7 @@ Boutique Parcelles, 70 111 22 33`}
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
                 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>
-                    ⚠️ Vous ciblez les <strong>Véhicules</strong> mais le message sélectionné parle de <strong>Mode / Vêtements</strong>.
+                    Vous ciblez les <strong>Véhicules</strong> mais le message sélectionné parle de <strong>Mode / Vêtements</strong>.
                   </span>
                   <button
                     onClick={() => {
@@ -2163,7 +2163,7 @@ Boutique Parcelles, 70 111 22 33`}
                       borderRadius: 6, fontSize: 11, fontWeight: 800, color: '#B45309', cursor: 'pointer', whiteSpace: 'nowrap'
                     }}
                   >
-                    Appliquer le template Véhicules 🚗
+                    Appliquer le template Véhicules 
                   </button>
                 </div>
               )}
@@ -2174,7 +2174,7 @@ Boutique Parcelles, 70 111 22 33`}
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
                 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>
-                    ⚠️ Vous ciblez l'<strong>Immobilier</strong> mais le message sélectionné parle de <strong>Mode / Vêtements</strong>.
+                    Vous ciblez l'<strong>Immobilier</strong> mais le message sélectionné parle de <strong>Mode / Vêtements</strong>.
                   </span>
                   <button
                     onClick={() => {
@@ -2189,7 +2189,7 @@ Boutique Parcelles, 70 111 22 33`}
                       borderRadius: 6, fontSize: 11, fontWeight: 800, color: '#B45309', cursor: 'pointer', whiteSpace: 'nowrap'
                     }}
                   >
-                    Appliquer le template Immobilier 🏠
+                    Appliquer le template Immobilier 
                   </button>
                 </div>
               )}
@@ -2211,11 +2211,11 @@ Boutique Parcelles, 70 111 22 33`}
                   <div>
                     {campagneMessage.length <= 190 ? (
                       <span style={{ color: '#16A34A', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        🟢 <strong>Seuil optimal respecté ({campagneMessage.length}/190 car.)</strong> : 100% visible sans bouton « Voir plus » sur smartphone
+                        <strong>Seuil optimal respecté ({campagneMessage.length}/190 car.)</strong> : 100% visible sans bouton « Voir plus » sur smartphone
                       </span>
                     ) : (
                       <span style={{ color: '#D97706', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        ⚠️ <strong>Attention ({campagneMessage.length} car. — seuil recommandé 190)</strong> : risque d&apos;apparition de « ... Voir plus » sur mobile
+                        <strong>Attention ({campagneMessage.length} car. — seuil recommandé 190)</strong> : risque d&apos;apparition de « ... Voir plus » sur mobile
                       </span>
                     )}
                   </div>
@@ -2246,7 +2246,7 @@ Boutique Parcelles, 70 111 22 33`}
                     cursor: isSending ? 'not-allowed' : 'pointer', boxShadow: '0 4px 14px rgba(22,163,74,0.3)',
                   }}
                 >
-                  {isSending ? 'Envoi en cours...' : '🚀 Lancer la Campagne Réelle'}
+                  {isSending ? 'Envoi en cours...' : 'Lancer la Campagne Réelle'}
                 </button>
               </div>
             </div>
@@ -2255,7 +2255,7 @@ Boutique Parcelles, 70 111 22 33`}
           {/* Aperçu en direct du message rendu */}
           <div style={{ background: '#FFF7ED', border: '2px solid #FFEDD5', borderRadius: 16, padding: '24px' }}>
             <h2 style={{ fontSize: 16, fontWeight: 900, color: '#C75B00', margin: '0 0 12px' }}>
-              📱 Aperçu WhatsApp Réel (Destinataire Exemple : {previewLead.nom_boutique})
+              Aperçu WhatsApp Réel (Destinataire Exemple : {previewLead.nom_boutique})
             </h2>
 
             <div style={{
@@ -2267,7 +2267,7 @@ Boutique Parcelles, 70 111 22 33`}
 
             <div style={{ marginTop: 20, padding: '12px 16px', background: '#fff', borderRadius: 12, border: '1px solid #FED7AA' }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: '#9A3412', display: 'block', marginBottom: 4 }}>
-                💡 Recommandations Anti-Ban WhatsApp Sénégal :
+                Recommandations Anti-Ban WhatsApp Sénégal :
               </span>
               <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: '#475569', lineHeight: 1.5 }}>
                 <li>Envoyez par vagues de 30 à 50 contacts par jour.</li>
@@ -2307,7 +2307,7 @@ Boutique Parcelles, 70 111 22 33`}
               {campagnesList.length > 0 && (
                 <div style={{ marginBottom: 24 }}>
                   <h3 style={{ fontSize: 15, fontWeight: 800, color: '#334155', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    📋 Récapitulatif des Campagnes ({campagnesList.length})
+                    Récapitulatif des Campagnes ({campagnesList.length})
                   </h3>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 12 }}>
@@ -2345,7 +2345,7 @@ Boutique Parcelles, 70 111 22 33`}
                                   background: c.statut === 'terminee' ? (isZeroSend ? '#FEF3C7' : '#DCFCE7') : c.statut === 'en_cours' ? '#DBEAFE' : '#F1F5F9',
                                   color: c.statut === 'terminee' ? (isZeroSend ? '#92400E' : '#166534') : c.statut === 'en_cours' ? '#1E40AF' : '#64748B',
                                 }}>
-                                  {c.statut === 'terminee' ? (isZeroSend ? '⚠️ 0 envoi' : '✅ Terminée') : c.statut === 'en_cours' ? '🔄 En cours' : c.statut}
+                                  {c.statut === 'terminee' ? (isZeroSend ? '0 envoi' : 'Terminée') : c.statut === 'en_cours' ? 'En cours' : c.statut}
                                 </span>
                               </td>
                               <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center' }}>{c.nb_total || 0}</td>
@@ -2355,7 +2355,7 @@ Boutique Parcelles, 70 111 22 33`}
                               <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center' }}>
                                 {nbReps > 0 ? (
                                   <span style={{ background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800 }}>
-                                    💬 {nbReps}
+                                    {nbReps}
                                   </span>
                                 ) : (
                                   <span style={{ color: '#94A3B8' }}>0</span>
@@ -2364,7 +2364,7 @@ Boutique Parcelles, 70 111 22 33`}
                               <td style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'center' }}>
                                 {nbConv > 0 ? (
                                   <span style={{ background: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 800 }}>
-                                    🏪 {nbConv} boutique{nbConv > 1 ? 's' : ''}
+                                    {nbConv} boutique{nbConv > 1 ? 's' : ''}
                                   </span>
                                 ) : (
                                   <span style={{ color: '#94A3B8' }}>—</span>
@@ -2485,7 +2485,7 @@ Boutique Parcelles, 70 111 22 33`}
                 </div>
                 <div>
                   <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
-                    🚀 Scraping &amp; Sourcing de Marchés
+                    Scraping &amp; Sourcing de Marchés
                   </h3>
                   <span style={{ fontSize: 12, color: '#64748B' }}>
                     Collecte de commerces ciblés par zone
@@ -2512,7 +2512,7 @@ Boutique Parcelles, 70 111 22 33`}
                     <option value="Tilène">Marché Tilène (Cosmétique &amp; Beauté)</option>
                     <option value="Thiès">Thiès (Commerce Général)</option>
                     <option value="Touba">Touba (Commerces &amp; Quincaillerie)</option>
-                    <option value="all">🌐 Tout Dakar &amp; Régions</option>
+                    <option value="all">Tout Dakar &amp; Régions</option>
                   </select>
                 </div>
 
@@ -2555,7 +2555,7 @@ Boutique Parcelles, 70 111 22 33`}
                   fontSize: 13,
                   color: scrapingResult.succes === false ? '#991B1B' : '#1E40AF',
                 }}>
-                  <strong>{scrapingResult.succes === false ? '❌ Erreur de Scraping :' : '✅ Résultat du Scraping :'}</strong>
+                  <strong>{scrapingResult.succes === false ? 'Erreur de Scraping :' : 'Résultat du Scraping :'}</strong>
                   {scrapingResult.error ? (
                     <p style={{ margin: '4px 0 0' }}>{scrapingResult.error}</p>
                   ) : (
@@ -2581,7 +2581,7 @@ Boutique Parcelles, 70 111 22 33`}
                 </div>
                 <div>
                   <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
-                    🔔 Relances Automatisées WhatsApp
+                    Relances Automatisées WhatsApp
                   </h3>
                   <span style={{ fontSize: 12, color: '#64748B' }}>
                     Dettes clients &amp; Abonnements marchands
@@ -2599,7 +2599,7 @@ Boutique Parcelles, 70 111 22 33`}
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}
                 >
-                  <span>⏰ Relances Marchands (J+1, J+7, J+25)</span>
+                  <span>Relances Marchands (J+1, J+7, J+25)</span>
                   <span style={{ fontSize: 11, background: '#E2E8F0', padding: '2px 8px', borderRadius: 6, fontWeight: 800 }}>Exécuter</span>
                 </button>
 
@@ -2612,7 +2612,7 @@ Boutique Parcelles, 70 111 22 33`}
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}
                 >
-                  <span>📒 Relances Carnet de Dettes (&quot;Bor&quot;)</span>
+                  <span>Relances Carnet de Dettes (&quot;Bor&quot;)</span>
                   <span style={{ fontSize: 11, background: '#E2E8F0', padding: '2px 8px', borderRadius: 6, fontWeight: 800 }}>Exécuter</span>
                 </button>
 
@@ -2626,13 +2626,13 @@ Boutique Parcelles, 70 111 22 33`}
                   }}
                 >
                   <RefreshCw size={18} className={isRelancing ? 'animate-spin' : ''} />
-                  <span>{isRelancing ? 'Envoi en cours...' : '⚡ Tout Exécuter Maintenant'}</span>
+                  <span>{isRelancing ? 'Envoi en cours...' : 'Tout Exécuter Maintenant'}</span>
                 </button>
               </div>
 
               {relancesResult && (
                 <div style={{ padding: 14, background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 10, fontSize: 13, color: '#065F46' }}>
-                  <strong>✅ Rapport d&apos;exécution des relances :</strong>
+                  <strong>Rapport d&apos;exécution des relances :</strong>
                   <ul style={{ margin: '6px 0 0', paddingLeft: 18, lineHeight: 1.5 }}>
                     {relancesResult.resultats?.marchands?.stats && (
                       <li>
@@ -2661,7 +2661,7 @@ Boutique Parcelles, 70 111 22 33`}
               </div>
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
-                  🤖 Assistant Marchand WhatsApp (&quot;Bot Taf-Taf&quot; &amp; &quot;+produit&quot;)
+                  Assistant Marchand WhatsApp (&quot;Bot Taf-Taf&quot; &amp; &quot;+produit&quot;)
                 </h3>
                 <span style={{ fontSize: 12, color: '#64748B' }}>
                   Commandes conversationnelles directes et gestion de catalogue
@@ -2672,33 +2672,33 @@ Boutique Parcelles, 70 111 22 33`}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
               <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: 18 }}>🏪</span>
+                  <span style={{ fontSize: 18 }}></span>
                   <strong style={{ fontSize: 14, color: '#1E293B' }}>Création de Boutique en 30s</strong>
                 </div>
                 <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 8px', lineHeight: 1.5 }}>
                   Un commerçant tape <code>créer boutique</code> sur WhatsApp. Le bot lui demande son nom, quartier et secteur, puis génère automatiquement sa vitrine en ligne avec 30 jours offerts.
                 </p>
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#16A34A', background: '#DCFCE7', padding: '3px 8px', borderRadius: 6 }}>
-                  🟢 Opérationnel 24h/24
+                  Opérationnel 24h/24
                 </span>
               </div>
 
               <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: 18 }}>🛍️</span>
+                  <span style={{ fontSize: 18 }}></span>
                   <strong style={{ fontSize: 14, color: '#1E293B' }}>Ajout de Produit Sécurisé (+produit)</strong>
                 </div>
                 <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 8px', lineHeight: 1.5 }}>
                   Un marchand tape <code>+produit</code> pour ajouter un article à son catalogue. Le système vérifie en base que son numéro est bien celui du propriétaire avant d&apos;autoriser l&apos;ajout.
                 </p>
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#2563EB', background: '#EFF6FF', padding: '3px 8px', borderRadius: 6 }}>
-                  🔒 Contrôle de Propriété Sécurisé
+                  Contrôle de Propriété Sécurisé
                 </span>
               </div>
 
               <div style={{ padding: 16, background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: 18 }}>🛡️</span>
+                  <span style={{ fontSize: 18 }}></span>
                   <strong style={{ fontSize: 14, color: '#1E293B' }}>Désinscription Stricte (STOP)</strong>
                 </div>
                 <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 8px', lineHeight: 1.5 }}>
@@ -2719,7 +2719,7 @@ Boutique Parcelles, 70 111 22 33`}
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                 <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1C2B4A', margin: 0 }}>
-                  📊 État des Crons d&apos;Arrière-Plan &amp; Statistiques Globales
+                  État des Crons d&apos;Arrière-Plan &amp; Statistiques Globales
                 </h3>
                 <span style={{ fontSize: 12, color: '#64748B' }}>
                   Blacklist active : <strong>{cronData.stats?.blacklist || 0}</strong> numéros protégés
@@ -2870,8 +2870,8 @@ Boutique Parcelles, 70 111 22 33`}
                           {item.nom_boutique ? (
                             <div>
                               <strong style={{ color: '#1C2B4A' }}>{item.nom_boutique}</strong>
-                              {item.contact_nom && <span style={{ fontSize: 12, color: '#64748B', display: 'block' }}>👤 {item.contact_nom}</span>}
-                              {item.quartier && <span style={{ fontSize: 11, color: '#94A3B8' }}>📍 {item.quartier}</span>}
+                              {item.contact_nom && <span style={{ fontSize: 12, color: '#64748B', display: 'block' }}>{item.contact_nom}</span>}
+                              {item.quartier && <span style={{ fontSize: 11, color: '#94A3B8' }}>{item.quartier}</span>}
                             </div>
                           ) : (
                             <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Non renseigné dans le CRM</span>
@@ -3192,7 +3192,7 @@ Boutique Parcelles, 70 111 22 33`}
             boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
           }}>
             <h3 style={{ fontSize: 20, fontWeight: 900, color: '#1C2B4A', margin: '0 0 16px' }}>
-              ➕ Ajouter un Nouveau Prospect
+              Ajouter un Nouveau Prospect
             </h3>
 
             <form onSubmit={handleAddSingle} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

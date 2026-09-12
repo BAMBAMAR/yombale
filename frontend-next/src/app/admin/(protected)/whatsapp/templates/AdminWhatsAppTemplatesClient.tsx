@@ -157,7 +157,7 @@ export default function AdminWhatsAppTemplatesClient({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
           <h1 className="admin-page-titre" style={{ margin: 0 }}>
-            💬 Templates des Messages WhatsApp
+            Templates des Messages WhatsApp
             <span className="admin-page-count">{templates.length}</span>
           </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
@@ -199,7 +199,7 @@ export default function AdminWhatsAppTemplatesClient({
 
                 {tpl.isCustom ? (
                   <span style={{ background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700 }}>
-                    ✨ Personnalisé
+                    Personnalisé
                   </span>
                 ) : (
                   <span style={{ background: '#f1f5f9', color: '#64748b', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600 }}>
@@ -332,7 +332,7 @@ export default function AdminWhatsAppTemplatesClient({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#1e293b' }}>
-                  ✏️ Modifier : {editingTpl.label}
+                  Modifier : {editingTpl.label}
                 </h2>
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
                   Utilisez les balises entre accolades pour injecter automatiquement les données contextuelles.
@@ -393,7 +393,7 @@ export default function AdminWhatsAppTemplatesClient({
               {/* Simulation WhatsApp */}
               <div style={{ marginBottom: 20 }}>
                 <h3 style={{ fontSize: 12, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', marginBottom: 6 }}>
-                  📱 Aperçu en direct dans WhatsApp (Exemple)
+                  Aperçu en direct dans WhatsApp (Exemple)
                 </h3>
                 <div
                   style={{

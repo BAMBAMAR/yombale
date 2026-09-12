@@ -51,7 +51,7 @@ export default function HomeDualTrackContainer({
       if (isMerchant || (activeBoutique && activeBoutique !== 'null' && activeBoutique !== '[]') || posUnlocked) {
         setActiveTab('marchand')
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:HomeDualTrackContainer:L54]', err); }
   }, [])
 
   function handleTabChange(tab: 'acheteur' | 'marchand') {
@@ -67,7 +67,7 @@ export default function HomeDualTrackContainer({
         }
         window.history.replaceState(null, '', url.toString())
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:HomeDualTrackContainer:L70]', err); }
   }
 
   return (

@@ -34,7 +34,7 @@ const CATEGORIES = LIB_CATEGORIES.map(c => ({
   label: c.label.replace(/^.*? /, ''), // Remove emoji
   emoji: c.label.split(' ')[0]
 }))
-CATEGORIES.push({ slug: 'telecom', label: 'Télécom & Forfaits', emoji: '📡' })
+CATEGORIES.push({ slug: 'telecom', label: 'Télécom & Forfaits', emoji: '' })
 
 const BUDGETS = [
   { label: 'Tout',        prixMin: '',       prixMax: ''       },
@@ -52,10 +52,10 @@ const ETATS = [
 ]
 
 const TRIS = [
-  { val: '',          label: '⭐ Pertinence' },
-  { val: 'prix_asc',  label: '💰 Prix ↑' },
+  { val: '',          label: 'Pertinence' },
+  { val: 'prix_asc',  label: 'Prix ↑' },
   { val: 'prix_desc', label: 'Prix ↓' },
-  { val: 'populaire', label: '🔥 Populaires' },
+  { val: 'populaire', label: 'Populaires' },
   { val: 'nom_asc',   label: 'Nom A-Z' },
 ]
 
@@ -194,7 +194,7 @@ export default async function HomePage({
                   background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 1px 2px rgba(26,22,18,0.03)',
                   whiteSpace: 'nowrap', flexShrink: 0
                 }}>
-                  <span>🏢</span> <span>Immobilier</span>
+                  <span></span> <span>Immobilier</span>
                 </Link>
               )
             }
@@ -206,7 +206,7 @@ export default async function HomePage({
                   background: '#fff', color: 'var(--text-strong, #2A231E)', border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 1px 2px rgba(26,22,18,0.03)',
                   whiteSpace: 'nowrap', flexShrink: 0
                 }}>
-                  <span>📢</span> <span>Annonces</span>
+                  <span></span> <span>Annonces</span>
                 </Link>
               )
             }
@@ -252,7 +252,7 @@ export default async function HomePage({
               border: '1px solid var(--border, #E8DDD2)', whiteSpace: 'nowrap', flexShrink: 0
             }}
           >
-            <span>🏪</span> <span>Boutiques →</span>
+            <span></span> <span>Boutiques →</span>
           </Link>
         </div>
       }
@@ -374,7 +374,7 @@ export default async function HomePage({
 
                 <div style={{ width: 1, height: 16, background: 'var(--border-medium, #C8BDB2)', margin: '0 4px', flexShrink: 0 }} className="hidden-mobile" />
 
-                <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: '#9a3412', whiteSpace: 'nowrap', marginLeft: 2 }}>🔥 Tendances :</span>
+                <span className="hidden-mobile" style={{ fontSize: 12, fontWeight: 800, color: '#9a3412', whiteSpace: 'nowrap', marginLeft: 2 }}>Tendances :</span>
                 {tendances.map((item, idx) => (
                   <Link
                     key={`${item.q}-${idx}`}
@@ -425,14 +425,14 @@ export default async function HomePage({
               {/* Grille de texte moderne */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32, marginBottom: 48 }}>
                 <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
-                  <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>🛍️</span>
+                  <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}></span>
                   <p style={{ margin: 0, color: 'var(--text-body, #4A3F36)', fontSize: 14, lineHeight: 1.7 }}>
                     <strong>Nopalou</strong> réunit acheteurs et commerçants sur une plateforme unique au Sénégal. Pour les <strong>acheteurs</strong>, Nopalou compare en temps réel les prix de milliers de produits chez tous les grands marchands et boutiques locales à Dakar, Thiès, Saint-Louis et dans tout le pays. Trouvez le <strong>meilleur prix vérifié</strong> et commandez en direct en toute confiance.
                   </p>
                 </div>
                 
                 <div style={{ background: '#ffffff', padding: 24, borderRadius: 16, border: '1px solid var(--border-light, #DDD5CB)', boxShadow: '0 4px 20px rgba(26,22,18,0.03)' }}>
-                  <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}>🏪</span>
+                  <span style={{ fontSize: 32, marginBottom: 16, display: 'block' }}></span>
                   <p style={{ margin: 0, color: 'var(--text-body, #4A3F36)', fontSize: 14, lineHeight: 1.7 }}>
                     Pour les <strong>commerçants</strong>, Nopalou offre une suite complète pour réussir : création de boutique en ligne en 2 minutes, <strong>caisse tactile POS 100% hors-ligne</strong> pour votre magasin, synchronisation de stocks, carnet de crédits/dettes avec relances Wave, et visibilité automatique de vos produits sur le comparateur de prix le plus consulté du Sénégal.
                   </p>
@@ -452,11 +452,11 @@ export default async function HomePage({
                 <p className="chip-row-label">Solutions Vendeurs, Business &amp; Commerce au Sénégal</p>
                 <div className="chip-row" style={{ marginBottom: 24 }}>
                   {[
-                    { href: '/creer-boutique', label: 'Créer sa boutique en ligne (1m offert)', emoji: '🚀' },
-                    { href: '/guide-sourcing-revente', label: 'Sourcing Alibaba, AliExpress & Shein', emoji: '📦' },
-                    { href: '/compte/apporteur', label: 'Programme Apporteur (20% récurrent à vie)', emoji: '💼' },
-                    { href: '/tarifs-boutique', label: 'Tarifs & Forfaits Vendeurs Sénégal', emoji: '🏷️' },
-                    { href: '/marchands', label: 'Plateforme Marchands & POS Caisse', emoji: '🏪' },
+                    { href: '/creer-boutique', label: 'Créer sa boutique en ligne (1m offert)', emoji: '' },
+                    { href: '/guide-sourcing-revente', label: 'Sourcing Alibaba, AliExpress & Shein', emoji: '' },
+                    { href: '/compte/apporteur', label: 'Programme Apporteur (20% récurrent à vie)', emoji: '' },
+                    { href: '/tarifs-boutique', label: 'Tarifs & Forfaits Vendeurs Sénégal', emoji: '' },
+                    { href: '/marchands', label: 'Plateforme Marchands & POS Caisse', emoji: '' },
                   ].map(l => (
                     <Link key={l.href} href={l.href} className="chip chip-small" style={{ background: '#fff7ed', border: '1px solid #fed7aa' }}>
                       <span className="chip-em">{l.emoji}</span>
@@ -468,7 +468,7 @@ export default async function HomePage({
                 {/* ── BANDEAU RÉSEAUX SOCIAUX OFFICIELS NOPALOU ──────────────────── */}
                 <div style={{ marginTop: 40, padding: '24px 20px', background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #0d1728 100%)', borderRadius: 16, color: '#ffffff', textAlign: 'center', boxShadow: '0 8px 24px rgba(28,43,74,0.15)' }}>
                   <span style={{ fontSize: 11, fontWeight: 900, color: '#fed7aa', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'rgba(199,91,0,0.2)', padding: '4px 12px', borderRadius: 20, border: '1px solid rgba(199,91,0,0.3)' }}>
-                    📢 Communauté &amp; Bons Plans
+                    Communauté &amp; Bons Plans
                   </span>
                   <h3 style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', margin: '10px 0 6px' }}>
                     Rejoignez Nopalou sur vos Réseaux Préférés
@@ -492,7 +492,7 @@ export default async function HomePage({
                       rel="noopener noreferrer"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'rgba(37, 211, 102, 0.15)', color: '#86efac', border: '1px solid rgba(37, 211, 102, 0.35)', borderRadius: 20, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.15s ease' }}
                     >
-                      <span>💬</span> <span>Canal WhatsApp</span>
+                      <span></span> <span>Canal WhatsApp</span>
                     </a>
                     <a
                       href="https://www.facebook.com/profile.php?id=61591675701726"
@@ -508,7 +508,7 @@ export default async function HomePage({
                       rel="noopener noreferrer"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: 'rgba(255,255,255,0.08)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 20, fontSize: 13, fontWeight: 700, textDecoration: 'none', transition: 'all 0.15s ease' }}
                     >
-                      <span>📸</span> <span>Instagram</span>
+                      <span></span> <span>Instagram</span>
                     </a>
                     <a
                       href="https://twitter.com/nopalou_sn"

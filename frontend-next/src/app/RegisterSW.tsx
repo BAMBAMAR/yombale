@@ -155,10 +155,10 @@ export default function RegisterSW() {
         setWasOffline(true)
         setShowOfflineToast(true)
         setShowOnlineToast(false)
-        console.warn('🔴 [RegisterSW] Hors-ligne confirmé par ping applicatif.')
+        console.warn('[RegisterSW] Hors-ligne confirmé par ping applicatif.')
       }
     } else if (wasOffline && isOnline) {
-      console.log('🟢 [RegisterSW] Connexion rétablie confirmée par ping applicatif.')
+      console.log('[RegisterSW] Connexion rétablie confirmée par ping applicatif.')
       setShowOnlineToast(true)
       setShowOfflineToast(false)
       setWasOffline(false)
@@ -194,7 +194,7 @@ export default function RegisterSW() {
 
     try {
       sessionStorage.setItem('nopalou_sw_updated', Date.now().toString())
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:RegisterSW:L197]', err); }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistration()
@@ -252,7 +252,7 @@ export default function RegisterSW() {
             animation: 'fadeInDown 0.25s ease',
           }}
         >
-          <span style={{ fontSize: '13px' }}>{showOfflineToast ? '📡' : '✅'}</span>
+          <span style={{ fontSize: '13px' }}>{showOfflineToast ? '' : ''}</span>
           <span>
             {showOfflineToast
               ? 'Mode Hors-Ligne activé — Données en cache local'
@@ -308,7 +308,7 @@ export default function RegisterSW() {
           }}
           onClick={handleSwUpdate}
         >
-          <span>🔄</span>
+          <span></span>
           <span>Nouvelle version disponible — Mettre à jour</span>
         </div>
       )}

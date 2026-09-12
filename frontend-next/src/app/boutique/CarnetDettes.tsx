@@ -257,7 +257,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur lors de l’importation')
 
-      setImportClientsSuccess(`🎉 ${data.count || clientsAImporter.length} client(s) importé(s) avec succès dans votre carnet !`)
+      setImportClientsSuccess(`${data.count || clientsAImporter.length} client(s) importé(s) avec succès dans votre carnet !`)
       setTimeout(async () => {
         setShowModalImportClients(false)
         setClientsAImporter([])
@@ -307,7 +307,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
   const demarrerScannerEanCredit = async () => {
     setModalScannerEanCredit(true)
-    setScannerEanStatusCredit('📷 Scanner EAN prêt (Mode Continu)…')
+    setScannerEanStatusCredit('Scanner EAN prêt (Mode Continu)…')
     dernierScanCreditRef.current = { code: '', time: 0 }
     setTimeout(async () => {
       try {
@@ -316,7 +316,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           try {
             await html5ScannerCreditRef.current.stop()
             html5ScannerCreditRef.current.clear()
-          } catch (e) {}
+          } catch (e) { console.warn('[Nopalou:CarnetDettes:L319]', e); }
           html5ScannerCreditRef.current = null
         }
         const container = document.getElementById('carnet-ean-scanner-reader')
@@ -329,17 +329,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         }
         try {
           await scanner.start({ facingMode: 'environment' }, config, onScanSuccess, () => {})
-          setScannerEanStatusCredit('📷 Caméra active ! Placez le code-barres dans le cadre.')
+          setScannerEanStatusCredit('Caméra active ! Placez le code-barres dans le cadre.')
         } catch (errEnv) {
           try {
             await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-            setScannerEanStatusCredit('📷 Caméra active ! Placez le code-barres dans le cadre.')
+            setScannerEanStatusCredit('Caméra active ! Placez le code-barres dans le cadre.')
           } catch (errUser) {
-            setScannerEanStatusCredit('❌ Impossible d’accéder à la caméra.')
+            setScannerEanStatusCredit('Impossible d’accéder à la caméra.')
           }
         }
       } catch (err) {
-        setScannerEanStatusCredit('❌ Impossible d’accéder à la caméra.')
+        setScannerEanStatusCredit('Impossible d’accéder à la caméra.')
       }
     }, 200)
   }
@@ -349,7 +349,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       try {
         html5ScannerCreditRef.current.stop()
         html5ScannerCreditRef.current.clear()
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:CarnetDettes:L352]', e); }
       html5ScannerCreditRef.current = null
     }
     setModalScannerEanCredit(false)
@@ -374,13 +374,13 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     if (prodTrouve) {
       setPanierProduits(prev => ({ ...prev, [prodTrouve.id]: (prev[prodTrouve.id] || 0) + 1 }))
       jouerBipEtVibrer('succes')
-      setScannerEanStatusCredit(`✅ +1 "${prodTrouve.nom}"`)
+      setScannerEanStatusCredit(`+1 "${prodTrouve.nom}"`)
       if (!scanContinuCredit) {
         setTimeout(() => arreterScannerEanCredit(), 600)
       }
     } else {
       jouerBipEtVibrer('alerte')
-      setScannerEanStatusCredit(`⚠️ Code "${barcodeStr}" non répertorié.`)
+      setScannerEanStatusCredit(`Code "${barcodeStr}" non répertorié.`)
       if (confirm(`Le code-barres "${barcodeStr}" n'existe pas dans le catalogue. L'ajouter en article libre ?`)) {
         setLibelleCustomInput(`Article EAN-${barcodeStr}`)
         setModeSaisie('manuel')
@@ -393,7 +393,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     setModalScannerNomCredit(true)
     setOcrDetectionsCredit([])
     setImageFligeeCreditNom(null)
-    setStatusScannerNomCredit('📷 Cadrez le nom sur l’emballage du produit…')
+    setStatusScannerNomCredit('Cadrez le nom sur l’emballage du produit…')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
@@ -404,7 +404,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         await videoNomCreditRef.current.play().catch(() => {})
       }
     } catch (e) {
-      setStatusScannerNomCredit('❌ Impossible d’accéder à la caméra.')
+      setStatusScannerNomCredit('Impossible d’accéder à la caméra.')
     }
   }
 
@@ -420,7 +420,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const capturerNomOCRCredit = async () => {
     if (!videoNomCreditRef.current) return
     setOcrLoadingCredit(true)
-    setStatusScannerNomCredit('🔍 Analyse OCR en cours…')
+    setStatusScannerNomCredit('Analyse OCR en cours…')
     const imageBase64 = capturerZoneViseurExacte(videoNomCreditRef.current, {
       boxTopRatio: 0.15,
       boxLeftRatio: 0.05,
@@ -429,7 +429,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     })
     if (!imageBase64) {
       setOcrLoadingCredit(false)
-      setStatusScannerNomCredit('❌ Échec de la capture.')
+      setStatusScannerNomCredit('Échec de la capture.')
       return
     }
 
@@ -450,15 +450,15 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           setOcrDetectionsCredit(data.detections)
         }
         jouerBipEtVibrer('succes')
-        setStatusScannerNomCredit(`✅ Nom capturé : "${data.nom}"`)
+        setStatusScannerNomCredit(`Nom capturé : "${data.nom}"`)
       } else {
         jouerBipEtVibrer('alerte')
-        setStatusScannerNomCredit(`⚠️ ${data.error || 'Aucun nom lisible détecté.'}`)
+        setStatusScannerNomCredit(`${data.error || 'Aucun nom lisible détecté.'}`)
       }
     } catch (err) {
       setOcrLoadingCredit(false)
       jouerBipEtVibrer('alerte')
-      setStatusScannerNomCredit('❌ Erreur de lecture OCR. Réessayez.')
+      setStatusScannerNomCredit('Erreur de lecture OCR. Réessayez.')
     }
   }
 
@@ -502,7 +502,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         const listCmd = Array.isArray(dataCmd) ? dataCmd : (dataCmd.commandes || [])
         const enAttenteCredit = listCmd.filter((c: any) => c.statut === 'en_attente' && (c.methode_paiement === 'credit' || c.note?.toLowerCase().includes('crédit')))
         setCommandesCreditEnAttente(enAttenteCredit)
-      } catch (eCmd) {}
+      } catch (eCmd) { console.warn('[Nopalou:CarnetDettes:L505]', eCmd); }
     } catch (err) {
       console.error('Erreur chargement carnet:', err)
     } finally {
@@ -599,7 +599,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       if (res.ok) {
         const data = await res.json()
         setVoiceActionPending(null)
-        setVoiceFeedback(`🎉 ${action.type === 'vente_credit' ? 'Dette' : 'Remboursement'} de ${fcfa(action.montant)} validé(e) pour ${action.client.nom} !`)
+        setVoiceFeedback(`${action.type === 'vente_credit' ? 'Dette' : 'Remboursement'} de ${fcfa(action.montant)} validé(e) pour ${action.client.nom} !`)
         jouerBipEtVibrer('succes')
         await chargerDonnees()
         if (data.client) {
@@ -639,7 +639,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     if (isListeningVoice) {
       try {
         voiceRecognitionRef.current?.stop()
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:CarnetDettes:L642]', err); }
       setIsListeningVoice(false)
       return
     }
@@ -686,11 +686,11 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         if (intent.type === 'recherche' && (!intent.montant || intent.montant <= 0)) {
           if (clientCible) {
             ouvrirFicheClient(clientCible)
-            setVoiceFeedback(`👤 Fiche de ${clientCible.nom} ouverte`)
+            setVoiceFeedback(`Fiche de ${clientCible.nom} ouverte`)
             jouerBipEtVibrer('succes')
           } else {
             // Ne jamais écraser le filtre textuel pour ne pas vider la liste !
-            setVoiceFeedback(`🔍 Aucun client trouvé pour « ${intent.nomClient || transcript} »`)
+            setVoiceFeedback(`Aucun client trouvé pour « ${intent.nomClient || transcript} »`)
             jouerBipEtVibrer('alerte')
           }
           return
@@ -917,7 +917,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         alert(err.error || 'Erreur lors de l’enregistrement de la transaction.')
       }
     } catch (e) {
-      console.warn('⚠️ [Carnet Dettes] Coupure réseau ou serveur inaccessible, bascule sur la file locale IndexedDB:', e)
+      console.warn('[Carnet Dettes] Coupure réseau ou serveur inaccessible, bascule sur la file locale IndexedDB:', e)
       try {
         await ajouterDetteHorsLigne({
           id_temporaire: txIdempotency,
@@ -951,7 +951,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         setDescriptionManuelle('')
         setDateEcheance('')
 
-        alert('📡 Hors-Ligne : Opération enregistrée localement sur votre appareil. Elle sera automatiquement synchronisée dès le retour de la connexion.')
+        alert('Hors-Ligne : Opération enregistrée localement sur votre appareil. Elle sera automatiquement synchronisée dès le retour de la connexion.')
       } catch (errDb) {
         console.error('Erreur enregistrement local carnet:', errDb)
         alert('Erreur critique de sauvegarde locale.')
@@ -1022,7 +1022,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         if (clientSelectionne?.id === c.id) {
           setClientSelectionne(prev => prev ? { ...prev, statut: nouveauStatut } : null)
         }
-        alert(nouveauStatut === 'bloque' ? `⛔ Le client ${c.nom} a été blacklisté.` : `🟢 Le client ${c.nom} a été réactivé.`)
+        alert(nouveauStatut === 'bloque' ? `Le client ${c.nom} a été blacklisté.` : `Le client ${c.nom} a été réactivé.`)
       } else {
         const err = await res.json()
         alert(err.error || 'Erreur lors du changement de statut du client.')
@@ -1047,7 +1047,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           setClientSelectionne(null)
         }
         await chargerDonnees()
-        alert(`🗑️ Client "${c.nom}" supprimé avec succès du carnet.`)
+        alert(`Client "${c.nom}" supprimé avec succès du carnet.`)
       } else {
         const err = await res.json()
         alert(err.error || 'Erreur lors de la suppression du client.')
@@ -1165,7 +1165,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
     const summaryHtml = `
       <div style="margin-bottom:20px; padding:16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; font-size:13px; color:#0f172a;">
-        <p style="margin:0 0 6px; font-size:15px; font-weight:bold; color:#15803d;">📊 Synthèse Globale du Carnet — ${boutique.nom}</p>
+        <p style="margin:0 0 6px; font-size:15px; font-weight:bold; color:#15803d;">Synthèse Globale du Carnet — ${boutique.nom}</p>
         <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:8px;">
           <div><strong>Total Créances à Encaisser :</strong> <span style="color:#dc2626; font-weight:bold;">${fcfa(totalDettesAEncaisser)}</span></div>
           <div><strong>Total Avances Clients :</strong> <span style="color:#16a34a; font-weight:bold;">${fcfa(totalAvancesClients)}</span></div>
@@ -1205,9 +1205,9 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         <div class="client-section">
           <div class="client-header">
             <div>
-              <span style="font-size:15px; font-weight:bold; color:#0f172a;">👤 ${c.nom}</span>
-              <span style="margin-left:12px; font-size:12.5px; color:#475569;">📱 ${c.telephone}</span>
-              ${c.adresse ? `<span style="margin-left:12px; font-size:12px; color:#64748b;">📍 ${c.adresse}</span>` : ''}
+              <span style="font-size:15px; font-weight:bold; color:#0f172a;">${c.nom}</span>
+              <span style="margin-left:12px; font-size:12.5px; color:#475569;">${c.telephone}</span>
+              ${c.adresse ? `<span style="margin-left:12px; font-size:12px; color:#64748b;">${c.adresse}</span>` : ''}
             </div>
             <div>
               <span style="font-size:12px; padding:3px 8px; border-radius:12px; background:#f1f5f9; color:#334155; font-weight:600; margin-right:8px;">${soldeBadge}</span>
@@ -1306,7 +1306,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 fontSize: 20,
                 flexShrink: 0
               }}>
-                📒
+                
               </div>
               <div>
                 <h1 style={{ margin: 0, fontSize: isMobile ? 18 : 21, fontWeight: 800, color: 'var(--navy, #1C2B4A)', letterSpacing: '-0.02em' }}>
@@ -1385,7 +1385,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   cursor: 'pointer'
                 }}
               >
-                <span>⚡</span>
+                <span></span>
                 <span>+ Vente crédit</span>
               </button>
 
@@ -1410,7 +1410,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   cursor: 'pointer'
                 }}
               >
-                <span>👤</span>
+                <span></span>
                 <span>+ Client</span>
               </button>
             </div>
@@ -1448,7 +1448,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   flex: isMobile ? 1 : 'initial'
                 }}
               >
-                <span>{isListeningVoice ? '⏹️' : '🎙️'}</span>
+                <span>{isListeningVoice ? '' : ''}</span>
                 <span>{isListeningVoice ? 'Écoute…' : 'Parler (Dette / Client)'}</span>
               </button>
 
@@ -1513,7 +1513,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       width: '100%',
                     }}
                   >
-                    <span>📱</span>
+                    <span></span>
                     <span>QR Client Comptoir</span>
                   </button>
 
@@ -1536,7 +1536,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       width: '100%',
                     }}
                   >
-                    <span>📥</span>
+                    <span></span>
                     <span>Importer CSV / Excel</span>
                   </button>
 
@@ -1560,7 +1560,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       opacity: relancantEcheances ? 0.6 : 1
                     }}
                   >
-                    <span>⏰</span>
+                    <span></span>
                     <span>{relancantEcheances ? 'Relances en cours...' : 'Relancer échéances dépassées'}</span>
                   </button>
 
@@ -1583,7 +1583,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       width: '100%',
                     }}
                   >
-                    <span>📊</span>
+                    <span></span>
                     <span>{t('common.exportCsv')}</span>
                   </button>
 
@@ -1606,7 +1606,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       width: '100%',
                     }}
                   >
-                    <span>🖨️</span>
+                    <span></span>
                     <span>{t('common.exportPdf')} (Registre)</span>
                   </button>
                 </div>
@@ -1640,7 +1640,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             boxSizing: 'border-box'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 22 }}>{isListeningVoice ? '🎙️' : voiceFeedback?.includes('bloqué') ? '🔒' : '✨'}</span>
+              <span style={{ fontSize: 22 }}>{isListeningVoice ? '' : voiceFeedback?.includes('bloqué') ? '' : ''}</span>
               <div>
                 <div style={{
                   fontSize: 13.5,
@@ -1663,7 +1663,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             {isListeningVoice && (
               <button
                 type="button"
-                onClick={() => { try { voiceRecognitionRef.current?.stop() } catch {}; setIsListeningVoice(false); }}
+                onClick={() => { try { voiceRecognitionRef.current?.stop() } catch (err) { console.warn('[Nopalou:CarnetDettes:L1666]', err); }; setIsListeningVoice(false); }}
                 style={{
                   background: '#ea580c',
                   color: '#fff',
@@ -1698,7 +1698,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 28 }}>
-                  {voiceActionPending.type === 'remboursement' ? '💵' : voiceActionPending.type === 'nouveau_client' ? '👤' : '📦'}
+                  {voiceActionPending.type === 'remboursement' ? '' : voiceActionPending.type === 'nouveau_client' ? '' : ''}
                 </span>
                 <div>
                   <div style={{
@@ -1708,7 +1708,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     letterSpacing: 0.5,
                     color: voiceActionPending.type === 'remboursement' ? '#166534' : voiceActionPending.type === 'nouveau_client' ? '#1d4ed8' : '#9a3412'
                   }}>
-                    🎙️ Action Vocale Détectée
+                    Action Vocale Détectée
                   </div>
                   <h4 style={{ margin: '2px 0 0', fontSize: isMobile ? 15 : 17, fontWeight: 900, color: '#0f172a' }}>
                     {voiceActionPending.type === 'remboursement'
@@ -1755,7 +1755,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 alignItems: 'center',
                 gap: 6
               }}>
-                <span>🗣️</span>
+                <span></span>
                 <span>Texte entendu par le micro : <strong>« {voiceActionPending.transcriptRaw} »</strong></span>
               </div>
             )}
@@ -1777,7 +1777,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     color: voiceActionPending.type === 'vente_credit' ? '#ffffff' : '#64748b'
                   }}
                 >
-                  📦 Donner à crédit (Dette)
+                  Donner à crédit (Dette)
                 </button>
                 <button
                   type="button"
@@ -1793,7 +1793,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     color: voiceActionPending.type === 'remboursement' ? '#ffffff' : '#64748b'
                   }}
                 >
-                  💵 Encaisser versement
+                  Encaisser versement
                 </button>
               </div>
             )}
@@ -1926,7 +1926,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     boxShadow: '0 2px 8px rgba(37,99,235,0.25)'
                   }}
                 >
-                  <span>➕</span>
+                  <span></span>
                   <span>Créer la fiche de « {voiceActionPending.nomClientPropose || 'Client'} »</span>
                 </button>
               ) : (
@@ -1951,7 +1951,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       opacity: voiceActionLoading || !voiceActionPending.client || !voiceActionPending.montant ? 0.6 : 1
                     }}
                   >
-                    <span>{voiceActionLoading ? '⏳' : '✅'}</span>
+                    <span>{voiceActionLoading ? '' : ''}</span>
                     <span>
                       {voiceActionLoading
                         ? 'Validation en cours…'
@@ -1979,7 +1979,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       gap: 6
                     }}
                   >
-                    <span>✏️</span>
+                    <span></span>
                     <span>Articles catalogue / Détails</span>
                   </button>
                 </>
@@ -2027,7 +2027,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>💡</span>
+              <span style={{ fontSize: 18 }}></span>
               <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
                 Comment fonctionne le Carnet de Dettes &amp; Crédits ?
               </span>
@@ -2047,7 +2047,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
             }}>
               <div style={{ background: '#ffffff', borderRadius: 10, padding: 12, border: '1px solid #fed7aa' }}>
                 <div style={{ fontWeight: 800, fontSize: 13, color: '#c2410c', marginBottom: 4 }}>
-                  1. Donner à crédit (Bor) 📦
+                  1. Donner à crédit (Bor) 
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
                   Cliquez sur <strong>+ Vente crédit</strong>. Le client prend des articles sans payer : son solde devient rouge (<strong>« Doit X FCFA »</strong>).
@@ -2056,7 +2056,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
               <div style={{ background: '#ffffff', borderRadius: 10, padding: 12, border: '1px solid #bbf7d0' }}>
                 <div style={{ fontWeight: 800, fontSize: 13, color: '#15803d', marginBottom: 4 }}>
-                  2. Rembourser (Fey bor) 💵
+                  2. Rembourser (Fey bor) 
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
                   Quand le client vient verser de l'argent, cliquez sur <strong>Encaisser / Rembourser</strong>. Sa dette diminue jusqu'à <strong>0 FCFA (À jour)</strong>.
@@ -2065,7 +2065,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
               <div style={{ background: '#ffffff', borderRadius: 10, padding: 12, border: '1px solid #bae6fd' }}>
                 <div style={{ fontWeight: 800, fontSize: 13, color: '#0369a1', marginBottom: 4 }}>
-                  3. Avance ou Relance WhatsApp 📲
+                  3. Avance ou Relance WhatsApp 
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
                   S'il verse une provision, son solde devient vert (<strong>« Avance »</strong>). En 1 clic sur l'icône WhatsApp, envoyez un rappel poli avec le solde exact.
@@ -2074,7 +2074,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
               <div style={{ background: '#ffffff', borderRadius: 10, padding: 12, border: '1px solid #fde047' }}>
                 <div style={{ fontWeight: 800, fontSize: 13, color: '#854d0e', marginBottom: 4 }}>
-                  4. Mode Vocal (Micro 🎙️) 🗣️
+                  4. Mode Vocal (Micro ) 
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: '#475569', lineHeight: 1.4 }}>
                   Dites <em>« Bor Moussa 10 000 »</em> pour une dette ou <em>« Moussa feyna 5000 »</em> pour un remboursement. Une carte s'affiche pour valider en 1 clic !
@@ -2160,7 +2160,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         <div style={{ background: '#f0f9ff', border: '1.5px solid #0284c7', borderRadius: 16, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 20 }}>💳</span>
+              <span style={{ fontSize: 20 }}></span>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 900, color: '#0369a1' }}>
                 {t('shop.onlineCreditPurchasesTitle')} ({commandesCreditEnAttente.length})
               </h3>
@@ -2175,10 +2175,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               <div key={cmd.id} style={{ background: '#ffffff', border: '1px solid #bae6fd', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                 <div>
                   <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: '#0f172a' }}>
-                    👤 {cmd.client_nom} <span style={{ color: '#0284c7', fontWeight: 600, fontSize: 12 }}>({cmd.client_telephone})</span>
+                    {cmd.client_nom} <span style={{ color: '#0284c7', fontWeight: 600, fontSize: 12 }}>({cmd.client_telephone})</span>
                   </p>
                   <p style={{ margin: '2px 0 0', fontSize: 12, color: '#475569' }}>
-                    📦 {cmd.nom_produit} × {cmd.quantite} — <strong style={{ color: '#dc2626' }}>{fcfa(cmd.montant_total)}</strong>
+                    {cmd.nom_produit} × {cmd.quantite} — <strong style={{ color: '#dc2626' }}>{fcfa(cmd.montant_total)}</strong>
                   </p>
                 </div>
 
@@ -2219,7 +2219,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         window.dispatchEvent(new Event('carnet_updated'))
                         const cleanTel = cmd.client_telephone.replace(/\D/g, '')
                         const msgWa = encodeURIComponent(`Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) a été approuvée par la boutique et enregistrée dans votre Carnet !`)
-                        if (confirm(`✅ Demande d'achat à crédit de ${cmd.client_nom} approuvée et enregistrée dans son Carnet client avec succès !\n\nSouhaitez-vous lui envoyer le message de confirmation sur WhatsApp ?`)) {
+                        if (confirm(`Demande d'achat à crédit de ${cmd.client_nom} approuvée et enregistrée dans son Carnet client avec succès !\n\nSouhaitez-vous lui envoyer le message de confirmation sur WhatsApp ?`)) {
                           window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
                         }
                       } catch (e) {
@@ -2228,7 +2228,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     }}
                     style={{ padding: '8px 14px', background: '#0284c7', color: '#ffffff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                   >
-                    ✅ {t('common.confirm')}
+                    {t('common.confirm')}
                   </button>
 
                   <button
@@ -2249,7 +2249,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     }}
                     style={{ padding: '8px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                   >
-                    ❌ {t('shop.cancelOrder')}
+                    {t('shop.cancelOrder')}
                   </button>
                 </div>
               </div>
@@ -2264,7 +2264,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           <div style={{ position: 'relative', flex: 1 }}>
             <input
               type="text"
-              placeholder={`🔍 ${t('common.search')}...`}
+              placeholder={`${t('common.search')}...`}
               value={recherche}
               onChange={e => setRecherche(e.target.value)}
               style={{
@@ -2305,7 +2305,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
               flexShrink: 0
             }}
           >
-            <span style={{ fontSize: 16 }}>{isListeningVoice ? '⏹️' : '🎙️'}</span>
+            <span style={{ fontSize: 16 }}>{isListeningVoice ? '' : ''}</span>
             <span>{isListeningVoice ? 'Écoute…' : 'Vocal'}</span>
           </button>
         </div>
@@ -2319,8 +2319,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         <div className="horizontal-scroll-fade" style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', paddingBottom: 2, WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', alignItems: 'center' }}>
           {[
             { id: 'tous', label: `Tous (${clients.length})` },
-            { id: 'retard', label: `🔴 Doivent la boutique (${nbClientsDebiteurs})` },
-            { id: 'credits', label: `🟢 En avance (${clients.filter(c => Number(c.solde) < 0).length})` },
+            { id: 'retard', label: `Doivent la boutique (${nbClientsDebiteurs})` },
+            { id: 'credits', label: `En avance (${clients.filter(c => Number(c.solde) < 0).length})` },
           ].map(f => (
             <button
               key={f.id}
@@ -2366,7 +2366,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 border: '2px dashed #cbd5e1',
                 color: '#64748b'
               }}>
-                <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}>📒</span>
+                <span style={{ fontSize: 36, display: 'block', marginBottom: 8 }}></span>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: 15 }}>{t('shop.noCustomersFound')}</p>
                 <p style={{ margin: '4px 0 14px', fontSize: 12.5, color: '#94a3b8' }}>
                   {t('shop.addFirstCustomerPrompt')}
@@ -2423,12 +2423,12 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           )}
                           {c.adresse && (
                             <span className="npl-badge npl-badge-neutral" style={{ fontSize: 11 }}>
-                              📍 {c.adresse}
+                              {c.adresse}
                             </span>
                           )}
                         </div>
                         <div style={{ fontSize: 12.5, color: 'var(--text2)', marginTop: 3 }}>
-                          📞 {formatPhone(c.telephone)} {c.plafond_max > 0 ? `• ${t('shop.creditLimitPrefix')}: ${fcfa(c.plafond_max)}` : ''}
+                          {formatPhone(c.telephone)} {c.plafond_max > 0 ? `• ${t('shop.creditLimitPrefix')}: ${fcfa(c.plafond_max)}` : ''}
                         </div>
                         {c.note_client && (
                           <div style={{ fontSize: 11.5, color: 'var(--text3)', fontStyle: 'italic', marginTop: 2 }}>
@@ -2485,7 +2485,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           className="npl-btn npl-btn-success npl-btn-sm"
                           style={{ flex: isMobile ? '1 1 auto' : 'none' }}
                         >
-                          <span>💵</span>
+                          <span></span>
                           <span>{t('shop.collectRepayBtn')}</span>
                         </button>
                       ) : estAvance ? (
@@ -2494,7 +2494,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           className="npl-btn npl-btn-accent npl-btn-sm"
                           style={{ flex: isMobile ? '1 1 auto' : 'none' }}
                         >
-                          <span>⚡</span>
+                          <span></span>
                           <span>{t('shop.deductOnPurchaseBtn')}</span>
                         </button>
                       ) : (
@@ -2503,7 +2503,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                           className="npl-btn npl-btn-primary npl-btn-sm"
                           style={{ flex: isMobile ? '1 1 auto' : 'none' }}
                         >
-                          <span>⚡</span>
+                          <span></span>
                           <span>{t('shop.giveCreditBtn')}</span>
                         </button>
                       )}
@@ -2514,7 +2514,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                         className="npl-btn npl-btn-secondary npl-btn-sm"
                         title="WhatsApp"
                       >
-                        <span style={{ color: '#25D366' }}>📱</span>
+                        <span style={{ color: '#25D366' }}></span>
                         <span>{t('shop.remindWhatsappBtn')}</span>
                       </button>
 
@@ -2546,7 +2546,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               }}
                               className="npl-dropdown-item"
                             >
-                              <span>📜</span>
+                              <span></span>
                               <span>{t('shop.viewCustomerFileMenu')}</span>
                             </button>
 
@@ -2559,7 +2559,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               }}
                               className="npl-dropdown-item"
                             >
-                              <span>✏️</span>
+                              <span></span>
                               <span>{t('shop.editProfileLimitMenu')}</span>
                             </button>
 
@@ -2572,7 +2572,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               }}
                               className="npl-dropdown-item"
                             >
-                              <span>⚡</span>
+                              <span></span>
                               <span>{t('shop.grantCreditAction')}</span>
                             </button>
 
@@ -2588,7 +2588,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                 }}
                                 className="npl-dropdown-item"
                               >
-                                <span>🟢</span>
+                                <span></span>
                                 <span>{t('shop.reactivateCustomerMenu')}</span>
                               </button>
                             ) : (
@@ -2601,7 +2601,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                 }}
                                 className="npl-dropdown-item danger"
                               >
-                                <span>⛔</span>
+                                <span></span>
                                 <span>{t('shop.blacklistCustomerMenu')}</span>
                               </button>
                             )}
@@ -2615,7 +2615,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               }}
                               className="npl-dropdown-item danger"
                             >
-                              <span>🗑️</span>
+                              <span></span>
                               <span>{t('shop.deleteCustomerMenu')}</span>
                             </button>
                           </div>
@@ -2688,7 +2688,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       cursor: 'pointer'
                     }}
                   >
-                    ✏️ {t('common.edit')}
+                    {t('common.edit')}
                   </button>
                   {!isMobile && (
                     <button
@@ -2700,7 +2700,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   )}
                 </div>
                 <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b' }}>
-                  📞 {clientSelectionne.telephone} {clientSelectionne.adresse ? `• 📍 ${clientSelectionne.adresse}` : ''}
+                  {clientSelectionne.telephone} {clientSelectionne.adresse ? `• ${clientSelectionne.adresse}` : ''}
                 </p>
                 {clientSelectionne.note_client && (
                   <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#94a3b8', fontStyle: 'italic' }}>
@@ -2758,7 +2758,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   minHeight: 42
                 }}
               >
-                💸 {t('shop.transactionRepayment')}
+                {t('shop.transactionRepayment')}
               </button>
 
               <button
@@ -2802,7 +2802,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     minHeight: 42
                   }}
                 >
-                  📱 {t('shop.remindWhatsappBtn')}
+                  {t('shop.remindWhatsappBtn')}
                 </button>
               )}
             </div>
@@ -2851,7 +2851,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                               color: estVente ? '#991b1b' : '#166534',
                               border: estVente ? '1px solid #fecaca' : '1px solid #bbf7d0'
                             }}>
-                              {estVente ? `🔴 ${t('shop.transactionCreditSale')}` : `🟢 ${t('shop.transactionRepayment')}`}
+                              {estVente ? `${t('shop.transactionCreditSale')}` : `${t('shop.transactionRepayment')}`}
                             </span>
                             <span style={{ fontSize: 11.5, color: '#64748b' }}>
                               {fmtDateHeure(h.created_at)}
@@ -2876,7 +2876,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
                           {h.date_echeance && (
                             <div style={{ fontSize: 11, marginTop: 4, color: estEnRetard ? '#dc2626' : '#0284c7', fontWeight: 700 }}>
-                              📅 {t('shop.dueDateLabel')} : {fmtDate(h.date_echeance)} {estEnRetard ? ` (🔴 ${t('shop.overdueBadge')})` : ''}
+                              {t('shop.dueDateLabel')} : {fmtDate(h.date_echeance)} {estEnRetard ? ` (${t('shop.overdueBadge')})` : ''}
                             </div>
                           )}
                         </div>
@@ -3201,7 +3201,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   {typeTransaction === 'vente_credit' ? t('shop.newCreditSaleModalTitle') : t('shop.collectRepaymentModalTitle')}
                 </h3>
                 <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12.5, color: '#475569', fontWeight: 700 }}>👤 Client :</span>
+                  <span style={{ fontSize: 12.5, color: '#475569', fontWeight: 700 }}>Client :</span>
                   <select
                     value={clientSelectionne.id}
                     onChange={(e) => {
@@ -3525,7 +3525,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                                 onClick={() => setPanierProduits(prev => ({ ...prev, [p.id]: 1 }))}
                                 style={{ marginTop: 4, padding: '3px 6px', fontSize: 10.5, fontWeight: 700, background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, color: '#475569', cursor: 'pointer' }}
                               >
-                                ➕ {t('common.add')}
+                                {t('common.add')}
                               </button>
                             )}
                           </div>
@@ -3539,7 +3539,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                     <div style={{ marginTop: 12, background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, padding: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                         <span style={{ fontSize: 12, fontWeight: 800, color: '#0369a1' }}>
-                          🛒 {t('shop.articlesInSale')} ({Object.values(panierProduits).reduce((a, b) => a + b, 0) + itemsCustomPanier.reduce((a, b) => a + b.quantite, 0)}) :
+                          {t('shop.articlesInSale')} ({Object.values(panierProduits).reduce((a, b) => a + b, 0) + itemsCustomPanier.reduce((a, b) => a + b.quantite, 0)}) :
                         </span>
                         <button
                           type="button"
@@ -3803,8 +3803,8 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                       style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
                     >
                       <option value="especes">{t('shop.cashCreditOption')}</option>
-                      <option value="wave">🌊 Wave</option>
-                      <option value="orange_money">🍊 Orange Money</option>
+                      <option value="wave">Wave</option>
+                      <option value="orange_money">Orange Money</option>
                     </select>
                   </div>
                 </div>
@@ -3863,7 +3863,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         onClose={() => setShowQrModalComptoir(false)}
         url={typeof window !== 'undefined' ? `${window.location.origin}/boutiques/${boutique.slug || boutique.id}?mode=credit` : `https://nopalou.com/boutiques/${boutique.slug || boutique.id}?mode=credit`}
         boutiqueNom={boutique.nom}
-        title="📱 QR Code Client en Boutique / Comptoir"
+        title="QR Code Client en Boutique / Comptoir"
       />
 
       {/* Modal Scanner EAN Caméra Crédit */}
@@ -3921,7 +3921,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 onClick={capturerNomOCRCredit}
                 style={{ flex: 1, padding: '11px', background: ocrLoadingCredit ? '#94a3b8' : '#0284c7', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: ocrLoadingCredit ? 'not-allowed' : 'pointer' }}
               >
-                {ocrLoadingCredit ? t('shop.savingProgress') : (imageFligeeCreditNom ? '🔄 Reprendre la photo' : t('shop.captureAndExtractNameBtn'))}
+                {ocrLoadingCredit ? t('shop.savingProgress') : (imageFligeeCreditNom ? 'Reprendre la photo' : t('shop.captureAndExtractNameBtn'))}
               </button>
               {imageFligeeCreditNom && (
                 <button
@@ -3929,7 +3929,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                   onClick={arreterScannerNomCredit}
                   style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
                 >
-                  ✅ Valider
+                  Valider
                 </button>
               )}
             </div>
@@ -3942,7 +3942,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
           <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 580, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 20 }}>📥</span>
+                <span style={{ fontSize: 20 }}></span>
                 <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: 'var(--navy)' }}>Importer des clients (CSV / Excel)</h3>
               </div>
               <button type="button" onClick={() => setShowModalImportClients(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
@@ -3950,7 +3950,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
             {importClientsError && (
               <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700 }}>
-                ⚠️ {importClientsError}
+                {importClientsError}
               </div>
             )}
 
@@ -4008,7 +4008,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
                 disabled={importingClients || clientsAImporter.length === 0}
                 style={{ padding: '10px 20px', background: clientsAImporter.length > 0 ? 'var(--navy)' : '#cbd5e1', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: clientsAImporter.length > 0 ? 'pointer' : 'not-allowed' }}
               >
-                {importingClients ? 'Importation en cours...' : `Valider l'import (${clientsAImporter.length}) 🚀`}
+                {importingClients ? 'Importation en cours...' : `Valider l'import (${clientsAImporter.length}) `}
               </button>
             </div>
           </div>

@@ -402,7 +402,7 @@ export default function DashboardFacile({
                   borderRadius: 10,
                 }}
               >
-                Auto WhatsApp 🎁
+                Auto WhatsApp 
               </span>
             </div>
             <h2 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
@@ -476,7 +476,7 @@ export default function DashboardFacile({
                   borderRadius: 10,
                 }}
               >
-                Vitrine &amp; Comptoir 📱
+                Vitrine &amp; Comptoir 
               </span>
             </div>
             <h2 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
@@ -519,7 +519,7 @@ export default function DashboardFacile({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 22 }}>💬</span>
+          <span style={{ fontSize: 22 }}></span>
           <div>
             <strong style={{ fontSize: 13, color: 'var(--navy, #1C2B4A)', display: 'block' }}>
               Besoin d&apos;aide ou d&apos;une démonstration en Wolof ?

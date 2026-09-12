@@ -38,10 +38,10 @@ function fcfa(n: number) {
 
 const VERTICALES = [
   { emoji: '🖥️', titre: 'Caisse POS Magasin', detail: 'Caisse tactile magasin, 3 scanners (Caméra, Cloud Sync <100ms, Douchette USB), stickers codes-barres GS1 Modulo 10 et carnet de dettes client.' },
-  { emoji: '📱', titre: 'Produits', detail: 'Comparez les prix de milliers de produits chez tous les marchands en ligne au Sénégal — téléphones, TV, électro, mode.' },
-  { emoji: '🏠', titre: 'Immobilier', detail: 'Location et vente d\'appartements, villas, terrains — annonces vérifiées avec photos et prix.' },
+  { emoji: '', titre: 'Produits', detail: 'Comparez les prix de milliers de produits chez tous les marchands en ligne au Sénégal — téléphones, TV, électro, mode.' },
+  { emoji: '', titre: 'Immobilier', detail: 'Location et vente d\'appartements, villas, terrains — annonces vérifiées avec photos et prix.' },
   { emoji: '📶', titre: 'Télécom', detail: 'Comparez les forfaits Orange, Yas, Expresso, Promobile en un coup d\'œil.' },
-  { emoji: '🛍️', titre: 'Boutiques & WhatsApp', detail: 'Les commerçants créent leur boutique et reçoivent leurs commandes directement sur WhatsApp.' },
+  { emoji: '', titre: 'Boutiques & WhatsApp', detail: 'Les commerçants créent leur boutique et reçoivent leurs commandes directement sur WhatsApp.' },
 ]
 
 const ETAPES_COMPTE = [
@@ -107,7 +107,7 @@ const PALIERS = [
 
 const CHATBOT_FONCTIONS = [
   {
-    groupe: '🔍 Recherche & comparaison',
+    groupe: 'Recherche & comparaison',
     items: [
       { titre: 'Recherche unifiée', detail: 'Texte libre (ex: "iPhone 14") → renvoie en une seule requête les prix comparés du marketplace, les boutiques marchandes Nopalou, les annonces classifiées ou les biens immo correspondants, avec lien direct.' },
       { titre: 'Annonces immo', detail: 'Dernières annonces immobilières actives (appartements, villas, terrains), envoyées avec photo, prix et lien.' },
@@ -116,7 +116,7 @@ const CHATBOT_FONCTIONS = [
     ],
   },
   {
-    groupe: '🛍️ Boutiques & achat',
+    groupe: 'Boutiques & achat',
     items: [
       { titre: 'Parcourir une boutique', detail: 'Le client accède à une boutique précise via un lien direct partagé par le commerçant, ou parcourt par secteur/catégorie.' },
       { titre: 'Commander dans le chat', detail: 'Le client choisit ses produits, indique ses coordonnées et son mode de livraison/paiement, sans quitter WhatsApp — la commande arrive directement chez le commerçant.' },
@@ -124,7 +124,7 @@ const CHATBOT_FONCTIONS = [
     ],
   },
   {
-    groupe: '🔔 Alertes & suivi',
+    groupe: 'Alertes & suivi',
     items: [
       { titre: 'Alerte de prix', detail: 'L\'utilisateur indique un produit et un prix cible — notifié par WhatsApp dès que le seuil est atteint, sans compte requis.' },
       { titre: 'Suivi de commande', detail: 'Référence de commande (ex: PAY-12345) → statut et montant.' },
@@ -287,7 +287,7 @@ export async function GET() {
   ${ListeEtapesNumerotees(ETAPES_COMPTE)}
   <div style="margin-top:20px; border:1px solid ${COULEURS.bordure}; border-radius:10px; padding:14px 20px; background:#FFF7ED;">
     <p style="font-size:12px; color:${COULEURS.marine}; margin:0; line-height:1.6;">
-      💡 La vérification email n'est nécessaire que pour publier des <strong>annonces</strong> — créer une boutique ne l'exige pas.
+      La vérification email n'est nécessaire que pour publier des <strong>annonces</strong> — créer une boutique ne l'exige pas.
     </p>
   </div>
   ${PagePiedString(4)}
@@ -326,12 +326,12 @@ export async function GET() {
 <div class="page" style="background:#fff; padding:56px 48px;">
   ${Titre('L\'assistant WhatsApp', 'Comparer, commander, suivre — sans quitter WhatsApp')}
   <div style="display:inline-flex; align-items:center; gap:8px; background:#f0fdf4; border:1.5px solid ${COULEURS.whatsapp}; border-radius:30px; padding:8px 18px; font-size:13px; color:${COULEURS.whatsapp}; font-weight:700; margin-bottom:24px;">
-    💬 100% gratuit · Disponible 24h/24 · Aucune app à installer
+    100% gratuit · Disponible 24h/24 · Aucune app à installer
   </div>
   <h2 style="font-size:14px; font-weight:700; color:${COULEURS.marine}; margin:0 0 12px;">Comment s'en servir</h2>
   ${ListeEtapesNumerotees(ETAPES_WHATSAPP, true)}
   <div style="margin-top:20px; background:${COULEURS.whatsapp}; border-radius:12px; padding:16px 24px; text-align:center;">
-    <p style="font-size:16px; font-weight:800; color:#fff; margin:0;">📲 wa.me/221708717942</p>
+    <p style="font-size:16px; font-weight:800; color:#fff; margin:0;">wa.me/221708717942</p>
     <p style="font-size:12px; color:#dcfce7; margin:4px 0 0;">+221 70 871 79 42</p>
   </div>
   ${PagePiedString(7)}
@@ -361,14 +361,14 @@ export async function GET() {
   ${Titre('Immobilier & annonces classifiées')}
   <div style="display:flex; flex-direction:column; gap:14px;">
     <div style="display:flex; gap:16px; align-items:flex-start; border:1px solid ${COULEURS.bordure}; border-radius:10px; padding:18px 22px; background:${COULEURS.fondClair};">
-      <span style="font-size:26px;">🏠</span>
+      <span style="font-size:26px;"></span>
       <div>
         <p style="font-size:15px; font-weight:700; color:${COULEURS.marine}; margin:0 0 6px;">Immobilier</p>
         <p style="font-size:13px; color:${COULEURS.gris}; margin:0; line-height:1.6;">Location et vente d'appartements, villas, studios, terrains à Dakar et ailleurs au Sénégal. Chaque annonce affiche photos, prix, superficie et coordonnées du propriétaire ou de l'agence. Une agence immobilière peut publier via son compte, avec la même visibilité que sur les grands sites immo du pays.</p>
       </div>
     </div>
     <div style="display:flex; gap:16px; align-items:flex-start; border:1px solid ${COULEURS.bordure}; border-radius:10px; padding:18px 22px; background:${COULEURS.fondClair};">
-      <span style="font-size:26px;">📋</span>
+      <span style="font-size:26px;"></span>
       <div>
         <p style="font-size:15px; font-weight:700; color:${COULEURS.marine}; margin:0 0 6px;">Annonces classifiées</p>
         <p style="font-size:13px; color:${COULEURS.gris}; margin:0; line-height:1.6;">Vente entre particuliers ou petits commerçants — véhicules, meubles, équipements électroniques. Publication rapide depuis le compte, avec vérification email obligatoire pour éviter les faux profils.</p>
@@ -464,16 +464,16 @@ export async function GET() {
   </div>
 
   <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:16px; padding:20px 32px; text-align:center; max-width:540px; margin-bottom:24px;">
-    <p style="font-size:14px; font-weight:800; color:#fff; margin:0 0 12px;">🌐 Suivez Nopalou sur nos Réseaux Officiels</p>
+    <p style="font-size:14px; font-weight:800; color:#fff; margin:0 0 12px;">Suivez Nopalou sur nos Réseaux Officiels</p>
     <div style="display:flex; justify-content:center; gap:16px; font-size:12px; color:#CBD5E1; flex-wrap:wrap;">
       <span>🎵 TikTok : <strong>@nopalou.com</strong></span>
-      <span>📢 Canal WA : <strong>nopalou.com/channel</strong></span>
+      <span>Canal WA : <strong>nopalou.com/channel</strong></span>
       <span>📘 Facebook : <strong>Nopalou Sénégal</strong></span>
-      <span>📸 Instagram : <strong>@nopalousn</strong></span>
+      <span>Instagram : <strong>@nopalousn</strong></span>
     </div>
   </div>
 
-  <p style="font-size:13px; color:${COULEURS.grisClair}; margin:0 0 6px;">💬 Assistant &amp; Support WhatsApp Officiel</p>
+  <p style="font-size:13px; color:${COULEURS.grisClair}; margin:0 0 6px;">Assistant &amp; Support WhatsApp Officiel</p>
   <p style="font-size:15px; color:#25D366; font-weight:800; margin:0;">wa.me/221708717942 (+221 70 871 79 42)</p>
   ${PagePiedString(13)}
 </div>

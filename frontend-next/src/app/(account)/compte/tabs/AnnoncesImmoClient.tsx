@@ -23,8 +23,8 @@ interface AnnonceImmo {
 }
 
 const TYPE_ICONS: Record<string, string> = {
-  appartement: '🏢', villa: '🏡', maison: '🏠',
-  studio: '🛏', terrain: '🌿', bureau: '🏢',
+  appartement: '', villa: '', maison: '',
+  studio: '🛏', terrain: '🌿', bureau: '',
 }
 
 export default function AnnoncesImmoClient({ created, updated }: { created?: boolean; updated?: boolean }) {
@@ -40,7 +40,7 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
       try { 
         const parsed = JSON.parse(cached)
         setAnnonces(parsed)
-      } catch(e) {} 
+      } catch (e) { console.warn('[Nopalou:AnnoncesImmoClient:L43]', e); } 
     }
     if (!cached) setLoading(true)
 
@@ -101,7 +101,7 @@ export default function AnnoncesImmoClient({ created, updated }: { created?: boo
       ) : (
         <div className="mes-immo-grid">
           {annonces.map(a => {
-            const icon = TYPE_ICONS[a.type_bien ?? ''] ?? '🏠'
+            const icon = TYPE_ICONS[a.type_bien ?? ''] ?? ''
             const isActive = a.actif
             return (
               <div key={a.id} className={`mes-immo-card ${!isActive ? 'inactive' : ''}`}>

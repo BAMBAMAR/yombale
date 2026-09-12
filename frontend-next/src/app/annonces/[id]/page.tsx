@@ -161,8 +161,8 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
               {CAT_LABELS[annonce.categorie_slug] ?? annonce.categorie_slug}
             </span>
             <div className="annonce-detail-meta-row">
-              <span>📍 {annonce.quartier ? `${annonce.quartier}, ` : ''}{annonce.ville ?? 'Dakar'}</span>
-              <span>🗓 {formatDate(annonce.created_at)}</span>
+              <span>{annonce.quartier ? `${annonce.quartier}, ` : ''}{annonce.ville ?? 'Dakar'}</span>
+              <span>{formatDate(annonce.created_at)}</span>
             </div>
           </div>
 
@@ -225,10 +225,10 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
               />
             )}
             <p className="annonce-contact-warn">
-              ⚠️ Ne payez jamais à l&apos;avance sans avoir vu le produit.
+              Ne payez jamais à l&apos;avance sans avoir vu le produit.
             </p>
             <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed #cbd5e1', fontSize: '0.78rem', color: '#64748b', textAlign: 'center', lineHeight: '1.4' }}>
-              🗑️ Vous souhaitez retirer cette annonce ou votre numéro ? <a href="/cgu#suppression-donnees" style={{ color: 'var(--navy)', fontWeight: 700, textDecoration: 'underline' }}>Cliquez ici</a> ou envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', fontWeight: 700, textDecoration: 'underline' }}>WhatsApp</a>.
+              Vous souhaitez retirer cette annonce ou votre numéro ? <a href="/cgu#suppression-donnees" style={{ color: 'var(--navy)', fontWeight: 700, textDecoration: 'underline' }}>Cliquez ici</a> ou envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', fontWeight: 700, textDecoration: 'underline' }}>WhatsApp</a>.
             </div>
           </div>
 

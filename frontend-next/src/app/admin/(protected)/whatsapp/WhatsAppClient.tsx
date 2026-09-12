@@ -50,7 +50,7 @@ export default function WhatsAppClient({
   const [sessions, setSessions] = useState(initialSessions)
   const [supportList, setSupportList] = useState<SupportDemande[]>(initialSupport)
   const [testPhone, setTestPhone] = useState('')
-  const [testMsg, setTestMsg] = useState('Bonjour depuis Nopalou ! 👋')
+  const [testMsg, setTestMsg] = useState('Bonjour depuis Nopalou ! ')
   const [busy, setBusy] = useState(false)
   const [flash, setFlash] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
@@ -118,7 +118,7 @@ export default function WhatsAppClient({
   }
 
   const statusColor = { ok: '#16a34a', token_invalide: '#dc2626', erreur_reseau: '#d97706', non_configure: '#6b7280' }
-  const statusLabel = { ok: '✅ Connecté', token_invalide: '❌ Token invalide', erreur_reseau: '⚠️ Erreur réseau', non_configure: '⚙️ Non configuré' }
+  const statusLabel = { ok: 'Connecté', token_invalide: 'Token invalide', erreur_reseau: 'Erreur réseau', non_configure: 'Non configuré' }
 
   const card = (title: string, children: React.ReactNode) => (
     <div style={{ background: '#fff', borderRadius: 12, padding: 24, marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
@@ -150,13 +150,13 @@ export default function WhatsAppClient({
         </div>
       )}
 
-      {card('📊 État de la connexion Meta', <>
+      {card('État de la connexion Meta', <>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
           {([
             ['Statut API', <span key="statut" style={{ color: statusColor[status.api_status], fontWeight: 700 }}>{statusLabel[status.api_status]}</span>],
             ['Phone ID', status.config.phone_number_id || '—'],
-            ['Token', status.config.token_present ? '✅ Présent' : '❌ Manquant'],
-            ['App Secret', status.config.app_secret ? '✅' : '❌'],
+            ['Token', status.config.token_present ? 'Présent' : 'Manquant'],
+            ['App Secret', status.config.app_secret ? '' : ''],
             ['Catalog ID', status.config.catalog_id || '—'],
           ] as [string, React.ReactNode][]).map(([k, v]) => (
             <div key={String(k)} style={{ background: '#f9fafb', borderRadius: 8, padding: '10px 16px', minWidth: 130 }}>
@@ -170,7 +170,7 @@ export default function WhatsAppClient({
         </div>
       </>)}
 
-      {card('📈 Statistiques', <>
+      {card('Statistiques', <>
         <div style={{ display: 'flex', gap: 16 }}>
           {[
             [`${status.stats.sessions_total}`, 'Sessions totales'],
@@ -185,7 +185,7 @@ export default function WhatsAppClient({
         </div>
       </>)}
 
-      {card('⚙️ Activation', <>
+      {card('Activation', <>
         {onOff(status.enabled, () => toggle('whatsapp_enabled'), 'WhatsApp (envoi & réception)')}
         {onOff(status.chatbot, () => toggle('whatsapp_chatbot'), 'Chatbot automatique')}
         <p style={{ fontSize: 12, color: '#6b7280', margin: '8px 0 0' }}>
@@ -216,7 +216,7 @@ export default function WhatsAppClient({
         <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>Le numéro doit être enregistré sur WhatsApp et avoir accepté vos messages (opt-in Meta).</p>
       </>)}
 
-      {card(`💬 Sessions chatbot actives (${sessions.length})`, <>
+      {card(`Sessions chatbot actives (${sessions.length})`, <>
         {sessions.length === 0 ? (
           <p style={{ color: '#6b7280', fontSize: 14 }}>Aucune session active.</p>
         ) : (
@@ -242,11 +242,11 @@ export default function WhatsAppClient({
           </div>
         )}
         <button onClick={clearSessions} style={{ marginTop: 14, padding: '8px 18px', background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', borderRadius: 6, fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
-          🗑 Vider toutes les sessions
+          Vider toutes les sessions
         </button>
       </>)}
 
-      {card(`📞 Demandes de Rappel & Support Client (${supportList.filter(s => s.statut === 'en_attente').length} en attente)`, <>
+      {card(`Demandes de Rappel & Support Client (${supportList.filter(s => s.statut === 'en_attente').length} en attente)`, <>
         {supportList.length === 0 ? (
           <p style={{ color: '#6b7280', fontSize: 14 }}>Aucune demande de rappel en attente.</p>
         ) : (
@@ -281,7 +281,7 @@ export default function WhatsAppClient({
                           color: isPending ? '#92400e' : '#166534',
                           borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700,
                         }}>
-                          {isPending ? '🟡 En attente' : '🟢 Traité'}
+                          {isPending ? '🟡 En attente' : 'Traité'}
                         </span>
                       </td>
                       <td style={{ padding: '8px 12px' }}>
@@ -295,7 +295,7 @@ export default function WhatsAppClient({
                               borderRadius: 4, fontSize: 12, fontWeight: 700, textDecoration: 'none',
                             }}
                           >
-                            💬 Rappeler
+                            Rappeler
                           </a>
                           {isPending ? (
                             <button
@@ -329,16 +329,16 @@ export default function WhatsAppClient({
         )}
       </>)}
 
-      {card('📋 Checklist mise en production Meta', <>
+      {card('Checklist mise en production Meta', <>
         {[
-          ['WHATSAPP_PHONE_NUMBER_ID', status.config.phone_number_id ? '✅' : '❌'],
-          ['WHATSAPP_API_TOKEN (token système permanent)', status.config.token_present ? '✅' : '❌'],
-          ['WHATSAPP_APP_SECRET', status.config.app_secret ? '✅' : '❌'],
-          ['WHATSAPP_VERIFY_TOKEN', status.config.verify_token ? '✅' : '❌'],
-          ['WHATSAPP_CATALOG_ID (pour catalogue)', status.config.catalog_id ? '✅' : '⚠️ Optionnel'],
-          ['Webhook déclaré sur Meta', status.api_status === 'ok' ? '✅' : '⏳ À faire'],
-          ['4 templates soumis à Meta', '✅ Approuvés'],
-          ['Vérification entreprise Business Manager', '✅ SKYROAD SARL'],
+          ['WHATSAPP_PHONE_NUMBER_ID', status.config.phone_number_id ? '' : ''],
+          ['WHATSAPP_API_TOKEN (token système permanent)', status.config.token_present ? '' : ''],
+          ['WHATSAPP_APP_SECRET', status.config.app_secret ? '' : ''],
+          ['WHATSAPP_VERIFY_TOKEN', status.config.verify_token ? '' : ''],
+          ['WHATSAPP_CATALOG_ID (pour catalogue)', status.config.catalog_id ? '' : 'Optionnel'],
+          ['Webhook déclaré sur Meta', status.api_status === 'ok' ? '' : 'À faire'],
+          ['4 templates soumis à Meta', 'Approuvés'],
+          ['Vérification entreprise Business Manager', 'SKYROAD SARL'],
         ].map(([item, ok]) => (
           <div key={String(item)} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #f3f4f6', fontSize: 13 }}>
             <span style={{ color: '#374151' }}>{item}</span>

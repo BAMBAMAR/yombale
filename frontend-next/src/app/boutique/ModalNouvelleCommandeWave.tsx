@@ -371,7 +371,7 @@ export default function ModalNouvelleCommandeWave({
                 }}
               >
                 <span style={{ fontSize: 11.5, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  🌊 Lien de paiement Wave direct
+                  Lien de paiement Wave direct
                 </span>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
@@ -464,7 +464,7 @@ export default function ModalNouvelleCommandeWave({
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>
-                    📦 Article ou Publication convenue *
+                    Article ou Publication convenue *
                   </label>
                   {produitsCatalogue.length > 0 && (
                     <span style={{ fontSize: 11, color: '#64748b' }}>
@@ -523,7 +523,7 @@ export default function ModalNouvelleCommandeWave({
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    💰 Prix unitaire convenu (FCFA) *
+                    Prix unitaire convenu (FCFA) *
                   </label>
                   <input
                     type="number"
@@ -574,7 +574,7 @@ export default function ModalNouvelleCommandeWave({
               {/* Livraison */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                  🚚 Livraison (optionnel)
+                  Livraison (optionnel)
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: zones.length > 0 ? '1.5fr 1fr' : '1fr', gap: 10 }}>
                   {zones.length > 0 && (
@@ -622,7 +622,7 @@ export default function ModalNouvelleCommandeWave({
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    📞 Numéro WhatsApp du Client *
+                    Numéro WhatsApp du Client *
                   </label>
                   <input
                     type="tel"
@@ -646,7 +646,7 @@ export default function ModalNouvelleCommandeWave({
 
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                    👤 Nom du Client
+                    Nom du Client
                   </label>
                   <input
                     type="text"
@@ -670,7 +670,7 @@ export default function ModalNouvelleCommandeWave({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ fontSize: 11.5, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 3 }}>
-                    📍 Adresse / Quartier
+                    Adresse / Quartier
                   </label>
                   <input
                     type="text"
@@ -712,13 +712,13 @@ export default function ModalNouvelleCommandeWave({
               {/* Mode de règlement */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
-                  💳 Mode de règlement
+                  Mode de règlement
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                   {[
-                    { id: 'wave', label: '🌊 Wave (Lien direct)' },
-                    { id: 'cash', label: '💵 Paiement livraison' },
-                    { id: 'orange_money', label: '🍊 Orange Money' },
+                    { id: 'wave', label: 'Wave (Lien direct)' },
+                    { id: 'cash', label: 'Paiement livraison' },
+                    { id: 'orange_money', label: 'Orange Money' },
                   ].map(m => (
                     <button
                       key={m.id}
@@ -790,7 +790,7 @@ export default function ModalNouvelleCommandeWave({
                 }}
               >
                 <MessageCircle size={18} />
-                {loading ? 'Génération de la commande et du lien...' : '🚀 Créer la commande & Envoyer sur WhatsApp'}
+                {loading ? 'Génération de la commande et du lien...' : 'Créer la commande & Envoyer sur WhatsApp'}
               </button>
             </form>
           )}

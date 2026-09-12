@@ -88,8 +88,8 @@ const TYPES_VARIANTE: TypeVariante[] = [
   { id: 'taille',   label: '📏 Taille (vêtement)',     nomVariante: 'Taille',    suggestions: TAILLES_VETEMENT,     repetable: false },
   { id: 'pointure', label: '👟 Pointure (chaussure)',  nomVariante: 'Pointure',  suggestions: POINTURES_CHAUSSURE,  repetable: false },
   { id: 'stockage', label: '💾 Stockage / RAM',        nomVariante: 'Stockage',  suggestions: STOCKAGES_RAM,        repetable: false },
-  { id: 'capacite', label: '⚙️ Capacité / Puissance',  nomVariante: 'Capacité',  suggestions: CAPACITES_PUISSANCE,  repetable: false },
-  { id: 'autre',    label: '➕ Autre (personnalisé)',   nomVariante: '',          suggestions: [],                   repetable: true },
+  { id: 'capacite', label: 'Capacité / Puissance',  nomVariante: 'Capacité',  suggestions: CAPACITES_PUISSANCE,  repetable: false },
+  { id: 'autre',    label: 'Autre (personnalisé)',   nomVariante: '',          suggestions: [],                   repetable: true },
 ]
 
 function CaracField({ label, name, value, onChange, placeholder, required: req = false }: {
@@ -408,8 +408,8 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
         setMagicFeedback({
           type: 'success',
           text: nbImgs > 0
-            ? `✨ Produit importé avec succès ! ${nbImgs} photo(s) ajoutée(s).`
-            : `✨ Fiche importée avec succès ! (Titre, Prix & Description remplis — ajoutez vos photos ci-dessous).`
+            ? `Produit importé avec succès ! ${nbImgs} photo(s) ajoutée(s).`
+            : `Fiche importée avec succès ! (Titre, Prix & Description remplis — ajoutez vos photos ci-dessous).`
         });
         setModeRapide(false); // Basculer pour afficher description et photos
         setShowAdvanced(true);
@@ -439,7 +439,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
     if (isListeningNom) {
       try {
         voiceNomRecognitionRef.current?.stop()
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:ProduitForm:L442]', err); }
       setIsListeningNom(false)
       return
     }
@@ -471,9 +471,9 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
         }
         if (parsed.prix !== null && parsed.prix > 0) {
           setPrixForm(String(parsed.prix))
-          setVoiceNomFeedback(`✨ Dictée réussie : "${parsed.nom}" · Prix : ${fcfa(parsed.prix)}`)
+          setVoiceNomFeedback(`Dictée réussie : "${parsed.nom}" · Prix : ${fcfa(parsed.prix)}`)
         } else {
-          setVoiceNomFeedback(`✨ Nom dicté : "${parsed.nom}"`)
+          setVoiceNomFeedback(`Nom dicté : "${parsed.nom}"`)
         }
         jouerBipEtVibrer('succes')
       }
@@ -523,7 +523,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
     setOcrDetections([])
     setOcrLoading(false)
     setImageFligeeNom(null)
-    setScannerStatus(target === 'nom' ? '📷 Cadrez le nom sur l’emballage puis cliquez sur Capturer' : '📷 Placez le code-barres dans le cadre...')
+    setScannerStatus(target === 'nom' ? 'Cadrez le nom sur l’emballage puis cliquez sur Capturer' : 'Placez le code-barres dans le cadre...')
 
     if (target === 'nom') {
       try {
@@ -536,7 +536,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
           await videoFormRef.current.play().catch(() => {})
         }
       } catch (e) {
-        setScannerStatus('❌ Impossible d’accéder à la caméra. Vérifiez les permissions.')
+        setScannerStatus('Impossible d’accéder à la caméra. Vérifiez les permissions.')
       }
     } else {
       setTimeout(async () => {
@@ -546,7 +546,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             try {
               await html5ScannerFormRef.current.stop()
               html5ScannerFormRef.current.clear()
-            } catch (e) {}
+            } catch (e) { console.warn('[Nopalou:ProduitForm:L549]', e); }
             html5ScannerFormRef.current = null
           }
 
@@ -562,7 +562,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             const cleanCode = decodedText.trim()
             setCodeBarreForm(cleanCode)
             jouerBipEtVibrer('succes')
-            setScannerStatus(`✅ Code scanné : ${cleanCode} — Recherche produit…`)
+            setScannerStatus(`Code scanné : ${cleanCode} — Recherche produit…`)
 
             // Lookup automatique OpenFoodFacts / base mondiale
             const info = await rechercherInfosProduitEan(cleanCode)
@@ -570,9 +570,9 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
               if (!nomForm || nomForm.trim() === '') {
                 setNomForm(info.nom)
               }
-              setScannerStatus(`✅ Produit reconnu : "${info.nom}"`)
+              setScannerStatus(`Produit reconnu : "${info.nom}"`)
             } else {
-              setScannerStatus(`✅ Code validé : ${cleanCode}`)
+              setScannerStatus(`Code validé : ${cleanCode}`)
             }
 
             setTimeout(() => {
@@ -585,10 +585,10 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
           } catch (errEnv) {
             try {
               await scanner.start({ facingMode: 'user' }, config, onScanSuccess, () => {}).catch(() => {})
-            } catch (e) {}
+            } catch (e) { console.warn('[Nopalou:ProduitForm:L588]', e); }
           }
         } catch (err) {
-          setScannerStatus('❌ Erreur d’initialisation du scanner.')
+          setScannerStatus('Erreur d’initialisation du scanner.')
         }
       }, 250)
     }
@@ -597,7 +597,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
   async function capturerEtLireNomTexte() {
     if (!videoFormRef.current) return
     setOcrLoading(true)
-    setScannerStatus('🔍 Analyse OCR en cours…')
+    setScannerStatus('Analyse OCR en cours…')
 
     const imageBase64 = capturerZoneViseurExacte(videoFormRef.current, {
       boxTopRatio: 0.15,
@@ -608,7 +608,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
 
     if (!imageBase64) {
       setOcrLoading(false)
-      setScannerStatus('❌ Échec de capture d’image.')
+      setScannerStatus('Échec de capture d’image.')
       return
     }
 
@@ -630,15 +630,15 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
           setOcrDetections(data.detections)
         }
         jouerBipEtVibrer('succes')
-        setScannerStatus(`✅ Nom capturé : "${data.nom}" (cliquez sur une suggestion ci-dessous si besoin)`)
+        setScannerStatus(`Nom capturé : "${data.nom}" (cliquez sur une suggestion ci-dessous si besoin)`)
       } else {
         jouerBipEtVibrer('alerte')
-        setScannerStatus(`⚠️ ${data.error || 'Aucun texte lisible détecté. Cliquez sur Reprendre pour réessayer.'}`)
+        setScannerStatus(`${data.error || 'Aucun texte lisible détecté. Cliquez sur Reprendre pour réessayer.'}`)
       }
     } catch (err) {
       setOcrLoading(false)
       jouerBipEtVibrer('alerte')
-      setScannerStatus('❌ Erreur lors de l’analyse OCR.')
+      setScannerStatus('Erreur lors de l’analyse OCR.')
     }
   }
 
@@ -655,7 +655,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
       try {
         html5ScannerFormRef.current.stop()
         html5ScannerFormRef.current.clear()
-      } catch (e) {}
+      } catch (e) { console.warn('[Nopalou:ProduitForm:L658]', e); }
       html5ScannerFormRef.current = null
     }
     setModalFormScanner(false)
@@ -842,7 +842,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
   useEffect(() => {
     if (state.success && handledRef.current !== state) {
       handledRef.current = state
-      setSuccessMsg(produit ? '✅ Produit modifié avec succès !' : '✅ Produit ajouté au catalogue avec succès !')
+      setSuccessMsg(produit ? 'Produit modifié avec succès !' : 'Produit ajouté au catalogue avec succès !')
       if (produitFormTopRef.current) {
         produitFormTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
@@ -868,11 +868,11 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
       <div ref={produitFormTopRef} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 17, fontWeight: 800, margin: 0, color: '#0f172a' }}>
-          {produit ? t('shop.editProductTitle') : '🚀 Ajouter un produit (Mode Rapide 10s)'}
+          {produit ? t('shop.editProductTitle') : 'Ajouter un produit (Mode Rapide 10s)'}
         </h3>
         {!produit && (
           <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', background: '#dcfce7', padding: '4px 10px', borderRadius: 20 }}>
-            ⚡ 3 champs suffisent pour vendre
+            3 champs suffisent pour vendre
           </span>
         )}
       </div>
@@ -902,7 +902,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
       {/* ── 1. PHOTO DU PRODUIT ────────────────────────────────────────────── */}
       <div style={{ background: '#ffffff', borderRadius: 14, border: '1.5px solid #e2e8f0', padding: 16 }}>
         <label className="npl-label-airy" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>📸 Photos de l&apos;article <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>(Max 5 — Recommandé)</span></span>
+          <span>Photos de l&apos;article <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>(Max 5 — Recommandé)</span></span>
           <span style={{ fontSize: 11.5, color: '#1d4ed8', fontWeight: 700 }}>
             {imagesExistantes.length + photos.length}/5 photos
           </span>
@@ -931,7 +931,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                 transition: 'all 0.2s ease'
               }}
             >
-              <span style={{ fontSize: 26 }}>📷</span>
+              <span style={{ fontSize: 26 }}></span>
               <div style={{ textAlign: 'left' }}>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: 13.5, color: '#1d4ed8' }}>
                   Toucher pour ajouter une photo
@@ -982,10 +982,10 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 6 }}>
           <label className="npl-label-airy" style={{ margin: 0 }}>
-            🏷️ Nom du produit <span style={{ color: '#dc2626' }}>*</span>
+            Nom du produit <span style={{ color: '#dc2626' }}>*</span>
           </label>
           <span style={{ fontSize: 12, color: '#ea580c', fontWeight: 700 }}>
-            🎙️ Dictez en Wolof ou Français (« Nom seul » ou « Nom + Prix »)
+            Dictez en Wolof ou Français (« Nom seul » ou « Nom + Prix »)
           </span>
         </div>
 
@@ -1025,7 +1025,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             }}
             title={isListeningNom ? "Arrêter l'écoute" : "Dicter le nom ou le nom + prix (ex: 'Robe Bazin 15000', 'Lait Candia benn téemeer')"}
           >
-            <span>{isListeningNom ? '⏹️' : '🎙️'}</span>
+            <span>{isListeningNom ? '' : ''}</span>
             <span>{isListeningNom ? 'Écoute…' : 'Dicter'}</span>
           </button>
 
@@ -1036,7 +1036,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             style={{ flex: '0 0 auto', height: 48, whiteSpace: 'nowrap', borderRadius: 12, padding: '0 16px', fontWeight: 800 }}
             title="Scanner le nom écrit sur l'emballage du produit"
           >
-            <span>📷</span>
+            <span></span>
             <span>Scan Nom</span>
           </button>
         </div>
@@ -1087,7 +1087,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
       {/* ── 3. PRIX DE VENTE (FCFA) ───────────────────────────────────────── */}
       <div style={{ background: '#ffffff', borderRadius: 14, border: '1.5px solid #e2e8f0', padding: 16 }}>
         <label className="npl-label-airy">
-          💰 Prix de vente (FCFA) <span style={{ color: '#dc2626' }}>*</span>
+          Prix de vente (FCFA) <span style={{ color: '#dc2626' }}>*</span>
         </label>
         <div style={{ position: 'relative' }}>
           <input
@@ -1115,7 +1115,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
         style={{ marginTop: 4, padding: '14px 18px', borderRadius: 14, border: '1.5px solid #cbd5e1' }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
-          <span style={{ fontSize: 18 }}>⚙️</span>
+          <span style={{ fontSize: 18 }}></span>
           <span>
             <strong style={{ display: 'block', fontSize: 13.5, color: '#0f172a' }}>
               Options avancées (Stock, Catégorie, Variantes, EAN, Description, Import)
@@ -1138,7 +1138,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             <div style={{ background: '#f0fdf4', padding: 16, borderRadius: 14, border: '1.5px dashed #22c55e', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <label style={{ fontSize: 13.5, fontWeight: 800, color: '#15803d', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>🌟</span>
+                  <span></span>
                   <span>Baguette Magique (Import Rapide URL)</span>
                 </label>
                 <span style={{ fontSize: 11, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
@@ -1164,7 +1164,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                   className="npl-btn npl-btn-success npl-btn-md"
                   style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 18px', borderRadius: 10, fontWeight: 800, height: 44 }}
                 >
-                  {magicLoading ? '⏳ Analyse en cours...' : '🪄 Importer'}
+                  {magicLoading ? 'Analyse en cours...' : '🪄 Importer'}
                 </button>
               </div>
 
@@ -1217,7 +1217,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                   )}
 
                   <div style={{ fontSize: 12, color: '#15803d', fontWeight: 700 }}>
-                    💡 Prix de vente suggéré : {magicResult.prix?.toLocaleString('fr-FR')} FCFA
+                    Prix de vente suggéré : {magicResult.prix?.toLocaleString('fr-FR')} FCFA
                     {magicResult.prix_achat > 0 && (
                       <span style={{ color: '#64748b', fontWeight: 500, marginLeft: 6 }}>
                         (Coût d'achat estimé : {magicResult.prix_achat?.toLocaleString('fr-FR')} FCFA)
@@ -1270,7 +1270,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                 style={{ flex: '0 0 auto', height: 48, whiteSpace: 'nowrap', borderRadius: 12 }}
                 title="Scanner le code-barres EAN avec la caméra"
               >
-                <span>📷</span>
+                <span></span>
                 <span>Scan EAN</span>
               </button>
             </div>
@@ -1279,7 +1279,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
           {/* Stock, Coût d'achat & Prix barré promo */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
             <div>
-              <label className="npl-label-airy">📦 Quantité en stock</label>
+              <label className="npl-label-airy">Quantité en stock</label>
               <input
                 name="stock_quantite"
                 type="number"
@@ -1334,8 +1334,8 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
             </button>
             <span style={{ fontSize: 13.5, color: '#334155', fontWeight: 700 }}>
               {enStock
-                ? (stockQuantiteForm && Number(stockQuantiteForm) > 0 ? `✅ En stock (${stockQuantiteForm} pcs)` : `✅ ${t('shop.inStock')}`)
-                : `❌ ${t('shop.outOfStock')}`}
+                ? (stockQuantiteForm && Number(stockQuantiteForm) > 0 ? `En stock (${stockQuantiteForm} pcs)` : `${t('shop.inStock')}`)
+                : `${t('shop.outOfStock')}`}
             </span>
           </div>
 
@@ -1465,7 +1465,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                       title="Copier le prix principal sur toutes les variantes"
                       style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 6, padding: '5px 9px', fontSize: 11, fontWeight: 600, color: '#334155', cursor: 'pointer' }}
                     >
-                      ⚡ Aligner prix ({prixForm || 0} F)
+                      Aligner prix ({prixForm || 0} F)
                     </button>
                     <button
                       type="button"
@@ -1473,7 +1473,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                       title="Copier la quantité en stock principale sur toutes les variantes"
                       style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 6, padding: '5px 9px', fontSize: 11, fontWeight: 600, color: '#334155', cursor: 'pointer' }}
                     >
-                      📦 Aligner stock ({stockQuantiteForm || 0})
+                      Aligner stock ({stockQuantiteForm || 0})
                     </button>
                     <button
                       type="button"
@@ -1579,7 +1579,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                                 title="Générer EAN13 aléatoire"
                                 style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 6, padding: '5px 6px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}
                               >
-                                ⚡
+                                
                               </button>
                             </div>
                           </td>
@@ -1614,7 +1614,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
           <div style={{ background: '#ffffff', borderRadius: 20, padding: 20, width: '100%', maxWidth: 460, border: '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#0f172a' }}>
-                {scannerTarget === 'nom' ? '📷 Scan Nom Produit (Face avant emballage)' : '📷 Scanner Code-Barres EAN'}
+                {scannerTarget === 'nom' ? 'Scan Nom Produit (Face avant emballage)' : 'Scanner Code-Barres EAN'}
               </h4>
               <button onClick={arreterFormScanner} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
             </div>
@@ -1645,7 +1645,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                     disabled={ocrLoading}
                     style={{ flex: 1, background: '#0284c7', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 800, cursor: ocrLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
-                    {ocrLoading ? '⏳ Analyse OCR en cours...' : (imageFligeeNom ? '🔄 Reprendre la photo' : '📸 Capturer le nom du produit')}
+                    {ocrLoading ? 'Analyse OCR en cours...' : (imageFligeeNom ? 'Reprendre la photo' : 'Capturer le nom du produit')}
                   </button>
                   {imageFligeeNom && (
                     <button
@@ -1673,14 +1673,14 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
                       onClick={arreterFormScanner}
                       style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '0 14px', fontSize: 13, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >
-                      ✅ Valider
+                      Valider
                     </button>
                   </div>
                 </div>
 
                 {ocrDetections.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, textAlign: 'left', background: '#f8fafc', padding: 8, borderRadius: 10, border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>💡 Suggestions détectées (cliquez pour choisir) :</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b' }}>Suggestions détectées (cliquez pour choisir) :</span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {ocrDetections.map((txt, idx) => (
                         <button
@@ -1726,7 +1726,7 @@ function ProduitForm({ boutiqueId, boutiqueCat, produit, modeInitial = 'rapide',
         marginBottom: 20,
       }}>
         <div style={{ flex: 1 }}>
-          <SubmitButton label={produit ? `💾 ${t('shop.saveProductBtn')}` : `🚀 Mettre en vente (10s)`} />
+          <SubmitButton label={produit ? `💾 ${t('shop.saveProductBtn')}` : `Mettre en vente (10s)`} />
         </div>
         <button type="button" onClick={onCancel} style={{
           minHeight: 48, padding: '0 20px', background: '#f1f5f9', border: '1.5px solid #cbd5e1',

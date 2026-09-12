@@ -74,7 +74,7 @@ export default function HeroDualTrack({
           if (parsed && parsed.nom) {
             setActiveBoutiqueNom(parsed.nom)
           }
-        } catch (_) {}
+        } catch (err) { console.warn('[Nopalou:HeroDualTrack:L77]', err); }
       }
 
       if (isMerchant || (activeBoutique && activeBoutique !== 'null') || posUnlocked) {
@@ -82,7 +82,7 @@ export default function HeroDualTrack({
           setInternalTab('marchand')
         }
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:HeroDualTrack:L85]', err); }
   }, [activeTabProp])
 
   function switchTab(tab: 'acheteur' | 'marchand') {
@@ -92,7 +92,7 @@ export default function HeroDualTrack({
       setInternalTab(tab)
       try {
         localStorage.setItem('nopalou_home_mode', tab)
-      } catch (_) {}
+      } catch (err) { console.warn('[Nopalou:HeroDualTrack:L95]', err); }
     }
   }
 
@@ -303,7 +303,7 @@ export default function HeroDualTrack({
               background: '#1C2B4A', color: '#FED7AA', padding: '4px 12px', borderRadius: 20,
               fontSize: 11.5, fontWeight: 800, marginBottom: 8, boxShadow: '0 2px 6px rgba(28,43,74,0.2)'
             }}>
-              <span>⚡ Écosystème Pro pour Boutiques &amp; Commerces Physiques</span>
+              <span>Écosystème Pro pour Boutiques &amp; Commerces Physiques</span>
             </div>
 
             <h2 style={{
@@ -341,7 +341,7 @@ export default function HeroDualTrack({
                 fontSize: 12,
                 color: '#065F46'
               }}>
-                <span>🏪 <strong>Boutique active : {activeBoutiqueNom}</strong></span>
+                <span><strong>Boutique active : {activeBoutiqueNom}</strong></span>
                 <Link href="/boutique" style={{ color: '#047857', fontWeight: 800, textDecoration: 'underline' }}>
                   Accéder à mon tableau de bord →
                 </Link>
@@ -424,7 +424,7 @@ export default function HeroDualTrack({
                     border: '1px solid rgba(255,255,255,0.2)'
                   }}
                 >
-                  Démo ⚡
+                  Démo 
                 </Link>
               </div>
             </div>
@@ -600,7 +600,7 @@ export default function HeroDualTrack({
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <span style={{ color: 'var(--navy, #1C2B4A)', fontWeight: 800 }}>
-                💡 Formule Taf-Taf Commerçant :
+                Formule Taf-Taf Commerçant :
               </span>
               <span style={{ color: 'var(--text2, #5A4E42)' }}>
                 Dès <strong style={{ color: 'var(--accent, #C75B00)' }}>{prixTafTaf.toLocaleString('fr-FR')} FCFA/mois</strong> après 30 jours d&apos;essai gratuit • Sans engagement • Aucun terminal bancaire à acheter

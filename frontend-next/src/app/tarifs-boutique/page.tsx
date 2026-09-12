@@ -64,7 +64,7 @@ export default function TarifsBoutiquePage() {
               background: 'rgba(199,91,0,0.2)', color: '#fed7aa', padding: '6px 16px', borderRadius: 20,
               fontSize: 13, fontWeight: 800, marginBottom: 20, border: '1px solid rgba(199,91,0,0.4)', letterSpacing: '0.05em'
             }}>
-              💳 PRIX TRANSPARENTS
+              PRIX TRANSPARENTS
             </span>
             <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 900, margin: '0 0 16px', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
               Investissez dans votre succès, <br/>sans surprise.
@@ -133,7 +133,7 @@ export default function TarifsBoutiquePage() {
         <section style={{ maxWidth: 1000, margin: '0 auto 60px', padding: '0 20px' }}>
           <div style={{ background: '#ffffff', borderRadius: 20, padding: 32, border: '1px solid #e2e8f0', boxShadow: '0 6px 24px rgba(0,0,0,0.03)' }}>
             <h2 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: '0 0 12px' }}>
-              📦 Vous achetez sur Alibaba ou AliExpress ? Vendez facilement au Sénégal !
+              Vous achetez sur Alibaba ou AliExpress ? Vendez facilement au Sénégal !
             </h2>
             <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.7, margin: '0 0 20px' }}>
               De nombreux commerçants à Dakar s&apos;approvisionnent en gros sur <strong>Alibaba, AliExpress, Shein ou 1688</strong> pour revendre des vêtements, téléphones, cosmétiques et accessoires. Avec Nopalou :

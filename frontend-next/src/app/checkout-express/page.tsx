@@ -16,9 +16,9 @@ interface Zone {
 }
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'dakar-intra', nom: '📍 Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
-  { id: 'dakar-banlieue', nom: '📍 Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
-  { id: 'regions-senegal', nom: '🚚 Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
+  { id: 'dakar-intra', nom: 'Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
+  { id: 'dakar-banlieue', nom: 'Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
+  { id: 'regions-senegal', nom: 'Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
   { id: 'retrait-boutique', nom: '🏬 Retrait gratuit en boutique', prix: 0 },
 ]
 
@@ -125,13 +125,13 @@ function CheckoutExpressContent() {
 
   // WhatsApp direct link generator
   const messageWhatsapp = `Bonjour ! Je souhaite valider la commande suivante via WhatsApp :\n\n` +
-    `🛍️ ${quantite}x ${produitInfo?.nom || 'Produit'} (${fcfa(sousTotal)})\n` +
-    `🚚 Livraison (${zoneSelectionnee?.nom}): ${fcfa(fraisLivraison)}\n` +
-    `💰 TOTAL: ${fcfa(totalGlobal)}\n\n` +
-    `👤 Nom: ${clientNom || 'Non renseigné'}\n` +
-    `📞 Téléphone: ${clientTel || 'Non renseigné'}\n` +
-    `📍 Adresse: ${clientAdresse || 'À préciser'}\n` +
-    `💳 Mode de paiement souhaité: ${methodePaiement === 'wave' ? 'Wave' : methodePaiement === 'orange_money' ? 'Orange Money' : 'Cash à la livraison'}`
+    `${quantite}x ${produitInfo?.nom || 'Produit'} (${fcfa(sousTotal)})\n` +
+    `Livraison (${zoneSelectionnee?.nom}): ${fcfa(fraisLivraison)}\n` +
+    `TOTAL: ${fcfa(totalGlobal)}\n\n` +
+    `Nom: ${clientNom || 'Non renseigné'}\n` +
+    `Téléphone: ${clientTel || 'Non renseigné'}\n` +
+    `Adresse: ${clientAdresse || 'À préciser'}\n` +
+    `Mode de paiement souhaité: ${methodePaiement === 'wave' ? 'Wave' : methodePaiement === 'orange_money' ? 'Orange Money' : 'Cash à la livraison'}`
 
   const lienWhatsapp = `https://wa.me/221777202086?text=${encodeURIComponent(messageWhatsapp)}`
 
@@ -208,7 +208,7 @@ function CheckoutExpressContent() {
               return
             }
             if (waveData.fallback_manuel) {
-              setErrorMsg('💡 L\'API Wave direct étant momentanément indisponible, effectuez votre transfert au 77 720 20 86 (Wave/OM). Votre commande est bien enregistrée.')
+              setErrorMsg('L\'API Wave direct étant momentanément indisponible, effectuez votre transfert au 77 720 20 86 (Wave/OM). Votre commande est bien enregistrée.')
             }
           }
         } catch (wErr) {
@@ -229,7 +229,7 @@ function CheckoutExpressContent() {
     return (
       <div style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         <div style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', boxShadow: '0 20px 50px rgba(0,163,224,0.15)', border: '1px solid #e0f7ff', maxWidth: 460, width: '100%' }}>
-          <span style={{ fontSize: 56, display: 'block', marginBottom: 16 }}>🌊</span>
+          <span style={{ fontSize: 56, display: 'block', marginBottom: 16 }}></span>
           <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0084b4', margin: '0 0 12px' }}>Redirection vers Wave…</h2>
           <p style={{ fontSize: 14, color: '#475569', margin: '0 0 24px', lineHeight: 1.5 }}>
             Nous préparons votre paiement sécurisé Wave pour <strong>{produitInfo?.nom || 'votre commande'}</strong>.
@@ -244,13 +244,13 @@ function CheckoutExpressContent() {
     return (
       <div style={{ maxWidth: 540, margin: '40px auto', padding: 24, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         <div style={{ background: '#fff', borderRadius: 20, padding: 32, textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
-          <span style={{ fontSize: 64, display: 'block', marginBottom: 16 }}>🎉</span>
+          <span style={{ fontSize: 64, display: 'block', marginBottom: 16 }}></span>
           <h2 style={{ fontSize: 24, fontWeight: 900, color: '#166534', margin: '0 0 8px' }}>Commande Confirmée !</h2>
           <p style={{ fontSize: 15, color: '#475569', margin: '0 0 16px' }}>
             Votre commande <strong>{orderRef}</strong> a bien été transmise.
           </p>
           <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, textAlign: 'left', margin: '20px 0', border: '1px solid #e2e8f0', fontSize: 14 }}>
-            <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#0f172a' }}>📦 Récapitulatif :</p>
+            <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#0f172a' }}>Récapitulatif :</p>
             <p style={{ margin: '0 0 4px', color: '#334155' }}>• {quantite}x {produitInfo?.nom || 'Produit'}</p>
             <p style={{ margin: '0 0 4px', color: '#334155' }}>• Total: <strong>{fcfa(totalGlobal)}</strong></p>
             <p style={{ margin: '0 0 4px', color: '#334155' }}>• Mode de paiement: <strong>{methodePaiement.toUpperCase()}</strong></p>
@@ -276,7 +276,7 @@ function CheckoutExpressContent() {
                 </div>
               )}
               <p style={{ margin: 0, fontSize: 11.5, color: '#5A4E42', lineHeight: 1.3 }}>
-                ⚠️ <strong>Ne communiquez ce code au livreur qu&apos;après avoir vérifié votre colis !</strong>
+                <strong>Ne communiquez ce code au livreur qu&apos;après avoir vérifié votre colis !</strong>
               </p>
             </div>
           )}
@@ -291,7 +291,7 @@ function CheckoutExpressContent() {
               fontWeight: 800, textDecoration: 'none', fontSize: 15, width: '100%', marginBottom: 12,
             }}
           >
-            <span>💬</span> Suivre ma commande sur WhatsApp
+            <span></span> Suivre ma commande sur WhatsApp
           </a>
 
           <Link href="/" style={{ color: '#64748b', fontSize: 14, textDecoration: 'underline' }}>
@@ -320,7 +320,7 @@ function CheckoutExpressContent() {
         {/* Détails du Produit */}
         {produitInfo ? (
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border, #E8DDD2)', marginBottom: 20 }}>
-            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="📦" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover', background: 'var(--bg, #F8F5F0)' }} />
+            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover', background: 'var(--bg, #F8F5F0)' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <Store size={12} />
@@ -458,7 +458,7 @@ function CheckoutExpressContent() {
                     background: methodePaiement === 'wave' ? '#f0f9ff' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  Wave ⚡
+                  Wave 
                 </button>
                 <button
                   type="button"
@@ -529,7 +529,7 @@ function CheckoutExpressContent() {
                 marginTop: 8, width: '100%', fontSize: 14.5,
               }}
             >
-              {submitting ? 'Validation en cours...' : '⚡ Valider et Payer la commande →'}
+              {submitting ? 'Validation en cours...' : 'Valider et Payer la commande →'}
             </button>
           </form>
         </div>

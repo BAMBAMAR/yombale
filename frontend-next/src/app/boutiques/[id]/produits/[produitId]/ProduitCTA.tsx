@@ -174,7 +174,7 @@ export default function ProduitCTA({
             }}
           >
             <ShoppingCart size={18} />
-            {addedCart ? '✅ Ajouté au panier !' : (!peutCommander && aDesVariantes && !selectionComplete ? 'Sélectionnez vos options ci-dessus' : 'Ajouter au panier')}
+            {addedCart ? 'Ajouté au panier !' : (!peutCommander && aDesVariantes && !selectionComplete ? 'Sélectionnez vos options ci-dessus' : 'Ajouter au panier')}
           </button>
 
           <button
@@ -190,7 +190,7 @@ export default function ProduitCTA({
               boxShadow: peutCommander ? '0 4px 14px rgba(199,91,0,0.25)' : 'none',
             }}
           >
-            ⚡ {!estEnStockVariante ? 'Rupture de stock' : (!selectionComplete ? 'Sélectionnez une option' : 'Commander en direct (1 clic)')}
+            {!estEnStockVariante ? 'Rupture de stock' : (!selectionComplete ? 'Sélectionnez une option' : 'Commander en direct (1 clic)')}
           </button>
         </div>
 
@@ -206,7 +206,7 @@ export default function ProduitCTA({
               fontWeight: 700, fontSize: 14,
             }}
           >
-            💬 Discuter avec le vendeur sur WhatsApp
+            Discuter avec le vendeur sur WhatsApp
           </a>
         )}
 
@@ -221,7 +221,7 @@ export default function ProduitCTA({
               fontWeight: 700, fontSize: 14,
             }}
           >
-            📞 Appeler au téléphone
+            Appeler au téléphone
           </a>
         )}
       </div>

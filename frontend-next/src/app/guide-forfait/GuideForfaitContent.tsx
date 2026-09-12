@@ -12,10 +12,10 @@ const API = ''
 
 const PROFILS = [
   { id: 'internet',    label: '📶 Grande data',     desc: 'Priorité à la quantité de data mobile',         poids: { data:5, appel:1, prix:2, duree:1 } },
-  { id: 'appel',       label: '📞 Grands appelants', desc: 'Priorité aux minutes (illimitées si possible)',  poids: { data:1, appel:5, prix:2, duree:1 } },
+  { id: 'appel',       label: 'Grands appelants', desc: 'Priorité aux minutes (illimitées si possible)',  poids: { data:1, appel:5, prix:2, duree:1 } },
   { id: 'mixte',       label: '🔀 Usage mixte',      desc: 'Équilibre data, appels et SMS',                 poids: { data:3, appel:3, prix:2, duree:1 } },
-  { id: 'econome',     label: '💰 Économique',        desc: 'Meilleur rapport qualité/prix avant tout',     poids: { data:3, appel:2, prix:5, duree:1 } },
-  { id: 'longue',      label: '📅 Longue durée',     desc: 'Forfaits valables plusieurs semaines/mois',    poids: { data:2, appel:2, prix:3, duree:5 } },
+  { id: 'econome',     label: 'Économique',        desc: 'Meilleur rapport qualité/prix avant tout',     poids: { data:3, appel:2, prix:5, duree:1 } },
+  { id: 'longue',      label: 'Longue durée',     desc: 'Forfaits valables plusieurs semaines/mois',    poids: { data:2, appel:2, prix:3, duree:5 } },
 ]
 
 const OPERATEURS = ['Orange', 'Free', 'Expresso', 'Wave', 'Sonatel']
@@ -159,7 +159,7 @@ export default function GuideForfaitPage() {
           { label: 'Accueil', href: '/' },
           { label: 'Guide Forfaits' },
         ]}
-        emoji="📱"
+        emoji=""
         titre="Comparateur de Forfaits"
         compteur={`${results.length} forfaits correspondants`}
         centered={true}
@@ -189,7 +189,7 @@ export default function GuideForfaitPage() {
           <div className="guide-divider" />
 
           <div className="guide-field">
-            <label className="guide-label">💰 Budget max (FCFA/mois)</label>
+            <label className="guide-label">Budget max (FCFA/mois)</label>
             <input
               className="guide-input"
               type="number" min={100} placeholder="ex: 3 000"
@@ -254,9 +254,9 @@ export default function GuideForfaitPage() {
 
           {[
             { id: 'data',  label: '📶 Importance de la data',     val: poidsData,  set: setPoidsData  },
-            { id: 'appel', label: '📞 Importance des appels',      val: poidsAppel, set: setPoidsAppel },
-            { id: 'prix',  label: '💰 Importance du prix',         val: poidsPrix,  set: setPoidsPrix  },
-            { id: 'duree', label: '📅 Importance de la durée',     val: poidsDuree, set: setPoidsDuree },
+            { id: 'appel', label: 'Importance des appels',      val: poidsAppel, set: setPoidsAppel },
+            { id: 'prix',  label: 'Importance du prix',         val: poidsPrix,  set: setPoidsPrix  },
+            { id: 'duree', label: 'Importance de la durée',     val: poidsDuree, set: setPoidsDuree },
           ].map(s => (
             <div key={s.id} className="guide-slider-wrap">
               <div className="guide-slider-header">
@@ -274,7 +274,7 @@ export default function GuideForfaitPage() {
           <div style={{ flex: 1, minHeight: 16 }} />
 
           <button className="guide-lancer-btn" onClick={lancer} disabled={loading}>
-            {loading ? '⏳ Analyse en cours…' : '🎯 Trouver le meilleur forfait'}
+            {loading ? 'Analyse en cours…' : 'Trouver le meilleur forfait'}
           </button>
         </div>
 
@@ -289,7 +289,7 @@ export default function GuideForfaitPage() {
 
           {!loading && !results.length && !error && (
             <div className="guide-empty">
-              <div style={{ fontSize: 52, opacity: .2, marginBottom: 16 }}>📡</div>
+              <div style={{ fontSize: 52, opacity: .2, marginBottom: 16 }}></div>
               <div className="guide-empty-titre">Configurez votre profil</div>
               <div className="guide-empty-sub">Choisissez un profil ou ajustez les paramètres,<br />puis cliquez <strong>Trouver</strong>.</div>
             </div>
@@ -306,7 +306,7 @@ export default function GuideForfaitPage() {
                 <div className="guide-tri-btns">
                   {(['score', 'prix', 'data'] as const).map(t => (
                     <button key={t} className={`guide-tri-btn${triPar === t ? ' active' : ''}`} onClick={() => setTriPar(t)}>
-                      {t === 'score' ? '🏆 Score' : t === 'prix' ? '💰 Prix' : '📶 Data'}
+                      {t === 'score' ? 'Score' : t === 'prix' ? 'Prix' : '📶 Data'}
                     </button>
                   ))}
                 </div>
@@ -317,7 +317,7 @@ export default function GuideForfaitPage() {
                   const color = OP_COLORS[f.operateur] ?? '#1C2B4A'
                   return (
                     <Link href={`/telecom/${f.id}`} key={f.id} className="guide-forfait-card">
-                      {idx === 0 && <div className="guide-result-badge">🏆 Meilleur score</div>}
+                      {idx === 0 && <div className="guide-result-badge">Meilleur score</div>}
                       <div className="guide-forfait-header" style={{ borderLeft: `4px solid ${color}` }}>
                         <span style={{ fontWeight: 700, color }}>{f.operateur}</span>
                         <span className="guide-forfait-prix">{fcfa(f.prix)}</span>
@@ -325,9 +325,9 @@ export default function GuideForfaitPage() {
                       <p className="guide-forfait-nom">{f.nom}</p>
                       <div className="guide-forfait-specs">
                         {f.data_mo != null && <span>📶 {formatData(f.data_mo)}</span>}
-                        {f.minutes != null && <span>📞 {f.minutes === -1 ? '∞ min' : `${f.minutes} min`}</span>}
-                        {f.sms != null && f.sms > 0 && <span>✉️ {f.sms === -1 ? '∞ SMS' : `${f.sms} SMS`}</span>}
-                        {f.validite_jours != null && <span>📅 {f.validite_jours}j</span>}
+                        {f.minutes != null && <span>{f.minutes === -1 ? '∞ min' : `${f.minutes} min`}</span>}
+                        {f.sms != null && f.sms > 0 && <span>{f.sms === -1 ? '∞ SMS' : `${f.sms} SMS`}</span>}
+                        {f.validite_jours != null && <span>{f.validite_jours}j</span>}
                       </div>
 
                       <div className="guide-score-big" style={{ marginTop: 8 }}>
@@ -347,7 +347,7 @@ export default function GuideForfaitPage() {
                         )}
                         {poidsAppel > 1 && (
                           <div className="guide-bar-row">
-                            <span>📞 Appels</span>
+                            <span>Appels</span>
                             <div className="guide-bar-track">
                               <div className="guide-bar-fill" style={{ width: `${f._sAppel}%`, background: '#7c3aed' }} />
                             </div>
@@ -355,7 +355,7 @@ export default function GuideForfaitPage() {
                           </div>
                         )}
                         <div className="guide-bar-row">
-                          <span>💰 Prix</span>
+                          <span>Prix</span>
                           <div className="guide-bar-track">
                             <div className="guide-bar-fill" style={{ width: `${f._sPrix}%`, background: '#10b981' }} />
                           </div>
@@ -370,7 +370,7 @@ export default function GuideForfaitPage() {
               {topForfait && (
                 <div className="guide-cta-bas">
                   <div className="guide-cta-bas-info">
-                    <span className="guide-cta-bas-label">🏆 Meilleur score</span>
+                    <span className="guide-cta-bas-label">Meilleur score</span>
                     <span className="guide-cta-bas-nom">{topForfait.operateur} — {topForfait.nom}</span>
                     <span className="guide-cta-bas-prix">{fcfa(topForfait.prix)}/mois</span>
                   </div>
@@ -387,8 +387,8 @@ export default function GuideForfaitPage() {
       <SeoCard
         titre="Pourquoi utiliser le guide forfait télécom Nopalou ?"
         blurbs={[
-          { emoji: '🎯', text: 'Choisissez un profil (grande data, grands appelants, usage mixte, économique, longue durée…) et le guide pondère automatiquement le score de chaque forfait selon vos priorités réelles.' },
-          { emoji: '📡', text: 'Les résultats comparent en direct les forfaits des 4 opérateurs sénégalais, filtrés selon votre budget, votre type de forfait et vos besoins en data et en appels.' },
+          { emoji: '', text: 'Choisissez un profil (grande data, grands appelants, usage mixte, économique, longue durée…) et le guide pondère automatiquement le score de chaque forfait selon vos priorités réelles.' },
+          { emoji: '', text: 'Les résultats comparent en direct les forfaits des 4 opérateurs sénégalais, filtrés selon votre budget, votre type de forfait et vos besoins en data et en appels.' },
         ]}
         chipRows={[
           {
@@ -396,7 +396,7 @@ export default function GuideForfaitPage() {
             chips: [
               { href: '/telecom/orange', emoji: '🟠', label: 'Orange' },
               { href: '/telecom/yas', emoji: '🟣', label: 'Yas' },
-              { href: '/telecom/expresso', emoji: '🟢', label: 'Expresso' },
+              { href: '/telecom/expresso', emoji: '', label: 'Expresso' },
               { href: '/telecom/promobile', emoji: '🔵', label: 'Promobile' },
             ],
           },

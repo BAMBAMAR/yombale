@@ -101,7 +101,7 @@ export default function DeveloperClient({ secret }: { secret: string }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            🔌 Supervision du Portail Développeur API &amp; Webhooks
+            Supervision du Portail Développeur API &amp; Webhooks
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
             Supervision globale des clés API REST (`nopalou_sk_live_...`) et des webhooks créés par les boutiques sur la formule Business VIP.
@@ -111,7 +111,7 @@ export default function DeveloperClient({ secret }: { secret: string }) {
           onClick={chargerDonnees}
           style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#0f172a' }}
         >
-          🔄 Actualiser
+          Actualiser
         </button>
       </div>
 
@@ -123,7 +123,7 @@ export default function DeveloperClient({ secret }: { secret: string }) {
 
       {erreur && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 16px', color: '#dc2626', fontSize: 13, fontWeight: 700, marginBottom: 20 }}>
-          ⚠️ {erreur}
+          {erreur}
         </div>
       )}
 
@@ -148,7 +148,7 @@ export default function DeveloperClient({ secret }: { secret: string }) {
           {/* Section 1 : Clés API */}
           <section style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              🔑 Clés API REST Générées ({keys.length})
+              Clés API REST Générées ({keys.length})
             </h2>
 
             {keys.length === 0 ? (
@@ -191,7 +191,7 @@ export default function DeveloperClient({ secret }: { secret: string }) {
                             disabled={revokingId === k.id}
                             style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                           >
-                            ❌ Révoker
+                            Révoker
                           </button>
                         </td>
                       </tr>
@@ -205,7 +205,7 @@ export default function DeveloperClient({ secret }: { secret: string }) {
           {/* Section 2 : Webhooks */}
           <section style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              🔔 Webhooks Événementiels ({webhooks.length})
+              Webhooks Événementiels ({webhooks.length})
             </h2>
 
             {webhooks.length === 0 ? (
@@ -248,7 +248,7 @@ export default function DeveloperClient({ secret }: { secret: string }) {
                             disabled={revokingId === w.id}
                             style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                           >
-                            🗑 Supprimer
+                            Supprimer
                           </button>
                         </td>
                       </tr>

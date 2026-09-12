@@ -22,7 +22,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
   async function fetchAdmins() {
     const cached = localStorage.getItem(`nopalou_offline_admins_${boutiqueId}`)
     if (cached) {
-      try { setAdmins(JSON.parse(cached)) } catch(e) {}
+      try { setAdmins(JSON.parse(cached)) } catch (e) { console.warn('[Nopalou:BoutiqueAdmins:L25]', e); }
     }
     if (!cached) setLoading(true)
 
@@ -140,7 +140,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
             className="npl-btn npl-btn-primary npl-btn-md"
             style={{ flex: '1 1 140px', color: '#ffffff', whiteSpace: 'nowrap' }}
           >
-            <span>{adding ? '⏳' : '👤 +'}</span>
+            <span>{adding ? '' : '+'}</span>
             <span>{adding ? t('common.loading') : t('shop.addAdminBtn')}</span>
           </button>
         </div>
@@ -199,7 +199,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
                     onClick={() => handleDelete(admin.id)}
                     className="npl-btn npl-btn-danger npl-btn-sm"
                   >
-                    <span>🗑️</span>
+                    <span></span>
                     <span>{t('shop.removeAdmin')}</span>
                   </button>
                 ) : (

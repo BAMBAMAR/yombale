@@ -27,7 +27,7 @@ export default function ProductTourModal({
   function handleTerminer() {
     try {
       localStorage.setItem('nopalou_merchant_tour_done', 'true')
-    } catch (e) {}
+    } catch (e) { console.warn('[Nopalou:ProductTourModal:L30]', e); }
     onClose()
   }
 
@@ -145,7 +145,7 @@ export default function ProductTourModal({
                 border: '1px solid #FFEDD5'
               }}
             >
-              🚀
+              
             </div>
             <div>
               <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
@@ -166,7 +166,7 @@ export default function ProductTourModal({
                 gap: 12
               }}
             >
-              <span style={{ fontSize: 22 }}>💡</span>
+              <span style={{ fontSize: 22 }}></span>
               <span style={{ fontSize: 12.5, color: '#334155', fontWeight: 600 }}>
                 Vous pouvez également coller un lien AliExpress ou Shein pour importer automatiquement photos et descriptions avec la Baguette Magique !
               </span>
@@ -190,7 +190,7 @@ export default function ProductTourModal({
                 border: '1px solid #bbf7d0'
               }}
             >
-              📲
+              
             </div>
             <div>
               <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
@@ -211,7 +211,7 @@ export default function ProductTourModal({
                 gap: 12
               }}
             >
-              <span style={{ fontSize: 22 }}>🛍️</span>
+              <span style={{ fontSize: 22 }}></span>
               <span style={{ fontSize: 12.5, color: '#166534', fontWeight: 600 }}>
                 Vos clients commandent directement sur mobile par panier ou par note vocale WhatsApp sans avoir besoin de créer un compte.
               </span>
@@ -235,7 +235,7 @@ export default function ProductTourModal({
                 border: '1px solid #bae6fd'
               }}
             >
-              ⚡
+              
             </div>
             <div>
               <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
@@ -256,7 +256,7 @@ export default function ProductTourModal({
                 gap: 12
               }}
             >
-              <span style={{ fontSize: 22 }}>🔒</span>
+              <span style={{ fontSize: 22 }}></span>
               <span style={{ fontSize: 12.5, color: '#334155', fontWeight: 600 }}>
                 Vos transactions sont protégées par le compte séquestre Pay Safe : les fonds sont débloqués sur validation du code PIN à la livraison.
               </span>
@@ -297,7 +297,7 @@ export default function ProductTourModal({
               gap: 8
             }}
           >
-            {step < totalSteps ? 'Continuer ➜' : '🚀 C&apos;est parti !'}
+            {step < totalSteps ? 'Continuer ➜' : 'C&apos;est parti !'}
           </button>
 
           {step === totalSteps && onAjouterProduitDirect && (
@@ -319,7 +319,7 @@ export default function ProductTourModal({
                 cursor: 'pointer'
               }}
             >
-              ➕ Ajouter 1er produit
+              Ajouter 1er produit
             </button>
           )}
         </div>

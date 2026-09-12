@@ -119,7 +119,7 @@ export default function ApporteursClient({
           okCount++
           setCommissions(cs => cs.map(c => c.id === id ? { ...c, statut: 'paye', paye_at: data.commission?.paye_at || new Date().toISOString() } : c))
         }
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:ApporteursClient:L122]', err); }
     }
     setSelectedCommissionIds([])
     setLoadingBatch(false)
@@ -147,7 +147,7 @@ export default function ApporteursClient({
     {
       key: 'payer',
       label: 'Marquer payées les commissions sélectionnées',
-      icon: '🟢',
+      icon: '',
       color: 'green',
       onClick: handleBatchPayerCommissions,
     },
@@ -164,7 +164,7 @@ export default function ApporteursClient({
       )}
 
       <div style={{ background: '#fff', borderRadius: 12, padding: 24, marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
-        <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>⚙️ Configuration</h3>
+        <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>Configuration</h3>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
           <button
@@ -194,7 +194,7 @@ export default function ApporteursClient({
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, padding: 24, marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
-        <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>👥 Apporteurs ({apporteurs.length})</h3>
+        <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>Apporteurs ({apporteurs.length})</h3>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 500 }}>
             <thead>
@@ -220,7 +220,7 @@ export default function ApporteursClient({
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
-        <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>💰 Commissions</h3>
+        <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 700 }}>Commissions</h3>
 
         <BatchActionBar
           selectedCount={selectedCommissionIds.length}

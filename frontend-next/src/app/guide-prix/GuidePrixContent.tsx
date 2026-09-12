@@ -34,19 +34,19 @@ interface Detail {
 }
 
 const CATEGORIES = [
-  { slug: 'smartphones',  label: 'Téléphones',     icon: '📱' },
-  { slug: 'informatique', label: 'Informatique',    icon: '💻' },
+  { slug: 'smartphones',  label: 'Téléphones',     icon: '' },
+  { slug: 'informatique', label: 'Informatique',    icon: '' },
   { slug: 'tv-electro',   label: 'TV & Électro',   icon: '📺' },
   { slug: 'mode',         label: 'Mode',            icon: '👗' },
-  { slug: 'maison',       label: 'Maison',          icon: '🏠' },
-  { slug: 'auto-moto',    label: 'Auto & Moto',     icon: '🛵' },
+  { slug: 'maison',       label: 'Maison',          icon: '' },
+  { slug: 'auto-moto',    label: 'Auto & Moto',     icon: '' },
   { slug: 'jeux',         label: 'Jeux & Gaming',   icon: '🎮' },
   { slug: 'sport',        label: 'Sport & Fitness', icon: '⚽' },
   { slug: 'sante-beaute', label: 'Santé & Beauté',  icon: '💊' },
-  { slug: 'alimentation', label: 'Alimentation',    icon: '🛒' },
-  { slug: 'telecom',      label: 'Télécom',         icon: '📡', href: '/telecom' },
+  { slug: 'alimentation', label: 'Alimentation',    icon: '' },
+  { slug: 'telecom',      label: 'Télécom',         icon: '', href: '/telecom' },
   { slug: 'immo',         label: 'Immobilier',      icon: '🏘', href: '/immo' },
-  { slug: 'annonces',     label: 'Annonces',        icon: '📢', href: '/annonces' },
+  { slug: 'annonces',     label: 'Annonces',        icon: '', href: '/annonces' },
 ]
 
 export default function GuidePrixPage({ categoriesActives }: { categoriesActives?: string[] | null }) {
@@ -158,7 +158,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
     <div className="guide-prix-page">
       <PageHeader
         breadcrumb={[{ label: 'Accueil', href: '/' }, { label: 'Guide des prix' }]}
-        emoji="💡"
+        emoji=""
         titre="Guide des prix"
         compteur="Recherchez un produit pour connaître son prix actuel au Sénégal, comparer les marchands et voir l'évolution du prix dans le temps."
         centered={true}
@@ -174,7 +174,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
               className="guide-prix-input"
             />
             <button type="submit" className="guide-prix-btn" disabled={loading}>
-              {loading ? '…' : '🔍 Rechercher'}
+              {loading ? '…' : 'Rechercher'}
             </button>
           </div>
           <FiltresBar
@@ -221,9 +221,9 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
               <div className="guide-tri-btns">
                 {([
                   ['pertinence', 'Pertinence'],
-                  ['prix_asc', '💰 Prix ↑'],
-                  ['prix_desc', '💰 Prix ↓'],
-                  ['nb_offres', `🏪 Plus d'offres`],
+                  ['prix_asc', 'Prix ↑'],
+                  ['prix_desc', 'Prix ↓'],
+                  ['nb_offres', `Plus d'offres`],
                 ] as const).map(([val, label]) => (
                   <button key={val} className={`guide-tri-btn${triPar === val ? ' active' : ''}`} onClick={() => setTriPar(val)}>
                     {label}
@@ -235,7 +235,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
           <div className="guide-prix-liste">
             {!searched && !loading && (
             <div className="guide-prix-empty">
-              <p style={{ fontSize: 36 }}>🔍</p>
+              <p style={{ fontSize: 36 }}></p>
               <p>Entrez le nom d&apos;un produit pour voir ses prix</p>
             </div>
           )}
@@ -266,7 +266,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
                 </p>
               </div>
               <span className="guide-prix-item-arrow">
-                {loadingId === p.id ? '⏳' : '›'}
+                {loadingId === p.id ? '' : '›'}
               </span>
             </button>
             ))}
@@ -349,12 +349,12 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
                 {/* Conseil */}
                 <div className="guide-prix-conseil">
                   {variation !== null && variation < -5
-                    ? '✅ Le prix baisse — bon moment pour acheter !'
+                    ? 'Le prix baisse — bon moment pour acheter !'
                     : variation !== null && variation > 5
-                    ? '⚠️ Le prix monte — comparez bien avant d\'acheter.'
+                    ? 'Le prix monte — comparez bien avant d\'acheter.'
                     : ecart >= 15
-                    ? `💡 Écart de ${ecart}% entre les marchands — choisissez soigneusement.`
-                    : '📊 Prix stable. Comparez les marchands ci-dessous pour le meilleur deal.'}
+                    ? `Écart de ${ecart}% entre les marchands — choisissez soigneusement.`
+                    : 'Prix stable. Comparez les marchands ci-dessous pour le meilleur deal.'}
                 </div>
 
                 {/* Tableau marchands */}
@@ -365,7 +365,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
                       {[...offres].sort((a, b) => a.prix - b.prix).map((o, i) => (
                         <div key={i} className={`guide-prix-marchand-row${i === 0 ? ' guide-prix-marchand-row--best' : ''}`}>
                           <div className="guide-prix-marchand-info">
-                            {i === 0 && <span className="guide-prix-best-badge">🏷 Moins cher</span>}
+                            {i === 0 && <span className="guide-prix-best-badge">Moins cher</span>}
                             <span className="guide-prix-marchand-nom">{o.marchand}</span>
                             {o.titre && <span className="guide-prix-marchand-desc">{decodeHtml(o.titre)}</span>}
                             {o.stock === false && <span className="guide-prix-stock-badge">Rupture</span>}
@@ -403,7 +403,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
         titre="Pourquoi utiliser le guide des prix Nopalou ?"
         blurbs={[
           {
-            emoji: '💡',
+            emoji: '',
             text: (
               <>
                 Ce guide vous montre en un coup d&apos;œil le prix le plus bas, le prix moyen et l&apos;écart entre marchands
@@ -412,7 +412,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
             ),
           },
           {
-            emoji: '📈',
+            emoji: '',
             text: (
               <>
                 L&apos;évolution du prix sur 30 jours vous aide à savoir si c&apos;est le bon moment pour acheter,

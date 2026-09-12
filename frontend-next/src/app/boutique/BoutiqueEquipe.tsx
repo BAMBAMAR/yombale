@@ -21,7 +21,7 @@ export default function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
             color: subTab === 'admins' ? '#C75B00' : '#374151',
           }}
         >
-          👥 {t('shop.admins')}
+          {t('shop.admins')}
         </button>
         <button
           onClick={() => setSubTab('caissiers')}
@@ -32,7 +32,7 @@ export default function BoutiqueEquipe({ boutiqueId }: { boutiqueId: string }) {
             color: subTab === 'caissiers' ? '#C75B00' : '#374151',
           }}
         >
-          🏪 {t('shop.caissiers')}
+          {t('shop.caissiers')}
         </button>
       </div>
 

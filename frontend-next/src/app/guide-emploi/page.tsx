@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const ACHETEUR_STEPS = [
   {
-    icon: '🔍', couleur: '#1d4ed8',
+    icon: '', couleur: '#1d4ed8',
     titre: '1. Rechercher des produits',
     texte: 'Tapez le nom d\'un produit ou d\'un bien immo (ex : "Samsung Galaxy A55", "climatiseur Haier"). Nopalou cherche sur toutes les boutiques partenaires.',
     ctas: [{ label: 'Rechercher →', href: '/', couleur: '#1d4ed8', bg: '#eff6ff' }],
@@ -23,19 +23,19 @@ const ACHETEUR_STEPS = [
     ctas: [{ label: 'Guide d\'achat →', href: '/guide-achat', couleur: '#0891b2', bg: '#ecfeff' }],
   },
   {
-    icon: '📲', couleur: '#25D366',
+    icon: '', couleur: '#25D366',
     titre: '3. Commander sur WhatsApp',
     texte: 'Cliquez sur "Commander via WhatsApp" depuis la fiche produit ou boutique. Le panier pré-rempli est envoyé directement au marchand.',
     ctas: [{ label: 'Assistant WhatsApp →', href: '/assistant-whatsapp', couleur: '#25D366', bg: '#f0fdf4' }],
   },
   {
-    icon: '🚚', couleur: '#059669',
+    icon: '', couleur: '#059669',
     titre: '4. Modes de livraison & Suivi',
     texte: 'Recevez votre colis chez vous. Suivez vos commandes en envoyant la référence (ex : PAY-12345) à l\'Assistant WhatsApp Nopalou.',
     ctas: [{ label: 'Suivre via WhatsApp →', href: 'https://wa.me/221708717942?text=suivi', couleur: '#059669', bg: '#ecfdf5' }],
   },
   {
-    icon: '🔔', couleur: '#f59e0b',
+    icon: '', couleur: '#f59e0b',
     titre: '5. Configurer des alertes prix',
     texte: 'Indiquez votre budget cible pour un produit. Nopalou vous envoie un message WhatsApp dès que le prix baisse.',
     ctas: [{ label: 'Créer une alerte →', href: '/mes-alertes', couleur: '#f59e0b', bg: '#fffbeb' }],
@@ -45,31 +45,31 @@ const ACHETEUR_STEPS = [
 function getMarchandSteps(commission: string) {
   return [
     {
-      icon: '🏢', couleur: '#ea580c',
+      icon: '', couleur: '#ea580c',
       titre: '1. Inscription & Boutique',
       texte: 'Créez votre compte gratuit en 2 minutes. Activez votre espace Boutique en renseignant vos coordonnées et lien WhatsApp.',
       ctas: [{ label: 'Créer ma boutique →', href: '/inscription', couleur: '#ea580c', bg: '#fff7ed' }],
     },
     {
-      icon: '📦', couleur: '#7c3aed',
+      icon: '', couleur: '#7c3aed',
       titre: '2. Configurer le catalogue',
       texte: 'Ajoutez vos produits en quelques clics : importez des photos, définissez les prix, états (neuf/occasion) et variantes.',
       ctas: [],
     },
     {
-      icon: '💬', couleur: '#25D366',
+      icon: '', couleur: '#25D366',
       titre: '3. Commandes sur WhatsApp',
       texte: 'Les commandes de vos clients arrivent structurées dans votre WhatsApp. Vous finalisez directement avec le client.',
       ctas: [],
     },
     {
-      icon: '📈', couleur: '#1e3a5f',
+      icon: '', couleur: '#1e3a5f',
       titre: '4. Suivi & Analytics',
       texte: 'Consultez le nombre de vues, clics et contacts sur votre boutique depuis votre tableau de bord marchand pour optimiser vos ventes.',
       ctas: [],
     },
     {
-      icon: '💼', couleur: '#C75B00',
+      icon: '', couleur: '#C75B00',
       titre: '5. Devenir Apporteur',
       texte: `Partagez Nopalou autour de vous et touchez ${commission}% de commission récurrente sur les abonnements Pro/Business souscrits par vos filleuls.`,
       ctas: [{ label: 'Devenir apporteur →', href: '/compte/apporteur', couleur: '#C75B00', bg: '#fff7ed' }],
@@ -112,7 +112,7 @@ export default async function GuideEmploiPage() {
         {/* Parcours Acheteur */}
         <div style={{ border: '1px solid #E2E8F0', borderRadius: 16, padding: 24, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1d4ed8', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            🛒 Parcours Acheteur
+            Parcours Acheteur
           </h2>
           <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 20px', lineHeight: 1.6 }}>
             Comment comparer les prix, commander au meilleur tarif et suivre vos livraisons facilement.
@@ -140,7 +140,7 @@ export default async function GuideEmploiPage() {
         {/* Parcours Marchand */}
         <div style={{ border: '1px solid #E2E8F0', borderRadius: 16, padding: 24, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <h2 style={{ fontSize: 18, fontWeight: 800, color: '#ea580c', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            🏢 Parcours Marchand
+            Parcours Marchand
           </h2>
           <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 20px', lineHeight: 1.6 }}>
             Comment ouvrir votre boutique, ajouter vos produits et encaisser des ventes via WhatsApp.
@@ -169,10 +169,10 @@ export default async function GuideEmploiPage() {
 
       {/* Footer Info */}
       <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 20, textAlign: 'center', marginBottom: 32 }}>
-        <div style={{ fontWeight: 800, color: '#1C2B4A', fontSize: 15, marginBottom: 4 }}>✅ Nopalou est 100% gratuit et indépendant pour les acheteurs</div>
+        <div style={{ fontWeight: 800, color: '#1C2B4A', fontSize: 15, marginBottom: 4 }}>Nopalou est 100% gratuit et indépendant pour les acheteurs</div>
         <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.6, marginBottom: 12 }}>Les prix et informations proviennent directement des sites marchands et boutiques locales partenaires. Nopalou compare et oriente pour vous faire économiser au quotidien.</div>
         <div style={{ fontSize: 12, color: '#475569', paddingTop: 10, borderTop: '1px dashed #cbd5e1' }}>
-          🗑️ <strong>Droit de retrait :</strong> Pour supprimer votre annonce ou votre numéro du site, envoyez <strong>&quot;supprimer&quot;</strong> sur <Link href="/assistant-whatsapp" style={{ color: '#25d366', fontWeight: 700 }}>WhatsApp</Link>. Pour ne plus recevoir de messages, envoyez <strong>&quot;STOP&quot;</strong>. (<Link href="/cgu#suppression-donnees" style={{ color: 'var(--navy)', fontWeight: 700, textDecoration: 'underline' }}>En savoir plus</Link>)
+          <strong>Droit de retrait :</strong> Pour supprimer votre annonce ou votre numéro du site, envoyez <strong>&quot;supprimer&quot;</strong> sur <Link href="/assistant-whatsapp" style={{ color: '#25d366', fontWeight: 700 }}>WhatsApp</Link>. Pour ne plus recevoir de messages, envoyez <strong>&quot;STOP&quot;</strong>. (<Link href="/cgu#suppression-donnees" style={{ color: 'var(--navy)', fontWeight: 700, textDecoration: 'underline' }}>En savoir plus</Link>)
         </div>
       </div>
     </div>

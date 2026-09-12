@@ -225,9 +225,9 @@ export default function SocialShopManager({
 
       let successMsg = `Publication ${data.post.plateforme.toUpperCase()} importée avec succès !`
       if (data.auto_linked_product) {
-        successMsg += ` ✨ Produit "${data.auto_linked_product.nom}" associé automatiquement.`
+        successMsg += ` Produit "${data.auto_linked_product.nom}" associé automatiquement.`
       } else if (data.suggestions && data.suggestions.length > 0) {
-        successMsg += ` 💡 ${data.suggestions.length} suggestion(s) de produits détectée(s).`
+        successMsg += ` ${data.suggestions.length} suggestion(s) de produits détectée(s).`
       }
 
       setMessage({ type: 'success', text: successMsg })
@@ -282,7 +282,7 @@ export default function SocialShopManager({
 
       setMessage({
         type: 'success',
-        text: `✨ ${found.length} publication(s) détectée(s) pour @${data.username} (${initialSelected.size} nouvelle(s)).`,
+        text: `${found.length} publication(s) détectée(s) pour @${data.username} (${initialSelected.size} nouvelle(s)).`,
       })
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Erreur de connexion' })
@@ -321,7 +321,7 @@ export default function SocialShopManager({
 
       setMessage({
         type: 'success',
-        text: `🚀 ${data.imported_count} publication(s) importée(s) avec succès ! (${data.auto_linked_count || 0} produit(s) auto-associé(s)).`,
+        text: `${data.imported_count} publication(s) importée(s) avec succès ! (${data.auto_linked_count || 0} produit(s) auto-associé(s)).`,
       })
       setDiscoveredPosts([])
       setSelectedDiscoveredUrls(new Set())
@@ -364,7 +364,7 @@ export default function SocialShopManager({
 
       setMessage({
         type: 'success',
-        text: `⚡ ${data.imported_count} publication(s) importée(s) sur ${data.total_detected} lien(s) valide(s) ! (${data.auto_linked_count || 0} produit(s) auto-associé(s)).`,
+        text: `${data.imported_count} publication(s) importée(s) sur ${data.total_detected} lien(s) valide(s) ! (${data.auto_linked_count || 0} produit(s) auto-associé(s)).`,
       })
       setBatchUrlsText('')
       await loadAdminData()
@@ -426,7 +426,7 @@ export default function SocialShopManager({
       if (found.length > 0) {
         setMessage({
           type: 'success',
-          text: `✨ Synchronisation pour @${acc.nom_compte} : ${found.length} publication(s) trouvée(s). Cochez celles que vous souhaitez ajouter à votre boutique ci-dessous :`,
+          text: `Synchronisation pour @${acc.nom_compte} : ${found.length} publication(s) trouvée(s). Cochez celles que vous souhaitez ajouter à votre boutique ci-dessous :`,
         })
       } else {
         setMessage({
@@ -853,7 +853,7 @@ export default function SocialShopManager({
               boxShadow: '0 2px 8px rgba(199,91,0,0.25)',
               flexShrink: 0,
             }}>
-              📱
+              
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -918,7 +918,7 @@ export default function SocialShopManager({
             title="Filtrer les publications sans produit"
           >
             <span className="social-micro-kpi-val" style={{ color: (stats.posts_sans_produits || 0) > 0 ? '#ea580c' : '#16a34a' }}>
-              {(stats.posts_sans_produits || 0) > 0 ? `⚠️ ${stats.posts_sans_produits}` : '0'}
+              {(stats.posts_sans_produits || 0) > 0 ? `${stats.posts_sans_produits}` : '0'}
             </span>
             <span className="social-micro-kpi-lbl">à associer</span>
           </div>
@@ -958,7 +958,7 @@ export default function SocialShopManager({
             onClick={() => setActiveMainTab('import')}
             className={`social-segment-btn ${activeMainTab === 'import' ? 'active' : ''}`}
           >
-            <span>➕ Ajouter</span>
+            <span>Ajouter</span>
             {discoveredPosts.length > 0 && (
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ea580c' }} />
             )}
@@ -969,7 +969,7 @@ export default function SocialShopManager({
             onClick={() => setActiveMainTab('accounts')}
             className={`social-segment-btn ${activeMainTab === 'accounts' ? 'active' : ''}`}
           >
-            <span>⚙️ Profils</span>
+            <span>Profils</span>
             <span className="social-segment-badge">
               {accounts.filter(a => a.nom_compte).length}/3
             </span>
@@ -1030,7 +1030,7 @@ export default function SocialShopManager({
                     background: postFilter !== 'unlinked' && postsWithoutProducts.length > 0 ? '#fff7ed' : undefined,
                   }}
                 >
-                  ⚠️ À associer ({postsWithoutProducts.length})
+                  À associer ({postsWithoutProducts.length})
                 </button>
 
                 <button
@@ -1038,7 +1038,7 @@ export default function SocialShopManager({
                   onClick={() => setPostFilter('featured')}
                   className={`social-filter-pill ${postFilter === 'featured' ? 'active' : ''}`}
                 >
-                  ⭐ À la une ({featuredPosts.length})
+                  À la une ({featuredPosts.length})
                 </button>
 
                 <button
@@ -1104,10 +1104,10 @@ export default function SocialShopManager({
                   className="saas-select-control"
                   title="Filtrer par plateforme"
                 >
-                  <option value="all">🌐 Toutes plateformes</option>
-                  <option value="instagram">📷 Instagram</option>
+                  <option value="all">Toutes plateformes</option>
+                  <option value="instagram">Instagram</option>
                   <option value="tiktok">🎵 TikTok</option>
-                  <option value="facebook">👥 Facebook</option>
+                  <option value="facebook">Facebook</option>
                 </select>
 
                 <select
@@ -1117,11 +1117,11 @@ export default function SocialShopManager({
                   title="Trier les publications"
                 >
                   <option value="date_desc">🕒 Plus récentes</option>
-                  <option value="date_asc">⏳ Plus anciennes</option>
-                  <option value="unlinked_first">⚠️ Non associées d&apos;abord</option>
-                  <option value="linked_first">🛍️ Produits liés d&apos;abord</option>
-                  <option value="featured_first">⭐ À la une d&apos;abord</option>
-                  <option value="platform">🌐 Par plateforme</option>
+                  <option value="date_asc">Plus anciennes</option>
+                  <option value="unlinked_first">Non associées d&apos;abord</option>
+                  <option value="linked_first">Produits liés d&apos;abord</option>
+                  <option value="featured_first">À la une d&apos;abord</option>
+                  <option value="platform">Par plateforme</option>
                 </select>
 
                 {displayedPosts.length > 0 && (
@@ -1171,7 +1171,7 @@ export default function SocialShopManager({
                     cursor: 'pointer',
                   }}
                 >
-                  ➕ Ajouter une vidéo
+                  Ajouter une vidéo
                 </button>
               ) : (
                 <button
@@ -1274,7 +1274,7 @@ export default function SocialShopManager({
                           )}
                           {post.is_featured && (
                             <span style={{ fontSize: 9.5, background: '#fff7ed', color: '#C75B00', border: '1px solid #fed7aa', padding: '0 5px', borderRadius: 8, fontWeight: 800 }}>
-                              ⭐ À la une
+                              À la une
                             </span>
                           )}
                           {!post.visible && (
@@ -1420,7 +1420,7 @@ export default function SocialShopManager({
         <div id="social-selection-section" className="social-shop-compact-card">
           <div style={{ marginBottom: 14 }}>
             <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 900, color: '#0f172a' }}>
-              ➕ Ajouter des Publications
+              Ajouter des Publications
             </h3>
             <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
               Importez vos vidéos Instagram, TikTok et Facebook par profil ou par lien direct.
@@ -1440,7 +1440,7 @@ export default function SocialShopManager({
               }}
             >
               <Sparkles size={14} />
-              <span>🔍 Aspirateur @pseudo</span>
+              <span>Aspirateur @pseudo</span>
             </button>
 
             <button
@@ -1454,7 +1454,7 @@ export default function SocialShopManager({
               }}
             >
               <Layers size={14} />
-              <span>📋 Liens en lot</span>
+              <span>Liens en lot</span>
             </button>
 
             <button
@@ -1498,7 +1498,7 @@ export default function SocialShopManager({
                   }}
                 >
                   <option value="tiktok">🎵 TikTok</option>
-                  <option value="instagram">📸 Instagram</option>
+                  <option value="instagram">Instagram</option>
                   <option value="facebook">📘 Facebook</option>
                 </select>
 
@@ -1782,7 +1782,7 @@ export default function SocialShopManager({
                   ) : (
                     <>
                       <Layers size={14} />
-                      <span>⚡ Importer le lot en 1 clic</span>
+                      <span>Importer le lot en 1 clic</span>
                     </>
                   )}
                 </button>
@@ -1869,7 +1869,7 @@ export default function SocialShopManager({
         <div className="social-shop-compact-card">
           <div style={{ marginBottom: 14 }}>
             <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 900, color: '#0f172a' }}>
-              ⚙️ Profils Sociaux Connectés
+              Profils Sociaux Connectés
             </h3>
             <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
               Renseignez vos identifiants officiels pour aspirer vos publications en 1 clic et synchroniser votre catalogue.
@@ -1878,7 +1878,7 @@ export default function SocialShopManager({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
-              { key: 'instagram', label: 'Instagram', icon: '📸', placeholder: '@maboutique ou lien profil' },
+              { key: 'instagram', label: 'Instagram', icon: '', placeholder: '@maboutique ou lien profil' },
               { key: 'tiktok', label: 'TikTok', icon: '🎵', placeholder: '@maboutique ou lien profil' },
               { key: 'facebook', label: 'Facebook', icon: '📘', placeholder: 'Page ou profil Facebook' },
             ].map(plat => {
@@ -1897,7 +1897,7 @@ export default function SocialShopManager({
                         <span style={{ fontWeight: 800, fontSize: 13.5, color: '#0f172a' }}>{plat.label}</span>
                         {acc ? (
                           <span style={{ fontSize: 10.5, background: '#16a34a', color: '#fff', padding: '1px 6px', borderRadius: 10, fontWeight: 800 }}>
-                            🟢 Connecté
+                            Connecté
                           </span>
                         ) : (
                           <span style={{ fontSize: 10.5, background: '#e2e8f0', color: '#64748b', padding: '1px 6px', borderRadius: 10, fontWeight: 700 }}>
@@ -1987,7 +1987,7 @@ export default function SocialShopManager({
                             }}
                             title="Activer/Désactiver la synchronisation automatique en arrière-plan"
                           >
-                            <span>{acc.auto_sync ? '🟢 Auto-Sync ON' : '⚪ Auto-Sync OFF'}</span>
+                            <span>{acc.auto_sync ? 'Auto-Sync ON' : '⚪ Auto-Sync OFF'}</span>
                           </button>
 
                           <button
@@ -2009,7 +2009,7 @@ export default function SocialShopManager({
                             }}
                           >
                             <RefreshCw size={11} className={syncingAccountId === acc.id ? 'spin' : ''} />
-                            <span>{syncingAccountId === acc.id ? 'Recherche…' : '🔄 Sync & Choisir'}</span>
+                            <span>{syncingAccountId === acc.id ? 'Recherche…' : 'Sync & Choisir'}</span>
                           </button>
                         </>
                       )}

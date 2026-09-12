@@ -85,7 +85,7 @@ export default function PwaInstallPrompt() {
 
   return (
     <>
-      {/* 🚀 BANNIÈRE FLOTTANTE DE PROMOTION PWA */}
+      {/* BANNIÈRE FLOTTANTE DE PROMOTION PWA */}
       <div style={{
         position: 'fixed',
         bottom: 74, // Au-dessus de la barre de navigation mobile
@@ -140,7 +140,7 @@ export default function PwaInstallPrompt() {
             </span>
           </div>
           <p style={{ margin: '3px 0 0', fontSize: 11, color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            Accès ultra-rapide & mode Caisse POS hors-ligne ⚡
+            Accès ultra-rapide & mode Caisse POS hors-ligne 
           </p>
         </div>
 
@@ -187,7 +187,7 @@ export default function PwaInstallPrompt() {
         </div>
       </div>
 
-      {/* 📲 MODALE D'INSTRUCTION SPÉCIFIQUE IPHONE / IOS */}
+      {/* MODALE D'INSTRUCTION SPÉCIFIQUE IPHONE / IOS */}
       {showIOSGuide && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 1050,
@@ -213,7 +213,7 @@ export default function PwaInstallPrompt() {
                 Appuyez sur le bouton <strong>Partager</strong> <Share size={14} style={{ display: 'inline', margin: '0 2px', color: '#0284c7' }} /> en bas de votre navigateur Safari.
               </li>
               <li style={{ marginBottom: 8 }}>
-                Faites défiler vers le bas et sélectionnez <strong>Sur l'écran d'accueil</strong> 📲.
+                Faites défiler vers le bas et sélectionnez <strong>Sur l'écran d'accueil</strong> .
               </li>
               <li>
                 Appuyez sur <strong>Ajouter</strong> en haut à droite pour finaliser l'installation.

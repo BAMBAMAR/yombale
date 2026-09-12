@@ -127,7 +127,7 @@ export default function MigrationLandingPage() {
               display: 'inline-flex', alignItems: 'center', gap: 8
             }}>
               <span>Assistance Migration par WhatsApp</span>
-              <span>💬</span>
+              <span></span>
             </a>
           </div>
 
@@ -167,7 +167,7 @@ export default function MigrationLandingPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
             <div style={{ background: '#f8fafc', padding: 20, borderRadius: 16, border: '1px solid #e2e8f0', textAlign: 'center' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>📦</div>
+              <div style={{ fontSize: 28, marginBottom: 8 }}></div>
               <div style={{ fontWeight: 900, fontSize: 15, color: '#0f172a' }}>Articles &amp; Variantes</div>
               <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Titres, tailles, couleurs, pointures et descriptions complètes.</div>
             </div>
@@ -179,13 +179,13 @@ export default function MigrationLandingPage() {
             </div>
 
             <div style={{ background: '#f8fafc', padding: 20, borderRadius: 16, border: '1px solid #e2e8f0', textAlign: 'center' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>💰</div>
+              <div style={{ fontSize: 28, marginBottom: 8 }}></div>
               <div style={{ fontWeight: 900, fontSize: 15, color: '#0f172a' }}>Prix FCFA &amp; Stocks</div>
               <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Conversion propre des tarifs et quantités en stock par magasin.</div>
             </div>
 
             <div style={{ background: '#f8fafc', padding: 20, borderRadius: 16, border: '1px solid #e2e8f0', textAlign: 'center' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>📒</div>
+              <div style={{ fontSize: 28, marginBottom: 8 }}></div>
               <div style={{ fontWeight: 900, fontSize: 15, color: '#0f172a' }}>Clients &amp; Dettes</div>
               <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Importation du carnet de clients avec numéros WhatsApp et reliquats.</div>
             </div>
@@ -273,7 +273,7 @@ export default function MigrationLandingPage() {
               boxShadow: '0 4px 14px rgba(37,211,102,0.3)', flexShrink: 0
             }}
           >
-            <span>💬 Confier ma migration par WhatsApp</span>
+            <span>Confier ma migration par WhatsApp</span>
           </a>
         </div>
       </section>

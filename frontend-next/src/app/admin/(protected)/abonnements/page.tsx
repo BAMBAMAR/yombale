@@ -47,7 +47,7 @@ export default async function AdminAbonnementsPage() {
       prixPro = Number(s.plan_pro_prix) || 5000
       prixBusiness = Number(s.plan_business_prix) || 10000
     }
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L50]', err); }
 
   return (
     <div style={{ padding: 24 }}>
@@ -59,13 +59,13 @@ export default async function AdminAbonnementsPage() {
       {stats && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16, marginBottom: 32 }}>
           {[
-            { label: 'Abonnés actifs',  value: stats.actifs,           emoji: '🟢' },
+            { label: 'Abonnés actifs',  value: stats.actifs,           emoji: '' },
             { label: 'Plan Pro',         value: stats.pro_actifs,       emoji: '🟠' },
-            { label: 'Plan Business',    value: stats.business_actifs,  emoji: '👑' },
-            ...(Number(stats.decouverte_actifs) > 0 ? [{ label: 'Plan Taf Taf', value: stats.decouverte_actifs!, emoji: '⚡' }] : []),
-            { label: 'MRR (estimé)',     value: fcfa(stats.mrr),        emoji: '💰' },
+            { label: 'Plan Business',    value: stats.business_actifs,  emoji: '' },
+            ...(Number(stats.decouverte_actifs) > 0 ? [{ label: 'Plan Taf Taf', value: stats.decouverte_actifs!, emoji: '' }] : []),
+            { label: 'MRR (estimé)',     value: fcfa(stats.mrr),        emoji: '' },
             { label: 'Expirés',          value: stats.expires,          emoji: '⚫' },
-            { label: 'Ce mois',          value: stats.nouveaux_ce_mois, emoji: '📅' },
+            { label: 'Ce mois',          value: stats.nouveaux_ce_mois, emoji: '' },
           ].map(({ label, value, emoji }) => (
             <div key={label} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px' }}>
               <div style={{ fontSize: 22 }}>{emoji}</div>

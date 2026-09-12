@@ -75,7 +75,7 @@ function genererMessageGuide(b: Boutique, template?: string) {
   const lienCaisse = `${siteUrl}/boutique/caisse?manage=${b.id}`
   const lienAccueil = `${siteUrl}/boutiques/${b.slug || b.id}`
 
-  const tpl = template || `👋 Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! 🎉\n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les moyens les plus simples d'alimenter votre boutique :\n\n1️⃣ 💬 *Directement par Message WhatsApp* :\nEnvoyez simplement le nom et le prix d'un article à ce numéro (ex: *« Robe Soie 15000 »*) avec une photo : il est publié immédiatement sur votre vitrine !\n\n2️⃣ 📦 *L'Import Intelligent Multi-Plateformes (Shopify, WooCommerce, Excel)* :\nImportez tout votre catalogue existant en 1 seul clic sans aucune ressaisie.\n\n3️⃣ 🛍️ *Depuis votre Espace Marchand Épuré* :\nRendez-vous sur : {lien_boutique}\nAjoutez vos articles en 5 secondes grâce au formulaire Express.\n\n4️⃣ ⚡ *La Caisse POS Magasin Tactile* :\nEnregistrez vos ventes et tenez votre carnet de dettes client : {lien_caisse}\n\n5️⃣ 📊 *Votre Bilan du Jour instantané* :\nTapez simplement *« Bilan »* sur WhatsApp pour connaître votre chiffre d'affaires et vos encaissements du jour.\n\nBesoin d'aide ou d'un accompagnement personnalisé ? Répondez directement à ce message, l'équipe Nopalou est là pour vous ! 🤝`
+  const tpl = template || `Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! \n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les moyens les plus simples d'alimenter votre boutique :\n\n1️⃣ *Directement par Message WhatsApp* :\nEnvoyez simplement le nom et le prix d'un article à ce numéro (ex: *« Robe Soie 15000 »*) avec une photo : il est publié immédiatement sur votre vitrine !\n\n2️⃣ *L'Import Intelligent Multi-Plateformes (Shopify, WooCommerce, Excel)* :\nImportez tout votre catalogue existant en 1 seul clic sans aucune ressaisie.\n\n3️⃣ *Depuis votre Espace Marchand Épuré* :\nRendez-vous sur : {lien_boutique}\nAjoutez vos articles en 5 secondes grâce au formulaire Express.\n\n4️⃣ *La Caisse POS Magasin Tactile* :\nEnregistrez vos ventes et tenez votre carnet de dettes client : {lien_caisse}\n\n5️⃣ *Votre Bilan du Jour instantané* :\nTapez simplement *« Bilan »* sur WhatsApp pour connaître votre chiffre d'affaires et vos encaissements du jour.\n\nBesoin d'aide ou d'un accompagnement personnalisé ? Répondez directement à ce message, l'équipe Nopalou est là pour vous ! 🤝`
 
   return tpl
     .replace(/\{prenom\}/gi, prenom)
@@ -118,10 +118,10 @@ function ModalConfigAutomatisation({
   const [seuil, setSeuil] = useState<number>(config?.seuil ?? 1)
   const [delaiHeures, setDelaiHeures] = useState<number>(config?.delai_heures ?? 24)
   const [intervalleJours, setIntervalleJours] = useState<number>(config?.intervalle_jours ?? 7)
-  const [titre, setTitre] = useState<string>(config?.titre || '🛍️ Nopalou — Ajoutez vos produits')
+  const [titre, setTitre] = useState<string>(config?.titre || 'Nopalou — Ajoutez vos produits')
   const [template, setTemplate] = useState<string>(
     config?.template ||
-      `👋 Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! 🎉\n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les 5 façons rapides d'ajouter vos articles :\n\n1️⃣ 🪄 *L'Import Magique par Photo (IA)* :\nPrenez en photo vos articles ou une facture/catalogue et envoyez-les directement ici sur WhatsApp ou dans votre espace. L'IA crée la fiche produit (titre, description, prix) en 3 secondes !\n\n2️⃣ 🛍️ *Depuis votre Espace Marchand* :\nRendez-vous sur : {lien_boutique}\nCliquez sur « Ajouter un produit » pour renseigner photos, prix et stock.\n\n3️⃣ ⚡ *La Saisie Express (Caisse POS)* :\nEnregistrez vos articles en 1 clic lors de vos ventes au comptoir : {lien_caisse}\n\n4️⃣ 📊 *L'Import Excel / CSV* :\nImportez tout votre catalogue d'un coup si vous avez déjà un fichier.\n\n5️⃣ 🤖 *Discussion avec l'Assistant WhatsApp* :\nÉcrivez simplement les noms et prix de vos articles à ce numéro, l'assistant les enregistre directement.\n\nBesoin d'aide ou d'un conseil ? Répondez directement à ce message, l'équipe Nopalou vous accompagne ! 🤝`
+      `Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! \n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les 5 façons rapides d'ajouter vos articles :\n\n1️⃣ 🪄 *L'Import Magique par Photo (IA)* :\nPrenez en photo vos articles ou une facture/catalogue et envoyez-les directement ici sur WhatsApp ou dans votre espace. L'IA crée la fiche produit (titre, description, prix) en 3 secondes !\n\n2️⃣ *Depuis votre Espace Marchand* :\nRendez-vous sur : {lien_boutique}\nCliquez sur « Ajouter un produit » pour renseigner photos, prix et stock.\n\n3️⃣ *La Saisie Express (Caisse POS)* :\nEnregistrez vos articles en 1 clic lors de vos ventes au comptoir : {lien_caisse}\n\n4️⃣ *L'Import Excel / CSV* :\nImportez tout votre catalogue d'un coup si vous avez déjà un fichier.\n\n5️⃣ *Discussion avec l'Assistant WhatsApp* :\nÉcrivez simplement les noms et prix de vos articles à ce numéro, l'assistant les enregistre directement.\n\nBesoin d'aide ou d'un conseil ? Répondez directement à ce message, l'équipe Nopalou vous accompagne ! 🤝`
   )
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
@@ -139,7 +139,7 @@ function ModalConfigAutomatisation({
       if (res.error) {
         setMsg({ type: 'err', text: res.error })
       } else {
-        setMsg({ type: 'ok', text: '✅ Configuration de relance enregistrée avec succès !' })
+        setMsg({ type: 'ok', text: 'Configuration de relance enregistrée avec succès !' })
         setTimeout(() => {
           onSaved()
           onClose()
@@ -162,7 +162,7 @@ function ModalConfigAutomatisation({
         } else {
           setMsg({
             type: 'ok',
-            text: `🚀 Relance effectuée ! ${res.successCount ?? 0} message(s) envoyé(s)${res.errorCount ? ` (${res.errorCount} échecs)` : ''}.`,
+            text: `Relance effectuée ! ${res.successCount ?? 0} message(s) envoyé(s)${res.errorCount ? ` (${res.errorCount} échecs)` : ''}.`,
           })
           onSaved()
         }
@@ -190,7 +190,7 @@ function ModalConfigAutomatisation({
           display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 28 }}>🤖</span>
+            <span style={{ fontSize: 28 }}></span>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>
                 Automatisation &amp; Cron de Relance Marchands
@@ -248,7 +248,7 @@ function ModalConfigAutomatisation({
           }}>
             <div>
               <div style={{ fontWeight: 800, fontSize: 15, color: actif ? '#166534' : '#334155' }}>
-                {actif ? '🟢 Automatisation Activée' : '⚪ Automatisation Désactivée'}
+                {actif ? 'Automatisation Activée' : '⚪ Automatisation Désactivée'}
               </div>
               <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
                 Le cron s&apos;exécute chaque matin à 10h00 pour relancer les boutiques ciblées.
@@ -275,7 +275,7 @@ function ModalConfigAutomatisation({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <div style={{ fontWeight: 800, fontSize: 14, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>🎯</span>
+                  <span></span>
                   <span>Boutiques ciblées actuellement : {eligibles?.length ?? 0}</span>
                 </div>
                 <div style={{ fontSize: 12, color: '#0284c7', marginTop: 4 }}>
@@ -301,7 +301,7 @@ function ModalConfigAutomatisation({
                   boxShadow: '0 2px 6px rgba(2, 132, 199, 0.2)'
                 }}
               >
-                <span>{testingCron ? '⏳ Envoi en cours…' : '🚀 Exécuter le Cron Maintenant'}</span>
+                <span>{testingCron ? 'Envoi en cours…' : 'Exécuter le Cron Maintenant'}</span>
               </button>
             </div>
           </div>
@@ -317,7 +317,7 @@ function ModalConfigAutomatisation({
                 onChange={e => setSeuil(Number(e.target.value))}
                 style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600 }}
               >
-                <option value={0}>🔴 0 produit uniquement</option>
+                <option value={0}>0 produit uniquement</option>
                 <option value={1}>🟠 ≤ 1 produit (Recommandé)</option>
                 <option value={2}>🟡 ≤ 2 produits</option>
                 <option value={3}>🔵 ≤ 3 produits</option>
@@ -443,22 +443,22 @@ function ModalRelanceCatalogue({
   const [message, setMessage] = useState<string>(() =>
     genererMessageGuide(firstBoutique, defaultTemplate)
   )
-  const [titre, setTitre] = useState<string>(`🛍️ ${firstBoutique.nom} — Ajoutez vos produits`)
+  const [titre, setTitre] = useState<string>(`${firstBoutique.nom} — Ajoutez vos produits`)
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
   // Modèles prédéfinis
   const TEMPLATES = [
     {
       label: '🪄 Guide 5 Méthodes (IA, POS, Formulaire, CSV, Chatbot)',
-      tpl: `👋 Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! 🎉\n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les 5 façons rapides d'ajouter vos articles :\n\n1️⃣ 🪄 *L'Import Magique par Photo (IA)* :\nPrenez en photo vos articles ou une facture/catalogue et envoyez-les directement ici sur WhatsApp ou dans votre espace. L'IA crée la fiche produit (titre, description, prix) en 3 secondes !\n\n2️⃣ 🛍️ *Depuis votre Espace Marchand* :\nRendez-vous sur : {lien_boutique}\nCliquez sur « Ajouter un produit » pour renseigner photos, prix et stock.\n\n3️⃣ ⚡ *La Saisie Express (Caisse POS)* :\nEnregistrez vos articles en 1 clic lors de vos ventes au comptoir : {lien_caisse}\n\n4️⃣ 📊 *L'Import Excel / CSV* :\nImportez tout votre catalogue d'un coup si vous avez déjà un fichier.\n\n5️⃣ 🤖 *Discussion avec l'Assistant WhatsApp* :\nÉcrivez simplement les noms et prix de vos articles à ce numéro, l'assistant les enregistre directement.\n\nBesoin d'aide ou d'un conseil ? Répondez directement à ce message, l'équipe Nopalou vous accompagne ! 🤝`
+      tpl: `Bonjour {prenom}, félicitations pour la création de votre boutique *{boutique_nom}* sur Nopalou ! \n\nActuellement, votre boutique compte {nb_produits} produit(s). Pour commencer à recevoir des commandes et attirer des clients, voici les 5 façons rapides d'ajouter vos articles :\n\n1️⃣ 🪄 *L'Import Magique par Photo (IA)* :\nPrenez en photo vos articles ou une facture/catalogue et envoyez-les directement ici sur WhatsApp ou dans votre espace. L'IA crée la fiche produit (titre, description, prix) en 3 secondes !\n\n2️⃣ *Depuis votre Espace Marchand* :\nRendez-vous sur : {lien_boutique}\nCliquez sur « Ajouter un produit » pour renseigner photos, prix et stock.\n\n3️⃣ *La Saisie Express (Caisse POS)* :\nEnregistrez vos articles en 1 clic lors de vos ventes au comptoir : {lien_caisse}\n\n4️⃣ *L'Import Excel / CSV* :\nImportez tout votre catalogue d'un coup si vous avez déjà un fichier.\n\n5️⃣ *Discussion avec l'Assistant WhatsApp* :\nÉcrivez simplement les noms et prix de vos articles à ce numéro, l'assistant les enregistre directement.\n\nBesoin d'aide ou d'un conseil ? Répondez directement à ce message, l'équipe Nopalou vous accompagne ! 🤝`
     },
     {
       label: '🤝 Offre d\'Accompagnement & Aide Personnalisée',
-      tpl: `👋 Bonjour {prenom} !\n\nNous avons remarqué que votre boutique *{boutique_nom}* n'a pas encore de produits en ligne. \n\n🚀 Nous pouvons vous aider gratuitement à intégrer vos articles ! Si vous avez une liste de prix, des photos ou un catalogue, envoyez-les nous simplement en répondant à ce message.\n\nOu ajoutez-les directement depuis votre espace : {lien_boutique}\n\nÀ très vite sur Nopalou ! 🇸🇳`
+      tpl: `Bonjour {prenom} !\n\nNous avons remarqué que votre boutique *{boutique_nom}* n'a pas encore de produits en ligne. \n\nNous pouvons vous aider gratuitement à intégrer vos articles ! Si vous avez une liste de prix, des photos ou un catalogue, envoyez-les nous simplement en répondant à ce message.\n\nOu ajoutez-les directement depuis votre espace : {lien_boutique}\n\nÀ très vite sur Nopalou ! 🇸🇳`
     },
     {
-      label: '⚡ Rappel Court : Lancez votre 1ère Vente',
-      tpl: `👋 Bonjour {prenom} !\n\nVotre boutique *{boutique_nom}* est prête à vendre ! 🛍️\n\nIl ne vous reste plus qu'à ajouter vos premiers articles pour commencer à encaisser par Wave et Orange Money.\n\n👉 Ajoutez vos produits ici : {lien_boutique}\n\nUne question ? Répondez-nous directement ! 💬`
+      label: 'Rappel Court : Lancez votre 1ère Vente',
+      tpl: `Bonjour {prenom} !\n\nVotre boutique *{boutique_nom}* est prête à vendre ! \n\nIl ne vous reste plus qu'à ajouter vos premiers articles pour commencer à encaisser par Wave et Orange Money.\n\nAjoutez vos produits ici : {lien_boutique}\n\nUne question ? Répondez-nous directement ! `
     }
   ]
 
@@ -477,7 +477,7 @@ function ModalRelanceCatalogue({
         } else {
           setStatusMsg({
             type: 'ok',
-            text: `✅ ${res.successCount} relance(s) envoyée(s) avec succès ! ${res.errorCount ? `(${res.errorCount} erreurs)` : ''}`
+            text: `${res.successCount} relance(s) envoyée(s) avec succès ! ${res.errorCount ? `(${res.errorCount} erreurs)` : ''}`
           })
           setTimeout(() => {
             onFinished()
@@ -489,7 +489,7 @@ function ModalRelanceCatalogue({
         if (res.error) {
           setStatusMsg({ type: 'err', text: res.error })
         } else {
-          setStatusMsg({ type: 'ok', text: `✅ Relance envoyée avec succès au marchand ${firstBoutique.nom} !` })
+          setStatusMsg({ type: 'ok', text: `Relance envoyée avec succès au marchand ${firstBoutique.nom} !` })
           setTimeout(() => {
             onFinished()
             onClose()
@@ -519,7 +519,7 @@ function ModalRelanceCatalogue({
           display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 28 }}>💬</span>
+            <span style={{ fontSize: 28 }}></span>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>
                 {isMultiple ? `Relancer ${boutiques.length} Marchands` : `Relancer ${firstBoutique.nom}`}
@@ -608,7 +608,7 @@ function ModalRelanceCatalogue({
                   alignItems: 'center', gap: 6
                 }}
               >
-                📱 Ouvrir WhatsApp Web
+                Ouvrir WhatsApp Web
               </a>
             )}
 
@@ -623,7 +623,7 @@ function ModalRelanceCatalogue({
                 alignItems: 'center', gap: 6
               }}
             >
-              {pending ? 'Envoi en cours…' : `🚀 Envoyer via API Serveur ${isMultiple ? `(${boutiques.length})` : ''}`}
+              {pending ? 'Envoi en cours…' : `Envoyer via API Serveur ${isMultiple ? `(${boutiques.length})` : ''}`}
             </button>
           </div>
         </div>
@@ -696,11 +696,11 @@ function ModalGestionMarchand({ boutique, onClose, onRefresh }: { boutique: Bout
           color: '#fff', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 28 }}>🏪</span>
+            <span style={{ fontSize: 28 }}></span>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{boutique.nom}</h3>
               <p style={{ margin: 0, fontSize: 12, opacity: 0.85 }}>
-                👤 {boutique.proprietaire_nom || 'Propriétaire'} ({boutique.proprietaire_email || 'sans email'})
+                {boutique.proprietaire_nom || 'Propriétaire'} ({boutique.proprietaire_email || 'sans email'})
               </p>
             </div>
           </div>
@@ -721,7 +721,7 @@ function ModalGestionMarchand({ boutique, onClose, onRefresh }: { boutique: Bout
           {/* Section Plan & Attribution */}
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 14, padding: 18, marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
-              ⭐ Activation / Changement d&apos;Abonnement
+              Activation / Changement d&apos;Abonnement
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
@@ -776,7 +776,7 @@ function ModalGestionMarchand({ boutique, onClose, onRefresh }: { boutique: Bout
                 color: sponsorActif ? '#991b1b' : '#92400e', cursor: 'pointer'
               }}
             >
-              {sponsorActif ? '❌ Enlever Sponsoring' : '⭐ Mettre en Sponsoring'}
+              {sponsorActif ? 'Enlever Sponsoring' : 'Mettre en Sponsoring'}
             </button>
 
             <button
@@ -788,7 +788,7 @@ function ModalGestionMarchand({ boutique, onClose, onRefresh }: { boutique: Bout
                 color: boutique.actif ? '#991b1b' : '#166534', cursor: 'pointer'
               }}
             >
-              {boutique.actif ? '🔴 Désactiver Boutique' : '🟢 Réactiver Boutique'}
+              {boutique.actif ? 'Désactiver Boutique' : 'Réactiver Boutique'}
             </button>
           </div>
         </div>
@@ -860,8 +860,8 @@ function BoutiqueRow({
       {/* Logo */}
       <div style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 8, overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {boutique.logo_url
-          ? <ExternalImg src={boutique.logo_url} alt={boutique.nom} style={{ width: 52, height: 52, objectFit: 'cover' }} fallback={<span style={{ fontSize: 22 }}>🏪</span>} />
-          : <span style={{ fontSize: 22 }}>🏪</span>
+          ? <ExternalImg src={boutique.logo_url} alt={boutique.nom} style={{ width: 52, height: 52, objectFit: 'cover' }} fallback={<span style={{ fontSize: 22 }}></span>} />
+          : <span style={{ fontSize: 22 }}></span>
         }
       </div>
 
@@ -870,10 +870,10 @@ function BoutiqueRow({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
           <span style={{ fontWeight: 700, fontSize: 14 }}>{boutique.nom}</span>
           {boutique.plan_actif === 'business' && (
-            <span style={{ fontSize: 10, background: '#1e3a5f', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>💼 BUSINESS</span>
+            <span style={{ fontSize: 10, background: '#1e3a5f', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>BUSINESS</span>
           )}
           {boutique.plan_actif === 'pro' && (
-            <span style={{ fontSize: 10, background: '#C75B00', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>⭐ PRO</span>
+            <span style={{ fontSize: 10, background: '#C75B00', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>PRO</span>
           )}
           {sponsorActif && (
             <span style={{ fontSize: 10, background: '#D97706', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>SPONSOR</span>
@@ -886,7 +886,7 @@ function BoutiqueRow({
             color: nbProduits === 0 ? '#991b1b' : nbProduits === 1 ? '#9a3412' : nbProduits <= 3 ? '#854d0e' : '#166534',
             display: 'inline-flex', alignItems: 'center', gap: 4
           }}>
-            {nbProduits === 0 ? '🔴 0 produit (vide)' : nbProduits === 1 ? '🟠 1 produit' : nbProduits <= 3 ? `🟡 ${nbProduits} produits` : `🟢 ${nbProduits} produits`}
+            {nbProduits === 0 ? '0 produit (vide)' : nbProduits === 1 ? '🟠 1 produit' : nbProduits <= 3 ? `🟡 ${nbProduits} produits` : `${nbProduits} produits`}
           </span>
 
           {boutique.nb_relances_catalogue && boutique.nb_relances_catalogue > 0 ? (
@@ -894,7 +894,7 @@ function BoutiqueRow({
               title={boutique.derniere_relance_catalogue_at ? `Dernière relance le ${formatDate(boutique.derniere_relance_catalogue_at)}` : ''}
               style={{ fontSize: 10, background: '#ede9fe', color: '#5b21b6', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}
             >
-              💬 {boutique.nb_relances_catalogue} relance{boutique.nb_relances_catalogue > 1 ? 's' : ''}
+              {boutique.nb_relances_catalogue} relance{boutique.nb_relances_catalogue > 1 ? 's' : ''}
             </span>
           ) : null}
 
@@ -902,12 +902,12 @@ function BoutiqueRow({
         </div>
 
         <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 1 }}>
-          👤 {boutique.proprietaire_nom || '—'} · {boutique.proprietaire_email || '—'}
-          {boutique.telephone ? ` · 📞 ${boutique.telephone}` : ''}
-          {boutique.whatsapp && boutique.whatsapp !== boutique.telephone ? ` · 💬 ${boutique.whatsapp}` : ''}
+          {boutique.proprietaire_nom || '—'} · {boutique.proprietaire_email || '—'}
+          {boutique.telephone ? ` · ${boutique.telephone}` : ''}
+          {boutique.whatsapp && boutique.whatsapp !== boutique.telephone ? ` · ${boutique.whatsapp}` : ''}
         </div>
         <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-          📍 {[boutique.adresse, boutique.ville].filter(Boolean).join(', ') || 'Dakar'}
+          {[boutique.adresse, boutique.ville].filter(Boolean).join(', ') || 'Dakar'}
           {' · '}Créée le {formatDate(boutique.created_at)}
           {boutique.plan_actif && boutique.plan_fin && (
             <span style={{ color: boutique.plan_actif === 'business' ? '#1e3a5f' : '#C75B00', fontWeight: 600 }}>
@@ -945,7 +945,7 @@ function BoutiqueRow({
             }}
             title="Envoyer le guide d'ajout de produits au marchand"
           >
-            💬 Relancer
+            Relancer
           </button>
           {waUrl && (
             <a
@@ -958,7 +958,7 @@ function BoutiqueRow({
               }}
               title="Ouvrir directement dans WhatsApp Web avec message pré-rempli"
             >
-              📱
+              
             </a>
           )}
         </div>
@@ -970,7 +970,7 @@ function BoutiqueRow({
             borderRadius: 6, fontSize: 11, padding: '6px 10px', fontWeight: 700, cursor: 'pointer'
           }}
         >
-          ⚙️ Gérer le marchand
+          Gérer le marchand
         </button>
 
         <a
@@ -981,7 +981,7 @@ function BoutiqueRow({
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4
           }}
         >
-          🚀 Migrer Catalogue
+          Migrer Catalogue
         </a>
 
         <div style={{ display: 'flex', gap: 6 }}>
@@ -1007,7 +1007,7 @@ function BoutiqueRow({
             className="admin-btn admin-btn--rejeter"
             style={{ fontSize: 11, background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
           >
-            🗑️
+            
           </button>
         </div>
       </div>
@@ -1049,7 +1049,7 @@ export default function AdminBoutiquesClient({
       seuil: 1,
       delai_heures: 24,
       intervalle_jours: 7,
-      titre: '🛍️ Nopalou — Ajoutez vos produits',
+      titre: 'Nopalou — Ajoutez vos produits',
       template: '',
     }
   )
@@ -1181,29 +1181,29 @@ export default function AdminBoutiquesClient({
   const batchActions: BatchActionConfig[] = [
     {
       key: 'relancer',
-      label: '💬 Relancer Catalogue (Guide WhatsApp)',
-      icon: '💬',
+      label: 'Relancer Catalogue (Guide WhatsApp)',
+      icon: '',
       color: 'amber',
       onClick: handleBatchRelancer,
     },
     {
       key: 'activer',
       label: 'Activer les boutiques',
-      icon: '🟢',
+      icon: '',
       color: 'green',
       onClick: handleBatchActiver,
     },
     {
       key: 'desactiver',
       label: 'Désactiver les boutiques',
-      icon: '🔴',
+      icon: '',
       color: 'amber',
       onClick: handleBatchDesactiver,
     },
     {
       key: 'supprimer',
       label: 'Supprimer définitivement',
-      icon: '🗑️',
+      icon: '',
       color: 'red',
       confirmMsg: 'Êtes-vous sûr de vouloir supprimer définitivement ces boutiques ?',
       onClick: handleBatchSupprimer,
@@ -1224,14 +1224,14 @@ export default function AdminBoutiquesClient({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: '#475569' }}>
-            🎯 Onboarding Catalogue :
+            Onboarding Catalogue :
           </span>
           <span style={{
             fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 12,
             background: counts.zeroProduit > 0 ? '#fee2e2' : '#f1f5f9',
             color: counts.zeroProduit > 0 ? '#991b1b' : '#64748b'
           }}>
-            🔴 {counts.zeroProduit} boutique(s) à 0 produit
+            {counts.zeroProduit} boutique(s) à 0 produit
           </span>
           <span style={{
             fontSize: 12, fontWeight: 800, padding: '3px 10px', borderRadius: 12,
@@ -1250,7 +1250,7 @@ export default function AdminBoutiquesClient({
             display: 'inline-flex', alignItems: 'center', gap: 8, boxShadow: '0 2px 4px rgba(30,58,95,0.2)'
           }}
         >
-          <span>⚙️ Automatisation Relances (Cron)</span>
+          <span>Automatisation Relances (Cron)</span>
           <span style={{
             background: relanceConfig.actif ? '#22c55e' : '#64748b',
             color: '#fff', fontSize: 10, padding: '2px 6px', borderRadius: 10, fontWeight: 800
@@ -1266,7 +1266,7 @@ export default function AdminBoutiquesClient({
         boxShadow: '0 2px 6px rgba(0,0,0,0.03)', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center'
       }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 260 }}>
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#94a3b8' }}>🔍</span>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#94a3b8' }}></span>
           <input
             type="text"
             value={q}
@@ -1304,8 +1304,8 @@ export default function AdminBoutiquesClient({
               fontSize: 13, fontWeight: 700, background: '#fff', color: '#1e293b', outline: 'none', cursor: 'pointer'
             }}
           >
-            <option value="tous">📋 Tous les volumes</option>
-            <option value="0">🔴 0 produit (Boutique vide)</option>
+            <option value="tous">Tous les volumes</option>
+            <option value="0">0 produit (Boutique vide)</option>
             <option value="1">🟠 ≤ 1 produit</option>
             <option value="2">🟡 ≤ 2 produits</option>
             <option value="3">🔵 ≤ 3 produits</option>
@@ -1317,9 +1317,9 @@ export default function AdminBoutiquesClient({
       {/* Onglets */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderBottom: '2px solid #e2e8f0', paddingBottom: 4 }}>
         {[
-          { key: 'toutes', label: '📋 Toutes', count: counts.toutes, color: '#1e3a5f' },
-          { key: 'abonnees', label: '⭐ Abonnées Pro/Business', count: counts.abonnees, color: '#C75B00' },
-          { key: 'sponsorisees', label: '⚡ Sponsorisées', count: counts.sponsorisees, color: '#D97706' },
+          { key: 'toutes', label: 'Toutes', count: counts.toutes, color: '#1e3a5f' },
+          { key: 'abonnees', label: 'Abonnées Pro/Business', count: counts.abonnees, color: '#C75B00' },
+          { key: 'sponsorisees', label: 'Sponsorisées', count: counts.sponsorisees, color: '#D97706' },
           { key: 'inactives', label: '⏸ Inactives', count: counts.inactives, color: '#dc2626' },
         ].map(t => (
           <button
@@ -1359,7 +1359,7 @@ export default function AdminBoutiquesClient({
       {abonnees.length > 0 && (
         <section className="admin-annonces-section" style={{ marginBottom: 24 }}>
           <h2 className="admin-section-titre" style={{ color: '#C75B00' }}>
-            ⭐ Abonnés Pro / Business
+            Abonnés Pro / Business
             <span className="admin-section-count">{abonnees.length}</span>
           </h2>
           <div className="admin-annonces-list">
@@ -1381,7 +1381,7 @@ export default function AdminBoutiquesClient({
       {sponsorisees.length > 0 && (
         <section className="admin-annonces-section" style={{ marginBottom: 24 }}>
           <h2 className="admin-section-titre" style={{ color: '#D97706' }}>
-            ⚡ Boutiques sponsorisées
+            Boutiques sponsorisées
             <span className="admin-section-count">{sponsorisees.length}</span>
           </h2>
           <div className="admin-annonces-list">

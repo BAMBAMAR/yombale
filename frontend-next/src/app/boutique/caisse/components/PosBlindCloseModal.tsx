@@ -34,11 +34,11 @@ export default function PosBlindCloseModal({
   })
 
   const COUPURES_BILLETS = [
-    { valeur: 10000, label: '10 000 FCFA', icone: '💵' },
-    { valeur: 5000, label: '5 000 FCFA', icone: '💵' },
-    { valeur: 2000, label: '2 000 FCFA', icone: '💵' },
-    { valeur: 1000, label: '1 000 FCFA', icone: '💵' },
-    { valeur: 500, label: '500 FCFA', icone: '💵' },
+    { valeur: 10000, label: '10 000 FCFA', icone: '' },
+    { valeur: 5000, label: '5 000 FCFA', icone: '' },
+    { valeur: 2000, label: '2 000 FCFA', icone: '' },
+    { valeur: 1000, label: '1 000 FCFA', icone: '' },
+    { valeur: 500, label: '500 FCFA', icone: '' },
   ]
 
   const COUPURES_PIECES = [
@@ -96,7 +96,7 @@ export default function PosBlindCloseModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>🔒</span> Clôture Z — Comptage des Espèces
+              <span></span> Clôture Z — Comptage des Espèces
             </h3>
             <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
               Session #{sessionId} • Caissier : <strong>{caissierNom}</strong>
@@ -113,7 +113,7 @@ export default function PosBlindCloseModal({
 
         {/* Note standard bancaire anti-fraude */}
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#166534', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>🛡️</span>
+          <span></span>
           <span>Comptage à l’aveugle : comptez le liquide réellement présent dans votre tiroir-caisse sans influence.</span>
         </div>
 
@@ -130,7 +130,7 @@ export default function PosBlindCloseModal({
               boxShadow: modeSaisie === 'decompte' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            💵 Décompte par Billets & Pièces
+            Décompte par Billets & Pièces
           </button>
           <button
             type="button"
@@ -233,7 +233,7 @@ export default function PosBlindCloseModal({
                 {fcfa(totalCalcule)}
               </p>
             </div>
-            <span style={{ fontSize: 28 }}>💰</span>
+            <span style={{ fontSize: 28 }}></span>
           </div>
 
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
@@ -249,7 +249,7 @@ export default function PosBlindCloseModal({
               disabled={submitting}
               style={{ flex: 1.5, padding: '12px', background: '#dc2626', color: '#ffffff', border: 'none', borderRadius: 10, fontWeight: 900, fontSize: 14, cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: '0 4px 12px rgba(220,38,38,0.3)', opacity: submitting ? 0.7 : 1 }}
             >
-              {submitting ? 'Clôture en cours...' : '🔒 Clôturer la Session (Rapport Z)'}
+              {submitting ? 'Clôture en cours...' : 'Clôturer la Session (Rapport Z)'}
             </button>
           </div>
         </form>

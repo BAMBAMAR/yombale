@@ -23,14 +23,14 @@ interface Annonce {
 }
 
 const CAT_LABELS: Record<string, string> = {
-  smartphones: '📱 Téléphone',
-  informatique: '💻 Info',
+  smartphones: 'Téléphone',
+  informatique: 'Info',
   'tv-electro': '📺 TV/Électro',
   mode: '👗 Mode',
-  maison: '🏠 Maison',
-  'auto-moto': '🚗 Auto',
+  maison: 'Maison',
+  'auto-moto': 'Auto',
   jeux: '🎮 Jeux',
-  services: '🛠 Services',
+  services: 'Services',
 }
 
 function StatutBadge({ a }: { a: Annonce }) {
@@ -85,7 +85,7 @@ function AnnonceCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cloudinaryHQ(photo, { width: 400 })} alt={annonce.titre} loading="lazy" />
         ) : (
-          <span className="annonce-thumb-placeholder">📷</span>
+          <span className="annonce-thumb-placeholder"></span>
         )}
       </div>
 
@@ -126,7 +126,7 @@ function AnnonceCard({
                 fontSize: 12,
               }}
             >
-              ⚡ {t('account.adActionActivate')} ({fcfa(prixAnnonce)})
+              {t('account.adActionActivate')} ({fcfa(prixAnnonce)})
             </Link>
           ) : (
             <Link
@@ -144,7 +144,7 @@ function AnnonceCard({
                 fontSize: 12,
               }}
             >
-              ✏️ {t('account.adActionEdit')}
+              {t('account.adActionEdit')}
             </Link>
           )}
 
@@ -211,7 +211,7 @@ function AnnonceCard({
                         textDecoration: 'none',
                       }}
                     >
-                      ✏️ {t('account.adActionEdit')}
+                      {t('account.adActionEdit')}
                     </Link>
                   )}
 
@@ -232,7 +232,7 @@ function AnnonceCard({
                           textDecoration: 'none',
                         }}
                       >
-                        🚀 {t('account.adActionBoost')}
+                        {t('account.adActionBoost')}
                       </Link>
 
                       <Link
@@ -278,7 +278,7 @@ function AnnonceCard({
                       width: '100%',
                     }}
                   >
-                    🗑️ {isPending ? 'Suppression…' : t('account.adActionDelete')}
+                    {isPending ? 'Suppression…' : t('account.adActionDelete')}
                   </button>
                 </div>
               </>
@@ -320,7 +320,7 @@ export default function AnnoncesClient({
       try { 
         const parsed = JSON.parse(cached)
         setAnnonces(parsed)
-      } catch(e) {} 
+      } catch (e) { console.warn('[Nopalou:AnnoncesClient:L323]', e); } 
     }
     if (!cached) setLoading(true)
 
@@ -431,7 +431,7 @@ export default function AnnoncesClient({
                 textDecoration: 'none',
               }}
             >
-              <span>🏪</span>
+              <span></span>
               <span>Ouvrir une boutique pro</span>
             </Link>
           </div>

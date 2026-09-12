@@ -40,7 +40,7 @@ const OP_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
 }
 
 const OP_ICONS: Record<string, string> = {
-  Orange: '🟠', Free: '🔴', Expresso: '🟢', Wave: '🔵',
+  Orange: '🟠', Free: '', Expresso: '', Wave: '🔵',
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -91,7 +91,7 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
 
   const f = forfait!
   const colors = OP_COLORS[f.operateur] ?? { bg: '#F8F5F0', text: '#1C2B4A', badge: '#1C2B4A' }
-  const icon = OP_ICONS[f.operateur] ?? '📡'
+  const icon = OP_ICONS[f.operateur] ?? ''
   const typeLabel = TYPE_LABELS[f.type] ?? f.type
 
   const prixParJour = f.validite_jours && f.validite_jours > 0
@@ -131,10 +131,10 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
       {proposerMeilleur && meilleurForfait && (
         <Link href={`/telecom/${meilleurForfait.id}`} className="meilleur-choix-banner">
           <div className="meilleur-choix-img">
-            <span>{OP_ICONS[meilleurForfait.operateur] ?? '📡'}</span>
+            <span>{OP_ICONS[meilleurForfait.operateur] ?? ''}</span>
           </div>
           <div className="meilleur-choix-info">
-            <span className="meilleur-choix-label">✨ Meilleur choix pour vous</span>
+            <span className="meilleur-choix-label">Meilleur choix pour vous</span>
             <span className="meilleur-choix-nom">{meilleurForfait.nom} — {meilleurForfait.operateur}</span>
             <span className="meilleur-choix-prix">
               {fcfa(meilleurForfait.prix)}
@@ -178,19 +178,19 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
               {f.data_mo != null && (
                 <div className="forfait-fiche-spec">
                   <span className="forfait-fiche-spec-val">{formatData(f.data_mo)}</span>
-                  <span className="forfait-fiche-spec-lbl">🌐 Internet</span>
+                  <span className="forfait-fiche-spec-lbl">Internet</span>
                 </div>
               )}
               {f.minutes != null && (
                 <div className="forfait-fiche-spec">
                   <span className="forfait-fiche-spec-val">{f.minutes === -1 ? '∞' : `${f.minutes}`}</span>
-                  <span className="forfait-fiche-spec-lbl">📞 {f.minutes === -1 ? 'Illimité' : 'Minutes'}</span>
+                  <span className="forfait-fiche-spec-lbl">{f.minutes === -1 ? 'Illimité' : 'Minutes'}</span>
                 </div>
               )}
               {f.sms != null && (
                 <div className="forfait-fiche-spec">
                   <span className="forfait-fiche-spec-val">{f.sms === -1 ? '∞' : f.sms}</span>
-                  <span className="forfait-fiche-spec-lbl">💬 SMS</span>
+                  <span className="forfait-fiche-spec-lbl">SMS</span>
                 </div>
               )}
               {f.validite_jours != null && (
@@ -293,11 +293,11 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
 
         return (
           <section className="similaires-section">
-            <h2 className="similaires-titre">📊 Comparer avec d&apos;autres forfaits</h2>
+            <h2 className="similaires-titre">Comparer avec d&apos;autres forfaits</h2>
             <p className="similaires-sous-titre">
               {courantEstMeilleur
-                ? '✅ Ce forfait a le prix le plus bas parmi les alternatives comparées.'
-                : `💡 Un forfait similaire est disponible à partir de ${fcfa(meilleurPrix)} — voir ci-dessous.`}
+                ? 'Ce forfait a le prix le plus bas parmi les alternatives comparées.'
+                : `Un forfait similaire est disponible à partir de ${fcfa(meilleurPrix)} — voir ci-dessous.`}
             </p>
             <table className="similaires-table">
               <thead>
@@ -318,7 +318,7 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
                     <SimilRow key={l.id} id={l.id} basePath="/telecom" courant={l.courant}>
                       <td>
                         <div className="simil-produit-cell">
-                          <span style={{ fontSize: 20 }}>{OP_ICONS[l.operateur] ?? '📡'}</span>
+                          <span style={{ fontSize: 20 }}>{OP_ICONS[l.operateur] ?? ''}</span>
                           <div>
                             <span className="simil-nom">{l.nom}</span>
                             <span className="simil-prod-marque" style={{ display: 'block', fontSize: 12, color: OP_COLORS[l.operateur]?.text }}>{l.operateur}</span>
@@ -330,7 +330,7 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
                       <td>
                         <span className={`simil-prix-val${isBest ? ' simil-prix-val--best' : ''}`}>
                           {fcfa(l.prix)}
-                          {isBest && <span className="simil-best-ico"> 🏆</span>}
+                          {isBest && <span className="simil-best-ico"> </span>}
                         </span>
                       </td>
                       <td>

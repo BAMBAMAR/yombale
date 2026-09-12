@@ -101,7 +101,7 @@ export async function GET(
   const contact = produit?.boutique_whatsapp || produit?.boutique_telephone || null
   const image = produit?.images?.[0] ?? null
 
-  const initiale = boutiqueNom.trim().charAt(0).toUpperCase() || '🏪'
+  const initiale = boutiqueNom.trim().charAt(0).toUpperCase() || ''
 
   return new ImageResponse(
     (
@@ -223,7 +223,7 @@ export async function GET(
                   display: 'flex',
                 }}
               >
-                📍 {boutiqueVille}
+                {boutiqueVille}
               </span>
             </div>
           </div>
@@ -299,7 +299,7 @@ export async function GET(
                 display: 'flex',
               }}
             >
-              🔥 NOUVEL ARRIVAGE
+              NOUVEL ARRIVAGE
             </div>
           )}
 
@@ -326,7 +326,7 @@ export async function GET(
                 color: '#64748b',
               }}
             >
-              <span style={{ fontSize: 130 }}>🛍️</span>
+              <span style={{ fontSize: 130 }}></span>
               <span style={{ fontSize: 26, fontWeight: 700 }}>Photo en boutique</span>
             </div>
           )}
@@ -407,7 +407,7 @@ export async function GET(
                 display: 'flex',
               }}
             >
-              💬 Commandez en 1-Clic
+              Commandez en 1-Clic
             </span>
             <span
               style={{
@@ -417,7 +417,7 @@ export async function GET(
                 display: 'flex',
               }}
             >
-              {contact ? `WhatsApp : ${contact}` : 'Envoi rapide & direct'} · 🚚 Livraison disponible
+              {contact ? `WhatsApp : ${contact}` : 'Envoi rapide & direct'} · Livraison disponible
             </span>
           </div>
 

@@ -60,7 +60,7 @@ export default function AccountDashboardHub({
     if (cachedAnnonces) {
       try {
         setAnnonces(JSON.parse(cachedAnnonces))
-      } catch (_) {}
+      } catch (err) { console.warn('[Nopalou:AccountDashboardHub:L63]', err); }
     }
 
     // 2. Récupération des boutiques depuis cache ou API
@@ -68,7 +68,7 @@ export default function AccountDashboardHub({
     if (cachedBoutiques) {
       try {
         setBoutiques(JSON.parse(cachedBoutiques))
-      } catch (_) {}
+      } catch (err) { console.warn('[Nopalou:AccountDashboardHub:L71]', err); }
     }
 
     // Fetch réseau en arrière-plan
@@ -149,7 +149,7 @@ export default function AccountDashboardHub({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}>
-                  Bonjour, {nom} 👋
+                  Bonjour, {nom} 
                 </h1>
                 <span style={{
                   fontSize: 11,
@@ -176,7 +176,7 @@ export default function AccountDashboardHub({
                     color: 'var(--accent, #C75B00)',
                     border: '1px solid rgba(199,91,0,0.2)',
                   }}>
-                    🏪 Commerçant
+                    Commerçant
                   </span>
                 )}
               </div>
@@ -382,7 +382,7 @@ export default function AccountDashboardHub({
             alignItems: 'center',
             gap: 6,
           }}>
-            <span>⚡</span>
+            <span></span>
             <span>Actions Rapides</span>
           </h2>
           <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>
@@ -685,7 +685,7 @@ export default function AccountDashboardHub({
                       />
                     ) : (
                       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-                        📷
+                        
                       </div>
                     )}
                   </div>
@@ -748,7 +748,7 @@ export default function AccountDashboardHub({
               fontSize: 20,
               flexShrink: 0,
             }}>
-              🚀
+              
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>

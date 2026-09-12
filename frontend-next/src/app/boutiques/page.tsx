@@ -38,20 +38,20 @@ interface Boutique {
 }
 
 const CATEGORIES_BOUTIQUE = [
-  { slug: '', label: 'Toutes les boutiques', icon: '🏪' },
-  { slug: 'smartphones', label: 'Smartphones & Tech', icon: '📱' },
-  { slug: 'informatique', label: 'Informatique & PC', icon: '💻' },
+  { slug: '', label: 'Toutes les boutiques', icon: '' },
+  { slug: 'smartphones', label: 'Smartphones & Tech', icon: '' },
+  { slug: 'informatique', label: 'Informatique & PC', icon: '' },
   { slug: 'tv-electro', label: 'TV & Électro', icon: '📺' },
   { slug: 'mode', label: 'Mode & Beauté', icon: '👗' },
-  { slug: 'maison', label: 'Maison & Déco', icon: '🏠' },
-  { slug: 'auto-moto', label: 'Auto-Moto', icon: '🚗' },
+  { slug: 'maison', label: 'Maison & Déco', icon: '' },
+  { slug: 'auto-moto', label: 'Auto-Moto', icon: '' },
   { slug: 'jeux', label: 'Jeux & Consoles', icon: '🎮' },
   { slug: 'alimentation', label: 'Alimentation', icon: '🥗' },
   { slug: 'beaute', label: 'Beauté & Soins', icon: '💄' },
-  { slug: 'bijouterie', label: 'Bijouterie & Horlogerie', icon: '💎' },
+  { slug: 'bijouterie', label: 'Bijouterie & Horlogerie', icon: '' },
   { slug: 'quincaillerie', label: 'Quincaillerie & BTP', icon: '🧱' },
-  { slug: 'services', label: 'Services & Pro', icon: '🛠' },
-  { slug: 'mixte', label: 'Généraliste', icon: '🛍️' },
+  { slug: 'services', label: 'Services & Pro', icon: '' },
+  { slug: 'mixte', label: 'Généraliste', icon: '' },
 ]
 
 const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Mbour']
@@ -119,7 +119,7 @@ export default async function BoutiquesPage({
     total = data?.total ?? 0
     villesDisponibles = data?.villes ?? []
     categoriesActivesSlugs = data?.categories ?? []
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L122]', err); }
 
   const villesAffichage = villesDisponibles.length > 0 ? villesDisponibles : VILLES
 
@@ -243,7 +243,7 @@ export default async function BoutiquesPage({
                         border: ville === v ? '1.5px solid #C75B00' : '1px solid #e2e8f0',
                       }}
                     >
-                      📍 {v}
+                      {v}
                     </Link>
                   ))}
 
@@ -258,7 +258,7 @@ export default async function BoutiquesPage({
                       border: '1px solid #cbd5e1',
                     }}
                   >
-                    💼 Business
+                    Business
                   </Link>
                   <Link
                     href={buildLink({ plan: plan === 'pro' ? '' : 'pro', page: '1' })}
@@ -269,7 +269,7 @@ export default async function BoutiquesPage({
                       border: '1px solid #cbd5e1',
                     }}
                   >
-                    ⭐ Vendeur Pro
+                    Vendeur Pro
                   </Link>
                 </div>
 
@@ -364,7 +364,7 @@ export default async function BoutiquesPage({
       {/* GRILLE DES BOUTIQUES */}
       {boutiquesFiltrees.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb' }}>
-          <span style={{ fontSize: 52, display: 'block', marginBottom: 12 }}>🏪</span>
+          <span style={{ fontSize: 52, display: 'block', marginBottom: 12 }}></span>
           <h3 style={{ margin: '0 0 6px', fontSize: 18, color: '#111827' }}>Aucune boutique ne correspond à votre recherche</h3>
           <p style={{ margin: '0 0 16px', fontSize: 14, color: '#6b7280' }}>Essayez de modifier votre recherche ou vos filtres de ville/catégorie.</p>
           <Link href="/boutiques" style={{ display: 'inline-block', background: '#C75B00', color: '#fff', padding: '10px 20px', borderRadius: 10, textDecoration: 'none', fontWeight: 700 }}>
@@ -435,12 +435,12 @@ export default async function BoutiquesPage({
 
                   {estBusiness && (
                     <div style={{ position: 'absolute', top: 10, left: 10, background: '#0f172a', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                      💼 Business
+                      Business
                     </div>
                   )}
                   {estPro && !estBusiness && (
                     <div style={{ position: 'absolute', top: 10, left: 10, background: '#C75B00', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 800, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                      ⭐ Vendeur Pro
+                      Vendeur Pro
                     </div>
                   )}
                 </div>

@@ -64,7 +64,7 @@ export default function DemoClient({
 
   // WhatsApp simulation chat state
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string }[]>([
-    { sender: 'bot', text: 'Bonjour ! Bienvenue sur Nopalou WhatsApp 🤖. Que recherchez-vous aujourd\'hui ? (ex: Riz 50kg, iPhone 15, Forfait Orange 5Go, Appartement Mermoz)', time: '10:00' },
+    { sender: 'bot', text: 'Bonjour ! Bienvenue sur Nopalou WhatsApp . Que recherchez-vous aujourd\'hui ? (ex: Riz 50kg, iPhone 15, Forfait Orange 5Go, Appartement Mermoz)', time: '10:00' },
   ]);
   const [chatInput, setChatInput] = useState('');
 
@@ -116,12 +116,12 @@ export default function DemoClient({
     setChatInput('');
 
     setTimeout(() => {
-      let botReply = '🛒 3 résultats trouvés pour "' + userMsg + '" au meilleur prix :\n\n1. Auchan Dakar : 21 900 FCFA\n2. Boutique Touba Express (Vendeur Pro) : 21 500 FCFA (En stock)\n\n👉 Appuyez sur [🛒 Commander] pour commander par Wave ou Orange Money !';
+      let botReply = '3 résultats trouvés pour "' + userMsg + '" au meilleur prix :\n\n1. Auchan Dakar : 21 900 FCFA\n2. Boutique Touba Express (Vendeur Pro) : 21 500 FCFA (En stock)\n\nAppuyez sur [Commander] pour commander par Wave ou Orange Money !';
       
       if (userMsg.toLowerCase().includes('immo') || userMsg.toLowerCase().includes('appartement')) {
-        botReply = '🏠 2 Appartements trouvés à Mermoz & Almadies :\n• Studio meublé Mermoz : 250 000 FCFA/mois\n• F3 Almadies : 450 000 FCFA/mois\n\nContact direct bailleur certifié sur Nopalou !';
+        botReply = '2 Appartements trouvés à Mermoz & Almadies :\n• Studio meublé Mermoz : 250 000 FCFA/mois\n• F3 Almadies : 450 000 FCFA/mois\n\nContact direct bailleur certifié sur Nopalou !';
       } else if (userMsg.toLowerCase().includes('telecom') || userMsg.toLowerCase().includes('forfait') || userMsg.toLowerCase().includes('orange')) {
-        botReply = '📱 Meilleur Pass Internet actuellement :\n• Orange Pass Max 10Go / 30j : 5 000 FCFA\n• Free Sénégal Illimité Week-end : 3 000 FCFA\n\nComparez les 25 forfaits sur nopalou.com/telecom !';
+        botReply = 'Meilleur Pass Internet actuellement :\n• Orange Pass Max 10Go / 30j : 5 000 FCFA\n• Free Sénégal Illimité Week-end : 3 000 FCFA\n\nComparez les 25 forfaits sur nopalou.com/telecom !';
       }
 
       setChatMessages(prev => [...prev, { sender: 'bot', text: botReply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
@@ -135,7 +135,7 @@ export default function DemoClient({
   };
 
   const handleShareWhatsApp = () => {
-    const message = '👋 Découvre Nopalou, la plateforme tout-en-un au Sénégal ! 🚀\n\n- Comparateur de prix & Forfaits Telecom\n- Caisse enregistreuse POS & Carnet de crédits marchands\n- Assistant WhatsApp Bot 24/7\n- Programme Apporteur (' + tauxCommissionPourcent + '% commission récurrente)\n\nTest la démo interactive ici : ' + shareableUrl;
+    const message = 'Découvre Nopalou, la plateforme tout-en-un au Sénégal ! \n\n- Comparateur de prix & Forfaits Telecom\n- Caisse enregistreuse POS & Carnet de crédits marchands\n- Assistant WhatsApp Bot 24/7\n- Programme Apporteur (' + tauxCommissionPourcent + '% commission récurrente)\n\nTest la démo interactive ici : ' + shareableUrl;
     const url = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(message);
     window.open(url, '_blank');
   };
@@ -169,7 +169,7 @@ export default function DemoClient({
             </Link>
             <div>
               <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy)' }}>
-                🚀 Démo Commerciale Interactive Nopalou
+                Démo Commerciale Interactive Nopalou
               </div>
               <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
                 Simulateur dynamique synchronisé en temps réel avec les tarifs et paramètres du site.
@@ -194,7 +194,7 @@ export default function DemoClient({
                 fontWeight: 800, fontSize: 12, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4
               }}
             >
-              📄 Brochure PDF (13 p.)
+              Brochure PDF (13 p.)
             </a>
           </div>
         </div>
@@ -215,13 +215,13 @@ export default function DemoClient({
               {activeExplanation.title}
             </div>
             <div style={{ fontSize: 13, color: '#1E40AF' }}>
-              📌 <strong>Explication :</strong> {activeExplanation.desc}
+              <strong>Explication :</strong> {activeExplanation.desc}
             </div>
             <div style={{ fontSize: 12, color: '#1E40AF' }}>
-              ⚙️ <strong>Système :</strong> {activeExplanation.backend}
+              <strong>Système :</strong> {activeExplanation.backend}
             </div>
             <div style={{ fontSize: 12, color: '#047857', fontWeight: 700 }}>
-              💡 <strong>Bénéfice :</strong> {activeExplanation.benefit}
+              <strong>Bénéfice :</strong> {activeExplanation.benefit}
             </div>
           </div>
         )}
@@ -245,13 +245,13 @@ export default function DemoClient({
             {/* Badges */}
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
               <span style={{ background: 'var(--accent)', color: '#FFF', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 800 }}>
-                ⚡ Démo Commerciale Dynamique
+                Démo Commerciale Dynamique
               </span>
               <span style={{ background: 'rgba(45, 212, 191, 0.2)', color: '#2DD4BF', border: '1px solid #2DD4BF', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                🛡️ Commission Apporteur : {tauxCommissionPourcent}% Récurrent
+                Commission Apporteur : {tauxCommissionPourcent}% Récurrent
               </span>
               <span style={{ background: 'rgba(251, 191, 36, 0.2)', color: '#FBBF24', border: '1px solid #FBBF24', padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                💳 Wave &amp; Orange Money Ready
+                Wave &amp; Orange Money Ready
               </span>
             </div>
 
@@ -298,7 +298,7 @@ export default function DemoClient({
                   display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none'
                 }}
               >
-                <span>📥 Télécharger la Brochure PDF (13 p.)</span>
+                <span>Télécharger la Brochure PDF (13 p.)</span>
               </a>
             </div>
 
@@ -336,7 +336,7 @@ export default function DemoClient({
                 fontWeight: 800, fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
               }}
             >
-              <span style={{ fontSize: 18 }}>🛒</span>
+              <span style={{ fontSize: 18 }}></span>
               <span>1. Parcours Acheteur Malin</span>
               <span style={{ fontSize: 11, opacity: activeRole === 'acheteur' ? 0.9 : 0.7, fontWeight: 400 }}>Comparateur &amp; WhatsApp</span>
             </button>
@@ -350,7 +350,7 @@ export default function DemoClient({
                 fontWeight: 800, fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
               }}
             >
-              <span style={{ fontSize: 18 }}>🏪</span>
+              <span style={{ fontSize: 18 }}></span>
               <span>2. Parcours Marchand POS</span>
               <span style={{ fontSize: 11, opacity: activeRole === 'marchand' ? 0.9 : 0.7, fontWeight: 400 }}>Caisse POS, Scan EAN-13 &amp; Dettes</span>
             </button>
@@ -364,7 +364,7 @@ export default function DemoClient({
                 fontWeight: 800, fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3
               }}
             >
-              <span style={{ fontSize: 18 }}>💼</span>
+              <span style={{ fontSize: 18 }}></span>
               <span>3. Parcours Apporteur d&apos;Affaires</span>
               <span style={{ fontSize: 11, opacity: activeRole === 'apporteur' ? 0.9 : 0.7, fontWeight: 400 }}>Commissions {tauxCommissionPourcent}% &amp; Kit Commercial</span>
             </button>
@@ -392,17 +392,17 @@ export default function DemoClient({
             {/* Window body */}
             <div style={{ padding: '20px 16px', minHeight: 380 }}>
 
-              {/* 🏪 MARCHAND POS SANDBOX */}
+              {/* MARCHAND POS SANDBOX */}
               {activeRole === 'marchand' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {/* Merchant Sub-tabs (100% Identical to real Boutique interface) */}
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', background: '#020617', padding: 6, borderRadius: 10, border: '1px solid #1E293B' }}>
                     {[
                       { id: 'pos', label: '🖥️ Caisse POS Tactile' },
-                      { id: 'catalogue', label: '🛍️ Produits & EAN-13' },
+                      { id: 'catalogue', label: 'Produits & EAN-13' },
                       { id: 'credit', label: '📓 Carnet Dettes Client' },
-                      { id: 'analytics', label: '📊 Analytics & Ventes' },
-                      { id: 'equipe', label: '👥 Équipe & PIN' },
+                      { id: 'analytics', label: 'Analytics & Ventes' },
+                      { id: 'equipe', label: 'Équipe & PIN' },
                     ].map(t => (
                       <button
                         key={t.id}
@@ -422,19 +422,19 @@ export default function DemoClient({
                   {merchantTab === 'pos' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                       <div style={{ background: '#1E293B', padding: 12, borderRadius: 8, fontSize: 12, color: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                        <span>💡 <strong>Mode Caisse POS :</strong> Encaissez vos ventes en magasin avec 3 modes de scan.</span>
+                        <span><strong>Mode Caisse POS :</strong> Encaissez vos ventes en magasin avec 3 modes de scan.</span>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button
                             onClick={handleSimulateScanItem}
                             style={{ background: '#059669', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                           >
-                            📷 Scanner Caméra
+                            Scanner Caméra
                           </button>
                           <button
                             onClick={() => setShowCloudScannerModal(true)}
                             style={{ background: '#0284C7', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                           >
-                            📱 Douchette Smartphone
+                            Douchette Smartphone
                           </button>
                         </div>
                       </div>
@@ -442,7 +442,7 @@ export default function DemoClient({
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
                         {/* Cart items */}
                         <div style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>🛒 Panier Caisse Actuel</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>Panier Caisse Actuel</div>
                           {posCart.map(it => (
                             <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: 8, borderRadius: 6, fontSize: 12 }}>
                               <div>
@@ -471,18 +471,18 @@ export default function DemoClient({
                               })}
                               style={{ background: '#10B981', color: '#020617', border: 'none', padding: 8, borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
                             >
-                              💵 Cash Espèces
+                              Cash Espèces
                             </button>
                             <button
                               onClick={() => setActiveExplanation({
-                                title: '🌊 Encaissement Wave / Orange Money',
+                                title: 'Encaissement Wave / Orange Money',
                                 desc: 'Paiement sans contact Wave ou Orange Money directement sur le QR code du magasin.',
                                 backend: 'Lien direct ou Webhook API Wave/OM avec réconciliation automatique.',
                                 benefit: 'Encaissement rapide sans risque d\'erreur de monnaie.'
                               })}
                               style={{ background: '#0284C7', color: '#FFF', border: 'none', padding: 8, borderRadius: 6, fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
                             >
-                              🌊 Wave / OM
+                              Wave / OM
                             </button>
                           </div>
                         </div>
@@ -494,7 +494,7 @@ export default function DemoClient({
                   {merchantTab === 'catalogue' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       <div style={{ background: '#1E293B', padding: 12, borderRadius: 8, fontSize: 12, color: '#E2E8F0' }}>
-                        🏷️ <strong>Gestion EAN-13 :</strong> Saisissez le code fabricant ou cliquez sur <code>🎲 Générer EAN</code> pour créer un code GS1 Modulo 10 scannable.
+                        <strong>Gestion EAN-13 :</strong> Saisissez le code fabricant ou cliquez sur <code>🎲 Générer EAN</code> pour créer un code GS1 Modulo 10 scannable.
                       </div>
 
                       {[
@@ -515,7 +515,7 @@ export default function DemoClient({
                               }}
                               style={{ background: 'var(--accent)', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                             >
-                              🖨️ Sticker 50x30mm
+                              Sticker 50x30mm
                             </button>
                           </div>
                         </div>
@@ -527,7 +527,7 @@ export default function DemoClient({
                   {merchantTab === 'credit' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       <div style={{ background: '#1E293B', padding: 12, borderRadius: 8, fontSize: 12, color: '#E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 18 }}>📒</span>
+                        <span style={{ fontSize: 18 }}></span>
                         <div>
                           <strong>Carnet de Crédits & Dettes Clients :</strong> Fini le cahier papier ! Enregistrez les créances et relancez en 1 clic sur WhatsApp.
                         </div>
@@ -539,13 +539,13 @@ export default function DemoClient({
                       ].map((c, idx) => (
                         <div key={idx} style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                           <div>
-                            <div style={{ fontWeight: 800, color: '#FFF', fontSize: 13 }}>👤 {c.nom} ({c.quartier})</div>
-                            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Tél: {c.tel} | 📅 Échéance: {c.echeance}</div>
+                            <div style={{ fontWeight: 800, color: '#FFF', fontSize: 13 }}>{c.nom} ({c.quartier})</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Tél: {c.tel} | Échéance: {c.echeance}</div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div style={{ textAlign: 'right' }}>
                               <div style={{ fontWeight: 900, color: '#EF4444', fontSize: 14 }}>+ {c.solde.toLocaleString()} FCFA</div>
-                              <span style={{ fontSize: 10, background: '#7F1D1D', color: '#FCA5A5', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>🔴 Dette</span>
+                              <span style={{ fontSize: 10, background: '#7F1D1D', color: '#FCA5A5', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>Dette</span>
                             </div>
                             <button
                               onClick={() => {
@@ -554,7 +554,7 @@ export default function DemoClient({
                               }}
                               style={{ background: '#25D366', color: '#FFF', border: 'none', padding: '8px 12px', borderRadius: 8, fontSize: 11.5, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 36 }}
                             >
-                              📱 WA Relance
+                              WA Relance
                             </button>
                           </div>
                         </div>
@@ -584,11 +584,11 @@ export default function DemoClient({
                   {merchantTab === 'equipe' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
                       <div style={{ background: '#020617', padding: 10, borderRadius: 6, display: 'flex', justifyContent: 'space-between', color: '#FFF' }}>
-                        <span>👑 Bamba Diallo (Propriétaire)</span>
+                        <span>Bamba Diallo (Propriétaire)</span>
                         <span style={{ color: '#F59E0B', fontWeight: 700 }}>Intouchable</span>
                       </div>
                       <div style={{ background: '#020617', padding: 10, borderRadius: 6, display: 'flex', justifyContent: 'space-between', color: '#FFF' }}>
-                        <span>👤 Modou Cissé (Caissier Matin)</span>
+                        <span>Modou Cissé (Caissier Matin)</span>
                         <span style={{ color: '#10B981', fontWeight: 700 }}>PIN: ****</span>
                       </div>
                     </div>
@@ -596,11 +596,11 @@ export default function DemoClient({
                 </div>
               )}
 
-              {/* 🛒 ACHETEUR STAGES */}
+              {/* ACHETEUR STAGES */}
               {activeRole === 'acheteur' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>🤖 Assistant Chatbot WhatsApp Meta Commerce</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>Assistant Chatbot WhatsApp Meta Commerce</div>
                     
                     {/* Chat simulation box */}
                     <div style={{ background: '#0F172A', borderRadius: 8, padding: 10, maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -630,11 +630,11 @@ export default function DemoClient({
                 </div>
               )}
 
-              {/* 💼 APPORTEUR D'AFFAIRES STAGES */}
+              {/* APPORTEUR D'AFFAIRES STAGES */}
               {activeRole === 'apporteur' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div style={{ background: '#020617', padding: 14, borderRadius: 10, border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#FFF' }}>💼 Kit Commercial &amp; Matériel de Démarchage</div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#FFF' }}>Kit Commercial &amp; Matériel de Démarchage</div>
                     <div style={{ fontSize: 12, color: '#CBD5E1' }}>
                       Téléchargez les visuels officiels et la brochure de 13 pages pour démarcher les commerçants de votre secteur.
                     </div>
@@ -644,7 +644,7 @@ export default function DemoClient({
                         href="/brochure-apporteur.pdf" target="_blank" download
                         style={{ background: '#1E293B', border: '1px solid #334155', padding: 12, borderRadius: 8, textDecoration: 'none', color: '#FFF', display: 'flex', flexDirection: 'column', gap: 4 }}
                       >
-                        <span style={{ fontWeight: 800, color: '#10B981', fontSize: 13 }}>📄 Brochure PDF (13 p.)</span>
+                        <span style={{ fontWeight: 800, color: '#10B981', fontSize: 13 }}>Brochure PDF (13 p.)</span>
                         <span style={{ fontSize: 10, color: '#94A3B8' }}>Document complet imprimable</span>
                       </a>
 
@@ -735,7 +735,7 @@ export default function DemoClient({
                 }}
                 style={{ background: '#10B981', color: '#020617', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
               >
-                🚀 Devenir Apporteur Maintenant
+                Devenir Apporteur Maintenant
               </button>
             </div>
           </div>
@@ -752,7 +752,7 @@ export default function DemoClient({
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
         }}>
           <div style={{ background: '#FFF', padding: 20, borderRadius: 12, maxWidth: 360, width: '100%', textAlign: 'center', color: '#111' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 10px' }}>🏷️ Sticker Thermique 50x30mm</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 10px' }}>Sticker Thermique 50x30mm</h3>
             <div style={{ border: '2px dashed #000', padding: 12, background: '#FFF', borderRadius: 6, display: 'inline-block', width: '100%' }}>
               <div style={{ fontWeight: 800, fontSize: 14 }}>Boutique Touba Express</div>
               <div style={{ fontSize: 13, fontWeight: 700, margin: '4px 0' }}>{stickerProd.nom}</div>
@@ -776,12 +776,12 @@ export default function DemoClient({
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
         }}>
           <div style={{ background: '#DCF8C6', padding: 20, borderRadius: 12, maxWidth: 400, width: '100%', color: '#111' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 8px', color: '#075E54' }}>💬 Aperçu Message WhatsApp Relance Client</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 8px', color: '#075E54' }}>Aperçu Message WhatsApp Relance Client</h3>
             <div style={{ background: '#FFF', padding: 12, borderRadius: 8, fontSize: 12, lineHeight: 1.6, color: '#111' }}>
               Bonjour *{relanceClient.nom}*,<br /><br />
               Nous espérons que vous allez bien. Votre solde du carnet chez *Boutique Touba Express* est de *{relanceClient.solde.toLocaleString()} FCFA*.<br /><br />
-              📅 Promesse d&apos;échéance : *{relanceClient.echeance}*<br />
-              📍 Quartier : {relanceClient.quartier}<br /><br />
+              Promesse d&apos;échéance : *{relanceClient.echeance}*<br />
+              Quartier : {relanceClient.quartier}<br /><br />
               Merci de régler par Wave/OM au 77 123 45 67. Excellente journée !
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
@@ -808,11 +808,11 @@ export default function DemoClient({
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
         }}>
           <div style={{ background: '#1E293B', padding: 20, borderRadius: 12, maxWidth: 360, width: '100%', textAlign: 'center', color: '#FFF' }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>📷</div>
+            <div style={{ fontSize: 32, marginBottom: 10 }}></div>
             <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Scan Caméra Smartphone en Cours...</h3>
             <p style={{ fontSize: 12, color: '#94A3B8' }}>Pointez le code-barres EAN-13 du produit avec votre caméra.</p>
             <div style={{ border: '2px dashed #10B981', height: 100, margin: '14px 0', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981', fontWeight: 800 }}>
-              ⚡ DÉTECTION EAN-13 EN COURS
+              DÉTECTION EAN-13 EN COURS
             </div>
             <button
               onClick={() => setShowScanModal(false)}
@@ -830,7 +830,7 @@ export default function DemoClient({
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
         }}>
           <div style={{ background: '#1E293B', padding: 20, borderRadius: 12, maxWidth: 380, width: '100%', color: '#FFF' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>📱 Douchette Smartphone Distante (Cloud Sync)</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>Douchette Smartphone Distante (Cloud Sync)</h3>
             <p style={{ fontSize: 12, color: '#94A3B8', margin: '0 0 10px' }}>Scannez ce QR Code avec le smartphone de votre caissier pour transformer le téléphone en douchette sans fil connectée au PC (&lt;100ms).</p>
             <div style={{ background: '#FFF', padding: 12, borderRadius: 8, display: 'inline-block', color: '#000', fontWeight: 900, fontSize: 14 }}>
               CODE SESSION : <code>NOPALOU-POS-8492</code>
@@ -892,13 +892,13 @@ export default function DemoClient({
                 onClick={handleCopyLink}
                 style={{ flex: 1, background: 'var(--bg)', color: 'var(--text1)', border: '1px solid var(--border)', padding: 11, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
               >
-                {copiedLink ? '✅ Lien Copié !' : '📋 Copier le Lien'}
+                {copiedLink ? 'Lien Copié !' : 'Copier le Lien'}
               </button>
               <button
                 onClick={handleShareWhatsApp}
                 style={{ flex: 1, background: '#059669', color: '#FFF', border: 'none', padding: 11, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
               >
-                💬 Partager WhatsApp
+                Partager WhatsApp
               </button>
             </div>
           </div>

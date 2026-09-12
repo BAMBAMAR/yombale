@@ -19,12 +19,12 @@ export default function FormulaireImmo() {
   const { t } = useTranslation()
 
   const TYPES_BIEN = [
-    { val: 'appartement', label: t('account.typeApartment'), icon: '🏢' },
-    { val: 'villa',       label: t('account.typeVilla'),       icon: '🏡' },
-    { val: 'maison',      label: t('account.typeHouse'),      icon: '🏠' },
+    { val: 'appartement', label: t('account.typeApartment'), icon: '' },
+    { val: 'villa',       label: t('account.typeVilla'),       icon: '' },
+    { val: 'maison',      label: t('account.typeHouse'),      icon: '' },
     { val: 'studio',      label: t('account.typeStudio'),      icon: '🛏' },
     { val: 'terrain',     label: t('account.typeLand'),     icon: '🌿' },
-    { val: 'bureau',      label: t('account.typeOffice'),      icon: '🏢' },
+    { val: 'bureau',      label: t('account.typeOffice'),      icon: '' },
   ]
 
   function handlePhotos(e: React.ChangeEvent<HTMLInputElement>) {
@@ -230,7 +230,7 @@ export default function FormulaireImmo() {
           role="button"
           aria-label={t('account.photosClickToAdd')}
         >
-          <span style={{ fontSize: 32 }}>📷</span>
+          <span style={{ fontSize: 32 }}></span>
           <p>{t('account.photosClickToAdd')}</p>
           <span className="form-hint">{t('account.photosHint')}</span>
         </div>

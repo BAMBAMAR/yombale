@@ -259,7 +259,7 @@ export default function FormulaireAnnonce({ email }: { email: string }) {
             role="button"
             aria-label={t('account.photosClickToAdd')}
           >
-            <span style={{ fontSize: 32 }}>📷</span>
+            <span style={{ fontSize: 32 }}></span>
             <p>{t('account.photosClickToAdd')}</p>
             <span className="form-hint">{t('account.photosHint')}</span>
           </div>

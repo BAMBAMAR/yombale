@@ -49,7 +49,7 @@ export default async function ModifierAnnoncePage({
           { label: 'Mes annonces', href: '/mes-annonces' },
           { label: 'Modifier' }
         ]}
-        emoji="✏️"
+        emoji=""
         titre="Modifier l'annonce"
         compteur="Toute modification soumettra votre annonce à une nouvelle modération."
       />

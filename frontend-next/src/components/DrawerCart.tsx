@@ -90,7 +90,7 @@ export default function DrawerCart() {
       if (savedNom) setClientNom(savedNom)
       if (savedTel) setClientTel(savedTel)
       if (savedAdresse) setClientAdresse(savedAdresse)
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:DrawerCart:L93]', err); }
   }, [])
 
   // Interception du bouton Retour Mobile (Android / iOS) et touche Échap Desktop
@@ -133,7 +133,7 @@ export default function DrawerCart() {
   // Validation du code promo
   async function appliquerCodePromo() {
     if (!codePromo.trim()) {
-      setPromoError('⚠️ Veuillez saisir un code promo')
+      setPromoError('Veuillez saisir un code promo')
       setPromoApplique(null)
       return
     }
@@ -183,7 +183,7 @@ export default function DrawerCart() {
     let msg = `Bonjour ${nomBoutique} ! Je souhaite passer la commande suivante :\n\n${lignedDetailles}\n\n` +
       `Sous-total: ${fcfa(currentSousTotal)}\n`
     if (currentReduction > 0 && currentPromoCode) {
-      msg += `🎉 Code Promo (${currentPromoCode}): -${fcfa(currentReduction)}\n`
+      msg += `Code Promo (${currentPromoCode}): -${fcfa(currentReduction)}\n`
     }
     if (currentFraisLivraison > 0) {
       msg += `Livraison (${zoneSelectionnee?.nom || 'Zone choisie'}): ${fcfa(currentFraisLivraison)}\n`
@@ -215,7 +215,7 @@ export default function DrawerCart() {
         if (clientNom.trim()) localStorage.setItem('nopalou_client_nom', clientNom.trim())
         if (clientTel.trim()) localStorage.setItem('nopalou_client_tel', clientTel.trim())
         if (clientAdresse.trim()) localStorage.setItem('nopalou_client_adresse', clientAdresse.trim())
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:DrawerCart:L218]', err); }
 
       const currentBoutiqueId = activeBoutiqueId!
       const currentBoutiqueNom = activeCart?.boutiqueNom || 'Boutique'
@@ -314,7 +314,7 @@ export default function DrawerCart() {
         if (clientNom.trim()) localStorage.setItem('nopalou_client_nom', clientNom.trim())
         if (clientTel.trim()) localStorage.setItem('nopalou_client_tel', clientTel.trim())
         if (clientAdresse.trim()) localStorage.setItem('nopalou_client_adresse', clientAdresse.trim())
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:DrawerCart:L317]', err); }
 
       const formattedItems = currentItems.map(i => ({
         produit_id: (i.produitId || i.id.split('_')[0]).length === 36 ? (i.produitId || i.id.split('_')[0]) : null,
@@ -408,7 +408,7 @@ export default function DrawerCart() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38,
             boxShadow: isCredit ? '0 8px 20px rgba(2,132,199,0.2)' : '0 8px 20px rgba(22,163,74,0.2)'
           }}>
-            {isCredit ? '💳' : (isWa ? '💬' : '🎉')}
+            {isCredit ? '' : (isWa ? '' : '')}
           </div>
 
           <div>
@@ -783,7 +783,7 @@ export default function DrawerCart() {
             {zones.length > 0 && (
               <div>
                 <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--text1, #1A1612)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <span>📍</span> {t('shop.deliveryZoneLabel')}
+                  <span></span> {t('shop.deliveryZoneLabel')}
                 </label>
                 <select
                   value={zoneId}
@@ -802,13 +802,13 @@ export default function DrawerCart() {
             {/* Section Code Promo */}
             <div style={{ background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', borderRadius: 14, padding: '12px 14px' }}>
               <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--text1, #1A1612)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                <span>🏷️</span> Code Promo (optionnel)
+                <span></span> Code Promo (optionnel)
               </label>
 
               {promoApplique ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 10, padding: '10px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 14 }}>✅</span>
+                    <span style={{ fontSize: 14 }}></span>
                     <div>
                       <strong style={{ fontSize: 13, color: '#166534' }}>{promoApplique.code}</strong>
                       <span style={{ fontSize: 12.5, color: '#15803d', marginLeft: 6, fontWeight: 700 }}>(-{fcfa(promoApplique.reduction)})</span>
@@ -1057,7 +1057,7 @@ export default function DrawerCart() {
                   <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text2, #6B5E52)', display: 'block', marginBottom: 4 }}>{t('common.paymentMethod')}</label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                     {[
-                      { value: 'wave', label: 'Wave ⚡' },
+                      { value: 'wave', label: 'Wave ' },
                       { value: 'orange_money', label: 'Orange Money' },
                       { value: 'especes', label: 'Espèces' },
                       { value: 'credit', label: 'Carnet Crédit' },

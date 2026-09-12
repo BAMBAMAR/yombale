@@ -64,10 +64,10 @@ export async function GET() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <span style={{ fontSize: 20, color: '#C75B00', fontWeight: 700 }}>
-              🌐 nopalou.com
+              nopalou.com
             </span>
             <span style={{ fontSize: 20, color: '#CBD5E1' }}>
-              💬 Contact WhatsApp direct
+              Contact WhatsApp direct
             </span>
           </div>
         </div>
