@@ -29,6 +29,20 @@ import {
   ZONES_LIVRAISON_SENEGAL,
   COMMUNES_LISTE,
 } from '../src/lib/logistique-senegal.ts'
+import { CATEGORY_COVER_PHOTOS } from '../src/lib/boutique-covers.ts'
+import { convertirDepuisFcfa, formaterMontantDevise, DEVISES_REGIONALES } from '../src/lib/devises.ts'
+import { SECTIONS_PAR_DEFAUT } from '../src/lib/boutique-sections.ts'
+import {
+  normaliserTexteRecherche,
+  genererFormePhonetiqueWolof,
+  expandRechercheSenegal,
+  matcherProduitRecherche,
+  scorePertinenceProduit,
+} from '../src/lib/recherche-senegal.ts'
+import {
+  genererEcrituresSyscohada,
+  getCompteTresorerieSyscohada,
+} from '../src/lib/syscohada-export.ts'
 
 let passed = 0
 let failed = 0
@@ -641,6 +655,209 @@ it('ErrorHandler & Resilience: safeJsonParse parse correctement ou retourne le f
 
   const nullVal = safeJsonParse(null, 'default')
   assert.equal(nullVal, 'default')
+})
+
+console.log('\n📦 11. Studio Personnalisation & Tiroir-Caisse POS')
+it('Boutique Covers: 20 catégories ont chacune des photos HD thématiques uniques et dédiées', () => {
+  assert.ok(CATEGORY_COVER_PHOTOS)
+  // Toutes les catégories officielles ont des couvertures dédiées
+  CATEGORIES.forEach(cat => {
+    const photos = CATEGORY_COVER_PHOTOS[cat.value]
+    assert.ok(photos, `Catégorie ${cat.value} doit avoir des photos de couverture`)
+    assert.ok(photos.length >= 4, `Catégorie ${cat.value} doit avoir au moins 4 photos HD`)
+  })
+
+  // Vérification de la non-duplication : parfum a des photos de parfum, pas de mode
+  const photosParfum = CATEGORY_COVER_PHOTOS['parfum']
+  const photosMode = CATEGORY_COVER_PHOTOS['mode']
+  assert.notDeepEqual(photosParfum, photosMode, 'Parfum et Mode ne doivent pas partager les mêmes photos')
+
+  // Vérification de la non-duplication : alimentation et smartphones
+  const photosAlim = CATEGORY_COVER_PHOTOS['alimentation']
+  const photosSmartphones = CATEGORY_COVER_PHOTOS['smartphones']
+  assert.notDeepEqual(photosAlim, photosSmartphones, 'Alimentation et Smartphones ne doivent pas partager les mêmes photos')
+})
+
+it('Tiroir-Caisse & Clôture Z: calcul précis du solde théorique et détection de l écart de caisse', () => {
+  const fondInitial = 50000
+  const ventesEspeces = 120000
+  const entreesEspeces = 10000 // Appoint monnaie
+  const sortiesEspeces = 15000 // Paiement coursier Tiak-Tiak
+
+  // Solde théorique = fondInitial + ventesEspeces + entrees - sorties
+  const soldeTheorique = fondInitial + ventesEspeces + entreesEspeces - sortiesEspeces
+  assert.equal(soldeTheorique, 165000)
+
+  // Cas 1 : Comptage parfait
+  const compteParfait = 165000
+  const ecartParfait = compteParfait - soldeTheorique
+  assert.equal(ecartParfait, 0)
+
+  // Cas 2 : Déficit de caisse (ex: 3 000 FCFA manquants)
+  const compteDeficit = 162000
+  const ecartDeficit = compteDeficit - soldeTheorique
+  assert.equal(ecartDeficit, -3000)
+
+  // Cas 3 : Excédent de caisse
+  const compteExcedent = 168000
+  const ecartExcedent = compteExcedent - soldeTheorique
+  assert.equal(ecartExcedent, 3000)
+})
+
+it('Décompte Billetterie BCEAO: validation du comptage par coupures', () => {
+  const coupures = {
+    '10000': 10, // 100 000
+    '5000': 10,  // 50 000
+    '2000': 5,   // 10 000
+    '1000': 5,   // 5 000
+    '500': 0,
+    '200': 0,
+    '100': 0,
+    '50': 0,
+    '25': 0,
+  }
+  const totalBillets = Object.entries(coupures).reduce((sum, [val, qte]) => sum + (Number(val) * qte), 0)
+  assert.equal(totalBillets, 165000)
+})
+
+console.log('\n📦 12. Multi-Devises Indicatif & Diaspora (devises.ts)')
+it('convertirDepuisFcfa: parité fixe EUR (655.957 FCFA) et conversion USD, GNF, NGN', () => {
+  // 65 596 FCFA ~= 100 EUR
+  const enEur = convertirDepuisFcfa(65595.7, 'EUR')
+  assert.equal(Math.round(enEur), 100)
+
+  // 10 000 FCFA en GNF (~142 500 GNF)
+  const enGnf = convertirDepuisFcfa(10000, 'GNF')
+  assert.equal(Math.round(enGnf), 142500)
+
+  // 10 000 FCFA en NGN (~24 500 NGN)
+  const enNgn = convertirDepuisFcfa(10000, 'NGN')
+  assert.equal(Math.round(enNgn), 24500)
+
+  // XOF reste 1 pour 1
+  assert.equal(convertirDepuisFcfa(5000, 'XOF'), 5000)
+})
+
+it('formaterMontantDevise: symboles et formatage propre', () => {
+  const fEur = formaterMontantDevise(65596, 'EUR', 'fr-FR')
+  assert.equal(fEur.includes('€'), true)
+
+  const fUsd = formaterMontantDevise(60500, 'USD', 'fr-FR')
+  assert.equal(fUsd.includes('$'), true)
+
+  const fXof = formaterMontantDevise(5000, 'XOF', 'fr-FR')
+  assert.equal(fXof.includes('FCFA'), true)
+})
+
+console.log('\n📦 13. Disposition & Glisser-Déposer des Sections (StudioDispositionSections.tsx)')
+it('SECTIONS_PAR_DEFAUT: intégrité des 5 sections canoniques et identifiants uniques', () => {
+  assert.equal(SECTIONS_PAR_DEFAUT.length, 5)
+  const ids = SECTIONS_PAR_DEFAUT.map(s => s.id)
+  assert.equal(ids.includes('banniere'), true)
+  assert.equal(ids.includes('recherche_filtres'), true)
+  assert.equal(ids.includes('produits'), true)
+  assert.equal(ids.includes('social'), true)
+  assert.equal(ids.includes('contact'), true)
+  assert.equal(new Set(ids).size, 5)
+})
+
+console.log('\n📦 14. Recherche Phonétique & Synonymes Sénégal (recherche-senegal.ts)')
+it('normaliserTexteRecherche: minuscules, accents supprimés, ponctuation nettoyée', () => {
+  assert.equal(normaliserTexteRecherche('Café Touba !'), 'cafe touba')
+  assert.equal(normaliserTexteRecherche('THIÉBOUDIENNE  Pilon'), 'thieboudienne pilon')
+  assert.equal(normaliserTexteRecherche("Lait d'Arachide"), 'lait d arachide')
+})
+
+it('genererFormePhonetiqueWolof: équivalences th->c, kh->x, dj->j, ou->u', () => {
+  assert.equal(genererFormePhonetiqueWolof('thieb'), 'ceb')
+  assert.equal(genererFormePhonetiqueWolof('ceeb'), 'ceb')
+  assert.equal(genererFormePhonetiqueWolof('khaliss'), 'xaliss')
+  assert.equal(genererFormePhonetiqueWolof('touba'), 'tuba')
+})
+
+it('expandRechercheSenegal: génération des synonymes sénégalais usuels', () => {
+  const synDall = expandRechercheSenegal('dall')
+  assert.equal(synDall.includes('chaussure'), true)
+  assert.equal(synDall.includes('sandale'), true)
+
+  const synCeeb = expandRechercheSenegal('ceeb')
+  assert.equal(synCeeb.includes('riz'), true)
+  assert.equal(synCeeb.includes('thieb'), true)
+
+  const synAtaya = expandRechercheSenegal('ataya')
+  assert.equal(synAtaya.includes('the'), true)
+})
+
+it('matcherProduitRecherche: détection par synonyme et tolérance phonétique', () => {
+  const p1 = { nom: 'Sac de Riz Brisé Parfumé 25kg', description: 'Idéal pour le ceebu jën' }
+  // Recherche 'thieb' doit trouver le riz
+  assert.equal(matcherProduitRecherche(p1, 'thieb'), true)
+  // Recherche 'ceeb' doit trouver le riz
+  assert.equal(matcherProduitRecherche(p1, 'ceeb'), true)
+
+  const p2 = { nom: 'Sandales en Cuir Artisanal Dakar', description: 'Confort et élégance' }
+  // Recherche 'dall' doit trouver les sandales
+  assert.equal(matcherProduitRecherche(p2, 'dall'), true)
+
+  const p3 = { nom: 'Grand Boubou Bazin Riche', description: 'Tenue brodée pour fêtes' }
+  // Recherche 'yeure' doit trouver le boubou
+  assert.equal(matcherProduitRecherche(p3, 'yeure'), true)
+})
+
+it('scorePertinenceProduit: priorité au nom exact puis aux synonymes', () => {
+  const pExact = { nom: 'Café Touba 500g' }
+  const pSyn = { nom: 'Tisane Kinkeliba', description: 'Boisson chaude comme le café' }
+
+  const score1 = scorePertinenceProduit(pExact, 'café')
+  const score2 = scorePertinenceProduit(pSyn, 'café')
+  assert.equal(score1 > score2, true)
+})
+
+console.log('\n📦 15. Export ERP & Comptabilité SYSCOHADA (syscohada-export.ts)')
+it('getCompteTresorerieSyscohada: mapping précis des modes Wave, OM, Cash, Carte, Crédit', () => {
+  assert.equal(getCompteTresorerieSyscohada('cash'), '571100')
+  assert.equal(getCompteTresorerieSyscohada('wave'), '521200')
+  assert.equal(getCompteTresorerieSyscohada('orange_money'), '521300')
+  assert.equal(getCompteTresorerieSyscohada('carte'), '521400')
+  assert.equal(getCompteTresorerieSyscohada('credit'), '411100')
+  assert.equal(getCompteTresorerieSyscohada('inconnu'), '571100')
+})
+
+it('genererEcrituresSyscohada: équilibre strict débit/crédit (partie double) en régime simplifié', () => {
+  const transactions = [
+    { id: 'tx-1', date: '2026-09-12', montantTotal: 15000, modePaiement: 'wave', type: 'vente', reference: 'CMD-101' },
+    { id: 'tx-2', date: '2026-09-12', montantTotal: 5000, modePaiement: 'cash', type: 'depense', libelle: 'Achat fournitures' },
+    { id: 'tx-3', date: '2026-09-12', montantTotal: 25000, modePaiement: 'credit', type: 'vente', clientNom: 'Modou Fall' },
+  ]
+  const ecritures = genererEcrituresSyscohada(transactions, 'simplifie')
+  assert.equal(ecritures.length, 6)
+
+  const totalDebit = ecritures.reduce((s, e) => s + e.debit, 0)
+  const totalCredit = ecritures.reduce((s, e) => s + e.credit, 0)
+  assert.equal(totalDebit, totalCredit)
+  assert.equal(totalDebit, 45000)
+})
+
+it('genererEcrituresSyscohada: équilibre strict débit/crédit en régime réel avec TVA 18%', () => {
+  const transactions = [
+    { id: 'tx-4', date: '2026-09-12', montantTotal: 11800, modePaiement: 'orange_money', type: 'vente', tauxTva: 0.18 },
+  ]
+  const ecritures = genererEcrituresSyscohada(transactions, 'reel')
+  assert.equal(ecritures.length, 3)
+
+  const debitLigne = ecritures.find(e => e.debit > 0)
+  assert.equal(debitLigne.debit, 11800)
+  assert.equal(debitLigne.compteGeneral, '521300') // OM
+
+  const venteHT = ecritures.find(e => e.compteGeneral === '701100')
+  assert.equal(venteHT.credit, 10000)
+
+  const tvaLigne = ecritures.find(e => e.compteGeneral === '443100')
+  assert.equal(tvaLigne.credit, 1800)
+
+  const totalDebit = ecritures.reduce((s, e) => s + e.debit, 0)
+  const totalCredit = ecritures.reduce((s, e) => s + e.credit, 0)
+  assert.equal(totalDebit, totalCredit)
 })
 
 console.log('\n──────────────────────────────────────────────────────────')

@@ -1,3 +1,177 @@
+- **App Store & Hub Extensions, Documentation SDK Interactive & Dataviz SVG Analytics (`feature/nopalou-master-fixes-p0-p3`) (12 septembre 2026)** 🧩💻📈⚡ :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Finalisation des piliers d'excellence identifiés lors de l'audit de compétitivité face à Shopify et Square :
+      * *Faiblesse N°05 & N°14 (P2)* : Hub d'applications et d'extensions tiers (`AppStoreBoutique.tsx`) avec activation en 1 clic des pixels publicitaires (Meta Pixel, TikTok Pixel, GA4), passerelles Wave & OM, WhatsApp Business et connecteur SYSCOHADA.
+      * *Faiblesse N°13 (P2)* : Portail développeur enrichi d'une documentation interactive avec snippets exécutables multi-langages (cURL, Node.js / Fetch, PHP, Python) pour la création de commande, consultation de stock et vérification de la signature HMAC SHA-256 (`X-Nopalou-Signature`).
+      * *Faiblesse N°10 & N°19 (P2/P3)* : Dataviz interactive et reporting d'activité par graphique SVG (`AnalyticsActivityChart.tsx`), jauge d'attribution des commandes sociales avec suppression intégrale des émojis UI.
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - **App Store & Hub Extensions Marchand (`AppStoreBoutique.tsx`)** :
+      * Composant complet avec catégorisation (Marketing, Paiements, Logistique, Comptabilité, Développeur) et recherche d'extensions.
+      * Modale de configuration directe pour Meta Facebook Pixel, TikTok Pixel et Google Analytics 4 branchée sur les endpoints `/api/boutiques/:id/pixels`.
+      * Branché directement dans `BoutiqueClient.tsx` sous le nouvel onglet `appstore` dans la navigation avancée avec icône Lucide `Boxes`.
+    - **Portail Développeur & Snippets SDK Multi-Langages (`DevCodeSnippets.tsx`)** :
+      * Composant modulaire sous `frontend-next/src/app/boutique/components/DevCodeSnippets.tsx` (< 230 lignes).
+      * Exemples interactifs pour cURL, Node.js (v18+ / Express), PHP et Python (Requests/FastAPI).
+      * Cas concrets : Envoi de commande REST, interrogation du catalogue/stock et vérification cryptographique de la signature Webhook HMAC SHA-256.
+      * Remplacement des béquilles émojis par des icônes vectorielles Lucide précises.
+    - **Graphique SVG Interactif d'Activité & Attribution Sociale (`AnalyticsActivityChart.tsx`)** :
+      * Composant graphique SVG pur sans dépendance externe lourde (< 180 lignes) avec courbe de gradient, repères dynamiques et infobulle de survol au pointeur/touch.
+      * Éradication des émojis résiduels dans l'attribution sociale (`AnalyticsClient.tsx`), remplacés par des puces colorées dynamiques et l'icône Lucide `Share2`.
+  * **🧪 3. Validation & Contrôle Qualité (Quality Gate 100% Validé)** :
+    - Exécution du script `npm run quality:gate` :
+      * TypeScript (frontend-next) : **0 erreur** (`tsc --noEmit`).
+      * Linter Anti-AI-Slop : **0 silent catch**, modularisation stricte (< 450 lignes pour les nouveaux composants).
+      * Tests unitaires frontend : **61/61 validés (100%)**.
+      * Tests unitaires backend Jest : **24/24 suites, 211/211 tests passés (100%)**.
+    - Règle de déploiement : **Aucun push git automatique exécuté (attente de l'ordre explicite de l'utilisateur)**.
+
+- **Exports ERP SYSCOHADA (Sage, Odoo, FEC), Multi-Entrepôts, Factures Pro & Quality Gate (`feature/nopalou-master-fixes-p0-p3`) (12 septembre 2026)** 🏛️📊🏭📑 :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Poursuite méthodique du plan d'amélioration master Nopalou issu de l'audit 88.6/100 (objectif >95/100) :
+      * *Faiblesse N°07 (P2)* : Synchronisation et export comptable vers les ERP tiers (Sage Saari, Odoo 16/17, FEC DGI) selon la norme SYSCOHADA / OHADA.
+      * *Faiblesse N°16 (P2)* : Gestion des stocks multi-entrepôts / multi-dépôts (Sandaga, Colobane, Pikine, etc.) avec agrégation automatique.
+      * *Faiblesse N°15 (P2)* : Gabarits de factures PDF personnalisables (Moderne Épuré vs Institutionnel OHADA avec mentions CGI).
+      * *Faiblesse N°01 & N°03* : Finalisation du démantèlement modulaire de `CaisseClient.tsx` (extraction de `PosHeaderBar.tsx`), nettoyage du toast et zéro silent catch.
+      * *Faiblesse N°20 (P1)* : Mise en place du Quality Gate automatisé (`npm run quality:gate`) exécutant en une passe TypeScript, Anti-Slop, tests frontend et Jest backend.
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - **Module d'Exportation Comptable SYSCOHADA & Norme OHADA Révisée** :
+      * Création de `frontend-next/src/lib/syscohada-export.ts` :
+        - Découpage strict en partie double : Débit total = Crédit total garanti.
+        - Comptes OHADA normalisés : Ventes 701100, Caisse 571100, Wave 521200, Orange Money 521300, Banques 521100, Clients 411100, Charges 605100, TVA facturée 443100.
+        - Générateurs d'export : `exportSageCSV` (Sage Saari .csv avec séparateur `;`), `exportFEC` (Fichier des Écritures Comptables conforme DGI), et `exportOdooJSON` (modèle `account.move` / `account.move.line`).
+      * Intégration dans `Comptabilite.tsx` : menu déroulant élégant d'exports ERP SYSCOHADA avec icônes `Building2`, `FileSpreadsheet`, `FileText`, `Database` (zéro émoji dans le JSX).
+      * Endpoint backend sécurisé anti-IDOR : `GET /api/comptabilite/:boutiqueId/export/syscohada` dans `backend/routes/comptabilite.js`.
+    - **Gestion Multi-Entrepôts & Multi-Dépôts Physiques (Faiblesse N°16)** :
+      * Migration de base de données dans `backend/migrate-inline.js` :
+        - Table `boutique_entrepots` (id, boutique_id, nom, adresse, ville, responsable, telephone, est_defaut, actif).
+        - Table `boutique_produit_stocks_entrepots` (produit_id, entrepot_id, quantite, seuil_alerte).
+      * Endpoints RESTful sécurisés avec `checkBoutiqueAccess` dans `backend/routes/boutiques.js` :
+        - `GET /api/boutiques/:id/entrepots` (lister les entrepôts).
+        - `POST /api/boutiques/:id/entrepots` (créer un dépôt).
+        - `PUT /api/boutiques/:id/entrepots/:entrepotId` (mettre à jour).
+        - `POST /api/boutiques/:id/entrepots/stocks` (mise à jour du stock par dépôt avec réagrégation automatique du stock global produit).
+    - **Modèles de Factures PDF Personnalisables (Faiblesse N°15)** :
+      * Prise en charge du paramètre `modele` (`moderne` ou `institutionnel`) dans la route PDF backend `backend/routes/boutiques.js:4626`.
+      * Intégration du cartouche fiscal officiel OHADA / CGI Sénégal pour les factures institutionnelles.
+      * Sélecteur de modèle ajouté dans `GestionDocuments.tsx` (Facture Moderne Épurée vs Facture Institutionnelle OHADA).
+    - **Quality Gate Automatisé & Éradication des Silent Catches** :
+      * Création de `scripts/quality-gate.mjs` et des commandes `"quality:gate"` et `"pre-push"` dans `package.json`.
+      * Éradication des 2 derniers silent catches résiduels dans `StudioPersonnalisation.tsx` et `BoutiqueDetailClient.tsx` (0 silent catch sur 498 fichiers).
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - Exécution complète du script `npm run quality:gate` validée avec **100% de succès** :
+      * TypeScript (frontend-next) : **0 erreur**.
+      * Anti-AI-Slop & Silent Catches : **0 silent catch**.
+      * Tests unitaires frontend : **61/61 passés (100%)** (Suite 15 SYSCOHADA validée).
+      * Tests unitaires backend Jest : **24/24 suites, 211/211 tests passés (100%)**.
+    - Règle de déploiement : **Aucun push git exécuté (en attente de l'ordre explicite de l'utilisateur)**.
+
+- **Recherche Phonétique Wolof/Sénégal, Disposition Vitrine & Reçus d'Avoir Thermiques (`feature/nopalou-master-fixes-p0-p3`) (12 septembre 2026)** 🔎🇸🇳🧾📐 :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Déroulement méthodique du plan d'amélioration master issu de l'audit 88.6/100 et des 20 faiblesses analysées :
+      * *Faiblesse N°08 & Amélioration N°20* : Recherche phonétique et dictionnaire sémantique Wolof / Sénégalais (compréhension des requêtes transcrites *ceeb*, *thieb*, *dall*, *yeure*, *ataya*, *kheucc*, *touba*, *pastels*, etc.).
+      * *Faiblesse N°04 (P2.1)* : Personnalisation visuelle et réorganisation libre de la vitrine en ligne (ordre et visibilité des sections).
+      * *Faiblesse N°15 (P3)* : Gabarits professionnels de reçus thermiques 80mm et impression des bons d'avoir / retour.
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - **Moteur de Recherche Phonétique Wolof & Synonymes Locaux Sénégalais** :
+      * Création de `frontend-next/src/lib/recherche-senegal.ts` :
+        - Normalisation robuste (suppression diacritiques, accents, ponctuation, minuscules).
+        - Équivalences phonétiques Wolof <-> Français : `th` ↔ `c` (*thieb* ↔ *ceeb* ↔ *ceb*), `kh` ↔ `x` (*khaliss* ↔ *xalis*), `dj` ↔ `j`, `gn` ↔ `n`, `ou` ↔ `u`, `ie`/`ee` ↔ `e`.
+        - Dictionnaire sémantique local complet (Habillement : *boubou*, *bazin*, *dall*, *sandale*, *moussor* ; Alimentation : *riz*, *ceeb*, *thieb*, *ataya*, *café touba*, *bissap*, *bouye*, *pastels*, *fataya*, *dibi*, *ndambé*, *thiacry* ; Beauté : *savon noir*, *kheucc*, *karité*, *thiouraye* ; Électro : *téléphone*, *télévision*, *frigo*).
+        - Fonctions d'expansion de requêtes (`expandRechercheSenegal`), de correspondance intelligente (`matcherProduitRecherche`) et de scoring de pertinence (`scorePertinenceProduit`).
+      * Intégration dans la vitrine publique `BoutiqueDetailClient.tsx` (recherche intelligente + classement automatique par pertinence).
+      * Intégration dans la caisse tactile `CaisseClient.tsx` (recherche ultra-rapide par synonymes et tolérance aux fautes de frappe).
+    - **Disposition & Glisser-Déposer des Sections de Vitrine** :
+      * Création de `frontend-next/src/lib/boutique-sections.ts` (modèle pur TS des 5 sections canoniques : `banniere`, `recherche_filtres`, `produits`, `social`, `contact`).
+      * Composant `frontend-next/src/app/boutique/StudioDispositionSections.tsx` : boutons de réordonnancement monter/descendre, interrupteurs de visibilité, et réinitialisation en 1 clic.
+      * Intégration dans le Studio de Personnalisation (`StudioPersonnalisation.tsx`) Bloc 6 avec persistance en base de données (`disposition_sections JSONB` dans `backend/migrate-inline.js` et `PUT /api/boutiques/:id`).
+      * Rendu dynamique et respect strict de la visibilité des sections dans `BoutiqueDetailClient.tsx`.
+    - **Gabarits de Reçus Thermiques & Bons d'Avoir Physiques** :
+      * Ajout de `printBonAvoirPDF` dans `frontend-next/src/lib/export.ts` : format ticket thermique compact 80mm prêt pour imprimantes de caisse ESC/POS, avec code unique en gros caractères, montant déductible en FCFA, date d'échéance et conditions d'usage (zéro chargement de police CDN externe).
+      * Bouton « Imprimer le Reçu d'Avoir (Ticket 80mm) » intégré dans `ModalRetourCommande.tsx`.
+      * Ouverture automatique et instantanée du PDF officiel lors de la génération d'un devis ou d'une proforma depuis la caisse tactile `CaisseClient.tsx`.
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - Tests unitaires frontend : **58/58 passés avec succès** (100% de réussite via `npm test`, suite 14 ajoutée).
+    - Tests unitaires backend Jest : **24/24 suites passées, 209/209 tests validés**.
+    - Typage strict TypeScript : `npx tsc --noEmit` exécuté avec **0 erreur**.
+    - Règle de déploiement : **Aucun push git exécuté (en attente de l'ordre explicite de l'utilisateur)**.
+
+- **Retours & Avoirs Nopalou, Scanner Douchette Matériel, Webhooks HMAC & Multi-Devises (`feature/nopalou-master-fixes-p0-p3`) (12 septembre 2026)** 🔄📦🔌💳 :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Déroulement méthodique du plan d'amélioration master issu de l'audit sans complaisance :
+      * *Faiblesse N°06 (P1)* : Gestion des retours clients et émission de bons d'avoir déductibles en caisse et boutique.
+      * *Faiblesse N°11 (P1)* : Scanner de codes-barres indépendant de la caméra smartphone pour les commerces à fort trafic (douchette laser USB / Bluetooth).
+      * *Faiblesse N°05 & N°13 (P2/P3)* : Architecture d'émission de webhooks marchands sécurisés avec signature HMAC SHA-256.
+      * *Multi-Devises Indicatif (P2)* : Support des devises sous-régionales et diaspora (XOF, EUR, USD, GNF, NGN).
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - **Gestion des Retours & Bons d'Avoir Déductibles** :
+      * Création de `frontend-next/src/app/boutique/ModalRetourCommande.tsx` (~380 lignes, 0 emoji, design tokens Nopalou) : sélection du motif (taille, défectueux, rétractation), réintégration optionnelle en stock, émission automatique d'un code d'avoir unique (`AVOIR-XXXX-XXXX`), et bouton d'envoi WhatsApp pré-rempli au client.
+      * Intégration complète dans `Commandes.tsx` avec bouton « Retour & Avoir » sur les commandes livrées/expédiées/confirmées.
+    - **Scanner Codes-Barres Matériel Global (USB HID / Bluetooth HID)** :
+      * Implémentation d'un écouteur d'événements clavier global (`keydown`) dans `CaisseClient.tsx` : détection des rafales ultra-rapides (<80ms par frappe) propres aux douchettes laser professionnelles et scanners de supermarché.
+      * Traitement instantané à la frappe `Enter` avec ajout immédiat au panier, confirmation sonore de succès et zéro besoin de toucher l'écran ni d'ouvrir la modale caméra.
+    - **Écosystème Webhooks Marchands & Signature HMAC SHA-256** :
+      * Création de `backend/services/webhookDispatcher.js` : dispatching asynchrone non-bloquant (timeout 5s) des événements `order.created`, `order.paid`, `order.shipped`, `order.cancelled`.
+      * Calcul cryptographique de l'en-tête de signature `X-Nopalou-Signature: t=timestamp,v1=hmac_sha256` avec le secret de la boutique pour validation anti-tampering par les serveurs tiers (ERP Sage, Odoo, Zapier).
+      * Déclenchement automatique branché dans `backend/routes/comptabilite.js` lors des changements de statut de commande.
+    - **Multi-Devises Indicatif Régional & Diaspora** :
+      * Création de `frontend-next/src/lib/devises.ts` : conversion et formatage précis pour Franc CFA XOF (BCEAO), Euro EUR (parité fixe 655.957 FCFA), Dollar US USD (~605 FCFA), Franc Guinéen GNF (14.25 GNF/FCFA) et Naira Nigérian NGN (2.45 NGN/FCFA).
+    - **Anti-AI-Slop & Nettoyage UI** :
+      * Remplacement des béquilles émojis résiduelles dans `Commandes.tsx` et mise à jour du bouton d'expédition (« Dispatch Livreur » connecté aux 20 transporteurs officiels).
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - Tests unitaires frontend : **52/52 passés avec succès** (100% réussite via `npm test`).
+    - Tests unitaires backend Jest : **24/24 suites passées, 209/209 tests validés**.
+    - Typage strict TypeScript : `npx tsc --noEmit` validé avec **0 erreur**.
+    - Règle de déploiement : **Aucun push git exécuté (en attente de l'ordre explicite de l'utilisateur)**.
+
+- **Studio Personnalisation Catégories, Tiroir-Caisse POS & Résolution Master Audit (`feature/nopalou-master-fixes-p0-p3`) (12 septembre 2026)** 🎨🏪💵 :
+  * **🎯 1. Contexte & Demandes Utilisateur** :
+    - *Signalement utilisateur* : Dans le Studio de personnalisation boutique ([StudioPersonnalisation.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/StudioPersonnalisation.tsx)), absence de champ pour modifier la catégorie et photos de couverture de suggestion identiques pour toutes les catégories.
+    - *Exécution du plan d'amélioration master* : Implémentation immédiate des correctifs UX boutique, de la gestion de trésorerie tiroir-caisse en cours de journée (coursiers Tiak-Tiak, appoint) et démantèlement modulaire de la caisse POS.
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - **Studio de Personnalisation — Catégories & Bannières Thématiques HD** :
+      * Ajout du sélecteur des 20 catégories officielles Nopalou dans le Bloc 1 (Identité & Style) avec icônes et labels clairs.
+      * Éradication du mini-dictionnaire statique local qui retombait toujours sur `mode` : connexion au catalogue haute définition de `CATEGORY_COVER_PHOTOS` (`src/lib/boutique-covers.ts`).
+      * Ajout d'une barre d'onglets de catégories défilante permettant au marchand de prévisualiser et choisir parmi 4 à 5 photos HD professionnelles par catégorie (mode, smartphones, parfum, optique, alimentation, maison, etc.).
+      * Remplacement des emojis des titres de section par des icônes Lucide (`Layers`, `ImageIcon`, `Tag`).
+      * Couverture étendue à 100% des catégories dans `boutique-covers.ts` (mixte, services, immo, annonces, etc.).
+    - **Gestion du Tiroir-Caisse POS & Mouvements d'Espèces (Entrées / Sorties)** :
+      * Création de `frontend-next/src/app/boutique/caisse/components/PosTiroirCaisseModal.tsx` (~350 lignes) : gestion complète des entrées (appoint monnaie, apport trésorerie) et sorties (coursiers Tiak-Tiak, fournitures, prélèvement gérant) avec raccourcis montants FCFA, historique en temps réel et solde théorique.
+      * Migration SQL dans `backend/migrate-inline.js` : création de la table `boutique_pos_mouvements_caisse` et colonnes `total_entrees_especes` et `total_sorties_especes` sur `boutique_pos_sessions`.
+      * Routes API sécurisées anti-IDOR (`checkBoutiqueAccess`) : `GET` et `POST /api/boutiques/:id/pos-sessions/:sessionId/mouvements`.
+      * Clôture Z et réconciliation comptable : calcul automatique de l'écart de caisse tenant compte des mouvements de tiroir (`ecart_caisse = especes_comptees - (fond_initial + ventes_especes + entrees - sorties)`).
+    - **Modularisation POS & Éradication des Béquilles Emojis** :
+      * Création de `frontend-next/src/app/boutique/caisse/components/PosSuperviseurPinModal.tsx` (~190 lignes) : extraction de la modale de validation PIN superviseur depuis `CaisseClient.tsx`.
+      * Nettoyage de `PosBlindCloseModal.tsx` : suppression des emojis `🪙` et `✍️`, remplacés par des icônes vectorielles Lucide (`Banknote`, `Coins`, `Lock`, `ShieldCheck`, `Calculator`).
+      * Nettoyage de l'écran de verrouillage et de l'en-tête de `CaisseClient.tsx` : suppression de l'émoji `ℹ️`, remplacement des pastilles de rôle par des icônes Lucide `Shield` et `KeyRound`.
+      * Intégration du bouton Tiroir-Caisse dans le menu outils de la caisse.
+    - **Logistique Locale & Réseau de Transporteurs Partenaires** :
+      * Exportation officielle de la liste des 20 transporteurs et coursiers Sénégal & Diaspora (`TRANSPORTEURS_SENEGAL`) dans `frontend-next/src/lib/logistique-senegal.ts` (Tiak-Tiak, Paps, Yango, GP Monde, EMS Chronopost, Dem Dikk, etc.).
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - Tests unitaires frontend : **50/50 passés avec succès** (100% réussite, suite 11 ajoutée).
+    - Tests unitaires backend Jest : **24/24 suites passées, 209/209 tests validés**.
+    - Typage strict TypeScript : `npx tsc --noEmit` exécuté avec **0 erreur**.
+    - Règle de déploiement : **Aucun push git exécuté (en attente de l'instruction utilisateur)**.
+
+- **Audit Exhaustif, Benchmark & Classement Stratégique International (47 Catégories, 37 Piliers) (`feature/nopalou-master-fixes-p0-p3`) (12 septembre 2026)** 🏆📊⚡ :
+  * **🎯 1. Contexte & Objectif de Session** :
+    - Réalisation d'un audit de niveau CEO/VP Engineering & Product sans aucune complaisance, évaluant Nopalou face aux leaders mondiaux (Shopify, Square, WooCommerce, Stripe, TikTok Shop, HubSpot, Amazon) et régionaux (Kippa, Bumpa, Catlog, Jumia).
+    - Mesure empirique du code actif : tests unitaires backend Jest (209/209 passés), tests frontend (47/47 passés), typage strict TypeScript `tsc --noEmit` (0 erreur), audit de réactivité mobile Playwright (55/55 viewports validés de 320px à 412px), et linter qualité `npm run lint:slop`.
+  * **🛠️ 2. Résultats Clés & Score Global** :
+    - **Score Global Pondéré Nopalou : 88.6 / 100** (Surclassement du leader mondial sur 8 des 17 catégories pour le contexte africain, parité sur 8 catégories, retard sur 1 catégorie : modularité/écosystème d'apps).
+    - **Surclassements Majeurs vs Shopify / Square** :
+      * Vitesse de création de boutique (Tunnel Taf-Taf en 45s vs 3-5 min).
+      * Intégration native Wave & Orange Money sans intermédiaire (0% de commission Nopalou).
+      * Carnet de dettes client avec relances WhatsApp automatiques et saisie vocale en Wolof (Note : 98/100).
+      * Résilience réseau (Caisse POS offline-first IndexedDB avec idempotency keys anti-doublon).
+      * Logistique locale par quartier Tiak-Tiak et Social Shop 2 colonnes avec attribution UTM.
+    - **Dettes Identifiées Sans Complaisance** :
+      * 28 composants monolithiques (> 800 lignes) à démanteler en sous-composants < 300 lignes.
+      * 1 309 émojis résiduels à remplacer par des SVG Lucide dans les sous-interfaces.
+      * Poids de `globals.css` (347 Ko) méritant une modularisation en CSS Modules (< 80 Ko).
+    - **Création de l'Artéfact de Référence** : Document d'audit exhaustif généré dans [audit_benchmark_nopalou_master.md](file:///C:/Users/HP/.gemini/antigravity-ide/brain/e66e52e6-b90e-46c5-9146-cb834107519d/audit_benchmark_nopalou_master.md).
+  * **🏆 3. Positionnement Stratégique Validé** :
+    - *« Nopalou n'est pas le Shopify sénégalais. Nopalou est le premier Système d'Exploitation Commercial Hybride d'Afrique de l'Ouest, unifiant en une seule plateforme fluide la vente en magasin tactile, le commerce WhatsApp 1-clic, le recouvrement de crédit client et la marketplace comparatrice, avec l'élégance technique des meilleurs SaaS mondiaux et une adéquation absolue aux réalités économiques locales. »*
+
 - **Chantier Anti-AI-Slop & Démantèlement Modulaire Caisse POS (P0-P2) (`frontend-next/`) (12 septembre 2026)** 🛡️🏗️✨ :
   * **🎯 1. Contexte & Objectif de Session** :
     - Éradication des symptômes majeurs d'IA-Slop identifiés lors de l'audit approfondi sur 32 critères : éradication des 127 silent catches (`catch(e) {}`), réduction massive des béquilles emojis dans l'UI, et amorçage du démantèlement du monolithe [CaisseClient.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/caisse/CaisseClient.tsx) (>5 000 lignes).

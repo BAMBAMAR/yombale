@@ -9,6 +9,8 @@
     "migrate": "node backend/migrate.js",
     "test": "playwright test",
     "test:unit": "jest tests/unit --runInBand --forceExit",
+    "quality:gate": "node scripts/quality-gate.mjs",
+    "pre-push": "node scripts/quality-gate.mjs",
     "test:pub": "playwright test tests/e2e/01-pages-publiques.spec.ts",
     "test:auth": "playwright test tests/e2e/02-auth.spec.ts",
     "test:publication": "playwright test tests/e2e/03-publication.spec.ts",

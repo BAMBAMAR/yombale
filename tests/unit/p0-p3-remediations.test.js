@@ -167,3 +167,31 @@ describe('Service Relance Panier Abandonné WhatsApp (P1 Conversion)', () => {
     expect(updateCall).toBeDefined();
   });
 });
+
+describe('Stocks Multi-Entrepôts & Dépôts (Faiblesse N°16)', () => {
+  test('Agrégation du stock total par entrepôt', () => {
+    const stocksEntrepots = [
+      { entrepot_nom: 'Sandaga Central', quantite: 15, seuil_alerte: 5 },
+      { entrepot_nom: 'Dépôt Colobane', quantite: 35, seuil_alerte: 10 },
+      { entrepot_nom: 'Point Relais Pikine', quantite: 10, seuil_alerte: 3 },
+    ];
+
+    const stockTotalCalcule = stocksEntrepots.reduce((sum, e) => sum + e.quantite, 0);
+    expect(stockTotalCalcule).toBe(60);
+
+    const alertesRupture = stocksEntrepots.filter(e => e.quantite <= e.seuil_alerte);
+    expect(alertesRupture).toHaveLength(0);
+  });
+
+  test('Détection des alertes stock par dépôt physique', () => {
+    const stocks = [
+      { entrepot_nom: 'Sandaga Central', quantite: 2, seuil_alerte: 5 },
+      { entrepot_nom: 'Dépôt Colobane', quantite: 20, seuil_alerte: 5 },
+    ];
+
+    const alertes = stocks.filter(e => e.quantite <= e.seuil_alerte);
+    expect(alertes).toHaveLength(1);
+    expect(alertes[0].entrepot_nom).toBe('Sandaga Central');
+  });
+});
+

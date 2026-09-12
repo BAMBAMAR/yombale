@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { matcherProduitRecherche, scorePertinenceProduit } from '@/lib/recherche-senegal'
 import CarnetDettes from '../CarnetDettes'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import Link from 'next/link'
@@ -8,7 +9,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import BatchImportModal from '@/app/boutique/BatchImportModal'
 import { CATEGORIES } from '@/lib/categories'
 import { getBoutiqueProduits, getBoutiquesMine, getPosHistorique, creerPosVente, declarerIncident, creerBoutiqueDocument } from '../actions'
-import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid, BarChart3, Sun, Moon, Columns3, ChevronDown, LogOut } from 'lucide-react'
+import { Settings, Download, History, Book, Unlock, Lock, ShieldAlert, User, Shield, Search, ArrowLeft, Store, Camera, MessageCircle, Printer, AlignJustify, LayoutGrid, BarChart3, Sun, Moon, Columns3, ChevronDown, LogOut, KeyRound, Banknote } from 'lucide-react'
 import {
   sauvegarderProduitsLocaux,
   obtenirProduitsLocaux,
@@ -34,10 +35,15 @@ import PosChangerCaissierModal, { CaissierItem } from './components/PosChangerCa
 import PosPairageModal from './components/PosPairageModal'
 import PosTicketsAttenteBar from './components/PosTicketsAttenteBar'
 import PosModalGestionPins from './components/PosModalGestionPins'
+import PosSuperviseurPinModal from './components/PosSuperviseurPinModal'
+import PosTiroirCaisseModal from './components/PosTiroirCaisseModal'
 import PosPanierSidebar from './components/PosPanierSidebar'
 import PosNonAutoriseScreen from './components/PosNonAutoriseScreen'
 import PosBilanRapportXModal from './components/PosBilanRapportXModal'
 import PosTransactionCarnetModal from './components/PosTransactionCarnetModal'
+import PosEditClientCarnetModal from './components/PosEditClientCarnetModal'
+import PosTicketPrintView from './components/PosTicketPrintView'
+import PosHeaderBar from './components/PosHeaderBar'
 import './caisse.css'
 
 interface ProduitCaisse {
@@ -230,6 +236,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [modalChangerCaissier, setModalChangerCaissier] = useState<boolean>(false)
   const [modalSessionOuverture, setModalSessionOuverture] = useState<boolean>(false)
   const [modalClotureZ, setModalClotureZ] = useState<boolean>(false)
+  const [modalTiroirCaisse, setModalTiroirCaisse] = useState<boolean>(false)
   const [modalBilanSession, setModalBilanSession] = useState<boolean>(false)
   const [modalHistorique, setModalHistorique] = useState<boolean>(false)
   const [fondDeCaisseSaisi, setFondDeCaisseSaisi] = useState<string>('50000')
@@ -406,23 +413,12 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
   const [relanceAutoWaCarnet, setRelanceAutoWaCarnet] = useState<boolean>(true)
   const [submittingCarnetTrans, setSubmittingCarnetTrans] = useState<boolean>(false)
 
-  // Édition Profil Client dans le Carnet POS
+  // Édition Profil Client dans le Carnet POS (déléguée au composant dédié)
   const [modalEditClientCarnet, setModalEditClientCarnet] = useState<boolean>(false)
   const [clientCarnetAEditer, setClientCarnetAEditer] = useState<any>(null)
-  const [editClientNom, setEditClientNom] = useState<string>('')
-  const [editClientTel, setEditClientTel] = useState<string>('')
-  const [editClientAdresse, setEditClientAdresse] = useState<string>('')
-  const [editClientPlafond, setEditClientPlafond] = useState<string>('200000')
-  const [editClientNote, setEditClientNote] = useState<string>('')
-  const [submittingEditClient, setSubmittingEditClient] = useState<boolean>(false)
 
   const ouvrirModalEditClientCarnet = (c: any) => {
     setClientCarnetAEditer(c)
-    setEditClientNom(c.nom || '')
-    setEditClientTel(c.telephone || '')
-    setEditClientAdresse(c.adresse || '')
-    setEditClientPlafond(String(c.plafond_max || 200000))
-    setEditClientNote(c.note_client || '')
     setModalEditClientCarnet(true)
   }
 
@@ -807,6 +803,42 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
 
   // ── Produits Réels de la Boutique ────────────────────────────────────────────
   const [produits, setProduits] = useState<ProduitCaisse[]>([])
+
+  // P1.11 : Écouteur Matériel Global pour Douchettes Codes-Barres (USB / Bluetooth HID)
+  // Les douchettes laser envoient une séquence ultra-rapide (<80ms entre frappes) terminée par Enter
+  useEffect(() => {
+    let barcodeBuffer = ''
+    let lastKeyTime = 0
+
+    function handleKeyDown(e: KeyboardEvent) {
+      const now = Date.now()
+      const diff = now - lastKeyTime
+      lastKeyTime = now
+
+      // Si l'intervalle entre frappes dépasse 80ms, c'est une saisie manuelle humaine
+      if (diff > 80 && barcodeBuffer.length > 0) {
+        barcodeBuffer = ''
+      }
+
+      if (e.key === 'Enter') {
+        if (barcodeBuffer.length >= 3) {
+          e.preventDefault()
+          e.stopPropagation()
+          traiterCodeBarreCamera(barcodeBuffer)
+          barcodeBuffer = ''
+        }
+        return
+      }
+
+      // Enregistrer uniquement les caractères imprimables
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        barcodeBuffer += e.key
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [produits])
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -2136,7 +2168,10 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         return
       }
 
-      alert(`${typeDocument.toUpperCase()} créé avec succès ! Réf : ${res.reference}`)
+      if (res.id) {
+        window.open(`/api/boutiques/${boutiqueActiveId}/documents/${res.id}/pdf`, '_blank')
+      }
+      alert(`${typeDocument.toUpperCase()} créé avec succès ! Réf : ${res.reference || res.id}`)
       viderPanier()
     } catch (err) {
       console.error(`Erreur création ${typeDocument}:`, err)
@@ -2507,12 +2542,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
     printPDFReport(`Rapport de Clôture Z — Session ${session.id}`, `Boutique ${boutiqueActiveId || 'Nopalou'}`, headers, rows)
   }
 
-  // Produits filtrés
-  const produitsFiltres = produits.filter(p => {
-    const matchCat = categorieFiltre === 'tous' || p.categorie === categorieFiltre
-    const matchSearch = !recherche || p.nom.toLowerCase().includes(recherche.toLowerCase()) || p.code_barre?.includes(recherche)
-    return matchCat && matchSearch
-  })
+  // Produits filtrés avec recherche phonétique Wolof et synonymes locaux
+  const produitsFiltres = useMemo(() => {
+    let result = produits.filter(p => {
+      const matchCat = categorieFiltre === 'tous' || p.categorie === categorieFiltre
+      const matchSearch = !recherche || matcherProduitRecherche(p, recherche)
+      return matchCat && matchSearch
+    })
+    if (recherche && recherche.trim()) {
+      result.sort((a, b) => scorePertinenceProduit(b, recherche) - scorePertinenceProduit(a, recherche))
+    }
+    return result
+  }, [produits, categorieFiltre, recherche])
 
   // ── ÉCRAN DE VERROUILLAGE SI BOUTIQUE NON AUTORISÉE À LA CAISSE POS ──────
   if (!estBoutiqueAutorisee) {
@@ -2563,37 +2604,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
           }}
         />
 
-        {/* Modale de Validation Superviseur */}
-        {modalSuperviseur && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', zIndex: 12500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <div style={{ background: '#ffffff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 380, border: '2px solid #ea580c', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}></div>
-              <h3 style={{ margin: '0 0 6px', fontSize: 17, color: '#0f172a', fontWeight: 800 }}>Autorisation Superviseur Requise</h3>
-              <p style={{ margin: '0 0 16px', fontSize: 13, color: '#c2410c', fontWeight: 600 }}>{superviseurTitre}</p>
-
-              <div style={{ marginBottom: 16 }}>
-                <input
-                  type="password"
-                  maxLength={6}
-                  placeholder="••••"
-                  value={pinSuperviseurSaisi}
-                  onChange={e => setPinSuperviseurSaisi(e.target.value.replace(/\D/g, ''))}
-                  style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1.5px solid #ea580c', background: '#f8fafc', color: '#0f172a', fontSize: 22, textAlign: 'center', letterSpacing: '0.3em', boxSizing: 'border-box', fontWeight: 900 }}
-                />
-                {superviseurError && <p style={{ margin: '6px 0 0', color: '#dc2626', fontSize: 12, fontWeight: 700 }}>{superviseurError}</p>}
-              </div>
-
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setModalSuperviseur(false)} style={{ flex: 1, padding: '10px', background: '#e2e8f0', color: '#334155', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>
-                  Annuler
-                </button>
-                <button onClick={validerSuperviseurPin} style={{ flex: 1, padding: '10px', background: '#ea580c', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 800, cursor: 'pointer' }}>
-                  Valider
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Modale Dédiée Validation Superviseur */}
+        <PosSuperviseurPinModal
+          isOpen={modalSuperviseur}
+          titre={superviseurTitre}
+          caissiersList={caissiersList}
+          pinSuperviseurFallback={pinSuperviseur}
+          onClose={() => setModalSuperviseur(false)}
+          onSuccess={() => {
+            setModalSuperviseur(false)
+            if (superviseurAction) superviseurAction()
+          }}
+        />
       </>
     )
   }
@@ -2667,7 +2689,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
               lineHeight: 1.35,
               textAlign: 'center'
             }}>
-              ℹ️ <strong>Session Gérant Connectée</strong><br />
+              <strong>Session Gérant Connectée</strong><br />
               <span style={{ fontSize: 11, color: '#c2410c' }}>
                 Pour une tablette partagée avec vos caissiers, utilisez le <strong>Lien Terminal Dédié</strong> sans session gérant.
               </span>
@@ -2737,7 +2759,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                         marginBottom: 8,
                         boxShadow: isSuper ? '0 4px 10px rgba(234, 88, 12, 0.25)' : '0 4px 10px rgba(37, 99, 235, 0.25)',
                       }}>
-                        {isSuper ? '' : (c.prenom ? c.prenom.charAt(0).toUpperCase() : (c.nom ? c.nom.charAt(0).toUpperCase() : ''))}
+                        {isSuper ? <Shield size={24} /> : (c.prenom ? c.prenom.charAt(0).toUpperCase() : (c.nom ? c.nom.charAt(0).toUpperCase() : ''))}
                       </div>
 
                       {/* Nom du caissier */}
@@ -2782,7 +2804,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                   padding: '6px 12px', borderRadius: 8
                 }}
               >
-                <span></span>
+                <KeyRound size={14} />
                 <span>Gérant : Gérer l&apos;équipe & modifier les codes PIN</span>
               </button>
             </div>
@@ -2847,7 +2869,7 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
                     fontWeight: 900,
                     flexShrink: 0
                   }}>
-                    {cibleCaissier.role === 'superviseur' ? '' : (cibleCaissier.prenom ? cibleCaissier.prenom.charAt(0).toUpperCase() : '')}
+                    {cibleCaissier.role === 'superviseur' ? <Shield size={18} /> : (cibleCaissier.prenom ? cibleCaissier.prenom.charAt(0).toUpperCase() : '')}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--pos-navy, #0f172a)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -3065,649 +3087,54 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
       )}
 
-
-      {conflitSessionMessage && (
-        <div className="no-print" style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#ffffff', borderRadius: 16, padding: 32, width: '100%', maxWidth: 460, textAlign: 'center', border: '2px solid #dc2626', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}></div>
-            <h2 style={{ margin: 0, fontSize: 18, color: '#dc2626', fontWeight: 900 }}>Conflit de Session POS</h2>
-            <p style={{ marginTop: 12, fontSize: 14, color: '#475569', lineHeight: 1.6 }}>{conflitSessionMessage}</p>
-            
-            <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button
-                onClick={() => {
-                  setVerrouille(true);
-                  setConflitSessionMessage(null);
-                }}
-                style={{ width: '100%', padding: '12px', background: '#475569', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}
-              >
-                ↩ Changer de Caissier / Verrouiller
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Styles Globaux Caisse POS (Plein Écran, 3 Colonnes & Thèmes) -> styles déportés dans ./caisse.css */}
-
-      {/* En-tête MOBILE-FIRST NOPALOU POS — Style Terminal POS Pro (Shopify/Square) */}
-      <header className="caisse-header no-print" style={{
-        background: 'var(--pos-surface)',
-        borderBottom: '2px solid var(--pos-primary)',
-        padding: '0 10px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        boxShadow: 'var(--pos-shadow)',
-        gap: 6,
-        height: 52,
-        minHeight: 52,
-        flexShrink: 0,
-        flexWrap: 'nowrap',
-      }}>
-        {/* Côté Gauche : Retour + Identité Boutique & Sélecteur */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexShrink: 1 }}>
-          {initialToken ? (
-            <div
-              style={{
-                height: 34,
-                padding: '0 10px',
-                fontSize: 12,
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                flexShrink: 0,
-                background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                color: '#ffffff',
-                borderRadius: 8,
-                boxShadow: '0 2px 6px rgba(29,78,216,0.3)'
-              }}
-            >
-              <span></span>
-              <span className="caisse-label-desktop">{t('caisse.terminalCashier')}</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                const targetUrl = boutiqueActiveId ? `/boutique?manage=${boutiqueActiveId}` : '/boutique';
-                if (roleActif === 'superviseur') {
-                  quitterVersDashboard();
-                  window.location.href = targetUrl;
-                } else {
-                  demanderValidationSuperviseur('Accès au Dashboard Gestion Boutique (Gérant)', () => {
-                    quitterVersDashboard();
-                    window.location.href = targetUrl;
-                  });
-                }
-              }}
-              className="caisse-btn-retour"
-              style={{
-                height: 34,
-                padding: '0 10px',
-                fontSize: 12,
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 5,
-                flexShrink: 0,
-                background: isDarkMode ? '#1e293b' : '#1e3a5f',
-                color: '#ffffff',
-                border: isDarkMode ? '1px solid #334155' : '1px solid #1e3a5f',
-                borderRadius: 8,
-                cursor: 'pointer',
-                boxShadow: isDarkMode ? '0 2px 6px rgba(0,0,0,0.3)' : '0 2px 6px rgba(28,43,74,0.2)',
-                transition: 'all 0.15s ease',
-              }}
-              title="Retourner au tableau de bord de la boutique"
-            >
-              <ArrowLeft size={14} />
-              <span className="caisse-label-desktop">{t('caisse.shop') || 'Boutique'}</span>
-            </button>
-          )}
-
-          {/* Badge Hors-Ligne & Sync (affiche le total des opérations locales : ventes + dettes) */}
-          {offlineModeActive ? (
-            <div className="caisse-status-badge" title={`${ventesHorsLigneCount} vente(s) et ${dettesHorsLigneCount} dette(s) locale(s) en attente de synchronisation`} style={{
-              background: '#dc2626',
-              color: '#fff',
-              padding: '3px 8px',
-              borderRadius: 6,
-              fontWeight: 800,
-              fontSize: 10,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              flexShrink: 0,
-              whiteSpace: 'nowrap',
-              animation: 'pulse 1.5s infinite'
-            }}>
-              <span></span>
-              <span className="caisse-label-desktop">Hors-Ligne</span>
-              {totalHorsLigneCount > 0 && (
-                <span style={{ background: '#991b1b', padding: '1px 5px', borderRadius: 4, fontSize: 9.5, fontWeight: 900 }}>
-                  {totalHorsLigneCount}
-                </span>
-              )}
-            </div>
-          ) : totalHorsLigneCount > 0 ? (
-            <button
-              type="button"
-              onClick={() => declencherSyncOffline()}
-              title="Cliquez pour synchroniser immédiatement les opérations locales en attente"
-              style={{
-                background: '#ea580c',
-                color: '#fff',
-                border: 'none',
-                padding: '3px 8px',
-                borderRadius: 6,
-                fontWeight: 800,
-                fontSize: 10,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                cursor: 'pointer',
-                flexShrink: 0,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span>↻</span>
-              <span>{syncingOffline ? 'Sync...' : `Sync (${totalHorsLigneCount})`}</span>
-            </button>
-          ) : null}
-
-          {/* Badge & Sélecteur Boutique Pro (Toujours visible avec logo + nom lisible) */}
-          {boutiques.length > 0 && (
-            <div
-              style={{
-                position: 'relative',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg)',
-                border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border)',
-                borderRadius: 8,
-                padding: '3px 8px 3px 4px',
-                height: 34,
-                flexShrink: 1,
-                minWidth: 0,
-              }}
-              title={boutiques.length > 1 ? "Boutique active (cliquez pour changer de boutique)" : "Boutique active"}
-            >
-              {activeBoutiqueObj?.logo ? (
-                <img
-                  src={activeBoutiqueObj.logo}
-                  alt={activeBoutiqueObj.nom}
-                  style={{ width: 26, height: 26, borderRadius: 6, objectFit: 'cover', flexShrink: 0, border: isDarkMode ? '1px solid #475569' : '1px solid var(--pos-border)' }}
-                />
-              ) : (
-                <span style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 6,
-                  background: 'linear-gradient(135deg, var(--pos-primary, #C75B00) 0%, #ea580c 100%)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12.5,
-                  fontWeight: 900,
-                  flexShrink: 0,
-                }}>
-                  {activeBoutiqueObj?.nom ? activeBoutiqueObj.nom.charAt(0).toUpperCase() : ''}
-                </span>
-              )}
-
-              <span style={{
-                fontSize: 12,
-                fontWeight: 800,
-                color: isDarkMode ? '#f8fafc' : '#1e3a5f',
-                maxWidth: 110,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}>
-                {activeBoutiqueObj?.nom || boutiques[0]?.nom}
-              </span>
-
-              {boutiques.length > 1 && !initialToken && (
-                <>
-                  <ChevronDown size={12} style={{ color: isDarkMode ? '#94a3b8' : '#64748b', flexShrink: 0 }} />
-                  <select
-                    value={boutiqueActiveId}
-                    onChange={e => demanderChangementBoutique(e.target.value)}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      opacity: 0,
-                      width: '100%',
-                      height: '100%',
-                      cursor: 'pointer',
-                    }}
-                    title="Changer de boutique (sécurisé par PIN Superviseur)"
-                  >
-                    {boutiques.map(b => (
-                      <option key={b.id} value={b.id}>
-                        {b.is_trial || b.plan_actif === 'pro' || b.plan_actif === 'business' ? '' : ''} {b.nom}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Côté Droit : Caissier Pro + Thème + Layout (Desktop) + Outils + Session */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-          {/* Espace Caissier Pro (Tap pour changer de caissier ou verrouiller) */}
-          <button
-            type="button"
-            onClick={() => setModalChangerCaissier(true)}
-            title={`Caissier actif : ${caissierNom} — Cliquer pour changer de caissier ou verrouiller`}
-            style={{
-              height: 34,
-              padding: '0 10px',
-              borderRadius: 20,
-              background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg)',
-              border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border)',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              flexShrink: 0,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <span style={{ fontSize: 13, lineHeight: 1 }}>
-              {roleActif === 'superviseur' ? '' : <User size={13} color="var(--pos-primary)" />}
-            </span>
-            <span style={{
-              fontSize: 11,
-              fontWeight: 800,
-              color: 'var(--pos-text)',
-              maxWidth: 75,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-              {caissierNom?.split(' ')[0] || caissierNom}
-            </span>
-            <ChevronDown size={12} color={isDarkMode ? '#94a3b8' : '#64748b'} />
-            <span
-              style={{
-                width: 6.5,
-                height: 6.5,
-                borderRadius: '50%',
-                backgroundColor: session ? '#16a34a' : '#94a3b8',
-                boxShadow: session ? '0 0 0 2px rgba(22, 163, 74, 0.25)' : 'none',
-                flexShrink: 0,
-              }}
-              title={session ? 'Session caisse active' : 'Session caisse fermée'}
-            />
-          </button>
-
-          {/* Bouton Bascule Mode Nuit / Jour (Vectoriel Sun / Moon) */}
-          <button
-            type="button"
-            onClick={toggleDarkMode}
-            title={isDarkMode ? "Passer en mode jour" : "Passer en mode nuit (sombre)"}
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              border: isDarkMode ? '1px solid #334155' : '1.5px solid var(--pos-border)',
-              background: isDarkMode ? '#1e293b' : 'var(--pos-surface)',
-              color: isDarkMode ? '#f59e0b' : 'var(--pos-text)',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              boxShadow: 'var(--pos-shadow)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {isDarkMode ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
-
-          {/* Bouton Bascule 3 Colonnes — Réservé aux écrans larges desktop */}
-          <button
-            type="button"
-            onClick={toggleLayoutColCentrale}
-            title="Afficher ou masquer la colonne centrale (pupitre tactile express)"
-            className="caisse-desktop-only"
-            style={{
-              height: 34,
-              padding: '0 8px',
-              borderRadius: 8,
-              border: isDarkMode ? '1px solid #334155' : '1.5px solid var(--pos-border)',
-              background: layoutColCentrale ? 'var(--pos-primary-bg)' : (isDarkMode ? '#1e293b' : 'var(--pos-surface)'),
-              color: layoutColCentrale ? 'var(--pos-primary)' : 'var(--pos-text)',
-              fontWeight: 800,
-              fontSize: 11.5,
-              cursor: 'pointer',
-              alignItems: 'center',
-              gap: 5,
-              boxShadow: 'var(--pos-shadow)',
-              flexShrink: 0,
-            }}
-          >
-            <Columns3 size={14} />
-            <span className="caisse-label-desktop">{layoutColCentrale ? '3 Col' : '2 Col'}</span>
-          </button>
-
-          {/* Menu Dropdown Outils & Actions */}
-          <div style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => setMenuOutilsOuvert(!menuOutilsOuvert)}
-              className="pos-btn pos-btn-sm pos-btn-secondary"
-              style={{
-                height: 34,
-                padding: '0 8px',
-                borderRadius: 8,
-                border: isDarkMode ? '1px solid #334155' : '1.5px solid var(--pos-border)',
-                background: menuOutilsOuvert ? 'var(--pos-primary-bg)' : (isDarkMode ? '#1e293b' : 'var(--pos-surface)'),
-                color: menuOutilsOuvert ? 'var(--pos-primary)' : 'var(--pos-text)',
-                gap: 5,
-                flexShrink: 0,
-                fontWeight: 800,
-                fontSize: 11.5,
-                display: 'inline-flex',
-                alignItems: 'center',
-              }}
-              title={t('caisse.tools') || 'Outils et clôture'}
-            >
-              <Settings size={14} />
-              <span className="caisse-label-desktop">{t('caisse.tools')}</span>
-            </button>
-
-            {menuOutilsOuvert && (
-              <>
-                <div
-                  onClick={() => setMenuOutilsOuvert(false)}
-                  style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
-                />
-                <div style={{
-                  position: 'fixed',
-                  top: 56,
-                  right: 12,
-                  background: isDarkMode ? '#1e293b' : 'var(--pos-surface, #ffffff)',
-                  border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border, #e2e8f0)',
-                  borderRadius: 12,
-                  padding: 8,
-                  zIndex: 9999,
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 3,
-                  minWidth: 220,
-                }}>
-                  <div style={{ padding: '4px 10px 6px', borderBottom: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border, #f1f5f9)', marginBottom: 2 }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#94a3b8' : 'var(--pos-text2, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {t('caisse.toolsTitle')}
-                    </span>
-                  </div>
-
-                  {/* Changer de Caissier */}
-                  <button
-                    onClick={() => { setModalChangerCaissier(true); setMenuOutilsOuvert(false); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%',
-                      background: isDarkMode ? '#1e293b' : 'var(--pos-primary-bg, #fff7ed)',
-                      border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border, #fed7aa)',
-                      color: 'var(--pos-primary, #ea580c)',
-                      fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4
-                    }}
-                  >
-                    <User size={14} />
-                    <span>Changer de caissier</span>
-                  </button>
-
-                  {/* Accès Clôture Z / Ouverture Session intégré dans Outils */}
-                  {session ? (
-                    <button
-                      onClick={() => { setModalClotureZ(true); setMenuOutilsOuvert(false); }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%',
-                        background: isDarkMode ? 'rgba(220, 38, 38, 0.15)' : '#FEF2F2',
-                        border: isDarkMode ? '1px solid rgba(220, 38, 38, 0.3)' : '1px solid #FECACA',
-                        color: isDarkMode ? '#F87171' : '#DC2626',
-                        fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4
-                      }}
-                    >
-                      <Lock size={14} />
-                      <span>{t('caisse.closeZ') || 'Clôture Z (Fin de journée)'}</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => { setModalSessionOuverture(true); setMenuOutilsOuvert(false); }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', width: '100%',
-                        background: isDarkMode ? 'rgba(22, 163, 74, 0.15)' : '#F0FDF4',
-                        border: isDarkMode ? '1px solid rgba(22, 163, 74, 0.3)' : '1px solid #BBF7D0',
-                        color: isDarkMode ? '#4ADE80' : '#15803D',
-                        fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 4
-                      }}
-                    >
-                      <Unlock size={14} />
-                      <span>{t('caisse.session') || 'Ouvrir une session de caisse'}</span>
-                    </button>
-                  )}
-
-                  {roleActif === 'superviseur' && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setModalBilanSession(true);
-                          setMenuOutilsOuvert(false);
-                          if (boutiqueActiveId) {
-                            fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/rapport-x/log`, {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ caissierNom, totalVentes: session?.ventes?.total || 0, nbVentes: session?.ventes?.nbVentes || 0 })
-                            }).catch(() => {})
-                          }
-                        }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: isDarkMode ? '#0f172a' : 'var(--pos-primary-bg)', border: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border)', color: 'var(--pos-primary)', fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 2 }}
-                      >
-                        <BarChart3 size={14} color="var(--pos-primary)" /> {t('caisse.reportX')}
-                      </button>
-                      <button
-                        onClick={() => { setModalImportBatch(true); setMenuOutilsOuvert(false); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: isDarkMode ? '#ffffff' : 'var(--pos-text)', fontSize: 12.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
-                      >
-                        <Download size={14} /> {t('caisse.importBatch')}
-                      </button>
-                      <button
-                        onClick={() => { ouvrirConfigPin(); setMenuOutilsOuvert(false); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: isDarkMode ? '#ffffff' : 'var(--pos-text)', fontSize: 12.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
-                      >
-                        <Lock size={14} /> {t('caisse.configPins')}
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => { setModalHistorique(true); setMenuOutilsOuvert(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: isDarkMode ? '#ffffff' : 'var(--pos-text)', fontSize: 12.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
-                  >
-                    <History size={14} /> {roleActif === 'superviseur' ? `${t('caisse.history')} (${historiqueVentes.length})` : 'Mes ventes récentes'}
-                  </button>
-                  <button
-                    onClick={() => { setModalCarnet(true); setMenuOutilsOuvert(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%', background: 'none', border: 'none', color: isDarkMode ? '#ffffff' : 'var(--pos-text)', fontSize: 12.5, fontWeight: 600, textAlign: 'left', cursor: 'pointer', borderRadius: 8 }}
-                  >
-                    <Book size={14} /> {t('caisse.debts')} ({clientsCredits.length})
-                  </button>
-
-                  <div style={{ borderTop: isDarkMode ? '1px solid #334155' : '1px solid var(--pos-border, #f1f5f9)', margin: '4px 0' }} />
-
-                  {roleActif === 'superviseur' && !initialToken && (
-                    <button
-                      onClick={() => {
-                        setMenuOutilsOuvert(false);
-                        const activeB = boutiques.find(b => b.id === boutiqueActiveId) || boutiques[0];
-                        const tok = (activeB as any)?.caisse_token || boutiqueActiveId;
-                        if (tok && typeof window !== 'undefined') {
-                          const terminalUrl = `${window.location.origin}/boutique/caisse?token=${tok}`;
-                          navigator.clipboard.writeText(terminalUrl);
-                          alert(`Lien Terminal Dédié copié !\n\nOuvrez ce lien sur la tablette ou l'ordinateur de vos caissiers pour qu'ils travaillent sans avoir accès à votre compte :\n${terminalUrl}`);
-                        }
-                      }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%',
-                        background: 'none', border: 'none',
-                        color: isDarkMode ? '#60a5fa' : '#2563eb',
-                        fontSize: 12, fontWeight: 700, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 2
-                      }}
-                    >
-                      <span></span>
-                      <span>Copier lien Terminal (Tablette)</span>
-                    </button>
-                  )}
-
-                  {/* Actions de Session POS : Fermer session et Déconnexion compte */}
-                  <button
-                    onClick={() => { setMenuOutilsOuvert(false); verrouillerCaisseManuellement(); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%',
-                      background: 'none', border: 'none',
-                      color: isDarkMode ? '#f97316' : '#ea580c',
-                      fontSize: 12.5, fontWeight: 700, textAlign: 'left', cursor: 'pointer', borderRadius: 8, marginBottom: 2
-                    }}
-                  >
-                    <Lock size={14} />
-                    <span>Fermer session caissier (Qui encaisse ?)</span>
-                  </button>
-
-                  {/* Déconnexion du compte dans le menu Outils */}
-                  <button
-                    onClick={() => { setMenuOutilsOuvert(false); seDeconnecterCompte(); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', width: '100%',
-                      background: isDarkMode ? 'rgba(220, 38, 38, 0.15)' : '#FEF2F2',
-                      border: isDarkMode ? '1px solid rgba(220, 38, 38, 0.3)' : '1px solid #FECACA',
-                      color: isDarkMode ? '#F87171' : '#DC2626',
-                      fontSize: 12.5, fontWeight: 800, textAlign: 'left', cursor: 'pointer', borderRadius: 8
-                    }}
-                  >
-                    <LogOut size={14} />
-                    <span>🚪 Déconnexion du compte Nopalou (Quitter)</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Bouton Session Direct Desktop (Clôture Z / Ouvrir Session) */}
-          {session ? (
-            <button
-              type="button"
-              onClick={() => setModalClotureZ(true)}
-              className="caisse-desktop-only"
-              style={{
-                height: 34,
-                padding: '0 10px',
-                borderRadius: 8,
-                background: isDarkMode ? 'rgba(220, 38, 38, 0.2)' : '#FEF2F2',
-                border: isDarkMode ? '1px solid rgba(220, 38, 38, 0.4)' : '1px solid #FECACA',
-                color: isDarkMode ? '#F87171' : '#DC2626',
-                fontWeight: 800,
-                fontSize: 11.5,
-                alignItems: 'center',
-                gap: 5,
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-              title="Clôturer la session de caisse (Rapport Z)"
-            >
-              <Lock size={12} />
-              <span className="caisse-label-desktop">{t('caisse.closeZ')}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setModalSessionOuverture(true)}
-              style={{
-                height: 34,
-                padding: '0 10px',
-                borderRadius: 8,
-                background: isDarkMode ? 'rgba(22, 163, 74, 0.25)' : '#F0FDF4',
-                border: isDarkMode ? '1px solid rgba(22, 163, 74, 0.5)' : '1px solid #BBF7D0',
-                color: isDarkMode ? '#4ADE80' : '#15803D',
-                fontWeight: 800,
-                fontSize: 11.5,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-              title="Ouvrir une nouvelle session de caisse"
-            >
-              <Unlock size={12} />
-              <span className="caisse-label-desktop">{t('caisse.session')}</span>
-            </button>
-          )}
-
-          {/* Bouton Fermer Session Caissier / Verrouiller */}
-          <button
-            type="button"
-            onClick={verrouillerCaisseManuellement}
-            title={`Fermer la session de ${caissierNom} et verrouiller (Retour à l'écran Qui encaisse)`}
-            style={{
-              height: 34,
-              padding: '0 9px',
-              borderRadius: 8,
-              border: isDarkMode ? '1px solid #334155' : '1.5px solid var(--pos-border)',
-              background: isDarkMode ? '#1e293b' : 'var(--pos-surface)',
-              color: 'var(--pos-text)',
-              fontWeight: 800,
-              fontSize: 11.5,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              cursor: 'pointer',
-              flexShrink: 0,
-              boxShadow: 'var(--pos-shadow)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <Lock size={13} color="#ea580c" />
-            <span className="caisse-label-desktop">Fermer session</span>
-          </button>
-
-          {/* Bouton Déconnexion du Compte Nopalou */}
-          <button
-            type="button"
-            onClick={seDeconnecterCompte}
-            title="Se déconnecter du compte Nopalou (Fermer l'accès et quitter)"
-            style={{
-              height: 34,
-              padding: '0 10px',
-              borderRadius: 8,
-              background: isDarkMode ? 'rgba(220, 38, 38, 0.2)' : '#FEF2F2',
-              border: isDarkMode ? '1px solid rgba(220, 38, 38, 0.4)' : '1px solid #FECACA',
-              color: isDarkMode ? '#F87171' : '#DC2626',
-              fontWeight: 800,
-              fontSize: 11.5,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              cursor: 'pointer',
-              flexShrink: 0,
-              boxShadow: '0 1px 3px rgba(220, 38, 38, 0.1)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <LogOut size={13} />
-            <span className="caisse-label-desktop">Déconnexion compte</span>
-          </button>
-        </div>
-      </header>
+      {/* En-tête Caisse POS Pro (Composant Extrait & Modulaire) */}
+      <PosHeaderBar
+        initialToken={initialToken}
+        boutiqueActiveId={boutiqueActiveId}
+        boutiques={boutiques}
+        activeBoutiqueObj={activeBoutiqueObj}
+        roleActif={roleActif}
+        caissierNom={caissierNom}
+        session={session}
+        offlineModeActive={offlineModeActive}
+        ventesHorsLigneCount={ventesHorsLigneCount}
+        dettesHorsLigneCount={dettesHorsLigneCount}
+        totalHorsLigneCount={totalHorsLigneCount}
+        syncingOffline={syncingOffline}
+        isDarkMode={isDarkMode}
+        layoutColCentrale={layoutColCentrale}
+        menuOutilsOuvert={menuOutilsOuvert}
+        clientsCreditsCount={clientsCredits.length}
+        historiqueVentesCount={historiqueVentes.length}
+        t={t as any}
+        onQuitterVersDashboard={quitterVersDashboard}
+        onDemanderValidationSuperviseur={demanderValidationSuperviseur}
+        onDeclencherSyncOffline={declencherSyncOffline}
+        onDemanderChangementBoutique={demanderChangementBoutique}
+        onOpenModalChangerCaissier={() => setModalChangerCaissier(true)}
+        onToggleDarkMode={toggleDarkMode}
+        onToggleLayoutColCentrale={toggleLayoutColCentrale}
+        onToggleMenuOutils={() => setMenuOutilsOuvert(!menuOutilsOuvert)}
+        onOpenModalTiroirCaisse={() => setModalTiroirCaisse(true)}
+        onOpenModalClotureZ={() => setModalClotureZ(true)}
+        onOpenModalSessionOuverture={() => setModalSessionOuverture(true)}
+        onOpenModalBilanSession={() => {
+          setModalBilanSession(true)
+          if (boutiqueActiveId) {
+            fetch(`/api/boutiques/${boutiqueActiveId}/pos-sessions/rapport-x/log`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ caissierNom, totalVentes: session?.ventes?.total || 0, nbVentes: session?.ventes?.nbVentes || 0 }),
+            }).catch(() => {})
+          }
+        }}
+        onOpenModalImportBatch={() => setModalImportBatch(true)}
+        onOpenConfigPin={ouvrirConfigPin}
+        onOpenModalHistorique={() => setModalHistorique(true)}
+        onOpenModalCarnet={() => setModalCarnet(true)}
+        onVerrouillerCaisseManuellement={verrouillerCaisseManuellement}
+        onSeDeconnecterCompte={seDeconnecterCompte}
+      />
 
       {/* Sélecteur d'Onglets Mobile (Visible <= 1024px) */}
       <div className="caisse-mobile-tabs no-print">
@@ -4147,131 +3574,16 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         />
       </div>
 
-      {/* MODALE ÉDITION CLIENT CARNET POS */}
-      {modalEditClientCarnet && clientCarnetAEditer && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
-          zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12
-        }}>
-          <div style={{
-            background: '#ffffff', borderRadius: 20, maxWidth: 480, width: '100%',
-            maxHeight: '92vh', overflowY: 'auto', padding: 20, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: '#0f172a' }}>
-                Modifier la fiche client
-              </h3>
-              <button onClick={() => setModalEditClientCarnet(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#94a3b8' }}>✕</button>
-            </div>
-
-            <form onSubmit={async (e) => {
-              e.preventDefault()
-              if (!editClientNom.trim() || !editClientTel.trim()) {
-                alert('Nom et téléphone obligatoires.')
-                return
-              }
-              if (boutiqueActiveId) {
-                setSubmittingEditClient(true)
-                try {
-                  const res = await fetch(`/api/boutiques/${boutiqueActiveId}/credits-clients/${clientCarnetAEditer.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      nom: editClientNom,
-                      telephone: editClientTel,
-                      adresse: editClientAdresse,
-                      plafond_max: editClientPlafond,
-                      note_client: editClientNote,
-                    })
-                  })
-                  if (res.ok) {
-                    await chargerClientsCredits(boutiqueActiveId)
-                    setModalEditClientCarnet(false)
-                    alert('Profil client mis à jour avec succès !')
-                  } else {
-                    const errData = await res.json()
-                    alert(errData.error || 'Erreur lors de la modification.')
-                  }
-                } catch (err) {
-                  console.error('Erreur modification client POS:', err)
-                } finally {
-                  setSubmittingEditClient(false)
-                }
-              }
-            }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Nom complet *</label>
-                <input
-                  type="text"
-                  required
-                  value={editClientNom}
-                  onChange={e => setEditClientNom(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Téléphone (WhatsApp) *</label>
-                <input
-                  type="tel"
-                  required
-                  value={editClientTel}
-                  onChange={e => setEditClientTel(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Adresse / Quartier</label>
-                  <input
-                    type="text"
-                    value={editClientAdresse}
-                    onChange={e => setEditClientAdresse(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Plafond Crédit (FCFA)</label>
-                  <input
-                    type="number"
-                    value={editClientPlafond}
-                    onChange={e => setEditClientPlafond(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 800, color: '#475569', display: 'block', marginBottom: 4 }}>Note / Remarque confidentielle</label>
-                <input
-                  type="text"
-                  value={editClientNote}
-                  onChange={e => setEditClientNote(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, boxSizing: 'border-box' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                <button
-                  type="button"
-                  onClick={() => setModalEditClientCarnet(false)}
-                  style={{ flex: 1, padding: '12px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingEditClient}
-                  style={{ flex: 2, padding: '12px', background: '#10b981', color: '#ffffff', border: 'none', borderRadius: 10, fontWeight: 900, cursor: 'pointer', opacity: submittingEditClient ? 0.7 : 1 }}
-                >
-                  {submittingEditClient ? 'Enregistrement...' : '✓ Enregistrer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* MODALE ÉDITION CLIENT CARNET POS (Composant Extrait & Modulaire) */}
+      <PosEditClientCarnetModal
+        isOpen={modalEditClientCarnet && Boolean(clientCarnetAEditer)}
+        onClose={() => setModalEditClientCarnet(false)}
+        client={clientCarnetAEditer}
+        boutiqueId={boutiqueActiveId}
+        onSuccess={() => {
+          if (boutiqueActiveId) chargerClientsCredits(boutiqueActiveId)
+        }}
+      />
 
       {/* Barre Flottante Sticky Mobile (Catalogue mode) */}
       {tabMobile === 'catalogue' && panier.length > 0 && (
@@ -4290,149 +3602,18 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
         </div>
       )}
 
-      {/* Ticket Impression Thermique 80mm (Format Standard Auchan Sénégal) */}
-      {derniereVente && (
-        <div className="ticket-print-container">
-          <div style={{ textAlign: 'center', marginBottom: 6 }}>
-            {activeBoutiqueObj?.logo && (
-              <img
-                src={activeBoutiqueObj.logo}
-                alt="Logo Boutique"
-                style={{ maxWidth: 90, maxHeight: 45, objectFit: 'contain', margin: '0 auto 4px', display: 'block' }}
-              />
-            )}
-            <div style={{ fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              . {boutiqueActive ? boutiqueActive.nom : 'NOPALOU BOUTIQUE'} .
-            </div>
-            {boutiqueActive?.adresse && <div style={{ fontSize: 10, marginTop: 1 }}>{boutiqueActive.adresse}</div>}
-            {boutiqueActive?.telephone && <div style={{ fontSize: 10 }}>TEL : {boutiqueActive.telephone}</div>}
-            <div style={{ fontSize: 10, fontWeight: 'bold', marginTop: 4, textTransform: 'uppercase' }}>
-              MERCI DE VOTRE VISITE - A BIENTOT
-            </div>
-            <div style={{ fontSize: 10, fontWeight: 'bold', marginTop: 3, borderTop: '1px dashed #000', paddingTop: 3 }}>
-              {derniereVente.caissier?.toUpperCase() || 'CAISSIER'} VOUS A SERVI :
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '3px 0', fontSize: 10, fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-            <span>CODE & ARTICLE</span>
-            <span>MONTANT</span>
-          </div>
-
-          <div style={{ padding: '4px 0', borderBottom: '1px dashed #000' }}>
-            {derniereVente.ticket.map((i, idx) => (
-              <div key={idx} style={{ marginBottom: 4, fontSize: 10.5 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{i.produit.code_barre ? `${i.produit.code_barre} ` : ''}{i.produit.nom.slice(0, 22)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: 8, fontSize: 10 }}>
-                  <span>{i.quantite} x {fcfa(i.prixUnitaire)}</span>
-                  <span style={{ fontWeight: 'bold' }}>{fcfa(i.prixUnitaire * i.quantite)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 11, borderBottom: '1px dashed #000', padding: '5px 0' }}>
-            {derniereVente.remise > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>REMISE {(derniereVente as any).remiseMotif ? `(${(derniereVente as any).remiseMotif.slice(0, 20)})` : ''} :</span>
-                <span>-{fcfa(derniereVente.remise)}</span>
-              </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: '900', margin: '2px 0' }}>
-              <span>TOTAL :</span>
-              <span>{fcfa(derniereVente.total)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5 }}>
-              <span>{derniereVente.mode || 'ESPECES'} :</span>
-              <span style={{ fontWeight: 'bold' }}>{fcfa(derniereVente.total)}</span>
-            </div>
-
-            {derniereVente.detailMixte ? (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: 8, fontSize: 10 }}>
-                  <span>- Espèces :</span>
-                  <span>{fcfa(derniereVente.detailMixte.especes)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: 8, fontSize: 10 }}>
-                  <span>- {derniereVente.detailMixte.autreMode} :</span>
-                  <span>{fcfa(derniereVente.detailMixte.autreMontant)}</span>
-                </div>
-              </>
-            ) : derniereVente.mode === 'ESPECES' ? (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10 }}>
-                  <span>REÇU :</span>
-                  <span>{fcfa(derniereVente.recu || derniereVente.total)}</span>
-                </div>
-                {derniereVente.monnaie > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontWeight: 'bold' }}>
-                    <span>RENDU :</span>
-                    <span>{fcfa(derniereVente.monnaie)}</span>
-                  </div>
-                )}
-              </>
-            ) : null}
-          </div>
-
-          {/* Tableau Récapitulatif Fiscal Sénégal (Format Auchan) */}
-          <div style={{ borderBottom: '1px dashed #000', padding: '4px 0', fontSize: 9.5 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: 2 }}>
-              <span>. TAUX</span>
-              <span>VAL. TVA</span>
-              <span>MONTANT HT</span>
-            </div>
-            {regimeFiscal === 'reel' && !estExonereClient ? (
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>18.00%</span>
-                <span>{fcfa(Math.round(derniereVente.total * 0.18 / 1.18))}</span>
-                <span>{fcfa(Math.round(derniereVente.total / 1.18))}</span>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', fontStyle: 'italic' }}>
-                TVA non applicable (Régime Simplifié CGI)
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontWeight: 'bold', padding: '4px 0', borderBottom: '1px dashed #000' }}>
-            <span>NOMBRE DE PRODUITS :</span>
-            <span>{derniereVente.ticket.reduce((sum, item) => sum + item.quantite, 0)}</span>
-          </div>
-
-          {/* Section Fidélité Reçu */}
-          {clientFidelite && (
-            <div style={{ borderBottom: '1px dashed #000', padding: '4px 0', fontSize: 10 }}>
-              <div style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>FIDÉLITÉ CLIENT :</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Client :</span>
-                <span>{clientFidelite.nom}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Cagnotte disponible :</span>
-                <span style={{ fontWeight: 'bold' }}>{fcfa(clientFidelite.cagnotte_fcfa)}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Bas de ticket & Code-barres transactionnel */}
-          <div style={{ textAlign: 'center', marginTop: 6, fontSize: 9.5 }}>
-            <div style={{ fontFamily: 'monospace', letterSpacing: '0.1em', fontWeight: 'bold', fontSize: 11, margin: '4px 0' }}>
-              ||| | ||||| |||| |||| ||| |||||||
-            </div>
-            <div style={{ fontSize: 9, color: '#333' }}>
-              TICKET #{derniereVente.id?.slice(-8) || '0001'} • {derniereVente.date} {derniereVente.heure}
-            </div>
-            <div style={{ marginTop: 4, fontWeight: 'bold' }}>
-              {activeBoutiqueObj?.message_bas_ticket || 'Dieureudieuf ! A bientôt chez nous.'}
-            </div>
-            <div style={{ marginTop: 2, fontSize: 8.5, color: '#555' }}>
-              Nopalou POS • www.nopalou.com
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Ticket Impression Thermique 80mm (Composant Extrait & Modulaire) */}
+      <PosTicketPrintView
+        vente={derniereVente as any}
+        boutiqueNom={boutiqueActive?.nom}
+        boutiqueAdresse={boutiqueActive?.adresse}
+        boutiqueTelephone={boutiqueActive?.telephone}
+        boutiqueLogo={activeBoutiqueObj?.logo}
+        messageBasTicket={activeBoutiqueObj?.message_bas_ticket}
+        regimeFiscal={regimeFiscal}
+        estExonereClient={estExonereClient}
+        clientFidelite={clientFidelite}
+      />
 
       {/* Modal d'importation par lot pour la caisse */}
       {modalImportBatch && (
@@ -4510,6 +3691,22 @@ export default function CaisseClient({ planActif: planActifProp, initialToken, u
             setSession(null)
             setEspecesComptees('')
             setModalClotureZ(false)
+          }}
+        />
+      )}
+
+      {/* Modale Gestion Tiroir-Caisse & Mouvements d'espèces */}
+      {modalTiroirCaisse && session && (
+        <PosTiroirCaisseModal
+          isOpen={modalTiroirCaisse}
+          sessionId={session.id}
+          boutiqueId={boutiqueActiveId}
+          caissierNom={session.caissierNom || caissierNom}
+          fondInitial={session.fondDeCaisse}
+          ventesEspeces={session.ventes.especes}
+          onClose={() => setModalTiroirCaisse(false)}
+          onMouvementEnregistre={() => {
+            showToast('Mouvement de caisse enregistré !', 'success')
           }}
         />
       )}

@@ -323,6 +323,23 @@ module.exports = async function migrateInline() {
 
       ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS detail_billets JSONB DEFAULT '{}';
       ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS total_remises NUMERIC(12,2) DEFAULT 0;
+      ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS total_entrees_especes NUMERIC(12,2) DEFAULT 0;
+      ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS total_sorties_especes NUMERIC(12,2) DEFAULT 0;
+
+      -- Table de gestion des mouvements d'espèces de caisse (coursiers, monnaie, retraits)
+      CREATE TABLE IF NOT EXISTS boutique_pos_mouvements_caisse (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        session_id   UUID NOT NULL REFERENCES boutique_pos_sessions(id) ON DELETE CASCADE,
+        type         VARCHAR(20) NOT NULL, -- 'entree' | 'sortie'
+        montant      NUMERIC(12,2) NOT NULL,
+        motif        VARCHAR(255) NOT NULL,
+        beneficiaire VARCHAR(150),
+        caissier_nom VARCHAR(150),
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_mouv_session ON boutique_pos_mouvements_caisse(session_id);
+      CREATE INDEX IF NOT EXISTS idx_pos_mouv_boutique ON boutique_pos_mouvements_caisse(boutique_id);
 
       -- ── TABLES FIDÉLISATION CLIENT & RÉCOMPENSES POS ─────────────────────────
       CREATE TABLE IF NOT EXISTS boutique_clients_fidelite (
@@ -1565,12 +1582,44 @@ module.exports = async function migrateInline() {
         session_id     VARCHAR(100),
         created_at     TIMESTAMPTZ DEFAULT NOW()
       );
+      -- Spec Master Audit Faiblesse 04 : Disposition personnalisable des sections de vitrine boutique
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS disposition_sections JSONB DEFAULT '["banniere", "recherche_filtres", "produits", "social", "contact"]';
+
+      -- Spec Master Audit Faiblesse 16 : Gestion des stocks multi-entrepôts / multi-dépôts
+      CREATE TABLE IF NOT EXISTS boutique_entrepots (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom         VARCHAR(150) NOT NULL,
+        adresse     VARCHAR(255),
+        ville       VARCHAR(100) DEFAULT 'Dakar',
+        responsable VARCHAR(150),
+        telephone   VARCHAR(30),
+        est_defaut  BOOLEAN DEFAULT FALSE,
+        actif       BOOLEAN DEFAULT TRUE,
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_entrepots_bq ON boutique_entrepots(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_produit_stocks_entrepots (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id   UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        entrepot_id  UUID NOT NULL REFERENCES boutique_entrepots(id) ON DELETE CASCADE,
+        quantite     INT NOT NULL DEFAULT 0,
+        seuil_alerte INT DEFAULT 5,
+        updated_at   TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_produit_entrepot UNIQUE (produit_id, entrepot_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_bpse_produit ON boutique_produit_stocks_entrepots(produit_id);
+      CREATE INDEX IF NOT EXISTS idx_bpse_entrepot ON boutique_produit_stocks_entrepots(entrepot_id);
+
       CREATE INDEX IF NOT EXISTS idx_sae_boutique_type ON social_analytics_events(boutique_id, event_type);
       CREATE INDEX IF NOT EXISTS idx_sae_post ON social_analytics_events(social_post_id);
       CREATE INDEX IF NOT EXISTS idx_sae_created_at ON social_analytics_events(created_at DESC);
     `);
 
-    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support/social_shop OK');
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support/social_shop/entrepots OK');
   } catch (err) {
     console.warn('[MIGRATE] POS Avancé & Recherches échec:', err.message);
   }

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslation } from '@/i18n/context'
+import { Lock } from 'lucide-react'
+import DevCodeSnippets from './components/DevCodeSnippets'
 
 export interface ApiKey {
   id: string
@@ -189,7 +191,9 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
     return (
       <div style={{ background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: 16, padding: 24, textOverflow: 'ellipsis' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 28 }}></span>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fed7aa', color: '#c2410c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Lock size={20} />
+          </div>
           <div>
             <h3 style={{ margin: 0, fontSize: 18, color: '#9a3412', fontWeight: 800 }}>{t('shop.developer')}</h3>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#c2410c' }}>
@@ -418,6 +422,9 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
           </div>
         )}
       </div>
+
+      {/* SECTION 3 : EXEMPLES DE CODE & INTÉGRATION SDK */}
+      <DevCodeSnippets boutiqueId={boutiqueId} />
     </div>
   )
 }

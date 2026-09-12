@@ -2,10 +2,15 @@
 
 import React, { useState } from 'react'
 import { fcfa } from '@/lib/format'
+import { Banknote, Coins, Lock, ShieldCheck, Calculator, CheckCircle2, X } from 'lucide-react'
 
 interface PosBlindCloseModalProps {
   sessionId: string
   caissierNom: string
+  fondCaisseInitial?: number
+  ventesEspeces?: number
+  totalEntreesEspeces?: number
+  totalSortiesEspeces?: number
   onClose: () => void
   onValiderCloture: (especesComptees: number, detailBillets: Record<string, number>) => Promise<void>
 }
@@ -13,6 +18,10 @@ interface PosBlindCloseModalProps {
 export default function PosBlindCloseModal({
   sessionId,
   caissierNom,
+  fondCaisseInitial = 0,
+  ventesEspeces = 0,
+  totalEntreesEspeces = 0,
+  totalSortiesEspeces = 0,
   onClose,
   onValiderCloture,
 }: PosBlindCloseModalProps) {
@@ -34,19 +43,19 @@ export default function PosBlindCloseModal({
   })
 
   const COUPURES_BILLETS = [
-    { valeur: 10000, label: '10 000 FCFA', icone: '' },
-    { valeur: 5000, label: '5 000 FCFA', icone: '' },
-    { valeur: 2000, label: '2 000 FCFA', icone: '' },
-    { valeur: 1000, label: '1 000 FCFA', icone: '' },
-    { valeur: 500, label: '500 FCFA', icone: '' },
+    { valeur: 10000, label: '10 000 FCFA' },
+    { valeur: 5000, label: '5 000 FCFA' },
+    { valeur: 2000, label: '2 000 FCFA' },
+    { valeur: 1000, label: '1 000 FCFA' },
+    { valeur: 500, label: '500 FCFA' },
   ]
 
   const COUPURES_PIECES = [
-    { valeur: 500, label: '500 FCFA (Pièce)', icone: '🪙' },
-    { valeur: 200, label: '200 FCFA', icone: '🪙' },
-    { valeur: 100, label: '100 FCFA', icone: '🪙' },
-    { valeur: 50, label: '50 FCFA', icone: '🪙' },
-    { valeur: 25, label: '25 FCFA', icone: '🪙' },
+    { valeur: 500, label: '500 FCFA (Pièce)' },
+    { valeur: 200, label: '200 FCFA' },
+    { valeur: 100, label: '100 FCFA' },
+    { valeur: 50, label: '50 FCFA' },
+    { valeur: 25, label: '25 FCFA' },
   ]
 
   const totalCalcule = modeSaisie === 'decompte'
@@ -96,25 +105,27 @@ export default function PosBlindCloseModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span></span> Clôture Z — Comptage des Espèces
+              <Lock size={18} color="#dc2626" />
+              <span>Clôture Z — Comptage des Espèces</span>
             </h3>
             <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
-              Session #{sessionId} • Caissier : <strong>{caissierNom}</strong>
+              Session #{sessionId?.slice(-8) || sessionId} • Caissier : <strong>{caissierNom}</strong>
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, fontSize: 16, fontWeight: 800, cursor: 'pointer' }}
+            style={{ background: '#f1f5f9', border: 'none', color: '#64748b', borderRadius: '50%', width: 32, height: 32, fontSize: 16, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            aria-label="Fermer"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
 
         {/* Note standard bancaire anti-fraude */}
         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#166534', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span></span>
-          <span>Comptage à l’aveugle : comptez le liquide réellement présent dans votre tiroir-caisse sans influence.</span>
+          <ShieldCheck size={16} color="#166534" />
+          <span>Comptage à l&apos;aveugle : comptez le liquide réellement présent dans votre tiroir-caisse sans influence.</span>
         </div>
 
         {/* Mode de saisie : Décompte par billet vs Total direct */}
@@ -127,10 +138,12 @@ export default function PosBlindCloseModal({
               background: modeSaisie === 'decompte' ? '#ffffff' : 'transparent',
               color: modeSaisie === 'decompte' ? '#0f172a' : '#64748b',
               fontWeight: 800, fontSize: 12.5, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               boxShadow: modeSaisie === 'decompte' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            Décompte par Billets & Pièces
+            <Banknote size={15} />
+            <span>Décompte par Billets & Pièces</span>
           </button>
           <button
             type="button"
@@ -140,10 +153,12 @@ export default function PosBlindCloseModal({
               background: modeSaisie === 'direct' ? '#ffffff' : 'transparent',
               color: modeSaisie === 'direct' ? '#0f172a' : '#64748b',
               fontWeight: 800, fontSize: 12.5, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               boxShadow: modeSaisie === 'direct' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
             }}
           >
-            ✍️ Saisie Montant Global
+            <Calculator size={15} />
+            <span>Saisie Montant Global</span>
           </button>
         </div>
 
@@ -152,8 +167,9 @@ export default function PosBlindCloseModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {/* Billets */}
               <div>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
-                  Billets de banque
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <Banknote size={14} />
+                  <span>Billets de banque BCEAO</span>
                 </span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                   {COUPURES_BILLETS.map((c) => (
@@ -180,8 +196,9 @@ export default function PosBlindCloseModal({
 
               {/* Pièces */}
               <div>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
-                  Pièces de monnaie
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <Coins size={14} />
+                  <span>Pièces de monnaie BCEAO</span>
                 </span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                   {COUPURES_PIECES.map((c) => (
@@ -233,7 +250,9 @@ export default function PosBlindCloseModal({
                 {fcfa(totalCalcule)}
               </p>
             </div>
-            <span style={{ fontSize: 28 }}></span>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: '#dbeafe', color: '#1e40af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Banknote size={24} />
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>

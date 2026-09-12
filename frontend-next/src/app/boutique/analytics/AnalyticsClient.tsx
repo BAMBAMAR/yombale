@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTranslation } from '@/i18n/context'
-import { BarChart3, DollarSign, ShoppingCart, Eye, Tag, Activity, CheckCircle2, HelpCircle, TrendingUp, Zap, Store } from 'lucide-react'
+import { BarChart3, DollarSign, ShoppingCart, Eye, Tag, Activity, CheckCircle2, HelpCircle, TrendingUp, Zap, Store, Share2 } from 'lucide-react'
+import AnalyticsActivityChart from '../components/AnalyticsActivityChart'
 
 interface Stats {
   vues_total: string
@@ -190,32 +191,32 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
           {attribution.length > 0 && (
             <div style={{ background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', borderRadius: 14, padding: '16px 20px', marginBottom: 24, boxShadow: 'var(--shadow-xs)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                <span style={{ fontSize: 18 }}></span>
+                <Share2 size={16} style={{ color: 'var(--accent, #C75B00)' }} />
                 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Attribution Sociale — D'où viennent vos commandes ?</h3>
               </div>
               <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text2, #6B5E52)' }}>
                 Commandes 90 derniers jours par canal d'acquisition (partage produit avec UTM)
               </p>
               {(() => {
-                const CANAL_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-                  instagram:  { label: 'Instagram',  icon: '', color: '#db2777', bg: '#fdf2f8' },
-                  tiktok:     { label: 'TikTok',     icon: '🎵', color: '#000',    bg: '#f8f8f8' },
-                  facebook:   { label: 'Facebook',   icon: '📘', color: '#1d4ed8', bg: '#eff6ff' },
-                  twitter:    { label: 'X/Twitter',  icon: '&#120143;',  color: '#000',    bg: '#f9f9f9' },
-                  telegram:   { label: 'Telegram',   icon: '✈️',    color: '#0284c7', bg: '#f0f9ff' },
-                  whatsapp:   { label: 'WhatsApp',   icon: '', color: '#16a34a', bg: '#f0fdf4' },
-                  social:     { label: 'Social',     icon: '', color: '#7c3aed', bg: '#f5f3ff' },
-                  direct:     { label: 'Direct',     icon: '', color: '#64748b', bg: '#f8fafc' },
+                const CANAL_META: Record<string, { label: string; color: string; bg: string }> = {
+                  instagram:  { label: 'Instagram',  color: '#db2777', bg: '#fdf2f8' },
+                  tiktok:     { label: 'TikTok',     color: '#0f172a', bg: '#f8f8f8' },
+                  facebook:   { label: 'Facebook',   color: '#1d4ed8', bg: '#eff6ff' },
+                  twitter:    { label: 'X / Twitter', color: '#0f172a', bg: '#f9f9f9' },
+                  telegram:   { label: 'Telegram',   color: '#0284c7', bg: '#f0f9ff' },
+                  whatsapp:   { label: 'WhatsApp',   color: '#16a34a', bg: '#f0fdf4' },
+                  social:     { label: 'Social',     color: '#7c3aed', bg: '#f5f3ff' },
+                  direct:     { label: 'Direct',     color: '#64748b', bg: '#f8fafc' },
                 };
                 const total = attribution.reduce((s, a) => s + a.nb_commandes, 0) || 1;
                 return attribution.map(a => {
-                  const meta = CANAL_META[a.canal] || { label: a.canal, icon: '', color: '#64748b', bg: '#f8fafc' };
+                  const meta = CANAL_META[a.canal] || { label: a.canal, color: '#64748b', bg: '#f8fafc' };
                   const pct = Math.round((a.nb_commandes / total) * 100);
                   return (
                     <div key={a.canal} style={{ marginBottom: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <span style={{ fontSize: 15 }}>{meta.icon}</span>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: meta.color, display: 'inline-block' }} />
                           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>{meta.label}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -233,6 +234,9 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
               })()}
             </div>
           )}
+
+          {/* Graphique d'Activité SVG */}
+          {historique.length > 0 && <AnalyticsActivityChart historique={historique} />}
 
           {/* Historique 30j */}
           {historique.length > 0 && (

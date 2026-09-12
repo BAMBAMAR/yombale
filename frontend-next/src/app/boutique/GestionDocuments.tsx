@@ -688,7 +688,8 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                       <select
                         onChange={(e) => {
                           const val = e.target.value;
-                          if (val === 'pdf') window.open(`/api/boutiques/${boutiqueId}/documents/${doc.id}/pdf`, '_blank');
+                          if (val === 'pdf_moderne' || val === 'pdf') window.open(`/api/boutiques/${boutiqueId}/documents/${doc.id}/pdf?modele=moderne`, '_blank');
+                          else if (val === 'pdf_institutionnel') window.open(`/api/boutiques/${boutiqueId}/documents/${doc.id}/pdf?modele=institutionnel`, '_blank');
                           else if (val === 'edit') handleOuvrirEdition(doc);
                           else if (val === 'convert') handleConvertirEnFacture(doc.id, doc.reference);
                           else if (val === 'delete') handleSupprimerDocument(doc.id, doc.reference);
@@ -708,7 +709,8 @@ export default function GestionDocuments({ boutiqueId }: { boutiqueId: string })
                         }}
                       >
                         <option value="" disabled>{t('shop.docActionsDropdown')}</option>
-                        <option value="pdf">{t('shop.actionDownloadPdf')}</option>
+                        <option value="pdf_moderne">PDF Moderne Épuré</option>
+                        <option value="pdf_institutionnel">PDF Institutionnel OHADA</option>
                         <option value="edit">{t('shop.actionEditDoc')}</option>
                         {(doc.type === 'devis' || doc.type === 'proforma') && (
                           <option value="convert">{t('shop.actionConvertToInvoice')}</option>

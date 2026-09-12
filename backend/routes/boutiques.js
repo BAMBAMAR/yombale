@@ -2447,6 +2447,15 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
       try { horairesJson = typeof horaires === 'string' ? JSON.parse(horaires) : horaires; } catch {}
     }
 
+    let dispositionSectionsJson = null;
+    if (req.body.disposition_sections) {
+      try {
+        dispositionSectionsJson = typeof req.body.disposition_sections === 'string'
+          ? JSON.parse(req.body.disposition_sections)
+          : req.body.disposition_sections;
+      } catch {}
+    }
+
     // UPDATE colonnes de base & personnalisation
     await pool.query(
       `UPDATE boutiques SET nom=$1, description=$2, categorie=$3, telephone=$4, adresse=$5,
@@ -2459,8 +2468,9 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
        bandeau_promo_actif=CASE WHEN $14::boolean IS NOT NULL THEN $14::boolean ELSE bandeau_promo_actif END,
        message_accueil=$15,
        disposition_catalogue=COALESCE($16, disposition_catalogue),
+       disposition_sections=COALESCE($17, disposition_sections),
        updated_at=NOW()
-       WHERE id=$17 AND utilisateur_id=$18`,
+       WHERE id=$18 AND utilisateur_id=$19`,
       [
         nom || existing.rows[0].nom, description !== undefined ? description : existing.rows[0].description,
         categorie || existing.rows[0].categorie, telephone || null, adresse || null, ville || 'Dakar',
@@ -2470,6 +2480,7 @@ router.put('/:id', verifierToken, param('id').isUUID(), multerBoutiqueFields, as
         bandeau_promo !== undefined ? bandeau_promo : null,
         bandeau_promo_actif !== undefined ? (bandeau_promo_actif === 'true' || bandeau_promo_actif === true || bandeau_promo_actif === '1') : null,
         message_accueil !== undefined ? message_accueil : null, disposition_catalogue || null,
+        dispositionSectionsJson ? JSON.stringify(dispositionSectionsJson) : null,
         req.params.id, req.user.userId
       ]
     );
@@ -3843,7 +3854,7 @@ router.post('/:id/pos-sessions/cloturer', verifierToken, async (req, res) => {
              ventes_carte = $5,
              ventes_total = $6,
              nb_ventes = $7,
-             ecart_caisse = ($1 - (fond_caisse_initial + $2))
+             ecart_caisse = ($1 - (fond_caisse_initial + $2 + COALESCE(total_entrees_especes, 0) - COALESCE(total_sorties_especes, 0)))
          WHERE id = $8 AND boutique_id = $9
          RETURNING *`,
         [
@@ -3875,6 +3886,98 @@ router.post('/:id/pos-sessions/cloturer', verifierToken, async (req, res) => {
   } catch (err) {
     console.error('[POST POS SESSION CLOTURER ERR]', err);
     res.status(500).json({ error: 'Erreur lors de la clôture de session' });
+  }
+});
+
+// GET /api/boutiques/:id/pos-sessions/:sessionId/mouvements — Mouvements du tiroir-caisse
+router.get('/:id/pos-sessions/:sessionId/mouvements', verifierToken, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux mouvements de caisse' });
+    }
+    const boutiqueId = b.id;
+    const sessionId = req.params.sessionId;
+
+    const mouvRes = await pool.query(
+      `SELECT * FROM boutique_pos_mouvements_caisse 
+       WHERE boutique_id = $1 AND session_id = $2 
+       ORDER BY created_at DESC`,
+      [boutiqueId, sessionId]
+    );
+
+    res.json({ success: true, mouvements: mouvRes.rows });
+  } catch (err) {
+    console.error('[GET POS MOUVEMENTS ERR]', err);
+    res.status(500).json({ error: 'Erreur récupération mouvements de caisse' });
+  }
+});
+
+// POST /api/boutiques/:id/pos-sessions/:sessionId/mouvements — Entrée ou Sortie d'espèces
+router.post('/:id/pos-sessions/:sessionId/mouvements', verifierToken, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const b = await checkBoutiqueAccess(idParam, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour enregistrer un mouvement de caisse' });
+    }
+    const boutiqueId = b.id;
+    const sessionId = req.params.sessionId;
+    const { type, montant, motif, beneficiaire, caissier_nom } = req.body;
+
+    if (!type || !['entree', 'sortie'].includes(type)) {
+      return res.status(400).json({ error: 'Type invalide (entree ou sortie requis)' });
+    }
+    const montantNum = Number(montant);
+    if (!montantNum || montantNum <= 0) {
+      return res.status(400).json({ error: 'Montant supérieur à 0 requis' });
+    }
+    if (!motif || !motif.trim()) {
+      return res.status(400).json({ error: 'Motif obligatoire' });
+    }
+
+    // Insérer le mouvement
+    const insRes = await pool.query(
+      `INSERT INTO boutique_pos_mouvements_caisse 
+       (boutique_id, session_id, type, montant, motif, beneficiaire, caissier_nom)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [boutiqueId, sessionId, type, montantNum, motif.trim(), beneficiaire?.trim() || null, caissier_nom || 'Caissier']
+    );
+
+    // Mettre à jour les totaux sur la session
+    if (type === 'entree') {
+      await pool.query(
+        `UPDATE boutique_pos_sessions 
+         SET total_entrees_especes = COALESCE(total_entrees_especes, 0) + $1 
+         WHERE id = $2 AND boutique_id = $3`,
+        [montantNum, sessionId, boutiqueId]
+      );
+    } else {
+      await pool.query(
+        `UPDATE boutique_pos_sessions 
+         SET total_sorties_especes = COALESCE(total_sorties_especes, 0) + $1 
+         WHERE id = $2 AND boutique_id = $3`,
+        [montantNum, sessionId, boutiqueId]
+      );
+    }
+
+    // Audit log
+    await enregistrerAuditLog(
+      boutiqueId,
+      req.user?.userId,
+      caissier_nom || 'Caissier',
+      'pos_tiroir',
+      `Mouvement tiroir-caisse ${type.toUpperCase()} de ${montantNum} FCFA (${motif.trim()})`,
+      { sessionId, type, montant: montantNum, motif: motif.trim(), beneficiaire },
+      req
+    );
+
+    res.json({ success: true, mouvement: insRes.rows[0] });
+  } catch (err) {
+    console.error('[POST POS MOUVEMENTS ERR]', err);
+    res.status(500).json({ error: 'Erreur enregistrement mouvement de caisse' });
   }
 });
 
@@ -4547,8 +4650,12 @@ router.get('/:id/documents/:docId/pdf', verifierToken, param('id').isUUID(), par
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${document.type}-${document.reference}.pdf"`);
 
-    const NAVY  = '#1e3a5f';
-    const ORANGE = '#C75B00';
+    const modele = String(req.query.modele || boutique.modele_facture || 'moderne').toLowerCase();
+    const couleurTheme = boutique.couleur_theme || '#1e3a5f';
+    const isInstitutionnel = modele === 'institutionnel';
+
+    const NAVY  = isInstitutionnel ? '#0f2942' : couleurTheme;
+    const ORANGE = isInstitutionnel ? '#047857' : '#C75B00';
     const GRAY  = '#6b7280';
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     doc.pipe(res);
@@ -4567,6 +4674,10 @@ router.get('/:id/documents/:docId/pdf', verifierToken, param('id').isUUID(), par
 
     // ── En-tête émetteur (gauche) ───────────────────────────────────────
     const headerTop = 50;
+    if (isInstitutionnel) {
+      doc.fillColor('#047857').fontSize(7.5).font('Helvetica-Bold')
+         .text('RÉPUBLIQUE DU SÉNÉGAL • CODE GÉNÉRAL DES IMPÔTS • NORME OHADA / SYSCOHADA', 50, headerTop - 15);
+    }
     doc.fillColor(NAVY).fontSize(20).font('Helvetica-Bold')
        .text(boutique.nom, 50, headerTop);
     doc.fontSize(10).font('Helvetica').fillColor(GRAY);
@@ -6104,6 +6215,154 @@ router.get('/:id/export-complet', verifierToken, param('id').isUUID(), async (re
     res.status(500).json({ error: 'Erreur lors de l’exportation complète de la boutique' });
   }
 });
+
+// ── GESTION MULTI-ENTREPÔTS / MULTI-DÉPÔTS (Spec Audit Faiblesse 16) ──────────
+
+// GET /api/boutiques/:id/entrepots — Lister les entrepôts de la boutique
+router.get('/:id/entrepots', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bAccess = await checkBoutiqueAccess(id, req.user.userId);
+    if (!bAccess && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT * FROM boutique_entrepots WHERE boutique_id = $1 ORDER BY est_defaut DESC, nom ASC`,
+      [id]
+    );
+
+    res.json({ success: true, entrepots: rows });
+  } catch (err) {
+    console.error('[ENTREPOTS GET ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des entrepôts' });
+  }
+});
+
+// POST /api/boutiques/:id/entrepots — Créer un entrepôt
+router.post(
+  '/:id/entrepots',
+  verifierToken,
+  param('id').isUUID(),
+  body('nom').trim().notEmpty().withMessage('Le nom de l’entrepôt est requis'),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const bAccess = await checkBoutiqueAccess(id, req.user.userId);
+      if (!bAccess && !req.user?.is_admin) {
+        return res.status(403).json({ error: 'Accès refusé' });
+      }
+
+      const { nom, adresse, ville, responsable, telephone, est_defaut } = req.body;
+
+      if (est_defaut) {
+        await pool.query('UPDATE boutique_entrepots SET est_defaut = FALSE WHERE boutique_id = $1', [id]);
+      }
+
+      const { rows } = await pool.query(
+        `INSERT INTO boutique_entrepots (boutique_id, nom, adresse, ville, responsable, telephone, est_defaut)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *`,
+        [id, nom, adresse || null, ville || 'Dakar', responsable || null, telephone || null, !!est_defaut]
+      );
+
+      res.status(201).json({ success: true, entrepot: rows[0] });
+    } catch (err) {
+      console.error('[ENTREPOTS POST ERR]', err);
+      res.status(500).json({ error: 'Erreur lors de la création de l’entrepôt' });
+    }
+  }
+);
+
+// PUT /api/boutiques/:id/entrepots/:entrepotId — Modifier un entrepôt
+router.put(
+  '/:id/entrepots/:entrepotId',
+  verifierToken,
+  param('id').isUUID(),
+  param('entrepotId').isUUID(),
+  async (req, res) => {
+    try {
+      const { id, entrepotId } = req.params;
+      const bAccess = await checkBoutiqueAccess(id, req.user.userId);
+      if (!bAccess && !req.user?.is_admin) {
+        return res.status(403).json({ error: 'Accès refusé' });
+      }
+
+      const { nom, adresse, ville, responsable, telephone, est_defaut, actif } = req.body;
+
+      if (est_defaut) {
+        await pool.query('UPDATE boutique_entrepots SET est_defaut = FALSE WHERE boutique_id = $1', [id]);
+      }
+
+      const { rows } = await pool.query(
+        `UPDATE boutique_entrepots
+         SET nom = COALESCE($1, nom),
+             adresse = COALESCE($2, adresse),
+             ville = COALESCE($3, ville),
+             responsable = COALESCE($4, responsable),
+             telephone = COALESCE($5, telephone),
+             est_defaut = COALESCE($6, est_defaut),
+             actif = COALESCE($7, actif),
+             updated_at = NOW()
+         WHERE id = $8 AND boutique_id = $9
+         RETURNING *`,
+        [nom, adresse, ville, responsable, telephone, est_defaut, actif, entrepotId, id]
+      );
+
+      if (rows.length === 0) return res.status(404).json({ error: 'Entrepôt introuvable' });
+
+      res.json({ success: true, entrepot: rows[0] });
+    } catch (err) {
+      console.error('[ENTREPOTS PUT ERR]', err);
+      res.status(500).json({ error: 'Erreur lors de la mise à jour de l’entrepôt' });
+    }
+  }
+);
+
+// POST /api/boutiques/:id/entrepots/stocks — Mettre à jour le stock d'un produit dans un entrepôt
+router.post(
+  '/:id/entrepots/stocks',
+  verifierToken,
+  param('id').isUUID(),
+  body('produit_id').isUUID(),
+  body('entrepot_id').isUUID(),
+  body('quantite').isInt({ min: 0 }),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const bAccess = await checkBoutiqueAccess(id, req.user.userId);
+      if (!bAccess && !req.user?.is_admin) {
+        return res.status(403).json({ error: 'Accès refusé' });
+      }
+
+      const { produit_id, entrepot_id, quantite, seuil_alerte } = req.body;
+
+      const { rows } = await pool.query(
+        `INSERT INTO boutique_produit_stocks_entrepots (boutique_id, produit_id, entrepot_id, quantite, seuil_alerte)
+         VALUES ($1, $2, $3, $4, COALESCE($5, 5))
+         ON CONFLICT (produit_id, entrepot_id)
+         DO UPDATE SET quantite = EXCLUDED.quantite, seuil_alerte = EXCLUDED.seuil_alerte, updated_at = NOW()
+         RETURNING *`,
+        [id, produit_id, entrepot_id, quantite, seuil_alerte]
+      );
+
+      // Met à jour la quantité totale agrégée du produit
+      await pool.query(
+        `UPDATE boutique_produits
+         SET stock_quantite = (
+           SELECT COALESCE(SUM(quantite), 0) FROM boutique_produit_stocks_entrepots WHERE produit_id = $1
+         )
+         WHERE id = $1 AND boutique_id = $2`,
+        [produit_id, id]
+      );
+
+      res.json({ success: true, stock: rows[0] });
+    } catch (err) {
+      console.error('[ENTREPOTS STOCK ERR]', err);
+      res.status(500).json({ error: 'Erreur lors de la mise à jour du stock entrepôt' });
+    }
+  }
+);
 
 module.exports = router;
 

@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import ExternalImg from '@/components/ExternalImg'
+import { CATEGORIES } from '@/lib/categories'
+import { CATEGORY_COVER_PHOTOS } from '@/lib/boutique-covers'
 import {
   Palette, Sparkles, Image as ImageIcon, Check, RefreshCw, Smartphone,
   Monitor, Eye, Upload, Info, AlertTriangle, ShieldCheck, Share2,
   Copy, Tag, MessageCircle, ExternalLink, CheckCircle2, ChevronRight,
-  Sliders, Wand2, Store, Heart, ShoppingCart
+  Sliders, Wand2, Store, Heart, ShoppingCart, Layers, LayoutGrid
 } from 'lucide-react'
+import StudioDispositionSections, { SectionItem, SECTIONS_PAR_DEFAUT } from './StudioDispositionSections'
 
 export interface BoutiqueCustomizationData {
   id: string
@@ -30,6 +33,7 @@ export interface BoutiqueCustomizationData {
   bandeau_promo_actif?: boolean
   message_accueil?: string | null
   disposition_catalogue?: string | null
+  disposition_sections?: string | any[] | null
   horaires?: Record<string, string> | null
 }
 
@@ -134,44 +138,6 @@ const PALETTES_POPULAIRES = [
   { nom: 'Ocre Doré', hex: '#D97706' },
 ]
 
-const COUVERTURES_MODELES: Record<string, { titre: string; url: string; badge: string }[]> = {
-  mode: [
-    { titre: 'Boutique Chic & Vêtements', url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80', badge: 'Chic' },
-    { titre: 'Atelier Couture & Bazin', url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80', badge: 'Traditionnel' },
-    { titre: 'Mode Pastel & Tendance', url: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1200&q=80', badge: 'Tendance' },
-    { titre: 'Maroquinerie & Chaussures', url: 'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&w=1200&q=80', badge: 'Luxe' },
-  ],
-  smartphones: [
-    { titre: 'Showroom Smartphones', url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80', badge: 'Tech' },
-    { titre: 'Réparation & Accessoires', url: 'https://images.unsplash.com/photo-1565849904461-04a58ad377e0?auto=format&fit=crop&w=1200&q=80', badge: 'Service' },
-    { titre: 'Mobiles Haute Gamme', url: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=1200&q=80', badge: 'Premium' },
-  ],
-  informatique: [
-    { titre: 'Setup Laptops & Informatique', url: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1200&q=80', badge: 'Pro' },
-    { titre: 'Écrans & Bureautique', url: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&w=1200&q=80', badge: 'Bureau' },
-    { titre: 'Gaming & Accessoires', url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80', badge: 'Gaming' },
-  ],
-  alimentation: [
-    { titre: 'Épicerie Fine & Marché', url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80', badge: 'Frais' },
-    { titre: 'Rayons Propres Supermarché', url: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=1200&q=80', badge: 'Épicerie' },
-    { titre: 'Étal de Fruits & Légumes', url: 'https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&w=1200&q=80', badge: 'Marché' },
-  ],
-  beaute: [
-    { titre: 'Cosmétiques & Soins Doux', url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80', badge: 'Douceur' },
-    { titre: 'Parfumerie & Luxe Doré', url: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?auto=format&fit=crop&w=1200&q=80', badge: 'Luxe' },
-    { titre: 'Salon de Beauté & Soins', url: 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?auto=format&fit=crop&w=1200&q=80', badge: 'Bien-être' },
-  ],
-  'auto-moto': [
-    { titre: 'Garage & Pièces Mécaniques', url: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1200&q=80', badge: 'Atelier' },
-    { titre: 'Véhicules & Showroom Auto', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80', badge: 'Showroom' },
-    { titre: 'Lubrifiants & Entretien', url: 'https://images.unsplash.com/photo-1635784065399-c020521e6490?auto=format&fit=crop&w=1200&q=80', badge: 'Pro' },
-  ],
-  quincaillerie: [
-    { titre: 'Outillage & Matériel BTP', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80', badge: 'BTP' },
-    { titre: 'Bricolage & Équipements', url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1200&q=80', badge: 'Matériaux' },
-  ],
-}
-
 // Fonction de calcul de contraste WCAG simple pour garantir la lisibilité
 function getContrastColor(hexColor: string): string {
   const cleanHex = hexColor.replace('#', '')
@@ -191,11 +157,43 @@ export default function StudioPersonnalisation({
   onSaved?: () => void
 }) {
   // ── États du formulaire de personnalisation ─────────────────────────────────
+  const [categorie, setCategorie] = useState<string>(boutique.categorie || 'mixte')
   const [styleActif, setStyleActif] = useState<string>(boutique.theme_style || 'moderne')
   const [couleurTheme, setCouleurTheme] = useState<string>(boutique.couleur_theme || '#C75B00')
   const [couleurSecondaire, setCouleurSecondaire] = useState<string>(boutique.couleur_secondaire || '#F8F5F0')
   const [formeBoutons, setFormeBoutons] = useState<string>(boutique.forme_boutons || 'squircle')
   const [dispositionCatalogue, setDispositionCatalogue] = useState<string>(boutique.disposition_catalogue || 'grille')
+  const [dispositionSections, setDispositionSections] = useState<SectionItem[]>(() => {
+    if (boutique.disposition_sections) {
+      try {
+        const parsed = typeof boutique.disposition_sections === 'string'
+          ? JSON.parse(boutique.disposition_sections)
+          : boutique.disposition_sections
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const mapped: SectionItem[] = []
+          for (const item of parsed) {
+            const id = typeof item === 'string' ? item : item.id
+            const def = SECTIONS_PAR_DEFAUT.find(s => s.id === id)
+            if (def) {
+              mapped.push({
+                ...def,
+                visible: typeof item === 'object' && item.visible !== undefined ? item.visible : true,
+              })
+            }
+          }
+          for (const def of SECTIONS_PAR_DEFAUT) {
+            if (!mapped.some(m => m.id === def.id)) {
+              mapped.push(def)
+            }
+          }
+          return mapped
+        }
+      } catch (err) {
+        console.warn('[StudioPersonnalisation] Erreur parsing disposition_sections:', err)
+      }
+    }
+    return [...SECTIONS_PAR_DEFAUT]
+  })
   
   const [slogan, setSlogan] = useState<string>(boutique.slogan || '')
   const [bandeauPromo, setBandeauPromo] = useState<string>(boutique.bandeau_promo || '')
@@ -216,6 +214,13 @@ export default function StudioPersonnalisation({
   const [activeCategoryCoversTab, setActiveCategoryCoversTab] = useState<string>(
     (boutique.categorie || 'mode').toLowerCase()
   )
+
+  // Synchronisation dynamique : quand la catégorie de la boutique change, on met à jour les bannières suggérées
+  useEffect(() => {
+    if (categorie) {
+      setActiveCategoryCoversTab(categorie.toLowerCase())
+    }
+  }, [categorie])
 
   // ── Aperçu en direct (Mobile vs Desktop Mockup) ─────────────────────────────
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile')
@@ -373,6 +378,7 @@ export default function StudioPersonnalisation({
 
     try {
       const formData = new FormData()
+      formData.append('categorie', categorie)
       formData.append('theme_style', styleActif)
       formData.append('couleur_theme', couleurTheme)
       formData.append('couleur_secondaire', couleurSecondaire)
@@ -382,6 +388,7 @@ export default function StudioPersonnalisation({
       formData.append('bandeau_promo', bandeauPromo)
       formData.append('bandeau_promo_actif', String(bandeauPromoActif))
       formData.append('message_accueil', messageAccueil)
+      formData.append('disposition_sections', JSON.stringify(dispositionSections))
 
       if (coverFile) {
         formData.append('cover', coverFile)
@@ -403,6 +410,7 @@ export default function StudioPersonnalisation({
         throw new Error(d.error || 'Impossible d\'enregistrer la personnalisation.')
       }
 
+      boutique.categorie = categorie
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 5000)
       if (onSaved) onSaved()
@@ -600,18 +608,60 @@ export default function StudioPersonnalisation({
         {/* COLONNE GAUCHE : LES CONTRÔLES SIMPLES DU MARCHAND */}
         <div className={`studio-editor-col ${activeScreenTab === 'apercu' ? 'studio-editor-hidden-mobile' : ''}`} style={{ flexDirection: 'column', gap: 16 }}>
           
-          {/* BLOC 1 : CHOIX DU STYLE (EN 1 CLIC) */}
+          {/* BLOC 1 : IDENTITÉ, CATÉGORIE & CHOIX DU STYLE */}
           <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span></span>
-                  <span>1. Quel style représente votre boutique ?</span>
+                  <Layers size={16} style={{ color: couleurTheme }} />
+                  <span>1. Secteur d&apos;activité &amp; Style de la boutique</span>
                 </h2>
                 <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>
-                  Nopalou configure automatiquement vos couleurs, boutons et ambiance en 1 clic.
+                  Nopalou calibre automatiquement vos couleurs, boutons et ambiance visuelle.
                 </p>
               </div>
+            </div>
+
+            {/* ── SÉLECTEUR DE CATÉGORIE MÉTIER DE LA BOUTIQUE ── */}
+            <div style={{
+              background: '#F8FAFC',
+              borderRadius: 14,
+              padding: '14px 16px',
+              border: '1.5px solid #E2E8F0',
+              marginBottom: 16,
+            }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>
+                Secteur d&apos;activité principal de votre boutique
+              </label>
+              <select
+                value={categorie}
+                onChange={e => {
+                  const newCat = e.target.value
+                  setCategorie(newCat)
+                  setActiveCategoryCoversTab(newCat.toLowerCase())
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1.5px solid #CBD5E1',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: '#0F172A',
+                  background: '#FFFFFF',
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {CATEGORIES.filter(c => !['annonces', 'immo'].includes(c.value)).map(c => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: 11.5, color: '#64748B', margin: '6px 0 0', lineHeight: 1.4 }}>
+                Définit votre classement sur la marketplace Nopalou et adapte automatiquement les modèles de bannières suggérés ci-dessous.
+              </p>
             </div>
 
             <div className="studio-presets-grid">
@@ -776,11 +826,11 @@ export default function StudioPersonnalisation({
           {/* BLOC 3 : PHOTO DE COUVERTURE INTELLIGENTE */}
           <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>🖼️</span>
-              <span>3. Photo de couverture & Bannière</span>
+              <ImageIcon size={16} style={{ color: couleurTheme }} />
+              <span>3. Photo de couverture &amp; Bannière</span>
             </h2>
             <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px' }}>
-              Choisissez une bannière HD calibrée pour votre activité ou importez la vôtre.
+              Choisissez une bannière HD calibrée pour votre activité ou importez votre propre visuel.
             </p>
 
             {/* Onglets : Modèles vs Import */}
@@ -797,7 +847,7 @@ export default function StudioPersonnalisation({
                 }}
               >
                 <Upload size={14} />
-                <span>Importer ma photo</span>
+                <span>Importer ma photo personnalisée</span>
               </button>
               <input
                 ref={coverInputRef}
@@ -822,65 +872,110 @@ export default function StudioPersonnalisation({
               </div>
             )}
 
-            {/* Modèles de bannières recommandées pour sa catégorie */}
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 800, color: '#475569', margin: '0 0 8px' }}>
-                Modèles thématiques adaptés à votre secteur :
+            {/* ── SÉLECTEUR D'ONGLETS POUR EXPLORER TOUS LES THÈMES DE COUVERTURES ── */}
+            <div style={{ marginBottom: 12 }}>
+              <p style={{ fontSize: 12, fontWeight: 800, color: '#475569', margin: '0 0 6px' }}>
+                Explorer les modèles thématiques haute définition :
               </p>
-              <div className="studio-covers-grid">
-                {(COUVERTURES_MODELES[activeCategoryCoversTab] || COUVERTURES_MODELES['mode']).map((m, idx) => {
-                  const isCurrent = coverUrl === m.url && !coverPreviewLocal
+              <div style={{
+                display: 'flex',
+                gap: 6,
+                overflowX: 'auto',
+                paddingBottom: 6,
+                scrollbarWidth: 'thin',
+              }}>
+                {CATEGORIES.filter(c => !['annonces', 'immo'].includes(c.value)).map(cat => {
+                  const isSelected = activeCategoryCoversTab === cat.value
                   return (
                     <button
-                      key={idx}
+                      key={cat.value}
                       type="button"
-                      onClick={() => {
-                        setCoverUrl(m.url)
-                        setCoverFile(null)
-                        setCoverPreviewLocal(null)
-                        setPhotoFeedback(null)
-                      }}
+                      onClick={() => setActiveCategoryCoversTab(cat.value)}
                       style={{
-                        position: 'relative',
-                        borderRadius: 10,
-                        overflow: 'hidden',
-                        aspectRatio: '16/9',
-                        border: isCurrent ? `2.5px solid ${couleurTheme}` : '1.5px solid #E2E8F0',
+                        whiteSpace: 'nowrap',
+                        padding: '5px 11px',
+                        borderRadius: 20,
+                        border: isSelected ? `1.5px solid ${couleurTheme}` : '1px solid #E2E8F0',
+                        background: isSelected ? couleurTheme : '#F8FAFC',
+                        color: isSelected ? contrastBtnText : '#475569',
+                        fontSize: 11,
+                        fontWeight: 750,
                         cursor: 'pointer',
-                        padding: 0,
-                        background: '#f1f5f9',
+                        flexShrink: 0,
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      <img src={m.url} alt={m.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <div style={{
-                        position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)',
-                        display: 'flex', alignItems: 'flex-end', padding: 6,
-                      }}>
-                        <span style={{ fontSize: 10, color: '#fff', fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
-                          {m.titre}
-                        </span>
-                      </div>
-                      {isCurrent && (
-                        <span style={{
-                          position: 'absolute', top: 4, right: 4, width: 18, height: 18,
-                          borderRadius: '50%', background: couleurTheme, color: contrastBtnText,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900,
-                        }}>
-                          ✓
-                        </span>
-                      )}
+                      {cat.label.replace(/^[^\w\s]+/, '').trim()}
                     </button>
                   )
                 })}
               </div>
+            </div>
+
+            {/* Grille des bannières adaptées à la catégorie sélectionnée */}
+            <div>
+              {(() => {
+                const coverPool = CATEGORY_COVER_PHOTOS[activeCategoryCoversTab]
+                  || CATEGORY_COVER_PHOTOS[categorie]
+                  || CATEGORY_COVER_PHOTOS['default']
+                  || []
+                return (
+                  <div className="studio-covers-grid">
+                    {coverPool.map((photoUrl, idx) => {
+                      const isCurrent = coverUrl === photoUrl && !coverPreviewLocal
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setCoverUrl(photoUrl)
+                            setCoverFile(null)
+                            setCoverPreviewLocal(null)
+                            setPhotoFeedback(null)
+                          }}
+                          style={{
+                            position: 'relative',
+                            borderRadius: 10,
+                            overflow: 'hidden',
+                            aspectRatio: '16/9',
+                            border: isCurrent ? `2.5px solid ${couleurTheme}` : '1.5px solid #E2E8F0',
+                            cursor: 'pointer',
+                            padding: 0,
+                            background: '#f1f5f9',
+                          }}
+                        >
+                          <img src={photoUrl} alt={`Bannière ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{
+                            position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)',
+                            display: 'flex', alignItems: 'flex-end', padding: 6,
+                          }}>
+                            <span style={{ fontSize: 10, color: '#fff', fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                              Modèle {idx + 1} — {activeCategoryCoversTab}
+                            </span>
+                          </div>
+                          {isCurrent && (
+                            <span style={{
+                              position: 'absolute', top: 4, right: 4, width: 18, height: 18,
+                              borderRadius: '50%', background: couleurTheme, color: contrastBtnText,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 900,
+                            }}>
+                              ✓
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           </div>
 
           {/* BLOC 4 : SLOGAN & BANDEAU PROMO COMMERCIALE */}
           <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span></span>
-              <span>4. Slogan & Annonces Commerciales</span>
+              <Tag size={16} style={{ color: couleurTheme }} />
+              <span>4. Slogan &amp; Annonces Commerciales</span>
             </h2>
             <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px' }}>
               Communiquez immédiatement vos points forts et vos offres promotionnelles.
@@ -948,8 +1043,8 @@ export default function StudioPersonnalisation({
           {/* BLOC 5 : FORME DES BOUTONS & DISPOSITION */}
           <div style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', border: '1.5px solid #E2E8F0' }}>
             <h2 style={{ fontSize: 15, fontWeight: 850, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>📐</span>
-              <span>5. Forme des boutons & Catalogue</span>
+              <Sliders size={16} style={{ color: couleurTheme }} />
+              <span>5. Forme des boutons &amp; Catalogue</span>
             </h2>
             <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px' }}>
               Harmonisez l&apos;ergonomie visuelle de vos boutons de commande.
@@ -986,6 +1081,12 @@ export default function StudioPersonnalisation({
               })}
             </div>
           </div>
+
+          {/* BLOC 6 : DISPOSITION & ORDRE DES SECTIONS DE VITRINE */}
+          <StudioDispositionSections
+            sections={dispositionSections}
+            onChange={setDispositionSections}
+          />
         </div>
 
         {/* COLONNE DROITE : PRÉVISUALISATION TEMPS RÉEL (MOCKUP INTERACTIF) */}

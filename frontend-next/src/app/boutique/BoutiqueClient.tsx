@@ -27,6 +27,7 @@ import SocialShopManager from './SocialShopManager'
 import StudioPersonnalisation from './StudioPersonnalisation'
 import MarketingBoutique from './MarketingBoutique'
 import BoutiqueEquipe from './BoutiqueEquipe'
+import AppStoreBoutique from './AppStoreBoutique'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import ProductTourModal from './ProductTourModal'
@@ -39,7 +40,7 @@ export { ProduitForm, CatalogueProduits, BoutiqueProduitsTab, BoutiqueProduitMod
 import DashboardFacile from './components/DashboardFacile'
 import {
   Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square,
-  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter, Palette
+  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter, Palette, Boxes
 } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
@@ -727,7 +728,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite'
+export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite' | 'appstore'
 
 function BoutiqueDashboard({
   boutique,
@@ -1946,7 +1947,7 @@ function BoutiqueManage({
   const router = useRouter()
   const { t, formatNumber } = useTranslation()
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false)
-  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','personnaliser','infos','marketing','social','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite']
+  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','personnaliser','infos','marketing','social','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite','appstore']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   // ── Navigation Progressive : Essentiel (visible par défaut) + Avancé (sur demande) ──
@@ -1971,7 +1972,7 @@ function BoutiqueManage({
       icon: Megaphone,
       title: t('shop.navGroupMarketingSettings') || 'Vitrine & Personnalisation',
       items: [
-        { key: 'personnaliser', icon: Palette, label: '🎨 Personnaliser ma boutique' },
+        { key: 'personnaliser', icon: Palette, label: 'Personnaliser ma boutique' },
         { key: 'social',      icon: Share2, label: 'Réseaux sociaux & Social Shop' },
         { key: 'marketing',   icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
         { key: 'infos',       icon: Settings, label: t('shop.settings') || 'Paramètres' },
@@ -2000,6 +2001,7 @@ function BoutiqueManage({
         { key: 'equipe',      icon: Users, label: t('shop.team') || 'Mon équipe', minPlan: 'business' },
         { key: 'journal',     icon: ScrollText, label: t('shop.auditLog') || 'Journal d\'activité', minPlan: 'business' },
         { key: 'developer',   icon: Code2, label: t('shop.developer') || 'Portail développeur', minPlan: 'business' },
+        { key: 'appstore',    icon: Boxes, label: 'App Store & Extensions', minPlan: 'pro' },
       ],
     },
   ]
@@ -2172,6 +2174,7 @@ function BoutiqueManage({
     personnaliser: { icon: Palette, title: 'Personnaliser ma vitrine', desc: 'Définissez l\'ambiance, les couleurs, la bannière et le slogan uniques de votre boutique en ligne.' },
     journal:     { icon: ScrollText, title: t('shop.auditLog'), desc: t('shop.auditLogDesc') },
     developer:   { icon: Code2, title: t('shop.developer'), desc: t('shop.developerDesc') },
+    appstore:    { icon: Boxes, title: 'App Store & Intégrations', desc: 'Activez vos pixels Meta/TikTok/GA4, webhooks, synchronisation et outils tiers.' },
   }
 
   const currentTabInfo = tabInfoMap[tab] ?? tabInfoMap.dashboard
@@ -3091,6 +3094,7 @@ function BoutiqueManage({
             {tab === 'fidelite'    && <ParametresFidelitePromos boutique={boutique} onUpdate={() => router.refresh()} />}
             {tab === 'journal'     && <BoutiqueLogs boutiqueId={boutique.id} />}
             {tab === 'developer'   && <PortailDeveloppeurBoutique boutiqueId={boutique.id} planActif={effectivePlan || 'decouverte'} />}
+            {tab === 'appstore'    && <AppStoreBoutique boutiqueId={boutique.id} initialMetaPixel={boutique.meta_pixel_id || ''} initialTiktokPixel={boutique.tiktok_pixel_id || ''} initialGa4={boutique.ga4_id || ''} />}
           </>
         )}
       </main>

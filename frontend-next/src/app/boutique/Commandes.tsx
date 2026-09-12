@@ -6,9 +6,10 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import { ZonesView } from './Comptabilite'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
-import { Zap, MessageCircle, Bike } from 'lucide-react'
+import { Zap, MessageCircle, Bike, RotateCcw } from 'lucide-react'
 import ModalNouvelleCommandeWave from './ModalNouvelleCommandeWave'
 import ModalDispatchLivreur, { CommandeDispatch } from './ModalDispatchLivreur'
+import ModalRetourCommande from './ModalRetourCommande'
 
 interface Commande {
   id: string; reference: string; nom_produit: string; quantite: number
@@ -54,7 +55,19 @@ function statutStyle(statut: string) {
   return s ? { color: s.color, background: s.bg, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 } : {}
 }
 
-function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande: Commande; boutiqueId: string; onUpdate: () => void; onDispatch?: (c: Commande) => void }) {
+function CommandeCard({
+  commande,
+  boutiqueId,
+  onUpdate,
+  onDispatch,
+  onRetour,
+}: {
+  commande: Commande;
+  boutiqueId: string;
+  onUpdate: () => void;
+  onDispatch?: (c: Commande) => void;
+  onRetour?: (c: Commande) => void;
+}) {
   const { t, formatPrice, formatNumber } = useTranslation()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -174,8 +187,8 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
             </div>
           </div>
           {commande.note && (
-            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#92400e' }}>
-              📝 {commande.note}
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#92400e', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontWeight: 700 }}>Note :</span> {commande.note}
             </div>
           )}
 
@@ -211,7 +224,7 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                     gap: 6,
                   }}
                 >
-                  <span>🔓 Valider Code PIN Livreur</span>
+                  <span>Valider Code PIN Livreur</span>
                 </button>
               </div>
 
@@ -433,10 +446,33 @@ function CommandeCard({ commande, boutiqueId, onUpdate, onDispatch }: { commande
                     alignItems: 'center',
                     gap: 5,
                   }}
-                  title="Générer et envoyer la fiche de livraison au livreur moto Tiak-Tiak"
+                  title="Générer et envoyer la fiche de livraison (20 transporteurs disponibles)"
                 >
-                  <Bike size={13} /> Tiak-Tiak
+                  <Bike size={13} /> Dispatch Livreur
                 </button>
+
+                {['livree', 'expediee', 'confirmee'].includes(commande.statut) && (
+                  <button
+                    type="button"
+                    onClick={() => onRetour?.(commande)}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#f8fafc',
+                      color: '#475569',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
+                    title="Enregistrer un retour client et émettre un bon d'avoir déductible"
+                  >
+                    <RotateCcw size={13} /> Retour & Avoir
+                  </button>
+                )}
               </div>
             </div>
 
@@ -509,7 +545,19 @@ function regrouperCommandes(commandes: Commande[]): (Commande | Commande[])[] {
   return resultat
 }
 
-function CommandeGroupeCard({ commandes, boutiqueId, onUpdate, onDispatch }: { commandes: Commande[]; boutiqueId: string; onUpdate: () => void; onDispatch?: (c: Commande) => void }) {
+function CommandeGroupeCard({
+  commandes,
+  boutiqueId,
+  onUpdate,
+  onDispatch,
+  onRetour,
+}: {
+  commandes: Commande[];
+  boutiqueId: string;
+  onUpdate: () => void;
+  onDispatch?: (c: Commande) => void;
+  onRetour?: (c: Commande) => void;
+}) {
   const { t, formatPrice, formatNumber } = useTranslation()
   const [open, setOpen] = useState(false)
   const fcfa = (n: number) => formatPrice(n)
@@ -547,7 +595,7 @@ function CommandeGroupeCard({ commandes, boutiqueId, onUpdate, onDispatch }: { c
       {open && (
         <div style={{ borderTop: '1px solid #f3f4f6', padding: '14px 18px', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {commandes.map(c => (
-            <CommandeCard key={c.id} commande={c} boutiqueId={boutiqueId} onUpdate={onUpdate} onDispatch={onDispatch} />
+            <CommandeCard key={c.id} commande={c} boutiqueId={boutiqueId} onUpdate={onUpdate} onDispatch={onDispatch} onRetour={onRetour} />
           ))}
         </div>
       )}
@@ -571,6 +619,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
   const [dispatchCommande, setDispatchCommande] = useState<Commande | null>(null)
+  const [retourCommande, setRetourCommande] = useState<Commande | null>(null)
   const [loading, setLoading] = useState(true)
   const [filtre, setFiltre] = useState('')
   const [filtreCanal, setFiltreCanal] = useState<'tous' | 'web' | 'caisse'>('tous')
@@ -1002,8 +1051,8 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {regrouperCommandes(commandesFiltrees).map((item, i) =>
             Array.isArray(item)
-              ? <CommandeGroupeCard key={item[0].groupe_commande ?? i} commandes={item} boutiqueId={boutiqueId} onUpdate={load} onDispatch={setDispatchCommande} />
-              : <CommandeCard key={item.id} commande={item} boutiqueId={boutiqueId} onUpdate={load} onDispatch={setDispatchCommande} />
+              ? <CommandeGroupeCard key={item[0].groupe_commande ?? i} commandes={item} boutiqueId={boutiqueId} onUpdate={load} onDispatch={setDispatchCommande} onRetour={setRetourCommande} />
+              : <CommandeCard key={item.id} commande={item} boutiqueId={boutiqueId} onUpdate={load} onDispatch={setDispatchCommande} onRetour={setRetourCommande} />
           )}
         </div>
       )}
@@ -1026,6 +1075,18 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
         boutique={boutique || { nom: 'Ma Boutique', adresse: 'Point de retrait', ville: 'Dakar' }}
         onMarquerExpediee={(cId) => {
           updateStatutCommande(boutiqueId, cId, 'expediee').then(() => load())
+        }}
+      />
+
+      {/* Modal Déclaration de Retour & Bon d'Avoir */}
+      <ModalRetourCommande
+        isOpen={Boolean(retourCommande)}
+        onClose={() => setRetourCommande(null)}
+        commande={retourCommande}
+        boutiqueId={boutiqueId}
+        onSuccess={() => {
+          setRetourCommande(null)
+          load()
         }}
       />
     </div>

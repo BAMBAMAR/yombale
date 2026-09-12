@@ -15,6 +15,7 @@ import {
   MapPin, Globe, Sparkles, Search, X, Filter, Grid, List, 
   Eye, Check, ArrowUpDown, ChevronRight, Store
 } from 'lucide-react'
+import { matcherProduitRecherche, scorePertinenceProduit } from '@/lib/recherche-senegal'
 
 export interface Produit {
   id: string
@@ -46,9 +47,9 @@ export interface Annonce {
 }
 
 const CAT_ICONS: Record<string, string> = {
-  smartphones: '', informatique: '', 'tv-electro': '📺',
-  mode: '👗', maison: '', 'auto-moto': '', jeux: '🎮',
-  services: '', alimentation: '🥗', beaute: '💄', autre: '',
+  smartphones: '', informatique: '', 'tv-electro': '',
+  mode: '', maison: '', 'auto-moto': '', jeux: '',
+  services: '', alimentation: '', beaute: '', autre: '',
 }
 
 function getContrastColor(hexColor?: string | null): string {
@@ -374,6 +375,7 @@ export default function BoutiqueDetailClient({
     bandeau_promo_actif?: boolean
     message_accueil?: string | null
     disposition_catalogue?: string | null
+    disposition_sections?: string | any[] | null
   }
   produits: Produit[]
   annonces: Annonce[]
@@ -384,6 +386,25 @@ export default function BoutiqueDetailClient({
   const contrastBtnText = getContrastColor(couleurTheme)
   const radiusMap: Record<string, string> = { droit: '4px', squircle: '10px', arrondi: '14px', pill: '9999px' }
   const currentRadius = radiusMap[boutique.forme_boutons || 'squircle'] || '10px'
+
+  const sectionVisibility = useMemo(() => {
+    const raw = (boutique as any).disposition_sections
+    if (!raw) return { banniere: true, recherche_filtres: true, produits: true, social: true, contact: true }
+    try {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+      if (Array.isArray(parsed)) {
+        const res: Record<string, boolean> = {}
+        for (const item of parsed) {
+          if (typeof item === 'string') res[item] = true
+          else if (typeof item === 'object' && item.id) res[item.id] = item.visible !== false
+        }
+        return res
+      }
+    } catch (err) {
+      console.warn('[BoutiqueDetailClient] Erreur parsing disposition_sections:', err)
+    }
+    return { banniere: true, recherche_filtres: true, produits: true, social: true, contact: true }
+  }, [boutique])
 
   const [tab, setTab] = useState<'produits' | 'social' | 'annonces' | 'infos'>('produits')
   const [commanderProduit, setCommanderProduit] = useState<Produit | null>(null)
@@ -475,8 +496,9 @@ export default function BoutiqueDetailClient({
     let result = [...produits]
 
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim()
-      result = result.filter(p => p.nom.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q)))
+      result = result
+        .filter(p => matcherProduitRecherche(p, searchQuery))
+        .sort((a, b) => scorePertinenceProduit(b, searchQuery) - scorePertinenceProduit(a, searchQuery))
     }
 
     if (catFilter) {
@@ -853,7 +875,7 @@ export default function BoutiqueDetailClient({
             </div>
           ) : produitsFiltres.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 20px', color: '#6b7280', background: '#fff', borderRadius: 14, border: '1px solid #e5e7eb' }}>
-              <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>🔎</span>
+              <Search size={36} style={{ margin: '0 auto 12px', display: 'block', color: '#9ca3af' }} />
               <p style={{ margin: '0 0 12px', fontWeight: 700 }}>Aucun produit ne correspond à vos filtres</p>
               <button
                 onClick={() => { setSearchQuery(''); setCatFilter(''); setPriceFilter(''); setStockOnly(false); }}
@@ -888,7 +910,7 @@ export default function BoutiqueDetailClient({
         <div>
           {annonces.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 20px', color: '#9ca3af' }}>
-              <span style={{ fontSize: 40, display: 'block', marginBottom: 12 }}>📭</span>
+              <Tag size={36} style={{ margin: '0 auto 12px', display: 'block', color: '#9ca3af' }} />
               <p style={{ margin: 0 }}>Aucune annonce pour l&apos;instant.</p>
             </div>
           ) : (
@@ -966,21 +988,21 @@ export default function BoutiqueDetailClient({
                 {boutique.facebook && (
                   <a href={boutique.facebook.startsWith('http') ? boutique.facebook : `https://facebook.com/${boutique.facebook}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', padding: '6px 14px', borderRadius: 20, color: '#1d4ed8', fontSize: 12, fontWeight: 700 }}>
-                      <span>📘 Facebook</span>
+                      <span>Facebook</span>
                     </div>
                   </a>
                 )}
                 {(boutique as any).tiktok && (
                   <a href={(boutique as any).tiktok.startsWith('http') ? (boutique as any).tiktok : `https://www.tiktok.com/@${(boutique as any).tiktok}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#f8f8f8', border: '1px solid #e2e8f0', padding: '6px 14px', borderRadius: 20, color: '#000', fontSize: 12, fontWeight: 700 }}>
-                      <span>🎵 TikTok</span>
+                      <span>TikTok</span>
                     </div>
                   </a>
                 )}
                 {(boutique as any).youtube && (
                   <a href={(boutique as any).youtube.startsWith('http') ? (boutique as any).youtube : `https://www.youtube.com/@${(boutique as any).youtube}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fef2f2', border: '1px solid #fecaca', padding: '6px 14px', borderRadius: 20, color: '#dc2626', fontSize: 12, fontWeight: 700 }}>
-                      <span>▶️ YouTube</span>
+                      <span>YouTube</span>
                     </div>
                   </a>
                 )}
