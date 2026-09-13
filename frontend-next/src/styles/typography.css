@@ -1,0 +1,42 @@
+/* ═══════════════════════════════════════════════════════════════
+   Nopalou Design System — Typography & Text Scale (WCAG Compliant)
+   ════════════════════════════════════════════════════════════════ */
+
+body, button, input, select, textarea, optgroup {
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100vh;
+  letter-spacing: -0.01em;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-archivo), var(--font-inter), system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.text-xs { font-size: var(--text-xs); line-height: 1.33; }
+.text-sm { font-size: var(--text-sm); line-height: 1.4; }
+.text-base { font-size: var(--text-base); line-height: 1.5; }
+.text-md { font-size: var(--text-md); line-height: 1.5; }
+.text-lg { font-size: var(--text-lg); line-height: 1.4; font-weight: 700; }
+.text-xl { font-size: var(--text-xl); line-height: 1.3; font-weight: 800; }
+.text-2xl { font-size: var(--text-2xl); line-height: 1.2; font-weight: 900; }
+.text-3xl { font-size: var(--text-3xl); line-height: 1.15; font-weight: 900; }
+
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+.font-black { font-weight: 900; }
+
+.text-navy { color: var(--navy); }
+.text-accent { color: var(--accent); }
+.text-price { color: var(--price); }
+.text-muted { color: var(--text-muted); }

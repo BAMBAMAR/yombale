@@ -1,634 +1,51 @@
 'use client'
-import { useEffect, useState, useTransition, useRef } from 'react'
-import { listCommandes, updateStatutCommande, creerBoutiqueDocument } from './actions'
-import { fmtDateHeure } from '@/lib/format'
-import { exportToCSV, printPDFReport } from '@/lib/export'
+
+import { useState } from 'react'
+import { updateStatutCommande } from './actions'
 import { ZonesView } from './Comptabilite'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
-import { Zap, MessageCircle, Bike, RotateCcw } from 'lucide-react'
 import ModalNouvelleCommandeWave from './ModalNouvelleCommandeWave'
-import ModalDispatchLivreur, { CommandeDispatch } from './ModalDispatchLivreur'
+import ModalDispatchLivreur from './ModalDispatchLivreur'
 import ModalRetourCommande from './ModalRetourCommande'
+import type { Commande } from './commandes/types'
+import { regrouperCommandes } from './commandes/types'
+import { useCommandesData } from './commandes/useCommandesData'
+import CommandesToolbar from './commandes/CommandesToolbar'
+import CommandeCard from './commandes/CommandeCard'
+import CommandeGroupeCard from './commandes/CommandeGroupeCard'
+import PanierAbandonneList from './commandes/PanierAbandonneList'
 
-interface Commande {
-  id: string; reference: string; nom_produit: string; quantite: number
-  prix_unitaire: number; montant_total: number; frais_livraison: number
-  client_nom: string; client_telephone: string; client_adresse: string | null
-  note: string | null; statut: string; source: string; created_at: string
-  methode_paiement: string | null; groupe_commande: string | null
-  statut_sequestre?: string | null
-}
-
-const STATUTS_META: { key: string; color: string; bg: string }[] = [
-  { key: 'en_attente',      color: '#92400e', bg: '#fef3c7' },
-  { key: 'confirmee',       color: '#1d4ed8', bg: '#eff6ff' },
-  { key: 'en_preparation',  color: '#6d28d9', bg: '#f5f3ff' },
-  { key: 'expediee',        color: '#0369a1', bg: '#e0f2fe' },
-  { key: 'livree',          color: '#16a34a', bg: '#dcfce7' },
-  { key: 'annulee',         color: '#dc2626', bg: '#fef2f2' },
-]
-
-const TRANSITIONS: Record<string, string[]> = {
-  en_attente:     ['confirmee', 'annulee'],
-  confirmee:      ['en_preparation', 'annulee'],
-  en_preparation: ['expediee', 'annulee'],
-  expediee:       ['livree', 'annulee'],
-  livree:         [],
-  annulee:        [],
-}
-
-function getStatutLabel(key: string, t: any) {
-  switch (key) {
-    case 'en_attente': return t('shop.statusPending')
-    case 'confirmee': return t('shop.statusConfirmed')
-    case 'en_preparation': return t('shop.statusPreparing')
-    case 'expediee': return t('shop.statusShipped')
-    case 'livree': return t('shop.statusDelivered')
-    case 'annulee': return t('shop.statusCancelled')
-    default: return key
-  }
-}
-
-function statutStyle(statut: string) {
-  const s = STATUTS_META.find(s => s.key === statut)
-  return s ? { color: s.color, background: s.bg, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 } : {}
-}
-
-function CommandeCard({
-  commande,
+export default function Commandes({
   boutiqueId,
-  onUpdate,
-  onDispatch,
-  onRetour,
+  boutique,
 }: {
-  commande: Commande;
-  boutiqueId: string;
-  onUpdate: () => void;
-  onDispatch?: (c: Commande) => void;
-  onRetour?: (c: Commande) => void;
+  boutiqueId: string
+  boutique?: any
 }) {
-  const { t, formatPrice, formatNumber } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [correcting, setCorrecting] = useState(false)
-  const [correctStatut, setCorrectStatut] = useState(commande.statut)
-  const [, startTransition] = useTransition()
-  const next = TRANSITIONS[commande.statut] ?? []
-  const fcfa = (n: number) => formatPrice(n)
-
-  function changeStatut(statut: string) {
-    setLoading(true)
-    startTransition(() => {
-      updateStatutCommande(boutiqueId, commande.id, statut).then(() => {
-        setLoading(false)
-        onUpdate()
-        if (commande.methode_paiement === 'credit' || commande.note?.toLowerCase().includes('crédit')) {
-          window.dispatchEvent(new Event('carnet_updated'))
-        }
-      }).catch(() => setLoading(false))
-    })
-  }
-
-  function applyCorrection() {
-    if (correctStatut === commande.statut) { setCorrecting(false); return }
-    changeStatut(correctStatut)
-    setCorrecting(false)
-  }
-
-  const [showPinModal, setShowPinModal] = useState(false)
-  const [pinSaisi, setPinSaisi] = useState('')
-  const [pinLoading, setPinLoading] = useState(false)
-  const [pinErreur, setPinErreur] = useState<string | null>(null)
-
-  async function debloquerSequestre() {
-    if (!pinSaisi.trim()) {
-      setPinErreur('Veuillez entrer le code PIN secret à 4 chiffres fourni par le client.')
-      return
-    }
-    try {
-      setPinLoading(true)
-      setPinErreur(null)
-      const res = await fetch('/api/paiement-sequestre/debloquer', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reference: commande.reference,
-          codePin: pinSaisi.trim()
-        })
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setPinErreur(data.error || 'Code PIN incorrect')
-        return
-      }
-      alert('' + (data.message || 'Fonds débloqués avec succès ! Commande validée comme livrée.'))
-      setShowPinModal(false)
-      onUpdate()
-    } catch {
-      setPinErreur('Erreur réseau lors de la validation du code PIN')
-    } finally {
-      setPinLoading(false)
-    }
-  }
-
-  return (
-    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-      {/* Header commande */}
-      <div
-        onClick={() => setOpen(!open)}
-        style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', gap: 12 }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-          <span style={statutStyle(commande.statut)}>{getStatutLabel(commande.statut, t)}</span>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {commande.nom_produit} × {commande.quantite}
-            </p>
-            <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
-              {commande.client_nom} · {commande.client_telephone}
-              {commande.source === 'whatsapp' && <span style={{ marginLeft: 6, background: '#dcfce7', color: '#16a34a', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700 }}>WhatsApp</span>}
-            </p>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#C75B00' }}>{fcfa(commande.montant_total)}</p>
-          <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>
-            {fmtDateHeure(commande.created_at)}
-          </p>
-        </div>
-        <span style={{ color: '#9ca3af', flexShrink: 0, fontSize: 12 }}>{open ? '▲' : '▼'}</span>
-      </div>
-
-      {/* Détails */}
-      {open && (
-        <div style={{ borderTop: '1px solid #f3f4f6', padding: '14px 18px', background: '#fafafa' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div>
-              <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>{t('shop.orderClient').toUpperCase()}</p>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{commande.client_nom}</p>
-              <a href={`tel:${commande.client_telephone}`} style={{ fontSize: 13, color: '#1d4ed8' }}>{commande.client_telephone}</a>
-              <br />
-              <a href={`https://wa.me/${commande.client_telephone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
-                style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>WhatsApp</a>
-            </div>
-            <div>
-              <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>{t('shop.orders').toUpperCase()}</p>
-              <p style={{ margin: 0, fontSize: 13 }}>{t('shop.orderReference')} : <strong>{commande.reference}</strong></p>
-              <p style={{ margin: 0, fontSize: 13 }}>{commande.quantite} × {fcfa(commande.prix_unitaire)}</p>
-              {commande.frais_livraison > 0 && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>{t('shop.deliveryZoneLabel')} : {fcfa(commande.frais_livraison)}</p>}
-              {commande.methode_paiement && (
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: commande.methode_paiement === 'credit' ? '#0369a1' : '#6b7280', fontWeight: commande.methode_paiement === 'credit' ? 800 : 400 }}>
-                  {({ wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: t('shop.transactionCreditSale') } as Record<string,string>)[commande.methode_paiement] ?? commande.methode_paiement}
-                </p>
-              )}
-              {commande.client_adresse && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b7280' }}>{commande.client_adresse}</p>}
-            </div>
-          </div>
-          {commande.note && (
-            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 13, color: '#92400e', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontWeight: 700 }}>Note :</span> {commande.note}
-            </div>
-          )}
-
-          {/* Nopalou Pay Safe — Séquestre Actif */}
-          {(commande.statut_sequestre === 'bloque' || (commande as any).statut_sequestre === 'bloque') && (
-            <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: 10, padding: '12px 14px', marginBottom: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 18 }}></span>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#166534' }}>
-                      Nopalou Pay Safe — Paiement sous séquestre
-                    </p>
-                    <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#15803d' }}>
-                      Les fonds sont sécurisés. Demandez le code PIN à 4 chiffres au client lors de la remise du colis pour débloquer le paiement.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setShowPinModal(!showPinModal); setPinErreur(null); setPinSaisi('') }}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: '#16a34a',
-                    color: '#ffffff',
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <span>Valider Code PIN Livreur</span>
-                </button>
-              </div>
-
-              {showPinModal && (
-                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #bbf7d0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>
-                    Saisir le Code PIN à 4 chiffres remis par le client :
-                  </label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={pinSaisi}
-                      onChange={e => setPinSaisi(e.target.value)}
-                      placeholder="Ex : 4819"
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: 6,
-                        border: '1px solid #86efac',
-                        fontSize: 14,
-                        fontWeight: 800,
-                        letterSpacing: 2,
-                        width: 120,
-                        textAlign: 'center',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={debloquerSequestre}
-                      disabled={pinLoading}
-                      style={{
-                        padding: '6px 16px',
-                        borderRadius: 6,
-                        border: 'none',
-                        background: '#15803d',
-                        color: '#ffffff',
-                        fontSize: 12,
-                        fontWeight: 800,
-                        cursor: pinLoading ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      {pinLoading ? 'Vérification…' : 'Débloquer les fonds ✓'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowPinModal(false)}
-                      style={{
-                        padding: '6px 10px',
-                        borderRadius: 6,
-                        border: '1px solid #cbd5e1',
-                        background: '#ffffff',
-                        fontSize: 12,
-                        color: '#64748b',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                  {pinErreur && (
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#dc2626' }}>
-                      {pinErreur}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Actions de statut & Validation Marchand */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Actions Rapides Marchand */}
-            <div style={{ background: '#f8fafc', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 11.5, fontWeight: 800, color: '#334155' }}>{t('shop.quickActions')} :</span>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {commande.statut === 'en_attente' && (
-                  <>
-                    <button
-                      onClick={() => changeStatut('confirmee')}
-                      disabled={loading}
-                      style={{ padding: '6px 12px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      {t('shop.statusConfirmed')}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        let cleanTel = commande.client_telephone.replace(/\D/g, '')
-                        if (cleanTel.length === 9 && (cleanTel.startsWith('77') || cleanTel.startsWith('78') || cleanTel.startsWith('76') || cleanTel.startsWith('75') || cleanTel.startsWith('70'))) {
-                          cleanTel = `221${cleanTel}`
-                        }
-                        const SITE = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
-                        const payUrl = `${SITE}/checkout-express?produit=${(commande as any).produit_id || ''}&boutique=${boutiqueId}&phone=${cleanTel}&pay=wave&ref=${commande.reference}&auto=1`
-                        const cleanNom = commande.client_nom?.trim()
-                        const salutation = cleanNom && cleanNom.toLowerCase() !== 'client whatsapp' ? `Bonjour ${cleanNom} !` : `Bonjour !`
-                        const msg = `${salutation}\n\n` +
-                          `Voici le rappel pour votre commande Nopalou :\n` +
-                          `*Produit :* ${commande.nom_produit} × ${commande.quantite}\n` +
-                          `*TOTAL :* ${fcfa(commande.montant_total)}\n` +
-                          `*Référence :* ${commande.reference}\n\n` +
-                          `*Pour régler directement en 1 clic par Wave sécurisé :*\n` +
-                          `${payUrl}\n\n` +
-                          `Merci pour votre confiance !`
-                        window.open(`https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`, '_blank')
-                      }}
-                      style={{ padding: '6px 12px', background: '#25D366', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                      title="Renvoyer le lien de paiement Wave au client sur WhatsApp"
-                    >
-                      <MessageCircle size={13} /> Relancer Wave
-                    </button>
-
-                    {(commande.methode_paiement === 'credit' || commande.note?.toLowerCase().includes('crédit')) && (
-                      <>
-                        <button
-                          onClick={async () => {
-                            try {
-                              setLoading(true)
-                              const res = await fetch(`/api/boutiques/${boutiqueId}/credits-clients/approuver-commande`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  commande_id: commande.id,
-                                  client_nom: commande.client_nom,
-                                  client_telephone: commande.client_telephone,
-                                  montant: commande.montant_total,
-                                  nom_produit: commande.nom_produit,
-                                  quantite: commande.quantite,
-                                  reference: commande.reference,
-                                }),
-                              })
-                              const data = await res.json()
-                              if (!res.ok) {
-                                alert(data.error || 'Erreur lors de l\'approbation de la demande à crédit.')
-                                return
-                              }
-                              if (typeof onUpdate === 'function') onUpdate()
-                              window.dispatchEvent(new Event('carnet_updated'))
-
-                              const cleanTel = commande.client_telephone.replace(/\D/g, '')
-                              const msgWa = encodeURIComponent(`Bonjour ${commande.client_nom}, votre demande d'achat à crédit de ${fcfa(commande.montant_total)} (${commande.nom_produit}) a été approuvée par la boutique et ajoutée à votre Carnet !`)
-                              
-                              if (confirm(`Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée au Carnet client avec succès !\n\nSouhaitez-vous ouvrir WhatsApp pour envoyer la confirmation au client ?`)) {
-                                window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
-                              }
-                            } catch (err) {
-                              alert('Erreur lors du traitement de la demande.')
-                            } finally {
-                              setLoading(false)
-                            }
-                          }}
-                          disabled={loading}
-                          style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                        >
-                          {t('shop.debts')}
-                        </button>
-
-                        <button
-                          onClick={async () => {
-                            if (!confirm(`Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${commande.client_nom} ?`)) return
-                            changeStatut('annulee')
-                          }}
-                          disabled={loading}
-                          style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                        >
-                          {t('shop.cancelOrder')}
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-
-                <button
-                  onClick={async () => {
-                    try {
-                      setLoading(true)
-                      const res = await creerBoutiqueDocument(boutiqueId, {
-                        type: 'facture',
-                        statut: 'valide',
-                        notes: `Facture issue de la commande Réf: ${commande.reference}`,
-                        items: [{ nom: commande.nom_produit, quantite: commande.quantite, prix: commande.prix_unitaire }]
-                      })
-                      if (res.error) alert(res.error)
-                      else alert(`Facture ${res.reference || ''} générée avec succès !`)
-                    } catch (e) {
-                      alert('Erreur lors de la création de la facture.')
-                    } finally {
-                      setLoading(false)
-                    }
-                  }}
-                  disabled={loading}
-                  style={{ padding: '6px 12px', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                >
-                  {t('shop.createInvoiceAction')}
-                </button>
-
-                <a
-                  href={`https://wa.me/${(commande.client_telephone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${commande.client_nom}, votre commande Réf: ${commande.reference} (${commande.quantite}x ${commande.nom_produit} - ${fcfa(commande.montant_total)}) a été bien validée par notre boutique. Merci pour votre confiance !`)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ padding: '6px 12px', background: '#25D366', color: '#fff', textDecoration: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                >
-                  WhatsApp
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => onDispatch?.(commande)}
-                  style={{
-                    padding: '6px 12px',
-                    background: '#FFF7ED',
-                    color: '#C75B00',
-                    border: '1.5px solid #FED7AA',
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                  }}
-                  title="Générer et envoyer la fiche de livraison (20 transporteurs disponibles)"
-                >
-                  <Bike size={13} /> Dispatch Livreur
-                </button>
-
-                {['livree', 'expediee', 'confirmee'].includes(commande.statut) && (
-                  <button
-                    type="button"
-                    onClick={() => onRetour?.(commande)}
-                    style={{
-                      padding: '6px 12px',
-                      background: '#f8fafc',
-                      color: '#475569',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
-                    }}
-                    title="Enregistrer un retour client et émettre un bon d'avoir déductible"
-                  >
-                    <RotateCcw size={13} /> Retour & Avoir
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {next.length > 0 && (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>{t('shop.advanceStatus')} :</span>
-                {next.map(s => {
-                  const info = STATUTS_META.find(x => x.key === s)!
-                  return (
-                    <button key={s} onClick={() => changeStatut(s)} disabled={loading} style={{
-                      fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 8, cursor: loading ? 'not-allowed' : 'pointer', border: 'none',
-                      background: info.bg, color: info.color, opacity: loading ? 0.6 : 1,
-                    }}>
-                      {getStatutLabel(s, t)} →
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-            {next.length === 0 && (
-              <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>✓ {t('shop.orderUpdatedSuccess')}</p>
-            )}
-            {/* Correction de statut */}
-            {!correcting ? (
-              <button onClick={() => { setCorrecting(true); setCorrectStatut(commande.statut) }} style={{
-                fontSize: 11, color: '#6b7280', background: 'none', border: '1px solid #e5e7eb',
-                borderRadius: 6, padding: '4px 10px', cursor: 'pointer', alignSelf: 'flex-start',
-              }}>
-                ✎ {t('common.edit')} {t('common.status')}
-              </button>
-            ) : (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: '#6b7280' }}>{t('common.edit')} :</span>
-                <select value={correctStatut} onChange={e => setCorrectStatut(e.target.value)} style={{
-                  fontSize: 12, border: '1px solid #d1d5db', borderRadius: 6, padding: '4px 8px', background: '#fff',
-                }}>
-                  {STATUTS_META.map(s => (
-                    <option key={s.key} value={s.key}>{getStatutLabel(s.key, t)}</option>
-                  ))}
-                </select>
-                <button onClick={applyCorrection} disabled={loading} style={{
-                  fontSize: 12, fontWeight: 700, background: '#374151', color: '#fff', border: 'none',
-                  borderRadius: 6, padding: '4px 12px', cursor: 'pointer',
-                }}>{t('common.confirm')}</button>
-                <button onClick={() => setCorrecting(false)} style={{
-                  fontSize: 12, background: 'none', border: '1px solid #d1d5db', borderRadius: 6,
-                  padding: '4px 10px', cursor: 'pointer', color: '#6b7280',
-                }}>{t('common.cancel')}</button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function regrouperCommandes(commandes: Commande[]): (Commande | Commande[])[] {
-  const groupes = new Map<string, Commande[]>()
-  const resultat: (Commande | Commande[])[] = []
-  for (const c of commandes) {
-    if (!c.groupe_commande) { resultat.push(c); continue }
-    if (!groupes.has(c.groupe_commande)) {
-      const groupe: Commande[] = []
-      groupes.set(c.groupe_commande, groupe)
-      resultat.push(groupe)
-    }
-    groupes.get(c.groupe_commande)!.push(c)
-  }
-  return resultat
-}
-
-function CommandeGroupeCard({
-  commandes,
-  boutiqueId,
-  onUpdate,
-  onDispatch,
-  onRetour,
-}: {
-  commandes: Commande[];
-  boutiqueId: string;
-  onUpdate: () => void;
-  onDispatch?: (c: Commande) => void;
-  onRetour?: (c: Commande) => void;
-}) {
-  const { t, formatPrice, formatNumber } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const fcfa = (n: number) => formatPrice(n)
-  const premiere = commandes[0]
-  const total = commandes.reduce((s, c) => s + Number(c.montant_total), 0)
-  const statuts = new Set(commandes.map(c => c.statut))
-  const statutAffiche = statuts.size === 1 ? premiere.statut : 'mixte'
-
-  return (
-    <div style={{ background: '#fff', border: '1px solid #C75B00', borderRadius: 12, overflow: 'hidden' }}>
-      <div
-        onClick={() => setOpen(!open)}
-        style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', gap: 12, background: '#fff7f0' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-          <span style={{ background: '#C75B00', color: '#fff', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
-            {t('shop.cartTitle')} · {formatNumber(commandes.length)} {t('common.details')}
-          </span>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {statutAffiche === 'mixte' ? t('common.status') : getStatutLabel(statutAffiche, t)}
-            </p>
-            <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>
-              {premiere.client_nom} · {premiere.client_telephone}
-              {premiere.source === 'whatsapp' && <span style={{ marginLeft: 6, background: '#dcfce7', color: '#16a34a', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700 }}>WhatsApp</span>}
-            </p>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: '#C75B00' }}>{fcfa(total)}</p>
-          <p style={{ margin: 0, fontSize: 11, color: '#9ca3af' }}>{fmtDateHeure(premiere.created_at)}</p>
-        </div>
-        <span style={{ color: '#9ca3af', flexShrink: 0, fontSize: 12 }}>{open ? '▲' : '▼'}</span>
-      </div>
-      {open && (
-        <div style={{ borderTop: '1px solid #f3f4f6', padding: '14px 18px', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {commandes.map(c => (
-            <CommandeCard key={c.id} commande={c} boutiqueId={boutiqueId} onUpdate={onUpdate} onDispatch={onDispatch} onRetour={onRetour} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-interface PanierAbandonne {
-  id: string
-  client_nom: string | null
-  client_tel: string
-  articles: { nom: string; quantite: number; prix: number }[]
-  total: number
-  relance_envoyee: boolean
-  created_at: string
-}
-
-export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string; boutique?: any }) {
-  const { t, formatPrice, formatNumber } = useTranslation()
-  const [subTab, setSubTab] = useState<'commandes' | 'zones'>('commandes')
-  const [commandes, setCommandes] = useState<Commande[]>([])
-  const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
+  const { t, formatNumber } = useTranslation()
   const [dispatchCommande, setDispatchCommande] = useState<Commande | null>(null)
   const [retourCommande, setRetourCommande] = useState<Commande | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [filtre, setFiltre] = useState('')
-  const [filtreCanal, setFiltreCanal] = useState<'tous' | 'web' | 'caisse'>('tous')
-  const [showExportMenu, setShowExportMenu] = useState(false)
   const [showModalNouvelleCommande, setShowModalNouvelleCommande] = useState(false)
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
-
   const { scrollRef, scrollToCenter } = useScrollNudge()
+
+  const {
+    subTab,
+    setSubTab,
+    commandes,
+    commandesFiltrees,
+    paniersAbandonnes,
+    loading,
+    filtre,
+    setFiltre,
+    filtreCanal,
+    setFiltreCanal,
+    load,
+    relancerWhatsApp,
+    exportCommandesCSV,
+    exportCommandesPDF,
+  } = useCommandesData(boutiqueId, t)
 
   const filtreStatuts = [
     { key: '', label: t('common.all') },
@@ -640,422 +57,91 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
     { key: 'annulee', label: t('shop.statusCancelled') },
   ]
 
-  async function load() {
-    const cacheKey = `nopalou_offline_commandes_${boutiqueId}_${filtre}`
-    const cached = localStorage.getItem(cacheKey)
-    if (cached) {
-      try { 
-        const parsed = JSON.parse(cached)
-        if (filtre === 'abandonne') setPaniersAbandonnes(parsed)
-        else setCommandes(parsed)
-      } catch (e) { console.warn('[Nopalou:Commandes:L602]', e); }
-    }
-    if (!cached) setLoading(true)
-
-    if (filtre === 'abandonne') {
-      try {
-        const res = await fetch(`/api/boutiques/${boutiqueId}/paniers-abandonnes`)
-        let data
-        if (!res.ok) {
-          const directRes = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/paniers-abandonnes`, {
-            credentials: 'include',
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('nopalou_token') || ''}` }
-          })
-          data = await directRes.json()
-        } else {
-          data = await res.json()
-        }
-        setPaniersAbandonnes(data.paniers || [])
-        localStorage.setItem(cacheKey, JSON.stringify(data.paniers || []))
-      } catch {
-        if (!cached) setPaniersAbandonnes([])
-      }
-    } else {
-      try {
-        const data = await listCommandes(boutiqueId, filtre)
-        setCommandes(data)
-        localStorage.setItem(cacheKey, JSON.stringify(data))
-      } catch (err) {
-        if (!cached) setCommandes([])
-      }
-    }
-    setLoading(false)
-  }
-
-  useEffect(() => { load() }, [boutiqueId, filtre])
-
-  const commandesFiltrees = commandes.filter(c => {
-    if (filtreCanal === 'caisse') return c.reference?.startsWith('POS') || c.source === 'pos_caisse'
-    if (filtreCanal === 'web') return !c.reference?.startsWith('POS') && c.source !== 'pos_caisse'
-    return true
-  })
-
-  async function relancerWhatsApp(cartId: string) {
-    try {
-      const res = await fetch(`${backendUrl}/api/boutiques/${boutiqueId}/paniers-abandonnes/${cartId}/relancer`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('nopalou_token') || ''}`
-        }
-      })
-      const data = await res.json()
-      if (data.lienWhatsapp) {
-        window.open(data.lienWhatsapp, '_blank')
-        load()
-      }
-    } catch {
-      alert('Impossible de générer le lien de relance WhatsApp')
-    }
-  }
-
   const stats = {
-    en_attente: commandes.filter(c => c.statut === 'en_attente').length,
+    en_attente: commandes.filter((c) => c.statut === 'en_attente').length,
     total: commandes.length,
-  }
-
-  function exportCommandesCSV() {
-    const headers = ['Référence', 'Produit', 'Quantité', 'Prix Unit (FCFA)', 'Livraison (FCFA)', 'Total (FCFA)', 'Client', 'Téléphone', 'Statut', 'Source', 'Date']
-    const rows = commandesFiltrees.map(c => [
-      c.reference || `CMD-${c.id.slice(0, 6)}`,
-      c.nom_produit,
-      c.quantite,
-      c.prix_unitaire,
-      c.frais_livraison,
-      c.montant_total,
-      c.client_nom,
-      c.client_telephone,
-      c.statut.toUpperCase(),
-      c.source || 'web',
-      fmtDateHeure(c.created_at)
-    ])
-    exportToCSV(`commandes_boutique_${boutiqueId}`, headers, rows)
-  }
-
-  function exportCommandesPDF() {
-    const headers = ['Réf.', 'Produit', 'Qte', 'Total', 'Client', 'Tel', 'Statut', 'Date']
-    const rows = commandesFiltrees.map(c => [
-      c.reference || `CMD-${c.id.slice(0, 6)}`,
-      c.nom_produit,
-      c.quantite,
-      `${Number(c.montant_total).toLocaleString('fr-FR')} FCFA`,
-      c.client_nom,
-      c.client_telephone,
-      getStatutLabel(c.statut, t),
-      fmtDateHeure(c.created_at)
-    ])
-    const totalM = commandesFiltrees.reduce((s, c) => s + Number(c.montant_total), 0)
-    const summaryHtml = `
-      <div class="summary">
-        <h3 style="margin:0 0 6px;">Registre des Commandes Clients</h3>
-        <p style="margin:0; font-size:14px; font-weight:bold; color:#C75B00;">Total : ${totalM.toLocaleString('fr-FR')} FCFA (${commandesFiltrees.length} commandes)</p>
-      </div>
-    `
-    printPDFReport('Journal des Commandes Clients', `Boutique ${boutiqueId}`, headers, rows, summaryHtml)
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Sub Tabs & Action Nouvelle Commande */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', gap: 12, paddingBottom: 6, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={() => setSubTab('commandes')}
-            style={{
-              background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'commandes' ? 700 : 500,
-              color: subTab === 'commandes' ? '#C75B00' : '#475569', borderBottom: subTab === 'commandes' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
-            }}
-          >
-            {t('shop.ordersTitle')}
-          </button>
-          <button
-            onClick={() => setSubTab('zones')}
-            style={{
-              background: 'none', border: 'none', padding: '6px 12px', fontSize: 14, fontWeight: subTab === 'zones' ? 700 : 500,
-              color: subTab === 'zones' ? '#C75B00' : '#475569', borderBottom: subTab === 'zones' ? '2px solid #C75B00' : 'none', cursor: 'pointer'
-            }}
-          >
-            {t('shop.deliveryZonesTitle')}
-          </button>
-        </div>
-
-        {subTab === 'commandes' && (
-          <button
-            type="button"
-            onClick={() => setShowModalNouvelleCommande(true)}
-            style={{
-              background: 'linear-gradient(135deg, #16a34a, #15803d)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: 10,
-              padding: '8px 14px',
-              fontSize: 12.5,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 3px 10px rgba(22, 163, 74, 0.25)',
-            }}
-          >
-            <Zap size={15} />
-            <span>Nouvelle commande / Lien Wave </span>
-          </button>
-        )}
-      </div>
+      <CommandesToolbar
+        subTab={subTab}
+        setSubTab={setSubTab}
+        onNouvelleCommande={() => setShowModalNouvelleCommande(true)}
+        pendingCount={stats.en_attente}
+        filtre={filtre}
+        setFiltre={setFiltre}
+        filtreCanal={filtreCanal}
+        setFiltreCanal={setFiltreCanal}
+        totalOrdersCount={commandes.length}
+        filtreStatuts={filtreStatuts}
+        onExportCSV={exportCommandesCSV}
+        onExportPDF={exportCommandesPDF}
+        scrollRef={scrollRef}
+        scrollToCenter={scrollToCenter}
+        t={t}
+        formatNumber={formatNumber}
+      />
 
       {subTab === 'zones' ? (
         <ZonesView boutiqueId={boutiqueId} />
       ) : (
         <>
-          {/* Stats rapides */}
-      {stats.en_attente > 0 && filtre !== 'abandonne' && (
-        <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: '#92400e', fontWeight: 600 }}>
-          {formatNumber(stats.en_attente)} {t('shop.pendingOrdersCount')}
-        </div>
-      )}
-
-      {/* Sélecteur de canal & Exports */}
-      {filtre !== 'abandonne' && (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '8px 12px', borderRadius: 12, border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginRight: 2 }}>{t('shop.orderSource')} :</span>
-            <button onClick={() => setFiltreCanal('tous')} style={{
-              padding: '4px 10px', borderRadius: 14, border: '1px solid',
-              borderColor: filtreCanal === 'tous' ? '#1e293b' : '#cbd5e1',
-              background: filtreCanal === 'tous' ? '#1e293b' : '#fff',
-              color: filtreCanal === 'tous' ? '#fff' : '#475569',
-              fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            }}>
-              {t('common.all')} ({formatNumber(commandes.length)})
-            </button>
-            <button onClick={() => setFiltreCanal('web')} style={{
-              padding: '4px 10px', borderRadius: 14, border: '1px solid',
-              borderColor: filtreCanal === 'web' ? '#2563eb' : '#cbd5e1',
-              background: filtreCanal === 'web' ? '#eff6ff' : '#fff',
-              color: filtreCanal === 'web' ? '#1d4ed8' : '#475569',
-              fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            }}>
-              Web
-            </button>
-            <button onClick={() => setFiltreCanal('caisse')} style={{
-              padding: '4px 10px', borderRadius: 14, border: '1px solid',
-              borderColor: filtreCanal === 'caisse' ? '#ea580c' : '#cbd5e1',
-              background: filtreCanal === 'caisse' ? '#fff7ed' : '#fff',
-              color: filtreCanal === 'caisse' ? '#c75b00' : '#475569',
-              fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            }}>
-              {t('shop.pos')}
-            </button>
-          </div>
-
-          {/* Menu compact d'export */}
-          <div style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => setShowExportMenu(!showExportMenu)}
+          {loading ? (
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+              aria-busy="true"
+              aria-label={t('common.loading')}
+            >
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
+              ))}
+            </div>
+          ) : filtre === 'abandonne' ? (
+            <PanierAbandonneList
+              paniers={paniersAbandonnes}
+              onRelancerWhatsApp={relancerWhatsApp}
+              t={t}
+            />
+          ) : commandesFiltrees.length === 0 ? (
+            <div
               style={{
-                fontSize: 12,
-                color: 'var(--navy, #1C2B4A)',
-                background: showExportMenu ? '#e2e8f0' : '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: 8,
-                padding: '5px 10px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
+                textAlign: 'center',
+                padding: '48px 20px',
+                background: '#f8fafc',
+                borderRadius: 12,
+                border: '1px dashed #d1d5db',
               }}
             >
-              <span>Exporter</span>
-              <span style={{ fontSize: 10 }}>▾</span>
-            </button>
-
-            {showExportMenu && (
-              <>
-                <div
-                  style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-                  onClick={() => setShowExportMenu(false)}
-                />
-                <div style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: '100%',
-                  marginTop: 4,
-                  width: 200,
-                  background: '#ffffff',
-                  borderRadius: 10,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
-                  border: '1px solid #e2e8f0',
-                  padding: '6px',
-                  zIndex: 50,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2,
-                }}>
-                  <button
-                    onClick={() => { setShowExportMenu(false); exportCommandesCSV(); }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '8px 10px',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: '#166534',
-                      background: '#f0fdf4',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      width: '100%',
-                    }}
-                  >
-                    <span></span>
-                    <span>{t('common.exportCsv')} (Excel)</span>
-                  </button>
-                  <button
-                    onClick={() => { setShowExportMenu(false); exportCommandesPDF(); }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '8px 10px',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: '#1d4ed8',
-                      background: '#eff6ff',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      width: '100%',
-                    }}
-                  >
-                    <span></span>
-                    <span>{t('common.exportPdf')} (Registre)</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Filtres statut + Onglet Paniers Abandonnés (Défilement horizontal fluide sur mobile avec Nudge 1x/min) */}
-      <div ref={scrollRef} className="commandes-status-scroll" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {filtreStatuts.map(f => (
-          <button
-            key={f.key}
-            onClick={(e) => {
-              setFiltre(f.key)
-              scrollToCenter(e.currentTarget)
-            }}
-            style={{
-              padding: '5px 12px', borderRadius: 20, border: '1px solid',
-              borderColor: filtre === f.key ? '#C75B00' : '#e5e7eb',
-              background: filtre === f.key ? '#fff7f0' : '#fff',
-              color: filtre === f.key ? '#C75B00' : '#374151',
-              fontWeight: filtre === f.key ? 700 : 500,
-              fontSize: 12, cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
-
-        <button
-          onClick={(e) => {
-            setFiltre('abandonne')
-            scrollToCenter(e.currentTarget)
-          }}
-          style={{
-            padding: '5px 14px', borderRadius: 20, border: '1px solid',
-            borderColor: filtre === 'abandonne' ? '#dc2626' : '#fecaca',
-            background: filtre === 'abandonne' ? '#fef2f2' : '#fff',
-            color: filtre === 'abandonne' ? '#dc2626' : '#991b1b',
-            fontWeight: filtre === 'abandonne' ? 800 : 600,
-            fontSize: 12, cursor: 'pointer',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          {t('shop.cartTitle')} (Abandonnés)
-        </button>
-      </div>
-
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-busy="true" aria-label={t('common.loading')}>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
-          ))}
-        </div>
-      ) : filtre === 'abandonne' ? (
-        paniersAbandonnes.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
-            <p style={{ fontSize: 32, marginBottom: 12 }}></p>
-            <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>{t('common.noData')}</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {paniersAbandonnes.map(p => (
-              <div key={p.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>{p.client_nom || t('shop.orderClient')}</span>
-                    <span style={{ fontSize: 12, color: '#6b7280' }}>({p.client_tel})</span>
-                    {p.relance_envoyee && (
-                      <span style={{ fontSize: 10, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
-                        ✓ {t('common.success')}
-                      </span>
-                    )}
-                  </div>
-
-                  <p style={{ margin: '0 0 4px', fontSize: 13, color: '#4b5563' }}>
-                    {t('shop.orderItems')} : {(p.articles || []).map(a => `${a.quantite}x ${a.nom}`).join(', ')}
-                  </p>
-
-                  <span style={{ fontSize: 12, color: '#9ca3af' }}>{new Date(p.created_at).toLocaleString('fr-FR')}</span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 16, fontWeight: 900, color: '#dc2626' }}>
-                    {formatPrice(p.total)}
-                  </span>
-
-                  <button
-                    onClick={() => relancerWhatsApp(p.id)}
-                    style={{
-                      background: '#25D366', color: '#fff', border: 'none', borderRadius: 8,
-                      padding: '10px 16px', fontSize: 13, fontWeight: 800, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 6px rgba(37,211,102,.25)'
-                    }}
-                  >
-                    WhatsApp (-5%) →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )
-      ) : commandesFiltrees.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 20px', background: '#f8fafc', borderRadius: 12, border: '1px dashed #d1d5db' }}>
-          <p style={{ fontSize: 32, marginBottom: 12 }}></p>
-          <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>
-            {t('shop.noOrdersFound')}
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {regrouperCommandes(commandesFiltrees).map((item, i) =>
-            Array.isArray(item)
-              ? <CommandeGroupeCard key={item[0].groupe_commande ?? i} commandes={item} boutiqueId={boutiqueId} onUpdate={load} onDispatch={setDispatchCommande} onRetour={setRetourCommande} />
-              : <CommandeCard key={item.id} commande={item} boutiqueId={boutiqueId} onUpdate={load} onDispatch={setDispatchCommande} onRetour={setRetourCommande} />
+              <p style={{ color: '#6b7280', fontSize: 14, margin: 0 }}>
+                {t('shop.noOrdersFound')}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {regrouperCommandes(commandesFiltrees).map((item, i) =>
+                Array.isArray(item) ? (
+                  <CommandeGroupeCard
+                    key={item[0].groupe_commande ?? i}
+                    commandes={item}
+                    boutiqueId={boutiqueId}
+                    onUpdate={load}
+                    onDispatch={setDispatchCommande}
+                    onRetour={setRetourCommande}
+                  />
+                ) : (
+                  <CommandeCard
+                    key={item.id}
+                    commande={item}
+                    boutiqueId={boutiqueId}
+                    onUpdate={load}
+                    onDispatch={setDispatchCommande}
+                    onRetour={setRetourCommande}
+                  />
+                )
+              )}
+            </div>
           )}
-        </div>
-      )}
         </>
       )}
 
@@ -1067,7 +153,7 @@ export default function Commandes({ boutiqueId, boutique }: { boutiqueId: string
         onSuccess={load}
       />
 
-      {/* Modal Dispatch Livreur Moto (Tiak-Tiak) */}
+      {/* Modal Dispatch Livreur Moto */}
       <ModalDispatchLivreur
         isOpen={Boolean(dispatchCommande)}
         onClose={() => setDispatchCommande(null)}

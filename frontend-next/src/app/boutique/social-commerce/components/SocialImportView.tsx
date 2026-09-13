@@ -1,0 +1,169 @@
+'use client'
+
+import React from 'react'
+import { Sparkles, Layers, Link2 } from 'lucide-react'
+import { DiscoveredPost, ImportMode, SocialAccountAdmin } from '../types'
+import { SocialImportProfileView } from './SocialImportProfileView'
+import { SocialImportBatchView } from './SocialImportBatchView'
+import { SocialImportSingleView } from './SocialImportSingleView'
+
+interface SocialImportViewProps {
+  importMode: ImportMode
+  setImportMode: (m: ImportMode) => void
+  autoMatch: boolean
+  setAutoMatch: (b: boolean) => void
+  profilePlatform: 'tiktok' | 'instagram' | 'facebook'
+  setProfilePlatform: (p: 'tiktok' | 'instagram' | 'facebook') => void
+  profileUsername: string
+  setProfileUsername: (u: string) => void
+  exploringProfile: boolean
+  handleExploreProfile: (e?: React.FormEvent) => Promise<void>
+  accounts: SocialAccountAdmin[]
+  discoveredPosts: DiscoveredPost[]
+  selectedDiscoveredUrls: Set<string>
+  setSelectedDiscoveredUrls: React.Dispatch<React.SetStateAction<Set<string>>>
+  importingDiscovered: boolean
+  handleImportDiscovered: () => Promise<void>
+  batchUrlsText: string
+  setBatchUrlsText: (text: string) => void
+  batchImporting: boolean
+  handleImportBatch: (e: React.FormEvent) => Promise<void>
+  importUrl: string
+  setImportUrl: (url: string) => void
+  importing: boolean
+  handleImportUrl: (e: React.FormEvent) => Promise<void>
+}
+
+export function SocialImportView({
+  importMode,
+  setImportMode,
+  autoMatch,
+  setAutoMatch,
+  profilePlatform,
+  setProfilePlatform,
+  profileUsername,
+  setProfileUsername,
+  exploringProfile,
+  handleExploreProfile,
+  accounts,
+  discoveredPosts,
+  selectedDiscoveredUrls,
+  setSelectedDiscoveredUrls,
+  importingDiscovered,
+  handleImportDiscovered,
+  batchUrlsText,
+  setBatchUrlsText,
+  batchImporting,
+  handleImportBatch,
+  importUrl,
+  setImportUrl,
+  importing,
+  handleImportUrl,
+}: SocialImportViewProps) {
+  return (
+    <div id="social-selection-section" className="social-shop-compact-card">
+      <div style={{ marginBottom: 14 }}>
+        <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 900, color: '#0f172a' }}>
+          Ajouter des Publications
+        </h3>
+        <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>
+          Importez vos vidéos Instagram, TikTok et Facebook par profil ou par lien direct.
+        </p>
+      </div>
+
+      {/* Barre de navigation des 3 Sous-Modes */}
+      <div className="social-tabs-nav">
+        <button
+          type="button"
+          onClick={() => setImportMode('profile')}
+          className="social-tab-btn"
+          style={{
+            background: importMode === 'profile' ? '#C75B00' : '#f8fafc',
+            color: importMode === 'profile' ? '#ffffff' : '#475569',
+            boxShadow: importMode === 'profile' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
+          }}
+        >
+          <Sparkles size={14} />
+          <span>Aspirateur @pseudo</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setImportMode('batch')}
+          className="social-tab-btn"
+          style={{
+            background: importMode === 'batch' ? '#C75B00' : '#f8fafc',
+            color: importMode === 'batch' ? '#ffffff' : '#475569',
+            boxShadow: importMode === 'batch' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
+          }}
+        >
+          <Layers size={14} />
+          <span>Liens en lot</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setImportMode('single')}
+          className="social-tab-btn"
+          style={{
+            background: importMode === 'single' ? '#C75B00' : '#f8fafc',
+            color: importMode === 'single' ? '#ffffff' : '#475569',
+            boxShadow: importMode === 'single' ? '0 2px 8px rgba(199,91,0,0.2)' : 'none',
+          }}
+        >
+          <Link2 size={14} />
+          <span>Lien unique</span>
+        </button>
+      </div>
+
+      {/* Sous-mode actif */}
+      {importMode === 'profile' && (
+        <SocialImportProfileView
+          profilePlatform={profilePlatform}
+          setProfilePlatform={setProfilePlatform}
+          profileUsername={profileUsername}
+          setProfileUsername={setProfileUsername}
+          exploringProfile={exploringProfile}
+          handleExploreProfile={handleExploreProfile}
+          accounts={accounts}
+          discoveredPosts={discoveredPosts}
+          selectedDiscoveredUrls={selectedDiscoveredUrls}
+          setSelectedDiscoveredUrls={setSelectedDiscoveredUrls}
+          importingDiscovered={importingDiscovered}
+          handleImportDiscovered={handleImportDiscovered}
+        />
+      )}
+
+      {importMode === 'batch' && (
+        <SocialImportBatchView
+          batchUrlsText={batchUrlsText}
+          setBatchUrlsText={setBatchUrlsText}
+          batchImporting={batchImporting}
+          handleImportBatch={handleImportBatch}
+        />
+      )}
+
+      {importMode === 'single' && (
+        <SocialImportSingleView
+          importUrl={importUrl}
+          setImportUrl={setImportUrl}
+          importing={importing}
+          handleImportUrl={handleImportUrl}
+        />
+      )}
+
+      {/* Option partagée : Smart Matching */}
+      <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #f1f5f9' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#334155', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={autoMatch}
+            onChange={e => setAutoMatch(e.target.checked)}
+            style={{ accentColor: '#C75B00' }}
+          />
+          <span>Activer le <strong>Smart Matching</strong> automatique (+85% similarité nom/légende)</span>
+        </label>
+      </div>
+    </div>
+  )
+}

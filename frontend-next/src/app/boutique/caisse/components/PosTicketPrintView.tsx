@@ -30,7 +30,9 @@ export interface VenteTicketPrint {
 }
 
 interface PosTicketPrintViewProps {
-  vente: VenteTicketPrint | null
+  vente?: VenteTicketPrint | null
+  ticket?: any
+  boutique?: any
   boutiqueNom?: string
   boutiqueAdresse?: string | null
   boutiqueTelephone?: string | null
@@ -39,10 +41,14 @@ interface PosTicketPrintViewProps {
   regimeFiscal?: string | null
   estExonereClient?: boolean
   clientFidelite?: ClientFidelite | null
+  onClose?: () => void
+  fcfa?: (n: any) => string
 }
 
 export default function PosTicketPrintView({
-  vente,
+  vente: venteProp,
+  ticket,
+  boutique,
   boutiqueNom,
   boutiqueAdresse,
   boutiqueTelephone,
@@ -51,7 +57,14 @@ export default function PosTicketPrintView({
   regimeFiscal,
   estExonereClient,
   clientFidelite,
+  onClose,
+  fcfa: fcfaProp,
 }: PosTicketPrintViewProps) {
+  const vente = venteProp || ticket
+  const bNom = boutiqueNom || boutique?.nom || 'Ma Boutique'
+  const bAdresse = boutiqueAdresse || boutique?.adresse
+  const bTelephone = boutiqueTelephone || boutique?.telephone
+  const bLogo = boutiqueLogo || boutique?.logo
   if (!vente) return null
 
   return (
@@ -83,13 +96,13 @@ export default function PosTicketPrintView({
       </div>
 
       <div style={{ padding: '4px 0', borderBottom: '1px dashed #000' }}>
-        {vente.ticket.map((i, idx) => (
+        {(vente.ticket || []).map((i: any, idx: number) => (
           <div key={idx} style={{ marginBottom: 4, fontSize: 10.5 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{i.produit.code_barre ? `${i.produit.code_barre} ` : ''}{i.produit.nom.slice(0, 22)}</span>
+              <span>{i.produit?.code_barre ? `${i.produit.code_barre} ` : ''}{(i.produit?.nom || i.nom || 'Article').slice(0, 22)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: 8, fontSize: 10 }}>
-              <span>{i.quantite} x {fcfa(i.prixUnitaire)}</span>
+              <span>{i.quantite} x {fcfa(i.prixUnitaire || i.prix)}</span>
               <span style={{ fontWeight: 'bold' }}>{fcfa(i.prixUnitaire * i.quantite)}</span>
             </div>
           </div>
@@ -161,7 +174,7 @@ export default function PosTicketPrintView({
 
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontWeight: 'bold', padding: '4px 0', borderBottom: '1px dashed #000' }}>
         <span>NOMBRE DE PRODUITS :</span>
-        <span>{vente.ticket.reduce((sum, item) => sum + item.quantite, 0)}</span>
+        <span>{(vente.ticket || []).reduce((sum: number, item: any) => sum + (item.quantite || 0), 0)}</span>
       </div>
 
       {/* Section Fidélité Reçu */}

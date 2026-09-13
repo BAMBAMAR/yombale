@@ -10,11 +10,15 @@ export { SECTIONS_PAR_DEFAUT }
 interface StudioDispositionSectionsProps {
   sections: SectionItem[]
   onChange: (newSections: SectionItem[]) => void
+  dispositionCatalogue?: string
+  onChangeDispositionCatalogue?: (val: string) => void
 }
 
 export default function StudioDispositionSections({
   sections,
   onChange,
+  dispositionCatalogue,
+  onChangeDispositionCatalogue,
 }: StudioDispositionSectionsProps) {
   // Déplacer une section vers le haut
   const moveUp = (index: number) => {

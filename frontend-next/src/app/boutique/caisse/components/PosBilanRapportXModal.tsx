@@ -12,7 +12,7 @@ interface PosBilanRapportXModalProps {
   session: any
   netAPayer: number
   panierLength: number
-  fcfa: (montant: number | undefined | null) => string
+  fcfa: (montant: any) => string
 }
 
 export default function PosBilanRapportXModal({

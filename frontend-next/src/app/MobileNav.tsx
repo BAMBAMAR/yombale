@@ -5,7 +5,8 @@ import { logout } from '@/app/actions/auth'
 import {
   Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
   Bell, Heart, Users, BookOpen, Sparkles, Plus, LogOut, ChevronDown,
-  MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon, Zap
+  MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon, Zap,
+  Menu, X
 } from 'lucide-react'
 
 interface Props {
@@ -60,7 +61,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
         aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
         aria-expanded={open}
       >
-        {open ? '✕' : '☰'}
+        {open ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       {open && (
@@ -77,7 +78,9 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             <Image src="/icons/logo-mark.svg" alt="" width={26} height={26} style={{ flexShrink: 0 }} priority />
             <span>Nopa<span style={{ color: 'var(--accent, #C75B00)' }}>lou</span></span>
           </a>
-          <button className="mobile-nav-close" onClick={close} aria-label="Fermer">✕</button>
+          <button className="mobile-nav-close" onClick={close} aria-label="Fermer">
+            <X size={18} />
+          </button>
         </div>
 
         <nav style={{ paddingBottom: 24 }}>

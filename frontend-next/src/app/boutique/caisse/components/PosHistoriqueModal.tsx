@@ -27,32 +27,42 @@ export interface VenteHistorique {
 }
 
 interface PosHistoriqueModalProps {
-  historiqueVentes: VenteHistorique[]
-  formatTicketThermique: '80mm' | '58mm'
-  onChangeFormatTicket: (f: '80mm' | '58mm') => void
-  btDeviceName: string | null
-  onConnecterBluetooth: () => void
-  onExporterCSV: () => void
-  onExporterPDF: () => void
-  onAnnulerRembourserVente: (id: string) => void
-  onImprimerTicket: (v: VenteHistorique) => void
+  isOpen?: boolean
+  historiqueVentes: VenteHistorique[] | any[]
+  formatTicketThermique?: '80mm' | '58mm'
+  onChangeFormatTicket?: (f: '80mm' | '58mm') => void
+  btDeviceName?: string | null
+  onConnecterBluetooth?: () => void
+  onExporterCSV?: () => void
+  onExporterPDF?: () => void
+  onAnnulerRembourserVente?: (id: string) => void
+  onAnnulerVente?: (v: any) => void
+  onImprimerTicket: (v: any) => void
   onClose: () => void
-  formatPrice: (p: number) => string
+  formatPrice?: (p: number) => string
+  fcfa?: (p: number) => string
+  roleActif?: string
 }
 
 export default function PosHistoriqueModal({
+  isOpen,
   historiqueVentes,
-  formatTicketThermique,
-  onChangeFormatTicket,
-  btDeviceName,
-  onConnecterBluetooth,
-  onExporterCSV,
-  onExporterPDF,
+  formatTicketThermique = '80mm',
+  onChangeFormatTicket = () => {},
+  btDeviceName = null,
+  onConnecterBluetooth = () => {},
+  onExporterCSV = () => {},
+  onExporterPDF = () => {},
   onAnnulerRembourserVente,
+  onAnnulerVente,
   onImprimerTicket,
   onClose,
   formatPrice,
+  fcfa: fcfaProp,
+  roleActif,
 }: PosHistoriqueModalProps) {
+  const formatPriceFn = formatPrice || fcfaProp || ((n: number) => `${n} FCFA`)
+  const handleAnnuler = onAnnulerRembourserVente || ((id: string) => onAnnulerVente?.({ id }))
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 780, border: '1px solid #e2e8f0', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)', position: 'relative' }}>
@@ -141,19 +151,19 @@ export default function PosHistoriqueModal({
                   </p>
                 )}
                 <p style={{ margin: '4px 0 0', fontSize: 12, color: '#334155' }}>
-                  Articles: {v.ticket.map(i => `${i.quantite}x ${i.produit.nom}`).join(', ')}
+                  Articles: {(v.ticket || []).map((i: any) => `${i.quantite}x ${i.produit?.nom || i.nom || 'Article'}`).join(', ')}
                 </p>
               </div>
 
               <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                 <span style={{ fontSize: 16, fontWeight: 900, color: v.statut === 'annulee' ? '#dc2626' : '#16a34a' }}>
-                  {v.statut === 'annulee' ? `-${formatPrice(v.total)}` : formatPrice(v.total)}
+                  {v.statut === 'annulee' ? `-${formatPriceFn(v.total)}` : formatPriceFn(v.total)}
                 </span>
 
                 <div style={{ display: 'flex', gap: 6 }}>
                   {v.statut !== 'annulee' && (
                     <button
-                      onClick={() => onAnnulerRembourserVente(v.id)}
+                      onClick={() => handleAnnuler(v.id)}
                       style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                     >
                       Annuler / Rembourser

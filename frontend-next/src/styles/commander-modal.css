@@ -1,0 +1,115 @@
+@keyframes commanderModalSlideUp {
+  from {
+    transform: translateY(20px) scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.commander-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.commander-modal-box {
+  background: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  animation: commanderModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.commander-premium-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #0f172a;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.commander-premium-input:focus {
+  border-color: var(--accent, #C75B00);
+  box-shadow: 0 0 0 3px rgba(199, 91, 0, 0.12);
+  background: #ffffff;
+}
+
+.commander-mode-tab-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 2px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  position: relative;
+}
+
+.commander-mode-tab-card:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.commander-mode-tab-card.active-whatsapp {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  box-shadow: 0 4px 16px -2px rgba(34, 197, 94, 0.2);
+}
+
+.commander-mode-tab-card.active-formulaire {
+  border-color: var(--accent, #C75B00);
+  background: #fff7ed;
+  box-shadow: 0 4px 16px -2px rgba(199, 91, 0, 0.2);
+}
+
+.commander-payment-card-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.commander-payment-card-btn:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.commander-payment-card-btn.selected {
+  border-color: var(--accent, #C75B00);
+  background: #fff7ed;
+  color: #9a3412;
+  box-shadow: 0 0 0 2px rgba(199, 91, 0, 0.15);
+}

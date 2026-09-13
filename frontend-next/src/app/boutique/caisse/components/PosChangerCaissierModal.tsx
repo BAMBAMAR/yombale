@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { User, Shield, Lock, X, Check, ArrowLeft, KeyRound, Settings, LogOut } from 'lucide-react'
+import PosLockPinPad from './PosLockPinPad'
 
 export interface CaissierItem {
   id: string
@@ -18,7 +19,7 @@ interface PosChangerCaissierModalProps {
   caissierActuelNom: string
   roleActif: 'caissier' | 'superviseur'
   caissiersList: CaissierItem[]
-  onValiderChangement: (caissier: CaissierItem, pin: string) => boolean | { ok: boolean; error?: string }
+  onValiderChangement: (caissier: any, pin?: string) => any
   onVerrouillerTerminal: () => void
   onOuvrirConfigEquipe?: () => void
   onDeconnexion?: () => void
@@ -402,78 +403,12 @@ export default function PosChangerCaissierModal({
                 </span>
               </div>
 
-              {/* Pastilles PIN */}
-              <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-                {[0, 1, 2, 3].map((i) => {
-                  const isFilled = pinSaisi.length > i
-                  return (
-                    <div
-                      key={i}
-                      style={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        background: isFilled ? '#C75B00' : '#f1f5f9',
-                        border: isFilled ? '2px solid #C75B00' : '2px solid #cbd5e1',
-                        transform: isFilled ? 'scale(1.15)' : 'scale(1)',
-                        transition: 'all 0.15s ease',
-                      }}
-                    />
-                  )
-                })}
-              </div>
-
-              {erreur && (
-                <div
-                  style={{
-                    color: '#dc2626',
-                    fontSize: 12.5,
-                    fontWeight: 800,
-                    marginBottom: 10,
-                    background: '#fef2f2',
-                    padding: '6px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #fecaca',
-                  }}
-                >
-                  {erreur}
-                </div>
-              )}
-
-              {/* Clavier Tactile Rapide */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, width: '100%', maxWidth: 280, marginBottom: 12 }}>
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => {
-                      if (val === 'C') {
-                        setPinSaisi('')
-                        setErreur(null)
-                      } else if (val === '⌫') {
-                        setPinSaisi((p) => p.slice(0, -1))
-                        setErreur(null)
-                      } else if (pinSaisi.length < 4) {
-                        setPinSaisi((p) => p + val)
-                        setErreur(null)
-                      }
-                    }}
-                    style={{
-                      padding: '14px',
-                      background: '#f8fafc',
-                      border: '1.5px solid #cbd5e1',
-                      borderRadius: 10,
-                      color: '#0f172a',
-                      fontWeight: 800,
-                      fontSize: 17,
-                      cursor: 'pointer',
-                      userSelect: 'none',
-                    }}
-                  >
-                    {val}
-                  </button>
-                ))}
-              </div>
+              <PosLockPinPad
+                codePinSaisi={pinSaisi}
+                pinError={erreur}
+                setCodePinSaisi={setPinSaisi}
+                setPinError={setErreur}
+              />
 
               <button
                 type="button"

@@ -2,7 +2,14 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { headers, cookies } from 'next/headers';
 import Image from 'next/image';
+import '@/styles/design-tokens.css';
+import '@/styles/reset.css';
+import '@/styles/typography.css';
+import '@/styles/components.css';
+import '@/styles/drawer-cart.css';
+import '@/styles/commander-modal.css';
 import './globals.css';
+
 import { getOptionalSession } from '@/lib/dal';
 import I18nClientProvider from '@/components/I18nClientProvider';
 import { getValidLocale, isRTL, isI18nScopedRoute } from '@/i18n/config';
@@ -40,9 +47,10 @@ import PwaInstallPrompt from '@/components/PwaInstallPrompt';
 import FavToast from './FavToast';
 import VerifyEmailToast from './VerifyEmailToast';
 import DrawerCart from '@/components/DrawerCart';
+import WebVitals from '@/components/WebVitals';
 import { CartProvider } from '@/context/CartContext';
 import { Suspense } from 'react';
-import { MessageCircle, Heart, Store, User, Zap, Package, Trash2 } from 'lucide-react';
+import { MessageCircle, Heart, Store, User, Zap, Package, Trash2, ShieldCheck, CheckCircle2, MapPin } from 'lucide-react';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -301,6 +309,7 @@ export default async function RootLayout({
         <BottomBars />
         <MobileBottomNav isLoggedIn={!!session} />
         <RegisterSW />
+        <WebVitals />
         <PwaInstallPrompt />
         <FavToast />
         <Suspense fallback={null}>
@@ -427,9 +436,18 @@ export default async function RootLayout({
 
           {/* Bandeau confiance */}
           <div className="footer-trust">
-            <div className="footer-trust-item"><strong>Impartial</strong> &amp; 0% commission</div>
-            <div className="footer-trust-item">Prix vérifiés <strong>toutes les 6h</strong></div>
-            <div className="footer-trust-item">🇸🇳 <strong>100% Commerce Sénégal</strong></div>
+            <div className="footer-trust-item">
+              <ShieldCheck size={16} style={{ color: 'var(--price, #0A5C36)', flexShrink: 0 }} />
+              <span><strong>Impartial</strong> &amp; 0% commission</span>
+            </div>
+            <div className="footer-trust-item">
+              <CheckCircle2 size={16} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+              <span>Prix vérifiés <strong>toutes les 6h</strong></span>
+            </div>
+            <div className="footer-trust-item">
+              <MapPin size={16} style={{ color: 'var(--price, #0A5C36)', flexShrink: 0 }} />
+              <span><strong>100% Commerce Sénégal</strong></span>
+            </div>
           </div>
 
           <div className="footer-bottom">

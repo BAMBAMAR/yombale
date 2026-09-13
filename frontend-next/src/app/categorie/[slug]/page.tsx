@@ -13,7 +13,7 @@ import SearchWithAnchor from '@/app/SearchWithAnchor'
 import { CATEGORIES } from '../categories-data'
 import { SOUS_CATEGORIES } from '../sous-categories-data'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 600
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''

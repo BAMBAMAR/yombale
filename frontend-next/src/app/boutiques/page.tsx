@@ -8,7 +8,7 @@ import HeroCarousel from './HeroCarousel'
 import ExternalImg from '@/components/ExternalImg'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Boutiques Partenaires & Vendeurs Vérifiés au Sénégal — Nopalou',

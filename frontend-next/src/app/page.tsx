@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import SearchBar from './SearchBar'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300 // ISR 5 minutes — TTFB instantané via cache avec rafraîchissement en arrière-plan
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''

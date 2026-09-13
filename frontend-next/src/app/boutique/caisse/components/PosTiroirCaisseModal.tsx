@@ -17,6 +17,8 @@ import {
   Plus,
   History,
 } from 'lucide-react'
+import PosTiroirHistoriqueList from './PosTiroirHistoriqueList'
+import PosTiroirMouvementForm from './PosTiroirMouvementForm'
 
 export interface MouvementCaisse {
   id: string
@@ -376,266 +378,30 @@ export default function PosTiroirCaisseModal({
         </div>
 
         {tab === 'historique' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {loadingMouvements ? (
-              <div style={{ padding: 20, textAlign: 'center', color: '#64748b', fontSize: 13 }}>
-                Chargement des mouvements...
-              </div>
-            ) : mouvements.length === 0 ? (
-              <div style={{ padding: 30, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
-                Aucun mouvement d&apos;espèces enregistré pour cette session.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 340, overflowY: 'auto' }}>
-                {mouvements.map((m) => {
-                  const isSortie = m.type === 'sortie'
-                  return (
-                    <div
-                      key={m.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 12px',
-                        background: '#f8fafc',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: 10,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '50%',
-                            background: isSortie ? '#fef2f2' : '#f0fdf4',
-                            color: isSortie ? '#dc2626' : '#16a34a',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {isSortie ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>{m.motif}</div>
-                          <div style={{ fontSize: 11, color: '#64748b' }}>
-                            {m.beneficiaire ? `Bénéficiaire : ${m.beneficiaire} • ` : ''}
-                            Par {m.caissier_nom}
-                            {m.created_at ? ` • ${new Date(m.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 900,
-                          color: isSortie ? '#dc2626' : '#16a34a',
-                        }}
-                      >
-                        {isSortie ? '-' : '+'}{fcfa(Number(m.montant))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+          <PosTiroirHistoriqueList
+            loadingMouvements={loadingMouvements}
+            mouvements={mouvements}
+            fcfa={fcfa}
+          />
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {/* Montant */}
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6 }}>
-                Montant en FCFA *
-              </label>
-              <input
-                type="number"
-                min={100}
-                step={50}
-                required
-                autoFocus
-                placeholder="Ex: 2500"
-                value={montant}
-                onChange={(e) => setMontant(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  borderRadius: 10,
-                  border: '1.5px solid #cbd5e1',
-                  fontSize: 18,
-                  fontWeight: 900,
-                  textAlign: 'center',
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            {/* Raccourcis montants rapides */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {MONTANTS_RAPIDES.map((mt) => (
-                <button
-                  key={mt}
-                  type="button"
-                  onClick={() => setMontant(String(mt))}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: 8,
-                    background: montant === String(mt) ? '#0f172a' : '#f1f5f9',
-                    color: montant === String(mt) ? '#ffffff' : '#334155',
-                    border: '1px solid #e2e8f0',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  +{fcfa(mt)}
-                </button>
-              ))}
-            </div>
-
-            {/* Motifs fréquents */}
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6 }}>
-                Motif de l&apos;opération *
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                {(tab === 'sortie' ? MOTIFS_SORTIE : MOTIFS_ENTREE).map((item) => {
-                  const Icon = item.icon
-                  const isSelected = motifSelectionne === item.label
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setMotifSelectionne(item.label)}
-                      style={{
-                        padding: '10px',
-                        borderRadius: 10,
-                        border: isSelected
-                          ? tab === 'sortie' ? '2px solid #ea580c' : '2px solid #0A5C36'
-                          : '1px solid #e2e8f0',
-                        background: isSelected
-                          ? tab === 'sortie' ? '#fffaf5' : '#f0fdf4'
-                          : '#ffffff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        textAlign: 'left',
-                        boxSizing: 'border-box',
-                      }}
-                    >
-                      <Icon size={16} color={isSelected ? (tab === 'sortie' ? '#ea580c' : '#0A5C36') : '#64748b'} />
-                      <span
-                        style={{
-                          fontSize: 12,
-                          fontWeight: isSelected ? 800 : 600,
-                          color: isSelected ? '#0f172a' : '#475569',
-                          lineHeight: 1.25,
-                        }}
-                      >
-                        {item.label}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Motif personnalisé / Détails */}
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>
-                Précisions ou commentaire libre (facultatif)
-              </label>
-              <input
-                type="text"
-                maxLength={140}
-                placeholder="Ex: Livreur Mamadou - Course Ouakam"
-                value={motifPersonnalise}
-                onChange={(e) => setMotifPersonnalise(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: 8,
-                  border: '1px solid #cbd5e1',
-                  fontSize: 13,
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {/* Bénéficiaire */}
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>
-                Bénéficiaire / Destinataire (facultatif)
-              </label>
-              <input
-                type="text"
-                maxLength={80}
-                placeholder="Ex: Moussa Diop (Tiak-Tiak) - 77 123 45 67"
-                value={beneficiaire}
-                onChange={(e) => setBeneficiaire(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: 8,
-                  border: '1px solid #cbd5e1',
-                  fontSize: 13,
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {/* Boutons d'action */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-              <button
-                type="button"
-                onClick={onClose}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: 10,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                style={{
-                  flex: 1.5,
-                  padding: '12px',
-                  background: tab === 'sortie' ? '#ea580c' : '#0A5C36',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: 10,
-                  fontWeight: 900,
-                  fontSize: 13.5,
-                  cursor: submitting ? 'not-allowed' : 'pointer',
-                  opacity: submitting ? 0.7 : 1,
-                  boxShadow: tab === 'sortie' ? '0 4px 12px rgba(234,88,12,0.25)' : '0 4px 12px rgba(10,92,54,0.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                }}
-              >
-                <Plus size={16} />
-                <span>
-                  {submitting
-                    ? 'Enregistrement...'
-                    : tab === 'sortie'
-                    ? 'Valider la Sortie d\'espèces'
-                    : 'Valider l\'Entrée d\'espèces'}
-                </span>
-              </button>
-            </div>
-          </form>
+          <PosTiroirMouvementForm
+            tab={tab}
+            montant={montant}
+            setMontant={setMontant}
+            motifSelectionne={motifSelectionne}
+            setMotifSelectionne={setMotifSelectionne}
+            motifPersonnalise={motifPersonnalise}
+            setMotifPersonnalise={setMotifPersonnalise}
+            beneficiaire={beneficiaire}
+            setBeneficiaire={setBeneficiaire}
+            submitting={submitting}
+            onClose={onClose}
+            onSubmit={handleSubmit}
+            fcfa={fcfa}
+            motifsSortie={MOTIFS_SORTIE}
+            motifsEntree={MOTIFS_ENTREE}
+            montantsRapides={MONTANTS_RAPIDES}
+          />
         )}
       </div>
     </div>
