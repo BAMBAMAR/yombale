@@ -285,7 +285,6 @@ app.use('/api/categories',      require('./routes/categories'));
 app.use('/api/plans',           require('./routes/plans'));
 app.use('/api/social-shop',     require('./routes/social-shop'));
 app.use('/api/boutiques',       require('./routes/social-shop'));
-app.use('/api',                 require('./routes/social-shop'));
 app.use('/api/admin/integrations', require('./routes/admin-integrations'));
 app.use('/api/paiement-sequestre', require('./routes/paiement-sequestre'));
 app.use('/api/flux-catalogue',  require('./routes/flux-catalogue-meta'));
@@ -331,7 +330,11 @@ app.use(require('./middlewares/bot-ssr'));
 
 // ── 404 JSON explicite pour toute route /api/* non reconnue ──
 app.all('/api/*', (req, res) => {
-  res.status(404).json({ error: `Endpoint API introuvable : ${req.method} ${req.originalUrl}` });
+  res.status(404).json({
+    success: false,
+    error: `Endpoint API introuvable : ${req.method} ${req.originalUrl}`,
+    code: 'NOT_FOUND'
+  });
 });
 
 // ── Catch-all 404 JSON (API pure) ─────────────────────────────

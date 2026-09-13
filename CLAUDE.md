@@ -1,3 +1,23 @@
+- **Sécurisation Anti-IDOR Crédits, Sanitisation Alertes Telegram & Durcissement 404 API (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🛡️🔒💬 :
+  * **🎯 1. Contexte & Objectifs** :
+    - Finalisation des durcissements de sécurité et de résilience du backend Express :
+      * Sécurisation multi-tenant anti-IDOR de la route batch du carnet de dettes/crédits (`/api/boutiques/:id/credits-clients/batch`).
+      * Sécurisation des notifications d'alertes administratives Telegram contre les erreurs de parsing HTML (caractères `<`, `>`, `&`).
+      * Nettoyage des routes montées dans `app.js` et standardisation du format de retour JSON 404.
+  * **🛠️ 2. Réalisations Techniques** :
+    - **Sécurité Multi-Tenant Anti-IDOR (`credits.js`)** :
+      * Remplacement de la requête brute par le helper centralisé `checkBoutiqueAccess(id, req.user.userId)` dans la route `POST /:id/credits-clients/batch`.
+    - **Résilience Alertes Telegram (`admin-alerts.js`)** :
+      * Implémentation du helper `escapeTelegramHtml` pour échapper les balises HTML dans le titre, message, détails et libellé d'action envoyés à l'API Telegram.
+    - **Durcissement Routeur & 404 (`app.js`)** :
+      * Élimination du montage dupliqué `app.use('/api', require('./routes/social-shop'))`.
+      * Standardisation du handler 404 API : retour d'un payload JSON strict `{ success: false, error: ..., code: 'NOT_FOUND' }`.
+  * **🧪 3. Validation & Contrôle Qualité (Quality Gate 100% Validé)** :
+    - Tests backend Jest (`npm run test:unit`) : **31/31 suites, 247/247 tests passés (100%)**.
+    - Tests frontend (`npm test`) : **65/65 tests passés (100%)**.
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch, 0 monolithe**.
+
 - **Harmonisation Visuelle CardActions (Favoris & Comparer) sur Annonces & Immo (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** ⚖️❤️✨ :
   * **🎯 1. Contexte & Demande Utilisateur** :
     - Sur `/annonces`, les boutons d'action "Comparer" et "Favoris" présentaient une disparité visuelle et d'emplacement par rapport au reste de la plateforme (homepage, boutiques, catégories) suite au positionnement absolu temporaire.

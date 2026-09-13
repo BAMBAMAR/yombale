@@ -98,8 +98,8 @@ router.post('/:id/credits-clients', verifierToken, async (req, res) => {
 router.post('/:id/credits-clients/batch', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
     const { id } = req.params;
-    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
-    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b) return res.status(403).json({ error: 'Accès refusé' });
 
     const { clients } = req.body;
     if (!Array.isArray(clients) || clients.length === 0) {
