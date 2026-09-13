@@ -1,5 +1,4 @@
-'use server'
-
+// Barrel re-export des Server Actions Boutique
 export {
   createBoutique,
   updateBoutique,
