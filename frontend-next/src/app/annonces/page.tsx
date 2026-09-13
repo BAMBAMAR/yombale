@@ -258,8 +258,7 @@ export default async function AnnoncesPage({
             const photo = Array.isArray(a.photos) ? a.photos[0] : null
             const isBooste = a.boost_until && new Date(a.boost_until) > new Date()
             return (
-              <Link href={`/annonces/${a.id}`} key={a.id} className="annonce-pub-card" style={{ position: 'relative' }}>
-                <CardActions id={a.id} nom={a.titre} type="annonce" />
+              <Link href={`/annonces/${a.id}`} key={a.id} className="annonce-pub-card">
                 <div className="annonce-pub-img-wrap">
                   {isBooste && (
                     <span style={{
@@ -289,6 +288,7 @@ export default async function AnnoncesPage({
                     <span>{a.quartier ? `${a.quartier}, ` : ''}{a.ville ?? 'Dakar'}</span>
                     <span>{formatDate(a.created_at)}</span>
                   </div>
+                  <CardActions id={a.id} nom={a.titre} type="annonce" />
                 </div>
               </Link>
             )

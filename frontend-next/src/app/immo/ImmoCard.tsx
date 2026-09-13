@@ -49,8 +49,7 @@ export default function ImmoCard({ a }: { a: AnnonceImmo }) {
   const isVente = a.transaction === 'vente'
 
   return (
-    <Link href={`/immo/${a.id}`} className="immo-card" style={{ position: 'relative' }}>
-      <CardActions id={a.id} nom={a.titre} type="immo" />
+    <Link href={`/immo/${a.id}`} className="immo-card">
       <div className="immo-card-img">
         <ExternalImg 
           src={cloudinaryHQ(img, { width: 480 })} 
@@ -99,6 +98,7 @@ export default function ImmoCard({ a }: { a: AnnonceImmo }) {
             <span className="immo-source">{SOURCE_LABELS[a.source]}</span>
           )}
         </div>
+        <CardActions id={a.id} nom={a.titre} type="immo" />
       </div>
     </Link>
   )

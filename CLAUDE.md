@@ -1,3 +1,17 @@
+- **Harmonisation Visuelle CardActions (Favoris & Comparer) sur Annonces & Immo (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** ⚖️❤️✨ :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Sur `/annonces`, les boutons d'action "Comparer" et "Favoris" présentaient une disparité visuelle et d'emplacement par rapport au reste de la plateforme (homepage, boutiques, catégories) suite au positionnement absolu temporaire.
+  * **🛠️ 2. Réalisations Techniques** :
+    - **Harmonisation Emplacement & Structure (`annonces/page.tsx`, `immo/ImmoCard.tsx`)** :
+      * Déplacement du composant `CardActions` à l'intérieur du corps de carte (`.annonce-pub-body` et `.immo-card-body`) tout en bas, à l'identique de la page d'accueil (`ProduitsListe.tsx`), des boutiques et des pages catégories.
+    - **Suppression des Overrides et Application du Design System Global (`annonces.css`)** :
+      * Suppression des règles spécifiques flottantes et application des styles standards `.card-actions` et `.card-action-btn` : deux boutons équilibrés côte à côte (`flex: 1`), bordure orange `var(--accent)`, icônes vectorielles SVG `Scale` et `Heart` (14px), hover `var(--orange2)` et états actifs cohérents.
+      * Alignement automatique au bas de la carte via `margin-top: auto` et `padding-top: 6px`.
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - TypeScript compiler (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests unitaires frontend (`npm test`) : **65/65 passés (100%)**.
+    - Cohérence visuelle 100% identique entre Accueil, Annonces, Immo, Catégories et Boutiques.
+
 - **Correction Régression CSS Globale & Unification des Feuilles de Styles (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🎨🛡️💎 :
   * **🎯 1. Contexte & Cause Racine Identifiée** :
     - Détection d'une régression d'affichage sur plusieurs pages (`/annonces`, `/deposer-annonce`, etc.) suite au découpage initial de `globals.css` :
