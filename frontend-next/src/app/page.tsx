@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import '@/styles/homepage.css'
 import SearchBar from './SearchBar'
 
 export const revalidate = 300 // ISR 5 minutes — TTFB instantané via cache avec rafraîchissement en arrière-plan

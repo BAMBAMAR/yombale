@@ -1,0 +1,167 @@
+/* styles/rtl.css — Direction RTL Arabe pour Espaces Compte, Boutique & POS */
+
+
+/* ═══════════════════════════════════════════════════════════════
+   NOPALOU i18n & RTL (ARABIC / ENGLISH / FRENCH)
+   ════════════════════════════════════════════════════════════════ */
+
+html[lang="ar"], html[dir="rtl"] {
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, "Geeza Pro", Arial, sans-serif !important;
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] *, html[dir="rtl"] *::before, html[dir="rtl"] *::after {
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, "Geeza Pro", Arial, sans-serif;
+}
+
+/* Espace Compte RTL */
+html[dir="rtl"] .account-layout {
+  direction: rtl;
+}
+
+html[dir="rtl"] .account-sidebar {
+  border-right: none;
+  border-left: 1px solid var(--border);
+  text-align: right;
+}
+
+html[dir="rtl"] .account-nav-link {
+  text-align: right;
+  flex-direction: row;
+}
+
+html[dir="rtl"] .account-sidebar-identity {
+  text-align: right;
+}
+
+/* Authentification RTL */
+html[dir="rtl"] .auth-page {
+  direction: rtl;
+}
+
+html[dir="rtl"] .auth-card {
+  text-align: right;
+}
+
+html[dir="rtl"] .auth-label-row {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .auth-input-icon {
+  right: 14px;
+  left: auto;
+}
+
+html[dir="rtl"] .auth-eye-btn {
+  left: 12px;
+  right: auto;
+}
+
+html[dir="rtl"] .auth-input--icon {
+  padding-right: 44px;
+  padding-left: 14px;
+}
+
+html[dir="rtl"] .auth-input--eye {
+  padding-left: 44px;
+  padding-right: 44px;
+}
+
+html[dir="rtl"] .auth-visual {
+  text-align: right;
+}
+
+html[dir="rtl"] .auth-visual-list {
+  text-align: right;
+}
+
+/* Caisse POS & Boutique RTL */
+html[dir="rtl"] .pos-layout, html[dir="rtl"] .boutique-layout {
+  direction: rtl;
+}
+
+html[dir="rtl"] .pos-btn, html[dir="rtl"] .npl-btn {
+  flex-direction: row;
+}
+
+html[dir="rtl"] .npl-dropdown-menu {
+  right: auto;
+  left: 0;
+  text-align: right;
+}
+
+html[dir="rtl"] .npl-dropdown-item {
+  text-align: right;
+}
+
+/* RTL cohérent pour les espaces compte, boutique et POS.
+   Les nombres, téléphones, URLs et identifiants techniques restent LTR. */
+html[dir="rtl"] .account-layout,
+html[dir="rtl"] .bq-manage-layout,
+html[dir="rtl"] .pos-layout {
+  direction: rtl;
+  text-align: start;
+}
+
+html[dir="rtl"] .account-nav-link,
+html[dir="rtl"] .bq-nav-item,
+html[dir="rtl"] .pos-btn,
+html[dir="rtl"] .npl-btn {
+  text-align: start;
+}
+
+html[dir="rtl"] .account-nav-link,
+html[dir="rtl"] .bq-nav-item {
+  border-left: 0;
+  border-right: 3px solid transparent;
+}
+
+html[dir="rtl"] .account-nav-link--active,
+html[dir="rtl"] .bq-nav-item.active {
+  border-left: 0;
+  border-right-color: var(--accent, #C75B00);
+}
+
+html[dir="rtl"] .bq-sidebar {
+  border-right: 0;
+  border-left: 1px solid #e5e7eb;
+}
+
+html[dir="rtl"] .bq-nav-badge {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[inputmode="numeric"],
+html[dir="rtl"] .pos-montant,
+html[dir="rtl"] .pos-code,
+html[dir="rtl"] code {
+  direction: ltr;
+  text-align: start;
+}
+
+html[dir="rtl"] .auth-input-icon {
+  inset-inline-start: auto;
+  inset-inline-end: 14px;
+}
+
+html[dir="rtl"] .auth-eye-btn {
+  inset-inline-start: 12px;
+  inset-inline-end: auto;
+}
+
+@media (max-width: 900px) {
+  html[dir="rtl"] .account-layout {
+    display: block;
+  }
+
+  html[dir="rtl"] .bq-sidebar {
+    border-left: 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+}
+

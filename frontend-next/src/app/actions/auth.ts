@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation'
 import { createSession, deleteSession, getSession } from '@/lib/session'
 import { backendFetch } from '@/lib/backend-fetch'
+import { validerForceMotDePasse } from '@/lib/password-validator'
 
 const API = process.env.BACKEND_URL ?? 'http://localhost:3000'
 
@@ -42,7 +43,8 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
   const password = formData.get('password')?.toString() ?? ''
 
   if (!nom || !email || !password) return { error: 'Tous les champs sont requis' }
-  if (password.length < 8) return { error: 'Le mot de passe doit faire au moins 8 caractères' }
+  const checkPwd = validerForceMotDePasse(password)
+  if (!checkPwd.valide) return { error: checkPwd.message }
 
   try {
     const res = await fetch(`${API}/api/auth/inscription`, {

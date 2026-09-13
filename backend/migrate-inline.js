@@ -99,6 +99,8 @@ module.exports = async function migrateInline() {
       );
 
       ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS email_verifie BOOLEAN DEFAULT FALSE;
+      ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS a2f_actif BOOLEAN DEFAULT FALSE;
+      ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS a2f_telephone VARCHAR(20);
 
       CREATE TABLE IF NOT EXISTS alertes (
         id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -876,6 +878,7 @@ module.exports = async function migrateInline() {
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS bandeau_promo_actif BOOLEAN DEFAULT FALSE`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS message_accueil TEXT`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS disposition_catalogue VARCHAR(30) DEFAULT 'grille'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS theme_id VARCHAR(50) DEFAULT 'classique'`,
   ];
   for (const sql of colonnesBoutiqueAvancees) {
     try { await pool.query(sql); }

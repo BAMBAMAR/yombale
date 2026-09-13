@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import '@/styles/produit.css'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeftRight } from 'lucide-react'

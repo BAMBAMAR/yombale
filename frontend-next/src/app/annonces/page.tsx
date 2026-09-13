@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import '@/styles/annonces.css'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import CardActions from '@/app/CardActions'

@@ -1,5 +1,6 @@
 'use client'
 
+import '@/styles/studio.css'
 import React, { useState, useMemo } from 'react'
 import {
   Palette,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react'
 import StudioDispositionSections from './StudioDispositionSections'
 import { useStudioPersonnalisation } from './studio/useStudioPersonnalisation'
+import StudioThemeSelector from './studio/StudioThemeSelector'
 import StudioPresetAndCategory from './studio/StudioPresetAndCategory'
 import StudioColorsAndButtons from './studio/StudioColorsAndButtons'
 import StudioMediaUploader from './studio/StudioMediaUploader'
@@ -64,6 +66,8 @@ export default function StudioPersonnalisation({
     activeCategoryCoversTab,
     setActiveCategoryCoversTab,
     scoreData,
+    themeId,
+    appliquerTheme,
     isSaving,
     saveSuccess,
     saveError,
@@ -347,6 +351,11 @@ export default function StudioPersonnalisation({
           className={`studio-editor-col ${activeScreenTab === 'apercu' ? 'studio-editor-hidden-mobile' : ''}`}
           style={{ flexDirection: 'column', gap: 16 }}
         >
+          <StudioThemeSelector
+            themeActif={themeId}
+            onSelectTheme={appliquerTheme}
+          />
+
           <StudioPresetAndCategory
             categorie={categorie}
             setCategorie={(cat) => {

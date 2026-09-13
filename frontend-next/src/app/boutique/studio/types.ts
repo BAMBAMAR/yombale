@@ -24,6 +24,7 @@ export interface BoutiqueCustomizationData {
   disposition_catalogue?: string | null
   disposition_sections?: string | any[] | null
   horaires?: Record<string, string> | null
+  theme_id?: string | null
 }
 
 export interface StylePreset {

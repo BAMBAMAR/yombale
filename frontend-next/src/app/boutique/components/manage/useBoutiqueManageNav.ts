@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { Boutique, ManageTab, NavGroup } from '../../types'
-import { VALID_TABS, getNavEssential, getNavAdvanced, getTabInfoMap } from './constants'
+import { VALID_TABS, getNavEssential, getNavCommerce, getNavAdvanced, getTabInfoMap } from './constants'
 
 export function useBoutiqueManageNav({
   boutique,
@@ -20,16 +20,67 @@ export function useBoutiqueManageNav({
     : 'dashboard'
 
   const navEssential = useMemo(() => getNavEssential(t), [t])
+  const navCommerce = useMemo(() => getNavCommerce(t), [t])
   const navAdvanced = useMemo(() => getNavAdvanced(t), [t])
   const tabInfoMap = useMemo(() => getTabInfoMap(t), [t])
 
-  const [showAdvancedNav, setShowAdvancedNav] = useState(() => {
-    return navAdvanced.some((g) => g.items.some((i) => i.key === resolvedInitialTab))
+  const [navTier, setNavTierState] = useState<'essential' | 'commerce' | 'all'>(() => {
+    if (navAdvanced.some((g) => g.items.some((i) => i.key === resolvedInitialTab))) {
+      return 'all'
+    }
+    if (navCommerce.some((g) => g.items.some((i) => i.key === resolvedInitialTab))) {
+      return 'commerce'
+    }
+    try {
+      const stored = localStorage.getItem('nopalou_dashboard_nav_tier')
+      if (stored === 'commerce' || stored === 'all' || stored === 'essential') return stored as any
+    } catch (e) {
+      console.warn('[useBoutiqueManageNav:storage:get]', e)
+    }
+    return 'essential'
   })
 
+  const setNavTier = useCallback((tier: 'essential' | 'commerce' | 'all') => {
+    setNavTierState(tier)
+    try {
+      localStorage.setItem('nopalou_dashboard_nav_tier', tier)
+    } catch (e) {
+      console.warn('[useBoutiqueManageNav:storage:set]', e)
+    }
+  }, [])
+
+  const showAdvancedNav = navTier === 'all'
+  const setShowAdvancedNav = useCallback((show: boolean | ((prev: boolean) => boolean)) => {
+    setNavTierState((prevTier) => {
+      const isCurrentlyAll = prevTier === 'all'
+      const nextShow = typeof show === 'function' ? show(isCurrentlyAll) : show
+      const nextTier = nextShow ? 'all' : 'essential'
+      try {
+        localStorage.setItem('nopalou_dashboard_nav_tier', nextTier)
+      } catch (e) {
+        console.warn('[useBoutiqueManageNav:storage:set]', e)
+      }
+      return nextTier
+    })
+  }, [])
+
+  const toggleNavTier = useCallback(() => {
+    setNavTierState((prev) => {
+      const next = prev === 'essential' ? 'commerce' : prev === 'commerce' ? 'all' : 'essential'
+      try {
+        localStorage.setItem('nopalou_dashboard_nav_tier', next)
+      } catch (e) {
+        console.warn('[useBoutiqueManageNav:storage:set]', e)
+      }
+      return next
+    })
+  }, [])
+
   const navGroups: NavGroup[] = useMemo(() => {
-    return showAdvancedNav ? [...navEssential, ...navAdvanced] : navEssential
-  }, [showAdvancedNav, navEssential, navAdvanced])
+    if (navTier === 'all') return [...navEssential, ...navCommerce, ...navAdvanced]
+    if (navTier === 'commerce') return [...navEssential, ...navCommerce]
+    return navEssential
+  }, [navTier, navEssential, navCommerce, navAdvanced])
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
   const [subTabCompta, setSubTabCompta] = useState<'bilan' | 'dashboard' | 'express' | 'ventes' | 'depenses'>('bilan')
@@ -74,7 +125,12 @@ export function useBoutiqueManageNav({
     }
     const isAdvancedTab = navAdvanced.some((g) => g.items.some((i) => i.key === targetTab))
     if (isAdvancedTab) {
-      setShowAdvancedNav(true)
+      setNavTier('all')
+    } else {
+      const isCommerceTab = navCommerce.some((g) => g.items.some((i) => i.key === targetTab))
+      if (isCommerceTab) {
+        setNavTierState((prev) => (prev === 'essential' ? 'commerce' : prev))
+      }
     }
     if (typeof window !== 'undefined' && targetTab !== tab) {
       const url = new URL(window.location.href)
@@ -82,7 +138,7 @@ export function useBoutiqueManageNav({
       window.history.pushState({ tab: targetTab, boutiqueManage: true }, '', url.toString())
     }
     setTab(targetTab)
-  }, [navAdvanced, tab])
+  }, [navAdvanced, navCommerce, setNavTier, tab])
 
   // Sync browser popstate
   useEffect(() => {
@@ -154,6 +210,10 @@ export function useBoutiqueManageNav({
     setTab,
     subTabCompta,
     handleNavigateTab,
+    navTier,
+    setNavTier,
+    toggleNavTier,
+    navCommerce,
     showAdvancedNav,
     setShowAdvancedNav,
     navGroups,

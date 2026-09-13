@@ -1,0 +1,758 @@
+/* styles/navbar.css — Styles Navbar, Navigation & Header Nopalou */
+
+
+/* ── Navbar simple ─────────────────────────────────────────────── */
+.navbar {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 clamp(10px, 1.8vw, 24px);
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 16px);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 1px 4px rgba(26, 22, 18, 0.04);
+  transition: all 0.2s ease;
+}
+
+.logo {
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--blue);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+
+.logo-name {
+  color: var(--navy);
+  display: inline;
+}
+
+.logo-nopa {
+  color: var(--navy);
+}
+
+.logo-lou {
+  color: var(--accent);
+}
+
+
+/* ── Navbar Guides dropdown ─────────────────────────────────────── */
+.navbar-guides-wrap {
+  position: relative;
+}
+
+.navbar-guides-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background .15s;
+}
+
+.navbar-guides-btn:hover { background: var(--bg); }
+
+.navbar-guides-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow2);
+  min-width: 220px;
+  z-index: 200;
+  overflow: hidden;
+  animation: fadeDown .15s ease;
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.navbar-guide-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text1);
+  text-decoration: none;
+  transition: background .12s;
+}
+
+.navbar-guide-item:hover { background: var(--bg); color: var(--accent); }
+
+.navbar-guide-item span:first-child { font-size: 14px; }
+
+
+/* ── Navbar (Sprint 10) ────────────────────────────────────────── */
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(2px, 0.35vw, 4px);
+  flex-shrink: 0;
+}
+
+.navbar-link {
+  padding: 6px clamp(5px, 0.55vw, 10px);
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--navy);
+  text-decoration: none;
+  transition: all .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.navbar-link:hover {
+  color: var(--accent);
+  background: var(--bg);
+  transform: translateY(-1px);
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.6vw, 8px);
+  flex-shrink: 0;
+}
+
+.navbar-actions-compte {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.navbar-deposer {
+  padding: 6px clamp(8px, 0.8vw, 13px);
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+
+.navbar-deposer:hover {
+  opacity: .88;
+}
+
+.navbar-inscription {
+  padding: 6px clamp(8px, 0.8vw, 13px);
+  border: 1.5px solid rgba(254, 215, 170, 0.65);
+  color: #fed7aa;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}
+
+.navbar-inscription:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+@media (max-width: 1320px) {
+  /* Masquer le gros bouton Taf Taf entre 1140px et 1320px pour éviter la troncature à droite */
+  .navbar-taftaf {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1140px) {
+  .navbar-links { display: none !important; }
+  /* Connexion + S'inscrire sont dans le tiroir mobile — on les cache de la navbar */
+  .navbar-link   { display: none !important; }
+  .navbar-inscription { display: none !important; }
+  /* Nom du compte + Déconnexion sont dans le tiroir mobile aussi — sans ce
+     masquage, .navbar-actions dépasse le viewport (nom + Déconnexion + Publier
+     + hamburger ne tiennent pas sur une largeur téléphone) */
+  .navbar-actions-compte { display: none !important; }
+  .navbar-deposer { display: none !important; }
+  .navbar-taftaf { display: none !important; }
+  .navbar-maboutique { display: none !important; }
+  /* S'assurer que le bouton hamburger est toujours visible */
+  .mobile-nav-btn { flex-shrink: 0; }
+}
+
+
+/* ── Recherche navbar (Sprint 11) ──────────────────────────────── */
+.navbar-search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.navbar-search-input {
+  width: 200px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text1);
+  outline: none;
+  transition: border-color .15s, width .2s;
+}
+
+.navbar-search-input:focus {
+  border-color: var(--accent);
+  width: 240px;
+}
+
+.navbar-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+
+.navbar-search-btn:hover {
+  background: var(--border);
+  color: var(--text1);
+}
+
+@media (max-width: 500px) {
+  .navbar-search-input { width: 120px; }
+  .navbar-search-input:focus { width: 140px; }
+}
+@media (max-width: 400px) {
+  /* Très petit écran : input de recherche minimal */
+  .navbar-search-input { width: 100px; }
+  .navbar-search-input:focus { width: 120px; }
+}
+
+
+/* ── Mobile Navigation ──────────────────────────────────────── */
+
+.mobile-nav-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--navy);
+  flex-shrink: 0;
+}
+
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 299;
+}
+
+.mobile-nav-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 290px;
+  max-width: 90vw;
+  height: 100dvh;
+  background: #fff;
+  z-index: 300;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.26s;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+}
+
+.mobile-nav-drawer--open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.mobile-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-nav-logo {
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+  text-decoration: none;
+}
+
+.mobile-nav-logo span {
+  color: var(--accent);
+}
+
+.mobile-nav-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--text2);
+  padding: 4px 8px;
+}
+
+.mobile-nav-link {
+  display: block;
+  padding: 13px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--navy);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link:active {
+  background: var(--bg-alt, #f5f6fa);
+}
+
+.mobile-nav-link--sub {
+  padding-left: 32px;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.mobile-nav-link--cta {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.mobile-nav-link--logout {
+  color: var(--red, #dc2626);
+}
+
+.mobile-nav-link--signup {
+  color: var(--primary, #2563eb);
+  font-weight: 600;
+}
+
+.mobile-nav-section {
+  padding: 12px 20px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-nav-sep {
+  height: 6px;
+  background: var(--bg-alt, #f5f6fa);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 1040px) {
+  .mobile-nav-btn {
+    display: flex;
+  }
+}
+
+.admin-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text3);
+  font-size: 14px;
+}
+
+
+/* ── Modern Premium E-commerce Header ──────────────────────────── */
+.navbar-top-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  gap: clamp(6px, 1vw, 14px);
+}
+
+.navbar-search-desktop {
+  display: block;
+}
+
+.navbar-search-mobile {
+  display: none;
+}
+
+/* Bouton Assistant WhatsApp dans l'en-tête */
+.navbar-whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #25D366;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  flex-shrink: 0;
+}
+.navbar-whatsapp-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+@media (max-width: 640px) {
+  .navbar-whatsapp-btn {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 9px !important;
+  }
+}
+@media (max-width: 380px) {
+  .navbar-whatsapp-btn {
+    width: 33px !important;
+    height: 33px !important;
+    border-radius: 8px !important;
+  }
+}
+
+
+/* ── Mobile icon buttons (Comparer / Favoris / Profil) ─────────── */
+.navbar-mobile-group {
+  display: none;
+}
+
+.navbar-icon-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.navbar-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.15s;
+}
+.navbar-pill-btn:active {
+  transform: scale(0.95);
+}
+
+.navbar-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.navbar-icon-btn:active {
+  transform: scale(0.9);
+}
+
+.navbar-icon-btn--whatsapp {
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 15px;
+}
+
+.navbar-icon-btn--whatsapp:hover {
+  background: #bbf7d0;
+}
+
+.navbar-icon-btn--favoris {
+  background: #fff3ea;
+  color: var(--accent);
+}
+
+.navbar-icon-btn--favoris:hover {
+  background: #ffe8d4;
+}
+
+.navbar-icon-btn--publier {
+  background: #e0f2fe;
+  color: var(--blue);
+  font-size: 14px;
+}
+
+.navbar-icon-btn--publier:hover {
+  background: #bae6fd;
+}
+
+.navbar-icon-btn--profil {
+  background: var(--surface-subtle);
+  color: var(--navy);
+  font-size: 15px;
+}
+
+.navbar-icon-btn--profil:hover {
+  background: var(--border-light);
+}
+
+/* Desktop: keep text-based Comparer hidden, show Publier */
+.navbar-comparer {
+  display: none;
+}
+
+@media (max-width: 1140px) {
+  .navbar {
+    height: auto !important;
+    padding: 10px 4% !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    border-bottom: none !important;
+    box-shadow: 0 2px 8px rgba(26,22,18,0.08);
+  }
+
+  .navbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), #e8a44a, var(--accent));
+  }
+
+  .caisse-search-row-btns {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .navbar-top-row {
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .navbar-search-desktop {
+    display: none !important;
+  }
+
+  .navbar-links {
+    display: none !important;
+  }
+
+  .navbar-actions {
+    display: none !important;
+  }
+
+  .navbar-search-mobile {
+    display: block;
+    width: 100%;
+  }
+
+  .logo-name {
+    display: inline !important;
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  /* Show grouped icon actions + burger aligned on the right */
+  .navbar-mobile-group {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .navbar-icon-actions {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .navbar-deposer {
+    display: none !important;
+  }
+
+  .navbar-comparer {
+    display: none !important;
+  }
+}
+
+@media (max-width: 580px) {
+  .logo-name {
+    display: inline-flex !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+  }
+  .navbar-top-row {
+    gap: 6px;
+  }
+  .navbar-mobile-group {
+    gap: 4px;
+  }
+  .navbar-icon-actions {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 8px 3% !important;
+  }
+}
+
+/* Responsive Account Layout Fixes */
+.account-mobile-header {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .account-layout {
+    padding: 12px 10px 80px !important;
+    gap: 14px !important;
+  }
+
+  .account-sidebar {
+    padding: 14px 12px !important;
+    overflow: hidden !important;
+  }
+
+  /* Sur mobile : masquer le hero profil du Dashboard Hub (redondant avec la sidebar) */
+  .account-hub-hero-card {
+    display: none !important;
+  }
+
+  /* Si on est sur une sous-page du compte, on masque la sidebar pour afficher immédiatement le contenu */
+  .account-sidebar--sub {
+    display: none !important;
+  }
+
+  /* Sur /compte mobile, nav bottom-sheet (remplace les 2 niveaux de pills) */
+  .account-nav-desktop {
+    display: none !important;
+  }
+
+  .account-nav-mobile {
+    display: none !important;
+  }
+
+  .mobile-nav-compact.mobile-nav-compact--account {
+    display: block !important;
+  }
+
+  .account-sidebar--main .account-sidebar-nav-wrapper {
+    display: block !important;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Cartes d'annonces mobiles — éliminer tout débordement horizontal des boutons */
+  .annonce-card {
+    padding: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .annonce-card-body {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .annonce-card-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 10px !important;
+    width: 100% !important;
+  }
+
+  .annonce-action-btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Affichage du bouton de retour sur les sous-pages sur mobile */
+  .account-mobile-header {
+    display: block;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .account-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+}
+

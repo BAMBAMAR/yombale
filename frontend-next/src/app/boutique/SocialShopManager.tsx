@@ -1,5 +1,6 @@
 'use client'
 
+import '@/styles/social-shop.css'
 import React, { useState, useEffect } from 'react'
 import {
   MainTab,

@@ -1,0 +1,145 @@
+/* styles/responsive-global.css — Responsive Global Media Queries */
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Nopalou — Audit & Optimisations Mobile
+   ════════════════════════════════════════════════════════════════ */
+
+/* 1. Grille Mes Alertes (2 colonnes desktop, 1 colonne mobile) */
+.mes-alertes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+@media (max-width: 768px) {
+  .mes-alertes-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* 2. Empêcher le zoom automatique indésirable iOS Safari sur les inputs (<16px) */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea,
+  .navbar-search-input {
+    font-size: 16px !important;
+  }
+}
+
+/* 3. Conteneur de tableau responsive à défilement fluide */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+}
+
+/* 4. Footer mobile : 2 colonnes équilibrées et compactes sur tous mobiles */
+@media (max-width: 480px) {
+  .footer-links {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px 12px !important;
+  }
+}
+
+/* 5. Sécurité padding-bottom du conteneur principal pour BottomBars */
+@media (max-width: 480px) {
+  .page-container {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACCESSIBILITÉ WEB (WCAG 2.1 AA) & MICRO-INTERACTIONS
+   ════════════════════════════════════════════════════════════════ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 20px;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  z-index: 9999;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transition: top 0.2s ease-in-out;
+}
+.skip-link:focus {
+  top: 10px;
+  outline: 3px solid #fbbf24;
+  outline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 2px !important;
+  border-radius: 6px;
+}
+
+/* Effet Vague (Ripple Effect) */
+button, .chip, .pcard, .card-produit, .nav-user {
+  position: relative;
+  overflow: hidden;
+}
+
+span.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-effect 500ms cubic-bezier(0.2, 0.8, 0.4, 1);
+  background-color: rgba(199, 91, 0, 0.22);
+  pointer-events: none;
+}
+@keyframes ripple-effect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Écrans de chargement squelette (Skeleton Shimmer) */
+.skeleton {
+  background: linear-gradient(90deg, #f8f5f0 25%, #e8ddd2 50%, #f8f5f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Micro-animations ressort */
+.card-produit {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.card-produit:hover {
+  transform: translateY(-3px) scale(1.006);
+}
+.card-produit:active {
+  transform: scale(0.98);
+}
+

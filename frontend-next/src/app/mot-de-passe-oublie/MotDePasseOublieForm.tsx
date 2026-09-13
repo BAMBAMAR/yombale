@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
+import { validerForceMotDePasse } from '@/lib/password-validator'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -81,7 +82,8 @@ function FormReinit({ token }: { token: string }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (password.length < 6) { setErr(t('errors.passwordTooShort')); return }
+    const checkPwd = validerForceMotDePasse(password)
+    if (!checkPwd.valide) { setErr(checkPwd.message); return }
     setLoading(true)
     setErr('')
     try {

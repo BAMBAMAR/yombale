@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { SECTIONS_PAR_DEFAUT, SectionItem } from '../StudioDispositionSections'
 import type { BoutiqueCustomizationData, StylePreset } from './types'
+import type { BoutiqueTheme } from '@/lib/boutique-themes'
 
 export function useStudioPersonnalisation({
   boutique,
@@ -11,6 +12,7 @@ export function useStudioPersonnalisation({
   boutique: BoutiqueCustomizationData
   onSaved?: () => void
 }) {
+  const [themeId, setThemeId] = useState<string>(boutique.theme_id || 'classique')
   const [categorie, setCategorie] = useState<string>(boutique.categorie || 'mixte')
   const [styleActif, setStyleActif] = useState<string>(boutique.theme_style || 'moderne')
   const [couleurTheme, setCouleurTheme] = useState<string>(boutique.couleur_theme || '#C75B00')
@@ -230,6 +232,15 @@ export function useStudioPersonnalisation({
     setDispositionCatalogue(preset.disposition)
   }
 
+  const appliquerTheme = (theme: BoutiqueTheme) => {
+    setThemeId(theme.id)
+    setCouleurTheme(theme.css.primary)
+    setCouleurSecondaire(theme.css.background)
+    if (theme.id === 'mode-chic') setFormeBoutons('droit')
+    else if (theme.id === 'nature-vert') setFormeBoutons('arrondi')
+    else setFormeBoutons('squircle')
+  }
+
   const handleEnregistrer = async () => {
     setIsSaving(true)
     setSaveError(null)
@@ -239,6 +250,7 @@ export function useStudioPersonnalisation({
       const formData = new FormData()
       formData.append('categorie', categorie)
       formData.append('theme_style', styleActif)
+      formData.append('theme_id', themeId)
       formData.append('couleur_theme', couleurTheme)
       formData.append('couleur_secondaire', couleurSecondaire)
       formData.append('forme_boutons', formeBoutons)
@@ -270,6 +282,7 @@ export function useStudioPersonnalisation({
       }
 
       boutique.categorie = categorie
+      boutique.theme_id = themeId
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 5000)
       if (onSaved) onSaved()
@@ -315,6 +328,9 @@ export function useStudioPersonnalisation({
     activeCategoryCoversTab,
     setActiveCategoryCoversTab,
     scoreData,
+    themeId,
+    setThemeId,
+    appliquerTheme,
     isSaving,
     saveSuccess,
     saveError,

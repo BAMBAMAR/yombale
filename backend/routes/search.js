@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { pool } = require('../models/db');
 const { limiterRecherche } = require('../middlewares/rateLimit');
 const { recordSearch } = require('../lib/searchLogger');
+const { expandQuery } = require('../services/search-service');
 
 // GET /api/search?q=…&limit=10
 router.get('/', limiterRecherche, async (req, res) => {
@@ -13,7 +14,7 @@ router.get('/', limiterRecherche, async (req, res) => {
   recordSearch(q);
 
   const limit = Math.min(parseInt(req.query.limit) || 10, 30);
-  const like = `%${q}%`;
+  const terms = expandQuery(q).map(t => `%${t}%`);
 
   try {
     const [produits, boutiques, annonces, immo] = await Promise.all([
@@ -30,12 +31,12 @@ router.get('/', limiterRecherche, async (req, res) => {
                   LIMIT 1
                 ) AS marchand
          FROM produits p
-         WHERE p.nom ILIKE $1 OR p.marque ILIKE $1
+         WHERE p.nom ILIKE ANY($1::text[]) OR p.marque ILIKE ANY($1::text[])
          ORDER BY
            CASE WHEN p.nom ILIKE $2 THEN 0 ELSE 1 END,
            p.prix_min ASC NULLS LAST
          LIMIT $3`,
-        [like, `${q}%`, limit]
+        [terms, `${q}%`, limit]
       ),
 
       // ── Boutiques + produits boutique ────────────────────────────────────────
@@ -44,7 +45,7 @@ router.get('/', limiterRecherche, async (req, res) => {
                 b.ville, b.logo_url AS image, b.slug,
                 NULL::numeric AS prix
          FROM boutiques b
-         WHERE b.actif = true AND (b.nom ILIKE $1 OR b.description ILIKE $1 OR b.categorie ILIKE $1)
+         WHERE b.actif = true AND (b.nom ILIKE ANY($1::text[]) OR b.description ILIKE ANY($1::text[]) OR b.categorie ILIKE ANY($1::text[]))
          UNION ALL
          SELECT 'produit_boutique' AS type, bp.id, bp.nom, bp.description, bp.categorie,
                 b.ville, bp.images[1] AS image, b.slug || '/produits/' || bp.id::text AS slug,
@@ -52,10 +53,10 @@ router.get('/', limiterRecherche, async (req, res) => {
          FROM boutique_produits bp
          JOIN boutiques b ON b.id = bp.boutique_id
          WHERE b.actif = true AND bp.en_stock = true
-           AND (bp.nom ILIKE $1 OR bp.description ILIKE $1)
+           AND (bp.nom ILIKE ANY($1::text[]) OR bp.description ILIKE ANY($1::text[]))
          ORDER BY type, prix ASC NULLS LAST
          LIMIT $2`,
-        [like, limit * 2]
+        [terms, limit * 2]
       ),
 
       // ── Annonces classées ────────────────────────────────────────────────────
@@ -65,13 +66,13 @@ router.get('/', limiterRecherche, async (req, res) => {
                 CASE WHEN a.actif THEN 'publiee' ELSE 'inactive' END AS statut
          FROM annonces_classifiees a
          WHERE a.actif = true AND a.supprimee = false
-           AND (a.titre ILIKE $1 OR a.description ILIKE $1 OR a.categorie_slug ILIKE $1 OR a.ville ILIKE $1)
+           AND (a.titre ILIKE ANY($1::text[]) OR a.description ILIKE ANY($1::text[]) OR a.categorie_slug ILIKE ANY($1::text[]) OR a.ville ILIKE ANY($1::text[]))
          ORDER BY
            CASE WHEN a.titre ILIKE $2 THEN 0 ELSE 1 END,
            CASE WHEN a.utilisateur_id IS NOT NULL THEN 0 ELSE 1 END,
            a.created_at DESC
          LIMIT $3`,
-        [like, `${q}%`, limit]
+        [terms, `${q}%`, limit]
       ),
 
       // ── Annonces immo ────────────────────────────────────────────────────────
@@ -82,13 +83,13 @@ router.get('/', limiterRecherche, async (req, res) => {
                 CASE WHEN ai.actif THEN 'publiee' ELSE 'inactive' END AS statut
          FROM annonces_immo ai
          WHERE ai.actif = true AND ai.supprimee = false
-           AND (ai.titre ILIKE $1 OR ai.ville ILIKE $1 OR ai.quartier ILIKE $1
-                OR ai.type_bien ILIKE $1 OR ai.description ILIKE $1)
+           AND (ai.titre ILIKE ANY($1::text[]) OR ai.ville ILIKE ANY($1::text[]) OR ai.quartier ILIKE ANY($1::text[])
+                OR ai.type_bien ILIKE ANY($1::text[]) OR ai.description ILIKE ANY($1::text[]))
          ORDER BY
            CASE WHEN ai.titre ILIKE $2 THEN 0 ELSE 1 END,
            ai.created_at DESC
          LIMIT $3`,
-        [like, `${q}%`, limit]
+        [terms, `${q}%`, limit]
       ),
     ]);
 

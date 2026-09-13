@@ -1,0 +1,274 @@
+/* styles/footer.css — Footer, Réassurance & Réseaux Sociaux */
+
+
+/* ── Footer (Sprint 10) ────────────────────────────────────────── */
+.site-footer {
+  background: #1C2B4A !important;
+  color: #fff;
+  margin-top: 64px;
+}
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 5% 32px;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.footer-logo {
+  font-family: var(--font-archivo), sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-logo-name {
+  color: #ffffff;
+}
+
+.footer-logo-name::after {
+  content: attr(data-suffix);
+  color: var(--accent);
+}
+
+.auth-logo-name {
+  color: #ffffff;
+}
+
+.auth-logo-name::after {
+  content: attr(data-suffix);
+  color: var(--accent);
+}
+
+.footer-tagline {
+  margin-top: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,.55);
+  line-height: 1.5;
+}
+
+.footer-links {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-col-titre {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #cbd5e1;
+  margin-bottom: 2px;
+}
+
+.footer-col a {
+  font-size: 14px;
+  color: rgba(255,255,255,.85);
+  transition: color .15s;
+}
+
+.footer-col a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,.1);
+  padding: 16px 5%;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,.75);
+}
+
+@media (max-width: 900px) {
+  .footer-links { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media (max-width: 680px) {
+  .footer-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-bottom: 24px;
+  }
+  .footer-links { grid-template-columns: 1fr 1fr !important; gap: 24px; }
+  
+}
+
+
+/* Footer social links */
+.footer-social {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.footer-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .15s;
+}
+
+.footer-social-link:hover {
+  background: rgba(255,255,255,.2);
+  color: #fff;
+}
+
+/* Footer 4 colonnes de liens */
+.footer-inner {
+  grid-template-columns: 200px 1fr !important;
+}
+
+.footer-links {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+.bq-nav-group {
+  margin-bottom: 12px;
+}
+
+.bq-nav-group-header {
+  transition: all 0.15s ease;
+}
+
+.bq-nav-group-header:hover {
+  background: var(--surface-subtle) !important;
+  border-color: var(--border-medium) !important;
+}
+
+.bq-nav-group-header--active {
+  box-shadow: 0 2px 8px rgba(199, 91, 0, 0.14) !important;
+}
+
+.bq-nav-group-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--navy);
+  padding: 6px 12px 4px;
+  margin: 0;
+}
+
+.bq-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+  color: #2D3748;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 2px;
+  text-align: left;
+  position: relative;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+
+.bq-nav-item:hover {
+  background: rgba(199, 91, 0, 0.06);
+  color: var(--navy);
+  transform: translateX(2px);
+}
+
+.bq-nav-item.active {
+  background: #FFF3E8 !important;
+  color: var(--accent) !important;
+  font-weight: 750 !important;
+}
+
+
+/* ── Social footer WhatsApp ────────────────────────────────────── */
+.footer-social {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.footer-social-link {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: rgba(255,255,255,.7);
+  transition: background .15s;
+}
+
+.footer-social-link:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+
+/* ── Bandeau confiance footer ──────────────────────────────────── */
+.footer-trust {
+  background: transparent;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 16px 5%;
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+/* ── Icônes Réseaux Sociaux Footer ────────────────────────────── */
+.footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.footer-social-link:hover {
+  transform: translateY(-3px);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.30);
+}
+
+.footer-social-link--tiktok:hover { background: #000000; color: #00f2fe !important; }
+.footer-social-link--whatsapp:hover { background: #25D366; }
+.footer-social-link--facebook:hover { background: #1877F2; }
+.footer-social-link--instagram:hover { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+.footer-social-link--twitter:hover { background: #000000; }
+
+.hero-categories-scroll { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+@media (max-width: 640px) {
+  .hero-categories-scroll { flex-wrap: nowrap !important; justify-content: flex-start !important; overflow-x: auto !important; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-left: 16px; padding-right: 20px; }
+  .hero-categories-scroll::-webkit-scrollbar { display: none; }
+}
+

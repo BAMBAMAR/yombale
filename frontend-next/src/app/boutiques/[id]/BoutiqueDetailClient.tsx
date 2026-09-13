@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext'
 import { matcherProduitRecherche, scorePertinenceProduit } from '@/lib/recherche-senegal'
 
 import { Produit, Annonce, BoutiqueData, getContrastColor } from './components/types'
+import { getBoutiqueTheme } from '@/lib/boutique-themes'
 import ProduitCard from './components/ProduitCard'
 import BoutiqueStickyBar from './components/BoutiqueStickyBar'
 import BoutiqueFilterBar from './components/BoutiqueFilterBar'
@@ -30,10 +31,11 @@ export default function BoutiqueDetailClient({
   initialSocialPosts?: SocialPost[]
   initialSocialAccounts?: SocialAccount[]
 }) {
-  const couleurTheme = boutique.couleur_theme || '#C75B00'
+  const theme = useMemo(() => getBoutiqueTheme(boutique.theme_id), [boutique.theme_id])
+  const couleurTheme = boutique.couleur_theme || theme.css.primary
   const contrastBtnText = getContrastColor(couleurTheme)
   const radiusMap: Record<string, string> = { droit: '4px', squircle: '10px', arrondi: '14px', pill: '9999px' }
-  const currentRadius = radiusMap[boutique.forme_boutons || 'squircle'] || '10px'
+  const currentRadius = boutique.forme_boutons ? (radiusMap[boutique.forme_boutons] || '10px') : theme.css.borderRadius
 
   const [tab, setTab] = useState<'produits' | 'social' | 'annonces' | 'infos'>('produits')
   const [commanderProduit, setCommanderProduit] = useState<Produit | null>(null)
@@ -165,7 +167,20 @@ export default function BoutiqueDetailClient({
   const whatsappUrl = contactNumber ? `https://wa.me/${contactNumber.replace(/\D/g, '')}` : null
 
   return (
-    <div>
+    <div
+      style={{
+        '--shop-primary': theme.css.primary,
+        '--shop-primary-dark': theme.css.primaryDark,
+        '--shop-primary-light': theme.css.primaryLight,
+        '--shop-bg': theme.css.background,
+        '--shop-card-bg': theme.css.cardBg,
+        '--shop-text-primary': theme.css.textPrimary,
+        '--shop-text-secondary': theme.css.textSecondary,
+        '--shop-border': theme.css.border,
+        '--shop-radius': currentRadius,
+        '--shop-shadow': theme.css.cardShadow,
+      } as React.CSSProperties}
+    >
       {/* Barre Sticky & Bannière Crédit */}
       <BoutiqueStickyBar
         isSticky={isSticky}

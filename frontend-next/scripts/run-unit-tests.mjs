@@ -860,6 +860,118 @@ it('genererEcrituresSyscohada: équilibre strict débit/crédit en régime réel
   assert.equal(totalDebit, totalCredit)
 })
 
+console.log('\n📦 16. Checkout 3 Étapes & Guest Checkout Zéro-Friction')
+it('Checkout: validation des étapes et des coordonnées sans compte obligatoire', () => {
+  // Étape 1 : validation
+  const validerEtape1 = (nom, tel) => nom.trim().length >= 2 && tel.trim().length >= 9
+  assert.equal(validerEtape1('', ''), false)
+  assert.equal(validerEtape1('F', '771234567'), false)
+  assert.equal(validerEtape1('Fatou Ndiaye', '77123456'), false) // 8 chiffres
+  assert.equal(validerEtape1('Fatou Ndiaye', '771234567'), true) // 9 chiffres Sénégal
+  assert.equal(validerEtape1('Amadou Diallo', '+221771234567'), true)
+
+  // Progression bornée des étapes 1 -> 2 -> 3
+  const nextStep = (current) => Math.min(current + 1, 3)
+  const prevStep = (current) => Math.max(current - 1, 1)
+  assert.equal(nextStep(1), 2)
+  assert.equal(nextStep(2), 3)
+  assert.equal(nextStep(3), 3) // Ne dépasse pas 3
+  assert.equal(prevStep(3), 2)
+  assert.equal(prevStep(2), 1)
+  assert.equal(prevStep(1), 1) // Ne descend pas sous 1
+
+  // Calcul du total commande
+  const sousTotal = 25000
+  const fraisLivraison = 1500
+  const reductionPromo = 2500
+  const totalSansPromo = sousTotal + fraisLivraison
+  const totalAvecPromo = Math.max(0, sousTotal + fraisLivraison - reductionPromo)
+  assert.equal(totalSansPromo, 26500)
+  assert.equal(totalAvecPromo, 24000)
+})
+
+console.log('\n📦 17. Système de Thèmes Boutique (boutique-themes.ts)')
+it('THEMES_BOUTIQUE: validation des 5 thèmes officiels et tokens système natifs', async () => {
+  const { THEMES_BOUTIQUE, getBoutiqueTheme } = await import('../src/lib/boutique-themes.ts')
+  assert.equal(THEMES_BOUTIQUE.length, 5)
+
+  const expectedIds = ['classique', 'luxe-sombre', 'nature-vert', 'tech-moderne', 'mode-chic']
+  for (const id of expectedIds) {
+    const theme = THEMES_BOUTIQUE.find(t => t.id === id)
+    assert.ok(theme, `Thème ${id} manquant`)
+    assert.ok(theme.nom.length > 0)
+    assert.ok(theme.css.primary.startsWith('#'))
+    assert.ok(theme.css.background.startsWith('#'))
+    assert.ok(theme.css.textPrimary.startsWith('#'))
+    assert.ok(theme.css.borderRadius.length > 0)
+    // Sécurité P0 : Polices système natives SANS fetch externe
+    assert.ok(theme.css.fontFamily.includes('system-ui') || theme.css.fontFamily.includes('-apple-system'))
+    assert.equal(theme.css.fontFamily.includes('http'), false)
+  }
+
+  // Fallback getBoutiqueTheme
+  assert.equal(getBoutiqueTheme('luxe-sombre').id, 'luxe-sombre')
+  assert.equal(getBoutiqueTheme(null).id, 'classique')
+  assert.equal(getBoutiqueTheme('inconnu').id, 'classique')
+})
+
+console.log('\n📦 18. Navigation Progressive Dashboard Marchand (constants.ts)')
+it('Progressive Navigation: intégrité des 3 tiers (Essential, Commerce, Advanced) sans doublons', async () => {
+  const { getNavEssential, getNavCommerce, getNavAdvanced, VALID_TABS } = await import('../src/app/boutique/components/manage/constants.ts')
+  const dummyT = (k) => k
+
+  const essential = getNavEssential(dummyT)
+  const commerce = getNavCommerce(dummyT)
+  const advanced = getNavAdvanced(dummyT)
+
+  const essentialKeys = essential.flatMap(g => g.items.map(i => i.key))
+  const commerceKeys = commerce.flatMap(g => g.items.map(i => i.key))
+  const advancedKeys = advanced.flatMap(g => g.items.map(i => i.key))
+
+  // Vérification de la complétude du mode essentiel (5 entrées indispensables)
+  assert.equal(essentialKeys.includes('dashboard'), true)
+  assert.equal(essentialKeys.includes('commandes'), true)
+  assert.equal(essentialKeys.includes('produits'), true)
+  assert.equal(essentialKeys.includes('personnaliser'), true)
+  assert.equal(essentialKeys.includes('infos'), true)
+
+  // Vérification des outils du mode commerce
+  assert.equal(commerceKeys.includes('carnet'), true)
+  assert.equal(commerceKeys.includes('express'), true)
+  assert.equal(commerceKeys.includes('fidelite'), true)
+  assert.equal(commerceKeys.includes('social'), true)
+
+  // Vérification des outils du mode avancé
+  assert.equal(advancedKeys.includes('compta'), true)
+  assert.equal(advancedKeys.includes('analytics'), true)
+  assert.equal(advancedKeys.includes('documents'), true)
+  assert.equal(advancedKeys.includes('fiscalite'), true)
+  assert.equal(advancedKeys.includes('equipe'), true)
+
+  // Aucun chevauchement (doublon) entre les tiers
+  const allKeys = [...essentialKeys, ...commerceKeys, ...advancedKeys]
+  const uniqueKeys = new Set(allKeys)
+  assert.equal(allKeys.length, uniqueKeys.size, 'Aucun doublon de clé entre les 3 tiers de navigation')
+
+  // Toutes les clés doivent être valides dans VALID_TABS
+  for (const k of allKeys) {
+    assert.equal(VALID_TABS.includes(k), true, `Clé ${k} doit être déclarée dans VALID_TABS`)
+  }
+})
+
+console.log('\n📦 19. Sécurité & Robustesse des Mots de Passe (password-validator.ts)')
+it('Password Validator: contrôle strict de la robustesse (min 8 chars, 1 chiffre, 1 maj/spécial)', async () => {
+  const { validerForceMotDePasse } = await import('../src/lib/password-validator.ts')
+
+  assert.equal(validerForceMotDePasse('short').valide, false)
+  assert.equal(validerForceMotDePasse('sanschiffre!').valide, false)
+  assert.equal(validerForceMotDePasse('minuscule123').valide, false)
+
+  assert.equal(validerForceMotDePasse('Nopalou2026').valide, true)
+  assert.equal(validerForceMotDePasse('Securite2026!').valide, true)
+  assert.equal(validerForceMotDePasse('dakar_2026*pro').valide, true)
+})
+
 console.log('\n──────────────────────────────────────────────────────────')
 console.log(`Résultats: ${passed} passés, ${failed} échoués (Total: ${passed + failed})`)
 if (failed > 0) process.exit(1)

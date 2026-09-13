@@ -26,11 +26,11 @@ interface CommanderPaymentSectionProps {
 }
 
 const MODES_PAIEMENT = [
-  { value: 'wave', label: 'Wave', badge: 'Pay Safe Séquestre', activeClass: 'active-wave' },
+  { value: 'wave', label: 'Wave', badge: 'Pay Safe Instantané', activeClass: 'active-wave' },
+  { value: 'orange_money', label: 'Orange Money', badge: 'Pay Safe Instantané', activeClass: 'active-om' },
+  { value: 'carte_bancaire', label: 'Carte Bancaire', badge: 'Stripe 3D-Secure', activeClass: 'active-wave' },
   { value: 'cash', label: 'Espèces', badge: 'À la livraison', activeClass: 'active-cash' },
-  { value: 'manuel', label: 'Wave / OM Manuel', badge: 'Pay Safe Séquestre', activeClass: 'active-om' },
   { value: 'credit', label: 'Achat à Crédit', badge: 'Carnet Client', activeClass: 'active-wave' },
-  { value: 'carte_bancaire', label: 'Carte Bancaire', badge: 'Stripe International', activeClass: 'active-wave' },
 ]
 
 export default function CommanderPaymentSection({

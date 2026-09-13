@@ -8,6 +8,15 @@ import '@/styles/typography.css';
 import '@/styles/components.css';
 import '@/styles/drawer-cart.css';
 import '@/styles/commander-modal.css';
+import '@/styles/checkout.css';
+import '@/styles/navbar.css';
+import '@/styles/footer.css';
+import '@/styles/tabs.css';
+import '@/styles/rtl.css';
+import '@/styles/mobile-nav.css';
+import '@/styles/mobile-utils.css';
+import '@/styles/responsive-global.css';
+import '@/styles/responsive-strict.css';
 import './globals.css';
 
 import { getOptionalSession } from '@/lib/dal';

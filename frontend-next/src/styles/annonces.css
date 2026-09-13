@@ -1,0 +1,1731 @@
+/* styles/annonces.css — Styles Annonces & Immobilier */
+
+
+/* ── Annonces immo ─────────────────────────────────────────────── */
+/* Legacy classes kept for backward compat */
+.grid-immo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px 5%;
+}
+
+.card-immo {
+  background: var(--card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-immo:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0,0,0,0.06);
+  border-color: rgba(199, 91, 0, 0.3);
+}
+
+/* ── Page immo Sprint 5 ─────────────────────────────────────────── */
+.immo-header {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.immo-titre-page {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 4px;
+}
+
+.immo-sous-titre {
+  font-size: 14px;
+  color: var(--text2);
+  margin: 0;
+}
+
+.immo-filtres {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.immo-quartier-input {
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  width: 220px;
+  background: #fff;
+  outline: none;
+}
+.immo-quartier-input:focus { border-color: var(--accent); }
+.immo-quartier-btn {
+  padding: 6px 14px;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Grille */
+.immo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+/* Carte immo */
+.immo-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .18s, transform .18s;
+}
+
+.immo-card:hover {
+  box-shadow: var(--shadow2), inset 3px 0 0 var(--accent);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.immo-card-img {
+  position: relative;
+  height: 180px;
+  background: var(--bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.immo-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.immo-img-placeholder {
+  font-size: 48px;
+  opacity: .25;
+}
+
+.immo-transaction-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.immo-transaction-badge--vente {
+  background: var(--accent);
+}
+
+.immo-sponsored-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.immo-card-body {
+  padding: 14px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.immo-type-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: capitalize;
+}
+
+.immo-titre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.35;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.immo-localisation {
+  font-size: 12px;
+  color: var(--text2);
+  margin: 0;
+}
+
+.immo-specs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.immo-spec {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: var(--text2);
+  font-weight: 500;
+}
+
+.immo-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+.immo-prix {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--price);
+}
+
+.immo-prix-periode {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text2);
+  margin-left: 2px;
+}
+
+.immo-source {
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+@media (max-width: 600px) {
+  .immo-titre-page { font-size: 22px; }
+  .immo-filtres { padding: 12px 14px; }
+  .immo-grid { grid-template-columns: 1fr; }
+  .immo-card-img { height: 160px; }
+  /* Input quartier : largeur fixe 220px → 100% sur mobile */
+  .immo-quartier-input { width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .hero-search {
+    margin-bottom: 12px;
+  }
+}
+
+/* ── Fiche immo ────────────────────────────────────────────────── */
+.fiche-immo {
+  max-width: 1200px;
+  margin: 32px auto;
+  padding: 0 5%;
+}
+
+.fiche-immo-hero {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.fiche-immo-hero h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text1);
+  margin-bottom: 12px;
+}
+
+.fiche-immo-hero .meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.meta-chip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--text2);
+}
+
+.meta-chip strong {
+  color: var(--text1);
+}
+
+.fiche-immo-hero .description {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.7;
+  margin-top: 16px;
+  white-space: pre-wrap;
+}
+
+
+/* ── CTA Annonce ───────────────────────────────────────────────── */
+.home-cta-annonce {
+  max-width: var(--max-w);
+  margin: 24px auto 0;
+  padding: 0 var(--px);
+}
+
+.home-cta-annonce-inner {
+  background: linear-gradient(135deg, #fff7f0, #fff);
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.home-cta-annonce-text h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 6px;
+}
+
+.home-cta-annonce-text p {
+  font-size: 14px;
+  color: var(--text2);
+  margin: 0;
+}
+
+.home-cta-annonce-btns {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.home-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.home-cta-btn:hover { opacity: .85; }
+.home-cta-btn--primary  { background: var(--accent); color: #fff; }
+.home-cta-btn--secondary { background: var(--navy); color: #fff; }
+
+
+/* ── Wizard Immo résultats ──────────────────────────────────────── */
+.wizard-immo-results { display: flex; flex-direction: column; gap: 12px; }
+
+.wizard-immo-card {
+  display: flex;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .15s;
+}
+
+.wizard-immo-card:hover { box-shadow: var(--shadow2); }
+
+.wizard-immo-img {
+  width: 80px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wizard-immo-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.wizard-immo-info { flex: 1; min-width: 0; }
+
+.wizard-immo-titre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text1);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wizard-immo-loc { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+
+.wizard-immo-tag {
+  font-size: 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--text2);
+}
+
+.wizard-immo-prix { font-size: 15px; font-weight: 700; color: var(--price); margin-top: 4px; }
+
+
+/* ── Formulaire Déposer annonce ────────────────────────────────── */
+.annonce-steps {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.annonce-step-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.annonce-step-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: #FFF4E6;
+  border: 1px solid #FDDCBA;
+  border-radius: 20px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.annonce-step-titre {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+.annonce-back {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  padding: 0;
+  margin-right: 4px;
+}
+
+.annonce-back:hover { color: var(--navy); }
+
+/* Grille catégories */
+.annonce-cats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  padding: 24px;
+}
+
+.annonce-cat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .12s;
+}
+
+.annonce-cat-btn:hover {
+  border-color: var(--accent);
+  background: #FFF4E6;
+  transform: translateY(-2px);
+}
+
+.annonce-cat-btn.active {
+  border-color: var(--accent);
+  background: #FFF4E6;
+}
+
+.annonce-cat-emoji { font-size: 28px; }
+
+.annonce-cat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+/* Formulaire annonce */
+.annonce-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text1);
+}
+
+.required { color: var(--accent); }
+
+.form-hint {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.form-input {
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text1);
+  outline: none;
+  transition: border-color .15s;
+  background: #fff;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-input:focus { border-color: var(--accent); }
+
+.form-textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-top: 4px;
+}
+
+.annonce-next-btn {
+  padding: 12px 24px;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  align-self: flex-end;
+}
+
+.annonce-next-btn:hover { opacity: .88; }
+
+/* Photos */
+.photos-zone { display: flex; flex-direction: column; gap: 16px; }
+
+.photos-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text2);
+  transition: border-color .15s, background .15s;
+  font-size: 14px;
+}
+
+.photos-dropzone:hover, .photos-dropzone:focus {
+  border-color: var(--accent);
+  background: #FFF4E6;
+  outline: none;
+}
+
+.photos-previews {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.photo-thumb {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0,0,0,.65);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.annonce-submit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.annonce-quota-info {
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.annonce-submit-btn {
+  padding: 14px 28px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  width: 100%;
+}
+
+.annonce-submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+.annonce-submit-btn:hover:not(:disabled) { opacity: .88; }
+
+.annonce-error {
+  background: #FEF2F2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--red);
+  font-size: 13px;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .annonce-cats-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-row { grid-template-columns: 1fr; }
+  .annonce-form { padding: 16px; }
+  .annonce-cats-grid { padding: 16px; }
+}
+
+
+/* ── Mes annonces ───────────────────────────────────────────────── */
+.mes-annonces-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.annonce-new-btn {
+  padding: 9px 18px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+
+.annonce-new-btn:hover { opacity: .88; }
+
+.annonces-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.annonce-card {
+  display: flex;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  align-items: flex-start;
+  transition: box-shadow .15s;
+}
+
+.annonce-card:hover { box-shadow: var(--shadow2); }
+
+.annonce-card-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  background: var(--bg);
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.annonce-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.annonce-thumb-placeholder { font-size: 24px; opacity: .25; }
+
+.annonce-card-body { flex: 1; min-width: 0; }
+
+.annonce-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.annonce-cat-label {
+  font-size: 11px;
+  color: var(--text3);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.annonce-card-titre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.annonce-card-meta {
+  font-size: 12px;
+  color: var(--text3);
+  margin: 4px 0 0;
+}
+
+.annonce-statut {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.annonce-statut--active    { background: #F0FDF4; color: var(--price); }
+.annonce-statut--attente   { background: #FFF4E6; color: var(--accent); }
+.annonce-statut--moderation { background: #EEF2FF; color: #4338CA; }
+.annonce-statut--rejete    { background: #FEF2F2; color: var(--red); }
+
+.annonce-delete-err {
+  font-size: 12px;
+  color: var(--red);
+  margin: 4px 0;
+}
+
+.annonce-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.annonce-action-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity .15s;
+  text-decoration: none;
+}
+
+.annonce-action-btn--pay {
+  background: var(--accent);
+  color: #fff;
+}
+
+.annonce-action-btn--pay:hover { opacity: .88; }
+
+.annonce-action-btn--delete {
+  background: none;
+  border: 1.5px solid #fecaca;
+  color: var(--red);
+}
+
+.annonce-action-btn--delete:hover { background: #fef2f2; }
+.annonce-action-btn--delete:disabled { opacity: .5; cursor: not-allowed; }
+
+.annonce-action-btn--edit {
+  background: var(--navy);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+}
+.annonce-action-btn--edit:hover { opacity: .85; }
+
+/* ── Formulaire de modification d'annonce ── */
+.modifier-annonce-warning {
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.modifier-cat-badge {
+  display: inline-block;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.modifier-photos-current {
+  margin-bottom: 12px;
+}
+
+.annonce-created-banner {
+  background: #F0FDF4;
+  border: 1px solid #86EFAC;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--price);
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .compte-grid { grid-template-columns: 1fr; }
+  .profil-field-row { grid-template-columns: 1fr; }
+  .annonce-card-top { flex-direction: column; }
+}
+
+
+/* ── Annonces publiques — listing (Sprint 13) ──────────────────── */
+.annonces-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 5%;
+}
+
+.annonces-cta-btn {
+  padding: 10px 18px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: opacity .15s;
+  flex-shrink: 0;
+}
+
+.annonces-cta-btn:hover { opacity: .88; }
+
+.annonces-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.annonces-search-input {
+  flex: 1 1 280px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.annonces-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.annonces-search-btn {
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: opacity .15s;
+}
+
+.annonces-search-btn:hover { opacity: .88; }
+
+.annonces-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.annonce-pub-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow .18s, transform .18s;
+  cursor: pointer;
+}
+
+.annonce-pub-card:hover {
+  box-shadow: var(--shadow2);
+  transform: translateY(-2px);
+}
+
+.annonce-pub-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.annonce-pub-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.annonce-pub-img--vide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  background: var(--border);
+}
+
+.annonce-pub-cat {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 7px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.annonce-pub-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.annonce-pub-titre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text1);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.annonce-pub-prix {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--price);
+  margin: 0;
+}
+
+.annonce-pub-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text3);
+  gap: 4px;
+}
+
+.annonces-empty {
+  text-align: center;
+  padding: 64px 20px;
+  color: var(--text2);
+}
+
+/* ── Boutons de Retour & Pagination Nopalou Premium ────────────────── */
+.annonces-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px 0;
+}
+
+.pag-btn, .page-btn, .budget-pill, .wizard-back, .annonce-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--pos-border, #E8DDD2);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pos-navy, #1C2B4A);
+  background: var(--pos-surface2, #FAF8F5);
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(26,22,18,0.05);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+
+.pag-btn:hover, .page-btn:hover, .budget-pill:hover, .wizard-back:hover, .annonce-back:hover {
+  border-color: var(--accent, #C75B00);
+  color: var(--accent, #C75B00);
+  background: var(--pos-primary-bg, #FFF3E8);
+  transform: translateX(-3px);
+  box-shadow: 0 3px 10px rgba(199, 91, 0, 0.14);
+}
+
+.pag-info {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--pos-navy, #1C2B4A);
+  background: var(--pos-surface, #ffffff);
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--pos-border, #E8DDD2);
+  box-shadow: 0 1px 3px rgba(26,22,18,0.04);
+}
+
+/* ── Annonce détail (Sprint 13) ────────────────────────────────── */
+.annonce-detail-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 5% 60px;
+}
+
+.annonce-detail-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.annonce-detail-breadcrumb a { color: var(--text2); }
+.annonce-detail-breadcrumb a:hover { color: var(--accent); }
+
+.annonce-detail-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 32px;
+  align-items: start;
+}
+
+.bq-nav-group {
+  margin-bottom: 12px;
+}
+
+.bq-nav-group-header {
+  transition: all 0.15s ease;
+}
+
+.bq-nav-group-header:hover {
+  background: var(--surface-subtle) !important;
+  border-color: var(--border-medium) !important;
+}
+
+.bq-nav-group-header--active {
+  box-shadow: 0 2px 8px rgba(199, 91, 0, 0.14) !important;
+}
+
+.bq-nav-group-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--navy);
+  padding: 6px 12px 4px;
+  margin: 0;
+}
+
+.bq-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+  color: #2D3748;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 2px;
+  text-align: left;
+  position: relative;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+
+.bq-nav-item:hover {
+  background: rgba(199, 91, 0, 0.06);
+  color: var(--navy);
+  transform: translateX(2px);
+}
+
+.bq-nav-item.active {
+  background: #FFF3E8 !important;
+  color: var(--accent) !important;
+  font-weight: 750 !important;
+}
+
+.annonce-detail-gallery { margin-bottom: 24px; }
+
+.annonce-detail-photo-main {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  display: block;
+}
+
+.annonce-detail-thumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+.annonce-detail-thumb {
+  width: 80px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s, opacity 0.15s;
+  opacity: 0.75;
+}
+.annonce-detail-thumb:hover { opacity: 1; border-color: var(--primary, #e85d26); }
+.annonce-detail-thumb-active { border-color: var(--primary, #e85d26) !important; opacity: 1; }
+
+.annonce-gallery-main-wrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.annonce-gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.annonce-gallery-arrow:hover { background: rgba(0,0,0,0.7); }
+.annonce-gallery-arrow-left  { left: 10px; }
+.annonce-gallery-arrow-right { right: 10px; }
+
+.annonce-gallery-counter {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.annonce-detail-no-photo {
+  width: 100%;
+  height: 240px;
+  background: var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  font-size: 48px;
+  margin-bottom: 24px;
+}
+
+.annonce-detail-no-photo p { font-size: 14px; margin-top: 8px; }
+
+.annonce-detail-header { margin-bottom: 16px; }
+
+.annonce-detail-cat {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--accent);
+  background: var(--orange2);
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.annonce-detail-titre {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 10px;
+  line-height: 1.3;
+}
+
+.annonce-detail-meta-row {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text2);
+  flex-wrap: wrap;
+}
+
+.annonce-detail-prix-box {
+  background: var(--green2);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+
+.annonce-detail-prix {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--price);
+  margin: 0;
+}
+
+.annonce-detail-section {
+  margin-bottom: 24px;
+}
+
+.annonce-detail-section-titre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.annonce-detail-description {
+  font-size: 14px;
+  color: var(--text1);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.annonce-detail-specs { margin: 0; }
+
+.annonce-detail-spec-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.annonce-detail-spec-key {
+  color: var(--text2);
+  min-width: 120px;
+  font-weight: 500;
+}
+
+.annonce-detail-spec-val {
+  color: var(--text1);
+  font-weight: 600;
+}
+
+/* Sidebar contact */
+.annonce-detail-sidebar { position: sticky; top: 80px; }
+
+.annonce-contact-card {
+  background: var(--navy);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.annonce-contact-titre {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,.6);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin: 0;
+}
+
+.annonce-contact-nom {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.annonce-contact-tel {
+  display: block;
+  padding: 12px 16px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  transition: background .15s;
+}
+
+.annonce-contact-tel:hover { background: rgba(255,255,255,.2); }
+
+.annonce-contact-whatsapp {
+  display: block;
+  padding: 12px 16px;
+  background: #25D366;
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  transition: opacity .15s;
+}
+
+.annonce-contact-whatsapp:hover { opacity: .88; }
+
+.annonce-contact-warn {
+  font-size: 11px;
+  color: rgba(255,255,255,.45);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.annonce-contact-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.annonce-contact-back {
+  font-size: 13px;
+  color: var(--text2);
+  padding: 8px 0;
+}
+
+.annonce-contact-back:hover { color: var(--accent); }
+
+.annonce-contact-deposer {
+  display: block;
+  padding: 10px 16px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  transition: background .15s, color .15s;
+}
+
+.annonce-contact-deposer:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Footer social links */
+.footer-social {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.footer-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .15s;
+}
+
+.footer-social-link:hover {
+  background: rgba(255,255,255,.2);
+  color: #fff;
+}
+
+/* Footer 4 colonnes de liens */
+.footer-inner {
+  grid-template-columns: 200px 1fr !important;
+}
+
+.footer-links {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+.bq-nav-group {
+  margin-bottom: 12px;
+}
+
+.bq-nav-group-header {
+  transition: all 0.15s ease;
+}
+
+.bq-nav-group-header:hover {
+  background: var(--surface-subtle) !important;
+  border-color: var(--border-medium) !important;
+}
+
+.bq-nav-group-header--active {
+  box-shadow: 0 2px 8px rgba(199, 91, 0, 0.14) !important;
+}
+
+.bq-nav-group-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--navy);
+  padding: 6px 12px 4px;
+  margin: 0;
+}
+
+.bq-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+  color: #2D3748;
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 2px;
+  text-align: left;
+  position: relative;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+
+.bq-nav-item:hover {
+  background: rgba(199, 91, 0, 0.06);
+  color: var(--navy);
+  transform: translateX(2px);
+}
+
+.bq-nav-item.active {
+  background: #FFF3E8 !important;
+  color: var(--accent) !important;
+  font-weight: 750 !important;
+}
+
+
+/* ── Formulaire dépôt immo ─────────────────────────────────────── */
+.deposer-immo-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem 5%;
+}
+
+.deposer-immo-titre {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+
+.deposer-immo-sub {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 28px;
+}
+
+.deposer-immo-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.deposer-immo-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text3);
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.deposer-immo-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-submit-btn {
+  padding: 14px 28px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  width: 100%;
+}
+.form-submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+.form-submit-btn:hover:not(:disabled) { opacity: .88; }
+
+.form-error-banner {
+  background: #FEF2F2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--red);
+  font-size: 13px;
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .deposer-immo-row { grid-template-columns: 1fr; }
+  .forfait-fiche-specs { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Mes annonces immo ─────────────────────────────────────────── */
+.mes-immo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.mes-immo-titre {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.mes-immo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+
+.mes-immo-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.mes-immo-card-img {
+  height: 160px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  overflow: hidden;
+}
+
+.mes-immo-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mes-immo-card-body {
+  padding: 14px 16px;
+}
+
+.mes-immo-card-titre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text1);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.mes-immo-card-prix {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--price);
+  margin-bottom: 8px;
+}
+
+.mes-immo-card-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.mes-immo-card-meta span {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.mes-immo-status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.mes-immo-status--attente {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.mes-immo-status--active {
+  background: var(--green2);
+  color: var(--price);
+}
+
+.mes-immo-status--inactive {
+  background: var(--bg);
+  color: var(--text3);
+}
+
+.historique-svg {
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+

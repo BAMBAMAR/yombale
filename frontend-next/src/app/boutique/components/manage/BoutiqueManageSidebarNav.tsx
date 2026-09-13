@@ -11,6 +11,7 @@ interface BoutiqueManageSidebarNavProps {
   tab: ManageTab
   onNavigateTab: (targetTab: ManageTab) => void
   showAdvancedNav: boolean
+  navTier?: 'essential' | 'commerce' | 'all'
   onToggleAdvancedNav: () => void
   isAllowed: (minPlan?: 'pro' | 'business') => boolean
   nbEnAttente: number
@@ -29,6 +30,7 @@ export default function BoutiqueManageSidebarNav({
   tab,
   onNavigateTab,
   showAdvancedNav,
+  navTier,
   onToggleAdvancedNav,
   isAllowed,
   nbEnAttente,
@@ -250,7 +252,15 @@ export default function BoutiqueManageSidebarNav({
             }}
           />
           <span>
-            {showAdvancedNav ? 'Masquer les options avancées' : 'Plus d\'options (comptabilité, rapports...)'}
+            {navTier
+              ? navTier === 'essential'
+                ? "Voir plus d'outils (carnet, fidélité...)"
+                : navTier === 'commerce'
+                ? "Outils Pro & Avancés (compta, TVA...)"
+                : "Revenir au mode essentiel"
+              : showAdvancedNav
+              ? 'Masquer les options avancées'
+              : "Plus d'options (comptabilité, rapports...)"}
           </span>
         </button>
 

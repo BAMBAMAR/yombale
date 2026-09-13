@@ -57,11 +57,10 @@ export function getNavEssential(t: (key: string) => string): NavGroup[] {
   return [
     {
       icon: LayoutDashboard,
-      title: t('shop.navGroupSalesClients') || 'Mon activité',
+      title: t('shop.navGroupSalesClients') || 'Mon activité essentielle',
       items: [
         { key: 'dashboard', icon: LayoutDashboard, label: t('shop.overview') || 'Accueil' },
         { key: 'commandes', icon: ClipboardList, label: t('shop.orders') || 'Mes commandes' },
-        { key: 'carnet', icon: BookOpen, label: t('shop.debts') || 'Carnet de dettes' },
       ],
     },
     {
@@ -69,17 +68,32 @@ export function getNavEssential(t: (key: string) => string): NavGroup[] {
       title: t('shop.navGroupCatalogStock') || 'Mes produits',
       items: [
         { key: 'produits', icon: ShoppingBag, label: t('shop.catalog') || 'Catalogue' },
-        { key: 'entrepots', icon: Warehouse, label: 'Entrepôts & Dépôts', minPlan: 'pro' },
       ],
     },
     {
       icon: Megaphone,
-      title: t('shop.navGroupMarketingSettings') || 'Vitrine & Personnalisation',
+      title: t('shop.navGroupMarketingSettings') || 'Vitrine & Paramètres',
       items: [
         { key: 'personnaliser', icon: Palette, label: 'Personnaliser ma boutique' },
+        { key: 'infos', icon: Settings, label: t('shop.settings') || 'Paramètres' },
+      ],
+    },
+  ]
+}
+
+export function getNavCommerce(t: (key: string) => string): NavGroup[] {
+  return [
+    {
+      icon: BookOpen,
+      title: 'Outils commerciaux',
+      items: [
+        { key: 'carnet', icon: BookOpen, label: t('shop.debts') || 'Carnet de dettes' },
+        { key: 'express', icon: Zap, label: t('shop.saisieExpress') || 'Ventes & Dépenses rapides' },
+        { key: 'fidelite', icon: Gift, label: t('shop.fidelitePromos') || 'Fidélité & Promotions' },
+        { key: 'fournisseurs', icon: Truck, label: t('shop.suppliers') || 'Fournisseurs', minPlan: 'pro' },
         { key: 'social', icon: Share2, label: 'Réseaux sociaux & Social Shop' },
         { key: 'marketing', icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
-        { key: 'infos', icon: Settings, label: t('shop.settings') || 'Paramètres' },
+        { key: 'appstore', icon: Boxes, label: 'App Store & Extensions', minPlan: 'pro' },
       ],
     },
   ]
@@ -91,7 +105,6 @@ export function getNavAdvanced(t: (key: string) => string): NavGroup[] {
       icon: Receipt,
       title: t('shop.navGroupFinanceReports') || 'Comptabilité & Rapports',
       items: [
-        { key: 'express', icon: Zap, label: t('shop.saisieExpress') || 'Ventes & Dépenses rapides', minPlan: 'pro' },
         { key: 'compta', icon: Receipt, label: t('shop.accounting') || 'Comptabilité détaillée', minPlan: 'pro' },
         { key: 'analytics', icon: BarChart3, label: t('shop.analytics') || 'Statistiques', minPlan: 'pro' },
         { key: 'documents', icon: FileText, label: t('shop.documents') || 'Factures & Devis', minPlan: 'pro' },
@@ -99,16 +112,14 @@ export function getNavAdvanced(t: (key: string) => string): NavGroup[] {
     },
     {
       icon: Settings,
-      title: t('shop.navGroupSettingsTeam') || 'Paramètres avancés',
+      title: t('shop.navGroupSettingsTeam') || 'Gestion avancée & Équipe',
       items: [
-        { key: 'fournisseurs', icon: Truck, label: t('shop.suppliers') || 'Fournisseurs', minPlan: 'pro' },
-        { key: 'fidelite', icon: Gift, label: t('shop.fidelitePromos') || 'Fidélité & Promotions' },
+        { key: 'entrepots', icon: Warehouse, label: 'Entrepôts & Dépôts', minPlan: 'pro' },
         { key: 'fiscalite', icon: Scale, label: t('shop.taxSettings') || 'Fiscalité & TVA', minPlan: 'pro' },
         { key: 'equipe', icon: Users, label: t('shop.team') || 'Mon équipe', minPlan: 'business' },
+        { key: 'abtesting', icon: Split, label: 'A/B Testing Vitrine', minPlan: 'pro' },
         { key: 'journal', icon: ScrollText, label: t('shop.auditLog') || 'Journal d\'activité', minPlan: 'business' },
         { key: 'developer', icon: Code2, label: t('shop.developer') || 'Portail développeur', minPlan: 'business' },
-        { key: 'appstore', icon: Boxes, label: 'App Store & Extensions', minPlan: 'pro' },
-        { key: 'abtesting', icon: Split, label: 'A/B Testing Vitrine', minPlan: 'pro' },
       ],
     },
   ]

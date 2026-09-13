@@ -63,6 +63,7 @@ export interface BoutiqueData {
   message_accueil?: string | null
   disposition_catalogue?: string | null
   disposition_sections?: string | any[] | null
+  theme_id?: string | null
 }
 
 export function getContrastColor(hexColor?: string | null): string {

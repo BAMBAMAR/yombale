@@ -79,7 +79,8 @@ export default function BoutiqueManage({
             tab={nav.tab}
             onNavigateTab={nav.handleNavigateTab}
             showAdvancedNav={nav.showAdvancedNav}
-            onToggleAdvancedNav={() => nav.setShowAdvancedNav((v) => !v)}
+            navTier={nav.navTier}
+            onToggleAdvancedNav={nav.toggleNavTier}
             isAllowed={nav.isAllowed}
             nbEnAttente={nav.nbEnAttente}
             formatNumber={formatNumber}

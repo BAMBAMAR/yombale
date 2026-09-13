@@ -9,6 +9,7 @@ import {
 import AnalyticsActivityChart from '../components/AnalyticsActivityChart'
 import AnalyticsFilterBar from '../components/AnalyticsFilterBar'
 import AnalyticsTopProduitsTable, { TopProduitItem } from '../components/AnalyticsTopProduitsTable'
+import AnalyticsConversionFunnel from '../components/AnalyticsConversionFunnel'
 
 interface Stats {
   vues_total: string
@@ -290,6 +291,9 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
               </div>
             ))}
           </div>
+
+          {/* Entonnoir de Conversion Visuel */}
+          <AnalyticsConversionFunnel boutiqueId={boutiqueId} />
 
           {/* Top 10 des Ventes sur la période sélectionnée */}
           {topProduits.length > 0 && (

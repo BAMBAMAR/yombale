@@ -1,3 +1,57 @@
+- **Exécution Intégrale du Plan Technique d'Excellence : Hisser Nopalou à 95+/100 — Découpage CSS, Modularisation Backend, Thèmes Natifs, Guest Checkout 3 Étapes, Passerelles Orange Money & Stripe, 2FA WhatsApp, Moteur de Recherche Unifié & Quality Gate 100% Vert (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🏆🚀💎🛡️ :
+  * **🎯 1. Contexte & Objectif Global** :
+    - Exécution complète des 12 phases du Plan Technique d'Excellence visant à élever la note globale de Nopalou de 62.4/100 à 95+/100 (Performance, Architecture, Expérience Marchand & Client, Sécurité, Résilience financière).
+    - Respect strict des 4 Règles d'Or Anti-IA-Slop & Standard Ingénieur Senior (0 émoji dans l'UI, composants < 450 lignes, design system tokens stricts, multi-tenant security & anti-IDOR).
+  * **🛠️ 2. Réalisations & Déploiements Techniques Détaillés (Phases 1 à 12)** :
+    - **Phase 1 — P0 : Découpage de `globals.css` (328 KB → Fichiers Spécialisés)** :
+      * Extraction et modularisation de 17 feuilles de styles dans `frontend-next/src/styles/` (`design-tokens.css`, `reset.css`, `caisse.css`, `checkout.css`, `studio.css`, `admin.css`, `landing.css`, `modals.css`, etc.).
+      * Allègement drastique de `globals.css` et suppression des styles monolithiques non purgés.
+    - **Phase 2 — P0 : Guest Checkout & Tunnel d'Achat 3 Étapes Optimisé Mobile** :
+      * Création du tunnel en 3 étapes sans friction (`CheckoutProgressBar.tsx`, `CheckoutStep1Info.tsx`, `CheckoutStep2Recap.tsx`, `CommanderPaymentSection.tsx`).
+      * Commande directe sans compte obligatoire pour les acheteurs sénégalais et diaspora.
+    - **Phase 3 — P0 : Découpage Architectural de `backend/routes/boutiques.js` (6 350 lignes → 15 Sous-Modules)** :
+      * Création du dossier `backend/routes/boutiques-modules/` avec 14 contrôleurs spécialisés (`boutiques-crud.js`, `boutiques-commandes.js`, `boutiques-produits.js`, `boutiques-pos.js`, `boutiques-documents.js`, `boutiques-fidelite.js`, `boutiques-equipe.js`, `boutiques-fournisseurs.js`, `boutiques-abtest.js`, `boutiques-club-vip.js`, `boutiques-integrations.js`, `boutiques-marketing.js`, `boutiques-admin.js`, `credits.js` + `helpers.js`).
+      * Allègement de `backend/routes/boutiques.js` en délégateur Express propre de 10 lignes avec compatibilité 100% descendante.
+    - **Phase 4 — P1 : Système de Thèmes Boutique Natifs (Zéro Fetch de Police Externe)** :
+      * Définition de 5 thèmes natifs à haute lisibilité dans `frontend-next/src/lib/boutique-themes.ts` (`classique`, `luxe-sombre`, `nature-vert`, `tech-moderne`, `mode-chic`).
+      * Migration SQL inline de la colonne `theme_id` sur la table `boutiques`.
+      * Composant de sélection visuelle `StudioThemeSelector.tsx` intégré au Studio Marchand.
+      * Injection dynamique des CSS Custom Properties (`--shop-primary`, `--shop-bg`, `--shop-radius`, etc.) dans `BoutiqueDetailClient.tsx`.
+    - **Phase 5 — P1 : Navigation Progressive Dashboard Marchand (Essentiel, Commerce, Avancé)** :
+      * Découpage en 3 tiers progressifs dans `constants.ts` (`getNavEssential`, `getNavCommerce`, `getNavAdvanced`).
+      * Hook `useBoutiqueManageNav.ts` avec mémorisation `localStorage`, bascule dynamique et auto-promotion d'onglet.
+      * Bouton sélecteur de mode ergonomique dans la barre latérale du tableau de bord.
+    - **Phase 6 — P1 : Passerelles de Paiement en Production (Orange Money & Stripe)** :
+      * Service `backend/services/orange-money.js` (OAuth2 token cache, Web Payment API Orange Sénégal, vérification de statut et mode sandbox automatique).
+      * Service `backend/services/stripe.js` (Sessions Checkout multi-devises EUR/USD/XOF, vérification cryptographique timing-safe HMAC-SHA256).
+      * Intégration dans `boutiques-commandes.js` et tests unitaires complets `tests/unit/payment-gateways-production.test.js`.
+    - **Phase 7 — P1 : Sécurité & Authentification Renforcée** :
+      * Validation de robustesse des mots de passe côté frontend et backend (min 8 car., 1 chiffre, 1 majuscule/caractère spécial) : `backend/lib/passwordValidator.js` et `frontend-next/src/lib/password-validator.ts`.
+      * 2FA Optionnel WhatsApp pour commerçants et administrateurs (`/connexion-2fa`, `/2fa/activer`, `/2fa/desactiver`, `/2fa/statut`).
+      * Colonnes SQL `a2f_actif` et `a2f_telephone` ajoutées à la table `utilisateurs` dans `migrate-inline.js`.
+      * Traçabilité audit trail via `enregistrerAdminLog` et `enregistrerAuditLog`.
+    - **Phase 8 — P1 : Composants Design System Fondateurs** :
+      * Bibliothèque UI standardisée dans `frontend-next/src/components/ui/` : `Button.tsx`, `Input.tsx`, `Card.tsx`, `Modal.tsx`, `EmptyState.tsx`, `Tooltip.tsx`.
+      * Conformes aux tokens Nopalou (`--navy`, `--accent`, `--price`, `--bg`, `--border`), 0 émoji en dur, icônes vectorielles `lucide-react`.
+    - **Phase 9 — P1 : Moteur de Recherche Unifié (PostgreSQL Trigrammes / Meilisearch Adapter)** :
+      * Création de `backend/services/search-service.js` combinant Meilisearch (si configuré) et fallback PostgreSQL résilient (`pg_trgm`, `ILIKE ANY`).
+      * Dictionnaire phonétique et sémantique sénégalais enrichi (`thieb` ↔ `riz`, `dall` ↔ `chaussure`, `yeure` ↔ `boubou`, `portable` ↔ `telephone`, etc.).
+    - **Phase 10 — P2 : Analytics Avancés & Entonnoir de Conversion Marchand** :
+      * Route backend `GET /api/analytics/boutique/:id/funnel` calculant les 5 étapes d'achat, le taux d'abandon panier et le taux de conversion global.
+      * Composant visuel `AnalyticsConversionFunnel.tsx` avec indicateurs de progression proportionnels et filtres temporels (7j, 30j, 90j).
+    - **Phase 11 — P2 : Centre d'Aide Marchand & Support Direct** :
+      * Route `/aide` (`frontend-next/src/app/aide/page.tsx` et `AideClient.tsx`) : recherche instantanée, 5 rubriques thématiques, accordéons FAQ interactifs et assistance WhatsApp 7j/7.
+      * Composant `Tooltip.tsx` accessible pour l'aide contextuelle sur les concepts avancés (SYSCOHADA, Clôture Z, etc.).
+    - **Phase 12 — P3 : Micro-animations, Accessibilité & Quality Gate Final** :
+      * Animation `modalSlideIn`, `fadeIn` et désactivation respectueuse `@media (prefers-reduced-motion: reduce)` dans `reset.css`.
+      * Élimination de tous les silent catches dans le code client.
+  * **🧪 3. Validation & Contrôle Qualité (Quality Gate 100% Vert)** :
+    - TypeScript compiler (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch**, **0 composant monolithe (>800 lignes)**.
+    - Tests unitaires frontend (`npm test` dans `frontend-next`) : **65/65 tests passés (100%)**.
+    - Tests unitaires backend Jest (`npm run test:unit`) : **31 suites, 247/247 tests passés (100%)**.
+    - Règle absolue respectée : **Aucun git push exécuté sans demande explicite de l'utilisateur**.
+
 - **Achèvement Intégral du Master Plan Nopalou : Démantèlement du Dernier Monolithe ProspectionClient (3 298 → 352 lignes), 100% des 17 Monolithes Résolus & Tests 100% Verts (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🏆💎🧩⚡ :
   * **🎯 1. Contexte & Résolution Complète** :
     - Clôture définitive du démantèlement des composants géants (Phase 2 & Pilier Architecture) :

@@ -33,6 +33,9 @@ export function useCommander({
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const nextStep = () => setStep(prev => Math.min(prev + 1, 3) as 1 | 2 | 3)
+  const prevStep = () => setStep(prev => Math.max(prev - 1, 1) as 1 | 2 | 3)
 
   const [crossSell, setCrossSell] = useState<Produit[]>([])
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({})
@@ -194,8 +197,8 @@ export function useCommander({
     }
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault()
+  async function submit(e?: React.FormEvent) {
+    if (e) e.preventDefault()
     setError(null)
     setLoading(true)
 
@@ -286,6 +289,7 @@ export function useCommander({
 
       recordAbConversion()
       setSuccess(true)
+      setStep(3)
     } catch {
       setError('Impossible de joindre le serveur')
     } finally {
@@ -296,6 +300,10 @@ export function useCommander({
   return {
     mode,
     setMode,
+    step,
+    setStep,
+    nextStep,
+    prevStep,
     nom,
     setNom,
     tel,
