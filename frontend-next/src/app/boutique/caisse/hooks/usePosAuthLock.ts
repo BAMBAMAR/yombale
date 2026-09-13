@@ -7,6 +7,7 @@ interface UsePosAuthLockProps {
   pinSuperviseur?: string
   session: any
   setCaissierNom: (nom: string) => void
+  caissierSelectionneId?: string
   setCaissierSelectionneId: (id: string) => void
   setRoleActif: (role: 'caissier' | 'superviseur') => void
   onRequireSessionOpen: () => void
@@ -17,6 +18,7 @@ export function usePosAuthLock({
   pinSuperviseur = '9999',
   session,
   setCaissierNom,
+  caissierSelectionneId,
   setCaissierSelectionneId,
   setRoleActif,
   onRequireSessionOpen,
@@ -60,5 +62,7 @@ export function usePosAuthLock({
     setPinError,
     profilChoisiPourPin,
     setProfilChoisiPourPin,
+    caissierSelectionneId,
+    setCaissierSelectionneId,
   }
 }

@@ -126,6 +126,7 @@ export default function CaisseClient({
     pinSuperviseur: modals.pinSuperviseur,
     session,
     setCaissierNom,
+    caissierSelectionneId,
     setCaissierSelectionneId,
     setRoleActif,
     onRequireSessionOpen: () => modals.setModalSessionOuverture(true),
@@ -239,6 +240,8 @@ export default function CaisseClient({
         initialToken={initialToken}
         caissiersList={caissiersList}
         authLock={authLock}
+        caissierSelectionneId={caissierSelectionneId}
+        setCaissierSelectionneId={setCaissierSelectionneId}
         onOpenConfigPin={() => modals.setModalConfigPin(true)}
         onSeDeconnecterCompte={() => (window.location.href = '/')}
         modalesGestionPin={

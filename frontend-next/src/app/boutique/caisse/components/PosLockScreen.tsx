@@ -47,14 +47,14 @@ export default function PosLockScreen(props: PosLockScreenProps) {
     modalesGestionPin,
   } = props
 
-  const profilChoisiPourPin = authLock ? authLock.profilChoisiPourPin : props.profilChoisiPourPin
-  const caissierSelectionneId = (authLock ? authLock.caissierSelectionneId : props.caissierSelectionneId) || ''
-  const codePinSaisi = (authLock ? authLock.codePinSaisi : props.codePinSaisi) || ''
-  const pinError = authLock ? authLock.pinError : (props.pinError ?? null)
-  const setProfilChoisiPourPin = authLock ? authLock.setProfilChoisiPourPin : (props.setProfilChoisiPourPin || (() => {}))
-  const setCaissierSelectionneId = authLock ? authLock.setCaissierSelectionneId : (props.setCaissierSelectionneId || (() => {}))
-  const setCodePinSaisi = authLock ? authLock.setCodePinSaisi : (props.setCodePinSaisi || (() => {}))
-  const setPinError = authLock ? authLock.setPinError : (props.setPinError || (() => {}))
+  const profilChoisiPourPin = authLock?.profilChoisiPourPin ?? props.profilChoisiPourPin
+  const caissierSelectionneId = authLock?.caissierSelectionneId ?? props.caissierSelectionneId ?? ''
+  const codePinSaisi = authLock?.codePinSaisi ?? props.codePinSaisi ?? ''
+  const pinError = authLock?.pinError ?? props.pinError ?? null
+  const setProfilChoisiPourPin = (typeof authLock?.setProfilChoisiPourPin === 'function' ? authLock.setProfilChoisiPourPin : props.setProfilChoisiPourPin) || (() => {})
+  const setCaissierSelectionneId = (typeof authLock?.setCaissierSelectionneId === 'function' ? authLock.setCaissierSelectionneId : props.setCaissierSelectionneId) || (() => {})
+  const setCodePinSaisi = (typeof authLock?.setCodePinSaisi === 'function' ? authLock.setCodePinSaisi : props.setCodePinSaisi) || (() => {})
+  const setPinError = (typeof authLock?.setPinError === 'function' ? authLock.setPinError : props.setPinError) || (() => {})
 
   const bqName = boutiques.find((b) => b.id === boutiqueActiveId)?.nom || boutiques[0]?.nom || ''
   const caissiersActifs = caissiersList.filter((c: any) => c.actif !== false)

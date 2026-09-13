@@ -1,3 +1,21 @@
+- **Correction POS Caisse & PWA Manifest Same-Origin (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🛡️⚡📱 :
+  * **🎯 1. Contexte & Problème Résolu** :
+    - Résolution de l'erreur JavaScript bloquante `TypeError: setCaissierSelectionneId is not a function` survenue dans `PosLockScreen.tsx` (ligne 187) lors du clic sur un caissier dans la grille de sélection `PosLockCaissierGrid`.
+    - Résolution du warning de console PWA `Manifest: property 'id' ignored, should be same origin as document`.
+  * **🛠️ 2. Réalisations Techniques** :
+    - **Hook `usePosAuthLock.ts`** :
+      * Exposition directe de `setCaissierSelectionneId` et `caissierSelectionneId` dans l'objet retourné par le hook.
+    - **Composant `PosLockScreen.tsx`** :
+      * Sécurisation défensive des setters et getters (`typeof authLock?.setCaissierSelectionneId === 'function'`) avec fallbacks automatiques sur les props directes et fonctions no-op pour éliminer toute possibilité de `TypeError`.
+    - **Composant `CaisseClient.tsx`** :
+      * Passage explicite des props `caissierSelectionneId` et `setCaissierSelectionneId` au hook `usePosAuthLock` et au composant `PosLockScreen`.
+    - **PWA `manifest.json`** :
+      * Remplacement de `"id": "https://nopalou.com/"` par `"id": "/"` garantissant la conformité Same-Origin sur tous les hôtes et ports d'exécution (localhost, environnements de prévisualisation et production).
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - TypeScript compiler (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests unitaires frontend (`npm test`) : **65/65 passés (100%)**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch**, **0 monolithe**.
+
 - **Exécution Intégrale du Plan Technique d'Excellence : Hisser Nopalou à 95+/100 — Découpage CSS, Modularisation Backend, Thèmes Natifs, Guest Checkout 3 Étapes, Passerelles Orange Money & Stripe, 2FA WhatsApp, Moteur de Recherche Unifié & Quality Gate 100% Vert (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🏆🚀💎🛡️ :
   * **🎯 1. Contexte & Objectif Global** :
     - Exécution complète des 12 phases du Plan Technique d'Excellence visant à élever la note globale de Nopalou de 62.4/100 à 95+/100 (Performance, Architecture, Expérience Marchand & Client, Sécurité, Résilience financière).
