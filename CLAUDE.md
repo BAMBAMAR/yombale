@@ -1,3 +1,19 @@
+- **Correction Régression CSS Globale & Unification des Feuilles de Styles (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🎨🛡️💎 :
+  * **🎯 1. Contexte & Cause Racine Identifiée** :
+    - Détection d'une régression d'affichage sur plusieurs pages (`/annonces`, `/deposer-annonce`, etc.) suite au découpage initial de `globals.css` :
+      * Les fichiers CSS extraits (`annonces.css`, `homepage.css`, `produit.css`, `vitrine-publique.css`, `boutique-dashboard.css`, `saas-commerce.css`, `social-shop.css`, `studio.css`, `admin.css`) n'étaient importés que sur des pages isolées.
+      * Conséquence : les routes partagées ou transversales (ex: `/deposer-annonce` dans `(account)`, filtres `FiltresBar`, boutons d'action `CardActions`, grilles catégories) perdaient leurs styles sur les navigations directes.
+  * **🛠️ 2. Réalisations Techniques** :
+    - **Enregistrement Global dans `layout.tsx`** :
+      * Importation centralisée de l'ensemble des modules CSS spécialisés (`homepage.css`, `annonces.css`, `produit.css`, `vitrine-publique.css`, `boutique-dashboard.css`, `saas-commerce.css`, `social-shop.css`, `studio.css`, `admin.css`) dans le `layout.tsx` racine.
+      * Garantit que 100% des composants partagés (`CardActions`, `FiltresBar`, cartes annonces, sélecteur de catégories 3 étapes, boutons d'action) disposent de leurs styles sur n'importe quelle URL de l'application.
+    - **Positionnement Flottant `CardActions` sur `annonce-pub-card` (`annonces.css`)** :
+      * Ajout des styles dédiés `.annonce-pub-card .card-actions` (position absolue en haut à droite avec backdrop-filter et boutons discrets) pour une intégration visuelle parfaite des actions comparer / favoris sur les cartes d'annonces.
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - TypeScript compiler (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests unitaires frontend (`npm test`) : **65/65 passés (100%)**.
+    - Routes vérifiées en direct : `/`, `/annonces`, `/deposer-annonce`, `/immo` toutes à **HTTP 200 OK**.
+
 - **Correction POS Caisse & PWA Manifest Same-Origin (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🛡️⚡📱 :
   * **🎯 1. Contexte & Problème Résolu** :
     - Résolution de l'erreur JavaScript bloquante `TypeError: setCaissierSelectionneId is not a function` survenue dans `PosLockScreen.tsx` (ligne 187) lors du clic sur un caissier dans la grille de sélection `PosLockCaissierGrid`.

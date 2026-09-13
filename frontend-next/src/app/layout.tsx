@@ -17,6 +17,15 @@ import '@/styles/mobile-nav.css';
 import '@/styles/mobile-utils.css';
 import '@/styles/responsive-global.css';
 import '@/styles/responsive-strict.css';
+import '@/styles/homepage.css';
+import '@/styles/annonces.css';
+import '@/styles/produit.css';
+import '@/styles/vitrine-publique.css';
+import '@/styles/boutique-dashboard.css';
+import '@/styles/saas-commerce.css';
+import '@/styles/social-shop.css';
+import '@/styles/studio.css';
+import '@/styles/admin.css';
 import './globals.css';
 
 import { getOptionalSession } from '@/lib/dal';
