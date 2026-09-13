@@ -990,9 +990,42 @@ module.exports = async function migrateInline() {
   try {
     await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS stock_quantite INT`);
     await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_achat NUMERIC(12,2) DEFAULT NULL`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS meta_title VARCHAR(150)`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS meta_description VARCHAR(300)`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS slug VARCHAR(200)`);
+    await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS meta_title VARCHAR(150)`);
+    await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS meta_description VARCHAR(300)`);
+    await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS layout_sections JSONB DEFAULT '[{"id":"hero","type":"banner","active":true},{"id":"prods","type":"featured_products","active":true},{"id":"cat","type":"categories_grid","active":true}]'::jsonb`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marketing_workflows (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom         VARCHAR(150) NOT NULL,
+        declencheur VARCHAR(50) NOT NULL DEFAULT 'panier_abandonne', -- e.g. panier_abandonne, nouvelle_commande, client_inactif
+        etapes      JSONB NOT NULL DEFAULT '[]'::jsonb,
+        actif       BOOLEAN DEFAULT true,
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_mw_boutique ON marketing_workflows(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS marketing_workflow_logs (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        workflow_id  UUID NOT NULL REFERENCES marketing_workflows(id) ON DELETE CASCADE,
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_tel   VARCHAR(30) NOT NULL,
+        etape_index  INT NOT NULL DEFAULT 0,
+        statut       VARCHAR(30) DEFAULT 'en_cours', -- en_cours, termine, echoue
+        prochaine_at TIMESTAMPTZ DEFAULT NOW(),
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_mwl_prochaine ON marketing_workflow_logs(prochaine_at, statut);
+    `);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS zones_livraison (
+
         id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
         nom         VARCHAR(100) NOT NULL,
@@ -1620,6 +1653,36 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_sae_boutique_type ON social_analytics_events(boutique_id, event_type);
       CREATE INDEX IF NOT EXISTS idx_sae_post ON social_analytics_events(social_post_id);
       CREATE INDEX IF NOT EXISTS idx_sae_created_at ON social_analytics_events(created_at DESC);
+
+      -- ── TABLES SPRINT 4 : BUNDLES / PACKS, TARIFS QUANTITÉ B2B & AGENTS IA ───────
+      CREATE TABLE IF NOT EXISTS produit_composants (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        parent_id    UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        enfant_id    UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        quantite     INT NOT NULL DEFAULT 1,
+        created_at   TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_produit_composant UNIQUE (parent_id, enfant_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_produit_comp_parent ON produit_composants(parent_id);
+
+      CREATE TABLE IF NOT EXISTS produit_tarifs_quantite (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        produit_id         UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        quantite_min       INT NOT NULL CHECK (quantite_min > 1),
+        prix_unitaire_fcfa NUMERIC(12,2) NOT NULL,
+        created_at         TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_produit_tarif_qty UNIQUE (produit_id, quantite_min)
+      );
+      CREATE INDEX IF NOT EXISTS idx_produit_tarif_qty_prod ON produit_tarifs_quantite(produit_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_ai_agents (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id       UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE UNIQUE,
+        prompt_systeme    TEXT,
+        marge_remise_max  NUMERIC(5,2) DEFAULT 5.00,
+        actif             BOOLEAN DEFAULT TRUE,
+        updated_at        TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
 
     console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support/social_shop/entrepots OK');

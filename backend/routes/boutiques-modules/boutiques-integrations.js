@@ -2,26 +2,11 @@
 const router = require('express').Router();
 const { body, param, query, validationResult } = require('express-validator');
 const { pool } = require('../../models/db');
-const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../../middlewares/auth');
-const { checkAbonnement, requireAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
-const { limiterPublication, limiterImport } = require('../../middlewares/rateLimit');
-const { uploadBuffer } = require('../../services/cloudinary');
-const { scrapeProductFromUrl } = require('../../services/magic-import');
-const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog');
-const cfg = require('../../lib/settingsCache');
-const { enregistrerAuditLog } = require('../../lib/auditLogger');
-const { normalizeSocialUrl } = require('../../services/social-parser');
-const {
-  checkBoutiqueAccess,
-  checkBoutiqueQuotas,
-  upload,
-  uploadProduitPhotos,
-  CATS,
-  MAX_BOUTIQUES,
-  QUOTA_PRODUITS,
-  slugify,
-  uniqueSlug,
-} = require('./helpers');
+const { verifierToken, tokenOptional, adminSecretOnly } = require('../../middlewares/auth');
+const { checkAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
+const { checkBoutiqueAccess } = require('./helpers');
+
+// ── Spec 04 : PUT /api/boutiques/:id/pixels — Sauvegarde des Pixels
 router.put('/:id/pixels', verifierToken, param('id').isUUID(), async (req, res) => {
   try {
     const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
@@ -110,7 +95,7 @@ router.post('/:id/api-keys', verifierToken, param('id').isUUID(), checkAbonnemen
     const crypto = require('crypto');
     const randomBytes = crypto.randomBytes(24).toString('hex');
     const apiKey = `nopalou_sk_live_${randomBytes}`;
-    const keyPrefix = apiKey.substring(0, 19); // "nopalou_sk_live_123"
+    const keyPrefix = apiKey.substring(0, 19);
     const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
 
     const r = await pool.query(
@@ -145,7 +130,7 @@ router.delete('/:id/api-keys/:keyId', verifierToken, param('id').isUUID(), param
     res.json({ success: true });
   } catch (err) {
     console.error('[DELETE API KEY ERR]', err);
-    res.status(500).json({ error: 'Erreur lors de la révocation de la clé API' });
+    res.status(500).json({ error: 'Erreur lors de la suppression de la clé API' });
   }
 });
 
@@ -188,10 +173,7 @@ router.post('/:id/webhooks', verifierToken, param('id').isUUID(), checkAbonnemen
       [bq.id, url.trim(), secret, eventsList]
     );
 
-    res.status(201).json({
-      success: true,
-      webhook: r.rows[0]
-    });
+    res.status(201).json({ success: true, webhook: r.rows[0] });
   } catch (err) {
     console.error('[POST WEBHOOK ERR]', err);
     res.status(500).json({ error: 'Erreur lors de l\'enregistrement du webhook' });
@@ -215,5 +197,116 @@ router.delete('/:id/webhooks/:webhookId', verifierToken, param('id').isUUID(), p
   }
 });
 
-// ── Spec 06 : GET /api/devises/taux — Taux de conversion officiels
+// ── Marketing Workflows endpoints ──────────────────────────────────────────
+router.get('/:id/marketing/workflows', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { rows } = await pool.query(
+      `SELECT * FROM marketing_workflows WHERE boutique_id = $1 ORDER BY created_at DESC`,
+      [bq.id]
+    );
+    res.json({ success: true, workflows: rows });
+  } catch (err) {
+    console.error('[GET WORKFLOWS ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.post('/:id/marketing/workflows', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { nom, declencheur, etapes } = req.body;
+    if (!nom || !Array.isArray(etapes)) {
+      return res.status(400).json({ error: 'Données invalides' });
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO marketing_workflows (boutique_id, nom, declencheur, etapes, actif)
+       VALUES ($1, $2, $3, $4, true)
+       RETURNING *`,
+      [bq.id, nom.trim(), declencheur || 'panier_abandonne', JSON.stringify(etapes)]
+    );
+
+    res.status(201).json({ success: true, workflow: rows[0] });
+  } catch (err) {
+    console.error('[POST WORKFLOW ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'enregistrement du workflow' });
+  }
+});
+
+// ── SPRINT 4 (POINT 07) : AGENT IA AUTONOME DE VENTE & NÉGOCIATION ─────────
+const { processAgentNegotiation } = require('../../services/ai-agent');
+
+// POST /api/boutiques/:id/ai-agent/chat — Endpoint public pour les acheteurs
+router.post('/:id/ai-agent/chat', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message, cart } = req.body; // message: string, cart: { articles, totalFCFA }
+
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    let targetId = id;
+    if (!isUUID) {
+      const bqRes = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [id]);
+      if (bqRes.rows[0]) targetId = bqRes.rows[0].id;
+    }
+
+    const result = await processAgentNegotiation(targetId, message, cart || {});
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('[AI AGENT CHAT ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du traitement par l\'agent IA' });
+  }
+});
+
+// GET /api/boutiques/:id/ai-agent — Lecture config marchand
+router.get('/:id/ai-agent', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { rows } = await pool.query(
+      `SELECT prompt_systeme, marge_remise_max, actif FROM boutique_ai_agents WHERE boutique_id = $1`,
+      [bq.id]
+    );
+
+    res.json({
+      success: true,
+      agent: rows[0] || { prompt_systeme: '', marge_remise_max: 5, actif: true }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// POST /api/boutiques/:id/ai-agent — Mise à jour config marchand (Anti-IDOR)
+router.post('/:id/ai-agent', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const bq = await checkBoutiqueAccess(req.params.id, req.user.userId);
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { prompt_systeme, marge_remise_max, actif } = req.body;
+
+    const { rows } = await pool.query(
+      `INSERT INTO boutique_ai_agents (boutique_id, prompt_systeme, marge_remise_max, actif, updated_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       ON CONFLICT (boutique_id) DO UPDATE SET
+         prompt_systeme = EXCLUDED.prompt_systeme,
+         marge_remise_max = EXCLUDED.marge_remise_max,
+         actif = EXCLUDED.actif,
+         updated_at = NOW()
+       RETURNING *`,
+      [bq.id, prompt_systeme || '', Number(marge_remise_max) || 5, actif !== false]
+    );
+
+    res.json({ success: true, agent: rows[0] });
+  } catch (err) {
+    console.error('[POST AI AGENT ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'enregistrement de l\'agent IA' });
+  }
+});
+
 module.exports = router;

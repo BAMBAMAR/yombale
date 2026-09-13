@@ -1219,5 +1219,30 @@ router.get('/:id/export-complet', verifierToken, param('id').isUUID(), async (re
   }
 });
 
-// ── SOUS-MODULE DÉDIÉ : Multi-entrepôts & gestion des stocks déportés
+// ── PUT /api/boutiques/:id/layout-sections — enregistrement de l'agencement visuel
+router.put('/:id/layout-sections', verifierToken, param('id').isUUID(), async (req, res) => {
+  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+  try {
+    const { id } = req.params;
+    const own = await checkBoutiqueAccess(id, req.user.userId);
+    if (!own) return res.status(403).json({ error: 'Accès refusé' });
+
+    const { layout_sections } = req.body;
+    if (!Array.isArray(layout_sections)) {
+      return res.status(400).json({ error: 'layout_sections doit être un tableau' });
+    }
+
+    await pool.query(
+      `UPDATE boutiques SET layout_sections = $1, updated_at = NOW() WHERE id = $2`,
+      [JSON.stringify(layout_sections), id]
+    );
+
+    res.json({ success: true, layout_sections });
+  } catch (err) {
+    console.error('[LAYOUT SECTIONS PUT ERR]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;
+

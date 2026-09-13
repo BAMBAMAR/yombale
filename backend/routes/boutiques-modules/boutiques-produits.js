@@ -22,16 +22,25 @@ const {
   slugify,
   uniqueSlug,
 } = require('./helpers');
-// ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand
+const { cacheGet, cacheSet, cacheInvalidatePattern } = require('../../services/redis-cache');
+
+// ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand (Cache < 10ms)
 router.get('/:id/produits', tokenOptional, async (req, res) => {
   try {
     const param = req.params.id;
+    const cacheKey = `cat:${param}`;
+    const cachedData = await cacheGet(cacheKey);
+    if (cachedData) {
+      return res.json({ produits: cachedData, cached: true });
+    }
+
     const { rows } = await pool.query(
       `SELECT p.id, p.nom, p.description, p.prix, p.prix_barre, p.images,
               COALESCE(CASE WHEN p.stock_quantite IS NOT NULL THEN (p.stock_quantite > 0) ELSE p.en_stock END, true) AS en_stock,
               p.ordre, p.categorie, p.caracteristiques, p.stock_quantite, p.variantes, p.code_barre,
               p.unite_vente, p.has_variants, p.date_expiration,
               p.whatsapp_sync_statut, p.whatsapp_sync_erreur, p.partage_le,
+              p.meta_title, p.meta_description, p.slug,
               COALESCE(
                 (SELECT json_agg(json_build_object(
                   'id', v.id, 'sku', v.sku, 'code_barre', v.code_barre, 'attributs', v.attributs,
@@ -47,9 +56,12 @@ router.get('/:id/produits', tokenOptional, async (req, res) => {
        ORDER BY p.ordre ASC, p.created_at DESC`,
       [param]
     );
+
+    await cacheSet(cacheKey, rows, 120); // Cache 2 minutes
     res.json({ produits: rows });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
+
 
 // ── GET /api/boutiques/:id/produits/:prodId — fiche produit publique ou privée marchand
 router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), async (req, res) => {
@@ -658,4 +670,98 @@ router.post('/:id/produits/:prodId/avis', async (req, res) => {
 });
 
 // ── Spec Acheteur 04 : GET /api/boutiques/commandes/suivi — Suivi de commande dynamique
+// ── SPRINT 4 (POINT 10) : BUNDLES / PACKS & TARIFS PAR QUANTITÉ B2B ─────────────────
+
+// GET /api/boutiques/:id/produits/:prodId/composants — composant du pack
+router.get('/:id/produits/:prodId/composants', async (req, res) => {
+  try {
+    const { prodId } = req.params;
+    const { rows } = await pool.query(
+      `SELECT pc.id, pc.enfant_id, pc.quantite, p.nom, p.prix, p.images, p.stock_quantite
+       FROM produit_composants pc
+       JOIN boutique_produits p ON p.id = pc.enfant_id
+       WHERE pc.parent_id = $1`,
+      [prodId]
+    );
+    res.json({ composants: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors du chargement des composants du pack' });
+  }
+});
+
+// POST /api/boutiques/:id/produits/:prodId/composants — Définir le contenu d'un pack (Anti-IDOR)
+router.post('/:id/produits/:prodId/composants', verifierToken, async (req, res) => {
+  try {
+    const { id, prodId } = req.params;
+    const { composants } = req.body; // Array of { enfant_id, quantite }
+    const access = await checkBoutiqueAccess(req.user.id, id);
+    if (!access.allowed) return res.status(403).json({ error: access.reason });
+
+    await pool.query('DELETE FROM produit_composants WHERE parent_id = $1', [prodId]);
+
+    if (Array.isArray(composants) && composants.length > 0) {
+      for (const comp of composants) {
+        if (comp.enfant_id && comp.quantite > 0) {
+          await pool.query(
+            `INSERT INTO produit_composants (parent_id, enfant_id, quantite)
+             VALUES ($1, $2, $3) ON CONFLICT (parent_id, enfant_id) DO UPDATE SET quantite = EXCLUDED.quantite`,
+            [prodId, comp.enfant_id, comp.quantite]
+          );
+        }
+      }
+    }
+
+    cacheInvalidatePattern(`cat:${id}`);
+    res.json({ success: true, message: 'Pack mis à jour avec succès' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de la mise à jour des composants' });
+  }
+});
+
+// GET /api/boutiques/:id/produits/:prodId/tarifs-quantite — Grille B2B
+router.get('/:id/produits/:prodId/tarifs-quantite', async (req, res) => {
+  try {
+    const { prodId } = req.params;
+    const { rows } = await pool.query(
+      `SELECT id, quantite_min, prix_unitaire_fcfa
+       FROM produit_tarifs_quantite
+       WHERE produit_id = $1
+       ORDER BY quantite_min ASC`,
+      [prodId]
+    );
+    res.json({ tarifs: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors du chargement de la grille tarifaire' });
+  }
+});
+
+// POST /api/boutiques/:id/produits/:prodId/tarifs-quantite — Définir les seuils B2B (Anti-IDOR)
+router.post('/:id/produits/:prodId/tarifs-quantite', verifierToken, async (req, res) => {
+  try {
+    const { id, prodId } = req.params;
+    const { tarifs } = req.body; // Array of { quantite_min, prix_unitaire_fcfa }
+    const access = await checkBoutiqueAccess(req.user.id, id);
+    if (!access.allowed) return res.status(403).json({ error: access.reason });
+
+    await pool.query('DELETE FROM produit_tarifs_quantite WHERE produit_id = $1', [prodId]);
+
+    if (Array.isArray(tarifs) && tarifs.length > 0) {
+      for (const t of tarifs) {
+        if (t.quantite_min > 1 && t.prix_unitaire_fcfa > 0) {
+          await pool.query(
+            `INSERT INTO produit_tarifs_quantite (produit_id, quantite_min, prix_unitaire_fcfa)
+             VALUES ($1, $2, $3) ON CONFLICT (produit_id, quantite_min) DO UPDATE SET prix_unitaire_fcfa = EXCLUDED.prix_unitaire_fcfa`,
+            [prodId, Number(t.quantite_min), Number(t.prix_unitaire_fcfa)]
+          );
+        }
+      }
+    }
+
+    cacheInvalidatePattern(`cat:${id}`);
+    res.json({ success: true, message: 'Grille tarifaire B2B enregistrée' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de l\'enregistrement de la grille' });
+  }
+});
+
 module.exports = router;

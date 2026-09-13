@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type { Boutique, ManageTab } from '../../types'
 import BoutiqueDashboard from '../BoutiqueDashboard'
@@ -11,22 +12,25 @@ import Commandes from '../../Commandes'
 import CarnetDettes from '../../CarnetDettes'
 import Comptabilite, { SaisieExpressView } from '../../Comptabilite'
 import AnalyticsClient from '../../analytics/AnalyticsClient'
-import StudioPersonnalisation from '../../StudioPersonnalisation'
-import MarketingBoutique from '../../MarketingBoutique'
-import SocialShopManager from '../../SocialShopManager'
-import BoutiqueEquipe from '../../BoutiqueEquipe'
-import BoutiqueAdmins from '../../BoutiqueAdmins'
-import BoutiqueCaissiers from '../../BoutiqueCaissiers'
-import GestionDocuments from '../../GestionDocuments'
-import GestionFournisseurs from '../../GestionFournisseurs'
-import ParametresFiscalite from '../../ParametresFiscalite'
-import ParametresFidelitePromos from '../../ParametresFidelitePromos'
-import BoutiqueLogs from '../../BoutiqueLogs'
-import PortailDeveloppeurBoutique from '../../PortailDeveloppeurBoutique'
-import AppStoreBoutique from '../../AppStoreBoutique'
-import GestionEntrepots from '../../GestionEntrepots'
-import ABTestingManager from '../ABTestingManager'
+
+// Code-splitting dynamique pour alléger le bundle JS initial du Studio Marchand
+const StudioPersonnalisation = dynamic(() => import('../../StudioPersonnalisation'))
+const MarketingBoutique = dynamic(() => import('../../MarketingBoutique'))
+const SocialShopManager = dynamic(() => import('../../SocialShopManager'))
+const BoutiqueEquipe = dynamic(() => import('../../BoutiqueEquipe'))
+const BoutiqueAdmins = dynamic(() => import('../../BoutiqueAdmins'))
+const BoutiqueCaissiers = dynamic(() => import('../../BoutiqueCaissiers'))
+const GestionDocuments = dynamic(() => import('../../GestionDocuments'))
+const GestionFournisseurs = dynamic(() => import('../../GestionFournisseurs'))
+const ParametresFiscalite = dynamic(() => import('../../ParametresFiscalite'))
+const ParametresFidelitePromos = dynamic(() => import('../../ParametresFidelitePromos'))
+const BoutiqueLogs = dynamic(() => import('../../BoutiqueLogs'))
+const PortailDeveloppeurBoutique = dynamic(() => import('../../PortailDeveloppeurBoutique'))
+const AppStoreBoutique = dynamic(() => import('../../AppStoreBoutique'))
+const GestionEntrepots = dynamic(() => import('../../GestionEntrepots'))
+const ABTestingManager = dynamic(() => import('../ABTestingManager'))
 import { Sparkles } from 'lucide-react'
+
 
 interface BoutiqueManageContentProps {
   tab: ManageTab
