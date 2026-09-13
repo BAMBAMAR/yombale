@@ -6,6 +6,7 @@
   body.in-caisse-pos nav.navbar,
   body.in-caisse-pos .navbar,
   body.in-caisse-pos .mobile-nav,
+  body.in-caisse-pos .mobile-bottom-nav,
   body.in-caisse-pos .bottom-bars,
   body.in-caisse-pos footer,
   body.in-caisse-pos .site-footer {
@@ -62,6 +63,16 @@
     --pos-primary-bg: rgba(249, 115, 22, 0.16) !important;
     --pos-shadow: 0 4px 14px rgba(0,0,0,0.5) !important;
     --pos-shadow-lg: 0 10px 30px rgba(0,0,0,0.6) !important;
+
+    /* Override standard design system tokens inside POS Dark Theme */
+    --navy: #ffffff !important;
+    --text: #ffffff !important;
+    --text1: #ffffff !important;
+    --text2: #cbd5e1 !important;
+    --text3: #94a3b8 !important;
+    --border: #29354d !important;
+    --bg: #090d16 !important;
+    --card: #131b2e !important;
   }
 
   .pos-theme-light {
@@ -143,6 +154,50 @@
   }
   .pos-theme-dark .pos-btn-success:hover {
     background: rgba(22, 163, 74, 0.3) !important;
+  }
+
+  /* ── Mode Nuit : Lisibilité Haute Définition Prix, Totaux & Formulaires ── */
+  .pos-theme-dark .fcfa-num {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-grand-total {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-panier-total {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-qty-pill {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+  }
+  .pos-theme-dark .pos-qty-pill button,
+  .pos-theme-dark .pos-qty-pill span {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-recap-fiscal {
+    background: #131b2e !important;
+    border-color: #29354d !important;
+    color: #cbd5e1 !important;
+  }
+  .pos-theme-dark .pos-recap-fiscal span {
+    color: #cbd5e1 !important;
+  }
+  .pos-theme-dark .pos-recap-fiscal .fcfa-num {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark input:not([type="checkbox"]):not([type="radio"]),
+  .pos-theme-dark select,
+  .pos-theme-dark textarea {
+    background-color: var(--pos-surface, #131b2e) !important;
+    color: #ffffff !important;
+    border-color: var(--pos-border, #29354d) !important;
+  }
+  .pos-theme-dark input::placeholder {
+    color: #94a3b8 !important;
+  }
+  .pos-theme-dark select option {
+    background-color: #131b2e !important;
+    color: #ffffff !important;
   }
 
   .caisse-desktop-only {
@@ -276,10 +331,11 @@
       bottom: 0;
       left: 0;
       right: 0;
-      z-index: 100;
+      z-index: 500;
       background: #0f172a;
       color: #ffffff;
       padding: 10px 14px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
       align-items: center;
       justify-content: space-between;
       gap: 12px;
@@ -388,10 +444,44 @@
    ════════════════════════════════════════════════════════ */
 body:has(.caisse-header) header[role="banner"],
 body:has(.caisse-header) .mobile-nav,
+body:has(.caisse-header) .mobile-bottom-nav,
 body:has(.caisse-header) .bottom-bars,
 body:has(.caisse-header) footer,
-body:has(.caisse-header) .site-footer {
+body:has(.caisse-header) .site-footer,
+body:has(.caisse-root) .mobile-bottom-nav {
   display: none !important;
+}
+
+/* Thème sombre pour onglets mobiles caisse */
+.pos-theme-dark .caisse-mobile-tabs {
+  background: #131b2e !important;
+  border-bottom-color: #29354d !important;
+}
+.pos-theme-dark .caisse-mobile-tab-btn {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+.pos-theme-dark .caisse-mobile-tab-btn.active {
+  background: #1e3a5f !important;
+  color: #ffffff !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 3px 10px rgba(56, 189, 248, 0.25) !important;
+}
+.pos-theme-dark .caisse-mobile-tab-btn.has-items.active {
+  background: linear-gradient(135deg, #ea580c 0%, #c75b00 100%) !important;
+  color: #ffffff !important;
+  border-color: #c75b00 !important;
+}
+.pos-theme-dark .caisse-mobile-tab-btn.has-items:not(.active) {
+  border-color: #c75b00 !important;
+  background: rgba(199, 91, 0, 0.2) !important;
+  color: #fdba74 !important;
+}
+.pos-theme-dark .caisse-back-to-catalogue-btn {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
 }
 
 .caisse-main-layout {
@@ -401,8 +491,6 @@ body:has(.caisse-header) .site-footer {
   gap: 0;
   overflow: hidden;
 }
-
-/* ── Navigation Caisse POS Mobile : Déportée dans caisse.css ── */
 
 /* ════════════════════════════════════════════════════════
    RESPONSIVE MOBILE — Toutes les pages modifiées

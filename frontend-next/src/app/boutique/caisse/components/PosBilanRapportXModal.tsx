@@ -182,13 +182,13 @@ export default function PosBilanRapportXModal({
           </div>
 
           {/* Ventilation Détaillée par Mode de Paiement */}
-          <div style={{ border: '1px solid var(--border, #E8DDD2)', borderRadius: 12, padding: 14, background: '#ffffff' }}>
+          <div style={{ border: '1px solid var(--border, #E8DDD2)', borderRadius: 12, padding: 14, background: 'var(--card, #ffffff)' }}>
             <h4
               style={{
                 margin: '0 0 10px',
                 fontSize: 13,
                 fontWeight: 800,
-                color: 'var(--navy, #1C2B4A)',
+                color: 'var(--pos-navy, #1C2B4A)',
                 borderBottom: '1px solid var(--border, #E8DDD2)',
                 paddingBottom: 6
               }}
@@ -199,28 +199,28 @@ export default function PosBilanRapportXModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: 'var(--bg, #F8F5F0)', borderRadius: 6 }}>
                 <span style={{ fontWeight: 700, color: 'var(--text2, #5A4E42)' }}>Ventes en Espèces</span>
-                <span style={{ fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>{fcfa(totalEspeces)}</span>
+                <span className="fcfa-num" style={{ fontWeight: 900, color: 'var(--pos-navy, #1C2B4A)' }}>{fcfa(totalEspeces)}</span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: 'var(--bg, #F8F5F0)', borderRadius: 6 }}>
                 <span style={{ fontWeight: 700, color: '#0284c7' }}>Ventes Wave Mobile</span>
-                <span style={{ fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>{fcfa(totalWave)}</span>
+                <span className="fcfa-num" style={{ fontWeight: 900, color: 'var(--pos-navy, #1C2B4A)' }}>{fcfa(totalWave)}</span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: 'var(--bg, #F8F5F0)', borderRadius: 6 }}>
                 <span style={{ fontWeight: 700, color: '#ea580c' }}>Ventes Orange Money</span>
-                <span style={{ fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>{fcfa(totalOM)}</span>
+                <span className="fcfa-num" style={{ fontWeight: 900, color: 'var(--pos-navy, #1C2B4A)' }}>{fcfa(totalOM)}</span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: 'var(--bg, #F8F5F0)', borderRadius: 6 }}>
                 <span style={{ fontWeight: 700, color: '#4f46e5' }}>Ventes Carte Bancaire</span>
-                <span style={{ fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>{fcfa(totalCarte)}</span>
+                <span className="fcfa-num" style={{ fontWeight: 900, color: 'var(--pos-navy, #1C2B4A)' }}>{fcfa(totalCarte)}</span>
               </div>
 
               {totalMixte > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px', background: 'var(--bg, #F8F5F0)', borderRadius: 6 }}>
                   <span style={{ fontWeight: 700, color: '#9333ea' }}>Ventes Paiement Mixte</span>
-                  <span style={{ fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>{fcfa(totalMixte)}</span>
+                  <span className="fcfa-num" style={{ fontWeight: 900, color: 'var(--pos-navy, #1C2B4A)' }}>{fcfa(totalMixte)}</span>
                 </div>
               )}
             </div>

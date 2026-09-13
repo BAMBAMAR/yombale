@@ -55,7 +55,6 @@ export default function CarnetClientCardItem({
     <div
       className="npl-card"
       style={{
-        borderColor: isActif ? 'var(--navy, #1C2B4A)' : undefined,
         boxShadow: isActif ? '0 0 0 1px var(--navy, #1C2B4A), var(--shadow2)' : undefined,
         display: 'flex',
         flexDirection: 'column',
@@ -63,7 +62,9 @@ export default function CarnetClientCardItem({
         padding: 14,
         borderRadius: 14,
         background: '#ffffff',
-        border: '1px solid #e2e8f0',
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderColor: isActif ? 'var(--navy, #1C2B4A)' : 'var(--border, #e2e8f0)',
       }}
     >
       {/* En-tête de la Carte Client */}

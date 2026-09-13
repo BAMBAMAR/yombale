@@ -668,19 +668,39 @@
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 860px) {
   .account-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
     padding: 12px 10px 80px !important;
     gap: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .account-sidebar {
+    width: 100% !important;
+    position: static !important;
+    box-sizing: border-box !important;
     padding: 14px 12px !important;
     overflow: hidden !important;
+    top: auto !important;
+  }
+
+  .account-main {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
   }
 
   /* Sur mobile : masquer le hero profil du Dashboard Hub (redondant avec la sidebar) */
   .account-hub-hero-card {
+    display: none !important;
+  }
+
+  /* Sur mobile : masquer le footer de la sidebar (Déconnexion, Guide) car déjà dans le tiroir mobile et au bas du dashboard */
+  .account-sidebar-footer {
     display: none !important;
   }
 

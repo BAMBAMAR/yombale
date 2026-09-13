@@ -346,7 +346,7 @@ export default function AdminDashboardClient({
         <DollarSign size={18} color="#16a34a" /> Performances Financières & MRR
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 32 }}>
-        <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+        <div className="admin-stat-card" style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>MRR Abonnements</span>
           <div style={{ fontSize: 26, fontWeight: 800, color: '#16a34a', margin: '6px 0 2px' }}>
             {fcfa(finances?.mrr || 0)}

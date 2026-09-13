@@ -93,8 +93,8 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
   try {
     const { id } = req.params;
     // Vérifier la propriété
-    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
-    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+    const own = await checkBoutiqueAccess(id, req.user.userId);
+    if (!own) return res.status(403).json({ error: 'Accès refusé' });
 
     // Quota
     const plan = req.abonnement.plan;
@@ -207,8 +207,8 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { id, prodId } = req.params;
-    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
-    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+    const own = await checkBoutiqueAccess(id, req.user.userId);
+    if (!own) return res.status(403).json({ error: 'Accès refusé' });
 
     const existing = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!existing.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
@@ -309,8 +309,8 @@ router.delete('/:id/produits/:prodId', verifierToken, param('id').isUUID(), para
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { id, prodId } = req.params;
-    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
-    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+    const own = await checkBoutiqueAccess(id, req.user.userId);
+    if (!own) return res.status(403).json({ error: 'Accès refusé' });
 
     const r = await pool.query('DELETE FROM boutique_produits WHERE id=$1 AND boutique_id=$2 RETURNING id, nom', [prodId, id]);
     if (!r.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
@@ -331,8 +331,8 @@ router.post('/:id/produits/:prodId/dupliquer', verifierToken, param('id').isUUID
   try {
     const { id, prodId } = req.params;
     const { nom, prix, stock_quantite } = req.body;
-    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
-    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+    const own = await checkBoutiqueAccess(id, req.user.userId);
+    if (!own) return res.status(403).json({ error: 'Accès refusé' });
 
     const orig = await pool.query('SELECT * FROM boutique_produits WHERE id=$1 AND boutique_id=$2', [prodId, id]);
     if (!orig.rows[0]) return res.status(404).json({ error: 'Produit introuvable' });
@@ -457,8 +457,8 @@ router.patch('/:id/produits/:prodId/partage', verifierToken, param('id').isUUID(
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { id, prodId } = req.params;
-    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
-    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+    const own = await checkBoutiqueAccess(id, req.user.userId);
+    if (!own) return res.status(403).json({ error: 'Accès refusé' });
 
     const r = await pool.query(
       'UPDATE boutique_produits SET partage_le=NOW() WHERE id=$1 AND boutique_id=$2 RETURNING partage_le',
@@ -474,8 +474,8 @@ router.post('/:id/produits/batch', verifierToken, param('id').isUUID(), async (r
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { id } = req.params;
-    const own = await pool.query('SELECT id FROM boutiques WHERE id=$1 AND utilisateur_id=$2', [id, req.user.userId]);
-    if (!own.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
+    const own = await checkBoutiqueAccess(id, req.user.userId);
+    if (!own) return res.status(403).json({ error: 'Accès refusé' });
 
     const { produits } = req.body;
     if (!Array.isArray(produits) || produits.length === 0) {

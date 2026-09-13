@@ -45,9 +45,9 @@ export default function PosFastTender({
               style={{
                 padding: '8px 4px',
                 borderRadius: 8,
-                border: isSelected ? '2px solid #16a34a' : '1.5px solid #cbd5e1',
-                background: isSelected ? '#16a34a' : '#ffffff',
-                color: isSelected ? '#ffffff' : '#0f172a',
+                border: isSelected ? '2px solid #16a34a' : '1.5px solid var(--pos-border, #cbd5e1)',
+                background: isSelected ? '#16a34a' : 'var(--pos-surface, #ffffff)',
+                color: isSelected ? '#ffffff' : 'var(--pos-text, #0f172a)',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',

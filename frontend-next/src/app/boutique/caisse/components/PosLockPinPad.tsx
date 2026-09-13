@@ -61,9 +61,8 @@ export default function PosLockPinPad({
               } else if (val === '⌫') {
                 setCodePinSaisi((prev: string) => prev.slice(0, -1))
                 setPinError(null)
-              } else if (codePinSaisi.length < 6) {
-                const nextPin = codePinSaisi + val
-                setCodePinSaisi(nextPin)
+              } else {
+                setCodePinSaisi((prev: string) => (prev.length < 6 ? prev + val : prev))
                 setPinError(null)
               }
             }}

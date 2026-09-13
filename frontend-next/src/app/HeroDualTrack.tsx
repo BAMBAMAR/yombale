@@ -191,7 +191,7 @@ export default function HeroDualTrack({
                   lineHeight: 1.22,
                   letterSpacing: '-0.02em'
                 }}>
-                  Achetez au meilleur prix. Commandez sur <span style={{ color: '#22c55e' }}>WhatsApp</span>.
+                  Achetez au meilleur prix au Sénégal. Commandez sur <span style={{ color: 'var(--price, #0A5C36)' }}>WhatsApp</span>.
                 </h1>
 
                 <p style={{

@@ -243,10 +243,10 @@ export default function PosPanierSidebar(props: Props) {
         ) : panier.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text3, #8C7E74)' }}>
             <ShoppingCart size={36} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: 'var(--pos-navy, #1C2B4A)' }}>
               Votre ticket est vide
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text2, #5A4E42)' }}>
+            <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--pos-text2, #5A4E42)' }}>
               Touchez un article du catalogue ou scannez son code-barres.
             </p>
           </div>
@@ -284,26 +284,26 @@ export default function PosPanierSidebar(props: Props) {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#FFFFFF', padding: '2px 4px', borderRadius: 6, border: '1px solid var(--pos-border, #E8DDD2)' }}>
+                <div className="pos-qty-pill" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--pos-surface3, #FFFFFF)', padding: '2px 4px', borderRadius: 6, border: '1px solid var(--pos-border, #E8DDD2)' }}>
                   <button
                     type="button"
                     onClick={() => onModifierQuantite(item.produit.id, -1)}
-                    style={{ background: 'none', border: 'none', color: 'var(--navy, #1C2B4A)', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}
+                    style={{ background: 'none', border: 'none', color: 'var(--pos-navy, #1C2B4A)', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}
                   >
                     -
                   </button>
-                  <span style={{ fontSize: 12, fontWeight: 800, minWidth: 16, textAlign: 'center', color: 'var(--navy, #1C2B4A)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, minWidth: 16, textAlign: 'center', color: 'var(--pos-navy, #1C2B4A)' }}>
                     {item.quantite}
                   </span>
                   <button
                     type="button"
                     onClick={() => onModifierQuantite(item.produit.id, 1)}
-                    style={{ background: 'none', border: 'none', color: 'var(--navy, #1C2B4A)', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}
+                    style={{ background: 'none', border: 'none', color: 'var(--pos-navy, #1C2B4A)', fontWeight: 800, cursor: 'pointer', padding: '0 4px', fontSize: 13 }}
                   >
                     +
                   </button>
                 </div>
-                <span className="fcfa-num" style={{ fontSize: 13, fontWeight: 900, color: 'var(--navy, #1C2B4A)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                <span className="fcfa-num pos-panier-total" style={{ fontSize: 13, fontWeight: 900, color: 'var(--pos-navy, #1C2B4A)', textAlign: 'right', whiteSpace: 'nowrap' }}>
                   {fcfa(item.prixUnitaire * item.quantite)}
                 </span>
               </div>
@@ -351,10 +351,10 @@ export default function PosPanierSidebar(props: Props) {
       <div style={{ position: 'sticky', bottom: 0, background: 'var(--pos-surface, #ffffff)', paddingTop: 8, borderTop: '1px solid var(--pos-border, #E8DDD2)', zIndex: 10, marginTop: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, padding: '0 2px' }}>
           <div>
-            <span style={{ fontSize: 11, color: 'var(--text3, #8C7E74)', fontWeight: 700, display: 'block' }}>TOTAL À PERCEVOIR</span>
-            <span style={{ fontSize: 11, color: 'var(--text2, #5A4E42)' }}>{totalArticles} article(s)</span>
+            <span style={{ fontSize: 11, color: 'var(--pos-text3, #8C7E74)', fontWeight: 700, display: 'block' }}>TOTAL À PERCEVOIR</span>
+            <span style={{ fontSize: 11, color: 'var(--pos-text2, #5A4E42)' }}>{totalArticles} article(s)</span>
           </div>
-          <span className="fcfa-num" style={{ fontSize: 22, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+          <span className="fcfa-num pos-grand-total" style={{ fontSize: 22, fontWeight: 900, color: 'var(--pos-navy, #1C2B4A)' }}>
             {fcfa(netAPayer)}
           </span>
         </div>

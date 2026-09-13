@@ -1,3 +1,110 @@
+- **Correction Visibilité & Contraste Mode Nuit Caisse POS (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🌙✨🧾✅ :
+  * **🎯 1. Contexte & Problème Signalé par l'Utilisateur ("on ne voit pas en mode nuit les prix")** :
+    - En mode nuit (`.pos-theme-dark`) sur le terminal de caisse POS (`/boutique/caisse`), les prix unitaires, les totaux de lignes d'articles dans le panier (ex: 165 000 FCFA), les sous-totaux fiscaux (`Total HT`, `TVA 18%`) et le montant grand total `TOTAL À PERCEVOIR` étaient affichés en bleu marine très sombre (`#1C2B4A`) sur fond bleu nuit (`#131b2e` / `#1e293b`), les rendant quasiment invisibles à l'écran.
+    - **Cause racine** : Le sélecteur `.pos-theme-dark` définissait des variables isolées `--pos-navy`, mais les composants JSX du panier (`PosPanierSidebar.tsx`, `PosPanierPaymentOptions.tsx`, `PosBilanRapportXModal.tsx`) utilisaient des styles inline `color: var(--navy, #1C2B4A)` et `color: var(--text2, #5A4E42)`, héritant des tokens globaux de thème clair sans adaptation. De plus, la pastille de quantité `- 3 +` avait un fond blanc hardcodé `#FFFFFF` contrastant anormalement avec le reste du terminal.
+  * **🛠️ 2. Réalisations & Résolution Haute Définition** :
+    - **Surcharge Globale des Tokens en Mode Nuit POS (`frontend-next/src/app/boutique/caisse/caisse.css`)** :
+      * Redéfinition des variables standards dans `.pos-theme-dark` : `--navy: #ffffff !important;`, `--text: #ffffff !important;`, `--text1: #ffffff !important;`, `--text2: #cbd5e1 !important;`, `--text3: #94a3b8 !important;`, `--border: #29354d !important;`, `--bg: #090d16 !important;`, `--card: #131b2e !important;`.
+      * Ajout de règles CSS ciblées de haute lisibilité :
+        - `.pos-theme-dark .fcfa-num { color: #ffffff !important; }`
+        - `.pos-theme-dark .pos-grand-total { color: #ffffff !important; }`
+        - `.pos-theme-dark .pos-panier-total { color: #ffffff !important; }`
+        - `.pos-theme-dark .pos-qty-pill { background: #1e293b !important; border-color: #334155 !important; }`
+        - `.pos-theme-dark .pos-qty-pill button, .pos-theme-dark .pos-qty-pill span { color: #ffffff !important; }`
+        - `.pos-theme-dark .pos-recap-fiscal { background: #131b2e !important; border-color: #29354d !important; color: #cbd5e1 !important; }`
+        - `.pos-theme-dark input:not([type="checkbox"]):not([type="radio"]), .pos-theme-dark select, .pos-theme-dark textarea { background-color: var(--pos-surface, #131b2e) !important; color: #ffffff !important; border-color: var(--pos-border, #29354d) !important; }`
+    - **Harmonisation des Composants Panier POS (`PosPanierSidebar.tsx`, `PosPanierPaymentOptions.tsx`, `PosFastTender.tsx`, `PosBilanRapportXModal.tsx`)** :
+      * Remplacement systématique de `var(--navy)` et `var(--text2)` par `var(--pos-navy)` et `var(--pos-text2)`.
+      * Attribution des classes sémantiques `.pos-grand-total`, `.pos-panier-total`, `.pos-qty-pill`, et `.pos-recap-fiscal`.
+      * Harmonisation des boutons Fast Tender avec `var(--pos-surface)` et `var(--pos-text)`.
+  * **🧪 3. Validation Visuelle & Non-Régression 100% Validée** :
+    - Test Playwright automatisé avec capture d'écran HD validée (`pos_dark_mode_cart_verified.png`) confirmant le rendu blanc éclatant `#ffffff` des montants, du total à percevoir (165 000 FCFA), du panier et du récapitulatif fiscal.
+    - Tests E2E Playwright POS (`tests/e2e/07-pos-offline-sync.spec.ts`) : **18/18 PASS (100%)** sur desktop et mobile.
+    - Quality Gate Global (`node scripts/quality-gate.mjs`) : **100% OK** (247 tests Jest passés).
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 erreur**.
+
+- **Refonte Responsive Espace Compte (`/compte`) & Tableau Comparatif Marchand 100% Mobile Ready (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 📱🧭✨✅ :
+  * **🎯 1. Contexte & Problèmes Signalés par l'Utilisateur (Captures Mobiles)** :
+    - **Capture 1 (Espace `/compte` écrasé)** : Sur smartphone (<860px), la grille `.account-layout` imposait `grid-template-columns: 280px 1fr`, bloquant la sidebar latérale à gauche (280px) et écrasant tout le tableau de bord (`AccountDashboardHub`) avec les cartes KPIs (`MA BOUTIQUE`, `MES ANNONCES`, `COMMANDES`) dans une colonne de ~60px complètement illisible et tronquée.
+    - **Capture 2 (Tableau Comparatif Marchand débordant)** : Sur la page d'accueil marchand (`/?mode=marchand`), `MerchantComparisonTable` affichait 5 colonnes rigides sans adaptation mobile, coupant la colonne WhatsApp en plein milieu de mot et masquant totalement Cahier Papier et Shopify.
+  * **🛠️ 2. Réalisations & Corrections Appliquées** :
+    - **Espace Compte (`frontend-next/src/app/globals.css`, `src/styles/navbar.css`, `AccountSidebarClient.tsx`, `CompteClient.tsx`)** :
+      * Passage de `.account-layout` en `display: flex !important; flex-direction: column !important; width: 100% !important;` à `<860px`, avec largeur pleine pour `.account-sidebar` et `.account-main`.
+      * Affinage de `isMainPage = pathname === '/compte' && (!tab || tab === 'accueil' || tab === 'dashboard')` dans `AccountSidebarClient.tsx` : lors de la sélection d'un sous-onglet (`?tab=mes-annonces`, `?tab=profil`, etc.), la sidebar passe en `.account-sidebar--sub` et est masquée sur mobile pour laisser immédiatement place au contenu avec bouton `← Tableau de bord`.
+      * Masquage de `.account-sidebar-footer` sur mobile (le bouton de déconnexion ne vient plus couper la page au-dessus des KPIs ; il est accessible dans le menu tiroir `MobileBottomSheetNav` et en bas du dashboard).
+      * Remplacement du padding hardcodé `20px` dans `CompteClient.tsx` par `.account-client-content` adaptatif.
+    - **Matrice Comparative Marchands (`MerchantComparisonTable.tsx`)** :
+      * Intégration d'un sélecteur mobile par onglets tactiles pills : `[ vs WhatsApp Seul | vs Cahier Papier | vs Shopify ($29/m) | Vue Complète 360° ]`.
+      * Mode mobile dédié avec cartes en tête-à-tête haute lisibilité : chaque critère compare Nopalou (mis en avant, badge vert) à l'alternative choisie (rouge si désavantageuse).
+      * Option "Vue Complète 360°" avec défilement fluide, première colonne sticky (`Critère Clé`) et bandeau d'orientation tactile.
+      * Maintien du tableau 5 colonnes complet sur grand écran (>=769px).
+    - **Pérennisation des Tests E2E Mobile (`tests/e2e/06-mobile-overflow-audit.spec.ts`)** :
+      * Ajout de `/?mode=marchand` dans l'audit public.
+      * Ajout d'une suite de tests authentifiés injectant le cookie de session JWT locale (`nopalou_session`) pour valider `/compte`, `/compte?tab=mes-annonces`, `/compte?tab=suivi-commande`, `/compte?tab=profil`, `/compte?tab=apporteur`, `/compte?tab=fonctionnalites`.
+      * Validation stricte : `hasOverflow === false`, et `.account-main > 300px` (pleine largeur, non écrasé).
+
+- **Rétablissement Visibilité du Ticket Mobile POS & Suite Exhaustive Anti-Régression 100% PASS (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🧾📱✅ :
+  * **🎯 1. Contexte & Demande Utilisateur ("JE NE vois plus le ticket")** :
+    - Sur smartphone (<1024px) dans la caisse POS (`/boutique/caisse`), lors de l'ajout d'articles au panier, le ticket de caisse était complètement masqué sans aucun moyen de basculer vers le panier ou de finaliser l'encaissement.
+    - La navigation globale du site (`.mobile-bottom-nav`) restait affichée en bas de l'écran POS, empiétant sur la zone de caisse tactile.
+  * **🛠️ 2. Réalisations & Corrections Appliquées** :
+    - **Création du Composant Dédié Mobile POS (`components/PosMobileNavBars.tsx`)** :
+      * Extraction modulaire conforme à la règle des <450 lignes : `PosMobileTabs` (onglets `[ ⊞ Catalogue | 🧾 Ticket ]`) et `PosMobileStickyBottom` (barre flottante sticky affichant le nombre d'articles et le total en direct en FCFA).
+      * Zéro béquilles emojis Unicode : utilisation exclusive des icônes vectorielles SVG `LayoutGrid` et `Receipt` de `lucide-react`.
+    - **Intégration Plein Écran & Synchronisation Réactive (`CaisseClient.tsx`)** :
+      * Calcul mémoïsé `totalArticlesPanier = useMemo(...)` réactif aux ajouts de produits.
+      * Gestion du cycle de vie plein écran POS via `document.body.classList.add('in-caisse-pos')`.
+      * Condensation du composant `CaisseClient.tsx` à 416 lignes (strictement sous le plafond de 450 lignes).
+    - **Styles Plein Écran POS & Thème Sombre (`caisse.css`)** :
+      * Masquage strict de la navigation globale `.mobile-bottom-nav` en mode caisse (`body.in-caisse-pos`, `body:has(.caisse-header)`, `body:has(.caisse-root)`).
+      * Élévation du `z-index` de `.caisse-sticky-bottom-bar` à 500 avec support `env(safe-area-inset-bottom)`.
+      * Thème sombre complet pour les onglets mobiles `.caisse-mobile-tabs` et `.caisse-mobile-tab-btn`.
+    - **Robustesse du Clavier PIN Tactile (`PosLockPinPad.tsx`)** :
+      * Passage aux mises à jour d'état fonctionnelles `setCodePinSaisi((prev) => ...)` pour éviter les pertes de chiffres lors de frappes tactiles rapides.
+    - **Pérennisation des Tests E2E Playwright (`01-pages-publiques.spec.ts`, `02-auth.spec.ts`, `07-pos-offline-sync.spec.ts`)** :
+      * Test 8 complet de la navigation mobile POS : onglets mobiles, déverrouillage PIN, ajout d'article, barre sticky flottante et consultation du ticket.
+      * Résilience d'hydratation Next.js sur les onglets auth et prise en compte de l'URL locale du sitemap.xml.
+  * **🧪 3. Bilan Qualité & Non-Régression Exhaustif (100% Vert)** :
+    - Quality Gate Global (`node scripts/quality-gate.mjs`) : **100% OK**.
+    - Tests Unitaires Backend (`npm run test:unit`) : **31/31 suites, 247/247 tests PASS (100%)**.
+    - Tests Unitaires Frontend (`npm test -- --run`) : **19/19 suites, 65/65 tests PASS (100%)**.
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch, 0 monolithe**.
+    - Tests Playwright E2E (`01-pages-publiques`, `02-auth`, `04-admin`, `05-api`, `06-overflow`, `07-pos-offline`) : **125 tests passés avec succès** (0 échec).
+
+- **Validation Globale End-to-End, Durcissement IDOR Multi-Tenant, Cookie Session Admin & Quality Gate 100% Validé (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🏆🛡️💎✅ :
+  * **🎯 1. Contexte & Objectifs de Production** :
+    - Exécution complète du protocole de mise en production de Nopalou SaaS/e-commerce : *Inventorier → Tester → Reproduire → Corriger → Retester → Régresser → Sécuriser → Optimiser → Valider*.
+    - Validation end-to-end de bout en bout (UI → action utilisateur → frontend → API → backend → base de données → réponse → interface → persistance → navigation).
+  * **🛠️ 2. Réalisations & Corrections Appliquées** :
+    - **Sécurité Multi-Tenant & Anti-IDOR (`backend/routes/boutiques-modules/boutiques-produits.js`, `boutiques-commandes.js`, `credits.js`)** :
+      * Remplacement systématique de toutes les requêtes SQL brutes par le helper centralisé `checkBoutiqueAccess(id, req.user.userId)` sur les routes de création, modification, suppression, duplication, partage et import en lot de produits.
+      * Prise en compte immédiate des collaborateurs rattachés (`boutique_utilisateurs`) et de la navigation par slug / UUID.
+      * Protection anti-IDOR renforcée sur les paniers abandonnés et l'import de crédits.
+    - **Session & Déconnexion Administration (`frontend-next/src/app/actions/admin.ts`, `AdminDashboardClient.tsx`)** :
+      * Correction du bug de portée de cookie : passage à `jar.delete(COOKIE)` standard à la racine (`path: '/'`), éliminant la persistance fantôme de la session administrateur.
+      * Ajout de la classe sémantique `admin-stat-card` sur les cartes de performances financières et MRR.
+    - **Alignement Design System (`frontend-next/src/app/HeroDualTrack.tsx`)** :
+      * Remplacement du vert hardcodé `#22c55e` par le token officiel `var(--price, #0A5C36)`.
+      * Harmonisation de l'accroche H1 vers : *"Achetez au meilleur prix au Sénégal. Commandez sur WhatsApp."*
+    - **Nettoyage Avertissement React Shorthand/Longhand (`CarnetClientCardItem.tsx`)** :
+      * Remplacement du mélange `border` et `borderColor` par des propriétés dédiées (`borderWidth: 1, borderStyle: 'solid', borderColor: ...`), éliminant l'avertissement React de console lors des re-renders de sélection client.
+    - **Suites de Tests E2E Playwright (`playwright.config.ts`, `tests/e2e/`)** :
+      * Ajustement du port de test vers le serveur Next.js (port 3001) et du backend API (port 3000).
+      * `01-pages-publiques.spec.ts` : **5/5 PASS** (support des UUIDs produits et sélecteurs de cartes).
+      * `02-auth.spec.ts` : **4/4 PASS** (gestion bi-modale WhatsApp OTP et Email avec détection de montage).
+      * `04-admin.spec.ts` : **7/7 PASS** (authentification par secret, dashboard pilotage, navigation multi-onglets, déconnexion).
+      * `05-api.spec.ts` : **8/8 PASS** (santé backend, intégrité catalogue, sécurité 401 sur token absent/invalide, reverse-proxy Next.js).
+      * `06-mobile-overflow-audit.spec.ts` : **16/16 PASS** (zéro débordement horizontal à 360px sur les 16 pages clés).
+      * `07-pos-offline-sync.spec.ts` : **8/8 PASS** (PWA offline, badge hors-ligne, synchronisation IndexedDB `ventes_queue` & `dettes_queue`, persistance locale).
+  * **🧪 3. Bilan Qualité & Quality Gate (100% Vert)** :
+    - Compilation TypeScript (`frontend-next`, `npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch**, **0 monolithe**.
+    - Tests Unitaires Frontend (`npm test -- --run`) : **65/65 passés (100%)**.
+    - Tests Unitaires Backend (`npm run test:unit`) : **31/31 suites, 247/247 tests passés (100%)**.
+    - Tests End-to-End Playwright : **48/48 tests actifs passés avec succès**.
+
 - **Sécurisation Anti-IDOR Crédits, Sanitisation Alertes Telegram & Durcissement 404 API (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🛡️🔒💬 :
   * **🎯 1. Contexte & Objectifs** :
     - Finalisation des durcissements de sécurité et de résilience du backend Express :

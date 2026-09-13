@@ -87,7 +87,7 @@ export default function PosPanierPaymentOptions({
       {/* Mode de Paiement & Options */}
       <div style={{ borderTop: '1px solid var(--pos-border, #E8DDD2)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--text2, #5A4E42)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--pos-text2, #5A4E42)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Mode de Règlement
           </label>
 
@@ -158,17 +158,17 @@ export default function PosPanierPaymentOptions({
         {/* Saisie Espèces Standard + Fast Tender */}
         {modePaiement === 'especes' && totalPanier > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)', padding: 8, borderRadius: 8 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'var(--pos-surface2, #F8F5F0)', border: '1px solid var(--pos-border, #E8DDD2)', padding: 8, borderRadius: 8 }}>
               <input
                 type="number"
                 placeholder="Montant reçu..."
                 value={montantRecu}
                 onChange={(e) => onSetMontantRecu(e.target.value)}
-                style={{ flex: 1, padding: '8px', borderRadius: 6, border: '1px solid var(--border, #E8DDD2)', background: '#FFFFFF', color: 'var(--navy, #1C2B4A)', fontSize: 13, fontWeight: 700 }}
+                style={{ flex: 1, padding: '8px', borderRadius: 6, border: '1px solid var(--pos-border, #E8DDD2)', background: 'var(--pos-surface, #FFFFFF)', color: 'var(--pos-navy, #1C2B4A)', fontSize: 13, fontWeight: 700 }}
               />
               <div style={{ fontSize: 12, textAlign: 'right' }}>
-                <span style={{ color: 'var(--text3, #8C7E74)', display: 'block', fontSize: 10 }}>Monnaie à rendre</span>
-                <span className="fcfa-num" style={{ fontWeight: 900, color: '#0A5C36', fontSize: 14 }}>{fcfa(monnaieARendre)}</span>
+                <span style={{ color: 'var(--pos-text3, #8C7E74)', display: 'block', fontSize: 10 }}>Monnaie à rendre</span>
+                <span className="fcfa-num" style={{ fontWeight: 900, color: monnaieARendre > 0 ? '#16a34a' : 'var(--pos-navy, #1C2B4A)', fontSize: 14 }}>{fcfa(monnaieARendre)}</span>
               </div>
             </div>
 
@@ -250,16 +250,16 @@ export default function PosPanierPaymentOptions({
       </div>
 
       {/* Récapitulatif Financier & Taxes */}
-      <div style={{ background: 'var(--pos-surface2, #FAF8F5)', padding: 10, borderRadius: 8, border: '1px solid var(--pos-border, #E8DDD2)', fontSize: 12, color: 'var(--text2, #5A4E42)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className="pos-recap-fiscal" style={{ background: 'var(--pos-surface2, #FAF8F5)', padding: 10, borderRadius: 8, border: '1px solid var(--pos-border, #E8DDD2)', fontSize: 12, color: 'var(--pos-text2, #5A4E42)', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {regimeFiscal === 'reel' && !estExonereClient && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Total HT :</span>
-              <span className="fcfa-num" style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{fcfa(totalHT)}</span>
+              <span className="fcfa-num" style={{ fontWeight: 800, color: 'var(--pos-navy, #1C2B4A)' }}>{fcfa(totalHT)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>TVA ({tvaDefaut}%) :</span>
-              <span className="fcfa-num" style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{fcfa(totalTVA)}</span>
+              <span className="fcfa-num" style={{ fontWeight: 800, color: 'var(--pos-navy, #1C2B4A)' }}>{fcfa(totalTVA)}</span>
             </div>
           </>
         )}

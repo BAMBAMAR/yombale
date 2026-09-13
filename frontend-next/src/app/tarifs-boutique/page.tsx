@@ -90,12 +90,12 @@ export default function TarifsBoutiquePage() {
           </div>
 
           <div style={{ overflowX: 'auto', background: '#ffffff', borderRadius: 24, border: '1px solid #e2e8f0', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 15 }}>
+            <table style={{ width: '100%', minWidth: 480, borderCollapse: 'collapse', textAlign: 'left', fontSize: 14 }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ padding: '20px 24px', fontWeight: 800, color: '#334155' }}>Critères clés</th>
-                  <th style={{ padding: '20px 24px', fontWeight: 900, color: '#C75B00', background: '#fff7ed', fontSize: 17 }}>🧡 Nopalou SaaS</th>
-                  <th style={{ padding: '20px 24px', fontWeight: 700, color: '#64748b' }}>Shopify</th>
+                  <th style={{ padding: '16px 20px', fontWeight: 800, color: '#334155' }}>Critères clés</th>
+                  <th style={{ padding: '16px 20px', fontWeight: 900, color: '#C75B00', background: '#fff7ed', fontSize: 16 }}>Nopalou SaaS</th>
+                  <th style={{ padding: '16px 20px', fontWeight: 700, color: '#64748b' }}>Shopify</th>
                 </tr>
               </thead>
               <tbody>

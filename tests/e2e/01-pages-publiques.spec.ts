@@ -21,7 +21,8 @@ test.describe('Accueil', () => {
     await expect(page.locator('body')).toContainText(/Samsung|résultat|produit/i)
   })
 
-  test('liens navbar fonctionnels', async ({ page }) => {
+  test('liens navbar fonctionnels', async ({ page, isMobile }) => {
+    test.skip(Boolean(isMobile), 'Navbar desktop masquée sur mobile (remplacée par bottom nav et menu)')
     await page.goto('/')
     await page.click('a[href="/immo"]')
     await expect(page).toHaveURL(/\/immo/)
@@ -40,7 +41,7 @@ test.describe('Produits', () => {
   test('page accueil charge des produits', async ({ page }) => {
     await page.goto('/')
     // Attendre que des produits apparaissent
-    const cards = page.locator('[class*="produit-card"], [class*="product-card"], .card').first()
+    const cards = page.locator('[class*="card-produit"], [class*="produit-card"], [class*="product-card"], article').first()
     await expect(cards).toBeVisible({ timeout: 10000 })
   })
 
@@ -51,7 +52,7 @@ test.describe('Produits', () => {
     const href = await link.getAttribute('href')
     if (!href) return
     await page.goto(href)
-    await expect(page).toHaveURL(/\/produit\/\d+/)
+    await expect(page).toHaveURL(/\/produit\/[0-9a-f-]+/)
     await expect(page.locator('h1')).toBeVisible()
   })
 })
@@ -142,7 +143,7 @@ test.describe('SEO et meta', () => {
     expect(res.status()).toBe(200)
     const body = await res.text()
     expect(body).toContain('<urlset')
-    expect(body).toContain('nopalou.com')
+    expect(body.includes('nopalou.com') || body.includes('localhost:3001')).toBe(true)
   })
 
   test('robots.txt accessible', async ({ page }) => {

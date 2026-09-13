@@ -180,7 +180,7 @@ export default function CompteClient({
         </div>
       )}
 
-      <div style={{ padding: '20px' }}>
+      <div className="account-client-content">
         {/* En-tête de retour au Dashboard si on est dans un sous-onglet */}
         {!isDashboard && (
           <div style={{ marginBottom: 18 }}>

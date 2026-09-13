@@ -9,13 +9,22 @@ test.describe('Page connexion — sans compte', () => {
   test('charge correctement', async ({ page }) => {
     await page.goto('/connexion')
     await expect(page).toHaveTitle(/Connexion|Nopalou/)
+
+    // Vérification du mode WhatsApp par défaut
+    await expect(page.locator('input[type="tel"]')).toBeVisible()
+    await expect(page.locator('button[type="submit"]')).toBeVisible()
+
+    // Bascule vers le mode Email
+    await page.locator('button[role="tab"]').filter({ hasText: 'Email' }).click()
     await expect(page.locator('input[name="email"]')).toBeVisible()
     await expect(page.locator('input[name="password"]')).toBeVisible()
-    await expect(page.locator('button[type="submit"]')).toBeVisible()
   })
 
   test('erreur avec mauvais identifiants', async ({ page }) => {
     await page.goto('/connexion')
+    await expect(page.locator('input[type="tel"]')).toBeVisible()
+    await page.locator('button[role="tab"]').filter({ hasText: 'Email' }).click()
+    await expect(page.locator('input[name="email"]')).toBeVisible()
     await page.fill('input[name="email"]', 'inexistant_xyz_test@gmail.com')
     await page.fill('input[name="password"]', 'mauvais_mdp_xyz')
     await page.click('button[type="submit"]')
@@ -34,7 +43,18 @@ test.describe('Page inscription', () => {
   test('charge correctement', async ({ page }) => {
     await page.goto('/inscription')
     await expect(page).toHaveTitle(/Inscription|Nopalou/)
-    await expect(page.locator('input[name="email"]')).toBeVisible()
+
+    // Vérification du mode WhatsApp par défaut
+    await expect(page.locator('input[type="tel"]')).toBeVisible()
+
+    // Bascule vers le mode Email (avec résilience d'hydratation Next.js)
+    const tabEmail = page.locator('button[role="tab"]').filter({ hasText: 'Email' })
+    await expect(tabEmail).toBeVisible()
+    await tabEmail.click()
+    if (!await page.locator('input[name="email"]').isVisible({ timeout: 1500 }).catch(() => false)) {
+      await tabEmail.click()
+    }
+    await expect(page.locator('input[name="email"]')).toBeVisible({ timeout: 5000 })
     await expect(page.locator('button[type="submit"]')).toBeVisible()
   })
 })

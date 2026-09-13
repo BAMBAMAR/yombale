@@ -3195,6 +3195,17 @@ a {
   margin: 0 auto;
 }
 
+@media (max-width: 860px) {
+  .account-layout {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 12px 80px;
+    gap: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 .account-sidebar {
   background: var(--card);
   border: 1px solid var(--border);
@@ -3203,6 +3214,15 @@ a {
   padding: 18px;
   position: sticky;
   top: 84px; /* sous la navbar sticky (62px) + marge */
+}
+
+@media (max-width: 860px) {
+  .account-sidebar {
+    position: static;
+    top: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .account-sidebar-identity {
@@ -3299,6 +3319,17 @@ a {
 
 .account-main {
   min-width: 0;
+}
+
+.account-client-content {
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (min-width: 861px) {
+  .account-client-content {
+    padding: 0 4px;
+  }
 }
 
 

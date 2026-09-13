@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { matcherProduitRecherche, scorePertinenceProduit } from '@/lib/recherche-senegal'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import { useTranslation } from '@/i18n/context'
@@ -19,6 +19,7 @@ import PosTicketsAttenteBar from './components/PosTicketsAttenteBar'
 import PosCatalogueSection from './components/PosCatalogueSection'
 import PosCenterDock from './components/PosCenterDock'
 import PosPanierSidebar from './components/PosPanierSidebar'
+import { PosMobileTabs, PosMobileStickyBottom } from './components/PosMobileNavBars'
 import PosLockScreen from './components/PosLockScreen'
 import PosModalGestionPins from './components/PosModalGestionPins'
 import PosModalsHost from './components/PosModalsHost'
@@ -44,79 +45,33 @@ export default function CaisseClient({
 
   // ── Données POS ──
   const {
-    boutiques,
-    boutiqueActiveId,
-    activeBoutiqueObj,
-    terminalPlan,
-    loadingProduits,
-    produits,
-    setProduits,
-    clientsCredits,
-    setClientsCredits,
-    caissiersList,
-    caissierNom,
-    setCaissierNom,
-    caissierSelectionneId,
-    setCaissierSelectionneId,
-    roleActif,
-    setRoleActif,
-    session,
-    setSession,
-    historiqueVentes,
-    setHistoriqueVentes,
-    changerBoutiqueActive,
-    chargerCaissiersEtSession,
-    chargerClientsCredits,
+    boutiques, boutiqueActiveId, activeBoutiqueObj, terminalPlan, loadingProduits,
+    produits, setProduits, clientsCredits, setClientsCredits, caissiersList,
+    caissierNom, setCaissierNom, caissierSelectionneId, setCaissierSelectionneId,
+    roleActif, setRoleActif, session, setSession, historiqueVentes, setHistoriqueVentes,
+    changerBoutiqueActive, chargerCaissiersEtSession, chargerClientsCredits,
   } = useCaisseData({
-    initialToken,
-    initialBoutiqueId,
-    userId,
-    isReallyOnline,
+    initialToken, initialBoutiqueId, userId, isReallyOnline,
     onOpenConfigObligatoire: () => setModalConfigObligatoire(true),
   })
 
   // ── Sync Hors-Ligne & Toast ──
   const {
-    offlineModeActive,
-    toastMsg,
-    showToast,
-    syncingOffline,
-    ventesHorsLigneCount,
-    dettesHorsLigneCount,
-    totalHorsLigneCount,
-    declencherSyncOffline,
-    rafraichirCompteurOffline,
+    offlineModeActive, toastMsg, showToast, syncingOffline,
+    ventesHorsLigneCount, dettesHorsLigneCount, totalHorsLigneCount,
+    declencherSyncOffline, rafraichirCompteurOffline,
   } = usePosSyncNotifications(boutiqueActiveId, userId, isReallyOnline)
 
   // ── Panier & Multi-Tickets ──
   const {
-    panier,
-    ticketsEnAttente,
-    remisePourcentage,
-    setRemisePourcentage,
-    remiseMotif,
-    setRemiseMotif,
-    clientFidelite,
-    setClientFidelite,
-    cagnotteDeduite,
-    setCagnotteDeduite,
-    montantRecu,
-    setMontantRecu,
-    montantEspecesMixte,
-    setMontantEspecesMixte,
-    encaissementEnCours,
-    setEncaissementEnCours,
-    ajouterAuPanier,
-    modifierQuantite,
-    viderPanier,
-    mettrePanierEnAttente,
-    reprendreTicketEnAttente,
-    sousTotalPanier,
-    montantRemise,
-    netAPayer,
+    panier, ticketsEnAttente, remisePourcentage, setRemisePourcentage,
+    remiseMotif, setRemiseMotif, clientFidelite, setClientFidelite,
+    cagnotteDeduite, setCagnotteDeduite, montantRecu, setMontantRecu,
+    montantEspecesMixte, setMontantEspecesMixte, encaissementEnCours, setEncaissementEnCours,
+    ajouterAuPanier, modifierQuantite, viderPanier, mettrePanierEnAttente,
+    reprendreTicketEnAttente, sousTotalPanier, montantRemise, netAPayer,
   } = useCaissePanier({
-    boutiqueActiveId,
-    boutiqueActive: activeBoutiqueObj,
+    boutiqueActiveId, boutiqueActive: activeBoutiqueObj,
     demanderValidationSuperviseur: modals.demanderValidationSuperviseur,
   })
 
@@ -217,6 +172,14 @@ export default function CaisseClient({
     enabled: !authLock.verrouille && !modals.modalSuperviseur && !modals.modalConfigPin,
   })
 
+  // ── Mode Plein Écran POS (Masquer le layout global du site) ──
+  useEffect(() => {
+    document.body.classList.add('in-caisse-pos')
+    return () => {
+      document.body.classList.remove('in-caisse-pos')
+    }
+  }, [])
+
   // ── Filtrage Catalogue Produits ──
   const produitsFiltres = useMemo(() => {
     let result = produits.filter((p) => {
@@ -229,6 +192,11 @@ export default function CaisseClient({
     }
     return result
   }, [produits, categorieFiltre, recherche])
+
+  const totalArticlesPanier = useMemo(
+    () => panier.reduce((sum, item) => sum + item.quantite, 0),
+    [panier]
+  )
 
   // ── Écran Verrouillé ──
   if (authLock.verrouille) {
@@ -302,6 +270,16 @@ export default function CaisseClient({
       />
 
       <PosTicketsAttenteBar tickets={ticketsEnAttente} onReprendre={reprendreTicketEnAttente} />
+
+      {/* ── Navigation Onglets Mobile (Catalogue / Ticket) ── */}
+      <PosMobileTabs
+        tabMobile={tabMobile}
+        setTabMobile={setTabMobile}
+        produitsFiltresCount={produitsFiltres.length}
+        totalArticlesPanier={totalArticlesPanier}
+        netAPayer={netAPayer}
+        formatPrice={formatPrice}
+      />
 
       <div className={`caisse-main-layout ${layoutColCentrale ? 'has-3-cols' : 'has-2-cols'}`}>
         <PosCatalogueSection
@@ -384,6 +362,15 @@ export default function CaisseClient({
           t={t as any}
         />
       </div>
+
+      {/* ── Barre Flottante Ticket Sticky Mobile (quand catalogue actif et panier > 0) ── */}
+      <PosMobileStickyBottom
+        tabMobile={tabMobile}
+        setTabMobile={setTabMobile}
+        totalArticlesPanier={totalArticlesPanier}
+        netAPayer={netAPayer}
+        formatPrice={formatPrice}
+      />
 
       <PosModalsHost
         session={session}
