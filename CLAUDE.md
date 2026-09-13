@@ -9,9 +9,10 @@
     - **Phase 2 — P0 : Guest Checkout & Tunnel d'Achat 3 Étapes Optimisé Mobile** :
       * Création du tunnel en 3 étapes sans friction (`CheckoutProgressBar.tsx`, `CheckoutStep1Info.tsx`, `CheckoutStep2Recap.tsx`, `CommanderPaymentSection.tsx`).
       * Commande directe sans compte obligatoire pour les acheteurs sénégalais et diaspora.
-    - **Phase 3 — P0 : Découpage Architectural de `backend/routes/boutiques.js` (6 350 lignes → 15 Sous-Modules)** :
+    - **Phase 3 — P0 : Découpage Architectural de `backend/routes/boutiques.js` (6 350 lignes → 15 Sous-Modules) & Server Actions** :
       * Création du dossier `backend/routes/boutiques-modules/` avec 14 contrôleurs spécialisés (`boutiques-crud.js`, `boutiques-commandes.js`, `boutiques-produits.js`, `boutiques-pos.js`, `boutiques-documents.js`, `boutiques-fidelite.js`, `boutiques-equipe.js`, `boutiques-fournisseurs.js`, `boutiques-abtest.js`, `boutiques-club-vip.js`, `boutiques-integrations.js`, `boutiques-marketing.js`, `boutiques-admin.js`, `credits.js` + `helpers.js`).
       * Allègement de `backend/routes/boutiques.js` en délégateur Express propre de 10 lignes avec compatibilité 100% descendante.
+      * Correction du fichier tonneau `frontend-next/src/app/boutique/actions.ts` : suppression du `'use server'` redondant en tête de fichier pour respecter la règle du compilateur Next.js SWC sur les ré-exports de server actions (`next build` 100% propre).
     - **Phase 4 — P1 : Système de Thèmes Boutique Natifs (Zéro Fetch de Police Externe)** :
       * Définition de 5 thèmes natifs à haute lisibilité dans `frontend-next/src/lib/boutique-themes.ts` (`classique`, `luxe-sombre`, `nature-vert`, `tech-moderne`, `mode-chic`).
       * Migration SQL inline de la colonne `theme_id` sur la table `boutiques`.
