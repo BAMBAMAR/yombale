@@ -1,5 +1,9 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import {
+  CreditCard, ShieldCheck, CheckCircle2, Circle, Info,
+  Store, Globe2, Lock, ArrowRight, Smartphone, Award
+} from 'lucide-react'
 
 interface Produit { id: string; nom: string; prix: number | null; images?: string[]; photo?: string }
 interface Zone { id: string; nom: string; prix: number }
@@ -21,7 +25,7 @@ const DEFAULT_ZONES: Zone[] = [
   { id: 'grande_banlieue', nom: 'Grande Banlieue (Rufisque, Bargny, Diamniadio) — 3 000 FCFA', prix: 3000 },
   { id: 'regions_proches', nom: 'Petite Côte & Thiès (Thiès, Mbour, Saly) — 3 500 FCFA', prix: 3500 },
   { id: 'regions_eloignees', nom: 'Régions Intérieures (St-Louis, Touba, Kaolack, Ziguinchor) — 5 000 FCFA', prix: 5000 },
-  { id: 'retrait-boutique', nom: '🏬 Retrait gratuit en boutique', prix: 0 },
+  { id: 'retrait-boutique', nom: 'Retrait gratuit en boutique', prix: 0 },
 ]
 
 export default function CommanderModal({
@@ -63,6 +67,13 @@ export default function CommanderModal({
   const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242');
   const [cardExp, setCardExp] = useState('12/28');
   const [cardCvc, setCardCvc] = useState('123');
+  const [deviseStripe, setDeviseStripe] = useState<'EUR' | 'USD' | 'XOF'>('EUR');
+
+  function getMontantDevise(montantXof: number, dev: 'EUR' | 'USD' | 'XOF') {
+    if (dev === 'EUR') return (montantXof / 655.957).toFixed(2);
+    if (dev === 'USD') return (montantXof / 600.0).toFixed(2);
+    return montantXof.toString();
+  }
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -109,8 +120,35 @@ export default function CommanderModal({
       .catch(() => {})
   }, [boutiqueId, produit.id, backendUrl])
 
+  const [clubVip, setClubVip] = useState<{
+    palier: string;
+    badge: string;
+    reduction_livraison: number;
+    livraison_offerte: boolean;
+  } | null>(null)
+
+  useEffect(() => {
+    const cleanDigits = tel.replace(/\D/g, '')
+    if (cleanDigits.length >= 9) {
+      fetch(`${backendUrl}/api/boutiques/club-vip/statut?telephone=${cleanDigits}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && data.success && data.reduction_livraison > 0) {
+            setClubVip(data)
+          } else {
+            setClubVip(null)
+          }
+        })
+        .catch(() => setClubVip(null))
+    } else {
+      setClubVip(null)
+    }
+  }, [tel, backendUrl])
+
   const zoneSelectionnee = zoneId ? (zones.find(z => z.id === zoneId) || null) : null
-  const fraisLivraison = zoneSelectionnee ? Number(zoneSelectionnee.prix || 0) : 0
+  const fraisLivraisonBrut = zoneSelectionnee ? Number(zoneSelectionnee.prix || 0) : 0
+  const reductionClubVip = clubVip ? Math.min(fraisLivraisonBrut, clubVip.reduction_livraison) : 0
+  const fraisLivraison = Math.max(0, fraisLivraisonBrut - reductionClubVip)
   const sousTotalMain = produit.prix ? produit.prix * quantite : 0
   const sousTotalAddons = Object.entries(selectedAddons).reduce((acc, [pId, qte]) => {
     const item = crossSell.find(c => c.id === pId)
@@ -164,6 +202,29 @@ export default function CommanderModal({
     }
   }
 
+  const recordAbConversion = () => {
+    try {
+      const storageKey = `nopalou_ab_${boutiqueId}`
+      const abRaw = sessionStorage.getItem(storageKey)
+      if (abRaw) {
+        const abData = JSON.parse(abRaw)
+        if (abData?.testId && abData?.variant) {
+          fetch(`${backendUrl}/api/boutiques/${boutiqueId}/ab-test/event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              testId: abData.testId,
+              variant: abData.variant,
+              eventType: 'conversion',
+            }),
+          }).catch(() => {})
+        }
+      }
+    } catch {
+      // Ignorer
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -187,13 +248,14 @@ export default function CommanderModal({
 
     try {
       if (paiement === 'carte_bancaire') {
+        const montantFinal = deviseStripe === 'XOF' ? total : Number(getMontantDevise(total, deviseStripe))
         const stripeRes = await fetch(`${backendUrl}/api/boutiques/paiements/stripe/simuler`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             boutique_id: boutiqueId,
-            montant: total,
-            devise: 'XOF',
+            montant: montantFinal,
+            devise: deviseStripe,
             card_number: cardNumber,
             exp_month: 12,
             exp_year: 2028,
@@ -248,6 +310,7 @@ export default function CommanderModal({
         if (adresse) localStorage.setItem('nopalou_client_adresse', adresse)
       } catch (err) { console.warn('[Nopalou:CommanderModal:L249]', err); }
 
+      recordAbConversion()
       setSuccess(true)
     } catch {
       setError('Impossible de joindre le serveur')
@@ -533,6 +596,7 @@ export default function CommanderModal({
               {/* Bouton Primaire WhatsApp */}
               <a
                 href={helperLienWhatsapp(whatsapp || '221777202086', messageWhatsappDirect)}
+                onClick={recordAbConversion}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -669,6 +733,12 @@ export default function CommanderModal({
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 700 }}>
                       <span>Code promo ({promoApplique.code})</span>
                       <span>-{fcfa(promoApplique.reduction)}</span>
+                    </div>
+                  )}
+                  {reductionClubVip > 0 && clubVip && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 700 }}>
+                      <span>Avantage Club VIP ({clubVip.badge})</span>
+                      <span>-{fcfa(reductionClubVip)}</span>
                     </div>
                   )}
                   {fraisLivraison > 0 && (
@@ -817,6 +887,25 @@ export default function CommanderModal({
                     className="npl-input-airy"
                     placeholder="Adresse précise (Quartier, rue, repère...)"
                   />
+
+                  {reductionClubVip > 0 && clubVip && (
+                    <div style={{
+                      marginTop: 8,
+                      padding: '9px 12px',
+                      borderRadius: 10,
+                      background: '#f0fdf4',
+                      border: '1.5px solid #86efac',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: 12,
+                      color: '#166534',
+                      fontWeight: 700
+                    }}>
+                      <Award size={16} color="#16a34a" style={{ flexShrink: 0 }} />
+                      <span>Avantage Nopalou Club VIP ({clubVip.badge}) : -{fcfa(reductionClubVip)} déduit sur votre livraison Tiak-Tiak !</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Section 3 : Mode de Paiement */}
@@ -842,7 +931,9 @@ export default function CommanderModal({
                           className={`npl-tile-payment ${isSelected ? m.activeClass : ''}`}
                           style={{ textAlign: 'left' }}
                         >
-                          <span style={{ fontSize: 16 }}>{isSelected ? '🔘' : '⚪'}</span>
+                          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {isSelected ? <CheckCircle2 size={18} color="#C75B00" /> : <Circle size={18} color="#94a3b8" />}
+                          </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a' }}>{m.label}</div>
                             <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{m.badge}</div>
@@ -853,23 +944,86 @@ export default function CommanderModal({
                   </div>
 
                   <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '10px 14px' }}>
-                    <span style={{ fontSize: 18 }}></span>
+                    <ShieldCheck size={20} color="#166534" style={{ flexShrink: 0 }} />
                     <div style={{ fontSize: 12, color: '#166534', lineHeight: 1.4 }}>
                       <strong>Protection Nopalou Pay Safe incluse :</strong> vos fonds restent sécurisés sous séquestre et ne sont transmis au vendeur que lorsque vous donnez votre code PIN secret au livreur à la réception de votre colis.
                     </div>
                   </div>
 
                   {paiement === 'credit' && (
-                    <div style={{ marginTop: 8, background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#0369a1', fontWeight: 600 }}>
-                      ℹ️ Votre demande d&apos;achat à crédit sera transmise directement au commerçant pour inscription dans son Carnet client.
+                    <div style={{ marginTop: 8, background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#0369a1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Info size={16} color="#0369a1" style={{ flexShrink: 0 }} />
+                      <span>Votre demande d&apos;achat à crédit sera transmise directement au commerçant pour inscription dans son Carnet client.</span>
                     </div>
                   )}
 
                   {paiement === 'carte_bancaire' && (
-                    <div style={{ marginTop: 10, background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        Simulation Paiement Sécurisé Carte Bancaire (Stripe)
+                    <div style={{ marginTop: 10, background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: 10 }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <CreditCard size={18} color="#C75B00" />
+                          <span>Paiement Carte Bancaire International (Diaspora)</span>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#166534', background: '#dcfce7', padding: '2px 8px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <ShieldCheck size={13} />
+                          <span>Stripe 3D-Secure</span>
+                        </span>
                       </div>
+
+                      {/* Sélecteur de Devise Diaspora */}
+                      <div>
+                        <label style={{ fontSize: 11, fontWeight: 800, color: '#475569', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                          <Globe2 size={13} color="#C75B00" />
+                          <span>Devise de Facturation</span>
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                          {[
+                            { code: 'EUR' as const, label: 'Euro (€)', desc: 'Europe' },
+                            { code: 'USD' as const, label: 'Dollar ($)', desc: 'USA / Monde' },
+                            { code: 'XOF' as const, label: 'FCFA', desc: 'UEMOA' },
+                          ].map(d => {
+                            const isCurSelected = deviseStripe === d.code
+                            return (
+                              <button
+                                key={d.code}
+                                type="button"
+                                onClick={() => setDeviseStripe(d.code)}
+                                style={{
+                                  padding: '8px 10px',
+                                  borderRadius: 8,
+                                  border: isCurSelected ? '2px solid #C75B00' : '1px solid #cbd5e1',
+                                  background: isCurSelected ? '#fff7ed' : '#ffffff',
+                                  cursor: 'pointer',
+                                  textAlign: 'center',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <div style={{ fontSize: 12.5, fontWeight: 800, color: isCurSelected ? '#9a3412' : '#1e293b' }}>
+                                  {d.label}
+                                </div>
+                                <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>
+                                  {d.desc}
+                                </div>
+                              </button>
+                            )
+                          })}
+                        </div>
+
+                        {/* Parité & Montant Final Débité */}
+                        <div style={{ marginTop: 8, background: '#f1f5f9', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
+                          <span style={{ color: '#475569' }}>
+                            {deviseStripe === 'EUR' && 'Taux fixe officiel : 1 EUR = 655,957 FCFA'}
+                            {deviseStripe === 'USD' && 'Taux de référence : 1 USD ≈ 600 FCFA'}
+                            {deviseStripe === 'XOF' && 'Monnaie locale FCFA sans conversion'}
+                          </span>
+                          <span style={{ fontWeight: 900, color: '#C75B00', fontSize: 13 }}>
+                            {deviseStripe === 'EUR' && `${getMontantDevise(total, 'EUR')} €`}
+                            {deviseStripe === 'USD' && `${getMontantDevise(total, 'USD')} $`}
+                            {deviseStripe === 'XOF' && fcfa(total)}
+                          </span>
+                        </div>
+                      </div>
+
                       <div>
                         <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 4 }}>Numéro de carte</label>
                         <input

@@ -1,8 +1,14 @@
 'use client'
-import { useState, useEffect } from 'react'
+
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from '@/i18n/context'
-import { BarChart3, DollarSign, ShoppingCart, Eye, Tag, Activity, CheckCircle2, HelpCircle, TrendingUp, Zap, Store, Share2 } from 'lucide-react'
+import {
+  BarChart3, DollarSign, ShoppingCart, Eye, Tag, Activity,
+  CheckCircle2, HelpCircle, TrendingUp, Zap, Store, Share2
+} from 'lucide-react'
 import AnalyticsActivityChart from '../components/AnalyticsActivityChart'
+import AnalyticsFilterBar from '../components/AnalyticsFilterBar'
+import AnalyticsTopProduitsTable, { TopProduitItem } from '../components/AnalyticsTopProduitsTable'
 
 interface Stats {
   vues_total: string
@@ -36,53 +42,167 @@ interface AttributionSociale {
   montant_total: number
 }
 
-export default function AnalyticsClient({ boutiques }: { boutiques: { id: string; nom: string }[] }) {
-  const { t, isRtl } = useTranslation()
-  const [boutiqueId, setBoutiqueId] = useState(boutiques[0]?.id ?? '')
-  const [stats, setStats]                   = useState<Stats | null>(null)
-  const [historique, setHistorique]         = useState<Historique[]>([])
-  const [attribution, setAttribution]       = useState<AttributionSociale[]>([])
-  const [loading, setLoading]               = useState(false)
-  const [erreur, setErreur]                 = useState<string | null>(null)
+function formatDateISO(d: Date): string {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
+export default function AnalyticsClient({ boutiques }: { boutiques: { id: string; nom: string }[] }) {
+  const { t } = useTranslation()
+  const [boutiqueId, setBoutiqueId] = useState(boutiques[0]?.id ?? '')
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [historique, setHistorique] = useState<Historique[]>([])
+  const [attribution, setAttribution] = useState<AttributionSociale[]>([])
+  const [topProduits, setTopProduits] = useState<TopProduitItem[]>([])
+  const [produits, setProduits] = useState<Array<{ id: string; nom: string }>>([])
+  
+  // Filtres temporels ad-hoc
+  const [activePreset, setActivePreset] = useState<'7j' | '30j' | 'mois' | 'libre'>('30j')
+  const [dateDebut, setDateDebut] = useState<string>(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 30)
+    return formatDateISO(d)
+  })
+  const [dateFin, setDateFin] = useState<string>(() => formatDateISO(new Date()))
+  const [selectedProduitId, setSelectedProduitId] = useState<string>('')
+
+  const [loading, setLoading] = useState(false)
+  const [erreur, setErreur] = useState<string | null>(null)
+
+  // 1. Charger le catalogue des produits pour le filtre
   useEffect(() => {
     if (!boutiqueId) return
-    
-    // 1. Charger depuis le cache immédiatement
-    const cached = localStorage.getItem(`nopalou_offline_analytics_${boutiqueId}`)
+    fetch(`/api/boutiques/${boutiqueId}/produits`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        const prods = Array.isArray(data) ? data : data?.produits || []
+        setProduits(prods.map((p: any) => ({ id: p.id, nom: p.nom || 'Sans nom' })))
+      })
+      .catch(err => console.warn('[AnalyticsClient:produits]', err))
+  }, [boutiqueId])
+
+  // 2. Charger les statistiques avec filtres ad-hoc
+  const chargerDonnees = useCallback((customStart?: string, customEnd?: string, customProd?: string) => {
+    if (!boutiqueId) return
+
+    const start = customStart !== undefined ? customStart : dateDebut
+    const end = customEnd !== undefined ? customEnd : dateFin
+    const prod = customProd !== undefined ? customProd : selectedProduitId
+
+    const params = new URLSearchParams()
+    if (start) params.set('date_debut', start)
+    if (end) params.set('date_fin', end)
+    if (prod) params.set('produit_id', prod)
+
+    const cacheKey = `nopalou_analytics_${boutiqueId}_${start}_${end}_${prod}`
+    const cached = localStorage.getItem(cacheKey)
     if (cached) {
       try {
         const data = JSON.parse(cached)
         if (data.stats) setStats(data.stats)
         if (data.historique) setHistorique(data.historique)
-      } catch (e) { console.warn('[Nopalou:AnalyticsClient:L57]', e); }
+        if (data.attribution_sociale) setAttribution(data.attribution_sociale)
+        if (data.top_produits) setTopProduits(data.top_produits)
+      } catch (e) { console.warn('[AnalyticsClient:cache]', e) }
     }
 
     if (!cached) setLoading(true)
     setErreur(null)
 
-    // 2. Fetch en arrière-plan
-    fetch(`/api/analytics/boutique/${boutiqueId}`)
+    fetch(`/api/analytics/boutique/${boutiqueId}?${params.toString()}`)
       .then(r => r.ok ? r.json() : r.json().then(d => Promise.reject(d.error || r.status)).catch(() => Promise.reject(r.statusText)))
-      .then(data => { 
+      .then(data => {
         setStats(data.stats)
         setHistorique(data.historique ?? [])
         setAttribution(data.attribution_sociale ?? [])
-        localStorage.setItem(`nopalou_offline_analytics_${boutiqueId}`, JSON.stringify(data))
+        setTopProduits(data.top_produits ?? [])
+        localStorage.setItem(cacheKey, JSON.stringify(data))
       })
       .catch((msg) => {
-        // Ne pas afficher d'erreur si on a déjà des données en cache (mode hors-ligne)
         if (!cached) setErreur(typeof msg === 'string' ? msg : 'Impossible de charger les statistiques.')
       })
       .finally(() => setLoading(false))
-  }, [boutiqueId])
+  }, [boutiqueId, dateDebut, dateFin, selectedProduitId])
+
+  useEffect(() => {
+    chargerDonnees()
+  }, [chargerDonnees])
+
+  // Gestion des Presets rapides
+  const handlePresetSelect = (preset: '7j' | '30j' | 'mois' | 'libre') => {
+    setActivePreset(preset)
+    const now = new Date()
+    let newStart = ''
+    const newEnd = formatDateISO(now)
+
+    if (preset === '7j') {
+      const d = new Date()
+      d.setDate(d.getDate() - 7)
+      newStart = formatDateISO(d)
+    } else if (preset === '30j') {
+      const d = new Date()
+      d.setDate(d.getDate() - 30)
+      newStart = formatDateISO(d)
+    } else if (preset === 'mois') {
+      const d = new Date(now.getFullYear(), now.getMonth(), 1)
+      newStart = formatDateISO(d)
+    } else {
+      return
+    }
+
+    setDateDebut(newStart)
+    setDateFin(newEnd)
+    chargerDonnees(newStart, newEnd)
+  }
+
+  const handleResetFiltres = () => {
+    setActivePreset('30j')
+    const now = new Date()
+    const d = new Date()
+    d.setDate(d.getDate() - 30)
+    const s = formatDateISO(d)
+    const e = formatDateISO(now)
+    setDateDebut(s)
+    setDateFin(e)
+    setSelectedProduitId('')
+    chargerDonnees(s, e, '')
+  }
+
+  // Export CSV immédiat
+  const handleExportCSV = () => {
+    if (!historique || historique.length === 0) return
+
+    let csvContent = 'Date;Vues Boutique;Clics Telephone\n'
+    historique.forEach(h => {
+      csvContent += `${h.jour};${h.vues};${h.clics_tel}\n`
+    })
+
+    if (topProduits.length > 0) {
+      csvContent += '\n\nTop Ventes Produit;Quantite Vendue;Chiffre d Affaires (FCFA)\n'
+      topProduits.forEach(p => {
+        csvContent += `"${p.nom_produit.replace(/"/g, '""')}";${p.quantite_vendue};${p.ca_total}\n`
+      })
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `analytics-nopalou-${dateDebut}-au-${dateFin}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
 
   const n = (v: string | number) => Number(v || 0).toLocaleString('fr-FR')
 
   if (boutiques.length === 0) {
     return (
       <div style={{ maxWidth: 700, margin: '40px auto', padding: '0 20px', textAlign: 'center' }}>
-        <BarChart3 size={40} style={{ color: 'var(--navy)', margin: '0 auto 12px' }} />
+        <BarChart3 size={40} style={{ color: 'var(--navy, #1C2B4A)', margin: '0 auto 12px' }} />
         <p>Vous n&apos;avez pas encore de boutique.</p>
       </div>
     )
@@ -90,7 +210,7 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', margin: 0, padding: 0 }}>
-      {/* Sélecteur boutique (si plusieurs boutiques) */}
+      {/* Sélecteur boutique (si multi-boutiques) */}
       {boutiques.length > 1 && (
         <select
           value={boutiqueId}
@@ -100,6 +220,21 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
           {boutiques.map(b => <option key={b.id} value={b.id}>{b.nom}</option>)}
         </select>
       )}
+
+      {/* Barre de filtrage temporel & ad-hoc */}
+      <AnalyticsFilterBar
+        dateDebut={dateDebut}
+        dateFin={dateFin}
+        onDateDebutChange={d => { setDateDebut(d); setActivePreset('libre'); chargerDonnees(d, dateFin); }}
+        onDateFinChange={d => { setDateFin(d); setActivePreset('libre'); chargerDonnees(dateDebut, d); }}
+        selectedProduitId={selectedProduitId}
+        onProduitChange={pId => { setSelectedProduitId(pId); chargerDonnees(dateDebut, dateFin, pId); }}
+        produits={produits}
+        activePreset={activePreset}
+        onPresetSelect={handlePresetSelect}
+        onReset={handleResetFiltres}
+        onExportCSV={handleExportCSV}
+      />
 
       {loading && <p style={{ color: '#94a3b8' }}>{t('common.loading')}</p>}
 
@@ -128,10 +263,10 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
             </div>
           </div>
 
-          {/* KPIs Trafic & Conversions — Grille 4 colonnes Desktop / 2 colonnes Mobile */}
+          {/* KPIs Trafic & Conversions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px' }}>
             <TrendingUp size={16} style={{ color: 'var(--accent, #C75B00)' }} />
-            <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, color: 'var(--navy, #1C2B4A)' }}>Performances Trafic & Ventes</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, color: 'var(--navy, #1C2B4A)' }}>Performances Trafic &amp; Ventes</h3>
           </div>
           
           <div className="bq-kpi-grid" style={{ marginBottom: 20 }}>
@@ -155,6 +290,14 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
               </div>
             ))}
           </div>
+
+          {/* Top 10 des Ventes sur la période sélectionnée */}
+          {topProduits.length > 0 && (
+            <AnalyticsTopProduitsTable topProduits={topProduits} formatMontant={n} />
+          )}
+
+          {/* Graphique d'Activité SVG */}
+          {historique.length > 0 && <AnalyticsActivityChart historique={historique} />}
 
           {/* Santé des Pixels Publicitaires */}
           <div style={{ background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', borderRadius: 14, padding: '16px 20px', marginBottom: 24, boxShadow: 'var(--shadow-xs)' }}>
@@ -187,15 +330,15 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
             </div>
           </div>
 
-          {/* Attribution Social Commerce — Tableau de bord UTM */}
+          {/* Attribution Social Commerce */}
           {attribution.length > 0 && (
             <div style={{ background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', borderRadius: 14, padding: '16px 20px', marginBottom: 24, boxShadow: 'var(--shadow-xs)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <Share2 size={16} style={{ color: 'var(--accent, #C75B00)' }} />
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Attribution Sociale — D'où viennent vos commandes ?</h3>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>Attribution Sociale — D&apos;où viennent vos commandes ?</h3>
               </div>
               <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text2, #6B5E52)' }}>
-                Commandes 90 derniers jours par canal d'acquisition (partage produit avec UTM)
+                Commandes 90 derniers jours par canal d&apos;acquisition (partage produit avec UTM)
               </p>
               {(() => {
                 const CANAL_META: Record<string, { label: string; color: string; bg: string }> = {
@@ -235,14 +378,11 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
             </div>
           )}
 
-          {/* Graphique d'Activité SVG */}
-          {historique.length > 0 && <AnalyticsActivityChart historique={historique} />}
-
-          {/* Historique 30j */}
+          {/* Historique du tableau */}
           {historique.length > 0 && (
             <div style={{ background: '#ffffff', border: '1px solid var(--border, #E8DDD2)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-xs)' }}>
               <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border, #E8DDD2)', fontWeight: 700, fontSize: 14, color: 'var(--navy, #1C2B4A)' }}>
-                Activité des 30 derniers jours
+                Détail de l&apos;activité ({dateDebut} au {dateFin})
               </div>
               <div style={{ maxHeight: 300, overflowY: 'auto', overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 400 }}>
@@ -269,7 +409,7 @@ export default function AnalyticsClient({ boutiques }: { boutiques: { id: string
 
           {historique.length === 0 && (
             <div style={{ textAlign: 'center', padding: 32, color: 'var(--text3, #9C8E84)', fontSize: 14 }}>
-              Pas encore d&apos;activité enregistrée. Les vues s&apos;afficheront dès que des visiteurs consulteront votre boutique.
+              Aucune activité enregistrée sur cette période.
             </div>
           )}
         </>

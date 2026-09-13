@@ -11,6 +11,7 @@ import { type SocialPost, type SocialAccount } from './SocialShopFeed'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import ExternalImg from '@/components/ExternalImg'
 import BoutonPartager from '@/components/BoutonPartager'
+import ABTestVitrineHeader from './ABTestVitrineHeader'
 
 interface Boutique {
   id: string
@@ -291,31 +292,16 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
               )}
             </div>
 
-            <div style={{ flex: 1, minWidth: 0, paddingBottom: 2 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 800, margin: 0, color: '#0f172a' }}>
-                  {b.nom}
-                </h1>
-                {b.plan_actif === 'business' && (
-                  <span style={{ fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-                    Business
-                  </span>
-                )}
-                {b.plan_actif === 'pro' && (
-                  <span style={{ fontSize: 11, background: b.couleur_theme || '#C75B00', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-                    Vendeur Pro
-                  </span>
-                )}
-              </div>
-              {b.slogan && (
-                <p style={{ margin: '3px 0 0', fontSize: 13.5, color: '#1E293B', fontWeight: 700, fontStyle: 'italic' }}>
-                  « {b.slogan} »
-                </p>
-              )}
-              <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {[b.categorie, b.adresse, b.ville].filter(Boolean).join(' · ')}
-              </p>
-            </div>
+            <ABTestVitrineHeader
+              boutiqueId={b.id}
+              nomInitial={b.nom}
+              sloganInitial={b.slogan}
+              planActif={b.plan_actif}
+              couleurTheme={b.couleur_theme}
+              categorie={b.categorie}
+              adresse={b.adresse}
+              ville={b.ville}
+            />
           </div>
 
           {/* Boutons d'action harmonisés */}

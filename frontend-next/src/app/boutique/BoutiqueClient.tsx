@@ -29,6 +29,7 @@ import MarketingBoutique from './MarketingBoutique'
 import BoutiqueEquipe from './BoutiqueEquipe'
 import AppStoreBoutique from './AppStoreBoutique'
 import GestionEntrepots from './GestionEntrepots'
+import ABTestingManager from './components/ABTestingManager'
 import QrCodeShareModal from '@/components/QrCodeShareModal'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import ProductTourModal from './ProductTourModal'
@@ -41,7 +42,7 @@ export { ProduitForm, CatalogueProduits, BoutiqueProduitsTab, BoutiqueProduitMod
 import DashboardFacile from './components/DashboardFacile'
 import {
   Store, PlusCircle, Monitor, Settings, Edit, Eye, Trash2, ArrowLeft, MapPin, Tag, Phone, Share2, Zap, BookOpen, ShoppingBag, FileText, ShoppingCart, ClipboardList, Star, AlertTriangle, CheckCircle2, XCircle, Sparkles, Copy, Check, Download, ExternalLink, MessageCircle, Flame, Send, CheckSquare, Square,
-  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter, Palette, Boxes, Warehouse
+  LayoutDashboard, Truck, Receipt, Scale, BarChart3, Users, Gift, ScrollText, Code2, Megaphone, ShieldCheck, QrCode, Lock, ChevronDown, ChevronRight, Menu, X, LucideIcon, Package, Plus, Search, Info, Printer, ArrowUpDown, Filter, Palette, Boxes, Warehouse, Split
 } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
@@ -729,7 +730,7 @@ function BoutiqueCard({ boutique, planActif, onEdit, onDelete, onManage }: {
 
 // ── Vue de gestion d'une boutique — layout sidebar ────────────────────────────
 
-export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite' | 'appstore' | 'entrepots'
+export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite' | 'appstore' | 'entrepots' | 'abtesting'
 
 function BoutiqueDashboard({
   boutique,
@@ -1948,7 +1949,7 @@ function BoutiqueManage({
   const router = useRouter()
   const { t, formatNumber } = useTranslation()
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false)
-  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','personnaliser','infos','marketing','social','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite','appstore','entrepots']
+  const validTabs: ManageTab[] = ['dashboard','produits','commandes','carnet','express','compta','analytics','personnaliser','infos','marketing','social','equipe','admins','caissiers','documents','fournisseurs','fiscalite','journal','developer','fidelite','appstore','entrepots','abtesting']
   const resolvedInitialTab: ManageTab = validTabs.includes(initialTabProp as ManageTab) ? (initialTabProp as ManageTab) : 'dashboard'
 
   // ── Navigation Progressive : Essentiel (visible par défaut) + Avancé (sur demande) ──
@@ -2004,6 +2005,7 @@ function BoutiqueManage({
         { key: 'journal',     icon: ScrollText, label: t('shop.auditLog') || 'Journal d\'activité', minPlan: 'business' },
         { key: 'developer',   icon: Code2, label: t('shop.developer') || 'Portail développeur', minPlan: 'business' },
         { key: 'appstore',    icon: Boxes, label: 'App Store & Extensions', minPlan: 'pro' },
+        { key: 'abtesting',   icon: Split, label: 'A/B Testing Vitrine', minPlan: 'pro' },
       ],
     },
   ]
@@ -2178,6 +2180,7 @@ function BoutiqueManage({
     developer:   { icon: Code2, title: t('shop.developer'), desc: t('shop.developerDesc') },
     appstore:    { icon: Boxes, title: 'App Store & Intégrations', desc: 'Activez vos pixels Meta/TikTok/GA4, webhooks, synchronisation et outils tiers.' },
     entrepots:   { icon: Warehouse, title: 'Multi-Entrepôts & Dépôts Physiques', desc: 'Ventilez et gérez vos stocks physiques par site avec réagrégation automatique du stock global.' },
+    abtesting:   { icon: Split, title: 'Moteur A/B Testing Vitrine', desc: 'Testez et optimisez scientifiquement les titres et sous-titres de votre vitrine marchande.' },
   }
 
   const currentTabInfo = tabInfoMap[tab] ?? tabInfoMap.dashboard
@@ -3099,6 +3102,7 @@ function BoutiqueManage({
             {tab === 'developer'   && <PortailDeveloppeurBoutique boutiqueId={boutique.id} planActif={effectivePlan || 'decouverte'} />}
             {tab === 'appstore'    && <AppStoreBoutique boutiqueId={boutique.id} initialMetaPixel={boutique.meta_pixel_id || ''} initialTiktokPixel={boutique.tiktok_pixel_id || ''} initialGa4={boutique.ga4_id || ''} />}
             {tab === 'entrepots'   && <GestionEntrepots boutiqueId={boutique.id} />}
+            {tab === 'abtesting'   && <ABTestingManager boutiqueId={boutique.id} />}
           </>
         )}
       </main>

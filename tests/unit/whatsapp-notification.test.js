@@ -46,13 +46,20 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
   test('gère gracieusement les erreurs sans lever d\'exception non interceptée', async () => {
     axios.post.mockRejectedValue(new Error('Network error'));
 
-    const res = await sendWhatsAppNotification('771234567', {
+    const resSansFallback = await sendWhatsAppNotification('771234567', {
+      textMessage: 'Test',
+      title: 'Alerte',
+      detail: 'Détail',
+      fallbackSMS: false,
+    });
+    expect(resSansFallback).toBeNull();
+
+    const resAvecFallback = await sendWhatsAppNotification('771234567', {
       textMessage: 'Test',
       title: 'Alerte',
       detail: 'Détail',
     });
-
-    expect(res).toBeNull();
+    expect(resAvecFallback?.fallback_sms).toBe(true);
   });
 
   test('assainit les retours à la ligne et espaces consécutifs pour respecter Meta #132018', async () => {

@@ -6390,6 +6390,274 @@ router.get('/:id/entrepots/stocks', verifierToken, param('id').isUUID(), async (
   }
 });
 
+// ── Spec 09 : GET /api/boutiques/club-vip/statut — Programme Fidélité Plateforme "Nopalou Club VIP"
+router.get('/club-vip/statut', async (req, res) => {
+  try {
+    const rawPhone = String(req.query.telephone || '').trim();
+    if (!rawPhone || rawPhone.replace(/\D/g, '').length < 7) {
+      return res.json({
+        success: true,
+        telephone: '',
+        nb_commandes: 0,
+        total_depense: 0,
+        palier: 'Bronze',
+        badge: 'Acheteur Bronze',
+        reduction_livraison: 0,
+        livraison_offerte: false,
+        description: 'Passez votre 1ère commande pour débloquer les avantages Tiak-Tiak Club VIP',
+        prochain_palier: { nom: 'Silver', commandes_restantes: 2, reduction_livraison: 500 }
+      });
+    }
+
+    const digits = rawPhone.replace(/\D/g, '');
+    const clean9 = digits.slice(-9);
+    const clean221 = clean9.length === 9 ? '221' + clean9 : digits;
+    const cleanPlus = clean9.length === 9 ? '+221' + clean9 : '+' + digits;
+
+    let nbCommandes = 0;
+    let totalDepense = 0;
+
+    try {
+      const { rows } = await pool.query(
+        `SELECT COUNT(*) as nb_commandes, COALESCE(SUM(total), 0) as total_depense
+         FROM commandes
+         WHERE (client_telephone = $1 OR client_telephone = $2 OR client_telephone = $3)
+           AND statut NOT IN ('annulee', 'rejetee')`,
+        [clean9, clean221, cleanPlus]
+      );
+      if (rows && rows[0]) {
+        nbCommandes = parseInt(rows[0].nb_commandes || 0, 10);
+        totalDepense = parseInt(rows[0].total_depense || 0, 10);
+      }
+    } catch (dbErr) {
+      console.warn('[CLUB VIP QUERY FALLBACK]', dbErr.message);
+    }
+
+    let palier = 'Bronze';
+    let badge = 'Acheteur Bronze';
+    let reductionLivraison = 0;
+    let livraisonOfferte = false;
+    let description = 'Effectuez encore 1 commande pour passer Silver et économiser 500 FCFA sur vos livraisons Tiak-Tiak';
+    let prochainPalier = { nom: 'Silver', commandes_restantes: Math.max(1, 2 - nbCommandes), reduction_livraison: 500 };
+
+    if (nbCommandes >= 10 || totalDepense >= 300000) {
+      palier = 'Platine VIP';
+      badge = 'Acheteur Platine VIP';
+      reductionLivraison = 2500;
+      livraisonOfferte = true;
+      description = 'Livraison Tiak-Tiak 100% offerte (jusqu\'à 2 500 FCFA pris en charge par Nopalou)';
+      prochainPalier = null;
+    } else if (nbCommandes >= 5 || totalDepense >= 150000) {
+      palier = 'Gold';
+      badge = 'Acheteur Vérifié Gold';
+      reductionLivraison = 1000;
+      livraisonOfferte = false;
+      description = 'Remise de 1 000 FCFA déduite sur toutes vos livraisons Tiak-Tiak';
+      prochainPalier = { nom: 'Platine VIP', commandes_restantes: Math.max(1, 10 - nbCommandes), reduction_livraison: 2500 };
+    } else if (nbCommandes >= 2 || totalDepense >= 50000) {
+      palier = 'Silver';
+      badge = 'Acheteur Silver';
+      reductionLivraison = 500;
+      livraisonOfferte = false;
+      description = 'Remise de 500 FCFA déduite sur votre livraison Tiak-Tiak';
+      prochainPalier = { nom: 'Gold', commandes_restantes: Math.max(1, 5 - nbCommandes), reduction_livraison: 1000 };
+    }
+
+    res.json({
+      success: true,
+      telephone: clean9,
+      nb_commandes: nbCommandes,
+      total_depense: totalDepense,
+      palier,
+      badge,
+      reduction_livraison: reductionLivraison,
+      livraison_offerte: livraisonOfferte,
+      description,
+      prochain_palier: prochainPalier
+    });
+  } catch (err) {
+    console.error('[CLUB VIP STATUT ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur lors de la récupération du statut Club VIP' });
+  }
+});
+
+// ── Spec 17 : Moteur A/B Testing Intégré ──
+
+// Helper auto-initialisation tables A/B Testing
+async function assurerTablesAbTest() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS boutique_ab_tests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        boutique_id UUID NOT NULL,
+        titre VARCHAR(255) NOT NULL,
+        actif BOOLEAN DEFAULT true,
+        repartition INTEGER DEFAULT 50,
+        variante_a JSONB NOT NULL,
+        variante_b JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS boutique_ab_test_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        boutique_id UUID NOT NULL,
+        variante VARCHAR(10) NOT NULL,
+        type_evenement VARCHAR(50) NOT NULL,
+        session_id VARCHAR(100),
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+  } catch (_) {}
+}
+
+// GET /api/boutiques/:id/ab-test — Configuration active du split-test (Public / Vitrine)
+router.get('/:id/ab-test', param('id').isUUID(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    await assurerTablesAbTest();
+    const { rows } = await pool.query(
+      `SELECT * FROM boutique_ab_tests WHERE boutique_id = $1 AND actif = true ORDER BY created_at DESC LIMIT 1`,
+      [id]
+    );
+
+    if (!rows || !rows[0]) {
+      return res.json({ success: true, actif: false, test: null });
+    }
+
+    res.json({ success: true, actif: true, test: rows[0] });
+  } catch (err) {
+    console.error('[AB TEST GET ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur lors de la récupération du test A/B' });
+  }
+});
+
+// POST /api/boutiques/:id/ab-test — Créer ou modifier le test A/B (Authentifié Propriétaire)
+router.post(
+  '/:id/ab-test',
+  verifierToken,
+  param('id').isUUID(),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const bAccess = await checkBoutiqueAccess(id, req.user.userId);
+      if (!bAccess && !req.user?.is_admin) {
+        return res.status(403).json({ success: false, error: 'Accès refusé' });
+      }
+
+      await assurerTablesAbTest();
+      const { titre, actif = true, repartition = 50, variante_a, variante_b } = req.body;
+
+      if (!titre || !variante_a || !variante_b) {
+        return res.status(400).json({ success: false, error: 'Titre, variante A et variante B obligatoires.' });
+      }
+
+      // Désactiver les anciens tests
+      await pool.query(`UPDATE boutique_ab_tests SET actif = false WHERE boutique_id = $1`, [id]);
+
+      const { rows } = await pool.query(
+        `INSERT INTO boutique_ab_tests (boutique_id, titre, actif, repartition, variante_a, variante_b)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [id, titre, actif, repartition, JSON.stringify(variante_a), JSON.stringify(variante_b)]
+      );
+
+      res.status(201).json({ success: true, test: rows[0] });
+    } catch (err) {
+      console.error('[AB TEST POST ERR]', err);
+      res.status(500).json({ success: false, error: 'Erreur lors de la configuration du test A/B' });
+    }
+  }
+);
+
+// POST /api/boutiques/:id/ab-test/event — Logger une impression ou conversion (Public)
+router.post(
+  '/:id/ab-test/event',
+  param('id').isUUID(),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { variante, type_evenement, session_id } = req.body;
+
+      if (!['A', 'B'].includes(variante) || !type_evenement) {
+        return res.status(400).json({ success: false, error: 'Variante (A/B) et type d\'événement obligatoires.' });
+      }
+
+      await assurerTablesAbTest();
+      await pool.query(
+        `INSERT INTO boutique_ab_test_events (boutique_id, variante, type_evenement, session_id)
+         VALUES ($1, $2, $3, $4)`,
+        [id, variante, type_evenement, session_id || null]
+      );
+
+      res.json({ success: true, enregistre: true });
+    } catch (err) {
+      console.error('[AB TEST EVENT ERR]', err);
+      res.status(500).json({ success: false, error: 'Erreur lors du suivi de l\'événement A/B' });
+    }
+  }
+);
+
+// GET /api/boutiques/:id/ab-test/results — Synthèse statistique des conversions (Authentifié Propriétaire)
+router.get(
+  '/:id/ab-test/results',
+  verifierToken,
+  param('id').isUUID(),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const bAccess = await checkBoutiqueAccess(id, req.user.userId);
+      if (!bAccess && !req.user?.is_admin) {
+        return res.status(403).json({ success: false, error: 'Accès refusé' });
+      }
+
+      await assurerTablesAbTest();
+      const { rows } = await pool.query(
+        `SELECT variante, type_evenement, COUNT(*) as total
+         FROM boutique_ab_test_events
+         WHERE boutique_id = $1
+         GROUP BY variante, type_evenement`,
+        [id]
+      );
+
+      let visitesA = 0, conversionsA = 0;
+      let visitesB = 0, conversionsB = 0;
+
+      (rows || []).forEach(r => {
+        const c = parseInt(r.total || 0, 10);
+        if (r.variante === 'A') {
+          if (r.type_evenement === 'visite') visitesA += c;
+          else conversionsA += c;
+        } else if (r.variante === 'B') {
+          if (r.type_evenement === 'visite') visitesB += c;
+          else conversionsB += c;
+        }
+      });
+
+      const tauxA = visitesA > 0 ? Number(((conversionsA / visitesA) * 100).toFixed(2)) : 0;
+      const tauxB = visitesB > 0 ? Number(((conversionsB / visitesB) * 100).toFixed(2)) : 0;
+
+      let gagnant = 'en_cours';
+      if (visitesA >= 30 && visitesB >= 30) {
+        if (tauxB > tauxA + 2) gagnant = 'B';
+        else if (tauxA > tauxB + 2) gagnant = 'A';
+      }
+
+      res.json({
+        success: true,
+        resultats: {
+          variante_a: { visites: visitesA, conversions: conversionsA, taux_conversion: tauxA },
+          variante_b: { visites: visitesB, conversions: conversionsB, taux_conversion: tauxB },
+          gagnant,
+          statistiquement_significatif: visitesA >= 30 && visitesB >= 30
+        }
+      });
+    } catch (err) {
+      console.error('[AB TEST RESULTS ERR]', err);
+      res.status(500).json({ success: false, error: 'Erreur lors du calcul des résultats A/B' });
+    }
+  }
+);
+
 module.exports = router;
 
 

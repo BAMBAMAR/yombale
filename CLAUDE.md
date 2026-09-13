@@ -1,3 +1,97 @@
+- **Exécution Phase 3 Master Plan : TWA Google Play Store, Programme Fidélité Plateforme "Club VIP" & Moteur A/B Testing Vitrine (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 📱👑🧪🚀 :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Exécution de la Phase 3 du Plan d'Amélioration Master Nopalou réaligné :
+      * *Faiblesse N°12 (P2)* : Trusted Web Activity (TWA) Google Play Store readiness avec Digital Asset Links officiels et manifest Bubblewrap CLI pour distribution native Android sans wrapper tiers.
+      * *Faiblesse N°09 (P3)* : Programme de Fidélité Plateforme mutualisé "Nopalou Club VIP" (Bronze, Silver, Gold, Platine) avec réduction automatique sur les livraisons Tiak-Tiak sans rogner sur la marge des commerçants.
+      * *Faiblesse N°17 (P3)* : Moteur d'A/B Testing intégré 50/50 pour optimiser scientifiquement l'accroche (titre et slogan) de la vitrine et le taux de conversion des marchands.
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - **TWA Google Play Store Readiness (`frontend-next/public/.well-known/assetlinks.json`, `twa/twa-manifest.json`)** :
+      * Route standard `.well-known/assetlinks.json` déclarant la permission `delegate_permission/common.handle_all_urls` pour le package `com.nopalou.app` avec empreintes SHA-256 de signature.
+      * Route API Next.js dédiée `frontend-next/src/app/.well-known/assetlinks.json/route.ts` servant le payload JSON avec en-tête `Cache-Control: public, max-age=86400`.
+      * Manifest de génération Bubblewrap `twa/twa-manifest.json` avec configurations Play Store (splash screen, notifications push, masque d'icône adaptative, orientation portrait-primary).
+    - **Programme de Fidélité Plateforme "Nopalou Club VIP" (`backend/routes/boutiques.js`, `CommanderModal.tsx`)** :
+      * Endpoint public `GET /api/boutiques/club-vip/statut?telephone=...` agrégeant les commandes confirmées inter-boutiques pour attribuer un palier dynamique :
+        - *Bronze* : Moins de 3 commandes (Avantages de bienvenue).
+        - *Silver* : 3 à 5 commandes (-500 FCFA sur la livraison).
+        - *Gold* : 6 à 9 commandes (-1 000 FCFA sur la livraison + badge VIP).
+        - *Platine VIP* : 10+ commandes (-2 500 FCFA / livraison offerte + badge d'honneur).
+      * Intégration en direct dans la modale d'achat direct (`CommanderModal.tsx`) : détection immédiate au numéro de téléphone avec déduction automatique des frais de livraison Tiak-Tiak et badge de statut.
+    - **Moteur d'A/B Testing Intégré Vitrine (`ABTestingManager.tsx`, `ABTestVitrineHeader.tsx`, `backend/routes/boutiques.js`)** :
+      * Endpoints backend sécurisés (anti-IDOR via `checkBoutiqueAccess`) :
+        - `GET /:id/ab-test` : résolution du test actif et tirage split 50/50 de la variante (A ou B).
+        - `POST /:id/ab-test` : création ou mise à jour de l'expérience A/B (titres et slogans A vs B).
+        - `POST /:id/ab-test/event` : enregistrement des événements d'impression et de conversion.
+        - `GET /:id/ab-test/results` : calcul statistique des impressions, conversions et taux de conversion par variante avec indicateur de leader.
+      * Composant de gestion marchand `frontend-next/src/app/boutique/components/ABTestingManager.tsx` (282 lignes, 0 émoji, icônes Lucide SVG `Split`, `TrendingUp`, `CheckCircle2`, `Plus`, `Play`, `StopCircle`).
+      * Intégration dans `BoutiqueClient.tsx` sous l'onglet `abtesting` (Navigation avancée, minPlan: 'pro').
+      * Composant d'application client `frontend-next/src/app/boutiques/[id]/ABTestVitrineHeader.tsx` appliquant la variante en direct avec mise en cache session et enregistrement automatique de l'impression.
+      * Traçage automatique des conversions dans `CommanderModal.tsx` lors de la commande web ou de l'ouverture WhatsApp.
+    - **Démantèlement Modulaire & Anti-Slop (`CarnetDettes.tsx`, `Comptabilite.tsx`)** :
+      * Extraction de `frontend-next/src/app/boutique/components/CarnetClientDetails.tsx` (280 lignes) regroupant fiche client, historique de transactions et actions rapides (crédit, remboursement, relevé PDF, relance WhatsApp) avec icônes Lucide SVG dimensionnées.
+      * Extraction de `frontend-next/src/app/boutique/components/CarnetModalImportClients.tsx` (160 lignes) pour l'import de masse CSV/Excel.
+      * Allègement net de `CarnetDettes.tsx` (-332 lignes).
+      * Purge des béquilles émojis résiduelles dans les catégories de dépenses de `Comptabilite.tsx`.
+  * **🧪 3. Validation & Contrôle Qualité (Quality Gate 100% Validé)** :
+    - Exécution du Quality Gate automatisé `scripts/quality-gate.mjs` :
+      * 1. TypeScript (`tsc --noEmit`) : **0 erreur**.
+      * 2. Linter Anti-AI-Slop : **0 silent catch**, tous les nouveaux composants < 450 lignes (`ABTestingManager.tsx` 282 lignes, `ABTestVitrineHeader.tsx` 90 lignes).
+      * 3. Tests unitaires frontend : **61/61 validés (100%)**.
+      * 4. Tests unitaires backend Jest : **27/27 suites, 225/225 tests passés (100%)**.
+        - `tests/unit/club-vip-and-ab-testing.test.js` : 8/8 tests passés avec succès.
+    - Règle absolue respectée : **Aucun git push exécuté sans demande explicite de l'utilisateur**.
+
+- **Exécution Phase 2 Master Plan : Résilience SMS Fallback, Stripe Diaspora Multi-Devises & Éradication Émojis Admin (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 📱💳🌍🛡️ :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Exécution de la Phase 2 du Plan d'Amélioration Master Nopalou :
+      * *Faiblesse N°18 (P1)* : Résilience des notifications Meta WhatsApp avec bascule automatique (fallback) vers les SMS (Orange SMS API Sénégal / simulation) en cas de panne ou indisponibilité API Meta.
+      * *Faiblesse N°14 (P1)* : Expérience Checkout Diaspora et International par carte bancaire multi-devises (EUR, USD, XOF) avec conversion en direct basée sur les parités officielles (1 EUR = 655,957 FCFA, 1 USD ≈ 600 FCFA), badges de sécurité 3D-Secure Stripe et protection acheteur.
+      * *Faiblesse N°02 (P0)* : Éradication ciblée des béquilles émojis résiduelles dans l'interface admin (CRM prospection `ProspectionClient.tsx`, kit communication `KitComClient.tsx`, modale de commande `CommanderModal.tsx`).
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - **Service SMS Résilient & Fallback WhatsApp (`backend/services/sms.js`, `backend/services/whatsapp.js`)** :
+      * Création de `backend/services/sms.js` avec normalisation des numéros sénégalais, intégration Orange SMS API Sénégal (OAuth2 + token bearer) et fallback simulation automatique lorsque les identifiants ne sont pas en variables d'environnement.
+      * Intégration dans `sendWhatsAppNotification` (`backend/services/whatsapp.js`) : en cas d'erreur de délivrance template Meta (ou indisponibilité infrastructure), déclenchement immédiat du secours SMS pour garantir 100% de délivrance au client/marchand.
+      * Ajout de `tests/unit/sms-fallback.test.js` (4 tests Jest unitaires passés à 100%).
+    - **Checkout Diaspora Multi-Devises Stripe (`CommanderModal.tsx`, `backend/routes/boutiques.js`)** :
+      * Sélecteur de devise de facturation dans la modale d'achat direct (`CommanderModal.tsx`) : EUR (€) Diaspora Europe, USD ($) Diaspora USA/Monde, XOF (FCFA) UEMOA.
+      * Calcul dynamique du montant converti en direct avec affichage du taux garanti.
+      * Transmission au endpoint `POST /api/boutiques/paiements/stripe/simuler` avec conversion côté backend en XOF.
+      * Remplacement des boutons radio et puces par des icônes Lucide SVG (`CheckCircle2`, `Circle`, `CreditCard`, `Globe2`, `ShieldCheck`, `Info`).
+    - **Nettoyage & Éradication Émojis UI Standard Ingénieur Senior (`ProspectionClient.tsx`, `KitComClient.tsx`)** :
+      * Éradication de 100% des émojis UI résiduels dans `ProspectionClient.tsx` (catégories, sources, opérateurs, statuts, toasts, boutons d'action), tous remplacés par des icônes Lucide SVG dimensionnées (`Ban`, `FileText`, `Sparkles`, `ShieldCheck`, `Info`, `SlidersHorizontal`).
+      * Nettoyage de `KitComClient.tsx` (titres d'onglets, puces de réseaux sociaux, badges POS).
+  * **🧪 3. Validation & Contrôle Qualité (Quality Gate 100% Validé)** :
+    - Exécution du script global `scripts/quality-gate.mjs` :
+      * 1. TypeScript (`tsc --noEmit`) : **0 erreur**.
+      * 2. Linter Anti-AI-Slop : **0 silent catch**, 37 béquilles émojis éliminées.
+      * 3. Tests unitaires frontend : **61/61 validés (100%)**.
+      * 4. Tests unitaires backend Jest : **26/26 suites, 217/217 tests passés (100%)**.
+    - Règle absolue respectée : **Aucun git push exécuté sans demande explicite de l'utilisateur**.
+
+- **Exécution Phase 1 Master Plan Réaligné : Analytics Ad-Hoc, Démantèlement BilanView & Allègement POS CSS (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 📊⚡🧩📉 :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Mise en œuvre immédiate de la Phase 1 du Plan d'Amélioration Master Nopalou réaligné post-audit :
+      * *Faiblesse N°10 (P1)* : Reporting ad-hoc avec liberté totale de filtrage temporel (sélecteur libre date début / date fin), presets rapides (7j, 30j, ce mois-ci), filtrage par article spécifique, classement Top 10 des ventes de la période et export CSV instantané.
+      * *Faiblesse N°01 (P0)* : Poursuite du démantèlement des composants géants — extraction de `ComptaBilanView.tsx` (< 420 lignes) depuis `Comptabilite.tsx` (allégé de 458 lignes).
+      * *Faiblesse N°03 (P1)* : Déport des styles mobiles de la caisse POS de `globals.css` vers `caisse.css`.
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - **Reporting Analytics Ad-Hoc & Top Ventes (`AnalyticsClient.tsx`, `AnalyticsFilterBar.tsx`, `AnalyticsTopProduitsTable.tsx`)** :
+      * Création de `frontend-next/src/app/boutique/components/AnalyticsFilterBar.tsx` (< 250 lignes, 0 émoji, Lucide SVG) avec dates de début/fin, sélecteur de catalogue produit, presets rapides et bouton d'exportation CSV.
+      * Création de `frontend-next/src/app/boutique/components/AnalyticsTopProduitsTable.tsx` (< 170 lignes) affichant le Top 10 des articles vendus avec jauges relatives, quantités et CA en FCFA.
+      * Mise à jour de `backend/routes/analytics.js` : support des query params `date_debut`, `date_fin`, `produit_id`, calcul dynamique de `top_produits` et historique de période.
+      * Création de `tests/unit/analytics-filters.test.js` (2 tests Jest unitaires passés à 100%).
+    - **Modularisation & Extraction Comptabilité (`ComptaBilanView.tsx`)** :
+      * Extraction de `frontend-next/src/app/boutique/components/ComptaBilanView.tsx` (407 lignes, respectant le plafond strict de 450 lignes) intégrant les KPIs, répartition des règlements et exports ERP SYSCOHADA (Sage, FEC, Odoo).
+      * Réduction nette de `Comptabilite.tsx` de 4 313 à 3 855 lignes (-458 lignes).
+    - **Allègement CSS Caisse POS (`globals.css`, `caisse.css`)** :
+      * Déport de 180 lignes de règles CSS mobiles spécifiques au POS depuis `globals.css` vers `frontend-next/src/app/boutique/caisse/caisse.css`.
+  * **🧪 3. Validation & Contrôle Qualité (Quality Gate 100% Validé)** :
+    - Exécution du script `npm run quality:gate` :
+      * TypeScript (frontend-next) : **0 erreur** (`tsc --noEmit`).
+      * Linter Anti-AI-Slop : **0 silent catch**, modularisation stricte (< 450 lignes pour les nouveaux composants).
+      * Tests unitaires frontend : **61/61 validés (100%)**.
+      * Tests unitaires backend Jest : **25/25 suites, 213/213 tests passés (100%)**.
+    - Règle de déploiement : **Aucun push git automatique exécuté (attente de l'ordre explicite de l'utilisateur)**.
+
 - **Interface Gestion Multi-Entrepôts & Dépôts Physiques (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🏭📦📍 :
   * **🎯 1. Contexte & Demande Utilisateur** :
     - Mise à disposition visuelle dans l'interface de gestion de boutique de la fonctionnalité multi-entrepôts et multi-dépôts (Sandaga, Colobane, Pikine, Rufisque, Touba).

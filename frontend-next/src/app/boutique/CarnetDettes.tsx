@@ -10,6 +10,8 @@ import { updateStatutCommande, listCommandes } from './actions'
 import { ajouterDetteHorsLigne } from '@/lib/db-offline'
 import { useSyncOffline } from '@/lib/sync-manager'
 import { createVoiceListener, parseDetteIntent, demanderPermissionMicrophone, getMessageErreurMicro, normaliserTexteVocal } from '@/lib/voice-assistant'
+import CarnetClientDetails from './components/CarnetClientDetails'
+import CarnetModalImportClients from './components/CarnetModalImportClients'
 
 interface ClientCredit {
   id: string
@@ -2631,276 +2633,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
 
         {/* FICHE DÉTAILLÉE DU CLIENT SÉLECTIONNÉ */}
         {clientSelectionne && (
-          <div style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: 18,
-            padding: isMobile ? '16px' : '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-            boxShadow: '0 4px 16px rgba(15,23,42,0.06)'
-          }}>
-            {/* Bouton Retour Liste sur Mobile */}
-            {isMobile && (
-              <button
-                onClick={() => {
-                  setClientSelectionne(null)
-                  if (typeof window !== 'undefined' && window.history.state?.clientDetail) {
-                    window.history.back()
-                  }
-                }}
-                style={{
-                  background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  color: '#0f172a',
-                  padding: '8px 14px',
-                  borderRadius: 10,
-                  fontWeight: 800,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  alignSelf: 'flex-start',
-                  minHeight: 38
-                }}
-              >
-                {t('shop.backToCustomerListBtn')}
-              </button>
-            )}
-
-            {/* En-tête Fiche Client */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #f1f5f9', paddingBottom: 14, flexWrap: 'wrap', gap: 10 }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>{clientSelectionne.nom}</h2>
-                  <button
-                    onClick={() => ouvrirModalEditClient(clientSelectionne)}
-                    style={{
-                      background: '#f1f5f9',
-                      border: '1px solid #cbd5e1',
-                      color: '#475569',
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {t('common.edit')}
-                  </button>
-                  {!isMobile && (
-                    <button
-                      onClick={() => setClientSelectionne(null)}
-                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 16 }}
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-                <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b' }}>
-                  {clientSelectionne.telephone} {clientSelectionne.adresse ? `• ${clientSelectionne.adresse}` : ''}
-                </p>
-                {clientSelectionne.note_client && (
-                  <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#94a3b8', fontStyle: 'italic' }}>
-                    {t('common.notes')}: {clientSelectionne.note_client}
-                  </p>
-                )}
-              </div>
-
-              <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
-                <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{t('shop.currentBalanceLabel')}</span>
-                <div style={{
-                  fontSize: 19,
-                  fontWeight: 900,
-                  color: Number(clientSelectionne.solde) > 0 ? '#dc2626' : Number(clientSelectionne.solde) < 0 ? '#16a34a' : '#0f172a'
-                }}>
-                  {Number(clientSelectionne.solde) > 0 ? `Doit : ${fcfa(clientSelectionne.solde)}` : Number(clientSelectionne.solde) < 0 ? `Avance : ${fcfa(Math.abs(Number(clientSelectionne.solde)))}` : '0 FCFA (À jour)'}
-                </div>
-              </div>
-            </div>
-
-            {/* Actions Rapides */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button
-                onClick={() => ouvrirModalTransaction('vente_credit')}
-                style={{
-                  flex: 1,
-                  minWidth: 120,
-                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '10px 12px',
-                  fontWeight: 800,
-                  fontSize: 12.5,
-                  cursor: 'pointer',
-                  minHeight: 42
-                }}
-              >
-                + {t('shop.transactionCreditSale')}
-              </button>
-
-              <button
-                onClick={() => ouvrirModalTransaction('remboursement')}
-                style={{
-                  flex: 1,
-                  minWidth: 120,
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '10px 12px',
-                  fontWeight: 800,
-                  fontSize: 12.5,
-                  cursor: 'pointer',
-                  minHeight: 42
-                }}
-              >
-                {t('shop.transactionRepayment')}
-              </button>
-
-              <button
-                onClick={handleExportReleveClientPDF}
-                style={{
-                  flex: 1,
-                  minWidth: 140,
-                  background: '#7c3aed',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '10px 12px',
-                  fontWeight: 800,
-                  fontSize: 12.5,
-                  cursor: 'pointer',
-                  minHeight: 42
-                }}
-                title={t('shop.printPdfStatementBtn')}
-              >
-                {t('shop.printPdfStatementBtn')}
-              </button>
-
-              {Number(clientSelectionne.solde) > 0 && (
-                <button
-                  onClick={() => handleRelancerWhatsApp(clientSelectionne)}
-                  style={{
-                    flex: isMobile ? 1 : 'none',
-                    minWidth: isMobile ? 120 : 'auto',
-                    background: '#25D366',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 10,
-                    padding: '10px 14px',
-                    fontWeight: 800,
-                    fontSize: 12.5,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    minHeight: 42
-                  }}
-                >
-                  {t('shop.remindWhatsappBtn')}
-                </button>
-              )}
-            </div>
-
-            {/* Historique des opérations */}
-            <div>
-              <h3 style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
-                {t('shop.operationsHistoryTitle')}
-              </h3>
-
-              {loadingHist ? (
-                <div style={{ fontSize: 13, color: '#64748b' }}>{t('common.loading')}</div>
-              ) : historique.length === 0 ? (
-                <div style={{ fontSize: 12.5, color: '#94a3b8', fontStyle: 'italic', padding: '12px 0' }}>
-                  {t('shop.noTransactionsForCustomer')}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 340, overflowY: 'auto' }}>
-                  {historique.map(h => {
-                    const estVente = h.type === 'vente_credit'
-                    const dateEch = h.date_echeance ? new Date(h.date_echeance) : null
-                    const estEnRetard = dateEch && dateEch < new Date() && estVente
-
-                    return (
-                      <div
-                        key={h.id}
-                        style={{
-                          background: '#f8fafc',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: 10,
-                          padding: '10px 12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: 8
-                        }}
-                      >
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            <span style={{
-                              fontSize: 10.5,
-                              fontWeight: 800,
-                              padding: '2px 6px',
-                              borderRadius: 6,
-                              background: estVente ? '#fef2f2' : '#f0fdf4',
-                              color: estVente ? '#991b1b' : '#166534',
-                              border: estVente ? '1px solid #fecaca' : '1px solid #bbf7d0'
-                            }}>
-                              {estVente ? `${t('shop.transactionCreditSale')}` : `${t('shop.transactionRepayment')}`}
-                            </span>
-                            <span style={{ fontSize: 11.5, color: '#64748b' }}>
-                              {fmtDateHeure(h.created_at)}
-                            </span>
-                          </div>
-
-                          {h.note && (
-                            <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', marginTop: 3 }}>
-                              {h.note}
-                            </div>
-                          )}
-
-                          {Array.isArray(h.produits) && h.produits.length > 0 && (
-                            <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                              {h.produits.map((item: any, idx: number) => (
-                                <span key={idx} style={{ fontSize: 10, background: '#e2e8f0', color: '#334155', padding: '2px 6px', borderRadius: 4 }}>
-                                  {item.nom} (x{item.quantite})
-                                </span>
-                              ))}
-                            </div>
-                          )}
-
-                          {h.date_echeance && (
-                            <div style={{ fontSize: 11, marginTop: 4, color: estEnRetard ? '#dc2626' : '#0284c7', fontWeight: 700 }}>
-                              {t('shop.dueDateLabel')} : {fmtDate(h.date_echeance)} {estEnRetard ? ` (${t('shop.overdueBadge')})` : ''}
-                            </div>
-                          )}
-                        </div>
-
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={{
-                            fontSize: 14,
-                            fontWeight: 900,
-                            color: estVente ? '#dc2626' : '#16a34a'
-                          }}>
-                            {estVente ? `+ ${fcfa(h.montant)}` : `- ${fcfa(h.montant)}`}
-                          </div>
-                          <div style={{ fontSize: 10.5, color: '#94a3b8' }}>
-                            {h.mode_paiement || 'Espèces'}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-          </div>
+          <CarnetClientDetails
+            client={clientSelectionne}
+            historique={historique}
+            loadingHist={loadingHist}
+            isMobile={isMobile}
+            onClose={() => setClientSelectionne(null)}
+            onEditClient={ouvrirModalEditClient}
+            onOpenTransaction={ouvrirModalTransaction}
+            onExportRelevePDF={handleExportReleveClientPDF}
+            onRelanceWhatsApp={handleRelancerWhatsApp}
+          />
         )}
       </div>
 
@@ -3937,83 +3680,17 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         </div>
       )}
       {/* Modal Import Clients par Lot (CSV / Excel) */}
-      {showModalImportClients && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000, padding: 16 }} onClick={() => setShowModalImportClients(false)}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 580, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 20 }}></span>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: 'var(--navy)' }}>Importer des clients (CSV / Excel)</h3>
-              </div>
-              <button type="button" onClick={() => setShowModalImportClients(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer' }}>✕</button>
-            </div>
-
-            {importClientsError && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700 }}>
-                {importClientsError}
-              </div>
-            )}
-
-            {importClientsSuccess && (
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#15803d', padding: '12px 16px', borderRadius: 10, fontSize: 14, fontWeight: 800 }}>
-                {importClientsSuccess}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff7ed', border: '1px solid #fed7aa', padding: '12px 14px', borderRadius: 12, flexWrap: 'wrap', gap: 8 }}>
-              <div>
-                <p style={{ margin: 0, fontSize: 12.5, fontWeight: 800, color: '#9a3412' }}>Besoin d'un modèle type ?</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#c2410c' }}>Nom, Téléphone, Dette initiale (FCFA), Adresse</p>
-              </div>
-              <button type="button" onClick={telechargerModeleClientsCSV} style={{ background: '#C75B00', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
-                Télécharger modèle CSV
-              </button>
-            </div>
-
-            <div style={{ border: '2px dashed #93c5fd', background: '#eff6ff', borderRadius: 14, padding: '24px 16px', textAlign: 'center' }}>
-              <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 800, color: '#1e3a8a' }}>Sélectionnez votre fichier (.CSV ou .TXT)</p>
-              <input type="file" accept=".csv,.txt" onChange={handleClientFileUpload} style={{ fontSize: 13 }} />
-            </div>
-
-            {clientsAImporter.length > 0 && (
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 }}>
-                <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                  ✓ {clientsAImporter.length} client(s) détecté(s) :
-                </p>
-                <div style={{ maxHeight: 160, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {clientsAImporter.slice(0, 5).map((c, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '6px 10px', borderRadius: 8, fontSize: 12 }}>
-                      <span style={{ fontWeight: 700, color: '#1e293b' }}>{c.nom} ({c.telephone})</span>
-                      <span style={{ color: c.solde > 0 ? '#dc2626' : '#16a34a', fontWeight: 800 }}>
-                        {c.solde > 0 ? `Dette : ${fcfa(c.solde)}` : 'Solde : 0 FCFA'}
-                      </span>
-                    </div>
-                  ))}
-                  {clientsAImporter.length > 5 && (
-                    <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b', textAlign: 'center' }}>
-                      ... et {clientsAImporter.length - 5} autre(s)
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: '1px solid #e2e8f0', paddingTop: 14 }}>
-              <button type="button" onClick={() => setShowModalImportClients(false)} style={{ padding: '10px 16px', background: '#f1f5f9', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#64748b' }}>
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={validerImportClients}
-                disabled={importingClients || clientsAImporter.length === 0}
-                style={{ padding: '10px 20px', background: clientsAImporter.length > 0 ? 'var(--navy)' : '#cbd5e1', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: clientsAImporter.length > 0 ? 'pointer' : 'not-allowed' }}
-              >
-                {importingClients ? 'Importation en cours...' : `Valider l'import (${clientsAImporter.length}) `}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CarnetModalImportClients
+        isOpen={showModalImportClients}
+        onClose={() => setShowModalImportClients(false)}
+        error={importClientsError}
+        success={importClientsSuccess}
+        clientsAImporter={clientsAImporter}
+        importing={importingClients}
+        onDownloadModeleCSV={telechargerModeleClientsCSV}
+        onFileUpload={handleClientFileUpload}
+        onValiderImport={validerImportClients}
+      />
     </div>
   )
 }

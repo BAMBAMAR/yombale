@@ -54,15 +54,34 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
       WHERE boutique_id=$1 AND statut != 'annulee'
     `, [req.params.id]);
 
+    // Paramètres optionnels de filtrage ad-hoc (date début / date fin / produit)
+    const { date_debut, date_fin, produit_id } = req.query;
+    const isIsoDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+
+    const hasCustomDates = isIsoDate(date_debut) && isIsoDate(date_fin);
+    const dateDebutSql = hasCustomDates ? `${date_debut} 00:00:00Z` : null;
+    const dateFinSql = hasCustomDates ? `${date_fin} 23:59:59.999Z` : null;
+
     // Chiffre d'affaires global réel (Comptabilité - Ventes directes POS, livrées, express)
-    const { rows: comptaRows } = await pool.query(`
+    let comptaSql = `
       SELECT
         COALESCE(SUM(montant_total), 0) AS ca_global_total,
         COALESCE(AVG(montant_total), 0) AS panier_moyen_global,
         COUNT(*) AS nb_ventes_global
       FROM ventes
       WHERE boutique_id=$1 AND archivee IS NOT TRUE
-    `, [req.params.id]);
+    `;
+    const comptaParams = [req.params.id];
+    if (hasCustomDates) {
+      comptaParams.push(dateDebutSql, dateFinSql);
+      comptaSql += ` AND created_at >= $${comptaParams.length - 1} AND created_at <= $${comptaParams.length}`;
+    }
+    if (produit_id && typeof produit_id === 'string' && produit_id.length === 36) {
+      comptaParams.push(produit_id);
+      comptaSql += ` AND produit_id = $${comptaParams.length}`;
+    }
+
+    const { rows: comptaRows } = await pool.query(comptaSql, comptaParams);
 
     // Promotions & coupons
     const { rows: promoRows } = await pool.query(`
@@ -80,15 +99,45 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
       WHERE id=$1
     `, [req.params.id]);
 
-    // Évolution sur 30 jours
-    const { rows: historique } = await pool.query(`
+    // Évolution temporelle (30 jours par défaut ou période libre personnalisée)
+    let histoSql = `
       SELECT DATE(created_at) AS jour,
-             COUNT(*) FILTER (WHERE type='vue_boutique')  AS vues,
-             COUNT(*) FILTER (WHERE type='clic_telephone') AS clics_tel
+             COUNT(*) FILTER (WHERE type='vue_boutique')   AS vues,
+             COUNT(*) FILTER (WHERE type='clic_telephone')  AS clics_tel
       FROM analytics_events
-      WHERE boutique_id=$1 AND created_at >= NOW() - INTERVAL '30 days'
-      GROUP BY jour ORDER BY jour ASC
-    `, [req.params.id]);
+      WHERE boutique_id=$1
+    `;
+    const histoParams = [req.params.id];
+    if (hasCustomDates) {
+      histoParams.push(dateDebutSql, dateFinSql);
+      histoSql += ` AND created_at >= $2 AND created_at <= $3`;
+    } else {
+      histoSql += ` AND created_at >= NOW() - INTERVAL '30 days'`;
+    }
+    histoSql += ` GROUP BY jour ORDER BY jour ASC`;
+    const { rows: historique } = await pool.query(histoSql, histoParams);
+
+    // Top 10 des produits vendus sur la période
+    let topSql = `
+      SELECT
+        produit_id,
+        nom_produit,
+        COALESCE(SUM(quantite), 0) AS quantite_vendue,
+        COALESCE(SUM(montant_total), 0) AS ca_total
+      FROM ventes
+      WHERE boutique_id=$1 AND archivee IS NOT TRUE
+    `;
+    const topParams = [req.params.id];
+    if (hasCustomDates) {
+      topParams.push(dateDebutSql, dateFinSql);
+      topSql += ` AND created_at >= $2 AND created_at <= $3`;
+    }
+    topSql += `
+      GROUP BY produit_id, nom_produit
+      ORDER BY ca_total DESC
+      LIMIT 10
+    `;
+    const { rows: topProduits } = await pool.query(topSql, topParams);
 
     // Attribution Social Commerce — Répartition des ventes par canal UTM
     const { rows: attributionRows } = await pool.query(`
@@ -119,6 +168,17 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
         tiktok_pixel_active: !!bqRows[0]?.tiktok_pixel_id,
         ga4_active: !!bqRows[0]?.ga4_id,
       },
+      filtres: {
+        date_debut: hasCustomDates ? date_debut : null,
+        date_fin: hasCustomDates ? date_fin : null,
+        produit_id: produit_id || null,
+      },
+      top_produits: topProduits.map(tp => ({
+        produit_id: tp.produit_id,
+        nom_produit: tp.nom_produit,
+        quantite_vendue: Number(tp.quantite_vendue),
+        ca_total: Number(tp.ca_total),
+      })),
       historique,
       attribution_sociale: attributionRows.map(r => ({
         canal: r.canal,

@@ -186,7 +186,7 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
       {/* Header General */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1C2B4A', margin: '0 0 6px' }}>
-          🎨 Kit de Communication Nopalou
+          Kit de Communication Nopalou
         </h1>
         <p style={{ color: '#64748B', fontSize: 14, margin: 0 }}>
           Support marketing multi-canal, scripts de terrain, visuels HD et publication automatique vers tous les réseaux sociaux.
@@ -296,11 +296,11 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
               {[
-                { name: 'TikTok Officiel', handle: '@nopalou.com', url: 'https://www.tiktok.com/@nopalou.com', icon: '🎵', bg: '#000', color: '#fff' },
+                { name: 'TikTok Officiel', handle: '@nopalou.com', url: 'https://www.tiktok.com/@nopalou.com', icon: 'TT', bg: '#000', color: '#fff' },
                 { name: 'Canal WhatsApp', handle: 'Canal Nopalou.com', url: 'https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33', icon: '', bg: '#25D366', color: '#fff' },
-                { name: 'Facebook Page', handle: 'Nopalou Sénégal', url: 'https://www.facebook.com/profile.php?id=61591675701726', icon: '📘', bg: '#1877F2', color: '#fff' },
+                { name: 'Facebook Page', handle: 'Nopalou Sénégal', url: 'https://www.facebook.com/profile.php?id=61591675701726', icon: 'FB', bg: '#1877F2', color: '#fff' },
                 { name: 'Instagram', handle: '@nopalousn', url: 'https://www.instagram.com/nopalousn/', icon: '', bg: '#E4405F', color: '#fff' },
-                { name: 'Twitter / X', handle: '@nopalou_sn', url: 'https://x.com/nopalou_sn', icon: '𝕏', bg: '#0f172a', color: '#fff' },
+                { name: 'Twitter / X', handle: '@nopalou_sn', url: 'https://x.com/nopalou_sn', icon: 'X', bg: '#0f172a', color: '#fff' },
                 { name: 'WhatsApp Support', handle: '+221 70 871 79 42', url: 'https://wa.me/221708717942', icon: '', bg: '#128C7E', color: '#fff' },
               ].map(s => (
                 <div key={s.name} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px', background: '#fff', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -337,7 +337,7 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
           {/* Section Visuels HD à télécharger */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              🖼 Visuels HD avec Téléchargement Direct 1-Clic
+              Visuels HD avec Téléchargement Direct 1-Clic
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
               {visuels.map(v => (
@@ -367,7 +367,7 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
                         download={v.url.endsWith('.svg') ? `nopalou-${v.titre.toLowerCase().replace(/[^a-z0-9]/g, '-')}.svg` : `nopalou-${v.titre.toLowerCase().replace(/[^a-z0-9]/g, '-')}.png`}
                         style={{ padding: '6px 12px', background: '#C75B00', color: '#fff', borderRadius: 6, fontSize: 11, fontWeight: 800, textDecoration: 'none' }}
                       >
-                        ⬇ {v.url.endsWith('.svg') ? 'SVG Vectoriel' : 'HD PNG'}
+                        {v.url.endsWith('.svg') ? 'SVG Vectoriel' : 'HD PNG'}
                       </a>
                     </div>
                   </div>
@@ -379,7 +379,7 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
           {/* Section Templates de Posts & Publications Automatiques */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              📝 Templates de Posts avec Publication Automatique Multi-Réseaux
+              Templates de Posts avec Publication Automatique Multi-Réseaux
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {postTemplates.map(p => (
@@ -426,7 +426,7 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
           {/* Section Bios Réseaux */}
           <section>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>
-              ✍️ Bios et Descriptions pour vos Profils Réseaux
+              Bios et Descriptions pour vos Profils Réseaux
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {textes.map(t => (
@@ -464,11 +464,11 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { t: '🖥️ Caisse Enregistreuse POS Tactile & 3 Scanners', d: 'Ventes en magasin, scan Caméra Smartphone, Cloud Sync (<100ms) ou Douchette USB + impression tickets.' },
-                { t: '📶 Mode Caisse PWA Hors-Ligne (Offline First)', d: 'Continuez d\'encaisser même en cas de coupure Internet ou 4G à Dakar. Synchronisation automatique au retour de la connexion.' },
+                { t: 'Caisse Enregistreuse POS Tactile & 3 Scanners', d: 'Ventes en magasin, scan Caméra Smartphone, Cloud Sync (<100ms) ou Douchette USB + impression tickets.' },
+                { t: 'Mode Caisse PWA Hors-Ligne (Offline First)', d: 'Continuez d\'encaisser même en cas de coupure Internet ou 4G à Dakar. Synchronisation automatique au retour de la connexion.' },
                 { t: 'Factures Proforma & Devis OHADA en PDF', d: 'Émission de documents fiscaux sénégalais conformes (NINEA, RCCM, TVA, Timbre fiscal) avec envoi WhatsApp immédiat.' },
                 { t: 'Gestion Fournisseurs & Scan OCR', d: 'Enregistrez vos fournisseurs, créez des bons de commande et scannez automatiquement les factures d\'achat avec l\'IA.' },
-                { t: '📓 Carnet de Dettes Client & Relances WhatsApp', d: 'Enregistrement des crédits clients et relance en 1-clic sur WhatsApp avec solde exact et lien de paiement.' },
+                { t: 'Carnet de Dettes Client & Relances WhatsApp', d: 'Enregistrement des crédits clients et relance en 1-clic sur WhatsApp avec solde exact et lien de paiement.' },
                 { t: 'Multi-Caissiers & Clôtures de Caisse Z', d: 'Chaque vendeur a son code PIN. Historique des ventes, contrôle des écarts de caisse et clôture Z automatique.' },
                 { t: '1er Mois 100% Offert & Remises -25%', d: `Démarrez sans payer le 1er mois. Formule Pro à ${fcfa(prixPro)}/mois ou Business à ${fcfa(prixBusiness)}/mois avec jusqu'à 3 mois offerts sur l'abonnement annuel.` },
               ].map((a, i) => (
@@ -636,7 +636,7 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
                 { t: 'Recherche Unifiée Instantanée', d: 'Tapez "iPhone 15" -> renvoie les prix comparés marketplace, boutiques Nopalou et biens immo.' },
                 { t: 'Panier Multi-Produits (Meta)', d: 'Composez un panier avec plusieurs articles depuis le catalogue WhatsApp et envoyez en 1 clic.' },
                 { t: 'Alertes Baisse de Prix', d: 'Recevez un message WhatsApp automatique dès qu\'un produit atteint votre prix cible.' },
-                { t: '📓 Carnet Dettes POS Client', d: 'Le marchand enregistre le crédit et le client reçoit son récapitulatif par message WhatsApp.' },
+                { t: 'Carnet Dettes POS Client', d: 'Le marchand enregistre le crédit et le client reçoit son récapitulatif par message WhatsApp.' },
               ].map(f => (
                 <div key={f.t} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 18, background: '#fff' }}>
                   <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 800, color: '#25D366' }}>{f.t}</p>
@@ -923,12 +923,12 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
             {/* Sélecteur de type d'affiche */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 24 }}>
               {[
-                { id: 'forfait_pro', label: '🖥️ Formule Pro (Caisse POS)', bg: '#FFF7ED', color: '#C75B00' },
+                { id: 'forfait_pro', label: 'Formule Pro (Caisse POS)', bg: '#FFF7ED', color: '#C75B00' },
                 { id: 'forfait_taftaf', label: 'Formule Taf Taf (2 500 F)', bg: '#EFF6FF', color: '#1D4ED8' },
                 { id: 'forfait_business', label: 'Formule Business (PIN)', bg: '#FDF4FF', color: '#7E22CE' },
                 { id: 'chatbot_wa', label: 'Chatbot WhatsApp Meta 24/7', bg: '#F0FDF4', color: '#166534' },
                 { id: 'immo', label: 'Immobilier Dakar & Sénégal', bg: '#EEF2FF', color: '#4338CA' },
-                { id: 'telecom', label: '📶 Pass & Forfaits Télécom', bg: '#F0F9FF', color: '#0369A1' },
+                { id: 'telecom', label: 'Pass & Forfaits Télécom', bg: '#F0F9FF', color: '#0369A1' },
                 { id: 'apporteur', label: 'Apporteurs d\'Affaires (20%)', bg: '#F0FDF4', color: '#15803D' },
                 { id: 'comparatif_paliers', label: 'Tableau Synthétique Formules', bg: '#FFF7ED', color: '#C75B00' },
                 { id: 'bon_plan', label: 'Bon Plan Prix Comparatif', bg: '#FEF3C7', color: '#92400E' },

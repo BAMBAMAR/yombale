@@ -5,7 +5,8 @@ import {
   Users, UserPlus, Send, History, Sparkles, Filter, Search,
   Download, Trash2, Phone, MessageSquare, ExternalLink, CheckCircle2,
   Copy, RefreshCw, Layers, ShieldCheck, Zap, Pencil, Ban, ShieldAlert,
-  Check, X, Lock, Unlock, SlidersHorizontal, RotateCcw, AlertTriangle
+  Check, X, Lock, Unlock, SlidersHorizontal, RotateCcw, AlertTriangle,
+  Info, FileText, Save
 } from 'lucide-react'
 import type { Lead, StatsLeads, TemplateMsg, DorkingRequete, BlacklistItem } from './page'
 
@@ -39,16 +40,16 @@ const OPERATEUR_COLORS: Record<string, { color: string; bg: string }> = {
 
 const CATEGORIES_OPTIONS = [
   { value: 'tous', label: 'Toutes les catégories' },
-  { value: 'mode', label: '👗 Mode & Prêt-à-porter' },
+  { value: 'mode', label: 'Mode & Prêt-à-porter' },
   { value: 'auto-moto', label: 'Véhicules & Auto-Moto' },
   { value: 'immo', label: 'Immobilier & Terrains' },
   { value: 'smartphones', label: 'Téléphonie & Tech' },
-  { value: 'tv-electro', label: '📺 Électroménager & TV' },
+  { value: 'tv-electro', label: 'Électroménager & TV' },
   { value: 'informatique', label: 'Informatique & Ordis' },
-  { value: 'maison', label: '🛋️ Maison & Ameublement' },
-  { value: 'beaute', label: '💄 Cosmétique & Beauté' },
+  { value: 'maison', label: 'Maison & Ameublement' },
+  { value: 'beaute', label: 'Cosmétique & Beauté' },
   { value: 'superette', label: 'Alimentation & Supérette' },
-  { value: 'quincaillerie', label: '🔨 Quincaillerie & BTP' },
+  { value: 'quincaillerie', label: 'Quincaillerie & BTP' },
   { value: 'grossiste', label: 'Grossistes & Import Chine' },
   { value: 'services', label: 'Services & Prestations' },
   { value: 'divers', label: 'Commerce Général / Mixte' },
@@ -61,14 +62,14 @@ const SOURCES_OPTIONS = [
   { value: 'scraper_auto', label: 'Scraper Automatisé' },
   { value: 'facebook', label: 'Groupes Facebook Dakar' },
   { value: 'import_vrac', label: 'Import Vrac' },
-  { value: 'manuel', label: '✍️ Ajout Manuel' },
+  { value: 'manuel', label: 'Ajout Manuel' },
 ]
 
 const OPERATEURS_OPTIONS = [
   { value: 'tous', label: 'Tous les opérateurs' },
-  { value: 'Orange', label: '🟠 Orange' },
+  { value: 'Orange', label: 'Orange' },
   { value: 'Free (Yas)', label: 'Free (Yas)' },
-  { value: 'Expresso', label: '🟣 Expresso' },
+  { value: 'Expresso', label: 'Expresso' },
   { value: 'Promobile', label: 'Promobile' },
 ]
 
@@ -383,7 +384,7 @@ export default function ProspectionClient({
       })
       const data = await res.json()
       if (res.ok) {
-        showToast(`🚫 Numéro ${data.phone} inscrit sur la Blacklist`)
+        showToast(`Numéro ${data.phone} inscrit sur la Blacklist`)
         setShowAddBlacklistModal(false)
         setBlacklistAddForm({ phone: '', reason: 'STOP / Opt-Out (WhatsApp)' })
         await loadBlacklist()
@@ -408,7 +409,7 @@ export default function ProspectionClient({
       })
       if (res.ok) {
         setBlacklist((prev) => prev.filter((b) => b.phone !== phone))
-        showToast(`🔓 Numéro +${phone} débloqué et retiré de la liste noire`)
+        showToast(`Numéro +${phone} débloqué et retiré de la liste noire`)
         await reloadLeads()
       } else {
         showToast('Erreur lors du déblocage')
@@ -778,7 +779,7 @@ export default function ProspectionClient({
 
     let confirmMsg = ''
     if (simulation) {
-      confirmMsg = `🧪 Simuler l'envoi de la campagne sur ${targetIds.length} prospects ciblés ?`
+      confirmMsg = `Simuler l'envoi de la campagne sur ${targetIds.length} prospects ciblés ?`
     } else if (nbDejaContactes > 0) {
       confirmMsg = `ATTENTION RELANCE :\n\nCette campagne cible ${targetIds.length} prospects, dont ${nbDejaContactes} DÉJÀ CONTACTÉS auparavant !\n\nConfirmez-vous l'envoi de ce nouveau message à ces ${nbDejaContactes} marchands déjà prospectés ?`
     } else {
@@ -1064,10 +1065,10 @@ export default function ProspectionClient({
             { label: 'Total Collectés', val: stats.total, color: '#1C2B4A', bg: '#F8FAFC', icon: Users, pct: null },
             { label: 'Qualifiés (Score ≥70)', val: stats.qualifies, color: '#7C3AED', bg: '#F5F3FF', icon: Sparkles, pct: stats.total ? Math.round(stats.qualifies / stats.total * 100) : 0 },
             { label: 'Nouveaux', val: stats.nouveaux, color: '#2563EB', bg: '#EFF6FF', icon: UserPlus, pct: stats.total ? Math.round(stats.nouveaux / stats.total * 100) : 0 },
-            { label: '📨 Contactés', val: stats.contactes, color: '#C75B00', bg: '#FFF7ED', icon: Send, pct: stats.total ? Math.round(stats.contactes / stats.total * 100) : 0 },
+            { label: 'Contactés', val: stats.contactes, color: '#C75B00', bg: '#FFF7ED', icon: Send, pct: stats.total ? Math.round(stats.contactes / stats.total * 100) : 0 },
             { label: 'En Discussion', val: stats.en_discussion, color: '#D97706', bg: '#FFFBEB', icon: MessageSquare, pct: stats.total ? Math.round(stats.en_discussion / stats.total * 100) : 0 },
             { label: 'Boutiques Créées', val: stats.convertis, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2, pct: stats.contactes ? Math.round(stats.convertis / stats.contactes * 100) : 0 },
-            { label: '🚫 Invalides / Hors cible', val: stats.invalides + (stats.desinscrits || 0), color: '#64748B', bg: '#F1F5F9', icon: Ban, pct: stats.total ? Math.round((stats.invalides + (stats.desinscrits || 0)) / stats.total * 100) : 0 },
+            { label: 'Invalides / Hors cible', val: stats.invalides + (stats.desinscrits || 0), color: '#64748B', bg: '#F1F5F9', icon: Ban, pct: stats.total ? Math.round((stats.invalides + (stats.desinscrits || 0)) / stats.total * 100) : 0 },
           ].map((kpi, idx) => {
             const Icon = kpi.icon
             return (
@@ -1133,8 +1134,8 @@ export default function ProspectionClient({
           { id: 'import', label: '2. Collecteur & Import Vrac', icon: Layers },
           { id: 'campagnes', label: '3. Dispatcher & Campagnes', icon: Send },
           { id: 'logs', label: '4. Historique d\'Envois', icon: History },
-          { id: 'control', label: '🎛️ 5. Centre de Contrôle & Crons', icon: ShieldCheck },
-          { id: 'blacklist', label: `🚫 6. Liste Noire (${stats.blacklist !== undefined ? stats.blacklist : blacklist.length})`, icon: Ban },
+          { id: 'control', label: '5. Centre de Contrôle & Crons', icon: ShieldCheck },
+          { id: 'blacklist', label: `6. Liste Noire (${stats.blacklist !== undefined ? stats.blacklist : blacklist.length})`, icon: Ban },
         ].map((t) => {
           const Icon = t.icon
           const isActive = activeTab === t.id
@@ -1221,7 +1222,7 @@ export default function ProspectionClient({
                   }}
                   title="Reclassement automatique des véhicules, immobilier, tech, suppression des faux noms et annonces emploi"
                 >
-                  <Sparkles size={15} color="#16A34A" /> {isCleaningLeads ? 'Nettoyage en cours...' : '🧹 Nettoyer & Reclasser CRM'}
+                  <Sparkles size={15} color="#16A34A" /> {isCleaningLeads ? 'Nettoyage en cours...' : 'Nettoyer & Reclasser CRM'}
                 </button>
 
                 <button
@@ -1285,12 +1286,12 @@ export default function ProspectionClient({
                 }}
               >
                 <option value="tous">Tous les statuts</option>
-                <option value="nouveau">🔹 Nouveau</option>
+                <option value="nouveau">Nouveau</option>
                 <option value="contacte_wa">Contacté WhatsApp</option>
-                <option value="en_discussion">🟠 En discussion</option>
+                <option value="en_discussion">En discussion</option>
                 <option value="converti">Converti (Actif)</option>
                 <option value="desinscrit">Désinscrit</option>
-                <option value="invalide">⚪ Invalide (Emploi / Hors Cible)</option>
+                <option value="invalide">Invalide (Emploi / Hors Cible)</option>
               </select>
 
               {/* Source */}
@@ -1381,7 +1382,7 @@ export default function ProspectionClient({
             </div>
             {stats.desinscrits ? (
               <span style={{ color: '#DC2626', fontWeight: 700, background: '#FEE2E2', padding: '2px 8px', borderRadius: 6 }}>
-                🚫 {stats.desinscrits} désinscrit{stats.desinscrits > 1 ? 's' : ''} (exclus des envois)
+                <Ban size={13} style={{ marginRight: 4, verticalAlign: 'middle', display: 'inline' }} />{stats.desinscrits} désinscrit{stats.desinscrits > 1 ? 's' : ''} (exclus des envois)
               </span>
             ) : null}
           </div>
@@ -1451,7 +1452,7 @@ export default function ProspectionClient({
                             )}
                             {lead.notes && (
                               <span style={{ fontSize: 11, color: '#94A3B8', display: 'block', fontStyle: 'italic', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                📝 {lead.notes}
+                                <FileText size={11} style={{ marginRight: 4, verticalAlign: 'middle', display: 'inline' }} />{lead.notes}
                               </span>
                             )}
                           </td>
@@ -2019,10 +2020,10 @@ Boutique Parcelles, 70 111 22 33`}
                       onChange={(e) => setStatutFilter(e.target.value)}
                       style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, fontWeight: 600, background: '#fff' }}
                     >
-                      <option value="nouveau">🔹 Nouveau (Recommandé)</option>
+                      <option value="nouveau">Nouveau (Recommandé)</option>
                       <option value="tous">Tous les statuts</option>
                       <option value="contacte_wa">Contacté WhatsApp</option>
-                      <option value="en_discussion">🟠 En discussion</option>
+                      <option value="en_discussion">En discussion</option>
                       <option value="converti">Converti</option>
                     </select>
                   </div>
@@ -2234,7 +2235,7 @@ Boutique Parcelles, 70 111 22 33`}
                     border: '1px solid #CBD5E1', borderRadius: 10, fontWeight: 800, fontSize: 14, cursor: 'pointer',
                   }}
                 >
-                  🧪 Tester en Mode Simulation
+                  Tester en Mode Simulation
                 </button>
 
                 <button
@@ -2388,7 +2389,7 @@ Boutique Parcelles, 70 111 22 33`}
               ) : (
             <div style={{ overflowX: 'auto' }}>
               <h3 style={{ fontSize: 15, fontWeight: 800, color: '#334155', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                📨 Messages Individuels ({logs.length})
+                Messages Individuels ({logs.length})
               </h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
                 <thead>
@@ -2452,7 +2453,7 @@ Boutique Parcelles, 70 111 22 33`}
           }}>
             <div>
               <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1C2B4A', margin: '0 0 4px' }}>
-                🎛️ Centre de Contrôle &amp; Automatisations en Direct
+                Centre de Contrôle &amp; Automatisations en Direct
               </h2>
               <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>
                 Déclenchez manuellement le scraping de prospection, lancez les vagues de relance WhatsApp et suivez l&apos;état des crons d&apos;arrière-plan.
@@ -2705,7 +2706,7 @@ Boutique Parcelles, 70 111 22 33`}
                   Si un destinataire répond <code>STOP</code>, son numéro est immédiatement inscrit dans la table de blacklist et marqué <em>désinscrit</em> dans le CRM. Aucun message futur ne lui est envoyé.
                 </p>
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#DC2626', background: '#FEE2E2', padding: '3px 8px', borderRadius: 6 }}>
-                  🚫 Blacklist Instantanée
+                  Blacklist Instantanée
                 </span>
               </div>
             </div>
@@ -3090,7 +3091,7 @@ Boutique Parcelles, 70 111 22 33`}
                     borderRadius: 8, fontWeight: 800, cursor: isSavingEdit ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {isSavingEdit ? 'Sauvegarde...' : '💾 Mettre à jour en Base'}
+                  {isSavingEdit ? 'Sauvegarde...' : 'Mettre à jour en Base'}
                 </button>
               </div>
             </form>
@@ -3154,7 +3155,7 @@ Boutique Parcelles, 70 111 22 33`}
               </div>
 
               <p style={{ fontSize: 12, color: '#64748B', margin: 0, lineHeight: 1.5 }}>
-                ℹ️ Ce numéro sera immédiatement exclu de toutes les campagnes futures, relances et notifications WhatsApp.
+                Ce numéro sera immédiatement exclu de toutes les campagnes futures, relances et notifications WhatsApp.
               </p>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
@@ -3173,7 +3174,7 @@ Boutique Parcelles, 70 111 22 33`}
                     borderRadius: 8, fontWeight: 800, cursor: isAddingBlacklist ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {isAddingBlacklist ? 'Ajout...' : '🚫 Inscrire en Blacklist'}
+                  {isAddingBlacklist ? 'Ajout...' : 'Inscrire en Blacklist'}
                 </button>
               </div>
             </form>
