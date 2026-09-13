@@ -6364,6 +6364,32 @@ router.post(
   }
 );
 
+// GET /api/boutiques/:id/entrepots/stocks — Récupérer la répartition des stocks par entrepôt
+router.get('/:id/entrepots/stocks', verifierToken, param('id').isUUID(), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bAccess = await checkBoutiqueAccess(id, req.user.userId);
+    if (!bAccess && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT s.*, e.nom as entrepot_nom, p.nom as produit_nom
+       FROM boutique_produit_stocks_entrepots s
+       JOIN boutique_entrepots e ON e.id = s.entrepot_id
+       JOIN boutique_produits p ON p.id = s.produit_id
+       WHERE s.boutique_id = $1
+       ORDER BY p.nom ASC, e.nom ASC`,
+      [id]
+    );
+
+    res.json({ success: true, stocks: rows });
+  } catch (err) {
+    console.error('[ENTREPOTS STOCKS GET ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des stocks entrepôts' });
+  }
+});
+
 module.exports = router;
 
 

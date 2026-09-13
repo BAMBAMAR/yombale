@@ -1,3 +1,16 @@
+- **Interface Gestion Multi-Entrepôts & Dépôts Physiques (`feature/nopalou-master-fixes-p0-p3`) (13 septembre 2026)** 🏭📦📍 :
+  * **🎯 1. Contexte & Demande Utilisateur** :
+    - Mise à disposition visuelle dans l'interface de gestion de boutique de la fonctionnalité multi-entrepôts et multi-dépôts (Sandaga, Colobane, Pikine, Rufisque, Touba).
+  * **🛠️ 2. Réalisations & Déploiements Techniques** :
+    - Création de `frontend-next/src/app/boutique/GestionEntrepots.tsx` (< 380 lignes, modulaire, zéro émojis) :
+      * Indicateurs clés : Dépôts actifs, Dépôt principal et Total d'unités réparties.
+      * Gestion des sites physiques : nom, ville, adresse, responsable, téléphone, désignation du dépôt par défaut en 1 clic.
+      * Modale d'ajustement et de ventilation des stocks par produit et par dépôt physique avec réagrégation instantanée du stock global de la boutique.
+    - Ajout de la route `GET /api/boutiques/:id/entrepots/stocks` dans `backend/routes/boutiques.js`.
+    - Raccordement dans `BoutiqueClient.tsx` sous le groupe *Mes produits* (icône Lucide `Warehouse`) et route d'accès direct `/boutique?tab=entrepots`.
+  * **🧪 3. Validation & Contrôle Qualité** :
+    - `npm run quality:gate` validé avec **100% de succès** (TypeScript 0 erreur, 0 silent catch, 61/61 tests front, 211/211 tests Jest).
+
 - **App Store & Hub Extensions, Documentation SDK Interactive & Dataviz SVG Analytics (`feature/nopalou-master-fixes-p0-p3`) (12 septembre 2026)** 🧩💻📈⚡ :
   * **🎯 1. Contexte & Demande Utilisateur** :
     - Finalisation des piliers d'excellence identifiés lors de l'audit de compétitivité face à Shopify et Square :
