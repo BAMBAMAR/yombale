@@ -436,7 +436,9 @@ router.get('/commandes/suivi', async (req, res) => {
 
     const query = `
       SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.statut, c.montant_total,
-             c.methode_paiement, c.created_at, COALESCE(b.nom, 'Boutique Nopalou') as boutique_nom,
+             c.methode_paiement, c.created_at, c.boutique_id, c.produit_id, c.nom_produit, c.quantite,
+             COALESCE(b.nom, 'Boutique Nopalou') as boutique_nom,
+             COALESCE(b.slug, b.id::text) as boutique_slug,
              COALESCE(b.telephone, '') as boutique_whatsapp
       FROM commandes_boutique c
       LEFT JOIN boutiques b ON b.id = c.boutique_id
