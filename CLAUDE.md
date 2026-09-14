@@ -1,3 +1,24 @@
+- **Finalisation Intégrale de la Roadmap Nopalou : CMS Blog SEO Marchand, Abonnements Récurrents & Gestion des Retours/Avoirs (`feature/nopalou-master-fixes`) (14 septembre 2026)** 📝🔁🔄 📦 ✅ :
+  * **🎯 1. Nouveautés & Réalisations Finales (P1 & P2)** :
+    - **CMS de Blog & Articles SEO Marchand (`P1`)** :
+      * Table SQL `boutique_articles` avec slugification automatique et contrôle d'unicité multi-tenant.
+      * Endpoints REST [`boutiques-articles.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/boutiques-modules/boutiques-articles.js) (liste publique, détail avec incrémentation de vues, création/édition/suppression sécurisée anti-IDOR).
+      * Dashboard marchand d'édition d'articles [`BlogArticlesManager.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/components/BlogArticlesManager.tsx).
+      * Pages publiques de blog [`/boutiques/[id]/blog`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutiques/[id]/blog/page.tsx) et [`/boutiques/[id]/blog/[slug]`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutiques/[id]/blog/[slug]/page.tsx) intégrant le balisage Schema.org `Article` JSON-LD pour Google et le partage 1-clic WhatsApp / Réseaux sociaux.
+    - **Abonnements Récurrents & Commandes Périodiques Automatisées (`P2`)** :
+      * Table SQL `boutique_abonnements` (fréquences hebdomadaires, bimensuelles, mensuelles, calcul du cycle de renouvellement).
+      * Endpoints REST [`boutiques-abonnements.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/boutiques-modules/boutiques-abonnements.js) et génération automatique de commandes boutique.
+      * Gestionnaire marchand [`AbonnementsManager.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/components/AbonnementsManager.tsx) avec relance automatique WhatsApp de livraison programmée.
+    - **Gestion des Retours Produits, Avoirs & Réintégration de Stock (`P2`)** :
+      * Table SQL `boutique_retours` (motifs de retour, distinction remise en stock vs mise au rebut, type de compensation avoir/remboursement).
+      * Endpoints REST [`boutiques-retours.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/boutiques-modules/boutiques-retours.js) avec réincrémentation automatique de l'inventaire `boutique_produits`.
+      * Modale de caisse et commandes [`RetoursAvoirsModal.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/caisse/components/RetoursAvoirsModal.tsx) avec impression du bon d'avoir.
+  * **🧪 2. Validation & Quality Gate (100% Vert)** :
+    - Nouvelle suite Jest (`tests/unit/p1-p2-blog-abonnements-retours.test.js`) : **6/6 tests validés (100%)**.
+    - Quality Gate Global (`node scripts/quality-gate.mjs`) : **37/37 suites passées, 267/267 tests unitaires validés (100%)**.
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch, composants < 450 lignes, zéro émojis d'interface**.
+
 - **Déploiement des Chantiers P1/P2 : QR Code Reçu Thermique POS, Alertes Plafonds Carnet & Variantes Multi-Axes (`feature/nopalou-master-fixes`) (14 septembre 2026)** 🧾🏷️📊 📦 ✅ :
   * **🎯 1. Nouveautés & Réalisations P1 / P2** :
     - **QR Code Vectoriel Intégré au Ticket Thermique POS (`P1`)** :
