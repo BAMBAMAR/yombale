@@ -14,9 +14,12 @@
       * Intégration dans `creerCommandeBoutique` (`backend/routes/comptabilite.js`) et `boutiques-commandes.js`.
     - **UI Marchand & Configurateur Acheteur** :
       * `ParametresEchelonnement.tsx` : Écran d'administration marchand avec sliders, toggles, simulateur interactif en direct.
-      * `EchelonnementConfigurator.tsx` : Cartes de formules intelligentes + curseur d'apport personnalisé intégré dans le Checkout Web et le Panier Drawer.
+      * `EchelonnementConfigurator.tsx` : Cartes de formules intelligentes + curseur d'apport personnalisé intégré dans le Checkout Web, le Panier Drawer et `checkout-express`.
+      * `ModalNouvelleCommandeWave.tsx` & `NouvelleCommandeForm.tsx` : Intégration de l'option de règlement « Payer en plusieurs fois » avec génération automatique de lien interactif et message WhatsApp dédié.
+      * `CarnetModalCreerPlan.tsx` : Création instantanée d'un plan de crédit échelonné (2x, 3x, 4x...) directement depuis la fiche client du Carnet de Dettes.
     - **Dashboard Carnet de Crédit & Relances** :
       * `CarnetPlansEchelonnes.tsx` & `CarnetClientDetails.tsx` : Affichage de l'échéancier avec barres de progression, statut d'échéance (payée, en retard, partielle, soldée par anticipation), modale d'encaissement partiel FIFO et solde anticipé.
+      * `checkout-express/page.tsx` : Support complet du choix de paiement comptant ou échelonné avec acompte Wave direct.
       * WhatsApp Chatbot (`whatsapp-chatbot.js`) : Détection automatique des demandes de solde et consultation certifiée depuis la base de données.
       * Cron Relances (`cron-relances-carnet.js`) : Relances WhatsApp automatiques intégrant le détail des échéances dépassées.
   * **🧪 2. Validation & Quality Gate (100% Vert)** :
