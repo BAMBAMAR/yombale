@@ -15,5 +15,8 @@ router.use(require('./boutiques-abtest'));
 router.use(require('./boutiques-club-vip'));
 router.use(require('./credits'));
 router.use(require('./entrepots'));
+router.use(require('./boutiques-articles'));
+router.use(require('./boutiques-abonnements'));
+router.use(require('./boutiques-retours'));
 
 module.exports = router;

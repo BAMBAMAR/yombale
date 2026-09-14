@@ -24,6 +24,7 @@ import {
   BookOpen,
   Store,
   ShieldCheck,
+  Repeat,
   LucideIcon,
 } from 'lucide-react'
 
@@ -51,6 +52,8 @@ export const VALID_TABS: ManageTab[] = [
   'appstore',
   'entrepots',
   'abtesting',
+  'blog',
+  'abonnements',
 ]
 
 export function getNavEssential(t: (key: string) => string): NavGroup[] {
@@ -91,6 +94,8 @@ export function getNavCommerce(t: (key: string) => string): NavGroup[] {
         { key: 'express', icon: Zap, label: t('shop.saisieExpress') || 'Ventes & Dépenses rapides' },
         { key: 'fidelite', icon: Gift, label: t('shop.fidelitePromos') || 'Fidélité & Promotions' },
         { key: 'fournisseurs', icon: Truck, label: t('shop.suppliers') || 'Fournisseurs', minPlan: 'pro' },
+        { key: 'abonnements', icon: Repeat, label: 'Abonnements & Récurrence', minPlan: 'pro' },
+        { key: 'blog', icon: FileText, label: 'Blog & Articles SEO', minPlan: 'pro' },
         { key: 'social', icon: Share2, label: 'Réseaux sociaux & Social Shop' },
         { key: 'marketing', icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique' },
         { key: 'appstore', icon: Boxes, label: 'App Store & Extensions', minPlan: 'pro' },
@@ -184,6 +189,16 @@ export function getTabInfoMap(t: (key: string) => string): Record<ManageTab, { t
       icon: Split,
       title: 'Moteur A/B Testing Vitrine',
       desc: 'Testez et optimisez scientifiquement les titres et sous-titres de votre vitrine marchande.',
+    },
+    blog: {
+      icon: FileText,
+      title: 'Blog & Articles SEO Marchand',
+      desc: 'Publiez des articles, guides d\'achat et astuces pour doper votre référencement Google.',
+    },
+    abonnements: {
+      icon: Repeat,
+      title: 'Abonnements & Commandes Récurrentes',
+      desc: 'Gérez vos contrats de livraisons programmées récurrentes et relances WhatsApp.',
     },
   }
 }

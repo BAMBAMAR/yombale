@@ -29,6 +29,8 @@ const PortailDeveloppeurBoutique = dynamic(() => import('../../PortailDeveloppeu
 const AppStoreBoutique = dynamic(() => import('../../AppStoreBoutique'))
 const GestionEntrepots = dynamic(() => import('../../GestionEntrepots'))
 const ABTestingManager = dynamic(() => import('../ABTestingManager'))
+const BlogArticlesManager = dynamic(() => import('../BlogArticlesManager'))
+const AbonnementsManager = dynamic(() => import('../AbonnementsManager'))
 import { Sparkles } from 'lucide-react'
 
 
@@ -183,6 +185,20 @@ export default function BoutiqueManageContent({
       )}
       {tab === 'entrepots' && <GestionEntrepots boutiqueId={boutique.id} />}
       {tab === 'abtesting' && <ABTestingManager boutiqueId={boutique.id} />}
+      {tab === 'blog' && (
+        <BlogArticlesManager
+          boutiqueId={boutique.id}
+          boutiqueSlug={boutique.slug || undefined}
+          token={typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}
+        />
+      )}
+      {tab === 'abonnements' && (
+        <AbonnementsManager
+          boutiqueId={boutique.id}
+          boutiqueNom={boutique.nom}
+          token={typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}
+        />
+      )}
     </>
   )
 }

@@ -1683,6 +1683,59 @@ module.exports = async function migrateInline() {
         actif             BOOLEAN DEFAULT TRUE,
         updated_at        TIMESTAMPTZ DEFAULT NOW()
       );
+
+      -- ── TABLES SPRINT FINAL : BLOG CMS SEO, ABONNEMENTS RÉCURRENTS & RETOURS PRODUITS ───
+      CREATE TABLE IF NOT EXISTS boutique_articles (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        titre        VARCHAR(255) NOT NULL,
+        slug         VARCHAR(255) NOT NULL,
+        contenu      TEXT NOT NULL,
+        extrait      TEXT,
+        image_url    TEXT,
+        est_publie   BOOLEAN DEFAULT TRUE,
+        tags         TEXT[],
+        vues_count   INT DEFAULT 0,
+        created_at   TIMESTAMPTZ DEFAULT NOW(),
+        updated_at   TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_boutique_article_slug UNIQUE (boutique_id, slug)
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_articles_boutique ON boutique_articles(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_boutique_articles_slug ON boutique_articles(boutique_id, slug);
+
+      CREATE TABLE IF NOT EXISTS boutique_abonnements (
+        id                          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id                 UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_nom                  VARCHAR(255) NOT NULL,
+        client_telephone            VARCHAR(50) NOT NULL,
+        client_adresse              TEXT,
+        frequence                   VARCHAR(50) NOT NULL DEFAULT 'hebdomadaire',
+        statut                      VARCHAR(50) NOT NULL DEFAULT 'actif',
+        montant_total               NUMERIC(12,2) NOT NULL DEFAULT 0,
+        items_json                  JSONB NOT NULL DEFAULT '[]',
+        prochain_renouvellement     TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '7 days',
+        notes                       TEXT,
+        created_at                  TIMESTAMPTZ DEFAULT NOW(),
+        updated_at                  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_abos_boutique ON boutique_abonnements(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_boutique_abos_renouv ON boutique_abonnements(prochain_renouvellement);
+
+      CREATE TABLE IF NOT EXISTS boutique_retours (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id        UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        reference_origine  VARCHAR(100),
+        produit_id         UUID REFERENCES boutique_produits(id) ON DELETE SET NULL,
+        produit_nom        VARCHAR(255) NOT NULL,
+        quantite           INT NOT NULL DEFAULT 1,
+        motif              TEXT NOT NULL,
+        action_stock       VARCHAR(50) NOT NULL DEFAULT 'remis_en_stock',
+        type_compensation  VARCHAR(50) NOT NULL DEFAULT 'avoir',
+        montant_fcfa       NUMERIC(12,2) NOT NULL DEFAULT 0,
+        effectue_par       VARCHAR(100),
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_retours_boutique ON boutique_retours(boutique_id);
     `);
 
     console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support/social_shop/entrepots OK');
