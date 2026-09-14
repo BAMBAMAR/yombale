@@ -44,43 +44,25 @@ export default function HeroDualTrack({
   useEffect(() => {
     if (activeTabProp !== undefined) return // Géré par le parent
     try {
-      // 1. Priorité URL si param ?mode=
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search)
         const urlMode = urlParams.get('mode')
-        if (urlMode === 'marchand' || urlMode === 'commercant') {
-          setInternalTab('marchand')
-          return
-        } else if (urlMode === 'acheteur') {
+        const hasSearchOrCat = urlParams.has('q') || urlParams.has('cat') || urlParams.has('tri') || urlParams.has('prix_max')
+
+        // 1. Si recherche ou catégorie -> Toujours Acheteur
+        if (hasSearchOrCat) {
           setInternalTab('acheteur')
           return
         }
-      }
 
-      // 2. Mémorisation du choix utilisateur précédent
-      const savedMode = localStorage.getItem('nopalou_home_mode')
-      if (savedMode === 'marchand' || savedMode === 'acheteur') {
-        setInternalTab(savedMode)
-      }
-
-      // 3. Détection si l'utilisateur est déjà un commerçant connecté
-      const isMerchant = localStorage.getItem('nopalou_is_merchant') === 'true'
-      const activeBoutique = localStorage.getItem('nopalou_boutique_active')
-      const posUnlocked = localStorage.getItem('nopalou_pos_user_boutiques')
-
-      if (activeBoutique && activeBoutique !== 'null' && activeBoutique !== '[]') {
-        try {
-          const parsed = JSON.parse(activeBoutique)
-          if (parsed && parsed.nom) {
-            setActiveBoutiqueNom(parsed.nom)
-          }
-        } catch (err) { console.warn('[Nopalou:HeroDualTrack:L77]', err); }
-      }
-
-      if (isMerchant || (activeBoutique && activeBoutique !== 'null') || posUnlocked) {
-        if (!savedMode) {
+        // 2. Si URL explicite ?mode=marchand
+        if (urlMode === 'marchand' || urlMode === 'commercant') {
           setInternalTab('marchand')
+          return
         }
+
+        // 3. Par défaut : Toujours Acheteur
+        setInternalTab('acheteur')
       }
     } catch (err) { console.warn('[Nopalou:HeroDualTrack:L85]', err); }
   }, [activeTabProp])
@@ -90,9 +72,6 @@ export default function HeroDualTrack({
       onTabChange(tab)
     } else {
       setInternalTab(tab)
-      try {
-        localStorage.setItem('nopalou_home_mode', tab)
-      } catch (err) { console.warn('[Nopalou:HeroDualTrack:L95]', err); }
     }
   }
 

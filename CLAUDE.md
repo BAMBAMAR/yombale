@@ -1,3 +1,12 @@
+- **Correctif Réactivité Dual-Track Accueil & Priorité Acheteur (`feature/nopalou-master-fixes`) (14 septembre 2026)** 🛒🔄📱 🚀 ✅ :
+  * **🎯 1. Synchronisation Réactive Immédiate Acheteur / Marchand (`HomeDualTrackContainer.tsx`)** :
+    - **Suppression du Verrouillage Marchand Persistant** : Remplacement de l'état statique non réactif par une écoute dynamique des paramètres d'URL via `useSearchParams()` sous `<Suspense>`.
+    - **Priorité Absolue au Mode Acheteur & Produits** : Tout clic sur une catégorie, un filtre de prix, un tri, une recherche (`?q=`), le logo ou le lien accueil bascule immédiatement et automatiquement l'interface sur la vue Acheteur (catalogue, comparateur de prix, offres Dakar), sans rester bloqué sur le showcase marchand.
+    - **Nettoyage Propre de l'URL** : Le basculement manuel vers Commerçant n'intervient que sur action explicite et nettoie les paramètres de recherche obsolètes sans recharger la page.
+  * **🧪 2. Validation & Quality Gate** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests Unitaires Frontend (`npm run test`) : **68/68 tests validés (100%)**.
+
 - **Correctif POS Caisse & Accessibilité A11y MobileNav (`feature/nopalou-master-fixes`) (14 septembre 2026)** 🔐♿📱 🚀 ✅ :
   * **🎯 1. Accessibilité WAI-ARIA & Ergonomie MobileNav Drawer (`MobileNav.tsx`, `navbar.css`)** :
     - **Fermeture Automatique au Clic en Dehors & Touche Échap** : Intégration d'une détection par `drawerRef` sur tout événement `pointerdown` / `touchstart` extérieur ainsi que sur la touche `Escape` du clavier, avec un overlay `.mobile-nav-overlay` doté de `touch-action: manipulation; cursor: pointer; backdrop-filter: blur(2px);`.
