@@ -11,6 +11,9 @@
       * Déclenchement de vibration haptique mobile (`navigator.vibrate([60, 40, 60])`) et du bip sonore WebAudio.
     - **Logistique Tiak-Tiak : Dispatch WhatsApp avec Itinéraire GPS (`P1`)** :
       * Ajout du lien Google Maps GPS direct dans l'ordre de mission WhatsApp du coursier dans [`ModalDispatchLivreur.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/ModalDispatchLivreur.tsx).
+    - **Studio V2 & Suivi de Commande Haute Lisibilité (`P1`)** :
+      * Édition des textes d'accroche et citations clients par section dans [`StudioDragDropSections.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/studio/StudioDragDropSections.tsx) (321 lignes).
+      * Remplacement des indicateurs d'étapes de livraison par les icônes Lucide SVG (`Clock`, `PackageCheck`, `Truck`, `CheckCircle2`, `MessageCircle`) dans [`suivi-commande/page.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/suivi-commande/page.tsx).
   * **🧪 2. Validation & Quality Gate (100% Vert)** :
     - Suite de tests unitaires Jest (`tests/unit/p0-chime-ratelimit-scanner.test.js`) : **4/4 tests validés (100%)**.
     - Script de Quality Gate Global (`node scripts/quality-gate.mjs`) : **36/36 suites passées, 261/261 tests unitaires validés (100%)**.

@@ -47,6 +47,12 @@ export function StudioDragDropSections({ boutiqueId, initialSections, onSave }: 
     );
   };
 
+  const handleUpdateContent = (index: number, content: string) => {
+    setSections(
+      sections.map((s, i) => (i === index ? { ...s, content } : s))
+    );
+  };
+
   const handleRemove = (index: number) => {
     setSections(sections.filter((_, i) => i !== index));
   };
@@ -183,25 +189,55 @@ export function StudioDragDropSections({ boutiqueId, initialSections, onSave }: 
               </div>
 
               <div style={{ flex: 1 }}>
-                <input
-                  type="text"
-                  value={sec.title || ''}
-                  onChange={(e) => handleUpdateTitle(idx, e.target.value)}
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: 'var(--navy, #1C2B4A)',
-                    border: '1px solid transparent',
-                    background: 'transparent',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    width: '100%',
-                    maxWidth: '300px'
-                  }}
-                />
-                <div style={{ fontSize: '11px', color: '#64748b', marginLeft: '8px' }}>
-                  Module : {sec.type}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={sec.title || ''}
+                    onChange={(e) => handleUpdateTitle(idx, e.target.value)}
+                    placeholder="Titre de la section"
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: 'var(--navy, #1C2B4A)',
+                      border: '1px solid #e2e8f0',
+                      background: '#ffffff',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      width: '100%',
+                      maxWidth: '280px'
+                    }}
+                  />
+                  <span style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap' }}>
+                    Type : {sec.type}
+                  </span>
                 </div>
+
+                {['banner', 'testimonials', 'rich_text'].includes(sec.type) && (
+                  <div style={{ marginTop: '6px' }}>
+                    <input
+                      type="text"
+                      value={sec.content || ''}
+                      onChange={(e) => handleUpdateContent(idx, e.target.value)}
+                      placeholder={
+                        sec.type === 'banner'
+                          ? 'Texte d\'accroche (ex: Livraison gratuite dès 25 000 FCFA)'
+                          : sec.type === 'testimonials'
+                          ? 'Citation client (ex: Service rapide et soigné)'
+                          : 'Contenu du paragraphe ou présentation'
+                      }
+                      style={{
+                        fontSize: '12px',
+                        color: '#475569',
+                        border: '1px solid #e2e8f0',
+                        background: '#ffffff',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        width: '100%',
+                        maxWidth: '420px'
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -231,7 +267,8 @@ export function StudioDragDropSections({ boutiqueId, initialSections, onSave }: 
                 <button
                   type="button"
                   onClick={() => handleRemove(idx)}
-                  style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '4px' }}
+                  title="Supprimer la section"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -270,6 +307,13 @@ export function StudioDragDropSections({ boutiqueId, initialSections, onSave }: 
           style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
           <Plus size={14} /> + Avis Clients
+        </button>
+        <button
+          type="button"
+          onClick={() => handleAddSection('rich_text')}
+          style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+        >
+          <Plus size={14} /> + Bloc Texte Libre
         </button>
       </div>
     </div>

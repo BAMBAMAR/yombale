@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { Clock, PackageCheck, Truck, CheckCircle2, MessageCircle } from 'lucide-react'
 
 interface CommandeSuivie {
   id: string
@@ -151,20 +152,21 @@ function SuiviCommandeContent() {
                   {/* Timeline des 4 étapes */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
                     {[
-                      { step: 1, label: 'En attente', icon: '' },
-                      { step: 2, label: 'En préparation', icon: '' },
-                      { step: 3, label: 'En livraison', icon: '' },
-                      { step: 4, label: 'Livrée', icon: '' },
+                      { step: 1, label: 'En attente', icon: Clock },
+                      { step: 2, label: 'En préparation', icon: PackageCheck },
+                      { step: 3, label: 'En livraison', icon: Truck },
+                      { step: 4, label: 'Livrée', icon: CheckCircle2 },
                     ].map(st => {
                       const isActive = currentStep >= st.step
+                      const IconComp = st.icon
                       return (
                         <div key={st.step} style={{ opacity: isActive ? 1 : 0.4 }}>
                           <div style={{
                             width: 36, height: 36, borderRadius: '50%', margin: '0 auto 6px',
-                            background: isActive ? '#C75B00' : '#e2e8f0', color: '#fff',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700
+                            background: isActive ? 'var(--accent, #C75B00)' : '#e2e8f0', color: '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
                           }}>
-                            {st.icon}
+                            <IconComp size={18} />
                           </div>
                           <span style={{ fontSize: 11, fontWeight: isActive ? 700 : 500, color: isActive ? '#1C2B4A' : '#94a3b8', display: 'block' }}>
                             {st.label}
@@ -181,9 +183,9 @@ function SuiviCommandeContent() {
                         href={`https://wa.me/${cmd.boutique_whatsapp.replace(/[^0-9]/g, '')}?text=Bonjour,%20je%20suis%20le%20suivi%20de%20ma%20commande%20${cmd.reference}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+                        style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
                       >
-                        Contacter le livreur
+                        <MessageCircle size={14} /> Contacter la boutique
                       </a>
                     )}
                   </div>
