@@ -29,15 +29,16 @@ function fcfa(amount: number) {
 
 function CheckoutExpressContent() {
   const searchParams = useSearchParams()
+  const refParam = searchParams.get('ref') || searchParams.get('r') || ''
   const produitId = searchParams.get('produit') || searchParams.get('p') || ''
-  const boutiqueId = searchParams.get('boutique') || searchParams.get('b') || ''
+  const boutiqueIdParam = searchParams.get('boutique') || searchParams.get('b') || ''
   const phoneParam = searchParams.get('phone') || searchParams.get('tel') || ''
   const nomParam = searchParams.get('nom') || ''
   const payParam = (searchParams.get('pay') || searchParams.get('m') || '').toLowerCase()
   const quantiteParam = parseInt(searchParams.get('q') || '1', 10)
 
   const [loading, setLoading] = useState<boolean>(true)
-  const [produitInfo, setProduitInfo] = useState<{ id: string; nom: string; prix: number; photo?: string; boutiqueNom?: string } | null>(null)
+  const [produitInfo, setProduitInfo] = useState<{ id: string; nom: string; prix: number; photo?: string | null; boutiqueNom?: string; boutiqueId?: string } | null>(null)
   const [zones, setZones] = useState<Zone[]>(DEFAULT_ZONES)
   const [zoneId, setZoneId] = useState<string>('dakar-intra')
   const [quantite, setQuantite] = useState<number>(quantiteParam > 0 ? quantiteParam : 1)
@@ -59,7 +60,7 @@ function CheckoutExpressContent() {
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [autoRedirecting, setAutoRedirecting] = useState<boolean>(false)
   const [success, setSuccess] = useState<boolean>(false)
-  const [orderRef, setOrderRef] = useState<string>('')
+  const [orderRef, setOrderRef] = useState<string>(refParam)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [useSequestre, setUseSequestre] = useState<boolean>(true)
   const [sequestrePin, setSequestrePin] = useState<string | null>(null)
@@ -71,6 +72,50 @@ function CheckoutExpressContent() {
     async function loadData() {
       setLoading(true)
       try {
+        // 1. Priorité absolue : Si une référence de commande existe (ex: C-MU118UXF)
+        if (refParam) {
+          const cRes = await fetch(`${backendUrl}/api/boutiques/commandes/suivi?ref=${encodeURIComponent(refParam)}`).catch(() => null)
+          if (cRes && cRes.ok) {
+            const cData = await cRes.json()
+            const cmd = cData.commandes?.[0]
+            if (cmd) {
+              const prixTot = Number(cmd.montant_total) || 0
+              const qte = Number(cmd.quantite) || 1
+              const prixUnit = Number(cmd.prix_unitaire) || (qte > 0 ? Math.round(prixTot / qte) : prixTot)
+
+              setProduitInfo({
+                id: cmd.produit_id || cmd.id,
+                nom: cmd.nom_produit || 'Produit Nopalou',
+                prix: prixUnit,
+                photo: null,
+                boutiqueNom: cmd.boutique_nom || 'Boutique Partenaire',
+                boutiqueId: cmd.boutique_id,
+              })
+              setQuantite(qte)
+              if (cmd.client_nom) setClientNom(cmd.client_nom)
+              if (cmd.client_telephone) setClientTel(cmd.client_telephone)
+              if (cmd.client_adresse) setClientAdresse(cmd.client_adresse)
+              setOrderRef(cmd.reference)
+
+              if (searchParams.get('echelonne') === '1' || cmd.methode_paiement === 'credit' || cmd.methode_paiement === 'echelonne') {
+                setMethodePaiement('echelonne')
+              }
+
+              const bId = cmd.boutique_id || boutiqueIdParam
+              if (bId) {
+                const zRes = await fetch(`${backendUrl}/api/comptabilite/${bId}/zones/public`).catch(() => null)
+                if (zRes && zRes.ok) {
+                  const zData = await zRes.json()
+                  if (Array.isArray(zData) && zData.length > 0) setZones(zData)
+                }
+              }
+              setLoading(false)
+              return
+            }
+          }
+        }
+
+        // 2. Chargement standard par produitId et/ou boutiqueId
         if (produitId) {
           const res = await fetch(`${backendUrl}/api/produits/${produitId}`).catch(() => null)
           if (res && res.ok) {
@@ -81,11 +126,29 @@ function CheckoutExpressContent() {
               prix: Number(data.prix || data.prix_min) || 0,
               photo: data.images?.[0] || data.photo || null,
               boutiqueNom: data.boutique_nom || 'Boutique Partenaire',
+              boutiqueId: data.boutique_id || boutiqueIdParam,
             })
+          } else if (boutiqueIdParam) {
+            // Fallback dans le catalogue de la boutique
+            const bRes = await fetch(`${backendUrl}/api/boutiques/${boutiqueIdParam}/produits`).catch(() => null)
+            if (bRes && bRes.ok) {
+              const bData = await bRes.json()
+              const found = (bData.produits || []).find((p: any) => p.id === produitId)
+              if (found) {
+                setProduitInfo({
+                  id: found.id,
+                  nom: found.nom,
+                  prix: Number(found.prix) || 0,
+                  photo: found.images?.[0] || null,
+                  boutiqueNom: 'Boutique Partenaire',
+                  boutiqueId: boutiqueIdParam,
+                })
+              }
+            }
           }
         }
-        if (boutiqueId) {
-          const zRes = await fetch(`${backendUrl}/api/comptabilite/${boutiqueId}/zones/public`).catch(() => null)
+        if (boutiqueIdParam) {
+          const zRes = await fetch(`${backendUrl}/api/comptabilite/${boutiqueIdParam}/zones/public`).catch(() => null)
           if (zRes && zRes.ok) {
             const zData = await zRes.json()
             if (Array.isArray(zData) && zData.length > 0) setZones(zData)
@@ -98,18 +161,18 @@ function CheckoutExpressContent() {
       }
     }
     loadData()
-  }, [produitId, boutiqueId, backendUrl])
+  }, [produitId, boutiqueIdParam, refParam, searchParams, backendUrl])
 
   const zoneSelectionnee = zones.find(z => z.id === zoneId) || DEFAULT_ZONES[0]
   const fraisLivraison = zoneSelectionnee ? zoneSelectionnee.prix : 1500
   const sousTotal = (produitInfo?.prix || 0) * quantite
-  const totalGlobal = sousTotal + fraisLivraison
+  const totalGlobal = sousTotal > 0 ? (sousTotal + fraisLivraison) : fraisLivraison
 
   // Auto redirection immédiate vers Wave si auto=1
   useEffect(() => {
     if (!loading && autoParam && methodePaiement === 'wave' && !submitting && !success && !autoRedirecting) {
       setAutoRedirecting(true)
-      const refTemp = `CMD-${Date.now().toString(36).toUpperCase()}`
+      const refTemp = refParam || orderRef || `CMD-${Date.now().toString(36).toUpperCase()}`
       fetch(`${backendUrl}/api/paiement/wave/initier-express`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -129,7 +192,7 @@ function CheckoutExpressContent() {
         })
         .catch(() => setAutoRedirecting(false))
     }
-  }, [loading, autoParam, methodePaiement, totalGlobal, produitInfo, backendUrl, submitting, success, autoRedirecting])
+  }, [loading, autoParam, methodePaiement, totalGlobal, produitInfo, backendUrl, submitting, success, autoRedirecting, refParam, orderRef])
 
   // WhatsApp direct link generator
   const messageWhatsapp = `Bonjour ! Je souhaite valider la commande suivante via WhatsApp :\n\n` +
@@ -139,7 +202,7 @@ function CheckoutExpressContent() {
     `Nom: ${clientNom || 'Non renseigné'}\n` +
     `Téléphone: ${clientTel || 'Non renseigné'}\n` +
     `Adresse: ${clientAdresse || 'À préciser'}\n` +
-    `Mode de paiement souhaité: ${methodePaiement === 'wave' ? 'Wave' : methodePaiement === 'orange_money' ? 'Orange Money' : 'Cash à la livraison'}`
+    `Mode de paiement souhaité: ${methodePaiement === 'wave' ? 'Wave' : methodePaiement === 'orange_money' ? 'Orange Money' : methodePaiement === 'echelonne' ? 'Paiement échelonné' : 'Cash à la livraison'}`
 
   const lienWhatsapp = `https://wa.me/221777202086?text=${encodeURIComponent(messageWhatsapp)}`
 
@@ -157,11 +220,15 @@ function CheckoutExpressContent() {
         ? (formuleEchelonnee?.apport || Math.round(totalGlobal * 0.2))
         : totalGlobal
 
-      const res = await fetch(`${backendUrl}/api/comptabilite/${boutiqueId || 'general'}/commandes`, {
+      const targetBoutique = produitInfo?.boutiqueId || boutiqueIdParam || 'general'
+      const referenceToUse = refParam || orderRef || `CMD-${Date.now().toString(36).toUpperCase()}`
+
+      const res = await fetch(`${backendUrl}/api/comptabilite/${targetBoutique}/commandes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          produit_id: produitId || undefined,
+          reference: referenceToUse,
+          produit_id: produitId || produitInfo?.id || undefined,
           nom_produit: produitInfo?.nom || 'Commande Express',
           prix_unitaire: produitInfo?.prix || 0,
           quantite,
@@ -181,8 +248,8 @@ function CheckoutExpressContent() {
       })
 
       const data = await res.json()
-      const referenceToUse = data.reference || `CMD-${Date.now().toString(36).toUpperCase()}`
-      setOrderRef(referenceToUse)
+      const finalRef = data.reference || referenceToUse
+      setOrderRef(finalRef)
 
       if (useSequestre && methodePaiement !== 'cash') {
         try {
@@ -190,7 +257,7 @@ function CheckoutExpressContent() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              reference: referenceToUse,
+              reference: finalRef,
               telephoneClient: clientTel.trim(),
               montantTotal: montantAPayer,
               nomBoutique: produitInfo?.boutiqueNom || 'Boutique Partenaire',
@@ -214,7 +281,7 @@ function CheckoutExpressContent() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               montant: montantAPayer,
-              reference: referenceToUse,
+              reference: finalRef,
               nom_produit: methodePaiement === 'echelonne'
                 ? `Acompte échelonné : ${produitInfo?.nom || 'Commande'}`
                 : (produitInfo?.nom || 'Commande Express'),
@@ -238,7 +305,7 @@ function CheckoutExpressContent() {
 
       setSuccess(true)
     } catch {
-      setOrderRef(`CMD-${Date.now().toString(36).toUpperCase()}`)
+      setOrderRef(refParam || `CMD-${Date.now().toString(36).toUpperCase()}`)
       setSuccess(true)
     } finally {
       setSubmitting(false)
@@ -518,7 +585,7 @@ function CheckoutExpressContent() {
               <div style={{ marginTop: 8 }}>
                 <EchelonnementConfigurator
                   montantTotal={totalGlobal}
-                  boutiqueId={boutiqueId}
+                  boutiqueId={produitInfo?.boutiqueId || boutiqueIdParam || ''}
                   onFormuleChoisie={(f) => setFormuleEchelonnee(f)}
                 />
               </div>
