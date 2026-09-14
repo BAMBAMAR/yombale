@@ -20,7 +20,7 @@ router.get('/:id/articles', async (req, res) => {
   try {
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.id);
     const bqRes = await pool.query(
-      `SELECT id, nom, slug, logo FROM boutiques WHERE ${isUUID ? 'id = $1' : 'slug = $1'}`,
+      `SELECT id, nom, slug, logo_url, description FROM boutiques WHERE ${isUUID ? 'id = $1' : 'slug = $1'}`,
       [req.params.id]
     );
     if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
@@ -70,7 +70,7 @@ router.get('/:id/articles/detail/:slug', async (req, res) => {
   try {
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.id);
     const bqRes = await pool.query(
-      `SELECT id, nom, slug, logo, description FROM boutiques WHERE ${isUUID ? 'id = $1' : 'slug = $1'}`,
+      `SELECT id, nom, slug, logo_url, description FROM boutiques WHERE ${isUUID ? 'id = $1' : 'slug = $1'}`,
       [req.params.id]
     );
     if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });

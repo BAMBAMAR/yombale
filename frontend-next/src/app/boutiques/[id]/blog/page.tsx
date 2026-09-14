@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { FileText, ArrowLeft, Calendar, Eye, Tag, ChevronRight } from 'lucide-react'
+import { apiFetch } from '@/lib/api'
 
 interface Article {
   id: string
@@ -17,12 +18,17 @@ interface Article {
   created_at: string
 }
 
+interface ArticlesResponse {
+  success: boolean
+  boutique: any
+  articles: Article[]
+  total: number
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
   try {
-    const res = await fetch(`${backendUrl}/api/boutiques/${id}/articles`, { cache: 'no-store' })
-    const data = await res.json()
+    const data = await apiFetch<ArticlesResponse>(`/boutiques/${id}/articles`)
     const bNom = data.boutique?.nom || 'Boutique'
     return {
       title: `Blog & Conseils — ${bNom} | Nopalou`,
@@ -42,18 +48,14 @@ export default async function BoutiqueBlogPage({
 }) {
   const { id } = await params
   const { tag } = await searchParams
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'
 
   let boutique: any = null
   let articles: Article[] = []
 
   try {
-    const url = tag
-      ? `${backendUrl}/api/boutiques/${id}/articles?tag=${encodeURIComponent(tag)}`
-      : `${backendUrl}/api/boutiques/${id}/articles`
-    const res = await fetch(url, { cache: 'no-store' })
-    const data = await res.json()
-    if (!res.ok || !data.boutique) {
+    const endpoint = tag ? `/boutiques/${id}/articles?tag=${encodeURIComponent(tag)}` : `/boutiques/${id}/articles`
+    const data = await apiFetch<ArticlesResponse>(endpoint)
+    if (!data || !data.boutique) {
       notFound()
     }
     boutique = data.boutique
