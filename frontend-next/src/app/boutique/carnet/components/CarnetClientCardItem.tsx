@@ -80,6 +80,12 @@ export default function CarnetClientCardItem({
                 <span>{t('shop.blacklistedBadge')}</span>
               </span>
             )}
+            {Number(c.plafond_max) > 0 && Number(c.solde) > Number(c.plafond_max) && (
+              <span className="npl-badge" style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 12, padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706' }} />
+                <span>Plafond dépassé</span>
+              </span>
+            )}
             {c.adresse && (
               <span className="npl-badge npl-badge-neutral" style={{ fontSize: 11 }}>
                 {c.adresse}

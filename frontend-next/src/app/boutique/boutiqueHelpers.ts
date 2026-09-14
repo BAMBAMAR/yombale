@@ -1,4 +1,4 @@
-export type TypeVarianteId = 'couleur' | 'taille' | 'pointure' | 'stockage' | 'capacite' | 'autre'
+export type TypeVarianteId = 'couleur' | 'taille' | 'pointure' | 'stockage' | 'capacite' | 'conditionnement' | 'autre'
 
 export const CHAMP_VERS_TYPE_VARIANTE: Record<'taille' | 'couleur' | 'stockage', TypeVarianteId> = {
   taille: 'taille',

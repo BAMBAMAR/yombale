@@ -47,6 +47,8 @@ export const POINTURES_CHAUSSURE = ['36', '37', '38', '39', '40', '41', '42', '4
 export const STOCKAGES_RAM = ['4 Go', '8 Go', '16 Go', '32 Go', '64 Go', '128 Go', '256 Go', '512 Go', '1 To']
 export const CAPACITES_PUISSANCE = ['0,75 CV', '1 CV', '1,5 CV', '2 CV', '2,5 CV', '3 CV', '100 L', '150 L', '200 L', '300 L', '400 L']
 
+export const FORMATS_CONDITIONNEMENT = ['Unité', 'Pack de 6', 'Carton de 12', 'Sachet 250g', 'Sachet 500g', 'Sachet 1kg', 'Sac 5kg', 'Sac 25kg', 'Sac 50kg', 'Bouteille 50cl', 'Bouteille 1.5L', 'Bidon 5L', 'Bidon 20L']
+
 export interface TypeVariante {
   id: TypeVarianteId
   label: string
@@ -56,12 +58,13 @@ export interface TypeVariante {
 }
 
 export const TYPES_VARIANTE: TypeVariante[] = [
-  { id: 'couleur',  label: 'Couleur',              nomVariante: 'Couleur',   suggestions: COULEURS_PALETTE.map(c => c.nom), repetable: false },
-  { id: 'taille',   label: 'Taille (vêtement)',     nomVariante: 'Taille',    suggestions: TAILLES_VETEMENT,     repetable: false },
-  { id: 'pointure', label: 'Pointure (chaussure)',  nomVariante: 'Pointure',  suggestions: POINTURES_CHAUSSURE,  repetable: false },
-  { id: 'stockage', label: 'Stockage / RAM',        nomVariante: 'Stockage',  suggestions: STOCKAGES_RAM,        repetable: false },
-  { id: 'capacite', label: 'Capacité / Puissance',  nomVariante: 'Capacité',  suggestions: CAPACITES_PUISSANCE,  repetable: false },
-  { id: 'autre',    label: 'Autre (personnalisé)',   nomVariante: '',          suggestions: [],                   repetable: true },
+  { id: 'couleur',         label: 'Couleur',                  nomVariante: 'Couleur',         suggestions: COULEURS_PALETTE.map(c => c.nom), repetable: false },
+  { id: 'taille',          label: 'Taille (vêtement)',         nomVariante: 'Taille',          suggestions: TAILLES_VETEMENT,     repetable: false },
+  { id: 'pointure',        label: 'Pointure (chaussure)',      nomVariante: 'Pointure',        suggestions: POINTURES_CHAUSSURE,  repetable: false },
+  { id: 'stockage',        label: 'Stockage / RAM',            nomVariante: 'Stockage',        suggestions: STOCKAGES_RAM,        repetable: false },
+  { id: 'capacite',        label: 'Capacité / Puissance',      nomVariante: 'Capacité',        suggestions: CAPACITES_PUISSANCE,  repetable: false },
+  { id: 'conditionnement', label: 'Conditionnement / Format',  nomVariante: 'Conditionnement', suggestions: FORMATS_CONDITIONNEMENT, repetable: false },
+  { id: 'autre',           label: 'Autre (personnalisé)',       nomVariante: '',                suggestions: [],                   repetable: true },
 ]
 
 export const MARQUES_MODE = ['Zara', 'Nike', 'Adidas', 'H&M', 'Shein']

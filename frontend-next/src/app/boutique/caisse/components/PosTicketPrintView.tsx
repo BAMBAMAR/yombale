@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import QRCode from 'qrcode-svg'
 import { fcfa } from '@/lib/format'
 import { ClientFidelite } from './PosFideliteModal'
 
@@ -65,6 +66,29 @@ export default function PosTicketPrintView({
   const bAdresse = boutiqueAdresse || boutique?.adresse
   const bTelephone = boutiqueTelephone || boutique?.telephone
   const bLogo = boutiqueLogo || boutique?.logo
+
+  const qrSvg = React.useMemo(() => {
+    if (!vente?.id) return null
+    try {
+      const ticketRef = `TICK-${vente.id.slice(-8)}`
+      const verifyUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/suivi-commande?ref=${ticketRef}`
+        : `https://nopalou.com/suivi-commande?ref=${ticketRef}`
+      const qr = new QRCode({
+        content: verifyUrl,
+        padding: 0,
+        width: 72,
+        height: 72,
+        color: '#000000',
+        background: '#ffffff',
+        ecl: 'M',
+      })
+      return qr.svg()
+    } catch {
+      return null
+    }
+  }, [vente?.id])
+
   if (!vente) return null
 
   return (
@@ -192,11 +216,18 @@ export default function PosTicketPrintView({
         </div>
       )}
 
-      {/* Bas de ticket & Code-barres transactionnel */}
+      {/* Bas de ticket & QR Code scannable de suivi / vérification */}
       <div style={{ textAlign: 'center', marginTop: 6, fontSize: 9.5 }}>
-        <div style={{ fontFamily: 'monospace', letterSpacing: '0.1em', fontWeight: 'bold', fontSize: 11, margin: '4px 0' }}>
-          ||| | ||||| |||| |||| ||| |||||||
-        </div>
+        {qrSvg ? (
+          <div
+            style={{ margin: '6px auto 4px', display: 'flex', justifyContent: 'center' }}
+            dangerouslySetInnerHTML={{ __html: qrSvg }}
+          />
+        ) : (
+          <div style={{ fontFamily: 'monospace', letterSpacing: '0.1em', fontWeight: 'bold', fontSize: 11, margin: '4px 0' }}>
+            ||| | ||||| |||| |||| ||| |||||||
+          </div>
+        )}
         <div style={{ fontSize: 9, color: '#333' }}>
           TICKET #{vente.id?.slice(-8) || '0001'} • {vente.date} {vente.heure}
         </div>
