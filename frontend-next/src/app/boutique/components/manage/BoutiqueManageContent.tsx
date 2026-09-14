@@ -135,7 +135,7 @@ export default function BoutiqueManageContent({
         />
       )}
       {tab === 'analytics' && <AnalyticsClient boutiques={[{ id: boutique.id, nom: boutique.nom }]} />}
-      {tab === 'personnaliser' && (
+      {(tab === 'personnaliser' || tab === 'studio') && (
         <StudioPersonnalisation boutique={boutique as any} onSaved={onBoutiqueSaved} />
       )}
       {tab === 'infos' && (

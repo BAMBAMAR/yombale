@@ -163,6 +163,11 @@ export function getTabInfoMap(t: (key: string) => string): Record<ManageTab, { t
       title: 'Personnaliser ma vitrine',
       desc: 'Définissez l\'ambiance, les couleurs, la bannière et le slogan uniques de votre boutique en ligne.',
     },
+    studio: {
+      icon: Palette,
+      title: 'Studio de personnalisation',
+      desc: 'Studio visuel pour personnaliser l\'apparence et l\'identité de votre boutique.',
+    },
     journal: { icon: ScrollText, title: t('shop.auditLog'), desc: t('shop.auditLogDesc') },
     developer: { icon: Code2, title: t('shop.developer'), desc: t('shop.developerDesc') },
     appstore: {
