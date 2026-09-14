@@ -72,7 +72,10 @@ router.get('/categories-actives', async (req, res) => {
       JOIN offres o ON o.produit_id = p.id 
       WHERE o.stock = true AND o.quarantinee = false
       UNION
-      SELECT DISTINCT categorie as slug FROM boutique_produits WHERE en_stock = true
+      SELECT DISTINCT bp.categorie as slug 
+      FROM boutique_produits bp
+      JOIN boutiques b ON b.id = bp.boutique_id
+      WHERE bp.en_stock = true AND b.actif = true
     `);
     const activeSlugs = rows.map(r => r.slug).filter(Boolean);
     
@@ -139,6 +142,16 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       'mode':         ['robe','chaussure','sac a main','chemise','pantalon','sneaker','basket','parfum','eau de toilette','eau de parfum','musc','jean homme','t-shirt'],
       'auto-moto':    ['voiture','moto ','scooter','trottinette','piece auto','batterie voiture'],
       'jeux':         ['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming'],
+      'beaute':        ['parfum','creme','lotion','savon','shampoing','rouge a levre','maquillage','beaute','soin','masque'],
+      'alimentation':  ['riz','huile','sucre','lait','cafe','chocolat','epicerie','boisson','the','farine','eau'],
+      'sport':         ['velo','ballon','fitness','musculation','haltere','maillot','tapis de course','sport'],
+      'quincaillerie': ['ciment','fer','peinture','outillage','tournevis','perceuse','cle','serrure','vis'],
+      'sante-pharma':  ['pharmacie','medicament','vitamine','thermomettre','tensiometre','pansement'],
+      'services':      ['service','reparation','installation','depannage'],
+      'fournitures':   ['cahier','stylo','papier','bureau','fourniture','classeur'],
+      'mixte':         [],
+      'autre':         [],
+      'divers':        [],
     };
 
     // Filtre sous-type : mots-clés précis au sein d'une catégorie (ex: 'tv' dans 'tv-electro')
@@ -161,8 +174,8 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       'jeux'        : ['playstation','ps4','ps5','xbox','nintendo','manette','jeu video','gaming','casque gamer'],
     };
 
-    if (categorieNorm && !CAT_FALLBACK[categorieNorm]) {
-      return res.json({ success: true, produits: [], page: +page, limit: +limit, total: 0, pages: 1 });
+    if (categorieNorm && !/^[a-z0-9-]+$/.test(categorieNorm)) {
+      return res.status(400).json({ error: 'Catégorie invalide' });
     }
     if (sousType && !SOUS_TYPE_MOTS[sousType]) {
       return res.json({ success: true, produits: [], page: +page, limit: +limit, total: 0, pages: 1 });

@@ -170,6 +170,19 @@ export default async function HomePage({
   }
   const prixTafTaf = Number(settings.plan_decouverte_prix || settings.plan_taftaf_prix) || 2500;
 
+  // Catégories avec produits réels pour la section "Comparer par catégorie"
+  const DEFAULT_ACTIVE_CATEGORIES = [
+    'smartphones', 'tv-electro', 'mode', 'informatique', 'maison',
+    'beaute', 'alimentation', 'jeux', 'auto-moto', 'sport'
+  ];
+  const categoriesAffichees = CATEGORIES.filter(c => {
+    if (c.slug === 'telecom' || c.slug === 'immo' || c.slug === 'annonces') return false;
+    if (categoriesActives && categoriesActives.length > 0) {
+      return categoriesActives.includes(c.slug);
+    }
+    return DEFAULT_ACTIVE_CATEGORIES.includes(c.slug);
+  });
+
   return (
     <HomeDualTrackContainer
       prixTafTaf={prixTafTaf}
@@ -442,7 +455,7 @@ export default async function HomePage({
 
               <p className="chip-row-label">Comparer par catégorie</p>
                 <div className="chip-row">
-                  {CATEGORIES.filter(c => c.slug !== 'telecom').map(c => (
+                  {categoriesAffichees.map(c => (
                     <Link key={c.slug} href={`/categorie/${c.slug}`} aria-label={`Catalogue complet de la catégorie ${c.label}`} className="chip">
                       <span className="chip-em">{c.emoji}</span>
                       {c.label}

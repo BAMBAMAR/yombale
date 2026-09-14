@@ -424,7 +424,7 @@ export default function GuidePrixPage({ categoriesActives }: { categoriesActives
         chipRows={[
           {
             label: 'Comparer par catégorie',
-            chips: CATEGORIES.map(c => ({ href: `/categorie/${c.slug}`, emoji: c.icon, label: c.label, small: true })),
+            chips: CATEGORIES.filter(c => !categoriesActives || categoriesActives.includes(c.slug)).map(c => ({ href: c.href || `/categorie/${c.slug}`, emoji: c.icon, label: c.label, small: true })),
           },
         ]}
         foot="Prix vérifiés automatiquement toutes les 6 heures sur tous les grands marchands sénégalais"

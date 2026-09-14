@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import { apiFetch } from '@/lib/api'
@@ -11,7 +11,29 @@ import FiltresBar from '@/components/FiltresBar'
 import SeoCard from '@/components/SeoCard'
 import SearchWithAnchor from '@/app/SearchWithAnchor'
 import { CATEGORIES } from '../categories-data'
+import { CATEGORIES as LIB_CATEGORIES } from '@/lib/categories'
 import { SOUS_CATEGORIES } from '../sous-categories-data'
+
+function resolveCategory(slug: string) {
+  if (CATEGORIES[slug]) return CATEGORIES[slug]
+  const libCat = LIB_CATEGORIES.find(c => c.value === slug)
+  if (!libCat) return null
+  const catLabel = libCat.label.replace(/^.*? /, '')
+  const catEmoji = libCat.label.split(' ')[0]
+  return {
+    label: catLabel,
+    emoji: catEmoji,
+    h1: `${catLabel} au Sénégal`,
+    intro: `Comparez les prix et trouvez les meilleures offres de ${catLabel.toLowerCase()} au Sénégal sur Nopalou.`,
+    description: `Comparez les prix de ${catLabel.toLowerCase()} au Sénégal. Retrouvez les meilleures offres de boutiques vérifiées à Dakar et partout au Sénégal.`,
+    keywords: [catLabel.toLowerCase(), 'Sénégal', 'Dakar', 'prix', 'achat'],
+    exemples: catLabel,
+    contenu: [
+      `Retrouvez une sélection de produits dans la catégorie ${catLabel.toLowerCase()} proposés par des boutiques vérifiées au Sénégal.`,
+      `Comparez les prix, vérifiez la disponibilité en stock et contactez directement les marchands en ligne.`
+    ]
+  }
+}
 
 export const revalidate = 600
 
@@ -45,7 +67,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const cat = CATEGORIES[slug]
+  const cat = resolveCategory(slug)
   if (!cat) return { title: 'Catégorie introuvable' }
 
   return {
@@ -74,7 +96,11 @@ export default async function CategoriePage({
   searchParams: Promise<{ page?: string; prixMin?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }> | { page?: string; prixMin?: string; prixMax?: string; tri?: string; sousType?: string; q?: string }
 }) {
   const { slug } = await params
-  const cat = CATEGORIES[slug]
+  if (slug === 'immo') redirect('/immo')
+  if (slug === 'annonces') redirect('/annonces')
+  if (slug === 'telecom') redirect('/telecom')
+
+  const cat = resolveCategory(slug)
   if (!cat) notFound()
 
   const sp = await Promise.resolve(searchParams)

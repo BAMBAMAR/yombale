@@ -1,3 +1,20 @@
+- **Correctif Filtrage & Résolution des Catégories du Comparateur de Prix (14 septembre 2026)** 🏷️🛒🔍 🚀 ✅ :
+  * **🎯 1. Section « Comparer par catégorie » en Bas de Page d'Accueil (`page.tsx`)** :
+    - **Affichage Exclusif des Catégories Avec Produits** : Remplacement de la liste statique des 27 catégories par un filtrage dynamique `categoriesAffichees` basé sur `/api/produits/categories-actives` (avec repli sur les catégories confirmées disposant d'offres en stock).
+    - **Élimination des Liens Vides & Redondants** : Exclusion des verticales qui ne sont pas des catalogues de produits physiques à comparer (`telecom`, `immo`, `annonces`) et masquage des catégories sans aucun produit pour éviter les déceptions utilisateur.
+  * **🎯 2. Déblocage Backend des Produits par Catégorie (`backend/routes/produits.js`)** :
+    - **Suppression du Blocage Involontaire** : Élimination du check restrictif `if (categorieNorm && !CAT_FALLBACK[categorieNorm]) return []` qui renvoyait 0 produit pour `beaute` (544 produits), `alimentation` (145 produits) et `sport` (21 produits).
+    - **Enrichissement des Fallbacks Mots-Clés** : Ajout des mots-clés de repli pour `beaute`, `alimentation`, `sport`, `quincaillerie`, `sante-pharma`, `services`, `fournitures`.
+    - **Contrôle Sécurité Regex** : Validation stricte du format du slug `/^[a-z0-9-]+$/` pour parer à toute injection tout en interrogeant directement la table `categories`.
+    - **Intégrité `/api/produits/categories-actives`** : Jointure avec les boutiques actives (`b.actif = true`) pour ne compter que les produits effectivement en vente.
+  * **🎯 3. Résolution des 404 & Redirections (`categorie/[slug]/page.tsx`, `GuidePrixContent.tsx`)** :
+    - **Résolution Dynamique `resolveCategory()`** : Tout slug valide de la nomenclature officielle Nopalou génère désormais automatiquement ses métadonnées et sa page sans jamais lever d'erreur 404.
+    - **Redirections des Verticales Dédiées** : `/categorie/immo` redirige vers `/immo`, `/categorie/annonces` vers `/annonces`, et `/categorie/telecom` vers `/telecom`.
+  * **🧪 4. Validation & Quality Gate** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests Unitaires Frontend (`npm run test`) : **68/68 tests validés (100%)**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **Validé**.
+
 - **Correctif Affichage & Élimination de la Troncature Horizontale du Carnet de Dettes (14 septembre 2026)** 💳📱📐 🚀 ✅ :
   * **🎯 1. Résolution de la Troncature des Cartes Clients (`CarnetClientCardItem.tsx`, `CarnetClientsList.tsx`)** :
     - **Header & Montants Sans Rognage** : Intégration de `minWidth: 0`, `maxWidth: '100%'`, et repli fluide (`wordBreak: 'break-word'`) sur les informations de contact et plafonds. Le montant dû (`Doit : 35 000 FCFA`) et son badge ne sont plus coupés à droite.
