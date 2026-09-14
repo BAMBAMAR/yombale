@@ -1,3 +1,16 @@
+- **Correctif POS Caisse : Overlay Fixe, Initialisation Sécurisée des Codes PIN & Ergonomie Mobile/Web (`feature/nopalou-master-fixes`) (14 septembre 2026)** 🔐📱💻 🚀 ✅ :
+  * **🎯 1. Résolution de l'Affichage LockScreen & Modale PIN (Mobile & Web)** :
+    - **Confinement & Centrage Plein Écran** : Correction de l'agencement flex qui positionnait la modale de configuration obligatoire côte-à-côte avec la carte de verrouillage. Application d'un backdrop overlay fixe `position: fixed; inset: 0; z-index: 12000; backdrop-filter: blur(6px);` centrant parfaitement la carte sans aucun débordement.
+    - **Amélioration Ergonomique** : Ajout de toggles d'affichage/masquage de mot de passe (`Eye` / `EyeOff`), saisie numérique optimisée (`inputMode="numeric"`), et bouton optionnel de fermeture/report pour le gérant.
+  * **⚙️ 2. Nouveaux Endpoints Backend Dédiés (`boutiques-equipe.js`)** :
+    - `POST /api/boutiques/:id/caisse/config-pin-initial` : Initialisation obligatoire et conjointe des codes PIN Superviseur et Caissier avec rejet strict des codes triviaux (`0000`, `1234`, `1111`, etc.).
+    - `PUT /api/boutiques/:id/caissiers/:caissierId/pin` : Mise à jour dédiée et sécurisée du code PIN d'un caissier.
+    - `PATCH /api/boutiques/:id/caissiers/:caissierId` : Modification partielle sécurisée des statuts actifs et rôles d'équipe.
+  * **🧪 3. Validation & Quality Gate** :
+    - Tests Unitaires Backend (`pos-pin-security.test.js`) : **5/5 tests validés (100%)**.
+    - TypeScript Strict Frontend (`npx tsc --noEmit`) : **0 erreur**.
+    - Audit Responsiveness Mobile Playwright : **55/55 contrôles validés (100% responsive sur 320px, 360px, 375px, 390px, 412px)**.
+
 - **Préparation Master Complète à la Mise en Production & Validation Globale (Phases 0 à 33) (`feature/nopalou-master-fixes`) (14 septembre 2026)** 🏆🛡️📱 🚀 ✅ :
   * **🎯 1. Validation Intégrale de la Chaîne de Valeur (Architecture, Données, Finances, POS, WhatsApp & Mobile)** :
     - **Principe Directeur Garanti** : *« Production Ready » ≠ « Build réussi »*. Preuve formelle apportée sur la cohérence de bout en bout : Boutique → Produit → Commande → Paiement → Stock → Crédit / Échéancier → POS → WhatsApp → Chatbot → Statistiques → Admin.

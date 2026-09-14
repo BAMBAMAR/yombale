@@ -293,6 +293,245 @@ router.put('/:id/caissiers/:caissierId', tokenOptional, async (req, res) => {
   }
 });
 
+// PATCH /api/boutiques/:id/caissiers/:caissierId (Alias modification partielle)
+router.patch('/:id/caissiers/:caissierId', tokenOptional, async (req, res) => {
+  try {
+    const { actif, nom, prenom, role, code_pin, terminal_token, superviseur_pin } = req.body;
+    const idParam = req.params.id;
+
+    let bq = null;
+    if (req.user?.userId) {
+      bq = await checkBoutiqueAccess(idParam, req.user.userId);
+    }
+    if (!bq) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+      const bRes = await pool.query(
+        `SELECT id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+        [idParam]
+      );
+      if (bRes.rows[0]) {
+        const boutique = bRes.rows[0];
+        if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+          bq = boutique;
+        } else if (superviseur_pin) {
+          const supRes = await pool.query(
+            `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND (role = 'superviseur' OR role = 'admin') AND actif = TRUE`,
+            [boutique.id, String(superviseur_pin).trim()]
+          );
+          if (supRes.rows[0]) bq = boutique;
+        }
+      }
+    }
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    let queryParts = [];
+    let values = [req.params.caissierId, bq.id];
+    let vIndex = 3;
+
+    if (nom !== undefined && String(nom).trim()) {
+      queryParts.push(`nom = $${vIndex++}`);
+      values.push(String(nom).trim());
+    }
+    if (prenom !== undefined) {
+      queryParts.push(`prenom = $${vIndex++}`);
+      values.push(prenom ? String(prenom).trim() : null);
+    }
+    if (role !== undefined && (role === 'caissier' || role === 'superviseur')) {
+      queryParts.push(`role = $${vIndex++}`);
+      values.push(role);
+    }
+    if (code_pin !== undefined && String(code_pin).trim()) {
+      const pinStr = String(code_pin).trim();
+      const codesInterdits = ['1234', '0000', '9999', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '1212'];
+      if (codesInterdits.includes(pinStr)) {
+        return res.status(400).json({ error: 'Code PIN trop simple ou par défaut. Veuillez choisir un code personnalisé.' });
+      }
+      if (!/^\d{4,6}$/.test(pinStr)) {
+        return res.status(400).json({ error: 'Le code PIN doit comporter entre 4 et 6 chiffres numériques.' });
+      }
+      queryParts.push(`code_pin = $${vIndex++}`);
+      values.push(pinStr);
+    }
+    if (actif !== undefined) {
+      queryParts.push(`actif = $${vIndex++}`);
+      values.push(Boolean(actif));
+    }
+
+    if (queryParts.length === 0) return res.json({ success: true });
+
+    const q = `UPDATE boutique_caissiers SET ${queryParts.join(', ')} WHERE id = $1 AND boutique_id = $2 RETURNING id, nom, prenom, code_pin, role, actif, created_at`;
+    const r = await pool.query(q, values);
+    if (!r.rows[0]) return res.status(404).json({ error: 'Caissier introuvable' });
+
+    if (req.user?.userId) {
+      enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_modifie', `Modification du caissier POS "${r.rows[0].nom}"`, { caissier_id: req.params.caissierId }, req);
+    }
+
+    res.json({ success: true, caissier: r.rows[0] });
+  } catch (err) {
+    console.error('[PATCH CAISSIER ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la modification' });
+  }
+});
+
+// PUT /api/boutiques/:id/caissiers/:caissierId/pin — Modification dédiée du PIN caissier
+router.put('/:id/caissiers/:caissierId/pin', tokenOptional, async (req, res) => {
+  try {
+    const { code_pin, terminal_token, superviseur_pin } = req.body;
+    const idParam = req.params.id;
+    const pinStr = code_pin ? String(code_pin).trim() : '';
+
+    if (!pinStr) return res.status(400).json({ error: 'Code PIN requis' });
+
+    const codesInterdits = ['1234', '0000', '9999', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '1212'];
+    if (codesInterdits.includes(pinStr)) {
+      return res.status(400).json({ error: 'Code PIN trop simple ou par défaut. Veuillez choisir un code à 4 chiffres personnalisé.' });
+    }
+    if (!/^\d{4,6}$/.test(pinStr)) {
+      return res.status(400).json({ error: 'Le code PIN doit comporter entre 4 et 6 chiffres numériques.' });
+    }
+
+    let bq = null;
+    if (req.user?.userId) {
+      bq = await checkBoutiqueAccess(idParam, req.user.userId);
+    }
+    if (!bq) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+      const bRes = await pool.query(
+        `SELECT id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+        [idParam]
+      );
+      if (bRes.rows[0]) {
+        const boutique = bRes.rows[0];
+        if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+          bq = boutique;
+        } else if (superviseur_pin) {
+          const supRes = await pool.query(
+            `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND (role = 'superviseur' OR role = 'admin') AND actif = TRUE`,
+            [boutique.id, String(superviseur_pin).trim()]
+          );
+          if (supRes.rows[0]) bq = boutique;
+        }
+      }
+    }
+    if (!bq) return res.status(403).json({ error: 'Accès refusé' });
+
+    const r = await pool.query(
+      `UPDATE boutique_caissiers SET code_pin = $1 WHERE id = $2 AND boutique_id = $3 RETURNING id, nom, prenom, role, actif`,
+      [pinStr, req.params.caissierId, bq.id]
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: 'Caissier introuvable' });
+
+    if (req.user?.userId) {
+      enregistrerAuditLog(bq.id, req.user.userId, req.user.nom || 'Marchand', 'caissier_pin_modifie', `Modification du code PIN du caissier #${req.params.caissierId}`, { caissier_id: req.params.caissierId }, req);
+    }
+
+    res.json({ success: true, caissier: r.rows[0] });
+  } catch (err) {
+    console.error('[PUT CAISSIER PIN ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la modification du code PIN' });
+  }
+});
+
+// POST /api/boutiques/:id/caisse/config-pin-initial — Configuration obligatoire initiale des codes PIN POS
+router.post('/:id/caisse/config-pin-initial', tokenOptional, async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { pin_superviseur, pin_caissier, terminal_token } = req.body;
+
+    const pinSup = pin_superviseur ? String(pin_superviseur).trim() : '';
+    const pinCai = pin_caissier ? String(pin_caissier).trim() : '';
+
+    if (!pinSup || !pinCai) {
+      return res.status(400).json({ success: false, error: 'Les deux codes PIN (Superviseur et Caissier) sont obligatoires.' });
+    }
+
+    if (!/^\d{4,6}$/.test(pinSup) || !/^\d{4,6}$/.test(pinCai)) {
+      return res.status(400).json({ success: false, error: 'Chaque code PIN doit comporter entre 4 et 6 chiffres numériques.' });
+    }
+
+    const codesInterdits = ['1234', '0000', '9999', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '1212'];
+    if (codesInterdits.includes(pinSup)) {
+      return res.status(400).json({ success: false, error: 'Le code PIN Superviseur est trop trivial. Choisissez un code personnalisé.' });
+    }
+
+    let bq = null;
+    if (req.user?.userId) {
+      bq = await checkBoutiqueAccess(idParam, req.user.userId);
+    }
+    if (!bq) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
+      const bRes = await pool.query(
+        `SELECT id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+        [idParam]
+      );
+      if (bRes.rows[0]) {
+        const boutique = bRes.rows[0];
+        if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+          bq = boutique;
+        }
+      }
+    }
+    if (!bq) return res.status(403).json({ success: false, error: 'Accès non autorisé à cette boutique.' });
+
+    // 1. Mettre à jour ou créer le profil superviseur
+    const supRes = await pool.query(
+      `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND (role = 'superviseur' OR role = 'admin') ORDER BY created_at ASC LIMIT 1`,
+      [bq.id]
+    );
+    if (supRes.rows[0]) {
+      await pool.query(
+        `UPDATE boutique_caissiers SET code_pin = $1, actif = TRUE WHERE id = $2`,
+        [pinSup, supRes.rows[0].id]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role, actif)
+         VALUES ($1, 'Gérant', 'Superviseur', $2, 'superviseur', TRUE)`,
+        [bq.id, pinSup]
+      );
+    }
+
+    // 2. Mettre à jour ou créer le profil caissier standard
+    const caiRes = await pool.query(
+      `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND role = 'caissier' ORDER BY created_at ASC LIMIT 1`,
+      [bq.id]
+    );
+    if (caiRes.rows[0]) {
+      await pool.query(
+        `UPDATE boutique_caissiers SET code_pin = $1, actif = TRUE WHERE id = $2`,
+        [pinCai, caiRes.rows[0].id]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO boutique_caissiers (boutique_id, nom, prenom, code_pin, role, actif)
+         VALUES ($1, 'Caissier', 'Standard', $2, 'caissier', TRUE)`,
+        [bq.id, pinCai]
+      );
+    }
+
+    if (req.user?.userId) {
+      enregistrerAuditLog(
+        bq.id,
+        req.user.userId,
+        req.user.nom || 'Marchand',
+        'pos_pin_initialise',
+        'Initialisation sécurisée des codes PIN Superviseur et Caissier',
+        {},
+        req
+      );
+    }
+
+    return res.json({ success: true, message: 'Codes PIN initialisés avec succès.' });
+  } catch (err) {
+    console.error('[CONFIG PIN INITIAL ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur lors de l’initialisation des codes PIN.' });
+  }
+});
+
 // DELETE /api/boutiques/:id/caissiers/:caissierId
 router.delete('/:id/caissiers/:caissierId', verifierToken, async (req, res) => {
   try {

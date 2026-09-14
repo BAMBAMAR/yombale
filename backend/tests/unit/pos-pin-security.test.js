@@ -50,4 +50,22 @@ describe('Sécurité des Codes PIN POS & Caissiers', () => {
     const doitConfigurer4 = trivialPins.includes(superviseurPerso) || caissiers4.length === 0 || caissiers4.some(c => trivialPins.includes(c.code_pin));
     expect(doitConfigurer4).toBe(false);
   });
+
+  test('Validation payload POST /api/boutiques/:id/caisse/config-pin-initial', () => {
+    function validerPayload(body) {
+      const pinSup = body.pin_superviseur ? String(body.pin_superviseur).trim() : '';
+      const pinCai = body.pin_caissier ? String(body.pin_caissier).trim() : '';
+      if (!pinSup || !pinCai) return { valid: false, error: 'Codes requis' };
+      if (!/^\d{4,6}$/.test(pinSup) || !/^\d{4,6}$/.test(pinCai)) return { valid: false, error: 'Longueur invalide' };
+      if (trivialPins.includes(pinSup)) return { valid: false, error: 'PIN superviseur trivial' };
+      return { valid: true };
+    }
+
+    expect(validerPayload({ pin_superviseur: '', pin_caissier: '4829' }).valid).toBe(false);
+    expect(validerPayload({ pin_superviseur: '1234', pin_caissier: '4829' }).valid).toBe(false);
+    expect(validerPayload({ pin_superviseur: '0000', pin_caissier: '4829' }).valid).toBe(false);
+    expect(validerPayload({ pin_superviseur: '4829', pin_caissier: '7301' }).valid).toBe(true);
+    expect(validerPayload({ pin_superviseur: '918273', pin_caissier: '839201' }).valid).toBe(true);
+  });
 });
+
