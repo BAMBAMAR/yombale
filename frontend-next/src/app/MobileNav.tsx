@@ -109,7 +109,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
       <div
         ref={drawerRef}
         className={`mobile-nav-drawer${open ? ' mobile-nav-drawer--open' : ''}`}
-        inert={!open ? true : undefined}
+        inert={(!open ? '' : undefined) as unknown as boolean}
       >
         {/* Header Drawer */}
         <div className="mobile-nav-header">
