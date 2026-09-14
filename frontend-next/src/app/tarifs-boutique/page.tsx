@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import TarifsPublicsSelector from './TarifsPublicsSelector'
+import TarifsMatriceDetaillee from './TarifsMatriceDetaillee'
+import { Sparkles, ArrowRight, ShieldCheck, Zap, Store, ShoppingBag } from 'lucide-react'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
@@ -76,8 +78,13 @@ export default function TarifsBoutiquePage() {
         </section>
 
         {/* ── FORFAITS CARDS SECTION (Lifted up to overlap header) ── */}
-        <section style={{ maxWidth: 1200, margin: '-80px auto 80px', padding: '0 20px', position: 'relative', zIndex: 3 }}>
+        <section style={{ maxWidth: 1200, margin: '-80px auto 40px', padding: '0 20px', position: 'relative', zIndex: 3 }}>
           <TarifsPublicsSelector />
+        </section>
+
+        {/* ── MATRICE DÉTAILLÉE DES FONCTIONNALITÉS RÉELLES ── */}
+        <section style={{ maxWidth: 1200, margin: '0 auto 80px', padding: '0 20px' }}>
+          <TarifsMatriceDetaillee />
         </section>
 
         {/* ── COMPARATIF DIRECT NOPALOU VS SHOPIFY & WOOCOMMERCE ── */}
@@ -100,7 +107,7 @@ export default function TarifsBoutiquePage() {
               </thead>
               <tbody>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '16px 24px', fontWeight: 700, color: '#475569' }}>Coût d'entrée</td>
+                  <td style={{ padding: '16px 24px', fontWeight: 700, color: '#475569' }}>Coût d&apos;entrée</td>
                   <td style={{ padding: '16px 24px', fontWeight: 900, color: '#10b981', background: '#fff7ed' }}>Dès 2.500 FCFA (1m offert)</td>
                   <td style={{ padding: '16px 24px', color: '#64748b' }}>29$ / mois (~18.000 FCFA)</td>
                 </tr>
@@ -140,15 +147,18 @@ export default function TarifsBoutiquePage() {
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
               <div style={{ background: '#f8fafc', padding: 16, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: 20, marginBottom: 6 }}>1️⃣ Sourcing</div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: '#1C2B4A', color: '#fff', fontSize: 13, fontWeight: 900, marginBottom: 8 }}>1</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Sourcing en gros</div>
                 <div style={{ fontSize: 13, color: '#64748b' }}>Commandez vos articles sur Alibaba/AliExpress à prix de gros.</div>
               </div>
               <div style={{ background: '#f8fafc', padding: 16, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: 20, marginBottom: 6 }}>2️⃣ Boutique Nopalou</div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: '#C75B00', color: '#fff', fontSize: 13, fontWeight: 900, marginBottom: 8 }}>2</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Boutique Nopalou</div>
                 <div style={{ fontSize: 13, color: '#64748b' }}>Publiez votre catalogue en 2 min avec vos prix en FCFA.</div>
               </div>
               <div style={{ background: '#f8fafc', padding: 16, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: 20, marginBottom: 6 }}>3️⃣ Vente WhatsApp</div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: '#0A5C36', color: '#fff', fontSize: 13, fontWeight: 900, marginBottom: 8 }}>3</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>Vente WhatsApp</div>
                 <div style={{ fontSize: 13, color: '#64748b' }}>Recevez l&apos;argent directement par Wave ou Orange Money à la commande.</div>
               </div>
             </div>

@@ -4,7 +4,7 @@ import { apiFetch } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Démo Commerciale Interactive | Nopalou — Le Super-Écosystème E-commerce au Sénégal',
-  description: 'Découvrez la démo interactive de Nopalou : Comparateur de prix, Caisse POS marchand avec carnet de crédit/dette, Bot WhatsApp commercial et programme Apporteur d\'affaires 10% récurrent.',
+  description: 'Découvrez la démo interactive de Nopalou : Comparateur de prix, Caisse POS marchand avec carnet de crédit/dette, Bot WhatsApp commercial et programme Apporteur d\'affaires 20% récurrent à vie.',
   keywords: [
     'Nopalou',
     'Démo commerciale',

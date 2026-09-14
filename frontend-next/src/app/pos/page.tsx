@@ -3,12 +3,12 @@ import Link from 'next/link'
 import {
   Smartphone, WifiOff, QrCode, Receipt, Users, Zap, ShieldCheck,
   CheckCircle2, ArrowRight, Printer, Sparkles, HelpCircle, Store,
-  CreditCard, BarChart2, Laptop, Clock
+  CreditCard, BarChart2, Laptop, Clock, ShoppingBag
 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Caisse Enregistreuse Dakar & Prix Sénégal | Nopalou POS pour Petit Commerce',
-  description: 'La caisse enregistreuse tactile N°1 à Dakar pour petit commerce, boutique et magasin. Fonctionne 100% hors-ligne sans Internet dès 2 500 FCFA/mois. 30 jours offerts.',
+  description: 'La caisse enregistreuse tactile N°1 à Dakar pour petit commerce, boutique et magasin. Fonctionne 100% hors-ligne sans Internet avec la formule Boutique Pro. 30 jours offerts.',
   keywords: [
     'caisse enregistreuse dakar',
     'caisse enregistreuse prix sénégal',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Caisse Enregistreuse Dakar & Sénégal — Nopalou POS',
-    description: 'La solution de caisse enregistreuse tactile pour petit commerce au Sénégal. Prix dès 2 500 FCFA/mois avec 30 jours offerts.',
+    description: 'La solution de caisse enregistreuse tactile pour commerce au Sénégal avec la formule Pro. 30 jours offerts.',
     url: 'https://nopalou.com/pos',
     type: 'website',
   },
@@ -32,11 +32,11 @@ export const metadata: Metadata = {
 const POS_FAQ = [
   {
     q: "Quel est le prix d'une caisse enregistreuse au Sénégal ?",
-    a: "Alors qu'une caisse enregistreuse tactile traditionnelle coûte entre 300 000 et 800 000 FCFA à Dakar, Nopalou POS ne nécessite aucun matériel coûteux et démarre à seulement 2 500 FCFA/mois (avec le premier mois 100% gratuit). Elle fonctionne sur votre smartphone, tablette ou ordinateur."
+    a: "Alors qu'une caisse tactile traditionnelle coûte entre 300 000 et 800 000 FCFA à Dakar, Nopalou POS ne nécessite aucun matériel dédié et est incluse dans la formule Boutique Pro (dès 3 750 FCFA/mois en formule annuelle, ou 5 000 FCFA/mois avec 30 jours 100% offerts). Elle fonctionne sur votre smartphone, tablette ou ordinateur."
   },
   {
     q: "Pourquoi Nopalou est la meilleure caisse enregistreuse pour petit commerce ?",
-    a: "Nopalou est spécialement conçue pour les petits commerces, boutiques de quartier et commerçants à Dakar : elle fonctionne même lors des coupures de réseau Internet (hors-ligne), gère les espèces et la monnaie, intègre le carnet de dettes clients ('Bor') et permet d'encaisser directement par Wave et Orange Money sans commission."
+    a: "Nopalou est spécialement conçue pour les commerces, boutiques et magasins à Dakar : elle fonctionne même lors des coupures de réseau Internet (hors-ligne), gère les espèces et la monnaie, intègre le carnet de dettes clients ('Bor') avec relances Wave 1-clic et permet d'encaisser par Wave et Orange Money sans commission."
   },
   {
     q: "Dois-je acheter un terminal ou du matériel de caisse coûteux ?",
@@ -346,19 +346,24 @@ export default function PosLandingPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
           {[
-            { em: '👗', t: 'Prêt-à-Porter & Chaussures', d: 'Gestion intuitive des variantes de tailles, couleurs, arrivages et étiquetage codes-barres en magasin.' },
-            { em: '', t: 'Téléphonie & High-Tech', d: 'Suivi des numéros IMEI, accessoires, garanties et factures officielles proforma conformes.' },
-            { em: '💄', t: 'Cosmétiques & Parfumerie', d: 'Encaissement rapide au comptoir, gestion des gammes capillaires, mèches et remises clients.' },
-            { em: '', t: 'Quincaillerie & Électro', d: 'Émission de devis, factures avec NINEA/RCCM et TVA pour vos clients professionnels et particuliers.' },
-            { em: '🍏', t: 'Épicerie & Alimentation', d: 'Scan code-barres ultra rapide, calcul instantané de la monnaie et impression tickets thermiques.' },
-            { em: '🍽️', t: 'Snacks & Restauration', d: 'Prise de commande rapide, encaissement direct Wave/OM ou espèces et suivi des ventes journalières.' },
-          ].map(s => (
-            <div key={s.t} style={{ background: '#ffffff', padding: 22, borderRadius: 16, border: '1px solid #cbd5e1', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 30, marginBottom: 10 }}>{s.em}</div>
-              <h3 style={{ fontSize: 16.5, fontWeight: 900, color: '#0f172a', margin: '0 0 6px' }}>{s.t}</h3>
-              <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.5, margin: 0 }}>{s.d}</p>
-            </div>
-          ))}
+            { icon: ShoppingBag, color: '#C75B00', bg: '#FFF3E8', t: 'Prêt-à-Porter & Chaussures', d: 'Gestion intuitive des variantes de tailles, couleurs, arrivages et étiquetage codes-barres en magasin.' },
+            { icon: Smartphone, color: '#2563EB', bg: '#EFF6FF', t: 'Téléphonie & High-Tech', d: 'Suivi des numéros IMEI, accessoires, garanties et factures officielles proforma conformes.' },
+            { icon: Sparkles, color: '#DB2777', bg: '#FDF2F8', t: 'Cosmétiques & Parfumerie', d: 'Encaissement rapide au comptoir, gestion des gammes capillaires, mèches et remises clients.' },
+            { icon: Store, color: '#0A5C36', bg: '#F0FDF4', t: 'Quincaillerie & Électro', d: 'Émission de devis, factures avec NINEA/RCCM et TVA pour vos clients professionnels et particuliers.' },
+            { icon: Zap, color: '#D97706', bg: '#FFFBEB', t: 'Épicerie & Alimentation', d: 'Scan code-barres ultra rapide, calcul instantané de la monnaie et impression tickets thermiques.' },
+            { icon: Clock, color: '#4F46E5', bg: '#EEF2FF', t: 'Snacks & Restauration', d: 'Prise de commande rapide, encaissement direct Wave/OM ou espèces et suivi des ventes journalières.' },
+          ].map(s => {
+            const IconComp = s.icon
+            return (
+              <div key={s.t} style={{ background: '#ffffff', padding: 22, borderRadius: 16, border: '1px solid #cbd5e1', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: s.bg, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                  <IconComp size={22} />
+                </div>
+                <h3 style={{ fontSize: 16.5, fontWeight: 900, color: '#0f172a', margin: '0 0 6px' }}>{s.t}</h3>
+                <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.5, margin: 0 }}>{s.d}</p>
+              </div>
+            )
+          })}
         </div>
       </section>
 

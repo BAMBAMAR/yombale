@@ -17,7 +17,7 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
     jest.clearAllMocks();
   });
 
-  test('envoie à la fois le texte libre et le template Meta certifié nopalou_fiche_texte', async () => {
+  test('envoie à la fois le texte libre et le template Meta certifié nopalou_alerte_commande', async () => {
     axios.post.mockResolvedValue({ data: { messages: [{ id: 'wamid.123' }] } });
 
     const res = await sendWhatsAppNotification('771234567', {
@@ -29,7 +29,7 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
     });
 
     expect(res).toBeDefined();
-    // Au moins 2 appels POST à l'API Graph (1 textMessage + 1 template nopalou_fiche_texte)
+    // Au moins 2 appels POST à l'API Graph (1 textMessage + 1 template nopalou_alerte_commande)
     expect(axios.post).toHaveBeenCalled();
     const calls = axios.post.mock.calls;
     
@@ -37,7 +37,7 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
     const tplCall = calls.find(c => c[1]?.type === 'template');
     expect(tplCall).toBeDefined();
     expect(tplCall[1].to).toBe('221771234567');
-    expect(tplCall[1].template.name).toBe('nopalou_fiche_texte');
+    expect(tplCall[1].template.name).toBe('nopalou_alerte_commande');
     expect(tplCall[1].template.language.code).toBe('fr');
     expect(tplCall[1].template.components[0].parameters[0].text).toContain('Tech Store');
     expect(tplCall[1].template.components[1].parameters[0].text).toBe('tech-store');
@@ -84,7 +84,8 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
       expect(p.text).not.toMatch(/ {4,}/);
     }
     expect(bodyParams[0].text).toBe('Titre · Avec · Sauts');
-    expect(bodyParams[1].text).toBe('Ligne 1 · Ligne 2 avec plusieurs espaces et tabulation');
+    expect(bodyParams[1].text).toBe('Nopalou');
+    expect(bodyParams[2].text).toBe('Ligne 1 · Ligne 2 avec plusieurs espaces et tabulation');
   });
 
   test('templateOnly: true ne tente PAS d\'envoi texte libre pour éviter l\'erreur 131047', async () => {

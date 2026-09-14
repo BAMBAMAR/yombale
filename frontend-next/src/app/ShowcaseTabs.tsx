@@ -2,7 +2,22 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Check, Sparkles } from 'lucide-react';
+import {
+  Check,
+  Sparkles,
+  Search,
+  ShoppingBag,
+  CreditCard,
+  PackageCheck,
+  Truck,
+  MessageCircle,
+  Share2,
+  Users,
+  ShieldCheck,
+  Store,
+  Zap,
+  BookOpen
+} from 'lucide-react';
 
 export default function ShowcaseTabs({ 
   prixTafTaf = 2500, 
@@ -109,24 +124,39 @@ export default function ShowcaseTabs({
             alignItems: 'center', textAlign: 'center'
           }}>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>🔎 1. Recherche</div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Search size={15} style={{ color: 'var(--accent, #C75B00)' }} />
+                <span>1. Recherche</span>
+              </div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Comparateur &amp; WhatsApp Bot</div>
             </div>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>2. Commande</div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <ShoppingBag size={15} style={{ color: 'var(--navy, #1C2B4A)' }} />
+                <span>2. Commande</span>
+              </div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Panier Web, WhatsApp &amp; POS</div>
             </div>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>3. Paiement</div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <CreditCard size={15} style={{ color: '#16a34a' }} />
+                <span>3. Paiement</span>
+              </div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Wave, Cash, Crédit ou Manuel</div>
             </div>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>4. Préparation</div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <PackageCheck size={15} style={{ color: '#2563eb' }} />
+                <span>4. Préparation</span>
+              </div>
               <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Gestion des statuts de stock</div>
             </div>
             <div style={{ background: '#fff', padding: '12px 10px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>5. Livraison</div>
-              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Suivi &amp; Alerte client WhatsApp</div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Truck size={15} style={{ color: 'var(--accent, #C75B00)' }} />
+                <span>5. Livraison</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>Dispatch Tiak-Tiak WhatsApp</div>
             </div>
           </div>
         </div>
@@ -145,7 +175,7 @@ export default function ShowcaseTabs({
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Boutique Taf Taf</h3>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b', lineHeight: 1.4 }}>
-              Créez votre vitrine en 30 secondes et vendez directement sur WhatsApp.
+              Créez votre vitrine en 30 secondes, tenez votre carnet de dettes et vendez sur WhatsApp.
             </p>
             
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
@@ -168,27 +198,27 @@ export default function ShowcaseTabs({
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Baguette Magique (Import Ali/SHEIN) :</strong> Recopie auto titre, prix &amp; photos en 1 clic</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
-                <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Produit → Annonce en 1 Clic :</strong> Diffusion directe en Petite Annonce sponsorisée</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
-                <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
                 <span><strong>Catalogue Web &amp; Panier WhatsApp :</strong> Commandes pré-remplies dans votre WhatsApp</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Produits &amp; Photos Illimités :</strong> Gestion facile des stocks &amp; prix barrés</span>
+                <span><strong>Carnet de Dettes Client ("Bor") :</strong> Suivi des crédits et historique des paiements</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>🔗 Lien `/boutiques/[nom]` + QR Code :</strong> Téléchargeable pour flyers &amp; réseaux</span>
+                <span><strong>Baguette Magique (Import Ali/SHEIN) :</strong> Recopie auto titre, prix &amp; photos en 1 clic</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Suivi Commande &amp; Livraison WhatsApp :</strong> Alerte automatique du client à l&apos;expédition</span>
+                <span><strong>Import Multi-Plateformes :</strong> Importez vos fichiers Shopify, WooCommerce ou Excel</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
+                <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
+                <span><strong>Lien Dédié + QR Code Boutique :</strong> Téléchargeable pour flyers, bio et réseaux</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
+                <Check size={16} style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }} />
+                <span><strong>Encaissements Wave &amp; OM directs :</strong> 0% de commission prélevée sur vos ventes</span>
               </div>
             </div>
 
@@ -223,7 +253,7 @@ export default function ShowcaseTabs({
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Vendeur Pro</h3>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b', lineHeight: 1.4 }}>
-              Caisse enregistreuse tactile, gestion de stock physique &amp; crédits clients.
+              Caisse enregistreuse tactile hors-ligne, factures pro &amp; relances Wave 1-clic.
             </p>
             
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
@@ -250,31 +280,31 @@ export default function ShowcaseTabs({
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Caisse POS Enregistreuse Tactile :</strong> Sur smartphone, tablette ou ordinateur PC</span>
+                <span><strong>Caisse POS Tactile (100% Hors-Ligne) :</strong> Sur smartphone, tablette ou ordinateur PC</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Scan Codes-Barres EAN-13 par Caméra :</strong> Scan 1-clic avec l&apos;appareil photo</span>
+                <span><strong>Scan Codes-Barres par Caméra :</strong> Reconnaissance 1-clic avec l&apos;appareil photo</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Édition &amp; Impression Stickers (50x30mm) :</strong> Imprimez vos codes-barres étiquettes</span>
+                <span><strong>Impression Tickets (58/80mm) &amp; Stickers :</strong> Format thermique standardisé</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📖 Carnet de Crédits Client &amp; Relance 1-Clic :</strong> Relancez les impayés sur WhatsApp</span>
+                <span><strong>Relances WhatsApp 1-Clic :</strong> Message personnalisé avec lien direct Wave prérempli</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Factures &amp; Devis PDF Pro :</strong> Envoi 1-clic direct sur WhatsApp avec logo</span>
+                <span><strong>Factures &amp; Devis PDF Pro OHADA :</strong> Envoi 1-clic direct sur WhatsApp avec logo</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Suivi &amp; Préparation de Commande :</strong> Statuts en direct (Attente → Préparation → Prêt → En Livraison)</span>
+                <span><strong>Dispatch Livreur Tiak-Tiak :</strong> Transmission des courses par WhatsApp</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#C75B00', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Badge Vendeur Pro Verified :</strong> Placement prioritaire dans l&apos;annuaire</span>
+                <span><strong>Badge Vendeur Pro Vérifié :</strong> Placement prioritaire sur le comparateur de prix</span>
               </div>
             </div>
 
@@ -301,7 +331,7 @@ export default function ShowcaseTabs({
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 900, color: '#0f172a' }}>Business VIP</h3>
             <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b', lineHeight: 1.4 }}>
-              Gestion multi-vendeurs, analytics de marge nette &amp; visibilité maximale.
+              Multi-vendeurs, dépôts physiques, API REST &amp; visibilité maximale.
             </p>
             
             <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>
@@ -328,31 +358,31 @@ export default function ShowcaseTabs({
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Multi-Caissiers &amp; Droits Équipe :</strong> PIN caissiers, sessions Z &amp; gestion des vendeurs</span>
+                <span><strong>Multi-Caissiers &amp; Droits Équipe :</strong> Codes PIN vendeurs &amp; sessions de clôtures Z</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Multi-Magasins &amp; Transferts :</strong> Gestion dépôts multiples &amp; mouvements stock</span>
+                <span><strong>Multi-Magasins &amp; Dépôts Physiques :</strong> Transferts de stocks inter-boutiques</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Portail Développeur API &amp; Webhooks :</strong> Clés API REST &amp; intégration sur mesure</span>
+                <span><strong>Portail Développeur API &amp; Webhooks :</strong> Clés API REST &amp; synchronisation externe</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Analytics CA &amp; Marges Nettes :</strong> Calcul des bénéfices, dettes &amp; classement vendeurs</span>
+                <span><strong>Comptabilité Fournisseurs &amp; Marge Nette :</strong> Calcul des bénéfices et bons d&apos;achat</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>WhatsApp Automation :</strong> Relances automatiques des paniers abandonnés</span>
+                <span><strong>WhatsApp Automation :</strong> Relances automatiques des dettes et des paniers</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>📣 Bannière Sponsorisée VIP :</strong> Emplacement prioritaire en tête de catégorie</span>
+                <span><strong>Bannière Sponsorisée VIP :</strong> Emplacement prioritaire en tête de catégorie</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#334155' }}>
                 <Check size={16} style={{ color: '#0f172a', flexShrink: 0, marginTop: 2 }} />
-                <span><strong>Support WhatsApp VIP 7j/7 :</strong> Ligne directe avec un conseiller technique</span>
+                <span><strong>Support VIP Dédié 7j/7 :</strong> Ligne directe prioritaire avec l&apos;équipe Nopalou</span>
               </div>
             </div>
 
@@ -396,12 +426,13 @@ export default function ShowcaseTabs({
             {/* Blocs Acheteurs */}
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800, color: '#25D366', marginBottom: 12 }}>
+                <ShoppingBag size={18} />
                 <span>Pour les Acheteurs</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <li><strong>Commande WhatsApp 1-Clic :</strong> Votre panier web est converti en bon de commande WhatsApp structuré.</li>
                 <li><strong>Connexion OTP sans mot de passe :</strong> Recevez un code de validation sécurisé sur votre WhatsApp.</li>
-                <li><strong>Assistant Bot Nopalou (`+221 70 871 79 42`) :</strong> Envoyez le nom d&apos;un produit sur WhatsApp et recevez le comparatif des prix de Dakar.</li>
+                <li><strong>Assistant Bot Nopalou (+221 70 871 79 42) :</strong> Envoyez le nom d&apos;un produit sur WhatsApp et recevez le comparatif des prix de Dakar.</li>
                 <li><strong>Alertes Prix Automatiques :</strong> Recevez une alerte directe sur WhatsApp dès qu&apos;un article baisse de prix.</li>
               </ul>
             </div>
@@ -409,11 +440,12 @@ export default function ShowcaseTabs({
             {/* Blocs Commerçants */}
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800, color: '#25D366', marginBottom: 12 }}>
+                <Store size={18} />
                 <span>Pour les Commerçants</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <li><strong>Alertes Commande Instantanées :</strong> Recevez chaque commande client pré-remplie directement sur votre WhatsApp.</li>
-                <li><strong>Relance Impayés en 1 Clic :</strong> Depuis la Caisse POS, relancez les clients débiteurs avec leur solde exact par message.</li>
+                <li><strong>Relance Impayés en 1 Clic :</strong> Depuis la Caisse POS, relancez les clients débiteurs avec lien Wave direct.</li>
                 <li><strong>Envoi Factures &amp; Devis PDF :</strong> Transmettez des factures professionnelles avec votre logo directement sur WhatsApp.</li>
                 <li><strong>Support Technologique VIP 7j/7 :</strong> Assistance prioritaire directe avec l&apos;équipe technique Nopalou.</li>
               </ul>
@@ -422,11 +454,12 @@ export default function ShowcaseTabs({
             {/* Blocs Apporteurs */}
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800, color: '#25D366', marginBottom: 12 }}>
+                <Users size={18} />
                 <span>Pour les Apporteurs &amp; Parrains</span>
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: '#e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li>🔗 <strong>Partage Statut &amp; Groupes WhatsApp :</strong> Diffusez votre lien de parrainage en 1 clic à vos contacts commerçants.</li>
-                <li><strong>Notifications de Commission :</strong> Soyez notifié sur WhatsApp dès qu&apos;une boutique parrainée s&apos;abonne.</li>
+                <li><strong>Partage Statut &amp; Groupes WhatsApp :</strong> Diffusez votre lien de parrainage en 1 clic à vos contacts commerçants.</li>
+                <li><strong>Notifications de Commission (20%) :</strong> Soyez notifié sur WhatsApp dès qu&apos;une boutique parrainée s&apos;abonne.</li>
                 <li><strong>Demande de Retrait Mobile Money :</strong> Demandez vos paiements de commission directement par messagerie.</li>
               </ul>
             </div>

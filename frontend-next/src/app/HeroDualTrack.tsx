@@ -608,7 +608,7 @@ export default function HeroDualTrack({
             </div>
 
             <Link
-              href="/pricing"
+              href="/tarifs-boutique"
               style={{
                 color: 'var(--accent, #C75B00)',
                 fontWeight: 900,
