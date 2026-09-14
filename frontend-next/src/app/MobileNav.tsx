@@ -48,7 +48,12 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  function close() { setOpen(false) }
+  function close() {
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+    setOpen(false)
+  }
 
   const displayName = nom?.trim() || 'Mon compte'
   const initiale = displayName.charAt(0).toUpperCase()
@@ -70,7 +75,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
 
       <div
         className={`mobile-nav-drawer${open ? ' mobile-nav-drawer--open' : ''}`}
-        aria-hidden={!open}
+        inert={!open ? true : undefined}
       >
         {/* Header Drawer */}
         <div className="mobile-nav-header">
