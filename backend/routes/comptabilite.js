@@ -376,6 +376,118 @@ router.delete(
   }
 );
 
+// GET /api/comptabilite/:boutiqueId/export/syscohada — Export Grand Livre / Journal des Ventes SYSCOHADA (OHADA)
+router.get(
+  '/:boutiqueId/export/syscohada',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+      const { debut, fin } = req.query;
+      let query = 'SELECT * FROM ventes WHERE boutique_id=$1 AND archivee IS NOT TRUE';
+      const params = [req.params.boutiqueId];
+
+      if (debut) {
+        params.push(debut);
+        query += ` AND created_at >= $${params.length}`;
+      }
+      if (fin) {
+        params.push(fin);
+        query += ` AND created_at <= $${params.length}`;
+      }
+      query += ' ORDER BY created_at ASC';
+
+      const { rows: ventes } = await pool.query(query, params);
+
+      const headers = [
+        'Date Écriture',
+        'N° Pièce / Référence',
+        'Code Journal',
+        'N° Compte Général',
+        'Intitulé du Compte',
+        'Libellé de l\'Écriture',
+        'Débit (FCFA)',
+        'Crédit (FCFA)',
+        'Mode Règlement',
+        'Tiers / Client',
+      ];
+
+      const escapeCSV = (val) => {
+        if (val === null || val === undefined) return '""';
+        const str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+      };
+
+      const csvLines = [headers.map(escapeCSV).join(';')];
+
+      for (const v of ventes) {
+        const dateFormatted = v.created_at ? new Date(v.created_at).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
+        const ref = v.reference || (v.id ? v.id.slice(0, 8) : 'REF');
+        const mode = (v.methode_paiement || 'cash').toLowerCase();
+        const client = v.client_nom || 'Client Comptoir';
+        const montant = Math.round(Number(v.montant_total) || 0);
+
+        let compteTresorerie = '571000';
+        let intituleTresorerie = 'Caisse Centrale Espèces';
+        if (mode === 'wave') {
+          compteTresorerie = '521100';
+          intituleTresorerie = 'Banque / Compte Wave Business';
+        } else if (mode === 'orange_money' || mode === 'om') {
+          compteTresorerie = '521200';
+          intituleTresorerie = 'Banque / Compte Orange Money';
+        } else if (mode === 'credit') {
+          compteTresorerie = '411100';
+          intituleTresorerie = 'Clients - Créances sur Ventes';
+        } else if (mode === 'virement' || mode === 'cb' || mode === 'carte') {
+          compteTresorerie = '521000';
+          intituleTresorerie = 'Banque / Établissements Financiers';
+        }
+
+        // Ligne Débit (Trésorerie / Client)
+        csvLines.push([
+          dateFormatted,
+          ref,
+          'VT',
+          compteTresorerie,
+          intituleTresorerie,
+          `Encaissement Vente #${ref} - ${v.nom_produit || 'Article'}`,
+          montant,
+          0,
+          mode.toUpperCase(),
+          client,
+        ].map(escapeCSV).join(';'));
+
+        // Ligne Crédit (Compte 701 - Ventes de Marchandises)
+        csvLines.push([
+          dateFormatted,
+          ref,
+          'VT',
+          '701000',
+          'Ventes de Marchandises dans la Région (SYSCOHADA)',
+          `Chiffre d'affaires Vente #${ref} - ${v.nom_produit || 'Article'} (x${v.quantite || 1})`,
+          0,
+          montant,
+          mode.toUpperCase(),
+          client,
+        ].map(escapeCSV).join(';'));
+      }
+
+      const csvContent = '\uFEFF' + csvLines.join('\r\n');
+      const filename = `journal_syscohada_${(boutique.nom || 'boutique').replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.csv`;
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      return res.status(200).send(csvContent);
+    } catch (err) {
+      console.error('[SYSCOHADA EXPORT ERR]', err);
+      return res.status(500).json({ error: 'Erreur lors de la génération de l\'export comptable SYSCOHADA' });
+    }
+  }
+);
+
 // GET /api/comptabilite/:boutiqueId/ventes/:venteId/facture.pdf
 router.get(
   '/:boutiqueId/ventes/:venteId/facture.pdf',
@@ -511,6 +623,195 @@ router.get(
   }
 );
 
+// ── GET /api/comptabilite/:boutiqueId/export/syscohada — Export Grand Livre & Écritures SYSCOHADA (Sage / FEC / Odoo)
+router.get(
+  '/:boutiqueId/export/syscohada',
+  verifierToken,
+  param('boutiqueId').isUUID(),
+  async (req, res) => {
+    try {
+      const boutique = await ownsBoutique(req.params.boutiqueId, req.user.userId, req.user.role);
+      if (!boutique) return res.status(403).json({ error: 'Accès refusé' });
+
+      const format = String(req.query.format || 'sage').toLowerCase();
+      const from = req.query.from ? new Date(req.query.from) : null;
+      const to = req.query.to ? new Date(req.query.to) : null;
+
+      // 1. Récupération des ventes
+      let queryVentes = 'SELECT * FROM ventes WHERE boutique_id = $1';
+      const paramsVentes = [req.params.boutiqueId];
+      if (from && !isNaN(from.getTime())) {
+        paramsVentes.push(from);
+        queryVentes += ` AND created_at >= $${paramsVentes.length}`;
+      }
+      if (to && !isNaN(to.getTime())) {
+        paramsVentes.push(to);
+        queryVentes += ` AND created_at <= $${paramsVentes.length}`;
+      }
+      queryVentes += ' ORDER BY created_at ASC';
+      const { rows: ventes } = await pool.query(queryVentes, paramsVentes);
+
+      // 2. Récupération des dépenses
+      let queryDepenses = 'SELECT * FROM depenses_boutique WHERE boutique_id = $1';
+      const paramsDepenses = [req.params.boutiqueId];
+      if (from && !isNaN(from.getTime())) {
+        paramsDepenses.push(from.toISOString().slice(0, 10));
+        queryDepenses += ` AND date_depense >= $${paramsDepenses.length}`;
+      }
+      if (to && !isNaN(to.getTime())) {
+        paramsDepenses.push(to.toISOString().slice(0, 10));
+        queryDepenses += ` AND date_depense <= $${paramsDepenses.length}`;
+      }
+      queryDepenses += ' ORDER BY date_depense ASC';
+      const { rows: depenses } = await pool.query(queryDepenses, paramsDepenses);
+
+      // 3. Mapping en écritures SYSCOHADA
+      const getCompte = (mode) => {
+        const m = String(mode || '').toLowerCase();
+        if (m === 'cash' || m === 'especes') return '571100';
+        if (m === 'wave') return '521200';
+        if (m === 'orange_money' || m === 'om') return '521300';
+        if (m === 'virement') return '521100';
+        if (m === 'carte') return '521400';
+        if (m === 'credit') return '411100';
+        return '571100';
+      };
+
+      const ecritures = [];
+
+      for (const v of ventes) {
+        const montant = Math.round(Number(v.montant_total) || 0);
+        if (montant <= 0) continue;
+        const d = new Date(v.created_at);
+        const dateStr = !isNaN(d.getTime())
+          ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+          : new Date().toLocaleDateString('fr-FR');
+        const ref = v.reference || v.id.slice(-8).toUpperCase();
+        const cptTresor = getCompte(v.methode_paiement);
+
+        ecritures.push({
+          journal: cptTresor.startsWith('571') ? 'CA' : cptTresor.startsWith('521') ? 'BQ' : 'VT',
+          date: dateStr,
+          piece: ref,
+          compte: cptTresor,
+          tiers: v.client_nom || '',
+          libelle: `Vente ${v.nom_produit || 'Marchandise'} - ${ref}`,
+          debit: montant,
+          credit: 0
+        });
+
+        ecritures.push({
+          journal: 'VT',
+          date: dateStr,
+          piece: ref,
+          compte: '701100',
+          tiers: '',
+          libelle: `Vente marchandises - ${ref}`,
+          debit: 0,
+          credit: montant
+        });
+      }
+
+      for (const dp of depenses) {
+        const montant = Math.round(Number(dp.montant) || 0);
+        if (montant <= 0) continue;
+        const d = new Date(dp.date_depense);
+        const dateStr = !isNaN(d.getTime())
+          ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+          : new Date().toLocaleDateString('fr-FR');
+        const ref = `DEP-${dp.id.slice(-6).toUpperCase()}`;
+
+        ecritures.push({
+          journal: 'AC',
+          date: dateStr,
+          piece: ref,
+          compte: '605100',
+          tiers: '',
+          libelle: dp.description || `Charge ${dp.categorie || 'exploitation'}`,
+          debit: montant,
+          credit: 0
+        });
+
+        ecritures.push({
+          journal: 'CA',
+          date: dateStr,
+          piece: ref,
+          compte: '571100',
+          tiers: '',
+          libelle: `Règlement charge #${ref}`,
+          debit: 0,
+          credit: montant
+        });
+      }
+
+      const slugBoutique = (boutique.nom || 'boutique').replace(/[^a-zA-Z0-9]/g, '_');
+      const dateExport = new Date().toISOString().slice(0, 10);
+
+      if (format === 'odoo') {
+        const moves = ecritures.map((e) => ({
+          name: e.piece,
+          date: e.date.split('/').reverse().join('-'),
+          journal_id: e.journal === 'VT' ? 'Customer Invoices' : 'Cash',
+          account_code: e.compte,
+          partner_name: e.tiers,
+          name_line: e.libelle,
+          debit: e.debit,
+          credit: e.credit
+        }));
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="SYSCOHADA_ODOO_${slugBoutique}_${dateExport}.json"`);
+        return res.json({ norme: 'SYSCOHADA', boutique: boutique.nom, date: dateExport, moves });
+      }
+
+      if (format === 'fec') {
+        const headerFec = 'JournalCode\tJournalLib\tEcritureNum\tEcritureDate\tCompteNum\tCompteLib\tCompAuxNum\tPieceRef\tPieceDate\tEcritureLib\tDebit\tCredit\tValidDate';
+        const lines = ecritures.map((e, idx) => [
+          e.journal,
+          e.journal === 'VT' ? 'Ventes' : e.journal === 'CA' ? 'Caisse' : 'Banque',
+          idx + 1,
+          e.date.split('/').reverse().join(''),
+          e.compte,
+          e.compte === '701100' ? 'Ventes de marchandises' : e.compte.startsWith('571') ? 'Caisse' : 'Banque/Mobile Money',
+          e.tiers,
+          e.piece,
+          e.date.split('/').reverse().join(''),
+          `"${e.libelle.replace(/"/g, '""')}"`,
+          e.debit > 0 ? e.debit.toFixed(2) : '0.00',
+          e.credit > 0 ? e.credit.toFixed(2) : '0.00',
+          e.date.split('/').reverse().join('')
+        ].join('\t'));
+
+        const content = '\ufeff' + [headerFec, ...lines].join('\r\n');
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="SYSCOHADA_FEC_${slugBoutique}_${dateExport}.txt"`);
+        return res.send(content);
+      }
+
+      // Par défaut : Format Sage Saari CSV
+      const headerSage = 'Code Journal;Date;N° Pièce;N° Compte Général;Compte Tiers;Libellé Écriture;Débit (FCFA);Crédit (FCFA)';
+      const rows = ecritures.map(e => [
+        `"${e.journal}"`,
+        `"${e.date}"`,
+        `"${e.piece}"`,
+        `"${e.compte}"`,
+        `"${e.tiers}"`,
+        `"${e.libelle.replace(/"/g, '""')}"`,
+        e.debit > 0 ? e.debit : '',
+        e.credit > 0 ? e.credit : ''
+      ].join(';'));
+
+      const csvContent = '\ufeff' + [headerSage, ...rows].join('\r\n');
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="SYSCOHADA_SAGE_${slugBoutique}_${dateExport}.csv"`);
+      return res.send(csvContent);
+
+    } catch (err) {
+      console.error('[COMPTA EXPORT SYSCOHADA ERR]', err);
+      res.status(500).json({ error: 'Erreur lors de la génération de l\'export SYSCOHADA' });
+    }
+  }
+);
+
 // ── Commandes boutique ────────────────────────────────────────────────────────
 
 const STATUTS_VALIDES = ['en_attente', 'confirmee', 'en_preparation', 'expediee', 'livree', 'annulee'];
@@ -573,9 +874,10 @@ async function notifierVendeurCommande(boutique, {
   sendWhatsAppNotification(vendeurTel, {
     textMessage: msg,
     title: titleTpl,
+    montant: `${montantFmt} FCFA`,
     detail: detailTpl.slice(0, 1000),
     url: lienCommandes,
-    buttonParam: boutique.slug || boutique.id,
+    buttonParam: 'boutique',
   })
     .then(() => console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`))
     .catch(err => console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message));
@@ -590,7 +892,7 @@ async function creerCommandeBoutique({
   boutiqueId, produitId, quantite = 1, clientNom, clientTelephone, clientAdresse,
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
   nomProduitManuel, prixUnitaireManuel, groupeCommande, items = [], varianteId,
-  codePromo, montantReduction,
+  codePromo, montantReduction, formuleEchelonnement,
 }) {
   const bQuery = 'SELECT id, nom, slug, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
@@ -681,6 +983,11 @@ async function creerCommandeBoutique({
   const ref = genRefCommande();
 
   let finalNote = note || '';
+  if (formuleEchelonnement && typeof formuleEchelonnement === 'object') {
+    const apportFmt = formuleEchelonnement.apport ? `${formuleEchelonnement.apport} FCFA` : '0 FCFA';
+    const echelonNote = `[Échelonnement: Apport ${apportFmt}, ${formuleEchelonnement.nb_echeances || 3}x (${formuleEchelonnement.frequence || 'mensuel'})]`;
+    finalNote = finalNote ? `${finalNote} | ${echelonNote}` : echelonNote;
+  }
   if (codePromo && String(codePromo).trim()) {
     const promoNote = `[Code Promo: ${String(codePromo).trim().toUpperCase()}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
     finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
@@ -778,7 +1085,7 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
     try {
-      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id, code_promo, montant_reduction, remise } = req.body;
+      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id, code_promo, montant_reduction, remise, formule_echelonnement, formuleEchelonnement } = req.body;
 
       const { commande, boutique } = await creerCommandeBoutique({
         boutiqueId: req.params.boutiqueId,
@@ -797,6 +1104,7 @@ router.post(
         items: Array.isArray(items) ? items : [],
         codePromo: code_promo,
         montantReduction: montant_reduction || remise,
+        formuleEchelonnement: formule_echelonnement || formuleEchelonnement,
       });
 
       await notifierVendeurCommande(boutique, {
@@ -1252,6 +1560,32 @@ router.patch(
         })
           .then(() => console.log(`[WHATSAPP VENDEUR STATUS NOTIF SUCCESS] Envoyé au ${vendeurMobile}`))
           .catch(err => console.error('[WHATSAPP VENDEUR STATUS NOTIF ERR]:', err.message));
+      }
+
+      // Déclenchement automatique des Webhooks Marchands avec signature HMAC SHA-256
+      try {
+        const { dispatchBoutiqueWebhook, WEBHOOK_EVENTS } = require('../services/webhookDispatcher');
+        const eventMap = {
+          confirmee: WEBHOOK_EVENTS.ORDER_CREATED,
+          expediee: WEBHOOK_EVENTS.ORDER_SHIPPED,
+          annulee: WEBHOOK_EVENTS.ORDER_CANCELLED,
+          livree: WEBHOOK_EVENTS.ORDER_PAID,
+        };
+        const evt = eventMap[req.body.statut];
+        if (evt) {
+          dispatchBoutiqueWebhook(req.params.boutiqueId, evt, {
+            commande_id: commande.id,
+            reference: commande.reference,
+            statut: commande.statut,
+            montant_total: commande.montant_total,
+            client_nom: commande.client_nom,
+            client_telephone: commande.client_telephone,
+            nom_produit: commande.nom_produit,
+            quantite: commande.quantite,
+          });
+        }
+      } catch (eWh) {
+        console.warn('[WEBHOOK TRIGGER ERR]:', eWh.message);
       }
 
       res.json(commande);

@@ -11,6 +11,7 @@ export interface SessionPayload {
   userId: string
   nom?: string
   email?: string
+  telephone?: string
 }
 
 export async function encrypt(payload: SessionPayload): Promise<string> {

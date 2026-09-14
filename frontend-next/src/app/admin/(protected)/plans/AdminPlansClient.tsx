@@ -235,7 +235,7 @@ export default function AdminPlansClient({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
           <h1 className="admin-page-titre" style={{ margin: 0 }}>
-            💎 Plans Tarifaires & Abonnements
+            Plans Tarifaires & Abonnements
             <span className="admin-page-count">{plans.length}</span>
           </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
@@ -337,10 +337,10 @@ export default function AdminPlansClient({
                 {/* Limites & Abonnés actifs */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
                   <span style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#334155' }}>
-                    📦 Max: {p.limites?.max_produits || 'Illimité'} produits
+                    Max: {p.limites?.max_produits || 'Illimité'} produits
                   </span>
                   <span style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#334155' }}>
-                    👥 Max: {p.limites?.max_caissiers || 1} caissier(s)
+                    Max: {p.limites?.max_caissiers || 1} caissier(s)
                   </span>
                   {p.nb_abonnes_actifs !== undefined && (
                     <span style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#047857' }}>
@@ -468,7 +468,7 @@ export default function AdminPlansClient({
             }}
           >
             <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 800, color: '#1e293b' }}>
-              {editingPlan ? `✏️ Modifier le plan "${editingPlan.label}"` : '✨ Créer un nouveau plan tarifaire'}
+              {editingPlan ? `Modifier le plan "${editingPlan.label}"` : 'Créer un nouveau plan tarifaire'}
             </h2>
 
             <form onSubmit={handleSave}>
@@ -601,7 +601,7 @@ export default function AdminPlansClient({
                 <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                   <input
                     type="text"
-                    placeholder="Ajouter un avantage (ex: 🎁 1er mois 100% OFFERT)..."
+                    placeholder="Ajouter un avantage (ex: 1er mois 100% OFFERT)..."
                     value={newAvantageText}
                     onChange={e => setNewAvantageText(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addAvantage() } }}

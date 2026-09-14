@@ -61,7 +61,7 @@ export async function GET(request: Request) {
             borderRadius: 14, padding: '14px 18px', marginBottom: 14,
           }}>
             <span style={{ fontSize: 15, fontWeight: 900, color: '#C75B00', letterSpacing: 0.3 }}>
-              ⚡ PITCH ÉCLAIR (30 SECONDES) :
+              PITCH ÉCLAIR (30 SECONDES) :
             </span>
             <p style={{ fontSize: 13.5, color: '#1C2B4A', margin: '6px 0 0', lineHeight: 1.45, fontWeight: 650 }}>
               « Bonjour ! Je suis avec Nopalou. On aide les boutiques du quartier à digitaliser leur caisse sur leur propre smartphone, gérer les dettes clients par WhatsApp et avoir une vitrine en ligne sans commission. Le 1er mois est 100% offert, je vous montre en 1 minute ? »
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
               borderRadius: 12, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4,
             }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: '#166534' }}>
-                ❌ S&apos;il n&apos;a PAS d&apos;application :
+                S&apos;il n&apos;a PAS d&apos;application :
               </span>
               <span style={{ fontSize: 12, color: '#334155', fontWeight: 600 }}>• Insister sur la <strong>simplicité</strong> et le <strong>zéro investissement</strong>.</span>
               <span style={{ fontSize: 12, color: '#334155', fontWeight: 600 }}>• Caisse PWA Offline (fonctionne même sans connexion).</span>
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
               borderRadius: 12, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4,
             }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: '#1E40AF' }}>
-                ✅ S&apos;il A DÉJÀ une application :
+                S&apos;il A DÉJÀ une application :
               </span>
               <span style={{ fontSize: 12, color: '#334155', fontWeight: 600 }}>• Insister sur le <strong>double canal</strong> (Caisse + Vitrine Web synchronisée).</span>
               <span style={{ fontSize: 12, color: '#334155', fontWeight: 600 }}>• Mobilité totale (suivi du chiffre d&apos;affaires à distance sur smartphone).</span>
@@ -98,7 +98,7 @@ export async function GET(request: Request) {
           {/* 3. Top 5 Objections & Parades Choc */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
             <span style={{ fontSize: 14.5, fontWeight: 900, color: '#1C2B4A', letterSpacing: -0.3 }}>
-              🛡️ PARADES AUX OBJECTIONS TERRAIN :
+              PARADES AUX OBJECTIONS TERRAIN :
             </span>
             {[
               {

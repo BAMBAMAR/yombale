@@ -99,7 +99,7 @@ export default function SearchableClientSelect({
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
               <span style={{ fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                👤 {selectedClient.prenom} {selectedClient.nom}
+                {selectedClient.prenom} {selectedClient.nom}
               </span>
               {selectedClient.telephone && (
                 <span style={{ fontSize: 11, color: '#64748b', background: '#f1f5f9', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
@@ -108,7 +108,7 @@ export default function SearchableClientSelect({
               )}
               {selectedClient.entreprise && (
                 <span style={{ fontSize: 11, color: '#0284c7', background: '#e0f2fe', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
-                  🏢 {selectedClient.entreprise}
+                  {selectedClient.entreprise}
                 </span>
               )}
             </div>
@@ -241,14 +241,14 @@ export default function SearchableClientSelect({
                       </div>
                       {c.entreprise && (
                         <div style={{ fontSize: 10.5, color: '#64748b' }}>
-                          🏢 {c.entreprise} {c.ninea ? `(NINEA: ${c.ninea})` : ''}
+                          {c.entreprise} {c.ninea ? `(NINEA: ${c.ninea})` : ''}
                         </div>
                       )}
                     </div>
 
                     {c.telephone && (
                       <span style={{ fontSize: 11, fontWeight: 700, background: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>
-                        📞 {c.telephone}
+                        {c.telephone}
                       </span>
                     )}
                   </div>

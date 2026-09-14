@@ -70,7 +70,7 @@ export async function GET() {
             fontSize: 18, color: '#FFA94D', fontWeight: 800,
             marginBottom: 32, display: 'flex', letterSpacing: 0.5,
           }}>
-            ⚡ BON PLAN &amp; COMPARATEUR DU JOUR
+            BON PLAN &amp; COMPARATEUR DU JOUR
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 18 }}>
@@ -104,7 +104,7 @@ export async function GET() {
             display: 'flex', letterSpacing: 0.5,
             boxShadow: '0 8px 24px rgba(199,91,0,0.4)',
           }}>
-            👉 nopalou.com
+            nopalou.com
           </div>
         </div>
 

@@ -17,7 +17,7 @@ export default async function AdminForceDeVentePage() {
       cache: 'no-store',
     })
     if (r.ok) settings = await r.json()
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L20]', err); }
 
   const prixDecouverte = parseInt(settings.tarif_decouverte || '2500') || 2500
   const prixPro = parseInt(settings.tarif_pro || '5000') || 5000

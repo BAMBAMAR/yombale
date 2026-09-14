@@ -57,7 +57,7 @@ export async function GET() {
             fontSize: 18, color: '#7C3AED', fontWeight: 900,
             marginBottom: 16, display: 'flex', letterSpacing: 0.5,
           }}>
-            💼 PROGRAMME APPORTEUR D&apos;AFFAIRES
+            PROGRAMME APPORTEUR D&apos;AFFAIRES
           </div>
 
           <span style={{
@@ -92,7 +92,7 @@ export async function GET() {
             display: 'flex', letterSpacing: -0.5,
             boxShadow: '0 8px 24px rgba(28, 43, 74, 0.25)',
           }}>
-            👉 nopalou.com/compte/apporteur
+            nopalou.com/compte/apporteur
           </div>
         </div>
 

@@ -74,6 +74,14 @@ function estErreurDestinataire(errObj = {}) {
     };
   }
 
+  // 131049 : Plafond marketing Meta (Ecosystem Engagement / Marketing Message Capping)
+  if (code === 131049 || msg.includes('ecosystem') || msg.includes('engagement') || title.includes('engagement')) {
+    return {
+      destinataire: true,
+      motif: 'Plafond marketing Meta atteint pour ce destinataire (Ecosystem Engagement Capping)',
+    };
+  }
+
   // 131051 / 131052 / 131053 : Format non supporté ou problème média sur l'appareil du client
   if (code === 131051 || code === 131052 || code === 131053 || msg.includes('unsupported message type')) {
     return {

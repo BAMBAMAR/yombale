@@ -232,7 +232,7 @@ function ImmoRow({
             className="admin-btn admin-btn--rejeter"
             style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
           >
-            🗑️ Supprimer
+            Supprimer
           </button>
         </div>
       </div>
@@ -322,7 +322,7 @@ function SponsoringRow({
             className="admin-btn admin-btn--rejeter"
             style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
           >
-            🗑️ Supprimer
+            Supprimer
           </button>
         </div>
       </div>
@@ -440,7 +440,7 @@ export default function AdminImmoClient({
     {
       key: 'valider',
       label: 'Valider les sélectionnées',
-      icon: '✅',
+      icon: '',
       color: 'green',
       onClick: handleBatchValider,
     },
@@ -454,14 +454,14 @@ export default function AdminImmoClient({
     {
       key: 'sponsoriser',
       label: 'Sponsoriser 30 jours',
-      icon: '⭐',
+      icon: '',
       color: 'blue',
       onClick: handleBatchSponsoriser,
     },
     {
       key: 'supprimer',
       label: 'Supprimer définitivement',
-      icon: '🗑️',
+      icon: '',
       color: 'red',
       confirmMsg: 'Êtes-vous sûr de vouloir supprimer définitivement ces annonces immobilières ?',
       onClick: handleBatchSupprimer,

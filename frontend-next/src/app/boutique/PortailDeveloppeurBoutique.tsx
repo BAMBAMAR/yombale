@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslation } from '@/i18n/context'
+import { Lock } from 'lucide-react'
+import DevCodeSnippets from './components/DevCodeSnippets'
 
 export interface ApiKey {
   id: string
@@ -45,9 +47,9 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
     const cacheKeyWebhooks = `nopalou_offline_webhooks_${boutiqueId}`
     
     const cKeys = localStorage.getItem(cacheKeyKeys)
-    if (cKeys) { try { setKeys(JSON.parse(cKeys)) } catch(e) {} }
+    if (cKeys) { try { setKeys(JSON.parse(cKeys)) } catch (e) { console.warn('[Nopalou:PortailDeveloppeurBoutique:L48]', e); } }
     const cWebhooks = localStorage.getItem(cacheKeyWebhooks)
-    if (cWebhooks) { try { setWebhooks(JSON.parse(cWebhooks)) } catch(e) {} }
+    if (cWebhooks) { try { setWebhooks(JSON.parse(cWebhooks)) } catch (e) { console.warn('[Nopalou:PortailDeveloppeurBoutique:L50]', e); } }
 
     if (!cKeys || !cWebhooks) setLoading(true)
     setErreur(null)
@@ -189,7 +191,9 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
     return (
       <div style={{ background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: 16, padding: 24, textOverflow: 'ellipsis' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 28 }}>🔒</span>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fed7aa', color: '#c2410c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Lock size={20} />
+          </div>
           <div>
             <h3 style={{ margin: 0, fontSize: 18, color: '#9a3412', fontWeight: 800 }}>{t('shop.developer')}</h3>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#c2410c' }}>
@@ -209,7 +213,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
           <span style={{ background: '#ff6600', color: '#fff', fontSize: 11, fontWeight: 900, padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase' }}>
             VIP
           </span>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>🔌 {t('shop.developer')}</h2>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>{t('shop.developer')}</h2>
         </div>
         <p style={{ margin: 0, fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>
           {t('shop.developerDesc')}
@@ -218,14 +222,14 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
 
       {erreur && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: 14, color: '#dc2626', fontSize: 13, fontWeight: 700 }}>
-          ⚠️ {erreur}
+          {erreur}
         </div>
       )}
 
       {/* SECTION 1 : CLÉS API REST */}
       <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
         <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-          🔑 {t('shop.apiKeysTitle')}
+          {t('shop.apiKeysTitle')}
         </h3>
 
         {/* Formulaire de génération */}
@@ -243,7 +247,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
             disabled={creationCleEnCours}
             style={{ padding: '10px 20px', background: '#ff6600', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
           >
-            {creationCleEnCours ? t('common.loading') : `⚡ ${t('shop.generateApiKeyBtn')}`}
+            {creationCleEnCours ? t('common.loading') : `${t('shop.generateApiKeyBtn')}`}
           </button>
         </form>
 
@@ -251,7 +255,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
         {cleBruteCreee && (
           <div style={{ background: '#f0fdf4', border: '2px solid #22c55e', borderRadius: 12, padding: 18, marginBottom: 24 }}>
             <div style={{ fontWeight: 800, color: '#166534', fontSize: 14, marginBottom: 6 }}>
-              ✅ {t('common.success')}
+              {t('common.success')}
             </div>
             <p style={{ margin: '0 0 10px', fontSize: 12, color: '#15803d' }}>
               {t('shop.copyKeyNotice')}
@@ -268,7 +272,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
                 }}
                 style={{ padding: '10px 16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
               >
-                📋 Copier
+                Copier
               </button>
             </div>
           </div>
@@ -311,7 +315,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
                         onClick={() => revoquerCleApi(k.id)}
                         style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                       >
-                        ❌ Révoquer
+                        Révoquer
                       </button>
                     </td>
                   </tr>
@@ -325,7 +329,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
       {/* SECTION 2 : WEBHOOKS ÉVÉNEMENTIELS */}
       <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, padding: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
         <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-          🔔 Endpoints Webhooks (Notifications en direct)
+          Endpoints Webhooks (Notifications en direct)
         </h3>
 
         {/* Formulaire Webhook */}
@@ -343,16 +347,16 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
             onChange={e => setEventsWebhook(e.target.value)}
             style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff' }}
           >
-            <option value="order.created">📦 Nouvelle commande</option>
-            <option value="stock.updated">📊 Modification de stock</option>
-            <option value="payment.success">💳 Paiement encaissé</option>
+            <option value="order.created">Nouvelle commande</option>
+            <option value="stock.updated">Modification de stock</option>
+            <option value="payment.success">Paiement encaissé</option>
           </select>
           <button
             type="submit"
             disabled={creationWebhookEnCours}
             style={{ padding: '10px 20px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
           >
-            {creationWebhookEnCours ? 'Ajout...' : '➕ Enregistrer Webhook'}
+            {creationWebhookEnCours ? 'Ajout...' : 'Enregistrer Webhook'}
           </button>
         </form>
 
@@ -360,7 +364,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
         {webhookSecretCree && (
           <div style={{ background: '#eff6ff', border: '2px solid #3b82f6', borderRadius: 12, padding: 18, marginBottom: 24 }}>
             <div style={{ fontWeight: 800, color: '#1e40af', fontSize: 14, marginBottom: 6 }}>
-              🛡 Secret de Signature Webhook (`X-Nopalou-Signature`)
+              Secret de Signature Webhook (`X-Nopalou-Signature`)
             </div>
             <p style={{ margin: '0 0 10px', fontSize: 12, color: '#1d4ed8' }}>
               Utilisez cette clé secrète dans votre backend pour vérifier la signature HMAC des requêtes webhook.
@@ -408,7 +412,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
                         onClick={() => supprimerWebhook(w.id)}
                         style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                       >
-                        🗑 Supprimer
+                        Supprimer
                       </button>
                     </td>
                   </tr>
@@ -418,6 +422,9 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
           </div>
         )}
       </div>
+
+      {/* SECTION 3 : EXEMPLES DE CODE & INTÉGRATION SDK */}
+      <DevCodeSnippets boutiqueId={boutiqueId} />
     </div>
   )
 }

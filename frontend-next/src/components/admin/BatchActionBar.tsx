@@ -142,8 +142,8 @@ export default function BatchActionBar({
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 >
-                  {isExecuting ? '⏳' : act.icon ? act.icon : null}
-                  <span>{isConfirming ? `⚠️ Confirmer ${act.label} ?` : act.label}</span>
+                  {isExecuting ? '' : act.icon ? act.icon : null}
+                  <span>{isConfirming ? `Confirmer ${act.label} ?` : act.label}</span>
                 </button>
 
                 {isConfirming && (

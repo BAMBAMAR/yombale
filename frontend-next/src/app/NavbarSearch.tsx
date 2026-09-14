@@ -252,11 +252,11 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
                       }}
                     >
                       <div style={{ width: 28, height: 28, borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}>
-                        <ExternalImg src={b.logo_url} alt="" fallback="🏪" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <ExternalImg src={b.logo_url} alt="" fallback="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       <div>
                         <p style={{ margin: 0, fontWeight: 700, fontSize: 13 }}>{b.nom}</p>
-                        <span style={{ fontSize: 11, color: '#6b7280' }}>📍 {b.ville}</span>
+                        <span style={{ fontSize: 11, color: '#6b7280' }}>{b.ville}</span>
                       </div>
                     </Link>
                   ))}

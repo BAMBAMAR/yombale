@@ -58,7 +58,7 @@ export default function GlobalError({
           textAlign: 'center',
           border: '1px solid #E8DDD2',
         }}>
-          <h2 style={{ color: '#C75B00', marginTop: 0, fontSize: '22px' }}>⚠️ Une erreur inattendue est survenue</h2>
+          <h2 style={{ color: '#C75B00', marginTop: 0, fontSize: '22px' }}>Une erreur inattendue est survenue</h2>
           <p style={{ color: '#6B5E52', fontSize: '14px', lineHeight: 1.5, marginBottom: '24px' }}>
             Nopalou n&apos;a pas pu charger la page demandée. Notre équipe a été notifiée et résout le problème au plus vite.
           </p>

@@ -23,9 +23,9 @@ interface PosRemiseModalProps {
 
 const MOTIFS_DEFAUT: RemiseMotif[] = [
   { id: 'anti_gaspi', nom: '🍌 Date courte / Anti-gaspi', pct: 30 },
-  { id: 'defaut', nom: '📦 Défaut packaging / Boîte', pct: 15 },
-  { id: 'personnel', nom: '👥 Personnel / Collaborateur', pct: 10 },
-  { id: 'geste', nom: '👑 Geste commercial client', pct: 5 },
+  { id: 'defaut', nom: 'Défaut packaging / Boîte', pct: 15 },
+  { id: 'personnel', nom: 'Personnel / Collaborateur', pct: 10 },
+  { id: 'geste', nom: 'Geste commercial client', pct: 5 },
 ]
 
 export default function PosRemiseModal({
@@ -118,7 +118,7 @@ export default function PosRemiseModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 900, color: 'var(--pos-text, #0f172a)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>🏷️</span> Règles & Motifs de Remises
+              <span></span> Règles & Motifs de Remises
             </h3>
             <span style={{ fontSize: 11, color: 'var(--pos-text3, #64748b)', fontWeight: 600 }}>
               Standard Retail Auchan • Autonomie caissier : max {plafondCaissierPct}% sans superviseur
@@ -151,7 +151,7 @@ export default function PosRemiseModal({
               boxShadow: mode === 'motifs' ? 'var(--pos-shadow)' : 'none',
             }}
           >
-            ⚡ Motifs Métiers (1 Clic)
+            Motifs Métiers (1 Clic)
           </button>
           <button
             type="button"
@@ -263,7 +263,7 @@ export default function PosRemiseModal({
                     >
                       {p}%
                       {depassePlafond && (
-                        <span style={{ position: 'absolute', top: -4, right: -4, fontSize: 8 }}>🔒</span>
+                        <span style={{ position: 'absolute', top: -4, right: -4, fontSize: 8 }}></span>
                       )}
                     </button>
                   )
@@ -328,7 +328,7 @@ export default function PosRemiseModal({
             onClick={() => { onApplyRemise(0); onClose(); }}
             style={{ width: '100%', padding: '9px', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: 'pointer' }}
           >
-            🗑️ Supprimer la remise active (-{remiseActuelle}%)
+            Supprimer la remise active (-{remiseActuelle}%)
           </button>
         )}
       </div>

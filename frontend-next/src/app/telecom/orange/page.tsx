@@ -1,6 +1,6 @@
 import OperateurLanding, { telecomLandingMetadata } from '../OperateurLanding'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 export const metadata = telecomLandingMetadata('orange')
 
 export default function Page() {

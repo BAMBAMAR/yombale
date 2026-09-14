@@ -67,7 +67,7 @@ export default function IntelligenceClient({
       if (res.ok) {
         setSelectedLeadTimeline(await res.json())
       }
-    } catch (_) {}
+    } catch (err) { console.warn('[Nopalou:IntelligenceClient:L70]', err); }
     finally {
       setLoadingTimeline(false)
     }
@@ -187,7 +187,7 @@ export default function IntelligenceClient({
                 </span>
               </div>
               <h2 style={{ fontSize: 20, fontWeight: 800, color: '#581C87', margin: 0 }}>
-                🎯 Cible Recommandée : {reco.segment_recommande} ({reco.zone})
+                Cible Recommandée : {reco.segment_recommande} ({reco.zone})
               </h2>
             </div>
 
@@ -216,7 +216,7 @@ export default function IntelligenceClient({
 
           <div style={{ marginTop: 16, background: '#FFF', padding: 16, borderRadius: 10, border: '1px solid #E9D5FF' }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#6B21A8', marginBottom: 8 }}>
-              💡 Pourquoi cette recommandation ? (Données probantes) :
+              Pourquoi cette recommandation ? (Données probantes) :
             </div>
             <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#4B5563' }}>
               {reco.justification_donnees?.map((just: string, idx: number) => (
@@ -231,7 +231,7 @@ export default function IntelligenceClient({
       <div style={{ background: '#FFF', border: '1px solid #E2E8F0', borderRadius: 12, padding: 20, marginBottom: 32 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0 }}>
-            📊 Entonnoir Global de Transformation (Funnel de Vente)
+            Entonnoir Global de Transformation (Funnel de Vente)
           </h3>
           <span style={{ fontSize: 12, color: '#64748B' }}>Suivi d'étapes de la collecte jusqu'au client payant</span>
         </div>
@@ -441,7 +441,7 @@ export default function IntelligenceClient({
         {/* Top Segments */}
         <div style={{ background: '#FFF', border: '1px solid #E2E8F0', borderRadius: 12, padding: 20 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>
-            🏆 Segments Métiers & Performance Réelle
+            Segments Métiers & Performance Réelle
           </h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -510,7 +510,7 @@ export default function IntelligenceClient({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', margin: 0 }}>
-              🔥 File des Prospects Prioritaires (Priorité 1)
+              File des Prospects Prioritaires (Priorité 1)
             </h3>
             <span style={{ fontSize: 12, color: '#64748B' }}>Ordonnés selon l'algorithme Lead Learning Score et Next Best Action</span>
           </div>

@@ -147,7 +147,7 @@ export async function GET(
               borderRadius: 24, padding: '30px 66px', boxShadow: `0 20px 50px ${palier.couleur}70`,
             }}
           >
-            <span style={{ fontSize: 40, display: 'flex' }}>🏪</span>
+            <span style={{ fontSize: 40, display: 'flex' }}></span>
             <span style={{ fontSize: 36, fontWeight: 900, color: '#fff', display: 'flex' }}>
               Créez votre boutique sur Nopalou
             </span>

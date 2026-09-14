@@ -18,7 +18,8 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const tab = searchParams.get('tab') || undefined
-  const isMainPage = pathname === '/compte'
+  const isDashboard = !tab || tab === 'accueil' || tab === 'dashboard'
+  const isMainPage = pathname === '/compte' && isDashboard
   const { t } = useTranslation()
 
   return (

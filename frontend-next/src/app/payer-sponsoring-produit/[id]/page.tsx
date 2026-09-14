@@ -26,7 +26,7 @@ export default async function PayerSponsoringProduitPage({ params }: { params: P
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>📦</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Produit introuvable.</p>
           <Link href="/boutique" className="budget-pill active" style={{ marginTop: 8 }}>
             Retour
@@ -56,7 +56,7 @@ export default async function PayerSponsoringProduitPage({ params }: { params: P
           { label: 'Produit', href: `/produit/${id}` },
           { label: 'Mettre en avant' }
         ]}
-        emoji="⭐"
+        emoji=""
         titre="Mettre en avant ce produit"
         compteur={`Sponsorisez "${nomCourt}" pour 30 jours afin de le propulser en tête des résultats.`}
       />

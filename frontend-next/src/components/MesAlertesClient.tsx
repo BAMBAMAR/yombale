@@ -132,7 +132,7 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
             textDecoration: 'none',
           }}
         >
-          <span>🔍 Parcourir les produits</span>
+          <span>Parcourir les produits</span>
         </Link>
       </div>
     )

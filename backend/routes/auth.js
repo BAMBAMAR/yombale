@@ -13,11 +13,17 @@ const { verifierToken } = require('../middlewares/auth');
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
 
 const { genererCodeUnique } = require('../lib/codeApporteur');
+const { validerForceMotDePasse } = require('../lib/passwordValidator');
+const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
 router.post('/inscription',
   limiterAuth,
   body('email').isEmail().normalizeEmail(),
-  body('mot_de_passe').isLength({ min: 6 }),
+  body('mot_de_passe').custom(val => {
+    const check = validerForceMotDePasse(val);
+    if (!check.valide) throw new Error(check.message);
+    return true;
+  }),
   body('nom').trim().notEmpty(),
   async (req, res) => {
     const errors = validationResult(req);
@@ -92,13 +98,34 @@ router.post('/connexion',
     try {
       const { email, mot_de_passe } = req.body;
       const { rows } = await pool.query(
-        'SELECT id,nom,email,mot_de_passe_hash,email_verifie,suspendu,supprime_le FROM utilisateurs WHERE email=$1', [email]
+        'SELECT id,nom,email,telephone,mot_de_passe_hash,email_verifie,suspendu,supprime_le,a2f_actif,a2f_telephone FROM utilisateurs WHERE email=$1', [email]
       );
       if (!rows.length) return res.status(401).json({ error: 'Identifiants incorrects' });
       const ok = await bcrypt.compare(mot_de_passe, rows[0].mot_de_passe_hash);
       if (!ok) return res.status(401).json({ error: 'Identifiants incorrects' });
       if (rows[0].suspendu) return res.status(403).json({ error: 'Compte suspendu. Contactez le support.' });
       if (rows[0].supprime_le) return res.status(403).json({ error: 'Ce compte est en cours de suppression.' });
+
+      // Détection A2F (2FA WhatsApp optionnel pour marchands & admins)
+      if (rows[0].a2f_actif) {
+        const destPhone = normalisePhone(rows[0].a2f_telephone || rows[0].telephone);
+        if (destPhone) {
+          const code2FA = crypto.randomInt(100000, 1000000).toString();
+          const tempToken = jwt.sign({ userId: rows[0].id, type: '2fa_pending' }, process.env.JWT_SECRET, { expiresIn: '10m' });
+          otps.set(`2fa_${rows[0].id}`, { code: code2FA, expiresAt: Date.now() + 10 * 60 * 1000, tentatives: 0 });
+
+          sendWhatsAppText(destPhone, `Nopalou - Votre code d'authentification à double facteur (2FA) est : *${code2FA}*.\nValide pendant 10 minutes.`)
+            .catch(err => console.warn('[2FA SEND WARN]', err.message));
+
+          return res.json({
+            require2FA: true,
+            tempToken,
+            telephoneMasque: destPhone.slice(0, 4) + '****' + destPhone.slice(-2),
+            message: 'Un code de sécurité à 6 chiffres vous a été envoyé sur WhatsApp.'
+          });
+        }
+      }
+
       const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
       res.cookie('nopalou_session', token, {
         httpOnly: true,
@@ -114,6 +141,149 @@ router.post('/connexion',
     }
   }
 );
+
+// POST /api/auth/connexion-2fa — valider le code 2FA WhatsApp
+router.post('/connexion-2fa',
+  limiterAuth,
+  body('tempToken').notEmpty(),
+  body('code').trim().isLength({ min: 6, max: 6 }),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    try {
+      const { tempToken, code } = req.body;
+      let payload;
+      try {
+        payload = jwt.verify(tempToken, process.env.JWT_SECRET);
+      } catch {
+        return res.status(401).json({ error: 'Session 2FA expirée ou invalide. Veuillez vous reconnecter.' });
+      }
+
+      if (payload.type !== '2fa_pending') {
+        return res.status(401).json({ error: 'Token 2FA invalide' });
+      }
+
+      const key = `2fa_${payload.userId}`;
+      const data = otps.get(key);
+      if (!data) return res.status(400).json({ error: 'Aucun code 2FA en attente ou code expiré' });
+      if (Date.now() > data.expiresAt) {
+        otps.delete(key);
+        return res.status(400).json({ error: 'Le code 2FA a expiré. Veuillez vous reconnecter.' });
+      }
+
+      data.tentatives = (data.tentatives || 0) + 1;
+      if (data.tentatives > 5) {
+        otps.delete(key);
+        return res.status(429).json({ error: 'Trop de tentatives incorrectes. Le code a été invalidé.' });
+      }
+
+      const bufExpected = Buffer.from(String(data.code));
+      const bufActual = Buffer.from(String(code || '').trim());
+      if (bufExpected.length !== bufActual.length || !crypto.timingSafeEqual(bufExpected, bufActual)) {
+        return res.status(400).json({ error: 'Code 2FA incorrect' });
+      }
+
+      otps.delete(key);
+
+      const { rows } = await pool.query(
+        'SELECT id,nom,email,telephone,email_verifie,suspendu,supprime_le,a2f_actif FROM utilisateurs WHERE id=$1',
+        [payload.userId]
+      );
+      if (!rows.length || rows[0].suspendu || rows[0].supprime_le) {
+        return res.status(403).json({ error: 'Compte inaccessible' });
+      }
+
+      const token = jwt.sign({ userId: rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      res.cookie('nopalou_session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      const { suspendu, supprime_le, ...user } = rows[0];
+      res.json({ user, token });
+    } catch (err) {
+      console.error('[AUTH 2FA VERIFY]', err.message);
+      res.status(500).json({ error: 'Erreur serveur lors de la validation 2FA' });
+    }
+  }
+);
+
+// GET /api/auth/2fa/statut — état de l'A2F
+router.get('/2fa/statut', verifierToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT a2f_actif, a2f_telephone, telephone FROM utilisateurs WHERE id=$1',
+      [req.user.userId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({
+      a2f_actif: !!rows[0].a2f_actif,
+      telephone: rows[0].a2f_telephone || rows[0].telephone || null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/2fa/activer — activer le 2FA WhatsApp
+router.post('/2fa/activer',
+  verifierToken,
+  body('telephone').trim().notEmpty(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    try {
+      const normTel = normalisePhone(req.body.telephone);
+      if (!normTel) return res.status(400).json({ error: 'Numéro de téléphone invalide pour le Sénégal' });
+
+      await pool.query(
+        'UPDATE utilisateurs SET a2f_actif=true, a2f_telephone=$1 WHERE id=$2',
+        [normTel, req.user.userId]
+      );
+
+      enregistrerAdminLog({
+        adminNom: req.user.nom || 'Utilisateur',
+        adminRole: 'marchand',
+        action: '2fa_active',
+        cibleType: 'utilisateur',
+        cibleId: req.user.userId,
+        description: `Activation de la double authentification WhatsApp (+${normTel})`,
+        req,
+      }).catch(() => {});
+
+      res.json({ success: true, message: 'Authentification à double facteur (2FA) WhatsApp activée avec succès.' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// POST /api/auth/2fa/desactiver — désactiver le 2FA WhatsApp
+router.post('/2fa/desactiver', verifierToken, async (req, res) => {
+  try {
+    await pool.query(
+      'UPDATE utilisateurs SET a2f_actif=false WHERE id=$1',
+      [req.user.userId]
+    );
+
+    enregistrerAdminLog({
+      adminNom: req.user.nom || 'Utilisateur',
+      adminRole: 'marchand',
+      action: '2fa_desactive',
+      cibleType: 'utilisateur',
+      cibleId: req.user.userId,
+      description: 'Désactivation de la double authentification WhatsApp',
+      req,
+    }).catch(() => {});
+
+    res.json({ success: true, message: 'Authentification à double facteur désactivée.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // POST /api/auth/deconnexion — purge du cookie HttpOnly
 router.post('/deconnexion', (req, res) => {
@@ -169,7 +339,14 @@ router.post('/mot-de-passe-oublie', limiterAuth, body('email').isEmail(), async 
 });
 
 // POST /api/auth/reinitialiser-mot-de-passe — appliquer le nouveau mot de passe
-router.post('/reinitialiser-mot-de-passe', limiterAuth, body('mot_de_passe').isLength({ min: 6 }), async (req, res) => {
+router.post('/reinitialiser-mot-de-passe',
+  limiterAuth,
+  body('mot_de_passe').custom(val => {
+    const check = validerForceMotDePasse(val);
+    if (!check.valide) throw new Error(check.message);
+    return true;
+  }),
+  async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   try {
@@ -207,17 +384,30 @@ router.get('/parrainage', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// PUT /api/auth/profil — modifier nom et/ou email
+// GET /api/auth/profil — obtenir les informations du profil utilisateur
+router.get('/profil', verifierToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, nom, email, telephone, email_verifie, created_at FROM utilisateurs WHERE id=$1',
+      [req.user.userId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ user: rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/auth/profil — modifier nom, email et/ou telephone
 router.put('/profil',
   verifierToken,
   body('nom').optional().trim().notEmpty().withMessage('Le nom ne peut pas être vide'),
   body('email').optional().isEmail().normalizeEmail().withMessage('Email invalide'),
+  body('telephone').optional().trim(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     try {
-      const { nom, email } = req.body;
-      if (!nom && !email) return res.status(400).json({ error: 'Au moins un champ à modifier' });
+      const { nom, email, telephone } = req.body;
+      if (!nom && !email && telephone === undefined) return res.status(400).json({ error: 'Au moins un champ à modifier' });
 
       if (email) {
         const exist = await pool.query(
@@ -230,12 +420,17 @@ router.put('/profil',
       const sets = [];
       const vals = [];
       let i = 1;
-      if (nom)   { sets.push(`nom=$${i++}`);   vals.push(nom); }
-      if (email) { sets.push(`email=$${i++}`); vals.push(email); }
+      if (nom)                  { sets.push(`nom=$${i++}`);       vals.push(nom); }
+      if (email)                { sets.push(`email=$${i++}`);     vals.push(email); }
+      if (telephone !== undefined) {
+        const cleanTel = telephone ? String(telephone).replace(/[^\d+]/g, '').trim() : null;
+        sets.push(`telephone=$${i++}`);
+        vals.push(cleanTel);
+      }
       vals.push(req.user.userId);
 
       const { rows } = await pool.query(
-        `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email`,
+        `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email, telephone`,
         vals
       );
       res.json({ user: rows[0] });
@@ -559,6 +754,39 @@ router.post('/magic-login', limiterAuth, async (req, res) => {
 
     const sessionToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ user, token: sessionToken });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/auth/2fa/demander — Générer et envoyer un code OTP WhatsApp
+router.post('/2fa/demander', verifierToken, async (req, res) => {
+  try {
+    const { action = 'operation_sensible', label = 'valider votre opération' } = req.body;
+    const { rows } = await pool.query('SELECT id, telephone, nom FROM utilisateurs WHERE id = $1', [req.user.userId]);
+    if (!rows.length || !rows[0].telephone) {
+      return res.status(400).json({ error: 'Numéro de téléphone introuvable sur votre compte' });
+    }
+    const { genererOtp, envoyerOtpWhatsApp } = require('../services/otp');
+    const code = await genererOtp(req.user.userId, action, rows[0].telephone);
+    await envoyerOtpWhatsApp(rows[0].telephone, code, label);
+    res.json({ success: true, message: 'Code de sécurité envoyé sur votre WhatsApp', telephone_masque: rows[0].telephone.slice(-4) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/auth/2fa/valider — Vérifier le code OTP saisi
+router.post('/2fa/valider', verifierToken, async (req, res) => {
+  try {
+    const { action = 'operation_sensible', code } = req.body;
+    if (!code) return res.status(400).json({ error: 'Code requis' });
+    const { verifierOtp } = require('../services/otp');
+    const result = await verifierOtp(req.user.userId, action, code);
+    if (!result.valide) {
+      return res.status(400).json({ error: result.error });
+    }
+    res.json({ success: true, message: 'Opération validée avec succès' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

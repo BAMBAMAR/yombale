@@ -27,7 +27,7 @@ function badge(u: Utilisateur) {
         ? <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>✓ vérifié</span>
         : <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>non vérifié</span>}
       {u.suspendu && <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626' }}>🚫 suspendu</span>}
-      {u.supprime_le && <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706' }}>⏳ en suppression</span>}
+      {u.supprime_le && <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706' }}>en suppression</span>}
     </div>
   )
 }
@@ -95,7 +95,7 @@ export default function ComptesTableClient({ utilisateurs }: { utilisateurs: Uti
     {
       key: 'reactiver',
       label: 'Réactiver les comptes',
-      icon: '✅',
+      icon: '',
       color: 'green',
       onClick: handleBatchReactiver,
     },
@@ -109,7 +109,7 @@ export default function ComptesTableClient({ utilisateurs }: { utilisateurs: Uti
     {
       key: 'supprimer',
       label: 'Supprimer (En suppression)',
-      icon: '🗑️',
+      icon: '',
       color: 'red',
       confirmMsg: 'Êtes-vous sûr de vouloir passer ces comptes en état de suppression ?',
       onClick: handleBatchSupprimer,

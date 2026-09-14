@@ -91,7 +91,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 16, fontFamily: 'var(--font-archivo), sans-serif', color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>⭐</span> {t('shop.reviewsAndRatingsTitle')} ({formatNumber(totalAvis)})
+            <span></span> {t('shop.reviewsAndRatingsTitle')} ({formatNumber(totalAvis)})
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             <span style={{ fontSize: 20, fontWeight: 900, color: '#f59e0b' }}>{formatNumber(noteMoyenne)}</span>
@@ -221,7 +221,7 @@ export default function AvisClients({ boutiqueId, produitId }: { boutiqueId: str
                     boxShadow: '0 2px 8px rgba(199,91,0,.3)',
                   }}
                 >
-                  {submitting ? t('common.loading') : `${t('shop.publishReviewBtn')} ⭐`}
+                  {submitting ? t('common.loading') : `${t('shop.publishReviewBtn')} `}
                 </button>
               </form>
             )}

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import '@/styles/annonces.css'
 import Link from 'next/link'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import CardActions from '@/app/CardActions'
@@ -32,18 +33,18 @@ async function fetchAnnonces(
 
 const CATEGORIES = [
   { slug: '',             label: 'Toutes',       emoji: '🗂' },
-  { slug: 'smartphones',  label: 'Téléphones',   emoji: '📱' },
-  { slug: 'informatique', label: 'Informatique', emoji: '💻' },
+  { slug: 'smartphones',  label: 'Téléphones',   emoji: '' },
+  { slug: 'informatique', label: 'Informatique', emoji: '' },
   { slug: 'tv-electro',   label: 'TV & Électro', emoji: '📺' },
   { slug: 'mode',         label: 'Mode',         emoji: '👗' },
-  { slug: 'maison',       label: 'Maison',       emoji: '🏠' },
-  { slug: 'auto-moto',    label: 'Auto & Moto',  emoji: '🚗' },
-  { slug: 'immo',         label: 'Immobilier',   emoji: '🏡' },
+  { slug: 'maison',       label: 'Maison',       emoji: '' },
+  { slug: 'auto-moto',    label: 'Auto & Moto',  emoji: '' },
+  { slug: 'immo',         label: 'Immobilier',   emoji: '' },
   { slug: 'beaute',       label: 'Beauté',       emoji: '💄' },
-  { slug: 'emploi',       label: 'Emploi',       emoji: '💼' },
+  { slug: 'emploi',       label: 'Emploi',       emoji: '' },
   { slug: 'jeux',         label: 'Jeux',         emoji: '🎮' },
-  { slug: 'services',     label: 'Services',     emoji: '🛠' },
-  { slug: 'divers',       label: 'Divers',       emoji: '📦' },
+  { slug: 'services',     label: 'Services',     emoji: '' },
+  { slug: 'divers',       label: 'Divers',       emoji: '' },
 ]
 
 const TRIS = [
@@ -150,7 +151,7 @@ export default async function AnnoncesPage({
   let categoriesActives: string[] | null = null
   try {
     categoriesActives = await apiFetch<string[]>('/annonces/categories-actives')
-  } catch (e) {}
+  } catch (e) { console.warn('[Nopalou:page:L153]', e); }
 
   const filteredCategories = CATEGORIES.filter(cat => !cat.slug || categoriesActives === null || categoriesActives.includes(cat.slug))
 
@@ -257,8 +258,7 @@ export default async function AnnoncesPage({
             const photo = Array.isArray(a.photos) ? a.photos[0] : null
             const isBooste = a.boost_until && new Date(a.boost_until) > new Date()
             return (
-              <Link href={`/annonces/${a.id}`} key={a.id} className="annonce-pub-card" style={{ position: 'relative' }}>
-                <CardActions id={a.id} nom={a.titre} type="annonce" />
+              <Link href={`/annonces/${a.id}`} key={a.id} className="annonce-pub-card">
                 <div className="annonce-pub-img-wrap">
                   {isBooste && (
                     <span style={{
@@ -269,14 +269,14 @@ export default async function AnnoncesPage({
                       boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
                       display: 'flex', alignItems: 'center', gap: 3
                     }}>
-                      ⚡ BOOSTÉ
+                      BOOSTÉ
                     </span>
                   )}
                   {photo
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={cloudinaryHQ(photo, { width: 400 })} alt={a.titre} className="annonce-pub-img" />
                     : <div className="annonce-pub-img annonce-pub-img--vide">
-                        <span>{CATEGORIES.find(c => c.slug === a.categorie_slug)?.emoji ?? '📦'}</span>
+                        <span>{CATEGORIES.find(c => c.slug === a.categorie_slug)?.emoji ?? ''}</span>
                       </div>
                   }
                   <span className="annonce-pub-cat">{catLabel(a.categorie_slug)}</span>
@@ -288,6 +288,7 @@ export default async function AnnoncesPage({
                     <span>{a.quartier ? `${a.quartier}, ` : ''}{a.ville ?? 'Dakar'}</span>
                     <span>{formatDate(a.created_at)}</span>
                   </div>
+                  <CardActions id={a.id} nom={a.titre} type="annonce" />
                 </div>
               </Link>
             )
@@ -331,7 +332,7 @@ export default async function AnnoncesPage({
             ),
           },
           {
-            emoji: '📢',
+            emoji: '',
             text: (
               <>
                 Publier une annonce est gratuit et rapide. Filtrez par catégorie, budget ou ville pour trouver

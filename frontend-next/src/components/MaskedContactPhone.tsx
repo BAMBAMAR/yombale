@@ -43,7 +43,7 @@ export default function MaskedContactPhone({
           event_label: titre,
         })
       }
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:MaskedContactPhone:L46]', err); }
   }
 
   if (!revealed) {
@@ -64,7 +64,7 @@ export default function MaskedContactPhone({
           }}
           title="Cliquez pour afficher le numéro de téléphone complet"
         >
-          📞 {maskedDisplay}
+          {maskedDisplay}
           <span style={{ fontSize: 12, opacity: 0.85, fontWeight: 500, background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: 12 }}>
             👁️ Afficher
           </span>
@@ -76,7 +76,7 @@ export default function MaskedContactPhone({
   return (
     <>
       <a href={`tel:${phone}`} className="annonce-contact-tel">
-        📞 {phone}
+        {phone}
       </a>
       <a
         href={`https://wa.me/${cleanDigits}?text=${encodeURIComponent(

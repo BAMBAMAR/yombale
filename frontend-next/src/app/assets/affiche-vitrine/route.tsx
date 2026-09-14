@@ -39,7 +39,7 @@ export async function GET(request: Request) {
           background: '#FFF7ED', border: '2px solid #FED7AA',
           borderRadius: 40, padding: '12px 32px', marginBottom: 36,
         }}>
-          <span style={{ fontSize: 24 }}>⭐</span>
+          <span style={{ fontSize: 24 }}></span>
           <span style={{ fontSize: 22, fontWeight: 900, color: '#C75B00', letterSpacing: '0.05em' }}>
             COMMERCE PARTENAIRE OFFICIEL NOPALOU
           </span>
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 32 }}>📲</span>
+            <span style={{ fontSize: 32 }}></span>
             <span style={{ fontSize: 28, fontWeight: 900, color: '#1C2B4A' }}>
               Scannez pour voir tous nos articles &amp; prix
             </span>
@@ -85,9 +85,9 @@ export async function GET(request: Request) {
           marginTop: 48,
         }}>
           {[
-            { icon: '💬', titre: 'Commande WhatsApp', desc: 'Directe avec nous' },
-            { icon: '🏷️', titre: 'Prix & Stock en Direct', desc: 'Mis à jour en temps réel' },
-            { icon: '🚀', titre: 'Livraison Rapide', desc: 'À domicile ou retrait' },
+            { icon: '', titre: 'Commande WhatsApp', desc: 'Directe avec nous' },
+            { icon: '', titre: 'Prix & Stock en Direct', desc: 'Mis à jour en temps réel' },
+            { icon: '', titre: 'Livraison Rapide', desc: 'À domicile ou retrait' },
           ].map((a, i) => (
             <div key={i} style={{
               flex: 1, background: '#FFF7ED', border: '2px solid #FFEDD5',

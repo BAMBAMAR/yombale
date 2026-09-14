@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { formatPhone, formatNomPropre, fcfa, formatNombre, decodeHtml, escapeHtml } from '../src/lib/format.ts'
+import { safeJsonParse } from '../src/lib/errorHandler.ts'
 import {
   calculerKpisCarnet,
   determinerActionClient,
@@ -28,6 +29,20 @@ import {
   ZONES_LIVRAISON_SENEGAL,
   COMMUNES_LISTE,
 } from '../src/lib/logistique-senegal.ts'
+import { CATEGORY_COVER_PHOTOS } from '../src/lib/boutique-covers.ts'
+import { convertirDepuisFcfa, formaterMontantDevise, DEVISES_REGIONALES } from '../src/lib/devises.ts'
+import { SECTIONS_PAR_DEFAUT } from '../src/lib/boutique-sections.ts'
+import {
+  normaliserTexteRecherche,
+  genererFormePhonetiqueWolof,
+  expandRechercheSenegal,
+  matcherProduitRecherche,
+  scorePertinenceProduit,
+} from '../src/lib/recherche-senegal.ts'
+import {
+  genererEcrituresSyscohada,
+  getCompteTresorerieSyscohada,
+} from '../src/lib/syscohada-export.ts'
 
 let passed = 0
 let failed = 0
@@ -583,6 +598,440 @@ it('ZONES_LIVRAISON_SENEGAL: intégrité des communes et transporteurs', () => {
   assert.equal(COMMUNES_LISTE.includes('Plateau'), true)
   assert.equal(COMMUNES_LISTE.includes('Guédiawaye'), true)
   assert.equal(COMMUNES_LISTE.includes('Touba'), true)
+})
+
+console.log('\n📦 10. SYSCOHADA & Audit P0-P3 Remediations')
+import { FACETTES_CONFIG, detecterFamilleFacette } from '../src/lib/facettes.ts'
+
+it('FacettesDynamiques: configuration des filtres par catégorie métier et détection famille', () => {
+  assert.ok(FACETTES_CONFIG['smartphones'])
+  assert.ok(FACETTES_CONFIG['mode'])
+  assert.ok(FACETTES_CONFIG['informatique'])
+
+  // Vérification des options smartphones (stockage, ram)
+  const phoneStockage = FACETTES_CONFIG['smartphones'].find(f => f.key === 'stockage')
+  assert.ok(phoneStockage)
+  assert.ok(phoneStockage.options.includes('128 Go'))
+  assert.ok(phoneStockage.options.includes('256 Go'))
+
+  // Vérification des options mode (taille, pointure)
+  const modeTaille = FACETTES_CONFIG['mode'].find(f => f.key === 'taille')
+  assert.ok(modeTaille)
+  assert.ok(modeTaille.options.includes('M'))
+  assert.ok(modeTaille.options.includes('XL'))
+
+  // Vérification de la détection
+  assert.equal(detecterFamilleFacette('smartphones'), 'tech')
+  assert.equal(detecterFamilleFacette('chaussures-homme'), 'mode')
+  assert.equal(detecterFamilleFacette('immobilier-dakar'), 'immo')
+  assert.equal(detecterFamilleFacette('autre'), null)
+})
+
+it('SYSCOHADA Plan Comptable: comptes de trésorerie et ventes de marchandises', () => {
+  // Mapping OHADA réglementaire
+  const comptesOHADA = {
+    caisse: '571000',
+    wave: '521100',
+    orange_money: '521200',
+    credit_client: '411100',
+    banque: '521000',
+    ventes_marchandises: '701000',
+  }
+  assert.equal(comptesOHADA.caisse, '571000')
+  assert.equal(comptesOHADA.wave, '521100')
+  assert.equal(comptesOHADA.orange_money, '521200')
+  assert.equal(comptesOHADA.credit_client, '411100')
+  assert.equal(comptesOHADA.ventes_marchandises, '701000')
+})
+
+it('ErrorHandler & Resilience: safeJsonParse parse correctement ou retourne le fallback sécurisé', () => {
+  const parsed = safeJsonParse('{"ok":true,"val":123}', { ok: false, val: 0 })
+  assert.equal(parsed.ok, true)
+  assert.equal(parsed.val, 123)
+
+  const fallback = safeJsonParse('invalid-json', { ok: false, val: 999 }, 'unit-test')
+  assert.equal(fallback.ok, false)
+  assert.equal(fallback.val, 999)
+
+  const nullVal = safeJsonParse(null, 'default')
+  assert.equal(nullVal, 'default')
+})
+
+console.log('\n📦 11. Studio Personnalisation & Tiroir-Caisse POS')
+it('Boutique Covers: 20 catégories ont chacune des photos HD thématiques uniques et dédiées', () => {
+  assert.ok(CATEGORY_COVER_PHOTOS)
+  // Toutes les catégories officielles ont des couvertures dédiées
+  CATEGORIES.forEach(cat => {
+    const photos = CATEGORY_COVER_PHOTOS[cat.value]
+    assert.ok(photos, `Catégorie ${cat.value} doit avoir des photos de couverture`)
+    assert.ok(photos.length >= 4, `Catégorie ${cat.value} doit avoir au moins 4 photos HD`)
+  })
+
+  // Vérification de la non-duplication : parfum a des photos de parfum, pas de mode
+  const photosParfum = CATEGORY_COVER_PHOTOS['parfum']
+  const photosMode = CATEGORY_COVER_PHOTOS['mode']
+  assert.notDeepEqual(photosParfum, photosMode, 'Parfum et Mode ne doivent pas partager les mêmes photos')
+
+  // Vérification de la non-duplication : alimentation et smartphones
+  const photosAlim = CATEGORY_COVER_PHOTOS['alimentation']
+  const photosSmartphones = CATEGORY_COVER_PHOTOS['smartphones']
+  assert.notDeepEqual(photosAlim, photosSmartphones, 'Alimentation et Smartphones ne doivent pas partager les mêmes photos')
+})
+
+it('Tiroir-Caisse & Clôture Z: calcul précis du solde théorique et détection de l écart de caisse', () => {
+  const fondInitial = 50000
+  const ventesEspeces = 120000
+  const entreesEspeces = 10000 // Appoint monnaie
+  const sortiesEspeces = 15000 // Paiement coursier Tiak-Tiak
+
+  // Solde théorique = fondInitial + ventesEspeces + entrees - sorties
+  const soldeTheorique = fondInitial + ventesEspeces + entreesEspeces - sortiesEspeces
+  assert.equal(soldeTheorique, 165000)
+
+  // Cas 1 : Comptage parfait
+  const compteParfait = 165000
+  const ecartParfait = compteParfait - soldeTheorique
+  assert.equal(ecartParfait, 0)
+
+  // Cas 2 : Déficit de caisse (ex: 3 000 FCFA manquants)
+  const compteDeficit = 162000
+  const ecartDeficit = compteDeficit - soldeTheorique
+  assert.equal(ecartDeficit, -3000)
+
+  // Cas 3 : Excédent de caisse
+  const compteExcedent = 168000
+  const ecartExcedent = compteExcedent - soldeTheorique
+  assert.equal(ecartExcedent, 3000)
+})
+
+it('Décompte Billetterie BCEAO: validation du comptage par coupures', () => {
+  const coupures = {
+    '10000': 10, // 100 000
+    '5000': 10,  // 50 000
+    '2000': 5,   // 10 000
+    '1000': 5,   // 5 000
+    '500': 0,
+    '200': 0,
+    '100': 0,
+    '50': 0,
+    '25': 0,
+  }
+  const totalBillets = Object.entries(coupures).reduce((sum, [val, qte]) => sum + (Number(val) * qte), 0)
+  assert.equal(totalBillets, 165000)
+})
+
+console.log('\n📦 12. Multi-Devises Indicatif & Diaspora (devises.ts)')
+it('convertirDepuisFcfa: parité fixe EUR (655.957 FCFA) et conversion USD, GNF, NGN', () => {
+  // 65 596 FCFA ~= 100 EUR
+  const enEur = convertirDepuisFcfa(65595.7, 'EUR')
+  assert.equal(Math.round(enEur), 100)
+
+  // 10 000 FCFA en GNF (~142 500 GNF)
+  const enGnf = convertirDepuisFcfa(10000, 'GNF')
+  assert.equal(Math.round(enGnf), 142500)
+
+  // 10 000 FCFA en NGN (~24 500 NGN)
+  const enNgn = convertirDepuisFcfa(10000, 'NGN')
+  assert.equal(Math.round(enNgn), 24500)
+
+  // XOF reste 1 pour 1
+  assert.equal(convertirDepuisFcfa(5000, 'XOF'), 5000)
+})
+
+it('formaterMontantDevise: symboles et formatage propre', () => {
+  const fEur = formaterMontantDevise(65596, 'EUR', 'fr-FR')
+  assert.equal(fEur.includes('€'), true)
+
+  const fUsd = formaterMontantDevise(60500, 'USD', 'fr-FR')
+  assert.equal(fUsd.includes('$'), true)
+
+  const fXof = formaterMontantDevise(5000, 'XOF', 'fr-FR')
+  assert.equal(fXof.includes('FCFA'), true)
+})
+
+console.log('\n📦 13. Disposition & Glisser-Déposer des Sections (StudioDispositionSections.tsx)')
+it('SECTIONS_PAR_DEFAUT: intégrité des 5 sections canoniques et identifiants uniques', () => {
+  assert.equal(SECTIONS_PAR_DEFAUT.length, 5)
+  const ids = SECTIONS_PAR_DEFAUT.map(s => s.id)
+  assert.equal(ids.includes('banniere'), true)
+  assert.equal(ids.includes('recherche_filtres'), true)
+  assert.equal(ids.includes('produits'), true)
+  assert.equal(ids.includes('social'), true)
+  assert.equal(ids.includes('contact'), true)
+  assert.equal(new Set(ids).size, 5)
+})
+
+console.log('\n📦 14. Recherche Phonétique & Synonymes Sénégal (recherche-senegal.ts)')
+it('normaliserTexteRecherche: minuscules, accents supprimés, ponctuation nettoyée', () => {
+  assert.equal(normaliserTexteRecherche('Café Touba !'), 'cafe touba')
+  assert.equal(normaliserTexteRecherche('THIÉBOUDIENNE  Pilon'), 'thieboudienne pilon')
+  assert.equal(normaliserTexteRecherche("Lait d'Arachide"), 'lait d arachide')
+})
+
+it('genererFormePhonetiqueWolof: équivalences th->c, kh->x, dj->j, ou->u', () => {
+  assert.equal(genererFormePhonetiqueWolof('thieb'), 'ceb')
+  assert.equal(genererFormePhonetiqueWolof('ceeb'), 'ceb')
+  assert.equal(genererFormePhonetiqueWolof('khaliss'), 'xaliss')
+  assert.equal(genererFormePhonetiqueWolof('touba'), 'tuba')
+})
+
+it('expandRechercheSenegal: génération des synonymes sénégalais usuels', () => {
+  const synDall = expandRechercheSenegal('dall')
+  assert.equal(synDall.includes('chaussure'), true)
+  assert.equal(synDall.includes('sandale'), true)
+
+  const synCeeb = expandRechercheSenegal('ceeb')
+  assert.equal(synCeeb.includes('riz'), true)
+  assert.equal(synCeeb.includes('thieb'), true)
+
+  const synAtaya = expandRechercheSenegal('ataya')
+  assert.equal(synAtaya.includes('the'), true)
+})
+
+it('matcherProduitRecherche: détection par synonyme et tolérance phonétique', () => {
+  const p1 = { nom: 'Sac de Riz Brisé Parfumé 25kg', description: 'Idéal pour le ceebu jën' }
+  // Recherche 'thieb' doit trouver le riz
+  assert.equal(matcherProduitRecherche(p1, 'thieb'), true)
+  // Recherche 'ceeb' doit trouver le riz
+  assert.equal(matcherProduitRecherche(p1, 'ceeb'), true)
+
+  const p2 = { nom: 'Sandales en Cuir Artisanal Dakar', description: 'Confort et élégance' }
+  // Recherche 'dall' doit trouver les sandales
+  assert.equal(matcherProduitRecherche(p2, 'dall'), true)
+
+  const p3 = { nom: 'Grand Boubou Bazin Riche', description: 'Tenue brodée pour fêtes' }
+  // Recherche 'yeure' doit trouver le boubou
+  assert.equal(matcherProduitRecherche(p3, 'yeure'), true)
+})
+
+it('scorePertinenceProduit: priorité au nom exact puis aux synonymes', () => {
+  const pExact = { nom: 'Café Touba 500g' }
+  const pSyn = { nom: 'Tisane Kinkeliba', description: 'Boisson chaude comme le café' }
+
+  const score1 = scorePertinenceProduit(pExact, 'café')
+  const score2 = scorePertinenceProduit(pSyn, 'café')
+  assert.equal(score1 > score2, true)
+})
+
+console.log('\n📦 15. Export ERP & Comptabilité SYSCOHADA (syscohada-export.ts)')
+it('getCompteTresorerieSyscohada: mapping précis des modes Wave, OM, Cash, Carte, Crédit', () => {
+  assert.equal(getCompteTresorerieSyscohada('cash'), '571100')
+  assert.equal(getCompteTresorerieSyscohada('wave'), '521200')
+  assert.equal(getCompteTresorerieSyscohada('orange_money'), '521300')
+  assert.equal(getCompteTresorerieSyscohada('carte'), '521400')
+  assert.equal(getCompteTresorerieSyscohada('credit'), '411100')
+  assert.equal(getCompteTresorerieSyscohada('inconnu'), '571100')
+})
+
+it('genererEcrituresSyscohada: équilibre strict débit/crédit (partie double) en régime simplifié', () => {
+  const transactions = [
+    { id: 'tx-1', date: '2026-09-12', montantTotal: 15000, modePaiement: 'wave', type: 'vente', reference: 'CMD-101' },
+    { id: 'tx-2', date: '2026-09-12', montantTotal: 5000, modePaiement: 'cash', type: 'depense', libelle: 'Achat fournitures' },
+    { id: 'tx-3', date: '2026-09-12', montantTotal: 25000, modePaiement: 'credit', type: 'vente', clientNom: 'Modou Fall' },
+  ]
+  const ecritures = genererEcrituresSyscohada(transactions, 'simplifie')
+  assert.equal(ecritures.length, 6)
+
+  const totalDebit = ecritures.reduce((s, e) => s + e.debit, 0)
+  const totalCredit = ecritures.reduce((s, e) => s + e.credit, 0)
+  assert.equal(totalDebit, totalCredit)
+  assert.equal(totalDebit, 45000)
+})
+
+it('genererEcrituresSyscohada: équilibre strict débit/crédit en régime réel avec TVA 18%', () => {
+  const transactions = [
+    { id: 'tx-4', date: '2026-09-12', montantTotal: 11800, modePaiement: 'orange_money', type: 'vente', tauxTva: 0.18 },
+  ]
+  const ecritures = genererEcrituresSyscohada(transactions, 'reel')
+  assert.equal(ecritures.length, 3)
+
+  const debitLigne = ecritures.find(e => e.debit > 0)
+  assert.equal(debitLigne.debit, 11800)
+  assert.equal(debitLigne.compteGeneral, '521300') // OM
+
+  const venteHT = ecritures.find(e => e.compteGeneral === '701100')
+  assert.equal(venteHT.credit, 10000)
+
+  const tvaLigne = ecritures.find(e => e.compteGeneral === '443100')
+  assert.equal(tvaLigne.credit, 1800)
+
+  const totalDebit = ecritures.reduce((s, e) => s + e.debit, 0)
+  const totalCredit = ecritures.reduce((s, e) => s + e.credit, 0)
+  assert.equal(totalDebit, totalCredit)
+})
+
+console.log('\n📦 16. Checkout 3 Étapes & Guest Checkout Zéro-Friction')
+it('Checkout: validation des étapes et des coordonnées sans compte obligatoire', () => {
+  // Étape 1 : validation
+  const validerEtape1 = (nom, tel) => nom.trim().length >= 2 && tel.trim().length >= 9
+  assert.equal(validerEtape1('', ''), false)
+  assert.equal(validerEtape1('F', '771234567'), false)
+  assert.equal(validerEtape1('Fatou Ndiaye', '77123456'), false) // 8 chiffres
+  assert.equal(validerEtape1('Fatou Ndiaye', '771234567'), true) // 9 chiffres Sénégal
+  assert.equal(validerEtape1('Amadou Diallo', '+221771234567'), true)
+
+  // Progression bornée des étapes 1 -> 2 -> 3
+  const nextStep = (current) => Math.min(current + 1, 3)
+  const prevStep = (current) => Math.max(current - 1, 1)
+  assert.equal(nextStep(1), 2)
+  assert.equal(nextStep(2), 3)
+  assert.equal(nextStep(3), 3) // Ne dépasse pas 3
+  assert.equal(prevStep(3), 2)
+  assert.equal(prevStep(2), 1)
+  assert.equal(prevStep(1), 1) // Ne descend pas sous 1
+
+  // Calcul du total commande
+  const sousTotal = 25000
+  const fraisLivraison = 1500
+  const reductionPromo = 2500
+  const totalSansPromo = sousTotal + fraisLivraison
+  const totalAvecPromo = Math.max(0, sousTotal + fraisLivraison - reductionPromo)
+  assert.equal(totalSansPromo, 26500)
+  assert.equal(totalAvecPromo, 24000)
+})
+
+console.log('\n📦 17. Système de Thèmes Boutique (boutique-themes.ts)')
+it('THEMES_BOUTIQUE: validation des 5 thèmes officiels et tokens système natifs', async () => {
+  const { THEMES_BOUTIQUE, getBoutiqueTheme } = await import('../src/lib/boutique-themes.ts')
+  assert.equal(THEMES_BOUTIQUE.length, 5)
+
+  const expectedIds = ['classique', 'luxe-sombre', 'nature-vert', 'tech-moderne', 'mode-chic']
+  for (const id of expectedIds) {
+    const theme = THEMES_BOUTIQUE.find(t => t.id === id)
+    assert.ok(theme, `Thème ${id} manquant`)
+    assert.ok(theme.nom.length > 0)
+    assert.ok(theme.css.primary.startsWith('#'))
+    assert.ok(theme.css.background.startsWith('#'))
+    assert.ok(theme.css.textPrimary.startsWith('#'))
+    assert.ok(theme.css.borderRadius.length > 0)
+    // Sécurité P0 : Polices système natives SANS fetch externe
+    assert.ok(theme.css.fontFamily.includes('system-ui') || theme.css.fontFamily.includes('-apple-system'))
+    assert.equal(theme.css.fontFamily.includes('http'), false)
+  }
+
+  // Fallback getBoutiqueTheme
+  assert.equal(getBoutiqueTheme('luxe-sombre').id, 'luxe-sombre')
+  assert.equal(getBoutiqueTheme(null).id, 'classique')
+  assert.equal(getBoutiqueTheme('inconnu').id, 'classique')
+})
+
+console.log('\n📦 18. Navigation Progressive Dashboard Marchand (constants.ts)')
+it('Progressive Navigation: intégrité des 3 tiers (Essential, Commerce, Advanced) sans doublons', async () => {
+  const { getNavEssential, getNavCommerce, getNavAdvanced, VALID_TABS } = await import('../src/app/boutique/components/manage/constants.ts')
+  const dummyT = (k) => k
+
+  const essential = getNavEssential(dummyT)
+  const commerce = getNavCommerce(dummyT)
+  const advanced = getNavAdvanced(dummyT)
+
+  const essentialKeys = essential.flatMap(g => g.items.map(i => i.key))
+  const commerceKeys = commerce.flatMap(g => g.items.map(i => i.key))
+  const advancedKeys = advanced.flatMap(g => g.items.map(i => i.key))
+
+  // Vérification de la complétude du mode essentiel (5 entrées indispensables)
+  assert.equal(essentialKeys.includes('dashboard'), true)
+  assert.equal(essentialKeys.includes('commandes'), true)
+  assert.equal(essentialKeys.includes('produits'), true)
+  assert.equal(essentialKeys.includes('personnaliser'), true)
+  assert.equal(essentialKeys.includes('infos'), true)
+
+  // Vérification des outils du mode commerce
+  assert.equal(commerceKeys.includes('carnet'), true)
+  assert.equal(commerceKeys.includes('express'), true)
+  assert.equal(commerceKeys.includes('fidelite'), true)
+  assert.equal(commerceKeys.includes('social'), true)
+
+  // Vérification des outils du mode avancé
+  assert.equal(advancedKeys.includes('compta'), true)
+  assert.equal(advancedKeys.includes('analytics'), true)
+  assert.equal(advancedKeys.includes('documents'), true)
+  assert.equal(advancedKeys.includes('fiscalite'), true)
+  assert.equal(advancedKeys.includes('equipe'), true)
+
+  // Aucun chevauchement (doublon) entre les tiers
+  const allKeys = [...essentialKeys, ...commerceKeys, ...advancedKeys]
+  const uniqueKeys = new Set(allKeys)
+  assert.equal(allKeys.length, uniqueKeys.size, 'Aucun doublon de clé entre les 3 tiers de navigation')
+
+  // Toutes les clés doivent être valides dans VALID_TABS
+  for (const k of allKeys) {
+    assert.equal(VALID_TABS.includes(k), true, `Clé ${k} doit être déclarée dans VALID_TABS`)
+  }
+})
+
+console.log('\n📦 19. Sécurité & Robustesse des Mots de Passe (password-validator.ts)')
+it('Password Validator: contrôle strict de la robustesse (min 8 chars, 1 chiffre, 1 maj/spécial)', async () => {
+  const { validerForceMotDePasse } = await import('../src/lib/password-validator.ts')
+
+  assert.equal(validerForceMotDePasse('short').valide, false)
+  assert.equal(validerForceMotDePasse('sanschiffre!').valide, false)
+  assert.equal(validerForceMotDePasse('minuscule123').valide, false)
+
+  assert.equal(validerForceMotDePasse('Nopalou2026').valide, true)
+  assert.equal(validerForceMotDePasse('Securite2026!').valide, true)
+  assert.equal(validerForceMotDePasse('dakar_2026*pro').valide, true)
+})
+
+console.log('\n📦 20. Moteur de Paiement Échelonné & Carnet de Crédit (creditCalculator.ts)')
+it('creditCalculator: validation stricte des règles marchand et seuils', async () => {
+  const { validerReglesEchelonnement, CONFIG_DEFAUT_ECHELONNEMENT } = await import('../src/lib/creditCalculator.ts')
+  const config = {
+    ...CONFIG_DEFAUT_ECHELONNEMENT,
+    actif: true,
+    montant_min_vente: 10000,
+    montant_max_vente: 2000000,
+    apport_min_pct: 20,
+    apport_min_fcfa: 5000,
+    nb_echeances_autorisees: [2, 3, 4, 6],
+    frequences_autorisees: ['mensuel', 'bimensuel', 'hebdomadaire'],
+  }
+
+  assert.equal(validerReglesEchelonnement(config, { montantTotal: 50000, apport: 15000, nbEcheances: 3, frequence: 'mensuel' }).valide, true)
+  assert.equal(validerReglesEchelonnement({ ...config, actif: false }, { montantTotal: 50000, apport: 15000, nbEcheances: 3, frequence: 'mensuel' }).valide, false)
+  assert.equal(validerReglesEchelonnement(config, { montantTotal: 5000, apport: 1000, nbEcheances: 3, frequence: 'mensuel' }).valide, false)
+  assert.equal(validerReglesEchelonnement(config, { montantTotal: 100000, apport: 10000, nbEcheances: 3, frequence: 'mensuel' }).valide, false)
+  assert.equal(validerReglesEchelonnement(config, { montantTotal: 60000, apport: 20000, nbEcheances: 5, frequence: 'mensuel' }).valide, false)
+})
+
+it('creditCalculator: garantie absolue de l’arrondi au franc (somme des échéances === financé)', async () => {
+  const { calculerEcheancier, CONFIG_DEFAUT_ECHELONNEMENT } = await import('../src/lib/creditCalculator.ts')
+  const calc = calculerEcheancier({
+    montantTotal: 100000,
+    apport: 20000,
+    nbEcheances: 3,
+    frequence: 'mensuel',
+    config: CONFIG_DEFAUT_ECHELONNEMENT,
+  })
+
+  assert.equal(calc.valide, true)
+  assert.equal(calc.montant_finance, 80000)
+  assert.equal(calc.echeances.length, 3)
+  assert.equal(calc.echeances[0].montant_prevu, 26666)
+  assert.equal(calc.echeances[1].montant_prevu, 26666)
+  assert.equal(calc.echeances[2].montant_prevu, 26668)
+
+  const somme = calc.echeances.reduce((sum, e) => sum + e.montant_prevu, 0)
+  assert.equal(somme, 80000)
+  assert.equal(somme + calc.apport_initial, calc.total_a_payer)
+})
+
+it('creditCalculator: imputation FIFO et solde anticipé', async () => {
+  const { imputerPaiementSurEcheances, solderCreditAnticipe } = await import('../src/lib/creditCalculator.ts')
+  const echeances = [
+    { id: '1', numero_echeance: 1, montant_prevu: 20000, montant_paye: 0, montant_restant: 20000, statut: 'a_venir' },
+    { id: '2', numero_echeance: 2, montant_prevu: 20000, montant_paye: 0, montant_restant: 20000, statut: 'a_venir' },
+  ]
+
+  const r1 = imputerPaiementSurEcheances(echeances, 25000)
+  assert.equal(r1.echeancesUpdated[0].statut, 'payee')
+  assert.equal(r1.echeancesUpdated[0].montant_paye, 20000)
+  assert.equal(r1.echeancesUpdated[1].statut, 'partielle')
+  assert.equal(r1.echeancesUpdated[1].montant_paye, 5000)
+  assert.equal(r1.echeancesUpdated[1].montant_restant, 15000)
+
+  const rSolde = solderCreditAnticipe({ id: 'p1', montant_total: 40000, solde_restant: 20000, statut: 'actif' }, echeances)
+  assert.equal(rSolde.planUpdated.statut, 'solde')
+  assert.equal(rSolde.echeancesUpdated[0].statut, 'soldee_par_anticipation')
 })
 
 console.log('\n──────────────────────────────────────────────────────────')

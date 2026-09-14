@@ -66,7 +66,7 @@ export default async function TelecomComparaisonPage({
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>📡</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Sélectionnez au moins 2 forfaits à comparer depuis la liste.</p>
           <Link href="/telecom" className="budget-pill active" style={{ marginTop: 8 }}>
             Parcourir les forfaits
@@ -89,7 +89,7 @@ export default async function TelecomComparaisonPage({
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>📡</span>
+          <span style={{ fontSize: 48 }}></span>
           <p>Impossible de charger les forfaits demandés.</p>
           <Link href="/telecom" className="budget-pill active" style={{ marginTop: 8 }}>Retour</Link>
         </div>
@@ -132,9 +132,9 @@ export default async function TelecomComparaisonPage({
                 const color = OP_COLORS[f.operateur] ?? '#1C2B4A'
                 return (
                   <th key={f.id} className={`comp-th${i === bestIdx ? ' comp-th--best' : ''}`}>
-                    {i === bestIdx && <div className="comp-best-badge">🏆 Meilleur rapport</div>}
+                    {i === bestIdx && <div className="comp-best-badge">Meilleur rapport</div>}
                     <div className="comp-prod-img">
-                      <span style={{ fontSize: 36 }}>📡</span>
+                      <span style={{ fontSize: 36 }}></span>
                     </div>
                     <Link href={`/telecom/${f.id}`} className="comp-prod-nom">{f.nom}</Link>
                     <span className="comp-prod-marque" style={{ color }}>{f.operateur}</span>

@@ -106,15 +106,15 @@ export default function Error({
       </p>
       {isChecking && (
         <div style={{ fontSize: '0.85rem', color: '#C75B00', marginBottom: 16, fontWeight: 700 }}>
-          ⏳ Connexion au serveur en cours...
+          Connexion au serveur en cours...
         </div>
       )}
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
         <button onClick={() => reset()} className="btn-primary" style={{ padding: '10px 20px', cursor: 'pointer' }}>
-          🔄 Réessayer maintenant
+          Réessayer maintenant
         </button>
         <a href="/" className="btn-secondary" style={{ padding: '10px 20px', textDecoration: 'none', background: '#f3f4f6', color: '#374151', borderRadius: 8, fontWeight: 600 }}>
-          🏠 Retour à l&apos;accueil
+          Retour à l&apos;accueil
         </a>
       </div>
     </div>

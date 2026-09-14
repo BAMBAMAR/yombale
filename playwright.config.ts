@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3001'
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -31,8 +31,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'node ./frontend-next/node_modules/next/dist/bin/next start ./frontend-next -p 3000',
-    url: 'http://localhost:3000',
+    command: 'npm run dev --prefix frontend-next',
+    url: 'http://localhost:3001',
     reuseExistingServer: true,
     timeout: 60000,
   },

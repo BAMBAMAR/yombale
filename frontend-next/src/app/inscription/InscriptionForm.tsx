@@ -191,7 +191,7 @@ export default function InscriptionForm() {
       <div style={{ marginBottom: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <label style={{ fontSize: 13, fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>⚡</span>
+            <span></span>
             <span>{t('auth.chooseMethodLabel') || 'Mode d\'inscription :'}</span>
           </label>
           <span style={{
@@ -244,7 +244,7 @@ export default function InscriptionForm() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
-              <span style={{ fontSize: 18 }}>💬</span>
+              <span style={{ fontSize: 18 }}></span>
               <span>WhatsApp</span>
             </div>
             <span style={{
@@ -252,7 +252,7 @@ export default function InscriptionForm() {
               fontWeight: 700,
               color: signupMethod === 'whatsapp' ? '#166534' : '#94a3b8'
             }}>
-              ⚡ {t('auth.waFastMethodDesc') || '1 clic sans mot de passe'}
+              {t('auth.waFastMethodDesc') || '1 clic sans mot de passe'}
             </span>
           </button>
 
@@ -280,7 +280,7 @@ export default function InscriptionForm() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: 14.5 }}>
-              <span style={{ fontSize: 16 }}>✉️</span>
+              <span style={{ fontSize: 16 }}></span>
               <span>Email</span>
             </div>
             <span style={{
@@ -307,7 +307,7 @@ export default function InscriptionForm() {
           <div className="auth-field">
             <label htmlFor="nom" className="auth-label">{t('auth.nomLabel')}</label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon">👤</span>
+              <span className="auth-input-icon"></span>
               <input
                 id="nom"
                 name="nom"
@@ -324,7 +324,7 @@ export default function InscriptionForm() {
           <div className="auth-field">
             <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon">✉</span>
+              <span className="auth-input-icon"></span>
               <input
                 id="email"
                 name="email"
@@ -341,7 +341,7 @@ export default function InscriptionForm() {
           <div className="auth-field">
             <label htmlFor="password" className="auth-label">{t('auth.passwordLabel')}</label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon">🔒</span>
+              <span className="auth-input-icon"></span>
               <input
                 id="password"
                 name="password"
@@ -387,7 +387,7 @@ export default function InscriptionForm() {
               {confirmErr && <span className="auth-confirm-err"> ✗ {t('auth.passwordsDifferent')}</span>}
             </label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon">🔒</span>
+              <span className="auth-input-icon"></span>
               <input
                 id="confirm"
                 name="confirm"
@@ -430,7 +430,7 @@ export default function InscriptionForm() {
               lineHeight: 1.5,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 6 }}>
-                <span>⚠️</span>
+                <span></span>
                 <span>Service WhatsApp momentanément indisponible</span>
               </div>
               <p style={{ margin: '0 0 10px 0' }}>
@@ -453,7 +453,7 @@ export default function InscriptionForm() {
                   gap: 6
                 }}
               >
-                <span>✉️</span>
+                <span></span>
                 <span>S'inscrire par Email & Mot de passe</span>
               </button>
             </div>
@@ -471,7 +471,7 @@ export default function InscriptionForm() {
               <div className="auth-field">
                 <label htmlFor="nom_wa" className="auth-label">{t('auth.nomLabel')}</label>
                 <div className="auth-input-wrap">
-                  <span className="auth-input-icon">👤</span>
+                  <span className="auth-input-icon"></span>
                   <input
                     id="nom_wa"
                     type="text"
@@ -487,7 +487,7 @@ export default function InscriptionForm() {
               <div className="auth-field">
                 <label htmlFor="telephone" className="auth-label">{t('auth.waPhoneLabel')}</label>
                 <div className="auth-input-wrap">
-                  <span className="auth-input-icon">📱</span>
+                  <span className="auth-input-icon"></span>
                   <input
                     id="telephone"
                     type="tel"
@@ -504,7 +504,7 @@ export default function InscriptionForm() {
             <div className="auth-field">
               <label htmlFor="code" className="auth-label">{t('auth.waCodeLabel')}</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon">💬</span>
+                <span className="auth-input-icon"></span>
                 <input
                   id="code"
                   type="text"

@@ -154,7 +154,7 @@ export default function AdminIntegrationsClient({
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 22 }}>📸</span>
+              <span style={{ fontSize: 22 }}></span>
               <span style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>Instagram</span>
             </div>
             <span style={{ fontSize: 11, background: '#fdf2f8', color: '#db2777', padding: '2px 8px', borderRadius: 12, fontWeight: 800 }}>
@@ -167,7 +167,7 @@ export default function AdminIntegrationsClient({
               {stats.plateformes?.find((p: any) => p.plateforme === 'instagram')?.total_comptes || 0}
             </span>
           </div>
-          <span style={{ fontSize: 11.5, color: '#16a34a', fontWeight: 700 }}>🟢 Connecteur opérationnel</span>
+          <span style={{ fontSize: 11.5, color: '#16a34a', fontWeight: 700 }}>Connecteur opérationnel</span>
         </div>
 
         {/* TikTok */}
@@ -187,7 +187,7 @@ export default function AdminIntegrationsClient({
               {stats.plateformes?.find((p: any) => p.plateforme === 'tiktok')?.total_comptes || 0}
             </span>
           </div>
-          <span style={{ fontSize: 11.5, color: '#16a34a', fontWeight: 700 }}>🟢 Connecteur opérationnel</span>
+          <span style={{ fontSize: 11.5, color: '#16a34a', fontWeight: 700 }}>Connecteur opérationnel</span>
         </div>
 
         {/* Facebook */}
@@ -207,14 +207,14 @@ export default function AdminIntegrationsClient({
               {stats.plateformes?.find((p: any) => p.plateforme === 'facebook')?.total_comptes || 0}
             </span>
           </div>
-          <span style={{ fontSize: 11.5, color: '#16a34a', fontWeight: 700 }}>🟢 Connecteur opérationnel</span>
+          <span style={{ fontSize: 11.5, color: '#16a34a', fontWeight: 700 }}>Connecteur opérationnel</span>
         </div>
 
         {/* Tracking & Pixels */}
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: '18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 22 }}>🎯</span>
+              <span style={{ fontSize: 22 }}></span>
               <span style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>Pixels & Tracking</span>
             </div>
             <span style={{ fontSize: 11, background: '#fff7f0', color: '#C75B00', padding: '2px 8px', borderRadius: 12, fontWeight: 800 }}>
@@ -307,7 +307,7 @@ export default function AdminIntegrationsClient({
                   <tr key={acc.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '14px 18px', fontWeight: 800 }}>
                       <span style={{ textTransform: 'capitalize' }}>
-                        {acc.plateforme === 'instagram' && '📸 Instagram'}
+                        {acc.plateforme === 'instagram' && 'Instagram'}
                         {acc.plateforme === 'tiktok' && '🎵 TikTok'}
                         {acc.plateforme === 'facebook' && '📘 Facebook'}
                         {acc.plateforme === 'youtube' && '▶️ YouTube'}
@@ -334,7 +334,7 @@ export default function AdminIntegrationsClient({
                     <td style={{ padding: '14px 18px' }}>
                       {acc.statut === 'actif' ? (
                         <span style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: 12, fontSize: 11.5, fontWeight: 800 }}>
-                          🟢 Actif
+                          Actif
                         </span>
                       ) : (
                         <span style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '2px 8px', borderRadius: 12, fontSize: 11.5, fontWeight: 800 }}>

@@ -66,7 +66,7 @@ export function ManualFallbackCard({ reference }: { reference?: string }) {
       boxShadow: '0 4px 12px rgba(245,158,11,0.1)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-        <span style={{ fontSize: 24 }}>💡</span>
+        <span style={{ fontSize: 24 }}></span>
         <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#92400E' }}>
           Alternative : Régler par Dépôt Manuel Direct
         </h3>
@@ -99,7 +99,7 @@ export function ManualFallbackCard({ reference }: { reference?: string }) {
             transition: 'background 0.2s'
           }}
         >
-          {copied ? '✅ Copié !' : '📋 Copier'}
+          {copied ? 'Copié !' : 'Copier'}
         </button>
       </div>
 
@@ -120,7 +120,7 @@ export function ManualFallbackCard({ reference }: { reference?: string }) {
       {/* Confirmation envoi */}
       {submitted && (
         <div style={{ background: '#DCFCE7', border: '1px solid #86EFAC', borderRadius: 10, padding: 14, textAlign: 'center' }}>
-          <span style={{ fontSize: 28 }}>🎉</span>
+          <span style={{ fontSize: 28 }}></span>
           <h4 style={{ margin: '4px 0 2px', fontSize: 15, color: '#166534', fontWeight: 800 }}>Déclaration transmise !</h4>
           <p style={{ margin: 0, fontSize: 13, color: '#15803D' }}>
             Notre équipe valide votre paiement dans les minutes qui suivent. Merci de votre patience !
@@ -153,7 +153,7 @@ export function ManualFallbackCard({ reference }: { reference?: string }) {
                   fontWeight: 700, fontSize: 13, cursor: 'pointer'
                 }}
               >
-                🌊 Wave
+                Wave
               </button>
               <button
                 type="button"
@@ -214,7 +214,7 @@ export function ManualFallbackCard({ reference }: { reference?: string }) {
               cursor: loading ? 'not-allowed' : 'pointer'
             }}
           >
-            {loading ? 'Envoi en cours…' : '🚀 Valider ma déclaration'}
+            {loading ? 'Envoi en cours…' : 'Valider ma déclaration'}
           </button>
         </form>
       )}

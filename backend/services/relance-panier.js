@@ -1,84 +1,96 @@
 // backend/services/relance-panier.js
-// Service de relance automatique des commandes & paniers abandonnés via WhatsApp
+// Nopalou — Relance Automatique de Panier Abandonné via WhatsApp (Audit P1)
+// Récupère les ventes/commandes abandonnées après 45 minutes et relance le client avec son lien Wave
 
 const { pool } = require('../models/db');
-const { sendWhatsAppText, normalisePhone } = require('./whatsapp');
-const cfg = require('../lib/settingsCache');
+const { sendWhatsAppText, normalisePhone, estDesinscrit } = require('./whatsapp');
+
+let _migrated = false;
+async function assurerColonnesRelance() {
+  if (_migrated) return;
+  try {
+    await pool.query(`
+      ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS relance_panier_envoyee BOOLEAN DEFAULT FALSE;
+      ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS date_relance_panier TIMESTAMPTZ;
+    `);
+    _migrated = true;
+  } catch (e) {
+    _migrated = true;
+  }
+}
 
 /**
- * Parcourt les commandes restées "en_attente" entre 1 heure et 24 heures
- * et envoie un rappel courtois par WhatsApp au client pour l'aider à finaliser.
+ * Exécute une passe de détection et relance des paniers abandonnés
  */
-async function relancerPaniersAbandonnes() {
+async function executerRelancePaniers() {
   try {
-    const relanceActive = await cfg.getBool('whatsapp_relance_panier_active').catch(() => true);
-    if (!relanceActive) return;
+    await assurerColonnesRelance();
 
-    // Vérification / Création dynamique des colonnes de suivi si absentes
-    await pool.query(`
-      ALTER TABLE commandes 
-      ADD COLUMN IF NOT EXISTS relance_panier_envoyee BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS date_relance_panier TIMESTAMP;
-    `).catch(() => {});
-
-    // Sélection des commandes non payées après 60 minutes
-    const { rows: commandes } = await pool.query(`
-      SELECT 
-        c.id, c.reference, c.client_nom, c.client_telephone, c.total, c.created_at,
-        b.nom AS boutique_nom, b.slug AS boutique_slug, b.whatsapp AS boutique_whatsapp
-      FROM commandes c
-      JOIN boutiques b ON c.boutique_id = b.id
-      WHERE c.statut = 'en_attente'
-        AND c.created_at <= NOW() - INTERVAL '60 minutes'
-        AND c.created_at >= NOW() - INTERVAL '24 hours'
-        AND (c.relance_panier_envoyee IS NULL OR c.relance_panier_envoyee = FALSE)
+    // Commandes en attente de paiement créées il y a entre 45 minutes et 24 heures
+    const { rows } = await pool.query(`
+      SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.montant_total, c.nom_produit, c.quantite,
+             b.nom as boutique_nom, b.telephone as boutique_tel
+      FROM commandes_boutique c
+      LEFT JOIN boutiques b ON b.id = c.boutique_id
+      WHERE (c.statut = 'en_attente' OR c.statut = 'attente_paiement')
+        AND (c.relance_panier_envoyee IS NOT TRUE)
         AND c.client_telephone IS NOT NULL
-        AND LENGTH(TRIM(c.client_telephone)) >= 9
-      ORDER BY c.created_at ASC
-      LIMIT 25
+        AND length(trim(c.client_telephone)) >= 9
+        AND c.created_at <= NOW() - INTERVAL '45 minutes'
+        AND c.created_at >= NOW() - INTERVAL '24 hours'
+      LIMIT 15
     `);
 
-    if (!commandes.length) return;
+    if (!rows.length) {
+      return { count: 0, message: 'Aucun panier abandonné éligible' };
+    }
 
-    console.log(`[RELANCE PANIER] ${commandes.length} commande(s) en attente éligible(s) trouvée(s).`);
+    let relancesEnvoyees = 0;
 
-    for (const cmd of commandes) {
-      const tel = normalisePhone(cmd.client_telephone);
-      if (!tel) {
-        await pool.query('UPDATE commandes SET relance_panier_envoyee = TRUE WHERE id = $1', [cmd.id]);
-        continue;
-      }
-
-      const prenom = cmd.client_nom ? cmd.client_nom.trim().split(' ')[0] : 'Bonjour';
-      const montantFmt = new Intl.NumberFormat('fr-FR').format(cmd.total || 0) + ' FCFA';
-      
-      const message = 
-        `👋 Bonjour ${prenom} !\n\n` +
-        `Votre commande *#${cmd.reference || cmd.id.slice(0, 8)}* d'un montant de *${montantFmt}* auprès de la boutique *${cmd.boutique_nom}* est bien enregistrée et réservée pour vous.\n\n` +
-        `Avez-vous besoin d'assistance pour valider votre livraison ou régler par Wave ?\n` +
-        `👉 Répondez directement à ce message pour confirmer votre commande en 1 clic !`;
-
+    for (const cmd of rows) {
       try {
-        await sendWhatsAppText(tel, message);
-        await pool.query(
-          'UPDATE commandes SET relance_panier_envoyee = TRUE, date_relance_panier = NOW() WHERE id = $1',
-          [cmd.id]
-        );
-        console.log(`[RELANCE PANIER] ✅ Notification WhatsApp envoyée à ${tel} (Commande ${cmd.reference})`);
-      } catch (sendErr) {
-        console.error(`[RELANCE PANIER] ❌ Échec envoi à ${tel}:`, sendErr.message);
-        // Marquer comme traité pour éviter de boucler indéfiniment sur un numéro non-WhatsApp
-        await pool.query(
-          'UPDATE commandes SET relance_panier_envoyee = TRUE, date_relance_panier = NOW() WHERE id = $1',
-          [cmd.id]
-        ).catch(() => {});
+        const phone = normalisePhone(cmd.client_telephone);
+        if (await estDesinscrit(phone)) {
+          await pool.query('UPDATE commandes_boutique SET relance_panier_envoyee = TRUE WHERE id = $1', [cmd.id]);
+          continue;
+        }
+
+        const prenom = cmd.client_nom ? cmd.client_nom.split(' ')[0] : 'Bonjour';
+        const montantFmt = new Intl.NumberFormat('fr-FR').format(cmd.montant_total);
+        const nomBoutique = cmd.boutique_nom || 'Nopalou Sénégal';
+
+        const msg = 
+`👋 *${prenom}, avez-vous oublié vos articles chez ${nomBoutique} ?*
+
+Votre commande *${cmd.reference}* (${cmd.quantite}x ${cmd.nom_produit || 'Produit'} — *${montantFmt} FCFA*) est réservée et prête pour expédition !
+
+⚡ *Pour finaliser votre commande en 1 clic :*
+Vous pouvez régler par Wave ou Orange Money, ou nous confirmer la livraison cash.
+
+Besoin d'un renseignement ? Répondez directement à ce message pour échanger avec notre service client.`;
+
+        await sendWhatsAppText(phone, msg);
+
+        await pool.query(`
+          UPDATE commandes_boutique
+          SET relance_panier_envoyee = TRUE, date_relance_panier = NOW()
+          WHERE id = $1
+        `, [cmd.id]);
+
+        relancesEnvoyees++;
+      } catch (errCmd) {
+        console.warn(`[RELANCE PANIER] Erreur pour commande ${cmd.reference}:`, errCmd.message);
       }
     }
+
+    return { count: relancesEnvoyees, message: `${relancesEnvoyees} relances envoyées avec succès` };
   } catch (err) {
-    console.error('[RELANCE PANIER SYSTEM ERR]:', err.message);
+    console.error('[RELANCE PANIER CRON ERR]:', err.message);
+    return { count: 0, error: err.message };
   }
 }
 
 module.exports = {
-  relancerPaniersAbandonnes,
+  executerRelancePaniers,
+  assurerColonnesRelance
 };

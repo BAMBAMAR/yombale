@@ -45,7 +45,7 @@ export default function PaiementSponsoringProduitClient({ produitId, nomCourt, s
         <span className="paiement-montant-desc">Sponsoring (30 jours)</span>
       </div>
 
-      {error && <p className="paiement-error">❌ {error}</p>}
+      {error && <p className="paiement-error">{error}</p>}
 
       <div className="paiement-methodes">
         <p className="paiement-methodes-titre">Choisissez votre mode de paiement</p>
@@ -53,7 +53,7 @@ export default function PaiementSponsoringProduitClient({ produitId, nomCourt, s
         {waveActif && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: 4, width: 'fit-content' }}>
-              ⚡ Recommandé — Activation automatique instantanée
+              Recommandé — Activation automatique instantanée
             </span>
             <button
               onClick={payerWave}
@@ -64,7 +64,7 @@ export default function PaiementSponsoringProduitClient({ produitId, nomCourt, s
                 <span>Connexion à Wave…</span>
               ) : (
                 <>
-                  <span className="paiement-btn-logo">🌊</span>
+                  <span className="paiement-btn-logo"></span>
                   <div className="paiement-btn-text">
                     <span className="paiement-btn-nom" style={{ fontWeight: 700 }}>Wave (Paiement Direct)</span>
                     <span className="paiement-btn-desc">Paiement 100% sécurisé et validation immédiate</span>
@@ -91,7 +91,7 @@ export default function PaiementSponsoringProduitClient({ produitId, nomCourt, s
           <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px dashed #cbd5e1' }}>
             <p style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>Problème avec Wave ou vous préférez un dépôt manuel ?</p>
             <button onClick={() => setShowManuel(true)} className="paiement-btn">
-              <span className="paiement-btn-logo">🧾</span>
+              <span className="paiement-btn-logo"></span>
               <div className="paiement-btn-text">
                 <span className="paiement-btn-nom">Paiement Manuel / Reçu de Dépôt</span>
                 <span className="paiement-btn-desc">Envoyer la preuve de transfert Wave / Orange Money</span>
@@ -103,9 +103,9 @@ export default function PaiementSponsoringProduitClient({ produitId, nomCourt, s
       </div>
 
       <div className="paiement-garanties">
-        <span>🔒 Paiement sécurisé</span>
-        <span>✅ Sponsoring immédiat</span>
-        <span>📞 Support disponible</span>
+        <span>Paiement sécurisé</span>
+        <span>Sponsoring immédiat</span>
+        <span>Support disponible</span>
       </div>
 
       {showManuel && (

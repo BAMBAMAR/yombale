@@ -302,7 +302,7 @@ async function trouverProduitCorrespondant(pool, item, catId = null) {
     const { rows } = await pool.query(
       `SELECT * FROM produits 
        WHERE LOWER(marque) = LOWER($1) 
-         AND (LOWER(nom) LIKE '%' || LOWER($2) || '%' OR LOWER(modele) = LOWER($2))
+         AND LOWER(nom) LIKE '%' || LOWER($2) || '%'
        LIMIT 5`,
       [marque, modele]
     );

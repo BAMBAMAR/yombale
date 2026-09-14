@@ -95,7 +95,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
       setFavAnim(true)
       setTimeout(() => setFavAnim(false), 600)
       window.dispatchEvent(new CustomEvent('nopalou:fav', { detail: { adding, nom, count: next.length } }))
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:CardActions:L98]', err); }
   }
 
   function toggleCompare(e: React.MouseEvent) {
@@ -129,7 +129,7 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
           router.push(`${pathname}?${params.toString()}`)
         }
       }
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:CardActions:L132]', err); }
   }
 
   return (

@@ -122,7 +122,7 @@ export default function PosFideliteModal({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>⭐</span> Programme de Fidélité Client
+            <span></span> Programme de Fidélité Client
           </h3>
           <button
             type="button"
@@ -142,7 +142,7 @@ export default function PosFideliteModal({
                   Carte Fidélité Active ({clientSelectionne.rang_fidelite.toUpperCase()})
                 </span>
                 <p style={{ margin: '2px 0 0', fontSize: 17, fontWeight: 900 }}>{clientSelectionne.nom}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#cbd5e1' }}>📱 {clientSelectionne.telephone}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#cbd5e1' }}>{clientSelectionne.telephone}</p>
               </div>
               <button
                 type="button"
@@ -178,7 +178,7 @@ export default function PosFideliteModal({
                     }}
                     style={{ flex: 1, padding: '10px', background: '#22c55e', color: '#ffffff', border: 'none', borderRadius: 8, fontWeight: 900, fontSize: 13, cursor: 'pointer' }}
                   >
-                    💰 Déduire la cagnotte (-{fcfa(Math.min(totalPanier, clientSelectionne.cagnotte_fcfa))})
+                    Déduire la cagnotte (-{fcfa(Math.min(totalPanier, clientSelectionne.cagnotte_fcfa))})
                   </button>
                 ) : (
                   <button
@@ -201,7 +201,7 @@ export default function PosFideliteModal({
               <input
                 type="text"
                 autoFocus
-                placeholder="🔍 Numéro WhatsApp (ex: 77 123 45 67) ou Nom..."
+                placeholder="Numéro WhatsApp (ex: 77 123 45 67) ou Nom..."
                 value={recherche}
                 onChange={(e) => setRecherche(e.target.value)}
                 style={{ flex: 1, padding: '12px 14px', borderRadius: 10, border: '1.5px solid #cbd5e1', fontSize: 14, fontWeight: 600, outline: 'none' }}
@@ -242,7 +242,7 @@ export default function PosFideliteModal({
                   >
                     <div>
                       <p style={{ margin: 0, fontSize: 13.5, fontWeight: 800, color: '#0f172a' }}>{c.nom}</p>
-                      <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#64748b' }}>📱 {c.telephone}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#64748b' }}>{c.telephone}</p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: 13, fontWeight: 900, color: '#16a34a', display: 'block' }}>{fcfa(c.cagnotte_fcfa)}</span>
@@ -258,7 +258,7 @@ export default function PosFideliteModal({
         {/* Formulaire d'enrôlement rapide en 10 secondes */}
         {modeEnrolement && (
           <form onSubmit={handleEnroler} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#0f172a' }}>⚡ Enrôlement Express Carte Fidélité</h4>
+            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#0f172a' }}>Enrôlement Express Carte Fidélité</h4>
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>Nom complet *</label>
               <input

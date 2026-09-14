@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Clock, PackageCheck, Truck, CheckCircle2, MessageCircle, Search, AlertCircle, CreditCard, Zap, ArrowRight } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { fcfa } from '@/lib/format'
 
@@ -13,12 +15,24 @@ interface CommandeSuivie {
   montant_total: number
   methode_paiement: string
   created_at: string
+  boutique_id?: string
+  produit_id?: string
+  nom_produit?: string
+  quantite?: number
   boutique_nom: string
+  boutique_slug?: string
   boutique_whatsapp?: string
 }
 
-export default function SuiviCommandeClient() {
-  const [refInput, setRefInput] = useState('')
+interface SuiviCommandeClientProps {
+  userPhone?: string
+}
+
+export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientProps) {
+  const searchParams = useSearchParams()
+  const initialRef = searchParams.get('ref') || searchParams.get('q') || userPhone || ''
+  
+  const [refInput, setRefInput] = useState(initialRef)
   const [loading, setLoading] = useState(false)
   const [commandes, setCommandes] = useState<CommandeSuivie[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -50,6 +64,13 @@ export default function SuiviCommandeClient() {
     }
   }, [backendUrl, t])
 
+  useEffect(() => {
+    if (initialRef) {
+      setRefInput(initialRef)
+      executeSearch(initialRef)
+    }
+  }, [initialRef, executeSearch])
+
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     executeSearch(refInput)
@@ -67,7 +88,7 @@ export default function SuiviCommandeClient() {
     <div style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1C2B4A', margin: '0 0 8px' }}>
-          📦 {t('account.trackOrderTitle')}
+          {t('account.trackOrderTitle')}
         </h2>
         <p style={{ fontSize: 14, color: '#64748b', margin: '0 0 20px', lineHeight: 1.5 }}>
           {t('account.trackOrderDesc')}
@@ -96,14 +117,14 @@ export default function SuiviCommandeClient() {
             className="npl-btn npl-btn-primary npl-btn-lg"
             style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 22px' }}
           >
-            <span>{loading ? '⏳' : '🔍'}</span>
+            <span>{loading ? '' : ''}</span>
             <span>{loading ? t('account.trackOrderSearching') : t('account.trackOrderSearch')}</span>
           </button>
         </form>
 
         {error && (
           <div style={{ marginTop: 16, padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>⚠️</span>
+            <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
@@ -125,10 +146,10 @@ export default function SuiviCommandeClient() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
                   {[
-                    { step: 1, label: t('account.stepPending'), icon: '📋' },
-                    { step: 2, label: t('account.stepPreparing'), icon: '📦' },
-                    { step: 3, label: t('account.stepDelivering'), icon: '🚚' },
-                    { step: 4, label: t('account.stepDelivered'), icon: '✅' },
+                    { step: 1, label: t('account.stepPending'), icon: <Clock size={16} /> },
+                    { step: 2, label: t('account.stepPreparing'), icon: <PackageCheck size={16} /> },
+                    { step: 3, label: t('account.stepDelivering'), icon: <Truck size={16} /> },
+                    { step: 4, label: t('account.stepDelivered'), icon: <CheckCircle2 size={16} /> },
                   ].map(st => {
                     const isActive = currentStep >= st.step
                     return (
@@ -147,6 +168,87 @@ export default function SuiviCommandeClient() {
                     )
                   })}
                 </div>
+
+                {/* Bloc d'action immédiate si paiement échelonné ou Wave en attente */}
+                {cmd.statut === 'en_attente' && (cmd.methode_paiement === 'credit' || cmd.methode_paiement === 'echelonne') && (
+                  <div style={{ margin: '14px 0', padding: '14px 16px', background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <CreditCard size={18} color="#C75B00" />
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#9a3412' }}>
+                          Paiement échelonné sélectionné (En attente d&apos;acompte)
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 11, background: '#ffedd5', color: '#c2410c', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                        Action requise
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 12.5, color: '#7c2d12', lineHeight: 1.4 }}>
+                      Définissez vos mensualités (2x, 3x, 4x) et réglez votre acompte pour valider définitivement la commande.
+                    </p>
+                    <a
+                      href={`/checkout-express?${cmd.produit_id ? `produit=${cmd.produit_id}&` : ''}${cmd.boutique_id ? `boutique=${cmd.boutique_id}&` : ''}nom=${encodeURIComponent(cmd.client_nom)}&phone=${cmd.client_telephone}&echelonne=1&ref=${encodeURIComponent(cmd.reference)}`}
+                      className="npl-btn npl-btn-primary"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        padding: '11px 20px',
+                        borderRadius: 10,
+                        background: 'var(--accent, #C75B00)',
+                        color: '#ffffff',
+                        fontWeight: 800,
+                        fontSize: 13.5,
+                        textDecoration: 'none',
+                        marginTop: 2,
+                        boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
+                      }}
+                    >
+                      <CreditCard size={16} />
+                      <span>💳 Finaliser mon paiement échelonné</span>
+                      <ArrowRight size={14} />
+                    </a>
+                  </div>
+                )}
+
+                {cmd.statut === 'en_attente' && (cmd.methode_paiement === 'wave' || cmd.methode_paiement === 'pay_wave') && (
+                  <div style={{ margin: '14px 0', padding: '14px 16px', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Zap size={18} color="#15803d" />
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#166534' }}>
+                          Paiement Wave en attente de règlement
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 11, background: '#dcfce7', color: '#15803d', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                        En attente
+                      </span>
+                    </div>
+                    <a
+                      href={`/checkout-express?${cmd.produit_id ? `produit=${cmd.produit_id}&` : ''}${cmd.boutique_id ? `boutique=${cmd.boutique_id}&` : ''}nom=${encodeURIComponent(cmd.client_nom)}&phone=${cmd.client_telephone}&pay=wave&ref=${encodeURIComponent(cmd.reference)}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        padding: '11px 20px',
+                        borderRadius: 10,
+                        background: '#0284c7',
+                        color: '#ffffff',
+                        fontWeight: 800,
+                        fontSize: 13.5,
+                        textDecoration: 'none',
+                        marginTop: 2,
+                        boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
+                      }}
+                    >
+                      <Zap size={16} />
+                      <span>🌊 Payer maintenant par Wave</span>
+                      <ArrowRight size={14} />
+                    </a>
+                  </div>
+                )}
 
                 <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, fontSize: 12, color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                   <span>Client : <strong>{cmd.client_nom}</strong> ({cmd.client_telephone})</span>

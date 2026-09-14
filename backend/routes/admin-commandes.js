@@ -107,4 +107,15 @@ router.put('/:id/statut', adminSecretOnly, async (req, res) => {
   }
 });
 
+// ── POST /api/admin/commandes/relancer-paniers — Déclenchement manuel des relances WhatsApp
+router.post('/relancer-paniers', adminSecretOnly, async (req, res) => {
+  try {
+    const { executerRelancePaniers } = require('../services/relance-panier');
+    const result = await executerRelancePaniers();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

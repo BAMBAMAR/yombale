@@ -136,7 +136,7 @@ export default function GuideCreerBoutiquePage() {
               Au Sénégal, la majorité des entrepreneurs à succès s&apos;approvisionnent directement en Asie via des plateformes comme <strong>Alibaba, AliExpress, 1688 ou Shein</strong>, ou collaborent avec des grossistes locaux (Sandaga, Colobane, HLM). Que vous vendiez des vêtements, des chaussures, de la téléphonie ou des cosmétiques, le sourcing en ligne permet d&apos;obtenir des marges nettes confortables.
             </p>
             <div style={{ background: '#eff6ff', borderLeft: '4px solid #3b82f6', padding: 16, borderRadius: '0 12px 12px 0', fontSize: 14, color: '#1e40af' }}>
-              💡 <strong>Conseil Pro :</strong> Pour démarrer sans risque, commandez d&apos;abord quelques pièces sur AliExpress pour tester la qualité et la rapidité de vente avant d&apos;engager des volumes plus importants sur Alibaba.
+              <strong>Conseil Pro :</strong> Pour démarrer sans risque, commandez d&apos;abord quelques pièces sur AliExpress pour tester la qualité et la rapidité de vente avant d&apos;engager des volumes plus importants sur Alibaba.
             </div>
           </section>
 
@@ -169,21 +169,21 @@ export default function GuideCreerBoutiquePage() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ background: '#f0fdf4', padding: 18, borderRadius: 14, border: '1.5px solid #bbf7d0' }}>
-                <strong style={{ color: '#166534', fontSize: 16 }}>📱 Méthode 1 : 100% WhatsApp en 30 secondes (Zéro Ordinateur)</strong>
+                <strong style={{ color: '#166534', fontSize: 16 }}>Méthode 1 : 100% WhatsApp en 30 secondes (Zéro Ordinateur)</strong>
                 <p style={{ margin: '6px 0 0', fontSize: 14, color: '#15803d', lineHeight: 1.6 }}>
                   Envoyez simplement <em>« creer boutique »</em> au numéro WhatsApp officiel Nopalou. En 3 réponses (Nom, Secteur, Ville), votre boutique et votre vitrine web sont ouvertes et prêtes à vendre !
                 </p>
               </div>
 
               <div style={{ background: '#f8fafc', padding: 18, borderRadius: 14, border: '1px solid #cbd5e1' }}>
-                <strong style={{ color: '#0f172a', fontSize: 16 }}>💻 Méthode 2 : Formulaire Express en Ligne (2 minutes)</strong>
+                <strong style={{ color: '#0f172a', fontSize: 16 }}>Méthode 2 : Formulaire Express en Ligne (2 minutes)</strong>
                 <p style={{ margin: '6px 0 0', fontSize: 14, color: '#475569', lineHeight: 1.6 }}>
                   Sur le site web, renseignez le nom de votre boutique et votre numéro WhatsApp. Votre espace marchand simplifié à 6 onglets est immédiatement actif.
                 </p>
               </div>
 
               <div style={{ background: '#eff6ff', padding: 18, borderRadius: 14, border: '1.5px solid #bfdbfe' }}>
-                <strong style={{ color: '#1e40af', fontSize: 16 }}>📦 Méthode 3 : Migration Intelligente 1-Clic (Shopify, WooCommerce, Excel)</strong>
+                <strong style={{ color: '#1e40af', fontSize: 16 }}>Méthode 3 : Migration Intelligente 1-Clic (Shopify, WooCommerce, Excel)</strong>
                 <p style={{ margin: '6px 0 0', fontSize: 14, color: '#1d4ed8', lineHeight: 1.6 }}>
                   Vous avez déjà un catalogue ailleurs ? Uploadez votre fichier CSV/Excel : le moteur d&apos;import intelligent détecte automatiquement vos titres, prix, stocks et photos en quelques secondes !
                 </p>
@@ -227,7 +227,7 @@ export default function GuideCreerBoutiquePage() {
                   textDecoration: 'none',
                 }}
               >
-                🚀 Créer ma boutique gratuitement
+                Créer ma boutique gratuitement
               </Link>
               <Link
                 href="/tarifs-boutique"

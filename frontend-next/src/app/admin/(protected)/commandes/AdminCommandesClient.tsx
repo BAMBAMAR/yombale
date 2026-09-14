@@ -164,7 +164,7 @@ export default function AdminCommandesClient({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
         <div>
           <h1 className="admin-page-titre" style={{ margin: 0 }}>
-            🛍️ Commandes Centralisées
+            Commandes Centralisées
             <span className="admin-page-count">{total}</span>
           </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
@@ -193,7 +193,7 @@ export default function AdminCommandesClient({
         </button>
       </div>
 
-      {/* 📊 Pilules KPI */}
+      {/* Pilules KPI */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 20 }}>
         <div style={{ background: '#fff', padding: 14, borderRadius: 10, border: '1px solid #e2e8f0' }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Volume Total</span>
@@ -259,11 +259,11 @@ export default function AdminCommandesClient({
             }}
           >
             <option value="tous">Tous les statuts</option>
-            <option value="en_attente">⏳ En attente</option>
+            <option value="en_attente">En attente</option>
             <option value="confirmee">✔️ Confirmée</option>
-            <option value="expediee">🚚 Expédiée</option>
-            <option value="livree">📦 Livrée</option>
-            <option value="annulee">❌ Annulée</option>
+            <option value="expediee">Expédiée</option>
+            <option value="livree">Livrée</option>
+            <option value="annulee">Annulée</option>
           </select>
 
           <button

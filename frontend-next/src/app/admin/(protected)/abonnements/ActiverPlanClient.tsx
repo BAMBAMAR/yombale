@@ -10,7 +10,7 @@ function Btn() {
       color: '#fff', border: 'none', borderRadius: 8,
       fontWeight: 700, fontSize: 14, cursor: pending ? 'not-allowed' : 'pointer',
     }}>
-      {pending ? 'Activation…' : '✅ Activer'}
+      {pending ? 'Activation…' : 'Activer'}
     </button>
   )
 }
@@ -34,12 +34,12 @@ export default function ActiverPlanClient({ prixPro, prixBusiness }: { prixPro: 
 
       {state.success && (
         <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '10px 14px', color: '#16a34a', fontWeight: 600, marginBottom: 12 }}>
-          ✅ {state.info}
+          {state.info}
         </div>
       )}
       {state.error && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', color: '#dc2626', marginBottom: 12 }}>
-          ❌ {state.error}
+          {state.error}
         </div>
       )}
 

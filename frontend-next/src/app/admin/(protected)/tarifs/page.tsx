@@ -15,7 +15,7 @@ export default async function AdminTarifsPage() {
       cache: 'no-store',
     })
     if (r.ok) settings = await r.json()
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L18]', err); }
 
   return (
     <div className="admin-content">

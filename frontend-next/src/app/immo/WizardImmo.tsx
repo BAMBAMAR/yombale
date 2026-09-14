@@ -22,12 +22,12 @@ interface AnnonceImmo {
 interface Props { onClose: () => void }
 
 const TYPE_BIENS = [
-  { val: 'appartement', label: '🏢 Appartement' },
-  { val: 'villa',       label: '🏡 Villa' },
-  { val: 'maison',      label: '🏠 Maison' },
+  { val: 'appartement', label: 'Appartement' },
+  { val: 'villa',       label: 'Villa' },
+  { val: 'maison',      label: 'Maison' },
   { val: 'studio',      label: '🛏 Studio' },
   { val: 'terrain',     label: '🌿 Terrain' },
-  { val: '',            label: '🔍 Peu importe' },
+  { val: '',            label: 'Peu importe' },
 ]
 
 const VILLES = ['Dakar', 'Pikine', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Touba', 'Autre']
@@ -90,7 +90,7 @@ export default function WizardImmo({ onClose }: Props) {
                     className={`wizard-profil-btn${transaction === t ? ' wizard-profil-btn--active' : ''}`}
                     style={{ flex: 1, justifyContent: 'center' }}
                   >
-                    <span className="wizard-profil-icon">{t === 'location' ? '🔑' : '🤝'}</span>
+                    <span className="wizard-profil-icon">{t === 'location' ? '' : '🤝'}</span>
                     <span className="wizard-profil-name">{t === 'location' ? 'Louer' : 'Acheter'}</span>
                   </button>
                 ))}
@@ -185,7 +185,7 @@ export default function WizardImmo({ onClose }: Props) {
           <>
             <div className="wizard-results-header">
               <h2 className="wizard-titre">
-                {results.length > 0 ? `✨ ${results.length} bien${results.length > 1 ? 's' : ''} trouvé${results.length > 1 ? 's' : ''}` : '😕 Aucun résultat'}
+                {results.length > 0 ? `${results.length} bien${results.length > 1 ? 's' : ''} trouvé${results.length > 1 ? 's' : ''}` : '😕 Aucun résultat'}
               </h2>
               <p className="wizard-sous-titre">
                 {transaction === 'location' ? 'Location' : 'Vente'} · Budget : <strong>{fcfa(budget)}</strong>
@@ -210,11 +210,11 @@ export default function WizardImmo({ onClose }: Props) {
                   return (
                     <a key={a.id} href={`/immo/${a.id}`} className="wizard-immo-card" target="_blank" rel="noopener">
                       <div className="wizard-immo-img">
-                        <ExternalImg src={img} alt={a.titre} fallback="🏠" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <ExternalImg src={img} alt={a.titre} fallback="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       <div className="wizard-immo-info">
                         <p className="wizard-immo-titre">{a.titre}</p>
-                        {loc && <p className="wizard-immo-loc">📍 {loc}</p>}
+                        {loc && <p className="wizard-immo-loc">{loc}</p>}
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                           {a.surface_m2 && <span className="wizard-immo-tag">{a.surface_m2} m²</span>}
                           {a.nb_pieces && <span className="wizard-immo-tag">{a.nb_pieces} pièces</span>}

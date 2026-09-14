@@ -24,14 +24,14 @@ const GENRES = ['Homme', 'Femme', 'Enfant', 'Unisexe']
 const VILLES = ['Dakar', 'Thiès', 'Ziguinchor', 'Saint-Louis', 'Kaolack', 'Rufisque', 'Pikine', 'Touba', 'Autre']
 
 const CAT_LABELS: Record<string, string> = {
-  smartphones: '📱 Téléphone',
-  informatique: '💻 Informatique',
+  smartphones: 'Téléphone',
+  informatique: 'Informatique',
   'tv-electro': '📺 TV & Électro',
   mode: '👗 Mode',
-  maison: '🏠 Maison',
-  'auto-moto': '🚗 Auto & Moto',
+  maison: 'Maison',
+  'auto-moto': 'Auto & Moto',
   jeux: '🎮 Jeux',
-  services: '🛠 Services',
+  services: 'Services',
 }
 
 interface CaracteristiquesProps {
@@ -295,7 +295,7 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
             role="button"
             aria-label={t('account.addPhotos')}
           >
-            <span style={{ fontSize: 28 }}>📷</span>
+            <span style={{ fontSize: 28 }}></span>
             <p>{t('account.addPhotos')}</p>
             <span className="form-hint">Max {5 - keepPhotos.length} · 5 Mo · JPG/PNG/WebP</span>
           </div>

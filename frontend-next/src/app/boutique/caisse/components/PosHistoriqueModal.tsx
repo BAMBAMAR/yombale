@@ -27,32 +27,42 @@ export interface VenteHistorique {
 }
 
 interface PosHistoriqueModalProps {
-  historiqueVentes: VenteHistorique[]
-  formatTicketThermique: '80mm' | '58mm'
-  onChangeFormatTicket: (f: '80mm' | '58mm') => void
-  btDeviceName: string | null
-  onConnecterBluetooth: () => void
-  onExporterCSV: () => void
-  onExporterPDF: () => void
-  onAnnulerRembourserVente: (id: string) => void
-  onImprimerTicket: (v: VenteHistorique) => void
+  isOpen?: boolean
+  historiqueVentes: VenteHistorique[] | any[]
+  formatTicketThermique?: '80mm' | '58mm'
+  onChangeFormatTicket?: (f: '80mm' | '58mm') => void
+  btDeviceName?: string | null
+  onConnecterBluetooth?: () => void
+  onExporterCSV?: () => void
+  onExporterPDF?: () => void
+  onAnnulerRembourserVente?: (id: string) => void
+  onAnnulerVente?: (v: any) => void
+  onImprimerTicket: (v: any) => void
   onClose: () => void
-  formatPrice: (p: number) => string
+  formatPrice?: (p: number) => string
+  fcfa?: (p: number) => string
+  roleActif?: string
 }
 
 export default function PosHistoriqueModal({
+  isOpen,
   historiqueVentes,
-  formatTicketThermique,
-  onChangeFormatTicket,
-  btDeviceName,
-  onConnecterBluetooth,
-  onExporterCSV,
-  onExporterPDF,
+  formatTicketThermique = '80mm',
+  onChangeFormatTicket = () => {},
+  btDeviceName = null,
+  onConnecterBluetooth = () => {},
+  onExporterCSV = () => {},
+  onExporterPDF = () => {},
   onAnnulerRembourserVente,
+  onAnnulerVente,
   onImprimerTicket,
   onClose,
   formatPrice,
+  fcfa: fcfaProp,
+  roleActif,
 }: PosHistoriqueModalProps) {
+  const formatPriceFn = formatPrice || fcfaProp || ((n: number) => `${n} FCFA`)
+  const handleAnnuler = onAnnulerRembourserVente || ((id: string) => onAnnulerVente?.({ id }))
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{ background: '#ffffff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 780, border: '1px solid #e2e8f0', maxHeight: '88vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)', position: 'relative' }}>
@@ -86,7 +96,7 @@ export default function PosHistoriqueModal({
         {/* En-tête Modale */}
         <div style={{ marginBottom: 14, paddingRight: 40 }}>
           <h2 style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
-            📜 Historique des Opérations &amp; Incidents de Caisse
+            Historique des Opérations &amp; Incidents de Caisse
           </h2>
           <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748b' }}>Journal des encaissements, annulations et remboursements.</p>
         </div>
@@ -98,27 +108,27 @@ export default function PosHistoriqueModal({
             onChange={e => onChangeFormatTicket(e.target.value as any)}
             style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 12, fontWeight: 700, background: '#ffffff', color: '#0f172a' }}
           >
-            <option value="80mm">🖨️ Format 80mm (Standard)</option>
-            <option value="58mm">🖨️ Format 58mm (Poche)</option>
+            <option value="80mm">Format 80mm (Standard)</option>
+            <option value="58mm">Format 58mm (Poche)</option>
           </select>
           <button
             onClick={onConnecterBluetooth}
             style={{ background: btDeviceName ? '#f0fdf4' : '#f5f3ff', color: btDeviceName ? '#166534' : '#6d28d9', border: btDeviceName ? '1px solid #bbf7d0' : '1px solid #ddd6fe', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
             title="Connecter une imprimante thermique Bluetooth direct ESC/POS"
           >
-            📱 Bluetooth {btDeviceName ? `(${btDeviceName})` : ''}
+            Bluetooth {btDeviceName ? `(${btDeviceName})` : ''}
           </button>
           <button
             onClick={onExporterCSV}
             style={{ background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
           >
-            📥 Excel (CSV)
+            Excel (CSV)
           </button>
           <button
             onClick={onExporterPDF}
             style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
           >
-            📄 Imprimer PDF
+            Imprimer PDF
           </button>
         </div>
 
@@ -129,11 +139,11 @@ export default function PosHistoriqueModal({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontWeight: 800, fontSize: 14, color: '#0f172a' }}>{v.id}</span>
                   <span style={{ fontSize: 11, background: v.statut === 'annulee' ? '#fef2f2' : '#eff6ff', color: v.statut === 'annulee' ? '#991b1b' : '#1d4ed8', border: v.statut === 'annulee' ? '1px solid #fecaca' : '1px solid #bfdbfe', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
-                    {v.statut === 'annulee' ? '❌ ANNULÉ / REMBOURSÉ' : v.modePaiement.toUpperCase()}
+                    {v.statut === 'annulee' ? 'ANNULÉ / REMBOURSÉ' : v.modePaiement.toUpperCase()}
                   </span>
                 </div>
                 <p style={{ margin: '4px 0 0', fontSize: 12, color: '#64748b' }}>
-                  📅 {v.date} à {v.heure} • {v.caissier}
+                  {v.date} à {v.heure} • {v.caissier}
                 </p>
                 {v.motifAnnulation && (
                   <p style={{ margin: '2px 0 0', fontSize: 11, color: '#dc2626', fontStyle: 'italic' }}>
@@ -141,22 +151,22 @@ export default function PosHistoriqueModal({
                   </p>
                 )}
                 <p style={{ margin: '4px 0 0', fontSize: 12, color: '#334155' }}>
-                  Articles: {v.ticket.map(i => `${i.quantite}x ${i.produit.nom}`).join(', ')}
+                  Articles: {(v.ticket || []).map((i: any) => `${i.quantite}x ${i.produit?.nom || i.nom || 'Article'}`).join(', ')}
                 </p>
               </div>
 
               <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                 <span style={{ fontSize: 16, fontWeight: 900, color: v.statut === 'annulee' ? '#dc2626' : '#16a34a' }}>
-                  {v.statut === 'annulee' ? `-${formatPrice(v.total)}` : formatPrice(v.total)}
+                  {v.statut === 'annulee' ? `-${formatPriceFn(v.total)}` : formatPriceFn(v.total)}
                 </span>
 
                 <div style={{ display: 'flex', gap: 6 }}>
                   {v.statut !== 'annulee' && (
                     <button
-                      onClick={() => onAnnulerRembourserVente(v.id)}
+                      onClick={() => handleAnnuler(v.id)}
                       style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', borderRadius: 6, padding: '4px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                     >
-                      ❌ Annuler / Rembourser
+                      Annuler / Rembourser
                     </button>
                   )}
                   <button

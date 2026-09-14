@@ -217,14 +217,15 @@ function adminPageGuard(req, res, next) {
 }
 
 app.get('/admin-telecom.html', adminPageGuard);
-app.get('/admin-immo.html',    adminPageGuard);
-app.get('/admin-partenaires.html', adminPageGuard);
-app.get('/admin-annonces.html', adminPageGuard);
-app.get('/admin.html', adminPageGuard);
-
-
-// ── Fichiers statiques frontend ───────────────────────────────
-app.use(express.static(path.join(__dirname, '../frontend')));
+// ── API Root & Santé (API pure JSON - frontend découplé sur Next.js) ──
+app.get('/', (req, res) => {
+  res.json({
+    service: 'nopalou-api',
+    version: '1.0.0',
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // ── Login admin — cookie httpOnly (8h) ───────────────────────
 app.post('/api/admin/login', (req, res) => {
@@ -284,10 +285,10 @@ app.use('/api/categories',      require('./routes/categories'));
 app.use('/api/plans',           require('./routes/plans'));
 app.use('/api/social-shop',     require('./routes/social-shop'));
 app.use('/api/boutiques',       require('./routes/social-shop'));
-app.use('/api',                 require('./routes/social-shop'));
 app.use('/api/admin/integrations', require('./routes/admin-integrations'));
 app.use('/api/paiement-sequestre', require('./routes/paiement-sequestre'));
 app.use('/api/flux-catalogue',  require('./routes/flux-catalogue-meta'));
+app.use('/api/boutiques',       require('./routes/flux-catalogue-meta'));
 
 // ── Health check (Diagnostics & Liveness/Readiness Probes) ─────
 app.get(['/health', '/api/health'], async (req, res) => {
@@ -330,13 +331,21 @@ app.use(require('./middlewares/bot-ssr'));
 
 // ── 404 JSON explicite pour toute route /api/* non reconnue ──
 app.all('/api/*', (req, res) => {
-  res.status(404).json({ error: `Endpoint API introuvable : ${req.method} ${req.originalUrl}` });
+  res.status(404).json({
+    success: false,
+    error: `Endpoint API introuvable : ${req.method} ${req.originalUrl}`,
+    code: 'NOT_FOUND'
+  });
 });
 
-// ── Catch-all → SPA frontend ──────────────────────────────────
-app.get('*', (req, res) =>
-  res.sendFile(path.join(__dirname, '../frontend/index.html'))
-);
+// ── Catch-all 404 JSON (API pure) ─────────────────────────────
+app.all('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `Ressource introuvable : ${req.method} ${req.originalUrl}`,
+    code: 'NOT_FOUND'
+  });
+});
 
 // ── Gestion erreurs globale ───────────────────────────────────
 // Sentry error handler — DOIT être APRÈS toutes les routes, AVANT les autres error handlers
@@ -395,6 +404,13 @@ async function demarrerApp() {
         console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
       }
       try { require('./services/cron-relances-carnet'); } catch (e) { console.warn('[CRON CARNET] Warning:', e.message); }
+      try {
+        const { executerRelancePaniers } = require('./services/relance-panier');
+        const cron = require('node-cron');
+        cron.schedule('*/30 * * * *', () => {
+          executerRelancePaniers().catch(() => {});
+        });
+      } catch (e) { console.warn('[CRON RELANCE PANIER] Warning:', e.message); }
     }
   });
 

@@ -65,7 +65,7 @@ export default async function OperateurLanding({ slug }: { slug: string }) {
 
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, color: 'var(--navy)', lineHeight: 1.2, marginBottom: 10 }}>
-            📡 {cfg.h1}
+            {cfg.h1}
           </h1>
           <p style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.6, maxWidth: 720 }}>{cfg.intro}</p>
           {forfaits.length > 0 && (
@@ -77,7 +77,7 @@ export default async function OperateurLanding({ slug }: { slug: string }) {
 
         {forfaits.length === 0 ? (
           <div className="empty-state">
-            <span style={{ fontSize: 48 }}>📡</span>
+            <span style={{ fontSize: 48 }}></span>
             <p>Aucun forfait disponible pour l&apos;instant.</p>
             <Link href="/telecom" className="budget-pill active" style={{ marginTop: 8 }}>Voir tous les forfaits</Link>
           </div>

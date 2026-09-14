@@ -130,7 +130,7 @@ export default function AdminDashboardClient({
       >
         <div>
           <h1 className="admin-page-titre" style={{ margin: 0 }}>
-            🚀 Console de Pilotage Nopalou
+            Console de Pilotage Nopalou
           </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
             Vue panoramique en temps réel : finances, marchands, catalogue, opérations & alertes.
@@ -162,7 +162,7 @@ export default function AdminDashboardClient({
         </div>
       </div>
 
-      {/* 🔴 ACTION CENTER : À Traiter Immédiatement */}
+      {/* ACTION CENTER : À Traiter Immédiatement */}
       {actionCenter && actionCenter.totalActionsRequises > 0 ? (
         <div
           style={{
@@ -175,7 +175,7 @@ export default function AdminDashboardClient({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <span style={{ fontSize: 20 }}>🔴</span>
+            <span style={{ fontSize: 20 }}></span>
             <div>
               <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#9f1239' }}>
                 Action Center — {actionCenter.totalActionsRequises} action(s) requise(s)
@@ -341,12 +341,12 @@ export default function AdminDashboardClient({
         </div>
       )}
 
-      {/* 💰 BLOC 1 : FINANCES & REVENUS */}
+      {/* BLOC 1 : FINANCES & REVENUS */}
       <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1e293b', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
         <DollarSign size={18} color="#16a34a" /> Performances Financières & MRR
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 32 }}>
-        <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+        <div className="admin-stat-card" style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>MRR Abonnements</span>
           <div style={{ fontSize: 26, fontWeight: 800, color: '#16a34a', margin: '6px 0 2px' }}>
             {fcfa(finances?.mrr || 0)}
@@ -370,13 +370,13 @@ export default function AdminDashboardClient({
           <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Abonnements par Forfait</span>
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <span style={{ background: '#f3e8ff', color: '#7e22ce', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
-              👑 VIP: {finances?.abonnements_business || 0}
+              VIP: {finances?.abonnements_business || 0}
             </span>
             <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
-              ⭐ Pro: {finances?.abonnements_pro || 0}
+              Pro: {finances?.abonnements_pro || 0}
             </span>
             <span style={{ background: '#dcfce7', color: '#15803d', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
-              🛍️ Taf: {finances?.abonnements_decouverte || 0}
+              Taf: {finances?.abonnements_decouverte || 0}
             </span>
           </div>
         </div>
@@ -397,7 +397,7 @@ export default function AdminDashboardClient({
         </div>
       </div>
 
-      {/* 👥 BLOC 2 : MARCHANDS & UTILISATEURS */}
+      {/* BLOC 2 : MARCHANDS & UTILISATEURS */}
       <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1e293b', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Store size={18} color="#0284c7" /> Écosystème Marchands & Comptes
       </h2>
@@ -443,7 +443,7 @@ export default function AdminDashboardClient({
         </div>
       </div>
 
-      {/* 📦 BLOC 3 : CATALOGUE & ACTIVITÉ */}
+      {/* BLOC 3 : CATALOGUE & ACTIVITÉ */}
       <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1e293b', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
         <Package size={18} color="#9333ea" /> Produits, Annonces & WhatsApp
       </h2>
@@ -489,9 +489,9 @@ export default function AdminDashboardClient({
         </div>
       </div>
 
-      {/* ⚡ RACCOURCIS DE GESTION RAPIDE */}
+      {/* RACCOURCIS DE GESTION RAPIDE */}
       <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1e293b', marginBottom: 12 }}>
-        ⚡ Raccourcis Opérationnels
+        Raccourcis Opérationnels
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
         <Link

@@ -66,21 +66,21 @@ export async function GET() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 26, fontWeight: 900, color: '#C75B00', letterSpacing: -0.5, display: 'flex', alignItems: 'center', gap: 12 }}>
-                🛒 1. ACHETEUR &amp; CONSOMMATEUR
+                1. ACHETEUR &amp; CONSOMMATEUR
               </span>
               <span style={{ fontSize: 14, background: '#FFF7ED', border: '1.5px solid #C75B00', color: '#C75B00', padding: '4px 14px', borderRadius: 9999, fontWeight: 900, display: 'flex' }}>100% GRATUIT</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', gap: 14 }}>
               <div style={{ flex: 1, background: '#F8FAFC', border: '1.5px solid #E2E8F0', padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>🔍 Super-Comparateur</strong>
+                <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>Super-Comparateur</strong>
                 <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Auchan, Carrefour, Expat-Dakar &amp; Boutiques Nopalou.</span>
               </div>
               <div style={{ flex: 1, background: '#F8FAFC', border: '1.5px solid #E2E8F0', padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#25D366', fontSize: 18, fontWeight: 900 }}>🤖 Bot WhatsApp Meta</strong>
+                <strong style={{ color: '#25D366', fontSize: 18, fontWeight: 900 }}>Bot WhatsApp Meta</strong>
                 <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Recherche, fiches produits et commande 24/7 sur WhatsApp.</span>
               </div>
               <div style={{ flex: 1, background: '#F8FAFC', border: '1.5px solid #E2E8F0', padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>🔔 Alertes Prix &amp; Immo</strong>
+                <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>Alertes Prix &amp; Immo</strong>
                 <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Notifications baisses de prix + Télécom &amp; Logements.</span>
               </div>
             </div>
@@ -93,7 +93,7 @@ export async function GET() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 26, fontWeight: 900, color: '#16a34a', letterSpacing: -0.5, display: 'flex', alignItems: 'center', gap: 12 }}>
-                🏪 2. MARCHAND &amp; CAISSE POS MAGASIN
+                2. MARCHAND &amp; CAISSE POS MAGASIN
               </span>
               <span style={{ fontSize: 14, background: '#F0FDF4', border: '1.5px solid #16a34a', color: '#16a34a', padding: '4px 14px', borderRadius: 9999, fontWeight: 900, display: 'flex' }}>SOLUTIONS POS MAGASIN</span>
             </div>
@@ -104,7 +104,7 @@ export async function GET() {
                   <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Scan Smartphone, Cloud Sync (&lt;100ms) et Douchette USB.</span>
                 </div>
                 <div style={{ flex: 1, background: '#F8FAFC', border: '1.5px solid #E2E8F0', padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>🏷️ Codes-Barres &amp; Stickers GS1</strong>
+                  <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>Codes-Barres &amp; Stickers GS1</strong>
                   <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Générateur EAN-13 GS1 Modulo 10 + impression stickers 50x30mm.</span>
                 </div>
               </div>
@@ -114,7 +114,7 @@ export async function GET() {
                   <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Saisie des crédits + Relance WhatsApp 1-Clic avec solde exact.</span>
                 </div>
                 <div style={{ flex: 1, background: '#F8FAFC', border: '1.5px solid #E2E8F0', padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>💳 Wave, OM + Multi-Caissiers</strong>
+                  <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>Wave, OM + Multi-Caissiers</strong>
                   <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Encaissement Cash/Wave/OM + Rôles sécurisés par PIN.</span>
                 </div>
               </div>
@@ -128,17 +128,17 @@ export async function GET() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 26, fontWeight: 900, color: '#7C3AED', letterSpacing: -0.5, display: 'flex', alignItems: 'center', gap: 12 }}>
-                💼 3. APPORTEUR D&apos;AFFAIRES &amp; PARRAINAGE
+                3. APPORTEUR D&apos;AFFAIRES &amp; PARRAINAGE
               </span>
               <span style={{ fontSize: 14, background: '#F3E8FF', border: '1.5px solid #7C3AED', color: '#7C3AED', padding: '4px 14px', borderRadius: 9999, fontWeight: 900, display: 'flex' }}>20% RÉCURRENT MENSUEL</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', gap: 14 }}>
               <div style={{ flex: 1, background: '#F8FAFC', border: '1.5px solid #E2E8F0', padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#7C3AED', fontSize: 18, fontWeight: 900 }}>💰 Commissions Récurrentes 20%</strong>
+                <strong style={{ color: '#7C3AED', fontSize: 18, fontWeight: 900 }}>Commissions Récurrentes 20%</strong>
                 <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Perçues chaque mois sur Wave / OM pour chaque boutique parrainée.</span>
               </div>
               <div style={{ flex: 1, background: '#F8FAFC', border: '1.5px solid #E2E8F0', padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>📄 Brochure PDF (13 P.) &amp; Kit</strong>
+                <strong style={{ color: '#1C2B4A', fontSize: 18, fontWeight: 900 }}>Brochure PDF (13 P.) &amp; Kit</strong>
                 <span style={{ fontSize: 14.5, color: '#475569', fontWeight: 650, lineHeight: 1.4 }}>Support de vente terrain + Démo POS commercial 1-Clic.</span>
               </div>
             </div>

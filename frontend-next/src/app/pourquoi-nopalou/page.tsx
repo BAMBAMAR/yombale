@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 const COMPARATIFS = [
   {
     titre: "Nopalou vs WhatsApp Seul",
-    emoji: "💬",
+    emoji: "",
     description: "WhatsApp est parfait pour discuter, mais devient un cauchemar dès que vous avez plus de 10 commandes par jour.",
     nopalou: [
       "Vos clients voient tout votre catalogue avec prix, tailles et photos sans vous solliciter",
@@ -41,7 +41,7 @@ const COMPARATIFS = [
   },
   {
     titre: "Nopalou vs Carnet Papier & Cahier de Dettes",
-    emoji: "📒",
+    emoji: "",
     description: "Le cahier traditionnel est gratuit au départ, mais vous fait perdre des dizaines de milliers de FCFA en oublis chaque mois.",
     nopalou: [
       "Historique sécurisé dans le Cloud : impossible de perdre vos comptes",
@@ -58,7 +58,7 @@ const COMPARATIFS = [
   },
   {
     titre: "Nopalou vs Shopify & Plateformes Internationales",
-    emoji: "🌐",
+    emoji: "",
     description: "Shopify est conçu pour les États-Unis et l'Europe, pas pour les commerçants de Dakar, Sandaga ou Thiès.",
     nopalou: [
       "Dès 2 500 FCFA/mois, payable directement par Wave ou Orange Money",
@@ -209,7 +209,7 @@ export default function PourquoiNopalouPage() {
                 {/* Colonne Alternative */}
                 <div style={{ background: '#f8fafc', borderRadius: 16, padding: 20, border: '1.5px solid #e2e8f0' }}>
                   <div style={{ fontWeight: 900, color: '#64748b', fontSize: 15, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>❌ Sans Nopalou :</span>
+                    <span>Sans Nopalou :</span>
                   </div>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {comp.autre.map((pt, pIdx) => (

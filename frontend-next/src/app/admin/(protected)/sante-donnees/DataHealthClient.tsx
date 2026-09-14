@@ -89,7 +89,7 @@ export default function DataHealthClient({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 24 }}>🛡️</span>
+            <span style={{ fontSize: 24 }}></span>
             <h1 className="admin-page-titre" style={{ margin: 0 }}>
               Santé des Données & Intégrité Forensique
             </h1>
@@ -271,7 +271,7 @@ export default function DataHealthClient({
             {data.anomaliesCritiques.map(a => (
               <div key={a.id} style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#991b1b' }}>🔴 {a.titre}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#991b1b' }}>{a.titre}</div>
                   <div style={{ fontSize: 12, color: '#b91c1c' }}>Impact : {a.impact}</div>
                 </div>
                 <span style={{ background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, padding: '2px 8px', borderRadius: 12 }}>

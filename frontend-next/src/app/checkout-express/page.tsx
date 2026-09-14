@@ -6,8 +6,9 @@ import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
 import {
   ShoppingBag, Store, MapPin, CreditCard, MessageCircle,
-  CheckCircle2, Zap, AlertCircle, ArrowRight, Phone, ShieldCheck
+  CheckCircle2, Zap, AlertCircle, ArrowRight, Phone, ShieldCheck, Layers
 } from 'lucide-react'
+import EchelonnementConfigurator from '@/app/boutiques/[id]/commander/EchelonnementConfigurator'
 
 interface Zone {
   id: string
@@ -16,9 +17,9 @@ interface Zone {
 }
 
 const DEFAULT_ZONES: Zone[] = [
-  { id: 'dakar-intra', nom: '📍 Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
-  { id: 'dakar-banlieue', nom: '📍 Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
-  { id: 'regions-senegal', nom: '🚚 Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
+  { id: 'dakar-intra', nom: 'Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
+  { id: 'dakar-banlieue', nom: 'Banlieue Dakar (Pikine, Guédiawaye, Keur Massar, Rufisque...)', prix: 2500 },
+  { id: 'regions-senegal', nom: 'Expédition Régions (Thiès, St-Louis, Mbour, Kaolack...)', prix: 3500 },
   { id: 'retrait-boutique', nom: '🏬 Retrait gratuit en boutique', prix: 0 },
 ]
 
@@ -28,15 +29,16 @@ function fcfa(amount: number) {
 
 function CheckoutExpressContent() {
   const searchParams = useSearchParams()
+  const refParam = searchParams.get('ref') || searchParams.get('r') || ''
   const produitId = searchParams.get('produit') || searchParams.get('p') || ''
-  const boutiqueId = searchParams.get('boutique') || searchParams.get('b') || ''
+  const boutiqueIdParam = searchParams.get('boutique') || searchParams.get('b') || ''
   const phoneParam = searchParams.get('phone') || searchParams.get('tel') || ''
   const nomParam = searchParams.get('nom') || ''
   const payParam = (searchParams.get('pay') || searchParams.get('m') || '').toLowerCase()
   const quantiteParam = parseInt(searchParams.get('q') || '1', 10)
 
   const [loading, setLoading] = useState<boolean>(true)
-  const [produitInfo, setProduitInfo] = useState<{ id: string; nom: string; prix: number; photo?: string; boutiqueNom?: string } | null>(null)
+  const [produitInfo, setProduitInfo] = useState<{ id: string; nom: string; prix: number; photo?: string | null; boutiqueNom?: string; boutiqueId?: string } | null>(null)
   const [zones, setZones] = useState<Zone[]>(DEFAULT_ZONES)
   const [zoneId, setZoneId] = useState<string>('dakar-intra')
   const [quantite, setQuantite] = useState<number>(quantiteParam > 0 ? quantiteParam : 1)
@@ -45,14 +47,23 @@ function CheckoutExpressContent() {
   const [clientNom, setClientNom] = useState(nomParam)
   const [clientTel, setClientTel] = useState(phoneParam)
   const [clientAdresse, setClientAdresse] = useState('')
-  const [methodePaiement, setMethodePaiement] = useState<'wave' | 'orange_money' | 'cash'>(
-    payParam === 'cash' ? 'cash' : payParam === 'om' || payParam === 'orange_money' ? 'orange_money' : 'wave'
+  const [methodePaiement, setMethodePaiement] = useState<'wave' | 'orange_money' | 'cash' | 'echelonne'>(
+    searchParams.get('echelonne') === '1'
+      ? 'echelonne'
+      : payParam === 'cash'
+      ? 'cash'
+      : payParam === 'om' || payParam === 'orange_money'
+      ? 'orange_money'
+      : 'wave'
   )
+  const [formuleEchelonnee, setFormuleEchelonnee] = useState<any | null>(null)
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [autoRedirecting, setAutoRedirecting] = useState<boolean>(false)
   const [success, setSuccess] = useState<boolean>(false)
-  const [orderRef, setOrderRef] = useState<string>('')
+  const [orderRef, setOrderRef] = useState<string>(refParam)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [useSequestre, setUseSequestre] = useState<boolean>(true)
+  const [sequestrePin, setSequestrePin] = useState<string | null>(null)
 
   const autoParam = searchParams.get('auto') === '1'
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
@@ -61,6 +72,50 @@ function CheckoutExpressContent() {
     async function loadData() {
       setLoading(true)
       try {
+        // 1. Priorité absolue : Si une référence de commande existe (ex: C-MU118UXF)
+        if (refParam) {
+          const cRes = await fetch(`${backendUrl}/api/boutiques/commandes/suivi?ref=${encodeURIComponent(refParam)}`).catch(() => null)
+          if (cRes && cRes.ok) {
+            const cData = await cRes.json()
+            const cmd = cData.commandes?.[0]
+            if (cmd) {
+              const prixTot = Number(cmd.montant_total) || 0
+              const qte = Number(cmd.quantite) || 1
+              const prixUnit = Number(cmd.prix_unitaire) || (qte > 0 ? Math.round(prixTot / qte) : prixTot)
+
+              setProduitInfo({
+                id: cmd.produit_id || cmd.id,
+                nom: cmd.nom_produit || 'Produit Nopalou',
+                prix: prixUnit,
+                photo: null,
+                boutiqueNom: cmd.boutique_nom || 'Boutique Partenaire',
+                boutiqueId: cmd.boutique_id,
+              })
+              setQuantite(qte)
+              if (cmd.client_nom) setClientNom(cmd.client_nom)
+              if (cmd.client_telephone) setClientTel(cmd.client_telephone)
+              if (cmd.client_adresse) setClientAdresse(cmd.client_adresse)
+              setOrderRef(cmd.reference)
+
+              if (searchParams.get('echelonne') === '1' || cmd.methode_paiement === 'credit' || cmd.methode_paiement === 'echelonne') {
+                setMethodePaiement('echelonne')
+              }
+
+              const bId = cmd.boutique_id || boutiqueIdParam
+              if (bId) {
+                const zRes = await fetch(`${backendUrl}/api/comptabilite/${bId}/zones/public`).catch(() => null)
+                if (zRes && zRes.ok) {
+                  const zData = await zRes.json()
+                  if (Array.isArray(zData) && zData.length > 0) setZones(zData)
+                }
+              }
+              setLoading(false)
+              return
+            }
+          }
+        }
+
+        // 2. Chargement standard par produitId et/ou boutiqueId
         if (produitId) {
           const res = await fetch(`${backendUrl}/api/produits/${produitId}`).catch(() => null)
           if (res && res.ok) {
@@ -71,11 +126,29 @@ function CheckoutExpressContent() {
               prix: Number(data.prix || data.prix_min) || 0,
               photo: data.images?.[0] || data.photo || null,
               boutiqueNom: data.boutique_nom || 'Boutique Partenaire',
+              boutiqueId: data.boutique_id || boutiqueIdParam,
             })
+          } else if (boutiqueIdParam) {
+            // Fallback dans le catalogue de la boutique
+            const bRes = await fetch(`${backendUrl}/api/boutiques/${boutiqueIdParam}/produits`).catch(() => null)
+            if (bRes && bRes.ok) {
+              const bData = await bRes.json()
+              const found = (bData.produits || []).find((p: any) => p.id === produitId)
+              if (found) {
+                setProduitInfo({
+                  id: found.id,
+                  nom: found.nom,
+                  prix: Number(found.prix) || 0,
+                  photo: found.images?.[0] || null,
+                  boutiqueNom: 'Boutique Partenaire',
+                  boutiqueId: boutiqueIdParam,
+                })
+              }
+            }
           }
         }
-        if (boutiqueId) {
-          const zRes = await fetch(`${backendUrl}/api/comptabilite/${boutiqueId}/zones/public`).catch(() => null)
+        if (boutiqueIdParam) {
+          const zRes = await fetch(`${backendUrl}/api/comptabilite/${boutiqueIdParam}/zones/public`).catch(() => null)
           if (zRes && zRes.ok) {
             const zData = await zRes.json()
             if (Array.isArray(zData) && zData.length > 0) setZones(zData)
@@ -88,18 +161,18 @@ function CheckoutExpressContent() {
       }
     }
     loadData()
-  }, [produitId, boutiqueId, backendUrl])
+  }, [produitId, boutiqueIdParam, refParam, searchParams, backendUrl])
 
   const zoneSelectionnee = zones.find(z => z.id === zoneId) || DEFAULT_ZONES[0]
   const fraisLivraison = zoneSelectionnee ? zoneSelectionnee.prix : 1500
   const sousTotal = (produitInfo?.prix || 0) * quantite
-  const totalGlobal = sousTotal + fraisLivraison
+  const totalGlobal = sousTotal > 0 ? (sousTotal + fraisLivraison) : fraisLivraison
 
   // Auto redirection immédiate vers Wave si auto=1
   useEffect(() => {
     if (!loading && autoParam && methodePaiement === 'wave' && !submitting && !success && !autoRedirecting) {
       setAutoRedirecting(true)
-      const refTemp = `CMD-${Date.now().toString(36).toUpperCase()}`
+      const refTemp = refParam || orderRef || `CMD-${Date.now().toString(36).toUpperCase()}`
       fetch(`${backendUrl}/api/paiement/wave/initier-express`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,17 +192,17 @@ function CheckoutExpressContent() {
         })
         .catch(() => setAutoRedirecting(false))
     }
-  }, [loading, autoParam, methodePaiement, totalGlobal, produitInfo, backendUrl, submitting, success, autoRedirecting])
+  }, [loading, autoParam, methodePaiement, totalGlobal, produitInfo, backendUrl, submitting, success, autoRedirecting, refParam, orderRef])
 
   // WhatsApp direct link generator
   const messageWhatsapp = `Bonjour ! Je souhaite valider la commande suivante via WhatsApp :\n\n` +
-    `🛍️ ${quantite}x ${produitInfo?.nom || 'Produit'} (${fcfa(sousTotal)})\n` +
-    `🚚 Livraison (${zoneSelectionnee?.nom}): ${fcfa(fraisLivraison)}\n` +
-    `💰 TOTAL: ${fcfa(totalGlobal)}\n\n` +
-    `👤 Nom: ${clientNom || 'Non renseigné'}\n` +
-    `📞 Téléphone: ${clientTel || 'Non renseigné'}\n` +
-    `📍 Adresse: ${clientAdresse || 'À préciser'}\n` +
-    `💳 Mode de paiement souhaité: ${methodePaiement === 'wave' ? 'Wave' : methodePaiement === 'orange_money' ? 'Orange Money' : 'Cash à la livraison'}`
+    `${quantite}x ${produitInfo?.nom || 'Produit'} (${fcfa(sousTotal)})\n` +
+    `Livraison (${zoneSelectionnee?.nom}): ${fcfa(fraisLivraison)}\n` +
+    `TOTAL: ${fcfa(totalGlobal)}\n\n` +
+    `Nom: ${clientNom || 'Non renseigné'}\n` +
+    `Téléphone: ${clientTel || 'Non renseigné'}\n` +
+    `Adresse: ${clientAdresse || 'À préciser'}\n` +
+    `Mode de paiement souhaité: ${methodePaiement === 'wave' ? 'Wave' : methodePaiement === 'orange_money' ? 'Orange Money' : methodePaiement === 'echelonne' ? 'Paiement échelonné' : 'Cash à la livraison'}`
 
   const lienWhatsapp = `https://wa.me/221777202086?text=${encodeURIComponent(messageWhatsapp)}`
 
@@ -143,36 +216,75 @@ function CheckoutExpressContent() {
     setSubmitting(true)
 
     try {
-      const res = await fetch(`${backendUrl}/api/comptabilite/${boutiqueId || 'general'}/commandes`, {
+      const montantAPayer = methodePaiement === 'echelonne'
+        ? (formuleEchelonnee?.apport || Math.round(totalGlobal * 0.2))
+        : totalGlobal
+
+      const targetBoutique = produitInfo?.boutiqueId || boutiqueIdParam || 'general'
+      const referenceToUse = refParam || orderRef || `CMD-${Date.now().toString(36).toUpperCase()}`
+
+      const res = await fetch(`${backendUrl}/api/comptabilite/${targetBoutique}/commandes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          produit_id: produitId || undefined,
+          reference: referenceToUse,
+          produit_id: produitId || produitInfo?.id || undefined,
           nom_produit: produitInfo?.nom || 'Commande Express',
           prix_unitaire: produitInfo?.prix || 0,
           quantite,
           client_nom: clientNom.trim(),
           client_telephone: clientTel.trim(),
           client_adresse: clientAdresse.trim() || undefined,
-          methode_paiement: methodePaiement,
+          methode_paiement: methodePaiement === 'echelonne' ? 'credit_echelonne' : methodePaiement,
           zone_livraison_id: zoneId || undefined,
           source: 'whatsapp_express_web',
+          plan_echelonne: methodePaiement === 'echelonne' && formuleEchelonnee ? {
+            apport: formuleEchelonnee.apport,
+            nb_echeances: formuleEchelonnee.nb_echeances,
+            frequence: formuleEchelonnee.frequence,
+            echeances: formuleEchelonnee.calcul?.echeances || [],
+          } : undefined,
         }),
       })
 
       const data = await res.json()
-      const referenceToUse = data.reference || `CMD-${Date.now().toString(36).toUpperCase()}`
-      setOrderRef(referenceToUse)
+      const finalRef = data.reference || referenceToUse
+      setOrderRef(finalRef)
 
-      if (methodePaiement === 'wave') {
+      if (useSequestre && methodePaiement !== 'cash') {
+        try {
+          const seqRes = await fetch(`${backendUrl}/api/paiement-sequestre/activer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reference: finalRef,
+              telephoneClient: clientTel.trim(),
+              montantTotal: montantAPayer,
+              nomBoutique: produitInfo?.boutiqueNom || 'Boutique Partenaire',
+            }),
+          }).catch(() => null)
+          if (seqRes && seqRes.ok) {
+            const seqData = await seqRes.json().catch(() => ({}))
+            if (seqData.pin) {
+              setSequestrePin(seqData.pin)
+            }
+          }
+        } catch (sErr) {
+          console.warn('[SEQUESTRE ERR]', sErr)
+        }
+      }
+
+      if (methodePaiement === 'wave' || methodePaiement === 'echelonne') {
         try {
           const waveRes = await fetch(`${backendUrl}/api/paiement/wave/initier-express`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              montant: totalGlobal,
-              reference: referenceToUse,
-              nom_produit: produitInfo?.nom || 'Commande Express',
+              montant: montantAPayer,
+              reference: finalRef,
+              nom_produit: methodePaiement === 'echelonne'
+                ? `Acompte échelonné : ${produitInfo?.nom || 'Commande'}`
+                : (produitInfo?.nom || 'Commande Express'),
             }),
           }).catch(() => null)
 
@@ -183,7 +295,7 @@ function CheckoutExpressContent() {
               return
             }
             if (waveData.fallback_manuel) {
-              setErrorMsg('💡 L\'API Wave direct étant momentanément indisponible, effectuez votre transfert au 77 720 20 86 (Wave/OM). Votre commande est bien enregistrée.')
+              setErrorMsg('L\'API Wave direct étant momentanément indisponible, effectuez votre transfert au 77 720 20 86 (Wave/OM). Votre commande est bien enregistrée.')
             }
           }
         } catch (wErr) {
@@ -193,7 +305,7 @@ function CheckoutExpressContent() {
 
       setSuccess(true)
     } catch {
-      setOrderRef(`CMD-${Date.now().toString(36).toUpperCase()}`)
+      setOrderRef(refParam || `CMD-${Date.now().toString(36).toUpperCase()}`)
       setSuccess(true)
     } finally {
       setSubmitting(false)
@@ -204,7 +316,7 @@ function CheckoutExpressContent() {
     return (
       <div style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         <div style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', boxShadow: '0 20px 50px rgba(0,163,224,0.15)', border: '1px solid #e0f7ff', maxWidth: 460, width: '100%' }}>
-          <span style={{ fontSize: 56, display: 'block', marginBottom: 16 }}>🌊</span>
+          <span style={{ fontSize: 56, display: 'block', marginBottom: 16 }}></span>
           <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0084b4', margin: '0 0 12px' }}>Redirection vers Wave…</h2>
           <p style={{ fontSize: 14, color: '#475569', margin: '0 0 24px', lineHeight: 1.5 }}>
             Nous préparons votre paiement sécurisé Wave pour <strong>{produitInfo?.nom || 'votre commande'}</strong>.
@@ -219,18 +331,42 @@ function CheckoutExpressContent() {
     return (
       <div style={{ maxWidth: 540, margin: '40px auto', padding: 24, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
         <div style={{ background: '#fff', borderRadius: 20, padding: 32, textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
-          <span style={{ fontSize: 64, display: 'block', marginBottom: 16 }}>🎉</span>
+          <span style={{ fontSize: 64, display: 'block', marginBottom: 16 }}></span>
           <h2 style={{ fontSize: 24, fontWeight: 900, color: '#166534', margin: '0 0 8px' }}>Commande Confirmée !</h2>
           <p style={{ fontSize: 15, color: '#475569', margin: '0 0 16px' }}>
             Votre commande <strong>{orderRef}</strong> a bien été transmise.
           </p>
           <div style={{ background: '#f8fafc', borderRadius: 12, padding: 16, textAlign: 'left', margin: '20px 0', border: '1px solid #e2e8f0', fontSize: 14 }}>
-            <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#0f172a' }}>📦 Récapitulatif :</p>
+            <p style={{ margin: '0 0 6px', fontWeight: 700, color: '#0f172a' }}>Récapitulatif :</p>
             <p style={{ margin: '0 0 4px', color: '#334155' }}>• {quantite}x {produitInfo?.nom || 'Produit'}</p>
             <p style={{ margin: '0 0 4px', color: '#334155' }}>• Total: <strong>{fcfa(totalGlobal)}</strong></p>
             <p style={{ margin: '0 0 4px', color: '#334155' }}>• Mode de paiement: <strong>{methodePaiement.toUpperCase()}</strong></p>
             <p style={{ margin: 0, color: '#334155' }}>• Tél: {clientTel}</p>
           </div>
+
+          {useSequestre && (
+            <div style={{ background: '#FFF3E8', borderRadius: 14, padding: 18, border: '2px solid #C75B00', margin: '16px 0', textAlign: 'center' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#C75B00', fontWeight: 800, fontSize: 13.5, marginBottom: 8 }}>
+                <ShieldCheck size={18} />
+                <span>Protection Séquestre Nopalou Pay Safe Active</span>
+              </div>
+              <p style={{ margin: '0 0 10px', fontSize: 13, color: '#1A1612' }}>
+                Vos fonds sont retenus en sécurité. Voici votre code secret de déblocage :
+              </p>
+              {sequestrePin ? (
+                <div style={{ display: 'inline-block', letterSpacing: '0.25em', fontSize: 24, fontWeight: 900, background: '#fff', color: '#1C2B4A', padding: '8px 20px', borderRadius: 10, border: '2px dashed #C75B00', marginBottom: 8 }}>
+                  {sequestrePin}
+                </div>
+              ) : (
+                <div style={{ fontSize: 12.5, color: '#16A34A', fontWeight: 700, marginBottom: 8 }}>
+                  Envoyé par WhatsApp sur votre téléphone
+                </div>
+              )}
+              <p style={{ margin: 0, fontSize: 11.5, color: '#5A4E42', lineHeight: 1.3 }}>
+                <strong>Ne communiquez ce code au livreur qu&apos;après avoir vérifié votre colis !</strong>
+              </p>
+            </div>
+          )}
 
           <a
             href={`https://wa.me/221777202086?text=${encodeURIComponent(`Bonjour, je souhaite suivre ma commande ${orderRef}`)}`}
@@ -242,7 +378,7 @@ function CheckoutExpressContent() {
               fontWeight: 800, textDecoration: 'none', fontSize: 15, width: '100%', marginBottom: 12,
             }}
           >
-            <span>💬</span> Suivre ma commande sur WhatsApp
+            <span></span> Suivre ma commande sur WhatsApp
           </a>
 
           <Link href="/" style={{ color: '#64748b', fontSize: 14, textDecoration: 'underline' }}>
@@ -271,7 +407,7 @@ function CheckoutExpressContent() {
         {/* Détails du Produit */}
         {produitInfo ? (
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border, #E8DDD2)', marginBottom: 20 }}>
-            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="📦" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover', background: 'var(--bg, #F8F5F0)' }} />
+            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover', background: 'var(--bg, #F8F5F0)' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <Store size={12} />
@@ -400,7 +536,7 @@ function CheckoutExpressContent() {
 
             <div>
               <label style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--text2, #6B5E52)', display: 'block', marginBottom: 4 }}>MODE DE PAIEMENT</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                 <button
                   type="button"
                   onClick={() => setMethodePaiement('wave')}
@@ -409,7 +545,7 @@ function CheckoutExpressContent() {
                     background: methodePaiement === 'wave' ? '#f0f9ff' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  Wave ⚡
+                  ⚡ Wave (Direct)
                 </button>
                 <button
                   type="button"
@@ -419,7 +555,7 @@ function CheckoutExpressContent() {
                     background: methodePaiement === 'orange_money' ? '#fff7ed' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  Orange Money
+                  🟠 Orange Money
                 </button>
                 <button
                   type="button"
@@ -429,10 +565,71 @@ function CheckoutExpressContent() {
                     background: methodePaiement === 'cash' ? '#f0fdf4' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  Espèces
+                  💵 Espèces à la livraison
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMethodePaiement('echelonne')}
+                  style={{
+                    padding: '10px 8px', borderRadius: 10, border: methodePaiement === 'echelonne' ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                    background: methodePaiement === 'echelonne' ? '#fff7ed' : '#fff', color: 'var(--accent, #C75B00)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
+                  }}
+                >
+                  💳 Payer en plusieurs fois
                 </button>
               </div>
             </div>
+
+            {/* Configurateur interactif d'échelonnement si sélectionné */}
+            {methodePaiement === 'echelonne' && (
+              <div style={{ marginTop: 8 }}>
+                <EchelonnementConfigurator
+                  montantTotal={totalGlobal}
+                  boutiqueId={produitInfo?.boutiqueId || boutiqueIdParam || ''}
+                  onFormuleChoisie={(f) => setFormuleEchelonnee(f)}
+                />
+              </div>
+            )}
+
+            {/* Toggle Protection Séquestre Nopalou Pay Safe */}
+            {methodePaiement !== 'echelonne' && (
+              <div
+                onClick={() => setUseSequestre(!useSequestre)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  border: useSequestre ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                  background: useSequestre ? 'var(--orange2, #FFF3E8)' : '#FFFFFF',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  marginTop: 4,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={useSequestre}
+                  onChange={e => setUseSequestre(e.target.checked)}
+                  style={{ marginTop: 3, accentColor: 'var(--accent, #C75B00)' }}
+                />
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <ShieldCheck size={16} color="var(--accent, #C75B00)" />
+                    <strong style={{ fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>
+                      Activer Nopalou Pay Safe (Séquestre Anti-Arnaque)
+                    </strong>
+                    <span style={{ fontSize: 9.5, fontWeight: 900, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8 }}>
+                      GRATUIT
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
+                    Fonds bloqués et versés au marchand uniquement après confirmation de livraison avec votre code PIN secret.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -442,7 +639,11 @@ function CheckoutExpressContent() {
                 marginTop: 8, width: '100%', fontSize: 14.5,
               }}
             >
-              {submitting ? 'Validation en cours...' : '⚡ Valider et Payer la commande →'}
+              {submitting
+                ? 'Validation en cours...'
+                : methodePaiement === 'echelonne'
+                ? `Régler l'acompte Wave (${fcfa(formuleEchelonnee?.apport || Math.round(totalGlobal * 0.2))}) & Valider →`
+                : `Valider et Payer la commande (${fcfa(totalGlobal)}) →`}
             </button>
           </form>
         </div>

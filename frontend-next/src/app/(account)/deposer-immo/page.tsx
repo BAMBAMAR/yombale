@@ -26,7 +26,7 @@ export default async function DeposerImmoPage() {
           { label: t('account.navMyRealEstate'), href: '/mes-annonces-immo' },
           { label: t('account.navPublishRealEstate') }
         ]}
-        emoji="🏡"
+        emoji=""
         titre={t('account.immoPageTitle')}
         compteur={t('account.immoPageSubtitle')}
       />

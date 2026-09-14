@@ -93,7 +93,7 @@ export async function GET(request: Request) {
             </span>
             <div style={{ display: 'flex', gap: 20, marginTop: 4 }}>
               <span style={{ fontSize: 18, color: '#38BDF8', fontWeight: 800 }}>
-                📞 {agentPhone}
+                {agentPhone}
               </span>
               <span style={{ fontSize: 18, color: '#E2E8F0', fontWeight: 700 }}>
                 ID : {codeAgent}

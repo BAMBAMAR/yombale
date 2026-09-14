@@ -59,7 +59,7 @@ export default function AdminCategoriesClient({
   // Formulaire (création ou édition)
   const [formNom, setFormNom] = useState('')
   const [formSlug, setFormSlug] = useState('')
-  const [formIcone, setFormIcone] = useState('📦')
+  const [formIcone, setFormIcone] = useState('')
   const [formDesc, setFormDesc] = useState('')
   const [formOrdre, setFormOrdre] = useState(0)
   const [formActif, setFormActif] = useState(true)
@@ -73,7 +73,7 @@ export default function AdminCategoriesClient({
     setEditingCat(null)
     setFormNom('')
     setFormSlug('')
-    setFormIcone('📦')
+    setFormIcone('')
     setFormDesc('')
     setFormOrdre(categories.length)
     setFormActif(true)
@@ -84,7 +84,7 @@ export default function AdminCategoriesClient({
     setEditingCat(cat)
     setFormNom(cat.nom)
     setFormSlug(cat.slug)
-    setFormIcone(cat.icone || '📦')
+    setFormIcone(cat.icone || '')
     setFormDesc(cat.description || '')
     setFormOrdre(cat.ordre || 0)
     setFormActif(cat.actif !== false)
@@ -311,7 +311,7 @@ export default function AdminCategoriesClient({
                     #{cat.ordre ?? 0}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 22 }}>
-                    {cat.icone || '📦'}
+                    {cat.icone || ''}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ fontWeight: 700, color: '#1e293b' }}>{cat.nom}</div>
@@ -416,7 +416,7 @@ export default function AdminCategoriesClient({
             }}
           >
             <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#1e293b' }}>
-              {editingCat ? `✏️ Modifier "${editingCat.nom}"` : '✨ Nouvelle Catégorie'}
+              {editingCat ? `Modifier "${editingCat.nom}"` : 'Nouvelle Catégorie'}
             </h2>
 
             <form onSubmit={handleSave}>

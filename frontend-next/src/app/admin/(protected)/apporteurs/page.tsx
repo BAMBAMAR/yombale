@@ -21,7 +21,7 @@ export default async function AdminApporteursPage() {
     if (settingsRes.ok) settings = await settingsRes.json()
     if (apporteursRes.ok) apporteurs = (await apporteursRes.json()).apporteurs
     if (commissionsRes.ok) commissions = (await commissionsRes.json()).commissions
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L24]', err); }
 
   return (
     <div className="admin-content">

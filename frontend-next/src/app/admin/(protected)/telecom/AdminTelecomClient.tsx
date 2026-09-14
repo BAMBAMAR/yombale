@@ -124,7 +124,7 @@ export default function AdminTelecomClient({
           method: 'DELETE',
           headers: { 'X-Admin-Secret': adminSecret },
         })
-      } catch {}
+      } catch (err) { console.warn('[Nopalou:AdminTelecomClient:L127]', err); }
     }
     setForfaits(prev => prev.filter(f => !selectedIds.includes(f.id)))
     setSelectedIds([])
@@ -160,7 +160,7 @@ export default function AdminTelecomClient({
     {
       key: 'desactiver',
       label: 'Désactiver / Supprimer les forfaits',
-      icon: '🗑️',
+      icon: '',
       color: 'red',
       confirmMsg: 'Désactiver tous les forfaits sélectionnés ?',
       onClick: handleBatchDeactivate,

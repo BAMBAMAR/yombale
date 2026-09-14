@@ -1,6 +1,7 @@
 // backend/services/whatsapp.js — Meta Cloud API v18.0
 const axios = require('axios');
 const whatsappHealth = require('./whatsapp-health');
+const { sendSMS } = require('./sms');
 
 const PHONE_ID   = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const TOKEN      = process.env.WHATSAPP_API_TOKEN;
@@ -189,11 +190,13 @@ async function isUtilityTemplateApproved() {
 async function sendWhatsAppNotification(phone, {
   textMessage,
   title,
+  montant,
   detail,
   url = SITE,
   buttonParam = 'boutique',
   templateOnly = false,
-}) {
+  fallbackSMS = true,
+} = {}) {
   if (!phone) return null;
   const normPhone = normalisePhone(phone);
 
@@ -220,14 +223,10 @@ async function sendWhatsAppNotification(phone, {
     cleanParam = cleanParam.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
   }
 
-  // Si le template officiel UTILITY nopalou_service_commerce est approuvé par Meta,
-  // on l'utilise en priorité absolue pour éliminer à 100% l'erreur 131049 (Marketing Capping).
-  let templateToUse = 'nopalou_fiche_texte';
-  try {
-    if (await isUtilityTemplateApproved()) {
-      templateToUse = 'nopalou_service_commerce';
-    }
-  } catch {}
+  // Utilisation prioritaire du template UTILITY certifié nopalou_alerte_commande
+  // Ce template de catégorie UTILITY est exempt à 100% de la restriction Meta 131049 (Marketing Capping).
+  const cleanMontant = sanitizeTemplateParam(montant || 'Nopalou').slice(0, 30);
+  let templateToUse = 'nopalou_alerte_commande';
 
   try {
     const res = await sendWhatsAppTemplate(normPhone, templateToUse, [
@@ -235,8 +234,8 @@ async function sendWhatsAppNotification(phone, {
         type: 'body',
         parameters: [
           { type: 'text', text: cleanTitle },
+          { type: 'text', text: cleanMontant },
           { type: 'text', text: cleanDetail },
-          { type: 'text', text: cleanUrl },
         ],
       },
       {
@@ -266,6 +265,26 @@ async function sendWhatsAppNotification(phone, {
   } catch (tErr) {
     const errMsg = tErr.response?.data?.error?.message || tErr.message;
     console.error(`[WHATSAPP NOTIF TEMPLATE ERR] (${normPhone}):`, errMsg);
+
+    // ── Fallback Automatique SMS (Orange SMS API Sénégal / Simulation) ──
+    if (fallbackSMS) {
+      try {
+        const smsContent = textMessage || `${cleanTitle} : ${cleanDetail} (${cleanUrl})`;
+        const smsRes = await sendSMS(normPhone, smsContent);
+        if (smsRes?.success) {
+          console.log(`[WHATSAPP -> SMS FALLBACK OK] (${normPhone}): Délivré via SMS (${smsRes.provider})`);
+          return {
+            success: true,
+            fallback_sms: true,
+            provider: smsRes.provider,
+            messages: [{ id: smsRes.messageId }],
+          };
+        }
+      } catch (sErr) {
+        console.warn(`[WHATSAPP -> SMS FALLBACK FAIL] (${normPhone}):`, sErr.message);
+      }
+    }
+
     return null;
   }
 }

@@ -27,7 +27,7 @@ export default function QrCodeShareModal({
   const [telClientInShop, setTelClientInShop] = useState('')
   const [isGrandEcran, setIsGrandEcran] = useState(false)
 
-  const modalTitle = title || `📱 ${t('common.qrCode')} & ${t('account.groupShop')}`
+  const modalTitle = title || `${t('common.qrCode')} & ${t('account.groupShop')}`
 
   const finalUrl = activeMode === 'credit' 
     ? (url.includes('?') ? `${url}&mode=credit` : `${url}?mode=credit`)
@@ -65,8 +65,8 @@ export default function QrCodeShareModal({
 
   const handlePartagerWa = () => {
     const textMsg = activeMode === 'credit'
-      ? `Bonjour ! Voici le lien de demande d'achat à crédit en ligne pour *${boutiqueNom}*. Vous pouvez passer votre demande sur ce lien :\n\n👉 ${finalUrl}`
-      : `Bonjour ! Voici le catalogue officiel et la vitrine en ligne de *${boutiqueNom}*. Vous pouvez passer votre commande directement sur ce lien :\n\n👉 ${finalUrl}`
+      ? `Bonjour ! Voici le lien de demande d'achat à crédit en ligne pour *${boutiqueNom}*. Vous pouvez passer votre demande sur ce lien :\n\n${finalUrl}`
+      : `Bonjour ! Voici le catalogue officiel et la vitrine en ligne de *${boutiqueNom}*. Vous pouvez passer votre commande directement sur ce lien :\n\n${finalUrl}`
     const waUrl = `https://wa.me/?text=${encodeURIComponent(textMsg)}`
     window.open(waUrl, '_blank')
   }
@@ -77,8 +77,8 @@ export default function QrCodeShareModal({
     const cleanTel = telClientInShop.replace(/\D/g, '')
     const targetTel = cleanTel.length === 9 ? '221' + cleanTel : cleanTel
     const textMsg = activeMode === 'credit'
-      ? `Bonjour ! Voici votre lien de demande d'achat à crédit auprès de la boutique *${boutiqueNom}* :\n\n👉 ${finalUrl}`
-      : `Bonjour ! Voici le catalogue officiel et la vitrine de la boutique *${boutiqueNom}* :\n\n👉 ${finalUrl}`
+      ? `Bonjour ! Voici votre lien de demande d'achat à crédit auprès de la boutique *${boutiqueNom}* :\n\n${finalUrl}`
+      : `Bonjour ! Voici le catalogue officiel et la vitrine de la boutique *${boutiqueNom}* :\n\n${finalUrl}`
     window.open(`https://wa.me/${targetTel}?text=${encodeURIComponent(textMsg)}`, '_blank')
   }
 
@@ -309,7 +309,7 @@ export default function QrCodeShareModal({
                 transition: 'background 0.15s ease'
               }}
             >
-              {copied ? `✓ ${t('common.copied')}` : `📋 ${t('common.copy')}`}
+              {copied ? `✓ ${t('common.copied')}` : `${t('common.copy')}`}
             </button>
           </div>
         </div>

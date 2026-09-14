@@ -281,16 +281,16 @@ export default function LogicielCaisseSenegalPage() {
             </h3>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
               <Link href="/creer-boutique-en-ligne" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                🛒 Créer une boutique en ligne
+                Créer une boutique en ligne
               </Link>
               <Link href="/alternative-shopify-senegal" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
                 🆚 Nopalou vs Shopify
               </Link>
               <Link href="/vendre-sur-whatsapp" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                💬 Commandes WhatsApp
+                Commandes WhatsApp
               </Link>
               <Link href="/gestion-stock-carnet-dettes" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                📒 Carnet de Dettes & Stock
+                Carnet de Dettes & Stock
               </Link>
             </div>
           </div>

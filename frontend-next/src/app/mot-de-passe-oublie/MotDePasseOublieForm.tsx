@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
+import { validerForceMotDePasse } from '@/lib/password-validator'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -35,7 +36,7 @@ function FormDemande() {
   if (done) {
     return (
       <div className="auth-success">
-        <p className="auth-success-icon">✅</p>
+        <p className="auth-success-icon"></p>
         <p>{t('auth.resetLinkSent')}</p>
         <Link href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>{t('auth.backToLogin')}</Link>
       </div>
@@ -48,7 +49,7 @@ function FormDemande() {
       <div className="auth-field">
         <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
         <div className="auth-input-wrap">
-          <span className="auth-input-icon">✉</span>
+          <span className="auth-input-icon"></span>
           <input
             id="email"
             type="email"
@@ -81,7 +82,8 @@ function FormReinit({ token }: { token: string }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (password.length < 6) { setErr(t('errors.passwordTooShort')); return }
+    const checkPwd = validerForceMotDePasse(password)
+    if (!checkPwd.valide) { setErr(checkPwd.message); return }
     setLoading(true)
     setErr('')
     try {
@@ -102,7 +104,7 @@ function FormReinit({ token }: { token: string }) {
   if (done) {
     return (
       <div className="auth-success">
-        <p className="auth-success-icon">✅</p>
+        <p className="auth-success-icon"></p>
         <p>{t('account.profileUpdated')}</p>
         <Link href="/connexion" className="auth-link" style={{ display: 'block', marginTop: 16 }}>{t('auth.loginLink')}</Link>
       </div>
@@ -115,7 +117,7 @@ function FormReinit({ token }: { token: string }) {
       <div className="auth-field">
         <label htmlFor="password" className="auth-label">{t('auth.passwordLabel')}</label>
         <div className="auth-input-wrap">
-          <span className="auth-input-icon">🔒</span>
+          <span className="auth-input-icon"></span>
           <input
             id="password"
             type={showPassword ? 'text' : 'password'}

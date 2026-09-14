@@ -149,14 +149,14 @@ export default function PaiementsManuelsClient({
     {
       key: 'valider',
       label: 'Valider les paiements',
-      icon: '✅',
+      icon: '',
       color: 'green',
       onClick: handleBatchValider,
     },
     {
       key: 'rejeter',
       label: 'Rejeter les paiements',
-      icon: '🔴',
+      icon: '',
       color: 'amber',
       confirmMsg: 'Rejeter les paiements sélectionnés ?',
       onClick: handleBatchRejeter,
@@ -179,7 +179,7 @@ export default function PaiementsManuelsClient({
         display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap'
       }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>🔍</span>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}></span>
           <input
             type="text"
             value={q}
@@ -194,7 +194,7 @@ export default function PaiementsManuelsClient({
           style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff' }}
         >
           <option value="toutes">Toutes les méthodes</option>
-          <option value="wave">🌊 Wave</option>
+          <option value="wave">Wave</option>
           <option value="orange">🟠 Orange Money</option>
         </select>
       </div>
@@ -250,7 +250,7 @@ export default function PaiementsManuelsClient({
                       <td style={{ padding: '8px 10px' }}>{p.utilisateur_nom}<br /><span style={{ color: '#9ca3af' }}>{p.utilisateur_email}</span></td>
                       <td style={{ padding: '8px 10px', fontFamily: 'monospace' }}>{p.reference}</td>
                       <td style={{ padding: '8px 10px' }}>{Number(p.montant).toLocaleString('fr-FR')} FCFA</td>
-                      <td style={{ padding: '8px 10px' }}>{p.methode === 'wave' ? '🌊 Wave' : '🟠 Orange'}</td>
+                      <td style={{ padding: '8px 10px' }}>{p.methode === 'wave' ? 'Wave' : '🟠 Orange'}</td>
                       <td style={{ padding: '8px 10px' }}>{p.telephone_expediteur}</td>
                       <td style={{ padding: '8px 10px' }}>{p.transaction_id_client || '—'}</td>
                       <td style={{ padding: '8px 10px' }}>

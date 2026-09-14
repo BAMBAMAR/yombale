@@ -18,7 +18,7 @@ export default function SponsoringProduitBtn({ produitId, settings }: Props) {
         className="sponsoring-produit-btn"
         style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
       >
-        ⭐ Mettre en avant ce produit
+        Mettre en avant ce produit
       </Link>
       <p className="sponsoring-produit-info">
         {montant.toLocaleString('fr-FR')} FCFA · 30 jours · Affiché en tête de liste

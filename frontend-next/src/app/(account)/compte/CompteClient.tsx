@@ -20,11 +20,13 @@ import AccountDashboardHub from './tabs/AccountDashboardHub'
 export default function CompteClient({ 
   nom, 
   email, 
+  telephone,
   initiale, 
   session 
 }: { 
   nom: string, 
   email: string | null, 
+  telephone?: string | null,
   initiale: string,
   session: any
 }) {
@@ -63,7 +65,7 @@ export default function CompteClient({
             localStorage.setItem(`nopalou_offline_annonces_${session?.userId}`, JSON.stringify(d.annonces))
           }
         })
-        .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement annonces :', err))
+        .catch(err => console.warn('[Compte SPA] Erreur préchargement annonces :', err))
 
       // 2. Précharge les annonces immo
       fetchLow('/api/immo/mine')
@@ -73,7 +75,7 @@ export default function CompteClient({
             localStorage.setItem('nopalou_offline_immo_mine', JSON.stringify(d))
           }
         })
-        .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement immo :', err))
+        .catch(err => console.warn('[Compte SPA] Erreur préchargement immo :', err))
 
       // 3. Précharge le plan d'abonnement actif
       fetchLow('/api/abonnements/mon-plan')
@@ -83,7 +85,7 @@ export default function CompteClient({
             localStorage.setItem('nopalou_plan_actif', d.abonnement.plan)
           }
         })
-        .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement plan :', err))
+        .catch(err => console.warn('[Compte SPA] Erreur préchargement plan :', err))
 
       // 4. Précharge les boutiques & tout leur contenu (catalogues, caisse, clients, equipe, analytics)
       fetchLow('/api/boutiques/mine')
@@ -101,7 +103,7 @@ export default function CompteClient({
                 const prods = pData.produits || (Array.isArray(pData) ? pData : [])
                 localStorage.setItem(`nopalou_pos_produits_${b.id}`, JSON.stringify(prods))
               })
-              .catch(() => console.warn(`[Compte SPA] ⚠️ Catalogue "${b.nom}" : erreur réseau (ignorée)`))
+              .catch(() => console.warn(`[Compte SPA] Catalogue "${b.nom}" : erreur réseau (ignorée)`))
 
             // 4b. Historique caisse POS
             fetchLow(`/api/boutiques/${b.id}/pos-historique`)
@@ -154,7 +156,7 @@ export default function CompteClient({
               .catch(() => {})
           })
         })
-        .catch(err => console.warn('[Compte SPA] ⚠️ Erreur préchargement boutiques :', err))
+        .catch(err => console.warn('[Compte SPA] Erreur préchargement boutiques :', err))
     }, 1200)
 
     return () => clearTimeout(preloadTimer)
@@ -176,11 +178,11 @@ export default function CompteClient({
     <>
       {isOffline && (
         <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#F59E0B', color: '#FFF', padding: '8px 16px', borderRadius: 8, zIndex: 9999, fontWeight: 600, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-          📡 {t('common.offlineMode')}
+          {t('common.offlineMode')}
         </div>
       )}
 
-      <div style={{ padding: '20px' }}>
+      <div className="account-client-content">
         {/* En-tête de retour au Dashboard si on est dans un sous-onglet */}
         {!isDashboard && (
           <div style={{ marginBottom: 18 }}>
@@ -232,10 +234,10 @@ export default function CompteClient({
            />
         )}
         {tab === 'mes-annonces-immo' && <AnnoncesImmoClient />}
-        {tab === 'suivi-commande' && <SuiviCommandeClient />}
+        {tab === 'suivi-commande' && <SuiviCommandeClient userPhone={telephone || session?.telephone || session?.user?.telephone || ''} />}
         {(tab === 'mes-alertes' || tab === 'alertes') && <AlertesClientTab userId={userId} />}
         {tab === 'favoris' && <FavorisClient />}
-        {tab === 'profil' && <ProfilClient nom={nom} email={email || ''} />}
+        {tab === 'profil' && <ProfilClient nom={nom} email={email || ''} telephone={telephone || session?.telephone || ''} />}
         {tab === 'apporteur' && <ApporteurClient />}
         {(tab === 'fonctionnalites' || tab === 'abonnement' || tab === 'tarifs') && <FonctionnalitesClient />}
       </div>

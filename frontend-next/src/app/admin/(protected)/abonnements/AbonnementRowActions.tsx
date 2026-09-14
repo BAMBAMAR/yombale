@@ -47,7 +47,7 @@ export default function AbonnementRowActions({ id, statut, plan }: Props) {
             color: msg.ok ? '#16a34a' : '#dc2626',
             border: `1px solid ${msg.ok ? '#bbf7d0' : '#fecaca'}`,
           }}>
-            {msg.ok ? '✅' : '❌'} {msg.text}
+            {msg.ok ? '' : ''} {msg.text}
           </div>
         )}
 

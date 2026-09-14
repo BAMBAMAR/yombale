@@ -87,14 +87,14 @@ export default function ModalPartageProduit({
 
     return {
       promo: remise
-        ? `🔥 OFFRE SPÉCIALE chez ${boutique.nom} !\n\n${produit.nom} est en promotion exceptionnelle à ${prixFmt} (au lieu de ${fcfa(produit.prix_barre!)} — remise -${remise}%) !\n\n🚚 Livraison rapide disponible à ${ville} et partout au Sénégal.\n👉 Voir le produit et commander : ${urlPromo}\n${contactTel ? `💬 WhatsApp direct : ${contactTel}` : ''}`
-        : `🔥 NOUVEL ARRIVAGE chez ${boutique.nom} !\n\n${produit.nom} est maintenant disponible en stock à ${prixFmt}.\n\n🚚 Livraison rapide disponible.\n👉 Voir et commander : ${urlPromo}\n${contactTel ? `💬 WhatsApp direct : ${contactTel}` : ''}`,
+        ? `OFFRE SPÉCIALE chez ${boutique.nom} !\n\n${produit.nom} est en promotion exceptionnelle à ${prixFmt} (au lieu de ${fcfa(produit.prix_barre!)} — remise -${remise}%) !\n\nLivraison rapide disponible à ${ville} et partout au Sénégal.\nVoir le produit et commander : ${urlPromo}\n${contactTel ? `WhatsApp direct : ${contactTel}` : ''}`
+        : `NOUVEL ARRIVAGE chez ${boutique.nom} !\n\n${produit.nom} est maintenant disponible en stock à ${prixFmt}.\n\nLivraison rapide disponible.\nVoir et commander : ${urlPromo}\n${contactTel ? `WhatsApp direct : ${contactTel}` : ''}`,
 
-      statut: `✨ ${produit.nom} disponible chez ${boutique.nom} !\n💰 Prix : ${prixFmt}${remise ? ` (-${remise}%)` : ''}\n📍 ${ville}\n📲 Commandez directement ici : ${urlStatut}`,
+      statut: `${produit.nom} disponible chez ${boutique.nom} !\nPrix : ${prixFmt}${remise ? ` (-${remise}%)` : ''}\n${ville}\nCommandez directement ici : ${urlStatut}`,
 
-      credit: `🤝 Facilité de paiement chez ${boutique.nom} !\n\nBesoin de "${produit.nom}" (${prixFmt}) ?\nPassez votre commande ou demandez un paiement échelonné en magasin.\n\n👉 Accéder à la boutique : ${urlCredit}\n${contactTel ? `💬 Contactez-nous : ${contactTel}` : ''}`,
+      credit: `🤝 Facilité de paiement chez ${boutique.nom} !\n\nBesoin de "${produit.nom}" (${prixFmt}) ?\nPassez votre commande ou demandez un paiement échelonné en magasin.\n\nAccéder à la boutique : ${urlCredit}\n${contactTel ? `Contactez-nous : ${contactTel}` : ''}`,
 
-      reseaux: `✨ Retrouvez "${produit.nom}" chez ${boutique.nom} !\n\n💰 Prix : ${prixFmt}${remise ? ` (Promo -${remise}%)` : ''}\n📍 ${ville}, Sénégal\n🚚 Livraison express disponible !\n\n👉 Lien pour commander dans notre bio ou ici : ${urlReseaux}\n\n#Dakar #Senegal #${cleanBoutiqueNom} #${cleanCat} #ShoppingDakar #BoutiqueDakar #BonPlanSenegal`,
+      reseaux: `Retrouvez "${produit.nom}" chez ${boutique.nom} !\n\nPrix : ${prixFmt}${remise ? ` (Promo -${remise}%)` : ''}\n${ville}, Sénégal\nLivraison express disponible !\n\nLien pour commander dans notre bio ou ici : ${urlReseaux}\n\n#Dakar #Senegal #${cleanBoutiqueNom} #${cleanCat} #ShoppingDakar #BoutiqueDakar #BonPlanSenegal`,
     }
   }, [produit, boutique, productUrl, contactTel, ville, remise])
 
@@ -139,7 +139,7 @@ export default function ModalPartageProduit({
         setAnnonceMsg(res.error)
       } else {
         setAnnonceStatus('success')
-        setAnnonceMsg(res.message || '✅ Annonce Nopalou publiée avec succès !')
+        setAnnonceMsg(res.message || 'Annonce Nopalou publiée avec succès !')
         onAnnoncePubliee?.()
       }
     } catch {
@@ -212,7 +212,7 @@ export default function ModalPartageProduit({
         {/* Titre & Sous-titre */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <span style={{ fontSize: 24 }}>{isNewlyCreated ? '🎉' : '🚀'}</span>
+            <span style={{ fontSize: 24 }}>{isNewlyCreated ? '' : ''}</span>
             <h3 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#0f172a' }}>
               {isNewlyCreated ? 'Produit ajouté avec succès !' : 'Partager ce produit'}
             </h3>
@@ -256,7 +256,7 @@ export default function ModalPartageProduit({
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             ) : (
-              <span style={{ fontSize: 26 }}>🛍️</span>
+              <span style={{ fontSize: 26 }}></span>
             )}
           </div>
 
@@ -308,10 +308,10 @@ export default function ModalPartageProduit({
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
             {[
-              { key: 'promo', label: '🔥 Promo / Nouveauté', desc: 'Message vendeur complet' },
-              { key: 'statut', label: '📱 Statut WhatsApp', desc: 'Court & percutant' },
-              { key: 'credit', label: '💳 Achat / Crédit', desc: 'Facilités de paiement' },
-              { key: 'reseaux', label: '📸 Insta & TikTok', desc: 'Avec hashtags Sénégal' },
+              { key: 'promo', label: 'Promo / Nouveauté', desc: 'Message vendeur complet' },
+              { key: 'statut', label: 'Statut WhatsApp', desc: 'Court & percutant' },
+              { key: 'credit', label: 'Achat / Crédit', desc: 'Facilités de paiement' },
+              { key: 'reseaux', label: 'Insta & TikTok', desc: 'Avec hashtags Sénégal' },
             ].map(tpl => (
               <button
                 key={tpl.key}
@@ -547,7 +547,7 @@ export default function ModalPartageProduit({
             }}
           >
             <Tag size={13} />
-            <span>{publishingAnnonce ? 'Publication…' : annonceStatus === 'success' ? '✓ Annonce en ligne' : '🏷️ Publier en Annonce'}</span>
+            <span>{publishingAnnonce ? 'Publication…' : annonceStatus === 'success' ? '✓ Annonce en ligne' : 'Publier en Annonce'}</span>
           </button>
         </div>
 

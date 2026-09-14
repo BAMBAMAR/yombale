@@ -179,7 +179,7 @@ export default async function FicheProduitPage(
                 background: isEnStock ? '#dcfce7' : '#fee2e2',
                 color: isEnStock ? '#16a34a' : '#dc2626',
               }}>
-                {isEnStock ? '✅ En stock' : '❌ Rupture de stock'}
+                {isEnStock ? 'En stock' : 'Rupture de stock'}
               </span>
               {p.categorie && (
                 <span style={{ fontSize: 12, color: '#9ca3af', background: '#f1f5f9', padding: '3px 10px', borderRadius: 20 }}>
@@ -253,12 +253,12 @@ export default async function FicheProduitPage(
               {p.boutique_logo
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={cloudinaryHQ(p.boutique_logo, { width: 80 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span style={{ fontSize: 20 }}>🏪</span>
+                : <span style={{ fontSize: 20 }}></span>
               }
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#1e293b' }}>{p.boutique_nom}</p>
-              <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>📍 {p.boutique_ville} · Voir la boutique →</p>
+              <p style={{ margin: 0, fontSize: 12, color: '#64748b' }}>{p.boutique_ville} · Voir la boutique →</p>
             </div>
           </Link>
 

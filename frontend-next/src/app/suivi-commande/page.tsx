@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { Clock, PackageCheck, Truck, CheckCircle2, MessageCircle, CreditCard, Zap, ArrowRight, AlertCircle } from 'lucide-react'
 
 interface CommandeSuivie {
   id: string
@@ -13,7 +14,12 @@ interface CommandeSuivie {
   montant_total: number
   methode_paiement: string
   created_at: string
+  boutique_id?: string
+  produit_id?: string
+  nom_produit?: string
+  quantite?: number
   boutique_nom: string
+  boutique_slug?: string
   boutique_whatsapp?: string
 }
 
@@ -91,7 +97,7 @@ function SuiviCommandeContent() {
 
         <div style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: '28px 24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', marginBottom: 24 }}>
           <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 22, fontWeight: 800, color: '#1C2B4A', margin: '0 0 8px' }}>
-            📦 Suivre ma Commande
+            Suivre ma Commande
           </h1>
           <p style={{ fontSize: 14, color: '#64748b', margin: '0 0 20px', lineHeight: 1.5 }}>
             Entrez votre numéro de référence (ex: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>CMD-2026-XXXX</code>) ou votre numéro de téléphone.
@@ -120,14 +126,14 @@ function SuiviCommandeContent() {
               className="npl-btn npl-btn-primary npl-btn-lg"
               style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 22px' }}
             >
-              <span>{loading ? '⏳' : '🔍'}</span>
+              <span>{loading ? '' : ''}</span>
               <span>{loading ? 'Recherche...' : 'Rechercher'}</span>
             </button>
           </form>
 
           {error && (
             <div style={{ marginTop: 16, padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>⚠️</span>
+              <span></span>
               <span>{error}</span>
             </div>
           )}
@@ -151,20 +157,21 @@ function SuiviCommandeContent() {
                   {/* Timeline des 4 étapes */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
                     {[
-                      { step: 1, label: 'En attente', icon: '📋' },
-                      { step: 2, label: 'En préparation', icon: '📦' },
-                      { step: 3, label: 'En livraison', icon: '🚚' },
-                      { step: 4, label: 'Livrée', icon: '✅' },
+                      { step: 1, label: 'En attente', icon: Clock },
+                      { step: 2, label: 'En préparation', icon: PackageCheck },
+                      { step: 3, label: 'En livraison', icon: Truck },
+                      { step: 4, label: 'Livrée', icon: CheckCircle2 },
                     ].map(st => {
                       const isActive = currentStep >= st.step
+                      const IconComp = st.icon
                       return (
                         <div key={st.step} style={{ opacity: isActive ? 1 : 0.4 }}>
                           <div style={{
                             width: 36, height: 36, borderRadius: '50%', margin: '0 auto 6px',
-                            background: isActive ? '#C75B00' : '#e2e8f0', color: '#fff',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700
+                            background: isActive ? 'var(--accent, #C75B00)' : '#e2e8f0', color: '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
                           }}>
-                            {st.icon}
+                            <IconComp size={18} />
                           </div>
                           <span style={{ fontSize: 11, fontWeight: isActive ? 700 : 500, color: isActive ? '#1C2B4A' : '#94a3b8', display: 'block' }}>
                             {st.label}
@@ -174,6 +181,87 @@ function SuiviCommandeContent() {
                     })}
                   </div>
 
+                  {/* Bloc d'action immédiate si paiement échelonné ou Wave en attente */}
+                  {cmd.statut === 'en_attente' && (cmd.methode_paiement === 'credit' || cmd.methode_paiement === 'echelonne') && (
+                    <div style={{ margin: '14px 0', padding: '14px 16px', background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <CreditCard size={18} color="#C75B00" />
+                          <span style={{ fontSize: 13, fontWeight: 800, color: '#9a3412' }}>
+                            Paiement échelonné sélectionné (En attente d&apos;acompte)
+                          </span>
+                        </div>
+                        <span style={{ fontSize: 11, background: '#ffedd5', color: '#c2410c', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                          Action requise
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 12.5, color: '#7c2d12', lineHeight: 1.4 }}>
+                        Définissez vos mensualités (2x, 3x, 4x) et réglez votre acompte pour valider définitivement la commande.
+                      </p>
+                      <a
+                        href={`/checkout-express?${cmd.produit_id ? `produit=${cmd.produit_id}&` : ''}${cmd.boutique_id ? `boutique=${cmd.boutique_id}&` : ''}nom=${encodeURIComponent(cmd.client_nom)}&phone=${cmd.client_telephone}&echelonne=1&ref=${encodeURIComponent(cmd.reference)}`}
+                        className="npl-btn npl-btn-primary"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          padding: '11px 20px',
+                          borderRadius: 10,
+                          background: 'var(--accent, #C75B00)',
+                          color: '#ffffff',
+                          fontWeight: 800,
+                          fontSize: 13.5,
+                          textDecoration: 'none',
+                          marginTop: 2,
+                          boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
+                        }}
+                      >
+                        <CreditCard size={16} />
+                        <span>💳 Finaliser mon paiement échelonné</span>
+                        <ArrowRight size={14} />
+                      </a>
+                    </div>
+                  )}
+
+                  {cmd.statut === 'en_attente' && (cmd.methode_paiement === 'wave' || cmd.methode_paiement === 'pay_wave') && (
+                    <div style={{ margin: '14px 0', padding: '14px 16px', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Zap size={18} color="#15803d" />
+                          <span style={{ fontSize: 13, fontWeight: 800, color: '#166534' }}>
+                            Paiement Wave en attente de règlement
+                          </span>
+                        </div>
+                        <span style={{ fontSize: 11, background: '#dcfce7', color: '#15803d', padding: '3px 8px', borderRadius: 6, fontWeight: 700 }}>
+                          En attente
+                        </span>
+                      </div>
+                      <a
+                        href={`/checkout-express?${cmd.produit_id ? `produit=${cmd.produit_id}&` : ''}${cmd.boutique_id ? `boutique=${cmd.boutique_id}&` : ''}nom=${encodeURIComponent(cmd.client_nom)}&phone=${cmd.client_telephone}&pay=wave&ref=${encodeURIComponent(cmd.reference)}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          padding: '11px 20px',
+                          borderRadius: 10,
+                          background: '#0284c7',
+                          color: '#ffffff',
+                          fontWeight: 800,
+                          fontSize: 13.5,
+                          textDecoration: 'none',
+                          marginTop: 2,
+                          boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
+                        }}
+                      >
+                        <Zap size={16} />
+                        <span>🌊 Payer maintenant par Wave</span>
+                        <ArrowRight size={14} />
+                      </a>
+                    </div>
+                  )}
+
                   <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, fontSize: 12, color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>Client : <strong>{cmd.client_nom}</strong> ({cmd.client_telephone})</span>
                     {cmd.boutique_whatsapp && (
@@ -181,9 +269,9 @@ function SuiviCommandeContent() {
                         href={`https://wa.me/${cmd.boutique_whatsapp.replace(/[^0-9]/g, '')}?text=Bonjour,%20je%20suis%20le%20suivi%20de%20ma%20commande%20${cmd.reference}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+                        style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
                       >
-                        💬 Contacter le livreur
+                        <MessageCircle size={14} /> Contacter la boutique
                       </a>
                     )}
                   </div>

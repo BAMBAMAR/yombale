@@ -1,0 +1,48 @@
+/* styles/tabs.css — Standardisation Menus Onglets & Scroll Tactile */
+
+
+/* ── Standardisation des menus d'onglets & scroll tactile ── */
+.nopalou-scroll-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+.nopalou-scroll-tabs::-webkit-scrollbar {
+  display: none;
+}
+.nopalou-scroll-tabs > button,
+.nopalou-scroll-tabs > a {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Caisse POS Search Row */
+.caisse-search-row {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .caisse-search-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .caisse-search-row > div:first-child {
+    width: 100%;
+  }
+  .caisse-search-row-btns {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .caisse-search-row-btns > button {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 8px !important;
+    font-size: 12px !important;
+  }
+}
+

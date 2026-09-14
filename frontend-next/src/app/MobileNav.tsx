@@ -1,11 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { logout } from '@/app/actions/auth'
 import {
   Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
   Bell, Heart, Users, BookOpen, Sparkles, Plus, LogOut, ChevronDown,
-  MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon, Zap
+  MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon, Zap,
+  Menu, X
 } from 'lucide-react'
 
 interface Props {
@@ -37,6 +38,7 @@ const GUIDES: GuideItem[] = [
 export default function MobileNav({ isLoggedIn, nom }: Props) {
   const [open, setOpen] = useState(false)
   const [guidesOpen, setGuidesOpen] = useState(false)
+  const drawerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) {
@@ -47,7 +49,39 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  function close() { setOpen(false) }
+  function close() {
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+    setOpen(false)
+  }
+
+  // Fermeture automatique au clic en dehors ou appui sur Échap
+  useEffect(() => {
+    if (!open) return
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') close()
+    }
+
+    function handlePointerDown(e: PointerEvent) {
+      if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
+        // Si le clic n'est pas sur le bouton toggle lui-même
+        const target = e.target as HTMLElement | null
+        if (!target?.closest('.mobile-nav-btn')) {
+          close()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('pointerdown', handlePointerDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [open])
 
   const displayName = nom?.trim() || 'Mon compte'
   const initiale = displayName.charAt(0).toUpperCase()
@@ -60,16 +94,22 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
         aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
         aria-expanded={open}
       >
-        {open ? '✕' : '☰'}
+        {open ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       {open && (
-        <div className="mobile-nav-overlay" onClick={close} aria-hidden="true" />
+        <div
+          className="mobile-nav-overlay"
+          onClick={close}
+          onPointerDown={close}
+          aria-hidden="true"
+        />
       )}
 
       <div
+        ref={drawerRef}
         className={`mobile-nav-drawer${open ? ' mobile-nav-drawer--open' : ''}`}
-        aria-hidden={!open}
+        inert={(!open ? '' : undefined) as unknown as boolean}
       >
         {/* Header Drawer */}
         <div className="mobile-nav-header">
@@ -77,7 +117,9 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             <Image src="/icons/logo-mark.svg" alt="" width={26} height={26} style={{ flexShrink: 0 }} priority />
             <span>Nopa<span style={{ color: 'var(--accent, #C75B00)' }}>lou</span></span>
           </a>
-          <button className="mobile-nav-close" onClick={close} aria-label="Fermer">✕</button>
+          <button className="mobile-nav-close" onClick={close} aria-label="Fermer">
+            <X size={18} />
+          </button>
         </div>
 
         <nav style={{ paddingBottom: 24 }}>

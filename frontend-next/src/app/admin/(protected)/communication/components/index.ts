@@ -1,0 +1,8 @@
+export * from './types'
+export { default as KitComAgentIdentity } from './KitComAgentIdentity'
+export { default as KitComTabReseaux } from './KitComTabReseaux'
+export { default as KitComTabDemarchage } from './KitComTabDemarchage'
+export { default as KitComTabBattlecard } from './KitComTabBattlecard'
+export { default as KitComTabApporteur } from './KitComTabApporteur'
+export { default as KitComTabWhatsApp } from './KitComTabWhatsApp'
+export { default as KitComTabGenerateur } from './KitComTabGenerateur'

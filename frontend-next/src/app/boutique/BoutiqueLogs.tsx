@@ -33,7 +33,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
           setLoading(false)
           hasCache = true
         }
-      } catch(e) {}
+      } catch (e) { console.warn('[Nopalou:BoutiqueLogs:L36]', e); }
     }
     if (!hasCache) setLoading(true)
     setError(null)
@@ -108,7 +108,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 10 }}>
-            📜 {t('shop.auditLogsTitle')}
+            {t('shop.auditLogsTitle')}
           </h2>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
             {t('shop.auditLogDesc')}
@@ -143,7 +143,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
           <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: '#94a3b8' }} />
           <input
             type="text"
-            placeholder={`🔍 ${t('common.search')}...`}
+            placeholder={`${t('common.search')}...`}
             value={recherche}
             onChange={e => setRecherche(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && fetchLogs()}
@@ -213,7 +213,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
         <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Chargement du journal d&apos;audit...</div>
       ) : logs.length === 0 ? (
         <div style={{ padding: 48, textAlign: 'center', background: '#f8fafc', borderRadius: 12, border: '1px dashed #cbd5e1' }}>
-          <p style={{ fontSize: 32, margin: '0 0 8px' }}>📜</p>
+          <p style={{ fontSize: 32, margin: '0 0 8px' }}></p>
           <p style={{ margin: 0, fontWeight: 700, color: '#334155' }}>Aucun événement enregistré dans ce filtre</p>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>Les actions menées sur la boutique apparaîtront ici automatiquement.</p>
         </div>

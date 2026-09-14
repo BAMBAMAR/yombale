@@ -43,7 +43,7 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
     return (
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420, padding: 24, textAlign: 'center' }}>
-          <p style={{ fontSize: 32 }}>✅</p>
+          <p style={{ fontSize: 32 }}></p>
           <p style={{ fontWeight: 600 }}>Déclaration reçue</p>
           <p style={{ color: '#6b7280', fontSize: 14 }}>
             Votre paiement sera vérifié et activé sous peu. Vous serez contacté si besoin.
@@ -69,7 +69,7 @@ export default function ModalPaiementManuel({ reference, montant, numeroWave, nu
             onClick={() => setMethode('wave')}
             style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: methode === 'wave' ? '2px solid #00a3e0' : '1px solid #d1d5db', background: methode === 'wave' ? '#e0f7ff' : '#fff', fontWeight: 600, cursor: 'pointer' }}
           >
-            🌊 Wave
+            Wave
           </button>
           <button
             onClick={() => setMethode('orange')}

@@ -12,7 +12,7 @@ export default function FavBar() {
     try {
       const favs: unknown[] = JSON.parse(localStorage.getItem('nopalou_favs') || '[]')
       setCount(favs.length)
-    } catch {}
+    } catch (err) { console.warn('[Nopalou:FavBar:L15]', err); }
   }
 
   useEffect(() => {

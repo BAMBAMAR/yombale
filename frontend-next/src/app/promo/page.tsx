@@ -59,7 +59,7 @@ export default async function PromoPage() {
         {/* HERO SECTION */}
         <div className="animate-fade-up">
           <div style={{ display: 'inline-block', background: 'rgba(199,91,0,0.15)', border: '1px solid #C75B00', color: '#ffedd5', padding: '6px 16px', borderRadius: 30, fontSize: 14, fontWeight: 700, marginBottom: 24 }}>
-            🔥 Offre Spéciale Vendeurs
+            Offre Spéciale Vendeurs
           </div>
           <h2 style={{ fontSize: 'clamp(40px, 6vw, 64px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 24px' }}>
             Transformez votre WhatsApp<br />

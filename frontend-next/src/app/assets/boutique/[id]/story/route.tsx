@@ -32,7 +32,7 @@ export async function GET(
   const logo = boutique?.logo_url ?? null
   const contact = boutique?.whatsapp || boutique?.telephone || null
   const adresse = boutique?.adresse || null
-  const initiale = nom.trim().charAt(0).toUpperCase() || '🏪'
+  const initiale = nom.trim().charAt(0).toUpperCase() || ''
 
   return new ImageResponse(
     (
@@ -98,7 +98,7 @@ export async function GET(
               gap: 10,
             }}
           >
-            <span style={{ fontSize: 24 }}>🏪</span>
+            <span style={{ fontSize: 24 }}></span>
             <span
               style={{
                 fontSize: 22,
@@ -235,7 +235,7 @@ export async function GET(
                   display: 'flex',
                 }}
               >
-                🏷️ {categorie}
+                {categorie}
               </span>
             ) : null}
 
@@ -251,7 +251,7 @@ export async function GET(
                 display: 'flex',
               }}
             >
-              📍 {adresse ? `${adresse}, ${ville}` : ville}
+              {adresse ? `${adresse}, ${ville}` : ville}
             </span>
           </div>
 
@@ -292,7 +292,7 @@ export async function GET(
                 display: 'flex',
               }}
             >
-              💬 Contactez-nous sur WhatsApp
+              Contactez-nous sur WhatsApp
             </span>
             <span
               style={{
@@ -302,7 +302,7 @@ export async function GET(
                 display: 'flex',
               }}
             >
-              {contact ? `Numéro direct : ${contact}` : 'Commandes & Renseignements'} · 🚚 Livraison rapide
+              {contact ? `Numéro direct : ${contact}` : 'Commandes & Renseignements'} · Livraison rapide
             </span>
           </div>
 

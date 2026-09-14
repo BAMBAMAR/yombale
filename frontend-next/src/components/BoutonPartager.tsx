@@ -76,7 +76,7 @@ export default function BoutonPartager({
           onClick={() => { setOuvert(false); partagerWhatsApp(); }}
           style={{ padding: '8px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', textAlign: 'left', fontSize: 13, fontWeight: 700, cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          💬 Partager sur WhatsApp
+          Partager sur WhatsApp
         </button>
       )}
       {onOpenFullModal && (
@@ -85,7 +85,7 @@ export default function BoutonPartager({
           onClick={() => { setOuvert(false); onOpenFullModal() }}
           style={{ padding: '8px 12px', background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0284c7', textAlign: 'left', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', borderRadius: 6 }}
         >
-          🚀 Partage Rapide (4 modèles)
+          Partage Rapide (4 modèles)
         </button>
       )}
       {canWebShare && (
@@ -94,7 +94,7 @@ export default function BoutonPartager({
           onClick={partagerWebShare}
           style={{ padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6, color: '#0f172a' }}
         >
-          📲 Autres applications…
+          Autres applications…
         </button>
       )}
       <button
@@ -102,7 +102,7 @@ export default function BoutonPartager({
         onClick={copierLien}
         style={{ padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 6, color: '#0f172a' }}
       >
-        {copie ? '✓ Copié !' : '📋 Copier le lien'}
+        {copie ? '✓ Copié !' : 'Copier le lien'}
       </button>
       {lienVisuel && (
         <a
@@ -155,7 +155,7 @@ export default function BoutonPartager({
           display: 'inline-flex', alignItems: 'center', gap: 6,
         }}
       >
-        💬 Partager
+        Partager
       </button>
       <button
         type="button"

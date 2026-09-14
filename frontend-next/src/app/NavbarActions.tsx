@@ -30,7 +30,7 @@ export default function NavbarActions({ nom }: Props) {
           textOverflow: 'ellipsis',
         }}
       >
-        <span style={{ flexShrink: 0 }}>👤</span>
+        <span style={{ flexShrink: 0 }}></span>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{nom}</span>
       </a>
       <form action={logout} style={{ margin: 0 }}>

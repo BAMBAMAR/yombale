@@ -32,7 +32,7 @@ export default function AdminAffiliateTrackingClient({ secret }: { secret: strin
         const data = await res.json();
         setClicks(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error('❌', err);
+        console.error('', err);
         setClicks([]);
       } finally {
         setLoading(false);
@@ -47,7 +47,7 @@ export default function AdminAffiliateTrackingClient({ secret }: { secret: strin
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
       <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e293b', marginBottom: '16px' }}>
-        📊 Tracking Affiliation
+        Tracking Affiliation
       </h1>
 
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
@@ -119,7 +119,7 @@ export default function AdminAffiliateTrackingClient({ secret }: { secret: strin
                         color: click.converted ? '#16a34a' : '#64748b',
                       }}
                     >
-                      {click.converted ? '✅ Converti' : '⏳ Clic'}
+                      {click.converted ? 'Converti' : 'Clic'}
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px', color: '#64748b', fontSize: '13px' }}>

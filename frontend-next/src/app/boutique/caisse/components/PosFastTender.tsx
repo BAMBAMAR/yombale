@@ -25,7 +25,7 @@ export default function PosFastTender({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--pos-text2, #475569)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          ⚡ Appoints Rapides Espèces (Fast Tender)
+          Appoints Rapides Espèces (Fast Tender)
         </label>
         {montantActuel > 0 && montantActuel >= totalNet && (
           <span style={{ fontSize: 12, fontWeight: 900, color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: 6 }}>
@@ -45,9 +45,9 @@ export default function PosFastTender({
               style={{
                 padding: '8px 4px',
                 borderRadius: 8,
-                border: isSelected ? '2px solid #16a34a' : '1.5px solid #cbd5e1',
-                background: isSelected ? '#16a34a' : '#ffffff',
-                color: isSelected ? '#ffffff' : '#0f172a',
+                border: isSelected ? '2px solid #16a34a' : '1.5px solid var(--pos-border, #cbd5e1)',
+                background: isSelected ? '#16a34a' : 'var(--pos-surface, #ffffff)',
+                color: isSelected ? '#ffffff' : 'var(--pos-text, #0f172a)',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',

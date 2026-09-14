@@ -27,7 +27,7 @@ const DUREES: DureeOption[] = [
   { mois: 1, label: '1 mois', sousTitre: 'Tarif mensuel', remise: 0, badge: null },
   { mois: 3, label: '3 mois', sousTitre: 'Trimestriel', remise: 0.10, badge: '-10%' },
   { mois: 6, label: '6 mois', sousTitre: 'Semestriel', remise: 0.15, badge: '-15%' },
-  { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: 0.25, badge: '🔥 -25% (3 mois offerts)' },
+  { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: 0.25, badge: '-25% (3 mois offerts)' },
 ]
 
 export default function AbonnementClient({ planActif, userId, settings }: Props) {
@@ -204,10 +204,10 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
             gap: 16,
             boxShadow: '0 8px 24px rgba(22,163,74,0.08)',
           }}>
-            <span style={{ fontSize: 32, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>🎉</span>
+            <span style={{ fontSize: 32, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}></span>
             <div>
               <strong style={{ fontSize: 16, color: '#14532D', display: 'block', marginBottom: 4 }}>
-                Formule active : {planActif.plan === 'business' ? '👑 Boutique Business VIP' : planActif.plan === 'pro' ? '⭐ Boutique Pro' : planActif.plan === 'decouverte' || planActif.plan === 'taf_taf' ? '⚡ Boutique Taf Taf (Mois offert)' : 'Gratuit'}
+                Formule active : {planActif.plan === 'business' ? 'Boutique Business VIP' : planActif.plan === 'pro' ? 'Boutique Pro' : planActif.plan === 'decouverte' || planActif.plan === 'taf_taf' ? 'Boutique Taf Taf (Mois offert)' : 'Gratuit'}
               </strong>
               <p style={{ margin: 0, color: '#15803D', fontSize: 14, lineHeight: 1.5 }}>
                 {(planActif.plan === 'decouverte' || planActif.plan === 'taf_taf') ? (
@@ -345,7 +345,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {estRecommande && (
                           <span style={{ fontSize: 10.5, fontWeight: 700, color: '#1d4ed8', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: 4, width: 'fit-content', margin: '0 auto 4px' }}>
-                            ⚡ Activation automatique
+                            Activation automatique
                           </span>
                         )}
                         <button
@@ -362,7 +362,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                             </div>
                           ) : (
                             <>
-                              <span className="paiement-btn-logo">🌊</span>
+                              <span className="paiement-btn-logo"></span>
                               <div className="paiement-btn-text">
                                 <span className="paiement-btn-nom" style={{ fontWeight: 800 }}>Wave (Paiement Direct)</span>
                                 <span className="paiement-btn-desc">
@@ -394,7 +394,7 @@ export default function AbonnementClient({ planActif, userId, settings }: Props)
                         className="paiement-btn"
                         style={{ margin: 0, textAlign: 'left' }}
                       >
-                        <span className="paiement-btn-logo">🧾</span>
+                        <span className="paiement-btn-logo"></span>
                         <div className="paiement-btn-text">
                           <span className="paiement-btn-nom">Paiement Manuel / Reçu</span>
                           <span className="paiement-btn-desc">Envoyer la preuve de dépôt (Wave/OM)</span>

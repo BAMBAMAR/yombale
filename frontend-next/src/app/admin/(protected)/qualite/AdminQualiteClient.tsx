@@ -31,7 +31,7 @@ export default function AdminQualiteClient({ secret }: { secret: string }) {
         const data = await res.json();
         setQuarantines(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error('❌', err);
+        console.error('', err);
       } finally {
         setLoading(false);
       }
@@ -50,7 +50,7 @@ export default function AdminQualiteClient({ secret }: { secret: string }) {
         setQuarantines(quarantines.filter((q) => q.offre_id !== offreId));
       }
     } catch (err) {
-      console.error('❌', err);
+      console.error('', err);
     }
   }
 
@@ -64,7 +64,7 @@ export default function AdminQualiteClient({ secret }: { secret: string }) {
         setQuarantines(quarantines.filter((q) => q.offre_id !== offreId));
       }
     } catch (err) {
-      console.error('❌', err);
+      console.error('', err);
     }
   }
 
@@ -73,7 +73,7 @@ export default function AdminQualiteClient({ secret }: { secret: string }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e293b' }}>
-            🔍 Qualité Données — Quarantines
+            Qualité Données — Quarantines
           </h1>
           <p style={{ color: '#64748b', fontSize: '14px' }}>
             Offres suspectes détectées automatiquement (anomalies de prix &gt; 50% sous la médiane).
@@ -95,9 +95,9 @@ export default function AdminQualiteClient({ secret }: { secret: string }) {
                 color: filter === tab ? '#fff' : '#64748b',
               }}
             >
-              {tab === 'quarantined' && '⚠️ Quarantinées'}
-              {tab === 'validated' && '✅ Validées'}
-              {tab === 'all' && '📋 Toutes'}
+              {tab === 'quarantined' && 'Quarantinées'}
+              {tab === 'validated' && 'Validées'}
+              {tab === 'all' && 'Toutes'}
             </button>
           ))}
         </div>

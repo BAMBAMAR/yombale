@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+import '@/styles/vitrine-publique.css'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
@@ -11,6 +12,7 @@ import { type SocialPost, type SocialAccount } from './SocialShopFeed'
 import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import ExternalImg from '@/components/ExternalImg'
 import BoutonPartager from '@/components/BoutonPartager'
+import ABTestVitrineHeader from './ABTestVitrineHeader'
 
 interface Boutique {
   id: string
@@ -45,9 +47,9 @@ interface Boutique {
 }
 
 const CAT_ICONS: Record<string, string> = {
-  smartphones: '📱', informatique: '💻', 'tv-electro': '📺',
-  mode: '👗', maison: '🏠', 'auto-moto': '🚗', jeux: '🎮',
-  services: '🛠', alimentation: '🥗', beaute: '💄', autre: '🏪',
+  smartphones: '', informatique: '', 'tv-electro': '📺',
+  mode: '👗', maison: '', 'auto-moto': '', jeux: '🎮',
+  services: '', alimentation: '🥗', beaute: '💄', autre: '',
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -254,7 +256,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
           justifyContent: 'center',
           gap: 8,
         }}>
-          <span>🔥</span>
+          <span></span>
           <span>{b.bandeau_promo}</span>
         </div>
       )}
@@ -291,31 +293,16 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
               )}
             </div>
 
-            <div style={{ flex: 1, minWidth: 0, paddingBottom: 2 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h1 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 800, margin: 0, color: '#0f172a' }}>
-                  {b.nom}
-                </h1>
-                {b.plan_actif === 'business' && (
-                  <span style={{ fontSize: 11, background: '#1e3a5f', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-                    💼 Business
-                  </span>
-                )}
-                {b.plan_actif === 'pro' && (
-                  <span style={{ fontSize: 11, background: b.couleur_theme || '#C75B00', color: '#fff', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-                    ⭐ Vendeur Pro
-                  </span>
-                )}
-              </div>
-              {b.slogan && (
-                <p style={{ margin: '3px 0 0', fontSize: 13.5, color: '#1E293B', fontWeight: 700, fontStyle: 'italic' }}>
-                  « {b.slogan} »
-                </p>
-              )}
-              <p style={{ margin: '3px 0 0', fontSize: 12.5, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {[b.categorie, b.adresse, b.ville].filter(Boolean).join(' · ')}
-              </p>
-            </div>
+            <ABTestVitrineHeader
+              boutiqueId={b.id}
+              nomInitial={b.nom}
+              sloganInitial={b.slogan}
+              planActif={b.plan_actif}
+              couleurTheme={b.couleur_theme}
+              categorie={b.categorie}
+              adresse={b.adresse}
+              ville={b.ville}
+            />
           </div>
 
           {/* Boutons d'action harmonisés */}
@@ -326,7 +313,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                 target="_blank" rel="noopener noreferrer"
                 className="bq-public-btn-whatsapp"
               >
-                💬 WhatsApp
+                WhatsApp
               </a>
             )}
             {b.telephone && (
@@ -334,7 +321,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                 href={`tel:${b.telephone}`}
                 className="bq-public-btn-tel"
               >
-                📞 {b.telephone}
+                {b.telephone}
               </a>
             )}
             <BoutonPartager
@@ -350,7 +337,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
                 target="_blank" rel="noopener noreferrer"
                 className="bq-public-btn-site"
               >
-                🌐 Site web
+                Site web
               </a>
             )}
           </div>
@@ -362,7 +349,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
         {/* Fil d'Ariane ultra-compact */}
         <nav aria-label="Fil d'Ariane" className="bq-breadcrumb-compact">
           <Link href="/boutiques" style={{ color: 'var(--text2, #6B5E52)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span>🏪 Toutes les boutiques</span>
+            <span>Toutes les boutiques</span>
           </Link>
           <span style={{ color: '#cbd5e1' }}>›</span>
           <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 700 }}>

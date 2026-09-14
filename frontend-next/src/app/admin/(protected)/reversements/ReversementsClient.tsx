@@ -68,7 +68,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
     }))
 
     exportWaveBulkPaymentXLS('Export_Wave_Bulk_Paiement', bulkItems)
-    setMsgSuccess(`📥 Fichier Excel (.xls) Wave Bulk Payout généré pour ${targets.length} reversement(s) !`)
+    setMsgSuccess(`Fichier Excel (.xls) Wave Bulk Payout généré pour ${targets.length} reversement(s) !`)
   }
 
   function handleExportWaveBulkCSV() {
@@ -86,7 +86,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
     }))
 
     exportWaveBulkPaymentCSV('Export_Wave_Bulk_Paiement', bulkItems)
-    setMsgSuccess(`📥 Fichier CSV Wave Bulk Payout généré pour ${targets.length} reversement(s) !`)
+    setMsgSuccess(`Fichier CSV Wave Bulk Payout généré pour ${targets.length} reversement(s) !`)
   }
 
   async function handleValiderLot() {
@@ -105,14 +105,14 @@ export default function ReversementsClient({ initialReversements }: { initialRev
     try {
       const res = await validerLotReversementsWave(selectedIds)
       if (res.error) {
-        setMsgError(`❌ ${res.error}`)
+        setMsgError(`${res.error}`)
       } else {
-        setMsgSuccess(`✅ ${targets.length} commande(s) marquée(s) comme reversée(s) avec succès ! (Total: ${totalNet.toLocaleString('fr-FR')} FCFA)`)
+        setMsgSuccess(`${targets.length} commande(s) marquée(s) comme reversée(s) avec succès ! (Total: ${totalNet.toLocaleString('fr-FR')} FCFA)`)
         setItems(prev => prev.filter(i => !selectedIds.includes(i.id)))
         setSelectedIds([])
       }
     } catch {
-      setMsgError('❌ Échec de la connexion au serveur.')
+      setMsgError('Échec de la connexion au serveur.')
     } finally {
       setValidatingLot(false)
     }
@@ -133,14 +133,14 @@ export default function ReversementsClient({ initialReversements }: { initialRev
     try {
       const res = await effectuerReversementWave(item.id)
       if (res.error) {
-        setMsgError(`❌ ${res.error}`)
+        setMsgError(`${res.error}`)
       } else {
-        setMsgSuccess(`✅ ${netAmount.toLocaleString('fr-FR')} FCFA transférés avec succès à ${item.boutique_nom} (${res.mobile || mobile}) ! Ref: payout_${item.reference}`)
+        setMsgSuccess(`${netAmount.toLocaleString('fr-FR')} FCFA transférés avec succès à ${item.boutique_nom} (${res.mobile || mobile}) ! Ref: payout_${item.reference}`)
         setItems(prev => prev.filter(i => i.id !== item.id))
         setSelectedIds(prev => prev.filter(i => i !== item.id))
       }
     } catch {
-      setMsgError('❌ Échec de la connexion au serveur.')
+      setMsgError('Échec de la connexion au serveur.')
     } finally {
       setLoadingId(null)
     }
@@ -167,7 +167,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
         }}>
           <div>
             <span style={{ fontWeight: 700, color: '#0f172a', fontSize: 14 }}>
-              🌊 Paiement en Masse Wave
+              Paiement en Masse Wave
             </span>
             <span style={{ display: 'block', fontSize: 12, color: '#64748b' }}>
               {selectedCount > 0
@@ -193,7 +193,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
                 gap: 6
               }}
             >
-              📥 Exporter pour Wave (.xls / Excel)
+              Exporter pour Wave (.xls / Excel)
             </button>
 
             <button
@@ -212,7 +212,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
                 gap: 6
               }}
             >
-              📄 Format CSV
+              Format CSV
             </button>
 
             {selectedCount > 0 && (
@@ -233,7 +233,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
                   gap: 6
                 }}
               >
-                {validatingLot ? '⏳ Validation du lot…' : `✅ Marquer la sélection comme Reversée (${selectedCount})`}
+                {validatingLot ? 'Validation du lot…' : `Marquer la sélection comme Reversée (${selectedCount})`}
               </button>
             )}
           </div>
@@ -255,7 +255,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
       {items.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ position: 'relative', maxWidth: 400 }}>
-            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>🔍</span>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}></span>
             <input
               type="text"
               value={q}
@@ -284,7 +284,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
 
       {itemsFiltres.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', color: '#6b7280' }}>
-          <span style={{ fontSize: 40, display: 'block', marginBottom: 8 }}>{q ? '🔍' : '✅'}</span>
+          <span style={{ fontSize: 40, display: 'block', marginBottom: 8 }}>{q ? '' : ''}</span>
           <p style={{ fontWeight: 600, fontSize: 16 }}>
             {q ? 'Aucun reversement ne correspond à votre recherche.' : 'Aucun reversement marchand en attente !'}
           </p>
@@ -338,7 +338,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <span style={{ fontWeight: 700, color: '#0f172a', display: 'block' }}>{item.boutique_nom}</span>
-                      <span style={{ fontSize: 12, color: '#2563eb', fontWeight: 600 }}>📞 {mobile || 'Non renseigné'}</span>
+                      <span style={{ fontSize: 12, color: '#2563eb', fontWeight: 600 }}>{mobile || 'Non renseigné'}</span>
                     </td>
                     <td style={{ padding: '14px 16px', fontWeight: 600, color: '#334155' }}>
                       {Number(item.montant_total).toLocaleString('fr-FR')} FCFA
@@ -368,7 +368,7 @@ export default function ReversementsClient({ initialReversements }: { initialRev
                           gap: 6
                         }}
                       >
-                        {isPending ? '⏳ Payout Wave en cours…' : '🌊 Reversement 1-Clic Wave'}
+                        {isPending ? 'Payout Wave en cours…' : 'Reversement 1-Clic Wave'}
                       </button>
                     </td>
                   </tr>

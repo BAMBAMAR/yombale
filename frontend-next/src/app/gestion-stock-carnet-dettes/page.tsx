@@ -253,7 +253,7 @@ export default function GestionStockCarnetDettesPage() {
             </h3>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
               <Link href="/creer-boutique-en-ligne" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                🛒 Créer une boutique en ligne
+                Créer une boutique en ligne
               </Link>
               <Link href="/alternative-shopify-senegal" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
                 🆚 Nopalou vs Shopify
@@ -262,7 +262,7 @@ export default function GestionStockCarnetDettesPage() {
                 📟 Caisse POS sans Internet
               </Link>
               <Link href="/paiement-en-ligne-senegal" style={{ background: '#ffffff', padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#1C2B4A', textDecoration: 'none', border: '1px solid #cbd5e1' }}>
-                💳 Paiements Wave & Orange Money
+                Paiements Wave & Orange Money
               </Link>
             </div>
           </div>

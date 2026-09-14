@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import '@/styles/boutique-dashboard.css'
+import '@/styles/saas-commerce.css'
 import { backendFetch } from '@/lib/backend-fetch'
 import { verifySession } from '@/lib/dal'
 import BoutiqueClient from './BoutiqueClient'

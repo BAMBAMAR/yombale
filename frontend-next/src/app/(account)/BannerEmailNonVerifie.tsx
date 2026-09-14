@@ -28,7 +28,7 @@ export default function BannerEmailNonVerifie() {
       role="alert"
       aria-live="polite"
     >
-      <span className="email-verif-banner__icon">✉️</span>
+      <span className="email-verif-banner__icon"></span>
       {envoye ? (
         <span className="email-verif-banner__msg">
           <strong>{t('account.verificationEmailSent')}</strong>

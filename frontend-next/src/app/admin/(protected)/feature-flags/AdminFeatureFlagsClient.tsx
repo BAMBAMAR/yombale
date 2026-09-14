@@ -15,14 +15,14 @@ interface FeatureFlag {
 }
 
 const CATEGORIES: { id: string; label: string; icon: string }[] = [
-  { id: 'tous', label: 'Tous les modules', icon: '⚡' },
+  { id: 'tous', label: 'Tous les modules', icon: '' },
   { id: 'pos', label: 'Caisse & POS', icon: '🖥️' },
-  { id: 'whatsapp', label: 'WhatsApp & IA', icon: '🤖' },
-  { id: 'stock', label: 'Stock & Inventaire', icon: '📦' },
-  { id: 'commerce', label: 'Commerce & Ventes', icon: '🛍️' },
-  { id: 'marketing', label: 'Marketing & Fidélité', icon: '🎁' },
-  { id: 'finance', label: 'Finances & Affiliation', icon: '💳' },
-  { id: 'tech', label: 'API & Développeur', icon: '🔌' },
+  { id: 'whatsapp', label: 'WhatsApp & IA', icon: '' },
+  { id: 'stock', label: 'Stock & Inventaire', icon: '' },
+  { id: 'commerce', label: 'Commerce & Ventes', icon: '' },
+  { id: 'marketing', label: 'Marketing & Fidélité', icon: '' },
+  { id: 'finance', label: 'Finances & Affiliation', icon: '' },
+  { id: 'tech', label: 'API & Développeur', icon: '' },
 ]
 
 export default function AdminFeatureFlagsClient({
@@ -430,8 +430,8 @@ export default function AdminFeatureFlagsClient({
                   }}
                 >
                   <option value="global">🌍 Toute la plateforme</option>
-                  <option value="plan">💎 Forfaits Pro/Business</option>
-                  <option value="boutique">🏪 Boutiques sélectionnées</option>
+                  <option value="plan">Forfaits Pro/Business</option>
+                  <option value="boutique">Boutiques sélectionnées</option>
                   <option value="beta">🧪 Testeurs Bêta</option>
                 </select>
               </div>
@@ -465,7 +465,7 @@ export default function AdminFeatureFlagsClient({
             }}
           >
             <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#1e293b' }}>
-              ✨ Créer un nouveau Feature Flag
+              Créer un nouveau Feature Flag
             </h2>
 
             <form onSubmit={handleCreate}>

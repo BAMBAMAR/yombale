@@ -66,7 +66,7 @@ export async function GET(request: Request) {
               display: 'flex', alignItems: 'center', gap: 10,
             }}>
               <span style={{ fontSize: 18, fontWeight: 900, color: '#15803D' }}>
-                🎁 1er Mois 100% Offert sur Tous les Plans
+                1er Mois 100% Offert sur Tous les Plans
               </span>
             </div>
           </div>
@@ -119,7 +119,7 @@ export async function GET(request: Request) {
                 position: 'absolute', top: -14, right: 20,
                 background: '#C75B00', color: '#fff', fontSize: 11, fontWeight: 900,
                 padding: '4px 12px', borderRadius: 9999, letterSpacing: 0.5,
-              }}>⭐ LE PLUS POPULAIRE</div>
+              }}>LE PLUS POPULAIRE</div>
               <span style={{ fontSize: 14, fontWeight: 800, color: '#C75B00', textTransform: 'uppercase', letterSpacing: 0.5 }}>MAGASIN PHYSIQUE</span>
               <span style={{ fontSize: 30, fontWeight: 900, color: '#1C2B4A', marginTop: 4, letterSpacing: -0.5 }}>Boutique Pro</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10 }}>
@@ -175,7 +175,7 @@ export async function GET(request: Request) {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
             <span style={{ fontSize: 18, fontWeight: 900, color: '#92400E', letterSpacing: -0.3 }}>
-              🏷️ Barème des Remises Commerçants :
+              Barème des Remises Commerçants :
             </span>
             <div style={{ display: 'flex', gap: 24 }}>
               <span style={{ fontSize: 16, fontWeight: 800, color: '#B45309' }}>
@@ -202,7 +202,7 @@ export async function GET(request: Request) {
               Démarrez votre essai gratuit dès aujourd&apos;hui
             </span>
             <span style={{ fontSize: 18, color: '#38BDF8', fontWeight: 800 }}>
-              📞 Contact WhatsApp : {agentPhone} · Code : {codeAgent}
+              Contact WhatsApp : {agentPhone} · Code : {codeAgent}
             </span>
             <span style={{ fontSize: 14, color: '#94A3B8' }}>
               Inscription immédiate en 3 minutes sur nopalou.com/boutique

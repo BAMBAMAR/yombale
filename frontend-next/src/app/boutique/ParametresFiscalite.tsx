@@ -49,7 +49,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
   useEffect(() => {
     if (state.success && handledRef.current !== state) {
       handledRef.current = state
-      setSavedMessage(`✅ ${t('shop.taxSavedSuccess')}`)
+      setSavedMessage(`${t('shop.taxSavedSuccess')}`)
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' })
       }
@@ -103,7 +103,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
         {/* ══════════ SECTION 1 — CONFIGURATION FISCALE ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={{ ...sectionTitleStyle, borderTop: 'none', paddingTop: 0 }}>📊 {t('shop.taxSettings')}</h4>
+          <h4 style={{ ...sectionTitleStyle, borderTop: 'none', paddingTop: 0 }}>{t('shop.taxSettings')}</h4>
           
           <div>
             <label style={labelStyle}>{t('shop.taxRegimeLabel')} *</label>
@@ -178,7 +178,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
         {/* ══════════ SECTION 2 — IDENTITÉ JURIDIQUE ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={sectionTitleStyle}>📋 {t('shop.taxLegalTitle')}</h4>
+          <h4 style={sectionTitleStyle}>{t('shop.taxLegalTitle')}</h4>
           <p style={{ ...helpText, margin: '-6px 0 4px 0' }}>
             Ces informations apparaîtront sur vos factures, devis et proformas. Obligatoire pour les documents conformes OHADA.
           </p>
@@ -263,7 +263,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
         {/* ══════════ SECTION 4 — CONDITIONS DE VENTE ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={sectionTitleStyle}>📄 {t('shop.salesTermsTitle')}</h4>
+          <h4 style={sectionTitleStyle}>{t('shop.salesTermsTitle')}</h4>
           <p style={{ ...helpText, margin: '-6px 0 4px 0' }}>
             Texte affiché en bas de vos documents commerciaux (factures, devis, proformas).
           </p>
@@ -307,7 +307,7 @@ export default function ParametresFiscalite({ boutique, onUpdate }: { boutique: 
 
         {/* ══════════ SECTION 5 — RÈGLES DE REMISES & PROMOTIONS CAISSE (STANDARD AUCHAN) ══════════ */}
         <div style={sectionStyle}>
-          <h4 style={sectionTitleStyle}>🏷️ Règles de Remises & Promotions Caisse (Standard Auchan)</h4>
+          <h4 style={sectionTitleStyle}>Règles de Remises & Promotions Caisse (Standard Auchan)</h4>
           <p style={{ ...helpText, margin: '-6px 0 4px 0' }}>
             Configurez l&apos;autonomie de vos caissiers, les seuils automatiques de réduction et les motifs métiers prédéfinis sans bloquer la caisse à chaque client.
           </p>

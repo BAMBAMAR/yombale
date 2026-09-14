@@ -114,7 +114,7 @@ export default function WhatsappLandingPage() {
               display: 'inline-flex', alignItems: 'center', gap: 8
             }}>
               <span>Tester le Bot au +221 70 871 79 42</span>
-              <span>💬</span>
+              <span></span>
             </a>
           </div>
 
@@ -157,7 +157,7 @@ export default function WhatsappLandingPage() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-                🏪
+                
               </div>
               <div>
                 <div style={{ fontWeight: 900, fontSize: 14 }}>Nopalou Assistant Marchand</div>
@@ -182,7 +182,7 @@ export default function WhatsappLandingPage() {
               padding: '14px 16px', borderRadius: '0 16px 16px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
             }}>
               <div style={{ fontSize: 11, fontWeight: 900, color: '#059669', marginBottom: 4 }}>
-                🛒 NOUVELLE COMMANDE REÇUE (Boutique Web)
+                NOUVELLE COMMANDE REÇUE (Boutique Web)
               </div>
               <div style={{ fontSize: 13, color: '#0f172a', lineHeight: 1.5 }}>
                 <strong>Client :</strong> Fatou Bintou Ndiaye (+221 77 450 XX XX)<br/>
@@ -218,14 +218,14 @@ export default function WhatsappLandingPage() {
               padding: '14px 16px', borderRadius: '0 16px 16px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
             }}>
               <div style={{ fontSize: 11, fontWeight: 900, color: '#1d4ed8', marginBottom: 4 }}>
-                📊 BILAN DU JOUR &bull; Dakar Tech Express
+                BILAN DU JOUR &bull; Dakar Tech Express
               </div>
               <div style={{ fontSize: 13, color: '#0f172a', lineHeight: 1.5 }}>
-                🎉 <strong>Chiffre d'Affaires Total : 285 000 FCFA</strong> (14 ventes)<br/>
-                &bull; 🌊 Wave : 180 000 FCFA (8 paiements)<br/>
+                <strong>Chiffre d'Affaires Total : 285 000 FCFA</strong> (14 ventes)<br/>
+                &bull; Wave : 180 000 FCFA (8 paiements)<br/>
                 &bull; 🟠 Orange Money : 65 000 FCFA (3 paiements)<br/>
-                &bull; 💵 Espèces Caisse : 40 000 FCFA (3 ventes)<br/>
-                &bull; 📒 1 Acompte noté au carnet (25 000 F)
+                &bull; Espèces Caisse : 40 000 FCFA (3 ventes)<br/>
+                &bull; 1 Acompte noté au carnet (25 000 F)
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 6, fontSize: 10, color: '#64748b' }}>
                 <span>21:00</span>
@@ -251,7 +251,7 @@ export default function WhatsappLandingPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
           
           <div style={{ background: '#ffffff', padding: 28, borderRadius: 20, border: '1px solid #e2e8f0' }}>
-            <div style={{ fontSize: 32, marginBottom: 16 }}>🛒</div>
+            <div style={{ fontSize: 32, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', marginBottom: 8 }}>Commandes Pré-Remplies</h3>
             <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
               Vos clients choisissent leurs articles sur votre lien web et vous envoient la commande complète sans avoir à taper le moindre texte.
@@ -259,7 +259,7 @@ export default function WhatsappLandingPage() {
           </div>
 
           <div style={{ background: '#ffffff', padding: 28, borderRadius: 20, border: '1px solid #e2e8f0' }}>
-            <div style={{ fontSize: 32, marginBottom: 16 }}>📒</div>
+            <div style={{ fontSize: 32, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', marginBottom: 8 }}>Relances Dettes 1-Clic</h3>
             <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
               Envoyez un rappel poli avec le solde exact et votre QR Code ou lien Wave direct pour être remboursé immédiatement sans conflit.
@@ -267,7 +267,7 @@ export default function WhatsappLandingPage() {
           </div>
 
           <div style={{ background: '#ffffff', padding: 28, borderRadius: 20, border: '1px solid #e2e8f0' }}>
-            <div style={{ fontSize: 32, marginBottom: 16 }}>📈</div>
+            <div style={{ fontSize: 32, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', marginBottom: 8 }}>Bilan par Simple Message</h3>
             <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
               Envoyez 'Bilan' le soir pour recevoir votre chiffre d'affaires ventilé sans ouvrir d'ordinateur ni faire de calculs manuels.
@@ -275,7 +275,7 @@ export default function WhatsappLandingPage() {
           </div>
 
           <div style={{ background: '#ffffff', padding: 28, borderRadius: 20, border: '1px solid #e2e8f0' }}>
-            <div style={{ fontSize: 32, marginBottom: 16 }}>📸</div>
+            <div style={{ fontSize: 32, marginBottom: 16 }}></div>
             <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', marginBottom: 8 }}>Ajout d'Articles Express</h3>
             <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
               Envoyez la photo d'un nouvel arrivage et son prix par message WhatsApp : notre système crée l'article sur votre vitrine automatiquement.

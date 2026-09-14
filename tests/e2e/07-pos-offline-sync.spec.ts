@@ -210,5 +210,97 @@ test.describe('Mode Hors-Ligne — Tests complets PWA & POS', () => {
     expect((testDebtAdded as any)?.type).toBe('vente_credit')
   })
 
+  test('8. Navigation mobile Caisse POS : onglets Catalogue/Ticket et visibilité du ticket', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+
+    // Préparation du cache local pour la caisse
+    await page.evaluate(() => {
+      localStorage.setItem('nopalou_pos_user_boutiques', JSON.stringify([
+        { id: 'b-e2e-1', nom: 'Boutique Dakar Pro', ville: 'Dakar', actif: true }
+      ]))
+      localStorage.setItem('nopalou_boutique_active', 'b-e2e-1')
+      localStorage.setItem('nopalou_pos_produits_b-e2e-1', JSON.stringify([
+        { id: 'p-1', nom: 'Samsung Galaxy A03 32Go', prix: 55000, stock: 10, code_barre: '429b6551' }
+      ]))
+      localStorage.setItem('nopalou_pos_session_b-e2e-1', JSON.stringify({
+        id: 'sess-e2e-1',
+        caissier_nom: 'Gérant / Superviseur',
+        fond_de_caisse: 20000,
+        ouvert_le: new Date().toISOString()
+      }))
+    })
+
+    await page.goto('/boutique/caisse?token=pos-test-token&b=b-e2e-1', { waitUntil: 'domcontentloaded' })
+
+    // Si l'écran de verrouillage est affiché, taper le code PIN Superviseur 9999
+    const btn9 = page.getByRole('button', { name: '9', exact: true })
+    if (await btn9.isVisible({ timeout: 6000 }).catch(() => false)) {
+      await btn9.click()
+      await page.waitForTimeout(50)
+      await btn9.click()
+      await page.waitForTimeout(50)
+      await btn9.click()
+      await page.waitForTimeout(50)
+      await btn9.click()
+    }
+
+    // Si la modale d'ouverture de session POS apparaît, valider ou fermer
+    const btnDemarrerSession = page.locator('button', { hasText: /Démarrer la Session|Valider/i }).first()
+    if (await btnDemarrerSession.isVisible({ timeout: 4000 }).catch(() => false)) {
+      await btnDemarrerSession.click()
+    } else {
+      const btnCloseModal = page.locator('button:has(svg.lucide-x)').first()
+      if (await btnCloseModal.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await btnCloseModal.click()
+      }
+    }
+
+    // Les onglets mobiles doivent être visibles sur smartphone (<= 1024px)
+    const mobileTabs = page.locator('.caisse-mobile-tabs')
+    await expect(mobileTabs).toBeVisible({ timeout: 10000 })
+
+    const tabCatalogue = mobileTabs.locator('button', { hasText: /Catalogue/i })
+    const tabTicket = mobileTabs.locator('button', { hasText: /Ticket/i })
+    await expect(tabCatalogue).toBeVisible()
+    await expect(tabTicket).toBeVisible()
+
+    // Au départ, le catalogue est actif
+    await expect(tabCatalogue).toHaveClass(/active/)
+
+    // Ajouter le produit au panier en cliquant dessus
+    const carteProduit = page.locator('text=Samsung Galaxy A03 32Go').first()
+    if (await carteProduit.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await carteProduit.click()
+      // La barre flottante du bas (sticky bottom) doit apparaître avec le total
+      const stickyBar = page.locator('.caisse-sticky-bottom-bar')
+      await expect(stickyBar).toBeVisible({ timeout: 5000 })
+      await expect(stickyBar).toContainText(/55 000/)
+
+      // Le tab ticket indique maintenant les articles
+      await expect(tabTicket).toHaveClass(/has-items/)
+
+      // Cliquer sur le bouton sticky "Voir le ticket"
+      const btnVoirTicket = stickyBar.locator('button')
+      await btnVoirTicket.click()
+    } else {
+      // Si pas de produit cliqué, basculer directement via l'onglet Ticket
+      await tabTicket.click()
+    }
+
+    // L'écran ticket est maintenant actif et visible
+    await expect(tabTicket).toHaveClass(/active/)
+    const ticketSection = page.locator('.ticket-section')
+    await expect(ticketSection).toBeVisible()
+
+    // Le bouton de retour au catalogue est présent
+    const btnRetour = page.locator('.caisse-back-to-catalogue-btn')
+    await expect(btnRetour).toBeVisible()
+    await btnRetour.click()
+
+    // Le catalogue redevient actif
+    await expect(tabCatalogue).toHaveClass(/active/)
+  })
+
 })
 

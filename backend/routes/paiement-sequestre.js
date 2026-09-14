@@ -104,7 +104,8 @@ Merci pour votre confiance sur Nopalou.`;
       success: true,
       message: 'Fonds retenus sous séquestre Pay Safe',
       statut_sequestre: 'bloque',
-      reference: cmd.reference
+      reference: cmd.reference,
+      pin: pin
     });
 
   } catch (err) {

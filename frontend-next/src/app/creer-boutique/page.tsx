@@ -31,7 +31,7 @@ export default function CreerBoutiqueWizard() {
   const [plansConfig, setPlansConfig] = useState({
     decouverte: {
       name: 'Boutique Taf Taf',
-      badge: '⚡ 1 MOIS OFFERT',
+      badge: '1 MOIS OFFERT',
       priceMain: '0 FCFA',
       priceSub: 'pendant 30j puis 5.000 FCFA/mois',
       desc: 'Idéal pour débuter et vendre directement sur WhatsApp.',
@@ -41,17 +41,17 @@ export default function CreerBoutiqueWizard() {
     },
     pro: {
       name: 'Vendeur Pro',
-      badge: '⭐ POPULAIRE',
+      badge: 'POPULAIRE',
       priceMain: '0 FCFA',
       priceSub: 'pendant 30j puis 15.000 FCFA/mois',
       desc: 'Pour les commerces voulant être en tête des recherches.',
-      features: ['Badge Pro Certifié ⭐', 'Référencement prioritaire', 'Caisse POS & Reçus PDF'],
+      features: ['Badge Pro Certifié ', 'Référencement prioritaire', 'Caisse POS & Reçus PDF'],
       color: '#C75B00',
       bgLight: '#fff7ed',
     },
     business: {
       name: 'Business VIP',
-      badge: '👑 MULTI-SITES & API',
+      badge: 'MULTI-SITES & API',
       priceMain: '0 FCFA',
       priceSub: 'pendant 30j puis 35.000 FCFA/mois',
       desc: 'Solution complète pour chaînes, grossistes & marques.',
@@ -78,7 +78,7 @@ export default function CreerBoutiqueWizard() {
         setPlansConfig({
           decouverte: {
             name: settings.plan_decouverte_label || 'Boutique Taf Taf',
-            badge: `⚡ ${essaiJours}J OFFERTS`,
+            badge: `${essaiJours}J OFFERTS`,
             priceMain: '0 FCFA',
             priceSub: `pendant ${essaiJours}j puis ${pxDecouverte.toLocaleString('fr-FR')} FCFA/mois`,
             desc: 'Idéal pour débuter et vendre directement sur WhatsApp.',
@@ -88,17 +88,17 @@ export default function CreerBoutiqueWizard() {
           },
           pro: {
             name: settings.plan_pro_label || 'Vendeur Pro',
-            badge: '⭐ POPULAIRE',
+            badge: 'POPULAIRE',
             priceMain: '0 FCFA',
             priceSub: `pendant ${essaiJours}j puis ${pxPro.toLocaleString('fr-FR')} FCFA/mois`,
             desc: 'Pour les commerces voulant être en tête des recherches.',
-            features: ['Badge Pro Certifié ⭐', 'Référencement prioritaire', 'Caisse POS & Reçus PDF'],
+            features: ['Badge Pro Certifié ', 'Référencement prioritaire', 'Caisse POS & Reçus PDF'],
             color: '#C75B00',
             bgLight: '#fff7ed',
           },
           business: {
             name: settings.plan_business_label || 'Business VIP',
-            badge: '👑 MULTI-SITES & API',
+            badge: 'MULTI-SITES & API',
             priceMain: '0 FCFA',
             priceSub: `pendant ${essaiJours}j puis ${pxBusiness.toLocaleString('fr-FR')} FCFA/mois`,
             desc: 'Solution complète pour chaînes, grossistes & marques.',
@@ -236,7 +236,7 @@ export default function CreerBoutiqueWizard() {
             padding: '14px 18px', borderRadius: 14, fontSize: 14, fontWeight: 700,
             marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10
           }}>
-            <span>⚠️</span>
+            <span></span>
             <span>{error}</span>
           </div>
         )}
@@ -247,7 +247,7 @@ export default function CreerBoutiqueWizard() {
           {step === 1 && (
             <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
               <div style={{ width: 48, height: 48, borderRadius: 16, background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 16 }}>
-                🏪
+                
               </div>
               <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', marginBottom: 8, letterSpacing: '-0.02em', lineHeight: 1.25 }}>
                 Quel est le nom de votre boutique ou marque ?
@@ -279,7 +279,7 @@ export default function CreerBoutiqueWizard() {
           {step === 2 && (
             <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
               <div style={{ width: 48, height: 48, borderRadius: 16, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 16 }}>
-                💬
+                
               </div>
               <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', marginBottom: 8, letterSpacing: '-0.02em', lineHeight: 1.25 }}>
                 Votre numéro WhatsApp
@@ -351,7 +351,7 @@ export default function CreerBoutiqueWizard() {
                   padding: '6px 16px', borderRadius: 20, letterSpacing: '0.04em', textTransform: 'uppercase',
                   display: 'inline-block', marginBottom: 10
                 }}>
-                  🎁 1er mois 100% offert sur tous nos forfaits
+                  1er mois 100% offert sur tous nos forfaits
                 </span>
                 <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
                   Choisissez votre formule & couleur
@@ -432,7 +432,7 @@ export default function CreerBoutiqueWizard() {
               {/* TYPE DE BOUTIQUE */}
               <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: 18, border: '1px solid #e2e8f0', marginBottom: 20 }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 900, color: '#0f172a', marginBottom: 10 }}>
-                  🛍️ Type de boutique :
+                  Type de boutique :
                 </label>
                 <select 
                   value={categorie}
@@ -542,7 +542,7 @@ export default function CreerBoutiqueWizard() {
                 transition: 'all 0.2s ease', ...fontStyle
               }}
             >
-              {loading ? 'Création en cours...' : step === 4 ? 'Lancer ma boutique 🚀' : 'Continuer →'}
+              {loading ? 'Création en cours...' : step === 4 ? 'Lancer ma boutique ' : 'Continuer →'}
             </button>
           </div>
         </form>
@@ -560,7 +560,7 @@ export default function CreerBoutiqueWizard() {
               <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a' }}>
-                    📜 Contrat &amp; Charte Vendeur Nopalou
+                    Contrat &amp; Charte Vendeur Nopalou
                   </h3>
                   <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748b' }}>
                     Conditions Générales d'Utilisation Marchand

@@ -89,14 +89,15 @@ export default function PageHeader({ breadcrumb, emoji, titre, compteur, cta, ce
       </nav>
 
       <div style={{ display: 'flex', alignItems: alignFlex, justifyContent: justifyFlex, gap: 16, flexWrap: 'wrap', flexDirection: centered ? 'column' : 'row' }}>
-        <h1 style={{ fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, margin: 0, textAlign }}>
-          {emoji ? `${emoji} ` : ''}{titre}
+        <h1 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--navy, #1C2B4A)', lineHeight: 1.25, margin: 0, textAlign }}>
+          {emoji ? <span style={{ marginRight: 8, opacity: 0.9 }}>{emoji}</span> : null}
+          {titre}
         </h1>
         {cta && (
           cta.href ? (
-            <Link href={cta.href} className="annonces-cta-btn">{cta.label}</Link>
+            <Link href={cta.href} className="btn-npl btn-npl-md btn-npl-primary">{cta.label}</Link>
           ) : (
-            <button type="button" className="annonces-cta-btn" onClick={cta.onClick}>{cta.label}</button>
+            <button type="button" className="btn-npl btn-npl-md btn-npl-primary" onClick={cta.onClick}>{cta.label}</button>
           )
         )}
       </div>

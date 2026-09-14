@@ -19,19 +19,19 @@ export default function GarantiesAcheteurBadge() {
       textAlign: 'center',
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <span style={{ fontSize: 18 }}>🛡️</span>
+        <span style={{ fontSize: 18 }}></span>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#1E293B' }}>{t('common.buyerGuarantee')}</span>
         <span style={{ fontSize: 10, color: '#64748b' }}>{t('common.satisfactionGuaranteed')}</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0' }}>
-        <span style={{ fontSize: 18 }}>🔒</span>
+        <span style={{ fontSize: 18 }}></span>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#1E293B' }}>{t('common.securePayment')}</span>
         <span style={{ fontSize: 10, color: '#64748b' }}>{t('common.securePaymentMethods')}</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <span style={{ fontSize: 18 }}>🚚</span>
+        <span style={{ fontSize: 18 }}></span>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#1E293B' }}>{t('common.fastDelivery')}</span>
         <span style={{ fontSize: 10, color: '#64748b' }}>{t('common.deliveryRegions')}</span>
       </div>

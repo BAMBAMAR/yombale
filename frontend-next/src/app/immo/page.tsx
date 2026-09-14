@@ -195,13 +195,13 @@ export default async function ImmoPage({
         essentiels={[
           {
             key: 'transaction-location',
-            label: '🏠 Location',
+            label: 'Location',
             href: buildLink({ transaction: 'location', prixMax: '', page: '1' }),
             active: transaction === 'location',
           },
           {
             key: 'transaction-vente',
-            label: '🔑 Vente',
+            label: 'Vente',
             href: buildLink({ transaction: 'vente', prixMax: '', page: '1' }),
             active: transaction === 'vente',
           },
@@ -227,7 +227,7 @@ export default async function ImmoPage({
           ...(ville ? [
             {
               key: `ville-${ville}`,
-              label: `📍 ${ville}`,
+              label: `${ville}`,
               href: buildLink({ ville, quartier: '', page: '1' }),
               active: true,
             },
@@ -243,7 +243,7 @@ export default async function ImmoPage({
         secondaires={[
           ...VILLES_SN.map(v => ({
             key: `ville-${v}`,
-            label: `📍 ${v}`,
+            label: `${v}`,
             href: buildLink({ ville: ville === v ? '' : v, quartier: '', page: '1' }),
             active: ville === v,
           })),
@@ -267,7 +267,7 @@ export default async function ImmoPage({
           })),
           {
             key: 'meuble',
-            label: '✅ Meublé',
+            label: 'Meublé',
             href: buildLink({ meuble: meuble === 'true' ? '' : 'true', page: '1' }),
             active: meuble === 'true',
           },
@@ -335,7 +335,7 @@ export default async function ImmoPage({
             ),
           },
           {
-            emoji: '📍',
+            emoji: '',
             text: (
               <>
                 Location ou vente, appartement, villa, studio ou terrain — filtrez par budget, ville et surface pour trouver
@@ -348,11 +348,11 @@ export default async function ImmoPage({
           {
             label: 'Recherches populaires',
             chips: [
-              { href: '/immo/location-appartement-dakar', emoji: '🏢', label: 'Location appartement Dakar' },
+              { href: '/immo/location-appartement-dakar', emoji: '', label: 'Location appartement Dakar' },
               { href: '/immo/location-chambre-dakar', emoji: '🛏️', label: 'Chambre à louer Dakar' },
-              { href: '/immo/location-studio-dakar', emoji: '🏠', label: 'Studio à louer Dakar' },
+              { href: '/immo/location-studio-dakar', emoji: '', label: 'Studio à louer Dakar' },
               { href: '/immo/vente-terrain-dakar', emoji: '🗺️', label: 'Terrain à vendre Dakar' },
-              { href: '/immo/vente-maison-dakar', emoji: '🏡', label: 'Maison à vendre Dakar' },
+              { href: '/immo/vente-maison-dakar', emoji: '', label: 'Maison à vendre Dakar' },
             ],
           },
         ]}

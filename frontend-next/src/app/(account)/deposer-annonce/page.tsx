@@ -27,7 +27,7 @@ export default async function DeposerAnnoncePage() {
           { label: t('account.navMyAds'), href: '/mes-annonces' },
           { label: t('account.navPublishAd') }
         ]}
-        emoji="📢"
+        emoji=""
         titre={t('account.navPublishAd')}
       />
       <FormulaireAnnonce email={session.email ?? ''} />

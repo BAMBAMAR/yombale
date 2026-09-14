@@ -114,7 +114,7 @@ export default function GuideSourcingReventePage() {
               borderRadius: 20, fontSize: 13, fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: 6,
               border: '1px solid #fed7aa', marginBottom: 16
             }}>
-              📦 Business &amp; Sourcing Sénégal 2026
+              Business &amp; Sourcing Sénégal 2026
             </span>
             <h1 style={{ fontSize: 'clamp(28px, 4.5vw, 40px)', fontWeight: 900, color: '#1C2B4A', margin: '0 0 16px', lineHeight: 1.2 }}>
               Comment Acheter sur Alibaba, AliExpress &amp; Shein et Revendre au Sénégal
@@ -155,7 +155,7 @@ export default function GuideSourcingReventePage() {
               </div>
 
               <div style={{ background: '#f0fdf4', padding: 20, borderRadius: 14, border: '1.5px solid #bbf7d0' }}>
-                <div style={{ fontSize: 24, marginBottom: 8 }}>🔴 AliExpress</div>
+                <div style={{ fontSize: 24, marginBottom: 8 }}>AliExpress</div>
                 <div style={{ fontWeight: 900, color: '#166534', fontSize: 15, marginBottom: 6 }}>Pour Démarrer Sans Risque (1 à 10 pièces)</div>
                 <p style={{ fontSize: 13, color: '#14532d', lineHeight: 1.5, margin: 0 }}>
                   Achat unitaire sans minimum de commande. Parfait pour tester la demande des clients à Dakar avant d'investir gros.
@@ -185,7 +185,7 @@ export default function GuideSourcingReventePage() {
               <li><strong>Fret Maritime (Bateau Conteneur) :</strong> 35 à 45 jours. Facturé au mètre cube (CBM). Solution la plus économique pour les sacs, chaussures, électroménager et cosmétiques volumineux.</li>
             </ul>
             <div style={{ background: '#eff6ff', padding: 16, borderRadius: 12, borderLeft: '4px solid #3b82f6', fontSize: 13.5, color: '#1e40af' }}>
-              💡 <strong>Astuce Logistique :</strong> Demandez à votre fournisseur d'expédier votre colis à l'adresse de l'entrepôt chinois de votre transitaire basé à Guangzhou ou Yiwu. Le transitaire s'occupe du dédouanement et vous livre à Dakar.
+              <strong>Astuce Logistique :</strong> Demandez à votre fournisseur d'expédier votre colis à l'adresse de l'entrepôt chinois de votre transitaire basé à Guangzhou ou Yiwu. Le transitaire s'occupe du dédouanement et vous livre à Dakar.
             </div>
           </section>
 

@@ -17,13 +17,13 @@ export default async function AdminReversementsPage() {
       const data = await res.json()
       reversements = data.reversements || []
     }
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L20]', err); }
 
   return (
     <div className="admin-content" style={{ padding: '24px 32px' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span>💸</span> Reversements Marchands Wave 1-Clic
+          <span></span> Reversements Marchands Wave 1-Clic
         </h1>
         <p style={{ color: '#6b7280', marginTop: 4, fontSize: 14 }}>
           Commandes de boutiques livrées payées par Wave. Cliquez sur un bouton pour transférer les fonds au marchand en 1 clic via Wave Payout API.

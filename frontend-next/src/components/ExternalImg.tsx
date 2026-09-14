@@ -31,7 +31,7 @@ export interface ExternalImgProps {
 export default function ExternalImg({
   src,
   alt,
-  fallback = '📦',
+  fallback = '',
   className,
   fallbackClassName,
   style,

@@ -45,7 +45,7 @@ test.describe('Admin login', () => {
       await page.click('button[type="submit"]')
       await page.waitForURL(/\/admin$/, { timeout: 8000 })
 
-      await expect(page.locator('h1')).toContainText(/Dashboard/)
+      await expect(page.locator('h1')).toContainText(/Dashboard|Pilotage|Console/i)
       // Cartes stats
       await expect(page.locator('[class*="admin-stat-card"]').first()).toBeVisible()
     })

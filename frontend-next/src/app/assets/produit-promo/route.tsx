@@ -80,7 +80,7 @@ export async function GET(request: Request) {
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: '#25D366', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
-              💬 CHATBOT WHATSAPP META 24/7
+              CHATBOT WHATSAPP META 24/7
             </span>
           </div>
 
@@ -97,9 +97,9 @@ export async function GET(request: Request) {
           {/* Cartes Fonctionnalités Chatbot (Fonds clairs haute visibilité) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, flex: 1 }}>
             {[
-              { t: '🔍 Recherche Unifiée Instantanée', d: 'Prix comparés marketplace, boutiques & immo' },
-              { t: '🛍️ Panier Multi-Produits WhatsApp', d: 'Commandez directement depuis votre chat' },
-              { t: '🔔 Alertes Baisse de Prix', d: 'Soyez notifié dès qu\'un prix baisse à Dakar' },
+              { t: 'Recherche Unifiée Instantanée', d: 'Prix comparés marketplace, boutiques & immo' },
+              { t: 'Panier Multi-Produits WhatsApp', d: 'Commandez directement depuis votre chat' },
+              { t: 'Alertes Baisse de Prix', d: 'Soyez notifié dès qu\'un prix baisse à Dakar' },
               { t: '📓 Carnet de Dettes Client POS', d: 'Envoi automatique du solde client par message' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondVert, border: '1.5px solid #BBF7D0', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -111,7 +111,7 @@ export async function GET(request: Request) {
 
           {/* Footer CTA Haute Lisibilité */}
           <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>📲 Tapez &quot;MENU&quot; au +221 70 871 79 42</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>Tapez &quot;MENU&quot; au +221 70 871 79 42</span>
             <span style={{ fontSize: 24, fontWeight: 900, color: '#25D366', display: 'flex' }}>wa.me/221708717942</span>
           </div>
         </div>
@@ -144,7 +144,7 @@ export async function GET(request: Request) {
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Immo</span></span>
             </div>
             <span style={{ background: '#4338CA', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
-              🏠 IMMOBILIER DAKAR &amp; SÉNÉGAL
+              IMMOBILIER DAKAR &amp; SÉNÉGAL
             </span>
           </div>
 
@@ -159,10 +159,10 @@ export async function GET(request: Request) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, flex: 1 }}>
             {[
-              { t: '🏢 Appartements & Studios Dakar', d: 'Almadies, Mermoz, Plateau, Fann, Yoff' },
-              { t: '🏡 Villas & Maisons avec Piscine', d: 'Saly, Somone, Ngaparou, Petite Côte' },
+              { t: 'Appartements & Studios Dakar', d: 'Almadies, Mermoz, Plateau, Fann, Yoff' },
+              { t: 'Villas & Maisons avec Piscine', d: 'Saly, Somone, Ngaparou, Petite Côte' },
               { t: '📐 Terrains Titre Foncier', d: 'Diamniadio, Lac Rose, Sebikotane, Thiès' },
-              { t: '📲 Contact Direct WhatsApp Propriétaire', d: 'Zéro intermédiaire masqué · Photos HD' },
+              { t: 'Contact Direct WhatsApp Propriétaire', d: 'Zéro intermédiaire masqué · Photos HD' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondImmo, border: '1.5px solid #C7D2FE', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 21, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
@@ -172,7 +172,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🔑 Trouvez votre bien immobilier</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>Trouvez votre bien immobilier</span>
             <span style={{ fontSize: 24, fontWeight: 900, color: '#818CF8', display: 'flex' }}>nopalou.com/immo</span>
           </div>
         </div>
@@ -220,10 +220,10 @@ export async function GET(request: Request) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, flex: 1 }}>
             {[
-              { t: '🍊 Orange Sénégal', d: 'Pass Illimix, Max, Fiber & Kirene' },
+              { t: 'Orange Sénégal', d: 'Pass Illimix, Max, Fiber & Kirene' },
               { t: '🟡 Yas Sénégal (ex-Free)', d: 'Pass Internet 4G+, Voix & Roaming' },
-              { t: '🔴 Expresso Sénégal', d: 'Pass Chrono, Data & International' },
-              { t: '🟢 Promobile Sénégal', d: 'Forfaits hybrides & Voix/Data' },
+              { t: 'Expresso Sénégal', d: 'Pass Chrono, Data & International' },
+              { t: 'Promobile Sénégal', d: 'Forfaits hybrides & Voix/Data' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondBleu, border: '1.5px solid #BAE6FD', borderRadius: 16, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 21, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
@@ -233,7 +233,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>📡 Comparez tous les Pass Télécom</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#ffffff', display: 'flex' }}>Comparez tous les Pass Télécom</span>
             <span style={{ fontSize: 24, fontWeight: 900, color: '#38BDF8', display: 'flex' }}>nopalou.com/telecom</span>
           </div>
         </div>
@@ -266,7 +266,7 @@ export async function GET(request: Request) {
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou Partner</span></span>
             </div>
             <span style={{ background: C.vert, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
-              💼 APPORTEURS D&apos;AFFAIRES
+              APPORTEURS D&apos;AFFAIRES
             </span>
           </div>
 
@@ -281,11 +281,11 @@ export async function GET(request: Request) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 28, flex: 1 }}>
             {[
-              { t: '🏪 Boutique Pro (5 000 F/mois)', d: 'Vous gagnez 1 000 FCFA / mois par boutique' },
-              { t: '👑 Boutique Business (10 000 F/mois)', d: 'Vous gagnez 2 000 FCFA / mois par boutique' },
-              { t: '⚡ Boutique Taf Taf (2 500 F/mois)', d: 'Vous gagnez 500 FCFA / mois par boutique' },
-              { t: '📄 Brochure PDF (13 P.) & Démo POS', d: 'Support de vente imprimable + Démo 1-clic' },
-              { t: '📱 Retrait Direct Wave & OM', d: 'Paiement mensuel automatique des commissions 20%' },
+              { t: 'Boutique Pro (5 000 F/mois)', d: 'Vous gagnez 1 000 FCFA / mois par boutique' },
+              { t: 'Boutique Business (10 000 F/mois)', d: 'Vous gagnez 2 000 FCFA / mois par boutique' },
+              { t: 'Boutique Taf Taf (2 500 F/mois)', d: 'Vous gagnez 500 FCFA / mois par boutique' },
+              { t: 'Brochure PDF (13 P.) & Démo POS', d: 'Support de vente imprimable + Démo 1-clic' },
+              { t: 'Retrait Direct Wave & OM', d: 'Paiement mensuel automatique des commissions 20%' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondVert, border: '1.5px solid #BBF7D0', borderRadius: 16, padding: '13px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
@@ -295,7 +295,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ background: C.marine, borderRadius: 20, padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-            <span style={{ fontSize: 21, fontWeight: 900, color: '#ffffff', display: 'flex' }}>💼 Devenez Apporteur d&apos;Affaires</span>
+            <span style={{ fontSize: 21, fontWeight: 900, color: '#ffffff', display: 'flex' }}>Devenez Apporteur d&apos;Affaires</span>
             <span style={{ fontSize: 23, fontWeight: 900, color: '#4ADE80', display: 'flex' }}>nopalou.com/compte/apporteur</span>
           </div>
         </div>
@@ -328,7 +328,7 @@ export async function GET(request: Request) {
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: C.orange, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
-              ⭐ FORMULE PRO MAGASIN
+              FORMULE PRO MAGASIN
             </span>
           </div>
 
@@ -346,9 +346,9 @@ export async function GET(request: Request) {
             {[
               { t: '🖥️ Caisse POS & 3 Scanners', d: 'Scan Caméra Smartphone, Cloud (<100ms) & Douchette USB' },
               { t: '📶 Mode Caisse PWA Hors-Ligne', d: 'Fonctionne même sans connexion Internet / coupure 4G' },
-              { t: '🧾 Factures & Devis OHADA PDF', d: 'Normes fiscales sénégalaises, NINEA, RCCM & TVA' },
+              { t: 'Factures & Devis OHADA PDF', d: 'Normes fiscales sénégalaises, NINEA, RCCM & TVA' },
               { t: '📓 Carnet Dettes Client & Relance WA', d: 'Enregistrez les crédits & relancez en 1-clic sur WhatsApp' },
-              { t: '🏷️ Impression Stickers Codes-Barres GS1', d: 'Générez & imprimez vos étiquettes EAN-13' },
+              { t: 'Impression Stickers Codes-Barres GS1', d: 'Générez & imprimez vos étiquettes EAN-13' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondOrange, border: `1.5px solid ${C.borderOrange}`, borderRadius: 16, padding: '12px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
@@ -358,7 +358,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🎁 1er Mois 100% Offert sans carte</span>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>1er Mois 100% Offert sans carte</span>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#FED7AA', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
         </div>
@@ -391,7 +391,7 @@ export async function GET(request: Request) {
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: '#1D4ED8', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
-              ⚡ BOUTIQUE TAF TAF
+              BOUTIQUE TAF TAF
             </span>
           </div>
 
@@ -408,10 +408,10 @@ export async function GET(request: Request) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 32, flex: 1 }}>
             {[
               { t: '🔗 URL Personnalisée', d: 'nopalou.com/boutiques/votre-nom' },
-              { t: '📲 Commandes WhatsApp 1-Clic', d: 'Recevez les acheteurs directement sur votre mobile' },
+              { t: 'Commandes WhatsApp 1-Clic', d: 'Recevez les acheteurs directement sur votre mobile' },
               { t: '📓 Carnet de Dettes Client Inclus', d: 'Suivi de vos créances clients et historique' },
-              { t: '✨ Import AliExpress & 1688', d: 'Ajoutez vos produits en 1-clic avec photos et descriptif' },
-              { t: '🔍 Visibilité Marketplace Dakar', d: '0% de commission sur vos ventes' },
+              { t: 'Import AliExpress & 1688', d: 'Ajoutez vos produits en 1-clic avec photos et descriptif' },
+              { t: 'Visibilité Marketplace Dakar', d: '0% de commission sur vos ventes' },
             ].map(f => (
               <div key={f.t} style={{ background: C.fondBleu, border: '1.5px solid #BFDBFE', borderRadius: 16, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 20, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
@@ -421,7 +421,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ background: C.orange, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-            <span style={{ fontSize: 21, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🚀 Lancez votre boutique aujourd&apos;hui</span>
+            <span style={{ fontSize: 21, fontWeight: 900, color: '#ffffff', display: 'flex' }}>Lancez votre boutique aujourd&apos;hui</span>
             <span style={{ fontSize: 23, fontWeight: 900, color: '#ffffff', display: 'flex' }}>nopalou.com/creer-boutique</span>
           </div>
         </div>
@@ -454,7 +454,7 @@ export async function GET(request: Request) {
               <span style={{ fontSize: 38, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <span style={{ background: '#7E22CE', padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#ffffff', letterSpacing: 0.5, display: 'flex' }}>
-              👑 FORMULE BUSINESS VIP
+              FORMULE BUSINESS VIP
             </span>
           </div>
 
@@ -470,11 +470,11 @@ export async function GET(request: Request) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24, flex: 1 }}>
             {[
-              { t: '👥 Multi-Caissiers & Codes PIN', d: 'Chaque vendeur possède son PIN et ses droits' },
-              { t: '📊 Clôtures de Caisse Z & Marges', d: 'Rapports journaliers automatiques & contrôle des écarts' },
-              { t: '🧾 Achats Fournisseurs & Scan OCR', d: 'Bons de commande & scan automatique de factures' },
-              { t: '📥 Import par Lot Excel / CSV', d: 'Importez tout votre catalogue en 1-clic' },
-              { t: '🔌 Portail Développeur API & Webhooks', d: 'Connectez vos logiciels tiers (ERP, Shopify, WooCommerce)' },
+              { t: 'Multi-Caissiers & Codes PIN', d: 'Chaque vendeur possède son PIN et ses droits' },
+              { t: 'Clôtures de Caisse Z & Marges', d: 'Rapports journaliers automatiques & contrôle des écarts' },
+              { t: 'Achats Fournisseurs & Scan OCR', d: 'Bons de commande & scan automatique de factures' },
+              { t: 'Import par Lot Excel / CSV', d: 'Importez tout votre catalogue en 1-clic' },
+              { t: 'Portail Développeur API & Webhooks', d: 'Connectez vos logiciels tiers (ERP, Shopify, WooCommerce)' },
             ].map(f => (
               <div key={f.t} style={{ background: '#FDF4FF', border: '1.5px solid #F5D0FE', borderRadius: 16, padding: '12px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 19, fontWeight: 800, color: C.marine, letterSpacing: -0.3, display: 'flex' }}>{f.t}</span>
@@ -484,7 +484,7 @@ export async function GET(request: Request) {
           </div>
 
           <div style={{ background: C.marine, borderRadius: 20, padding: '18px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>🏢 Demandez votre démo VIP Grands Comptes</span>
+            <span style={{ fontSize: 20, fontWeight: 900, color: '#ffffff', display: 'flex' }}>Demandez votre démo VIP Grands Comptes</span>
             <span style={{ fontSize: 22, fontWeight: 900, color: '#E9D5FF', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
         </div>
@@ -516,7 +516,7 @@ export async function GET(request: Request) {
               <span style={{ fontSize: 30, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 900, color: C.marine, letterSpacing: -0.5, margin: 0, display: 'flex' }}>
-              📊 Formules Boutiques &amp; Caisse POS
+              Formules Boutiques &amp; Caisse POS
             </h1>
           </div>
 
@@ -533,7 +533,7 @@ export async function GET(request: Request) {
                 <span>✓ Carnet de dettes client</span>
                 <span>✓ Import AliExpress / 1688</span>
                 <span>✓ 0% de commission</span>
-                <span style={{ color: '#16a34a', fontWeight: 800 }}>🎁 1er mois OFFERT</span>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>1er mois OFFERT</span>
               </div>
             </div>
 
@@ -550,7 +550,7 @@ export async function GET(request: Request) {
                 <span>✓ Factures &amp; Devis OHADA PDF</span>
                 <span>✓ Relance Dettes WhatsApp</span>
                 <span>✓ Impression Stickers EAN-13</span>
-                <span style={{ color: '#C75B00', fontWeight: 900 }}>🎁 1er mois OFFERT</span>
+                <span style={{ color: '#C75B00', fontWeight: 900 }}>1er mois OFFERT</span>
               </div>
             </div>
 
@@ -566,7 +566,7 @@ export async function GET(request: Request) {
                 <span>✓ Fournisseurs &amp; Scan OCR</span>
                 <span>✓ Import par lot Excel / CSV</span>
                 <span>✓ API REST &amp; Webhooks</span>
-                <span style={{ color: '#7E22CE', fontWeight: 800 }}>🎁 1er mois OFFERT</span>
+                <span style={{ color: '#7E22CE', fontWeight: 800 }}>1er mois OFFERT</span>
               </div>
             </div>
 
@@ -578,11 +578,11 @@ export async function GET(request: Request) {
             <span>·</span>
             <span>6 mois : -15%</span>
             <span>·</span>
-            <span style={{ color: '#C75B00' }}>🔥 12 mois : -25% (3 mois offerts)</span>
+            <span style={{ color: '#C75B00' }}>12 mois : -25% (3 mois offerts)</span>
           </div>
 
           <div style={{ background: C.marine, borderRadius: 14, padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-            <span style={{ fontSize: 16, fontWeight: 900, color: '#fff', display: 'flex' }}>🎁 Testez 1 Mois Gratuitement</span>
+            <span style={{ fontSize: 16, fontWeight: 900, color: '#fff', display: 'flex' }}>Testez 1 Mois Gratuitement</span>
             <span style={{ fontSize: 17, fontWeight: 900, color: '#FED7AA', display: 'flex' }}>nopalou.com/boutique</span>
           </div>
         </div>
@@ -622,7 +622,7 @@ export async function GET(request: Request) {
             <span style={{ fontSize: 36, fontWeight: 900, color: C.marine, letterSpacing: -1, display: 'flex' }}>Nopa<span style={{ color: C.orange, display: 'flex' }}>lou</span></span>
           </div>
           <span style={{ background: C.orange, padding: '10px 24px', borderRadius: 9999, fontSize: 17, fontWeight: 900, color: '#fff', letterSpacing: 0.5, display: 'flex' }}>
-            🔥 BON PLAN PRIX NOPALOU
+            BON PLAN PRIX NOPALOU
           </span>
         </div>
 
@@ -633,7 +633,7 @@ export async function GET(request: Request) {
               <img src={image} alt={nomAffichage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 80, display: 'flex' }}>🛍️</span>
+                <span style={{ fontSize: 80, display: 'flex' }}></span>
                 <span style={{ fontSize: 18, fontWeight: 800, color: C.marine, textAlign: 'center', padding: '0 20px' }}>{boutiqueAffichage}</span>
               </div>
             )}

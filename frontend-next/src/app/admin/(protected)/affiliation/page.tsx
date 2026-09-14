@@ -41,7 +41,7 @@ export default async function AdminAffiliationPage() {
       parMarchand = data.par_marchand ?? []
       parJour     = data.par_jour ?? []
     }
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L44]', err); }
 
   const n = (v: string | number) => Number(v).toLocaleString('fr-FR')
 
@@ -54,8 +54,8 @@ export default async function AdminAffiliationPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 32 }}>
           {[
             { label: 'Clics total',       value: n(total.total),         emoji: '🖱' },
-            { label: 'Ce mois-ci',        value: n(total.ce_mois),       emoji: '📅' },
-            { label: 'Cette semaine',     value: n(total.cette_semaine), emoji: '📈' },
+            { label: 'Ce mois-ci',        value: n(total.ce_mois),       emoji: '' },
+            { label: 'Cette semaine',     value: n(total.cette_semaine), emoji: '' },
           ].map(({ label, value, emoji }) => (
             <div key={label} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '16px 20px' }}>
               <div style={{ fontSize: 24 }}>{emoji}</div>

@@ -99,6 +99,8 @@ module.exports = async function migrateInline() {
       );
 
       ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS email_verifie BOOLEAN DEFAULT FALSE;
+      ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS a2f_actif BOOLEAN DEFAULT FALSE;
+      ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS a2f_telephone VARCHAR(20);
 
       CREATE TABLE IF NOT EXISTS alertes (
         id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -323,6 +325,23 @@ module.exports = async function migrateInline() {
 
       ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS detail_billets JSONB DEFAULT '{}';
       ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS total_remises NUMERIC(12,2) DEFAULT 0;
+      ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS total_entrees_especes NUMERIC(12,2) DEFAULT 0;
+      ALTER TABLE boutique_pos_sessions ADD COLUMN IF NOT EXISTS total_sorties_especes NUMERIC(12,2) DEFAULT 0;
+
+      -- Table de gestion des mouvements d'espèces de caisse (coursiers, monnaie, retraits)
+      CREATE TABLE IF NOT EXISTS boutique_pos_mouvements_caisse (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        session_id   UUID NOT NULL REFERENCES boutique_pos_sessions(id) ON DELETE CASCADE,
+        type         VARCHAR(20) NOT NULL, -- 'entree' | 'sortie'
+        montant      NUMERIC(12,2) NOT NULL,
+        motif        VARCHAR(255) NOT NULL,
+        beneficiaire VARCHAR(150),
+        caissier_nom VARCHAR(150),
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_mouv_session ON boutique_pos_mouvements_caisse(session_id);
+      CREATE INDEX IF NOT EXISTS idx_pos_mouv_boutique ON boutique_pos_mouvements_caisse(boutique_id);
 
       -- ── TABLES FIDÉLISATION CLIENT & RÉCOMPENSES POS ─────────────────────────
       CREATE TABLE IF NOT EXISTS boutique_clients_fidelite (
@@ -859,6 +878,7 @@ module.exports = async function migrateInline() {
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS bandeau_promo_actif BOOLEAN DEFAULT FALSE`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS message_accueil TEXT`,
     `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS disposition_catalogue VARCHAR(30) DEFAULT 'grille'`,
+    `ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS theme_id VARCHAR(50) DEFAULT 'classique'`,
   ];
   for (const sql of colonnesBoutiqueAvancees) {
     try { await pool.query(sql); }
@@ -970,9 +990,42 @@ module.exports = async function migrateInline() {
   try {
     await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS stock_quantite INT`);
     await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS prix_achat NUMERIC(12,2) DEFAULT NULL`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS meta_title VARCHAR(150)`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS meta_description VARCHAR(300)`);
+    await pool.query(`ALTER TABLE boutique_produits ADD COLUMN IF NOT EXISTS slug VARCHAR(200)`);
+    await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS meta_title VARCHAR(150)`);
+    await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS meta_description VARCHAR(300)`);
+    await pool.query(`ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS layout_sections JSONB DEFAULT '[{"id":"hero","type":"banner","active":true},{"id":"prods","type":"featured_products","active":true},{"id":"cat","type":"categories_grid","active":true}]'::jsonb`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marketing_workflows (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom         VARCHAR(150) NOT NULL,
+        declencheur VARCHAR(50) NOT NULL DEFAULT 'panier_abandonne', -- e.g. panier_abandonne, nouvelle_commande, client_inactif
+        etapes      JSONB NOT NULL DEFAULT '[]'::jsonb,
+        actif       BOOLEAN DEFAULT true,
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_mw_boutique ON marketing_workflows(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS marketing_workflow_logs (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        workflow_id  UUID NOT NULL REFERENCES marketing_workflows(id) ON DELETE CASCADE,
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_tel   VARCHAR(30) NOT NULL,
+        etape_index  INT NOT NULL DEFAULT 0,
+        statut       VARCHAR(30) DEFAULT 'en_cours', -- en_cours, termine, echoue
+        prochaine_at TIMESTAMPTZ DEFAULT NOW(),
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_mwl_prochaine ON marketing_workflow_logs(prochaine_at, statut);
+    `);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS zones_livraison (
+
         id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
         nom         VARCHAR(100) NOT NULL,
@@ -1565,14 +1618,192 @@ module.exports = async function migrateInline() {
         session_id     VARCHAR(100),
         created_at     TIMESTAMPTZ DEFAULT NOW()
       );
+      -- Spec Master Audit Faiblesse 04 : Disposition personnalisable des sections de vitrine boutique
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS disposition_sections JSONB DEFAULT '["banniere", "recherche_filtres", "produits", "social", "contact"]';
+
+      -- Spec Master Audit Faiblesse 16 : Gestion des stocks multi-entrepôts / multi-dépôts
+      CREATE TABLE IF NOT EXISTS boutique_entrepots (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        nom         VARCHAR(150) NOT NULL,
+        adresse     VARCHAR(255),
+        ville       VARCHAR(100) DEFAULT 'Dakar',
+        responsable VARCHAR(150),
+        telephone   VARCHAR(30),
+        est_defaut  BOOLEAN DEFAULT FALSE,
+        actif       BOOLEAN DEFAULT TRUE,
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_entrepots_bq ON boutique_entrepots(boutique_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_produit_stocks_entrepots (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        produit_id   UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        entrepot_id  UUID NOT NULL REFERENCES boutique_entrepots(id) ON DELETE CASCADE,
+        quantite     INT NOT NULL DEFAULT 0,
+        seuil_alerte INT DEFAULT 5,
+        updated_at   TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_produit_entrepot UNIQUE (produit_id, entrepot_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_bpse_produit ON boutique_produit_stocks_entrepots(produit_id);
+      CREATE INDEX IF NOT EXISTS idx_bpse_entrepot ON boutique_produit_stocks_entrepots(entrepot_id);
+
       CREATE INDEX IF NOT EXISTS idx_sae_boutique_type ON social_analytics_events(boutique_id, event_type);
       CREATE INDEX IF NOT EXISTS idx_sae_post ON social_analytics_events(social_post_id);
       CREATE INDEX IF NOT EXISTS idx_sae_created_at ON social_analytics_events(created_at DESC);
+
+      -- ── TABLES SPRINT 4 : BUNDLES / PACKS, TARIFS QUANTITÉ B2B & AGENTS IA ───────
+      CREATE TABLE IF NOT EXISTS produit_composants (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        parent_id    UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        enfant_id    UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        quantite     INT NOT NULL DEFAULT 1,
+        created_at   TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_produit_composant UNIQUE (parent_id, enfant_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_produit_comp_parent ON produit_composants(parent_id);
+
+      CREATE TABLE IF NOT EXISTS produit_tarifs_quantite (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        produit_id         UUID NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        quantite_min       INT NOT NULL CHECK (quantite_min > 1),
+        prix_unitaire_fcfa NUMERIC(12,2) NOT NULL,
+        created_at         TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_produit_tarif_qty UNIQUE (produit_id, quantite_min)
+      );
+      CREATE INDEX IF NOT EXISTS idx_produit_tarif_qty_prod ON produit_tarifs_quantite(produit_id);
+
+      CREATE TABLE IF NOT EXISTS boutique_ai_agents (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id       UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE UNIQUE,
+        prompt_systeme    TEXT,
+        marge_remise_max  NUMERIC(5,2) DEFAULT 5.00,
+        actif             BOOLEAN DEFAULT TRUE,
+        updated_at        TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      -- ── TABLES SPRINT FINAL : BLOG CMS SEO, ABONNEMENTS RÉCURRENTS & RETOURS PRODUITS ───
+      CREATE TABLE IF NOT EXISTS boutique_articles (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id  UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        titre        VARCHAR(255) NOT NULL,
+        slug         VARCHAR(255) NOT NULL,
+        contenu      TEXT NOT NULL,
+        extrait      TEXT,
+        image_url    TEXT,
+        est_publie   BOOLEAN DEFAULT TRUE,
+        tags         TEXT[],
+        vues_count   INT DEFAULT 0,
+        created_at   TIMESTAMPTZ DEFAULT NOW(),
+        updated_at   TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT uq_boutique_article_slug UNIQUE (boutique_id, slug)
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_articles_boutique ON boutique_articles(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_boutique_articles_slug ON boutique_articles(boutique_id, slug);
+
+      CREATE TABLE IF NOT EXISTS boutique_abonnements (
+        id                          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id                 UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_nom                  VARCHAR(255) NOT NULL,
+        client_telephone            VARCHAR(50) NOT NULL,
+        client_adresse              TEXT,
+        frequence                   VARCHAR(50) NOT NULL DEFAULT 'hebdomadaire',
+        statut                      VARCHAR(50) NOT NULL DEFAULT 'actif',
+        montant_total               NUMERIC(12,2) NOT NULL DEFAULT 0,
+        items_json                  JSONB NOT NULL DEFAULT '[]',
+        prochain_renouvellement     TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '7 days',
+        notes                       TEXT,
+        created_at                  TIMESTAMPTZ DEFAULT NOW(),
+        updated_at                  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_abos_boutique ON boutique_abonnements(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_boutique_abos_renouv ON boutique_abonnements(prochain_renouvellement);
+
+      CREATE TABLE IF NOT EXISTS boutique_retours (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id        UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        reference_origine  VARCHAR(100),
+        produit_id         UUID REFERENCES boutique_produits(id) ON DELETE SET NULL,
+        produit_nom        VARCHAR(255) NOT NULL,
+        quantite           INT NOT NULL DEFAULT 1,
+        motif              TEXT NOT NULL,
+        action_stock       VARCHAR(50) NOT NULL DEFAULT 'remis_en_stock',
+        type_compensation  VARCHAR(50) NOT NULL DEFAULT 'avoir',
+        montant_fcfa       NUMERIC(12,2) NOT NULL DEFAULT 0,
+        effectue_par       VARCHAR(100),
+        created_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_boutique_retours_boutique ON boutique_retours(boutique_id);
+
+      -- ── NOUVEAU MOTEUR DE PAIEMENT ÉCHELONNÉ & CRÉDIT COMMERCIAL NOPALOU ──
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS echelonnement_actif BOOLEAN DEFAULT FALSE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS echelonnement_config JSONB DEFAULT '{
+        "actif": false,
+        "montant_min_vente": 10000,
+        "montant_max_vente": 5000000,
+        "apport_min_pct": 20,
+        "apport_min_fcfa": 5000,
+        "echeance_min_fcfa": 5000,
+        "nb_echeances_autorisees": [2, 3, 4, 6],
+        "frequences_autorisees": ["mensuel", "bimensuel", "hebdomadaire"],
+        "delai_premiere_echeance_jours": 30,
+        "frais_dossier_fixes": 0,
+        "frais_pourcentage": 0
+      }'::jsonb;
+
+      CREATE TABLE IF NOT EXISTS caisse_credit_plans (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id      UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_id        UUID NOT NULL REFERENCES caisse_clients_credits(id) ON DELETE CASCADE,
+        commande_id      UUID REFERENCES commandes_boutique(id) ON DELETE SET NULL,
+        reference        VARCHAR(100) UNIQUE NOT NULL,
+        montant_total    NUMERIC(12,2) NOT NULL,
+        frais_dossier    NUMERIC(12,2) NOT NULL DEFAULT 0,
+        apport_initial   NUMERIC(12,2) NOT NULL DEFAULT 0,
+        montant_finance  NUMERIC(12,2) NOT NULL,
+        montant_paye     NUMERIC(12,2) NOT NULL DEFAULT 0,
+        montant_restant  NUMERIC(12,2) NOT NULL,
+        nb_echeances     INT NOT NULL DEFAULT 3,
+        frequence        VARCHAR(30) NOT NULL DEFAULT 'mensuel',
+        statut           VARCHAR(30) NOT NULL DEFAULT 'en_cours',
+        date_debut       DATE NOT NULL DEFAULT CURRENT_DATE,
+        snapshot_regles  JSONB NOT NULL DEFAULT '{}'::jsonb,
+        articles         JSONB NOT NULL DEFAULT '[]'::jsonb,
+        notes            TEXT,
+        idempotency_key  VARCHAR(128),
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_credit_plans_bq_client ON caisse_credit_plans(boutique_id, client_id);
+      CREATE INDEX IF NOT EXISTS idx_credit_plans_statut ON caisse_credit_plans(boutique_id, statut);
+      CREATE INDEX IF NOT EXISTS idx_credit_plans_ref ON caisse_credit_plans(boutique_id, reference);
+
+      CREATE TABLE IF NOT EXISTS caisse_credit_echeances (
+        id                         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        plan_id                    UUID NOT NULL REFERENCES caisse_credit_plans(id) ON DELETE CASCADE,
+        boutique_id                UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_id                  UUID NOT NULL REFERENCES caisse_clients_credits(id) ON DELETE CASCADE,
+        numero_echeance            INT NOT NULL,
+        date_echeance              DATE NOT NULL,
+        montant_prevu              NUMERIC(12,2) NOT NULL,
+        montant_paye               NUMERIC(12,2) NOT NULL DEFAULT 0,
+        montant_restant            NUMERIC(12,2) NOT NULL,
+        statut                     VARCHAR(30) NOT NULL DEFAULT 'a_venir',
+        date_paiement_complet      TIMESTAMPTZ,
+        derniere_relance_whatsapp  TIMESTAMPTZ,
+        created_at                 TIMESTAMPTZ DEFAULT NOW(),
+        updated_at                 TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_credit_ech_plan ON caisse_credit_echeances(plan_id, numero_echeance);
+      CREATE INDEX IF NOT EXISTS idx_credit_ech_date ON caisse_credit_echeances(boutique_id, date_echeance, statut);
+      CREATE INDEX IF NOT EXISTS idx_credit_ech_client ON caisse_credit_echeances(client_id, statut);
     `);
 
-    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/recherches_logs/prospection/support/social_shop OK');
+    console.log('[MIGRATE] ✅ Tables et colonnes fiscales/fournisseurs/audit_logs/comptabilite/credit_plans/echeances OK');
   } catch (err) {
-    console.warn('[MIGRATE] POS Avancé & Recherches échec:', err.message);
+    console.warn('[MIGRATE] POS Avancé & Crédit échec:', err.message);
   }
 
   try { await pool.end(); } catch (_) {}

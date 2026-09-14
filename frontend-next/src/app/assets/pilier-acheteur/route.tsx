@@ -41,7 +41,7 @@ export async function GET() {
             background: '#FFF7ED', border: '2.5px solid #C75B00',
             borderRadius: 30, padding: '12px 28px', fontSize: 18, fontWeight: 900, color: '#C75B00', display: 'flex',
           }}>
-            🛒 PILIER 1 : ACHETEUR
+            PILIER 1 : ACHETEUR
           </div>
         </div>
 
@@ -69,7 +69,7 @@ export async function GET() {
             <div style={{
               width: 72, height: 72, borderRadius: 20, background: '#FFF7ED', border: '2px solid #C75B00',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
-            }}>🔍</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 26, fontWeight: 900, color: '#C75B00' }}>Super-Comparateur Multi-Marchands</span>
               <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
@@ -86,7 +86,7 @@ export async function GET() {
             <div style={{
               width: 72, height: 72, borderRadius: 20, background: '#F0FDF4', border: '2px solid #25D366',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
-            }}>🤖</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 26, fontWeight: 900, color: '#25D366' }}>Assistant Chatbot WhatsApp Meta 24/7</span>
               <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
@@ -103,7 +103,7 @@ export async function GET() {
             <div style={{
               width: 72, height: 72, borderRadius: 20, background: '#F8FAFC', border: '2px solid #1C2B4A',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
-            }}>🔔</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 26, fontWeight: 900, color: '#1C2B4A' }}>Alertes Prix &amp; Annonces Immo</span>
               <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>

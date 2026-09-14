@@ -37,7 +37,7 @@ export default function FiltresBar({ essentiels, secondaires = [], tri = [] }: F
 
         {secondaires.length > 0 && (
           <button type="button" className="filtres-more-btn" onClick={() => setOpen(o => !o)}>
-            ⚙ Plus de filtres
+            Plus de filtres
             {badgeCount > 0 && <span className="filtres-more-badge">{badgeCount}</span>}
           </button>
         )}

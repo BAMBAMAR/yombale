@@ -9,11 +9,12 @@ import { useTranslation } from '@/i18n/context'
 interface Props {
   nom: string
   email: string
+  telephone?: string | null
 }
 
 const INIT: AuthState = {}
 
-export default function ProfilClient({ nom, email }: Props) {
+export default function ProfilClient({ nom, email, telephone }: Props) {
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [state, formAction]   = useFormState(updateProfil, INIT)
@@ -67,25 +68,31 @@ export default function ProfilClient({ nom, email }: Props) {
               className="profil-reset-btn"
               style={{ fontSize: 13, padding: '6px 14px' }}
             >
-              ✏️ {t('common.edit')}
+              {t('common.edit')}
             </button>
           )}
         </div>
 
         {!editing ? (
-          <div className="profil-field-row">
+          <div className="profil-field-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             <div className="profil-field">
               <span className="profil-field-label">{t('account.profileName')}</span>
-              <span className="profil-field-value">{nom}</span>
+              <span className="profil-field-value">{nom || 'Non renseigné'}</span>
             </div>
             <div className="profil-field">
               <span className="profil-field-label">{t('account.profileEmail')}</span>
-              <span className="profil-field-value">{email}</span>
+              <span className="profil-field-value">{email || 'Non renseigné'}</span>
+            </div>
+            <div className="profil-field">
+              <span className="profil-field-label">{t('account.profilePhone')} / WhatsApp</span>
+              <span className="profil-field-value" style={{ color: telephone ? 'var(--navy, #1C2B4A)' : '#94a3b8' }}>
+                {telephone || 'Non renseigné'}
+              </span>
             </div>
           </div>
         ) : (
           <form action={formAction}>
-            <div className="profil-field-row" style={{ flexDirection: 'column', gap: 14 }}>
+            <div className="profil-field-row" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div className="profil-field" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label htmlFor="profil-nom" className="profil-field-label">{t('account.profileName')}</label>
                 <input
@@ -93,7 +100,7 @@ export default function ProfilClient({ nom, email }: Props) {
                   name="nom"
                   defaultValue={nom}
                   placeholder={t('auth.nomPlaceholder')}
-                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14 }}
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, outline: 'none' }}
                 />
               </div>
               <div className="profil-field" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -104,8 +111,22 @@ export default function ProfilClient({ nom, email }: Props) {
                   type="email"
                   defaultValue={email}
                   placeholder={t('auth.emailPlaceholder')}
-                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14 }}
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, outline: 'none' }}
                 />
+              </div>
+              <div className="profil-field" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label htmlFor="profil-telephone" className="profil-field-label">{t('account.profilePhone')} / WhatsApp</label>
+                <input
+                  id="profil-telephone"
+                  name="telephone"
+                  type="tel"
+                  defaultValue={telephone || ''}
+                  placeholder="Ex: 77 123 45 67 ou 221771234567"
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, outline: 'none' }}
+                />
+                <span style={{ fontSize: 12, color: '#64748b' }}>
+                  Utilisé pour le suivi automatique de vos commandes et les notifications WhatsApp.
+                </span>
               </div>
             </div>
 
@@ -138,7 +159,7 @@ export default function ProfilClient({ nom, email }: Props) {
 
         {resetSent ? (
           <div className="profil-success-box">
-            ✅ {t('auth.resetLinkSent')}
+            {t('auth.resetLinkSent')}
           </div>
         ) : (
           <>
@@ -151,7 +172,7 @@ export default function ProfilClient({ nom, email }: Props) {
               disabled={isPending}
               className="profil-reset-btn"
             >
-              {isPending ? t('common.pleaseWait') : `🔑 ${t('auth.sendResetLink')}`}
+              {isPending ? t('common.pleaseWait') : `${t('auth.sendResetLink')}`}
             </button>
           </>
         )}

@@ -58,7 +58,7 @@ function TokenBanner({ onRenew }: { onRenew: () => void }) {
   const bg       = expired ? '#FEF2F2' : ts?.status === 'ok' ? '#F0FDF4' : '#FFFBEB'
   const border   = expired ? '#FECACA' : ts?.status === 'ok' ? '#BBF7D0' : '#FDE68A'
   const color    = expired ? '#DC2626' : ts?.status === 'ok' ? '#166534' : '#92400E'
-  const icon     = expired ? '❌' : ts?.status === 'ok' ? '✅' : '⚠️'
+  const icon     = expired ? '' : ts?.status === 'ok' ? '' : ''
 
   let label = ''
   if (ts?.status === 'missing') label = 'Aucun token Facebook configuré'
@@ -76,7 +76,7 @@ function TokenBanner({ onRenew }: { onRenew: () => void }) {
         onClick={onRenew}
         style={{ padding: '6px 14px', background: expired ? '#DC2626' : '#1877F2', color: '#fff', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
       >
-        {expired ? '🔑 Renouveler le token' : '🔑 Changer le token'}
+        {expired ? 'Renouveler le token' : 'Changer le token'}
       </button>
     </div>
   )
@@ -108,7 +108,7 @@ function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: '#fff', borderRadius: 14, padding: 28, maxWidth: 580, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>🔑 Renouveler le token Facebook</h2>
+        <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1C2B4A', marginBottom: 16 }}>Renouveler le token Facebook</h2>
 
         {/* Sélecteur de mode */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
@@ -122,14 +122,14 @@ function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
             onClick={() => { setMode('direct'); setToken(''); setMsg(''); setStatus('idle') }}
             style={{ flex: 1, padding: '10px 12px', border: `2px solid ${mode === 'direct' ? '#1877F2' : '#E2E8F0'}`, borderRadius: 8, background: mode === 'direct' ? '#EFF6FF' : '#F8FAFC', color: mode === 'direct' ? '#1D4ED8' : '#64748B', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
           >
-            📋 Token de page direct (~60j)
+            Token de page direct (~60j)
           </button>
         </div>
 
         {mode === 'exchange' ? (
           <>
             <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#166534' }}>
-              ✅ Cette méthode génère un token qui <strong>n&apos;expire jamais</strong> — plus besoin de renouveler régulièrement.
+              Cette méthode génère un token qui <strong>n&apos;expire jamais</strong> — plus besoin de renouveler régulièrement.
             </div>
             <ol style={{ fontSize: 13, color: '#1C2B4A', lineHeight: 2.2, paddingLeft: 20, marginBottom: 16 }}>
               <li>Aller sur <strong>developers.facebook.com/tools/explorer</strong></li>
@@ -149,7 +149,7 @@ function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
         ) : (
           <>
             <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#92400E' }}>
-              ⚠️ Ce token expire dans ~60 jours. Préférez la méthode <strong>Token permanent</strong> pour éviter ce problème.
+              Ce token expire dans ~60 jours. Préférez la méthode <strong>Token permanent</strong> pour éviter ce problème.
             </div>
             <ol style={{ fontSize: 13, color: '#1C2B4A', lineHeight: 2.2, paddingLeft: 20, marginBottom: 16 }}>
               <li>Aller sur <strong>developers.facebook.com/tools/explorer</strong></li>
@@ -168,7 +168,7 @@ function TokenModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
 
         {msg && (
           <p style={{ fontSize: 13, color: status === 'ok' ? '#10B981' : '#EF4444', marginBottom: 12 }}>
-            {status === 'ok' ? '✅' : '❌'} {msg}
+            {status === 'ok' ? '' : ''} {msg}
           </p>
         )}
 
@@ -334,35 +334,35 @@ export default function PublicationsPage() {
       {/* Générateurs automatiques */}
       <div style={{ ...s.card, background: '#F8FAFC', marginBottom: 20 }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: '#1C2B4A', marginBottom: 12 }}>
-          ⚡ Générer automatiquement depuis la base de données
+          Générer automatiquement depuis la base de données
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
           <button style={{ ...s.btn, background: '#FEF3C7', color: '#92400E' }} onClick={() => generer('bon-plan')} disabled={isPending}>
-            🔥 Bon plan du jour
+            Bon plan du jour
           </button>
           <button style={{ ...s.btn, background: '#EFF6FF', color: '#1D4ED8' }} onClick={() => generer('comparatif')} disabled={isPending}>
-            📊 Comparatif prix
+            Comparatif prix
           </button>
           <button style={{ ...s.btn, background: '#F0FDF4', color: '#166534' }} onClick={() => generer('immo')} disabled={isPending}>
-            🏠 Annonce immo
+            Annonce immo
           </button>
           <button style={{ ...s.btn, background: '#FDF4FF', color: '#7E22CE' }} onClick={() => generer('conseil')} disabled={isPending}>
-            💡 Conseil achat
+            Conseil achat
           </button>
           <button style={{ ...s.btn, background: '#FFF7ED', color: '#C75B00' }} onClick={() => generer('abonnement')} disabled={isPending}>
-            🎯 Promo abonnement
+            Promo abonnement
           </button>
           <button style={{ ...s.btn, background: '#ECFDF5', color: '#065F46' }} onClick={() => generer('boutiques')} disabled={isPending}>
-            🏪 Vitrine boutique
+            Vitrine boutique
           </button>
           <button style={{ ...s.btn, background: '#F0F9FF', color: '#0369A1' }} onClick={() => generer('telecom')} disabled={isPending}>
-            📱 Forfait télécom
+            Forfait télécom
           </button>
           <button style={{ ...s.btn, background: '#FEF9C3', color: '#854D0E' }} onClick={() => generer('apporteur')} disabled={isPending}>
             🤝 Programme apporteur
           </button>
           <button style={{ ...s.btn, background: '#FEF2F2', color: '#991B1B' }} onClick={() => generer('vente-flash')} disabled={isPending}>
-            ⚡ Vente flash
+            Vente flash
           </button>
         </div>
         <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 8, marginBottom: 0 }}>
@@ -373,7 +373,7 @@ export default function PublicationsPage() {
       {/* Formulaire */}
       <div style={{ ...s.card, borderColor: editId ? '#C75B00' : '#E2E8F0' }}>
         <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1C2B4A', marginBottom: 16 }}>
-          {editId ? '✏️ Modifier le post' : '➕ Nouveau post'}
+          {editId ? 'Modifier le post' : 'Nouveau post'}
         </h2>
 
         <label style={s.label}>Message *</label>
@@ -403,7 +403,7 @@ export default function PublicationsPage() {
           placeholder="https://nopalou.com/produit/..."
         />
 
-        <label style={s.label}>📅 Date de publication programmée (optionnel)</label>
+        <label style={s.label}>Date de publication programmée (optionnel)</label>
         <input
           type="datetime-local"
           style={s.input}
@@ -420,11 +420,11 @@ export default function PublicationsPage() {
             style={{ width: 16, height: 16, accentColor: '#E4405F' }}
           />
           <span style={{ fontSize: 13, color: '#1C2B4A', fontWeight: 600 }}>
-            📸 Publier aussi sur Instagram <span style={{ color: '#94A3B8', fontWeight: 400 }}>(image requise)</span>
+            Publier aussi sur Instagram <span style={{ color: '#94A3B8', fontWeight: 400 }}>(image requise)</span>
           </span>
         </label>
         {form.publier_instagram && !form.image_url && (
-          <p style={{ fontSize: 12, color: '#EF4444', marginBottom: 12 }}>⚠️ Ajoutez une URL d&apos;image pour publier sur Instagram</p>
+          <p style={{ fontSize: 12, color: '#EF4444', marginBottom: 12 }}>Ajoutez une URL d&apos;image pour publier sur Instagram</p>
         )}
 
         {err && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 8 }}>{err}</p>}
@@ -472,11 +472,11 @@ export default function PublicationsPage() {
           {
             key: 'approuver',
             label: 'Approuver les sélectionnées',
-            icon: '✅',
+            icon: '',
             color: 'green',
             onClick: async () => {
               for (const id of selectedIds) {
-                try { await api(`${id}/approuver`, { method: 'POST' }) } catch {}
+                try { await api(`${id}/approuver`, { method: 'POST' }) } catch (err) { console.warn('[Nopalou:page:L479]', err); }
               }
               setSelectedIds([])
               load()
@@ -485,12 +485,12 @@ export default function PublicationsPage() {
           {
             key: 'supprimer',
             label: 'Supprimer les sélectionnées',
-            icon: '🗑️',
+            icon: '',
             color: 'red',
             confirmMsg: 'Supprimer définitivement ces publications ?',
             onClick: async () => {
               for (const id of selectedIds) {
-                try { await api(id, { method: 'DELETE' }) } catch {}
+                try { await api(id, { method: 'DELETE' }) } catch (err) { console.warn('[Nopalou:page:L493]', err); }
               }
               setSelectedIds([])
               load()
@@ -526,7 +526,7 @@ export default function PublicationsPage() {
                 </span>
                 {p.publier_instagram && (
                   <span style={{ fontSize: 11, background: '#FDF2F8', color: '#9D174D', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-                    📸 IG
+                    IG
                   </span>
                 )}
               </div>
@@ -547,26 +547,26 @@ export default function PublicationsPage() {
 
             {p.date_publication && (
               <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 6px' }}>
-                📅 Programmé : {new Date(p.date_publication).toLocaleString('fr-FR')}
+                Programmé : {new Date(p.date_publication).toLocaleString('fr-FR')}
               </p>
             )}
             {p.date_publie && (
               <p style={{ fontSize: 12, color: '#10B981', margin: '0 0 6px' }}>
-                ✅ Publié le {new Date(p.date_publie).toLocaleString('fr-FR')}
+                Publié le {new Date(p.date_publie).toLocaleString('fr-FR')}
                 {p.post_fb_id && <> · FB: {p.post_fb_id}</>}
                 {p.post_ig_id && <> · IG: {p.post_ig_id}</>}
               </p>
             )}
             {p.erreur && (
-              <p style={{ fontSize: 12, color: '#EF4444', margin: '0 0 6px' }}>❌ {p.erreur}</p>
+              <p style={{ fontSize: 12, color: '#EF4444', margin: '0 0 6px' }}>{p.erreur}</p>
             )}
 
             {p.statut !== 'publie' && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const, marginTop: 10 }}>
                 {p.statut === 'brouillon' && (
                   <>
-                    <button style={{ ...s.btn, background: '#EFF6FF', color: '#1D4ED8' }} onClick={() => startEdit(p)}>✏️ Modifier</button>
-                    <button style={{ ...s.btn, background: '#FEF3C7', color: '#92400E' }} onClick={() => approuver(p.id)}>✅ Approuver</button>
+                    <button style={{ ...s.btn, background: '#EFF6FF', color: '#1D4ED8' }} onClick={() => startEdit(p)}>Modifier</button>
+                    <button style={{ ...s.btn, background: '#FEF3C7', color: '#92400E' }} onClick={() => approuver(p.id)}>Approuver</button>
                   </>
                 )}
                 {p.statut === 'approuve' && (
@@ -579,11 +579,11 @@ export default function PublicationsPage() {
                 )}
                 {p.statut === 'erreur' && (
                   <>
-                    <button style={{ ...s.btn, background: '#1877F2', color: '#fff' }} onClick={() => publierMaintenant(p.id)}>🔄 Réessayer</button>
+                    <button style={{ ...s.btn, background: '#1877F2', color: '#fff' }} onClick={() => publierMaintenant(p.id)}>Réessayer</button>
                     <button style={{ ...s.btn, background: '#F1F5F9', color: '#64748B' }} onClick={() => remettreEnBrouillon(p.id)}>↩️ Brouillon</button>
                   </>
                 )}
-                <button style={{ ...s.btn, background: '#FEF2F2', color: '#DC2626' }} onClick={() => supprimer(p.id)}>🗑 Supprimer</button>
+                <button style={{ ...s.btn, background: '#FEF2F2', color: '#DC2626' }} onClick={() => supprimer(p.id)}>Supprimer</button>
               </div>
             )}
           </div>

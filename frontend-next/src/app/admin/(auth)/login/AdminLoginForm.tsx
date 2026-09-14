@@ -11,7 +11,7 @@ export default function AdminLoginForm() {
       <div className="auth-field">
         <label htmlFor="secret" className="auth-label">Secret administrateur</label>
         <div className="auth-input-wrap">
-          <span className="auth-input-icon">🔑</span>
+          <span className="auth-input-icon"></span>
           <input
             id="secret"
             name="secret"

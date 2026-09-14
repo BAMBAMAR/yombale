@@ -111,15 +111,22 @@ async function alerterAdmin({
     console.error('[ADMIN ALERTS] Échec envoi email admin:', err.message);
   });
 
+  // Fonction d'échappement HTML pour Telegram
+  const escapeTelegramHtml = (str) => {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  };
+
   // 2. Envoi par Telegram
   let tgText = `${icone} <b>[${priorite}] ALERTE NOPALOU</b>\n\n`;
-  tgText += `<b>${titre}</b>\n\n`;
-  tgText += `${message}\n\n`;
+  tgText += `<b>${escapeTelegramHtml(titre)}</b>\n\n`;
+  tgText += `${escapeTelegramHtml(message)}\n\n`;
   if (details) {
-    tgText += `<code>${details.length > 500 ? details.slice(0, 500) + '...' : details}</code>\n\n`;
+    const rawDetails = details.length > 500 ? details.slice(0, 500) + '...' : details;
+    tgText += `<code>${escapeTelegramHtml(rawDetails)}</code>\n\n`;
   }
   if (lienAction) {
-    tgText += `👉 <a href="${lienAction}">${texteAction}</a>\n`;
+    tgText += `👉 <a href="${lienAction}">${escapeTelegramHtml(texteAction)}</a>\n`;
   }
 
   const tgPromise = envoyerTelegram(tgText);

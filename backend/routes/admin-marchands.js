@@ -141,6 +141,12 @@ router.post('/:id/action-plan', adminSecretOnly, async (req, res) => {
       [id, plan, fin, `admin_grant_${id}_${Date.now()}`]
     );
 
+    // Synchroniser également la colonne plan_actif sur les boutiques du marchand
+    await pool.query(
+      `UPDATE boutiques SET plan_actif = $1, updated_at = NOW() WHERE utilisateur_id = $2`,
+      [plan, id]
+    );
+
     await enregistrerAdminLog({
       action: 'marchand_plan_accorde',
       cibleType: 'utilisateur',

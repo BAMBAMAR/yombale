@@ -14,7 +14,7 @@ export default async function BoutiqueAnalyticsPage() {
       const d = await r.json()
       planActif = d?.abonnement?.plan ?? null
     }
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L17]', err); }
 
   const isPro = planActif === 'pro' || planActif === 'business'
   if (!isPro) {
@@ -29,7 +29,7 @@ export default async function BoutiqueAnalyticsPage() {
       const data = await res.json()
       boutiques = (data.boutiques ?? []).map((b: { id: string; nom: string }) => ({ id: b.id, nom: b.nom }))
     }
-  } catch {}
+  } catch (err) { console.warn('[Nopalou:page:L32]', err); }
 
   return <AnalyticsClient boutiques={boutiques} />
 }

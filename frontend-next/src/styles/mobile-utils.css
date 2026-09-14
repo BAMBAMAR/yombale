@@ -1,0 +1,48 @@
+/* styles/mobile-utils.css — Utilitaires Mobiles & Touch Targets */
+
+
+/* ── Utilities Mobile ── */
+@media (max-width: 768px) {
+  .visible-mobile-flex {
+    display: flex !important;
+  }
+  .hidden-mobile {
+    display: none !important;
+  }
+  /* ShowcaseTabs responsive (Home page pricing cards) */
+  .showcase-section {
+    padding: 24px 12px !important;
+    margin: 20px 0 !important;
+    border-radius: 16px !important;
+  }
+  .showcase-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  /* Fiche Produit titre responsive */
+  .produit-fiche-nom {
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  .produit-fiche-nom-row {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* Global Strict Horizontal Overflow Prevention */
+html, body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  box-sizing: border-box;
+}
+
+.page-container, .fiche, .site-footer {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+

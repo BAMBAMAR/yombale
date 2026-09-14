@@ -29,6 +29,7 @@ describe('POST /api/comptabilite/:boutiqueId/ventes', () => {
       .mockResolvedValueOnce({ rows: [{ id: boutiqueId, nom: 'Ma boutique' }] }) // ownsBoutique
       .mockResolvedValueOnce({ rows: [{ nom: 'iPhone 14', stock_quantite: 5 }] }) // produit
       .mockResolvedValueOnce({ rows: [{ prix: 2000 }] }) // zone
+      .mockResolvedValueOnce({ rows: [] }) // anti-double-clic idempotence check
       .mockResolvedValueOnce({ rows: [{ id: 'vente-1', montant_total: 102000 }] }) // insert vente
       .mockResolvedValueOnce({ rows: [] }); // update stock
 
@@ -38,9 +39,9 @@ describe('POST /api/comptabilite/:boutiqueId/ventes', () => {
       .send({ produit_id: produitId, quantite: 2, prix_unitaire: 50000, zone_livraison_id: zoneId });
 
     expect(res.status).toBe(201);
-    const insertCall = pool.query.mock.calls[3];
+    const insertCall = pool.query.mock.calls[4];
     expect(insertCall[1][8]).toBe(102000); // montant_total = 2*50000 + 2000
-    const updateCall = pool.query.mock.calls[4];
+    const updateCall = pool.query.mock.calls[5];
     expect(updateCall[0]).toMatch(/UPDATE boutique_produits/);
   });
 
@@ -109,3 +110,37 @@ describe('PATCH /api/comptabilite/:boutiqueId/stock/:produitId', () => {
     expect(updateQuery[1][0]).toBe(15);
   });
 });
+
+describe('GET /api/comptabilite/:boutiqueId/export/syscohada', () => {
+  test('génère un export CSV officiel conforme SYSCOHADA avec comptes 521100/571000 et 701000', async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, nom: 'Touba Boutique' }] }) // ownsBoutique
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'v-1',
+            reference: 'CMD-001',
+            nom_produit: 'Robe Bazin',
+            quantite: 1,
+            montant_total: 15000,
+            methode_paiement: 'wave',
+            client_nom: 'Fatou Sow',
+            created_at: new Date('2026-09-10T12:00:00Z'),
+          },
+        ],
+      }); // query ventes
+
+    const res = await request(app)
+      .get(`/api/comptabilite/${boutiqueId}/export/syscohada`)
+      .set('Authorization', auth);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/text\/csv/);
+    expect(res.headers['content-disposition']).toMatch(/attachment; filename=/);
+    expect(res.text).toContain('521100'); // Wave account
+    expect(res.text).toContain('701000'); // Ventes de Marchandises
+    expect(res.text).toContain('15000');
+    expect(res.text).toContain('Fatou Sow');
+  });
+});
+

@@ -14,7 +14,7 @@ export default function AnnonceGallery({ photos, titre }: Props) {
   if (photos.length === 0) {
     return (
       <div className="annonce-detail-no-photo">
-        <span>📦</span>
+        <span></span>
         <p>Pas de photo</p>
       </div>
     )

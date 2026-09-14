@@ -160,8 +160,8 @@ export default function HeroWhatsAppCarousel({ isMobile = false }: { isMobile?: 
               </svg>
             )}
             {slide.iconType === 'parrainage' && <span style={{ fontSize: 13 }}>🤝</span>}
-            {slide.iconType === 'bot' && <span style={{ fontSize: 13 }}>🤖</span>}
-            {slide.iconType === 'pos' && <span style={{ fontSize: 13 }}>🏪</span>}
+            {slide.iconType === 'bot' && <span style={{ fontSize: 13 }}></span>}
+            {slide.iconType === 'pos' && <span style={{ fontSize: 13 }}></span>}
             <span
               style={{
                 fontSize: 9.5,

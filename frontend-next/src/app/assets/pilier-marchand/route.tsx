@@ -41,7 +41,7 @@ export async function GET() {
             background: '#F0FDF4', border: '2.5px solid #16a34a',
             borderRadius: 30, padding: '12px 28px', fontSize: 18, fontWeight: 900, color: '#16a34a', display: 'flex',
           }}>
-            🏪 PILIER 2 : MARCHAND &amp; CAISSE POS
+            PILIER 2 : MARCHAND &amp; CAISSE POS
           </div>
         </div>
 
@@ -103,7 +103,7 @@ export async function GET() {
             <div style={{
               width: 72, height: 72, borderRadius: 20, background: '#F0FDF4', border: '2px solid #16a34a',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
-            }}>🏷️</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 26, fontWeight: 900, color: '#1C2B4A' }}>Générateur Codes-Barres &amp; Stickers GS1</span>
               <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>
@@ -120,7 +120,7 @@ export async function GET() {
             <div style={{
               width: 72, height: 72, borderRadius: 20, background: '#F8FAFC', border: '2px solid #1C2B4A',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, flexShrink: 0
-            }}>💳</div>
+            }}></div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <span style={{ fontSize: 26, fontWeight: 900, color: '#1C2B4A' }}>Cash, Wave, OM + Multi-Caissiers PIN</span>
               <span style={{ fontSize: 18, color: '#334155', fontWeight: 700, marginTop: 6, lineHeight: 1.45 }}>

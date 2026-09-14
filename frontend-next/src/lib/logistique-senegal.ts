@@ -126,3 +126,39 @@ export function estimerFraisLivraison(
     economie: 0
   }
 }
+
+export interface TransporteurSenegal {
+  id: string
+  nom: string
+  type: 'moto_urbain' | 'express_pro' | 'gp_international' | 'interurbain' | 'relais_magasin'
+  delaiMoyen: string
+  zonesCouvertes: string
+  suiviEnLigne: boolean
+  contactType?: 'whatsapp' | 'telephone' | 'api'
+}
+
+/**
+ * 20 Transporteurs & Réseaux de Distribution Partenaires au Sénégal et Diaspora
+ */
+export const TRANSPORTEURS_SENEGAL: TransporteurSenegal[] = [
+  { id: 'tiak_tiak', nom: 'Tiak-Tiak Moto Express', type: 'moto_urbain', delaiMoyen: '1h - 3h', zonesCouvertes: 'Région de Dakar', suiviEnLigne: false, contactType: 'whatsapp' },
+  { id: 'paps', nom: 'Paps Logistics', type: 'express_pro', delaiMoyen: '2h - 4h / J+1', zonesCouvertes: 'Dakar, Thiès, Mbour', suiviEnLigne: true, contactType: 'api' },
+  { id: 'yango_deliv', nom: 'Yango Delivery', type: 'moto_urbain', delaiMoyen: '45min - 2h', zonesCouvertes: 'Dakar & Banlieue', suiviEnLigne: true, contactType: 'api' },
+  { id: 'colis_dakar', nom: 'Colis Dakar Express', type: 'moto_urbain', delaiMoyen: '1h - 3h', zonesCouvertes: 'Dakar Métropole', suiviEnLigne: false, contactType: 'whatsapp' },
+  { id: 'gp_monde', nom: 'GP Monde Diaspora (France / USA / Italie)', type: 'gp_international', delaiMoyen: '48h - 72h', zonesCouvertes: 'France, Italie, USA, Espagne', suiviEnLigne: true, contactType: 'whatsapp' },
+  { id: 'la_poste_ems', nom: 'La Poste Sénégal (EMS / Chronopost)', type: 'express_pro', delaiMoyen: '24h - 48h', zonesCouvertes: '14 Régions du Sénégal & International', suiviEnLigne: true, contactType: 'api' },
+  { id: 'dhl_senegal', nom: 'DHL Express Sénégal', type: 'express_pro', delaiMoyen: '24h - 72h', zonesCouvertes: 'National & Monde entier', suiviEnLigne: true, contactType: 'api' },
+  { id: 'allo_dakar', nom: 'Allo Dakar / 7 Places Interurbain', type: 'interurbain', delaiMoyen: '4h - 12h', zonesCouvertes: 'Thiès, Kaolack, Touba, Saint-Louis', suiviEnLigne: false, contactType: 'telephone' },
+  { id: 'touba_transport', nom: 'Touba Express Colis', type: 'interurbain', delaiMoyen: '6h - 24h', zonesCouvertes: 'Axe Dakar - Touba - Mbacké', suiviEnLigne: false, contactType: 'telephone' },
+  { id: 'baol_express', nom: 'Baol Logistique', type: 'interurbain', delaiMoyen: '24h', zonesCouvertes: 'Diourbel, Bambey, Gossas', suiviEnLigne: false, contactType: 'whatsapp' },
+  { id: 'saloum_logistique', nom: 'Saloum Fret & Colis', type: 'interurbain', delaiMoyen: '24h', zonesCouvertes: 'Kaolack, Fatick, Kaffrine', suiviEnLigne: false, contactType: 'whatsapp' },
+  { id: 'casamance_express', nom: 'Casamance Fret Maritime & Terrestre', type: 'interurbain', delaiMoyen: '24h - 48h', zonesCouvertes: 'Ziguinchor, Cap Skirring, Kolda, Sédhiou', suiviEnLigne: false, contactType: 'telephone' },
+  { id: 'dem_dikk', nom: 'Sénégal Dem Dikk Interurbain', type: 'interurbain', delaiMoyen: '12h - 24h', zonesCouvertes: 'Toutes les gares régionales', suiviEnLigne: true, contactType: 'telephone' },
+  { id: 'k_express', nom: 'K-Express Banlieue', type: 'moto_urbain', delaiMoyen: '1h - 3h', zonesCouvertes: 'Keur Massar, Rufisque, Malika', suiviEnLigne: false, contactType: 'whatsapp' },
+  { id: 'niagass_tiak', nom: 'Niagass Coursiers Pro', type: 'moto_urbain', delaiMoyen: '1h - 2h', zonesCouvertes: 'Dakar Plateau, Almadies, Maristes', suiviEnLigne: false, contactType: 'whatsapp' },
+  { id: 'fedex_sn', nom: 'FedEx Sénégal', type: 'express_pro', delaiMoyen: '24h - 72h', zonesCouvertes: 'International & National', suiviEnLigne: true, contactType: 'api' },
+  { id: 'aramex_sn', nom: 'Aramex West Africa', type: 'express_pro', delaiMoyen: '48h - 72h', zonesCouvertes: 'Sous-région CEDEAO (Mali, Côte d\'Ivoire)', suiviEnLigne: true, contactType: 'api' },
+  { id: 'point_relais', nom: 'Point Relais Boutique Partenaire', type: 'relais_magasin', delaiMoyen: 'Mise à disposition 2h', zonesCouvertes: 'Réseau de commerces de quartier', suiviEnLigne: true, contactType: 'whatsapp' },
+  { id: 'click_collect', nom: 'Retrait en Boutique (Click & Collect)', type: 'relais_magasin', delaiMoyen: 'Immédiat (selon stock)', zonesCouvertes: 'Au magasin physique', suiviEnLigne: true, contactType: 'whatsapp' },
+  { id: 'flotte_interne', nom: 'Livreur Dédié du Magasin', type: 'moto_urbain', delaiMoyen: '1h - 3h', zonesCouvertes: 'Zone de livraison du commerçant', suiviEnLigne: false, contactType: 'telephone' },
+]

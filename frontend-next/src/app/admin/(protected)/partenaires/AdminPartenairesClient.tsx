@@ -118,7 +118,7 @@ function PartenaireRow({
           className="admin-btn admin-btn--rejeter"
           style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}
         >
-          🗑️ Supprimer
+          Supprimer
         </button>
       </div>
     </div>
@@ -188,21 +188,21 @@ export default function AdminPartenairesClient({ demandes }: { demandes: Partena
     {
       key: 'approuver',
       label: 'Approuver les demandes',
-      icon: '🟢',
+      icon: '',
       color: 'green',
       onClick: handleBatchApprouver,
     },
     {
       key: 'rejeter',
       label: 'Rejeter les demandes',
-      icon: '🔴',
+      icon: '',
       color: 'amber',
       onClick: handleBatchRejeter,
     },
     {
       key: 'supprimer',
       label: 'Supprimer définitivement',
-      icon: '🗑️',
+      icon: '',
       color: 'red',
       confirmMsg: 'Êtes-vous sûr de vouloir supprimer définitivement ces demandes de partenariat ?',
       onClick: handleBatchSupprimer,

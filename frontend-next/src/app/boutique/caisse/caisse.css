@@ -1,0 +1,684 @@
+/* frontend-next/src/app/boutique/caisse/caisse.css */
+/* Styles dédiés au Terminal Caisse POS Nopalou (Plein Écran, Colonnes & Thèmes) */
+
+@media screen {
+  body.in-caisse-pos header[role="banner"],
+  body.in-caisse-pos nav.navbar,
+  body.in-caisse-pos .navbar,
+  body.in-caisse-pos .mobile-nav,
+  body.in-caisse-pos .mobile-bottom-nav,
+  body.in-caisse-pos .bottom-bars,
+  body.in-caisse-pos footer,
+  body.in-caisse-pos .site-footer {
+    display: none !important;
+  }
+
+  .caisse-main-layout.has-3-cols {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.35fr) 280px minmax(420px, 1fr) !important;
+    height: calc(100vh - 52px) !important;
+    max-height: calc(100vh - 52px) !important;
+    overflow: hidden !important;
+  }
+
+  .caisse-main-layout.has-2-cols {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.15fr) minmax(460px, 1fr) !important;
+    height: calc(100vh - 52px) !important;
+    max-height: calc(100vh - 52px) !important;
+    overflow: hidden !important;
+  }
+
+  @media (max-width: 1200px) {
+    .caisse-main-layout.has-3-cols {
+      grid-template-columns: minmax(0, 1.15fr) minmax(460px, 1fr) !important;
+    }
+    .caisse-center-dock {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .caisse-main-layout.has-3-cols,
+    .caisse-main-layout.has-2-cols {
+      grid-template-columns: 1fr !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow-y: auto !important;
+    }
+  }
+
+  /* Mode Nuit & Mode Jour Variables */
+  .pos-theme-dark {
+    --pos-bg: #090d16 !important;
+    --pos-surface: #131b2e !important;
+    --pos-surface2: #1e293b !important;
+    --pos-surface3: #334155 !important;
+    --pos-text: #ffffff !important;
+    --pos-text2: #cbd5e1 !important;
+    --pos-text3: #94a3b8 !important;
+    --pos-navy: #ffffff !important;
+    --pos-border: #29354d !important;
+    --pos-primary: #f97316 !important;
+    --pos-primary-bg: rgba(249, 115, 22, 0.16) !important;
+    --pos-shadow: 0 4px 14px rgba(0,0,0,0.5) !important;
+    --pos-shadow-lg: 0 10px 30px rgba(0,0,0,0.6) !important;
+
+    /* Override standard design system tokens inside POS Dark Theme */
+    --navy: #ffffff !important;
+    --text: #ffffff !important;
+    --text1: #ffffff !important;
+    --text2: #cbd5e1 !important;
+    --text3: #94a3b8 !important;
+    --border: #29354d !important;
+    --bg: #090d16 !important;
+    --card: #131b2e !important;
+  }
+
+  .pos-theme-light {
+    --pos-bg: #f8fafc !important;
+    --pos-surface: #ffffff !important;
+    --pos-surface2: #f1f5f9 !important;
+    --pos-surface3: #e2e8f0 !important;
+    --pos-text: #0f172a !important;
+    --pos-text2: #475569 !important;
+    --pos-text3: #94a3b8 !important;
+    --pos-navy: #1e3a5f !important;
+    --pos-border: #e2e8f0 !important;
+    --pos-primary: #C75B00 !important;
+    --pos-primary-bg: #fff7ed !important;
+    --pos-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+    --pos-shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1) !important;
+  }
+
+  .pos-theme-dark .pos-btn-ghost {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #334155 !important;
+  }
+  .pos-theme-dark .pos-btn-ghost:hover {
+    background-color: #334155 !important;
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-produit-card {
+    background: #131b2e !important;
+    border-color: #29354d !important;
+  }
+  .pos-theme-dark .pos-produit-card:hover {
+    border-color: #f97316 !important;
+    box-shadow: 0 4px 16px rgba(249,115,22,0.25) !important;
+  }
+
+  .caisse-btn-retour {
+    transition: all 0.15s ease;
+  }
+  .pos-theme-dark .caisse-btn-retour {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border: 1px solid #475569 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+  }
+  .pos-theme-dark .caisse-btn-retour:hover {
+    background-color: #334155 !important;
+    border-color: #f97316 !important;
+    color: #ffffff !important;
+  }
+  .pos-theme-light .caisse-btn-retour {
+    background-color: #1e3a5f !important;
+    color: #ffffff !important;
+    border: 1px solid #1e3a5f !important;
+    box-shadow: 0 2px 6px rgba(28,43,74,0.25) !important;
+  }
+  .pos-theme-light .caisse-btn-retour:hover {
+    background-color: #152840 !important;
+  }
+
+  .pos-theme-dark .caisse-boutique-select {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border-color: #475569 !important;
+  }
+
+  .pos-theme-dark .pos-btn-danger {
+    background: rgba(220, 38, 38, 0.2) !important;
+    color: #f87171 !important;
+    border-color: rgba(220, 38, 38, 0.4) !important;
+  }
+  .pos-theme-dark .pos-btn-danger:hover {
+    background: rgba(220, 38, 38, 0.3) !important;
+  }
+  .pos-theme-dark .pos-btn-success {
+    background: rgba(22, 163, 74, 0.2) !important;
+    color: #4ade80 !important;
+    border-color: rgba(22, 163, 74, 0.4) !important;
+  }
+  .pos-theme-dark .pos-btn-success:hover {
+    background: rgba(22, 163, 74, 0.3) !important;
+  }
+
+  /* ── Mode Nuit : Lisibilité Haute Définition Prix, Totaux & Formulaires ── */
+  .pos-theme-dark .fcfa-num {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-grand-total {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-panier-total {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-qty-pill {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+  }
+  .pos-theme-dark .pos-qty-pill button,
+  .pos-theme-dark .pos-qty-pill span {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark .pos-recap-fiscal {
+    background: #131b2e !important;
+    border-color: #29354d !important;
+    color: #cbd5e1 !important;
+  }
+  .pos-theme-dark .pos-recap-fiscal span {
+    color: #cbd5e1 !important;
+  }
+  .pos-theme-dark .pos-recap-fiscal .fcfa-num {
+    color: #ffffff !important;
+  }
+  .pos-theme-dark input:not([type="checkbox"]):not([type="radio"]),
+  .pos-theme-dark select,
+  .pos-theme-dark textarea {
+    background-color: var(--pos-surface, #131b2e) !important;
+    color: #ffffff !important;
+    border-color: var(--pos-border, #29354d) !important;
+  }
+  .pos-theme-dark input::placeholder {
+    color: #94a3b8 !important;
+  }
+  .pos-theme-dark select option {
+    background-color: #131b2e !important;
+    color: #ffffff !important;
+  }
+
+  .caisse-desktop-only {
+    display: inline-flex !important;
+  }
+
+  @media (max-width: 640px) {
+    .caisse-desktop-only {
+      display: none !important;
+    }
+  }
+
+  .hover-bg-slate:hover {
+    background-color: var(--pos-surface2) !important;
+  }
+  .ticket-print-container {
+    display: none !important;
+  }
+
+  /* ── Navigation Caisse POS Mobile (Déporté depuis globals.css) ── */
+  .caisse-mobile-tabs {
+    display: none !important;
+  }
+
+  .caisse-sticky-bottom-bar {
+    display: none !important;
+  }
+
+  .caisse-back-to-catalogue-btn {
+    display: none !important;
+  }
+
+  @media (max-width: 1024px) {
+    .caisse-mobile-tabs {
+      display: flex !important;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: #ffffff;
+      padding: 8px 8px;
+      gap: 6px;
+      border-bottom: 1px solid var(--pos-border, #e2e8f0);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+      box-sizing: border-box !important;
+      max-width: 100vw !important;
+    }
+
+    .caisse-mobile-tab-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 6px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #1e293b;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .caisse-mobile-tab-btn.active {
+      background: #1e3a5f;
+      color: #ffffff;
+      border-color: #1e3a5f;
+      box-shadow: 0 3px 10px rgba(30, 58, 95, 0.25);
+    }
+
+    .caisse-mobile-tab-btn.has-items.active {
+      background: linear-gradient(135deg, #ea580c 0%, #c75b00 100%);
+      color: #ffffff;
+      border-color: #c75b00;
+      box-shadow: 0 4px 12px rgba(199, 91, 0, 0.3);
+    }
+
+    .caisse-mobile-tab-btn.has-items:not(.active) {
+      border-color: #fdba74;
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .caisse-catalogue-section.mobile-hidden {
+      display: none !important;
+    }
+
+    .ticket-section.mobile-hidden {
+      display: none !important;
+    }
+
+    .caisse-catalogue-section.mobile-active {
+      display: flex !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      padding: 12px 10px 90px 10px !important;
+    }
+
+    .ticket-section.mobile-active {
+      display: flex !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      padding: 12px 10px !important;
+    }
+
+    .caisse-back-to-catalogue-btn {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 14px;
+      background: #f1f5f9;
+      color: #1e3a5f;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .caisse-sticky-bottom-bar {
+      display: flex !important;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 500;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 14px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 -6px 25px rgba(15, 23, 42, 0.35);
+      border-top: 1px solid #334155;
+      animation: slideUpBar 0.25s ease-out;
+    }
+
+    .caisse-sticky-bottom-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .caisse-sticky-count {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .caisse-sticky-total {
+      font-size: 17px;
+      font-weight: 900;
+      color: #38bdf8;
+    }
+
+    .caisse-sticky-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 900;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+      transition: transform 0.1s ease;
+    }
+
+    .caisse-sticky-btn:active {
+      transform: scale(0.97);
+    }
+  }
+
+  @keyframes slideUpBar {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  header,
+  footer,
+  nav,
+  .site-header,
+  .site-footer,
+  .navbar-icon-actions,
+  .caisse-header,
+  .caisse-main-layout,
+  .btn-premium,
+  button,
+  input,
+  select {
+    display: none !important;
+  }
+  .ticket-print-container, .ticket-print-container * {
+    visibility: visible !important;
+  }
+  .ticket-print-container {
+    display: block !important;
+    position: static !important;
+    width: 80mm !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    padding: 10px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+
+/* ── Styles POS migrés depuis globals.css ── */
+/* ════════════════════════════════════════════════════════
+   CAISSE POS FULLSCREEN MODE — Masquer l'en-tête global du site
+   ════════════════════════════════════════════════════════ */
+body:has(.caisse-header) header[role="banner"],
+body:has(.caisse-header) .mobile-nav,
+body:has(.caisse-header) .mobile-bottom-nav,
+body:has(.caisse-header) .bottom-bars,
+body:has(.caisse-header) footer,
+body:has(.caisse-header) .site-footer,
+body:has(.caisse-root) .mobile-bottom-nav {
+  display: none !important;
+}
+
+/* Thème sombre pour onglets mobiles caisse */
+.pos-theme-dark .caisse-mobile-tabs {
+  background: #131b2e !important;
+  border-bottom-color: #29354d !important;
+}
+.pos-theme-dark .caisse-mobile-tab-btn {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+.pos-theme-dark .caisse-mobile-tab-btn.active {
+  background: #1e3a5f !important;
+  color: #ffffff !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 3px 10px rgba(56, 189, 248, 0.25) !important;
+}
+.pos-theme-dark .caisse-mobile-tab-btn.has-items.active {
+  background: linear-gradient(135deg, #ea580c 0%, #c75b00 100%) !important;
+  color: #ffffff !important;
+  border-color: #c75b00 !important;
+}
+.pos-theme-dark .caisse-mobile-tab-btn.has-items:not(.active) {
+  border-color: #c75b00 !important;
+  background: rgba(199, 91, 0, 0.2) !important;
+  color: #fdba74 !important;
+}
+.pos-theme-dark .caisse-back-to-catalogue-btn {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
+}
+
+.caisse-main-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(480px, 1fr);
+  gap: 0;
+  overflow: hidden;
+}
+
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE — Toutes les pages modifiées
+   Breakpoints : 768px (tablette) et 480px (mobile)
+   ════════════════════════════════════════════════════════ */
+
+/* ── Caisse POS : En-tête ── */
+/* Labels masqués sur mobile (icônes seules) */
+.caisse-label-desktop {
+  display: inline;
+}
+
+/* Boutons secondaires masqués sur smartphone dans le header POS */
+.caisse-desktop-only {
+  display: inline-flex !important;
+}
+
+/* Sélecteur de boutique : visible sur tablette+ */
+.caisse-boutique-select {
+  display: block;
+}
+
+.caisse-header {
+  flex-wrap: nowrap !important;
+}
+
+@media (max-width: 640px) {
+  /* Sur petit écran : masquer les labels texte et boutons secondaires dans le header */
+  .caisse-label-desktop,
+  .caisse-desktop-only {
+    display: none !important;
+  }
+
+  /* Masquer le select boutique brut sur très petit écran (remplacé par overlay) */
+  .caisse-boutique-select {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Header POS : masquer le label texte "Nopalou" et adapter */
+  .caisse-header {
+    padding: 8px 12px !important;
+    justify-content: space-between !important;
+    overflow: visible !important;
+    position: relative;
+  }
+
+  /* Caisse layout : catalogue en premier, ticket en dessous */
+  .caisse-main-layout {
+    grid-template-columns: 1fr !important;
+    overflow-y: auto;
+  }
+
+  /* Boutons POS : taille réduite */
+  .btn-premium {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+  }
+
+  /* Badges */
+  .badge-premium {
+    font-size: 10px !important;
+    padding: 3px 7px !important;
+  }
+
+  /* Page boutique (dashboard marchand) : tabs en scroll horizontal */
+  .boutique-tabs-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap !important;
+  }
+
+  /* Cartes produit : grille adaptative */
+  .produits-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Formulaire produit : max-width full */
+  .produit-form-wrapper {
+    max-width: 100% !important;
+    padding: 16px !important;
+  }
+
+  /* Modales : plein écran sur mobile */
+  .modal-overlay > div {
+    max-width: calc(100vw - 32px) !important;
+    max-height: 92vh !important;
+    overflow-y: auto;
+  }
+
+  /* Stats et chiffres : 2 colonnes */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Tableaux : scroll horizontal */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Input de recherche caisse */
+  .caisse-search-input {
+    font-size: 14px !important;
+  }
+
+  /* Ticket de caisse : full width */
+  .ticket-section {
+    border-left: none !important;
+    border-top: 1px solid var(--border-light);
+  }
+}
+
+@media (max-width: 480px) {
+  /* Très petit écran : réduire encore les paddings */
+  .caisse-header {
+    padding: 6px 10px !important;
+  }
+
+  /* Produits : 1 seule colonne */
+  .produits-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats : 1 colonne */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Boutons d'action produit : wrap */
+  .produit-actions {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  /* Filtres catégorie caisse : scroll horizontal */
+  .caisse-categories-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Boutons de paiement : 2x2 */
+  .paiement-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Formulaires modales : champs full width */
+  .dup-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Modales POS Universelles (Backdrop + Centrage Plein Écran) */
+.pos-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10000 !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px 12px !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+}
+
+.pos-modal-card {
+  background: #ffffff !important;
+  border-radius: 20px !important;
+  padding: 28px 24px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  box-sizing: border-box !important;
+  margin: auto !important;
+  position: relative !important;
+}
+
+@media (max-width: 480px) {
+  .pos-modal-card {
+    padding: 20px 16px !important;
+    border-radius: 16px !important;
+  }
+}

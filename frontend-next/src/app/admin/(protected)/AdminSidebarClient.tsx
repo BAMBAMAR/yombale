@@ -43,7 +43,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
       title: 'Marketing & Partenaires',
       items: [
         { href: '/admin/prospection', label: 'Prospection & Leads', icon: <Target size={16} />, highlight: '#16a34a' },
-        { href: '/admin/prospection/intelligence', label: '🧠 Intelligence Prospection', icon: <Sparkles size={16} />, highlight: '#7C3AED' },
+        { href: '/admin/prospection/intelligence', label: 'Intelligence Prospection', icon: <Sparkles size={16} />, highlight: '#7C3AED' },
         { href: '/admin/force-de-vente', label: 'Force de Vente Terrain', icon: <Rocket size={16} />, highlight: '#C75B00' },
         { href: '/admin/partenaires', label: 'Partenaires', icon: <Handshake size={16} /> },
         { href: '/admin/affiliation', label: 'Affiliation', icon: <MousePointer size={16} /> },
@@ -68,7 +68,7 @@ export default function AdminSidebarClient({ logoutAction }: AdminSidebarProps) 
       title: 'Système & Pilotage',
       items: [
         { href: '/admin/migration', label: 'Migration Marchands', icon: <Rocket size={16} />, highlight: '#ea580c' },
-        { href: '/admin/sante-donnees', label: '🛡️ Santé des Données', icon: <ShieldCheck size={16} />, highlight: '#16a34a' },
+        { href: '/admin/sante-donnees', label: 'Santé des Données', icon: <ShieldCheck size={16} />, highlight: '#16a34a' },
         { href: '/admin/feature-flags', label: 'Feature Flags (No-Code)', icon: <Flag size={16} />, highlight: '#9333ea' },
         { href: '/admin/audit-logs', label: 'Audit Logs & Traçabilité', icon: <ShieldCheck size={16} />, highlight: '#059669' },
         { href: '/admin/system', label: 'Santé Système & Exports', icon: <Activity size={16} />, highlight: '#0284c7' },
