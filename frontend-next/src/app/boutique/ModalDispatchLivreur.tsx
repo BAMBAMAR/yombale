@@ -73,6 +73,7 @@ export default function ModalDispatchLivreur({
 • *Destinataire :* ${commande.client_nom}
 • *Téléphone :* ${commande.client_telephone} (${telClientLien})
 • *Adresse :* ${commande.client_adresse || 'Adresse à préciser par téléphone'}
+• *Itinéraire GPS :* https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((commande.client_adresse || 'Dakar') + ', Sénégal')}
 ${commande.note ? `• *Note spéciale :* ${commande.note}\n` : ''}
 *3. INSTRUCTION D'ENCAISSEMENT :*
 ${dejaPaye 

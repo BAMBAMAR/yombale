@@ -24,6 +24,7 @@ import PosLockScreen from './components/PosLockScreen'
 import PosModalGestionPins from './components/PosModalGestionPins'
 import PosModalsHost from './components/PosModalsHost'
 import PosToast from './components/PosToast'
+import { usePosWebOrdersAlert } from './hooks/usePosWebOrdersAlert'
 import './caisse.css'
 
 export default function CaisseClient({
@@ -179,6 +180,15 @@ export default function CaisseClient({
       document.body.classList.remove('in-caisse-pos')
     }
   }, [])
+
+  // ── Écoute temps réel des nouvelles commandes Web (Carillon WebAudio + Notification) ──
+  usePosWebOrdersAlert({
+    boutiqueActiveId,
+    isReallyOnline,
+    initialToken,
+    showToast,
+    formatPrice,
+  })
 
   // ── Filtrage Catalogue Produits ──
   const produitsFiltres = useMemo(() => {

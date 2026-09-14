@@ -4,7 +4,15 @@ const { body, param, query, validationResult } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly } = require('../../middlewares/auth');
 const { checkAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
+const { createRateLimiter } = require('../../middlewares/rateLimiter');
 const { checkBoutiqueAccess } = require('./helpers');
+
+const limiterAiAgent = createRateLimiter({
+  windowMs: 60000,
+  max: 20,
+  prefix: 'ai-agent',
+  message: 'Trop de requêtes vers l\'assistant IA. Veuillez patienter une minute.'
+});
 
 // ── Spec 04 : PUT /api/boutiques/:id/pixels — Sauvegarde des Pixels
 router.put('/:id/pixels', verifierToken, param('id').isUUID(), async (req, res) => {
@@ -241,8 +249,8 @@ router.post('/:id/marketing/workflows', verifierToken, param('id').isUUID(), asy
 // ── SPRINT 4 (POINT 07) : AGENT IA AUTONOME DE VENTE & NÉGOCIATION ─────────
 const { processAgentNegotiation } = require('../../services/ai-agent');
 
-// POST /api/boutiques/:id/ai-agent/chat — Endpoint public pour les acheteurs
-router.post('/:id/ai-agent/chat', async (req, res) => {
+// POST /api/boutiques/:id/ai-agent/chat — Endpoint public pour les acheteurs (Rate-Limité)
+router.post('/:id/ai-agent/chat', limiterAiAgent, async (req, res) => {
   try {
     const { id } = req.params;
     const { message, cart } = req.body; // message: string, cart: { articles, totalFCFA }

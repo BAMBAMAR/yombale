@@ -1,3 +1,22 @@
+- **Exécution des Remédiations Prioritaires P0 & P1 : Alerte Carillon POS WebAudio, Rate Limiter Redis, Scanner Haptique & Dispatch GPS Tiak-Tiak (`feature/nopalou-master-fixes`) (14 septembre 2026)** ⚡🔔🧭 📦 ✅ :
+  * **🎯 1. Contexte & Réalisations P0 & P1** :
+    - **Alerte Sonore & Visuelle WebAudio Caisse POS (`P0`)** :
+      * Synthétiseur WebAudio pur zéro dépendance (`frontend-next/src/lib/audio-chime.ts`) : carillon Do-Mi-Sol (523Hz-1046Hz) et bip scanner (880Hz).
+      * Hook modulaire d'écoute temps réel [`usePosWebOrdersAlert.ts`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/caisse/hooks/usePosWebOrdersAlert.ts) et intégration dans [`CaisseClient.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/caisse/CaisseClient.tsx) (425 lignes).
+    - **Sécurité & Stabilité : Rate Limiter Distribué Redis / Mémoire (`P0`)** :
+      * Middleware [`backend/middlewares/rateLimiter.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/middlewares/rateLimiter.js) avec en-têtes standard HTTP (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`) et réponse JSON 429.
+      * Protection de la route publique de négociation `/api/boutiques/:id/ai-agent/chat` (20 req/min).
+    - **Scanner Code-Barres Caisse Haptique & Anti-Slop (`P0`)** :
+      * Remplacement de l'émoji torche par l'icône Lucide `Flashlight` (14px) dans [`PosScannerModal.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/caisse/components/PosScannerModal.tsx).
+      * Déclenchement de vibration haptique mobile (`navigator.vibrate([60, 40, 60])`) et du bip sonore WebAudio.
+    - **Logistique Tiak-Tiak : Dispatch WhatsApp avec Itinéraire GPS (`P1`)** :
+      * Ajout du lien Google Maps GPS direct dans l'ordre de mission WhatsApp du coursier dans [`ModalDispatchLivreur.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/ModalDispatchLivreur.tsx).
+  * **🧪 2. Validation & Quality Gate (100% Vert)** :
+    - Suite de tests unitaires Jest (`tests/unit/p0-chime-ratelimit-scanner.test.js`) : **4/4 tests validés (100%)**.
+    - Script de Quality Gate Global (`node scripts/quality-gate.mjs`) : **36/36 suites passées, 261/261 tests unitaires validés (100%)**.
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch, 0 composant monolithique**.
+
 - **Audit, Benchmark, Scoring Intégral & Plan d'Action pour Chaque Point Non-Vert (`feature/nopalou-master-fixes`) (14 septembre 2026)** 🏆📊🛠️ ✅ :
   * **🎯 1. Rapport d'Audit & Benchmark Intégral (`audit_benchmark_nopalou_master.md`)** :
     - Évaluation exhaustive sans complaisance des **37 domaines fonctionnels (A à AU)** de Nopalou face au panel mondial (Shopify, WooCommerce, Square, Toast, WhatsApp Business, Jumia).

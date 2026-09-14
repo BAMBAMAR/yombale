@@ -1,7 +1,8 @@
 'use client'
 
-import React from 'react'
-import { Camera } from 'lucide-react'
+import React, { useEffect } from 'react'
+import { Camera, Flashlight, Check } from 'lucide-react'
+import { playScannerBeep } from '@/lib/audio-chime'
 
 interface PosScannerModalProps {
   scannerTorcheActive: boolean
@@ -26,6 +27,19 @@ export default function PosScannerModal({
   panierTotal,
   formatPrice,
 }: PosScannerModalProps) {
+  useEffect(() => {
+    if (scannerFlashActif) {
+      playScannerBeep()
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate([60, 40, 60])
+        } catch (e) {
+          console.warn('[POS SCANNER] Vibration non supportée:', e)
+        }
+      }
+    }
+  }, [scannerFlashActif])
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(4px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{ background: '#ffffff', borderRadius: 20, padding: '20px 20px 16px', width: '100%', maxWidth: 460, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', textAlign: 'center' }}>
@@ -37,10 +51,10 @@ export default function PosScannerModal({
             <button
               type="button"
               onClick={onToggleTorche}
-              style={{ background: scannerTorcheActive ? '#fef08a' : '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 8, padding: '4px 8px', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+              style={{ background: scannerTorcheActive ? '#fef08a' : '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 8, padding: '4px 8px', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
               title="Allumer la lampe torche"
             >
-              <span>🔦</span>
+              <Flashlight size={14} style={{ color: scannerTorcheActive ? '#a16207' : '#475569' }} />
               <span style={{ fontSize: 11, fontWeight: 700, color: '#0f172a' }}>{scannerTorcheActive ? 'ON' : 'OFF'}</span>
             </button>
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 20, cursor: 'pointer', padding: '0 4px' }}>✕</button>
@@ -52,8 +66,8 @@ export default function PosScannerModal({
           <div id="nopalou-reader-scanner" style={{ width: '100%', height: '100%' }} />
           {scannerFlashActif && (
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(34, 197, 94, 0.18)', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ background: '#15803d', color: '#fff', padding: '6px 14px', borderRadius: 20, fontWeight: 900, fontSize: 13, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                ✓ BIP VALIDÉ
+              <span style={{ background: '#15803d', color: '#fff', padding: '6px 14px', borderRadius: 20, fontWeight: 900, fontSize: 13, boxShadow: '0 4px 12px rgba(0,0,0,0.3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Check size={16} /> BIP VALIDÉ
               </span>
             </div>
           )}
