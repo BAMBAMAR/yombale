@@ -75,18 +75,7 @@ export default function MerchantMasterStage() {
       </div>
 
       {/* Barre de Commutation Segmentée des 4 Modules */}
-      <div
-        style={{
-          display: 'flex',
-          background: '#F1F5F9',
-          borderRadius: 16,
-          padding: 5,
-          gap: 6,
-          marginBottom: 20,
-          border: '1px solid #E2E8F0',
-          overflowX: 'auto'
-        }}
-      >
+      <div className="merchant-piliers-nav">
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isSelected = activeFeature === tab.id
@@ -95,38 +84,11 @@ export default function MerchantMasterStage() {
               key={tab.id}
               type="button"
               onClick={() => setActiveFeature(tab.id)}
-              style={{
-                flex: 1,
-                minWidth: 160,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '11px 16px',
-                borderRadius: 12,
-                border: 'none',
-                background: isSelected ? '#1C2B4A' : 'transparent',
-                color: isSelected ? '#ffffff' : 'var(--navy, #1C2B4A)',
-                cursor: 'pointer',
-                fontWeight: isSelected ? 900 : 700,
-                fontSize: 12.5,
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: isSelected ? '0 4px 14px rgba(28,43,74,0.18)' : 'none',
-                whiteSpace: 'nowrap'
-              }}
+              className={`merchant-pilier-btn ${isSelected ? 'active' : ''}`}
             >
-              <Icon size={15} color={isSelected ? '#FED7AA' : 'var(--accent, #C75B00)'} />
+              <Icon size={15} color={isSelected ? '#FED7AA' : 'var(--accent, #C75B00)'} style={{ flexShrink: 0 }} />
               <span>{tab.label}</span>
-              <span
-                style={{
-                  fontSize: 9.5,
-                  fontWeight: 900,
-                  background: isSelected ? 'rgba(254,215,170,0.2)' : '#E2E8F0',
-                  color: isSelected ? '#FED7AA' : '#64748B',
-                  padding: '2px 6px',
-                  borderRadius: 8
-                }}
-              >
+              <span className="tab-badge">
                 {tab.badge}
               </span>
             </button>
@@ -141,10 +103,10 @@ export default function MerchantMasterStage() {
           borderRadius: 20,
           border: '1px solid #E2E8F0',
           boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-          padding: '30px 24px',
+          padding: '24px 20px',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 28,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
+          gap: 24,
           alignItems: 'center'
         }}
       >

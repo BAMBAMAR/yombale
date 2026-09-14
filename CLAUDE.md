@@ -1,3 +1,12 @@
+- **Correctif Showcase Marchand : Responsiveness Navigation des 4 Piliers (`feature/nopalou-master-fixes`) (14 septembre 2026)** 📱🏪📐 🚀 ✅ :
+  * **🎯 1. Résolution de l'Affichage & Troncature des Onglets (`MerchantMasterStage.tsx`, `homepage.css`)** :
+    - **Grille Adaptative 2x2 sur Mobile & 4 Colonnes sur Desktop** : Remplacement de l'agencement flex débordant avec barre de défilement brute par une grille fluide `.merchant-piliers-nav` (`grid-template-columns: repeat(4, 1fr)` sur grand écran, `repeat(2, 1fr)` sur mobile < 860px).
+    - **Affichage Intégral & Zéro Rognage** : Les 4 modules majeurs (POS Tactile, Boutique en Ligne, Vente WhatsApp & Dettes, Migration Shopify/Excel) s'affichent maintenant sans aucun rognage, sans scrollbar disgracieuse et avec des badges compacts adaptés à tous les formats d'écrans (320px, 360px, 390px, 412px, desktop).
+    - **Plateau Interactif Confiné** : Ajustement de la grille du plateau interactif avec `minmax(min(100%, 300px), 1fr)` éliminant tout risque de débordement horizontal sur petits écrans.
+  * **🧪 2. Validation & Quality Gate** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests Unitaires Frontend (`npm run test`) : **68/68 tests validés (100%)**.
+
 - **Correctif Carnet de Dettes, Échéancier Plans Structurés & Responsiveness Mobile (`feature/nopalou-master-fixes`) (14 septembre 2026)** 💳📱📐 🚀 ✅ :
   * **🎯 1. Résolution de l'Affichage des Montants et Échéances (`credits.js`, `CarnetPlansEchelonnes.tsx`)** :
     - **Normalisation des Champs SQL / API** : Résolution de l'anomalie d'affichage du tiret cadratin (`Reste : —` et `Échéance Due ... —`) causée par une divergence de nommage entre PostgreSQL (`caisse_credit_plans.montant_restant`, `caisse_credit_echeances.montant_prevu`, `numero_echeance`) et le frontend (`solde_restant`, `montant_total`, `numero`). Le contrôleur backend normalise désormais systématiquement tous les champs et le frontend dispose de fallbacks stricts garantissant un affichage exact en FCFA.
