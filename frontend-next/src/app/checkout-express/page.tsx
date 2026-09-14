@@ -6,8 +6,9 @@ import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
 import {
   ShoppingBag, Store, MapPin, CreditCard, MessageCircle,
-  CheckCircle2, Zap, AlertCircle, ArrowRight, Phone, ShieldCheck
+  CheckCircle2, Zap, AlertCircle, ArrowRight, Phone, ShieldCheck, Layers
 } from 'lucide-react'
+import EchelonnementConfigurator from '@/app/boutiques/[id]/commander/EchelonnementConfigurator'
 
 interface Zone {
   id: string
@@ -45,9 +46,16 @@ function CheckoutExpressContent() {
   const [clientNom, setClientNom] = useState(nomParam)
   const [clientTel, setClientTel] = useState(phoneParam)
   const [clientAdresse, setClientAdresse] = useState('')
-  const [methodePaiement, setMethodePaiement] = useState<'wave' | 'orange_money' | 'cash'>(
-    payParam === 'cash' ? 'cash' : payParam === 'om' || payParam === 'orange_money' ? 'orange_money' : 'wave'
+  const [methodePaiement, setMethodePaiement] = useState<'wave' | 'orange_money' | 'cash' | 'echelonne'>(
+    searchParams.get('echelonne') === '1'
+      ? 'echelonne'
+      : payParam === 'cash'
+      ? 'cash'
+      : payParam === 'om' || payParam === 'orange_money'
+      ? 'orange_money'
+      : 'wave'
   )
+  const [formuleEchelonnee, setFormuleEchelonnee] = useState<any | null>(null)
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [autoRedirecting, setAutoRedirecting] = useState<boolean>(false)
   const [success, setSuccess] = useState<boolean>(false)
@@ -145,6 +153,10 @@ function CheckoutExpressContent() {
     setSubmitting(true)
 
     try {
+      const montantAPayer = methodePaiement === 'echelonne'
+        ? (formuleEchelonnee?.apport || Math.round(totalGlobal * 0.2))
+        : totalGlobal
+
       const res = await fetch(`${backendUrl}/api/comptabilite/${boutiqueId || 'general'}/commandes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,9 +168,15 @@ function CheckoutExpressContent() {
           client_nom: clientNom.trim(),
           client_telephone: clientTel.trim(),
           client_adresse: clientAdresse.trim() || undefined,
-          methode_paiement: methodePaiement,
+          methode_paiement: methodePaiement === 'echelonne' ? 'credit_echelonne' : methodePaiement,
           zone_livraison_id: zoneId || undefined,
           source: 'whatsapp_express_web',
+          plan_echelonne: methodePaiement === 'echelonne' && formuleEchelonnee ? {
+            apport: formuleEchelonnee.apport,
+            nb_echeances: formuleEchelonnee.nb_echeances,
+            frequence: formuleEchelonnee.frequence,
+            echeances: formuleEchelonnee.calcul?.echeances || [],
+          } : undefined,
         }),
       })
 
@@ -166,7 +184,7 @@ function CheckoutExpressContent() {
       const referenceToUse = data.reference || `CMD-${Date.now().toString(36).toUpperCase()}`
       setOrderRef(referenceToUse)
 
-      if (useSequestre) {
+      if (useSequestre && methodePaiement !== 'cash') {
         try {
           const seqRes = await fetch(`${backendUrl}/api/paiement-sequestre/activer`, {
             method: 'POST',
@@ -174,7 +192,7 @@ function CheckoutExpressContent() {
             body: JSON.stringify({
               reference: referenceToUse,
               telephoneClient: clientTel.trim(),
-              montantTotal: totalGlobal,
+              montantTotal: montantAPayer,
               nomBoutique: produitInfo?.boutiqueNom || 'Boutique Partenaire',
             }),
           }).catch(() => null)
@@ -189,15 +207,17 @@ function CheckoutExpressContent() {
         }
       }
 
-      if (methodePaiement === 'wave') {
+      if (methodePaiement === 'wave' || methodePaiement === 'echelonne') {
         try {
           const waveRes = await fetch(`${backendUrl}/api/paiement/wave/initier-express`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              montant: totalGlobal,
+              montant: montantAPayer,
               reference: referenceToUse,
-              nom_produit: produitInfo?.nom || 'Commande Express',
+              nom_produit: methodePaiement === 'echelonne'
+                ? `Acompte échelonné : ${produitInfo?.nom || 'Commande'}`
+                : (produitInfo?.nom || 'Commande Express'),
             }),
           }).catch(() => null)
 
@@ -449,7 +469,7 @@ function CheckoutExpressContent() {
 
             <div>
               <label style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--text2, #6B5E52)', display: 'block', marginBottom: 4 }}>MODE DE PAIEMENT</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                 <button
                   type="button"
                   onClick={() => setMethodePaiement('wave')}
@@ -458,7 +478,7 @@ function CheckoutExpressContent() {
                     background: methodePaiement === 'wave' ? '#f0f9ff' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  Wave 
+                  ⚡ Wave (Direct)
                 </button>
                 <button
                   type="button"
@@ -468,7 +488,7 @@ function CheckoutExpressContent() {
                     background: methodePaiement === 'orange_money' ? '#fff7ed' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  Orange Money
+                  🟠 Orange Money
                 </button>
                 <button
                   type="button"
@@ -478,48 +498,71 @@ function CheckoutExpressContent() {
                     background: methodePaiement === 'cash' ? '#f0fdf4' : '#fff', color: 'var(--navy, #1C2B4A)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
                   }}
                 >
-                  Espèces
+                  💵 Espèces à la livraison
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMethodePaiement('echelonne')}
+                  style={{
+                    padding: '10px 8px', borderRadius: 10, border: methodePaiement === 'echelonne' ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                    background: methodePaiement === 'echelonne' ? '#fff7ed' : '#fff', color: 'var(--accent, #C75B00)', fontWeight: 750, fontSize: 12.5, cursor: 'pointer',
+                  }}
+                >
+                  💳 Payer en plusieurs fois
                 </button>
               </div>
             </div>
 
-            {/* Toggle Protection Séquestre Nopalou Pay Safe */}
-            <div
-              onClick={() => setUseSequestre(!useSequestre)}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 12,
-                padding: '12px 14px',
-                borderRadius: 12,
-                border: useSequestre ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
-                background: useSequestre ? 'var(--orange2, #FFF3E8)' : '#FFFFFF',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                marginTop: 4,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={useSequestre}
-                onChange={e => setUseSequestre(e.target.checked)}
-                style={{ marginTop: 3, accentColor: 'var(--accent, #C75B00)' }}
-              />
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                  <ShieldCheck size={16} color="var(--accent, #C75B00)" />
-                  <strong style={{ fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>
-                    Activer Nopalou Pay Safe (Séquestre Anti-Arnaque)
-                  </strong>
-                  <span style={{ fontSize: 9.5, fontWeight: 900, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8 }}>
-                    GRATUIT
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
-                  Fonds bloqués et versés au marchand uniquement après confirmation de livraison avec votre code PIN secret.
-                </p>
+            {/* Configurateur interactif d'échelonnement si sélectionné */}
+            {methodePaiement === 'echelonne' && (
+              <div style={{ marginTop: 8 }}>
+                <EchelonnementConfigurator
+                  montantTotal={totalGlobal}
+                  boutiqueId={boutiqueId}
+                  onFormuleChoisie={(f) => setFormuleEchelonnee(f)}
+                />
               </div>
-            </div>
+            )}
+
+            {/* Toggle Protection Séquestre Nopalou Pay Safe */}
+            {methodePaiement !== 'echelonne' && (
+              <div
+                onClick={() => setUseSequestre(!useSequestre)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  padding: '12px 14px',
+                  borderRadius: 12,
+                  border: useSequestre ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+                  background: useSequestre ? 'var(--orange2, #FFF3E8)' : '#FFFFFF',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  marginTop: 4,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={useSequestre}
+                  onChange={e => setUseSequestre(e.target.checked)}
+                  style={{ marginTop: 3, accentColor: 'var(--accent, #C75B00)' }}
+                />
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <ShieldCheck size={16} color="var(--accent, #C75B00)" />
+                    <strong style={{ fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>
+                      Activer Nopalou Pay Safe (Séquestre Anti-Arnaque)
+                    </strong>
+                    <span style={{ fontSize: 9.5, fontWeight: 900, background: '#16A34A', color: '#fff', padding: '1px 6px', borderRadius: 8 }}>
+                      GRATUIT
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.35 }}>
+                    Fonds bloqués et versés au marchand uniquement après confirmation de livraison avec votre code PIN secret.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -529,7 +572,11 @@ function CheckoutExpressContent() {
                 marginTop: 8, width: '100%', fontSize: 14.5,
               }}
             >
-              {submitting ? 'Validation en cours...' : 'Valider et Payer la commande →'}
+              {submitting
+                ? 'Validation en cours...'
+                : methodePaiement === 'echelonne'
+                ? `Régler l'acompte Wave (${fcfa(formuleEchelonnee?.apport || Math.round(totalGlobal * 0.2))}) & Valider →`
+                : `Valider et Payer la commande (${fcfa(totalGlobal)}) →`}
             </button>
           </form>
         </div>

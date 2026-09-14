@@ -33,8 +33,8 @@ interface NouvelleCommandeFormProps {
   setClientAdresse: (a: string) => void
   note: string
   setNote: (n: string) => void
-  methodePaiement: 'wave' | 'cash' | 'orange_money'
-  setMethodePaiement: (m: 'wave' | 'cash' | 'orange_money') => void
+  methodePaiement: 'wave' | 'cash' | 'orange_money' | 'echelonne'
+  setMethodePaiement: (m: 'wave' | 'cash' | 'orange_money' | 'echelonne') => void
   montantFrais: number
   montantTotal: number
   loading: boolean
@@ -328,23 +328,24 @@ export default function NouvelleCommandeForm({
         <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
           Mode de règlement
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
           {[
-            { id: 'wave', label: 'Wave (Lien direct)' },
-            { id: 'cash', label: 'Paiement livraison' },
-            { id: 'orange_money', label: 'Orange Money' },
+            { id: 'wave', label: '⚡ Wave (Lien direct)' },
+            { id: 'orange_money', label: '🟠 Orange Money' },
+            { id: 'cash', label: '💵 Paiement livraison' },
+            { id: 'echelonne', label: '💳 Payer en plusieurs fois' },
           ].map(m => (
             <button
               key={m.id}
               type="button"
               onClick={() => setMethodePaiement(m.id as any)}
               style={{
-                padding: '8px 6px',
-                borderRadius: 8,
-                border: methodePaiement === m.id ? '2px solid #0284c7' : '1px solid #cbd5e1',
-                background: methodePaiement === m.id ? '#f0f9ff' : '#ffffff',
-                color: methodePaiement === m.id ? '#0284c7' : '#475569',
-                fontSize: 11.5,
+                padding: '10px 8px',
+                borderRadius: 10,
+                border: methodePaiement === m.id ? '2px solid var(--accent, #C75B00)' : '1px solid #cbd5e1',
+                background: methodePaiement === m.id ? '#fff7ed' : '#ffffff',
+                color: methodePaiement === m.id ? 'var(--accent, #C75B00)' : '#475569',
+                fontSize: 12,
                 fontWeight: methodePaiement === m.id ? 800 : 600,
                 cursor: 'pointer',
                 textAlign: 'center',
@@ -354,6 +355,22 @@ export default function NouvelleCommandeForm({
             </button>
           ))}
         </div>
+        {methodePaiement === 'echelonne' && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: '#fffaf5',
+              border: '1px solid #fed7aa',
+              fontSize: 11.5,
+              color: '#9a3412',
+              lineHeight: 1.4,
+            }}
+          >
+            ✨ <strong>Lien interactif d&apos;échelonnement :</strong> Le client recevra un lien lui permettant de choisir sa formule (2x, 3x, 4x...) et de régler son acompte Wave en ligne.
+          </div>
+        )}
       </div>
 
       {/* Récapitulatif Total */}

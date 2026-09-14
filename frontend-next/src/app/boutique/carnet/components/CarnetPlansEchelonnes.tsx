@@ -15,8 +15,10 @@ import {
   CreditCard,
   Check,
   RefreshCw,
+  Plus,
 } from 'lucide-react'
 import { fcfa, fmtDate } from '@/lib/format'
+import CarnetModalCreerPlan from './CarnetModalCreerPlan'
 
 export interface PlanEcheance {
   id: string
@@ -64,6 +66,9 @@ export default function CarnetPlansEchelonnes({
   const [loading, setLoading] = useState(true)
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null)
   
+  // Modale Nouveau Plan
+  const [modalCreerPlanOpen, setModalCreerPlanOpen] = useState(false)
+
   // Modale Encaisser
   const [encaissementModalOpen, setEncaissementModalOpen] = useState(false)
   const [selectedPlanForPay, setSelectedPlanForPay] = useState<PlanEchelonne | null>(null)
@@ -98,7 +103,6 @@ export default function CarnetPlansEchelonnes({
 
   const handleOpenEncaisser = (plan: PlanEchelonne) => {
     setSelectedPlanForPay(plan)
-    // Suggérer par défaut le montant de la prochaine échéance non soldée ou le solde restant
     const nextUnpaid = plan.echeances.find((e) => e.statut !== 'payee' && e.statut !== 'soldee_par_anticipation')
     setMontantEncaissement(nextUnpaid ? Number(nextUnpaid.montant_restant) : Number(plan.solde_restant))
     setActionError(null)
@@ -179,226 +183,290 @@ export default function CarnetPlansEchelonnes({
     window.open(url, '_blank')
   }
 
-  if (loading && plans.length === 0) {
-    return (
-      <div style={{ padding: '12px 0', fontSize: 12.5, color: '#64748b' }}>
-        Chargement des plans d&apos;échelonnement...
-      </div>
-    )
-  }
-
-  if (plans.length === 0) {
-    return null
-  }
-
   return (
     <div style={{ marginTop: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <h3 style={{ fontSize: 13.5, fontWeight: 900, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Layers size={16} color="var(--accent, #C75B00)" />
-          <span>Plans d&apos;Échelonnement Actifs ({plans.length})</span>
-        </h3>
-        <button
-          type="button"
-          onClick={loadPlans}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700 }}
+      {/* État vide avec bouton de création direct */}
+      {plans.length === 0 ? (
+        <div
+          style={{
+            background: '#fffaf5',
+            border: '1px solid #fed7aa',
+            borderRadius: 14,
+            padding: '14px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
         >
-          <RefreshCw size={12} />
-          <span>Actualiser</span>
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {plans.map((plan) => {
-          const isExpanded = expandedPlanId === plan.id
-          const totalNum = Number(plan.montant_total) || 1
-          const payeNum = Number(plan.montant_paye) || 0
-          const pct = Math.min(100, Math.round((payeNum / totalNum) * 100))
-          const estSolde = plan.statut === 'solde' || Number(plan.solde_restant) <= 0
-
-          return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 220 }}>
             <div
-              key={plan.id}
               style={{
-                border: estSolde ? '1px solid #bbf7d0' : '1.5px solid #fed7aa',
-                background: estSolde ? '#f0fdf4' : '#fffaf5',
-                borderRadius: 12,
-                padding: '12px 14px',
-                transition: 'all 0.15s ease',
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: '#ffedd5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
-              {/* En-tête du Plan */}
-              <div
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
-                onClick={() => setExpandedPlanId(isExpanded ? null : plan.id)}
+              <Layers size={20} color="var(--accent, #C75B00)" />
+            </div>
+            <div>
+              <h4 style={{ margin: 0, fontSize: 13.5, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                Paiement Échelonné / Crédit Structuré
+              </h4>
+              <p style={{ margin: 0, fontSize: 11.5, color: '#64748b' }}>
+                Aucun plan actif pour ce client. Accordez un paiement en 2x, 3x, 4x ou 6x.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setModalCreerPlanOpen(true)}
+            className="btn-npl btn-npl-sm btn-npl-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '8px 14px' }}
+          >
+            <Plus size={14} />
+            <span>Créer un plan échelonné</span>
+          </button>
+        </div>
+      ) : (
+        /* Liste des plans actifs */
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <h3 style={{ fontSize: 13.5, fontWeight: 900, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Layers size={16} color="var(--accent, #C75B00)" />
+              <span>Plans d&apos;Échelonnement Actifs ({plans.length})</span>
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setModalCreerPlanOpen(true)}
+                className="btn-npl btn-npl-sm btn-npl-primary"
+                style={{ height: 28, padding: '0 10px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
               >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
-                      {plan.reference}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 800,
-                        padding: '1px 6px',
-                        borderRadius: 6,
-                        background: estSolde ? '#dcfce7' : '#ffedd5',
-                        color: estSolde ? '#166534' : '#9a3412',
-                      }}
-                    >
-                      {estSolde ? 'SOLDÉ' : `${plan.nb_echeances}x ${plan.frequence}`}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
-                    Total : <strong>{fcfa(plan.montant_total)}</strong> • Apport : {fcfa(plan.montant_apport)}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 900, color: estSolde ? '#166534' : '#c2410c' }}>
-                      {estSolde ? '0 FCFA' : `Reste ${fcfa(plan.solde_restant)}`}
-                    </div>
-                    <div style={{ fontSize: 10, color: '#64748b', fontWeight: 700 }}>
-                      {pct}% remboursé
-                    </div>
-                  </div>
-                  {isExpanded ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
-                </div>
-              </div>
-
-              {/* Barre de Progression */}
-              <div
-                style={{
-                  height: 6,
-                  width: '100%',
-                  background: '#e2e8f0',
-                  borderRadius: 999,
-                  overflow: 'hidden',
-                  marginTop: 8,
-                }}
+                <Plus size={12} />
+                <span>Nouveau Plan</span>
+              </button>
+              <button
+                type="button"
+                onClick={loadPlans}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700 }}
               >
+                <RefreshCw size={12} />
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {plans.map((plan) => {
+              const isExpanded = expandedPlanId === plan.id
+              const totalNum = Number(plan.montant_total) || 1
+              const payeNum = Number(plan.montant_paye) || 0
+              const pct = Math.min(100, Math.round((payeNum / totalNum) * 100))
+              const estSolde = plan.statut === 'solde' || Number(plan.solde_restant) <= 0
+
+              return (
                 <div
+                  key={plan.id}
                   style={{
-                    height: '100%',
-                    width: `${pct}%`,
-                    background: estSolde ? '#16a34a' : 'linear-gradient(90deg, #ea580c 0%, #16a34a 100%)',
-                    borderRadius: 999,
-                    transition: 'width 0.3s ease',
+                    border: estSolde ? '1px solid #bbf7d0' : '1.5px solid #fed7aa',
+                    background: estSolde ? '#f0fdf4' : '#fffaf5',
+                    borderRadius: 12,
+                    padding: '12px 14px',
+                    transition: 'all 0.15s ease',
                   }}
-                />
-              </div>
-
-              {/* Corps Déplié : Échéances & Actions */}
-              {isExpanded && (
-                <div style={{ marginTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 10 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                    {plan.echeances.map((ech) => {
-                      const isPayee = ech.statut === 'payee' || ech.statut === 'soldee_par_anticipation'
-                      const isRetard = ech.statut === 'en_retard'
-                      const isPartielle = ech.statut === 'partielle'
-
-                      return (
-                        <div
-                          key={ech.id}
+                >
+                  {/* En-tête du Plan */}
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+                    onClick={() => setExpandedPlanId(isExpanded ? null : plan.id)}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                          {plan.reference}
+                        </span>
+                        <span
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            background: '#ffffff',
-                            border: isRetard ? '1px solid #fca5a5' : isPayee ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
-                            borderRadius: 8,
-                            padding: '6px 10px',
-                            fontSize: 11.5,
+                            fontSize: 10,
+                            fontWeight: 800,
+                            padding: '1px 6px',
+                            borderRadius: 6,
+                            background: estSolde ? '#dcfce7' : '#ffedd5',
+                            color: estSolde ? '#166534' : '#9a3412',
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span
-                              style={{
-                                width: 18,
-                                height: 18,
-                                borderRadius: '50%',
-                                background: isPayee ? '#dcfce7' : isRetard ? '#fee2e2' : '#f1f5f9',
-                                color: isPayee ? '#166534' : isRetard ? '#991b1b' : '#475569',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 900,
-                                fontSize: 10,
-                              }}
-                            >
-                              {isPayee ? <Check size={11} strokeWidth={3} /> : ech.numero}
-                            </span>
-                            <div>
-                              <strong style={{ color: '#0f172a' }}>Échéance {ech.numero}</strong>
-                              <div style={{ fontSize: 10.5, color: isRetard ? '#dc2626' : '#64748b' }}>
-                                Due le {fmtDate(ech.date_echeance)} {isRetard ? `(Retard ${ech.jours_retard || 0}j)` : ''}
-                              </div>
-                            </div>
-                          </div>
+                          {estSolde ? 'SOLDÉ' : `${plan.nb_echeances}x ${plan.frequence}`}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                        Créé le {fmtDate(plan.created_at)} • Total : <strong>{fcfa(plan.montant_total)}</strong>
+                      </div>
+                    </div>
 
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontWeight: 800, color: isPayee ? '#166534' : '#0f172a' }}>
-                              {fcfa(ech.montant_total)}
-                            </div>
-                            {isPartielle && (
-                              <div style={{ fontSize: 10, color: '#ea580c', fontWeight: 700 }}>
-                                Reste : {fcfa(ech.montant_restant)}
-                              </div>
-                            )}
-                            {isPayee && (
-                              <div style={{ fontSize: 10, color: '#166534', fontWeight: 700 }}>
-                                Réglée
-                              </div>
-                            )}
-                          </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: estSolde ? '#166534' : 'var(--accent, #C75B00)' }}>
+                          {estSolde ? '0 FCFA' : `Reste : ${fcfa(plan.solde_restant)}`}
                         </div>
-                      )
-                    })}
+                        <div style={{ fontSize: 10, color: '#64748b' }}>
+                          {pct}% payé ({fcfa(plan.montant_paye)})
+                        </div>
+                      </div>
+                      {isExpanded ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
+                    </div>
                   </div>
 
-                  {/* Boutons d'Action Plan */}
-                  {!estSolde && (
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEncaisser(plan)}
-                        className="btn-npl btn-npl-sm btn-npl-primary"
-                        style={{ flex: 1, minWidth: 120, height: 34, fontSize: 12 }}
-                      >
-                        <CreditCard size={13} />
-                        <span>Encaisser (FIFO)</span>
-                      </button>
+                  {/* Barre de Progression */}
+                  <div
+                    style={{
+                      height: 6,
+                      background: '#e2e8f0',
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      marginTop: 8,
+                      marginBottom: isExpanded ? 12 : 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${pct}%`,
+                        background: estSolde ? '#16a34a' : 'linear-gradient(90deg, #f97316, #ea580c)',
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleSolderAnticipe(plan)}
-                        disabled={loadingAction}
-                        className="btn-npl btn-npl-sm btn-npl-secondary"
-                        style={{ flex: 1, minWidth: 120, height: 34, fontSize: 12 }}
-                      >
-                        <Zap size={13} />
-                        <span>Solder par anticipation</span>
-                      </button>
+                  {/* Détail Déplié des Échéances */}
+                  {isExpanded && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid #f1f5f9', paddingTop: 10 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {plan.echeances.map((ech) => {
+                          const isPayee = ech.statut === 'payee' || ech.statut === 'soldee_par_anticipation'
+                          const isRetard = ech.statut === 'en_retard'
+                          const isPartielle = ech.statut === 'partielle'
 
-                      <button
-                        type="button"
-                        onClick={() => handlePartagerWhatsApp(plan)}
-                        className="btn-npl btn-npl-sm btn-npl-whatsapp"
-                        style={{ height: 34, padding: '0 10px', fontSize: 12 }}
-                        title="Envoyer l'échéancier sur WhatsApp"
-                      >
-                        <MessageCircle size={14} />
-                      </button>
+                          return (
+                            <div
+                              key={ech.id}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                background: '#ffffff',
+                                border: isRetard ? '1px solid #fca5a5' : isPayee ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                                borderRadius: 8,
+                                padding: '6px 10px',
+                                fontSize: 11.5,
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span
+                                  style={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '50%',
+                                    background: isPayee ? '#dcfce7' : isRetard ? '#fee2e2' : '#f1f5f9',
+                                    color: isPayee ? '#166534' : isRetard ? '#991b1b' : '#475569',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 900,
+                                    fontSize: 10,
+                                  }}
+                                >
+                                  {isPayee ? <Check size={11} strokeWidth={3} /> : ech.numero}
+                                </span>
+                                <div>
+                                  <strong style={{ color: '#0f172a' }}>Échéance {ech.numero}</strong>
+                                  <div style={{ fontSize: 10.5, color: isRetard ? '#dc2626' : '#64748b' }}>
+                                    Due le {fmtDate(ech.date_echeance)} {isRetard ? `(Retard ${ech.jours_retard || 0}j)` : ''}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontWeight: 800, color: isPayee ? '#166534' : '#0f172a' }}>
+                                  {fcfa(ech.montant_total)}
+                                </div>
+                                {isPartielle && (
+                                  <div style={{ fontSize: 10, color: '#ea580c', fontWeight: 700 }}>
+                                    Reste : {fcfa(ech.montant_restant)}
+                                  </div>
+                                )}
+                                {isPayee && (
+                                  <div style={{ fontSize: 10, color: '#166534', fontWeight: 700 }}>
+                                    Réglée
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Boutons d'Action Plan */}
+                      {!estSolde && (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEncaisser(plan)}
+                            className="btn-npl btn-npl-sm btn-npl-primary"
+                            style={{ flex: 1, minWidth: 120, height: 34, fontSize: 12 }}
+                          >
+                            <CreditCard size={13} />
+                            <span>Encaisser (FIFO)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSolderAnticipe(plan)}
+                            disabled={loadingAction}
+                            className="btn-npl btn-npl-sm btn-npl-secondary"
+                            style={{ flex: 1, minWidth: 120, height: 34, fontSize: 12 }}
+                          >
+                            <Zap size={13} />
+                            <span>Solder par anticipation</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handlePartagerWhatsApp(plan)}
+                            className="btn-npl btn-npl-sm btn-npl-whatsapp"
+                            style={{ height: 34, padding: '0 10px', fontSize: 12 }}
+                            title="Envoyer l'échéancier sur WhatsApp"
+                          >
+                            <MessageCircle size={14} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Modale de Création d'un Plan Échelonné */}
+      <CarnetModalCreerPlan
+        isOpen={modalCreerPlanOpen}
+        onClose={() => setModalCreerPlanOpen(false)}
+        boutiqueId={boutiqueId}
+        clientId={clientId}
+        clientNom={clientNom}
+        onPlanCreated={() => {
+          loadPlans()
+          onPlanUpdated()
+        }}
+      />
 
       {/* Modale d'Encaissement Partiel / Complet */}
       {encaissementModalOpen && selectedPlanForPay && (

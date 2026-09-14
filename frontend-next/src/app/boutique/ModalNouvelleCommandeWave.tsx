@@ -36,7 +36,7 @@ export default function ModalNouvelleCommandeWave({
   const [clientTelephone, setClientTelephone] = useState('')
   const [clientAdresse, setClientAdresse] = useState('')
   const [note, setNote] = useState('')
-  const [methodePaiement, setMethodePaiement] = useState<'wave' | 'cash' | 'orange_money'>('wave')
+  const [methodePaiement, setMethodePaiement] = useState<'wave' | 'cash' | 'orange_money' | 'echelonne'>('wave')
 
   // État de succès
   const [createdOrder, setCreatedOrder] = useState<any | null>(null)
@@ -119,6 +119,10 @@ export default function ModalNouvelleCommandeWave({
       msg += `*Pour régler directement en 1 clic par Wave sécurisé :*\n` +
         `${payUrl}\n\n` +
         `_Dès votre validation Wave, votre commande est confirmée et votre reçu officiel vous est délivré instantanément._`
+    } else if (methodePaiement === 'echelonne') {
+      msg += `*💳 Pour choisir votre formule de paiement en plusieurs fois (2x, 3x, 4x...) et régler votre acompte :*\n` +
+        `${payUrl}\n\n` +
+        `_Sélectionnez votre mensualité préférée et réglez votre acompte par Wave / OM pour valider votre commande en toute sécurité._`
     } else {
       msg += `*Mode de paiement :* ${methodePaiement === 'cash' ? 'Espèces à la livraison' : 'Orange Money'}\n` +
         `Merci pour votre confiance !`
@@ -192,8 +196,9 @@ export default function ModalNouvelleCommandeWave({
       // Construction du lien de paiement
       const SITE = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
       let finalPayUrl = result.wave_url
-      if (!finalPayUrl) {
-        finalPayUrl = `${SITE}/checkout-express?produit=${cmd.produit_id || ''}&boutique=${boutiqueId}&phone=${encodeURIComponent(cleanTel)}&pay=wave&ref=${cmd.reference}&auto=1`
+      if (!finalPayUrl || methodePaiement === 'echelonne') {
+        const echParam = methodePaiement === 'echelonne' ? '&echelonne=1' : '&pay=wave&auto=1'
+        finalPayUrl = `${SITE}/checkout-express?produit=${cmd.produit_id || ''}&boutique=${boutiqueId}&phone=${encodeURIComponent(cleanTel)}&nom=${encodeURIComponent(clientNom)}&ref=${cmd.reference}${echParam}`
       }
       setWavePaymentUrl(finalPayUrl)
       setLoading(false)
