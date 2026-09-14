@@ -874,9 +874,10 @@ async function notifierVendeurCommande(boutique, {
   sendWhatsAppNotification(vendeurTel, {
     textMessage: msg,
     title: titleTpl,
+    montant: `${montantFmt} FCFA`,
     detail: detailTpl.slice(0, 1000),
     url: lienCommandes,
-    buttonParam: boutique.slug || boutique.id,
+    buttonParam: 'boutique',
   })
     .then(() => console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`))
     .catch(err => console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message));

@@ -429,7 +429,7 @@ async function trouverBoutiqueParTelephone(phoneStr) {
 
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
-            b.couleur_theme, b.theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, b.banniere_url,
+            b.couleur_theme, COALESCE(b.theme_id, 'classique') AS theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, COALESCE(b.cover_url, '') AS banniere_url,
             b.utilisateur_id, u.nom AS proprietaire_nom
      FROM boutiques b
      LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
@@ -454,7 +454,7 @@ async function trouverBoutiqueMarchand(phone) {
 
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
-            b.couleur_theme, b.theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, b.banniere_url,
+            b.couleur_theme, COALESCE(b.theme_id, 'classique') AS theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, COALESCE(b.cover_url, '') AS banniere_url,
             b.utilisateur_id, u.nom AS proprietaire_nom,
             COALESCE(a.is_trial, false) AS is_trial, a.plan AS abonnement_plan, a.fin AS abonnement_fin
      FROM boutiques b
@@ -486,7 +486,7 @@ async function trouverToutesBoutiquesMarchand(phone) {
 
   const { rows } = await pool.query(
     `SELECT b.id, b.nom, b.slug, b.categorie, b.ville, b.description, b.telephone, b.whatsapp, b.code_pin,
-            b.couleur_theme, b.theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, b.banniere_url,
+            b.couleur_theme, COALESCE(b.theme_id, 'classique') AS theme_preset, b.slogan, b.bandeau_promo, b.bandeau_promo_actif, b.logo_url, COALESCE(b.cover_url, '') AS banniere_url,
             b.utilisateur_id, u.nom AS proprietaire_nom,
             COALESCE(a.is_trial, false) AS is_trial, a.plan AS abonnement_plan, a.fin AS abonnement_fin
      FROM boutiques b

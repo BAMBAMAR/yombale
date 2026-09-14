@@ -318,9 +318,10 @@ router.post('/commandes/express', async (req, res) => {
         sendWhatsAppNotification(client_telephone.trim(), {
           textMessage: msgClient,
           title: titleTpl,
+          montant: `${totalFmt} FCFA`,
           detail: detailTpl,
           url: urlTpl,
-          buttonParam: String(ref),
+          buttonParam: 'compte',
         })
           .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation envoyée au ${client_telephone}`))
           .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));

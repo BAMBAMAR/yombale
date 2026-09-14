@@ -190,12 +190,13 @@ async function isUtilityTemplateApproved() {
 async function sendWhatsAppNotification(phone, {
   textMessage,
   title,
+  montant,
   detail,
   url = SITE,
   buttonParam = 'boutique',
   templateOnly = false,
   fallbackSMS = true,
-}) {
+} = {}) {
   if (!phone) return null;
   const normPhone = normalisePhone(phone);
 
@@ -222,14 +223,10 @@ async function sendWhatsAppNotification(phone, {
     cleanParam = cleanParam.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
   }
 
-  // Si le template officiel UTILITY nopalou_service_commerce est approuvé par Meta,
-  // on l'utilise en priorité absolue pour éliminer à 100% l'erreur 131049 (Marketing Capping).
-  let templateToUse = 'nopalou_fiche_texte';
-  try {
-    if (await isUtilityTemplateApproved()) {
-      templateToUse = 'nopalou_service_commerce';
-    }
-  } catch {}
+  // Utilisation prioritaire du template UTILITY certifié nopalou_alerte_commande
+  // Ce template de catégorie UTILITY est exempt à 100% de la restriction Meta 131049 (Marketing Capping).
+  const cleanMontant = sanitizeTemplateParam(montant || 'Nopalou').slice(0, 30);
+  let templateToUse = 'nopalou_alerte_commande';
 
   try {
     const res = await sendWhatsAppTemplate(normPhone, templateToUse, [
@@ -237,8 +234,8 @@ async function sendWhatsAppNotification(phone, {
         type: 'body',
         parameters: [
           { type: 'text', text: cleanTitle },
+          { type: 'text', text: cleanMontant },
           { type: 'text', text: cleanDetail },
-          { type: 'text', text: cleanUrl },
         ],
       },
       {

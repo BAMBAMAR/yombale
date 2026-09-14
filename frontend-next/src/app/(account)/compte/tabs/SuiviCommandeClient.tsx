@@ -1,6 +1,8 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Clock, PackageCheck, Truck, CheckCircle2, MessageCircle, Search, AlertCircle } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import { fcfa } from '@/lib/format'
 
@@ -17,8 +19,15 @@ interface CommandeSuivie {
   boutique_whatsapp?: string
 }
 
-export default function SuiviCommandeClient() {
-  const [refInput, setRefInput] = useState('')
+interface SuiviCommandeClientProps {
+  userPhone?: string
+}
+
+export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientProps) {
+  const searchParams = useSearchParams()
+  const initialRef = searchParams.get('ref') || searchParams.get('q') || userPhone || ''
+  
+  const [refInput, setRefInput] = useState(initialRef)
   const [loading, setLoading] = useState(false)
   const [commandes, setCommandes] = useState<CommandeSuivie[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -49,6 +58,13 @@ export default function SuiviCommandeClient() {
       setLoading(false)
     }
   }, [backendUrl, t])
+
+  useEffect(() => {
+    if (initialRef) {
+      setRefInput(initialRef)
+      executeSearch(initialRef)
+    }
+  }, [initialRef, executeSearch])
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -103,7 +119,7 @@ export default function SuiviCommandeClient() {
 
         {error && (
           <div style={{ marginTop: 16, padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span></span>
+            <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
@@ -125,10 +141,10 @@ export default function SuiviCommandeClient() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
                   {[
-                    { step: 1, label: t('account.stepPending'), icon: '' },
-                    { step: 2, label: t('account.stepPreparing'), icon: '' },
-                    { step: 3, label: t('account.stepDelivering'), icon: '' },
-                    { step: 4, label: t('account.stepDelivered'), icon: '' },
+                    { step: 1, label: t('account.stepPending'), icon: <Clock size={16} /> },
+                    { step: 2, label: t('account.stepPreparing'), icon: <PackageCheck size={16} /> },
+                    { step: 3, label: t('account.stepDelivering'), icon: <Truck size={16} /> },
+                    { step: 4, label: t('account.stepDelivered'), icon: <CheckCircle2 size={16} /> },
                   ].map(st => {
                     const isActive = currentStep >= st.step
                     return (

@@ -257,7 +257,7 @@ router.get('/', async (req, res) => {
       pool.query(
         `SELECT b.id, b.slug, b.nom, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
                 b.logo_url, b.cover_url, b.horaires, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
-                a.plan AS plan_actif,
+                COALESCE(a.plan, b.plan_actif, 'pro') AS plan_actif,
                 COALESCE(ROUND(av.note_avg::numeric, 1), 5.0) AS note_moyenne,
                 COALESCE(av.total_cnt, 0) AS total_avis
          FROM boutiques b
@@ -319,14 +319,18 @@ router.get('/mine', verifierToken, async (req, res) => {
               COALESCE(b.fidelite_seuil_tampon, 2000) AS fidelite_seuil_tampon,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
               (b.utilisateur_id = $1) AS is_owner,
-              (
-                SELECT CASE 
-                  WHEN a.is_trial = true THEN 'business' 
-                  ELSE a.plan 
-                END
-                FROM abonnements a
-                WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
-                ORDER BY a.fin DESC LIMIT 1
+              COALESCE(
+                (
+                  SELECT CASE 
+                    WHEN a.is_trial = true THEN 'business' 
+                    ELSE a.plan 
+                  END
+                  FROM abonnements a
+                  WHERE a.utilisateur_id = b.utilisateur_id AND a.statut = 'actif' AND a.fin > NOW()
+                  ORDER BY a.fin DESC LIMIT 1
+                ),
+                b.plan_actif,
+                'pro'
               ) AS plan_actif,
               (
                 SELECT a.plan
@@ -490,7 +494,7 @@ router.get('/:id', async (req, res) => {
               COALESCE(b.fidelite_tampons_max, 10) AS fidelite_tampons_max,
               COALESCE(b.fidelite_seuil_tampon, 2000) AS fidelite_seuil_tampon,
               COALESCE(b.caisse_token, b.id::text) AS caisse_token,
-              a.plan AS plan_actif
+              COALESCE(a.plan, b.plan_actif, 'pro') AS plan_actif
        FROM boutiques b
        LEFT JOIN LATERAL (
          SELECT plan FROM abonnements

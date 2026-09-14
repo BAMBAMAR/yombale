@@ -232,7 +232,7 @@ export default function CompteClient({
            />
         )}
         {tab === 'mes-annonces-immo' && <AnnoncesImmoClient />}
-        {tab === 'suivi-commande' && <SuiviCommandeClient />}
+        {tab === 'suivi-commande' && <SuiviCommandeClient userPhone={session?.telephone || session?.user?.telephone || ''} />}
         {(tab === 'mes-alertes' || tab === 'alertes') && <AlertesClientTab userId={userId} />}
         {tab === 'favoris' && <FavorisClient />}
         {tab === 'profil' && <ProfilClient nom={nom} email={email || ''} />}
