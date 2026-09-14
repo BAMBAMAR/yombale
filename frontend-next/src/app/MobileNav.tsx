@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { logout } from '@/app/actions/auth'
 import {
@@ -38,6 +38,7 @@ const GUIDES: GuideItem[] = [
 export default function MobileNav({ isLoggedIn, nom }: Props) {
   const [open, setOpen] = useState(false)
   const [guidesOpen, setGuidesOpen] = useState(false)
+  const drawerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) {
@@ -55,6 +56,33 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
     setOpen(false)
   }
 
+  // Fermeture automatique au clic en dehors ou appui sur Échap
+  useEffect(() => {
+    if (!open) return
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') close()
+    }
+
+    function handlePointerDown(e: PointerEvent) {
+      if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
+        // Si le clic n'est pas sur le bouton toggle lui-même
+        const target = e.target as HTMLElement | null
+        if (!target?.closest('.mobile-nav-btn')) {
+          close()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('pointerdown', handlePointerDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [open])
+
   const displayName = nom?.trim() || 'Mon compte'
   const initiale = displayName.charAt(0).toUpperCase()
 
@@ -70,10 +98,16 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
       </button>
 
       {open && (
-        <div className="mobile-nav-overlay" onClick={close} aria-hidden="true" />
+        <div
+          className="mobile-nav-overlay"
+          onClick={close}
+          onPointerDown={close}
+          aria-hidden="true"
+        />
       )}
 
       <div
+        ref={drawerRef}
         className={`mobile-nav-drawer${open ? ' mobile-nav-drawer--open' : ''}`}
         inert={!open ? true : undefined}
       >
