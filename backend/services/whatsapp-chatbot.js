@@ -194,6 +194,75 @@ async function enregistrerDemandeSupport(phone, { nom = null, message = 'Demande
   }
 }
 
+// ── Consultation Solde & Échéances Carnet de Crédit WhatsApp ───────────────
+async function repondreDemandeCreditsWhatsApp(phone) {
+  try {
+    const cleanDigits = String(phone || '').replace(/\D/g, '');
+    const shortTel = cleanDigits.length >= 9 ? cleanDigits.slice(-9) : cleanDigits;
+
+    // 1. Chercher les comptes clients du carnet
+    const clientRes = await pool.query(
+      `SELECT c.id, c.nom, c.solde, b.nom AS boutique_nom, b.slug AS boutique_slug, b.telephone AS boutique_tel, b.whatsapp AS boutique_whatsapp
+       FROM caisse_clients_credits c
+       JOIN boutiques b ON c.boutique_id = b.id
+       WHERE REPLACE(REPLACE(c.telephone, ' ', ''), '+', '') LIKE '%' || $1`,
+      [shortTel]
+    );
+
+    if (clientRes.rows.length === 0) {
+      await sendWhatsAppText(
+        phone,
+        `📋 *Carnet de Crédit & Paiement Échelonné — Nopalou*\n\n` +
+        `Aucun compte de crédit ou créance active n'a été trouvé pour le numéro (+${phone}).\n\n` +
+        `Pour toute question ou commande, tapez *menu* ou visitez notre boutique : ${SITE}`
+      );
+      return true;
+    }
+
+    // 2. Pour chaque boutique où le client a un compte
+    let message = `📋 *Vos Soldes & Échéances — Carnet Nopalou*\n\n`;
+
+    for (const cl of clientRes.rows) {
+      const soldeNum = Number(cl.solde) || 0;
+      message += `🏪 *Boutique : ${cl.boutique_nom}*\n`;
+      message += `• Solde global dû : *${prixFmt(soldeNum)}*\n`;
+
+      // Chercher les plans et prochaines échéances
+      const echRes = await pool.query(
+        `SELECT e.numero, e.montant_total, e.montant_restant, e.date_echeance, e.statut, p.reference
+         FROM caisse_credit_echeances e
+         JOIN caisse_credit_plans p ON e.plan_id = p.id
+         WHERE p.client_id = $1 AND p.statut = 'actif' AND e.statut NOT IN ('payee', 'soldee_par_anticipation')
+         ORDER BY e.date_echeance ASC
+         LIMIT 3`,
+        [cl.id]
+      );
+
+      if (echRes.rows.length > 0) {
+        message += `• *Prochaines échéances :*\n`;
+        echRes.rows.forEach(e => {
+          const echDate = e.date_echeance ? new Date(e.date_echeance).toLocaleDateString('fr-FR') : 'N/C';
+          message += `  └ Éch. ${e.numero} (${e.reference}) : *${prixFmt(e.montant_restant)}* le ${echDate}\n`;
+        });
+      }
+
+      const telContact = cl.boutique_whatsapp || cl.boutique_tel;
+      if (telContact) {
+        message += `• Contact boutique : ${telContact}\n`;
+      }
+      message += `\n`;
+    }
+
+    message += `🙏 Merci de votre fidélité ! Tapez *menu* pour d'autres options.`;
+
+    await sendWhatsAppText(phone, message);
+    return true;
+  } catch (err) {
+    console.error('[WHATSAPP CREDITS CHECK ERR]:', err.message);
+    return false;
+  }
+}
+
 // ── Session DB ────────────────────────────────────────────────────────────────
 async function getSession(phone) {
   const r = await pool.query(
@@ -3225,6 +3294,16 @@ async function handleIncomingInternal(msg) {
           console.error('[AJOUT PRODUIT WA ERR]', pErr.message);
         }
       }
+    }
+
+    // Détection spécifique : Consultation de solde / créance / échéances carnet de crédit
+    const normClean = normaliserTexte(text);
+    const MOTS_CREDIT = ['credit', 'carnet', 'echeance', 'echeancier', 'mes dettes', 'mon solde', 'mes echeances', 'combien je dois', 'combien me reste', 'prochaine echeance', 'dette'];
+    if (MOTS_CREDIT.some(m => normClean === m || normClean.includes(m))) {
+      await repondreDemandeCreditsWhatsApp(phone);
+      await sendWhatsAppMenuOuFin(phone, 'Une autre question ?').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
     }
 
     // Texte libre reçu en état MENU → question FAQ, sinon traiter comme recherche

@@ -49,6 +49,7 @@ export const VALID_TABS: ManageTab[] = [
   'journal',
   'developer',
   'fidelite',
+  'echelonnement',
   'appstore',
   'entrepots',
   'abtesting',
@@ -91,6 +92,7 @@ export function getNavCommerce(t: (key: string) => string): NavGroup[] {
       title: 'Outils commerciaux',
       items: [
         { key: 'carnet', icon: BookOpen, label: t('shop.debts') || 'Carnet de dettes' },
+        { key: 'echelonnement', icon: CreditCard, label: 'Paiement Échelonné' },
         { key: 'express', icon: Zap, label: t('shop.saisieExpress') || 'Ventes & Dépenses rapides' },
         { key: 'fidelite', icon: Gift, label: t('shop.fidelitePromos') || 'Fidélité & Promotions' },
         { key: 'fournisseurs', icon: Truck, label: t('shop.suppliers') || 'Fournisseurs', minPlan: 'pro' },
@@ -162,6 +164,11 @@ export function getTabInfoMap(t: (key: string) => string): Record<ManageTab, { t
       desc:
         t('shop.fidelitePromosDesc') ||
         'Configurez le programme de fidélité, le cashback, les plafonds de remise caisse et les codes promo.',
+    },
+    echelonnement: {
+      icon: CreditCard,
+      title: 'Conditions de Paiement Échelonné',
+      desc: 'Définissez vos règles de crédit : apport minimum, formules 2x à 12x, calendrier et frais.',
     },
     personnaliser: {
       icon: Palette,

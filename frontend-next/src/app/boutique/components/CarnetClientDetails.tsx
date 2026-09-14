@@ -3,6 +3,7 @@
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
 import { Plus, ArrowDownLeft, Printer, MessageCircle, Edit3, X, ArrowLeft } from 'lucide-react'
+import CarnetPlansEchelonnes from '../carnet/components/CarnetPlansEchelonnes'
 
 export interface ClientCredit {
   id: string
@@ -264,6 +265,17 @@ export default function CarnetClientDetails({
           </button>
         )}
       </div>
+
+      {/* Plans d'échelonnement et échéances du client */}
+      <CarnetPlansEchelonnes
+        boutiqueId={client.boutique_id}
+        clientId={client.id}
+        clientNom={client.nom}
+        clientTelephone={client.telephone}
+        onPlanUpdated={() => {
+          // Recharger les données si nécessaire
+        }}
+      />
 
       {/* Historique des opérations */}
       <div>

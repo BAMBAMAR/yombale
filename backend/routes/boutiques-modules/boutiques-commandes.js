@@ -11,6 +11,7 @@ const { syncProduit, deleteProduit } = require('../../services/whatsapp-catalog'
 const cfg = require('../../lib/settingsCache');
 const { enregistrerAuditLog } = require('../../lib/auditLogger');
 const { normalizeSocialUrl } = require('../../services/social-parser');
+const creditCalc = require('../../lib/creditCalculator');
 const {
   checkBoutiqueAccess,
   checkBoutiqueQuotas,
@@ -98,7 +99,7 @@ router.post('/:id/paniers-abandonnes/:cartId/relancer', verifierToken, async (re
 router.post('/commandes/express', async (req, res) => {
   try {
     const { boutique_id, client_nom, client_telephone, client_adresse, methode_paiement, note, frais_livraison, articles, code_promo, montant_reduction, remise,
-      utm_source, utm_medium, utm_campaign, social_post_id } = req.body;
+      utm_source, utm_medium, utm_campaign, social_post_id, formule_echelonnement } = req.body;
 
     if (!boutique_id) {
       return res.status(400).json({ error: 'Boutique introuvable ou ID requis.' });
@@ -206,6 +207,14 @@ router.post('/commandes/express', async (req, res) => {
     if (promoAppliquee) {
       const promoNote = `[Code Promo: ${promoAppliquee}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
       finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
+    }
+
+    if (formule_echelonnement && typeof formule_echelonnement === 'object') {
+      const appFmt = (Number(formule_echelonnement.apport) || 0).toLocaleString('fr-FR');
+      const nbEch = formule_echelonnement.nb_echeances || 3;
+      const freq = formule_echelonnement.frequence || 'mensuel';
+      const echNote = `[Paiement Échelonné: Apport ${appFmt} FCFA + ${nbEch}x (${freq})]`;
+      finalNote = finalNote ? `${finalNote} | ${echNote}` : echNote;
     }
 
     // Enregistrement des lignes de commande avec les prix vérifiés

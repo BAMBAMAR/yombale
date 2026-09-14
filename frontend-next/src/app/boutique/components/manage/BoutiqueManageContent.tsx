@@ -24,6 +24,7 @@ const GestionDocuments = dynamic(() => import('../../GestionDocuments'))
 const GestionFournisseurs = dynamic(() => import('../../GestionFournisseurs'))
 const ParametresFiscalite = dynamic(() => import('../../ParametresFiscalite'))
 const ParametresFidelitePromos = dynamic(() => import('../../ParametresFidelitePromos'))
+const ParametresEchelonnement = dynamic(() => import('../../ParametresEchelonnement'))
 const BoutiqueLogs = dynamic(() => import('../../BoutiqueLogs'))
 const PortailDeveloppeurBoutique = dynamic(() => import('../../PortailDeveloppeurBoutique'))
 const AppStoreBoutique = dynamic(() => import('../../AppStoreBoutique'))
@@ -171,6 +172,7 @@ export default function BoutiqueManageContent({
       {tab === 'fournisseurs' && <GestionFournisseurs boutiqueId={boutique.id} />}
       {tab === 'fiscalite' && <ParametresFiscalite boutique={boutique} onUpdate={() => router.refresh()} />}
       {tab === 'fidelite' && <ParametresFidelitePromos boutique={boutique} onUpdate={() => router.refresh()} />}
+      {tab === 'echelonnement' && <ParametresEchelonnement boutique={boutique} onUpdate={onBoutiqueSaved} />}
       {tab === 'journal' && <BoutiqueLogs boutiqueId={boutique.id} />}
       {tab === 'developer' && (
         <PortailDeveloppeurBoutique boutiqueId={boutique.id} planActif={effectivePlan || 'decouverte'} />

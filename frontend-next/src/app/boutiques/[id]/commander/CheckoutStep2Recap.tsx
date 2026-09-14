@@ -44,6 +44,8 @@ interface CheckoutStep2RecapProps {
   error: string | null
   onSubmit: () => void
   onBack: () => void
+  boutiqueId?: string
+  onFormuleChoisie?: (formule: any) => void
 }
 
 export default function CheckoutStep2Recap({
@@ -75,6 +77,8 @@ export default function CheckoutStep2Recap({
   error,
   onSubmit,
   onBack,
+  boutiqueId,
+  onFormuleChoisie,
 }: CheckoutStep2RecapProps) {
   return (
     <div className="checkout-step-container">
@@ -229,6 +233,8 @@ export default function CheckoutStep2Recap({
           cardCvc={cardCvc}
           setCardCvc={setCardCvc}
           total={total}
+          boutiqueId={boutiqueId}
+          onFormuleChoisie={onFormuleChoisie}
         />
       </div>
 

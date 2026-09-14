@@ -972,6 +972,68 @@ it('Password Validator: contrôle strict de la robustesse (min 8 chars, 1 chiffr
   assert.equal(validerForceMotDePasse('dakar_2026*pro').valide, true)
 })
 
+console.log('\n📦 20. Moteur de Paiement Échelonné & Carnet de Crédit (creditCalculator.ts)')
+it('creditCalculator: validation stricte des règles marchand et seuils', async () => {
+  const { validerReglesEchelonnement, CONFIG_DEFAUT_ECHELONNEMENT } = await import('../src/lib/creditCalculator.ts')
+  const config = {
+    ...CONFIG_DEFAUT_ECHELONNEMENT,
+    actif: true,
+    montant_min_vente: 10000,
+    montant_max_vente: 2000000,
+    apport_min_pct: 20,
+    apport_min_fcfa: 5000,
+    nb_echeances_autorisees: [2, 3, 4, 6],
+    frequences_autorisees: ['mensuel', 'bimensuel', 'hebdomadaire'],
+  }
+
+  assert.equal(validerReglesEchelonnement(config, { montantTotal: 50000, apport: 15000, nbEcheances: 3, frequence: 'mensuel' }).valide, true)
+  assert.equal(validerReglesEchelonnement({ ...config, actif: false }, { montantTotal: 50000, apport: 15000, nbEcheances: 3, frequence: 'mensuel' }).valide, false)
+  assert.equal(validerReglesEchelonnement(config, { montantTotal: 5000, apport: 1000, nbEcheances: 3, frequence: 'mensuel' }).valide, false)
+  assert.equal(validerReglesEchelonnement(config, { montantTotal: 100000, apport: 10000, nbEcheances: 3, frequence: 'mensuel' }).valide, false)
+  assert.equal(validerReglesEchelonnement(config, { montantTotal: 60000, apport: 20000, nbEcheances: 5, frequence: 'mensuel' }).valide, false)
+})
+
+it('creditCalculator: garantie absolue de l’arrondi au franc (somme des échéances === financé)', async () => {
+  const { calculerEcheancier, CONFIG_DEFAUT_ECHELONNEMENT } = await import('../src/lib/creditCalculator.ts')
+  const calc = calculerEcheancier({
+    montantTotal: 100000,
+    apport: 20000,
+    nbEcheances: 3,
+    frequence: 'mensuel',
+    config: CONFIG_DEFAUT_ECHELONNEMENT,
+  })
+
+  assert.equal(calc.valide, true)
+  assert.equal(calc.montant_finance, 80000)
+  assert.equal(calc.echeances.length, 3)
+  assert.equal(calc.echeances[0].montant_prevu, 26666)
+  assert.equal(calc.echeances[1].montant_prevu, 26666)
+  assert.equal(calc.echeances[2].montant_prevu, 26668)
+
+  const somme = calc.echeances.reduce((sum, e) => sum + e.montant_prevu, 0)
+  assert.equal(somme, 80000)
+  assert.equal(somme + calc.apport_initial, calc.total_a_payer)
+})
+
+it('creditCalculator: imputation FIFO et solde anticipé', async () => {
+  const { imputerPaiementSurEcheances, solderCreditAnticipe } = await import('../src/lib/creditCalculator.ts')
+  const echeances = [
+    { id: '1', numero_echeance: 1, montant_prevu: 20000, montant_paye: 0, montant_restant: 20000, statut: 'a_venir' },
+    { id: '2', numero_echeance: 2, montant_prevu: 20000, montant_paye: 0, montant_restant: 20000, statut: 'a_venir' },
+  ]
+
+  const r1 = imputerPaiementSurEcheances(echeances, 25000)
+  assert.equal(r1.echeancesUpdated[0].statut, 'payee')
+  assert.equal(r1.echeancesUpdated[0].montant_paye, 20000)
+  assert.equal(r1.echeancesUpdated[1].statut, 'partielle')
+  assert.equal(r1.echeancesUpdated[1].montant_paye, 5000)
+  assert.equal(r1.echeancesUpdated[1].montant_restant, 15000)
+
+  const rSolde = solderCreditAnticipe({ id: 'p1', montant_total: 40000, solde_restant: 20000, statut: 'actif' }, echeances)
+  assert.equal(rSolde.planUpdated.statut, 'solde')
+  assert.equal(rSolde.echeancesUpdated[0].statut, 'soldee_par_anticipation')
+})
+
 console.log('\n──────────────────────────────────────────────────────────')
 console.log(`Résultats: ${passed} passés, ${failed} échoués (Total: ${passed + failed})`)
 if (failed > 0) process.exit(1)

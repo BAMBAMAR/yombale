@@ -3,12 +3,90 @@
 const router = require('express').Router();
 const { param } = require('express-validator');
 const { pool } = require('../../models/db');
-const { verifierToken } = require('../../middlewares/auth');
+const { verifierToken, tokenOptional } = require('../../middlewares/auth');
 const { checkBoutiqueAccess } = require('../../middlewares/tenantSecurity');
+const creditCalc = require('../../lib/creditCalculator');
+
+// Auto-migration de sécurité : tables et colonnes d'échelonnement
+let _creditSchemaMigrated = false;
+async function ensureCreditSchema() {
+  if (_creditSchemaMigrated) return;
+  try {
+    await pool.query(`
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS echelonnement_actif BOOLEAN DEFAULT FALSE;
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS echelonnement_config JSONB DEFAULT '{
+        "actif": false,
+        "montant_min_vente": 10000,
+        "montant_max_vente": 5000000,
+        "apport_min_pct": 20,
+        "apport_min_fcfa": 5000,
+        "echeance_min_fcfa": 5000,
+        "nb_echeances_autorisees": [2, 3, 4, 6],
+        "frequences_autorisees": ["mensuel", "bimensuel", "hebdomadaire"],
+        "delai_premiere_echeance_jours": 30,
+        "frais_dossier_fixes": 0,
+        "frais_pourcentage": 0
+      }'::jsonb;
+
+      CREATE TABLE IF NOT EXISTS caisse_credit_plans (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        boutique_id      UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_id        UUID NOT NULL REFERENCES caisse_clients_credits(id) ON DELETE CASCADE,
+        commande_id      UUID REFERENCES commandes_boutique(id) ON DELETE SET NULL,
+        reference        VARCHAR(100) UNIQUE NOT NULL,
+        montant_total    NUMERIC(12,2) NOT NULL,
+        frais_dossier    NUMERIC(12,2) NOT NULL DEFAULT 0,
+        apport_initial   NUMERIC(12,2) NOT NULL DEFAULT 0,
+        montant_finance  NUMERIC(12,2) NOT NULL,
+        montant_paye     NUMERIC(12,2) NOT NULL DEFAULT 0,
+        montant_restant  NUMERIC(12,2) NOT NULL,
+        nb_echeances     INT NOT NULL DEFAULT 3,
+        frequence        VARCHAR(30) NOT NULL DEFAULT 'mensuel',
+        statut           VARCHAR(30) NOT NULL DEFAULT 'en_cours',
+        date_debut       DATE NOT NULL DEFAULT CURRENT_DATE,
+        snapshot_regles  JSONB NOT NULL DEFAULT '{}'::jsonb,
+        articles         JSONB NOT NULL DEFAULT '[]'::jsonb,
+        notes            TEXT,
+        idempotency_key  VARCHAR(128),
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_credit_plans_bq_client ON caisse_credit_plans(boutique_id, client_id);
+      CREATE INDEX IF NOT EXISTS idx_credit_plans_statut ON caisse_credit_plans(boutique_id, statut);
+      CREATE INDEX IF NOT EXISTS idx_credit_plans_ref ON caisse_credit_plans(boutique_id, reference);
+
+      CREATE TABLE IF NOT EXISTS caisse_credit_echeances (
+        id                         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        plan_id                    UUID NOT NULL REFERENCES caisse_credit_plans(id) ON DELETE CASCADE,
+        boutique_id                UUID NOT NULL REFERENCES boutiques(id) ON DELETE CASCADE,
+        client_id                  UUID NOT NULL REFERENCES caisse_clients_credits(id) ON DELETE CASCADE,
+        numero_echeance            INT NOT NULL,
+        date_echeance              DATE NOT NULL,
+        montant_prevu              NUMERIC(12,2) NOT NULL,
+        montant_paye               NUMERIC(12,2) NOT NULL DEFAULT 0,
+        montant_restant            NUMERIC(12,2) NOT NULL,
+        statut                     VARCHAR(30) NOT NULL DEFAULT 'a_venir',
+        date_paiement_complet      TIMESTAMPTZ,
+        derniere_relance_whatsapp  TIMESTAMPTZ,
+        created_at                 TIMESTAMPTZ DEFAULT NOW(),
+        updated_at                 TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_credit_ech_plan ON caisse_credit_echeances(plan_id, numero_echeance);
+      CREATE INDEX IF NOT EXISTS idx_credit_ech_date ON caisse_credit_echeances(boutique_id, date_echeance, statut);
+      CREATE INDEX IF NOT EXISTS idx_credit_ech_client ON caisse_credit_echeances(client_id, statut);
+      ALTER TABLE caisse_credit_historique ADD COLUMN IF NOT EXISTS reference VARCHAR(128);
+      CREATE INDEX IF NOT EXISTS idx_credit_hist_ref ON caisse_credit_historique(boutique_id, reference);
+    `);
+    _creditSchemaMigrated = true;
+  } catch {
+    _creditSchemaMigrated = true;
+  }
+}
 
 // ── GET /api/boutiques/:id/credits-clients — Liste des clients avec carnet de dettes/avances
 router.get('/:id/credits-clients', verifierToken, async (req, res) => {
   try {
+    await ensureCreditSchema();
     const { id } = req.params;
     const b = await checkBoutiqueAccess(id, req.user.userId);
     if (!b && !req.user?.is_admin) {
@@ -671,4 +749,756 @@ router.post('/:id/credits-clients/approuver-commande', verifierToken, async (req
   }
 });
 
+// ── GET /api/boutiques/:id/credits-config — Obtenir la configuration du paiement échelonné
+router.get('/:id/credits-config', tokenOptional, async (req, res) => {
+  try {
+    await ensureCreditSchema();
+    const { id } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const b = await pool.query(
+      `SELECT id, nom, slug, echelonnement_actif, echelonnement_config FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      [id]
+    );
+    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const boutique = b.rows[0];
+    const config = {
+      ...creditCalc.CONFIG_DEFAUT,
+      ...(boutique.echelonnement_config || {}),
+      actif: boutique.echelonnement_actif === true || boutique.echelonnement_config?.actif === true,
+    };
+
+    res.json({ success: true, config, boutique: { id: boutique.id, nom: boutique.nom, slug: boutique.slug } });
+  } catch (err) {
+    console.error('[CREDITS CONFIG GET]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── PUT /api/boutiques/:id/credits-config — Mettre à jour la configuration échelonnement (Marchand)
+router.put('/:id/credits-config', verifierToken, async (req, res) => {
+  try {
+    await ensureCreditSchema();
+    const { id } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour configurer les crédits de cette boutique' });
+    }
+
+    const {
+      actif,
+      montant_min_vente,
+      montant_max_vente,
+      apport_min_pct,
+      apport_min_fcfa,
+      echeance_min_fcfa,
+      nb_echeances_autorisees,
+      frequences_autorisees,
+      delai_premiere_echeance_jours,
+      frais_dossier_fixes,
+      frais_pourcentage,
+    } = req.body;
+
+    const newConfig = {
+      actif: Boolean(actif),
+      montant_min_vente: Math.max(0, Number(montant_min_vente) || 10000),
+      montant_max_vente: montant_max_vente ? Math.max(0, Number(montant_max_vente)) : 5000000,
+      apport_min_pct: Math.min(100, Math.max(0, Number(apport_min_pct !== undefined ? apport_min_pct : 20))),
+      apport_min_fcfa: Math.max(0, Number(apport_min_fcfa) || 0),
+      echeance_min_fcfa: Math.max(0, Number(echeance_min_fcfa) || 5000),
+      nb_echeances_autorisees: Array.isArray(nb_echeances_autorisees) && nb_echeances_autorisees.length > 0
+        ? nb_echeances_autorisees.map(Number).filter(n => n >= 2 && n <= 24)
+        : [2, 3, 4, 6],
+      frequences_autorisees: Array.isArray(frequences_autorisees) && frequences_autorisees.length > 0
+        ? frequences_autorisees
+        : ['mensuel', 'bimensuel', 'hebdomadaire'],
+      delai_premiere_echeance_jours: Math.max(1, Number(delai_premiere_echeance_jours) || 30),
+      frais_dossier_fixes: Math.max(0, Number(frais_dossier_fixes) || 0),
+      frais_pourcentage: Math.max(0, Number(frais_pourcentage) || 0),
+    };
+
+    await pool.query(
+      `UPDATE boutiques 
+       SET echelonnement_actif = $1, echelonnement_config = $2, updated_at = NOW() 
+       WHERE id = $3`,
+      [newConfig.actif, JSON.stringify(newConfig), b.id]
+    );
+
+    res.json({ success: true, message: 'Conditions de paiement échelonné mises à jour avec succès', config: newConfig });
+  } catch (err) {
+    console.error('[CREDITS CONFIG PUT]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/credits-calculer — Moteur de simulation d'échéancier (Acheteur / Marchand)
+router.post('/:id/credits-calculer', tokenOptional, async (req, res) => {
+  try {
+    await ensureCreditSchema();
+    const { id } = req.params;
+    const isUUID = /^[0-9a-f-]{36}$/i.test(id);
+    const b = await pool.query(
+      `SELECT id, nom, slug, echelonnement_actif, echelonnement_config FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      [id]
+    );
+    if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const boutique = b.rows[0];
+    const config = {
+      ...creditCalc.CONFIG_DEFAUT,
+      ...(boutique.echelonnement_config || {}),
+      actif: boutique.echelonnement_actif === true || boutique.echelonnement_config?.actif === true,
+    };
+
+    const { montantTotal, apport, nbEcheances, frequence, dateDebut } = req.body;
+    const numTotal = Number(montantTotal) || 0;
+
+    // Génération des formules recommandées + calcul personnalisé
+    const formules = creditCalc.genererFormulesRecommandees(numTotal, config, dateDebut);
+
+    let calculPersonnalise = null;
+    if (apport !== undefined && nbEcheances !== undefined) {
+      calculPersonnalise = creditCalc.calculerEcheancier({
+        montantTotal: numTotal,
+        apport: Number(apport),
+        nbEcheances: Number(nbEcheances),
+        frequence: frequence || 'mensuel',
+        dateDebut: dateDebut || new Date(),
+        config,
+      });
+    }
+
+    res.json({
+      success: true,
+      config,
+      formules,
+      calcul: calculPersonnalise,
+    });
+  } catch (err) {
+    console.error('[CREDITS CALCULER POST]', err);
+    res.status(500).json({ error: 'Erreur lors du calcul de l\'échéancier' });
+  }
+});
+
+// ── GET /api/boutiques/:id/credits-clients/:clientId/plans — Obtenir les plans et échéances d'un client
+router.get('/:id/credits-clients/:clientId/plans', verifierToken, async (req, res) => {
+  try {
+    await ensureCreditSchema();
+    const { id, clientId } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé aux dossiers de crédit' });
+    }
+
+    const { rows: plans } = await pool.query(
+      `SELECT * FROM caisse_credit_plans 
+       WHERE boutique_id = $1 AND client_id = $2 
+       ORDER BY created_at DESC`,
+      [b.id, clientId]
+    );
+
+    const { rows: echeances } = await pool.query(
+      `SELECT * FROM caisse_credit_echeances 
+       WHERE boutique_id = $1 AND client_id = $2 
+       ORDER BY date_echeance ASC, numero_echeance ASC`,
+      [b.id, clientId]
+    );
+
+    const echMap = new Map();
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    echeances.forEach(ech => {
+      // Calcul automatique de retard
+      if (ech.statut !== 'payee' && ech.statut !== 'soldee_par_anticipation' && ech.statut !== 'annulee') {
+        const echDateStr = typeof ech.date_echeance === 'string' ? ech.date_echeance.split('T')[0] : new Date(ech.date_echeance).toISOString().split('T')[0];
+        if (echDateStr < todayStr) {
+          ech.statut = 'en_retard';
+          const diffJours = Math.floor((new Date(todayStr).getTime() - new Date(echDateStr).getTime()) / (1000 * 60 * 60 * 24));
+          ech.jours_retard = diffJours;
+        } else if (echDateStr === todayStr) {
+          ech.statut = 'bientot_due';
+          ech.jours_retard = 0;
+        }
+      }
+      if (!echMap.has(ech.plan_id)) echMap.set(ech.plan_id, []);
+      echMap.get(ech.plan_id).push(ech);
+    });
+
+    plans.forEach(p => {
+      p.echeances = echMap.get(p.id) || [];
+      p.nb_payees = p.echeances.filter(e => e.statut === 'payee').length;
+      p.has_retard = p.echeances.some(e => e.statut === 'en_retard');
+    });
+
+    res.json({ success: true, plans, echeances });
+  } catch (err) {
+    console.error('[CREDITS PLANS GET]', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ── POST /api/boutiques/:id/credits-clients/:clientId/creer-plan — Créer un plan de crédit avec échéancier
+router.post('/:id/credits-clients/:clientId/creer-plan', verifierToken, async (req, res) => {
+  try {
+    await ensureCreditSchema();
+    const { id, clientId } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour créer un dossier de crédit' });
+    }
+
+    const {
+      montant_total,
+      apport_initial,
+      nb_echeances,
+      frequence,
+      date_debut,
+      articles,
+      notes,
+      mode_paiement_apport,
+      commande_id,
+      idempotency_key,
+    } = req.body;
+
+    const numTotal = Number(montant_total) || 0;
+    const numApport = Number(apport_initial) || 0;
+    const numNb = Number(nb_echeances) || 3;
+    const freq = String(frequence || 'mensuel').toLowerCase();
+
+    if (numTotal <= 0) {
+      return res.status(400).json({ error: 'Montant total de la vente valide (> 0) requis.' });
+    }
+
+    // Gestion de l'idempotence
+    if (idempotency_key) {
+      const existingPlan = await pool.query(
+        `SELECT id, reference, montant_total, montant_restant FROM caisse_credit_plans WHERE boutique_id = $1 AND idempotency_key = $2 LIMIT 1`,
+        [b.id, idempotency_key]
+      );
+      if (existingPlan.rows[0]) {
+        return res.json({ success: true, duplicate: true, plan: existingPlan.rows[0] });
+      }
+    }
+
+    // Récupération de la config de la boutique
+    const bqConfigRes = await pool.query(`SELECT echelonnement_actif, echelonnement_config FROM boutiques WHERE id = $1`, [b.id]);
+    const bqConfig = {
+      ...creditCalc.CONFIG_DEFAUT,
+      ...(bqConfigRes.rows[0]?.echelonnement_config || {}),
+      actif: bqConfigRes.rows[0]?.echelonnement_actif === true || bqConfigRes.rows[0]?.echelonnement_config?.actif === true,
+    };
+
+    // Validation stricte des règles
+    const validation = creditCalc.validerReglesEchelonnement(bqConfig, {
+      montantTotal: numTotal,
+      apport: numApport,
+      nbEcheances: numNb,
+      frequence: freq,
+    });
+
+    if (!validation.valide) {
+      return res.status(400).json({ error: validation.erreur });
+    }
+
+    // Calcul de l'échéancier exact
+    const calcul = creditCalc.calculerEcheancier({
+      montantTotal: numTotal,
+      apport: numApport,
+      nbEcheances: numNb,
+      frequence: freq,
+      dateDebut: date_debut || new Date(),
+      config: bqConfig,
+    });
+
+    const dbClient = await pool.connect();
+    try {
+      await dbClient.query('BEGIN');
+
+      // Verrouillage du client
+      const cRes = await dbClient.query(
+        `SELECT * FROM caisse_clients_credits WHERE id = $1 AND boutique_id = $2 FOR UPDATE`,
+        [clientId, b.id]
+      );
+      if (!cRes.rows[0]) {
+        await dbClient.query('ROLLBACK');
+        return res.status(404).json({ error: 'Client introuvable' });
+      }
+      const clientCarnet = cRes.rows[0];
+
+      if (clientCarnet.statut === 'bloque') {
+        await dbClient.query('ROLLBACK');
+        return res.status(400).json({ error: '⛔ Ce client est actuellement bloqué/blacklisté.' });
+      }
+
+      // Vérification plafond de crédit
+      const soldeActuel = Number(clientCarnet.solde || 0);
+      const plafondMax = Number(clientCarnet.plafond_max || 200000);
+      const montantFinance = calcul.montant_finance;
+      const nouveauSolde = soldeActuel + montantFinance;
+
+      if (nouveauSolde > plafondMax) {
+        await dbClient.query('ROLLBACK');
+        return res.status(400).json({
+          error: `Le plafond de crédit du client (${plafondMax.toLocaleString('fr-FR')} FCFA) serait dépassé. Nouveau solde : ${nouveauSolde.toLocaleString('fr-FR')} FCFA.`,
+        });
+      }
+
+      const planRef = idempotency_key || `CRD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      // 1. Insertion du plan de crédit (avec snapshot des règles figées)
+      const planRes = await dbClient.query(
+        `INSERT INTO caisse_credit_plans (
+          boutique_id, client_id, commande_id, reference, montant_total, frais_dossier,
+          apport_initial, montant_finance, montant_paye, montant_restant, nb_echeances,
+          frequence, statut, date_debut, snapshot_regles, articles, notes, idempotency_key, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $8, $9, $10, 'en_cours', $11, $12, $13, $14, $15, NOW(), NOW())
+        RETURNING *`,
+        [
+          b.id,
+          clientId,
+          commande_id || null,
+          planRef,
+          calcul.total_a_payer,
+          calcul.frais_dossier,
+          numApport,
+          montantFinance,
+          numNb,
+          freq,
+          date_debut || new Date().toISOString().split('T')[0],
+          JSON.stringify(bqConfig),
+          JSON.stringify(articles || []),
+          notes || null,
+          idempotency_key || null,
+        ]
+      );
+      const createdPlan = planRes.rows[0];
+
+      // 2. Insertion des échéances contractuelles
+      const insertedEcheances = [];
+      for (const ech of calcul.echeances) {
+        const echRes = await dbClient.query(
+          `INSERT INTO caisse_credit_echeances (
+            plan_id, boutique_id, client_id, numero_echeance, date_echeance,
+            montant_prevu, montant_paye, montant_restant, statut, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, 0, $6, 'a_venir', NOW(), NOW())
+          RETURNING *`,
+          [createdPlan.id, b.id, clientId, ech.numero_echeance, ech.date_echeance, ech.montant_prevu]
+        );
+        insertedEcheances.push(echRes.rows[0]);
+      }
+
+      // 3. Écriture comptable dans caisse_credit_historique pour la vente à crédit
+      await dbClient.query(
+        `INSERT INTO caisse_credit_historique (
+          client_id, boutique_id, type, montant, mode_paiement, note, produits,
+          date_echeance, relance_auto_whatsapp, reference, created_at
+        ) VALUES ($1, $2, 'vente_credit', $3, 'credit', $4, $5, $6, true, $7, NOW())`,
+        [
+          clientId,
+          b.id,
+          numTotal,
+          `Plan ${numNb}x (${freq}) — Réf: ${planRef}${notes ? ` | ${notes}` : ''}`,
+          JSON.stringify(articles || []),
+          calcul.prochaine_echeance,
+          planRef,
+        ]
+      );
+
+      // 4. Si un apport initial a été versé immédiatement, enregistrement du reçu
+      if (numApport > 0) {
+        await dbClient.query(
+          `INSERT INTO caisse_credit_historique (
+            client_id, boutique_id, type, montant, mode_paiement, note, reference, created_at
+          ) VALUES ($1, $2, 'remboursement', $3, $4, $5, $6, NOW())`,
+          [
+            clientId,
+            b.id,
+            numApport,
+            mode_paiement_apport || 'especes',
+            `Apport initial sur plan ${planRef}`,
+            `${planRef}-APPORT`,
+          ]
+        );
+      }
+
+      // 5. Mise à jour du solde du client
+      await dbClient.query(
+        `UPDATE caisse_clients_credits SET solde = $1, updated_at = NOW() WHERE id = $2`,
+        [nouveauSolde, clientId]
+      );
+
+      // 6. Décrémentation de stock pour chaque article et insertion dans ventes
+      if (Array.isArray(articles) && articles.length > 0) {
+        for (let idx = 0; idx < articles.length; idx++) {
+          const item = articles[idx];
+          const qte = Number(item.quantite || 1);
+          const pId = item.id || item.produit_id;
+
+          let pRes = null;
+          if (pId && /^[0-9a-f-]{36}$/i.test(String(pId))) {
+            pRes = await dbClient.query(
+              `UPDATE boutique_produits
+               SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
+                   en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
+               WHERE id = $2 AND boutique_id = $3
+               RETURNING id, nom, prix`,
+              [qte, pId, b.id]
+            );
+          }
+
+          const itemNom = item.nom || item.nom_produit || pRes?.rows[0]?.nom || 'Article Échelonné';
+          const itemPrix = Number(item.prix || item.prix_unitaire || pRes?.rows[0]?.prix || 0);
+          const totalLigne = itemPrix * qte;
+          const itemRef = articles.length > 1 ? `${planRef}-${idx + 1}` : planRef;
+
+          await dbClient.query(
+            `INSERT INTO ventes (
+              reference, boutique_id, produit_id, nom_produit, quantite,
+              prix_unitaire, frais_livraison, montant_total, client_nom, client_telephone, methode_paiement, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, 'credit_echelonne', NOW())
+            ON CONFLICT (reference) DO NOTHING`,
+            [itemRef, b.id, pRes?.rows[0]?.id || null, itemNom, qte, itemPrix, totalLigne, clientCarnet.nom, clientCarnet.telephone]
+          );
+        }
+      }
+
+      await dbClient.query('COMMIT');
+
+      // Notification WhatsApp au client
+      if (clientCarnet.telephone) {
+        try {
+          const { sendWhatsAppNotification } = require('../../services/whatsapp');
+          const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+          const totalFmt = new Intl.NumberFormat('fr-FR').format(numTotal);
+          const apportFmt = new Intl.NumberFormat('fr-FR').format(numApport);
+          const financeFmt = new Intl.NumberFormat('fr-FR').format(montantFinance);
+          const prochainFmt = new Intl.NumberFormat('fr-FR').format(calcul.prochain_montant);
+          const dateEchFmt = calcul.prochaine_echeance ? new Date(calcul.prochaine_echeance).toLocaleDateString('fr-FR') : 'à définir';
+
+          const msgWA = `🎉 *Formule de paiement échelonné confirmée — ${b.nom}*\n\n` +
+            `Bonjour *${clientCarnet.nom}*,\n` +
+            `Votre formule de paiement en *${numNb} fois* a été validée pour votre achat de *${totalFmt} FCFA*.\n\n` +
+            (numApport > 0 ? `💵 *Apport réglé : ${apportFmt} FCFA*\n` : '') +
+            `📊 *Montant restant financé : ${financeFmt} FCFA*\n` +
+            `📅 *Prochaine échéance : ${prochainFmt} FCFA le ${dateEchFmt}*\n\n` +
+            `Merci de votre fidélité !`;
+
+          sendWhatsAppNotification(clientCarnet.telephone, {
+            textMessage: msgWA,
+            title: `💳 Paiement échelonné validé — ${b.nom}`.slice(0, 60),
+            detail: `Achat ${totalFmt} FCFA en ${numNb}x. Prochaine échéance: ${prochainFmt} FCFA le ${dateEchFmt}.`,
+            url: `${SITE}/boutiques/${b.slug || b.id}`,
+            buttonParam: b.slug || b.id,
+          }).catch(err => console.error('[WHATSAPP PLAN NOTIF ERR]:', err.message));
+        } catch (eWs) {
+          console.error('[WHATSAPP PLAN NOTIF ERR]:', eWs.message);
+        }
+      }
+
+      res.status(201).json({
+        success: true,
+        message: `Plan de paiement échelonné créé avec succès (${numNb} échéances)`,
+        plan: createdPlan,
+        echeances: insertedEcheances,
+        nouveauSolde,
+      });
+    } catch (e) {
+      await dbClient.query('ROLLBACK');
+      throw e;
+    } finally {
+      dbClient.release();
+    }
+  } catch (err) {
+    console.error('[CREDITS CREER PLAN ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de la création du plan de crédit' });
+  }
+});
+
+// ── POST /api/boutiques/:id/credits-clients/:clientId/encaisser — Encaisser un règlement sur échéance(s)
+router.post('/:id/credits-clients/:clientId/encaisser', verifierToken, async (req, res) => {
+  try {
+    await ensureCreditSchema();
+    const { id, clientId } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour encaisser des règlements' });
+    }
+
+    const { montant, mode_paiement, note, plan_id, echeance_id, idempotency_key } = req.body;
+    const numMontant = Number(montant) || 0;
+    if (numMontant <= 0) {
+      return res.status(400).json({ error: 'Montant valide (> 0) requis pour l’encaissement.' });
+    }
+
+    if (idempotency_key) {
+      const existingTx = await pool.query(
+        `SELECT id, montant, type FROM caisse_credit_historique WHERE boutique_id = $1 AND reference = $2 LIMIT 1`,
+        [b.id, idempotency_key]
+      );
+      if (existingTx.rows[0]) {
+        return res.json({ success: true, duplicate: true, transaction: existingTx.rows[0] });
+      }
+    }
+
+    const dbClient = await pool.connect();
+    try {
+      await dbClient.query('BEGIN');
+
+      const cRes = await dbClient.query(
+        `SELECT * FROM caisse_clients_credits WHERE id = $1 AND boutique_id = $2 FOR UPDATE`,
+        [clientId, b.id]
+      );
+      if (!cRes.rows[0]) {
+        await dbClient.query('ROLLBACK');
+        return res.status(404).json({ error: 'Client introuvable' });
+      }
+      const clientCarnet = cRes.rows[0];
+
+      // Récupération des échéances non soldées (filtrées par plan si spécifié)
+      let queryEch = `
+        SELECT * FROM caisse_credit_echeances 
+        WHERE boutique_id = $1 AND client_id = $2 AND statut NOT IN ('payee', 'annulee', 'soldee_par_anticipation')
+      `;
+      const paramsEch = [b.id, clientId];
+      if (plan_id) {
+        paramsEch.push(plan_id);
+        queryEch += ` AND plan_id = $${paramsEch.length}`;
+      }
+      queryEch += ` ORDER BY date_echeance ASC, numero_echeance ASC FOR UPDATE`;
+
+      const { rows: echeancesNonSoldees } = await dbClient.query(queryEch, paramsEch);
+
+      // Imputation FIFO
+      const { echeancesUpdated } = creditCalc.imputerPaiementSurEcheances(echeancesNonSoldees, numMontant);
+
+      for (const ech of echeancesUpdated) {
+        await dbClient.query(
+          `UPDATE caisse_credit_echeances 
+           SET montant_paye = $1, montant_restant = $2, statut = $3, date_paiement_complet = $4, updated_at = NOW()
+           WHERE id = $5`,
+          [ech.montant_paye, ech.montant_restant, ech.statut, ech.date_paiement_complet || null, ech.id]
+        );
+      }
+
+      // Mise à jour du plan de crédit si présent
+      const planIdsTouches = [...new Set(echeancesUpdated.map(e => e.plan_id))];
+      for (const pId of planIdsTouches) {
+        const { rows: allPlanEch } = await dbClient.query(
+          `SELECT statut, montant_paye, montant_restant FROM caisse_credit_echeances WHERE plan_id = $1`,
+          [pId]
+        );
+        const totalPayePlan = allPlanEch.reduce((s, e) => s + Number(e.montant_paye || 0), 0);
+        const totalRestantPlan = allPlanEch.reduce((s, e) => s + Number(e.montant_restant || 0), 0);
+        const toutPaye = allPlanEch.every(e => e.statut === 'payee' || e.statut === 'soldee_par_anticipation');
+
+        await dbClient.query(
+          `UPDATE caisse_credit_plans 
+           SET montant_paye = $1, montant_restant = $2, statut = $3, updated_at = NOW()
+           WHERE id = $4`,
+          [totalPayePlan, totalRestantPlan, toutPaye ? 'solde' : 'en_cours', pId]
+        );
+      }
+
+      // Mise à jour du solde global du client (Solde = Solde - Montant)
+      const nouveauSolde = Math.max(0, Number(clientCarnet.solde || 0) - numMontant);
+      await dbClient.query(
+        `UPDATE caisse_clients_credits SET solde = $1, updated_at = NOW() WHERE id = $2`,
+        [nouveauSolde, clientId]
+      );
+
+      // Enregistrement dans caisse_credit_historique
+      const histRes = await dbClient.query(
+        `INSERT INTO caisse_credit_historique (
+          client_id, boutique_id, type, montant, mode_paiement, note, reference, created_at
+        ) VALUES ($1, $2, 'remboursement', $3, $4, $5, $6, NOW()) RETURNING *`,
+        [
+          clientId,
+          b.id,
+          numMontant,
+          mode_paiement || 'especes',
+          note || 'Règlement échéance carnet',
+          idempotency_key || null,
+        ]
+      );
+
+      await dbClient.query('COMMIT');
+
+      // Notification WhatsApp
+      if (clientCarnet.telephone) {
+        try {
+          const { sendWhatsAppNotification } = require('../../services/whatsapp');
+          const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+          const montantFmt = new Intl.NumberFormat('fr-FR').format(numMontant);
+          const soldeFmt = new Intl.NumberFormat('fr-FR').format(nouveauSolde);
+
+          const msgWA = `💚 *Règlement enregistré — ${b.nom}*\n\n` +
+            `Bonjour *${clientCarnet.nom}*,\n` +
+            `Nous confirmons la bonne réception de votre paiement de *${montantFmt} FCFA* (${mode_paiement || 'Règlement'}).\n\n` +
+            `📊 *Votre solde restant est désormais de : ${soldeFmt} FCFA*.\n\n` +
+            `Merci pour votre paiement !`;
+
+          sendWhatsAppNotification(clientCarnet.telephone, {
+            textMessage: msgWA,
+            title: `💚 Règlement reçu — ${b.nom}`.slice(0, 60),
+            detail: `Paiement de ${montantFmt} FCFA reçu. Solde restant : ${soldeFmt} FCFA.`,
+            url: `${SITE}/boutiques/${b.slug || b.id}`,
+            buttonParam: b.slug || b.id,
+          }).catch(err => console.error('[WHATSAPP ENCAISSEMENT ERR]:', err.message));
+        } catch (eWs) {
+          console.error('[WHATSAPP ENCAISSEMENT ERR]:', eWs.message);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Encaissement validé avec succès',
+        nouveauSolde,
+        transaction: histRes.rows[0],
+        echeancesMisesAJour: echeancesUpdated,
+      });
+    } catch (e) {
+      await dbClient.query('ROLLBACK');
+      throw e;
+    } finally {
+      dbClient.release();
+    }
+  } catch (err) {
+    console.error('[CREDITS ENCAISSER ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l’encaissement' });
+  }
+});
+
+// ── POST /api/boutiques/:id/credits-clients/:clientId/solder-anticipe — Règlement anticipé du solde
+router.post('/:id/credits-clients/:clientId/solder-anticipe', verifierToken, async (req, res) => {
+  try {
+    await ensureCreditSchema();
+    const { id, clientId } = req.params;
+    const b = await checkBoutiqueAccess(id, req.user.userId);
+    if (!b && !req.user?.is_admin) {
+      return res.status(403).json({ error: 'Accès non autorisé pour solder ce crédit' });
+    }
+
+    const { plan_id, mode_paiement, note, idempotency_key } = req.body;
+
+    const dbClient = await pool.connect();
+    try {
+      await dbClient.query('BEGIN');
+
+      const cRes = await dbClient.query(
+        `SELECT * FROM caisse_clients_credits WHERE id = $1 AND boutique_id = $2 FOR UPDATE`,
+        [clientId, b.id]
+      );
+      if (!cRes.rows[0]) {
+        await dbClient.query('ROLLBACK');
+        return res.status(404).json({ error: 'Client introuvable' });
+      }
+      const clientCarnet = cRes.rows[0];
+
+      let planCondition = '';
+      const params = [b.id, clientId];
+      if (plan_id) {
+        params.push(plan_id);
+        planCondition = ` AND id = $${params.length}`;
+      }
+
+      const { rows: plans } = await dbClient.query(
+        `SELECT * FROM caisse_credit_plans WHERE boutique_id = $1 AND client_id = $2 AND statut != 'solde'${planCondition} FOR UPDATE`,
+        params
+      );
+
+      let totalSoldeVerse = 0;
+
+      for (const plan of plans) {
+        const montantRestantPlan = Number(plan.montant_restant || 0);
+        totalSoldeVerse += montantRestantPlan;
+
+        // Mise à jour de toutes les échéances non payées
+        await dbClient.query(
+          `UPDATE caisse_credit_echeances 
+           SET statut = 'soldee_par_anticipation', montant_restant = 0, updated_at = NOW()
+           WHERE plan_id = $1 AND statut NOT IN ('payee', 'annulee')`,
+          [plan.id]
+        );
+
+        // Clôture du plan
+        await dbClient.query(
+          `UPDATE caisse_credit_plans 
+           SET statut = 'solde', montant_paye = montant_total, montant_restant = 0, updated_at = NOW()
+           WHERE id = $1`,
+          [plan.id]
+        );
+      }
+
+      // Si aucun plan structuré, solder le montant débiteur global
+      if (plans.length === 0 && Number(clientCarnet.solde) > 0) {
+        totalSoldeVerse = Number(clientCarnet.solde);
+      }
+
+      // Remise à zéro du solde client
+      await dbClient.query(
+        `UPDATE caisse_clients_credits SET solde = 0, updated_at = NOW() WHERE id = $1`,
+        [clientId]
+      );
+
+      // Écriture d'historique
+      await dbClient.query(
+        `INSERT INTO caisse_credit_historique (
+          client_id, boutique_id, type, montant, mode_paiement, note, reference, created_at
+        ) VALUES ($1, $2, 'remboursement', $3, $4, $5, $6, NOW())`,
+        [
+          clientId,
+          b.id,
+          totalSoldeVerse,
+          mode_paiement || 'especes',
+          note || 'Règlement total anticipé — Crédit soldé',
+          idempotency_key || null,
+        ]
+      );
+
+      await dbClient.query('COMMIT');
+
+      // Notification WhatsApp
+      if (clientCarnet.telephone) {
+        try {
+          const { sendWhatsAppNotification } = require('../../services/whatsapp');
+          const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+          const montantFmt = new Intl.NumberFormat('fr-FR').format(totalSoldeVerse);
+
+          const msgWA = `🎉 *Félicitations ! Votre crédit est 100% soldé — ${b.nom}*\n\n` +
+            `Bonjour *${clientCarnet.nom}*,\n` +
+            `Votre règlement anticipé de *${montantFmt} FCFA* a été enregistré avec succès.\n\n` +
+            `✅ *Votre compte est entièrement à jour (Solde restant : 0 FCFA)*.\n\n` +
+            `Merci pour votre confiance exemplaire !`;
+
+          sendWhatsAppNotification(clientCarnet.telephone, {
+            textMessage: msgWA,
+            title: `✅ Crédit 100% Soldé — ${b.nom}`.slice(0, 60),
+            detail: `Votre crédit chez ${b.nom} est entièrement réglé (Solde : 0 FCFA). Merci !`,
+            url: `${SITE}/boutiques/${b.slug || b.id}`,
+            buttonParam: b.slug || b.id,
+          }).catch(err => console.error('[WHATSAPP SOLDER NOTIF ERR]:', err.message));
+        } catch (eWs) {
+          console.error('[WHATSAPP SOLDER NOTIF ERR]:', eWs.message);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Crédit soldé par anticipation avec succès',
+        montantRegle: totalSoldeVerse,
+        nouveauSolde: 0,
+      });
+    } catch (e) {
+      await dbClient.query('ROLLBACK');
+      throw e;
+    } finally {
+      dbClient.release();
+    }
+  } catch (err) {
+    console.error('[CREDITS SOLDER ANTICIPE ERR]', err);
+    res.status(500).json({ error: 'Erreur lors du règlement anticipé' });
+  }
+});
+
 module.exports = router;
+

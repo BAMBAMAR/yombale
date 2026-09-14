@@ -115,6 +115,8 @@ export default function CommanderModal({
                 error={commander.error}
                 onSubmit={commander.submit}
                 onBack={commander.prevStep}
+                boutiqueId={boutiqueId}
+                onFormuleChoisie={commander.setFormuleEchelonnement}
               />
             </>
           )}

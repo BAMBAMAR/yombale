@@ -50,6 +50,13 @@ export function useCommander({
   const [cardCvc, setCardCvc] = useState('123')
   const [deviseStripe, setDeviseStripe] = useState<'EUR' | 'USD' | 'XOF'>('EUR')
 
+  const [formuleEchelonnement, setFormuleEchelonnement] = useState<{
+    apport: number
+    nb_echeances: number
+    frequence: string
+    calcul: any
+  } | null>(null)
+
   const [clubVip, setClubVip] = useState<ClubVipData | null>(null)
 
   // Capture des paramètres UTM depuis l'URL (attribution social commerce)
@@ -256,6 +263,7 @@ export function useCommander({
           articles: articlesPayload,
           code_promo: promoApplique?.code || undefined,
           montant_reduction: promoApplique?.reduction || undefined,
+          formule_echelonnement: paiement === 'credit' ? formuleEchelonnement : undefined,
           ...utmRef.current,
         }),
       })
@@ -340,6 +348,8 @@ export function useCommander({
     setCardCvc,
     deviseStripe,
     setDeviseStripe,
+    formuleEchelonnement,
+    setFormuleEchelonnement,
     clubVip,
     zoneSelectionnee,
     reductionClubVip,

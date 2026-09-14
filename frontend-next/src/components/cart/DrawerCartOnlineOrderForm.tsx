@@ -3,6 +3,7 @@ import React from 'react'
 import { fcfa } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
 import { AlertCircle } from 'lucide-react'
+import EchelonnementConfigurator from '@/app/boutiques/[id]/commander/EchelonnementConfigurator'
 
 interface DrawerCartOnlineOrderFormProps {
   clientNom: string
@@ -17,13 +18,15 @@ interface DrawerCartOnlineOrderFormProps {
   loadingCheckout: boolean
   totalGlobal: number
   onSubmit: (e: React.FormEvent) => void
+  boutiqueId?: string
+  onFormuleChoisie?: (val: any) => void
 }
 
 const PAYMENT_METHODS = [
   { value: 'wave', label: 'Wave' },
   { value: 'orange_money', label: 'Orange Money' },
   { value: 'especes', label: 'Espèces' },
-  { value: 'credit', label: 'Carnet Crédit' },
+  { value: 'credit', label: 'Paiement Échelonné / Carnet' },
 ]
 
 export default function DrawerCartOnlineOrderForm({
@@ -39,6 +42,8 @@ export default function DrawerCartOnlineOrderForm({
   loadingCheckout,
   totalGlobal,
   onSubmit,
+  boutiqueId,
+  onFormuleChoisie,
 }: DrawerCartOnlineOrderFormProps) {
   const { t } = useTranslation()
 
@@ -217,25 +222,35 @@ export default function DrawerCartOnlineOrderForm({
         </div>
 
         {methodePaiement === 'credit' && (
-          <p
-            style={{
-              margin: '6px 0 0',
-              fontSize: 11.5,
-              color: '#0369a1',
-              fontWeight: 600,
-              background: '#e0f2fe',
-              padding: '6px 8px',
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <AlertCircle size={14} style={{ flexShrink: 0 }} />
-            <span>
-              Votre demande sera transmise au commerçant pour inscription au Carnet client.
-            </span>
-          </p>
+          <div style={{ marginTop: 10 }}>
+            {boutiqueId ? (
+              <EchelonnementConfigurator
+                montantTotal={totalGlobal}
+                boutiqueId={boutiqueId}
+                onFormuleChoisie={onFormuleChoisie || (() => {})}
+              />
+            ) : (
+              <p
+                style={{
+                  margin: '6px 0 0',
+                  fontSize: 11.5,
+                  color: '#0369a1',
+                  fontWeight: 600,
+                  background: '#e0f2fe',
+                  padding: '6px 8px',
+                  borderRadius: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                <span>
+                  Votre demande sera transmise au commerçant pour inscription au Carnet client.
+                </span>
+              </p>
+            )}
+          </div>
         )}
       </div>
 

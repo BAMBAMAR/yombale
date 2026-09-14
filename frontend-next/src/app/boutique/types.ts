@@ -27,6 +27,8 @@ export interface Boutique {
   fidelite_taux_cashback?: number
   fidelite_tampons_max?: number
   fidelite_seuil_tampon?: number
+  echelonnement_actif?: boolean
+  echelonnement_config?: any
   pos_remise_max_caissier?: number
   pos_remise_seuil_auto_montant?: number
   pos_remise_seuil_auto_pct?: number
@@ -72,7 +74,7 @@ export interface Produit {
   partage_le: string | null
 }
 
-export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'studio' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite' | 'appstore' | 'entrepots' | 'abtesting' | 'blog' | 'abonnements'
+export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'studio' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite' | 'echelonnement' | 'appstore' | 'entrepots' | 'abtesting' | 'blog' | 'abonnements'
 
 export interface NavItem {
   key: ManageTab

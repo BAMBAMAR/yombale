@@ -891,7 +891,7 @@ async function creerCommandeBoutique({
   boutiqueId, produitId, quantite = 1, clientNom, clientTelephone, clientAdresse,
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
   nomProduitManuel, prixUnitaireManuel, groupeCommande, items = [], varianteId,
-  codePromo, montantReduction,
+  codePromo, montantReduction, formuleEchelonnement,
 }) {
   const bQuery = 'SELECT id, nom, slug, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
@@ -982,6 +982,11 @@ async function creerCommandeBoutique({
   const ref = genRefCommande();
 
   let finalNote = note || '';
+  if (formuleEchelonnement && typeof formuleEchelonnement === 'object') {
+    const apportFmt = formuleEchelonnement.apport ? `${formuleEchelonnement.apport} FCFA` : '0 FCFA';
+    const echelonNote = `[Échelonnement: Apport ${apportFmt}, ${formuleEchelonnement.nb_echeances || 3}x (${formuleEchelonnement.frequence || 'mensuel'})]`;
+    finalNote = finalNote ? `${finalNote} | ${echelonNote}` : echelonNote;
+  }
   if (codePromo && String(codePromo).trim()) {
     const promoNote = `[Code Promo: ${String(codePromo).trim().toUpperCase()}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
     finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
@@ -1079,7 +1084,7 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
     try {
-      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id, code_promo, montant_reduction, remise } = req.body;
+      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id, code_promo, montant_reduction, remise, formule_echelonnement, formuleEchelonnement } = req.body;
 
       const { commande, boutique } = await creerCommandeBoutique({
         boutiqueId: req.params.boutiqueId,
@@ -1098,6 +1103,7 @@ router.post(
         items: Array.isArray(items) ? items : [],
         codePromo: code_promo,
         montantReduction: montant_reduction || remise,
+        formuleEchelonnement: formule_echelonnement || formuleEchelonnement,
       });
 
       await notifierVendeurCommande(boutique, {

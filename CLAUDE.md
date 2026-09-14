@@ -1,3 +1,30 @@
+- **Évolution Majeure : Système Unifié de Paiement Échelonné & Carnet de Crédit Commercial Nopalou (`feature/carnet-credit-echelonne-v2`) (14 septembre 2026)** 💳📊🧾 📦 ✅ :
+  * **🎯 1. Contexte & Réalisations Métier Complètes** :
+    - **Principe Fondamental Respecté** :
+      * MARCHAND = Définit les règles, plafonds, apports minimaux (en % et FCFA), fréquences et échéances autorisées.
+      * NOPALOU = Calcule, garantit l'arrondi exact au franc près (somme des échéances === montant financé), contrôle les règles de gestion et l'imputation FIFO.
+      * ACHETEUR = Choisit parmi les formules autorisées (Recommandé, Petit Budget, Liberté Express) ou configure son apport personnalisé dans les bornes marchandes.
+      * SYSTÈME = Source unique de vérité partagée entre Web Checkout (1-page express & Drawer cart), Caisse POS, Carnet de Crédit, WhatsApp Bot et Relances automatiques.
+    - **Moteurs de Calcul Centralisés (Node.js & TypeScript)** :
+      * `backend/lib/creditCalculator.js` & `frontend-next/src/lib/creditCalculator.ts` : Fonctions pures testées (`validerReglesEchelonnement`, `calculerEcheancier`, `genererFormulesRecommandees`, `imputerPaiementSurEcheances`, `solderCreditAnticipe`).
+    - **Schéma SQL & Migrations Transactionnelles** :
+      * Migration tables `boutiques` (colonnes `echelonnement_actif`, `echelonnement_config`), `caisse_credit_plans` (avec `snapshot_regles` pour garantir l'immutabilité des contrats en cours), et `caisse_credit_echeances` (suivi granulaire du statut, retards, versements partiels).
+    - **Backend & Sécurité Multi-Tenant Anti-IDOR** :
+      * `backend/routes/boutiques-modules/credits.js` : Endpoints sécurisés (`GET/PUT /api/boutiques/:id/credits-config`, `POST /api/boutiques/:id/credits-calculer`, `GET/POST /api/boutiques/:id/credits-clients/:clientId/plans`, `POST /encaisser` avec FIFO, `POST /solder-anticipe`).
+      * Intégration dans `creerCommandeBoutique` (`backend/routes/comptabilite.js`) et `boutiques-commandes.js`.
+    - **UI Marchand & Configurateur Acheteur** :
+      * `ParametresEchelonnement.tsx` : Écran d'administration marchand avec sliders, toggles, simulateur interactif en direct.
+      * `EchelonnementConfigurator.tsx` : Cartes de formules intelligentes + curseur d'apport personnalisé intégré dans le Checkout Web et le Panier Drawer.
+    - **Dashboard Carnet de Crédit & Relances** :
+      * `CarnetPlansEchelonnes.tsx` & `CarnetClientDetails.tsx` : Affichage de l'échéancier avec barres de progression, statut d'échéance (payée, en retard, partielle, soldée par anticipation), modale d'encaissement partiel FIFO et solde anticipé.
+      * WhatsApp Chatbot (`whatsapp-chatbot.js`) : Détection automatique des demandes de solde et consultation certifiée depuis la base de données.
+      * Cron Relances (`cron-relances-carnet.js`) : Relances WhatsApp automatiques intégrant le détail des échéances dépassées.
+  * **🧪 2. Validation & Quality Gate (100% Vert)** :
+    - Suite de tests unitaires Jest (`tests/unit/credit-echelonnement-engine.test.js`) : **12/12 tests validés (100%)**.
+    - Suite de tests unitaires Frontend (`frontend-next/scripts/run-unit-tests.mjs`) : **68/68 tests validés (100%)**.
+    - Suite globale Backend Jest (`npm run test:unit`) : **38/38 suites passées, 279/279 tests passés (100%)**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch, composants < 450 lignes, zéro émoji d'interface**.
+
 - **Finalisation Intégrale de la Roadmap Nopalou : CMS Blog SEO Marchand, Abonnements Récurrents & Gestion des Retours/Avoirs (`feature/nopalou-master-fixes`) (14 septembre 2026)** 📝🔁🔄 📦 ✅ :
   * **🎯 1. Nouveautés & Réalisations Finales (P1 & P2)** :
     - **CMS de Blog & Articles SEO Marchand (`P1`)** :

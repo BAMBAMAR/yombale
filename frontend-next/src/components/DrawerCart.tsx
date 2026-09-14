@@ -39,6 +39,8 @@ export default function DrawerCart() {
     setClientAdresse,
     methodePaiement,
     setMethodePaiement,
+    formuleEchelonnement,
+    setFormuleEchelonnement,
     errorMsg,
     codePromo,
     setCodePromo,
@@ -257,6 +259,8 @@ export default function DrawerCart() {
               methodePaiement={methodePaiement}
               setMethodePaiement={setMethodePaiement}
               errorMsg={errorMsg}
+              boutiqueId={activeBoutiqueId || undefined}
+              onFormuleChoisie={setFormuleEchelonnement}
             />
           )}
         </div>

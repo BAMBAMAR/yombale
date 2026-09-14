@@ -31,6 +31,7 @@ export function useDrawerCartCheckout() {
   const [clientAdresse, setClientAdresse] = useState('')
   const [methodePaiement, setMethodePaiement] = useState('wave')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [formuleEchelonnement, setFormuleEchelonnement] = useState<any>(null)
 
   // Codes promo
   const [codePromo, setCodePromo] = useState('')
@@ -228,6 +229,7 @@ export function useDrawerCartCheckout() {
           items: formattedItems,
           code_promo: currentPromoCode || undefined,
           montant_reduction: currentReduction > 0 ? currentReduction : undefined,
+          formule_echelonnement: currentMethode === 'credit' ? formuleEchelonnement : undefined,
         }),
       })
 
@@ -376,6 +378,8 @@ export function useDrawerCartCheckout() {
     setClientAdresse,
     methodePaiement,
     setMethodePaiement,
+    formuleEchelonnement,
+    setFormuleEchelonnement,
     errorMsg,
     codePromo,
     setCodePromo,

@@ -40,6 +40,8 @@ interface DrawerCartCheckoutProps {
   methodePaiement: string
   setMethodePaiement: (val: string) => void
   errorMsg: string | null
+  boutiqueId?: string
+  onFormuleChoisie?: (val: any) => void
 }
 
 export default function DrawerCartCheckout({
@@ -72,6 +74,8 @@ export default function DrawerCartCheckout({
   methodePaiement,
   setMethodePaiement,
   errorMsg,
+  boutiqueId,
+  onFormuleChoisie,
 }: DrawerCartCheckoutProps) {
   const { t } = useTranslation()
 
@@ -101,43 +105,45 @@ export default function DrawerCartCheckout({
               marginBottom: 6,
             }}
           >
-            <MapPin size={13} style={{ color: 'var(--accent, #C75B00)' }} />
-            <span>{t('shop.deliveryZoneLabel')}</span>
+            <MapPin size={14} color="var(--accent, #C75B00)" />
+            <span>{t('shop.deliveryZone')}</span>
           </label>
           <select
             value={zoneId}
             onChange={(e) => setZoneId(e.target.value)}
-            className="premium-cart-input"
-            style={{ height: 42 }}
+            className="input-npl"
+            style={{
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: 13,
+            }}
           >
-            <option value="">{t('shop.freeShopPickup')}</option>
             {zones.map((z) => (
               <option key={z.id} value={z.id}>
-                {z.nom} ({z.prix > 0 ? fcfa(z.prix) : 'Gratuit'})
+                {z.nom} ({Number(z.prix) > 0 ? fcfa(Number(z.prix)) : t('shop.freeDelivery')})
               </option>
             ))}
           </select>
         </div>
       )}
 
-      {/* Code Promo Component */}
+      {/* Code promotionnel */}
       <DrawerCartPromoCode
         codePromo={codePromo}
         setCodePromo={setCodePromo}
         promoApplique={promoApplique}
         promoLoading={promoLoading}
         promoError={promoError}
-        onApply={appliquerCodePromo}
-        onRemove={retirerCodePromo}
+        appliquerCodePromo={appliquerCodePromo}
+        retirerCodePromo={retirerCodePromo}
       />
 
-      {/* Récapitulatif Prix */}
+      {/* Récapitulatif financier */}
       <DrawerCartSummary
         sousTotal={sousTotal}
         reductionMontant={reductionMontant}
         fraisLivraison={fraisLivraison}
         totalGlobal={totalGlobal}
-        promoCode={promoApplique?.code}
       />
 
       {/* SÉLECTEUR D'ONGLETS / MODE DE COMMANDE */}

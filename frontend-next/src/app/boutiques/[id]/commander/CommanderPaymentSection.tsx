@@ -10,6 +10,7 @@ import {
   Globe2,
 } from 'lucide-react'
 import { fcfa, getMontantDevise } from './types'
+import EchelonnementConfigurator from './EchelonnementConfigurator'
 
 interface CommanderPaymentSectionProps {
   paiement: string
@@ -23,6 +24,8 @@ interface CommanderPaymentSectionProps {
   cardCvc: string
   setCardCvc: (val: string) => void
   total: number
+  boutiqueId?: string
+  onFormuleChoisie?: (formule: any) => void
 }
 
 const MODES_PAIEMENT = [
@@ -30,7 +33,7 @@ const MODES_PAIEMENT = [
   { value: 'orange_money', label: 'Orange Money', badge: 'Pay Safe Instantané', activeClass: 'active-om' },
   { value: 'carte_bancaire', label: 'Carte Bancaire', badge: 'Stripe 3D-Secure', activeClass: 'active-wave' },
   { value: 'cash', label: 'Espèces', badge: 'À la livraison', activeClass: 'active-cash' },
-  { value: 'credit', label: 'Achat à Crédit', badge: 'Carnet Client', activeClass: 'active-wave' },
+  { value: 'credit', label: 'Paiement Échelonné / Crédit', badge: 'Carnet Commerçant', activeClass: 'active-wave' },
 ]
 
 export default function CommanderPaymentSection({
@@ -45,6 +48,8 @@ export default function CommanderPaymentSection({
   cardCvc,
   setCardCvc,
   total,
+  boutiqueId,
+  onFormuleChoisie,
 }: CommanderPaymentSectionProps) {
   return (
     <div>
@@ -99,23 +104,32 @@ export default function CommanderPaymentSection({
       </div>
 
       {paiement === 'credit' && (
-        <div
-          style={{
-            marginTop: 8,
-            background: '#f0f9ff',
-            border: '1px solid #bae6fd',
-            borderRadius: 10,
-            padding: '10px 12px',
-            fontSize: 12,
-            color: '#0369a1',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <Info size={16} color="#0369a1" style={{ flexShrink: 0 }} />
-          <span>Votre demande d&apos;achat à crédit sera transmise directement au commerçant pour inscription dans son Carnet client.</span>
+        <div style={{ marginTop: 12 }}>
+          {boutiqueId ? (
+            <EchelonnementConfigurator
+              montantTotal={total}
+              boutiqueId={boutiqueId}
+              onFormuleChoisie={onFormuleChoisie || (() => {})}
+            />
+          ) : (
+            <div
+              style={{
+                background: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: 10,
+                padding: '10px 12px',
+                fontSize: 12,
+                color: '#0369a1',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <Info size={16} color="#0369a1" style={{ flexShrink: 0 }} />
+              <span>Votre demande d&apos;achat à crédit sera transmise directement au commerçant pour inscription dans son Carnet client.</span>
+            </div>
+          )}
         </div>
       )}
 

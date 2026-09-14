@@ -67,18 +67,18 @@ async function traiterRelancesAutomatiquesWhatsApp(boutiqueId = null) {
         b.slug AS boutique_slug,
         b.telephone AS boutique_tel,
         b.whatsapp AS boutique_whatsapp,
-        MIN(h.date_echeance) AS plus_ancienne_echeance,
-        COUNT(h.id) AS nb_creances,
-        ARRAY_AGG(h.id) AS trans_ids
-      FROM caisse_credit_historique h
-      JOIN caisse_clients_credits c ON h.client_id = c.id
-      JOIN boutiques b ON h.boutique_id = b.id
+        MIN(COALESCE(e.date_echeance, h.date_echeance)) AS plus_ancienne_echeance,
+        COUNT(DISTINCT COALESCE(e.id, h.id)) AS nb_creances,
+        ARRAY_AGG(DISTINCT h.id) FILTER (WHERE h.id IS NOT NULL) AS trans_ids,
+        ARRAY_AGG(DISTINCT e.id) FILTER (WHERE e.id IS NOT NULL) AS ech_ids
+      FROM caisse_clients_credits c
+      JOIN boutiques b ON c.boutique_id = b.id
+      LEFT JOIN caisse_credit_plans p ON p.client_id = c.id AND p.statut = 'actif'
+      LEFT JOIN caisse_credit_echeances e ON e.plan_id = p.id AND e.statut IN ('en_attente', 'partielle', 'en_retard') AND e.date_echeance <= CURRENT_DATE
+      LEFT JOIN caisse_credit_historique h ON h.client_id = c.id AND h.type = 'vente_credit' AND h.relance_auto_whatsapp = true AND h.date_echeance <= CURRENT_DATE
       WHERE 
         c.solde > 0
-        AND h.type = 'vente_credit'
-        AND h.relance_auto_whatsapp = true
-        AND h.date_echeance IS NOT NULL
-        AND h.date_echeance <= CURRENT_DATE
+        AND (e.id IS NOT NULL OR h.id IS NOT NULL)
         AND (h.derniere_relance_whatsapp IS NULL OR h.derniere_relance_whatsapp < CURRENT_DATE)
         ${boutiqueCondition}
       GROUP BY c.id, c.nom, c.telephone, c.solde, b.id, b.nom, b.slug, b.telephone, b.whatsapp
