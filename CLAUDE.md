@@ -1,3 +1,17 @@
+- **Déploiement des Chantiers P1/P2 : QR Code Reçu Thermique POS, Alertes Plafonds Carnet & Variantes Multi-Axes (`feature/nopalou-master-fixes`) (14 septembre 2026)** 🧾🏷️📊 📦 ✅ :
+  * **🎯 1. Nouveautés & Réalisations P1 / P2** :
+    - **QR Code Vectoriel Intégré au Ticket Thermique POS (`P1`)** :
+      * Intégration du générateur vectoriel SVG natif `qrcode-svg` dans [`PosTicketPrintView.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/caisse/components/PosTicketPrintView.tsx).
+      * Génération automatique d'un QR code de suivi et de vérification d'authenticité de commande `/suivi-commande?ref=TICK-XXXX` scannable sur smartphone et tickets 58mm/80mm.
+    - **Détection Visuelle & Alerte Dépassement Plafond de Crédit (`P1`)** :
+      * Alerte immédiate avec pastille et badge d'avertissement `Plafond dépassé` dans [`CarnetClientCardItem.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/carnet/components/CarnetClientCardItem.tsx) dès que le solde débiteur dépasse le plafond de crédit configuré.
+    - **Extension de la Matrice de Variantes Multi-Axes : Conditionnement / Format (`P2`)** :
+      * Ajout du type de variante `'conditionnement'` et des suggestions de formats standards (Sachets 250g/500g/1kg, Sacs 5kg/25kg/50kg, Bouteilles, Packs, Cartons) dans [`boutiqueHelpers.ts`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/boutiqueHelpers.ts) et [`constants.ts`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/produits/constants.ts).
+  * **🧪 2. Validation & Quality Gate (100% Vert)** :
+    - Quality Gate Global (`node scripts/quality-gate.mjs`) : **36/36 suites passées, 261/261 tests unitaires validés (100%)**.
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch, composants < 450 lignes, zéro émojis d'interface**.
+
 - **Exécution des Remédiations Prioritaires P0 & P1 : Alerte Carillon POS WebAudio, Rate Limiter Redis, Scanner Haptique & Dispatch GPS Tiak-Tiak (`feature/nopalou-master-fixes`) (14 septembre 2026)** ⚡🔔🧭 📦 ✅ :
   * **🎯 1. Contexte & Réalisations P0 & P1** :
     - **Alerte Sonore & Visuelle WebAudio Caisse POS (`P0`)** :
