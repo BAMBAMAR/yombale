@@ -1,4 +1,4 @@
-- **Évolution Majeure : Système Unifié de Paiement Échelonné & Carnet de Crédit Commercial Nopalou (`feature/carnet-credit-echelonne-v2`) (14 septembre 2026)** 💳📊🧾 📦 ✅ :
+- **Évolution Majeure : Système Unifié de Paiement Échelonné & Carnet de Crédit Commercial Nopalou (`feature/nopalou-master-fixes`) (14 septembre 2026)** 💳📊🧾 📦 ✅ :
   * **🎯 1. Contexte & Réalisations Métier Complètes** :
     - **Principe Fondamental Respecté** :
       * MARCHAND = Définit les règles, plafonds, apports minimaux (en % et FCFA), fréquences et échéances autorisées.
