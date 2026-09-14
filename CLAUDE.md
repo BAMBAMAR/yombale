@@ -1,3 +1,23 @@
+- **Optimisation Complète Profil, Suivi de Commande & Finalisation Paiement Échelonné (`feature/nopalou-master-fixes`) (14 septembre 2026)** 👤💳📦 🚀 ✅ :
+  * **🎯 1. Nouveautés & Corrections Métier** :
+    - **Profil Utilisateur & Numéro Téléphone/WhatsApp (`/compte?tab=profil`)** :
+      * Ajout du champ Téléphone/WhatsApp en mode consultation et modification dans [`ProfilClient.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/(account)/compte/profil/ProfilClient.tsx).
+      * Synchronisation bidirectionnelle avec PostgreSQL via `GET /api/auth/profil` et `PUT /api/auth/profil`.
+      * Mise à jour automatique de la session utilisateur et du JWT signé dans les Server Actions `login`, `signup`, `updateProfil` et `setAuthCookieAction`.
+    - **Recherche & Chargement Automatique dans « Suivre ma commande » (`/compte?tab=suivi-commande`)** :
+      * Injection automatique du numéro de téléphone de l'utilisateur connecté dans [`SuiviCommandeClient.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/(account)/compte/tabs/SuiviCommandeClient.tsx) pour lancer la recherche sans saisie manuelle.
+      * Boutons d'action directe contextuels : **`[ 💳 Finaliser mon paiement échelonné → ]`** et **`[ 🌊 Payer maintenant par Wave → ]`**.
+      * Recherche flexible dans le backend [`boutiques-commandes.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/boutiques-modules/boutiques-commandes.js) supportant tous les formats de numéros sénégalais (+221, 221, 9 chiffres).
+    - **Résolution Incohérence Montant & Échelonnement sur `/checkout-express`** :
+      * Extraction prioritaire du paramètre `ref` (ex: `ref=C-MU118UXF`) pour charger fidèlement les informations réelles de la commande depuis la base de données (nom du produit, prix exact de 56 500 FCFA, coordonnées client, boutique).
+      * Configuration précise des mensualités (2x, 3x, 4x) sur le montant réel total avec calcul automatique de l'acompte Wave initial (20%).
+    - **Fiabilisation Bot & Notifications WhatsApp** :
+      * Résolution de l'erreur SQL sur le menu du chatbot WhatsApp.
+      * Basculement des notifications transactionnelles sur le template certifié Meta `nopalou_alerte_commande` (Catégorie `UTILITY`) pour contourner les plafonds marketing.
+  * **🧪 2. Validation & Quality Gate** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests de connectivité et redémarrage propre des serveurs locaux (Backend port 3000 & Frontend port 3001).
+
 - **Évolution Majeure : Système Unifié de Paiement Échelonné & Carnet de Crédit Commercial Nopalou (`feature/nopalou-master-fixes`) (14 septembre 2026)** 💳📊🧾 📦 ✅ :
   * **🎯 1. Contexte & Réalisations Métier Complètes** :
     - **Principe Fondamental Respecté** :
