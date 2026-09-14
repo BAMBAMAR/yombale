@@ -435,8 +435,8 @@ router.put('/:id/caissiers/:caissierId/pin', tokenOptional, async (req, res) => 
   }
 });
 
-// POST /api/boutiques/:id/caisse/config-pin-initial — Configuration obligatoire initiale des codes PIN POS
-router.post('/:id/caisse/config-pin-initial', tokenOptional, async (req, res) => {
+// POST /api/boutiques/:id/caisse/config-pin-initial (avec alias /caissiers/config-pin-initial)
+router.post(['/:id/caisse/config-pin-initial', '/:id/caissiers/config-pin-initial', '/:id/config-pin-initial'], tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
     const { pin_superviseur, pin_caissier, terminal_token } = req.body;

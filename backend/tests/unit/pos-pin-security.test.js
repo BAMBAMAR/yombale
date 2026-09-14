@@ -67,5 +67,21 @@ describe('Sécurité des Codes PIN POS & Caissiers', () => {
     expect(validerPayload({ pin_superviseur: '4829', pin_caissier: '7301' }).valid).toBe(true);
     expect(validerPayload({ pin_superviseur: '918273', pin_caissier: '839201' }).valid).toBe(true);
   });
+
+  test('Route Express POST /api/boutiques/:id/caisse/config-pin-initial est bien déclarée et non 404', async () => {
+    process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/test';
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_secret_32_chars_long_12345';
+    process.env.NODE_ENV = 'test';
+    const app = require('../../app');
+    const res = await request(app)
+      .post('/api/boutiques/284a70a4-e293-48a7-820e-e0c054c97ee9/caisse/config-pin-initial')
+      .send({});
+    // Le corps étant vide, la route doit répondre 400 (Bad Request) et NON 404 (Endpoint introuvable)
+    expect(res.status).not.toBe(404);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('obligatoires');
+  });
 });
+
+
 
