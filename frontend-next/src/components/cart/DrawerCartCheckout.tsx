@@ -106,7 +106,7 @@ export default function DrawerCartCheckout({
             }}
           >
             <MapPin size={14} color="var(--accent, #C75B00)" />
-            <span>{t('shop.deliveryZone')}</span>
+            <span>{t('shop.deliveryZoneLabel')}</span>
           </label>
           <select
             value={zoneId}
@@ -120,7 +120,7 @@ export default function DrawerCartCheckout({
           >
             {zones.map((z) => (
               <option key={z.id} value={z.id}>
-                {z.nom} ({Number(z.prix) > 0 ? fcfa(Number(z.prix)) : t('shop.freeDelivery')})
+                {z.nom} ({Number(z.prix) > 0 ? fcfa(Number(z.prix)) : t('shop.freeShopPickup')})
               </option>
             ))}
           </select>
@@ -134,8 +134,8 @@ export default function DrawerCartCheckout({
         promoApplique={promoApplique}
         promoLoading={promoLoading}
         promoError={promoError}
-        appliquerCodePromo={appliquerCodePromo}
-        retirerCodePromo={retirerCodePromo}
+        onApply={appliquerCodePromo}
+        onRemove={retirerCodePromo}
       />
 
       {/* Récapitulatif financier */}
@@ -144,6 +144,7 @@ export default function DrawerCartCheckout({
         reductionMontant={reductionMontant}
         fraisLivraison={fraisLivraison}
         totalGlobal={totalGlobal}
+        promoCode={promoApplique?.code}
       />
 
       {/* SÉLECTEUR D'ONGLETS / MODE DE COMMANDE */}

@@ -25,6 +25,7 @@ import {
   Store,
   ShieldCheck,
   Repeat,
+  CreditCard,
   LucideIcon,
 } from 'lucide-react'
 
