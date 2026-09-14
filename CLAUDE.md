@@ -1,3 +1,16 @@
+- **Correctif Carnet de Dettes, Échéancier Plans Structurés & Responsiveness Mobile (`feature/nopalou-master-fixes`) (14 septembre 2026)** 💳📱📐 🚀 ✅ :
+  * **🎯 1. Résolution de l'Affichage des Montants et Échéances (`credits.js`, `CarnetPlansEchelonnes.tsx`)** :
+    - **Normalisation des Champs SQL / API** : Résolution de l'anomalie d'affichage du tiret cadratin (`Reste : —` et `Échéance Due ... —`) causée par une divergence de nommage entre PostgreSQL (`caisse_credit_plans.montant_restant`, `caisse_credit_echeances.montant_prevu`, `numero_echeance`) et le frontend (`solde_restant`, `montant_total`, `numero`). Le contrôleur backend normalise désormais systématiquement tous les champs et le frontend dispose de fallbacks stricts garantissant un affichage exact en FCFA.
+  * **🎯 2. Refonte Responsive Mobile du Carnet de Dettes & Modales (`CarnetModalTransaction.tsx`, `CarnetClientCardItem.tsx`, `CarnetClientsList.tsx`)** :
+    - **Header Modale & Sélecteur Client** : Restructuration du header de la modale d'encaissement/vente à crédit en 2 rangées distinctes (Ligne 1 : Titre avec icône SVG Lucide + Bouton Fermer [X] ancré en haut à droite / Ligne 2 : Sélecteur client en pleine largeur `100%`), éliminant tout chevauchement ou déplacement vertical du bouton [X].
+    - **Cartes Clients & Barre d'Actions** : Ajustement du flex-wrap sur le statut/solde `Doit : XX FCFA` pour écrans étroits (<390px) et optimisation de la rangée de boutons d'action (`[Encaisser]`, `[Relance]`, `[...]`) pour garantir un affichage fluide sans débordement horizontal.
+    - **Barre de Recherche & Filtres** : Extension pleine largeur du conteneur de filtres avec défilement horizontal fluide sur mobile.
+  * **🎯 3. Conformité Anti-AI-Slop & Standard Ingénieur Senior** :
+    - Élimination des émojis Unicode d'interface dans les fichiers de traduction (`fr/shop.ts`, `en/shop.ts`, `ar/shop.ts`) et dans les sous-composants, avec substitution par les icônes SVG de `lucide-react` (`ArrowDownLeft`, `ArrowUpRight`, `Check`, `Layers`, `History`, `MessageCircle`).
+  * **🧪 4. Validation & Quality Gate** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests Unitaires Frontend (`npm run test`) : **68/68 tests validés (100%)**.
+
 - **Correctif Réactivité Dual-Track Accueil & Priorité Acheteur (`feature/nopalou-master-fixes`) (14 septembre 2026)** 🛒🔄📱 🚀 ✅ :
   * **🎯 1. Synchronisation Réactive Immédiate Acheteur / Marchand (`HomeDualTrackContainer.tsx`)** :
     - **Suppression du Verrouillage Marchand Persistant** : Remplacement de l'état statique non réactif par une écoute dynamique des paramètres d'URL via `useSearchParams()` sous `<Suspense>`.

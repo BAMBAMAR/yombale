@@ -925,9 +925,23 @@ router.get('/:id/credits-clients/:clientId/plans', verifierToken, async (req, re
     });
 
     plans.forEach(p => {
-      p.echeances = echMap.get(p.id) || [];
-      p.nb_payees = p.echeances.filter(e => e.statut === 'payee').length;
-      p.has_retard = p.echeances.some(e => e.statut === 'en_retard');
+      const rawEchs = echMap.get(p.id) || []
+      p.solde_restant = Number(p.montant_restant !== undefined ? p.montant_restant : p.solde_restant) || 0
+      p.montant_total = Number(p.montant_total) || 0
+      p.montant_apport = Number(p.apport_initial !== undefined ? p.apport_initial : p.montant_apport) || 0
+      p.montant_paye = Number(p.montant_paye) || 0
+      p.montant_finance = Number(p.montant_finance) || (p.montant_total - p.montant_apport)
+      p.echeances = rawEchs.map(ech => ({
+        ...ech,
+        numero: ech.numero_echeance || ech.numero || 1,
+        numero_echeance: ech.numero_echeance || ech.numero || 1,
+        montant_total: Number(ech.montant_prevu !== undefined ? ech.montant_prevu : ech.montant_total) || 0,
+        montant_prevu: Number(ech.montant_prevu !== undefined ? ech.montant_prevu : ech.montant_total) || 0,
+        montant_restant: Number(ech.montant_restant !== undefined ? ech.montant_restant : (ech.montant_prevu - ech.montant_paye)) || 0,
+        montant_paye: Number(ech.montant_paye) || 0,
+      }))
+      p.nb_payees = p.echeances.filter(e => e.statut === 'payee').length
+      p.has_retard = p.echeances.some(e => e.statut === 'en_retard')
     });
 
     res.json({ success: true, plans, echeances });

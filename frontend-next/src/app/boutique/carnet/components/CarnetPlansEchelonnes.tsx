@@ -267,8 +267,9 @@ export default function CarnetPlansEchelonnes({
               const isExpanded = expandedPlanId === plan.id
               const totalNum = Number(plan.montant_total) || 1
               const payeNum = Number(plan.montant_paye) || 0
+              const soldeRestantNum = Number(plan.solde_restant !== undefined ? plan.solde_restant : (plan as any).montant_restant) || 0
               const pct = Math.min(100, Math.round((payeNum / totalNum) * 100))
-              const estSolde = plan.statut === 'solde' || Number(plan.solde_restant) <= 0
+              const estSolde = plan.statut === 'solde' || soldeRestantNum <= 0
 
               return (
                 <div
@@ -283,11 +284,11 @@ export default function CarnetPlansEchelonnes({
                 >
                   {/* En-tête du Plan */}
                   <div
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', gap: 10, flexWrap: 'wrap' }}
                     onClick={() => setExpandedPlanId(isExpanded ? null : plan.id)}
                   >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 12.5, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
                           {plan.reference}
                         </span>
@@ -305,17 +306,17 @@ export default function CarnetPlansEchelonnes({
                         </span>
                       </div>
                       <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
-                        Créé le {fmtDate(plan.created_at)} • Total : <strong>{fcfa(plan.montant_total)}</strong>
+                        Créé le {fmtDate(plan.created_at)} • Total : <strong>{fcfa(totalNum)}</strong>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 12, fontWeight: 800, color: estSolde ? '#166534' : 'var(--accent, #C75B00)' }}>
-                          {estSolde ? '0 FCFA' : `Reste : ${fcfa(plan.solde_restant)}`}
+                          {estSolde ? '0 FCFA' : `Reste : ${fcfa(soldeRestantNum)}`}
                         </div>
                         <div style={{ fontSize: 10, color: '#64748b' }}>
-                          {pct}% payé ({fcfa(plan.montant_paye)})
+                          {pct}% payé ({fcfa(payeNum)})
                         </div>
                       </div>
                       {isExpanded ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
@@ -347,14 +348,17 @@ export default function CarnetPlansEchelonnes({
                   {isExpanded && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid #f1f5f9', paddingTop: 10 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {plan.echeances.map((ech) => {
+                        {(plan.echeances || []).map((ech, idx) => {
                           const isPayee = ech.statut === 'payee' || ech.statut === 'soldee_par_anticipation'
                           const isRetard = ech.statut === 'en_retard'
                           const isPartielle = ech.statut === 'partielle'
+                          const numEch = ech.numero || (ech as any).numero_echeance || idx + 1
+                          const montantEch = Number(ech.montant_total !== undefined ? ech.montant_total : (ech as any).montant_prevu) || 0
+                          const montantRestantEch = Number(ech.montant_restant !== undefined ? ech.montant_restant : (montantEch - (Number(ech.montant_paye) || 0))) || 0
 
                           return (
                             <div
-                              key={ech.id}
+                              key={ech.id || `ech-${idx}`}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -364,9 +368,10 @@ export default function CarnetPlansEchelonnes({
                                 borderRadius: 8,
                                 padding: '6px 10px',
                                 fontSize: 11.5,
+                                gap: 8,
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                                 <span
                                   style={{
                                     width: 18,
@@ -379,25 +384,26 @@ export default function CarnetPlansEchelonnes({
                                     justifyContent: 'center',
                                     fontWeight: 900,
                                     fontSize: 10,
+                                    flexShrink: 0,
                                   }}
                                 >
-                                  {isPayee ? <Check size={11} strokeWidth={3} /> : ech.numero}
+                                  {isPayee ? <Check size={11} strokeWidth={3} /> : numEch}
                                 </span>
-                                <div>
-                                  <strong style={{ color: '#0f172a' }}>Échéance {ech.numero}</strong>
-                                  <div style={{ fontSize: 10.5, color: isRetard ? '#dc2626' : '#64748b' }}>
+                                <div style={{ minWidth: 0 }}>
+                                  <strong style={{ color: '#0f172a' }}>Échéance {numEch}</strong>
+                                  <div style={{ fontSize: 10.5, color: isRetard ? '#dc2626' : '#64748b', whiteSpace: 'nowrap' }}>
                                     Due le {fmtDate(ech.date_echeance)} {isRetard ? `(Retard ${ech.jours_retard || 0}j)` : ''}
                                   </div>
                                 </div>
                               </div>
 
-                              <div style={{ textAlign: 'right' }}>
+                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                 <div style={{ fontWeight: 800, color: isPayee ? '#166534' : '#0f172a' }}>
-                                  {fcfa(ech.montant_total)}
+                                  {fcfa(montantEch)}
                                 </div>
                                 {isPartielle && (
                                   <div style={{ fontSize: 10, color: '#ea580c', fontWeight: 700 }}>
-                                    Reste : {fcfa(ech.montant_restant)}
+                                    Reste : {fcfa(montantRestantEch)}
                                   </div>
                                 )}
                                 {isPayee && (
@@ -413,12 +419,12 @@ export default function CarnetPlansEchelonnes({
 
                       {/* Boutons d'Action Plan */}
                       {!estSolde && (
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', width: '100%', marginTop: 4 }}>
                           <button
                             type="button"
                             onClick={() => handleOpenEncaisser(plan)}
                             className="btn-npl btn-npl-sm btn-npl-primary"
-                            style={{ flex: 1, minWidth: 120, height: 34, fontSize: 12 }}
+                            style={{ flex: '1 1 130px', height: 34, fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
                           >
                             <CreditCard size={13} />
                             <span>Encaisser (FIFO)</span>
@@ -429,7 +435,7 @@ export default function CarnetPlansEchelonnes({
                             onClick={() => handleSolderAnticipe(plan)}
                             disabled={loadingAction}
                             className="btn-npl btn-npl-sm btn-npl-secondary"
-                            style={{ flex: 1, minWidth: 120, height: 34, fontSize: 12 }}
+                            style={{ flex: '1 1 140px', height: 34, fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
                           >
                             <Zap size={13} />
                             <span>Solder par anticipation</span>
@@ -439,7 +445,7 @@ export default function CarnetPlansEchelonnes({
                             type="button"
                             onClick={() => handlePartagerWhatsApp(plan)}
                             className="btn-npl btn-npl-sm btn-npl-whatsapp"
-                            style={{ height: 34, padding: '0 10px', fontSize: 12 }}
+                            style={{ height: 34, padding: '0 12px', fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                             title="Envoyer l'échéancier sur WhatsApp"
                           >
                             <MessageCircle size={14} />

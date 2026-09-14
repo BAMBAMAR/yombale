@@ -68,26 +68,26 @@ export default function CarnetClientCardItem({
       }}
     >
       {/* En-tête de la Carte Client */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 180px', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
               {formatNomPropre(c.nom)}
             </span>
             {c.statut === 'bloque' && (
-              <span className="npl-badge npl-badge-danger">
+              <span className="npl-badge npl-badge-danger" style={{ whiteSpace: 'nowrap' }}>
                 <span className="npl-badge-dot" />
                 <span>{t('shop.blacklistedBadge')}</span>
               </span>
             )}
             {Number(c.plafond_max) > 0 && Number(c.solde) > Number(c.plafond_max) && (
-              <span className="npl-badge" style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 12, padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span className="npl-badge" style={{ fontSize: 11, background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 12, padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d97706' }} />
                 <span>Plafond dépassé</span>
               </span>
             )}
             {c.adresse && (
-              <span className="npl-badge npl-badge-neutral" style={{ fontSize: 11 }}>
+              <span className="npl-badge npl-badge-neutral" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
                 {c.adresse}
               </span>
             )}
@@ -104,13 +104,14 @@ export default function CarnetClientCardItem({
         </div>
 
         {/* Montant & Statut */}
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ textAlign: isMobile ? 'left' : 'right', flexShrink: 0, marginTop: isMobile ? 2 : 0 }}>
           <div
             style={{
               fontSize: 16,
-              fontWeight: 700,
+              fontWeight: 800,
               color: estDebiteur ? '#dc2626' : estAvance ? '#16a34a' : 'var(--text2, #64748b)',
               fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
             }}
           >
             {estDebiteur
@@ -121,17 +122,17 @@ export default function CarnetClientCardItem({
           </div>
           <div style={{ marginTop: 4 }}>
             {estDebiteur ? (
-              <span className="npl-badge npl-badge-danger">
+              <span className="npl-badge npl-badge-danger" style={{ whiteSpace: 'nowrap' }}>
                 <span className="npl-badge-dot" />
                 <span>{t('shop.owesShopBadge')}</span>
               </span>
             ) : estAvance ? (
-              <span className="npl-badge npl-badge-success">
+              <span className="npl-badge npl-badge-success" style={{ whiteSpace: 'nowrap' }}>
                 <span className="npl-badge-dot" />
                 <span>{t('shop.advanceBadge')}</span>
               </span>
             ) : (
-              <span className="npl-badge npl-badge-neutral">
+              <span className="npl-badge npl-badge-neutral" style={{ whiteSpace: 'nowrap' }}>
                 <span className="npl-badge-dot" />
                 <span>{t('shop.zeroBalanceBadge')}</span>
               </span>
@@ -144,12 +145,11 @@ export default function CarnetClientCardItem({
       <div
         style={{
           display: 'flex',
-          gap: 8,
+          gap: 6,
           paddingTop: 10,
           borderTop: '1px solid var(--border, #f1f5f9)',
           alignItems: 'center',
-          justifyContent: 'flex-end',
-          flexWrap: 'wrap',
+          justifyContent: 'space-between',
         }}
       >
         {estDebiteur ? (
@@ -157,30 +157,30 @@ export default function CarnetClientCardItem({
             type="button"
             onClick={() => onOuvrirModalTransaction('remboursement', c)}
             className="npl-btn npl-btn-success npl-btn-sm"
-            style={{ flex: isMobile ? '1 1 auto' : 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+            style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
           >
-            <ArrowDownLeft size={14} />
-            <span>{t('shop.collectRepayBtn')}</span>
+            <ArrowDownLeft size={14} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.collectRepayBtn')}</span>
           </button>
         ) : estAvance ? (
           <button
             type="button"
             onClick={() => onOuvrirModalTransaction('vente_credit', c)}
             className="npl-btn npl-btn-accent npl-btn-sm"
-            style={{ flex: isMobile ? '1 1 auto' : 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+            style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
           >
-            <ArrowUpRight size={14} />
-            <span>{t('shop.deductOnPurchaseBtn')}</span>
+            <ArrowUpRight size={14} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.deductOnPurchaseBtn')}</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={() => onOuvrirModalTransaction('vente_credit', c)}
             className="npl-btn npl-btn-primary npl-btn-sm"
-            style={{ flex: isMobile ? '1 1 auto' : 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+            style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
           >
-            <Plus size={14} />
-            <span>{t('shop.giveCreditBtn')}</span>
+            <Plus size={14} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.giveCreditBtn')}</span>
           </button>
         )}
 
@@ -189,13 +189,13 @@ export default function CarnetClientCardItem({
           onClick={() => onRelancerWhatsApp(c)}
           className="npl-btn npl-btn-secondary npl-btn-sm"
           title="WhatsApp"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0, padding: '0 10px' }}
         >
           <MessageCircle size={14} color="#25D366" />
           <span>{t('shop.remindWhatsappBtn')}</span>
         </button>
 
-        <div className="npl-dropdown" style={{ position: 'relative' }}>
+        <div className="npl-dropdown" style={{ position: 'relative', flexShrink: 0 }}>
           <button
             type="button"
             onClick={(e) => {
@@ -207,7 +207,7 @@ export default function CarnetClientCardItem({
             aria-label={t('shop.moreActionsBtn')}
             aria-haspopup="true"
             aria-expanded={isMenuOpen}
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, padding: 0 }}
           >
             <MoreHorizontal size={16} />
           </button>

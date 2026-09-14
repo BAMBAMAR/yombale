@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, ArrowDownLeft, ArrowUpRight, Check } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
 import type { ClientCredit, ProduitBoutique } from '../types'
@@ -181,67 +181,108 @@ export default function CarnetModalTransaction({
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <div>
+        {/* En-tête Modale */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 14,
+            paddingBottom: 12,
+            borderBottom: '1px solid #f1f5f9',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: typeTransaction === 'vente_credit' ? '#fee2e2' : '#dcfce7',
+                color: typeTransaction === 'vente_credit' ? '#b91c1c' : '#15803d',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {typeTransaction === 'vente_credit' ? (
+                <ArrowUpRight size={18} strokeWidth={2.5} />
+              ) : (
+                <ArrowDownLeft size={18} strokeWidth={2.5} />
+              )}
+            </div>
             <h3 style={{ margin: 0, fontSize: isMobile ? 15.5 : 18, fontWeight: 900, color: '#0f172a' }}>
               {typeTransaction === 'vente_credit'
                 ? t('shop.newCreditSaleModalTitle')
                 : t('shop.collectRepaymentModalTitle')}
             </h3>
-            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12.5, color: '#475569', fontWeight: 700 }}>Client :</span>
-              <select
-                value={clientSelectionne.id}
-                onChange={(e) => {
-                  const c = clients.find((cl) => cl.id === e.target.value)
-                  if (c) onSelectClient(c)
-                }}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 8,
-                  border: '1.5px solid #cbd5e1',
-                  fontSize: 12.5,
-                  fontWeight: 800,
-                  background: '#fff',
-                  color: '#0f172a',
-                  maxWidth: 280,
-                }}
-              >
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nom} ({c.telephone}) —{' '}
-                    {Number(c.solde) > 0
-                      ? `Doit ${fcfa(c.solde)}`
-                      : Number(c.solde) < 0
-                      ? `Avance ${fcfa(Math.abs(c.solde))}`
-                      : 'À jour (0 F)'}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fermer"
             style={{
               background: '#f1f5f9',
               border: 'none',
-              color: '#0f172a',
+              color: '#475569',
               borderRadius: '50%',
               width: 34,
               height: 34,
-              fontSize: 18,
-              fontWeight: 900,
-              cursor: 'pointer',
-              flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
             }}
-            title={t('common.close')}
           >
-            <X size={16} />
+            <X size={18} />
           </button>
+        </div>
+
+        {/* Sélecteur Client Pleine Largeur */}
+        <div
+          style={{
+            marginBottom: 14,
+            background: '#f8fafc',
+            padding: '10px 12px',
+            borderRadius: 12,
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          <label style={{ display: 'block', fontSize: 11.5, color: '#64748b', fontWeight: 700, marginBottom: 4 }}>
+            {t('shop.clientLabel') || 'Client'} :
+          </label>
+          <select
+            value={clientSelectionne.id}
+            onChange={(e) => {
+              const c = clients.find((cl) => cl.id === e.target.value)
+              if (c) onSelectClient(c)
+            }}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              borderRadius: 8,
+              border: '1.5px solid #cbd5e1',
+              fontSize: 13,
+              fontWeight: 800,
+              background: '#fff',
+              color: '#0f172a',
+              boxSizing: 'border-box',
+              outline: 'none',
+            }}
+          >
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nom} ({c.telephone}) —{' '}
+                {Number(c.solde) > 0
+                  ? `Doit ${fcfa(c.solde)}`
+                  : Number(c.solde) < 0
+                  ? `Avance ${fcfa(Math.abs(c.solde))}`
+                  : 'À jour (0 F)'}
+              </option>
+            ))}
+          </select>
         </div>
 
         {typeTransaction === 'vente_credit' && (
@@ -423,13 +464,19 @@ export default function CarnetModalTransaction({
               cursor: submittingTrans ? 'not-allowed' : 'pointer',
               opacity: submittingTrans ? 0.6 : 1,
               minHeight: 44,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
-            {submittingTrans
-              ? t('shop.savingProgress')
-              : typeTransaction === 'vente_credit'
-              ? t('shop.validateCreditSaleBtn')
-              : t('shop.validateRepaymentBtn')}
+            <Check size={16} strokeWidth={3} />
+            <span>
+              {submittingTrans
+                ? t('shop.savingProgress')
+                : typeTransaction === 'vente_credit'
+                ? t('shop.validateCreditSaleBtn')
+                : t('shop.validateRepaymentBtn')}
+            </span>
           </button>
         </div>
       </div>

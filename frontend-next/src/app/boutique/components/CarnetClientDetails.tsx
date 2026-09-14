@@ -2,7 +2,7 @@
 
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
-import { Plus, ArrowDownLeft, Printer, MessageCircle, Edit3, X, ArrowLeft } from 'lucide-react'
+import { Plus, ArrowDownLeft, Printer, MessageCircle, Edit3, X, ArrowLeft, History } from 'lucide-react'
 import CarnetPlansEchelonnes from '../carnet/components/CarnetPlansEchelonnes'
 
 export interface ClientCredit {
@@ -279,9 +279,12 @@ export default function CarnetClientDetails({
 
       {/* Historique des opérations */}
       <div>
-        <h3 style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
-          {t('shop.operationsHistoryTitle')}
-        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <History size={16} color="#475569" />
+          <h3 style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            {t('shop.operationsHistoryTitle')}
+          </h3>
+        </div>
 
         {loadingHist ? (
           <div style={{ fontSize: 13, color: '#64748b' }}>{t('common.loading')}</div>
