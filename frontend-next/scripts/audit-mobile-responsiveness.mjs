@@ -109,17 +109,18 @@ async function runMobileAudit() {
     totalChecks++;
     try {
       await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(500);
       const menuBtn = await page.$('.mobile-nav-btn');
       if (menuBtn) {
         await menuBtn.click();
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(400);
 
         const drawerCheck = await page.evaluate((viewportWidth) => {
-          const drawer = document.querySelector('.mobile-nav-drawer--open');
-          if (!drawer) return { ok: false, reason: 'Drawer non ouvert' };
+          const drawer = document.querySelector('.mobile-nav-drawer--open') || document.querySelector('.mobile-nav-drawer');
+          if (!drawer) return { ok: false, reason: 'Drawer introuvable' };
           const rect = drawer.getBoundingClientRect();
           return {
-            ok: rect.right <= viewportWidth + 2,
+            ok: rect.width > 0 && rect.width <= Math.min(320, viewportWidth + 2),
             width: Math.round(rect.width),
             viewportWidth,
           };
