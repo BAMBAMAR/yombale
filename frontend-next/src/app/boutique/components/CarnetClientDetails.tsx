@@ -65,11 +65,14 @@ export default function CarnetClientDetails({
       background: '#ffffff',
       border: '1px solid #e2e8f0',
       borderRadius: 18,
-      padding: isMobile ? '16px' : '20px',
+      padding: isMobile ? '12px 14px' : '18px 20px',
       display: 'flex',
       flexDirection: 'column',
       gap: 16,
-      boxShadow: '0 4px 16px rgba(15,23,42,0.06)'
+      boxShadow: '0 4px 16px rgba(15,23,42,0.06)',
+      minWidth: 0,
+      maxWidth: '100%',
+      boxSizing: 'border-box',
     }}>
       {/* Bouton Retour Liste sur Mobile */}
       {isMobile && (
@@ -278,7 +281,7 @@ export default function CarnetClientDetails({
       />
 
       {/* Historique des opérations */}
-      <div>
+      <div style={{ minWidth: 0, width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
           <History size={16} color="#475569" />
           <h3 style={{ fontSize: 13.5, fontWeight: 800, color: '#0f172a', margin: 0 }}>
@@ -293,7 +296,7 @@ export default function CarnetClientDetails({
             {t('shop.noTransactionsForCustomer')}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 340, overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 340, overflowY: 'auto', minWidth: 0, width: '100%' }}>
             {historique.map(h => {
               const estVente = h.type === 'vente_credit'
               const dateEch = h.date_echeance ? new Date(h.date_echeance) : null
@@ -310,10 +313,13 @@ export default function CarnetClientDetails({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: 8
+                    gap: 10,
+                    minWidth: 0,
+                    width: '100%',
+                    boxSizing: 'border-box',
                   }}
                 >
-                  <div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       <span style={{
                         fontSize: 10.5,
@@ -322,17 +328,18 @@ export default function CarnetClientDetails({
                         borderRadius: 6,
                         background: estVente ? '#fef2f2' : '#f0fdf4',
                         color: estVente ? '#991b1b' : '#166534',
-                        border: estVente ? '1px solid #fecaca' : '1px solid #bbf7d0'
+                        border: estVente ? '1px solid #fecaca' : '1px solid #bbf7d0',
+                        whiteSpace: 'nowrap',
                       }}>
                         {estVente ? `${t('shop.transactionCreditSale')}` : `${t('shop.transactionRepayment')}`}
                       </span>
-                      <span style={{ fontSize: 11.5, color: '#64748b' }}>
+                      <span style={{ fontSize: 11.5, color: '#64748b', whiteSpace: 'nowrap' }}>
                         {fmtDateHeure(h.created_at)}
                       </span>
                     </div>
 
                     {h.note && (
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', marginTop: 3 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', marginTop: 3, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                         {h.note}
                       </div>
                     )}
@@ -340,7 +347,7 @@ export default function CarnetClientDetails({
                     {Array.isArray(h.produits) && h.produits.length > 0 && (
                       <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                         {h.produits.map((item: any, idx: number) => (
-                          <span key={idx} style={{ fontSize: 10, background: '#e2e8f0', color: '#334155', padding: '2px 6px', borderRadius: 4 }}>
+                          <span key={idx} style={{ fontSize: 10, background: '#e2e8f0', color: '#334155', padding: '2px 6px', borderRadius: 4, wordBreak: 'break-word' }}>
                             {item.nom} (x{item.quantite})
                           </span>
                         ))}
@@ -348,21 +355,23 @@ export default function CarnetClientDetails({
                     )}
 
                     {h.date_echeance && (
-                      <div style={{ fontSize: 11, marginTop: 4, color: estEnRetard ? '#dc2626' : '#0284c7', fontWeight: 700 }}>
+                      <div style={{ fontSize: 11, marginTop: 4, color: estEnRetard ? '#dc2626' : '#0284c7', fontWeight: 700, wordBreak: 'break-word' }}>
                         {t('shop.dueDateLabel')} : {fmtDate(h.date_echeance)} {estEnRetard ? ` (${t('shop.overdueBadge')})` : ''}
                       </div>
                     )}
                   </div>
 
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 0, paddingLeft: 4 }}>
                     <div style={{
                       fontSize: 14,
                       fontWeight: 900,
-                      color: estVente ? '#dc2626' : '#16a34a'
+                      color: estVente ? '#dc2626' : '#16a34a',
+                      whiteSpace: 'nowrap',
+                      fontVariantNumeric: 'tabular-nums',
                     }}>
                       {estVente ? `+ ${fcfa(h.montant)}` : `- ${fcfa(h.montant)}`}
                     </div>
-                    <div style={{ fontSize: 10.5, color: '#94a3b8' }}>
+                    <div style={{ fontSize: 10.5, color: '#94a3b8', whiteSpace: 'nowrap' }}>
                       {h.mode_paiement || 'Espèces'}
                     </div>
                   </div>

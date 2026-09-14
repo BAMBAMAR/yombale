@@ -341,36 +341,40 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : clientSelectionne ? '1.2fr 1fr' : '1fr',
+          gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : clientSelectionne ? 'minmax(0, 1.15fr) minmax(0, 1fr)' : 'minmax(0, 1fr)',
           gap: 16,
           alignItems: 'start',
+          width: '100%',
+          minWidth: 0,
         }}
       >
-        <CarnetClientsList
-          isMobile={isMobile}
-          clients={clients}
-          clientsFiltres={clientsFiltres}
-          clientSelectionne={clientSelectionne}
-          loading={loading}
-          recherche={recherche}
-          setRecherche={setRecherche}
-          filtreStatus={filtreStatus}
-          setFiltreStatus={setFiltreStatus}
-          menuOuvertClientId={menuOuvertClientId}
-          setMenuOuvertClientId={setMenuOuvertClientId}
-          isListeningVoice={isListeningVoice}
-          voiceFeedback={voiceFeedback}
-          nbClientsDebiteurs={nbClientsDebiteurs}
-          t={t}
-          onDemarrerEcouteVocale={demarrerEcouteVocaleCarnet}
-          onOuvrirModalNouveauClient={() => setShowModalNouveauClient(true)}
-          onOuvrirFicheClient={ouvrirFicheClient}
-          onOuvrirModalEditClient={ouvrirModalEditClient}
-          onOuvrirModalTransaction={ouvrirModalTransaction}
-          onRelancerWhatsApp={handleRelancerWhatsApp}
-          onChangerStatutClient={handleChangerStatutClient}
-          onSupprimerClient={handleSupprimerClient}
-        />
+        {(!isMobile || !clientSelectionne) && (
+          <CarnetClientsList
+            isMobile={isMobile}
+            clients={clients}
+            clientsFiltres={clientsFiltres}
+            clientSelectionne={clientSelectionne}
+            loading={loading}
+            recherche={recherche}
+            setRecherche={setRecherche}
+            filtreStatus={filtreStatus}
+            setFiltreStatus={setFiltreStatus}
+            menuOuvertClientId={menuOuvertClientId}
+            setMenuOuvertClientId={setMenuOuvertClientId}
+            isListeningVoice={isListeningVoice}
+            voiceFeedback={voiceFeedback}
+            nbClientsDebiteurs={nbClientsDebiteurs}
+            t={t}
+            onDemarrerEcouteVocale={demarrerEcouteVocaleCarnet}
+            onOuvrirModalNouveauClient={() => setShowModalNouveauClient(true)}
+            onOuvrirFicheClient={ouvrirFicheClient}
+            onOuvrirModalEditClient={ouvrirModalEditClient}
+            onOuvrirModalTransaction={ouvrirModalTransaction}
+            onRelancerWhatsApp={handleRelancerWhatsApp}
+            onChangerStatutClient={handleChangerStatutClient}
+            onSupprimerClient={handleSupprimerClient}
+          />
+        )}
 
         {clientSelectionne && (
           <CarnetClientDetails

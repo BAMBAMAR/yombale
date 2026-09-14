@@ -57,7 +57,7 @@ export default function CarnetClientsList({
   onSupprimerClient,
 }: CarnetClientsListProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0, width: '100%' }}>
       {/* Barre de Recherche & Filtres */}
       <div
         style={{
@@ -67,11 +67,12 @@ export default function CarnetClientsList({
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
+          minWidth: 0,
         }}
       >
         <div
           style={{
-            flex: '1 1 240px',
+            flex: '1 1 200px',
             minWidth: 0,
             width: '100%',
             display: 'flex',
@@ -79,7 +80,7 @@ export default function CarnetClientsList({
             gap: 8,
           }}
         >
-          <div style={{ position: 'relative', flex: 1 }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <input
               type="text"
               placeholder={`${t('common.search')}...`}
@@ -87,6 +88,7 @@ export default function CarnetClientsList({
               onChange={(e) => setRecherche(e.target.value)}
               style={{
                 width: '100%',
+                minWidth: 0,
                 padding: '10px 14px 10px 36px',
                 borderRadius: 12,
                 border: '1px solid #cbd5e1',
@@ -115,7 +117,7 @@ export default function CarnetClientsList({
             }
             style={{
               height: 42,
-              padding: '0 14px',
+              padding: '0 12px',
               borderRadius: 12,
               border: isListeningVoice ? '2px solid #ea580c' : '1px solid #cbd5e1',
               background: isListeningVoice ? '#fff7ed' : '#ffffff',
@@ -161,6 +163,8 @@ export default function CarnetClientsList({
             gap: 6,
             overflowX: 'auto',
             width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
             paddingBottom: 4,
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',

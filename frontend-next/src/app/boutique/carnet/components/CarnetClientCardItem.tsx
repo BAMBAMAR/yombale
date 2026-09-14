@@ -65,13 +65,16 @@ export default function CarnetClientCardItem({
         borderWidth: 1,
         borderStyle: 'solid',
         borderColor: isActif ? 'var(--navy, #1C2B4A)' : 'var(--border, #e2e8f0)',
+        minWidth: 0,
+        maxWidth: '100%',
+        boxSizing: 'border-box',
       }}
     >
       {/* En-tête de la Carte Client */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 180px', minWidth: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap', width: '100%', minWidth: 0 }}>
+        <div style={{ flex: '1 1 140px', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy, #1C2B4A)', wordBreak: 'break-word' }}>
               {formatNomPropre(c.nom)}
             </span>
             {c.statut === 'bloque' && (
@@ -92,22 +95,22 @@ export default function CarnetClientCardItem({
               </span>
             )}
           </div>
-          <div style={{ fontSize: 12.5, color: 'var(--text2, #64748b)', marginTop: 3 }}>
-            {formatPhone(c.telephone)}{' '}
-            {c.plafond_max > 0 ? `• ${t('shop.creditLimitPrefix')}: ${fcfa(c.plafond_max)}` : ''}
+          <div style={{ fontSize: 12.5, color: 'var(--text2, #64748b)', marginTop: 3, wordBreak: 'break-word', minWidth: 0 }}>
+            <span>{formatPhone(c.telephone)}</span>
+            {c.plafond_max > 0 ? <span> • {t('shop.creditLimitPrefix')}: {fcfa(c.plafond_max)}</span> : null}
           </div>
           {c.note_client && (
-            <div style={{ fontSize: 11.5, color: 'var(--text3, #94a3b8)', fontStyle: 'italic', marginTop: 2 }}>
+            <div style={{ fontSize: 11.5, color: 'var(--text3, #94a3b8)', fontStyle: 'italic', marginTop: 2, wordBreak: 'break-word' }}>
               {t('common.notes')}: {c.note_client}
             </div>
           )}
         </div>
 
         {/* Montant & Statut */}
-        <div style={{ textAlign: isMobile ? 'left' : 'right', flexShrink: 0, marginTop: isMobile ? 2 : 0 }}>
+        <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 0, maxWidth: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           <div
             style={{
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: 800,
               color: estDebiteur ? '#dc2626' : estAvance ? '#16a34a' : 'var(--text2, #64748b)',
               fontVariantNumeric: 'tabular-nums',
@@ -120,7 +123,7 @@ export default function CarnetClientCardItem({
               ? `Avance : ${fcfa(Math.abs(soldeNum))}`
               : '0 FCFA (À jour)'}
           </div>
-          <div style={{ marginTop: 4 }}>
+          <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
             {estDebiteur ? (
               <span className="npl-badge npl-badge-danger" style={{ whiteSpace: 'nowrap' }}>
                 <span className="npl-badge-dot" />
@@ -150,6 +153,9 @@ export default function CarnetClientCardItem({
           borderTop: '1px solid var(--border, #f1f5f9)',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          minWidth: 0,
+          width: '100%',
         }}
       >
         {estDebiteur ? (
@@ -157,7 +163,7 @@ export default function CarnetClientCardItem({
             type="button"
             onClick={() => onOuvrirModalTransaction('remboursement', c)}
             className="npl-btn npl-btn-success npl-btn-sm"
-            style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
+            style={{ flex: '1 1 120px', minWidth: 90, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
           >
             <ArrowDownLeft size={14} style={{ flexShrink: 0 }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.collectRepayBtn')}</span>
@@ -167,7 +173,7 @@ export default function CarnetClientCardItem({
             type="button"
             onClick={() => onOuvrirModalTransaction('vente_credit', c)}
             className="npl-btn npl-btn-accent npl-btn-sm"
-            style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
+            style={{ flex: '1 1 120px', minWidth: 90, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
           >
             <ArrowUpRight size={14} style={{ flexShrink: 0 }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.deductOnPurchaseBtn')}</span>
@@ -177,7 +183,7 @@ export default function CarnetClientCardItem({
             type="button"
             onClick={() => onOuvrirModalTransaction('vente_credit', c)}
             className="npl-btn npl-btn-primary npl-btn-sm"
-            style={{ flex: 1, minWidth: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
+            style={{ flex: '1 1 120px', minWidth: 90, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
           >
             <Plus size={14} style={{ flexShrink: 0 }} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.giveCreditBtn')}</span>
@@ -189,7 +195,7 @@ export default function CarnetClientCardItem({
           onClick={() => onRelancerWhatsApp(c)}
           className="npl-btn npl-btn-secondary npl-btn-sm"
           title="WhatsApp"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0, padding: '0 10px' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flex: '0 0 auto', padding: '0 10px', whiteSpace: 'nowrap' }}
         >
           <MessageCircle size={14} color="#25D366" />
           <span>{t('shop.remindWhatsappBtn')}</span>

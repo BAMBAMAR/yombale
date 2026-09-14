@@ -1,3 +1,17 @@
+- **Correctif Affichage & Élimination de la Troncature Horizontale du Carnet de Dettes (14 septembre 2026)** 💳📱📐 🚀 ✅ :
+  * **🎯 1. Résolution de la Troncature des Cartes Clients (`CarnetClientCardItem.tsx`, `CarnetClientsList.tsx`)** :
+    - **Header & Montants Sans Rognage** : Intégration de `minWidth: 0`, `maxWidth: '100%'`, et repli fluide (`wordBreak: 'break-word'`) sur les informations de contact et plafonds. Le montant dû (`Doit : 35 000 FCFA`) et son badge ne sont plus coupés à droite.
+    - **Barre d'Actions Complète** : Ajout de `flexWrap: 'wrap'` sur la rangée d'actions de la carte client (`[Encaisser / Rembourser]`, `[Relance]`, `[...]`). Le bouton WhatsApp et le menu déroulant d'actions restent désormais 100% visibles quel que soit le format d'écran.
+    - **Barre de Recherche & Bouton Vocal** : Ajout de `minWidth: 0` sur l'input et son conteneur, empêchant l'étirement excessif et garantissant que l'intitulé *"Vocal"* ne soit plus tronqué en *"V"*.
+  * **🎯 2. Résolution des Débordements dans les Détails & Historique Client (`CarnetClientDetails.tsx`, `CarnetPlansEchelonnes.tsx`)** :
+    - **Cartes d'Opérations Fluides** : Application de `flex: 1, minWidth: 0` et `wordBreak: 'break-word'` sur les libellés et notes de transaction (`Règlement total anticipé...`), assurant que les montants à droite (`- 11 668 FCFA`) et le mode de paiement (`Espèces`) ne soient plus tronqués.
+    - **Plans Échelonnés** : Confinement de l'en-tête du plan avec `minWidth: 0` et espacements resserrés, maintenant la flèche chevron et les badges de statut à l'intérieur du conteneur.
+  * **🎯 3. Grille Layout & Expérience Mobile (`CarnetDettes.tsx`)** :
+    - Utilisation de `minmax(0, 1fr)` pour les colonnes de grille CSS afin de prévenir tout forçage de largeur par les enfants.
+    - Bascule ergonomique sur mobile : lorsqu'un client est sélectionné, sa fiche détaillée s'affiche en pleine largeur avec le bouton de retour, évitant l'empilement saturé de la liste et des détails.
+  * **🧪 4. Validation & Quality Gate** :
+    - Build Next.js (`npm run build`) : **Succès (Exit code 0)**.
+
 - **Correctif Showcase Marchand : Responsiveness Navigation des 4 Piliers (`feature/nopalou-master-fixes`) (14 septembre 2026)** 📱🏪📐 🚀 ✅ :
   * **🎯 1. Résolution de l'Affichage & Troncature des Onglets (`MerchantMasterStage.tsx`, `homepage.css`)** :
     - **Grille Adaptative 2x2 sur Mobile & 4 Colonnes sur Desktop** : Remplacement de l'agencement flex débordant avec barre de défilement brute par une grille fluide `.merchant-piliers-nav` (`grid-template-columns: repeat(4, 1fr)` sur grand écran, `repeat(2, 1fr)` sur mobile < 860px).

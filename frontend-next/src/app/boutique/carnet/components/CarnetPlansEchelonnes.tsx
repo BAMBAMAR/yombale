@@ -284,12 +284,12 @@ export default function CarnetPlansEchelonnes({
                 >
                   {/* En-tête du Plan */}
                   <div
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', gap: 10, flexWrap: 'wrap' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', gap: 8, flexWrap: 'wrap', minWidth: 0, width: '100%' }}
                     onClick={() => setExpandedPlanId(isExpanded ? null : plan.id)}
                   >
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 12.5, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 900, color: 'var(--navy, #1C2B4A)', wordBreak: 'break-word' }}>
                           {plan.reference}
                         </span>
                         <span
@@ -300,26 +300,29 @@ export default function CarnetPlansEchelonnes({
                             borderRadius: 6,
                             background: estSolde ? '#dcfce7' : '#ffedd5',
                             color: estSolde ? '#166534' : '#9a3412',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {estSolde ? 'SOLDÉ' : `${plan.nb_echeances}x ${plan.frequence}`}
                         </span>
                       </div>
-                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 2, wordBreak: 'break-word' }}>
                         Créé le {fmtDate(plan.created_at)} • Total : <strong>{fcfa(totalNum)}</strong>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: estSolde ? '#166534' : 'var(--accent, #C75B00)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, minWidth: 0 }}>
+                      <div style={{ textAlign: 'right', minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: estSolde ? '#166534' : 'var(--accent, #C75B00)', whiteSpace: 'nowrap' }}>
                           {estSolde ? '0 FCFA' : `Reste : ${fcfa(soldeRestantNum)}`}
                         </div>
-                        <div style={{ fontSize: 10, color: '#64748b' }}>
+                        <div style={{ fontSize: 10, color: '#64748b', whiteSpace: 'nowrap' }}>
                           {pct}% payé ({fcfa(payeNum)})
                         </div>
                       </div>
-                      {isExpanded ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
+                      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                        {isExpanded ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
+                      </div>
                     </div>
                   </div>
 
