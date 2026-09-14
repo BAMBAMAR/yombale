@@ -2,9 +2,9 @@
   * **🎯 1. Nouveautés & Réalisations Finales (P1 & P2)** :
     - **CMS de Blog & Articles SEO Marchand (`P1`)** :
       * Table SQL `boutique_articles` avec slugification automatique et contrôle d'unicité multi-tenant.
-      * Endpoints REST [`boutiques-articles.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/boutiques-modules/boutiques-articles.js) (liste publique, détail avec incrémentation de vues, création/édition/suppression sécurisée anti-IDOR).
+      * Endpoints REST [`boutiques-articles.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/boutiques-modules/boutiques-articles.js) (liste publique, détail avec incrémentation de vues, création/édition/suppression sécurisée anti-IDOR avec `logo_url`).
       * Dashboard marchand d'édition d'articles [`BlogArticlesManager.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutique/components/BlogArticlesManager.tsx).
-      * Pages publiques de blog [`/boutiques/[id]/blog`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutiques/[id]/blog/page.tsx) et [`/boutiques/[id]/blog/[slug]`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutiques/[id]/blog/[slug]/page.tsx) intégrant le balisage Schema.org `Article` JSON-LD pour Google et le partage 1-clic WhatsApp / Réseaux sociaux.
+      * Pages publiques de blog [`/boutiques/[id]/blog`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutiques/[id]/blog/page.tsx) et [`/boutiques/[id]/blog/[slug]`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/boutiques/[id]/blog/[slug]/page.tsx) intégrant `apiFetch`, balisage Schema.org `Article` JSON-LD pour Google et partage 1-clic WhatsApp / Réseaux sociaux.
     - **Abonnements Récurrents & Commandes Périodiques Automatisées (`P2`)** :
       * Table SQL `boutique_abonnements` (fréquences hebdomadaires, bimensuelles, mensuelles, calcul du cycle de renouvellement).
       * Endpoints REST [`boutiques-abonnements.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/boutiques-modules/boutiques-abonnements.js) et génération automatique de commandes boutique.
