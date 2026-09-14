@@ -647,4 +647,38 @@ body:has(.caisse-root) .mobile-bottom-nav {
     grid-template-columns: 1fr !important;
   }
 }
-
+
+/* Modales POS Universelles (Backdrop + Centrage Plein Écran) */
+.pos-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10000 !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px 12px !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+}
+
+.pos-modal-card {
+  background: #ffffff !important;
+  border-radius: 20px !important;
+  padding: 28px 24px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  box-sizing: border-box !important;
+  margin: auto !important;
+  position: relative !important;
+}
+
+@media (max-width: 480px) {
+  .pos-modal-card {
+    padding: 20px 16px !important;
+    border-radius: 16px !important;
+  }
+}

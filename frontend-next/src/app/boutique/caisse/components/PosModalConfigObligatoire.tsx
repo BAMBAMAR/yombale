@@ -62,8 +62,38 @@ export default function PosModalConfigObligatoire({
   }
 
   return (
-    <div className="pos-modal-backdrop" style={{ zIndex: 12000 }}>
-      <div className="pos-modal-card" style={{ maxWidth: 480, border: '2px solid var(--accent, #C75B00)' }}>
+    <div
+      className="pos-modal-backdrop"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 12000,
+        background: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px 12px',
+        overflowY: 'auto',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div
+        className="pos-modal-card"
+        style={{
+          background: '#ffffff',
+          borderRadius: 20,
+          padding: '28px 20px',
+          width: '100%',
+          maxWidth: 480,
+          border: '2px solid var(--accent, #C75B00)',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+          boxSizing: 'border-box',
+          margin: 'auto',
+          position: 'relative',
+        }}
+      >
         <div
           style={{
             width: 56,

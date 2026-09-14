@@ -148,8 +148,37 @@ export default function PosModalGestionPins({
 
   // ── VUE 2 : Gestion standard des PINs et de l'équipe ──
   return (
-    <div className="pos-modal-backdrop" style={{ zIndex: 11000 }}>
-      <div className="pos-modal-card" style={{ maxWidth: 540 }}>
+    <div
+      className="pos-modal-backdrop"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 11000,
+        background: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px 12px',
+        overflowY: 'auto',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div
+        className="pos-modal-card"
+        style={{
+          background: '#ffffff',
+          borderRadius: 20,
+          padding: '24px 20px',
+          width: '100%',
+          maxWidth: 540,
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+          boxSizing: 'border-box',
+          margin: 'auto',
+          position: 'relative',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
