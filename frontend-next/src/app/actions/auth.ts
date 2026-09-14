@@ -26,6 +26,7 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
       userId: data.user.id,
       nom: data.user.nom,
       email: data.user.email,
+      telephone: data.user.telephone,
     })
   } catch (e) {
     console.error('[LOGIN]', e instanceof Error ? e.message : e)
@@ -59,6 +60,7 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
       userId: data.user.id,
       nom: data.user.nom,
       email: data.user.email,
+      telephone: data.user.telephone,
     })
   } catch (e) {
     console.error('[SIGNUP]', e instanceof Error ? e.message : e)
@@ -77,22 +79,32 @@ export async function logout(): Promise<void> {
 
 // ── Mise à jour profil ───────────────────────────────────────────
 export async function updateProfil(prevState: AuthState, formData: FormData): Promise<AuthState> {
-  const nom   = formData.get('nom')?.toString().trim() ?? ''
-  const email = formData.get('email')?.toString().trim() ?? ''
+  const nom       = formData.get('nom')?.toString().trim() ?? ''
+  const email     = formData.get('email')?.toString().trim() ?? ''
+  const telephone = formData.get('telephone')?.toString().trim() ?? ''
 
-  if (!nom && !email) return { error: 'Remplissez au moins un champ' }
+  if (!nom && !email && !telephone) return { error: 'Remplissez au moins un champ' }
 
   try {
     const res = await backendFetch('/api/auth/profil', {
       method: 'PUT',
-      body: JSON.stringify({ ...(nom && { nom }), ...(email && { email }) }),
+      body: JSON.stringify({
+        ...(nom && { nom }),
+        ...(email && { email }),
+        ...(telephone !== undefined && { telephone }),
+      }),
     })
     const data = await res.json()
     if (!res.ok) return { error: data.errors?.[0]?.msg ?? data.error ?? 'Erreur lors de la mise à jour' }
 
     const current = await getSession()
     if (current) {
-      await createSession({ userId: current.userId, nom: data.user.nom, email: data.user.email })
+      await createSession({
+        userId: current.userId,
+        nom: data.user.nom,
+        email: data.user.email,
+        telephone: data.user.telephone,
+      })
     }
     return { message: 'Profil mis à jour ✓' }
   } catch {
@@ -122,6 +134,7 @@ export async function setAuthCookieAction(input: any) {
   let userId = ''
   let nom = ''
   let email = ''
+  let telephone = ''
 
   if (typeof input === 'string') {
     const parts = input.split('.')
@@ -131,6 +144,7 @@ export async function setAuthCookieAction(input: any) {
         userId = payload.userId || payload.id || ''
         nom = payload.nom || ''
         email = payload.email || ''
+        telephone = payload.telephone || ''
       } catch (e) {
         console.error('[setAuthCookieAction] Error parsing token:', e)
       }
@@ -139,10 +153,11 @@ export async function setAuthCookieAction(input: any) {
     userId = input.id || input.userId || ''
     nom = input.nom || ''
     email = input.email || ''
+    telephone = input.telephone || ''
   }
 
   if (userId) {
-    await createSession({ userId, nom, email })
+    await createSession({ userId, nom, email, telephone })
   } else {
     console.error('[setAuthCookieAction] Impossible de créer la session, userId manquant:', input)
   }

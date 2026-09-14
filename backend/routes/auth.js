@@ -384,17 +384,30 @@ router.get('/parrainage', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// PUT /api/auth/profil — modifier nom et/ou email
+// GET /api/auth/profil — obtenir les informations du profil utilisateur
+router.get('/profil', verifierToken, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, nom, email, telephone, email_verifie, created_at FROM utilisateurs WHERE id=$1',
+      [req.user.userId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ user: rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/auth/profil — modifier nom, email et/ou telephone
 router.put('/profil',
   verifierToken,
   body('nom').optional().trim().notEmpty().withMessage('Le nom ne peut pas être vide'),
   body('email').optional().isEmail().normalizeEmail().withMessage('Email invalide'),
+  body('telephone').optional().trim(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     try {
-      const { nom, email } = req.body;
-      if (!nom && !email) return res.status(400).json({ error: 'Au moins un champ à modifier' });
+      const { nom, email, telephone } = req.body;
+      if (!nom && !email && telephone === undefined) return res.status(400).json({ error: 'Au moins un champ à modifier' });
 
       if (email) {
         const exist = await pool.query(
@@ -407,12 +420,17 @@ router.put('/profil',
       const sets = [];
       const vals = [];
       let i = 1;
-      if (nom)   { sets.push(`nom=$${i++}`);   vals.push(nom); }
-      if (email) { sets.push(`email=$${i++}`); vals.push(email); }
+      if (nom)                  { sets.push(`nom=$${i++}`);       vals.push(nom); }
+      if (email)                { sets.push(`email=$${i++}`);     vals.push(email); }
+      if (telephone !== undefined) {
+        const cleanTel = telephone ? String(telephone).replace(/[^\d+]/g, '').trim() : null;
+        sets.push(`telephone=$${i++}`);
+        vals.push(cleanTel);
+      }
       vals.push(req.user.userId);
 
       const { rows } = await pool.query(
-        `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email`,
+        `UPDATE utilisateurs SET ${sets.join(', ')} WHERE id=$${i} RETURNING id, nom, email, telephone`,
         vals
       );
       res.json({ user: rows[0] });

@@ -432,7 +432,9 @@ router.get('/commandes/suivi', async (req, res) => {
 
     const searchPattern = `%${rawTerm}%`;
     const cleanDigits = rawTerm.replace(/[^0-9]/g, '');
+    const shortDigits = cleanDigits.length >= 9 && cleanDigits.startsWith('221') ? cleanDigits.slice(3) : cleanDigits;
     const digitsPattern = cleanDigits ? `%${cleanDigits}%` : searchPattern;
+    const shortDigitsPattern = shortDigits ? `%${shortDigits}%` : searchPattern;
 
     const query = `
       SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.statut, c.montant_total,
@@ -447,12 +449,13 @@ router.get('/commandes/suivi', async (req, res) => {
         OR c.id::text ILIKE $1
         OR c.client_telephone ILIKE $1
         OR ($2 <> '%%' AND regexp_replace(COALESCE(c.client_telephone, ''), '[^0-9]', '', 'g') LIKE $2)
+        OR ($3 <> '%%' AND regexp_replace(COALESCE(c.client_telephone, ''), '[^0-9]', '', 'g') LIKE $3)
       )
       ORDER BY c.created_at DESC
       LIMIT 10
     `;
 
-    const { rows } = await pool.query(query, [searchPattern, digitsPattern]);
+    const { rows } = await pool.query(query, [searchPattern, digitsPattern, shortDigitsPattern]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Aucune commande trouvée pour cette référence ou ce numéro.' });
     }

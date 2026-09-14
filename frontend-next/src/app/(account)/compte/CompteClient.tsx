@@ -20,11 +20,13 @@ import AccountDashboardHub from './tabs/AccountDashboardHub'
 export default function CompteClient({ 
   nom, 
   email, 
+  telephone,
   initiale, 
   session 
 }: { 
   nom: string, 
   email: string | null, 
+  telephone?: string | null,
   initiale: string,
   session: any
 }) {
@@ -232,10 +234,10 @@ export default function CompteClient({
            />
         )}
         {tab === 'mes-annonces-immo' && <AnnoncesImmoClient />}
-        {tab === 'suivi-commande' && <SuiviCommandeClient userPhone={session?.telephone || session?.user?.telephone || ''} />}
+        {tab === 'suivi-commande' && <SuiviCommandeClient userPhone={telephone || session?.telephone || session?.user?.telephone || ''} />}
         {(tab === 'mes-alertes' || tab === 'alertes') && <AlertesClientTab userId={userId} />}
         {tab === 'favoris' && <FavorisClient />}
-        {tab === 'profil' && <ProfilClient nom={nom} email={email || ''} />}
+        {tab === 'profil' && <ProfilClient nom={nom} email={email || ''} telephone={telephone || session?.telephone || ''} />}
         {tab === 'apporteur' && <ApporteurClient />}
         {(tab === 'fonctionnalites' || tab === 'abonnement' || tab === 'tarifs') && <FonctionnalitesClient />}
       </div>
