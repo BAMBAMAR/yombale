@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
+import { Building2 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ImmoClientWrapper from './ImmoClientWrapper'
 import ImmoQuartierInput from './ImmoQuartierInput'
@@ -187,7 +188,29 @@ export default async function ImmoPage({
             ? `${total.toLocaleString('fr-FR')} annonce${total > 1 ? 's' : ''} disponible${total > 1 ? 's' : ''}`
             : 'Trouvez votre bien idéal'}
         />
-        <ImmoClientWrapper />
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Link
+            href="/agences"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '9px 16px',
+              borderRadius: 8,
+              background: '#FFFFFF',
+              border: '1px solid var(--border, #E8DDD2)',
+              color: 'var(--navy, #1C2B4A)',
+              fontWeight: 750,
+              fontSize: 13,
+              textDecoration: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Building2 size={15} style={{ color: 'var(--accent, #C75B00)' }} />
+            Agences Immobilières
+          </Link>
+          <ImmoClientWrapper />
+        </div>
       </div>
 
       {/* Barre de filtres */}

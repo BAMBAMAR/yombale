@@ -277,6 +277,7 @@ export default async function RootLayout({
                 <a href="/telecom" className="navbar-link">Télécom</a>
                 <a href="/annonces" className="navbar-link">Annonces</a>
                 <a href="/boutiques" className="navbar-link">Boutiques</a>
+                <a href="/agences" className="navbar-link">Agences</a>
                 <NavbarGuides />
               </div>
               <div className="navbar-search-desktop">

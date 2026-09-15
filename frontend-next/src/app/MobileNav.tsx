@@ -6,7 +6,7 @@ import {
   Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
   Bell, Heart, Users, BookOpen, Sparkles, Plus, LogOut, ChevronDown,
   MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon, Zap,
-  Menu, X
+  Menu, X, Building2
 } from 'lucide-react'
 
 interface Props {
@@ -329,6 +329,10 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           <a href="/boutiques" className="mobile-nav-link" onClick={close}>
             <Store size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
             <span>Boutiques Vérifiées</span>
+          </a>
+          <a href="/agences" className="mobile-nav-link" onClick={close}>
+            <Building2 size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
+            <span>Agences Immobilières</span>
           </a>
 
           {/* ── 2.5 SOLUTIONS MARCHANDS & FORFAITS ── */}

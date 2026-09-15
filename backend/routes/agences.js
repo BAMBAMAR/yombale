@@ -124,6 +124,45 @@ router.post('/', verifierToken, async (req, res) => {
   }
 });
 
+// ── GET /api/agences/public — Annuaire public des agences immobilières ──
+router.get('/public', async (req, res) => {
+  try {
+    const { ville, recherche } = req.query;
+    let query = `
+      SELECT a.id, a.nom, a.slug, a.description, a.logo_url, a.adresse, a.ville, a.quartier,
+             a.telephone, a.whatsapp, a.email_contact, a.site_web, a.numero_agrement,
+             a.parametres, a.statut, a.created_at,
+             (SELECT COUNT(*) FROM biens_immo b WHERE b.agence_id = a.id AND b.statut = 'actif' AND b.statut_occupation = 'disponible') AS nb_biens_disponibles
+      FROM agences_immo a
+      WHERE a.statut = 'actif'
+    `;
+    const params = [];
+    let pIdx = 1;
+
+    if (ville) {
+      query += ` AND a.ville ILIKE $${pIdx++}`;
+      params.push(`%${ville}%`);
+    }
+    if (recherche) {
+      query += ` AND (a.nom ILIKE $${pIdx} OR a.description ILIKE $${pIdx} OR a.quartier ILIKE $${pIdx})`;
+      params.push(`%${recherche}%`);
+      pIdx++;
+    }
+
+    query += ` ORDER BY nb_biens_disponibles DESC, a.created_at DESC`;
+
+    const { rows } = await pool.query(query, params);
+
+    res.json({
+      success: true,
+      agences: rows
+    });
+  } catch (err) {
+    console.error('[GET /api/agences/public]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement annuaire agences' });
+  }
+});
+
 // ── GET /api/agences/public/:slugOrId — Récupérer la vitrine publique d'une agence (Accessible à tous) ──
 router.get('/public/:slugOrId', async (req, res) => {
   try {
