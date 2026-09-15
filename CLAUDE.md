@@ -1,3 +1,24 @@
+- **Sprint 4 (P0) — Intégration des Courtiers & Apporteurs d'Affaires, Dynamisation Compta Agence & Restauration Social Shop (15 septembre 2026)** 🤝🏢📊 🚀 ✅ :
+  * **🎯 1. Intégration Complète des Courtiers & Apporteurs d'Affaires dans l'Agence** :
+    - **Rôle Dédié & Filtrage Équipe (`/agence/[slug]/equipe`)** : Ajout du rôle officiel `courtier: 'Courtier / Apporteur d\'Affaires'` dans `agence_membres`. Système d'onglets de filtrage (*Tous*, *Équipe Interne*, *Courtiers & Apporteurs*) et formulaire d'invitation/association avec badge de partenaire financier vert.
+    - **Attribution dans le Pipeline de Transactions (`/agence/[slug]/transactions`)** : Prise en compte du `courtier_id` dans `transactions_immo`, ajout de la jointure SQL `LEFT JOIN utilisateurs courtier ON t.courtier_id = courtier.id`, sélection du courtier partenaire dans `ModalCreerTransaction.tsx` et affichage explicite dans la colonne « Agent & Courtier ».
+    - **Commissions & Partages d'Honoraires (`/agence/[slug]/commissions`)** : Association des honoraires au courtier prescripteur avec badge visuel et gestion du schéma de répartition (`repartition` JSONB).
+    - **Navigation & Dashboard Agence (`layout.tsx`, `page.tsx`)** : Mise à jour du menu latéral en « Équipe, Agents & Courtiers » et ajout des raccourcis vers Transactions et Courtiers dans la grille d'outils du tableau de bord.
+    - **Seeding de Partenaires Réels (`seed-courtier.js`)** : Peuplement automatique pour `amar-immo` de M. Abdoulaye Diallo (Courtier Financement Immobilier - Teranga Courtage Dakar) et Mme Aïssatou Sow (Apporteuse d'affaires), avec une transaction de vente (Villa Duplex Almadies, 185M FCFA) et commission partagée.
+  * **🎯 2. Dynamisation & Clarification de la Comptabilité Agence (`/agence/[slug]/compta`)** :
+    - **Résolution du Piège des Échéances Futures** : Le tableau des mois affichait des mois lointains (ex: 2027-07) à 0 FCFA car la requête SQL appliquait un simple `ORDER BY periode DESC LIMIT 6` sur le calendrier prévisionnel de 12 mois. Correction avec la borne `periode <= TO_CHAR(CURRENT_DATE + INTERVAL '1 month', 'YYYY-MM')` affichant désormais les mois réels passés et en cours (2026-09, 2026-08...).
+    - **Bilan Global Consolidé** : Agrégation des commissions sur ventes (`commissions_immo`), honoraires de gestion locative et factures de prestations pour calculer le Chiffre d'Affaires Global de l'agence.
+    - **Correction d'Import TS** : Rectification du chemin relatif d'`ExportCsvButton` (`../../components/ExportCsvButton`).
+  * **🎯 3. Restauration de l'Exploration & Import Profil Social Shop** :
+    - **Rétablissement Multi-Plateforme (`social-parser.js`)** : Restauration de l'extraction de profil pour Instagram (proxy visuel `wsrv.nl` pour contourner les restrictions CDN Meta), TikTok (oEmbed enrichi), YouTube et Facebook.
+    - **Endpoint Universel Agence & Boutique** : Enregistrement de la route `POST /api/social-shop/explore-profile` dans `social-shop.js`.
+    - **Interface Utilisateur Débloquée (`SocialImportTab.tsx`)** : Suppression du message d'erreur factice et affichage de la grille de sélection des posts/vidéos avec tags et statut d'import.
+  * **🧪 4. Validation Qualité Globale (100% Vert)** :
+    - Tests Unitaires Jest : **38/38 suites réussies, 281/281 tests validés**.
+    - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Tous les composants React <= 450 lignes, 0 émoji dans les contrôles UI.
+    - Serveur Backend Express (port 3000) et Frontend Next.js (port 3001) actifs et répondant 200 OK.
+
 - **Sprint 3 (P0) — Spécificité & Différenciation de la Facturation Immobilière vs Boutique, Journal d'Activité & Paramétrage Légal COCC (15 septembre 2026)** 🏛️⚖️🧾 🚀 ✅ :
   * **🎯 1. Différenciation Fondamentale de la Facturation Agence vs Boutique (`/agence/[slug]/factures`)** :
     - **Nature des Opérations Immobilières** : Contrairement aux factures de vente d'articles/stocks en boutique (produits physiques, quantités, tickets de caisse), la facturation d'agence émet des **Notes d'Honoraires & Débours** réglementées par le Code des Obligations Civiles et Commerciales (COCC) sénégalais :
