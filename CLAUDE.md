@@ -1,3 +1,33 @@
+- **Implémentation & Déploiement du Vertical Nopalou Immobilier (`feature/vertical-immobilier`) (15 septembre 2026)** 🏢🔑📱 🚀 ✅ :
+  * **🎯 1. Architecture Modulaire & Moteur Métier Dédié (Sans Fusion Commerce)** :
+    - **Isolation Stricte du Vertical** : L'Immobilier fonctionne comme un vertical autonome au-dessus des fondations Nopalou (Auth, Paiements, WhatsApp, Notifications, Cloudinary, Médias) sans jamais polluer ni mélanger les modèles de données Commerce (Boutiques, POS, Stocks, Commandes).
+    - **13 Nouvelles Tables SQL PostgreSQL** : Déploiement dans `backend/migrate-inline.js` des tables `agences_immo`, `agence_membres`, `proprietaires_immo`, `biens_immo`, `contacts_immo`, `mandats_immo`, `visites_immo`, `offres_immo`, `transactions_immo`, `commissions_immo`, `baux_immo`, `loyers_echeances`, `maintenance_immo` et enrichissement non-destructif de `annonces_immo` (`bien_id`, `agence_id`).
+  * **🎯 2. Sécurité Multi-Tenant & RBAC Anti-IDOR (`backend/middlewares/tenantSecurityImmo.js`)** :
+    - **Protection Stricte** : `checkAgenceAccess` et `requireAgenceAccess` assurant qu'un agent ou bailleur d'une agence A ne peut en aucun cas lire ou modifier les biens, prospects, loyers ou commissions d'une agence B.
+    - **Matrice des Rôles** : Support natif des rôles `admin_agence`, `directeur`, `agent`, `gestionnaire_locatif`, `commercial`.
+  * **🎯 3. Moteur Intelligent de Matching (`backend/services/matching-immo.js`)** :
+    - **Matching Prospect ↔ Biens** : Algorithme multi-critères (Opération vente/location, Fourchette budgétaire, Villes & Quartiers ciblés Dakar/Sénégal, Type de bien, Nb de chambres, Statut meublé) avec score sur 100% et explications textuelles compréhensibles.
+    - **Matching Inverse** : Notification/listing instantané des prospects intéressés dès l'ajout ou la mise à jour d'un bien au catalogue de l'agence.
+  * **🎯 4. APIs REST Complètes Nopalou Immobilier (`backend/routes/`)** :
+    - `/api/agences` : Gestion du profil agence, invitations de collaborateurs, KPIs temps réel (biens, annonces, visites, loyers, impayés).
+    - `/api/biens` : Portefeuille de biens, publication / synchronisation automatique sur la marketplace publique `annonces_immo`, matching prospects.
+    - `/api/crm-immo` : Pipeline CRM Kanban des prospects, prise de rendez-vous et suivi des visites, répertoire des propriétaires mandants.
+    - `/api/locatif-immo` : Création de baux avec génération automatique des échéances mensuelles, encaissement rapide des loyers (Wave, Orange Money, Cash, Virement), quittances numériques numérotées, relances WhatsApp d'impayés, gestion des tickets de maintenance.
+  * **🎯 5. Interface Utilisateur Web & Mobile-First (`frontend-next/src/app/agence/`)** :
+    - **Espace Agences Hub (`/agence`)** : Liste des agences de l'utilisateur avec compteurs en direct et modal de création rapide d'agence.
+    - **Workspace Agence Dédié (`/agence/[slug]/layout.tsx`)** : Sidebar ergonomique avec navigation contextuelle, sélecteur d'agences et drawer responsive mobile.
+    - **Tableau de Bord Exécutif (`/agence/[slug]/page.tsx`)** : Grille KPI en temps réel (Biens actifs, Annonces en ligne, Visites du jour, Suivi des impayés, Loyers attendus vs encaissés, Pipeline prospects).
+    - **Gestion du Portefeuille (`/agence/[slug]/biens/`)** : Tableau filtrable par type, statut et quartier, formulaire de création de bien optimisé Sénégal, bouton de publication instantanée sur la marketplace.
+    - **CRM Pipeline Kanban (`/agence/[slug]/prospects/`)** : Colonnes (Nouveaux, Qualifiés, Visite, Offre, Gagné), tiroir de matching intelligent affichant les biens compatibles avec score de pertinence.
+    - **Agenda des Visites (`/agence/[slug]/visites/`)** : Calendrier et liste des rendez-vous avec mise à jour du statut (Réalisée, Annulée, Confirmée).
+    - **Gestion Locative & Quittances (`/agence/[slug]/locatif/`)** : Suivi des échéances du mois, modale d'encaissement de loyer avec sélection du mode de paiement, génération de quittance et relances.
+    - **Répertoire Bailleurs & Équipe (`/agence/[slug]/bailleurs/`, `/agence/[slug]/equipe/`, `/agence/[slug]/parametres/`)** : Gestion des mandataires, commissions par défaut et invitations sécurisées.
+    - **Conformité Anti-AI-Slop** : 0 émoji UI, utilisation exclusive des icônes SVG `lucide-react`, variables CSS globales (`--navy`, `--accent`, `--price`, `--bg`, `--border`), composants modulaires <= 450 lignes.
+  * **🧪 6. Validation & Quality Gate** :
+    - Validation Syntaxique Backend : **100% Modules chargés avec succès**.
+    - Linter Anti-AI-Slop : **Advisory Mode validé**.
+    - Branche Git : `feature/vertical-immobilier` (prête pour revue sans push automatique).
+
 - **Optimisation Hiérarchie Visuelle Mobile & Guidage Nom de Produit (15 septembre 2026)** 📱🏪✨ 🚀 ✅ :
   * **🎯 1. Hiérarchie Visuelle & Densité Mobile (~278px Libérés au-dessus de la ligne de flottaison)** :
     - **Masquage Contextuel CSS (`boutique-dashboard.css`, `BoutiqueManage.tsx`)** : Ajout de l'attribut `data-tab` sur `<aside>` pour masquer dynamiquement la carte d'identité boutique (`.bq-sidebar-header`) et le titre H2 redondant (`.bq-main-tab-header`) sur mobile lorsque le marchand navigue dans les modules profonds (`commandes`, `produits`, `compta`, etc.).

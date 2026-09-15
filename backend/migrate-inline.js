@@ -1806,5 +1806,371 @@ module.exports = async function migrateInline() {
     console.warn('[MIGRATE] POS Avancé & Crédit échec:', err.message);
   }
 
+  // ══════════════════════════════════════════════════════════════
+  // NOPALOU IMMOBILIER — MIGRATION DU VERTICAL IMMOBILIER
+  // ══════════════════════════════════════════════════════════════
+  try {
+    await pool.query(`
+      -- 1. AGENCES IMMOBILIÈRES
+      CREATE TABLE IF NOT EXISTS agences_immo (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id    UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        nom               VARCHAR(200) NOT NULL,
+        slug              VARCHAR(200) UNIQUE NOT NULL,
+        description       TEXT,
+        logo_url          TEXT,
+        adresse           TEXT,
+        ville             VARCHAR(100) DEFAULT 'Dakar',
+        quartier          VARCHAR(200),
+        telephone         VARCHAR(30),
+        whatsapp          VARCHAR(30),
+        email_contact     VARCHAR(255),
+        site_web          TEXT,
+        numero_agrement   VARCHAR(100),
+        statut            VARCHAR(20) DEFAULT 'actif',
+        abonnement_plan   VARCHAR(50) DEFAULT 'essentiel',
+        abonnement_fin    TIMESTAMPTZ,
+        parametres        JSONB DEFAULT '{"taux_commission_vente_defaut": 5, "taux_commission_location_defaut": 10}'::jsonb,
+        created_at        TIMESTAMPTZ DEFAULT NOW(),
+        updated_at        TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_agences_immo_user   ON agences_immo(utilisateur_id);
+      CREATE INDEX IF NOT EXISTS idx_agences_immo_statut ON agences_immo(statut);
+      CREATE INDEX IF NOT EXISTS idx_agences_immo_slug   ON agences_immo(slug);
+
+      -- 2. MEMBRES D'UNE AGENCE (RBAC)
+      CREATE TABLE IF NOT EXISTS agence_membres (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id      UUID NOT NULL REFERENCES agences_immo(id) ON DELETE CASCADE,
+        utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        role           VARCHAR(50) NOT NULL DEFAULT 'agent',
+        permissions    JSONB DEFAULT '{}'::jsonb,
+        portefeuille   JSONB DEFAULT '[]'::jsonb,
+        actif          BOOLEAN DEFAULT TRUE,
+        date_entree    DATE DEFAULT CURRENT_DATE,
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(agence_id, utilisateur_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_agence_membres_agence ON agence_membres(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_agence_membres_user   ON agence_membres(utilisateur_id);
+
+      -- 3. PROPRIÉTAIRES / BAILLEURS
+      CREATE TABLE IF NOT EXISTS proprietaires_immo (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        agence_id      UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        nom            VARCHAR(200) NOT NULL,
+        prenom         VARCHAR(200),
+        telephone      VARCHAR(30),
+        whatsapp       VARCHAR(30),
+        email          VARCHAR(255),
+        adresse        TEXT,
+        type_bailleur  VARCHAR(30) DEFAULT 'particulier',
+        iban           TEXT,
+        notes          TEXT,
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        updated_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_proprietaires_agence ON proprietaires_immo(agence_id);
+
+      -- 4. BIENS IMMOBILIERS (Entité Centrale)
+      CREATE TABLE IF NOT EXISTS biens_immo (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id          UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        proprietaire_id    UUID REFERENCES proprietaires_immo(id) ON DELETE SET NULL,
+        agent_id           UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        reference          VARCHAR(50),
+        type_bien          VARCHAR(50) NOT NULL DEFAULT 'appartement',
+        sous_type          VARCHAR(50),
+        titre              VARCHAR(500) NOT NULL,
+        description        TEXT,
+        adresse            TEXT,
+        quartier           VARCHAR(200),
+        ville              VARCHAR(100) DEFAULT 'Dakar',
+        region             VARCHAR(100) DEFAULT 'Dakar',
+        pays               VARCHAR(50) DEFAULT 'Sénégal',
+        latitude           NUMERIC(10,7),
+        longitude          NUMERIC(10,7),
+        surface_m2         NUMERIC(10,2),
+        surface_terrain    NUMERIC(10,2),
+        nb_pieces          INT DEFAULT 1,
+        nb_chambres        INT DEFAULT 1,
+        nb_sdb             INT DEFAULT 1,
+        nb_salons          INT DEFAULT 1,
+        etage              INT,
+        nb_etages          INT,
+        ascenseur          BOOLEAN DEFAULT FALSE,
+        parking            BOOLEAN DEFAULT FALSE,
+        gardien            BOOLEAN DEFAULT FALSE,
+        piscine            BOOLEAN DEFAULT FALSE,
+        terrasse           BOOLEAN DEFAULT FALSE,
+        balcon             BOOLEAN DEFAULT FALSE,
+        climatisation      BOOLEAN DEFAULT FALSE,
+        meuble             BOOLEAN DEFAULT FALSE,
+        equipements        JSONB DEFAULT '[]'::jsonb,
+        etat               VARCHAR(30) DEFAULT 'bon',
+        annee_construction INT,
+        regimes_juridiques JSONB DEFAULT '[]'::jsonb,
+        disponible_le      DATE,
+        statut_occupation  VARCHAR(30) DEFAULT 'disponible',
+        prix_location      NUMERIC(15,2),
+        prix_vente         NUMERIC(15,2),
+        charges            NUMERIC(15,2) DEFAULT 0,
+        depot_garantie     NUMERIC(15,2) DEFAULT 0,
+        photos             JSONB DEFAULT '[]'::jsonb,
+        videos             JSONB DEFAULT '[]'::jsonb,
+        visite_virtuelle   TEXT,
+        plan_url           TEXT,
+        statut             VARCHAR(20) DEFAULT 'actif',
+        notes_internes     TEXT,
+        champs_dynamiques  JSONB DEFAULT '{}'::jsonb,
+        created_at         TIMESTAMPTZ DEFAULT NOW(),
+        updated_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_biens_agence     ON biens_immo(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_biens_proprio    ON biens_immo(proprietaire_id);
+      CREATE INDEX IF NOT EXISTS idx_biens_ville      ON biens_immo(ville);
+      CREATE INDEX IF NOT EXISTS idx_biens_type       ON biens_immo(type_bien);
+      CREATE INDEX IF NOT EXISTS idx_biens_statut     ON biens_immo(statut_occupation);
+
+      -- Enrichir la table annonces_immo existante (migration non destructive)
+      ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS bien_id UUID REFERENCES biens_immo(id) ON DELETE SET NULL;
+      ALTER TABLE annonces_immo ADD COLUMN IF NOT EXISTS agence_id UUID REFERENCES agences_immo(id) ON DELETE SET NULL;
+      CREATE INDEX IF NOT EXISTS idx_immo_bien_id ON annonces_immo(bien_id);
+      CREATE INDEX IF NOT EXISTS idx_immo_agence_id ON annonces_immo(agence_id);
+
+      -- 5. CONTACTS / PROSPECTS / CRM IMMOBILIER
+      CREATE TABLE IF NOT EXISTS contacts_immo (
+        id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id           UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        utilisateur_id      UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        type_contact        VARCHAR(20) DEFAULT 'prospect',
+        nom                 VARCHAR(200) NOT NULL,
+        prenom              VARCHAR(200),
+        telephone           VARCHAR(30),
+        whatsapp            VARCHAR(30),
+        email               VARCHAR(255),
+        profession          VARCHAR(100),
+        revenus_mensuels    NUMERIC(15,2),
+        statut_crm          VARCHAR(30) DEFAULT 'nouveau',
+        budget_min          NUMERIC(15,2),
+        budget_max          NUMERIC(15,2),
+        type_operation      VARCHAR(20) DEFAULT 'location',
+        type_bien_souhaite  VARCHAR(50),
+        surface_min         NUMERIC(10,2),
+        nb_chambres_min     INT,
+        villes_souhaitees   JSONB DEFAULT '["Dakar"]'::jsonb,
+        quartiers_souhaites JSONB DEFAULT '[]'::jsonb,
+        meuble_souhaite     BOOLEAN,
+        delai               VARCHAR(50) DEFAULT 'immediat',
+        agent_id            UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        source              VARCHAR(50) DEFAULT 'direct',
+        probabilite         INT DEFAULT 50,
+        prochaine_action    VARCHAR(200),
+        prochaine_action_le DATE,
+        notes               TEXT,
+        created_at          TIMESTAMPTZ DEFAULT NOW(),
+        updated_at          TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_contacts_agence ON contacts_immo(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_contacts_type   ON contacts_immo(type_contact);
+      CREATE INDEX IF NOT EXISTS idx_contacts_statut ON contacts_immo(statut_crm);
+      CREATE INDEX IF NOT EXISTS idx_contacts_agent  ON contacts_immo(agent_id);
+
+      -- 6. MANDATS IMMOBILIERS
+      CREATE TABLE IF NOT EXISTS mandats_immo (
+        id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id               UUID NOT NULL REFERENCES agences_immo(id) ON DELETE CASCADE,
+        bien_id                 UUID NOT NULL REFERENCES biens_immo(id) ON DELETE CASCADE,
+        proprietaire_id         UUID NOT NULL REFERENCES proprietaires_immo(id) ON DELETE CASCADE,
+        agent_id                UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        type_mandat             VARCHAR(30) DEFAULT 'simple',
+        type_operation          VARCHAR(20) DEFAULT 'location',
+        date_debut              DATE NOT NULL DEFAULT CURRENT_DATE,
+        date_fin                DATE,
+        duree_mois              INT DEFAULT 12,
+        taux_commission         NUMERIC(5,2),
+        montant_commission_fixe NUMERIC(15,2),
+        conditions              TEXT,
+        statut                  VARCHAR(20) DEFAULT 'actif',
+        document_url            TEXT,
+        created_at              TIMESTAMPTZ DEFAULT NOW(),
+        updated_at              TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_mandats_agence ON mandats_immo(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_mandats_bien   ON mandats_immo(bien_id);
+
+      -- 7. VISITES IMMOBILIÈRES
+      CREATE TABLE IF NOT EXISTS visites_immo (
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id     UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        bien_id       UUID NOT NULL REFERENCES biens_immo(id) ON DELETE CASCADE,
+        contact_id    UUID NOT NULL REFERENCES contacts_immo(id) ON DELETE CASCADE,
+        agent_id      UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        annonce_id    UUID REFERENCES annonces_immo(id) ON DELETE SET NULL,
+        date_visite   TIMESTAMPTZ NOT NULL,
+        duree_min     INT DEFAULT 30,
+        lieu_rdv      TEXT,
+        statut        VARCHAR(30) DEFAULT 'demandee',
+        notes         TEXT,
+        resultat      VARCHAR(50),
+        prochaine_action TEXT,
+        rappel_envoye BOOLEAN DEFAULT FALSE,
+        created_at    TIMESTAMPTZ DEFAULT NOW(),
+        updated_at    TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_visites_agence ON visites_immo(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_visites_bien   ON visites_immo(bien_id);
+      CREATE INDEX IF NOT EXISTS idx_visites_date   ON visites_immo(date_visite);
+
+      -- 8. OFFRES D'ACHAT / LOCATION
+      CREATE TABLE IF NOT EXISTS offres_immo (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id          UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        bien_id            UUID NOT NULL REFERENCES biens_immo(id) ON DELETE CASCADE,
+        contact_id         UUID NOT NULL REFERENCES contacts_immo(id) ON DELETE CASCADE,
+        agent_id           UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        visite_id          UUID REFERENCES visites_immo(id) ON DELETE SET NULL,
+        type_offre         VARCHAR(20) DEFAULT 'location',
+        montant            NUMERIC(15,2) NOT NULL,
+        conditions         TEXT,
+        date_offre         DATE NOT NULL DEFAULT CURRENT_DATE,
+        date_validite      DATE,
+        statut             VARCHAR(20) DEFAULT 'en_cours',
+        contre_proposition NUMERIC(15,2),
+        notes              TEXT,
+        created_at         TIMESTAMPTZ DEFAULT NOW(),
+        updated_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_offres_immo_bien ON offres_immo(bien_id);
+
+      -- 9. TRANSACTIONS IMMOBILIÈRES
+      CREATE TABLE IF NOT EXISTS transactions_immo (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id        UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        bien_id          UUID NOT NULL REFERENCES biens_immo(id) ON DELETE CASCADE,
+        offre_id         UUID REFERENCES offres_immo(id) ON DELETE SET NULL,
+        mandat_id        UUID REFERENCES mandats_immo(id) ON DELETE SET NULL,
+        vendeur_id       UUID REFERENCES proprietaires_immo(id) ON DELETE SET NULL,
+        acheteur_id      UUID REFERENCES contacts_immo(id) ON DELETE SET NULL,
+        agent_id         UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        courtier_id      UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        type_transaction VARCHAR(20) NOT NULL DEFAULT 'location',
+        montant          NUMERIC(15,2) NOT NULL,
+        date_transaction DATE NOT NULL DEFAULT CURRENT_DATE,
+        date_cloture     DATE,
+        statut           VARCHAR(20) DEFAULT 'en_cours',
+        documents        JSONB DEFAULT '[]'::jsonb,
+        notes            TEXT,
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_transactions_agence ON transactions_immo(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_transactions_bien   ON transactions_immo(bien_id);
+
+      -- 10. COMMISSIONS IMMOBILIÈRES
+      CREATE TABLE IF NOT EXISTS commissions_immo (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id         UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        transaction_id    UUID REFERENCES transactions_immo(id) ON DELETE CASCADE,
+        montant_brut      NUMERIC(15,2) NOT NULL,
+        repartition       JSONB DEFAULT '[]'::jsonb,
+        frais_applicables JSONB DEFAULT '[]'::jsonb,
+        montant_net       NUMERIC(15,2),
+        montant_paye      NUMERIC(15,2) DEFAULT 0,
+        montant_restant   NUMERIC(15,2),
+        statut            VARCHAR(20) DEFAULT 'en_attente',
+        date_prevue       DATE,
+        date_paiement     DATE,
+        notes             TEXT,
+        created_at        TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      -- 11. BAUX IMMOBILIERS
+      CREATE TABLE IF NOT EXISTS baux_immo (
+        id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id       UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        bien_id         UUID NOT NULL REFERENCES biens_immo(id) ON DELETE CASCADE,
+        locataire_id    UUID NOT NULL REFERENCES contacts_immo(id) ON DELETE CASCADE,
+        proprietaire_id UUID REFERENCES proprietaires_immo(id) ON DELETE SET NULL,
+        agent_id        UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        transaction_id  UUID REFERENCES transactions_immo(id) ON DELETE SET NULL,
+        date_debut      DATE NOT NULL,
+        date_fin        DATE,
+        duree_mois      INT DEFAULT 12,
+        loyer_mensuel   NUMERIC(15,2) NOT NULL,
+        charges         NUMERIC(15,2) DEFAULT 0,
+        depot_garantie  NUMERIC(15,2) DEFAULT 0,
+        periodicite     VARCHAR(20) DEFAULT 'mensuel',
+        jour_echeance   INT DEFAULT 5,
+        statut          VARCHAR(20) DEFAULT 'actif',
+        conditions      TEXT,
+        document_url    TEXT,
+        created_at      TIMESTAMPTZ DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_baux_bien      ON baux_immo(bien_id);
+      CREATE INDEX IF NOT EXISTS idx_baux_locataire ON baux_immo(locataire_id);
+      CREATE INDEX IF NOT EXISTS idx_baux_agence    ON baux_immo(agence_id);
+
+      -- 12. LOYERS / ÉCHÉANCES
+      CREATE TABLE IF NOT EXISTS loyers_echeances (
+        id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        bail_id            UUID NOT NULL REFERENCES baux_immo(id) ON DELETE CASCADE,
+        agence_id          UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        periode            VARCHAR(20) NOT NULL,
+        date_echeance      DATE NOT NULL,
+        montant_du         NUMERIC(15,2) NOT NULL,
+        montant_paye       NUMERIC(15,2) DEFAULT 0,
+        montant_restant    NUMERIC(15,2),
+        statut             VARCHAR(20) DEFAULT 'en_attente',
+        date_paiement      DATE,
+        mode_paiement      VARCHAR(30),
+        reference_paiement VARCHAR(100),
+        quittance_url      TEXT,
+        retard_jours       INT DEFAULT 0,
+        frais_retard       NUMERIC(15,2) DEFAULT 0,
+        rappels_envoyes    INT DEFAULT 0,
+        dernier_rappel     TIMESTAMPTZ,
+        notes              TEXT,
+        created_at         TIMESTAMPTZ DEFAULT NOW(),
+        updated_at         TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_loyers_bail    ON loyers_echeances(bail_id);
+      CREATE INDEX IF NOT EXISTS idx_loyers_statut  ON loyers_echeances(statut);
+      CREATE INDEX IF NOT EXISTS idx_loyers_periode ON loyers_echeances(periode);
+      CREATE INDEX IF NOT EXISTS idx_loyers_agence  ON loyers_echeances(agence_id);
+
+      -- 13. MAINTENANCE / TRAVAUX IMMOBILIERS
+      CREATE TABLE IF NOT EXISTS maintenance_immo (
+        id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id    UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        bien_id      UUID NOT NULL REFERENCES biens_immo(id) ON DELETE CASCADE,
+        bail_id      UUID REFERENCES baux_immo(id) ON DELETE SET NULL,
+        type         VARCHAR(50) DEFAULT 'autre',
+        description  TEXT NOT NULL,
+        priorite     VARCHAR(20) DEFAULT 'normale',
+        demandeur    VARCHAR(30) DEFAULT 'locataire',
+        technicien   VARCHAR(200),
+        cout_estime  NUMERIC(15,2),
+        cout_reel    NUMERIC(15,2),
+        a_charge_de  VARCHAR(20) DEFAULT 'proprietaire',
+        statut       VARCHAR(20) DEFAULT 'signale',
+        date_signal  TIMESTAMPTZ DEFAULT NOW(),
+        date_debut   DATE,
+        date_resolu  DATE,
+        photos       JSONB DEFAULT '[]'::jsonb,
+        notes        TEXT,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_maintenance_agence ON maintenance_immo(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_maintenance_bien   ON maintenance_immo(bien_id);
+    `);
+
+    console.log('[MIGRATE] ✅ Nopalou Immobilier: 13 tables & colonnes créées avec succès');
+  } catch (err) {
+    console.warn('[MIGRATE] Nopalou Immobilier échec:', err.message);
+  }
+
   try { await pool.end(); } catch (_) {}
 };

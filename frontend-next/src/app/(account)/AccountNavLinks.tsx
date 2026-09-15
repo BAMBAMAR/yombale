@@ -53,7 +53,7 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
     },
     {
       id: 'boutique-caisse',
-      title: t('account.groupShop'),
+      title: 'Activités & Agences',
       icon: '',
       items: [
         {
@@ -63,6 +63,14 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
           isShop: true,
           badgeText: t('account.manageShopBadge'),
           badgeBg: 'var(--accent, #C75B00)',
+          badgeColor: '#ffffff',
+        },
+        {
+          href: '/agence',
+          label: 'Mes agences immo',
+          emoji: '',
+          badgeText: 'Pro',
+          badgeBg: 'var(--navy, #1C2B4A)',
           badgeColor: '#ffffff',
         },
         {
