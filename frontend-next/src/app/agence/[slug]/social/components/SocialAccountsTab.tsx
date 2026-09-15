@@ -13,7 +13,8 @@ import {
   Save,
   Check,
   ExternalLink,
-  Plus
+  Plus,
+  Trash2,
 } from 'lucide-react'
 import { SocialAccountsConfig } from '../types'
 
@@ -106,12 +107,21 @@ export function SocialAccountsTab({
   }
 
   function handleSaveSingle(key: string) {
-    setAccounts(prev => ({ ...prev, [key]: tempValue.trim() }))
+    const cleaned = tempValue.replace(/^@+$/, '').trim()
+    setAccounts(prev => ({ ...prev, [key]: cleaned }))
     setEditingKey(null)
     setTempValue('')
   }
 
-  const nbConfigured = Object.values(accounts).filter(v => !!v?.trim()).length
+  function handleDisconnect(key: string) {
+    setAccounts(prev => ({ ...prev, [key]: '' }))
+    if (editingKey === key) {
+      setEditingKey(null)
+      setTempValue('')
+    }
+  }
+
+  const nbConfigured = Object.values(accounts).filter(v => !!v?.trim() && v.trim() !== '@').length
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -166,8 +176,9 @@ export function SocialAccountsTab({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 14 }}>
         {PLATFORMS_CONFIG.map(plat => {
           const Icon = plat.icon
-          const val = accounts[plat.key] || ''
-          const isConnected = !!val.trim()
+          const rawVal = accounts[plat.key] || ''
+          const val = rawVal.replace(/^@+$/, '').trim()
+          const isConnected = !!val && val !== '@'
           const isEditing = editingKey === plat.key
 
           return (
@@ -288,27 +299,52 @@ export function SocialAccountsTab({
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      maxWidth: '75%',
+                      maxWidth: '65%',
                     }}
                   >
                     {val || plat.placeholder}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => startEditing(plat.key, val)}
-                    style={{
-                      background: 'none',
-                      border: '1px solid var(--border, #E8DDD2)',
-                      padding: '4px 10px',
-                      borderRadius: 6,
-                      fontSize: 11.5,
-                      fontWeight: 700,
-                      color: 'var(--navy, #1C2B4A)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {isConnected ? 'Modifier' : 'Configurer'}
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {isConnected && (
+                      <button
+                        type="button"
+                        onClick={() => handleDisconnect(plat.key)}
+                        style={{
+                          background: '#FEF2F2',
+                          border: '1px solid #FECACA',
+                          padding: '4px 8px',
+                          borderRadius: 6,
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          color: '#DC2626',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                        title="Déconnecter ce compte"
+                      >
+                        <Trash2 size={12} />
+                        <span>Déconnecter</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => startEditing(plat.key, val)}
+                      style={{
+                        background: 'none',
+                        border: '1px solid var(--border, #E8DDD2)',
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: 'var(--navy, #1C2B4A)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {isConnected ? 'Modifier' : 'Configurer'}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

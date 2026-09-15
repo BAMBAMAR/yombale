@@ -193,6 +193,12 @@ export default function SocialShopManager({
   async function handleSaveAccount(platform: string) {
     if (!accountInput.trim()) return
 
+    const cleanVal = accountInput.trim()
+    if (!cleanVal || cleanVal === '@') {
+      await handleDeleteAccount(platform)
+      return
+    }
+
     try {
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
@@ -205,13 +211,35 @@ export default function SocialShopManager({
         },
         body: JSON.stringify({
           plateforme: platform,
-          nom_compte: accountInput.trim(),
+          nom_compte: cleanVal,
         }),
       })
 
       if (res.ok) {
         setEditingPlatform(null)
         setAccountInput('')
+        setMessage({ type: 'success', text: 'Compte enregistré avec succès' })
+        await loadAdminData()
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  async function handleDeleteAccount(platform: string) {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/accounts/${platform}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (res.ok) {
+        setEditingPlatform(null)
+        setAccountInput('')
+        setMessage({ type: 'success', text: 'Compte déconnecté avec succès' })
         await loadAdminData()
       }
     } catch (err) {
@@ -300,6 +328,7 @@ export default function SocialShopManager({
           accountInput={accountInput}
           setAccountInput={setAccountInput}
           handleSaveAccount={handleSaveAccount}
+          handleDeleteAccount={handleDeleteAccount}
           handleToggleAutoSync={handleToggleAutoSync}
           handleSyncAccount={handleSyncAccount}
           syncingAccountId={syncingAccountId}

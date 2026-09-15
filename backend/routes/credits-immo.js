@@ -125,56 +125,136 @@ router.post('/agence/:slugOrId', verifierToken, requireAgenceAccess('agent'), as
   }
 });
 
-// ── POST /api/credits-immo/agence/:slugOrId/:creditId/encaisser-echeance ──
-router.post('/api/credits-immo/agence/:slugOrId/:creditId/encaisser-echeance', verifierToken, requireAgenceAccess('agent'), async (req, res) => {
+// ── GET /api/credits-immo/agence/:slugOrId/config — Configuration échelonnement agence ──
+const CONFIG_DEFAUT_ECHELONNEMENT_IMMO = {
+  caution_active: true,
+  caution_formules: [2, 3],
+  caution_apport_min_pct: 50,
+  caution_frais_gestion_pct: 0,
+  caution_conditions: 'Éligible pour tout bail d\'habitation validé par l\'agence.',
+  tranches_actives: true,
+  tranches_formules_mois: [6, 12, 24, 36],
+  tranches_apport_min_pct: 30,
+  tranches_frequence: 'mensuel',
+  delai_grace_jours: 5,
+  penalite_retard_pct: 2,
+  tranches_conditions: 'Réservé aux parcelles titrées/délibérées et programmes neufs éligibles.',
+};
+
+router.get('/agence/:slugOrId/config', verifierToken, requireAgenceAccess(), async (req, res) => {
   try {
-    const agenceId = req.agence.id;
-    const { creditId } = req.params;
-    const { numero_echeance, montant } = req.body;
-
-    const { rows: creditRows } = await pool.query(
-      `SELECT * FROM credits_immo WHERE id = $1 AND agence_id = $2`,
-      [creditId, agenceId]
-    );
-
-    if (creditRows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Plan introuvable' });
-    }
-
-    const credit = creditRows[0];
-    const echs = Array.isArray(credit.echeances) ? [...credit.echeances] : [];
-    const idx = echs.findIndex(e => e.numero === numero_echeance);
-
-    if (idx >= 0) {
-      echs[idx].statut = 'paye';
-      echs[idx].montant_paye = montant || echs[idx].montant;
-      echs[idx].date_paiement = new Date().toISOString().split('T')[0];
-    }
-
-    const payees = echs.filter(e => e.statut === 'paye').reduce((sum, e) => sum + (e.montant_paye || e.montant), 0);
-    const newSolde = Math.max(0, (credit.montant_total - credit.apport_initial) - payees);
-    const newStatut = newSolde === 0 ? 'solde' : 'actif';
-
-    const { rows: updatedRows } = await pool.query(
-      `UPDATE credits_immo SET
-        echeances = $1,
-        solde_restant = $2,
-        statut = $3,
-        updated_at = NOW()
-       WHERE id = $4 AND agence_id = $5
-       RETURNING *`,
-      [JSON.stringify(echs), newSolde, newStatut, creditId, agenceId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Échéance encaissée avec succès',
-      credit: updatedRows[0]
-    });
+    const agence = req.agence;
+    const currentParams = agence.parametres || {};
+    const config = {
+      ...CONFIG_DEFAUT_ECHELONNEMENT_IMMO,
+      ...(currentParams.echelonnement_config || {}),
+    };
+    res.json({ success: true, config });
   } catch (err) {
-    console.error('[POST /api/credits-immo/agence/:slugOrId/:creditId/encaisser-echeance]', err.message);
-    res.status(500).json({ success: false, error: 'Erreur encaissement échéance' });
+    console.error('[GET /api/credits-immo/agence/:slugOrId/config]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement configuration échelonnement' });
   }
 });
+
+// ── PUT /api/credits-immo/agence/:slugOrId/config — Sauvegarde configuration échelonnement agence ──
+router.put('/agence/:slugOrId/config', verifierToken, requireAgenceAccess('admin_agence'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const body = req.body || {};
+
+    const newConfig = {
+      caution_active: Boolean(body.caution_active),
+      caution_formules: Array.isArray(body.caution_formules) && body.caution_formules.length > 0
+        ? body.caution_formules.map(Number).filter(n => [2, 3, 4].includes(n))
+        : [2, 3],
+      caution_apport_min_pct: Math.min(100, Math.max(10, Number(body.caution_apport_min_pct) || 50)),
+      caution_frais_gestion_pct: Math.max(0, Number(body.caution_frais_gestion_pct) || 0),
+      caution_conditions: String(body.caution_conditions || '').trim(),
+
+      tranches_actives: Boolean(body.tranches_actives),
+      tranches_formules_mois: Array.isArray(body.tranches_formules_mois) && body.tranches_formules_mois.length > 0
+        ? body.tranches_formules_mois.map(Number).filter(n => n >= 2 && n <= 60)
+        : [6, 12, 24, 36],
+      tranches_apport_min_pct: Math.min(100, Math.max(5, Number(body.tranches_apport_min_pct) || 30)),
+      tranches_frequence: ['mensuel', 'trimestriel'].includes(body.tranches_frequence) ? body.tranches_frequence : 'mensuel',
+      delai_grace_jours: Math.max(0, Number(body.delai_grace_jours) || 5),
+      penalite_retard_pct: Math.max(0, Number(body.penalite_retard_pct) || 0),
+      tranches_conditions: String(body.tranches_conditions || '').trim(),
+    };
+
+    const { rows: aRows } = await pool.query(`SELECT parametres FROM agences_immo WHERE id = $1`, [agenceId]);
+    const mergedParams = {
+      ...(aRows[0]?.parametres || {}),
+      echelonnement_config: newConfig,
+    };
+
+    await pool.query(
+      `UPDATE agences_immo SET parametres = $1, updated_at = NOW() WHERE id = $2`,
+      [JSON.stringify(mergedParams), agenceId]
+    );
+
+    res.json({ success: true, message: 'Configuration de l\'échelonnement enregistrée avec succès', config: newConfig });
+  } catch (err) {
+    console.error('[PUT /api/credits-immo/agence/:slugOrId/config]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur enregistrement configuration échelonnement' });
+  }
+});
+
+// ── POST /api/credits-immo/agence/:slugOrId/:creditId/encaisser-echeance ──
+router.post(
+  ['/agence/:slugOrId/:creditId/encaisser-echeance', '/:slugOrId/:creditId/encaisser-echeance'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { creditId } = req.params;
+      const { numero_echeance, montant } = req.body;
+
+      const { rows: creditRows } = await pool.query(
+        `SELECT * FROM credits_immo WHERE id = $1 AND agence_id = $2`,
+        [creditId, agenceId]
+      );
+
+      if (creditRows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Plan introuvable' });
+      }
+
+      const credit = creditRows[0];
+      const echs = Array.isArray(credit.echeances) ? [...credit.echeances] : [];
+      const idx = echs.findIndex(e => e.numero === numero_echeance);
+
+      if (idx >= 0) {
+        echs[idx].statut = 'paye';
+        echs[idx].montant_paye = montant || echs[idx].montant;
+        echs[idx].date_paiement = new Date().toISOString().split('T')[0];
+      }
+
+      const payees = echs.filter(e => e.statut === 'paye').reduce((sum, e) => sum + (e.montant_paye || e.montant), 0);
+      const newSolde = Math.max(0, (credit.montant_total - credit.apport_initial) - payees);
+      const newStatut = newSolde === 0 ? 'solde' : 'actif';
+
+      const { rows: updatedRows } = await pool.query(
+        `UPDATE credits_immo SET
+          echeances = $1,
+          solde_restant = $2,
+          statut = $3,
+          updated_at = NOW()
+         WHERE id = $4 AND agence_id = $5
+         RETURNING *`,
+        [JSON.stringify(echs), newSolde, newStatut, creditId, agenceId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Échéance encaissée avec succès',
+        credit: updatedRows[0]
+      });
+    } catch (err) {
+      console.error('[POST /api/credits-immo/agence/:slugOrId/:creditId/encaisser-echeance]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur encaissement échéance' });
+    }
+  }
+);
 
 module.exports = router;

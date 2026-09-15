@@ -6,6 +6,7 @@ const router = express.Router();
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
+const { enregistrerAgenceAuditLog } = require('../lib/auditLoggerImmo');
 
 // ══════════════════════════════════════════════════════════════
 // 1. BAUX IMMOBILIERS
@@ -222,7 +223,14 @@ router.post('/agence/:slugOrId/loyers/:loyerId/encaisser', verifierToken, requir
     }
 
     const loyer = loyerRows[0];
-    const montantPayeTotal = Number(loyer.montant_paye) + Number(montant || loyer.montant_du);
+
+    // Idempotence & sécurité : empêcher le double encaissement si déjà soldé
+    if (loyer.statut === 'paye' && Number(loyer.montant_restant) <= 0) {
+      return res.status(400).json({ success: false, error: 'Cette échéance est déjà intégralement réglée.' });
+    }
+
+    const versement = Number(montant) || Number(loyer.montant_restant || loyer.montant_du);
+    const montantPayeTotal = Math.min(Number(loyer.montant_du), Number(loyer.montant_paye || 0) + versement);
     const montantRestant = Math.max(0, Number(loyer.montant_du) - montantPayeTotal);
     const nouveauStatut = montantRestant === 0 ? 'paye' : 'partiel';
     const quittanceRef = `QUITTANCE-${loyer.periode}-${Date.now().toString(36).toUpperCase()}`;
@@ -251,6 +259,17 @@ router.post('/agence/:slugOrId/loyers/:loyerId/encaisser', verifierToken, requir
         loyerId,
         agenceId
       ]
+    );
+
+    // Audit log
+    enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.id,
+      null,
+      'loyer_encaisse',
+      `Encaissement de loyer : ${quittanceRef} (${montantPayeTotal} FCFA via ${mode_paiement || 'wave'})`,
+      { loyer_id: loyerId, montant: montantPayeTotal, mode: mode_paiement, quittance: quittanceRef },
+      req
     );
 
     res.json({
@@ -285,6 +304,16 @@ router.post('/agence/:slugOrId/loyers/:loyerId/relance', verifierToken, requireA
     if (rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Échéance introuvable.' });
     }
+
+    enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.id,
+      null,
+      'loyer_relance',
+      `Relance de paiement de loyer envoyée pour la période ${rows[0].periode}`,
+      { loyer_id: loyerId, periode: rows[0].periode },
+      req
+    );
 
     res.json({
       success: true,

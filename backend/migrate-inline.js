@@ -2215,12 +2215,25 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_credits_immo_agence ON credits_immo(agence_id);
       CREATE INDEX IF NOT EXISTS idx_credits_immo_statut ON credits_immo(statut);
+
+      -- 16. JOURNAL D'AUDIT / LOGS D'ACTIVITÉ AGENCE IMMOBILIÈRE
+      CREATE TABLE IF NOT EXISTS agence_logs (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id      UUID NOT NULL REFERENCES agences_immo(id) ON DELETE CASCADE,
+        utilisateur_id UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        auteur_nom     VARCHAR(100),
+        type_action    VARCHAR(50),
+        description    TEXT,
+        metadonnees    JSONB,
+        ip_adresse     VARCHAR(45),
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_agence_logs_agence ON agence_logs(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_agence_logs_date   ON agence_logs(created_at DESC);
     `);
 
-    console.log('[MIGRATE] ✅ Nopalou Immobilier: 15 tables & colonnes créées avec succès');
+    console.log('[MIGRATE] ✅ Nopalou Immobilier: 16 tables & colonnes créées avec succès');
   } catch (err) {
     console.warn('[MIGRATE] Nopalou Immobilier échec:', err.message);
   }
-
-  try { await pool.end(); } catch (_) {}
 };

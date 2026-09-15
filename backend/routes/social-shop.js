@@ -42,6 +42,96 @@ async function verifierAccesBoutique(boutiqueId, userId) {
 }
 
 // ============================================================================
+// 🛠️ 0. OUTILS UNIVERSELS DE RÉSOLUTION D'URLS (BOUTIQUES & AGENCES)
+// ============================================================================
+
+/**
+ * POST /api/social-shop/parse-url (ou /api/boutiques/social/parse-url)
+ * Résout une URL sociale unique (TikTok, YouTube, Instagram, Facebook) et retourne les métadonnées officielles
+ */
+router.post(['/parse-url', '/social/parse-url'], limiterGeneral, async (req, res) => {
+  try {
+    const { url, fallback_thumbnail, custom_caption } = req.body;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ success: false, error: 'URL requise' });
+    }
+
+    const platform = detectPlatform(url);
+    if (!platform) {
+      return res.status(400).json({
+        success: false,
+        error: 'Plateforme non reconnue. Veuillez fournir un lien TikTok, Instagram, Facebook ou YouTube.',
+      });
+    }
+
+    const meta = await fetchOEmbedMetadata(url, platform);
+
+    res.json({
+      success: true,
+      data: {
+        plateforme: platform,
+        post_url: url.trim(),
+        external_post_id: meta.externalPostId,
+        media_type: meta.mediaType,
+        thumbnail_url: meta.thumbnailUrl || fallback_thumbnail || null,
+        embed_html: meta.embedHtml,
+        caption: custom_caption || meta.caption || meta.title || '',
+        auteur: meta.author || '',
+        title: meta.title || '',
+      },
+    });
+  } catch (err) {
+    console.error('[SOCIAL_PARSE_URL_ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur lors de la résolution de l\'URL' });
+  }
+});
+
+/**
+ * POST /api/social-shop/parse-batch
+ * Résout un lot d'URLs sociales en parallèle
+ */
+router.post(['/parse-batch', '/social/parse-batch'], limiterGeneral, async (req, res) => {
+  try {
+    const { raw_urls, fallback_thumbnail } = req.body;
+    const items = parseBatchUrls(raw_urls);
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({ success: false, error: 'Aucune URL valide trouvée' });
+    }
+
+    const results = [];
+    for (const item of items.slice(0, 30)) {
+      const u = typeof item === 'string' ? item : item.url;
+      const platform = (item && item.platform) ? item.platform : detectPlatform(u);
+      if (!platform) continue;
+      try {
+        const meta = await fetchOEmbedMetadata(u, platform);
+        results.push({
+          plateforme: platform,
+          post_url: u.trim(),
+          external_post_id: meta.externalPostId || (item.externalPostId || null),
+          media_type: meta.mediaType,
+          thumbnail_url: meta.thumbnailUrl || fallback_thumbnail || null,
+          embed_html: meta.embedHtml,
+          caption: meta.caption || meta.title || '',
+          auteur: meta.author || '',
+        });
+      } catch (_) {}
+    }
+
+    res.json({
+      success: true,
+      total_soumis: items.length,
+      total_resolus: results.length,
+      posts: results,
+    });
+  } catch (err) {
+    console.error('[SOCIAL_PARSE_BATCH_ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur lors du traitement en lot' });
+  }
+});
+
+// ============================================================================
 // 🌐 1. ROUTES PUBLIQUES (VITRINE SOCIAL SHOP ACHETEUR)
 // ============================================================================
 
@@ -609,8 +699,8 @@ router.post(['/:id/social/admin/accounts', '/boutiques/:id/social/admin/accounts
     if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
 
     const { plateforme, nom_compte, profil_url } = req.body;
-    if (!plateforme || !nom_compte) {
-      return res.status(400).json({ error: 'Plateforme et nom de compte requis' });
+    if (!plateforme) {
+      return res.status(400).json({ error: 'Plateforme requise' });
     }
 
     const plat = plateforme.toLowerCase();
@@ -618,14 +708,29 @@ router.post(['/:id/social/admin/accounts', '/boutiques/:id/social/admin/accounts
       return res.status(400).json({ error: 'Plateforme invalide' });
     }
 
-    // Normalisation du nom de compte et de l'URL du profil si manquant
+    // Si le nom de compte est vide, espaces ou seulement "@", c'est une déconnexion/suppression voulue par l'utilisateur
     const cleanHandle = cleanUsername(nom_compte);
-    const displayAccountName = cleanHandle ? `@${cleanHandle}` : nom_compte.trim();
+    if (!nom_compte || !nom_compte.trim() || nom_compte.trim() === '@' || !cleanHandle) {
+      await pool.query(
+        `DELETE FROM social_accounts WHERE boutique_id = $1 AND plateforme = $2`,
+        [boutique.id, plat]
+      );
+      if (plat === 'instagram') {
+        await pool.query('UPDATE boutiques SET instagram = NULL WHERE id = $1', [boutique.id]);
+      } else if (plat === 'facebook') {
+        await pool.query('UPDATE boutiques SET facebook = NULL WHERE id = $1', [boutique.id]);
+      }
+      return res.json({ success: true, deleted: true, message: 'Compte déconnecté avec succès' });
+    }
+
+    // Normalisation du nom de compte et de l'URL du profil si manquant
+    const displayAccountName = `@${cleanHandle}`;
     let finalProfilUrl = profil_url || null;
     if (!finalProfilUrl && cleanHandle) {
       if (plat === 'instagram') finalProfilUrl = `https://instagram.com/${cleanHandle}`;
       else if (plat === 'tiktok') finalProfilUrl = `https://tiktok.com/@${cleanHandle}`;
       else if (plat === 'facebook') finalProfilUrl = `https://facebook.com/${cleanHandle}`;
+      else if (plat === 'youtube') finalProfilUrl = `https://youtube.com/@${cleanHandle}`;
     }
 
     const { rows } = await pool.query(
@@ -672,7 +777,13 @@ router.delete(['/:id/social/admin/accounts/:plateforme', '/boutiques/:id/social/
       [boutique.id, plat]
     );
 
-    res.json({ success: true });
+    if (plat === 'instagram') {
+      await pool.query('UPDATE boutiques SET instagram = NULL WHERE id = $1', [boutique.id]);
+    } else if (plat === 'facebook') {
+      await pool.query('UPDATE boutiques SET facebook = NULL WHERE id = $1', [boutique.id]);
+    }
+
+    res.json({ success: true, deleted: true, message: 'Compte déconnecté' });
   } catch (err) {
     console.error('[SOCIAL_DELETE_ACCOUNT_ERR]', err);
     res.status(500).json({ error: 'Erreur lors de la déconnexion' });

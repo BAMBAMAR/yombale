@@ -1,3 +1,41 @@
+- **Sprint 1 (P0) — Fondations Transactionnelles, Fiches 360° & Paramétrage Échelonnement Nopalou Immobilier (15 septembre 2026)** 🏢🔑💼 🚀 ✅ :
+  * **🎯 1. Correction Bloquante de Routage (`credits-immo.js`)** :
+    - Élimination du préfixe doublé `/api/credits-immo/api/credits-immo/...` sur l'encaissement d'échéances (`credits-immo.js:129`). Support flexible de `/agence/:slugOrId/:creditId/encaisser-echeance`.
+  * **🎯 2. Déploiement des 4 Modules de Transaction (Standard Hektor / Apimo)** :
+    - **Mandats de Gestion & Vente (`mandats-immo.js`, `/agence/[slug]/mandats/`)** : Registre complet des mandats (simples, exclusifs, co-exclusifs), alertes d'expiration sous 30 jours, commissionnement, filtrage et modale dédiée `ModalCreerMandat.tsx`.
+    - **Offres & Négociations (`offres-immo.js`)** : Dépôt d'offres d'achat/location, conditions suspensives, contre-propositions chiffrées et workflow d'acceptation.
+    - **Pipeline des Transactions Notariales (`transactions-immo.js`, `/agence/[slug]/transactions/`)** : Suivi des 5 étapes clés (*Offre acceptée ➔ Compromis signé ➔ Séquestre déposé ➔ Acte authentique ➔ Clôturée & Actée*), KPIs de volume d'affaires en cours vs clôturé, mise à jour automatique du statut des biens et génération de commission.
+    - **Commissions & Partages d'Honoraires (`commissions-immo.js`, `/agence/[slug]/commissions/`)** : Suivi du chiffre d'affaires agence, commissions brutes vs nettes, encaissement direct des honoraires et répartition avec les agents négociateurs.
+  * **🎯 3. Fiches 360° Métier Exhaustives** :
+    - **Fiche Détail 360° du Bien (`/agence/[slug]/biens/[bienId]/`)** : Navigation par onglets (*Aperçu & Équipements, Matching Prospects IA avec scores /100 et explications, Visites réalisées, Bail actif & Locataire en titre, Offres d'achat reçues*), bascule instantanée de publication sur la marketplace publique Nopalou Immobilier.
+    - **Fiche Détail 360° du Prospect (`/agence/[slug]/prospects/[id]/`)** : Profil acquéreur/locataire, budgets et quartiers ciblés, rapprochement instantané des biens du portefeuille avec contact WhatsApp en 1-clic, historique des visites et des offres émises.
+  * **🎯 4. Paramétrage & Politiques d'Échelonnement Immobilier (Héritage Boutique)** :
+    - **Module Dédié (`ParametresEchelonnementImmo.tsx`, `credits-immo.js:128-210`)** : Configuration fine pour l'agence de la **Caution Locative** (2x, 3x, 4x, apport min %) et de la **Vente de Terrains / VEFA par Tranches** (6 à 36 mois, acompte réservation %, fréquence mensuelle/trimestrielle).
+    - **Simulateur Négociateur en Direct** : Calcul instantané en rendez-vous client de l'apport initial et des mensualités selon la formule retenue.
+    - **Onglet Dédié dans `/agence/[slug]/credits/`** : Bascule fluide entre les échéanciers en cours et les paramètres agence.
+  * **🎯 5. Navigation & Ergonomie Agence (`layout.tsx`)** :
+    - Intégration des nouveaux liens dans la sidebar : *Mandats de Gestion & Vente*, *Transactions & Ventes*, *Commissions & Partages*.
+  * **🧪 6. Quality Gate & Tests** :
+    - 38/38 suites de tests Jest passées (**281/281 tests unitaires validés**).
+    - Typecheck TypeScript : **0 erreur**.
+    - Anti-AI-Slop : **0 violation** (0 émoji dans les contrôles UI, icônes SVG Lucide exclusives, composants modulaires <= 450 lignes).
+
+- **Correction & Optimisation Social Shop (Boutiques & Agences) (15 septembre 2026)** 🛒📱🎬 🚀 ✅ :
+  * **🎯 1. Résolution Déconnexion Comptes Réseaux Sociaux (Suppression du bug '@' obligatoire)** :
+    - **Bouton Déconnecter Explicite** : Ajout d'un bouton direct de déconnexion (`Trash2`) dans la vue des comptes Boutique (`SocialAccountsView.tsx`) et Agence (`SocialAccountsTab.tsx`).
+    - **Gestion de la Valeur Vide / '@' dans l'API** : Dans `backend/routes/social-shop.js` (`POST /accounts` et `DELETE /accounts/:plateforme`), si l'utilisateur vide le champ ou envoie `@`, l'API supprime la ligne dans `social_accounts` et réinitialise les colonnes miroirs (`instagram`, `facebook`) dans `boutiques` au lieu de renvoyer une erreur 400.
+    - **Nettoyage Automatique** : `cleanUsername` retourne désormais une chaîne vide si l'entrée est uniquement `@`. Les lignes zombies existantes avec `nom_compte = '@'` ont été purgées de la base.
+    - **Vitrine & Badges Publics** : Filtrage strict dans `vitrine/page.tsx` et `SocialAccountsView` pour ne jamais afficher d'icône ou de pseudo si le compte est non configuré ou égal à `@`.
+  * **🎯 2. Résolution de l'Importation / Aspiration des Publications Sociales (Social Parsing & OEmbed)** :
+    - **Endpoints Universels Dédiés** : Création de `POST /api/social-shop/parse-url` et `POST /api/social-shop/parse-batch` utilisables à la fois par les Boutiques et les Agences Immobilières.
+    - **Aspiration Réelle YouTube (Vidéos, Shorts, Chaînes)** : Intégration de l'oEmbed officiel YouTube pour récupérer automatiquement les titres, auteurs et miniatures haute définition. Exploration automatique des vidéos publiques d'une chaîne `@username`.
+    - **Remplacement des Simulations Agence** : `SocialImportTab.tsx` communique désormais directement avec le backend pour résoudre les métadonnées officielles plutôt que de générer des données mockées avec photos Unsplash génériques.
+    - **Guidage Ergonomique pour Instagram & TikTok** : En raison du blocage des scrapers sans OAuth par Meta et TikTok, le système informe le marchand avec pédagogie et le redirige automatiquement vers l'onglet d'import direct ou en lot (batch) d'URLs qui fonctionne de manière instantanée.
+  * **🧪 3. Validation & Tests** :
+    - Tests Unitaires : 38/38 suites de tests passées (281/281 tests validés).
+    - TypeScript : 0 erreur de typage.
+    - Anti-AI-Slop : Respect strict des tokens CSS, 0 émoji UI (icônes Lucide), composants modulaires.
+
 - **Implémentation & Déploiement du Vertical Nopalou Immobilier (`feature/vertical-immobilier`) (15 septembre 2026)** 🏢🔑📱 🚀 ✅ :
   * **🎯 1. Architecture Modulaire & Moteur Métier Dédié (Sans Fusion Commerce)** :
     - **Isolation Stricte du Vertical** : L'Immobilier fonctionne comme un vertical autonome au-dessus des fondations Nopalou (Auth, Paiements, WhatsApp, Notifications, Cloudinary, Médias) sans jamais polluer ni mélanger les modèles de données Commerce (Boutiques, POS, Stocks, Commandes).

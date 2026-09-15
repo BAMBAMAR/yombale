@@ -20,7 +20,10 @@ import {
   Wallet,
   Wrench,
   FileText,
-  CreditCard
+  CreditCard,
+  Briefcase,
+  FileSignature,
+  Percent
 } from 'lucide-react'
 import '../agence.css'
 
@@ -76,14 +79,17 @@ export default function AgenceWorkspaceLayout({
   const navItems = [
     { href: `/agence/${slug}`, label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
     { href: `/agence/${slug}/biens`, label: 'Biens Immobiliers', icon: Home },
+    { href: `/agence/${slug}/mandats`, label: 'Mandats de Gestion & Vente', icon: FileSignature },
+    { href: `/agence/${slug}/transactions`, label: 'Transactions & Ventes', icon: Briefcase },
     { href: `/agence/${slug}/prospects`, label: 'CRM Prospects', icon: Users2 },
     { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
     { href: `/agence/${slug}/visites`, label: 'Visites & Agenda', icon: Calendar },
     { href: `/agence/${slug}/locatif`, label: 'Loyers & Quittances', icon: Key },
+    { href: `/agence/${slug}/commissions`, label: 'Commissions & Partages', icon: Percent },
     { href: `/agence/${slug}/factures`, label: 'Factures & Honoraires', icon: FileText },
     { href: `/agence/${slug}/credits`, label: 'Crédits & Échelonnement', icon: CreditCard },
     { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench },
-    { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs & Mandats', icon: Building2 },
+    { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs Propriétaires', icon: Building2 },
     { href: `/agence/${slug}/compta`, label: 'Comptabilité & Bilan', icon: Wallet },
     { href: `/agence/${slug}/social`, label: 'Réseaux Sociaux & Vitrine', icon: ExternalLink },
     { href: `/agence/${slug}/fiscalite`, label: 'Fiscalité & Légal', icon: ShieldAlert },

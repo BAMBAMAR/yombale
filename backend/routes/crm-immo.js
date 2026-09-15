@@ -448,4 +448,90 @@ router.post('/agence/:slugOrId/proprietaires', verifierToken, requireAgenceAcces
   }
 });
 
+// ── PUT /api/crm-immo/agence/:slugOrId/proprietaires/:id — Modifier un bailleur ──
+router.put('/agence/:slugOrId/proprietaires/:id', verifierToken, requireAgenceAccess('agent'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { id } = req.params;
+    const { nom, prenom, telephone, whatsapp, email, adresse, type_bailleur, iban, notes } = req.body;
+
+    const { rows } = await pool.query(
+      `UPDATE proprietaires_immo SET
+        nom = COALESCE($1, nom),
+        prenom = COALESCE($2, prenom),
+        telephone = COALESCE($3, telephone),
+        whatsapp = COALESCE($4, whatsapp),
+        email = COALESCE($5, email),
+        adresse = COALESCE($6, adresse),
+        type_bailleur = COALESCE($7, type_bailleur),
+        iban = COALESCE($8, iban),
+        notes = COALESCE($9, notes),
+        updated_at = NOW()
+       WHERE id = $10 AND agence_id = $11
+       RETURNING *`,
+      [
+        nom ? nom.trim() : null,
+        prenom ? prenom.trim() : null,
+        telephone ? telephone.trim() : null,
+        whatsapp ? whatsapp.trim() : null,
+        email ? email.trim() : null,
+        adresse || null,
+        type_bailleur || null,
+        iban || null,
+        notes || null,
+        id,
+        agenceId,
+      ]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Propriétaire introuvable.' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Propriétaire mis à jour avec succès',
+      proprietaire: rows[0],
+    });
+  } catch (err) {
+    console.error('[PUT /api/crm-immo/agence/:slugOrId/proprietaires/:id]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur mise à jour bailleur' });
+  }
+});
+
+// ── DELETE /api/crm-immo/agence/:slugOrId/proprietaires/:id — Supprimer un bailleur ──
+router.delete('/agence/:slugOrId/proprietaires/:id', verifierToken, requireAgenceAccess('directeur'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { id } = req.params;
+
+    // Vérifier si des biens sont encore rattachés
+    const { rows: biens } = await pool.query(
+      `SELECT COUNT(*) AS total FROM biens_immo WHERE proprietaire_id = $1 AND agence_id = $2`,
+      [id, agenceId]
+    );
+
+    if (parseInt(biens[0]?.total, 10) > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Impossible de supprimer ce bailleur : ${biens[0].total} bien(s) lui sont encore rattachés. Réassignez ou archivez d'abord ses biens.`,
+      });
+    }
+
+    const { rowCount } = await pool.query(
+      `DELETE FROM proprietaires_immo WHERE id = $1 AND agence_id = $2`,
+      [id, agenceId]
+    );
+
+    if (rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Propriétaire introuvable.' });
+    }
+
+    res.json({ success: true, message: 'Bailleur supprimé avec succès' });
+  } catch (err) {
+    console.error('[DELETE /api/crm-immo/agence/:slugOrId/proprietaires/:id]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur suppression bailleur' });
+  }
+});
+
 module.exports = router;

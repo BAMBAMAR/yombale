@@ -3,6 +3,7 @@
 
 const https = require('https');
 const http = require('http');
+const axios = require('axios');
 
 /**
  * Normalise une chaîne de texte pour comparaison textuelle
@@ -52,6 +53,14 @@ function extractExternalPostId(url, platform) {
       if (vMatch) return vMatch;
       const pathParts = u.pathname.split('/').filter(Boolean);
       return pathParts[pathParts.length - 1] || null;
+    } else if (platform === 'youtube') {
+      if (u.pathname.includes('/shorts/')) {
+        return u.pathname.split('/shorts/')[1]?.split('?')[0] || null;
+      } else if (u.searchParams.get('v')) {
+        return u.searchParams.get('v');
+      } else if (u.hostname === 'youtu.be') {
+        return u.pathname.slice(1) || null;
+      }
     }
   } catch (_) {}
   return null;
@@ -124,9 +133,8 @@ async function fetchOEmbedMetadata(url, platform) {
 
     if (postId) {
       const embedType = isReel ? 'reel' : 'p';
-      const rawIgMedia = `https://www.instagram.com/p/${postId}/media/?size=l`;
-      result.thumbnailUrl = `https://wsrv.nl/?url=${encodeURIComponent(rawIgMedia)}`;
       result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
+      result.thumbnailUrl = `https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=600&q=80`;
     }
   } else if (platform === 'facebook') {
     const isVideoOrReel = /\/(reel|videos|watch)/i.test(url);
@@ -161,6 +169,15 @@ async function fetchOEmbedMetadata(url, platform) {
       result.externalPostId = videoId;
       result.thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
       result.embedHtml = `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:12px;"></iframe>`;
+
+      // Récupérer le titre et l'auteur officiel via l'oEmbed gratuit de YouTube
+      const ytData = await httpGetJson(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`, 5000);
+      if (ytData) {
+        result.title = ytData.title || '';
+        result.caption = ytData.title || '';
+        result.author = ytData.author_name || '';
+        if (ytData.thumbnail_url) result.thumbnailUrl = ytData.thumbnail_url;
+      }
     }
   }
 
@@ -261,6 +278,7 @@ function matchProductsWithCaption(caption, products = []) {
 function cleanUsername(rawInput) {
   if (!rawInput || typeof rawInput !== 'string') return '';
   let u = rawInput.trim();
+  if (u === '@' || u === '') return '';
   // Si URL de profil passée, extraire le pseudo
   try {
     if (u.startsWith('http://') || u.startsWith('https://')) {
@@ -269,7 +287,8 @@ function cleanUsername(rawInput) {
       u = parts[0] || '';
     }
   } catch (_) {}
-  return u.replace(/^@+/, '').replace(/\/+$/, '').trim();
+  const res = u.replace(/^@+/, '').replace(/\/+$/, '').trim();
+  return res === '@' ? '' : res;
 }
 
 /**
@@ -400,91 +419,50 @@ async function exploreProfile(platform, rawUser) {
   const posts = [];
 
   try {
-    if (platform === 'instagram') {
-      // Sécurité : NE PAS utiliser process.env.IG_USER_ID ni getLiveMetaToken() ici.
-      // Ces credentials appartiennent au compte Nopalou et non au marchand.
-      // → Exploration publique uniquement via iframe embed placeholder.
-      const profileUrl = `https://www.instagram.com/${username}/`;
-
-      posts.push({
-        externalPostId: `ig_${username}_latest_1`,
-        url: profileUrl,
-        platform: 'instagram',
-        mediaType: 'REEL',
-        thumbnailUrl: null,
-        caption: `Dernières publications de @${username}`,
-        author: `@${username}`,
-        isProfilePlaceholder: true,
-      });
-
-      return { success: true, platform: 'instagram', username, posts, source: 'web_discovery' };
-    }
-
-    if (platform === 'tiktok') {
-      // TikTok oEmbed public — pas de token requis, isolation garantie.
-      const profileUrl = `https://www.tiktok.com/@${username}`;
-      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
-      const data = await httpGetJson(oembedUrl, 6000);
-
-      if (data) {
-        posts.push({
-          externalPostId: `tiktok_${username}_profile`,
-          url: profileUrl,
-          platform: 'tiktok',
-          mediaType: 'TIKTOK_VIDEO',
-          thumbnailUrl: data.thumbnail_url || null,
-          caption: data.title || `Vidéos de @${username}`,
-          author: data.author_name ? `@${data.author_name}` : `@${username}`,
-          source: 'oembed',
+    if (platform === 'youtube') {
+      try {
+        const channelUrl = `https://www.youtube.com/@${username}/videos`;
+        const resp = await axios.get(channelUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8',
+          },
+          timeout: 7000,
         });
-      } else {
-        // Fallback sans oEmbed
-        posts.push({
-          externalPostId: `tiktok_${username}_profile`,
-          url: profileUrl,
-          platform: 'tiktok',
-          mediaType: 'TIKTOK_VIDEO',
-          thumbnailUrl: null,
-          caption: `Vidéos de @${username}`,
-          author: `@${username}`,
-          isProfilePlaceholder: true,
-        });
+        const matches = resp.data.match(/\/watch\?v=[a-zA-Z0-9_-]{11}/g) || [];
+        const uniqueIds = [...new Set(matches.map(m => m.replace('/watch?v=', '')))].slice(0, 10);
+        for (const vid of uniqueIds) {
+          const vUrl = `https://www.youtube.com/watch?v=${vid}`;
+          const meta = await fetchOEmbedMetadata(vUrl, 'youtube');
+          posts.push({
+            externalPostId: vid,
+            url: vUrl,
+            platform: 'youtube',
+            mediaType: 'VIDEO',
+            thumbnailUrl: meta.thumbnailUrl || `https://img.youtube.com/vi/${vid}/hqdefault.jpg`,
+            caption: meta.title || `Vidéo YouTube (${vid})`,
+            author: meta.author || `@${username}`,
+            isProfilePlaceholder: false,
+          });
+        }
+      } catch (errYt) {
+        console.warn('[YOUTUBE_DISCOVERY_WARN]', errYt.message);
       }
 
-      return { success: true, platform: 'tiktok', username, posts, source: 'tiktok_discovery' };
+      if (posts.length > 0) {
+        return { success: true, platform: 'youtube', username, posts, source: 'youtube_discovery' };
+      }
+      return { success: false, error: `Aucune vidéo publique trouvée sur la chaîne YouTube de @${username}`, posts: [] };
     }
 
-    if (platform === 'facebook') {
-      // Sécurité : NE PAS utiliser le token FB global (getLiveMetaToken) ni FB_PAGE_ID.
-      // Cela retournerait les posts de la page officielle Nopalou, pas ceux du marchand.
-      // → Fallback iframe Plugin Facebook public uniquement.
-      const pageUrl = `https://www.facebook.com/${username}`;
-      posts.push({
-        externalPostId: `fb_${username}_page`,
-        url: pageUrl,
-        platform: 'facebook',
-        mediaType: 'POST',
-        thumbnailUrl: null,
-        caption: `Publications de la page ${username}`,
-        author: username,
-        isProfilePlaceholder: true,
-      });
-      return { success: true, platform: 'facebook', username, posts, source: 'facebook_discovery' };
-    }
-
-    if (platform === 'youtube') {
-      const channelUrl = `https://www.youtube.com/@${username}`;
-      posts.push({
-        externalPostId: `yt_${username}_channel`,
-        url: channelUrl,
-        platform: 'youtube',
-        mediaType: 'VIDEO',
-        thumbnailUrl: null,
-        caption: `Chaîne YouTube de @${username}`,
-        author: `@${username}`,
-        isProfilePlaceholder: true,
-      });
-      return { success: true, platform: 'youtube', username, posts, source: 'youtube_discovery' };
+    if (platform === 'instagram' || platform === 'tiktok' || platform === 'facebook') {
+      return {
+        success: false,
+        platform,
+        username,
+        error: `Meta (Instagram, Facebook) et TikTok bloquent l'aspiration automatique sans OAuth officiel. Utilisez l'onglet "Import en Lot" pour coller vos liens directs de vidéos en 1 clic !`,
+        posts: [],
+      };
     }
 
     return { success: false, error: 'Plateforme non supportée pour l\'exploration', posts: [] };

@@ -447,18 +447,31 @@ router.delete('/:slugOrId/membres/:membreId', verifierToken, requireAgenceAccess
     const agenceId = req.agence.id;
     const { membreId } = req.params;
 
-    const { rows } = await pool.query(
-      `DELETE FROM agence_membres WHERE id = $1 AND agence_id = $2 RETURNING *`,
+    // Vérifier que le membre n'est pas le créateur/fondateur de l'agence
+    const { rows: targetMembre } = await pool.query(
+      `SELECT am.*, a.utilisateur_id AS fondateur_id 
+       FROM agence_membres am 
+       JOIN agences_immo a ON am.agence_id = a.id 
+       WHERE am.id = $1 AND am.agence_id = $2`,
       [membreId, agenceId]
     );
 
-    if (rows.length === 0) {
+    if (targetMembre.length === 0) {
       return res.status(404).json({ success: false, error: 'Membre introuvable dans cette agence.' });
     }
 
+    if (targetMembre[0].utilisateur_id === targetMembre[0].fondateur_id) {
+      return res.status(403).json({ success: false, error: 'Impossible de retirer le fondateur ou propriétaire de l\'agence.' });
+    }
+
+    await pool.query(
+      `DELETE FROM agence_membres WHERE id = $1 AND agence_id = $2`,
+      [membreId, agenceId]
+    );
+
     res.json({
       success: true,
-      message: 'Membre retiré de l’agence avec succès'
+      message: 'Membre retiré de l\'agence avec succès'
     });
   } catch (err) {
     console.error('[DELETE /api/agences/:slugOrId/membres/:membreId]', err.message);

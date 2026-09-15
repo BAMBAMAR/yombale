@@ -41,122 +41,179 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     return 'instagram'
   }
 
-  function handleImportSingle(e: React.FormEvent) {
+  async function handleImportSingle(e: React.FormEvent) {
     e.preventDefault()
     if (!singleUrl.trim()) return
 
     setImporting(true)
-    const detectedPlat = detectPlatformFromUrl(singleUrl)
     const chosenBien = biens.find(b => b.id === selectedBienId)
+    const fallbackThumb = chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'
 
-    const newPost: SocialPostItem = {
-      id: 'post-' + Date.now().toString(36),
-      plateforme: detectedPlat,
-      post_url: singleUrl.trim(),
-      media_type: singleUrl.includes('/reel') || singleUrl.includes('/video') ? 'reel' : 'video',
-      thumbnail_url: chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-      caption: caption.trim() || (chosenBien ? `Visite guidée : ${chosenBien.titre}` : 'Visite exclusive bien immobilier'),
-      visible: true,
-      is_featured: true,
-      created_at: new Date().toISOString(),
-      biens_associes: chosenBien ? [
-        {
-          id: chosenBien.id,
-          titre: chosenBien.titre,
-          prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
-          type_operation: chosenBien.prix_location ? 'location' : 'vente',
-          quartier: chosenBien.quartier,
-          image_url: chosenBien.images?.[0],
-        }
-      ] : [],
+    try {
+      const res = await fetch('/api/social-shop/parse-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: singleUrl.trim(),
+          fallback_thumbnail: fallbackThumb,
+          custom_caption: caption.trim() || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Erreur lors de la résolution de la vidéo')
+      }
+
+      const postData = data.data
+      const newPost: SocialPostItem = {
+        id: 'post-' + Date.now().toString(36),
+        plateforme: postData.plateforme,
+        post_url: postData.post_url,
+        media_type: postData.media_type === 'TIKTOK_VIDEO' || postData.media_type === 'REEL' || postData.media_type === 'reel' ? 'reel' : 'video',
+        thumbnail_url: postData.thumbnail_url || fallbackThumb,
+        caption: caption.trim() || postData.caption || (chosenBien ? `Visite guidée : ${chosenBien.titre}` : 'Visite exclusive bien immobilier'),
+        auteur: postData.auteur,
+        visible: true,
+        is_featured: true,
+        created_at: new Date().toISOString(),
+        biens_associes: chosenBien ? [
+          {
+            id: chosenBien.id,
+            titre: chosenBien.titre,
+            prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
+            type_operation: chosenBien.prix_location ? 'location' : 'vente',
+            quartier: chosenBien.quartier,
+            image_url: chosenBien.images?.[0],
+          }
+        ] : [],
+      }
+
+      onImportPosts([newPost])
+      setSingleUrl('')
+      setCaption('')
+      setSuccessMsg(`Publication ${postData.plateforme.toUpperCase()} importée avec succès !`)
+      setTimeout(() => setSuccessMsg(null), 4000)
+    } catch (err: any) {
+      alert(err.message || 'Impossible d\'importer cette vidéo')
+    } finally {
+      setImporting(false)
     }
-
-    onImportPosts([newPost])
-    setImporting(false)
-    setSingleUrl('')
-    setCaption('')
-    setSuccessMsg('Publication importée avec succès et associée à votre vitrine !')
-    setTimeout(() => setSuccessMsg(null), 4000)
   }
 
-  function handleImportBatch(e: React.FormEvent) {
+  async function handleImportBatch(e: React.FormEvent) {
     e.preventDefault()
     if (!batchUrls.trim()) return
 
     setImporting(true)
-    const urls = batchUrls
-      .split('\n')
-      .map(u => u.trim())
-      .filter(u => u.length > 5 && u.startsWith('http'))
-
     const chosenBien = biens.find(b => b.id === selectedBienId)
+    const fallbackThumb = chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'
 
-    const newPosts: SocialPostItem[] = urls.map((u, idx) => ({
-      id: 'batch-' + Date.now().toString(36) + '-' + idx,
-      plateforme: detectPlatformFromUrl(u),
-      post_url: u,
-      media_type: 'reel',
-      thumbnail_url: chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-      caption: chosenBien ? `Visite ${chosenBien.titre}` : `Visite vidéo #${idx + 1}`,
-      visible: true,
-      is_featured: idx === 0,
-      created_at: new Date().toISOString(),
-      biens_associes: chosenBien ? [
-        {
-          id: chosenBien.id,
-          titre: chosenBien.titre,
-          prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
-          type_operation: chosenBien.prix_location ? 'location' : 'vente',
-          quartier: chosenBien.quartier,
-          image_url: chosenBien.images?.[0],
-        }
-      ] : [],
-    }))
+    try {
+      const res = await fetch('/api/social-shop/parse-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          raw_urls: batchUrls,
+          fallback_thumbnail: fallbackThumb,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Erreur lors du traitement en lot')
+      }
 
-    onImportPosts(newPosts)
-    setImporting(false)
-    setBatchUrls('')
-    setSuccessMsg(`${newPosts.length} vidéo(s) importée(s) avec succès !`)
-    setTimeout(() => setSuccessMsg(null), 4000)
+      const parsedPosts = data.posts || []
+      const newPosts: SocialPostItem[] = parsedPosts.map((p: any, idx: number) => ({
+        id: 'batch-' + Date.now().toString(36) + '-' + idx,
+        plateforme: p.plateforme,
+        post_url: p.post_url,
+        media_type: 'reel',
+        thumbnail_url: p.thumbnail_url || fallbackThumb,
+        caption: p.caption || (chosenBien ? `Visite ${chosenBien.titre}` : `Visite vidéo #${idx + 1}`),
+        auteur: p.auteur,
+        visible: true,
+        is_featured: idx === 0,
+        created_at: new Date().toISOString(),
+        biens_associes: chosenBien ? [
+          {
+            id: chosenBien.id,
+            titre: chosenBien.titre,
+            prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
+            type_operation: chosenBien.prix_location ? 'location' : 'vente',
+            quartier: chosenBien.quartier,
+            image_url: chosenBien.images?.[0],
+          }
+        ] : [],
+      }))
+
+      onImportPosts(newPosts)
+      setBatchUrls('')
+      setSuccessMsg(`${newPosts.length} vidéo(s) importée(s) avec succès avec leurs aperçus officiels !`)
+      setTimeout(() => setSuccessMsg(null), 4000)
+    } catch (err: any) {
+      alert(err.message || 'Erreur lors de l\'import groupé')
+    } finally {
+      setImporting(false)
+    }
   }
 
-  function handleExploreProfile(e: React.FormEvent) {
+  async function handleExploreProfile(e: React.FormEvent) {
     e.preventDefault()
     if (!username.trim()) return
 
+    const cleanUser = username.replace(/^@+/, '').trim()
+    if (!cleanUser) return
+
     setImporting(true)
-    const cleanUser = username.replace('@', '').trim()
     const chosenBien = biens.find(b => b.id === selectedBienId)
+    const fallbackThumb = chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80'
 
-    // Simulation de découverte des 3 dernières publications du profil
-    const simulatedPosts: SocialPostItem[] = [1, 2, 3].map(i => ({
-      id: `profile-${cleanUser}-${Date.now()}-${i}`,
-      plateforme: platform,
-      post_url: `https://${platform}.com/@${cleanUser}/video/${Date.now() + i}`,
-      media_type: 'reel',
-      thumbnail_url: chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80',
-      caption: `Visite immobilière officielle par @${cleanUser} - Épisode ${i}`,
-      auteur: `@${cleanUser}`,
-      visible: true,
-      is_featured: i === 1,
-      created_at: new Date().toISOString(),
-      biens_associes: chosenBien ? [
-        {
-          id: chosenBien.id,
-          titre: chosenBien.titre,
-          prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
-          type_operation: chosenBien.prix_location ? 'location' : 'vente',
-          quartier: chosenBien.quartier,
-          image_url: chosenBien.images?.[0],
+    try {
+      if (platform === 'youtube') {
+        const res = await fetch(`/api/social-shop/explore-profile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plateforme: 'youtube', username: cleanUser }),
+        })
+        const data = await res.json()
+        if (data.success && data.posts && data.posts.length > 0) {
+          const imported: SocialPostItem[] = data.posts.map((p: any, idx: number) => ({
+            id: 'yt-' + Date.now().toString(36) + '-' + idx,
+            plateforme: 'youtube',
+            post_url: p.url,
+            media_type: 'video',
+            thumbnail_url: p.thumbnailUrl || fallbackThumb,
+            caption: p.caption,
+            auteur: p.author,
+            visible: true,
+            is_featured: idx === 0,
+            created_at: new Date().toISOString(),
+            biens_associes: chosenBien ? [
+              {
+                id: chosenBien.id,
+                titre: chosenBien.titre,
+                prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
+                type_operation: chosenBien.prix_location ? 'location' : 'vente',
+                quartier: chosenBien.quartier,
+                image_url: chosenBien.images?.[0],
+              }
+            ] : [],
+          }))
+          onImportPosts(imported)
+          setUsername('')
+          setSuccessMsg(`${imported.length} vidéo(s) YouTube de @${cleanUser} importée(s) !`)
+          setTimeout(() => setSuccessMsg(null), 4000)
+          return
         }
-      ] : [],
-    }))
+      }
 
-    onImportPosts(simulatedPosts)
-    setImporting(false)
-    setUsername('')
-    setSuccessMsg(`3 publications de @${cleanUser} synchronisées avec succès !`)
-    setTimeout(() => setSuccessMsg(null), 4000)
+      setMode('batch')
+      alert(`Pour ${platform === 'instagram' ? 'Instagram' : 'TikTok'}, copiez et collez directement les liens de vos vidéos dans l'onglet "Import en Lot" (un lien par ligne) pour les importer instantanément.`)
+    } catch (err: any) {
+      alert(err.message || 'Impossible d\'explorer ce profil')
+    } finally {
+      setImporting(false)
+    }
   }
 
   return (

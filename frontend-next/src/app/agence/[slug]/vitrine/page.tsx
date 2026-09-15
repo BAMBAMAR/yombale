@@ -221,7 +221,7 @@ export default function AgenceVitrinePubliquePage() {
           {agence?.parametres?.reseaux_sociaux && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
               <span style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 600 }}>Nos réseaux :</span>
-              {agence.parametres.reseaux_sociaux.instagram && (
+              {agence.parametres.reseaux_sociaux.instagram && agence.parametres.reseaux_sociaux.instagram.replace(/^@+$/, '').trim() !== '' && (
                 <a
                   href={agence.parametres.reseaux_sociaux.instagram.startsWith('http') ? agence.parametres.reseaux_sociaux.instagram : `https://instagram.com/${agence.parametres.reseaux_sociaux.instagram.replace(/^@/, '')}`}
                   target="_blank"
@@ -231,7 +231,7 @@ export default function AgenceVitrinePubliquePage() {
                   Instagram
                 </a>
               )}
-              {agence.parametres.reseaux_sociaux.facebook && (
+              {agence.parametres.reseaux_sociaux.facebook && agence.parametres.reseaux_sociaux.facebook.replace(/^@+$/, '').trim() !== '' && (
                 <a
                   href={agence.parametres.reseaux_sociaux.facebook.startsWith('http') ? agence.parametres.reseaux_sociaux.facebook : `https://facebook.com/${agence.parametres.reseaux_sociaux.facebook}`}
                   target="_blank"
@@ -241,7 +241,7 @@ export default function AgenceVitrinePubliquePage() {
                   Facebook
                 </a>
               )}
-              {agence.parametres.reseaux_sociaux.tiktok && (
+              {agence.parametres.reseaux_sociaux.tiktok && agence.parametres.reseaux_sociaux.tiktok.replace(/^@+$/, '').trim() !== '' && (
                 <a
                   href={agence.parametres.reseaux_sociaux.tiktok.startsWith('http') ? agence.parametres.reseaux_sociaux.tiktok : `https://tiktok.com/@${agence.parametres.reseaux_sociaux.tiktok.replace(/^@/, '')}`}
                   target="_blank"
@@ -251,7 +251,7 @@ export default function AgenceVitrinePubliquePage() {
                   TikTok
                 </a>
               )}
-              {agence.parametres.reseaux_sociaux.linkedin && (
+              {agence.parametres.reseaux_sociaux.linkedin && agence.parametres.reseaux_sociaux.linkedin.replace(/^@+$/, '').trim() !== '' && (
                 <a
                   href={agence.parametres.reseaux_sociaux.linkedin.startsWith('http') ? agence.parametres.reseaux_sociaux.linkedin : `https://linkedin.com/company/${agence.parametres.reseaux_sociaux.linkedin}`}
                   target="_blank"
@@ -261,7 +261,7 @@ export default function AgenceVitrinePubliquePage() {
                   LinkedIn
                 </a>
               )}
-              {agence.parametres.reseaux_sociaux.youtube && (
+              {agence.parametres.reseaux_sociaux.youtube && agence.parametres.reseaux_sociaux.youtube.replace(/^@+$/, '').trim() !== '' && (
                 <a
                   href={agence.parametres.reseaux_sociaux.youtube.startsWith('http') ? agence.parametres.reseaux_sociaux.youtube : `https://youtube.com/${agence.parametres.reseaux_sociaux.youtube}`}
                   target="_blank"
@@ -271,7 +271,7 @@ export default function AgenceVitrinePubliquePage() {
                   YouTube
                 </a>
               )}
-              {agence.parametres.reseaux_sociaux.site_web && (
+              {agence.parametres.reseaux_sociaux.site_web && agence.parametres.reseaux_sociaux.site_web.replace(/^@+$/, '').trim() !== '' && (
                 <a
                   href={agence.parametres.reseaux_sociaux.site_web.startsWith('http') ? agence.parametres.reseaux_sociaux.site_web : `https://${agence.parametres.reseaux_sociaux.site_web}`}
                   target="_blank"

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Camera, Music, Share2, RefreshCw } from 'lucide-react'
+import { Camera, Music, Share2, RefreshCw, Trash2 } from 'lucide-react'
 import { SocialAccountAdmin } from '../types'
 
 interface SocialAccountsViewProps {
@@ -11,6 +11,7 @@ interface SocialAccountsViewProps {
   accountInput: string
   setAccountInput: (val: string) => void
   handleSaveAccount: (platform: string) => Promise<void>
+  handleDeleteAccount: (platform: string) => Promise<void>
   handleToggleAutoSync: (acc: SocialAccountAdmin) => Promise<void>
   handleSyncAccount: (acc: SocialAccountAdmin) => Promise<void>
   syncingAccountId: string | null
@@ -29,6 +30,7 @@ export function SocialAccountsView({
   accountInput,
   setAccountInput,
   handleSaveAccount,
+  handleDeleteAccount,
   handleToggleAutoSync,
   handleSyncAccount,
   syncingAccountId,
@@ -47,13 +49,14 @@ export function SocialAccountsView({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {PLATFORMS_CONFIG.map(plat => {
           const acc = accounts.find(a => a.plateforme === plat.key)
+          const isConfigured = Boolean(acc && acc.nom_compte && acc.nom_compte !== '@' && acc.nom_compte.replace(/^@/, '').trim())
           const isEditing = editingPlatform === plat.key
           const IconComp = plat.Icon
 
           return (
             <div
               key={plat.key}
-              className={`social-account-row-compact ${acc ? 'connected' : ''}`}
+              className={`social-account-row-compact ${isConfigured ? 'connected' : ''}`}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                 <div
@@ -61,12 +64,12 @@ export function SocialAccountsView({
                     width: 36,
                     height: 36,
                     borderRadius: 8,
-                    background: acc ? '#f0fdf4' : '#f1f5f9',
-                    border: `1px solid ${acc ? '#bbf7d0' : '#e2e8f0'}`,
+                    background: isConfigured ? '#f0fdf4' : '#f1f5f9',
+                    border: `1px solid ${isConfigured ? '#bbf7d0' : '#e2e8f0'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: acc ? '#15803d' : '#64748b',
+                    color: isConfigured ? '#15803d' : '#64748b',
                     flexShrink: 0,
                   }}
                 >
@@ -75,7 +78,7 @@ export function SocialAccountsView({
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: 800, fontSize: 13.5, color: '#0f172a' }}>{plat.label}</span>
-                    {acc ? (
+                    {isConfigured ? (
                       <span
                         style={{
                           fontSize: 10.5,
@@ -124,7 +127,14 @@ export function SocialAccountsView({
                       />
                       <button
                         type="button"
-                        onClick={() => handleSaveAccount(plat.key)}
+                        onClick={() => {
+                          const cleanVal = accountInput.trim()
+                          if (!cleanVal || cleanVal === '@') {
+                            handleDeleteAccount(plat.key)
+                          } else {
+                            handleSaveAccount(plat.key)
+                          }
+                        }}
                         style={{
                           background: '#C75B00',
                           color: '#fff',
@@ -160,8 +170,8 @@ export function SocialAccountsView({
                     </div>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: acc ? '#15803d' : '#64748b' }}>
-                        {acc ? `@${acc.nom_compte.replace(/^@/, '')}` : 'Aucun compte associé'}
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: isConfigured ? '#15803d' : '#64748b' }}>
+                        {isConfigured ? `@${acc!.nom_compte.replace(/^@/, '')}` : 'Aucun compte associé'}
                       </span>
                     </div>
                   )}
@@ -170,7 +180,7 @@ export function SocialAccountsView({
 
               {!isEditing && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  {acc && (
+                  {isConfigured && acc && (
                     <>
                       <button
                         type="button"
@@ -214,6 +224,28 @@ export function SocialAccountsView({
                         <RefreshCw size={11} className={syncingAccountId === acc.id ? 'spin' : ''} />
                         <span>{syncingAccountId === acc.id ? 'Recherche…' : 'Sync & Choisir'}</span>
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAccount(plat.key)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          background: '#fef2f2',
+                          color: '#dc2626',
+                          border: '1px solid #fecaca',
+                          borderRadius: 8,
+                          padding: '5px 8px',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                        title="Déconnecter et supprimer ce compte"
+                      >
+                        <Trash2 size={11} />
+                        <span>Déconnecter</span>
+                      </button>
                     </>
                   )}
 
@@ -221,7 +253,7 @@ export function SocialAccountsView({
                     type="button"
                     onClick={() => {
                       setEditingPlatform(plat.key)
-                      setAccountInput(acc ? acc.nom_compte : '')
+                      setAccountInput(isConfigured && acc ? acc.nom_compte : '')
                     }}
                     style={{
                       background: '#ffffff',
@@ -234,7 +266,7 @@ export function SocialAccountsView({
                       color: '#334155',
                     }}
                   >
-                    {acc ? 'Modifier' : '+ Configurer'}
+                    {isConfigured ? 'Modifier' : '+ Configurer'}
                   </button>
                 </div>
               )}
