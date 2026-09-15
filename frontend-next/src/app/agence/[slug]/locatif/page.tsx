@@ -11,8 +11,13 @@ import {
   Phone,
   FileText,
   Send,
-  Calendar
+  Calendar,
+  Download,
+  ExternalLink
 } from 'lucide-react'
+import ModalCreerBail from './components/ModalCreerBail'
+import ModalEncaisserLoyer from './components/ModalEncaisserLoyer'
+import ExportCsvButton from '../../components/ExportCsvButton'
 
 interface BailItem {
   id: string
@@ -22,10 +27,11 @@ interface BailItem {
   locataire_tel?: string
   loyer_mensuel: number
   charges: number
+  depot_garantie?: number
   date_debut: string
   date_fin?: string
   statut: string
-  nb_impayes: number
+  nb_impayes?: number
 }
 
 interface LoyerEcheance {
@@ -52,19 +58,20 @@ export default function LocatifPage() {
   const [loyers, setLoyers] = useState<LoyerEcheance[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Modale Encaissement
+  // Modales
+  const [showCreerBail, setShowCreerBail] = useState(false)
   const [selectedLoyer, setSelectedLoyer] = useState<LoyerEcheance | null>(null)
-  const [montantEncaissement, setMontantEncaissement] = useState('')
-  const [modePaiement, setModePaiement] = useState('wave')
-  const [savingPaiement, setSavingPaiement] = useState(false)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
 
   async function chargerDonnees() {
     try {
       setLoading(true)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
       const [resBaux, resLoyers] = await Promise.all([
-        fetch(`/api/locatif-immo/agence/${slug}/baux?statut=actif`),
-        fetch(`/api/locatif-immo/agence/${slug}/loyers`),
+        fetch(`/api/locatif-immo/agence/${slug}/baux`, { headers }),
+        fetch(`/api/locatif-immo/agence/${slug}/loyers`, { headers }),
       ])
       const dataBaux = await resBaux.json()
       const dataLoyers = await resLoyers.json()
@@ -81,42 +88,18 @@ export default function LocatifPage() {
     if (slug) chargerDonnees()
   }, [slug])
 
-  async function handleEncaisser(e: React.FormEvent) {
-    e.preventDefault()
-    if (!selectedLoyer) return
-
-    try {
-      setSavingPaiement(true)
-      const res = await fetch(`/api/locatif-immo/agence/${slug}/loyers/${selectedLoyer.id}/encaisser`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          montant: montantEncaissement ? parseFloat(montantEncaissement) : selectedLoyer.montant_du,
-          mode_paiement: modePaiement,
-        }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setToastMsg(`Paiement enregistré ! Quittance générée : ${data.quittance_reference}`)
-        setSelectedLoyer(null)
-        chargerDonnees()
-        setTimeout(() => setToastMsg(null), 5000)
-      }
-    } catch (err) {
-      console.error('[ENCAISSER_ERR]', err)
-    } finally {
-      setSavingPaiement(false)
-    }
-  }
-
   async function handleRelance(loyerId: string) {
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
       const res = await fetch(`/api/locatif-immo/agence/${slug}/loyers/${loyerId}/relance`, {
         method: 'POST',
+        headers,
       })
       const data = await res.json()
       if (data.success) {
-        setToastMsg('Relance de paiement envoyée avec succès.')
+        setToastMsg('Rappel et relance de loyer enregistrés avec succès.')
         chargerDonnees()
         setTimeout(() => setToastMsg(null), 4000)
       }
@@ -127,11 +110,23 @@ export default function LocatifPage() {
 
   return (
     <div>
-      {/* ── En-tête ── */}
-      <div className="agence-header">
+      {/* ── En-tête avec actions ── */}
+      <div className="agence-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 className="agence-title">Gestion Locative & Loyers</h1>
-          <p className="agence-subtitle">Suivi des baux actifs, encaissement des loyers et quittances numériques.</p>
+          <p className="agence-subtitle">Suivi des baux actifs, encaissement des loyers et quittances numériques certifiées.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <ExportCsvButton slug={slug} type={tab === 'loyers' ? 'loyers' : 'baux'} label={`Exporter ${tab === 'loyers' ? 'Loyers' : 'Baux'} CSV`} />
+          <button
+            type="button"
+            onClick={() => setShowCreerBail(true)}
+            className="agence-btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <Plus size={16} />
+            <span>Nouveau Bail</span>
+          </button>
         </div>
       </div>
 
@@ -172,7 +167,7 @@ export default function LocatifPage() {
             color: tab === 'loyers' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
           }}
         >
-          Échéances & Encaissements
+          Échéances & Encaissements ({loyers.length})
         </button>
         <button
           type="button"
@@ -201,10 +196,21 @@ export default function LocatifPage() {
               <p>Chargement des échéances de loyers...</p>
             </div>
           ) : loyers.length === 0 ? (
-            <div className="agence-card" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
-              <DollarSign size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-              <p style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 16 }}>Aucune échéance générée</p>
-              <p style={{ fontSize: 13.5 }}>Créez un bail pour générer automatiquement le calendrier des loyers.</p>
+            <div className="agence-card" style={{ textAlign: 'center', padding: '50px 20px', color: '#64748B' }}>
+              <DollarSign size={36} style={{ margin: '0 auto 12px', opacity: 0.5, color: 'var(--accent, #C75B00)' }} />
+              <p style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 17 }}>Aucune échéance de loyer générée</p>
+              <p style={{ fontSize: 13.5, maxWidth: 450, margin: '6px auto 16px' }}>
+                Créez un contrat de bail pour que le système génère automatiquement l'échéancier des 12 prochains mois.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowCreerBail(true)}
+                className="agence-btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '0 auto' }}
+              >
+                <Plus size={16} />
+                <span>Créer mon premier bail</span>
+              </button>
             </div>
           ) : (
             <div className="agence-table-wrapper">
@@ -238,28 +244,25 @@ export default function LocatifPage() {
                           {Number(l.montant_du).toLocaleString('fr-FR')} FCFA
                         </div>
                         {l.montant_paye > 0 && l.statut !== 'paye' && (
-                          <div style={{ fontSize: 11.5, color: '#166534' }}>
-                            Payé : {Number(l.montant_paye).toLocaleString('fr-FR')} FCFA
+                          <div style={{ fontSize: 11.5, color: '#0A5C36', fontWeight: 600 }}>
+                            Acompte : {Number(l.montant_paye).toLocaleString('fr-FR')} FCFA
                           </div>
                         )}
                       </td>
                       <td>
-                        <span className={`status-badge ${l.statut}`}>
-                          {l.statut === 'paye' ? 'Payé' : l.statut === 'retard' ? 'En Retard' : l.statut}
-                        </span>
+                        {l.statut === 'paye' && <span className="status-badge actif">Payé</span>}
+                        {l.statut === 'en_attente' && <span className="status-badge brouillon">En attente</span>}
+                        {l.statut === 'retard' && <span className="status-badge suspendu">En retard</span>}
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                        <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                           {l.statut !== 'paye' ? (
                             <>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setSelectedLoyer(l)
-                                  setMontantEncaissement(String(l.montant_restant || l.montant_du))
-                                }}
+                                onClick={() => setSelectedLoyer(l)}
                                 style={{
-                                  padding: '5px 12px',
+                                  padding: '5px 10px',
                                   borderRadius: 6,
                                   background: 'var(--accent, #C75B00)',
                                   color: '#FFFFFF',
@@ -282,15 +285,34 @@ export default function LocatifPage() {
                                   color: 'var(--navy, #1C2B4A)',
                                   cursor: 'pointer',
                                 }}
-                                title="Relance WhatsApp"
+                                title="Envoyer une relance"
                               >
                                 <Send size={13} />
                               </button>
                             </>
                           ) : (
-                            <span style={{ fontSize: 11.5, color: '#166534', fontWeight: 700 }}>
-                              ✓ Quittance #{l.quittance_url ? l.quittance_url.substring(0, 14) : 'OK'}
-                            </span>
+                            <a
+                              href={`/api/agences/agence/${slug}/documents/quittance/${l.id}.pdf`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 5,
+                                padding: '5px 10px',
+                                borderRadius: 6,
+                                background: '#ECFDF5',
+                                border: '1px solid #A7F3D0',
+                                color: '#065F46',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                textDecoration: 'none',
+                              }}
+                              title="Télécharger la Quittance de loyer officielle"
+                            >
+                              <FileText size={13} />
+                              <span>Quittance PDF</span>
+                            </a>
                           )}
                         </div>
                       </td>
@@ -305,155 +327,131 @@ export default function LocatifPage() {
 
       {/* ── Tableau des Baux ── */}
       {tab === 'baux' && (
-        <div className="agence-table-wrapper">
-          <table className="agence-table">
-            <thead>
-              <tr>
-                <th>Bien Loué</th>
-                <th>Locataire</th>
-                <th>Loyer Mensuel</th>
-                <th>Date Début</th>
-                <th>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {baux.map(b => (
-                <tr key={b.id}>
-                  <td>
-                    <div style={{ fontWeight: 750, color: 'var(--navy, #1C2B4A)' }}>{b.bien_titre}</div>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 700 }}>
-                      {b.locataire_nom} {b.locataire_prenom || ''}
-                    </div>
-                    {b.locataire_tel && <div style={{ fontSize: 12, color: '#64748B' }}>{b.locataire_tel}</div>}
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                      {Number(b.loyer_mensuel).toLocaleString('fr-FR')} FCFA
-                    </div>
-                  </td>
-                  <td>{new Date(b.date_debut).toLocaleDateString('fr-FR')}</td>
-                  <td>
-                    <span className="status-badge actif">Actif</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div>
+          {baux.length === 0 ? (
+            <div className="agence-card" style={{ textAlign: 'center', padding: '50px 20px', color: '#64748B' }}>
+              <Key size={36} style={{ margin: '0 auto 12px', opacity: 0.5, color: 'var(--accent, #C75B00)' }} />
+              <p style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 17 }}>Aucun bail enregistré</p>
+              <p style={{ fontSize: 13.5, maxWidth: 450, margin: '6px auto 16px' }}>
+                Associez un locataire à un bien immobilier pour créer votre premier contrat de bail locatif.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowCreerBail(true)}
+                className="agence-btn-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, margin: '0 auto' }}
+              >
+                <Plus size={16} />
+                <span>Nouveau Contrat de Bail</span>
+              </button>
+            </div>
+          ) : (
+            <div className="agence-table-wrapper">
+              <table className="agence-table">
+                <thead>
+                  <tr>
+                    <th>Bien Loué</th>
+                    <th>Locataire</th>
+                    <th>Loyer Mensuel</th>
+                    <th>Période du Bail</th>
+                    <th>Statut</th>
+                    <th style={{ textAlign: 'right' }}>Contrat PDF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {baux.map(b => (
+                    <tr key={b.id}>
+                      <td>
+                        <div style={{ fontWeight: 750, color: 'var(--navy, #1C2B4A)' }}>{b.bien_titre}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 700 }}>
+                          {b.locataire_nom} {b.locataire_prenom || ''}
+                        </div>
+                        {b.locataire_tel && <div style={{ fontSize: 12, color: '#64748B' }}>{b.locataire_tel}</div>}
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                          {Number(b.loyer_mensuel).toLocaleString('fr-FR')} FCFA
+                        </div>
+                        {b.charges > 0 && (
+                          <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                            + {Number(b.charges).toLocaleString('fr-FR')} FCFA ch.
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ fontSize: 12.5, fontWeight: 600 }}>
+                          Du {new Date(b.date_debut).toLocaleDateString('fr-FR')}
+                        </div>
+                        {b.date_fin && (
+                          <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                            au {new Date(b.date_fin).toLocaleDateString('fr-FR')}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <span className="status-badge actif">{b.statut || 'Actif'}</span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <a
+                          href={`/api/agences/agence/${slug}/documents/bail/${b.id}.pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
+                            padding: '6px 12px',
+                            borderRadius: 6,
+                            background: '#F1F5F9',
+                            border: '1px solid #CBD5E1',
+                            color: 'var(--navy, #1C2B4A)',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                          }}
+                          title="Télécharger le Contrat de Bail officiel"
+                        >
+                          <FileText size={13} />
+                          <span>Contrat PDF</span>
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* ── Modale Création Nouveau Bail ── */}
+      {showCreerBail && (
+        <ModalCreerBail
+          slug={slug}
+          onClose={() => setShowCreerBail(false)}
+          onSuccess={(msg) => {
+            setToastMsg(msg)
+            chargerDonnees()
+            setTimeout(() => setToastMsg(null), 5000)
+          }}
+        />
       )}
 
       {/* ── Modale d'Encaissement de Loyer ── */}
       {selectedLoyer && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(28, 43, 74, 0.5)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 16,
+        <ModalEncaisserLoyer
+          slug={slug}
+          loyer={selectedLoyer}
+          onClose={() => setSelectedLoyer(null)}
+          onSuccess={(msg) => {
+            setToastMsg(msg)
+            setSelectedLoyer(null)
+            chargerDonnees()
+            setTimeout(() => setToastMsg(null), 5000)
           }}
-        >
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 14,
-              maxWidth: 460,
-              width: '100%',
-              padding: 24,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <DollarSign size={20} color="var(--accent, #C75B00)" />
-                <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
-                  Encaisser le loyer — {selectedLoyer.periode}
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedLoyer(null)}
-                style={{ background: 'none', border: 'none', fontSize: 20, color: '#94A3B8', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleEncaisser}>
-              <div style={{ marginBottom: 16, padding: 12, background: '#FAF8F5', borderRadius: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-                  {selectedLoyer.bien_titre}
-                </div>
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                  Locataire : {selectedLoyer.locataire_nom} {selectedLoyer.locataire_prenom || ''}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Montant perçu (FCFA) *</label>
-                <input
-                  type="number"
-                  required
-                  value={montantEncaissement}
-                  onChange={e => setMontantEncaissement(e.target.value)}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Mode de paiement *</label>
-                <select
-                  value={modePaiement}
-                  onChange={e => setModePaiement(e.target.value)}
-                  className="form-select"
-                >
-                  <option value="wave">Wave Sénégal</option>
-                  <option value="orange_money">Orange Money</option>
-                  <option value="especes">Espèces (Cash)</option>
-                  <option value="virement">Virement bancaire</option>
-                  <option value="cheque">Chèque</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedLoyer(null)}
-                  style={{
-                    padding: '9px 14px',
-                    borderRadius: 8,
-                    background: '#FAF8F5',
-                    border: '1px solid var(--border, #E8DDD2)',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingPaiement}
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    background: 'var(--accent, #C75B00)',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    fontWeight: 700,
-                    cursor: savingPaiement ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {savingPaiement ? 'Validation...' : 'Valider & Générer quittance'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        />
       )}
     </div>
   )

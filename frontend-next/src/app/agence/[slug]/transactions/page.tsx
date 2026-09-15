@@ -24,6 +24,10 @@ interface TransactionItem {
   vendeur_id?: string
   acheteur_id?: string
   agent_id?: string
+  courtier_id?: string
+  courtier_nom?: string
+  courtier_prenom?: string
+  courtier_telephone?: string
   type_transaction: string
   montant: number
   date_transaction: string
@@ -62,6 +66,7 @@ export default function AgenceTransactionsPage() {
   const [biens, setBiens] = useState<any[]>([])
   const [contacts, setContacts] = useState<any[]>([])
   const [proprietaires, setProprietaires] = useState<any[]>([])
+  const [courtiers, setCourtiers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [advancingId, setAdvancingId] = useState<string | null>(null)
@@ -75,20 +80,22 @@ export default function AgenceTransactionsPage() {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
 
-      const [resTx, resPipe, resBiens, resContacts, resProps] = await Promise.all([
+      const [resTx, resPipe, resBiens, resContacts, resProps, resMembres] = await Promise.all([
         fetch(`/api/transactions-immo/agence/${slug}?statut=${filterStatut}&search=${encodeURIComponent(searchTerm)}`, { headers }),
         fetch(`/api/transactions-immo/agence/${slug}/pipeline`, { headers }),
         fetch(`/api/biens/agence/${slug}?statut=actif`, { headers }),
         fetch(`/api/crm-immo/agence/${slug}/contacts`, { headers }),
         fetch(`/api/crm-immo/agence/${slug}/proprietaires`, { headers }),
+        fetch(`/api/agences/${slug}/membres`, { headers }),
       ])
 
-      const [dTx, dPipe, dB, dC, dP] = await Promise.all([
+      const [dTx, dPipe, dB, dC, dP, dM] = await Promise.all([
         resTx.json(),
         resPipe.json(),
         resBiens.json(),
         resContacts.json(),
         resProps.json(),
+        resMembres.json(),
       ])
 
       if (dTx.success) setTransactions(dTx.transactions || [])
@@ -96,6 +103,7 @@ export default function AgenceTransactionsPage() {
       if (dB.success) setBiens(dB.biens || [])
       if (dC.success) setContacts(dC.contacts || [])
       if (dP.success) setProprietaires(dP.proprietaires || [])
+      if (dM.success) setCourtiers((dM.membres || []).filter((m: any) => m.role === 'courtier'))
     } catch (err) {
       console.error('[LOAD_TX_ERR]', err)
     } finally {
@@ -277,6 +285,7 @@ export default function AgenceTransactionsPage() {
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   <th style={{ padding: '12px 16px', fontWeight: 700 }}>Bien & Prix</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700 }}>Parties (Acheteur / Vendeur)</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Agent & Courtier</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700 }}>Étape Notariale</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700 }}>Commission Agence</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
@@ -313,6 +322,34 @@ export default function AgenceTransactionsPage() {
                         <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 2 }}>
                           <span style={{ fontWeight: 700 }}>Vendeur :</span> {t.vendeur_nom || 'Non spécifié'}
                         </div>
+                      </td>
+
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontSize: 12.5, color: '#334155' }}>
+                          <span style={{ fontWeight: 700 }}>Agent :</span>{' '}
+                          {t.agent_nom ? `${t.agent_prenom || ''} ${t.agent_nom}`.trim() : 'Agence direct'}
+                        </div>
+                        {t.courtier_nom ? (
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            marginTop: 4,
+                            padding: '2px 8px',
+                            borderRadius: 6,
+                            background: '#DCFCE7',
+                            color: '#166534',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            border: '1px solid #BBF7D0'
+                          }}>
+                            <span>Courtier : {t.courtier_prenom ? `${t.courtier_prenom} ${t.courtier_nom}` : t.courtier_nom}</span>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>
+                            Sans courtier
+                          </div>
+                        )}
                       </td>
 
                       <td style={{ padding: '14px 16px' }}>
@@ -393,6 +430,7 @@ export default function AgenceTransactionsPage() {
           biens={biens}
           contacts={contacts}
           proprietaires={proprietaires}
+          courtiers={courtiers}
           onClose={() => setShowModal(false)}
           onSuccess={() => {
             setShowModal(false)

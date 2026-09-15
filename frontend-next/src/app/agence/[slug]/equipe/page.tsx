@@ -5,12 +5,12 @@ import { useParams } from 'next/navigation'
 import {
   ShieldAlert,
   Plus,
-  User,
-  Mail,
-  Phone,
   Trash2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Users2,
+  Briefcase,
+  X
 } from 'lucide-react'
 
 interface Membre {
@@ -20,6 +20,7 @@ interface Membre {
   actif: boolean
   date_entree: string
   utilisateur_nom: string
+  utilisateur_prenom?: string
   utilisateur_email: string
   utilisateur_tel?: string
 }
@@ -30,6 +31,7 @@ const ROLES: Record<string, string> = {
   agent: 'Agent Immobilier',
   gestionnaire_locatif: 'Gestionnaire Locatif',
   commercial: 'Commercial',
+  courtier: 'Courtier / Apporteur d\'Affaires',
 }
 
 export default function EquipePage() {
@@ -42,10 +44,11 @@ export default function EquipePage() {
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [filtreType, setFiltreType] = useState<'tous' | 'internes' | 'courtiers'>('tous')
 
   const [form, setForm] = useState({
     emailOrPhone: '',
-    role: 'agent',
+    role: 'courtier',
   })
 
   async function chargerMembres() {
@@ -85,8 +88,8 @@ export default function EquipePage() {
         return
       }
       setShowModal(false)
-      setForm({ emailOrPhone: '', role: 'agent' })
-      setToastMsg('Collaborateur ajouté avec succès à l’équipe.')
+      setForm({ emailOrPhone: '', role: 'courtier' })
+      setToastMsg('Collaborateur ou courtier ajouté avec succès à l’agence.')
       chargerMembres()
       setTimeout(() => setToastMsg(null), 4000)
     } catch (err) {
@@ -112,73 +115,139 @@ export default function EquipePage() {
     }
   }
 
+  const membresFiltres = membres.filter(m => {
+    if (filtreType === 'courtiers') return m.role === 'courtier'
+    if (filtreType === 'internes') return m.role !== 'courtier'
+    return true
+  })
+
+  const nbCourtiers = membres.filter(m => m.role === 'courtier').length
+  const nbInternes = membres.filter(m => m.role !== 'courtier').length
+
   return (
     <div>
       {/* ── En-tête ── */}
-      <div className="agence-header">
+      <div className="agence-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 className="agence-title">Équipe & Rôles</h1>
-          <p className="agence-subtitle">Gérez les accès et délégations des agents, directeurs et gestionnaires.</p>
+          <h1 className="agence-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Users2 size={22} color="var(--accent, #C75B00)" />
+            <span>Équipe, Agents &amp; Courtiers Partenaires</span>
+          </h1>
+          <p className="agence-subtitle">
+            Gérez les directeurs, agents négociateurs, gestionnaires locatifs et courtiers en crédit immobilier / apporteurs d'affaires.
+          </p>
         </div>
 
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="btn-npl"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 18px',
-            borderRadius: 8,
-            background: 'var(--accent, #C75B00)',
-            color: '#FFFFFF',
-            fontWeight: 700,
-            border: 'none',
-            cursor: 'pointer',
-          }}
+          className="agence-btn-primary"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
-          <Plus size={18} />
-          Inviter un collaborateur
+          <Plus size={16} />
+          <span>Ajouter un collaborateur / courtier</span>
         </button>
       </div>
 
       {toastMsg && (
-        <div
-          style={{
-            padding: '12px 16px',
-            background: '#DCFCE7',
-            color: '#166534',
-            borderRadius: 8,
-            fontSize: 13.5,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 16,
-          }}
-        >
+        <div style={{ padding: '12px 16px', background: '#DCFCE7', color: '#166534', borderRadius: 8, fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <CheckCircle2 size={18} />
           {toastMsg}
         </div>
       )}
 
+      {/* ── Filtres Onglets ── */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button
+          type="button"
+          onClick={() => setFiltreType('tous')}
+          style={{
+            padding: '8px 14px',
+            borderRadius: 8,
+            border: '1px solid',
+            borderColor: filtreType === 'tous' ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
+            background: filtreType === 'tous' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+            color: filtreType === 'tous' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
+        >
+          Tous ({membres.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFiltreType('internes')}
+          style={{
+            padding: '8px 14px',
+            borderRadius: 8,
+            border: '1px solid',
+            borderColor: filtreType === 'internes' ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
+            background: filtreType === 'internes' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+            color: filtreType === 'internes' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
+        >
+          Équipe Interne ({nbInternes})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFiltreType('courtiers')}
+          style={{
+            padding: '8px 14px',
+            borderRadius: 8,
+            border: '1px solid',
+            borderColor: filtreType === 'courtiers' ? '#0A5C36' : 'var(--border, #E8DDD2)',
+            background: filtreType === 'courtiers' ? '#0A5C36' : '#FFFFFF',
+            color: filtreType === 'courtiers' ? '#FFFFFF' : '#0A5C36',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Briefcase size={14} />
+          <span>Courtiers &amp; Apporteurs ({nbCourtiers})</span>
+        </button>
+      </div>
+
       {/* ── Tableau de l'Équipe ── */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>
-          <p>Chargement des membres de l'équipe...</p>
+          <p>Chargement des membres de l'équipe et courtiers...</p>
         </div>
-      ) : membres.length === 0 ? (
+      ) : membresFiltres.length === 0 ? (
         <div className="agence-card" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
           <ShieldAlert size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-          <p style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 16 }}>Aucun membre</p>
+          <p style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 16 }}>
+            {filtreType === 'courtiers' ? 'Aucun courtier ou apporteur d\'affaires enregistré' : 'Aucun collaborateur'}
+          </p>
+          <p style={{ fontSize: 13, maxWidth: 450, margin: '6px auto 14px' }}>
+            {filtreType === 'courtiers'
+              ? 'Associez des courtiers en crédit immobilier ou apporteurs pour partager les commissions sur les transactions.'
+              : 'Invitez vos agents négociateurs et gestionnaires pour collaborer sur le portefeuille.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="agence-btn-primary"
+            style={{ margin: '0 auto' }}
+          >
+            Inviter un courtier ou collaborateur
+          </button>
         </div>
       ) : (
         <div className="agence-table-wrapper">
           <table className="agence-table">
             <thead>
               <tr>
-                <th>Collaborateur</th>
+                <th>Collaborateur / Courtier</th>
                 <th>Rôle / Privilèges</th>
                 <th>Contact</th>
                 <th>Date d'entrée</th>
@@ -186,58 +255,68 @@ export default function EquipePage() {
               </tr>
             </thead>
             <tbody>
-              {membres.map(m => (
-                <tr key={m.id}>
-                  <td>
-                    <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{m.utilisateur_nom}</div>
-                  </td>
-                  <td>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        padding: '3px 8px',
-                        borderRadius: 12,
-                        background: m.role === 'admin_agence' ? '#FFEDD5' : '#FAF8F5',
-                        color: m.role === 'admin_agence' ? '#9A3412' : 'var(--navy, #1C2B4A)',
-                        border: '1px solid var(--border, #E8DDD2)',
-                      }}
-                    >
-                      {ROLES[m.role] || m.role}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ fontSize: 12.5, color: '#475569' }}>{m.utilisateur_email}</div>
-                    {m.utilisateur_tel && <div style={{ fontSize: 11.5, color: '#64748B' }}>{m.utilisateur_tel}</div>}
-                  </td>
-                  <td>{m.date_entree ? new Date(m.date_entree).toLocaleDateString('fr-FR') : 'Fondateur'}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    {m.role !== 'admin_agence' && (
-                      <button
-                        type="button"
-                        onClick={() => handleSupprimerMembre(m.id)}
+              {membresFiltres.map(m => {
+                const isCourtier = m.role === 'courtier'
+                return (
+                  <tr key={m.id}>
+                    <td>
+                      <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                        {m.utilisateur_prenom ? `${m.utilisateur_prenom} ${m.utilisateur_nom}` : m.utilisateur_nom}
+                      </div>
+                      {isCourtier && (
+                        <div style={{ fontSize: 11, color: '#0A5C36', fontWeight: 650 }}>
+                          Partenaire Financement &amp; Apporteur
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <span
                         style={{
-                          padding: '6px',
-                          borderRadius: 6,
-                          background: '#FEE2E2',
-                          color: '#991B1B',
-                          border: 'none',
-                          cursor: 'pointer',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: 12,
+                          background: isCourtier ? '#DCFCE7' : m.role === 'admin_agence' ? '#FFEDD5' : '#FAF8F5',
+                          color: isCourtier ? '#166534' : m.role === 'admin_agence' ? '#9A3412' : 'var(--navy, #1C2B4A)',
+                          border: `1px solid ${isCourtier ? '#BBF7D0' : 'var(--border, #E8DDD2)'}`,
                         }}
-                        title="Retirer le collaborateur"
                       >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                        {ROLES[m.role] || m.role}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: 12.5, color: '#475569' }}>{m.utilisateur_email}</div>
+                      {m.utilisateur_tel && <div style={{ fontSize: 11.5, color: '#64748B' }}>{m.utilisateur_tel}</div>}
+                    </td>
+                    <td>{m.date_entree ? new Date(m.date_entree).toLocaleDateString('fr-FR') : 'Fondateur'}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      {m.role !== 'admin_agence' && (
+                        <button
+                          type="button"
+                          onClick={() => handleSupprimerMembre(m.id)}
+                          style={{
+                            padding: '6px',
+                            borderRadius: 6,
+                            background: '#FEE2E2',
+                            color: '#991B1B',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                          title="Retirer de l'agence"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* ── Modale Inviter Membre ── */}
+      {/* ── Modale Inviter Membre / Courtier ── */}
       {showModal && (
         <div
           style={{
@@ -252,43 +331,22 @@ export default function EquipePage() {
             padding: 16,
           }}
         >
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 14,
-              maxWidth: 460,
-              width: '100%',
-              padding: 24,
-            }}
-          >
+          <div style={{ background: '#FFFFFF', borderRadius: 14, maxWidth: 440, width: '100%', padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
-                Inviter un collaborateur
-              </h2>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
+                Inviter un Collaborateur ou Courtier
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: 20, color: '#94A3B8', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 
             {errorMsg && (
-              <div
-                style={{
-                  padding: '10px 14px',
-                  background: '#FEE2E2',
-                  color: '#991B1B',
-                  borderRadius: 8,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  marginBottom: 16,
-                }}
-              >
+              <div style={{ padding: '10px 14px', background: '#FEE2E2', color: '#991B1B', borderRadius: 8, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                 <AlertCircle size={16} />
                 {errorMsg}
               </div>
@@ -300,7 +358,7 @@ export default function EquipePage() {
                 <input
                   type="text"
                   required
-                  placeholder="agent@exemple.sn ou 770000000"
+                  placeholder="courtier@banque.sn ou 770000000"
                   value={form.emailOrPhone}
                   onChange={e => setForm({ ...form, emailOrPhone: e.target.value })}
                   className="form-input"
@@ -308,16 +366,17 @@ export default function EquipePage() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Rôle attribué *</label>
+                <label className="form-label">Rôle attribué dans l'agence *</label>
                 <select
                   value={form.role}
                   onChange={e => setForm({ ...form, role: e.target.value })}
                   className="form-select"
                 >
-                  <option value="agent">Agent Immobilier (Portefeuille)</option>
+                  <option value="courtier">Courtier / Apporteur d'Affaires (Financement &amp; Partage)</option>
+                  <option value="agent">Agent Immobilier (Gestion Portefeuille)</option>
+                  <option value="gestionnaire_locatif">Gestionnaire Locatif (Baux &amp; Loyers)</option>
+                  <option value="commercial">Commercial (Prospects &amp; Visites)</option>
                   <option value="directeur">Directeur Agence</option>
-                  <option value="gestionnaire_locatif">Gestionnaire Locatif (Baux/Loyers)</option>
-                  <option value="commercial">Commercial (Prospects/Visites)</option>
                 </select>
               </div>
 
@@ -325,31 +384,16 @@ export default function EquipePage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '9px 14px',
-                    borderRadius: 8,
-                    background: '#FAF8F5',
-                    border: '1px solid var(--border, #E8DDD2)',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
+                  style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', background: '#FFF', color: '#64748B', fontWeight: 650, cursor: 'pointer' }}
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    background: 'var(--accent, #C75B00)',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    fontWeight: 700,
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                  }}
+                  className="agence-btn-primary"
                 >
-                  {saving ? 'Ajout...' : 'Ajouter au groupe'}
+                  {saving ? 'Envoi...' : 'Valider l’invitation'}
                 </button>
               </div>
             </form>

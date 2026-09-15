@@ -372,7 +372,7 @@ router.get('/:slugOrId/membres', verifierToken, requireAgenceAccess(), async (re
   try {
     const agenceId = req.agence.id;
     const { rows } = await pool.query(
-      `SELECT am.*, u.nom AS utilisateur_nom, u.email AS utilisateur_email, u.telephone AS utilisateur_tel
+      `SELECT am.*, u.nom AS utilisateur_nom, u.prenom AS utilisateur_prenom, u.email AS utilisateur_email, u.telephone AS utilisateur_tel
        FROM agence_membres am
        JOIN utilisateurs u ON am.utilisateur_id = u.id
        WHERE am.agence_id = $1
@@ -402,8 +402,8 @@ router.post('/:slugOrId/membres', verifierToken, requireAgenceAccess('admin_agen
 
     // Trouver l'utilisateur
     const { rows: userRows } = await pool.query(
-      `SELECT id, nom, email, telephone FROM utilisateurs 
-       WHERE LOWER(email) = LOWER($1) OR telephone = $1 OR whatsapp = $1`,
+      `SELECT id, nom, prenom, email, telephone FROM utilisateurs 
+       WHERE LOWER(email) = LOWER($1) OR telephone = $1`,
       [emailOrPhone.trim()]
     );
 

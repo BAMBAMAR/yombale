@@ -288,7 +288,8 @@ export default async function RootLayout({
                 <NavbarCartBtn />
                 {session ? (
                   <a href="/boutique" className="navbar-maboutique hidden-mobile" aria-label="Accéder à ma boutique" style={{ background: 'var(--navy)', color: '#fff', padding: '6px 11px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <Store size={14} style={{ color: 'var(--accent, #C75B00)' }} /> Ma Boutique
+                    <Store size={14} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+                    <span className="navbar-maboutique-text">Ma Boutique</span>
                   </a>
                 ) : (
                   <a href="/creer-boutique" className="navbar-taftaf hidden-mobile" aria-label="Créer Boutique Taf Taf" style={{ background: 'var(--navy)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: '0 2px 6px rgba(28,43,74,0.15)' }}>

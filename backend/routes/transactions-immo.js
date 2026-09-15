@@ -19,16 +19,18 @@ router.get('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (req
     let query = `
       SELECT t.*,
              b.titre AS bien_titre, b.quartier AS bien_quartier, b.ville AS bien_ville,
-             b.images AS bien_images, b.reference AS bien_reference,
+             b.photos AS bien_images, b.reference AS bien_reference,
              v.nom AS vendeur_nom, v.telephone AS vendeur_telephone, v.email AS vendeur_email,
              a.nom AS acheteur_nom, a.telephone AS acheteur_telephone, a.email AS acheteur_email,
              u.nom AS agent_nom, u.prenom AS agent_prenom,
+             courtier.nom AS courtier_nom, courtier.prenom AS courtier_prenom, courtier.telephone AS courtier_telephone,
              c.id AS commission_id, c.montant_brut AS commission_montant, c.statut AS commission_statut
       FROM transactions_immo t
       JOIN biens_immo b ON t.bien_id = b.id
       LEFT JOIN proprietaires_immo v ON t.vendeur_id = v.id
       LEFT JOIN contacts_immo a ON t.acheteur_id = a.id
       LEFT JOIN utilisateurs u ON t.agent_id = u.id
+      LEFT JOIN utilisateurs courtier ON t.courtier_id = courtier.id
       LEFT JOIN commissions_immo c ON c.transaction_id = t.id
       WHERE t.agence_id = $1
     `;
@@ -102,10 +104,11 @@ router.get('/agence/:slugOrId/:txId', verifierToken, requireAgenceAccess(), asyn
     const { rows } = await pool.query(
       `SELECT t.*,
               b.titre AS bien_titre, b.quartier AS bien_quartier, b.ville AS bien_ville,
-              b.prix_vente, b.prix_location, b.surface_m2, b.images AS bien_images,
+              b.prix_vente, b.prix_location, b.surface_m2, b.photos AS bien_images,
               v.nom AS vendeur_nom, v.telephone AS vendeur_telephone, v.email AS vendeur_email, v.adresse AS vendeur_adresse,
               a.nom AS acheteur_nom, a.telephone AS acheteur_telephone, a.email AS acheteur_email,
               u.nom AS agent_nom, u.prenom AS agent_prenom, u.telephone AS agent_telephone,
+              courtier.nom AS courtier_nom, courtier.prenom AS courtier_prenom, courtier.telephone AS courtier_telephone,
               m.type_mandat, m.taux_commission AS mandat_taux_commission,
               o.montant AS offre_montant, o.conditions AS offre_conditions
        FROM transactions_immo t
@@ -113,6 +116,7 @@ router.get('/agence/:slugOrId/:txId', verifierToken, requireAgenceAccess(), asyn
        LEFT JOIN proprietaires_immo v ON t.vendeur_id = v.id
        LEFT JOIN contacts_immo a ON t.acheteur_id = a.id
        LEFT JOIN utilisateurs u ON t.agent_id = u.id
+       LEFT JOIN utilisateurs courtier ON t.courtier_id = courtier.id
        LEFT JOIN mandats_immo m ON t.mandat_id = m.id
        LEFT JOIN offres_immo o ON t.offre_id = o.id
        WHERE t.id = $1 AND t.agence_id = $2`,

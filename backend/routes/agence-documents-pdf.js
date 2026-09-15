@@ -636,4 +636,166 @@ router.get('/agence/:slugOrId/documents/decompte-bailleur/:proprietaireId.pdf', 
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. GET /api/agences/agence/:slugOrId/documents/facture/:factureId.pdf
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/agence/:slugOrId/documents/facture/:factureId.pdf', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { factureId } = req.params;
+
+    const { rows } = await pool.query(
+      `SELECT f.*,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
+              b.ville AS bien_ville, b.reference AS bien_ref,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.email_contact AS agence_email,
+              a.adresse AS agence_adresse, a.ville AS agence_ville, a.numero_agrement
+       FROM factures_immo f
+       LEFT JOIN biens_immo b ON f.bien_id = b.id
+       JOIN agences_immo a ON f.agence_id = a.id
+       WHERE f.id = $1 AND f.agence_id = $2`,
+      [factureId, agenceId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Facture d\'honoraires introuvable' });
+    }
+
+    const f = rows[0];
+    const numFact = f.numero_facture || `FACT-${f.id.slice(0, 8).toUpperCase()}`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="facture_honoraires_${numFact}.pdf"`);
+
+    const doc = new PDFDocument({ margin: 45, size: 'A4' });
+    doc.pipe(res);
+
+    // En-tête légal
+    doc.fillColor(NAVY).fontSize(7.5).font('Helvetica-Bold')
+       .text("RÉPUBLIQUE DU SÉNÉGAL • CODE DES OBLIGATIONS CIVILES ET COMMERCIALES (COCC) • ACTIVITÉS IMMOBILIÈRES", 45, 40);
+
+    doc.fillColor(NAVY).fontSize(16).font('Helvetica-Bold').text(f.agence_nom, 45, 56);
+    let hY = 75;
+    doc.fontSize(8.5).font('Helvetica').fillColor(GRAY);
+    if (f.numero_agrement) { doc.text(`Agrément Professionnel : ${f.numero_agrement}`, 45, hY); hY += 12; }
+    if (f.agence_adresse) { doc.text(`${f.agence_adresse}${f.agence_ville ? `, ${f.agence_ville}` : ''}`, 45, hY); hY += 12; }
+    if (f.agence_tel) { doc.text(`Tél : ${f.agence_tel}${f.agence_email ? ` • Email : ${f.agence_email}` : ''}`, 45, hY); hY += 12; }
+
+    doc.moveTo(45, hY + 6).lineTo(550, hY + 6).strokeColor(NAVY).lineWidth(1.2).stroke();
+
+    // Titre Facture Immobilière
+    const titleY = hY + 18;
+    const typeLabel = f.type_facture === 'honoraires_vente' ? 'FACTURE D\'HONORAIRES DE TRANSACTION IMMOBILIÈRE' :
+                      f.type_facture === 'gestion_locative' ? 'FACTURE D\'HONORAIRES DE GESTION LOCATIVE' :
+                      f.type_facture === 'honoraires_location' ? 'FACTURE D\'HONORAIRES DE LOCATION & RÉDACTION DE BAIL' :
+                      f.type_facture === 'debours_travaux' ? 'FACTURE DE DÉBOURS & INTERVENTIONS TRAVAUX' :
+                      f.type_facture === 'expertise' ? 'FACTURE D\'HONORAIRES D\'EXPERTISE & ESTIMATION' :
+                      'FACTURE D\'HONORAIRES PROFESSIONNELS IMMOBILIERS';
+
+    doc.fillColor(NAVY).fontSize(14).font('Helvetica-Bold').text(typeLabel, 45, titleY);
+    doc.fillColor(ACCENT).fontSize(9).font('Helvetica-Bold')
+       .text(`FACTURE OFFICIELLE N° : ${numFact}`, 45, titleY + 20);
+    doc.fillColor(GRAY).fontSize(8.5).font('Helvetica')
+       .text(`Date d'émission : ${new Date(f.date_emission).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`, 45, titleY + 34)
+       .text(`Date d'échéance : ${f.date_echeance ? new Date(f.date_echeance).toLocaleDateString('fr-FR') : 'À réception'}`, 45, titleY + 46);
+
+    // Blocs Destinataire (Client/Mandant) et Bien rattaché
+    const boxY = titleY + 68;
+
+    // Cadre Client
+    doc.roundedRect(305, boxY, 245, 80, 4).fillColor('#F8FAFC').strokeColor(BORDER_COLOR).lineWidth(0.5).fillAndStroke();
+    doc.fillColor(NAVY).fontSize(9.5).font('Helvetica-Bold').text('CLIENT / MANDANT FACTURÉ', 315, boxY + 8);
+    doc.fillColor('#1F2937').fontSize(9).font('Helvetica-Bold').text(cleanText(f.client_nom), 315, boxY + 24);
+    doc.font('Helvetica').fontSize(8.5).fillColor(GRAY)
+       .text(`Téléphone : ${f.client_tel || 'Non renseigné'}`, 315, boxY + 38)
+       .text(`Email : ${f.client_email || 'Non renseigné'}`, 315, boxY + 50);
+
+    // Cadre Bien immobilier
+    doc.roundedRect(45, boxY, 250, 80, 4).fillColor('#F8FAFC').strokeColor(BORDER_COLOR).lineWidth(0.5).fillAndStroke();
+    doc.fillColor(NAVY).fontSize(9.5).font('Helvetica-Bold').text('DOSSIER & BIEN CONCERNÉ', 55, boxY + 8);
+    if (f.bien_titre) {
+      doc.fillColor('#1F2937').fontSize(9).font('Helvetica-Bold').text(cleanText(f.bien_titre), 55, boxY + 24, { width: 230 });
+      doc.font('Helvetica').fontSize(8.5).fillColor(GRAY)
+         .text(`${f.bien_adresse || ''} ${f.bien_quartier ? `(${f.bien_quartier})` : ''} - ${f.bien_ville || 'Dakar'}`, 55, boxY + 40, { width: 230 })
+         .text(`Réf portefeuille : ${f.bien_ref || 'IMMO'}`, 55, boxY + 54);
+    } else {
+      doc.font('Helvetica').fontSize(8.5).fillColor(GRAY)
+         .text('Prestation d\'intermédiation / conseil immobilier général', 55, boxY + 28, { width: 230 });
+    }
+
+    // Tableau des prestations
+    const tableY = boxY + 100;
+    doc.rect(45, tableY, 505, 22).fillColor(NAVY).fill();
+    doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold')
+       .text('DÉSIGNATION DE LA PRESTATION D\'HONORAIRES IMMOBILIERS', 55, tableY + 6)
+       .text('MONTANT H.T.', 455, tableY + 6, { align: 'right', width: 85 });
+
+    let curY = tableY + 22;
+    const ht = Number(f.montant_ht || 0);
+    const tva = Number(f.montant_tva || 0);
+    const timbre = Number(f.timbre_fiscal || 0);
+    const ttc = Number(f.montant_ttc || (ht + tva + timbre));
+
+    // Ligne de prestation
+    doc.rect(45, curY, 505, 36).fillColor('#FFFFFF').fill();
+    doc.fillColor('#1F2937').fontSize(9).font('Helvetica-Bold')
+       .text(cleanText(typeLabel), 55, curY + 6);
+    doc.font('Helvetica').fontSize(8).fillColor(GRAY)
+       .text(f.notes ? cleanText(f.notes) : `Honoraires professionnels d'agence immobilière pour mission d'intermédiation et de gestion.`, 55, curY + 20, { width: 380 });
+    doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(9.5)
+       .text(`${fmtNum(ht)} FCFA`, 455, curY + 10, { align: 'right', width: 85 });
+    doc.moveTo(45, curY + 36).lineTo(550, curY + 36).strokeColor(BORDER_COLOR).lineWidth(0.5).stroke();
+
+    curY += 45;
+
+    // Décompte financier à droite
+    doc.rect(260, curY, 290, 80).fillColor('#FAFAFA').strokeColor(BORDER_COLOR).lineWidth(0.8).fillAndStroke();
+    doc.fillColor(NAVY).fontSize(8.5).font('Helvetica')
+       .text("Total Honoraires Hors Taxes (HT) :", 270, curY + 8)
+       .text(`TVA légale (${f.taux_tva || 18}%) :`, 270, curY + 24)
+       .text("Droit de timbre fiscal (Art. 544 CGI) :", 270, curY + 40);
+
+    doc.fillColor(NAVY).font('Helvetica-Bold')
+       .text(`${fmtNum(ht)} FCFA`, 440, curY + 8, { align: 'right', width: 100 });
+    doc.fillColor(GRAY).font('Helvetica-Bold')
+       .text(`${fmtNum(tva)} FCFA`, 440, curY + 24, { align: 'right', width: 100 });
+    doc.fillColor(GRAY).font('Helvetica')
+       .text(`${fmtNum(timbre)} FCFA`, 440, curY + 40, { align: 'right', width: 100 });
+
+    doc.moveTo(270, curY + 54).lineTo(540, curY + 54).strokeColor(BORDER_COLOR).lineWidth(0.5).stroke();
+
+    doc.fillColor(ACCENT).fontSize(10).font('Helvetica-Bold')
+       .text("NET À PAYER (TTC) :", 270, curY + 60)
+       .text(`${fmtNum(ttc)} FCFA`, 430, curY + 60, { align: 'right', width: 110 });
+
+    curY += 95;
+
+    // Modalités de règlement & Statut
+    doc.roundedRect(45, curY, 505, 55, 4).fillColor('#F8FAFC').strokeColor(BORDER_COLOR).lineWidth(0.5).fillAndStroke();
+    doc.fillColor(NAVY).fontSize(9).font('Helvetica-Bold').text("MODALITÉS DE RÈGLEMENT", 55, curY + 8);
+    doc.fillColor(GRAY).fontSize(8.5).font('Helvetica')
+       .text(`Mode de paiement accepté : ${String(f.mode_paiement || 'Wave / Virement').toUpperCase()}`, 55, curY + 22)
+       .text(`Règlement à réception. Mention légale : Honoraires d'agence exigibles conformément au mandat.`, 55, curY + 34);
+
+    const isPayee = f.statut === 'payee';
+    doc.fillColor(isPayee ? PRICE_GREEN : '#B45309').fontSize(9).font('Helvetica-Bold')
+       .text(isPayee ? "[ FACTURE INTÉGRALEMENT ACQUITTÉE ]" : "[ EN ATTENTE DE RÈGLEMENT ]", 340, curY + 22);
+
+    // Cachet & Signature
+    const stampY = curY + 70;
+    doc.roundedRect(330, stampY, 220, 85, 4).strokeColor(NAVY).lineWidth(1).stroke();
+    doc.fillColor(NAVY).fontSize(8.5).font('Helvetica-Bold')
+       .text("CACHET & SIGNATURE DE L'AGENCE", 340, stampY + 8, { align: 'center', width: 200 });
+    doc.fillColor(GRAY).fontSize(7.5).font('Helvetica')
+       .text(cleanText(f.agence_nom), 340, stampY + 24, { align: 'center', width: 200 })
+       .text(`Délivrée le ${new Date(f.date_emission).toLocaleDateString('fr-FR')}`, 340, stampY + 38, { align: 'center', width: 200 })
+       .text("[ DOCUMENT OFFICIEL CERTIFIÉ ]", 340, stampY + 60, { align: 'center', width: 200 });
+
+    doc.end();
+  } catch (err) {
+    console.error('[PDF FACTURE IMMO ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur lors de la génération de la facture d\'honoraires PDF' });
+  }
+});
+
 module.exports = router;

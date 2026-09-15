@@ -18,11 +18,13 @@ router.get('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (req
       SELECT c.*,
              t.type_transaction, t.montant AS transaction_montant, t.date_transaction,
              b.titre AS bien_titre, b.quartier AS bien_quartier, b.ville AS bien_ville,
-             u.nom AS agent_nom, u.prenom AS agent_prenom, u.email AS agent_email
+             u.nom AS agent_nom, u.prenom AS agent_prenom, u.email AS agent_email,
+             courtier.nom AS courtier_nom, courtier.prenom AS courtier_prenom, courtier.email AS courtier_email
       FROM commissions_immo c
       JOIN transactions_immo t ON c.transaction_id = t.id
       JOIN biens_immo b ON t.bien_id = b.id
       LEFT JOIN utilisateurs u ON t.agent_id = u.id
+      LEFT JOIN utilisateurs courtier ON t.courtier_id = courtier.id
       WHERE c.agence_id = $1
     `;
     const params = [agenceId];
@@ -33,7 +35,7 @@ router.get('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (req
       params.push(statut);
     }
     if (search && search.trim()) {
-      query += ` AND (b.titre ILIKE $${pIdx} OR u.nom ILIKE $${pIdx} OR c.notes ILIKE $${pIdx})`;
+      query += ` AND (b.titre ILIKE $${pIdx} OR u.nom ILIKE $${pIdx} OR courtier.nom ILIKE $${pIdx} OR c.notes ILIKE $${pIdx})`;
       params.push(`%${search.trim()}%`);
       pIdx++;
     }

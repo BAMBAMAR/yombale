@@ -3,15 +3,13 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import {
-  Settings,
   CheckCircle2,
   AlertCircle,
   Building2,
   DollarSign,
-  Eye,
-  Power,
-  MessageSquare
+  Power
 } from 'lucide-react'
+import ParametresFacturationImmo from './components/ParametresFacturationImmo'
 
 export default function AgenceParametresPage() {
   const params = useParams()
@@ -38,6 +36,16 @@ export default function AgenceParametresPage() {
     message_accueil_wa: '',
     taux_vente: '5',
     taux_location: '10',
+    // Facturation & Mentions Légales
+    ninea: '',
+    rccm: '',
+    taux_tva_defaut: '18',
+    timbre_fiscal_defaut: '100',
+    banque_nom: '',
+    iban_rib: '',
+    mentions_facture: '',
+    autoriser_caution_3x: true,
+    autoriser_vente_tranches: true,
   })
 
   async function chargerParametres() {
@@ -64,6 +72,15 @@ export default function AgenceParametresPage() {
           message_accueil_wa: p.message_accueil_wa || '',
           taux_vente: String(p.taux_commission_vente_defaut ?? '5'),
           taux_location: String(p.taux_commission_location_defaut ?? '10'),
+          ninea: p.ninea || '',
+          rccm: p.rccm || '',
+          taux_tva_defaut: String(p.taux_tva_defaut ?? '18'),
+          timbre_fiscal_defaut: String(p.timbre_fiscal_defaut ?? '100'),
+          banque_nom: p.banque_nom || '',
+          iban_rib: p.iban_rib || '',
+          mentions_facture: p.mentions_facture || '',
+          autoriser_caution_3x: p.autoriser_caution_3x !== false,
+          autoriser_vente_tranches: p.autoriser_vente_tranches !== false,
         })
       }
     } catch (err) {
@@ -84,7 +101,6 @@ export default function AgenceParametresPage() {
 
     try {
       setSaving(true)
-      // Récupérer paramètres actuels
       const resGet = await fetch(`/api/agences/${slug}`)
       const dataGet = await resGet.json()
       const currentParams = dataGet.agence?.parametres || {}
@@ -107,6 +123,15 @@ export default function AgenceParametresPage() {
           message_accueil_wa: form.message_accueil_wa,
           taux_commission_vente_defaut: parseFloat(form.taux_vente) || 5,
           taux_commission_location_defaut: parseFloat(form.taux_location) || 10,
+          ninea: form.ninea,
+          rccm: form.rccm,
+          taux_tva_defaut: parseFloat(form.taux_tva_defaut) || 18,
+          timbre_fiscal_defaut: parseFloat(form.timbre_fiscal_defaut) || 100,
+          banque_nom: form.banque_nom,
+          iban_rib: form.iban_rib,
+          mentions_facture: form.mentions_facture,
+          autoriser_caution_3x: form.autoriser_caution_3x,
+          autoriser_vente_tranches: form.autoriser_vente_tranches,
         },
       }
 
@@ -122,7 +147,7 @@ export default function AgenceParametresPage() {
         return
       }
 
-      setToastMsg('Paramètres et statut de l’agence mis à jour avec succès.')
+      setToastMsg('Paramètres, statut et facturation d’agence mis à jour avec succès.')
       setTimeout(() => setToastMsg(null), 4000)
     } catch (err) {
       console.error('[SAVE_SETTINGS_ERR]', err)
@@ -135,7 +160,7 @@ export default function AgenceParametresPage() {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748B' }}>
-        <p>Chargement des paramètres...</p>
+        <p>Chargement des paramètres de l'agence...</p>
       </div>
     )
   }
@@ -145,58 +170,34 @@ export default function AgenceParametresPage() {
       {/* ── En-tête ── */}
       <div className="agence-header">
         <div>
-          <h1 className="agence-title">Paramètres & Statut de l'Agence</h1>
-          <p className="agence-subtitle">Activez/désactivez l'agence, gérez la vitrine publique et les commissions.</p>
+          <h1 className="agence-title">Paramètres &amp; Statut de l'Agence</h1>
+          <p className="agence-subtitle">
+            Gérez le statut opérationnel, les commissions, la facturation légale COCC et les facilités d'échelonnement.
+          </p>
         </div>
       </div>
 
       {toastMsg && (
-        <div
-          style={{
-            padding: '12px 16px',
-            background: '#DCFCE7',
-            color: '#166534',
-            borderRadius: 8,
-            fontSize: 13.5,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 20,
-          }}
-        >
+        <div style={{ padding: '12px 16px', background: '#DCFCE7', color: '#166534', borderRadius: 8, fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
           <CheckCircle2 size={18} />
           {toastMsg}
         </div>
       )}
 
       {errorMsg && (
-        <div
-          style={{
-            padding: '12px 16px',
-            background: '#FEE2E2',
-            color: '#991B1B',
-            borderRadius: 8,
-            fontSize: 13.5,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 20,
-          }}
-        >
+        <div style={{ padding: '12px 16px', background: '#FEE2E2', color: '#991B1B', borderRadius: 8, fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
           <AlertCircle size={18} />
           {errorMsg}
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {/* ── Activation & Statut Agence ── */}
         <div className="agence-card">
           <div className="agence-card-header">
             <div className="agence-card-title">
               <Power size={18} />
-              Statut de l'Agence & Visibilité Publique
+              Statut de l'Agence &amp; Visibilité Publique
             </div>
           </div>
 
@@ -205,7 +206,7 @@ export default function AgenceParametresPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
               {[
                 { id: 'actif', label: 'Active & Opérationnelle', desc: 'Réception de prospects' },
-                { id: 'pause', label: 'Pause Commerciale', desc: 'Biens visibles, pas de nouvelles visites' },
+                { id: 'pause', label: 'Pause Commerciale', desc: 'Biens visibles, pas de visites' },
                 { id: 'vacances', label: 'Mode Congés / Vacances', desc: 'Message automatique' },
               ].map(opt => (
                 <button
@@ -231,7 +232,6 @@ export default function AgenceParametresPage() {
             </div>
           </div>
 
-          {/* Toggle Vitrine Publique */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 16 }}>
             <input
               type="checkbox"
@@ -256,7 +256,7 @@ export default function AgenceParametresPage() {
           <div className="agence-card-header">
             <div className="agence-card-title">
               <Building2 size={18} />
-              Identité Commerciale & Contact
+              Identité Commerciale &amp; Contact
             </div>
           </div>
 
@@ -319,7 +319,7 @@ export default function AgenceParametresPage() {
           <div className="agence-card-header">
             <div className="agence-card-title">
               <DollarSign size={18} />
-              Taux de Commission & Message d'Accueil
+              Taux de Commission &amp; Message d'Accueil
             </div>
           </div>
 
@@ -358,6 +358,30 @@ export default function AgenceParametresPage() {
           </div>
         </div>
 
+        {/* ── Facturation d'Agence, Mentions Fiscales & Échelonnement (Composant extrait) ── */}
+        <ParametresFacturationImmo
+          numeroAgrement={form.numero_agrement}
+          setNumeroAgrement={val => setForm(f => ({ ...f, numero_agrement: val }))}
+          ninea={form.ninea}
+          setNinea={val => setForm(f => ({ ...f, ninea: val }))}
+          rccm={form.rccm}
+          setRccm={val => setForm(f => ({ ...f, rccm: val }))}
+          tauxTvaDefaut={form.taux_tva_defaut}
+          setTauxTvaDefaut={val => setForm(f => ({ ...f, taux_tva_defaut: val }))}
+          timbreFiscalDefaut={form.timbre_fiscal_defaut}
+          setTimbreFiscalDefaut={val => setForm(f => ({ ...f, timbre_fiscal_defaut: val }))}
+          banqueNom={form.banque_nom}
+          setBanqueNom={val => setForm(f => ({ ...f, banque_nom: val }))}
+          ibanRib={form.iban_rib}
+          setIbanRib={val => setForm(f => ({ ...f, iban_rib: val }))}
+          mentionsFacture={form.mentions_facture}
+          setMentionsFacture={val => setForm(f => ({ ...f, mentions_facture: val }))}
+          autoriserCaution3x={form.autoriser_caution_3x}
+          setAutoriserCaution3x={val => setForm(f => ({ ...f, autoriser_caution_3x: val }))}
+          autoriserVenteTranches={form.autoriser_vente_tranches}
+          setAutoriserVenteTranches={val => setForm(f => ({ ...f, autoriser_vente_tranches: val }))}
+        />
+
         {/* Bouton de sauvegarde */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 40 }}>
           <button
@@ -375,7 +399,7 @@ export default function AgenceParametresPage() {
               opacity: saving ? 0.7 : 1,
             }}
           >
-            {saving ? 'Enregistrement...' : 'Enregistrer les paramètres'}
+            {saving ? 'Enregistrement...' : 'Enregistrer tous les paramètres'}
           </button>
         </div>
       </form>

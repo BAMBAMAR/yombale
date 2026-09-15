@@ -1,3 +1,59 @@
+- **Sprint 3 (P0) — Spécificité & Différenciation de la Facturation Immobilière vs Boutique, Journal d'Activité & Paramétrage Légal COCC (15 septembre 2026)** 🏛️⚖️🧾 🚀 ✅ :
+  * **🎯 1. Différenciation Fondamentale de la Facturation Agence vs Boutique (`/agence/[slug]/factures`)** :
+    - **Nature des Opérations Immobilières** : Contrairement aux factures de vente d'articles/stocks en boutique (produits physiques, quantités, tickets de caisse), la facturation d'agence émet des **Notes d'Honoraires & Débours** réglementées par le Code des Obligations Civiles et Commerciales (COCC) sénégalais :
+      * *Honoraires de Vente & Transaction* : Calcul sur l'assiette du prix de vente notarié net vendeur (ex: 5% sur 90 000 000 FCFA).
+      * *Honoraires de Gestion Locative Mensuelle* : Calcul sur le volume des loyers quittancés (ex: 10% sur les encaissements du mois).
+      * *Frais de Rédaction de Bail & État des Lieux* : Émoluments d'entrée forfaitaires ou partagés 50/50 locataire/bailleur selon usage et COCC.
+      * *Refacturation de Débours Travaux* : Interventions d'artisans (plomberie, électricité) refacturées au franc près pour le compte du bailleur.
+      * *Honoraires d'Expertise & Avis de Valeur* : Évaluations vénales professionnelles.
+    - **Bannière d'Information Légale & Fiscale** : Intégration dans `factures/page.tsx` d'un bandeau explicatif mettant en valeur les spécificités réglementaires (bien rattaché, TVA 18%, timbre fiscal 100 FCFA Art. 544 CGI).
+    - **Moteur PDFKit Dédié** : Génération des Notes d'Honoraires officielles (`/api/agences/agence/:slug/documents/facture/:id.pdf`) avec NINEA, N° Agrément ministériel, mentions de décharge et visa certifié.
+    - **Seeding de Factures Réelles** : 3 notes d'honoraires types créées pour l'agence `amar-immo` (Transaction de vente Villa 90M FCFA, Gestion locative mensuelle, Rédaction de bail résidentiel).
+  * **🎯 2. Paramétrage Dédié Facturation Légale COCC & Facilités Immobilières (`ParametresFacturationImmo.tsx`)** :
+    - **Composant Modulaire de Facturation & Statut** (`/agence/[slug]/parametres`) :
+      * Configuration du Numéro d'Agrément Professionnel Ministériel et du NINEA/RCCM.
+      * Choix du taux de TVA par défaut (18% Régime réel ou 0% Exonéré/BRS) et du timbre fiscal (100 FCFA).
+      * Coordonnées bancaires de l'agence (Nom de la banque, IBAN / RIB pour encaissement des honoraires).
+      * Mentions légales personnalisées de bas de page des factures.
+      * Options commerciales de facilités : activation de l'échelonnement de caution locataire (3x sans frais) et de la vente par tranches / VEFA.
+  * **🎯 3. Interface du Journal d'Activité & Audit Log (`/agence/[slug]/journal`)** :
+    - **Nouvel Écran & Entrée Navigation** : Ajout de la route `/agence/[slug]/journal` avec icône vectorielle `History` dans la barre latérale agence.
+    - **Traçabilité des Opérations** : Filtrage par type d'action (encaissements loyers, quittances, baux, mandats, factures d'honoraires), recherche textuelle par opérateur/bien, horodatage précis et adresse IP.
+    - **Audit Automatique Backend** : Connexion immédiate de `POST /api/factures-immo` et `PATCH /:id/encaisser` à `auditLoggerImmo.js` pour consigner automatiquement les émissions et règlements de factures.
+    - **Export CSV** : Intégration du bouton `ExportCsvButton` pour télécharger le journal d'activité agence au format CSV Excel.
+  * **🎯 4. Respect des Règles Anti-AI-Slop & Plafond de Taille des Composants (< 450 lignes)** :
+    - Extraction du `SimulateurHonorairesImmo.tsx` réduisant `ModalCreerFactureImmo.tsx` de 513 à 375 lignes.
+    - `factures/page.tsx` compacté à 424 lignes.
+    - `parametres/page.tsx` à 352 lignes.
+    - Zéro émoji Unicode dans les contrôles UI (usage exclusif des icônes SVG Lucide).
+  * **🧪 5. Validation Qualité Globale (100% Vert)** :
+    - Tests Unitaires Jest : **38/38 suites réussies, 281/281 tests validés**.
+    - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Serveur Backend Express (port 3000) et Frontend Next.js (port 3001) actifs et répondant 200 OK.
+
+- **Sprint 2 (P1) — Moteur de Documents PDF Officiels, Journal d'Audit & Gestion Locative Complète Nopalou Immobilier (15 septembre 2026)** 📜⚖️📑 🚀 ✅ :
+  * **🎯 1. Résolution de la Gestion Locative & Échéances de Loyers (`/agence/[slug]/locatif`)** :
+    - **Correction Critique d'Authentification** : Ajout du token Bearer `Authorization: Bearer ${token}` dans `locatif/page.tsx` (`chargerDonnees`, `handleEncaisser`, `handleRelance`), résolvant le retour 401 silencieux qui laissait l'écran vide ("Rien dans Gestion Locative").
+    - **Bouton & Modale Dédiée de Création de Bail (`ModalCreerBail.tsx`)** : Interface complète de saisie (sélection bien portefeuille, sélection ou création locataire à la volée, loyer, charges, caution, date d'effet, durée, jour d'échéance) générant automatiquement les 12 échéances de loyers mensuels en base.
+    - **Modularisation Complète** : Extraction de `ModalCreerBail.tsx` et `ModalEncaisserLoyer.tsx` dans `components/`, ramenant le composant principal à ~280 lignes (< 450 lignes).
+  * **🎯 2. Moteur de Génération des Documents PDF Officiels (`backend/routes/agence-documents-pdf.js`)** :
+    - **Architecture PDFKit 100% Native & Sécurisée** : Zéro fetch externe de polices (Helvetica natif), nettoyage des retours chariot Windows (`cleanText`), formatage FCFA sans espaces insécables parasites (`fmtNum`).
+    - **Quittance de Loyer Numérique Conforme COCC / Sénégal** (`/api/agences/agence/:slug/documents/quittance/:loyerId.pdf`) : En-tête agence, agrément professionnel, cadre preneur & bailleur mandant, décomposition financière (loyer net, charges, timbre fiscal légal 100 FCFA Art. 544 CGI), mention libératoire, détails du règlement (Wave, OM, virement) et visa/cachet numérique certifié.
+    - **Contrat de Bail d'Habitation Conforme Sénégal / OHADA** (`/api/agences/agence/:slug/documents/bail/:bailId.pdf`) : 5 articles réglementaires (parties, désignation du bien, durée ferme, conditions financières avec loyer & caution max 2 mois conforme décret 2023, clause résolutoire de plein droit) et cadres d'émargement.
+    - **Mandat Officiel de Gestion / Vente** (`/api/agences/agence/:slug/documents/mandat/:mandatId.pdf`) : Numéro d'enregistrement registre, pouvoirs conférés, honoraires et signatures.
+    - **Décompte de Gérance Mensuel Bailleur** (`/api/agences/agence/:slug/documents/decompte-bailleur/:proprietaireId.pdf`) : Rapport mensuel de reddition des comptes (total loyers perçus - honoraires agence - débours travaux = solde net reversé avec avis de virement).
+  * **🎯 3. Export Universel CSV des Données Agence (`agence-export.js`, `ExportCsvButton.tsx`)** :
+    - Export compatible Excel (BOM UTF-8, protection contre les injections de formules CSV) pour 9 entités : `biens`, `prospects`, `baux`, `loyers`, `visites`, `transactions`, `commissions`, `bailleurs`, `mandats`.
+    - Bouton réutilisable `ExportCsvButton.tsx` intégré dans l'ensemble des modules agence.
+  * **🎯 4. Journal d'Activité & Traçabilité Multi-Tenant (`agence_logs`, `agence-logs.js`)** :
+    - Table SQL `agence_logs` et service `auditLoggerImmo.js` enregistrant toutes les actions sensibles (encaissement de loyers, relances, clôtures de transactions, commissions).
+  * **🎯 5. Correction Responsive du Header Desktop (`navbar.css`, `NavbarActions.tsx`)** :
+    - Résolution de la troncature du bouton « Quitter » sur les écrans d'ordinateurs portables (1140px à 1400px) par compaction adaptative des liens et masquage des labels secondaires au profit des icônes vectorielles Lucide.
+  * **🧪 6. Validation Globale (100% Vert)** :
+    - 38/38 suites de tests unitaires Jest validées (**281/281 tests passés**).
+    - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop : Respect strict des tokens CSS, 0 émoji UI, composants modulaires <= 450 lignes.
+
 - **Sprint 1 (P0) — Fondations Transactionnelles, Fiches 360° & Paramétrage Échelonnement Nopalou Immobilier (15 septembre 2026)** 🏢🔑💼 🚀 ✅ :
   * **🎯 1. Correction Bloquante de Routage (`credits-immo.js`)** :
     - Élimination du préfixe doublé `/api/credits-immo/api/credits-immo/...` sur l'encaissement d'échéances (`credits-immo.js:129`). Support flexible de `/agence/:slugOrId/:creditId/encaisser-echeance`.

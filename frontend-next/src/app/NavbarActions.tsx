@@ -61,8 +61,8 @@ export default function NavbarActions({ nom }: Props) {
             transition: 'background 0.15s, color 0.15s'
           }}
         >
-          <LogOut size={13} />
-          <span className="hidden-mobile">Quitter</span>
+          <LogOut size={14} />
+          <span className="hidden-mobile navbar-logout-text">Quitter</span>
         </button>
       </form>
     </div>

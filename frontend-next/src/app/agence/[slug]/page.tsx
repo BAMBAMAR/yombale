@@ -23,7 +23,8 @@ import {
   ShieldAlert,
   Settings,
   FileText,
-  CreditCard
+  CreditCard,
+  Briefcase
 } from 'lucide-react'
 
 interface StatsData {
@@ -362,6 +363,20 @@ export default function AgenceDashboardPage() {
               desc: 'Honoraires agence, reversements nets bailleurs',
               icon: Wallet,
               color: 'var(--navy, #1C2B4A)',
+            },
+            {
+              href: `/agence/${slug}/transactions`,
+              title: 'Transactions & Ventes',
+              desc: 'Pipeline notarial : compromis, séquestres et clôtures',
+              icon: Briefcase,
+              color: '#0284C7',
+            },
+            {
+              href: `/agence/${slug}/equipe`,
+              title: 'Équipe, Agents & Courtiers',
+              desc: 'Gestion des négociateurs et courtiers partenaires',
+              icon: Users,
+              color: '#166534',
             },
             {
               href: `/agence/${slug}/fiscalite`,

@@ -183,10 +183,23 @@
   color: #fff;
 }
 
-@media (max-width: 1320px) {
-  /* Masquer le gros bouton Taf Taf entre 1140px et 1320px pour éviter la troncature à droite */
+@media (max-width: 1400px) {
+  /* Masquer le texte secondaire et compacter entre 1140px et 1400px pour éviter tout débordement */
   .navbar-taftaf {
     display: none !important;
+  }
+  .navbar-maboutique .navbar-maboutique-text {
+    display: none !important;
+  }
+  .navbar-actions-compte .navbar-logout-text {
+    display: none !important;
+  }
+  .navbar-links {
+    gap: 2px !important;
+  }
+  .navbar-link {
+    padding: 6px 6px !important;
+    font-size: 12.5px !important;
   }
 }
 

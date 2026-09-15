@@ -495,7 +495,30 @@ router.get('/agence/:slugOrId/compta', verifierToken, requireAgenceAccess(), asy
       [agenceId]
     );
 
-    // 3. Ventilation mensuelle (6 derniers mois)
+    // 3. Commissions sur Transactions & Ventes
+    const { rows: commVente } = await pool.query(
+      `SELECT 
+        COALESCE(SUM(montant_brut), 0) AS total_commissions_brutes,
+        COALESCE(SUM(montant_net), 0) AS total_commissions_nettes,
+        COALESCE(SUM(montant_paye), 0) AS total_commissions_payees
+       FROM commissions_immo
+       WHERE agence_id = $1`,
+      [agenceId]
+    );
+
+    // 4. Factures d'honoraires & débours
+    const { rows: factStats } = await pool.query(
+      `SELECT 
+        COALESCE(SUM(montant_ttc), 0) AS total_facture_ttc,
+        COALESCE(SUM(montant_ttc) FILTER (WHERE statut = 'payee'), 0) AS total_facture_encaisse,
+        COUNT(*) AS nb_factures_total,
+        COUNT(*) FILTER (WHERE statut = 'payee') AS nb_factures_payees
+       FROM factures_immo
+       WHERE agence_id = $1`,
+      [agenceId]
+    );
+
+    // 5. Ventilation mensuelle (mois échus et mois en cours, max 12 périodes)
     const { rows: historiqueMois } = await pool.query(
       `SELECT 
         periode,
@@ -503,12 +526,16 @@ router.get('/agence/:slugOrId/compta', verifierToken, requireAgenceAccess(), asy
         COALESCE(SUM(montant_du), 0) AS attendu,
         COUNT(*) AS nb_echeances
        FROM loyers_echeances
-       WHERE agence_id = $1
+       WHERE agence_id = $1 AND periode <= TO_CHAR(CURRENT_DATE + INTERVAL '1 month', 'YYYY-MM')
        GROUP BY periode
        ORDER BY periode DESC
-       LIMIT 6`,
+       LIMIT 12`,
       [agenceId]
     );
+
+    const commVenteBrutes = Number(commVente[0]?.total_commissions_brutes || 0);
+    const commVentePayees = Number(commVente[0]?.total_commissions_payees || 0);
+    const facturesEncaissees = Number(factStats[0]?.total_facture_encaisse || 0);
 
     res.json({
       success: true,
@@ -522,6 +549,10 @@ router.get('/agence/:slugOrId/compta', verifierToken, requireAgenceAccess(), asy
         honoraires_gestion_bruts: honorairesEstimes,
         reversement_bailleurs_net: reversementBailleurs,
         total_depenses_travaux: Number(depensesMaintenance[0]?.total_maintenance || 0),
+        commissions_vente_brutes: commVenteBrutes,
+        commissions_vente_payees: commVentePayees,
+        factures_honoraires_encaisses: facturesEncaissees,
+        chiffre_affaires_global: honorairesEstimes + commVentePayees + facturesEncaissees,
         historique_mensuel: historiqueMois.map(m => ({
           ...m,
           encaisse: Number(m.encaisse),

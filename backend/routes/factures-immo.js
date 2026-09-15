@@ -6,6 +6,7 @@ const router = express.Router();
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
+const { enregistrerAgenceAuditLog } = require('../lib/auditLoggerImmo');
 
 // ── GET /api/factures-immo/agence/:slugOrId ──
 router.get('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (req, res) => {
@@ -104,10 +105,23 @@ router.post('/agence/:slugOrId', verifierToken, requireAgenceAccess('agent'), as
       ]
     );
 
+    const fac = rows[0];
+
+    // Audit log
+    await enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.id || req.user?.userId,
+      null,
+      'creation_facture_immo',
+      `Émission de la facture d'honoraires ${fac.numero_facture} (${fac.type_facture}) - Montant: ${fac.montant_ttc} FCFA pour ${fac.client_nom}`,
+      { facture_id: fac.id, numero_facture: fac.numero_facture, montant_ttc: fac.montant_ttc, type_facture: fac.type_facture },
+      req
+    ).catch(() => {});
+
     res.status(201).json({
       success: true,
       message: 'Facture créée avec succès',
-      facture: rows[0]
+      facture: fac
     });
   } catch (err) {
     console.error('[POST /api/factures-immo/agence/:slugOrId]', err.message);
@@ -136,10 +150,23 @@ router.patch('/agence/:slugOrId/:factureId/encaisser', verifierToken, requireAge
       return res.status(404).json({ success: false, error: 'Facture introuvable' });
     }
 
+    const fac = rows[0];
+
+    // Audit log
+    await enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.id || req.user?.userId,
+      null,
+      'encaissement_facture_immo',
+      `Règlement encaissé pour la facture d'honoraires ${fac.numero_facture} (${fac.montant_ttc} FCFA) via ${mode_paiement || 'wave'}`,
+      { facture_id: fac.id, numero_facture: fac.numero_facture, mode_paiement },
+      req
+    ).catch(() => {});
+
     res.json({
       success: true,
       message: 'Facture marquée comme payée',
-      facture: rows[0]
+      facture: fac
     });
   } catch (err) {
     console.error('[PATCH /api/factures-immo/agence/:slugOrId/:factureId/encaisser]', err.message);

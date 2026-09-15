@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Plus,
   Home,
-  Check,
   Search,
   Sparkles
 } from 'lucide-react'
@@ -32,14 +31,6 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
   const [caption, setCaption] = useState('')
   const [importing, setImporting] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
-
-  function detectPlatformFromUrl(url: string): 'instagram' | 'tiktok' | 'facebook' | 'youtube' {
-    if (url.includes('tiktok.com')) return 'tiktok'
-    if (url.includes('instagram.com')) return 'instagram'
-    if (url.includes('facebook.com') || url.includes('fb.watch')) return 'facebook'
-    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube'
-    return 'instagram'
-  }
 
   async function handleImportSingle(e: React.FormEvent) {
     e.preventDefault()
@@ -148,7 +139,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
 
       onImportPosts(newPosts)
       setBatchUrls('')
-      setSuccessMsg(`${newPosts.length} vidéo(s) importée(s) avec succès avec leurs aperçus officiels !`)
+      setSuccessMsg(`${newPosts.length} vidéo(s) importée(s) avec succès !`)
       setTimeout(() => setSuccessMsg(null), 4000)
     } catch (err: any) {
       alert(err.message || 'Erreur lors de l\'import groupé')
@@ -169,46 +160,42 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     const fallbackThumb = chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80'
 
     try {
-      if (platform === 'youtube') {
-        const res = await fetch(`/api/social-shop/explore-profile`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plateforme: 'youtube', username: cleanUser }),
-        })
-        const data = await res.json()
-        if (data.success && data.posts && data.posts.length > 0) {
-          const imported: SocialPostItem[] = data.posts.map((p: any, idx: number) => ({
-            id: 'yt-' + Date.now().toString(36) + '-' + idx,
-            plateforme: 'youtube',
-            post_url: p.url,
-            media_type: 'video',
-            thumbnail_url: p.thumbnailUrl || fallbackThumb,
-            caption: p.caption,
-            auteur: p.author,
-            visible: true,
-            is_featured: idx === 0,
-            created_at: new Date().toISOString(),
-            biens_associes: chosenBien ? [
-              {
-                id: chosenBien.id,
-                titre: chosenBien.titre,
-                prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
-                type_operation: chosenBien.prix_location ? 'location' : 'vente',
-                quartier: chosenBien.quartier,
-                image_url: chosenBien.images?.[0],
-              }
-            ] : [],
-          }))
-          onImportPosts(imported)
-          setUsername('')
-          setSuccessMsg(`${imported.length} vidéo(s) YouTube de @${cleanUser} importée(s) !`)
-          setTimeout(() => setSuccessMsg(null), 4000)
-          return
-        }
+      const res = await fetch(`/api/social-shop/explore-profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plateforme: platform, username: cleanUser }),
+      })
+      const data = await res.json()
+      if (data.success && data.posts && data.posts.length > 0) {
+        const imported: SocialPostItem[] = data.posts.map((p: any, idx: number) => ({
+          id: `${platform.slice(0, 2)}-` + Date.now().toString(36) + '-' + idx,
+          plateforme: platform,
+          post_url: p.url,
+          media_type: p.mediaType === 'VIDEO' ? 'video' : 'reel',
+          thumbnail_url: p.thumbnailUrl || fallbackThumb,
+          caption: p.caption || (chosenBien ? `Visite ${chosenBien.titre}` : `Publication @${cleanUser}`),
+          auteur: p.author || `@${cleanUser}`,
+          visible: true,
+          is_featured: idx === 0,
+          created_at: new Date().toISOString(),
+          biens_associes: chosenBien ? [
+            {
+              id: chosenBien.id,
+              titre: chosenBien.titre,
+              prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
+              type_operation: chosenBien.prix_location ? 'location' : 'vente',
+              quartier: chosenBien.quartier,
+              image_url: chosenBien.images?.[0],
+            }
+          ] : [],
+        }))
+        onImportPosts(imported)
+        setUsername('')
+        setSuccessMsg(`${imported.length} publication(s) de @${cleanUser} importée(s) avec succès !`)
+        setTimeout(() => setSuccessMsg(null), 4000)
+      } else {
+        throw new Error(data.error || 'Aucune publication publique trouvée pour ce compte')
       }
-
-      setMode('batch')
-      alert(`Pour ${platform === 'instagram' ? 'Instagram' : 'TikTok'}, copiez et collez directement les liens de vos vidéos dans l'onglet "Import en Lot" (un lien par ligne) pour les importer instantanément.`)
     } catch (err: any) {
       alert(err.message || 'Impossible d\'explorer ce profil')
     } finally {
@@ -218,7 +205,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* ── Sélecteur de Mode d'Importation ── */}
+      {/* ── Sélecteur de Mode ── */}
       <div
         style={{
           background: '#FFFFFF',
@@ -300,37 +287,18 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
       </div>
 
       {successMsg && (
-        <div
-          style={{
-            padding: '12px 16px',
-            background: '#DCFCE7',
-            color: '#166534',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
+        <div style={{ padding: '12px 16px', background: '#DCFCE7', color: '#166534', borderRadius: 8, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
           <CheckCircle2 size={16} />
           {successMsg}
         </div>
       )}
 
-      {/* ── Formulaire Selon le Mode ── */}
-      <div
-        style={{
-          background: '#FFFFFF',
-          border: '1px solid var(--border, #E8DDD2)',
-          borderRadius: 12,
-          padding: 24,
-        }}
-      >
+      {/* ── Formulaire Selon Mode ── */}
+      <div style={{ background: '#FFFFFF', border: '1px solid var(--border, #E8DDD2)', borderRadius: 12, padding: 24 }}>
         {mode === 'single' && (
           <form onSubmit={handleImportSingle} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label className="form-label">URL de la vidéo / Reel TikTok, Instagram ou Facebook</label>
+              <label className="form-label">URL de la vidéo / Reel TikTok, Instagram, YouTube ou Facebook</label>
               <input
                 type="url"
                 required
@@ -339,9 +307,6 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
                 placeholder="https://www.instagram.com/reel/... ou https://www.tiktok.com/@.../video/..."
                 className="form-input"
               />
-              <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 4 }}>
-                Collez le lien de partage officiel de la visite immobilière.
-              </div>
             </div>
 
             <div>
@@ -349,98 +314,110 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
               <select
                 value={selectedBienId}
                 onChange={e => setSelectedBienId(e.target.value)}
-                className="form-select"
+                className="form-input"
+                style={{ background: '#FFF' }}
               >
-                <option value="">-- Aucun bien lié (Vidéo générale de l'agence) --</option>
+                <option value="">-- Aucun bien associé --</option>
                 {biens.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.titre} — {b.prix_location ? `${Number(b.prix_location).toLocaleString('fr-FR')} FCFA/mois` : `${Number(b.prix_vente || 0).toLocaleString('fr-FR')} FCFA`} ({b.quartier || b.ville})
+                    {b.titre} ({b.prix_location ? `${b.prix_location.toLocaleString()} F/mois` : `${(b.prix_vente || 0).toLocaleString()} F`}) - {b.quartier}
                   </option>
                 ))}
               </select>
-              <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 4 }}>
-                Le bien sélectionné apparaîtra en incrustation sur la vidéo avec son prix et bouton WhatsApp direct.
-              </div>
             </div>
 
             <div>
-              <label className="form-label">Titre ou légende d'accroche</label>
+              <label className="form-label">Légende personnalisée (Optionnel)</label>
               <input
                 type="text"
                 value={caption}
                 onChange={e => setCaption(e.target.value)}
-                placeholder="Ex: Visite guidée magnifique Villa R+2 à Ngor Almadies"
+                placeholder="Ex: Splendide villa aux Almadies avec piscine..."
                 className="form-input"
               />
             </div>
 
             <button
               type="submit"
-              disabled={importing || !singleUrl.trim()}
-              className="btn-npl"
-              style={{
-                padding: '12px 20px',
-                borderRadius: 8,
-                background: 'var(--accent, #C75B00)',
-                color: '#FFFFFF',
-                fontWeight: 800,
-                fontSize: 14,
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                marginTop: 8,
-              }}
+              disabled={importing}
+              className="agence-btn-primary"
+              style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
               <Plus size={16} />
-              {importing ? 'Importation en cours...' : 'Ajouter la vidéo au Social Shop'}
+              <span>{importing ? 'Importation en cours...' : 'Importer cette vidéo'}</span>
             </button>
           </form>
         )}
 
         {mode === 'profile' && (
           <form onSubmit={handleExploreProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div className="form-grid-2">
-              <div>
-                <label className="form-label">Plateforme sociale</label>
-                <select
-                  value={platform}
-                  onChange={e => setPlatform(e.target.value as any)}
-                  className="form-select"
-                >
-                  <option value="instagram">Instagram</option>
-                  <option value="tiktok">TikTok</option>
-                  <option value="facebook">Facebook</option>
-                  <option value="youtube">YouTube</option>
-                </select>
+            <div>
+              <label className="form-label">Plateforme Réseau Social</label>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {[
+                  { id: 'instagram', label: 'Instagram', icon: Camera },
+                  { id: 'tiktok', label: 'TikTok', icon: Music },
+                  { id: 'youtube', label: 'YouTube', icon: Video },
+                  { id: 'facebook', label: 'Facebook', icon: Share2 },
+                ].map(p => {
+                  const Icon = p.icon
+                  const active = platform === p.id
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setPlatform(p.id as any)}
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: 8,
+                        border: '1.5px solid',
+                        borderColor: active ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
+                        background: active ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+                        color: active ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Icon size={16} />
+                      {p.label}
+                    </button>
+                  )
+                })}
               </div>
+            </div>
 
-              <div>
-                <label className="form-label">Nom d'utilisateur / Handle</label>
+            <div>
+              <label className="form-label">Pseudo du compte (@nom_utilisateur) *</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 12, top: 10, color: '#94A3B8', fontWeight: 800 }}>@</span>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={e => setUsername(e.target.value)}
-                  placeholder="@mon_agence_immo"
+                  placeholder="mon_agence_immo"
                   className="form-input"
+                  style={{ paddingLeft: 30 }}
                 />
               </div>
             </div>
 
             <div>
-              <label className="form-label">Associer un bien immobilier par défaut</label>
+              <label className="form-label">Associer un bien de votre catalogue aux vidéos importées (Optionnel)</label>
               <select
                 value={selectedBienId}
                 onChange={e => setSelectedBienId(e.target.value)}
-                className="form-select"
+                className="form-input"
+                style={{ background: '#FFF' }}
               >
-                <option value="">-- Aucun bien lié par défaut --</option>
+                <option value="">-- Aucun bien associé --</option>
                 {biens.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.titre} ({b.quartier || b.ville})
+                    {b.titre} - {b.quartier}
                   </option>
                 ))}
               </select>
@@ -448,26 +425,12 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
 
             <button
               type="submit"
-              disabled={importing || !username.trim()}
-              className="btn-npl"
-              style={{
-                padding: '12px 20px',
-                borderRadius: 8,
-                background: 'var(--accent, #C75B00)',
-                color: '#FFFFFF',
-                fontWeight: 800,
-                fontSize: 14,
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                marginTop: 8,
-              }}
+              disabled={importing}
+              className="agence-btn-primary"
+              style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
-              <Search size={16} />
-              {importing ? 'Recherche des publications...' : 'Explorer et synchroniser le profil'}
+              <Sparkles size={16} />
+              <span>{importing ? 'Exploration & Importation...' : 'Aspirer les vidéos publiques'}</span>
             </button>
           </form>
         )}
@@ -475,31 +438,33 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
         {mode === 'batch' && (
           <form onSubmit={handleImportBatch} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label className="form-label">Liste d'URLs de vidéos (Une par ligne)</label>
+              <label className="form-label">Collez les liens de vos vidéos (Un lien par ligne)</label>
               <textarea
                 rows={5}
                 required
                 value={batchUrls}
                 onChange={e => setBatchUrls(e.target.value)}
-                placeholder="https://www.tiktok.com/@agence/video/123&#10;https://www.instagram.com/reel/456&#10;https://www.facebook.com/watch/789"
-                className="form-textarea"
+                placeholder="https://www.instagram.com/reel/C7x...&#10;https://www.tiktok.com/@agence/video/73...&#10;https://www.youtube.com/shorts/..."
+                className="form-input"
+                style={{ fontFamily: 'monospace', fontSize: 12.5 }}
               />
               <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 4 }}>
-                Collez jusqu'à 20 liens de vidéos en même temps pour alimenter rapidement votre catalogue interactif.
+                Prend en charge Instagram Reels, TikTok, YouTube Shorts et vidéos Facebook.
               </div>
             </div>
 
             <div>
-              <label className="form-label">Associer un bien aux vidéos importées</label>
+              <label className="form-label">Associer un bien à ce lot de vidéos (Optionnel)</label>
               <select
                 value={selectedBienId}
                 onChange={e => setSelectedBienId(e.target.value)}
-                className="form-select"
+                className="form-input"
+                style={{ background: '#FFF' }}
               >
-                <option value="">-- Aucun bien lié par défaut --</option>
+                <option value="">-- Aucun bien associé --</option>
                 {biens.map(b => (
                   <option key={b.id} value={b.id}>
-                    {b.titre} ({b.quartier || b.ville})
+                    {b.titre} - {b.quartier}
                   </option>
                 ))}
               </select>
@@ -507,26 +472,12 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
 
             <button
               type="submit"
-              disabled={importing || !batchUrls.trim()}
-              className="btn-npl"
-              style={{
-                padding: '12px 20px',
-                borderRadius: 8,
-                background: 'var(--accent, #C75B00)',
-                color: '#FFFFFF',
-                fontWeight: 800,
-                fontSize: 14,
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                marginTop: 8,
-              }}
+              disabled={importing}
+              className="agence-btn-primary"
+              style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
               <Download size={16} />
-              {importing ? 'Importation du lot...' : 'Importer tout le lot de vidéos'}
+              <span>{importing ? 'Importation en cours...' : 'Importer tout le lot'}</span>
             </button>
           </form>
         )}

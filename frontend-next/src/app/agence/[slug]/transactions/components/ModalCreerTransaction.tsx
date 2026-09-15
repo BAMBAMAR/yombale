@@ -22,11 +22,19 @@ interface ProprietaireOption {
   nom: string
 }
 
+interface CourtierOption {
+  utilisateur_id: string
+  utilisateur_nom: string
+  utilisateur_prenom?: string
+  role?: string
+}
+
 interface ModalCreerTransactionProps {
   slug: string
   biens: BienOption[]
   contacts: ContactOption[]
   proprietaires: ProprietaireOption[]
+  courtiers?: CourtierOption[]
   onClose: () => void
   onSuccess: () => void
 }
@@ -36,6 +44,7 @@ export function ModalCreerTransaction({
   biens,
   contacts,
   proprietaires,
+  courtiers = [],
   onClose,
   onSuccess,
 }: ModalCreerTransactionProps) {
@@ -47,6 +56,7 @@ export function ModalCreerTransaction({
     type_transaction: 'vente',
     acheteur_id: contacts[0]?.id || '',
     vendeur_id: proprietaires[0]?.id || '',
+    courtier_id: '',
     montant: '',
     date_transaction: new Date().toISOString().split('T')[0],
     notes: '',
@@ -84,6 +94,7 @@ export function ModalCreerTransaction({
           type_transaction: form.type_transaction,
           acheteur_id: form.acheteur_id || null,
           vendeur_id: form.vendeur_id || null,
+          courtier_id: form.courtier_id || null,
           montant: Number(form.montant),
           date_transaction: form.date_transaction,
           notes: form.notes.trim() || null,
@@ -221,6 +232,24 @@ export function ModalCreerTransaction({
                 ))}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 4, color: '#334155' }}>
+              Courtier Partenaire / Apporteur d&apos;Affaires (Optionnel)
+            </label>
+            <select
+              value={form.courtier_id}
+              onChange={e => setForm({ ...form, courtier_id: e.target.value })}
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13.5 }}
+            >
+              <option value="">Aucun courtier (Affaire directe agence)</option>
+              {courtiers.map(c => (
+                <option key={c.utilisateur_id} value={c.utilisateur_id}>
+                  {c.utilisateur_prenom ? `${c.utilisateur_prenom} ${c.utilisateur_nom}` : c.utilisateur_nom} (Courtier partenaire)
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

@@ -23,7 +23,8 @@ import {
   CreditCard,
   Briefcase,
   FileSignature,
-  Percent
+  Percent,
+  History
 } from 'lucide-react'
 import '../agence.css'
 
@@ -93,7 +94,8 @@ export default function AgenceWorkspaceLayout({
     { href: `/agence/${slug}/compta`, label: 'Comptabilité & Bilan', icon: Wallet },
     { href: `/agence/${slug}/social`, label: 'Réseaux Sociaux & Vitrine', icon: ExternalLink },
     { href: `/agence/${slug}/fiscalite`, label: 'Fiscalité & Légal', icon: ShieldAlert },
-    { href: `/agence/${slug}/equipe`, label: 'Équipe & Agents', icon: Users2 },
+    { href: `/agence/${slug}/equipe`, label: 'Équipe, Agents & Courtiers', icon: Users2 },
+    { href: `/agence/${slug}/journal`, label: 'Journal d\'Activité', icon: History },
     { href: `/agence/${slug}/parametres`, label: 'Paramètres & Statut', icon: Settings },
   ]
 

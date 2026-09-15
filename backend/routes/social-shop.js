@@ -131,6 +131,37 @@ router.post(['/parse-batch', '/social/parse-batch'], limiterGeneral, async (req,
   }
 });
 
+/**
+ * POST /api/social-shop/explore-profile (ou /api/boutiques/social/explore-profile)
+ * Explore et aspire les publications publiques d'un compte (@pseudo) sans exiger de boutique_id
+ */
+router.post(['/explore-profile', '/social/explore-profile'], limiterGeneral, async (req, res) => {
+  try {
+    const { plateforme, username } = req.body;
+    if (!plateforme || !username) {
+      return res.status(400).json({ success: false, error: 'Plateforme et nom d\'utilisateur requis' });
+    }
+
+    const cleanUser = cleanUsername(username);
+    const exploration = await exploreProfile(plateforme.toLowerCase(), cleanUser);
+
+    if (!exploration.success && (!exploration.posts || exploration.posts.length === 0)) {
+      return res.status(400).json({ success: false, error: exploration.error || 'Impossible d\'explorer ce profil' });
+    }
+
+    res.json({
+      success: true,
+      plateforme: exploration.platform,
+      username: exploration.username,
+      source: exploration.source,
+      posts: exploration.posts || [],
+    });
+  } catch (err) {
+    console.error('[SOCIAL_EXPLORE_PROFILE_ERR]', err);
+    res.status(500).json({ success: false, error: 'Erreur exploration profil : ' + err.message });
+  }
+});
+
 // ============================================================================
 // 🌐 1. ROUTES PUBLIQUES (VITRINE SOCIAL SHOP ACHETEUR)
 // ============================================================================

@@ -33,6 +33,10 @@ interface CommissionItem {
   bien_ville?: string
   agent_nom?: string
   agent_prenom?: string
+  courtier_nom?: string
+  courtier_prenom?: string
+  courtier_email?: string
+  repartition?: any
 }
 
 export default function AgenceCommissionsPage() {
@@ -198,7 +202,7 @@ export default function AgenceCommissionsPage() {
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   <th style={{ padding: '12px 16px', fontWeight: 700 }}>Transaction & Bien</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Agent Négociateur</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Négociateur & Courtier</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700 }}>Montant Brut</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700 }}>Encaissé / Solde</th>
                   <th style={{ padding: '12px 16px', fontWeight: 700 }}>Statut</th>
@@ -219,8 +223,25 @@ export default function AgenceCommissionsPage() {
 
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ fontWeight: 600, color: '#1e293b' }}>
-                        {c.agent_nom ? `${c.agent_prenom || ''} ${c.agent_nom}` : 'Agence (Direct)'}
+                        {c.agent_nom ? `${c.agent_prenom || ''} ${c.agent_nom}`.trim() : 'Agence (Direct)'}
                       </div>
+                      {c.courtier_nom && (
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          marginTop: 4,
+                          padding: '2px 7px',
+                          borderRadius: 6,
+                          background: '#DCFCE7',
+                          color: '#166534',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          border: '1px solid #BBF7D0'
+                        }}>
+                          <span>Courtier : {c.courtier_prenom ? `${c.courtier_prenom} ${c.courtier_nom}` : c.courtier_nom}</span>
+                        </div>
+                      )}
                     </td>
 
                     <td style={{ padding: '14px 16px' }}>

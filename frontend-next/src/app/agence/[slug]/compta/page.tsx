@@ -6,13 +6,13 @@ import {
   DollarSign,
   TrendingUp,
   ArrowDownRight,
-  ArrowUpRight,
   Calendar,
-  CheckCircle2,
-  FileText,
   Building2,
-  Download
+  Download,
+  Briefcase,
+  Wallet
 } from 'lucide-react'
+import ExportCsvButton from '../../components/ExportCsvButton'
 
 interface MoisBilan {
   periode: string
@@ -32,6 +32,10 @@ interface BilanData {
   honoraires_gestion_bruts: number
   reversement_bailleurs_net: number
   total_depenses_travaux: number
+  commissions_vente_brutes: number
+  commissions_vente_payees: number
+  factures_honoraires_encaisses: number
+  chiffre_affaires_global: number
   historique_mensuel: MoisBilan[]
 }
 
@@ -45,7 +49,10 @@ export default function AgenceComptaPage() {
   async function chargerCompta() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/locatif-immo/agence/${slug}/compta`)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
+      const res = await fetch(`/api/locatif-immo/agence/${slug}/compta`, { headers })
       const data = await res.json()
       if (data.success) {
         setBilan(data.bilan)
@@ -64,7 +71,7 @@ export default function AgenceComptaPage() {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748B' }}>
-        <p>Calcul des états financiers de l'agence...</p>
+        <p>Calcul des états financiers réels de l'agence...</p>
       </div>
     )
   }
@@ -79,38 +86,78 @@ export default function AgenceComptaPage() {
     honoraires_gestion_bruts: 0,
     reversement_bailleurs_net: 0,
     total_depenses_travaux: 0,
+    commissions_vente_brutes: 0,
+    commissions_vente_payees: 0,
+    factures_honoraires_encaisses: 0,
+    chiffre_affaires_global: 0,
     historique_mensuel: [],
   }
 
   return (
     <div>
       {/* ── En-tête ── */}
-      <div className="agence-header">
+      <div className="agence-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 className="agence-title">Comptabilité & Commissions</h1>
-          <p className="agence-subtitle">Suivi des flux financiers, honoraires d'agence et reddition des comptes bailleurs.</p>
+          <h1 className="agence-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Wallet size={22} color="var(--accent, #C75B00)" />
+            <span>Comptabilité &amp; Commissions de l'Agence</span>
+          </h1>
+          <p className="agence-subtitle">
+            Suivi des flux financiers réels : encaissements de loyers, commissions de vente, honoraires et reversements.
+          </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => window.print()}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '9px 16px',
-            borderRadius: 8,
-            background: '#FFFFFF',
-            border: '1px solid var(--border, #E8DDD2)',
-            color: 'var(--navy, #1C2B4A)',
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
-        >
-          <Download size={15} />
-          Imprimer le bilan
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <ExportCsvButton slug={slug} type="transactions" label="Exporter CSV" />
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="agence-btn-outline"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <Download size={15} />
+            <span>Imprimer le bilan</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Bannière Synthèse Chiffre d'Affaires Global ── */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #2A3F6D 100%)',
+          borderRadius: 12,
+          padding: '20px 24px',
+          color: '#FFFFFF',
+          marginBottom: 20,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>
+            Revenus Cumulés &amp; Honoraires d'Agence Encaissés
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 900, marginTop: 4, color: '#FFFFFF' }}>
+            {Number(b.chiffre_affaires_global).toLocaleString('fr-FR')} FCFA
+          </div>
+          <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
+            Comprend les honoraires de gérance ({Number(b.honoraires_gestion_bruts).toLocaleString('fr-FR')} F) et les factures d'honoraires réglées ({Number(b.factures_honoraires_encaisses).toLocaleString('fr-FR')} F).
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '10px 16px', borderRadius: 8, textAlign: 'center' }}>
+            <div style={{ fontSize: 11, opacity: 0.8 }}>Loyers Traités</div>
+            <div style={{ fontSize: 16, fontWeight: 800 }}>{Number(b.total_loyers_encaisses).toLocaleString('fr-FR')} F</div>
+          </div>
+          <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '10px 16px', borderRadius: 8, textAlign: 'center' }}>
+            <div style={{ fontSize: 11, opacity: 0.8 }}>Reversement Bailleurs</div>
+            <div style={{ fontSize: 16, fontWeight: 800 }}>{Number(b.reversement_bailleurs_net).toLocaleString('fr-FR')} F</div>
+          </div>
+        </div>
       </div>
 
       {/* ── 4 Cartes Financières ── */}
@@ -130,7 +177,7 @@ export default function AgenceComptaPage() {
 
         <div className="kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-card-title">Honoraires Agence</span>
+            <span className="kpi-card-title">Honoraires Gestion Locative</span>
             <div className="kpi-card-icon" style={{ color: 'var(--accent, #C75B00)' }}>
               <TrendingUp size={18} />
             </div>
@@ -138,12 +185,12 @@ export default function AgenceComptaPage() {
           <div className="kpi-card-value" style={{ color: 'var(--accent, #C75B00)' }}>
             {Number(b.honoraires_gestion_bruts).toLocaleString('fr-FR')} F
           </div>
-          <div className="kpi-card-sub">Taux moyen : {b.taux_commission_moyen}%</div>
+          <div className="kpi-card-sub">Taux moyen mandat : {b.taux_commission_moyen}%</div>
         </div>
 
         <div className="kpi-card">
           <div className="kpi-card-header">
-            <span className="kpi-card-title">Reversement Bailleurs</span>
+            <span className="kpi-card-title">Net Reversé Bailleurs</span>
             <div className="kpi-card-icon" style={{ color: 'var(--navy, #1C2B4A)' }}>
               <Building2 size={18} />
             </div>
@@ -151,7 +198,7 @@ export default function AgenceComptaPage() {
           <div className="kpi-card-value">
             {Number(b.reversement_bailleurs_net).toLocaleString('fr-FR')} F
           </div>
-          <div className="kpi-card-sub">Montant net mandataires</div>
+          <div className="kpi-card-sub">Montant reversé aux propriétaires</div>
         </div>
 
         <div className="kpi-card" style={{ borderColor: b.total_impayes > 0 ? '#FCA5A5' : 'var(--border, #E8DDD2)' }}>
@@ -164,16 +211,16 @@ export default function AgenceComptaPage() {
           <div className="kpi-card-value" style={{ color: b.total_impayes > 0 ? '#DC2626' : 'var(--navy, #1C2B4A)' }}>
             {Number(b.total_impayes).toLocaleString('fr-FR')} F
           </div>
-          <div className="kpi-card-sub">{b.nb_impayes} dossier(s) en retard</div>
+          <div className="kpi-card-sub">{b.nb_impayes} échéance(s) en retard</div>
         </div>
       </div>
 
-      {/* ── Ventilation Mensuelle ── */}
-      <div className="agence-card">
+      {/* ── Ventilation Mensuelle & Reddition ── */}
+      <div className="agence-card" style={{ marginTop: 20 }}>
         <div className="agence-card-header">
           <div className="agence-card-title">
             <Calendar size={18} />
-            Historique & Reddition des Comptes Mensuels
+            Historique &amp; Reddition des Comptes Mensuels (Périodes Récentes)
           </div>
         </div>
 
@@ -201,30 +248,28 @@ export default function AgenceComptaPage() {
                   return (
                     <tr key={m.periode}>
                       <td>
-                        <span style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{m.periode}</span>
+                        <strong style={{ color: 'var(--navy, #1C2B4A)' }}>{m.periode}</strong>
+                        <div style={{ fontSize: 11, color: '#64748B' }}>{m.nb_echeances} échéance(s)</div>
                       </td>
                       <td>{Number(m.attendu).toLocaleString('fr-FR')} FCFA</td>
                       <td>
-                        <span style={{ fontWeight: 750, color: '#166534' }}>
+                        <span style={{ fontWeight: 750, color: m.encaisse > 0 ? '#166534' : 'inherit' }}>
                           {Number(m.encaisse).toLocaleString('fr-FR')} FCFA
                         </span>
                       </td>
                       <td>
-                        <span style={{ fontWeight: 750, color: 'var(--accent, #C75B00)' }}>
+                        <span style={{ color: 'var(--accent, #C75B00)', fontWeight: 700 }}>
                           {Number(m.honoraires).toLocaleString('fr-FR')} FCFA
                         </span>
                       </td>
-                      <td>{Number(reversement).toLocaleString('fr-FR')} FCFA</td>
+                      <td>
+                        <span style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
+                          {Number(reversement).toLocaleString('fr-FR')} FCFA
+                        </span>
+                      </td>
                       <td>
                         <span
-                          style={{
-                            padding: '3px 8px',
-                            borderRadius: 12,
-                            fontSize: 12,
-                            fontWeight: 800,
-                            background: taux >= 90 ? '#DCFCE7' : taux >= 50 ? '#FEF3C7' : '#FEE2E2',
-                            color: taux >= 90 ? '#166534' : taux >= 50 ? '#92400E' : '#991B1B',
-                          }}
+                          className={`status-badge ${taux === 100 ? 'actif' : taux > 0 ? 'partiel' : 'en_attente'}`}
                         >
                           {taux}%
                         </span>
