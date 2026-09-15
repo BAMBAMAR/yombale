@@ -99,7 +99,9 @@ function requireAgenceAccess(requiredRoleOrPerm = null, paramName = 'id') {
 
     const agenceIdOrSlug =
       req.params[paramName] ||
+      req.params.slugOrId ||
       req.params.agenceId ||
+      req.params.agenceSlug ||
       req.params.id ||
       req.params.slug ||
       req.body?.agence_id ||
