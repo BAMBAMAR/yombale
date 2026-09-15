@@ -28,8 +28,9 @@ import {
   CHAMP_VERS_TYPE_VARIANTE,
   champVisibleSelonVariante,
   nomParDefautPourCategorie,
+  isNomParDefaut,
 } from './boutiqueHelpers'
-export { CaracChips, CHAMP_VERS_TYPE_VARIANTE, champVisibleSelonVariante, nomParDefautPourCategorie }
+export { CaracChips, CHAMP_VERS_TYPE_VARIANTE, champVisibleSelonVariante, nomParDefautPourCategorie, isNomParDefaut }
 export type { TypeVarianteId }
 
 import { WifiOff, Store } from 'lucide-react'

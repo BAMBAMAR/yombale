@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import ExternalImg from '@/components/ExternalImg'
 import { fcfa } from '@/lib/format'
-import { genererSVGCodeBarresEAN13 } from '../boutiqueHelpers'
+import { genererSVGCodeBarresEAN13, isNomParDefaut } from '../boutiqueHelpers'
 import type { Boutique, Produit } from '../boutiqueTypes'
 import {
   Package,
@@ -17,6 +17,7 @@ import {
   CheckSquare,
   Square,
   X,
+  AlertCircle,
 } from 'lucide-react'
 
 interface CatalogueProductCardProps {
@@ -269,6 +270,33 @@ export default function CatalogueProductCard({
             {(p as any).code_barre && (
               <span className="saas-badge-pill saas-badge-info">
                 <span>EAN: {(p as any).code_barre}</span>
+              </span>
+            )}
+
+            {/* Badge Nom par défaut / À préciser */}
+            {isNomParDefaut(p.nom) && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(p)
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  background: 'var(--orange2, #FFF7ED)',
+                  color: 'var(--accent, #C75B00)',
+                  border: '1px solid #FED7AA',
+                  borderRadius: 20,
+                  padding: '2px 8px',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+                title="Ce produit a conservé un nom par défaut. Cliquez pour lui donner un nom précis."
+              >
+                <AlertCircle size={11} />
+                <span>Nom à préciser</span>
               </span>
             )}
           </div>

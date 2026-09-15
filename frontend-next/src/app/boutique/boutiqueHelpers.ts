@@ -31,6 +31,15 @@ export function nomParDefautPourCategorie(categorie: string): string {
   return NOMS_PAR_DEFAUT[categorie] ?? 'Produit — à modifier'
 }
 
+export function isNomParDefaut(nom?: string | null): boolean {
+  if (!nom) return false
+  const trimmed = nom.trim().toLowerCase()
+  if (trimmed.includes('à modifier') || trimmed.includes('a modifier')) return true
+  return Object.values(NOMS_PAR_DEFAUT).some(
+    (defaultNom) => defaultNom.toLowerCase() === trimmed
+  )
+}
+
 export function genererSVGCodeBarresEAN13(codeStr: string): string {
   let code = (codeStr || '2001234567890').replace(/\D/g, '')
   if (code.length < 13) code = code.padEnd(13, '0')

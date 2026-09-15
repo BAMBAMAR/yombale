@@ -8,9 +8,10 @@ import { useTranslation } from '@/i18n/context'
 import {
   champVisibleSelonVariante,
   nomParDefautPourCategorie,
+  isNomParDefaut,
 } from './boutiqueHelpers'
 import type { Produit } from './boutiqueTypes'
-import { Mic, Scan, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
+import { Mic, Scan, Sparkles, ChevronDown, ChevronUp, AlertCircle, Edit3 } from 'lucide-react'
 
 // Modular subcomponents & helpers
 import { inputStyle, labelStyle } from './produits/constants'
@@ -69,6 +70,12 @@ function ProduitForm({
   )
   const [prixBarreForm, setPrixBarreForm] = useState<string>(produit?.prix_barre != null ? String(produit.prix_barre) : '')
   const [descForm, setDescForm] = useState<string>(produit?.description ?? '')
+
+  const inputNomRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const [showNomWarningModal, setShowNomWarningModal] = useState(false)
+  const [allowDefaultSubmit, setAllowDefaultSubmit] = useState(false)
+  const isDefaultNom = isNomParDefaut(nomForm)
 
   useEffect(() => {
     if (produit?.nom) setNomForm(produit.nom)
@@ -160,7 +167,17 @@ function ProduitForm({
   const hasCaracFields = cat && cat !== 'autre' && showAdvanced
 
   return (
-    <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 60 }}>
+    <form
+      ref={formRef}
+      action={formAction}
+      onSubmit={(e) => {
+        if (isNomParDefaut(nomForm) && !allowDefaultSubmit) {
+          e.preventDefault()
+          setShowNomWarningModal(true)
+        }
+      }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 60 }}
+    >
       <div ref={produitFormTopRef} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <h3 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontSize: 17, fontWeight: 800, margin: 0, color: '#0f172a' }}>
@@ -227,13 +244,23 @@ function ProduitForm({
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
+            ref={inputNomRef}
             name="nom"
             required
             maxLength={300}
             value={nomForm}
             onChange={e => setNomForm(e.target.value)}
+            onFocus={e => {
+              if (isDefaultNom) {
+                e.target.select()
+              }
+            }}
             className="npl-input-airy"
-            style={{ flex: '1 1 200px' }}
+            style={{
+              flex: '1 1 200px',
+              border: isDefaultNom ? '1.5px solid var(--accent, #C75B00)' : undefined,
+              background: isDefaultNom ? '#FFFDF8' : undefined,
+            }}
             placeholder="Ex: Robe Bazin Brodé / Lait Candia 1L..."
           />
 
@@ -274,6 +301,55 @@ function ProduitForm({
             <span>Scan Nom</span>
           </button>
         </div>
+
+        {isDefaultNom && (
+          <div
+            style={{
+              marginTop: 10,
+              padding: '10px 14px',
+              background: 'var(--orange2, #FFF7ED)',
+              border: '1.5px solid #FED7AA',
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 220 }}>
+              <AlertCircle size={16} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+              <span style={{ fontSize: 12.5, color: '#9A3412', lineHeight: 1.4 }}>
+                <strong>Nom par défaut :</strong> Donnez un vrai nom à votre article (ex: <em>Robe Bazin, iPhone 13, Chaussures Cuir...</em>) pour attirer vos clients.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setNomForm('')
+                inputNomRef.current?.focus()
+              }}
+              style={{
+                background: 'var(--accent, #C75B00)',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '6px 14px',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 1px 3px rgba(199,91,0,0.2)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Edit3 size={13} />
+              <span>Effacer et nommer</span>
+            </button>
+          </div>
+        )}
 
         {scanners.isListeningNom && (
           <div style={{ marginTop: 10, padding: '8px 12px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, fontSize: 12.5, color: '#9a3412', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -403,6 +479,122 @@ function ProduitForm({
         onCancel={onCancel}
         t={t}
       />
+
+      {/* Modale d'avertissement bienveillant si le nom est resté par défaut */}
+      {showNomWarningModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: 16,
+          }}
+          onClick={() => setShowNomWarningModal(false)}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 18,
+              maxWidth: 440,
+              width: '100%',
+              padding: 24,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: 'var(--orange2, #FFF3E8)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <AlertCircle size={24} style={{ color: 'var(--accent, #C75B00)' }} />
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                  Préciser le nom de l'article ?
+                </h4>
+                <span style={{ fontSize: 12, color: '#64748B' }}>Conseil pour réussir vos ventes</span>
+              </div>
+            </div>
+
+            <p style={{ margin: 0, fontSize: 13.5, color: '#475569', lineHeight: 1.5 }}>
+              Votre produit a conservé le nom par défaut : <strong style={{ color: 'var(--accent, #C75B00)' }}>« {nomForm} »</strong>.
+              Un nom précis (ex: <em>Robe Bazin Brodé</em>, <em>iPhone 13 128Go</em>) permet à vos clients de trouver votre article et augmente vos ventes.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNomWarningModal(false)
+                  setNomForm('')
+                  inputNomRef.current?.focus()
+                  produitFormTopRef.current?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                style={{
+                  width: '100%',
+                  background: 'var(--accent, #C75B00)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: 12,
+                  padding: '12px 16px',
+                  fontSize: 14,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  boxShadow: '0 2px 8px rgba(199,91,0,0.25)',
+                }}
+              >
+                <Edit3 size={16} />
+                <span>Donner un nom précis</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNomWarningModal(false)
+                  setAllowDefaultSubmit(true)
+                  setTimeout(() => {
+                    formRef.current?.requestSubmit()
+                  }, 50)
+                }}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  color: '#64748B',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: 12,
+                  padding: '10px 16px',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Enregistrer avec ce nom temporaire
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   )
 }

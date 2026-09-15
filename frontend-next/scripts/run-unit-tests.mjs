@@ -14,6 +14,7 @@ import {
 import {
   champVisibleSelonVariante,
   nomParDefautPourCategorie,
+  isNomParDefaut,
 } from '../src/app/boutique/boutiqueHelpers.ts'
 import {
   extraireMontantCFA,
@@ -237,6 +238,15 @@ it('nomParDefautPourCategorie: nom par défaut pour chaque catégorie', () => {
 it('nomParDefautPourCategorie: repli par défaut pour catégorie vide ou inconnue', () => {
   assert.equal(nomParDefautPourCategorie(''), 'Produit — à modifier')
   assert.equal(nomParDefautPourCategorie('valeur-inconnue'), 'Produit — à modifier')
+})
+
+it('isNomParDefaut: détection stricte des noms par défaut', () => {
+  assert.equal(isNomParDefaut('Smartphone — à modifier'), true)
+  assert.equal(isNomParDefaut('Article mode — à modifier'), true)
+  assert.equal(isNomParDefaut('Produit — à modifier'), true)
+  assert.equal(isNomParDefaut('iPhone 13 Pro Max'), false)
+  assert.equal(isNomParDefaut('Robe Bazin'), false)
+  assert.equal(isNomParDefaut(''), false)
 })
 
 console.log('\n📦 5. Partage & WhatsApp (BoutonPartager.tsx logic)')
