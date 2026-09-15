@@ -24,7 +24,8 @@ import {
   Briefcase,
   FileSignature,
   Percent,
-  History
+  History,
+  Share2
 } from 'lucide-react'
 import '../agence.css'
 
@@ -53,7 +54,10 @@ export default function AgenceWorkspaceLayout({
   async function chargerAgence() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/agences/${slug}`)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const res = await fetch(`/api/agences/${slug}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
       if (res.status === 401) {
         router.push(`/connexion?redirect=/agence/${slug}`)
         return
@@ -77,29 +81,60 @@ export default function AgenceWorkspaceLayout({
     if (slug) chargerAgence()
   }, [slug])
 
-  const navItems = [
-    { href: `/agence/${slug}`, label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
-    { href: `/agence/${slug}/biens`, label: 'Biens Immobiliers', icon: Home },
-    { href: `/agence/${slug}/mandats`, label: 'Mandats de Gestion & Vente', icon: FileSignature },
-    { href: `/agence/${slug}/transactions`, label: 'Transactions & Ventes', icon: Briefcase },
-    { href: `/agence/${slug}/prospects`, label: 'CRM Prospects', icon: Users2 },
-    { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
-    { href: `/agence/${slug}/visites`, label: 'Visites & Agenda', icon: Calendar },
-    { href: `/agence/${slug}/locatif`, label: 'Loyers & Quittances', icon: Key },
-    { href: `/agence/${slug}/commissions`, label: 'Commissions & Partages', icon: Percent },
-    { href: `/agence/${slug}/factures`, label: 'Factures & Honoraires', icon: FileText },
-    { href: `/agence/${slug}/credits`, label: 'Crédits & Échelonnement', icon: CreditCard },
-    { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench },
-    { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs Propriétaires', icon: Building2 },
-    { href: `/agence/${slug}/compta`, label: 'Comptabilité & Bilan', icon: Wallet },
-    { href: `/agence/${slug}/social`, label: 'Réseaux Sociaux & Vitrine', icon: ExternalLink },
-    { href: `/agence/${slug}/fiscalite`, label: 'Fiscalité & Légal', icon: ShieldAlert },
-    { href: `/agence/${slug}/equipe`, label: 'Équipe, Agents & Courtiers', icon: Users2 },
-    { href: `/agence/${slug}/journal`, label: 'Journal d\'Activité', icon: History },
-    { href: `/agence/${slug}/parametres`, label: 'Paramètres & Statut', icon: Settings },
+  const navSections = [
+    {
+      titre: 'Vue d’ensemble',
+      items: [
+        { href: `/agence/${slug}`, label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
+      ],
+    },
+    {
+      titre: 'Transactions & Ventes',
+      items: [
+        { href: `/agence/${slug}/biens`, label: 'Biens Immobiliers', icon: Home },
+        { href: `/agence/${slug}/mandats`, label: 'Mandats de Vente & Gestion', icon: FileSignature },
+        { href: `/agence/${slug}/transactions`, label: 'Pipeline des Transactions', icon: Briefcase },
+        { href: `/agence/${slug}/prospects`, label: 'CRM Prospects & Acquéreurs', icon: Users2 },
+        { href: `/agence/${slug}/visites`, label: 'Agenda & Visites', icon: Calendar },
+      ],
+    },
+    {
+      titre: 'Gestion Locative',
+      items: [
+        { href: `/agence/${slug}/locatif`, label: 'Baux, Loyers & Quittances', icon: Key },
+        { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
+        { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs Propriétaires', icon: Building2 },
+        { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench },
+      ],
+    },
+    {
+      titre: 'Finance & Facturation',
+      items: [
+        { href: `/agence/${slug}/factures`, label: 'Factures d’Honoraires', icon: FileText },
+        { href: `/agence/${slug}/commissions`, label: 'Commissions & Courtiers', icon: Percent },
+        { href: `/agence/${slug}/compta`, label: 'Comptabilité & Bilan', icon: Wallet },
+        { href: `/agence/${slug}/credits`, label: 'Crédits & Échelonnement', icon: CreditCard },
+      ],
+    },
+    {
+      titre: 'Marketing & Vitrine',
+      items: [
+        { href: `/agence/${slug}/social`, label: 'Social Shop & Réseaux', icon: Share2 },
+        { href: `/agence/${slug}/vitrine`, label: 'Vitrine Publique', icon: ExternalLink },
+      ],
+    },
+    {
+      titre: 'Organisation & Légal',
+      items: [
+        { href: `/agence/${slug}/equipe`, label: 'Équipe, Agents & Courtiers', icon: Users2 },
+        { href: `/agence/${slug}/journal`, label: 'Journal d’Activité & Audit', icon: History },
+        { href: `/agence/${slug}/fiscalite`, label: 'Fiscalité & Légal COCC', icon: ShieldAlert },
+        { href: `/agence/${slug}/parametres`, label: 'Paramètres Agence', icon: Settings },
+      ],
+    },
   ]
 
-  function isLinkActive(item: typeof navItems[0]) {
+  function isLinkActive(item: { href: string; exact?: boolean }) {
     if (item.exact) {
       return pathname === item.href
     }
@@ -170,22 +205,31 @@ export default function AgenceWorkspaceLayout({
           </div>
         </div>
 
-        {/* Menu Navigation */}
-        <nav style={{ padding: '12px 4px', flex: 1 }}>
-          {navItems.map(item => {
-            const Icon = item.icon
-            const active = isLinkActive(item)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`sidebar-nav-item ${active ? 'active' : ''}`}
-              >
-                <Icon size={18} />
-                <span>{item.label}</span>
-              </Link>
-            )
-          })}
+        {/* Menu Navigation avec Rubriques Thématiques */}
+        <nav className="workspace-sidebar-nav">
+          {navSections.map(section => (
+            <div key={section.titre} className="sidebar-section">
+              <div className="sidebar-section-title">
+                <span>{section.titre}</span>
+              </div>
+              <div>
+                {section.items.map(item => {
+                  const Icon = item.icon
+                  const active = isLinkActive(item)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`sidebar-nav-item ${active ? 'active' : ''}`}
+                    >
+                      <Icon size={16} />
+                      <span>{item.label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Pied de sidebar */}
@@ -252,30 +296,41 @@ export default function AgenceWorkspaceLayout({
           </Link>
         </div>
 
-        {/* Tiroir Mobile */}
+        {/* Tiroir Mobile avec Rubriques */}
         {mobileMenuOpen && (
           <div
             style={{
               background: '#FFFFFF',
               borderBottom: '1px solid var(--border, #E8DDD2)',
               padding: '12px 16px',
+              maxHeight: '75vh',
+              overflowY: 'auto',
             }}
           >
-            {navItems.map(item => {
-              const Icon = item.icon
-              const active = isLinkActive(item)
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`sidebar-nav-item ${active ? 'active' : ''}`}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
+            {navSections.map(section => (
+              <div key={section.titre} className="sidebar-section">
+                <div className="sidebar-section-title">
+                  <span>{section.titre}</span>
+                </div>
+                <div>
+                  {section.items.map(item => {
+                    const Icon = item.icon
+                    const active = isLinkActive(item)
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`sidebar-nav-item ${active ? 'active' : ''}`}
+                      >
+                        <Icon size={16} />
+                        <span>{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

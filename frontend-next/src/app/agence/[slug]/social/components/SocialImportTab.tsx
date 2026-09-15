@@ -10,11 +10,11 @@ import {
   Video,
   CheckCircle2,
   Plus,
-  Home,
   Search,
   Sparkles
 } from 'lucide-react'
 import { BienItem, SocialPostItem } from '../types'
+import { SocialDiscoveredGrid, DiscoveredItem } from './SocialDiscoveredGrid'
 
 interface SocialImportTabProps {
   biens: BienItem[]
@@ -31,14 +31,36 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
   const [caption, setCaption] = useState('')
   const [importing, setImporting] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [discoveredPosts, setDiscoveredPosts] = useState<DiscoveredItem[]>([])
+  const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set())
+
+  function getFallbackThumb(): string {
+    const chosenBien = biens.find(b => b.id === selectedBienId)
+    return chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'
+  }
+
+  function getAssociatedBienArray() {
+    const chosenBien = biens.find(b => b.id === selectedBienId)
+    if (!chosenBien) return []
+    return [
+      {
+        id: chosenBien.id,
+        titre: chosenBien.titre,
+        prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
+        type_operation: chosenBien.prix_location ? ('location' as const) : ('vente' as const),
+        quartier: chosenBien.quartier,
+        image_url: chosenBien.images?.[0],
+      }
+    ]
+  }
 
   async function handleImportSingle(e: React.FormEvent) {
     e.preventDefault()
     if (!singleUrl.trim()) return
 
     setImporting(true)
+    const fallbackThumb = getFallbackThumb()
     const chosenBien = biens.find(b => b.id === selectedBienId)
-    const fallbackThumb = chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'
 
     try {
       const res = await fetch('/api/social-shop/parse-url', {
@@ -67,16 +89,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
         visible: true,
         is_featured: true,
         created_at: new Date().toISOString(),
-        biens_associes: chosenBien ? [
-          {
-            id: chosenBien.id,
-            titre: chosenBien.titre,
-            prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
-            type_operation: chosenBien.prix_location ? 'location' : 'vente',
-            quartier: chosenBien.quartier,
-            image_url: chosenBien.images?.[0],
-          }
-        ] : [],
+        biens_associes: getAssociatedBienArray(),
       }
 
       onImportPosts([newPost])
@@ -96,8 +109,8 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     if (!batchUrls.trim()) return
 
     setImporting(true)
+    const fallbackThumb = getFallbackThumb()
     const chosenBien = biens.find(b => b.id === selectedBienId)
-    const fallbackThumb = chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'
 
     try {
       const res = await fetch('/api/social-shop/parse-batch', {
@@ -125,16 +138,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
         visible: true,
         is_featured: idx === 0,
         created_at: new Date().toISOString(),
-        biens_associes: chosenBien ? [
-          {
-            id: chosenBien.id,
-            titre: chosenBien.titre,
-            prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
-            type_operation: chosenBien.prix_location ? 'location' : 'vente',
-            quartier: chosenBien.quartier,
-            image_url: chosenBien.images?.[0],
-          }
-        ] : [],
+        biens_associes: getAssociatedBienArray(),
       }))
 
       onImportPosts(newPosts)
@@ -156,8 +160,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     if (!cleanUser) return
 
     setImporting(true)
-    const chosenBien = biens.find(b => b.id === selectedBienId)
-    const fallbackThumb = chosenBien?.images?.[0] || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80'
+    setDiscoveredPosts([])
 
     try {
       const res = await fetch(`/api/social-shop/explore-profile`, {
@@ -167,32 +170,10 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
       })
       const data = await res.json()
       if (data.success && data.posts && data.posts.length > 0) {
-        const imported: SocialPostItem[] = data.posts.map((p: any, idx: number) => ({
-          id: `${platform.slice(0, 2)}-` + Date.now().toString(36) + '-' + idx,
-          plateforme: platform,
-          post_url: p.url,
-          media_type: p.mediaType === 'VIDEO' ? 'video' : 'reel',
-          thumbnail_url: p.thumbnailUrl || fallbackThumb,
-          caption: p.caption || (chosenBien ? `Visite ${chosenBien.titre}` : `Publication @${cleanUser}`),
-          auteur: p.author || `@${cleanUser}`,
-          visible: true,
-          is_featured: idx === 0,
-          created_at: new Date().toISOString(),
-          biens_associes: chosenBien ? [
-            {
-              id: chosenBien.id,
-              titre: chosenBien.titre,
-              prix: chosenBien.prix_location || chosenBien.prix_vente || 0,
-              type_operation: chosenBien.prix_location ? 'location' : 'vente',
-              quartier: chosenBien.quartier,
-              image_url: chosenBien.images?.[0],
-            }
-          ] : [],
-        }))
-        onImportPosts(imported)
-        setUsername('')
-        setSuccessMsg(`${imported.length} publication(s) de @${cleanUser} importée(s) avec succès !`)
-        setTimeout(() => setSuccessMsg(null), 4000)
+        const found: DiscoveredItem[] = data.posts
+        setDiscoveredPosts(found)
+        setSelectedUrls(new Set(found.map(p => p.url)))
+        setSuccessMsg(`${found.length} publication(s) trouvée(s) pour @${cleanUser}. Sélectionnez celles à importer :`)
       } else {
         throw new Error(data.error || 'Aucune publication publique trouvée pour ce compte')
       }
@@ -201,6 +182,48 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     } finally {
       setImporting(false)
     }
+  }
+
+  function toggleUrlSelection(url: string) {
+    const next = new Set(selectedUrls)
+    if (next.has(url)) {
+      next.delete(url)
+    } else {
+      next.add(url)
+    }
+    setSelectedUrls(next)
+  }
+
+  function handleConfirmImportDiscovered() {
+    const chosen = discoveredPosts.filter(p => selectedUrls.has(p.url))
+    if (chosen.length === 0) {
+      alert('Veuillez sélectionner au moins une vidéo à importer.')
+      return
+    }
+
+    const fallbackThumb = getFallbackThumb()
+    const chosenBien = biens.find(b => b.id === selectedBienId)
+
+    const imported: SocialPostItem[] = chosen.map((p, idx) => ({
+      id: `${platform.slice(0, 2)}-` + Date.now().toString(36) + '-' + idx,
+      plateforme: (p.platform || platform) as 'instagram' | 'tiktok' | 'facebook' | 'youtube',
+      post_url: p.url,
+      media_type: p.mediaType === 'VIDEO' ? 'video' : 'reel',
+      thumbnail_url: p.thumbnailUrl || fallbackThumb,
+      caption: p.caption || (chosenBien ? `Visite ${chosenBien.titre}` : `Publication @${username}`),
+      auteur: p.author || `@${username}`,
+      visible: true,
+      is_featured: idx === 0,
+      created_at: new Date().toISOString(),
+      biens_associes: getAssociatedBienArray(),
+    }))
+
+    onImportPosts(imported)
+    setDiscoveredPosts([])
+    setSelectedUrls(new Set())
+    setUsername('')
+    setSuccessMsg(`${imported.length} publication(s) importée(s) et enregistrée(s) avec succès !`)
+    setTimeout(() => setSuccessMsg(null), 4000)
   }
 
   return (
@@ -216,74 +239,39 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
           gap: 6,
         }}
       >
-        <button
-          type="button"
-          onClick={() => setMode('single')}
-          style={{
-            flex: 1,
-            padding: '10px 14px',
-            borderRadius: 8,
-            border: 'none',
-            background: mode === 'single' ? 'var(--navy, #1C2B4A)' : 'transparent',
-            color: mode === 'single' ? '#FFFFFF' : '#64748B',
-            fontWeight: 800,
-            fontSize: 13,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
-        >
-          <Link2 size={16} />
-          Lien Direct (Reel / Vidéo)
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMode('profile')}
-          style={{
-            flex: 1,
-            padding: '10px 14px',
-            borderRadius: 8,
-            border: 'none',
-            background: mode === 'profile' ? 'var(--navy, #1C2B4A)' : 'transparent',
-            color: mode === 'profile' ? '#FFFFFF' : '#64748B',
-            fontWeight: 800,
-            fontSize: 13,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
-        >
-          <Search size={16} />
-          Par Profil (@Compte)
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMode('batch')}
-          style={{
-            flex: 1,
-            padding: '10px 14px',
-            borderRadius: 8,
-            border: 'none',
-            background: mode === 'batch' ? 'var(--navy, #1C2B4A)' : 'transparent',
-            color: mode === 'batch' ? '#FFFFFF' : '#64748B',
-            fontWeight: 800,
-            fontSize: 13,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
-        >
-          <Download size={16} />
-          Import par Lot (Multi-Liens)
-        </button>
+        {[
+          { id: 'single' as const, label: 'Lien Direct (Reel / Vidéo)', icon: Link2 },
+          { id: 'profile' as const, label: 'Par Profil (@Compte)', icon: Search },
+          { id: 'batch' as const, label: 'Import par Lot (Multi-Liens)', icon: Download },
+        ].map(m => {
+          const Icon = m.icon
+          const active = mode === m.id
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => { setMode(m.id); setDiscoveredPosts([]) }}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: 8,
+                border: 'none',
+                background: active ? 'var(--navy, #1C2B4A)' : 'transparent',
+                color: active ? '#FFFFFF' : '#64748B',
+                fontWeight: 800,
+                fontSize: 13,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+            >
+              <Icon size={16} />
+              <span>{m.label}</span>
+            </button>
+          )
+        })}
       </div>
 
       {successMsg && (
@@ -366,7 +354,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => setPlatform(p.id as any)}
+                      onClick={() => { setPlatform(p.id as any); setDiscoveredPosts([]) }}
                       style={{
                         padding: '10px 16px',
                         borderRadius: 8,
@@ -430,7 +418,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
               style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
               <Sparkles size={16} />
-              <span>{importing ? 'Exploration & Importation...' : 'Aspirer les vidéos publiques'}</span>
+              <span>{importing ? 'Exploration en cours...' : 'Aspirer les vidéos publiques'}</span>
             </button>
           </form>
         )}
@@ -482,6 +470,14 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
           </form>
         )}
       </div>
+
+      {/* ── Grille de Sélection des Publications Découvertes ── */}
+      <SocialDiscoveredGrid
+        discoveredPosts={discoveredPosts}
+        selectedUrls={selectedUrls}
+        onToggleUrl={toggleUrlSelection}
+        onConfirmImport={handleConfirmImportDiscovered}
+      />
     </div>
   )
 }

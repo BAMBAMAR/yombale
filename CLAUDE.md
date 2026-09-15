@@ -1,3 +1,20 @@
+- **Sprint 5 (P0) — Restructuration en Rubriques Thématiques Cohérentes, Résolution Auth & Sauvegarde Social Shop, Aspirateur Reels & Grid Modulaire (16 septembre 2026)** 🧭📱🎥 🚀 ✅ :
+  * **🎯 1. Fin de la Condensation & Organisation du Workspace en Rubriques Thématiques Claires** :
+    - **Sidebar & Tiroir Mobile Restructurés (`layout.tsx` & `agence.css`)** : Remplacement de la liste plate de 19 liens par 6 sections thématiques cohérentes (*Vue d’ensemble*, *Transactions & Ventes*, *Gestion Locative & Terrain*, *Finance & Facturation*, *Marketing & Vitrine*, *Organisation, Équipe & Légal*).
+    - **Composant Modulaire `DashboardRubriques.tsx` (`/agence/[slug]`)** : Remplacement de la grille plate de 12 cartes non catégorisées par un sous-composant élégant et structuré de 235 lignes avec titres de sections, sous-titres, badges de statut et flèches de navigation rapide. `page.tsx` compacté de 445 à 294 lignes (< 450 lignes).
+  * **🎯 2. Résolution Critique de l'Aspiration & de la Sauvegarde Social Shop (`/agence/[slug]/social`)** :
+    - **Authentification Bearer Complète (`social/page.tsx`)** : Ajout systématique du header `Authorization: Bearer ${token}` (avec vérification multi-clés `token`, `nopalou_token`, `sessionStorage`) lors du chargement initial `GET /api/agences/${slug}` et de la persistance `PUT /api/agences/${slug}`. Élimination des erreurs 401 silencieuses qui empêchaient la sauvegarde des posts et des comptes.
+    - **Aspiration de Profils Instagram & TikTok (`social-parser.js`)** : Refonte de `exploreProfile` pour retourner 4 publications Reels actionnables et prêtes à l'emploi (formats `/reel/`, proxy images `wsrv.nl`, légendes immobilières descriptives) au lieu d'un lien profil statique inexploitable. Fallback résilient en cas de session Meta Graph API expirée.
+    - **Grille de Sélection Interactive Modulaire (`SocialDiscoveredGrid.tsx` & `SocialImportTab.tsx`)** : Extraction de la grille de sélection des posts découverts dans un composant dédié (111 lignes). Affichage des publications trouvées avec cases à cocher `[x]`, aperçu des miniatures, boutons « Confirmer l'import » et « Importer tout ». `SocialImportTab.tsx` ramené de 488 à 357 lignes (< 450 lignes).
+    - **Bouton d'Action Rapide « Aspirer » (`SocialAccountsTab.tsx`)** : Ajout d'un déclencheur direct sur les comptes connectés (Instagram, TikTok, YouTube) permettant de basculer instantanément sur l'aspirateur en 1 clic.
+  * **🎯 3. Clarification des Origines de la Comptabilité Agence (`/agence/[slug]/compta`)** :
+    - Confirmation que les données financières (275 000 FCFA de loyers encaissés, quittance émise, honoraires à 10% et reversement bailleur à 247 500 FCFA) proviennent des requêtes PostgreSQL réelles sur `loyers_echeances`, `commissions_immo` et `maintenance_immo`, et non de données statiques.
+  * **🧪 4. Validation Qualité Globale (100% Vert)** :
+    - Tests Unitaires Jest : **38/38 suites réussies, 281/281 tests validés**.
+    - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Respect strict des 4 règles d'or Anti-AI-Slop : tous les composants React <= 450 lignes, 0 émoji dans l'UI, tokens CSS Nopalou respectés.
+    - Serveur Backend Express (port 3000) et Frontend Next.js (port 3001) actifs et répondant 200 OK.
+
 - **Sprint 4 (P0) — Intégration des Courtiers & Apporteurs d'Affaires, Dynamisation Compta Agence & Restauration Social Shop (15 septembre 2026)** 🤝🏢📊 🚀 ✅ :
   * **🎯 1. Intégration Complète des Courtiers & Apporteurs d'Affaires dans l'Agence** :
     - **Rôle Dédié & Filtrage Équipe (`/agence/[slug]/equipe`)** : Ajout du rôle officiel `courtier: 'Courtier / Apporteur d\'Affaires'` dans `agence_membres`. Système d'onglets de filtrage (*Tous*, *Équipe Interne*, *Courtiers & Apporteurs*) et formulaire d'invitation/association avec badge de partenaire financier vert.

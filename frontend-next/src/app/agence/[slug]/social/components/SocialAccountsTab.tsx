@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Plus,
   Trash2,
+  Sparkles,
 } from 'lucide-react'
 import { SocialAccountsConfig } from '../types'
 
@@ -23,6 +24,7 @@ interface SocialAccountsTabProps {
   setAccounts: React.Dispatch<React.SetStateAction<SocialAccountsConfig>>
   onSave: () => Promise<void>
   saving: boolean
+  onExploreAccount?: (platform: string, username: string) => void
 }
 
 const PLATFORMS_CONFIG = [
@@ -97,6 +99,7 @@ export function SocialAccountsTab({
   setAccounts,
   onSave,
   saving,
+  onExploreAccount,
 }: SocialAccountsTabProps) {
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [tempValue, setTempValue] = useState('')
@@ -326,6 +329,29 @@ export function SocialAccountsTab({
                       >
                         <Trash2 size={12} />
                         <span>Déconnecter</span>
+                      </button>
+                    )}
+                    {isConnected && ['instagram', 'tiktok', 'youtube', 'facebook'].includes(plat.key) && onExploreAccount && (
+                      <button
+                        type="button"
+                        onClick={() => onExploreAccount(plat.key, val)}
+                        style={{
+                          background: 'rgba(199, 91, 0, 0.08)',
+                          border: '1px solid var(--accent, #C75B00)',
+                          padding: '4px 10px',
+                          borderRadius: 6,
+                          fontSize: 11.5,
+                          fontWeight: 750,
+                          color: 'var(--accent, #C75B00)',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                        title="Aspirer les vidéos de ce compte"
+                      >
+                        <Sparkles size={12} />
+                        <span>Aspirer</span>
                       </button>
                     )}
                     <button

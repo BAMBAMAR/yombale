@@ -63,11 +63,18 @@ export default function AgencySocialShopManagerPage() {
   const [saving, setSaving] = useState(false)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
 
+  function getAuthToken(): string {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('token') || localStorage.getItem('nopalou_token') || sessionStorage.getItem('token') || ''
+  }
+
   async function chargerDonnees() {
     try {
       setLoading(true)
+      const token = getAuthToken()
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
       const [resAgence, resBiens] = await Promise.all([
-        fetch(`/api/agences/${slug}`),
+        fetch(`/api/agences/${slug}`, { headers: authHeaders }),
         fetch(`/api/biens/agence/${slug}?statut=actif`),
       ])
       const dataAgence = await resAgence.json()
@@ -111,7 +118,15 @@ export default function AgencySocialShopManagerPage() {
   async function persistData(updatedPosts?: SocialPostItem[], updatedAccounts?: SocialAccountsConfig) {
     try {
       setSaving(true)
-      const resGet = await fetch(`/api/agences/${slug}`)
+      const token = getAuthToken()
+      const authHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      }
+
+      const resGet = await fetch(`/api/agences/${slug}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
       const dataGet = await resGet.json()
       const currentParametres = dataGet.agence?.parametres || {}
 
@@ -120,7 +135,7 @@ export default function AgencySocialShopManagerPage() {
 
       const res = await fetch(`/api/agences/${slug}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({
           whatsapp: nextAccounts.whatsapp,
           site_web: nextAccounts.site_web,
@@ -136,6 +151,8 @@ export default function AgencySocialShopManagerPage() {
       if (data.success) {
         setToastMsg('Modifications enregistrées avec succès !')
         setTimeout(() => setToastMsg(null), 3500)
+      } else {
+        alert(data.error || 'Erreur lors de l\'enregistrement')
       }
     } catch (err) {
       console.error('[SAVE_SOCIAL_SHOP_ERR]', err)
@@ -336,6 +353,7 @@ export default function AgencySocialShopManagerPage() {
           setAccounts={setSocialAccounts}
           onSave={() => persistData(undefined, socialAccounts)}
           saving={saving}
+          onExploreAccount={() => setActiveTab('import')}
         />
       )}
 
