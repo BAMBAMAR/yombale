@@ -25,8 +25,8 @@ router.get('/public/agence/:slugOrId', async (req, res) => {
     const agenceId = agenceRows[0].id;
     const { rows: biens } = await pool.query(
       `SELECT id, reference, titre, type_bien, description, ville, quartier, adresse,
-              prix_location, charges_mensuelles, caution_demandee, prix_vente,
-              surface_m2, nb_pieces, nb_chambres, nb_salles_de_bain, etage, meuble, equipements,
+              prix_location, charges, depot_garantie, prix_vente,
+              surface_m2, nb_pieces, nb_chambres, nb_sdb, etage, meuble, equipements,
               photos, statut_occupation, created_at
        FROM biens_immo
        WHERE agence_id = $1 AND statut = 'actif' AND statut_occupation = 'disponible'
