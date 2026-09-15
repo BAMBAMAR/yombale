@@ -519,6 +519,29 @@
   .bq-main [style*="justify-content: space-between"] {
     flex-wrap: wrap !important;
   }
+
+  /* ═══ Masquage contextuel mobile — Hiérarchie Visuelle ═══ */
+  /* Quand tab !== dashboard, l'identité boutique est inutile sur mobile */
+  .bq-sidebar:not([data-tab="dashboard"]) .bq-sidebar-header {
+    display: none !important;
+  }
+
+  /* Sur le dashboard, compacter l'identité (moins de padding) */
+  .bq-sidebar[data-tab="dashboard"] .bq-sidebar-header {
+    padding: 8px 12px 4px !important;
+    margin-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+
+  /* Masquer titre H2 + desc du module (redondant avec sélecteur pill) */
+  .bq-sidebar:not([data-tab="dashboard"]) ~ .bq-main .bq-main-tab-header {
+    display: none !important;
+  }
+
+  /* Masquer « Voir plus d'outils » (déjà dans le bottom sheet) */
+  .bq-sidebar:not([data-tab="dashboard"]) .bq-sidebar-tools-toggle {
+    display: none !important;
+  }
 }
 
 /* Extra petits écrans < 400px */

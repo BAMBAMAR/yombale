@@ -32,7 +32,6 @@ const GestionEntrepots = dynamic(() => import('../../GestionEntrepots'))
 const ABTestingManager = dynamic(() => import('../ABTestingManager'))
 const BlogArticlesManager = dynamic(() => import('../BlogArticlesManager'))
 const AbonnementsManager = dynamic(() => import('../AbonnementsManager'))
-import { Sparkles } from 'lucide-react'
 
 
 interface BoutiqueManageContentProps {
@@ -85,37 +84,12 @@ export default function BoutiqueManageContent({
             onBasculerModeComplet={() => onSetModeFacile(false)}
           />
         ) : (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-              <button
-                type="button"
-                onClick={() => onSetModeFacile(true)}
-                style={{
-                  background: 'var(--orange2, #FFF3E8)',
-                  border: '1px solid #FED7AA',
-                  color: 'var(--accent, #C75B00)',
-                  borderRadius: 10,
-                  padding: '6px 14px',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  boxShadow: '0 1px 3px rgba(199,91,0,0.1)',
-                }}
-              >
-                <Sparkles size={14} />
-                <span>Activer le Mode Facile (Caisse Taf-Taf)</span>
-              </button>
-            </div>
-            <BoutiqueDashboard
-              boutique={boutique}
-              planActif={effectivePlan}
-              nbEnAttente={nbEnAttente}
-              onNavigate={onNavigateTab}
-            />
-          </>
+          <BoutiqueDashboard
+            boutique={boutique}
+            planActif={effectivePlan}
+            nbEnAttente={nbEnAttente}
+            onNavigate={onNavigateTab}
+          />
         ))}
 
       {tab === 'produits' && (

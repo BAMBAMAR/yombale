@@ -55,7 +55,7 @@ export default function BoutiqueManage({
     <>
       <div className="bq-manage-layout">
         {/* Sidebar */}
-        <aside className={`bq-sidebar${!nav.isSidebarOpen ? ' bq-sidebar--hidden' : ''}`}>
+        <aside className={`bq-sidebar${!nav.isSidebarOpen ? ' bq-sidebar--hidden' : ''}`} data-tab={nav.tab}>
           <BoutiqueManageSidebarHeader
             boutique={boutique}
             tab={nav.tab}

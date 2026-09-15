@@ -221,7 +221,7 @@ export default function BoutiqueManageSidebarNav({
       </nav>
 
       {/* Bouton bascule : Afficher/Masquer les options avancées */}
-      <div style={{ padding: '4px 12px 12px' }}>
+      <div className="bq-sidebar-tools-toggle" style={{ padding: '4px 12px 12px' }}>
         <button
           type="button"
           onClick={onToggleAdvancedNav}

@@ -35,25 +35,47 @@ export default function BoutiqueDashboard({
         fontFamily: 'var(--font-inter), system-ui, sans-serif',
       }}
     >
-      <BoutiqueDashboardModeSwitch
-        modeEssentiel={stats.modeEssentiel}
-        onToggleModeEssentiel={stats.toggleModeEssentiel}
-      />
-
       {stats.modeEssentiel ? (
-        <BoutiqueDashboardEssentielView
-          boutique={boutique}
-          loading={stats.loading}
-          produitsCount={stats.produitsCount}
-          dettesTotal={stats.dettesTotal}
-          caMois={stats.caMois}
-          nbEnAttente={nbEnAttente}
-          formatNumber={formatNumber}
-          formatPrice={formatPrice}
-          onNavigate={onNavigate}
-        />
+        <>
+          <BoutiqueDashboardEssentielView
+            boutique={boutique}
+            loading={stats.loading}
+            produitsCount={stats.produitsCount}
+            dettesTotal={stats.dettesTotal}
+            caMois={stats.caMois}
+            nbEnAttente={nbEnAttente}
+            formatNumber={formatNumber}
+            formatPrice={formatPrice}
+            onNavigate={onNavigate}
+          />
+          <BoutiqueDashboardModeSwitch
+            modeEssentiel={stats.modeEssentiel}
+            onToggleModeEssentiel={stats.toggleModeEssentiel}
+          />
+        </>
       ) : (
         <>
+          {/* KPIs EN PREMIER — contenu principal immédiatement visible */}
+          <BoutiqueDashboardKpiGrid
+            loading={stats.loading}
+            caMois={stats.caMois}
+            nbEnAttente={nbEnAttente}
+            stockAlertsCount={stats.stockAlertsCount}
+            dettesTotal={stats.dettesTotal}
+            produitsCount={stats.produitsCount}
+            formatPrice={formatPrice}
+            formatNumber={formatNumber}
+            onNavigate={onNavigate}
+            t={t}
+          />
+
+          {/* Mode Switch — APRÈS les KPIs */}
+          <BoutiqueDashboardModeSwitch
+            modeEssentiel={stats.modeEssentiel}
+            onToggleModeEssentiel={stats.toggleModeEssentiel}
+          />
+
+          {/* Onboarding — en dernier, repliable */}
           {(!stats.hasProducts || stats.pctReady < 100 || stats.isBienvenue) && !stats.onboardingDismissed && (
             <BoutiqueDashboardOnboarding
               pctReady={stats.pctReady}
@@ -67,19 +89,6 @@ export default function BoutiqueDashboard({
               onOpenQrModal={onOpenQrModal}
             />
           )}
-
-          <BoutiqueDashboardKpiGrid
-            loading={stats.loading}
-            caMois={stats.caMois}
-            nbEnAttente={nbEnAttente}
-            stockAlertsCount={stats.stockAlertsCount}
-            dettesTotal={stats.dettesTotal}
-            produitsCount={stats.produitsCount}
-            formatPrice={formatPrice}
-            formatNumber={formatNumber}
-            onNavigate={onNavigate}
-            t={t}
-          />
 
           <BoutiqueDashboardActionHub boutique={boutique} onNavigate={onNavigate} />
         </>
