@@ -2165,9 +2165,59 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_maintenance_agence ON maintenance_immo(agence_id);
       CREATE INDEX IF NOT EXISTS idx_maintenance_bien   ON maintenance_immo(bien_id);
+
+      -- 14. FACTURES IMMOBILIÈRES (Honoraires, Gestion, Débours, Quittances)
+      CREATE TABLE IF NOT EXISTS factures_immo (
+        id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id       UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        numero_facture  VARCHAR(50) NOT NULL,
+        type_facture    VARCHAR(30) DEFAULT 'honoraires',
+        client_nom      VARCHAR(150) NOT NULL,
+        client_tel      VARCHAR(30),
+        client_email    VARCHAR(150),
+        bien_id         UUID REFERENCES biens_immo(id) ON DELETE SET NULL,
+        montant_ht      NUMERIC(15,2) NOT NULL,
+        taux_tva        NUMERIC(5,2) DEFAULT 0,
+        montant_tva     NUMERIC(15,2) DEFAULT 0,
+        timbre_fiscal   NUMERIC(10,2) DEFAULT 0,
+        montant_ttc     NUMERIC(15,2) NOT NULL,
+        statut          VARCHAR(20) DEFAULT 'en_attente',
+        date_emission   DATE DEFAULT CURRENT_DATE,
+        date_echeance   DATE,
+        mode_paiement   VARCHAR(30),
+        lignes          JSONB DEFAULT '[]'::jsonb,
+        notes           TEXT,
+        created_at      TIMESTAMPTZ DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_factures_agence ON factures_immo(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_factures_statut ON factures_immo(statut);
+
+      -- 15. CRÉDITS & PLANS D'ÉCHELONNEMENT IMMO (Caution 3x, Frais étalés, Terrains VEFA)
+      CREATE TABLE IF NOT EXISTS credits_immo (
+        id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agence_id         UUID REFERENCES agences_immo(id) ON DELETE CASCADE,
+        type_credit       VARCHAR(30) DEFAULT 'caution_echelonnee',
+        beneficiaire_nom  VARCHAR(150) NOT NULL,
+        beneficiaire_tel  VARCHAR(30),
+        bien_id           UUID REFERENCES biens_immo(id) ON DELETE SET NULL,
+        bail_id           UUID REFERENCES baux_immo(id) ON DELETE SET NULL,
+        montant_total     NUMERIC(15,2) NOT NULL,
+        apport_initial    NUMERIC(15,2) DEFAULT 0,
+        solde_restant     NUMERIC(15,2) NOT NULL,
+        nb_echeances      INT DEFAULT 3,
+        frequence         VARCHAR(20) DEFAULT 'mensuel',
+        statut            VARCHAR(20) DEFAULT 'actif',
+        echeances         JSONB DEFAULT '[]'::jsonb,
+        notes             TEXT,
+        created_at        TIMESTAMPTZ DEFAULT NOW(),
+        updated_at        TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_credits_immo_agence ON credits_immo(agence_id);
+      CREATE INDEX IF NOT EXISTS idx_credits_immo_statut ON credits_immo(statut);
     `);
 
-    console.log('[MIGRATE] ✅ Nopalou Immobilier: 13 tables & colonnes créées avec succès');
+    console.log('[MIGRATE] ✅ Nopalou Immobilier: 15 tables & colonnes créées avec succès');
   } catch (err) {
     console.warn('[MIGRATE] Nopalou Immobilier échec:', err.message);
   }

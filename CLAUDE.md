@@ -1,7 +1,7 @@
 - **Implémentation & Déploiement du Vertical Nopalou Immobilier (`feature/vertical-immobilier`) (15 septembre 2026)** 🏢🔑📱 🚀 ✅ :
   * **🎯 1. Architecture Modulaire & Moteur Métier Dédié (Sans Fusion Commerce)** :
     - **Isolation Stricte du Vertical** : L'Immobilier fonctionne comme un vertical autonome au-dessus des fondations Nopalou (Auth, Paiements, WhatsApp, Notifications, Cloudinary, Médias) sans jamais polluer ni mélanger les modèles de données Commerce (Boutiques, POS, Stocks, Commandes).
-    - **13 Nouvelles Tables SQL PostgreSQL** : Déploiement dans `backend/migrate-inline.js` des tables `agences_immo`, `agence_membres`, `proprietaires_immo`, `biens_immo`, `contacts_immo`, `mandats_immo`, `visites_immo`, `offres_immo`, `transactions_immo`, `commissions_immo`, `baux_immo`, `loyers_echeances`, `maintenance_immo` et enrichissement non-destructif de `annonces_immo` (`bien_id`, `agence_id`).
+    - **15 Tables SQL PostgreSQL** : Déploiement dans `backend/migrate-inline.js` des tables `agences_immo`, `agence_membres`, `proprietaires_immo`, `biens_immo`, `contacts_immo`, `mandats_immo`, `visites_immo`, `offres_immo`, `transactions_immo`, `commissions_immo`, `baux_immo`, `loyers_echeances`, `maintenance_immo`, `factures_immo` (honoraires, gestion, débours) et `credits_immo` (cautions échelonnées, ventes par tranches) avec enrichissement non-destructif de `annonces_immo` (`bien_id`, `agence_id`).
   * **🎯 2. Sécurité Multi-Tenant & RBAC Anti-IDOR (`backend/middlewares/tenantSecurityImmo.js`)** :
     - **Protection Stricte** : `checkAgenceAccess` et `requireAgenceAccess` assurant qu'un agent ou bailleur d'une agence A ne peut en aucun cas lire ou modifier les biens, prospects, loyers ou commissions d'une agence B.
     - **Matrice des Rôles** : Support natif des rôles `admin_agence`, `directeur`, `agent`, `gestionnaire_locatif`, `commercial`.
@@ -13,15 +13,19 @@
     - `/api/biens` : Portefeuille de biens, publication / synchronisation automatique sur la marketplace publique `annonces_immo`, matching prospects.
     - `/api/crm-immo` : Pipeline CRM Kanban des prospects, prise de rendez-vous et suivi des visites, répertoire des propriétaires mandants.
     - `/api/locatif-immo` : Création de baux avec génération automatique des échéances mensuelles, encaissement rapide des loyers (Wave, Orange Money, Cash, Virement), quittances numériques numérotées, relances WhatsApp d'impayés, gestion des tickets de maintenance, bilan financier `/compta`.
+    - `/api/factures-immo` : Émission et cycle de vie des factures d'honoraires et débours de gestion avec TVA 18%, NINEA, statut de règlement et modèle d'impression officiel.
+    - `/api/credits-immo` : Gestion des plans d'échelonnement (cautions en 2x/3x/4x, terrains/VEFA par tranches), suivi des mensualités et relances WhatsApp automatiques.
   * **🎯 5. Interface Utilisateur Web & Mobile-First (`frontend-next/src/app/agence/`) — Héritage Intégral des Capacités Pertinentes** :
     - **Espace Agences Hub (`/agence`)** : Liste des agences de l'utilisateur avec compteurs en direct et modal de création rapide d'agence.
     - **Workspace Agence Dédié (`/agence/[slug]/layout.tsx`)** : Sidebar ergonomique avec navigation contextuelle, sélecteur d'agences et drawer responsive mobile.
-    - **Tableau de Bord Exécutif (`/agence/[slug]/page.tsx`)** : Grille KPI en temps réel (Biens actifs, Annonces en ligne, Visites du jour, Suivi des impayés, Loyers attendus vs encaissés, Pipeline prospects).
+    - **Tableau de Bord Exécutif (`/agence/[slug]/page.tsx`)** : Grille KPI en temps réel (Biens actifs, Annonces en ligne, Visites du jour, Suivi des impayés, Loyers attendus vs encaissés, Pipeline prospects, Factures & Crédits).
     - **Gestion du Portefeuille (`/agence/[slug]/biens/`)** : Tableau filtrable par type, statut et quartier, formulaire de création de bien optimisé Sénégal, bouton de publication instantanée sur la marketplace.
     - **CRM Pipeline Kanban (`/agence/[slug]/prospects/`)** : Colonnes (Nouveaux, Qualifiés, Visite, Offre, Gagné), tiroir de matching intelligent affichant les biens compatibles avec score de pertinence.
     - **Gestion Dédiée des Locataires (`/agence/[slug]/locataires/`)** : Répertoire complet des locataires, suivi du bien loué, montant du loyer, jour d'échéance et bouton direct d'échange WhatsApp.
     - **Agenda des Visites (`/agence/[slug]/visites/`)** : Calendrier et liste des rendez-vous avec mise à jour du statut (Réalisée, Annulée, Confirmée).
     - **Encaissement Loyers & Quittances (`/agence/[slug]/locatif/`)** : Suivi des échéances du mois, modale d'encaissement avec sélection du mode de paiement (Wave, OM, Espèces, Virement), génération de quittance numérique et relances d'impayés.
+    - **Facturation & Honoraires Professionnels (`/agence/[slug]/factures/`)** : Création de factures d'honoraires, quittances, gestion des débours, calcul automatique TVA 18%, NINEA, aperçu et impression prêt pour la comptabilité.
+    - **Crédits & Plans d'Échelonnement (`/agence/[slug]/credits/`)** : Étalement de caution en 2x/3x/4x, règlements de terrains/VEFA par tranches, échéancier interactif avec encaissement direct et relances WhatsApp 1-clic.
     - **Maintenance, Sinistres & Travaux (`/agence/[slug]/maintenance/`)** : Déclaration d'incidents (plomberie, électricité, clim, serrurerie), suivi des interventions artisans, imputation bailleur/locataire et clôture des tickets.
     - **Comptabilité & Bilan Financier (`/agence/[slug]/compta/`)** : Bilan financier complet, calcul des honoraires d'agence, suivi des reversements nets aux bailleurs, taux de recouvrement mensuel et fonction d'impression de bilan.
     - **Social Shop & Réseaux Sociaux (`/agence/[slug]/social/`)** : Configuration complète des comptes et liens officiels (Instagram, TikTok, Facebook, WhatsApp, LinkedIn, YouTube, Twitter/X, Site Web) et générateur de publications 1-clic pour les réseaux.
@@ -31,7 +35,7 @@
     - **Répertoire Bailleurs & Équipe (`/agence/[slug]/bailleurs/`, `/agence/[slug]/equipe/`)** : Gestion des mandataires et invitations sécurisées d'agents.
     - **Conformité Anti-AI-Slop** : 0 émoji UI, utilisation exclusive des icônes SVG `lucide-react`, variables CSS globales (`--navy`, `--accent`, `--price`, `--bg`, `--border`), composants modulaires <= 450 lignes.
   * **🧪 6. Validation & Quality Gate** :
-    - Validation Syntaxique Backend : **100% Modules chargés avec succès**.
+    - Validation Syntaxique Backend : **100% Modules chargés avec succès (38/38 suites de tests unitaires passées)**.
     - Typecheck TypeScript Frontend : **0 erreur**.
     - Linter Anti-AI-Slop : **Validé (0 violation)**.
     - Branche Git : `feature/vertical-immobilier` (prête pour revue sans push automatique).

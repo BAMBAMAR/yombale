@@ -254,6 +254,8 @@ app.use('/api/agences',       require('./routes/agences'));
 app.use('/api/biens',         require('./routes/biens'));
 app.use('/api/crm-immo',      require('./routes/crm-immo'));
 app.use('/api/locatif-immo',  require('./routes/locatif-immo'));
+app.use('/api/factures-immo', require('./routes/factures-immo'));
+app.use('/api/credits-immo',  require('./routes/credits-immo'));
 app.use('/api/partenaires',   require('./routes/partenaires'));
 app.use('/api/annonces',        require('./routes/annonces'));
 app.use('/api/boutiques',       require('./routes/boutiques'));

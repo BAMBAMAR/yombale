@@ -21,7 +21,9 @@ import {
   Wrench,
   Wallet,
   ShieldAlert,
-  Settings
+  Settings,
+  FileText,
+  CreditCard
 } from 'lucide-react'
 
 interface StatsData {
@@ -332,6 +334,20 @@ export default function AgenceDashboardPage() {
               desc: 'Encaissements Wave/OM/Cash et quittances numérotées',
               icon: Key,
               color: '#166534',
+            },
+            {
+              href: `/agence/${slug}/factures`,
+              title: 'Factures & Honoraires',
+              desc: 'Émission factures pro avec TVA 18%, NINEA, impression',
+              icon: FileText,
+              color: '#0284C7',
+            },
+            {
+              href: `/agence/${slug}/credits`,
+              title: 'Crédits & Échelonnement',
+              desc: 'Caution en 2x/3x/4x, terrains étalés, relances WhatsApp',
+              icon: CreditCard,
+              color: '#EA580C',
             },
             {
               href: `/agence/${slug}/maintenance`,
