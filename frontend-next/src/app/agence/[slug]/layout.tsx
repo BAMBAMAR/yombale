@@ -109,7 +109,7 @@ export default function AgenceWorkspaceLayout({
   return (
     <div className="workspace-layout">
       {/* ── Sidebar Desktop ── */}
-      <aside className="workspace-sidebar" style={{ display: 'none' }} id="agence-sidebar-desktop">
+      <aside className="workspace-sidebar">
         <div style={{ padding: '16px', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
           <Link
             href="/agence"
@@ -207,17 +207,7 @@ export default function AgenceWorkspaceLayout({
 
       {/* ── Menu Mobile Toggle Bar (Visible uniquement < 768px) ── */}
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <div
-          id="agence-topbar-mobile"
-          style={{
-            background: '#FFFFFF',
-            borderBottom: '1px solid var(--border, #E8DDD2)',
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+        <div className="agence-topbar-mobile">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button
               type="button"
@@ -284,17 +274,6 @@ export default function AgenceWorkspaceLayout({
         {/* ── Main Content Area ── */}
         <main className="workspace-content">{children}</main>
       </div>
-
-      <style jsx global>{`
-        @media (min-width: 768px) {
-          #agence-sidebar-desktop {
-            display: flex !important;
-          }
-          #agence-topbar-mobile {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }
