@@ -1,3 +1,23 @@
+- **Optimisation Hiérarchie Visuelle Mobile & Guidage Nom de Produit (15 septembre 2026)** 📱🏪✨ 🚀 ✅ :
+  * **🎯 1. Hiérarchie Visuelle & Densité Mobile (~278px Libérés au-dessus de la ligne de flottaison)** :
+    - **Masquage Contextuel CSS (`boutique-dashboard.css`, `BoutiqueManage.tsx`)** : Ajout de l'attribut `data-tab` sur `<aside>` pour masquer dynamiquement la carte d'identité boutique (`.bq-sidebar-header`) et le titre H2 redondant (`.bq-main-tab-header`) sur mobile lorsque le marchand navigue dans les modules profonds (`commandes`, `produits`, `compta`, etc.).
+    - **Priorisation Immédiate des KPIs (`BoutiqueDashboard.tsx`)** : Réordonnancement du layout : la grille des indicateurs clés (`BoutiqueDashboardKpiGrid`) passe en 1ère position pour un coup d'œil instantané dès le chargement sur mobile.
+    - **Compactage du Mode Switch (`BoutiqueDashboardModeSwitch.tsx`)** : Refonte en sélecteur pill inline ultra-léger (~36px vs ~80px), supprimant les cartes/icônes/descriptions verbeuses qui repoussaient le contenu utile.
+    - **Élimination des Doublons (`BoutiqueManageContent.tsx`)** : Suppression du bouton flottant dupliqué « Activer le Mode Facile » au-dessus du tableau de bord.
+  * **🎯 2. Guidage Intelligent & Incitation au Nommage des Produits (`ProduitForm.tsx`, `boutiqueHelpers.ts`, `CatalogueProductCard.tsx`)** :
+    - **Détection des Noms par Défaut (`isNomParDefaut`)** : Fonction helper robuste identifiant les intitulés temporaires (*« Smartphone — à modifier »*, *« Article mode — à modifier »*, *« Produit — à modifier »*).
+    - **Auto-Sélection Intelligente au Clic** : Tout le texte par défaut est automatiquement sélectionné au focus, permettant au marchand d'écraser instantanément le nom en tapant ou en dictant à la voix sans avoir à effacer lettre par lettre.
+    - **Bandeau d'Aide Contextuelle & Action Rapide** : Affichage d'un encadré doux sous le champ avec conseil vendeur et bouton `[ Effacer et nommer ]` qui vide le champ et y place le curseur en 1 clic.
+    - **Confirmation Bienveillante à la Soumission** : Invite prévenante en cas d'enregistrement avec un nom par défaut (`[ Donner un nom précis ]` ou `[ Enregistrer avec ce nom temporaire ]` sans jamais bloquer un encaissement urgent).
+    - **Badge Catalogue Marchand** : Affichage du badge discret `Nom à préciser` sur les fiches produits concernées, cliquable pour une modification immédiate.
+  * **🎯 3. Résilience PWA & Dev Server (`RegisterSW.tsx`, `sw.js`)** :
+    - **Garde Locale PWA** : Désactivation automatique, purge des caches et désinscription immédiate du Service Worker sur `localhost` / `127.0.0.1` pour éliminer tout risque d'erreur `bad-precaching-response` ou de conflit MIME en cours de développement.
+    - **Résolution Collision Icône** : Élimination du doublon de fichier `apple-icon.png` dans `src/app`.
+  * **🧪 4. Validation & Quality Gate** :
+    - Build Next.js (`npm run build`) : **Succès (Exit code 0)**.
+    - Tests Unitaires Frontend (`npm run test`) : **69/69 tests validés (100%)**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **Validé (0 erreur)**.
+
 - **Correctif Filtrage & Résolution des Catégories du Comparateur de Prix (14 septembre 2026)** 🏷️🛒🔍 🚀 ✅ :
   * **🎯 1. Section « Comparer par catégorie » en Bas de Page d'Accueil (`page.tsx`)** :
     - **Affichage Exclusif des Catégories Avec Produits** : Remplacement de la liste statique des 27 catégories par un filtrage dynamique `categoriesAffichees` basé sur `/api/produits/categories-actives` (avec repli sur les catégories confirmées disposant d'offres en stock).
