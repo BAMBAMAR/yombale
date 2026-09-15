@@ -22,6 +22,7 @@
     - **Gestion Dédiée des Locataires (`/agence/[slug]/locataires/`)** : Répertoire complet des locataires, suivi du bien loué, montant du loyer, jour d'échéance et bouton direct d'échange WhatsApp.
     - **Agenda des Visites (`/agence/[slug]/visites/`)** : Calendrier et liste des rendez-vous avec mise à jour du statut (Réalisée, Annulée, Confirmée).
     - **Encaissement Loyers & Quittances (`/agence/[slug]/locatif/`)** : Suivi des échéances du mois, modale d'encaissement avec sélection du mode de paiement (Wave, OM, Espèces, Virement), génération de quittance numérique et relances d'impayés.
+    - **Maintenance, Sinistres & Travaux (`/agence/[slug]/maintenance/`)** : Déclaration d'incidents (plomberie, électricité, clim, serrurerie), suivi des interventions artisans, imputation bailleur/locataire et clôture des tickets.
     - **Comptabilité & Bilan Financier (`/agence/[slug]/compta/`)** : Bilan financier complet, calcul des honoraires d'agence, suivi des reversements nets aux bailleurs, taux de recouvrement mensuel et fonction d'impression de bilan.
     - **Marketing & Multi-Diffusion Sociale (`/agence/[slug]/social/`)** : Générateur de posts immobiliers percutants pour WhatsApp, Facebook et Instagram en 1 clic, boutons de partage direct et lien vers la vitrine.
     - **Vitrine Sociale / Page Publique Agence (`/agence/[slug]/vitrine/`)** : Storefront public de l'agence avec bannière, coordonnées, filtres achat/location et catalogue complet de biens consultables par les clients avec bouton WhatsApp direct.

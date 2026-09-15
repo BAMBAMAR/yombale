@@ -388,6 +388,48 @@ router.post('/agence/:slugOrId/maintenance', verifierToken, requireAgenceAccess(
   }
 });
 
+// ── PATCH /api/locatif-immo/agence/:slugOrId/maintenance/:ticketId — Mettre à jour un ticket ──
+router.patch('/agence/:slugOrId/maintenance/:ticketId', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { ticketId } = req.params;
+    const { statut, technicien, cout_reel, a_charge_de } = req.body;
+
+    const { rows } = await pool.query(
+      `UPDATE maintenance_immo SET
+        statut = COALESCE($1, statut),
+        technicien = COALESCE($2, technicien),
+        cout_reel = COALESCE($3, cout_reel),
+        a_charge_de = COALESCE($4, a_charge_de),
+        date_resolution = CASE WHEN $1 = 'resolu' THEN CURRENT_DATE ELSE date_resolution END,
+        updated_at = NOW()
+       WHERE id = $5 AND agence_id = $6
+       RETURNING *`,
+      [
+        statut || null,
+        technicien || null,
+        cout_reel ? parseFloat(cout_reel) : null,
+        a_charge_de || null,
+        ticketId,
+        agenceId
+      ]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Ticket introuvable.' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Ticket mis à jour',
+      ticket: rows[0]
+    });
+  } catch (err) {
+    console.error('[PATCH /api/locatif-immo/agence/:slugOrId/maintenance/:ticketId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur mise à jour ticket' });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════
 // 4. COMPTABILITÉ & BILAN FINANCIER IMMOBILIER
 // ══════════════════════════════════════════════════════════════

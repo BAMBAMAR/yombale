@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   ExternalLink,
-  Wallet
+  Wallet,
+  Wrench
 } from 'lucide-react'
 import '../agence.css'
 
@@ -77,6 +78,7 @@ export default function AgenceWorkspaceLayout({
     { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
     { href: `/agence/${slug}/visites`, label: 'Visites & Agenda', icon: Calendar },
     { href: `/agence/${slug}/locatif`, label: 'Loyers & Quittances', icon: Key },
+    { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench },
     { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs & Mandats', icon: Building2 },
     { href: `/agence/${slug}/compta`, label: 'Comptabilité & Bilan', icon: Wallet },
     { href: `/agence/${slug}/social`, label: 'Réseaux Sociaux & Vitrine', icon: ExternalLink },
