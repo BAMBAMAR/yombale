@@ -17,7 +17,7 @@ router.get('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (req
     let query = `
       SELECT o.*,
              b.titre AS bien_titre, b.prix_location, b.prix_vente, b.quartier AS bien_quartier,
-             b.ville AS bien_ville, b.images AS bien_images,
+             b.ville AS bien_ville, b.photos AS bien_images,
              c.nom AS contact_nom, c.telephone AS contact_telephone, c.email AS contact_email,
              c.type_contact,
              u.nom AS agent_nom, u.prenom AS agent_prenom
@@ -71,7 +71,7 @@ router.get('/agence/:slugOrId/:offreId', verifierToken, requireAgenceAccess(), a
     const { rows } = await pool.query(
       `SELECT o.*,
               b.titre AS bien_titre, b.prix_location, b.prix_vente, b.quartier AS bien_quartier,
-              b.ville AS bien_ville, b.images AS bien_images, b.statut AS bien_statut,
+              b.ville AS bien_ville, b.photos AS bien_images, b.statut AS bien_statut,
               c.nom AS contact_nom, c.telephone AS contact_telephone, c.email AS contact_email,
               u.nom AS agent_nom, u.prenom AS agent_prenom
        FROM offres_immo o
