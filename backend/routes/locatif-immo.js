@@ -388,4 +388,81 @@ router.post('/agence/:slugOrId/maintenance', verifierToken, requireAgenceAccess(
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// 4. COMPTABILITÉ & BILAN FINANCIER IMMOBILIER
+// ══════════════════════════════════════════════════════════════
+
+// ── GET /api/locatif-immo/agence/:slugOrId/compta ──
+router.get('/agence/:slugOrId/compta', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const p = req.agence.parametres || {};
+    const tauxCom = Number(p.taux_commission_location_defaut) || 10;
+
+    // 1. Total Loyers Encaissés
+    const { rows: loyersEncaisse } = await pool.query(
+      `SELECT 
+        COALESCE(SUM(montant_paye), 0) AS total_encaisse,
+        COALESCE(SUM(montant_du), 0) AS total_attendu,
+        COUNT(*) FILTER (WHERE statut = 'paye') AS nb_quittances_emises,
+        COUNT(*) FILTER (WHERE statut IN ('retard', 'impaye')) AS nb_impayes,
+        COALESCE(SUM(montant_restant) FILTER (WHERE statut IN ('retard', 'impaye')), 0) AS total_impayes
+       FROM loyers_echeances
+       WHERE agence_id = $1`,
+      [agenceId]
+    );
+
+    const totalEncaisse = Number(loyersEncaisse[0]?.total_encaisse || 0);
+    const honorairesEstimes = Math.round((totalEncaisse * tauxCom) / 100);
+    const reversementBailleurs = totalEncaisse - honorairesEstimes;
+
+    // 2. Dépenses de maintenance
+    const { rows: depensesMaintenance } = await pool.query(
+      `SELECT COALESCE(SUM(cout_reel), 0) AS total_maintenance
+       FROM maintenance_immo
+       WHERE agence_id = $1 AND statut = 'resolu'`,
+      [agenceId]
+    );
+
+    // 3. Ventilation mensuelle (6 derniers mois)
+    const { rows: historiqueMois } = await pool.query(
+      `SELECT 
+        periode,
+        COALESCE(SUM(montant_paye), 0) AS encaisse,
+        COALESCE(SUM(montant_du), 0) AS attendu,
+        COUNT(*) AS nb_echeances
+       FROM loyers_echeances
+       WHERE agence_id = $1
+       GROUP BY periode
+       ORDER BY periode DESC
+       LIMIT 6`,
+      [agenceId]
+    );
+
+    res.json({
+      success: true,
+      bilan: {
+        total_loyers_encaisses: totalEncaisse,
+        total_loyers_attendus: Number(loyersEncaisse[0]?.total_attendu || 0),
+        total_impayes: Number(loyersEncaisse[0]?.total_impayes || 0),
+        nb_impayes: Number(loyersEncaisse[0]?.nb_impayes || 0),
+        nb_quittances_emises: Number(loyersEncaisse[0]?.nb_quittances_emises || 0),
+        taux_commission_moyen: tauxCom,
+        honoraires_gestion_bruts: honorairesEstimes,
+        reversement_bailleurs_net: reversementBailleurs,
+        total_depenses_travaux: Number(depensesMaintenance[0]?.total_maintenance || 0),
+        historique_mensuel: historiqueMois.map(m => ({
+          ...m,
+          encaisse: Number(m.encaisse),
+          attendu: Number(m.attendu),
+          honoraires: Math.round((Number(m.encaisse) * tauxCom) / 100)
+        }))
+      }
+    });
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/agence/:slugOrId/compta]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur calcul comptabilité agence' });
+  }
+});
+
 module.exports = router;
