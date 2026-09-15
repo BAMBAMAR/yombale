@@ -8,6 +8,42 @@ const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
 const { trouverProspectsPourBien } = require('../services/matching-immo');
 
+// ── GET /api/biens/public/agence/:slugOrId — Biens disponibles pour la vitrine publique ──
+router.get('/public/agence/:slugOrId', async (req, res) => {
+  try {
+    const { slugOrId } = req.params;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+    const agenceQuery = isUUID
+      ? `SELECT id, nom, slug, statut FROM agences_immo WHERE id = $1`
+      : `SELECT id, nom, slug, statut FROM agences_immo WHERE slug = $1`;
+
+    const { rows: agenceRows } = await pool.query(agenceQuery, [slugOrId]);
+    if (agenceRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Agence introuvable' });
+    }
+
+    const agenceId = agenceRows[0].id;
+    const { rows: biens } = await pool.query(
+      `SELECT id, reference, titre, type_bien, description, ville, quartier, adresse,
+              prix_location, charges_mensuelles, caution_demandee, prix_vente,
+              surface_m2, nb_pieces, nb_chambres, nb_salles_de_bain, etage, meuble, equipements,
+              photos, statut_occupation, created_at
+       FROM biens_immo
+       WHERE agence_id = $1 AND statut = 'actif' AND statut_occupation = 'disponible'
+       ORDER BY created_at DESC`,
+      [agenceId]
+    );
+
+    res.json({
+      success: true,
+      biens
+    });
+  } catch (err) {
+    console.error('[GET /api/biens/public/agence/:slugOrId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement des biens' });
+  }
+});
+
 // ── GET /api/biens/agence/:slugOrId — Liste des biens de l'agence ──
 router.get('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (req, res) => {
   try {

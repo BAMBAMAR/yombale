@@ -124,6 +124,30 @@ router.post('/', verifierToken, async (req, res) => {
   }
 });
 
+// ── GET /api/agences/public/:slugOrId — Récupérer la vitrine publique d'une agence (Accessible à tous) ──
+router.get('/public/:slugOrId', async (req, res) => {
+  try {
+    const { slugOrId } = req.params;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+    const query = isUUID
+      ? `SELECT id, nom, slug, description, logo_url, adresse, ville, quartier, telephone, whatsapp, email_contact, site_web, numero_agrement, parametres, statut FROM agences_immo WHERE id = $1`
+      : `SELECT id, nom, slug, description, logo_url, adresse, ville, quartier, telephone, whatsapp, email_contact, site_web, numero_agrement, parametres, statut FROM agences_immo WHERE slug = $1`;
+
+    const { rows } = await pool.query(query, [slugOrId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Agence introuvable' });
+    }
+
+    res.json({
+      success: true,
+      agence: rows[0]
+    });
+  } catch (err) {
+    console.error('[GET /api/agences/public/:slugOrId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement vitrine agence' });
+  }
+});
+
 // ── GET /api/agences/:slugOrId — Récupérer le profil d'une agence ──
 router.get('/:slugOrId', verifierToken, requireAgenceAccess(), async (req, res) => {
   try {

@@ -79,8 +79,8 @@ export default function AgenceVitrinePubliquePage() {
     try {
       setLoading(true)
       const [resAgence, resBiens] = await Promise.all([
-        fetch(`/api/agences/${slug}`),
-        fetch(`/api/biens/agence/${slug}?statut=actif&statut_occupation=disponible`),
+        fetch(`/api/agences/public/${slug}`),
+        fetch(`/api/biens/public/agence/${slug}`),
       ])
       const dataAgence = await resAgence.json()
       const dataBiens = await resBiens.json()
