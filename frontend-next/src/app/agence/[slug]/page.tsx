@@ -13,7 +13,15 @@ import {
   TrendingUp,
   CheckCircle2,
   Clock,
-  DollarSign
+  DollarSign,
+  Share2,
+  ExternalLink,
+  UserCheck,
+  Key,
+  Wrench,
+  Wallet,
+  ShieldAlert,
+  Settings
 } from 'lucide-react'
 
 interface StatsData {
@@ -283,6 +291,121 @@ export default function AgenceDashboardPage() {
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Accès Rapide aux Espaces & Outils de l'Agence ── */}
+      <div className="agence-card" style={{ marginTop: 24 }}>
+        <div className="agence-card-header">
+          <div className="agence-card-title">
+            <TrendingUp size={18} />
+            Espaces & Outils de Gestion de l'Agence
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
+          {[
+            {
+              href: `/agence/${slug}/social`,
+              title: 'Marketing & Réseaux Sociaux',
+              desc: 'Générateur de posts WhatsApp, Facebook, Instagram',
+              icon: Share2,
+              color: '#16a34a',
+            },
+            {
+              href: `/agence/${slug}/vitrine`,
+              title: 'Vitrine Publique Agence',
+              desc: 'Page publique avec catalogue de biens & contact WhatsApp',
+              icon: ExternalLink,
+              color: 'var(--accent, #C75B00)',
+            },
+            {
+              href: `/agence/${slug}/locataires`,
+              title: 'Gestion des Locataires',
+              desc: 'Répertoire des locataires, baux et contact direct',
+              icon: UserCheck,
+              color: '#0369A1',
+            },
+            {
+              href: `/agence/${slug}/locatif`,
+              title: 'Loyers & Quittances',
+              desc: 'Encaissements Wave/OM/Cash et quittances numérotées',
+              icon: Key,
+              color: '#166534',
+            },
+            {
+              href: `/agence/${slug}/maintenance`,
+              title: 'Maintenance & Travaux',
+              desc: 'Gestion des incidents, artisans et coûts travaux',
+              icon: Wrench,
+              color: '#D97706',
+            },
+            {
+              href: `/agence/${slug}/compta`,
+              title: 'Comptabilité & Commissions',
+              desc: 'Honoraires agence, reversements nets bailleurs',
+              icon: Wallet,
+              color: 'var(--navy, #1C2B4A)',
+            },
+            {
+              href: `/agence/${slug}/fiscalite`,
+              title: 'Fiscalité & Légal',
+              desc: 'NINEA, RCCM, TVA 18%, timbre fiscal & CGV',
+              icon: ShieldAlert,
+              color: '#7C3AED',
+            },
+            {
+              href: `/agence/${slug}/parametres`,
+              title: 'Paramètres & Statut',
+              desc: 'Activer/pause/vacances et configuration de l’agence',
+              icon: Settings,
+              color: '#475569',
+            },
+          ].map(m => {
+            const Icon = m.icon
+            return (
+              <Link
+                key={m.href}
+                href={m.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  padding: 14,
+                  borderRadius: 10,
+                  border: '1px solid var(--border, #E8DDD2)',
+                  background: '#FFFFFF',
+                  textDecoration: 'none',
+                  transition: 'all 0.15s ease',
+                }}
+                className="kpi-card"
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    background: 'rgba(28, 43, 74, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: m.color,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={18} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 750, color: 'var(--navy, #1C2B4A)', fontSize: 13.5 }}>
+                    {m.title}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2, lineHeight: 1.4 }}>
+                    {m.desc}
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       </div>
     </div>

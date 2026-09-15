@@ -201,9 +201,10 @@ export default function AgenceWorkspaceLayout({
         </div>
       </aside>
 
-      {/* ── Menu Mobile Toggle Bar ── */}
+      {/* ── Menu Mobile Toggle Bar (Visible uniquement < 768px) ── */}
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
         <div
+          id="agence-topbar-mobile"
           style={{
             background: '#FFFFFF',
             borderBottom: '1px solid var(--border, #E8DDD2)',
@@ -281,9 +282,12 @@ export default function AgenceWorkspaceLayout({
       </div>
 
       <style jsx global>{`
-        @media (min-width: 1024px) {
+        @media (min-width: 768px) {
           #agence-sidebar-desktop {
             display: flex !important;
+          }
+          #agence-topbar-mobile {
+            display: none !important;
           }
         }
       `}</style>
