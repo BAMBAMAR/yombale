@@ -2,7 +2,16 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Settings, CheckCircle2, AlertCircle, Building2, DollarSign } from 'lucide-react'
+import {
+  Settings,
+  CheckCircle2,
+  AlertCircle,
+  Building2,
+  DollarSign,
+  Eye,
+  Power,
+  MessageSquare
+} from 'lucide-react'
 
 export default function AgenceParametresPage() {
   const params = useParams()
@@ -24,6 +33,9 @@ export default function AgenceParametresPage() {
     email_contact: '',
     site_web: '',
     numero_agrement: '',
+    statut: 'actif',
+    vitrine_active: true,
+    message_accueil_wa: '',
     taux_vente: '5',
     taux_location: '10',
   })
@@ -47,6 +59,9 @@ export default function AgenceParametresPage() {
           email_contact: a.email_contact || '',
           site_web: a.site_web || '',
           numero_agrement: a.numero_agrement || '',
+          statut: a.statut || 'actif',
+          vitrine_active: p.vitrine_active !== false,
+          message_accueil_wa: p.message_accueil_wa || '',
           taux_vente: String(p.taux_commission_vente_defaut ?? '5'),
           taux_location: String(p.taux_commission_location_defaut ?? '10'),
         })
@@ -69,6 +84,11 @@ export default function AgenceParametresPage() {
 
     try {
       setSaving(true)
+      // Récupérer paramètres actuels
+      const resGet = await fetch(`/api/agences/${slug}`)
+      const dataGet = await resGet.json()
+      const currentParams = dataGet.agence?.parametres || {}
+
       const payload = {
         nom: form.nom,
         description: form.description,
@@ -80,7 +100,11 @@ export default function AgenceParametresPage() {
         email_contact: form.email_contact,
         site_web: form.site_web,
         numero_agrement: form.numero_agrement,
+        statut: form.statut,
         parametres: {
+          ...currentParams,
+          vitrine_active: form.vitrine_active,
+          message_accueil_wa: form.message_accueil_wa,
           taux_commission_vente_defaut: parseFloat(form.taux_vente) || 5,
           taux_commission_location_defaut: parseFloat(form.taux_location) || 10,
         },
@@ -98,7 +122,7 @@ export default function AgenceParametresPage() {
         return
       }
 
-      setToastMsg('Paramètres enregistrés avec succès.')
+      setToastMsg('Paramètres et statut de l’agence mis à jour avec succès.')
       setTimeout(() => setToastMsg(null), 4000)
     } catch (err) {
       console.error('[SAVE_SETTINGS_ERR]', err)
@@ -117,12 +141,12 @@ export default function AgenceParametresPage() {
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+    <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {/* ── En-tête ── */}
       <div className="agence-header">
         <div>
-          <h1 className="agence-title">Paramètres de l'Agence</h1>
-          <p className="agence-subtitle">Coordonnées, informations légales et taux de commission par défaut.</p>
+          <h1 className="agence-title">Paramètres & Statut de l'Agence</h1>
+          <p className="agence-subtitle">Activez/désactivez l'agence, gérez la vitrine publique et les commissions.</p>
         </div>
       </div>
 
@@ -167,17 +191,77 @@ export default function AgenceParametresPage() {
       )}
 
       <form onSubmit={handleSubmit}>
+        {/* ── Activation & Statut Agence ── */}
+        <div className="agence-card">
+          <div className="agence-card-header">
+            <div className="agence-card-title">
+              <Power size={18} />
+              Statut de l'Agence & Visibilité Publique
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">État de l'agence *</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+              {[
+                { id: 'actif', label: 'Active & Opérationnelle', desc: 'Réception de prospects' },
+                { id: 'pause', label: 'Pause Commerciale', desc: 'Biens visibles, pas de nouvelles visites' },
+                { id: 'vacances', label: 'Mode Congés / Vacances', desc: 'Message automatique' },
+              ].map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setForm({ ...form, statut: opt.id })}
+                  style={{
+                    padding: '12px',
+                    borderRadius: 8,
+                    border: '1.5px solid',
+                    borderColor: form.statut === opt.id ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
+                    background: form.statut === opt.id ? 'rgba(199, 91, 0, 0.08)' : '#FFFFFF',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontWeight: 750, fontSize: 13, color: form.statut === opt.id ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)' }}>
+                    {opt.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Toggle Vitrine Publique */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 16 }}>
+            <input
+              type="checkbox"
+              id="toggle-vitrine"
+              checked={form.vitrine_active}
+              onChange={e => setForm({ ...form, vitrine_active: e.target.checked })}
+              style={{ width: 18, height: 18, marginTop: 2, accentColor: 'var(--accent, #C75B00)' }}
+            />
+            <label htmlFor="toggle-vitrine" style={{ cursor: 'pointer' }}>
+              <div style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 14 }}>
+                Activer la Vitrine Sociale / Page Publique Agence
+              </div>
+              <div style={{ fontSize: 12, color: '#64748B' }}>
+                Permet aux clients de consulter votre catalogue complet sur <code>/agence/{slug}/vitrine</code>.
+              </div>
+            </label>
+          </div>
+        </div>
+
         {/* ── Coordonnées ── */}
         <div className="agence-card">
           <div className="agence-card-header">
             <div className="agence-card-title">
               <Building2 size={18} />
-              Identité & Coordonnées
+              Identité Commerciale & Contact
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Nom commercial de l'agence *</label>
+            <label className="form-label">Nom de l'agence *</label>
             <input
               type="text"
               required
@@ -228,25 +312,14 @@ export default function AgenceParametresPage() {
               />
             </div>
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Numéro d'agrément / RCCM</label>
-            <input
-              type="text"
-              placeholder="Ex: SN-DKR-2024-B-12345"
-              value={form.numero_agrement}
-              onChange={e => setForm({ ...form, numero_agrement: e.target.value })}
-              className="form-input"
-            />
-          </div>
         </div>
 
-        {/* ── Commissions ── */}
+        {/* ── Commissions & WhatsApp ── */}
         <div className="agence-card">
           <div className="agence-card-header">
             <div className="agence-card-title">
               <DollarSign size={18} />
-              Commissions par Défaut
+              Taux de Commission & Message d'Accueil
             </div>
           </div>
 
@@ -272,6 +345,17 @@ export default function AgenceParametresPage() {
               />
             </div>
           </div>
+
+          <div className="form-group">
+            <label className="form-label">Message d'accueil WhatsApp automatique</label>
+            <input
+              type="text"
+              placeholder="Ex: Bienvenue chez Teranga Immo ! Comment pouvons-nous vous aider ?"
+              value={form.message_accueil_wa}
+              onChange={e => setForm({ ...form, message_accueil_wa: e.target.value })}
+              className="form-input"
+            />
+          </div>
         </div>
 
         {/* Bouton de sauvegarde */}
@@ -291,7 +375,7 @@ export default function AgenceParametresPage() {
               opacity: saving ? 0.7 : 1,
             }}
           >
-            {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+            {saving ? 'Enregistrement...' : 'Enregistrer les paramètres'}
           </button>
         </div>
       </form>

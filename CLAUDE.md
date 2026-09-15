@@ -19,13 +19,18 @@
     - **Tableau de Bord Exécutif (`/agence/[slug]/page.tsx`)** : Grille KPI en temps réel (Biens actifs, Annonces en ligne, Visites du jour, Suivi des impayés, Loyers attendus vs encaissés, Pipeline prospects).
     - **Gestion du Portefeuille (`/agence/[slug]/biens/`)** : Tableau filtrable par type, statut et quartier, formulaire de création de bien optimisé Sénégal, bouton de publication instantanée sur la marketplace.
     - **CRM Pipeline Kanban (`/agence/[slug]/prospects/`)** : Colonnes (Nouveaux, Qualifiés, Visite, Offre, Gagné), tiroir de matching intelligent affichant les biens compatibles avec score de pertinence.
+    - **Gestion Dédiée des Locataires (`/agence/[slug]/locataires/`)** : Répertoire complet des locataires, suivi du bien loué, montant du loyer, jour d'échéance et bouton direct d'échange WhatsApp.
     - **Agenda des Visites (`/agence/[slug]/visites/`)** : Calendrier et liste des rendez-vous avec mise à jour du statut (Réalisée, Annulée, Confirmée).
-    - **Gestion Locative & Quittances (`/agence/[slug]/locatif/`)** : Suivi des échéances du mois, modale d'encaissement de loyer avec sélection du mode de paiement, génération de quittance et relances.
-    - **Répertoire Bailleurs & Équipe (`/agence/[slug]/bailleurs/`, `/agence/[slug]/equipe/`, `/agence/[slug]/parametres/`)** : Gestion des mandataires, commissions par défaut et invitations sécurisées.
+    - **Encaissement Loyers & Quittances (`/agence/[slug]/locatif/`)** : Suivi des échéances du mois, modale d'encaissement avec sélection du mode de paiement (Wave, OM, Espèces, Virement), génération de quittance numérique et relances d'impayés.
+    - **Marketing & Multi-Diffusion Sociale (`/agence/[slug]/social/`)** : Générateur de posts immobiliers percutants pour WhatsApp, Facebook et Instagram en 1 clic, boutons de partage direct et lien vers la vitrine.
+    - **Vitrine Sociale / Page Publique Agence (`/agence/[slug]/vitrine/`)** : Storefront public de l'agence avec bannière, coordonnées, filtres achat/location et catalogue complet de biens consultables par les clients.
+    - **Fiscalité, NINEA & Mentions Légales (`/agence/[slug]/fiscalite/`)** : Paramétrage TVA 18%, NINEA, RCCM, numéro d'agrément, droit de timbre fiscal sur quittances et conditions générales de gestion locative.
+    - **Paramètres & Statut d'Agence (`/agence/[slug]/parametres/`)** : Toggles d'activation, pause commerciale, mode vacances, visibilité de la vitrine publique et taux de commission par défaut.
+    - **Répertoire Bailleurs & Équipe (`/agence/[slug]/bailleurs/`, `/agence/[slug]/equipe/`)** : Gestion des mandataires et invitations sécurisées d'agents.
     - **Conformité Anti-AI-Slop** : 0 émoji UI, utilisation exclusive des icônes SVG `lucide-react`, variables CSS globales (`--navy`, `--accent`, `--price`, `--bg`, `--border`), composants modulaires <= 450 lignes.
   * **🧪 6. Validation & Quality Gate** :
     - Validation Syntaxique Backend : **100% Modules chargés avec succès**.
-    - Linter Anti-AI-Slop : **Advisory Mode validé**.
+    - Linter Anti-AI-Slop : **Validé (0 violation)**.
     - Branche Git : `feature/vertical-immobilier` (prête pour revue sans push automatique).
 
 - **Optimisation Hiérarchie Visuelle Mobile & Guidage Nom de Produit (15 septembre 2026)** 📱🏪✨ 🚀 ✅ :

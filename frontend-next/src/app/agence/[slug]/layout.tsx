@@ -73,11 +73,14 @@ export default function AgenceWorkspaceLayout({
     { href: `/agence/${slug}`, label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
     { href: `/agence/${slug}/biens`, label: 'Biens Immobiliers', icon: Home },
     { href: `/agence/${slug}/prospects`, label: 'CRM Prospects', icon: Users2 },
+    { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
     { href: `/agence/${slug}/visites`, label: 'Visites & Agenda', icon: Calendar },
-    { href: `/agence/${slug}/locatif`, label: 'Gestion Locative', icon: Key },
-    { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs & Mandats', icon: UserCheck },
-    { href: `/agence/${slug}/equipe`, label: 'Équipe & Agents', icon: ShieldAlert },
-    { href: `/agence/${slug}/parametres`, label: 'Paramètres Agence', icon: Settings },
+    { href: `/agence/${slug}/locatif`, label: 'Loyers & Quittances', icon: Key },
+    { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs & Mandats', icon: Building2 },
+    { href: `/agence/${slug}/social`, label: 'Réseaux Sociaux & Vitrine', icon: ExternalLink },
+    { href: `/agence/${slug}/fiscalite`, label: 'Fiscalité & Légal', icon: ShieldAlert },
+    { href: `/agence/${slug}/equipe`, label: 'Équipe & Agents', icon: Users2 },
+    { href: `/agence/${slug}/parametres`, label: 'Paramètres & Statut', icon: Settings },
   ]
 
   function isLinkActive(item: typeof navItems[0]) {
