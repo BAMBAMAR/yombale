@@ -12,7 +12,13 @@ import {
   CheckCircle2,
   ExternalLink,
   Search,
-  Filter
+  Filter,
+  Camera,
+  Music,
+  Globe,
+  Video,
+  Send,
+  Share2
 } from 'lucide-react'
 
 interface AgenceData {
@@ -25,8 +31,21 @@ interface AgenceData {
   quartier?: string
   telephone?: string
   whatsapp?: string
+  site_web?: string
   email_contact?: string
   numero_agrement?: string
+  parametres?: {
+    reseaux_sociaux?: {
+      instagram?: string
+      tiktok?: string
+      facebook?: string
+      whatsapp?: string
+      linkedin?: string
+      youtube?: string
+      twitter?: string
+      site_web?: string
+    }
+  }
 }
 
 interface BienItem {
@@ -197,6 +216,73 @@ export default function AgenceVitrinePubliquePage() {
               </a>
             )}
           </div>
+
+          {/* ── Réseaux Sociaux Officiels de l'Agence ── */}
+          {agence?.parametres?.reseaux_sociaux && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+              <span style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 600 }}>Nos réseaux :</span>
+              {agence.parametres.reseaux_sociaux.instagram && (
+                <a
+                  href={agence.parametres.reseaux_sociaux.instagram.startsWith('http') ? agence.parametres.reseaux_sociaux.instagram : `https://instagram.com/${agence.parametres.reseaux_sociaux.instagram.replace(/^@/, '')}`}
+                  target="_blank"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(225, 48, 108, 0.25)', color: '#FFFFFF', fontSize: 12, textDecoration: 'none', fontWeight: 700 }}
+                >
+                  <Camera size={13} />
+                  Instagram
+                </a>
+              )}
+              {agence.parametres.reseaux_sociaux.facebook && (
+                <a
+                  href={agence.parametres.reseaux_sociaux.facebook.startsWith('http') ? agence.parametres.reseaux_sociaux.facebook : `https://facebook.com/${agence.parametres.reseaux_sociaux.facebook}`}
+                  target="_blank"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(24, 119, 242, 0.25)', color: '#FFFFFF', fontSize: 12, textDecoration: 'none', fontWeight: 700 }}
+                >
+                  <Share2 size={13} />
+                  Facebook
+                </a>
+              )}
+              {agence.parametres.reseaux_sociaux.tiktok && (
+                <a
+                  href={agence.parametres.reseaux_sociaux.tiktok.startsWith('http') ? agence.parametres.reseaux_sociaux.tiktok : `https://tiktok.com/@${agence.parametres.reseaux_sociaux.tiktok.replace(/^@/, '')}`}
+                  target="_blank"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(0, 0, 0, 0.35)', color: '#FFFFFF', fontSize: 12, textDecoration: 'none', fontWeight: 700 }}
+                >
+                  <Music size={13} />
+                  TikTok
+                </a>
+              )}
+              {agence.parametres.reseaux_sociaux.linkedin && (
+                <a
+                  href={agence.parametres.reseaux_sociaux.linkedin.startsWith('http') ? agence.parametres.reseaux_sociaux.linkedin : `https://linkedin.com/company/${agence.parametres.reseaux_sociaux.linkedin}`}
+                  target="_blank"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(10, 102, 194, 0.25)', color: '#FFFFFF', fontSize: 12, textDecoration: 'none', fontWeight: 700 }}
+                >
+                  <Globe size={13} />
+                  LinkedIn
+                </a>
+              )}
+              {agence.parametres.reseaux_sociaux.youtube && (
+                <a
+                  href={agence.parametres.reseaux_sociaux.youtube.startsWith('http') ? agence.parametres.reseaux_sociaux.youtube : `https://youtube.com/${agence.parametres.reseaux_sociaux.youtube}`}
+                  target="_blank"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(255, 0, 0, 0.25)', color: '#FFFFFF', fontSize: 12, textDecoration: 'none', fontWeight: 700 }}
+                >
+                  <Video size={13} />
+                  YouTube
+                </a>
+              )}
+              {agence.parametres.reseaux_sociaux.site_web && (
+                <a
+                  href={agence.parametres.reseaux_sociaux.site_web.startsWith('http') ? agence.parametres.reseaux_sociaux.site_web : `https://${agence.parametres.reseaux_sociaux.site_web}`}
+                  target="_blank"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF', fontSize: 12, textDecoration: 'none', fontWeight: 700 }}
+                >
+                  <Globe size={13} />
+                  Site Web
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
