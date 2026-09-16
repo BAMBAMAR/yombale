@@ -486,6 +486,12 @@ router.post('/agence/:slugOrId/loyers/:loyerId/relance', verifierToken, requireA
       req
     );
 
+    // Déclencher le rappel WhatsApp automatique au locataire
+    const { notifierRelanceLoyerWhatsApp } = require('../services/immo-whatsapp-notifications');
+    notifierRelanceLoyerWhatsApp({ agenceId, loyerId }).catch(err => {
+      console.warn('[LOYER_RELANCE_WA_WARN]', err.message);
+    });
+
     res.json({
       success: true,
       message: 'Relance de paiement envoyée avec succès',

@@ -252,6 +252,19 @@ router.post('/public/lead', async (req, res) => {
             })
           ]
         );
+
+        // Déclenchement automatique de la notification WhatsApp Agence & Prospect
+        const { notifierDemandeVisiteAgence } = require('../services/immo-whatsapp-notifications');
+        notifierDemandeVisiteAgence({
+          agenceId: cibleAgenceId,
+          contactNom: cleanNom,
+          contactTel,
+          annonceTitre,
+          dateVisite: req.body.date_visite,
+          creneau: req.body.creneau,
+          message: message || null,
+          visiteId
+        }).catch(err => console.warn('[CRM_WA_NOTIF_WARN]', err.message));
       } catch (eNotif) {
         console.error('[DEMANDE_VISITE_NOTIF_ERR]', eNotif.message);
       }
@@ -637,6 +650,36 @@ router.put('/agence/:slugOrId/visites/:visiteId', verifierToken, requireAgenceAc
         `UPDATE contacts_immo SET statut_crm = 'visite_programmee', updated_at = NOW() WHERE id = $1`,
         [rows[0].contact_id]
       );
+
+      if (rows[0].contact_id) {
+        try {
+          const { rows: details } = await pool.query(
+            `SELECT c.nom AS contact_nom, c.telephone AS contact_tel,
+                    b.titre AS bien_titre,
+                    u.nom AS agent_nom, u.telephone AS agent_tel
+             FROM contacts_immo c
+             LEFT JOIN biens_immo b ON b.id = $2
+             LEFT JOIN utilisateurs u ON u.id = $3
+             WHERE c.id = $1`,
+            [rows[0].contact_id, rows[0].bien_id, rows[0].agent_id]
+          );
+          if (details[0]?.contact_tel) {
+            const { notifierConfirmationVisite } = require('../services/immo-whatsapp-notifications');
+            notifierConfirmationVisite({
+              agenceId,
+              contactNom: details[0].contact_nom,
+              contactTel: details[0].contact_tel,
+              bienTitre: details[0].bien_titre,
+              dateVisite: rows[0].date_visite,
+              heureVisite: rows[0].date_visite ? new Date(rows[0].date_visite).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : null,
+              agentNom: details[0].agent_nom,
+              agentTel: details[0].agent_tel
+            }).catch(e => console.warn('[CONFIRM_VISITE_WA_ERR]', e.message));
+          }
+        } catch (eConfirm) {
+          console.warn('[CONFIRM_VISITE_LOOKUP_ERR]', eConfirm.message);
+        }
+      }
     }
 
     res.json({
