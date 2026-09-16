@@ -12,6 +12,7 @@ import {
   Home,
   ShoppingBag,
   Zap,
+  Building2,
 } from 'lucide-react'
 
 interface AccountHubQuickActionsProps {
@@ -252,6 +253,28 @@ export default function AccountHubQuickActions({
         >
           <Home size={14} style={{ color: '#7C3AED' }} />
           <span>Immobilier</span>
+        </Link>
+
+        <Link
+          href="/agence"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '7px 12px',
+            borderRadius: 20,
+            background: '#ffffff',
+            border: '1px solid #E8DDD2',
+            color: 'var(--navy, #1C2B4A)',
+            fontSize: 12,
+            fontWeight: 750,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.02)',
+          }}
+        >
+          <Building2 size={14} style={{ color: 'var(--accent, #C75B00)' }} />
+          <span>Agence Immo Pro</span>
         </Link>
 
         <Link

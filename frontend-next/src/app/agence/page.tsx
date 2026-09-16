@@ -3,8 +3,23 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Building2, Plus, MapPin, ArrowRight, ShieldCheck, Home, Users, CheckCircle2, AlertCircle } from 'lucide-react'
+import {
+  Building2,
+  Plus,
+  MapPin,
+  ArrowRight,
+  ShieldCheck,
+  Home,
+  Users,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  CreditCard,
+  Crown
+} from 'lucide-react'
 import './agence.css'
+import { ModalCreerAgence } from './components/ModalCreerAgence'
+import { ModalMultiAgence } from './components/ModalMultiAgence'
 
 interface AgenceItem {
   id: string
@@ -19,13 +34,26 @@ interface AgenceItem {
   is_owner: boolean
   nb_biens: number
   nb_prospects_actifs: number
+  sponsorise?: boolean
+  sponsor_jusqu_au?: string
+  est_sponsorise_actif?: boolean
+}
+
+interface QuotaData {
+  max_agences: number
+  agences_creees: number
+  peut_creer: boolean
+  tarif_multi_agence: number
+  label_multi_agence: string
 }
 
 export default function AgencesHubPage() {
   const router = useRouter()
   const [agences, setAgences] = useState<AgenceItem[]>([])
+  const [quotas, setQuotas] = useState<QuotaData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showMultiModal, setShowMultiModal] = useState(false)
   const [creating, setCreating] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -49,6 +77,9 @@ export default function AgencesHubPage() {
       const data = await res.json()
       if (data.success) {
         setAgences(data.agences || [])
+        if (data.quotas) {
+          setQuotas(data.quotas)
+        }
       }
     } catch (err) {
       console.error('[CHARGER_AGENCES_ERR]', err)
@@ -60,6 +91,15 @@ export default function AgencesHubPage() {
   useEffect(() => {
     chargerAgences()
   }, [])
+
+  function handleOpenCreationFlow() {
+    if (quotas && !quotas.peut_creer) {
+      setShowMultiModal(true)
+      return
+    }
+    setFormError(null)
+    setShowModal(true)
+  }
 
   async function handleCreerAgence(e: React.FormEvent) {
     e.preventDefault()
@@ -78,6 +118,11 @@ export default function AgencesHubPage() {
       })
       const data = await res.json()
       if (!res.ok || !data.success) {
+        if (data.quotas && !data.quotas.allowed) {
+          setShowModal(false)
+          setShowMultiModal(true)
+          return
+        }
         setFormError(data.error || "Erreur lors de la création de l'agence.")
         return
       }
@@ -90,6 +135,10 @@ export default function AgencesHubPage() {
       setCreating(false)
     }
   }
+
+  const userOwnerCount = agences.filter(a => a.is_owner).length
+  const quotaMax = quotas?.max_agences || 1
+  const isQuotaReached = userOwnerCount >= quotaMax
 
   return (
     <div className="agence-container">
@@ -112,7 +161,22 @@ export default function AgencesHubPage() {
               <Building2 size={22} />
             </div>
             <div>
-              <h1 className="agence-title">Nopalou Immobilier Pro</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h1 className="agence-title" style={{ margin: 0 }}>Nopalou Immobilier Pro</h1>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                    background: isQuotaReached ? '#FEF3C7' : 'rgba(10, 92, 54, 0.1)',
+                    color: isQuotaReached ? '#92400E' : 'var(--price, #0A5C36)',
+                    border: isQuotaReached ? '1px solid #FCD34D' : 'none',
+                  }}
+                >
+                  Quota : {userOwnerCount} / {quotaMax} agence{quotaMax > 1 ? 's' : ''} (Plan Essentiel)
+                </span>
+              </div>
               <p className="agence-subtitle">
                 Gérez vos agences, votre portefeuille de biens, vos prospects CRM et vos baux locatifs.
               </p>
@@ -122,7 +186,7 @@ export default function AgencesHubPage() {
 
         <button
           type="button"
-          onClick={() => setShowModal(true)}
+          onClick={handleOpenCreationFlow}
           className="btn-npl"
           style={{
             display: 'inline-flex',
@@ -177,11 +241,11 @@ export default function AgencesHubPage() {
           </h2>
           <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, marginBottom: 24 }}>
             Digitalisez votre agence immobilière au Sénégal : catalogue de biens, multidiffusion d'annonces, CRM
-            prospects, gestion des visites, baux et encaissement des loyers.
+            prospects, gestion des visites, baux et encaissement des loyers. 1 agence gratuite incluse.
           </p>
           <button
             type="button"
-            onClick={() => setShowModal(true)}
+            onClick={handleOpenCreationFlow}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -207,316 +271,185 @@ export default function AgencesHubPage() {
             gap: 20,
           }}
         >
-          {agences.map(agence => (
-            <div
-              key={agence.id}
-              className="agence-card"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                padding: 24,
-                position: 'relative',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 10,
-                        background: 'linear-gradient(135deg, #1C2B4A 0%, #2A3F6D 100%)',
-                        color: '#FFFFFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 800,
-                        fontSize: 18,
-                      }}
-                    >
-                      {agence.nom.charAt(0).toUpperCase()}
+          {agences.map(agence => {
+            const isSponsored = agence.est_sponsorise_actif || (agence.sponsorise && agence.sponsor_jusqu_au && new Date(agence.sponsor_jusqu_au) > new Date())
+            return (
+              <div
+                key={agence.id}
+                className="agence-card"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  padding: 24,
+                  position: 'relative',
+                  border: isSponsored ? '1.5px solid #D97706' : '1px solid var(--border, #E8DDD2)',
+                  background: isSponsored ? 'linear-gradient(180deg, rgba(254, 243, 199, 0.15) 0%, #FFFFFF 100%)' : '#FFFFFF',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 10,
+                          background: isSponsored ? 'linear-gradient(135deg, #B45309 0%, #D97706 100%)' : 'linear-gradient(135deg, #1C2B4A 0%, #2A3F6D 100%)',
+                          color: '#FFFFFF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 800,
+                          fontSize: 18,
+                        }}
+                      >
+                        {agence.nom.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
+                          {agence.nom}
+                        </h3>
+                        <span style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                          <MapPin size={13} />
+                          {agence.quartier ? `${agence.quartier}, ${agence.ville}` : agence.ville}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
-                        {agence.nom}
-                      </h3>
-                      <span style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                        <MapPin size={13} />
-                        {agence.quartier ? `${agence.quartier}, ${agence.ville}` : agence.ville}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {isSponsored && (
+                        <span
+                          style={{
+                            fontSize: 10.5,
+                            fontWeight: 800,
+                            padding: '2px 8px',
+                            borderRadius: 12,
+                            background: '#FEF3C7',
+                            color: '#92400E',
+                            border: '1px solid #FCD34D',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
+                          }}
+                        >
+                          <Sparkles size={11} />
+                          En Vedette
+                        </span>
+                      )}
+                      <span className={`status-badge ${agence.statut}`}>
+                        {agence.statut === 'actif' ? 'Active' : agence.statut}
                       </span>
                     </div>
                   </div>
 
-                  <span className={`status-badge ${agence.statut}`}>
-                    {agence.statut === 'actif' ? 'Active' : agence.statut}
-                  </span>
+                  {agence.description && (
+                    <p
+                      style={{
+                        fontSize: 13,
+                        color: '#475569',
+                        lineHeight: 1.5,
+                        marginBottom: 16,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {agence.description}
+                    </p>
+                  )}
+
+                  {/* Badges compteurs */}
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+                    <div
+                      style={{
+                        flex: 1,
+                        padding: '10px 12px',
+                        background: '#FAF8F5',
+                        borderRadius: 8,
+                        border: '1px solid var(--border, #E8DDD2)',
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Biens</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{agence.nb_biens}</div>
+                    </div>
+                    <div
+                      style={{
+                        flex: 1,
+                        padding: '10px 12px',
+                        background: '#FAF8F5',
+                        borderRadius: 8,
+                        border: '1px solid var(--border, #E8DDD2)',
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Prospects</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{agence.nb_prospects_actifs}</div>
+                    </div>
+                  </div>
                 </div>
 
-                {agence.description && (
-                  <p
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Link
+                    href={`/agence/${agence.slug}`}
                     style={{
-                      fontSize: 13,
-                      color: '#475569',
-                      lineHeight: 1.5,
-                      marginBottom: 16,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      fontWeight: 700,
+                      fontSize: 13.5,
+                      background: 'var(--navy, #1C2B4A)',
+                      color: '#FFFFFF',
+                      textDecoration: 'none',
                     }}
                   >
-                    {agence.description}
-                  </p>
-                )}
+                    <span>Gérer l'agence</span>
+                    <ArrowRight size={15} />
+                  </Link>
 
-                {/* Badges compteurs */}
-                <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-                  <div
+                  <Link
+                    href={`/agence/${agence.slug}/abonnement`}
+                    className="agence-btn-outline"
                     style={{
-                      flex: 1,
                       padding: '10px 12px',
-                      background: '#FAF8F5',
-                      borderRadius: 8,
-                      border: '1px solid var(--border, #E8DDD2)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
+                    title="Abonnement & Sponsoring"
                   >
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Biens</div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{agence.nb_biens}</div>
-                  </div>
-                  <div
-                    style={{
-                      flex: 1,
-                      padding: '10px 12px',
-                      background: '#FAF8F5',
-                      borderRadius: 8,
-                      border: '1px solid var(--border, #E8DDD2)',
-                    }}
-                  >
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Prospects</div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{agence.nb_prospects_actifs}</div>
-                  </div>
+                    <CreditCard size={16} />
+                  </Link>
                 </div>
               </div>
-
-              <Link
-                href={`/agence/${agence.slug}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  width: '100%',
-                  padding: '11px 16px',
-                  background: 'var(--navy, #1C2B4A)',
-                  color: '#FFFFFF',
-                  borderRadius: 8,
-                  fontWeight: 700,
-                  fontSize: 13.5,
-                  textDecoration: 'none',
-                  transition: 'opacity 0.15s ease',
-                }}
-              >
-                Accéder à l'espace Agence
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
-      {/* ── Modale Création d'Agence ── */}
-      {showModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(28, 43, 74, 0.5)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 14,
-              maxWidth: 520,
-              width: '100%',
-              padding: 24,
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 8,
-                    background: 'rgba(199, 91, 0, 0.1)',
-                    color: 'var(--accent, #C75B00)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Building2 size={20} />
-                </div>
-                <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
-                  Créer une agence immobilière
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: 20,
-                  color: '#94A3B8',
-                  cursor: 'pointer',
-                }}
-              >
-                ✕
-              </button>
-            </div>
+      {/* ── Modale de Création d'Agence ── */}
+      <ModalCreerAgence
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        formData={formData}
+        setFormData={setFormData}
+        onSubmit={handleCreerAgence}
+        creating={creating}
+        formError={formError}
+      />
 
-            {formError && (
-              <div
-                style={{
-                  padding: '10px 14px',
-                  background: '#FEE2E2',
-                  color: '#991B1B',
-                  borderRadius: 8,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  marginBottom: 16,
-                }}
-              >
-                <AlertCircle size={16} />
-                {formError}
-              </div>
-            )}
-
-            <form onSubmit={handleCreerAgence}>
-              <div className="form-group">
-                <label className="form-label">Nom de l'agence *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Teranga Immo, Almadies Prestige..."
-                  value={formData.nom}
-                  onChange={e => setFormData({ ...formData, nom: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Ville *</label>
-                  <select
-                    value={formData.ville}
-                    onChange={e => setFormData({ ...formData, ville: e.target.value })}
-                    className="form-select"
-                  >
-                    <option value="Dakar">Dakar</option>
-                    <option value="Thiès">Thiès</option>
-                    <option value="Saly">Saly / Mbour</option>
-                    <option value="Saint-Louis">Saint-Louis</option>
-                    <option value="Ziguinchor">Ziguinchor</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Quartier</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Almadies, Mermoz, Plateau..."
-                    value={formData.quartier}
-                    onChange={e => setFormData({ ...formData, quartier: e.target.value })}
-                    className="form-input"
-                  />
-                </div>
-              </div>
-
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Téléphone</label>
-                  <input
-                    type="tel"
-                    placeholder="+221 77 000 00 00"
-                    value={formData.telephone}
-                    onChange={e => setFormData({ ...formData, telephone: e.target.value })}
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">WhatsApp Pro</label>
-                  <input
-                    type="tel"
-                    placeholder="+221 77 000 00 00"
-                    value={formData.whatsapp}
-                    onChange={e => setFormData({ ...formData, whatsapp: e.target.value })}
-                    className="form-input"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Brève description</label>
-                <textarea
-                  rows={3}
-                  placeholder="Spécialiste de la location et vente résidentielle à Dakar..."
-                  value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  className="form-textarea"
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: 8,
-                    background: '#FAF8F5',
-                    border: '1px solid var(--border, #E8DDD2)',
-                    color: 'var(--navy, #1C2B4A)',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={creating}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    background: 'var(--accent, #C75B00)',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    fontWeight: 700,
-                    cursor: creating ? 'not-allowed' : 'pointer',
-                    opacity: creating ? 0.7 : 1,
-                  }}
-                >
-                  {creating ? 'Création...' : 'Créer mon agence'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ── Modale Option Multi-Agences ── */}
+      <ModalMultiAgence
+        isOpen={showMultiModal}
+        onClose={() => setShowMultiModal(false)}
+        tarifMensuel={quotas?.tarif_multi_agence || 15000}
+        labelOption={quotas?.label_multi_agence || 'Option Réseau Multi-Agences'}
+        currentAgencesCount={userOwnerCount}
+      />
     </div>
   )
 }

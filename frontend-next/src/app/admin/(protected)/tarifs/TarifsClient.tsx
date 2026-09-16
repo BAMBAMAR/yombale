@@ -31,6 +31,11 @@ interface Settings {
   paiement_manuel_numero_om: string
   max_boutiques_par_compte: string
   max_boutiques_par_telephone: string
+  max_agences_par_compte?: string
+  max_agences_par_telephone?: string
+  tarif_agence_supplementaire?: string
+  immo_multi_agence_label?: string
+  prix_sponsoring_agence?: string
   alertes_abonnement_jours_avant: string
   alertes_abonnement_whatsapp: string
   alertes_abonnement_email: string
@@ -68,6 +73,11 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       paiement_manuel_numero_om: '',
       max_boutiques_par_compte: '3',
       max_boutiques_par_telephone: '3',
+      max_agences_par_compte: '1',
+      max_agences_par_telephone: '1',
+      tarif_agence_supplementaire: '15000',
+      immo_multi_agence_label: 'Option Réseau Multi-Agences',
+      prix_sponsoring_agence: '5000',
       alertes_abonnement_jours_avant: '7',
       alertes_abonnement_whatsapp: 'true',
       alertes_abonnement_email: 'true',
@@ -209,6 +219,17 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         {field('max_boutiques_par_telephone', 'Nombre max de boutiques associées au même téléphone / email', 'number', 'boutiques')}
         <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 0' }}>
           Empêche les utilisateurs de créer plus de boutiques que la limite autorisée, même en créant plusieurs comptes avec le même numéro ou e-mail.
+        </p>
+      </>)}
+
+      {card('🏢 Immobilier Pro — Quotas, Multi-Agences & Sponsoring', <>
+        {field('max_agences_par_compte', 'Nombre max d\'agences gratuites par compte (Plan Essentiel)', 'number', 'agence')}
+        {field('max_agences_par_telephone', 'Nombre max d\'agences par téléphone / email (Anti-abus)', 'number', 'agence')}
+        {field('tarif_agence_supplementaire', 'Tarif mensuel de l\'Option Réseau Multi-Agences', 'number', 'FCFA / mois')}
+        {field('immo_multi_agence_label', 'Libellé de l\'option Multi-Agences', 'text')}
+        {field('prix_sponsoring_agence', 'Mise en avant Agence (Sponsoring tête d\'annuaire) — 30 jours', 'number', 'FCFA')}
+        <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 0' }}>
+          Par défaut, 1 seule agence est autorisée par compte. Toute tentative de création supplémentaire bascule sur l'Option Multi-Agences au tarif défini ici.
         </p>
       </>)}
 

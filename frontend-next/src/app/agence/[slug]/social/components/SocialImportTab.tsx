@@ -22,6 +22,21 @@ interface SocialImportTabProps {
   onImportPosts: (newPosts: SocialPostItem[]) => void
 }
 
+function extractCleanSocialUsername(raw: string): string {
+  let u = (raw || '').trim()
+  try {
+    if (u.startsWith('http://') || u.startsWith('https://')) {
+      const parsed = new URL(u)
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      const atPart = parts.find(p => p.startsWith('@'))
+      u = atPart ? atPart.replace(/^@+/, '') : (parts[0] || u)
+    }
+  } catch (_parseErr) {
+    // Si format invalide, conserver la chaîne brute
+  }
+  return u.replace(/^@+/, '').replace(/\/+$/, '').trim()
+}
+
 export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) {
   const [mode, setMode] = useState<'profile' | 'batch' | 'single'>('single')
   const [platform, setPlatform] = useState<'instagram' | 'tiktok' | 'facebook' | 'youtube'>('instagram')
@@ -174,19 +189,23 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
 
   async function handleExploreProfile(e: React.FormEvent) {
     e.preventDefault()
-    if (!username.trim()) return
+    const cleanUser = extractCleanSocialUsername(username)
+    if (!cleanUser) {
+      alert('Veuillez renseigner un pseudo ou un lien de compte valide.')
+      return
+    }
 
     setImporting(true)
     setDiscoveredPosts([])
     setSelectedUrls(new Set())
-    const cleanUser = username.trim().replace(/^@/, '')
 
     try {
       const res = await fetch('/api/social-shop/explore-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          platform,
+          plateforme: platform,
+          platform: platform,
           username: cleanUser,
         }),
       })
@@ -405,8 +424,16 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
                   type="text"
                   required
                   value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  placeholder="mon_agence_immo"
+                  onChange={e => {
+                    const val = e.target.value
+                    if (val.includes('http') || val.includes('.com') || val.includes('/') || val.startsWith('@')) {
+                      setUsername(extractCleanSocialUsername(val))
+                    } else {
+                      setUsername(val)
+                    }
+                  }}
+                  onBlur={() => setUsername(extractCleanSocialUsername(username))}
+                  placeholder="nom_compte ou coller l'URL du profil"
                   className="form-input"
                   style={{ paddingLeft: 30 }}
                 />

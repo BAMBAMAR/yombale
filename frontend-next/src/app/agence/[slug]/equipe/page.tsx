@@ -7,23 +7,12 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
-  AlertCircle,
   Users2,
   Briefcase,
-  X
+  Pencil
 } from 'lucide-react'
-
-interface Membre {
-  id: string
-  utilisateur_id: string
-  role: string
-  actif: boolean
-  date_entree: string
-  utilisateur_nom: string
-  utilisateur_prenom?: string
-  utilisateur_email: string
-  utilisateur_tel?: string
-}
+import ModalAjouterMembre from './components/ModalAjouterMembre'
+import ModalEditerMembre, { MembreItem } from './components/ModalEditerMembre'
 
 const ROLES: Record<string, string> = {
   admin_agence: 'Administrateur Agence',
@@ -38,23 +27,20 @@ export default function EquipePage() {
   const params = useParams()
   const slug = params?.slug as string
 
-  const [membres, setMembres] = useState<Membre[]>([])
+  const [membres, setMembres] = useState<MembreItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [membreAEditer, setMembreAEditer] = useState<MembreItem | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [filtreType, setFiltreType] = useState<'tous' | 'internes' | 'courtiers'>('tous')
-
-  const [form, setForm] = useState({
-    emailOrPhone: '',
-    role: 'courtier',
-  })
 
   async function chargerMembres() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/agences/${slug}/membres`)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
+      const res = await fetch(`/api/agences/${slug}/membres`, { headers })
       const data = await res.json()
       if (data.success) {
         setMembres(data.membres || [])
@@ -70,45 +56,21 @@ export default function EquipePage() {
     if (slug) chargerMembres()
   }, [slug])
 
-  async function handleInviterMembre(e: React.FormEvent) {
-    e.preventDefault()
-    setErrorMsg(null)
-    if (!form.emailOrPhone.trim()) return
-
-    try {
-      setSaving(true)
-      const res = await fetch(`/api/agences/${slug}/membres`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        setErrorMsg(data.error || "Erreur lors de l'invitation du collaborateur.")
-        return
-      }
-      setShowModal(false)
-      setForm({ emailOrPhone: '', role: 'courtier' })
-      setToastMsg('Collaborateur ou courtier ajouté avec succès à l’agence.')
-      chargerMembres()
-      setTimeout(() => setToastMsg(null), 4000)
-    } catch (err) {
-      console.error('[INVITE_MEMBRE_ERR]', err)
-      setErrorMsg('Erreur de connexion au serveur.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   async function handleSupprimerMembre(membreId: string) {
     if (!confirm('Êtes-vous sûr de vouloir retirer ce collaborateur de l’agence ?')) return
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
       const res = await fetch(`/api/agences/${slug}/membres/${membreId}`, {
         method: 'DELETE',
+        headers,
       })
       const data = await res.json()
       if (data.success) {
+        setToastMsg('Membre retiré de l’agence.')
         chargerMembres()
+        setTimeout(() => setToastMsg(null), 3000)
       }
     } catch (err) {
       console.error('[DELETE_MEMBRE_ERR]', err)
@@ -239,7 +201,7 @@ export default function EquipePage() {
             className="agence-btn-primary"
             style={{ margin: '0 auto' }}
           >
-            Inviter un courtier ou collaborateur
+            Ajouter un courtier ou collaborateur
           </button>
         </div>
       ) : (
@@ -249,7 +211,7 @@ export default function EquipePage() {
               <tr>
                 <th>Collaborateur / Courtier</th>
                 <th>Rôle / Privilèges</th>
-                <th>Contact</th>
+                <th>Coordonnées &amp; Cabinet</th>
                 <th>Date d'entrée</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
@@ -257,6 +219,7 @@ export default function EquipePage() {
             <tbody>
               {membresFiltres.map(m => {
                 const isCourtier = m.role === 'courtier'
+                const p = m.permissions || {}
                 return (
                   <tr key={m.id}>
                     <td>
@@ -264,8 +227,15 @@ export default function EquipePage() {
                         {m.utilisateur_prenom ? `${m.utilisateur_prenom} ${m.utilisateur_nom}` : m.utilisateur_nom}
                       </div>
                       {isCourtier && (
-                        <div style={{ fontSize: 11, color: '#0A5C36', fontWeight: 650 }}>
-                          Partenaire Financement &amp; Apporteur
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                          <span style={{ fontSize: 11, color: '#0A5C36', fontWeight: 700, background: '#DCFCE7', padding: '1px 6px', borderRadius: 4 }}>
+                            {p.partage_taux_commission ? `${p.partage_taux_commission}% com.` : 'Courtier Partenaire'}
+                          </span>
+                          {p.cabinet && (
+                            <span style={{ fontSize: 11, color: '#64748B' }}>
+                              {p.cabinet}
+                            </span>
+                          )}
                         </div>
                       )}
                     </td>
@@ -283,30 +253,55 @@ export default function EquipePage() {
                       >
                         {ROLES[m.role] || m.role}
                       </span>
+                      {p.specialite && (
+                        <div style={{ fontSize: 11, color: '#64748B', marginTop: 3, maxWidth: 200 }}>
+                          {p.specialite}
+                        </div>
+                      )}
                     </td>
                     <td>
-                      <div style={{ fontSize: 12.5, color: '#475569' }}>{m.utilisateur_email}</div>
-                      {m.utilisateur_tel && <div style={{ fontSize: 11.5, color: '#64748B' }}>{m.utilisateur_tel}</div>}
+                      <div style={{ fontSize: 12.5, color: '#475569' }}>{m.utilisateur_email || p.email || 'Non renseigné'}</div>
+                      {(m.utilisateur_tel || p.telephone) && (
+                        <div style={{ fontSize: 11.5, color: '#64748B' }}>{m.utilisateur_tel || p.telephone}</div>
+                      )}
                     </td>
                     <td>{m.date_entree ? new Date(m.date_entree).toLocaleDateString('fr-FR') : 'Fondateur'}</td>
                     <td style={{ textAlign: 'right' }}>
-                      {m.role !== 'admin_agence' && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                         <button
                           type="button"
-                          onClick={() => handleSupprimerMembre(m.id)}
+                          onClick={() => setMembreAEditer(m)}
                           style={{
                             padding: '6px',
                             borderRadius: 6,
-                            background: '#FEE2E2',
-                            color: '#991B1B',
-                            border: 'none',
+                            background: '#FAF8F5',
+                            border: '1px solid var(--border, #E8DDD2)',
+                            color: 'var(--navy, #1C2B4A)',
                             cursor: 'pointer',
                           }}
-                          title="Retirer de l'agence"
+                          title="Modifier les coordonnées &amp; commissions"
                         >
-                          <Trash2 size={14} />
+                          <Pencil size={14} />
                         </button>
-                      )}
+
+                        {m.role !== 'admin_agence' && (
+                          <button
+                            type="button"
+                            onClick={() => handleSupprimerMembre(m.id)}
+                            style={{
+                              padding: '6px',
+                              borderRadius: 6,
+                              background: '#FEE2E2',
+                              color: '#991B1B',
+                              border: 'none',
+                              cursor: 'pointer',
+                            }}
+                            title="Retirer de l'agence"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -316,89 +311,31 @@ export default function EquipePage() {
         </div>
       )}
 
-      {/* ── Modale Inviter Membre / Courtier ── */}
+      {/* ── Modale Ajouter Membre / Courtier ── */}
       {showModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(28, 43, 74, 0.5)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 16,
+        <ModalAjouterMembre
+          slug={slug}
+          onClose={() => setShowModal(false)}
+          onSuccess={(msg) => {
+            setToastMsg(msg)
+            chargerMembres()
+            setTimeout(() => setToastMsg(null), 4000)
           }}
-        >
-          <div style={{ background: '#FFFFFF', borderRadius: 14, maxWidth: 440, width: '100%', padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
-                Inviter un Collaborateur ou Courtier
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}
-              >
-                <X size={18} />
-              </button>
-            </div>
+        />
+      )}
 
-            {errorMsg && (
-              <div style={{ padding: '10px 14px', background: '#FEE2E2', color: '#991B1B', borderRadius: 8, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <AlertCircle size={16} />
-                {errorMsg}
-              </div>
-            )}
-
-            <form onSubmit={handleInviterMembre}>
-              <div className="form-group">
-                <label className="form-label">Email ou Téléphone du compte Nopalou *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="courtier@banque.sn ou 770000000"
-                  value={form.emailOrPhone}
-                  onChange={e => setForm({ ...form, emailOrPhone: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Rôle attribué dans l'agence *</label>
-                <select
-                  value={form.role}
-                  onChange={e => setForm({ ...form, role: e.target.value })}
-                  className="form-select"
-                >
-                  <option value="courtier">Courtier / Apporteur d'Affaires (Financement &amp; Partage)</option>
-                  <option value="agent">Agent Immobilier (Gestion Portefeuille)</option>
-                  <option value="gestionnaire_locatif">Gestionnaire Locatif (Baux &amp; Loyers)</option>
-                  <option value="commercial">Commercial (Prospects &amp; Visites)</option>
-                  <option value="directeur">Directeur Agence</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', background: '#FFF', color: '#64748B', fontWeight: 650, cursor: 'pointer' }}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="agence-btn-primary"
-                >
-                  {saving ? 'Envoi...' : 'Valider l’invitation'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* ── Modale Modifier Membre / Courtier ── */}
+      {membreAEditer && (
+        <ModalEditerMembre
+          slug={slug}
+          membre={membreAEditer}
+          onClose={() => setMembreAEditer(null)}
+          onSuccess={(msg) => {
+            setToastMsg(msg)
+            chargerMembres()
+            setTimeout(() => setToastMsg(null), 4000)
+          }}
+        />
       )}
     </div>
   )

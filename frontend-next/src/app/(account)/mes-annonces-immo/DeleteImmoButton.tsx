@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { Trash2 } from 'lucide-react'
 import { deleteAnnonceImmo } from '@/app/actions/immo'
 import { useTranslation } from '@/i18n/context'
 
@@ -25,22 +26,36 @@ export default function DeleteImmoButton({ id }: { id: string }) {
 
   if (confirming) {
     return (
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
         <button
+          type="button"
           onClick={handleDelete}
           disabled={pending}
           style={{
-            padding: '5px 12px', background: '#dc2626', color: '#fff',
-            border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600,
+            padding: '6px 12px',
+            background: '#DC2626',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: 8,
+            fontSize: 12,
+            cursor: pending ? 'wait' : 'pointer',
+            fontWeight: 700,
           }}
         >
           {pending ? '…' : t('common.confirm')}
         </button>
         <button
+          type="button"
           onClick={() => setConfirming(false)}
           style={{
-            padding: '5px 12px', background: 'transparent', color: 'var(--text2)',
-            border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+            padding: '6px 10px',
+            background: '#FFFFFF',
+            color: 'var(--navy, #1C2B4A)',
+            border: '1px solid var(--border, #E8DDD2)',
+            borderRadius: 8,
+            fontSize: 12,
+            cursor: 'pointer',
+            fontWeight: 600,
           }}
         >
           {t('common.cancel')}
@@ -51,14 +66,26 @@ export default function DeleteImmoButton({ id }: { id: string }) {
 
   return (
     <button
+      type="button"
       onClick={() => setConfirming(true)}
       style={{
-        padding: '5px 12px', background: 'transparent', color: '#dc2626',
-        border: '1px solid #fca5a5', borderRadius: 6, fontSize: 12,
-        cursor: 'pointer', marginTop: 8,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 5,
+        padding: '6px 12px',
+        background: '#FEE2E2',
+        color: '#991B1B',
+        border: '1px solid #FCA5A5',
+        borderRadius: 8,
+        fontSize: 12,
+        fontWeight: 700,
+        cursor: 'pointer',
+        transition: 'all 0.15s ease',
       }}
+      title="Supprimer cette annonce immobilière"
     >
-      {t('account.adActionDelete')}
+      <Trash2 size={13} />
+      <span>{t('account.adActionDelete')}</span>
     </button>
   )
 }

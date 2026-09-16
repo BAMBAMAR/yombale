@@ -35,6 +35,9 @@ interface AgenceData {
   slug: string
   ville: string
   statut: string
+  abonnement_plan?: string
+  sponsorise?: boolean
+  sponsor_jusqu_au?: string
 }
 
 export default function AgenceWorkspaceLayout({
@@ -126,6 +129,7 @@ export default function AgenceWorkspaceLayout({
     {
       titre: 'Organisation & Légal',
       items: [
+        { href: `/agence/${slug}/abonnement`, label: 'Abonnement & Sponsoring', icon: CreditCard },
         { href: `/agence/${slug}/equipe`, label: 'Équipe, Agents & Courtiers', icon: Users2 },
         { href: `/agence/${slug}/journal`, label: 'Journal d’Activité & Audit', icon: History },
         { href: `/agence/${slug}/fiscalite`, label: 'Fiscalité & Légal COCC', icon: ShieldAlert },
@@ -200,7 +204,24 @@ export default function AgenceWorkspaceLayout({
               >
                 {agence?.nom}
               </div>
-              <div style={{ fontSize: 11.5, color: '#64748B' }}>{agence?.ville || 'Dakar'}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                <span style={{ fontSize: 11, color: '#64748B' }}>{agence?.ville || 'Dakar'}</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    padding: '1px 6px',
+                    borderRadius: 10,
+                    background: agence?.sponsorise ? '#FEF3C7' : 'rgba(10, 92, 54, 0.1)',
+                    color: agence?.sponsorise ? '#92400E' : 'var(--price, #0A5C36)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                  }}
+                >
+                  {agence?.sponsorise ? '⭐ Vedette' : 'Essentiel'}
+                </span>
+              </div>
             </div>
           </div>
         </div>

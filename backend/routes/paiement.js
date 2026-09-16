@@ -107,6 +107,17 @@ async function appliquerPaiementReussi(reference, montant, methode) {
       );
     }
   }
+  // Sponsoring agence immobilière : ref = spimmo_agenceId_timestamp
+  if (ref && ref.startsWith('spimmo_')) {
+    const agenceId = ref.split('_')[1];
+    if (agenceId) {
+      const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      await pool.query(
+        "UPDATE agences_immo SET sponsorise=true, sponsor_jusqu_au=$1, updated_at=NOW() WHERE id=$2",
+        [until, agenceId]
+      );
+    }
+  }
   // Sponsoring produit : ref = prod_userId_produitId
   if (ref && ref.startsWith('prod_')) {
     const produitId = ref.split('_')[2];

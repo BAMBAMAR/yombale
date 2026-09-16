@@ -174,4 +174,133 @@ router.patch('/agence/:slugOrId/:factureId/encaisser', verifierToken, requireAge
   }
 });
 
+// ── PUT /api/factures-immo/agence/:slugOrId/:factureId — Modifier une facture d'honoraires ──
+router.put('/agence/:slugOrId/:factureId', verifierToken, requireAgenceAccess('agent'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { factureId } = req.params;
+    const {
+      client_nom,
+      client_tel,
+      client_email,
+      type_facture,
+      bien_id,
+      montant_ht,
+      taux_tva,
+      timbre_fiscal,
+      date_echeance,
+      mode_paiement,
+      statut,
+      notes,
+      lignes
+    } = req.body;
+
+    const { rows: existingRows } = await pool.query(
+      `SELECT * FROM factures_immo WHERE id = $1 AND agence_id = $2`,
+      [factureId, agenceId]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Facture introuvable' });
+    }
+
+    const current = existingRows[0];
+
+    const ht = montant_ht !== undefined ? parseFloat(montant_ht) : parseFloat(current.montant_ht || 0);
+    const tvaPct = taux_tva !== undefined ? parseFloat(taux_tva) : parseFloat(current.taux_tva || 0);
+    const montantTva = (ht * tvaPct) / 100;
+    const timbre = timbre_fiscal !== undefined ? parseFloat(timbre_fiscal) : parseFloat(current.timbre_fiscal || 0);
+    const ttc = ht + montantTva + timbre;
+
+    const { rows: updatedRows } = await pool.query(
+      `UPDATE factures_immo SET
+        client_nom = COALESCE($1, client_nom),
+        client_tel = COALESCE($2, client_tel),
+        client_email = COALESCE($3, client_email),
+        type_facture = COALESCE($4, type_facture),
+        bien_id = CASE WHEN $5::text = 'null' THEN NULL WHEN $5 IS NOT NULL THEN $5::uuid ELSE bien_id END,
+        montant_ht = $6,
+        taux_tva = $7,
+        montant_tva = $8,
+        timbre_fiscal = $9,
+        montant_ttc = $10,
+        date_echeance = COALESCE($11, date_echeance),
+        mode_paiement = COALESCE($12, mode_paiement),
+        statut = COALESCE($13, statut),
+        notes = COALESCE($14, notes),
+        lignes = COALESCE($15::jsonb, lignes),
+        updated_at = NOW()
+       WHERE id = $16 AND agence_id = $17
+       RETURNING *`,
+      [
+        client_nom ? client_nom.trim() : null,
+        client_tel !== undefined ? client_tel : null,
+        client_email !== undefined ? client_email : null,
+        type_facture || null,
+        bien_id !== undefined ? bien_id : null,
+        ht,
+        tvaPct,
+        montantTva,
+        timbre,
+        ttc,
+        date_echeance || null,
+        mode_paiement || null,
+        statut || null,
+        notes !== undefined ? notes : null,
+        lignes ? JSON.stringify(Array.isArray(lignes) ? lignes : []) : null,
+        factureId,
+        agenceId
+      ]
+    );
+
+    const fac = updatedRows[0];
+
+    // Audit log
+    await enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.id || req.user?.userId,
+      null,
+      'modification_facture_immo',
+      `Mise à jour de la facture ${fac.numero_facture} - Nouveau montant: ${fac.montant_ttc} FCFA (Statut: ${fac.statut})`,
+      { facture_id: fac.id, numero_facture: fac.numero_facture, montant_ttc: fac.montant_ttc, statut: fac.statut },
+      req
+    ).catch(() => {});
+
+    res.json({
+      success: true,
+      message: 'Facture mise à jour avec succès',
+      facture: fac
+    });
+  } catch (err) {
+    console.error('[PUT /api/factures-immo/agence/:slugOrId/:factureId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur mise à jour facture' });
+  }
+});
+
+// ── DELETE /api/factures-immo/agence/:slugOrId/:factureId — Supprimer ou annuler une facture ──
+router.delete('/agence/:slugOrId/:factureId', verifierToken, requireAgenceAccess('admin_agence'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { factureId } = req.params;
+
+    const { rows } = await pool.query(
+      `DELETE FROM factures_immo WHERE id = $1 AND agence_id = $2 RETURNING *`,
+      [factureId, agenceId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Facture introuvable' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Facture supprimée avec succès'
+    });
+  } catch (err) {
+    console.error('[DELETE /api/factures-immo/agence/:slugOrId/:factureId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur suppression facture' });
+  }
+});
+
 module.exports = router;
+

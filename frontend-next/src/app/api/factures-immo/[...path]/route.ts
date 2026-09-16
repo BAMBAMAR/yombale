@@ -8,8 +8,15 @@ async function forwardRequest(req: NextRequest, { params }: { params: { path?: s
   const search = req.nextUrl.search || ''
   const fullPath = `/api/factures-immo/${subPath}${search}`
 
+  const headers: Record<string, string> = {}
+  const clientAuth = req.headers.get('authorization')
+  if (clientAuth) {
+    headers['Authorization'] = clientAuth
+  }
+
   const options: RequestInit = {
     method: req.method,
+    headers,
   }
 
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
@@ -23,6 +30,28 @@ async function forwardRequest(req: NextRequest, { params }: { params: { path?: s
 
   try {
     const res = await backendFetch(fullPath, options)
+    const contentType = res.headers.get('content-type') || ''
+
+    if (
+      contentType.includes('application/pdf') ||
+      contentType.includes('text/csv') ||
+      contentType.includes('application/octet-stream') ||
+      contentType.includes('spreadsheet') ||
+      contentType.includes('vnd.ms-excel')
+    ) {
+      const arrayBuffer = await res.arrayBuffer()
+      const responseHeaders = new Headers()
+      responseHeaders.set('Content-Type', contentType)
+      const disposition = res.headers.get('content-disposition')
+      if (disposition) {
+        responseHeaders.set('Content-Disposition', disposition)
+      }
+      return new NextResponse(arrayBuffer, {
+        status: res.status,
+        headers: responseHeaders,
+      })
+    }
+
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (err) {

@@ -1832,13 +1832,20 @@ module.exports = async function migrateInline() {
         statut            VARCHAR(20) DEFAULT 'actif',
         abonnement_plan   VARCHAR(50) DEFAULT 'essentiel',
         abonnement_fin    TIMESTAMPTZ,
+        sponsorise        BOOLEAN DEFAULT FALSE,
+        sponsor_jusqu_au  TIMESTAMPTZ,
+        max_agences_override INT DEFAULT NULL,
         parametres        JSONB DEFAULT '{"taux_commission_vente_defaut": 5, "taux_commission_location_defaut": 10}'::jsonb,
         created_at        TIMESTAMPTZ DEFAULT NOW(),
         updated_at        TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE agences_immo ADD COLUMN IF NOT EXISTS sponsorise BOOLEAN DEFAULT FALSE;
+      ALTER TABLE agences_immo ADD COLUMN IF NOT EXISTS sponsor_jusqu_au TIMESTAMPTZ;
+      ALTER TABLE agences_immo ADD COLUMN IF NOT EXISTS max_agences_override INT DEFAULT NULL;
       CREATE INDEX IF NOT EXISTS idx_agences_immo_user   ON agences_immo(utilisateur_id);
       CREATE INDEX IF NOT EXISTS idx_agences_immo_statut ON agences_immo(statut);
       CREATE INDEX IF NOT EXISTS idx_agences_immo_slug   ON agences_immo(slug);
+      CREATE INDEX IF NOT EXISTS idx_agences_immo_sponsor ON agences_immo(sponsorise);
 
       -- 2. MEMBRES D'UNE AGENCE (RBAC)
       CREATE TABLE IF NOT EXISTS agence_membres (

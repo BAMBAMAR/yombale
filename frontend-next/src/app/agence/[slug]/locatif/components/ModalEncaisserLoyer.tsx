@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { X, DollarSign, Check, Loader2, FileText } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface LoyerEcheance {
   id: string
@@ -48,11 +49,9 @@ export default function ModalEncaisserLoyer({
     try {
       setSaving(true)
       setError(null)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = {
+      const headers = getImmoAuthHeaders({
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      }
+      })
 
       const res = await fetch(`/api/locatif-immo/agence/${slug}/loyers/${loyer.id}/encaisser`, {
         method: 'POST',

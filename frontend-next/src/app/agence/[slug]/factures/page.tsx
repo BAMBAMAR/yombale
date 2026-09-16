@@ -10,10 +10,12 @@ import {
   Check,
   Building2,
   Eye,
+  Pencil,
   ExternalLink
 } from 'lucide-react'
 import ModalCreerFactureImmo from './components/ModalCreerFactureImmo'
 import ModalApercuFactureImmo from './components/ModalApercuFactureImmo'
+import ModalEditerFactureImmo from './components/ModalEditerFactureImmo'
 import ExportCsvButton from '../../components/ExportCsvButton'
 
 interface FactureItem {
@@ -56,6 +58,7 @@ export default function AgenceFacturesPage() {
   // Modales
   const [showModalCreer, setShowModalCreer] = useState(false)
   const [selectedFacture, setSelectedFacture] = useState<FactureItem | null>(null)
+  const [factureAEditer, setFactureAEditer] = useState<FactureItem | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
 
   async function chargerDonnees() {
@@ -376,16 +379,31 @@ export default function AgenceFacturesPage() {
                         <Eye size={13} />
                       </button>
 
-                      <a
-                        href={`/api/agences/agence/${slug}/documents/facture/${fact.id}.pdf`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 6, background: '#F1F5F9', border: '1px solid #CBD5E1', color: 'var(--navy, #1C2B4A)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
-                        title="Télécharger la Facture PDF officielle"
+                      <button
+                        type="button"
+                        onClick={() => setFactureAEditer(fact)}
+                        style={{ padding: '5px 9px', borderRadius: 6, background: '#FAF8F5', border: '1px solid var(--border, #E8DDD2)', color: 'var(--navy, #1C2B4A)', cursor: 'pointer' }}
+                        title="Modifier la facture"
                       >
-                        <FileText size={13} />
-                        <span>PDF</span>
-                      </a>
+                        <Pencil size={13} />
+                      </button>
+
+                      {(() => {
+                        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+                        const pdfUrl = `/api/agences/agence/${slug}/documents/facture/${fact.id}.pdf${token ? `?token=${encodeURIComponent(token)}` : ''}`
+                        return (
+                          <a
+                            href={pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 6, background: '#F1F5F9', border: '1px solid #CBD5E1', color: 'var(--navy, #1C2B4A)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}
+                            title="Télécharger la Facture PDF officielle"
+                          >
+                            <FileText size={13} />
+                            <span>PDF</span>
+                          </a>
+                        )
+                      })()}
                     </div>
                   </td>
                 </tr>
@@ -401,6 +419,21 @@ export default function AgenceFacturesPage() {
           slug={slug}
           biens={biens}
           onClose={() => setShowModalCreer(false)}
+          onSuccess={(msg) => {
+            setToastMsg(msg)
+            chargerDonnees()
+            setTimeout(() => setToastMsg(null), 4000)
+          }}
+        />
+      )}
+
+      {/* ── Modale Modification Facture Immobilière ── */}
+      {factureAEditer && (
+        <ModalEditerFactureImmo
+          slug={slug}
+          facture={factureAEditer}
+          biens={biens}
+          onClose={() => setFactureAEditer(null)}
           onSuccess={(msg) => {
             setToastMsg(msg)
             chargerDonnees()

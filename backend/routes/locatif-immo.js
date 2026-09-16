@@ -284,6 +284,108 @@ router.post('/agence/:slugOrId/loyers/:loyerId/encaisser', verifierToken, requir
   }
 });
 
+// ── PUT /api/locatif-immo/agence/:slugOrId/loyers/:loyerId — Modifier une quittance / échéance de loyer ──
+router.put('/agence/:slugOrId/loyers/:loyerId', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { loyerId } = req.params;
+    const {
+      montant_du,
+      montant_paye,
+      date_echeance,
+      date_paiement,
+      mode_paiement,
+      reference_paiement,
+      statut,
+      notes
+    } = req.body;
+
+    const { rows: existingRows } = await pool.query(
+      `SELECT * FROM loyers_echeances WHERE id = $1 AND agence_id = $2`,
+      [loyerId, agenceId]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Échéance de loyer introuvable' });
+    }
+
+    const current = existingRows[0];
+
+    const du = montant_du !== undefined ? parseFloat(montant_du) : parseFloat(current.montant_du || 0);
+    const paye = montant_paye !== undefined ? parseFloat(montant_paye) : parseFloat(current.montant_paye || 0);
+    const restant = Math.max(0, du - paye);
+
+    let finalStatut = statut;
+    if (!finalStatut) {
+      if (restant === 0 && paye > 0) {
+        finalStatut = 'paye';
+      } else if (paye > 0 && restant > 0) {
+        finalStatut = 'partiel';
+      } else {
+        finalStatut = current.statut;
+      }
+    }
+
+    let finalQuittanceUrl = current.quittance_url;
+    if (paye > 0 && !finalQuittanceUrl) {
+      finalQuittanceUrl = `QUITTANCE-${current.periode}-${Date.now().toString(36).toUpperCase()}`;
+    }
+
+    const { rows: updatedRows } = await pool.query(
+      `UPDATE loyers_echeances SET
+        montant_du = $1,
+        montant_paye = $2,
+        montant_restant = $3,
+        date_echeance = COALESCE($4, date_echeance),
+        date_paiement = CASE WHEN $5::text = 'null' THEN NULL WHEN $5 IS NOT NULL THEN $5::date ELSE date_paiement END,
+        mode_paiement = COALESCE($6, mode_paiement),
+        reference_paiement = COALESCE($7, reference_paiement),
+        statut = $8,
+        quittance_url = $9,
+        notes = COALESCE($10, notes),
+        updated_at = NOW()
+       WHERE id = $11 AND agence_id = $12
+       RETURNING *`,
+      [
+        du,
+        paye,
+        restant,
+        date_echeance || null,
+        date_paiement !== undefined ? date_paiement : null,
+        mode_paiement || null,
+        reference_paiement !== undefined ? reference_paiement : null,
+        finalStatut,
+        finalQuittanceUrl,
+        notes !== undefined ? notes : null,
+        loyerId,
+        agenceId
+      ]
+    );
+
+    const loy = updatedRows[0];
+
+    // Audit log
+    enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.id,
+      null,
+      'modification_quittance_loyer',
+      `Modification de la quittance / échéance ${loy.periode} - Payé: ${loy.montant_paye} FCFA / Dû: ${loy.montant_du} FCFA (${loy.statut})`,
+      { loyer_id: loyerId, montant_paye: loy.montant_paye, statut: loy.statut },
+      req
+    );
+
+    res.json({
+      success: true,
+      message: 'Quittance et échéance de loyer mises à jour avec succès',
+      loyer: loy
+    });
+  } catch (err) {
+    console.error('[PUT /api/locatif-immo/agence/:slugOrId/loyers/:loyerId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur mise à jour de la quittance' });
+  }
+});
+
 // ── POST /api/locatif-immo/agence/:slugOrId/loyers/:loyerId/relance — Relance de paiement ──
 router.post('/agence/:slugOrId/loyers/:loyerId/relance', verifierToken, requireAgenceAccess(), async (req, res) => {
   try {

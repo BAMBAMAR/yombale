@@ -17,8 +17,11 @@ export default function ExportCsvButton({ slug, type, label }: ExportCsvButtonPr
       setDownloading(true)
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const urlWithToken = token
+        ? `/api/agences/agence/${slug}/export/${type}?token=${encodeURIComponent(token)}`
+        : `/api/agences/agence/${slug}/export/${type}`
 
-      const res = await fetch(`/api/agences/agence/${slug}/export/${type}`, {
+      const res = await fetch(urlWithToken, {
         headers,
       })
 

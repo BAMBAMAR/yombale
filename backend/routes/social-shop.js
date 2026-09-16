@@ -144,13 +144,17 @@ router.post(['/parse-batch', '/social/parse-batch'], limiterGeneral, async (req,
  */
 router.post(['/explore-profile', '/social/explore-profile'], limiterGeneral, async (req, res) => {
   try {
-    const { plateforme, username } = req.body;
-    if (!plateforme || !username) {
+    const { plateforme, platform, username } = req.body;
+    const plat = (plateforme || platform || '').trim().toLowerCase();
+    if (!plat || !username) {
       return res.status(400).json({ success: false, error: 'Plateforme et nom d\'utilisateur requis' });
     }
 
     const cleanUser = cleanUsername(username);
-    const exploration = await exploreProfile(plateforme.toLowerCase(), cleanUser);
+    if (!cleanUser) {
+      return res.status(400).json({ success: false, error: 'Nom d\'utilisateur ou lien de profil invalide' });
+    }
+    const exploration = await exploreProfile(plat, cleanUser);
 
     if (!exploration.success && (!exploration.posts || exploration.posts.length === 0)) {
       return res.status(400).json({ success: false, error: exploration.error || 'Impossible d\'explorer ce profil' });
@@ -1041,8 +1045,9 @@ router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/e
     const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
     if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
 
-    const { plateforme, username } = req.body;
-    if (!plateforme || !username) {
+    const { plateforme, platform, username } = req.body;
+    const plat = (plateforme || platform || '').trim().toLowerCase();
+    if (!plat || !username) {
       return res.status(400).json({ error: 'Plateforme et nom d\'utilisateur requis' });
     }
 

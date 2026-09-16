@@ -3,9 +3,13 @@
 
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
+
+const cfg = require('../lib/settingsCache');
 
 function slugify(text) {
   return String(text || '')
@@ -17,26 +21,123 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
+async function checkAgenceQuota(userId, telephoneInput = '', emailInput = '') {
+  const maxCompte = (await cfg.getNum('max_agences_par_compte')) || 1;
+  const maxTel = (await cfg.getNum('max_agences_par_telephone')) || 1;
+  const tarifMulti = (await cfg.getNum('tarif_agence_supplementaire')) || 15000;
+  const labelMulti = (await cfg.get('immo_multi_agence_label')) || 'Option Réseau Multi-Agences';
+
+  let userLimit = maxCompte;
+  try {
+    const userOverrideRes = await pool.query(
+      `SELECT max_agences_override FROM agences_immo WHERE utilisateur_id = $1 AND max_agences_override IS NOT NULL ORDER BY max_agences_override DESC LIMIT 1`,
+      [userId]
+    );
+    if (userOverrideRes.rows[0]?.max_agences_override != null) {
+      userLimit = Math.max(userLimit, parseInt(userOverrideRes.rows[0].max_agences_override, 10));
+    }
+  } catch (_) {}
+
+  try {
+    const aboRes = await pool.query(
+      `SELECT plan FROM abonnements WHERE utilisateur_id = $1 AND statut = 'actif' AND fin > NOW() AND plan IN ('business', 'multi_agence', 'reseau') LIMIT 1`,
+      [userId]
+    );
+    if (aboRes.rows.length > 0) {
+      userLimit = 10;
+    }
+  } catch (_) {}
+
+  const cntCompte = await pool.query(
+    `SELECT COUNT(*) FROM agences_immo WHERE utilisateur_id = $1`,
+    [userId]
+  );
+  const totalCreees = parseInt(cntCompte.rows[0].count, 10);
+
+  if (totalCreees >= userLimit) {
+    return {
+      allowed: false,
+      quotaMax: userLimit,
+      quotaUtilise: totalCreees,
+      tarifMulti,
+      labelMulti,
+      error: `Limite de ${userLimit} agence(s) atteinte pour votre compte. La création d'une agence supplémentaire requiert l'${labelMulti} (${tarifMulti.toLocaleString('fr-FR')} FCFA/mois). Veuillez contacter l'administration ou activer l'option multi-agences.`
+    };
+  }
+
+  const inputTelRaw = telephoneInput?.trim() || '';
+  const cleanTel = inputTelRaw.replace(/\D/g, '').slice(-9);
+  const userEmailRaw = (emailInput || '').trim().toLowerCase();
+
+  if (cleanTel || userEmailRaw) {
+    try {
+      const cntTel = await pool.query(
+        `SELECT COUNT(DISTINCT a.id)
+         FROM agences_immo a
+         JOIN utilisateurs u ON a.utilisateur_id = u.id
+         WHERE (
+           ($1::text != '' AND (
+             RIGHT(REGEXP_REPLACE(COALESCE(u.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+             OR
+             RIGHT(REGEXP_REPLACE(COALESCE(a.telephone, ''), '[^0-9]', '', 'g'), 9) = $1
+           ))
+           OR
+           ($2::text != '' AND LOWER(COALESCE(u.email, '')) = $2)
+         )`,
+        [cleanTel, userEmailRaw]
+      );
+      const totalTrouvees = parseInt(cntTel.rows[0].count, 10);
+      if (totalTrouvees >= maxTel && userLimit <= maxCompte) {
+        return {
+          allowed: false,
+          quotaMax: userLimit,
+          quotaUtilise: totalTrouvees,
+          tarifMulti,
+          labelMulti,
+          error: `Limite atteinte : ${totalTrouvees} agence(s) sont déjà enregistrées avec ce numéro de téléphone ou e-mail. La création d'une nouvelle agence requiert l'${labelMulti} (${tarifMulti.toLocaleString('fr-FR')} FCFA/mois).`
+        };
+      }
+    } catch (_) {}
+  }
+
+  return {
+    allowed: true,
+    quotaMax: userLimit,
+    quotaUtilise: totalCreees,
+    tarifMulti,
+    labelMulti
+  };
+}
+
 // ── GET /api/agences/mine — Liste des agences de l'utilisateur connecté ──
 router.get('/mine', verifierToken, async (req, res) => {
   try {
     const userId = req.user.userId;
+    const quotaInfo = await checkAgenceQuota(userId);
     const { rows } = await pool.query(
       `SELECT a.*, 
               COALESCE(am.role, 'admin_agence') AS mon_role,
               (a.utilisateur_id = $1) AS is_owner,
+              (a.sponsorise = true AND (a.sponsor_jusqu_au IS NULL OR a.sponsor_jusqu_au > NOW())) AS est_sponsorise_actif,
               (SELECT COUNT(*) FROM biens_immo b WHERE b.agence_id = a.id AND b.statut = 'actif') AS nb_biens,
               (SELECT COUNT(*) FROM contacts_immo c WHERE c.agence_id = a.id AND c.type_contact = 'prospect' AND c.statut_crm NOT IN ('gagne', 'perdu')) AS nb_prospects_actifs
        FROM agences_immo a
        LEFT JOIN agence_membres am ON a.id = am.agence_id AND am.utilisateur_id = $1 AND am.actif = true
        WHERE a.utilisateur_id = $1 OR am.id IS NOT NULL
-       ORDER BY a.created_at DESC`,
+       ORDER BY (a.sponsorise = true AND (a.sponsor_jusqu_au IS NULL OR a.sponsor_jusqu_au > NOW())) DESC, a.created_at DESC`,
       [userId]
     );
 
     res.json({
       success: true,
-      agences: rows
+      agences: rows,
+      quotas: {
+        max_agences: quotaInfo.quotaMax,
+        agences_creees: quotaInfo.quotaUtilise,
+        peut_creer: quotaInfo.allowed,
+        tarif_multi_agence: quotaInfo.tarifMulti,
+        label_multi_agence: quotaInfo.labelMulti
+      }
     });
   } catch (err) {
     console.error('[GET /api/agences/mine]', err.message);
@@ -65,6 +166,17 @@ router.post('/', verifierToken, async (req, res) => {
 
     if (!nom || nom.trim().length < 2) {
       return res.status(400).json({ success: false, error: "Le nom de l'agence est requis (min 2 caractères)." });
+    }
+
+    // Contrôle strict des quotas (1 agence max par défaut)
+    const userRes = await pool.query('SELECT email, telephone FROM utilisateurs WHERE id=$1', [userId]);
+    const currentUser = userRes.rows[0] || {};
+    const inputTelRaw = telephone?.trim() || currentUser.telephone?.trim() || '';
+    const userEmailRaw = (email_contact || currentUser.email || '').trim().toLowerCase();
+
+    const quotaCheck = await checkAgenceQuota(userId, inputTelRaw, userEmailRaw);
+    if (!quotaCheck.allowed) {
+      return res.status(400).json({ success: false, error: quotaCheck.error, quotas: quotaCheck });
     }
 
     let baseSlug = slugify(nom);
@@ -132,6 +244,8 @@ router.get('/public', async (req, res) => {
       SELECT a.id, a.nom, a.slug, a.description, a.logo_url, a.adresse, a.ville, a.quartier,
              a.telephone, a.whatsapp, a.email_contact, a.site_web, a.numero_agrement,
              a.parametres, a.statut, a.created_at,
+             a.sponsorise, a.sponsor_jusqu_au,
+             (a.sponsorise = true AND (a.sponsor_jusqu_au IS NULL OR a.sponsor_jusqu_au > NOW())) AS est_sponsorise_actif,
              (SELECT COUNT(*) FROM biens_immo b WHERE b.agence_id = a.id AND b.statut = 'actif' AND b.statut_occupation = 'disponible') AS nb_biens_disponibles
       FROM agences_immo a
       WHERE a.statut = 'actif'
@@ -149,7 +263,7 @@ router.get('/public', async (req, res) => {
       pIdx++;
     }
 
-    query += ` ORDER BY nb_biens_disponibles DESC, a.created_at DESC`;
+    query += ` ORDER BY (a.sponsorise = true AND (a.sponsor_jusqu_au IS NULL OR a.sponsor_jusqu_au > NOW())) DESC, nb_biens_disponibles DESC, a.created_at DESC`;
 
     const { rows } = await pool.query(query, params);
 
@@ -262,6 +376,66 @@ router.put('/:slugOrId', verifierToken, requireAgenceAccess('admin_agence'), asy
   } catch (err) {
     console.error('[PUT /api/agences/:slugOrId]', err.message);
     res.status(500).json({ success: false, error: "Erreur mise à jour de l'agence" });
+  }
+});
+
+// ── POST /api/agences/:slugOrId/sponsoring — Initier la mise en avant (Sponsoring Wave 30 jours) ──
+router.post('/:slugOrId/sponsoring', verifierToken, requireAgenceAccess('admin_agence'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const wave = require('../services/wave');
+    const montant = (await cfg.getNum('prix_sponsoring_agence')) || (await cfg.getNum('prix_sponsoring')) || 5000;
+    const clientRef = `spimmo_${agenceId}_${Date.now()}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+
+    const session = await wave.createCheckoutSession({
+      amount: montant,
+      currency: 'XOF',
+      success_url: `${frontendUrl}/agence/${req.agence.slug}/abonnement?sponsoring=success`,
+      error_url: `${frontendUrl}/agence/${req.agence.slug}/abonnement?sponsoring=error`,
+      client_reference: clientRef,
+    });
+
+    res.json({
+      success: true,
+      wave_url: session.wave_url,
+      session_id: session.session_id,
+      montant,
+      duree_jours: 30
+    });
+  } catch (err) {
+    console.error('[SPONSORING_AGENCE_ERR]', err.message);
+    res.json({
+      success: false,
+      fallback_manuel: true,
+      error: err.message || "Erreur initialisation Wave",
+      numero_depot: '777202086',
+      reference: `spimmo_${req.agence.id}`,
+      montant: 5000
+    });
+  }
+});
+
+// ── POST /api/agences/:slugOrId/activer-sponsoring-direct — Activation directe sponsoring (30 jours) ──
+router.post('/:slugOrId/activer-sponsoring-direct', verifierToken, requireAgenceAccess('admin_agence'), async (req, res) => {
+  try {
+    const { duree_jours = 30 } = req.body;
+    const agenceId = req.agence.id;
+    const until = new Date(Date.now() + Number(duree_jours) * 24 * 60 * 60 * 1000).toISOString();
+
+    const { rows } = await pool.query(
+      `UPDATE agences_immo SET sponsorise = true, sponsor_jusqu_au = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [until, agenceId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Mise en avant activée avec succès',
+      agence: rows[0]
+    });
+  } catch (err) {
+    console.error('[ACTIVER_SPONSORING_DIRECT_ERR]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur activation du sponsoring' });
   }
 });
 
@@ -390,31 +564,81 @@ router.get('/:slugOrId/membres', verifierToken, requireAgenceAccess(), async (re
   }
 });
 
-// ── POST /api/agences/:slugOrId/membres — Ajouter un membre ──
+// ── POST /api/agences/:slugOrId/membres — Ajouter un collaborateur ou courtier partenaire ──
 router.post('/:slugOrId/membres', verifierToken, requireAgenceAccess('admin_agence'), async (req, res) => {
   try {
     const agenceId = req.agence.id;
-    const { emailOrPhone, role = 'agent', permissions = {} } = req.body;
+    const {
+      emailOrPhone,
+      email,
+      telephone,
+      nom,
+      prenom,
+      role = 'courtier',
+      permissions = {},
+      cabinet,
+      specialite,
+      partage_taux_commission,
+      commission_taux,
+    } = req.body;
 
-    if (!emailOrPhone) {
-      return res.status(400).json({ success: false, error: "Email ou numéro de téléphone requis." });
+    const identifier = (email || telephone || emailOrPhone || '').trim();
+    if (!identifier && !nom) {
+      return res.status(400).json({ success: false, error: "Identifiant (email, téléphone ou nom) requis." });
     }
 
-    // Trouver l'utilisateur
-    const { rows: userRows } = await pool.query(
-      `SELECT id, nom, prenom, email, telephone FROM utilisateurs 
-       WHERE LOWER(email) = LOWER($1) OR telephone = $1`,
-      [emailOrPhone.trim()]
-    );
+    const searchEmail = (email || (identifier.includes('@') ? identifier : '')).trim();
+    const searchTel = (telephone || (!identifier.includes('@') ? identifier : '')).trim();
 
-    if (userRows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: "Aucun compte Nopalou trouvé avec cet email ou téléphone. Invitez l'utilisateur à créer un compte."
-      });
+    // 1. Chercher si l'utilisateur existe déjà
+    let targetUser = null;
+    if (searchEmail || searchTel) {
+      const { rows: userRows } = await pool.query(
+        `SELECT id, nom, prenom, email, telephone FROM utilisateurs 
+         WHERE (LOWER(email) = LOWER($1) AND $1 <> '') OR (telephone = $2 AND $2 <> '')`,
+        [searchEmail, searchTel]
+      );
+      if (userRows.length > 0) {
+        targetUser = userRows[0];
+      }
     }
 
-    const targetUser = userRows[0];
+    // 2. Si non trouvé, créer le compte automatiquement (invitation directe)
+    if (!targetUser) {
+      const userNom = (nom || (searchEmail ? searchEmail.split('@')[0] : 'Partenaire')).trim();
+      const userPrenom = (prenom || '').trim();
+      const finalEmail = searchEmail || `contact_${Date.now()}@agence.nopalou.sn`;
+      const finalTel = searchTel || null;
+
+      const randomPass = crypto.randomBytes(16).toString('hex');
+      const hash = await bcrypt.hash(randomPass, 10);
+
+      const { rows: newUserRows } = await pool.query(
+        `INSERT INTO utilisateurs (nom, prenom, email, telephone, mot_de_passe_hash, est_apporteur, email_verifie)
+         VALUES ($1, $2, $3, $4, $5, $6, true)
+         RETURNING id, nom, prenom, email, telephone`,
+        [userNom, userPrenom, finalEmail, finalTel, hash, role === 'courtier']
+      );
+      targetUser = newUserRows[0];
+    } else if (nom || prenom) {
+      // Optionnel : enrichir nom/prenom si manquants
+      await pool.query(
+        `UPDATE utilisateurs SET 
+          nom = COALESCE($1, nom),
+          prenom = COALESCE($2, prenom)
+         WHERE id = $3 AND (prenom IS NULL OR prenom = '')`,
+        [nom ? nom.trim() : null, prenom ? prenom.trim() : null, targetUser.id]
+      );
+    }
+
+    const mergedPerms = {
+      ...permissions,
+      cabinet: cabinet || permissions.cabinet || '',
+      specialite: specialite || permissions.specialite || '',
+      partage_taux_commission: Number(commission_taux ?? partage_taux_commission ?? permissions.partage_taux_commission ?? (role === 'courtier' ? 15 : 0)),
+      telephone: searchTel || targetUser.telephone || '',
+      email: searchEmail || targetUser.email || '',
+    };
 
     const { rows: newMembre } = await pool.query(
       `INSERT INTO agence_membres (agence_id, utilisateur_id, role, permissions, actif)
@@ -422,22 +646,99 @@ router.post('/:slugOrId/membres', verifierToken, requireAgenceAccess('admin_agen
        ON CONFLICT (agence_id, utilisateur_id) 
        DO UPDATE SET role = EXCLUDED.role, permissions = EXCLUDED.permissions, actif = true
        RETURNING *`,
-      [agenceId, targetUser.id, role, JSON.stringify(permissions)]
+      [agenceId, targetUser.id, role, JSON.stringify(mergedPerms)]
     );
 
     res.status(201).json({
       success: true,
-      message: 'Collaborateur ajouté à l’agence avec succès',
+      message: role === 'courtier' ? 'Courtier partenaire enregistré avec succès' : 'Collaborateur ajouté avec succès',
       membre: {
         ...newMembre[0],
         utilisateur_nom: targetUser.nom,
+        utilisateur_prenom: targetUser.prenom,
         utilisateur_email: targetUser.email,
         utilisateur_tel: targetUser.telephone
       }
     });
   } catch (err) {
     console.error('[POST /api/agences/:slugOrId/membres]', err.message);
-    res.status(500).json({ success: false, error: "Erreur lors de l'ajout du membre" });
+    res.status(500).json({ success: false, error: "Erreur lors de l'enregistrement du collaborateur ou courtier" });
+  }
+});
+
+// ── PUT /api/agences/:slugOrId/membres/:membreId — Mettre à jour un collaborateur ou courtier ──
+router.put('/:slugOrId/membres/:membreId', verifierToken, requireAgenceAccess('admin_agence'), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { membreId } = req.params;
+    const {
+      role,
+      nom,
+      prenom,
+      telephone,
+      email,
+      cabinet,
+      specialite,
+      partage_taux_commission,
+      commission_taux,
+      permissions = {},
+      actif
+    } = req.body;
+
+    const { rows: existingRows } = await pool.query(
+      `SELECT am.*, u.id AS uid, u.nom, u.prenom, u.email, u.telephone
+       FROM agence_membres am
+       JOIN utilisateurs u ON am.utilisateur_id = u.id
+       WHERE am.id = $1 AND am.agence_id = $2`,
+      [membreId, agenceId]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Membre introuvable' });
+    }
+
+    const current = existingRows[0];
+    const currentPerms = current.permissions || {};
+
+    const updatedPerms = {
+      ...currentPerms,
+      ...permissions,
+      ...(cabinet !== undefined ? { cabinet } : {}),
+      ...(specialite !== undefined ? { specialite } : {}),
+      ...(commission_taux !== undefined || partage_taux_commission !== undefined
+        ? { partage_taux_commission: Number(commission_taux ?? partage_taux_commission) }
+        : {}),
+    };
+
+    const { rows: updatedMembre } = await pool.query(
+      `UPDATE agence_membres SET
+        role = COALESCE($1, role),
+        permissions = $2,
+        actif = COALESCE($3, actif)
+       WHERE id = $4 AND agence_id = $5
+       RETURNING *`,
+      [role || null, JSON.stringify(updatedPerms), actif !== undefined ? actif : null, membreId, agenceId]
+    );
+
+    if (nom || prenom || telephone) {
+      await pool.query(
+        `UPDATE utilisateurs SET
+          nom = COALESCE($1, nom),
+          prenom = COALESCE($2, prenom),
+          telephone = COALESCE($3, telephone)
+         WHERE id = $4`,
+        [nom ? nom.trim() : null, prenom ? prenom.trim() : null, telephone ? telephone.trim() : null, current.uid]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'Collaborateur / courtier mis à jour avec succès',
+      membre: updatedMembre[0]
+    });
+  } catch (err) {
+    console.error('[PUT /api/agences/:slugOrId/membres/:membreId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur mise à jour membre' });
   }
 });
 
