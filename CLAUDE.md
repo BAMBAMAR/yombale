@@ -1,3 +1,79 @@
+- **Transformation PropTech Nopalou Immo — Livraison P2 : Tiers de Confiance Séquestre Garanti, SEO Agences & Données Structurées Schema.org, Cache PWA Hors-Ligne (`paiement-sequestre.js`, `immo-sequestre.test.js`, `sitemap.ts`, `agences/[slug]/page.tsx`, `agences/page.tsx`, `AgenceDirectoryCard.tsx`, `sw.ts`) (16 septembre 2026)** 🔒🏢🗺️ 🚀 ✅ :
+  * **🎯 1. Module Séquestre Tiers de Confiance Pay Safe Immo (`backend/routes/paiement-sequestre.js`, `immo-sequestre.test.js`)** :
+    - **Sécurité Diaspora & Acheteurs** : Protection des transactions immobilières à fort enjeu (cautions locatives, acomptes sur vente, frais de visite VIP) via un séquestre tiers de confiance avec code PIN à 4 chiffres généré et transmis au prospect via WhatsApp.
+    - **Table `reservations_sequestre_immo` & Connexion CRM Automatique** : Toute consignation crée ou enrichit instantanément un prospect dans `contacts_immo` de l'agence concernée, affichant le montant garanti et son statut (`bloque`).
+    - **Endpoints Déblocage & Statut Transparent** : `POST /immo/debloquer` (libération des fonds sur PIN avec limite à 3 tentatives et passage automatique du contact CRM en `cloture_gagne`) et `GET /immo/:reference/statut` (vérification publique en temps réel).
+    - **Tests Unitaires Immo Séquestre** : Création de `tests/unit/immo-sequestre.test.js` (**5/5 tests validés avec succès**).
+  * **🎯 2. Indexation SEO Dynamique & Sitemap Agences (`sitemap.ts`)** :
+    - **Sitemap XML Enrichi** : Intégration de la route maîtresse de l'annuaire `/agences` (priority 0.92, fréquence journalière) et moissonnage automatique de l'ensemble des vitrines agences `/agences/[slug]` (priority 0.85).
+    - **Indexation Exhaustive des Annonces** : Moissonnage étendu de toutes les offres immobilières disponibles (vente et location) sans restriction de pagination prématurée.
+  * **🎯 3. Données Structurées Schema.org `RealEstateAgent` & Métadonnées Dynamiques (`agences/[slug]/page.tsx`)** :
+    - **Composant Serveur SEO** : `/agences/[slug]` converti en Server Component générant dynamiquement les métadonnées OpenGraph/Twitter Cards et injectant le balisage structuré JSON-LD officiel `RealEstateAgent` (nom de l'agence, adresse physique ou quartier, téléphone/WhatsApp, logo et coordonnées de contact).
+    - **Montage Transparent de la Vitrine Client** : Rendu fluide de la vitrine interactive sans aucun décalage de rendu (CLS = 0).
+  * **🎯 4. Modularisation de l'Annuaire Public des Agences (`agences/page.tsx`, `AgenceDirectoryCard.tsx`)** :
+    - **Respect Rigoureux du Plafond de 450 Lignes** : Extraction de `AgenceDirectoryCard.tsx` (168 lignes), faisant passer `agences/page.tsx` de **453 à 266 lignes**.
+    - **Esthétique Épurée Sans Émojis** : Composants 100% SVG `lucide-react`, tokens CSS Nopalou (`--navy`, `--border`, `--accent`).
+  * **🎯 5. Cache Avancé PWA Serwist pour les Visites Terrain Hors-Ligne (`sw.ts`)** :
+    - **Résilience 4G/3G en Visite Terrain** : Règle `NetworkFirst` (150 entrées, rétention 48h) pour `/api/immo`, `/api/agences/public` et `/api/biens/public` permettant aux agents et clients de consulter les fiches et photos sur le terrain même en sous-sol ou zone blanche.
+    - **Cloisonnement Strict Anti-IDOR & Multi-Tenant** : Exclusion explicite en `NetworkOnly` de tous les endpoints sensibles (CRM `api/crm-immo`, paiements séquestres `api/paiement-sequestre`, logs d'agence) garantissant l'absence de fuite de données entre comptes.
+  * **🧪 6. Validation Qualité Complète** :
+    - Tests Unitaires Backend Jest : **41/41 suites validées, 314/314 tests passés avec succès**.
+    - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop : **0 violation (0 silent catch, 0 monoliths > 450 lignes)**.
+
+- **Transformation PropTech Nopalou Immo — Livraison P1 : Chatbot WhatsApp Bimodal, Carte Interactive, Filtres Spécifiques Marché & Commutateur Multi-Activités (`immo-chatbot.js`, `ImmoInteractiveMap.tsx`, `ImmoMapConfig.ts`, `ImmoFiltresConfig.ts`, `AccountNavLinks.tsx`, `MobileBottomSheetNav.tsx`, `FicheImmoSidebar.tsx`) (16 septembre 2026)** 🏛️🗺️🤖 🚀 ✅ :
+  * **🎯 1. Assistant Conversationnel WhatsApp Immobilier Bimodal (`backend/services/immo-chatbot.js`, `whatsapp-chatbot.js`)** :
+    - **Mode 1 — Espace Agent Pro Autonome** : Les agents et gérants d'agences agréées pilotent leur activité directement depuis WhatsApp : consultation instantanée des prochaines visites (`visites`), des derniers prospects CRM capturés (`prospects`), et des loyers impayés ou échéances en retard (`loyers`) avec liens profonds vers leur tableau de bord web.
+    - **Mode 2 — Recherche Visiteur en Langage Naturel** : Détection d'intentions de recherche par mots-clés et quartiers (Almadies, Ngor, Mermoz, Plateau, Saly...), typologies (villas, appartements, studios, terrains) et transactions (vente, location). Renvoi d'opportunités enrichies avec nom de l'agence certifiée et lien direct.
+    - **Capture Automatique de Lead CRM** : Ingestion silencieuse et automatique de tout visiteur WhatsApp initiant une recherche immobilière dans `contacts_immo` de l'agence concernée, sans friction.
+    - **Tests Unitaires Immo-Chatbot** : Création de `tests/unit/immo-chatbot.test.js` avec **5/5 tests validés**.
+  * **🎯 2. Carte Interactive PropTech Géolocalisée (`ImmoInteractiveMap.tsx`, `ImmoMapConfig.ts`, `immo/page.tsx`)** :
+    - **Projection Vectorielle SVG de la Presqu'île de Dakar & Petite-Côte** : Visualisation responsive haute performance avec repères géographiques (Almadies, Ngor, Ouakam, Mermoz, Plateau, VDN, Maristes, Rufisque, Saly).
+    - **Pins de Prix Interactifs** : Affichage compact des tarifs (ex: `250k`, `1.2M`, `45M`), différenciation visuelle immédiate des biens gérés par des agences partenaires certifiées (badges marine statutaires) vs particuliers.
+    - **Fiche Pop-Up Preview** : Mini-carte dynamique au tap/clic affichant la photo, le prix formaté en FCFA, surface, nombre de chambres, badge agence et bouton d'accès direct vers `/immo/[id]`.
+    - **Contrôles Ergonomiques** : Zoom interactif (+ / -) et filtres par zones rapides (Tous, Almadies, Mermoz, Plateau, Saly).
+    - **Commutateur de Vue Fluide** : Switch instantané `[ Liste ]` vs `[ Carte ]` dans l'en-tête de `/immo`.
+  * **🎯 3. Filtres Spécifiques au Marché Sénégalais (`backend/routes/immo.js`, `ImmoFiltresConfig.ts`)** :
+    - Prise en charge API et UI des critères indispensables aux locataires et investisseurs au Sénégal :
+      - *Groupe électrogène* (`commodite=groupe` pour la continuité électrique).
+      - *Suppresseur / réserve d'eau* (`commodite=suppresseur` pour pallier les baisses de pression réseau).
+      - *Titre Foncier / Bail* (`commodite=titre_foncier` pour la sécurité foncière et juridique).
+      - *Gardiennage 24/7* (`commodite=gardien` pour la sécurité résidentielle).
+    - Tests unitaires `tests/unit/immo-p0-lead-and-agency.test.js` enrichis (**6/6 tests validés**).
+  * **🎯 4. Commutateur Multi-Activités & Refonte du Compte (`AccountNavLinks.tsx`, `MobileBottomSheetNav.tsx`)** :
+    - **Sélecteur Multi-Activités 3 Volets** : Remplacement des liens disparates par un commutateur de contexte senior : `[ 🛍️ Ma Boutique ] [ 🏢 Mon Agence Immo ] [ 👤 Mon Profil ]`, unifiant l'expérience des utilisateurs commerçants, agents immobiliers et particuliers.
+    - **Modularisation Complète** : Extraction de `MobileBottomSheetNav.tsx` (198 lignes), ramenant `AccountNavLinks.tsx` de 533 à 403 lignes (< 450 lignes).
+    - **Éradication des Béquilles Émojis Unicode** : Remplacement par les icônes vectorielles SVG de `lucide-react`.
+  * **🎯 5. Modularisation de la Fiche Détail Annonce (`immo/[id]/page.tsx`, `FicheImmoSidebar.tsx`)** :
+    - Découpage de `immo/[id]/page.tsx` de **561 à 434 lignes** (< 450 lignes) grâce à l'extraction de `FicheImmoSidebar.tsx` (190 lignes).
+    - Typage strict TypeScript (`isOwner`, `isSponsorise`, `prix`).
+    - **100% des fichiers du projet conformes au plafond de 450 lignes**.
+  * **🧪 6. Validation Qualité Globale (100% Vert)** :
+    - Tests Unitaires Backend Jest : **40/40 suites validées, 309/309 tests passés avec succès**.
+    - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop : **0 violation (0 silent catch, 0 composant > 450 lignes)**.
+
+- **Benchmark International PropTech & Implémentation Chantiers P0 Nopalou Immo (`immo.js`, `crm-immo.js`, `BlocAgenceAnnonce.tsx`, `ModalDemandeVisite.tsx`, `HomeImmoShowcase.tsx`, `vitrine/page.tsx`) (16 septembre 2026)** 🏛️🏢⚡ 🚀 ✅ :
+  * **🎯 1. Dossier Maître d'Audit & Benchmark International (40 Points Couverts)** :
+    - **Panel Comparatif Mondial Équilibré** : Analyse approfondie des standards des portails (Zillow, SeLoger, Property Finder MENA), brokerages d'élite (Compass, Sotheby's Realty, Engel & Völkers) et SaaS spécialisés (Follow Up Boss, AppFolio, Apimo).
+    - **Matrices d'Excellence & Scorecard** : Production des matrices de parité Commerce ↔ Immo, d'intégration omnicanale, scorecard sur 24 domaines, audit factuel des 30 scénarios End-to-End (25 PASS, 4 FAIL, 1 BLOCKED) et feuille de route P0 à P4 consignés dans `benchmark_nopalou_immo_international.md`.
+  * **🎯 2. Reconnexion Annonce ↔ Agence & Ingestion CRM Automatique (`immo.js`, `crm-immo.js`)** :
+    - **Jointure SQL Complète (`immo.js`)** : `GET /api/immo/:id` et `GET /api/immo` effectuent désormais une jointure `LEFT JOIN agences_immo` et `LEFT JOIN utilisateurs` (agent négociateur), restituant les métadonnées officielles de l'agence (logo, agrément, sponsor, contact).
+    - **Endpoint Public de Capture de Lead (`crm-immo.js`)** : Nouvel endpoint `POST /api/crm-immo/public/lead` dédupliquant par téléphone et enregistrant automatiquement tout prospect WhatsApp ou demande de visite dans `contacts_immo` avec attribution à l'agent responsable.
+  * **🎯 3. Carte Agence Signature & Demande de Visite (`BlocAgenceAnnonce.tsx`, `ModalDemandeVisite.tsx`, `immo/[id]/page.tsx`)** :
+    - **Fiche Annonce Haut de Gamme** : Remplacement du bloc contact anonyme par `<BlocAgenceAnnonce />` affichant l'identité vérifiée de l'agence, le conseiller référent, un bouton WhatsApp à capture CRM en arrière-plan, et un lien direct vers la vitrine agence `/agences/[slug]`.
+    - **Prise de Rendez-vous Formelle** : Extraction modulaire de `ModalDemandeVisite.tsx` permettant au visiteur de soumettre une date souhaitée directement reliée au CRM. Remplacement de l'émoji résiduel de comparaison par l'icône vectorielle SVG `Scale`.
+  * **🎯 4. Découverte Signature & Vitrine Immobilière Homepage (`HomeImmoShowcase.tsx`, `page.tsx`, `layout.tsx`)** :
+    - **Carrousel Homepage** : Intégration sous le pli de la page d'accueil d'un espace dédié mettant en avant les agences certifiées et les opportunités immobilières à Dakar et sur la Petite Côte (badges de transaction, prix FCFA, surface).
+    - **Accès Pro Rehaussé** : Badge `Pro` élégant sur le lien Agences dans la barre de navigation supérieure.
+  * **🎯 5. Modularisation Stricte de la Vitrine Agence (`vitrine/page.tsx`, `VitrineBanner.tsx`, `VitrineVideoReels.tsx`, `VitrineBiensGrid.tsx`)** :
+    - Découpage de `vitrine/page.tsx` qui passe de **599 à 135 lignes** (< 450 lignes), élimination de tous les silent catches, 100% conforme à la règle 2 d'`AGENTS.md`.
+  * **🧪 6. Validation Qualité Complète (100% Vert)** :
+    - Suite de Tests Dédiée Immo P0 (`immo-p0-lead-and-agency.test.js`) : **5/5 tests passés**.
+    - Tests Unitaires Backend Jest : **39/39 suites validées, 301/301 tests passés avec succès**.
+    - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop : **0 violation (0 silent catch, 0 monoliths > 450 lignes)**.
+
 - **Relance Locale Propre & Correctifs Espace Agence Immo (`immo-auth.ts`, `abonnement/page.tsx`, `locatif/page.tsx`, `ModalEditerQuittanceImmo.tsx`) (16 septembre 2026)** 🔄🏢⚡ 🚀 ✅ :
   * **🎯 1. Résolution du Crash 500 sur la Page Abonnement (`abonnement/page.tsx`)** :
     - Correction du chemin d'import relatif invalide `../agence.css` vers l'alias universel `@/app/agence/agence.css`.

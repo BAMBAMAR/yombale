@@ -3,28 +3,9 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ShoppingBag, Building2, User, ChevronRight } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
-import { logout } from '@/app/actions/auth'
-
-interface NavLinkItem {
-  href: string
-  label: string
-  emoji: string
-  tab?: string
-  badgeText?: string
-  badgeBg?: string
-  badgeColor?: string
-  isCta?: boolean
-  isShop?: boolean
-  external?: boolean
-}
-
-interface NavGroup {
-  id: string
-  title: string
-  icon: string
-  items: NavLinkItem[]
-}
+import MobileBottomSheetNav, { type NavGroup, type NavLinkItem } from './MobileBottomSheetNav'
 
 export default function AccountNavLinks({ overrideTab }: { overrideTab?: string }) {
   const pathname = usePathname()
@@ -34,32 +15,28 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
     {
       id: 'vue-dashboard',
       title: 'Mon Espace',
-      icon: '',
       items: [
-        { href: '/compte', label: 'Tableau de bord', emoji: '', tab: 'accueil' },
+        { href: '/compte', label: 'Tableau de bord', tab: 'accueil' },
       ],
     },
     {
       id: 'annonces-achats',
       title: t('account.groupAdsPurchases'),
-      icon: '',
       items: [
-        { href: '/compte?tab=suivi-commande',    label: t('account.navTrackOrder'),     emoji: '', tab: 'suivi-commande' },
-        { href: '/compte?tab=mes-annonces',      label: t('account.navMyAds'),          emoji: '', tab: 'mes-annonces' },
-        { href: '/compte?tab=mes-annonces-immo', label: t('account.navMyRealEstate'),   emoji: '', tab: 'mes-annonces-immo' },
-        { href: '/compte?tab=mes-alertes',       label: t('account.navPriceAlerts'),    emoji: '', tab: 'mes-alertes' },
-        { href: '/compte?tab=favoris',           label: t('account.navFavorites'),      emoji: '♥',  tab: 'favoris' },
+        { href: '/compte?tab=suivi-commande',    label: t('account.navTrackOrder'),     tab: 'suivi-commande' },
+        { href: '/compte?tab=mes-annonces',      label: t('account.navMyAds'),          tab: 'mes-annonces' },
+        { href: '/compte?tab=mes-annonces-immo', label: t('account.navMyRealEstate'),   tab: 'mes-annonces-immo' },
+        { href: '/compte?tab=mes-alertes',       label: t('account.navPriceAlerts'),    tab: 'mes-alertes' },
+        { href: '/compte?tab=favoris',           label: t('account.navFavorites'),      tab: 'favoris' },
       ],
     },
     {
       id: 'boutique-caisse',
       title: 'Activités & Agences',
-      icon: '',
       items: [
         {
           href: '/boutique',
           label: t('account.navMyShop'),
-          emoji: '',
           isShop: true,
           badgeText: t('account.manageShopBadge'),
           badgeBg: 'var(--accent, #C75B00)',
@@ -68,7 +45,6 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
         {
           href: '/agence',
           label: 'Mes agences immo',
-          emoji: '',
           badgeText: 'Pro',
           badgeBg: 'var(--navy, #1C2B4A)',
           badgeColor: '#ffffff',
@@ -76,7 +52,6 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
         {
           href: '/boutique/caisse',
           label: t('caisse.posTitle') || 'Caisse POS',
-          emoji: '',
           badgeText: 'POS',
           badgeBg: '#16a34a',
           badgeColor: '#ffffff',
@@ -86,30 +61,26 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
     {
       id: 'compte-parrainage',
       title: t('account.groupAccount'),
-      icon: '',
       items: [
-        { href: '/compte?tab=profil',         label: t('account.navMyProfile'),      emoji: '', tab: 'profil' },
+        { href: '/compte?tab=profil',         label: t('account.navMyProfile'), tab: 'profil' },
         {
           href: '/compte?tab=apporteur',
           label: t('account.navBusinessPartner'),
-          emoji: '🤝',
           tab: 'apporteur',
           badgeText: '20%',
           badgeBg: '#FFEDD5',
           badgeColor: '#9A3412',
         },
-        { href: '/compte?tab=fonctionnalites', label: t('account.navFeaturesPlans'), emoji: '📖', tab: 'fonctionnalites' },
+        { href: '/compte?tab=fonctionnalites', label: t('account.navFeaturesPlans'), tab: 'fonctionnalites' },
       ],
     },
     {
       id: 'actions-publier',
       title: 'Publier & Déposer',
-      icon: '',
       items: [
         {
           href: '/deposer-annonce',
           label: t('account.navPublishAd'),
-          emoji: '',
           isCta: true,
           badgeText: t('common.new'),
           badgeBg: '#DCFCE7',
@@ -118,7 +89,6 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
         {
           href: '/deposer-immo',
           label: t('account.navPublishRealEstate'),
-          emoji: '',
           isCta: true,
           badgeText: t('common.new'),
           badgeBg: '#E0F2FE',
@@ -136,9 +106,6 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
     'compte-parrainage': true,
     'actions-publier': true,
   })
-
-  // État onglet actif Mobile (Niveau 1)
-  const [mobileGroupIdx, setMobileGroupIdx] = useState(0)
 
   function toggleGroup(id: string) {
     setExpandedGroups(prev => ({
@@ -160,19 +127,105 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
     return pathname === lien.href || pathname.startsWith(lien.href + '/')
   }
 
-  // Déplier automatiquement le groupe Desktop et activer le groupe Mobile correspondant
+  // Déplier automatiquement le groupe Desktop correspondant
   useEffect(() => {
-    groupes.forEach((group, idx) => {
+    groupes.forEach(group => {
       const hasActive = group.items.some(item => isItemActive(item))
       if (hasActive) {
         setExpandedGroups(prev => ({ ...prev, [group.id]: true }))
-        setMobileGroupIdx(idx)
       }
     })
   }, [pathname, overrideTab])
 
   return (
     <nav aria-label={t('account.navTitle')} style={{ width: '100%' }}>
+      {/* ── Multi-Activity Context Switcher (Boutique / Agence Immo / Espace Perso) ── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 6,
+          padding: 4,
+          background: '#FAF8F5',
+          borderRadius: 12,
+          marginBottom: 14,
+          border: '1.5px solid var(--border, #E8DDD2)',
+        }}
+      >
+        <Link
+          href="/boutique"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+            padding: '8px 4px',
+            borderRadius: 8,
+            fontSize: 11,
+            fontWeight: 800,
+            textDecoration: 'none',
+            background: pathname.startsWith('/boutique') ? 'var(--accent, #C75B00)' : '#FFFFFF',
+            color: pathname.startsWith('/boutique') ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            border: pathname.startsWith('/boutique') ? '1px solid transparent' : '1px solid var(--border, #E8DDD2)',
+            textAlign: 'center',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <ShoppingBag size={14} />
+          <span>Boutique</span>
+        </Link>
+        <Link
+          href="/agence"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+            padding: '8px 4px',
+            borderRadius: 8,
+            fontSize: 11,
+            fontWeight: 800,
+            textDecoration: 'none',
+            background: pathname.startsWith('/agence') ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+            color: pathname.startsWith('/agence') ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            border: pathname.startsWith('/agence') ? '1px solid transparent' : '1px solid var(--border, #E8DDD2)',
+            textAlign: 'center',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <Building2 size={14} />
+          <span>Agence Immo</span>
+        </Link>
+        <Link
+          href="/compte"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+            padding: '8px 4px',
+            borderRadius: 8,
+            fontSize: 11,
+            fontWeight: 800,
+            textDecoration: 'none',
+            background: pathname === '/compte' && !pathname.startsWith('/boutique') && !pathname.startsWith('/agence') ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
+            color: pathname === '/compte' && !pathname.startsWith('/boutique') && !pathname.startsWith('/agence') ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            border: pathname === '/compte' && !pathname.startsWith('/boutique') && !pathname.startsWith('/agence') ? '1px solid transparent' : '1px solid var(--border, #E8DDD2)',
+            textAlign: 'center',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <User size={14} />
+          <span>Mon Profil</span>
+        </Link>
+      </div>
+
       {/* ── 1. AFFICHAGE DESKTOP (Accordéons soignés) ── */}
       <div className="account-nav-desktop">
         {groupes.map(group => {
@@ -209,7 +262,6 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                  <span style={{ fontSize: 14, flexShrink: 0 }}>{group.icon}</span>
                   <span
                     style={{
                       fontSize: 11.5,
@@ -297,7 +349,6 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
                         className={`account-nav-link${actif ? ' account-nav-link--active' : ''}`}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: 15, flexShrink: 0 }}>{item.emoji}</span>
                           <span
                             style={{
                               whiteSpace: 'nowrap',
@@ -336,11 +387,9 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
       </div>
 
       {/* ── 2. AFFICHAGE MOBILE (Bottom-Sheet compact + tiroir) ── */}
-      <div className="account-nav-mobile">
-        {/* Ancien 2 niveaux masqué par CSS, remplacé par mobile-nav-compact */}
-      </div>
+      <div className="account-nav-mobile" />
 
-      {/* ── Bottom-Sheet Mobile Navigation ── */}
+      {/* Bottom-Sheet Mobile Navigation */}
       <MobileBottomSheetNav
         groupes={groupes}
         isItemActive={isItemActive}
@@ -349,184 +398,5 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
         variant="account"
       />
     </nav>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   COMPOSANT BOTTOM-SHEET — Navigation mobile unifiée
-   ════════════════════════════════════════════════════════════════ */
-
-function MobileBottomSheetNav({
-  groupes,
-  isItemActive,
-  backHref,
-  sheetTitle,
-  variant,
-}: {
-  groupes: NavGroup[]
-  isItemActive: (item: NavLinkItem) => boolean
-  backHref?: string
-  sheetTitle: string
-  variant: 'account' | 'boutique'
-}) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isClosing, setIsClosing] = useState(false)
-
-  // Trouver l'item actif pour la barre compacte
-  const activeItem = groupes.flatMap(g => g.items).find(item => isItemActive(item))
-  const currentIcon = activeItem?.emoji || ''
-  const currentLabel = activeItem?.label || 'Tableau de bord'
-
-  function openSheet() {
-    setIsOpen(true)
-    setIsClosing(false)
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = 'hidden'
-    }
-  }
-
-  function closeSheet() {
-    setIsClosing(true)
-    setTimeout(() => {
-      setIsOpen(false)
-      setIsClosing(false)
-      if (typeof document !== 'undefined') {
-        document.body.style.overflow = ''
-      }
-    }, 200)
-  }
-
-  useEffect(() => {
-    return () => {
-      if (typeof document !== 'undefined') {
-        document.body.style.overflow = ''
-      }
-    }
-  }, [])
-
-  return (
-    <div className={`mobile-nav-compact mobile-nav-compact--${variant}`}>
-      {/* Barre compacte */}
-      <div className="mobile-nav-compact-bar">
-        {backHref && (
-          <Link href={backHref} className="mobile-nav-compact-back" aria-label="Retour">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-          </Link>
-        )}
-
-        <button
-          type="button"
-          className="mobile-nav-compact-dropdown"
-          onClick={openSheet}
-          aria-label={`Menu compte: ${currentLabel}`}
-          aria-haspopup="true"
-          aria-expanded={isOpen}
-        >
-          <div className="mobile-nav-compact-dropdown-content">
-            <span className="mobile-nav-compact-current-icon">{currentIcon}</span>
-            <span className="mobile-nav-compact-current-label">{currentLabel}</span>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mobile-nav-compact-chevron">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Bottom Sheet */}
-      {isOpen && (
-        <>
-          <div className="mobile-bs-overlay" onClick={closeSheet} aria-hidden="true" />
-          <div className={`mobile-bs-panel${isClosing ? ' mobile-bs-panel--closing' : ''}`}>
-            <div className="mobile-bs-handle">
-              <div className="mobile-bs-handle-bar" />
-            </div>
-
-            <div className="mobile-bs-header">
-              <span className="mobile-bs-title">{sheetTitle}</span>
-              <button type="button" className="mobile-bs-close" onClick={closeSheet} aria-label="Fermer">
-                ✕
-              </button>
-            </div>
-
-            <div className="mobile-bs-body">
-              {groupes.map((group, gIdx) => {
-                const hasActive = group.items.some(item => isItemActive(item))
-                return (
-                  <div key={group.id} className={`mobile-bs-group${hasActive ? ' mobile-bs-group--active' : ''}`}>
-                    <div className="mobile-bs-group-title">
-                      <span className="mobile-bs-group-title-icon">{group.icon}</span>
-                      <span>{group.title}</span>
-                    </div>
-                    <div className="mobile-bs-group-items">
-                      {group.items.map(item => {
-                        const actif = isItemActive(item)
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`mobile-bs-item${actif ? ' mobile-bs-item--active' : ''}`}
-                            onClick={closeSheet}
-                          >
-                            <span className="mobile-bs-item-icon">{item.emoji}</span>
-                            <span className="mobile-bs-item-label">{item.label}</span>
-                            {item.badgeText && (
-                              <span
-                                className="mobile-bs-item-badge mobile-bs-item-badge--brand"
-                                style={{ background: item.badgeBg, color: item.badgeColor }}
-                              >
-                                {item.badgeText}
-                              </span>
-                            )}
-                          </Link>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="mobile-bs-footer" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', gap: 6, width: '100%' }}>
-                <Link
-                  href="/guide-utilisation"
-                  target="_blank"
-                  className="mobile-bs-footer-link"
-                  style={{ flex: 1, background: '#FFF7ED', color: '#C75B00', border: '1px solid #FFEDD5', justifyContent: 'center' }}
-                  onClick={closeSheet}
-                >
-                  <span>📖</span>
-                  <span>Guide</span>
-                </Link>
-                <Link
-                  href="/boutique"
-                  className="mobile-bs-footer-link"
-                  style={{ flex: 1, background: '#F1F5F9', color: 'var(--navy, #1C2B4A)', border: '1px solid #E2E8F0', justifyContent: 'center' }}
-                  onClick={closeSheet}
-                >
-                  <span></span>
-                  <span>Boutique</span>
-                </Link>
-              </div>
-
-              <form action={logout} style={{ width: '100%', margin: 0 }}>
-                <button
-                  type="submit"
-                  className="mobile-bs-footer-link"
-                  style={{ width: '100%', boxSizing: 'border-box', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FEE2E2', justifyContent: 'center', fontWeight: 800, cursor: 'pointer' }}
-                  onClick={closeSheet}
-                >
-                  <span>🚪</span>
-                  <span>Se déconnecter</span>
-                </button>
-              </form>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
   )
 }

@@ -21,6 +21,9 @@ export interface AnnonceImmo {
   source: string | null
   sponsorisee: boolean
   created_at: string
+  agence_nom?: string | null
+  agence_slug?: string | null
+  agence_logo_url?: string | null
 }
 
 export const TYPE_ICONS: Record<string, string> = {
@@ -28,10 +31,10 @@ export const TYPE_ICONS: Record<string, string> = {
   appartement_meuble: '',
   villa:              '',
   maison:             '',
-  studio:             '🛏',
-  chambre:            '🛏',
-  chambre_meuble:     '🛏',
-  terrain:            '🌿',
+  studio:             '',
+  chambre:            '',
+  chambre_meuble:     '',
+  terrain:            '',
   bureau:             '',
 }
 

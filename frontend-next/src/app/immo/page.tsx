@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { Building2 } from 'lucide-react'
+import { Building2, List, MapPin } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ImmoClientWrapper from './ImmoClientWrapper'
 import ImmoQuartierInput from './ImmoQuartierInput'
 import ImmoCard, { type AnnonceImmo, TYPE_ICONS } from './ImmoCard'
+import ImmoInteractiveMap from './ImmoInteractiveMap'
 import PageHeader from '@/components/PageHeader'
 import FiltresBar from '@/components/FiltresBar'
 import SeoCard from '@/components/SeoCard'
@@ -38,59 +39,16 @@ interface ImmoResponse {
   pages: number
 }
 
-const TYPE_BIEN = [
-  { val: '',            label: 'Tous types' },
-  { val: 'appartement', label: 'Appartement' },
-  { val: 'villa',       label: 'Villa' },
-  { val: 'maison',      label: 'Maison' },
-  { val: 'studio',      label: 'Studio' },
-  { val: 'terrain',     label: 'Terrain' },
-  { val: 'bureau',      label: 'Bureau' },
-]
-
-const TRIS = [
-  { val: 'recent',       label: 'Récent' },
-  { val: 'prix_asc',     label: 'Prix ↑' },
-  { val: 'prix_desc',    label: 'Prix ↓' },
-  { val: 'surface_desc', label: 'Surface ↓' },
-]
-
-const PRIX_MAX_LOCATION = [
-  { label: '< 100k',     val: '100000'  },
-  { label: '< 250k',     val: '250000'  },
-  { label: '< 500k',     val: '500000'  },
-  { label: '< 1M',       val: '1000000' },
-]
-
-const PRIX_MAX_VENTE = [
-  { label: '< 20M',  val: '20000000'  },
-  { label: '< 50M',  val: '50000000'  },
-  { label: '< 100M', val: '100000000' },
-  { label: '< 200M', val: '200000000' },
-]
-
-const SURFACE_MIN = [
-  { label: '20 m²',  val: '20'  },
-  { label: '40 m²',  val: '40'  },
-  { label: '60 m²',  val: '60'  },
-  { label: '100 m²', val: '100' },
-]
-
-const NB_PIECES = [
-  { label: '1+', val: '1' },
-  { label: '2+', val: '2' },
-  { label: '3+', val: '3' },
-  { label: '4+', val: '4' },
-]
-
-const NB_CHAMBRES = [
-  { label: '1+', val: '1' },
-  { label: '2+', val: '2' },
-  { label: '3+', val: '3' },
-  { label: '4+', val: '4' },
-]
-
-const VILLES_SN = ['Dakar', 'Pikine', 'Guédiawaye', 'Rufisque', 'Thiès', 'Mbour', 'Saint-Louis', 'Ziguinchor', 'Kaolack', 'Touba']
+import {
+  TYPE_BIEN,
+  TRIS,
+  PRIX_MAX_LOCATION,
+  PRIX_MAX_VENTE,
+  SURFACE_MIN,
+  NB_PIECES,
+  NB_CHAMBRES,
+  VILLES_SN,
+} from './ImmoFiltresConfig'
 
 export default async function ImmoPage({
   searchParams,
@@ -106,6 +64,8 @@ export default async function ImmoPage({
     nbPieces?: string
     nbChambres?: string
     meuble?: string
+    commodite?: string
+    vue?: string
     page?: string
   }> | {
     transaction?: string
@@ -118,6 +78,8 @@ export default async function ImmoPage({
     nbPieces?: string
     nbChambres?: string
     meuble?: string
+    commodite?: string
+    vue?: string
     page?: string
   }
 }) {
@@ -132,6 +94,8 @@ export default async function ImmoPage({
   const nbPieces    = sp?.nbPieces    ?? ''
   const nbChambres  = sp?.nbChambres  ?? ''
   const meuble      = sp?.meuble      ?? ''
+  const commodite   = sp?.commodite   ?? ''
+  const vue         = sp?.vue         ?? 'liste'
   const page        = sp?.page        ?? '1'
 
   const qs = new URLSearchParams()
@@ -147,6 +111,7 @@ export default async function ImmoPage({
   if (nbPieces)    qs.set('nbPieces', nbPieces)
   if (nbChambres)  qs.set('nbChambres', nbChambres)
   if (meuble)      qs.set('meuble', meuble)
+  if (commodite)   qs.set('commodite', commodite)
 
   let data: ImmoResponse = { annonces: [], total: 0, page: 1, pages: 1 }
 
@@ -171,6 +136,8 @@ export default async function ImmoPage({
     if (nbPieces)   p.set('nbPieces', nbPieces)
     if (nbChambres) p.set('nbChambres', nbChambres)
     if (meuble)     p.set('meuble', meuble)
+    if (commodite)  p.set('commodite', commodite)
+    if (vue && vue !== 'liste') p.set('vue', vue)
     Object.entries(params).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)))
     return `/immo?${p.toString()}`
   }
@@ -189,6 +156,58 @@ export default async function ImmoPage({
             : 'Trouvez votre bien idéal'}
         />
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Commutateur Vue Liste / Carte */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              background: '#FFFFFF',
+              border: '1px solid var(--border, #E8DDD2)',
+              borderRadius: 8,
+              padding: 3,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Link
+              href={buildLink({ vue: 'liste' })}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 6,
+                fontSize: 12.5,
+                fontWeight: 750,
+                textDecoration: 'none',
+                background: vue !== 'carte' ? 'var(--navy, #1C2B4A)' : 'transparent',
+                color: vue !== 'carte' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <List size={14} />
+              <span>Liste</span>
+            </Link>
+            <Link
+              href={buildLink({ vue: 'carte' })}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 6,
+                fontSize: 12.5,
+                fontWeight: 750,
+                textDecoration: 'none',
+                background: vue === 'carte' ? 'var(--accent, #C75B00)' : 'transparent',
+                color: vue === 'carte' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <MapPin size={14} />
+              <span>Carte</span>
+            </Link>
+          </div>
+
           <Link
             href="/agences"
             style={{
@@ -294,6 +313,30 @@ export default async function ImmoPage({
             href: buildLink({ meuble: meuble === 'true' ? '' : 'true', page: '1' }),
             active: meuble === 'true',
           },
+          {
+            key: 'comm-groupe',
+            label: 'Groupe électrogène',
+            href: buildLink({ commodite: commodite === 'groupe' ? '' : 'groupe', page: '1' }),
+            active: commodite === 'groupe',
+          },
+          {
+            key: 'comm-suppresseur',
+            label: 'Suppresseur eau',
+            href: buildLink({ commodite: commodite === 'suppresseur' ? '' : 'suppresseur', page: '1' }),
+            active: commodite === 'suppresseur',
+          },
+          {
+            key: 'comm-titre',
+            label: 'Titre Foncier / Bail',
+            href: buildLink({ commodite: commodite === 'titre_foncier' ? '' : 'titre_foncier', page: '1' }),
+            active: commodite === 'titre_foncier',
+          },
+          {
+            key: 'comm-gardien',
+            label: 'Gardiennage 24/7',
+            href: buildLink({ commodite: commodite === 'gardien' ? '' : 'gardien', page: '1' }),
+            active: commodite === 'gardien',
+          },
         ]}
         tri={TRIS.map(t => ({
           key: t.val,
@@ -303,7 +346,7 @@ export default async function ImmoPage({
         }))}
       />
 
-      {/* Quartier — champ texte, garde son propre input, affiché sous la barre de pills */}
+      {/* Quartier — champ texte avec autocomplétion */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, marginBottom: 20 }}>
         <span className="filtres-label">Quartier</span>
         <Suspense fallback={<span className="immo-quartier-input" style={{display:'inline-block',width:220}}>…</span>}>
@@ -311,10 +354,13 @@ export default async function ImmoPage({
         </Suspense>
       </div>
 
+      {/* Vue Carte Interactive si activée */}
+      {vue === 'carte' && <ImmoInteractiveMap annonces={annonces} />}
+
       {/* Grille annonces */}
       {annonces.length === 0 ? (
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>🏘</span>
+          <Building2 size={44} style={{ color: 'var(--accent, #C75B00)', margin: '0 auto 12px' }} />
           <p>Aucune annonce trouvée pour ces critères.</p>
           <Link href="/immo" className="budget-pill active" style={{ marginTop: 8 }}>
             Voir toutes les annonces
@@ -349,7 +395,7 @@ export default async function ImmoPage({
         titre="Pourquoi chercher votre bien immobilier sur Nopalou ?"
         blurbs={[
           {
-            emoji: '🏘',
+            emoji: '',
             text: (
               <>
                 Nopalou regroupe les annonces immobilières publiées directement par les propriétaires et agences,
@@ -361,8 +407,8 @@ export default async function ImmoPage({
             emoji: '',
             text: (
               <>
-                Location ou vente, appartement, villa, studio ou terrain — filtrez par budget, ville et surface pour trouver
-                le bien qui correspond exactement à votre recherche, partout à <strong>Dakar</strong> et dans les grandes villes du Sénégal.
+                Location ou vente, appartement, villa, studio ou terrain — filtrez par budget, ville et commodités (groupe, suppresseur, titre foncier)
+                pour trouver le bien qui correspond exactement à votre recherche, partout à <strong>Dakar</strong> et dans les régions.
               </>
             ),
           },
@@ -372,9 +418,9 @@ export default async function ImmoPage({
             label: 'Recherches populaires',
             chips: [
               { href: '/immo/location-appartement-dakar', emoji: '', label: 'Location appartement Dakar' },
-              { href: '/immo/location-chambre-dakar', emoji: '🛏️', label: 'Chambre à louer Dakar' },
+              { href: '/immo/location-chambre-dakar', emoji: '', label: 'Chambre à louer Dakar' },
               { href: '/immo/location-studio-dakar', emoji: '', label: 'Studio à louer Dakar' },
-              { href: '/immo/vente-terrain-dakar', emoji: '🗺️', label: 'Terrain à vendre Dakar' },
+              { href: '/immo/vente-terrain-dakar', emoji: '', label: 'Terrain à vendre Dakar' },
               { href: '/immo/vente-maison-dakar', emoji: '', label: 'Maison à vendre Dakar' },
             ],
           },

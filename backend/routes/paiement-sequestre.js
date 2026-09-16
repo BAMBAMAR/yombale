@@ -33,6 +33,27 @@ async function migrerColonnesSequestre() {
       ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS sequestre_pin_sel VARCHAR(32);
       ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS sequestre_essais_restants INT DEFAULT 3;
       ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS sequestre_date_deblocage TIMESTAMPTZ;
+
+      CREATE TABLE IF NOT EXISTS reservations_sequestre_immo (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        reference VARCHAR(50) UNIQUE NOT NULL,
+        bien_id INT,
+        agence_id UUID,
+        prospect_nom VARCHAR(120) NOT NULL,
+        prospect_telephone VARCHAR(30) NOT NULL,
+        prospect_email VARCHAR(120),
+        type_reservation VARCHAR(40) NOT NULL DEFAULT 'caution_location',
+        montant NUMERIC(14, 2) NOT NULL,
+        statut_sequestre VARCHAR(30) NOT NULL DEFAULT 'bloque',
+        sequestre_pin_hash VARCHAR(64),
+        sequestre_pin_sel VARCHAR(32),
+        sequestre_essais_restants INT DEFAULT 3,
+        sequestre_date_deblocage TIMESTAMPTZ,
+        notes TEXT,
+        contact_crm_id UUID,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
     colsMigrated = true;
   } catch (e) {
@@ -232,8 +253,319 @@ router.get('/:reference/statut', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[SEQUESTRE STATUT ERR]:', err);
+    console.error('[SEQUESTRE STATUT ERR]:', err.message);
     res.status(500).json({ error: 'Erreur récupération statut séquestre' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// ── MODULE SÉQUESTRE IMMOBILIER (PropTech Tiers de Confiance) ──
+// ══════════════════════════════════════════════════════════════
+
+// ── POST /api/paiement-sequestre/immo/reserver — Consignation séquestre immobilière
+router.post('/immo/reserver', async (req, res) => {
+  try {
+    await migrerColonnesSequestre();
+    const {
+      bienId,
+      agenceId,
+      prospectNom,
+      prospectTelephone,
+      prospectEmail,
+      typeReservation = 'caution_location', // 'caution_location', 'acompte_vente', 'frais_visite_vip'
+      montant,
+      notes
+    } = req.body;
+
+    const montantNum = parseFloat(montant);
+    if (!montantNum || montantNum <= 0) {
+      return res.status(400).json({ success: false, error: 'Montant de consignation invalide.' });
+    }
+
+    if (!prospectNom || !prospectTelephone) {
+      return res.status(400).json({ success: false, error: 'Nom et téléphone du prospect obligatoires.' });
+    }
+
+    // Référence unique
+    const randSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
+    const reference = `NOP-IMM-${Date.now().toString(36).toUpperCase()}-${randSuffix}`;
+
+    const pin = genererCodePin();
+    const sel = crypto.randomBytes(8).toString('hex');
+    const hashedPin = hashPin(pin, sel);
+
+    // Résoudre l'agence si bienId fourni
+    let resolvedAgenceId = agenceId || null;
+    let bienTitre = null;
+
+    if (bienId) {
+      try {
+        const bRes = await pool.query(
+          `SELECT b.titre, b.agence_id, a.nom AS agence_nom
+           FROM biens_immo b
+           LEFT JOIN agences_immo a ON b.agence_id = a.id
+           WHERE b.id = $1`,
+          [bienId]
+        );
+        if (bRes.rows.length) {
+          bienTitre = bRes.rows[0].titre;
+          if (!resolvedAgenceId) resolvedAgenceId = bRes.rows[0].agence_id;
+        }
+      } catch (eBien) {
+        console.warn('[SEQUESTRE IMMO RESOLVE BIEN]:', eBien.message);
+      }
+    }
+
+    // Si agenceId fourni sous forme de slug, résoudre son UUID
+    if (resolvedAgenceId && typeof resolvedAgenceId === 'string' && resolvedAgenceId.length !== 36) {
+      try {
+        const agRes = await pool.query('SELECT id FROM agences_immo WHERE slug = $1 LIMIT 1', [resolvedAgenceId]);
+        if (agRes.rows.length) resolvedAgenceId = agRes.rows[0].id;
+      } catch (eAg) {
+        console.warn('[SEQUESTRE IMMO RESOLVE SLUG]:', eAg.message);
+      }
+    }
+
+    // Créer ou rattacher le lead dans contacts_immo si agenceId valide
+    let contactCrmId = null;
+    if (resolvedAgenceId) {
+      try {
+        const cleanTel = String(prospectTelephone).replace(/\D/g, '');
+        const { rows: existCrm } = await pool.query(
+          `SELECT id FROM contacts_immo
+           WHERE agence_id = $1 AND (REPLACE(telephone, ' ', '') LIKE '%' || $2 OR REPLACE(whatsapp, ' ', '') LIKE '%' || $2)
+           LIMIT 1`,
+          [resolvedAgenceId, cleanTel.slice(-8)]
+        );
+
+        const noteSequestre = `\n[${new Date().toLocaleDateString('fr-FR')} - Séquestre Nopalou Pay Safe] Réservation ${reference} de ${new Intl.NumberFormat('fr-FR').format(montantNum)} FCFA (${typeReservation}). Statut: BLOQUÉ.`;
+
+        if (existCrm.length > 0) {
+          contactCrmId = existCrm[0].id;
+          await pool.query(
+            `UPDATE contacts_immo
+             SET notes = COALESCE(notes, '') || $1,
+                 budget_max = GREATEST(COALESCE(budget_max, 0), $2),
+                 updated_at = NOW()
+             WHERE id = $3`,
+            [noteSequestre, montantNum, contactCrmId]
+          );
+        } else {
+          const { rows: newCrm } = await pool.query(
+            `INSERT INTO contacts_immo (
+              agence_id, nom, prenom, telephone, whatsapp, email, type_contact,
+              statut_crm, budget_max, notes
+            ) VALUES ($1, $2, '', $3, $3, $4, 'prospect', 'contacte', $5, $6)
+            RETURNING id`,
+            [resolvedAgenceId, prospectNom, prospectTelephone, prospectEmail || null, montantNum, noteSequestre]
+          );
+          if (newCrm.length > 0) contactCrmId = newCrm[0].id;
+        }
+      } catch (eCrm) {
+        console.warn('[SEQUESTRE CRM SYNC ERR]:', eCrm.message);
+      }
+    }
+
+    // Insérer dans reservations_sequestre_immo
+    const { rows: resRows } = await pool.query(
+      `INSERT INTO reservations_sequestre_immo (
+        reference, bien_id, agence_id, prospect_nom, prospect_telephone, prospect_email,
+        type_reservation, montant, statut_sequestre, sequestre_pin_hash, sequestre_pin_sel,
+        sequestre_essais_restants, notes, contact_crm_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'bloque', $9, $10, 3, $11, $12)
+      RETURNING id, reference, montant, statut_sequestre, type_reservation, created_at`,
+      [
+        reference,
+        bienId || null,
+        resolvedAgenceId,
+        prospectNom,
+        prospectTelephone,
+        prospectEmail || null,
+        typeReservation,
+        montantNum,
+        hashedPin,
+        sel,
+        notes || null,
+        contactCrmId
+      ]
+    );
+
+    const reservation = resRows[0];
+
+    // Notification WhatsApp au prospect avec le code PIN
+    const telProspectNorm = normalisePhone(prospectTelephone);
+    if (telProspectNorm) {
+      const msgProspect =
+`🔒 *Nopalou Pay Safe Immo — Dépôt de Garantie Séquestré*
+
+Bonjour *${prospectNom}*,
+Votre consignation de *${new Intl.NumberFormat('fr-FR').format(montantNum)} FCFA* sous la référence *${reference}* est validée et protégée par le tiers de confiance Nopalou.
+
+🔑 *Votre code PIN secret de déblocage :*
+👉 *${pin}* 👈
+
+⚠️ *Règle de sécurité absolue :*
+Ne communiquez ce code PIN à l'agence qu'une fois la visite terminée, le bail signé ou les clés en main. Vos fonds restent sous séquestre tant que vous n'avez pas libéré ce code.`;
+
+      sendWhatsAppText(telProspectNorm, msgProspect).catch(e => {
+        console.warn('[SEQUESTRE IMMO WA PROSPECT ERR]:', e.message);
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Réservation immobilière consignée sous séquestre Nopalou Pay Safe',
+      reference: reservation.reference,
+      montant: reservation.montant,
+      statut_sequestre: reservation.statut_sequestre,
+      pin: pin,
+      created_at: reservation.created_at
+    });
+
+  } catch (err) {
+    console.error('[POST /api/paiement-sequestre/immo/reserver]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la réservation sous séquestre' });
+  }
+});
+
+// ── POST /api/paiement-sequestre/immo/debloquer — Déblocage des fonds immobiliers avec code PIN
+router.post('/immo/debloquer', async (req, res) => {
+  try {
+    await migrerColonnesSequestre();
+    const { reference, codePin, motif } = req.body;
+
+    if (!reference || !codePin) {
+      return res.status(400).json({ success: false, error: 'Référence de réservation et code PIN requis.' });
+    }
+
+    const { rows } = await pool.query(
+      `SELECT * FROM reservations_sequestre_immo WHERE reference = $1`,
+      [reference]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, error: 'Réservation sous séquestre introuvable.' });
+    }
+
+    const resImmo = rows[0];
+
+    if (resImmo.statut_sequestre === 'debloque') {
+      return res.json({
+        success: true,
+        message: 'Cette consignation a déjà été débloquée.',
+        statut_sequestre: 'debloque',
+        reference: resImmo.reference
+      });
+    }
+
+    if (resImmo.statut_sequestre !== 'bloque') {
+      return res.status(400).json({
+        success: false,
+        error: `Impossible de débloquer : statut actuel (${resImmo.statut_sequestre}).`
+      });
+    }
+
+    const essais = Number(resImmo.sequestre_essais_restants || 3);
+    if (essais <= 0) {
+      return res.status(403).json({
+        success: false,
+        error: 'Séquestre verrouillé suite à 3 tentatives erronées. Veuillez contacter le support Nopalou.'
+      });
+    }
+
+    const testHash = hashPin(String(codePin).trim(), resImmo.sequestre_pin_sel);
+    if (testHash !== resImmo.sequestre_pin_hash) {
+      const restants = essais - 1;
+      await pool.query(
+        `UPDATE reservations_sequestre_immo SET sequestre_essais_restants = $1 WHERE id = $2`,
+        [restants, resImmo.id]
+      );
+      return res.status(400).json({
+        success: false,
+        error: `Code PIN incorrect. ${restants} tentative(s) restante(s).`,
+        essaisRestants: restants
+      });
+    }
+
+    // Déblocage valide
+    await pool.query(
+      `UPDATE reservations_sequestre_immo
+       SET statut_sequestre = 'debloque',
+           sequestre_date_deblocage = NOW(),
+           notes = COALESCE(notes, '') || $1,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [motif ? `\n[Déblocage motif]: ${motif}` : '', resImmo.id]
+    );
+
+    // Mettre à jour le CRM si rattaché
+    if (resImmo.contact_crm_id) {
+      try {
+        await pool.query(
+          `UPDATE contacts_immo
+           SET statut_crm = 'cloture_gagne',
+               notes = COALESCE(notes, '') || $1,
+               updated_at = NOW()
+           WHERE id = $2`,
+          [`\n[${new Date().toLocaleDateString('fr-FR')}] Séquestre ${resImmo.reference} DÉBLOQUÉ avec succès.`, resImmo.contact_crm_id]
+        );
+      } catch (eCrm) {
+        console.warn('[SEQUESTRE CRM WIN UPDATE ERR]:', eCrm.message);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: 'Code PIN validé avec succès ! Fonds séquestrés libérés.',
+      statut_sequestre: 'debloque',
+      reference: resImmo.reference
+    });
+
+  } catch (err) {
+    console.error('[POST /api/paiement-sequestre/immo/debloquer]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur déblocage séquestre' });
+  }
+});
+
+// ── GET /api/paiement-sequestre/immo/:reference/statut — Vérification statut séquestre
+router.get('/immo/:reference/statut', async (req, res) => {
+  try {
+    await migrerColonnesSequestre();
+    const { reference } = req.params;
+
+    const { rows } = await pool.query(
+      `SELECT r.reference, r.statut_sequestre, r.type_reservation, r.montant,
+              r.sequestre_date_deblocage, r.created_at,
+              b.titre AS bien_titre, a.nom AS agence_nom, a.slug AS agence_slug
+       FROM reservations_sequestre_immo r
+       LEFT JOIN biens_immo b ON r.bien_id = b.id
+       LEFT JOIN agences_immo a ON r.agence_id = a.id
+       WHERE r.reference = $1 OR r.id::text = $1`,
+      [reference]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, error: 'Réservation séquestre introuvable.' });
+    }
+
+    const item = rows[0];
+    return res.json({
+      success: true,
+      reference: item.reference,
+      statut_sequestre: item.statut_sequestre,
+      type_reservation: item.type_reservation,
+      montant: item.montant,
+      securise_pay_safe: item.statut_sequestre === 'bloque' || item.statut_sequestre === 'debloque',
+      date_deblocage: item.sequestre_date_deblocage,
+      created_at: item.created_at,
+      bien_titre: item.bien_titre,
+      agence_nom: item.agence_nom,
+      agence_slug: item.agence_slug
+    });
+
+  } catch (err) {
+    console.error('[GET /api/paiement-sequestre/immo/:reference/statut]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur consultation statut séquestre' });
   }
 });
 

@@ -16,6 +16,7 @@ import { apiFetch } from '@/lib/api'
 import HeroWhatsAppCarousel from './HeroWhatsAppCarousel'
 import HomeDualTrackContainer from './HomeDualTrackContainer'
 import FacettesDynamiques from '@/components/FacettesDynamiques'
+import HomeImmoShowcase from './components/HomeImmoShowcase'
 
 export const metadata: Metadata = {
   title: 'Nopalou · Acheter au meilleur prix, Vendre & Développer son commerce au Sénégal',
@@ -421,6 +422,9 @@ export default async function HomePage({
 
           {/* PRODUITS RÉCEMMENT CONSULTÉS */}
           <RecentlyViewed />
+
+          {/* VITRINE IMMOBILIÈRE SIGNATURE & AGENCES PRO */}
+          <HomeImmoShowcase />
 
           {/* ── Bloc SEO (MODERNISÉ, SANS BOÎTE) ─────────────────────────────────────────────── */}
           {!hasFiltre && (

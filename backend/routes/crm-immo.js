@@ -61,6 +61,145 @@ router.get('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), a
   }
 });
 
+// ── POST /api/crm-immo/public/lead ── Ingestion automatique de lead depuis annonce ou vitrine
+router.post('/public/lead', async (req, res) => {
+  try {
+    const {
+      annonce_id,
+      agence_id,
+      nom,
+      prenom = '',
+      telephone,
+      whatsapp,
+      email,
+      message,
+      type_action = 'whatsapp_click', // 'whatsapp_click', 'demande_visite', 'demande_info'
+      type_operation,
+      budget,
+      ville,
+      quartier
+    } = req.body;
+
+    const contactTel = telephone || whatsapp;
+    if (!contactTel && !nom) {
+      return res.status(400).json({ success: false, error: 'Numéro de téléphone ou nom requis.' });
+    }
+
+    let cibleAgenceId = agence_id;
+    let cibleAgentId = null;
+    let annonceTitre = '';
+    let annoncePrix = null;
+    let annonceQuartier = quartier || '';
+    let annonceTypeBien = null;
+    let annonceTypeOp = type_operation || 'location';
+
+    // Si une annonce_id est fournie, récupérer les infos de l'annonce et de l'agence associée
+    if (annonce_id) {
+      const { rows: adRows } = await pool.query(
+        `SELECT ai.id, ai.titre, ai.prix, ai.quartier, ai.ville, ai.type_bien, ai.transaction,
+                ai.agence_id, b.agent_id
+         FROM annonces_immo ai
+         LEFT JOIN biens_immo b ON ai.bien_id = b.id
+         WHERE ai.id = $1`,
+        [annonce_id]
+      );
+      if (adRows.length > 0) {
+        const ad = adRows[0];
+        if (!cibleAgenceId && ad.agence_id) cibleAgenceId = ad.agence_id;
+        cibleAgentId = ad.agent_id;
+        annonceTitre = ad.titre;
+        annoncePrix = ad.prix;
+        annonceQuartier = ad.quartier || annonceQuartier;
+        annonceTypeBien = ad.type_bien;
+        annonceTypeOp = ad.transaction || annonceTypeOp;
+      }
+    }
+
+    // Si toujours pas d'agence_id, rechercher si le slug a été passé dans agence_id
+    if (cibleAgenceId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cibleAgenceId)) {
+      const { rows: agRows } = await pool.query(
+        `SELECT id FROM agences_immo WHERE slug = $1 LIMIT 1`,
+        [cibleAgenceId]
+      );
+      if (agRows.length > 0) cibleAgenceId = agRows[0].id;
+      else cibleAgenceId = null;
+    }
+
+    if (!cibleAgenceId) {
+      return res.status(400).json({ success: false, error: 'Agence cible introuvable pour ce lead.' });
+    }
+
+    const cleanTel = String(contactTel || '').replace(/\D/g, '');
+    const cleanNom = String(nom || (cleanTel ? `Prospect ${cleanTel.slice(-4)}` : 'Prospect Web')).trim();
+
+    // Vérifier si ce contact existe déjà dans l'agence (déduplication par téléphone)
+    let contactId = null;
+    if (cleanTel) {
+      const { rows: existRows } = await pool.query(
+        `SELECT id, notes FROM contacts_immo 
+         WHERE agence_id = $1 AND (REPLACE(REPLACE(telephone, ' ', ''), '+', '') LIKE '%' || $2 OR REPLACE(REPLACE(whatsapp, ' ', ''), '+', '') LIKE '%' || $2)
+         LIMIT 1`,
+        [cibleAgenceId, cleanTel.slice(-8)]
+      );
+      if (existRows.length > 0) {
+        contactId = existRows[0].id;
+        const noteAdd = `\n[${new Date().toLocaleDateString('fr-FR')} - ${type_action}] Intérêt pour : ${annonceTitre || 'Bien'}${annoncePrix ? ` (${annoncePrix} FCFA)` : ''}${message ? ` - Message: ${message}` : ''}`;
+        await pool.query(
+          `UPDATE contacts_immo 
+           SET notes = COALESCE(notes, '') || $1,
+               updated_at = NOW()
+           WHERE id = $2`,
+          [noteAdd, contactId]
+        );
+      }
+    }
+
+    // Si non trouvé, créer le nouveau prospect
+    if (!contactId) {
+      const initialNotes = `[${new Date().toLocaleDateString('fr-FR')} - Création via ${type_action}]\n` +
+        `Bien : ${annonceTitre || 'Contact direct'}\n` +
+        (annoncePrix ? `Prix : ${annoncePrix} FCFA\n` : '') +
+        (message ? `Message initial : ${message}\n` : '');
+
+      const { rows: newContact } = await pool.query(
+        `INSERT INTO contacts_immo (
+          agence_id, type_contact, nom, prenom, telephone, whatsapp, email,
+          statut_crm, budget_max, type_operation, type_bien_souhaite,
+          quartiers_souhaites, agent_id, source, notes
+        ) VALUES (
+          $1, 'prospect', $2, $3, $4, $5, $6,
+          'nouveau', $7, $8, $9,
+          $10, $11, 'annonce_web', $12
+        ) RETURNING id`,
+        [
+          cibleAgenceId,
+          cleanNom,
+          prenom,
+          contactTel,
+          whatsapp || contactTel,
+          email || null,
+          budget || annoncePrix || null,
+          annonceTypeOp,
+          annonceTypeBien,
+          JSON.stringify(annonceQuartier ? [annonceQuartier] : []),
+          cibleAgentId,
+          initialNotes
+        ]
+      );
+      contactId = newContact[0].id;
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Prospect enregistré dans le CRM de l\'agence avec succès',
+      contactId
+    });
+  } catch (err) {
+    console.error('[POST /api/crm-immo/public/lead]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'enregistrement du lead' });
+  }
+});
+
 // ── POST /api/crm-immo/agence/:slugOrId/contacts ──
 router.post('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), async (req, res) => {
   try {

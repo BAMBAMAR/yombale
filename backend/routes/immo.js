@@ -44,7 +44,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
   try {
     const {
       ville, quartier, type_bien, transaction = 'location',
-      prixMin, prixMax, surfaceMin, nbPieces, nbChambres, meuble, source,
+      prixMin, prixMax, surfaceMin, nbPieces, nbChambres, meuble, source, commodite,
       tri = 'recent', limit = 24, page = 1,
     } = req.query;
 
@@ -52,37 +52,50 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
     const orderBy = ORDER_MAP[tri] || ORDER_MAP.recent;
 
     const sql = `
-      SELECT *, COUNT(*) OVER() AS total_count
-      FROM annonces_immo
-      WHERE actif = true
-        AND (prix IS NULL OR prix >= 10000)
-        AND ($1::text IS NULL OR transaction = $1)
-        AND ($2::text IS NULL OR ville ILIKE $2)
-        AND ($3::text IS NULL OR quartier ILIKE '%' || $3 || '%')
+      SELECT ai.*, 
+             ag.nom AS agence_nom, ag.slug AS agence_slug, ag.logo_url AS agence_logo_url,
+             (ag.sponsorise = true AND ag.sponsor_jusqu_au > NOW()) AS agence_sponsorisee,
+             COUNT(*) OVER() AS total_count
+      FROM annonces_immo ai
+      LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
+      WHERE ai.actif = true
+        AND (ai.prix IS NULL OR ai.prix >= 10000)
+        AND ($1::text IS NULL OR ai.transaction = $1)
+        AND ($2::text IS NULL OR ai.ville ILIKE $2)
+        AND ($3::text IS NULL OR ai.quartier ILIKE '%' || $3 || '%')
         AND ($4::text IS NULL OR (
-              LOWER(type_bien) = LOWER($4)
-              OR LOWER(type_bien) = LOWER($4) || '_meuble'
+              LOWER(ai.type_bien) = LOWER($4)
+              OR LOWER(ai.type_bien) = LOWER($4) || '_meuble'
             ))
-        AND ($5::numeric IS NULL OR prix >= $5::numeric)
-        AND ($6::numeric IS NULL OR prix <= $6::numeric)
-        AND ($7::int IS NULL OR surface_m2 >= $7::int)
-        AND ($8::int IS NULL OR nb_pieces >= $8::int)
-        AND ($9::int IS NULL OR nb_chambres >= $9::int)
+        AND ($5::numeric IS NULL OR ai.prix >= $5::numeric)
+        AND ($6::numeric IS NULL OR ai.prix <= $6::numeric)
+        AND ($7::int IS NULL OR ai.surface_m2 >= $7::int)
+        AND ($8::int IS NULL OR ai.nb_pieces >= $8::int)
+        AND ($9::int IS NULL OR ai.nb_chambres >= $9::int)
         AND ($10::boolean IS NULL OR (
-              ($10::boolean = true  AND (meuble = true  OR type_bien ILIKE '%meuble%'))
-              OR ($10::boolean = false AND meuble = false AND type_bien NOT ILIKE '%meuble%')
+              ($10::boolean = true  AND (ai.meuble = true  OR ai.type_bien ILIKE '%meuble%'))
+              OR ($10::boolean = false AND ai.meuble = false AND ai.type_bien NOT ILIKE '%meuble%')
             ))
-        AND ($11::text IS NULL OR source = $11)
-        AND supprimee = false
-      ORDER BY (sponsorisee = true AND sponsorisee_jusqu_au > NOW()) DESC, ${orderBy}
-      LIMIT $12 OFFSET $13`;
+        AND ($11::text IS NULL OR ai.source = $11)
+        AND ($12::text IS NULL OR (
+              CASE 
+                WHEN $12 = 'groupe' THEN (ai.description ILIKE '%groupe%' OR ai.description ILIKE '%electrogene%')
+                WHEN $12 = 'suppresseur' THEN (ai.description ILIKE '%suppresseur%' OR ai.description ILIKE '%reservoir%' OR ai.description ILIKE '%reserve d%')
+                WHEN $12 = 'titre_foncier' THEN (ai.description ILIKE '%titre foncier%' OR ai.description ILIKE '%bail%' OR ai.titre ILIKE '%titre foncier%')
+                WHEN $12 = 'gardien' THEN (ai.description ILIKE '%gardien%' OR ai.description ILIKE '%securite%' OR ai.description ILIKE '%concierge%')
+                ELSE (ai.description ILIKE '%' || $12 || '%' OR ai.titre ILIKE '%' || $12 || '%')
+              END
+            ))
+        AND ai.supprimee = false
+      ORDER BY (ai.sponsorisee = true AND ai.sponsorisee_jusqu_au > NOW()) DESC, ${orderBy}
+      LIMIT $13 OFFSET $14`;
 
     const params = [
       transaction || null, ville || null, quartier || null,
       type_bien || null, prixMin || null, prixMax || null,
       surfaceMin || null, nbPieces || null, nbChambres || null,
       meuble === 'true' ? true : meuble === 'false' ? false : null,
-      source || null, limit, offset,
+      source || null, commodite || null, limit, offset,
     ];
 
     const result = await pool.query(sql, params);
@@ -315,10 +328,63 @@ router.get('/:id/similaires', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'SELECT * FROM annonces_immo WHERE id = $1', [req.params.id]
+      `SELECT ai.*,
+              ag.id AS agence_id_ref,
+              ag.nom AS agence_nom,
+              ag.slug AS agence_slug,
+              ag.logo_url AS agence_logo_url,
+              ag.description AS agence_description,
+              ag.adresse AS agence_adresse,
+              ag.ville AS agence_ville,
+              ag.quartier AS agence_quartier,
+              ag.telephone AS agence_telephone,
+              ag.whatsapp AS agence_whatsapp,
+              ag.email_contact AS agence_email,
+              ag.site_web AS agence_site_web,
+              ag.numero_agrement AS agence_numero_agrement,
+              (ag.sponsorise = true AND ag.sponsor_jusqu_au > NOW()) AS agence_sponsorisee,
+              u.id AS agent_id,
+              u.nom AS agent_nom,
+              u.telephone AS agent_telephone,
+              u.email AS agent_email
+       FROM annonces_immo ai
+       LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
+       LEFT JOIN biens_immo b ON ai.bien_id = b.id
+       LEFT JOIN utilisateurs u ON (b.agent_id = u.id OR ai.utilisateur_id = u.id)
+       WHERE ai.id = $1`, [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
-    res.json(rows[0]);
+
+    const row = rows[0];
+    const agence = row.agence_id ? {
+      id: row.agence_id,
+      nom: row.agence_nom,
+      slug: row.agence_slug,
+      logo_url: row.agence_logo_url,
+      description: row.agence_description,
+      adresse: row.agence_adresse,
+      ville: row.agence_ville,
+      quartier: row.agence_quartier,
+      telephone: row.agence_telephone,
+      whatsapp: row.agence_whatsapp,
+      email_contact: row.agence_email,
+      site_web: row.agence_site_web,
+      numero_agrement: row.agence_numero_agrement,
+      sponsorise: !!row.agence_sponsorisee
+    } : null;
+
+    const agent = row.agent_id ? {
+      id: row.agent_id,
+      nom: row.agent_nom,
+      telephone: row.agent_telephone,
+      email: row.agent_email
+    } : null;
+
+    res.json({
+      ...row,
+      agence,
+      agent
+    });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

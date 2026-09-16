@@ -16,6 +16,7 @@ const {
 } = require('./whatsapp');
 const { creerCommandeBoutique, notifierVendeurCommande } = require('../routes/comptabilite');
 const cfg = require('../lib/settingsCache');
+const { detecterIntentionImmo, traiterMessageImmo, trouverAgenceAgentParTelephone } = require('./immo-chatbot');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
@@ -2814,6 +2815,16 @@ async function handleIncomingInternal(msg) {
     return;
   }
 
+  // ── Actions directes Agent Immobilier Pro (visites, prospects, loyers) ──
+  const DECLENCHEURS_IMMO_PRO = ['visites', 'visite', 'rdv', 'prospects', 'prospect', 'leads', 'lead', 'loyers', 'loyer', 'impayes', 'echeances', 'agence', 'mon agence'];
+  if (DECLENCHEURS_IMMO_PRO.includes(normTxtLower) || interactiveId?.startsWith('immo_agent_')) {
+    const agenceAgent = await trouverAgenceAgentParTelephone(phone);
+    if (agenceAgent) {
+      const handled = await traiterMessageImmo(phone, text);
+      if (handled) return;
+    }
+  }
+
   // ── Actions directes de sélection de menu (Menu Marchand / Menu Boutique / Menu Général) ─
   const DECLENCHEURS_MENU_MARCHAND = [
     'menu_marchand', 'marchand', 'menu marchand', 'espace marchand', 'ma boutique',
@@ -2943,8 +2954,17 @@ async function handleIncomingInternal(msg) {
       await sendWhatsAppText(phone, '🔍 Que recherchez-vous ? (ex: télévision Samsung, canapé, forfait Tigo...)');
       return;
     }
-    if (action === 'immo') {
-      await envoyerListeImmo(phone);
+    if (action === 'immo' || action === 'immobilier') {
+      const isAgent = await trouverAgenceAgentParTelephone(phone);
+      if (isAgent) {
+        await traiterMessageImmo(phone, 'espace agent');
+        return;
+      }
+      await sendWhatsAppText(
+        phone,
+        `🏠 *Nopalou Immobilier*\n\nQue recherchez-vous ?\nExemples :\n• *Appartement 3 pièces Almadies*\n• *Villa avec piscine Saly*\n• *Studio meublé Mermoz*\n\nOu tapez directement vos critères ci-dessous :`
+      );
+      await setSession(phone, 'SEARCH_QUERY', { domaine: 'immo' });
       return;
     }
     if (action === 'telecom') {
@@ -3306,13 +3326,21 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
-    // Texte libre reçu en état MENU → question FAQ, sinon traiter comme recherche
+    // Texte libre reçu en état MENU → question FAQ, sinon intention immo ou recherche
     const faq = detecterFAQ(text);
     if (faq) {
       await sendWhatsAppText(phone, faq.reponse);
       await sendWhatsAppMenuOuFin(phone, 'Une autre question ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
+    }
+    if (detecterIntentionImmo(text)) {
+      const handled = await traiterMessageImmo(phone, text);
+      if (handled) {
+        await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options, ou faites une nouvelle recherche :').catch(() => {});
+        await setSession(phone, 'MENU', { last: { type: 'immo_search', query: text } });
+        return;
+      }
     }
     await setSession(phone, 'SEARCH_QUERY', {});
     await handleSearchQuery(phone, text);
@@ -4092,6 +4120,15 @@ async function handleIncomingInternal(msg) {
           await envoyerMenuBoutique(phone, r.rows[0]);
           return;
         }
+      }
+    }
+
+    if (detecterIntentionImmo(text) || context?.domaine === 'immo') {
+      const handled = await traiterMessageImmo(phone, text);
+      if (handled) {
+        await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options, ou faites une nouvelle recherche :').catch(() => {});
+        await setSession(phone, 'MENU', { last: { type: 'immo_search', query: text } });
+        return;
       }
     }
 

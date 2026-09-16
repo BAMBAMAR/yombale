@@ -101,7 +101,7 @@ const serwist = new Serwist({
       matcher: ({ url }) => isExternalTrackerOrSocialMedia(url),
       handler: new NetworkOnly(),
     },
-    // 1. Endpoints sensibles, authentification, paiement, admin, boutiques — NetworkOnly STRICT (jamais mis en cache)
+    // 1. Endpoints sensibles, authentification, paiement, admin, boutiques, CRM immo — NetworkOnly STRICT (jamais mis en cache)
     {
       matcher: ({ url, request }) =>
         url.pathname === '/api/ping' ||
@@ -109,9 +109,13 @@ const serwist = new Serwist({
         url.pathname.startsWith('/api/auth') ||
         url.pathname.startsWith('/api/admin') ||
         url.pathname.startsWith('/api/paiement') ||
+        url.pathname.startsWith('/api/paiement-sequestre') ||
         url.pathname.startsWith('/api/boutiques') ||
         url.pathname.startsWith('/api/utilisateurs') ||
-        url.pathname.startsWith('/api/credits-clients'),
+        url.pathname.startsWith('/api/credits-clients') ||
+        url.pathname.startsWith('/api/crm-immo') ||
+        (url.pathname.startsWith('/api/agences') && !url.pathname.startsWith('/api/agences/public')) ||
+        (url.pathname.startsWith('/api/biens') && !url.pathname.startsWith('/api/biens/public')),
       handler: new NetworkOnly(),
     },
     // 2. Navigation HTML — NetworkFirst avec timeout 2s
@@ -144,7 +148,7 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 4. Routes API publiques lecture seule (/api/annonces, /api/telecom, /api/categories) — NetworkFirst
+    // 4. Routes API publiques lecture seule (/api/immo, /api/agences/public, /api/biens/public, /api/annonces) — NetworkFirst (visites terrain hors-ligne)
     {
       matcher: ({ url, request }) =>
         request.method === "GET" &&
@@ -153,16 +157,20 @@ const serwist = new Serwist({
         !url.pathname.startsWith('/api/auth') &&
         !url.pathname.startsWith('/api/admin') &&
         !url.pathname.startsWith('/api/paiement') &&
+        !url.pathname.startsWith('/api/paiement-sequestre') &&
         !url.pathname.startsWith('/api/boutiques') &&
         !url.pathname.startsWith('/api/utilisateurs') &&
-        !url.pathname.startsWith('/api/credits-clients'),
+        !url.pathname.startsWith('/api/credits-clients') &&
+        !url.pathname.startsWith('/api/crm-immo') &&
+        (!url.pathname.startsWith('/api/agences') || url.pathname.startsWith('/api/agences/public')) &&
+        (!url.pathname.startsWith('/api/biens') || url.pathname.startsWith('/api/biens/public')),
       handler: new NetworkFirst({
         cacheName: `nopalou-api-cache-${CACHE_VERSION}`,
         networkTimeoutSeconds: 2,
         plugins: [
           new ExpirationPlugin({
-            maxEntries: 100,
-            maxAgeSeconds: 24 * 60 * 60 * 1,
+            maxEntries: 150,
+            maxAgeSeconds: 24 * 60 * 60 * 2, // 48h pour les visites terrain
           }),
         ],
       }),

@@ -5,12 +5,13 @@ import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
 import { fcfa } from '@/lib/format';
 import { getOptionalSession } from '@/lib/dal';
-import SponsoringImmoBtn from './SponsoringImmoBtn';
 import { cloudinaryHQ } from '@/lib/cloudinary';
 import BoutonWhatsApp from '@/components/BoutonWhatsApp';
 import SimilRow from '@/components/SimilRow';
 import { sanitizeImgUrl } from '@/lib/sanitizeImg';
 import PageHeader from '@/components/PageHeader';
+import { AgenceInfo, AgentInfo } from './BlocAgenceAnnonce';
+import FicheImmoSidebar from './FicheImmoSidebar';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,9 @@ interface AnnonceImmo {
   utilisateur_id: string | null;
   sponsorisee: boolean | null;
   sponsorisee_jusqu_au: string | null;
+  agence_id?: string | null;
+  agence?: AgenceInfo | null;
+  agent?: AgentInfo | null;
 }
 
 interface AnnonceSimilaire {
@@ -179,10 +183,10 @@ export default async function FicheImmoPage({
   const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
   const photos = Array.isArray(annonce.photos) ? annonce.photos : [];
   const mainPhoto = photos[0] ?? null;
-  const isOwner = session && annonce.utilisateur_id && session.userId === annonce.utilisateur_id;
-  const isSponsorise = annonce.sponsorisee && annonce.sponsorisee_jusqu_au
+  const isOwner = Boolean(session && annonce.utilisateur_id && session.userId === annonce.utilisateur_id);
+  const isSponsorise = Boolean(annonce.sponsorisee && annonce.sponsorisee_jusqu_au
     ? new Date(annonce.sponsorisee_jusqu_au) > new Date()
-    : false;
+    : false);
 
   // Meilleur choix parmi les biens comparables — le moins cher du secteur, à type/transaction identiques
   const meilleurBien = annonce.prix ? similaires.reduce((best, s) => {
@@ -315,144 +319,17 @@ export default async function FicheImmoPage({
         </div>
 
         {/* Sidebar : résumé, prix, contact, actions */}
-        <aside className="fiche-sidebar">
-          <div className="sidebar-card" style={{ background: 'var(--card)', color: 'var(--text1)', border: '1px solid var(--border)' }}>
-            <p className="sidebar-titre" style={{ color: 'var(--text3)' }}>RÉSUMÉ</p>
-            <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text1)', lineHeight: 1.4, marginBottom: 16 }}>
-              {annonce.titre}
-            </p>
-
-            <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
-              <span>Prix</span>
-              <strong style={{ color: 'var(--text1)' }}>
-                {fcfa(annonce.prix)}{annonce.transaction?.toLowerCase().includes('locat') ? ' /mois' : ''}
-              </strong>
-            </div>
-            {prixM2 && (
-              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
-                <span>Prix / m²</span>
-                <strong style={{ color: 'var(--text1)' }}>{fcfa(prixM2)}</strong>
-              </div>
-            )}
-            {annonce.surface_m2 && (
-              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
-                <span>Surface</span>
-                <strong style={{ color: 'var(--text1)' }}>{annonce.surface_m2} m²</strong>
-              </div>
-            )}
-            {annonce.nb_pieces && (
-              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
-                <span>Pièces</span>
-                <strong style={{ color: 'var(--text1)' }}>{annonce.nb_pieces}</strong>
-              </div>
-            )}
-            {annonce.nb_chambres && (
-              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
-                <span>Chambres</span>
-                <strong style={{ color: 'var(--text1)' }}>{annonce.nb_chambres}</strong>
-              </div>
-            )}
-            {localisation && (
-              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
-                <span>Localisation</span>
-                <strong style={{ color: 'var(--text1)' }}>{localisation}</strong>
-              </div>
-            )}
-            {annonce.transaction && (
-              <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
-                <span>Transaction</span>
-                <strong style={{ color: 'var(--text1)' }}>{annonce.transaction === 'vente' ? 'Vente' : 'Location'}</strong>
-              </div>
-            )}
-
-            {similaires.length > 0 && (
-              <Link
-                href={`/immo/comparaison?ids=${idsComparaison}`}
-                className="sidebar-cta"
-                style={{ background: 'var(--accent)' }}
-              >
-                ⚖ Comparaison détaillée côte à côte
-              </Link>
-            )}
-
-            {/* Contact */}
-            {annonce.contact_tel && (
-              <div style={{ background: 'var(--navy)', color: '#fff', borderRadius: 10, padding: '16px 20px', marginTop: 12 }}>
-                {annonce.contact_nom && <p style={{ fontWeight: 700, marginBottom: 8 }}>{annonce.contact_nom}</p>}
-                <a href={`tel:${annonce.contact_tel}`} style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>
-                  {annonce.contact_tel}
-                </a>
-                <a
-                  href={`https://wa.me/${annonce.contact_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par :\n\n*${annonce.titre}*${annonce.prix ? ` — ${fcfa(annonce.prix)}` : ''}\n\n${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo/${annonce.id}`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'block', marginTop: 8, color: '#25d366', fontWeight: 600 }}
-                >
-                  WhatsApp
-                </a>
-                <BoutonWhatsApp type="immo" id={annonce.id} isConnecte={!!session} />
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed rgba(255,255,255,0.2)', fontSize: '0.76rem', color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: '1.4' }}>
-                  Pour retirer ce bien ou votre numéro : envoyez &quot;supprimer&quot; sur <a href="https://wa.me/221708717942" target="_blank" rel="noopener noreferrer" style={{ color: '#25d366', textDecoration: 'underline' }}>WhatsApp</a> ou <a href="/cgu#suppression-donnees" style={{ color: '#60a5fa', textDecoration: 'underline' }}>consultez les CGU</a>.
-                </div>
-              </div>
-            )}
-
-            {/* Lien source */}
-            {annonce.url_source && (
-              <a
-                href={annonce.url_source}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'block',
-                  textAlign: 'center',
-                  background: 'var(--blue)',
-                  color: '#fff',
-                  padding: '10px 20px',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  marginTop: 16,
-                }}
-              >
-                Voir l&apos;annonce originale →
-              </a>
-            )}
-
-            {/* Actions du propriétaire */}
-            {isOwner && (
-              <div style={{ marginTop: 16 }}>
-                {isSponsorise ? (
-                  <div style={{ padding: '14px 18px', background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 10, marginBottom: 12 }}>
-                    <p style={{ fontWeight: 700, color: '#854D0E' }}>
-                      Mise en avant active jusqu&apos;au{' '}
-                      {new Date(annonce.sponsorisee_jusqu_au!).toLocaleDateString('fr-FR')}
-                    </p>
-                  </div>
-                ) : (
-                  <SponsoringImmoBtn immoId={annonce.id} userId={session!.userId} settings={settings} />
-                )}
-                <Link
-                  href={`/mes-annonces-immo/${annonce.id}/modifier`}
-                  style={{
-                    display: 'block',
-                    textAlign: 'center',
-                    background: '#f1f5f9',
-                    color: '#334155',
-                    border: '1px solid #cbd5e1',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    marginTop: 10,
-                  }}
-                >
-                  Modifier ou Supprimer ce bien
-                </Link>
-              </div>
-            )}
-          </div>
-        </aside>
+        <FicheImmoSidebar
+          annonce={annonce}
+          similaires={similaires}
+          idsComparaison={idsComparaison}
+          prixM2={prixM2}
+          localisation={localisation}
+          isOwner={isOwner}
+          isSponsorise={Boolean(isSponsorise)}
+          session={session ? { userId: session.userId } : null}
+          settings={settings}
+        />
       </div>
 
       {/* ── Comparaison automatique avec des biens similaires ───── */}

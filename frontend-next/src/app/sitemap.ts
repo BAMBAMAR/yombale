@@ -49,6 +49,8 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   })),
+  // Agences Immobilières certifiées
+  { url: `${BASE}/agences`,                   changeFrequency: 'daily',   priority: 0.92 },
   // Silos B2B Solutions Marchands & "Problème → Solution" SEO
   { url: `${BASE}/creer-boutique-en-ligne`,     changeFrequency: 'weekly', priority: 0.98 },
   { url: `${BASE}/alternative-shopify-senegal`, changeFrequency: 'weekly', priority: 0.95 },
@@ -82,6 +84,7 @@ interface Produit { id: string; updated_at?: string }
 interface Annonce { id: string; updated_at?: string }
 interface AnnonceClassifiee { id: string; updated_at?: string }
 interface Boutique { id: string; slug: string | null; updated_at?: string }
+interface AgenceItem { id: string; slug: string; updated_at?: string }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
@@ -90,13 +93,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let immoEntries: MetadataRoute.Sitemap     = []
   let annonceEntries: MetadataRoute.Sitemap  = []
   let boutiqueEntries: MetadataRoute.Sitemap = []
+  let agenceEntries: MetadataRoute.Sitemap   = []
 
   try {
-    const [prodRes, immoRes, annonceRes, boutiqueRes] = await Promise.allSettled([
+    const [prodRes, immoRes, annonceRes, boutiqueRes, agenceRes] = await Promise.allSettled([
       fetch(`${BACKEND}/api/produits?limit=500&page=1`, { next: { revalidate: 3600 } }),
-      fetch(`${BACKEND}/api/immo?limit=200&page=1&transaction=location`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/immo?limit=300&page=1`, { next: { revalidate: 3600 } }),
       fetch(`${BACKEND}/api/annonces?limit=200&page=1`, { next: { revalidate: 3600 } }),
       fetch(`${BACKEND}/api/boutiques?limit=200&page=1`, { next: { revalidate: 3600 } }),
+      fetch(`${BACKEND}/api/agences/public?limit=200`, { next: { revalidate: 3600 } }),
     ])
 
     if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
@@ -117,7 +122,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${BASE}/immo/${a.id}`,
         lastModified: a.updated_at ? new Date(a.updated_at) : undefined,
         changeFrequency: 'weekly' as const,
-        priority: 0.6,
+        priority: 0.75,
       }))
     }
 
@@ -142,9 +147,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       }))
     }
+
+    if (agenceRes.status === 'fulfilled' && agenceRes.value.ok) {
+      const data = await agenceRes.value.json()
+      const items: AgenceItem[] = data.agences ?? []
+      agenceEntries = items.map(ag => ({
+        url: `${BASE}/agences/${ag.slug || ag.id}`,
+        lastModified: ag.updated_at ? new Date(ag.updated_at) : undefined,
+        changeFrequency: 'daily' as const,
+        priority: 0.85,
+      }))
+    }
   } catch {
     // sitemap dégradé si backend indisponible
   }
 
-  return [...STATIC_ROUTES, ...produitEntries, ...boutiqueEntries, ...immoEntries, ...annonceEntries]
+  return [...STATIC_ROUTES, ...produitEntries, ...boutiqueEntries, ...immoEntries, ...agenceEntries, ...annonceEntries]
 }
