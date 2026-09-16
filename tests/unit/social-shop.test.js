@@ -250,6 +250,15 @@ describe('Social Parser — Exploration de profil (exploreProfile)', () => {
     expect(res.posts[0].embedHtml).toContain('facebook.com/plugins/page.php');
     expect(res.posts[0].thumbnailUrl).toBeNull();
   });
+
+  test('génère un résultat pour un profil YouTube sans fausses données', async () => {
+    const res = await exploreProfile('youtube', 'apple');
+    expect(res.platform).toBe('youtube');
+    expect(res.username).toBe('apple');
+    expect(Array.isArray(res.posts)).toBe(true);
+    const hasUnsplash = res.posts.some(p => p.thumbnailUrl && p.thumbnailUrl.includes('unsplash.com'));
+    expect(hasUnsplash).toBe(false);
+  });
 });
 
 describe('Social Parser — Métadonnées oEmbed (fetchOEmbedMetadata)', () => {

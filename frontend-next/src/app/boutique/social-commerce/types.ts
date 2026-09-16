@@ -49,6 +49,7 @@ export interface DiscoveredPost {
   caption?: string
   author?: string
   is_already_imported?: boolean
+  isProfilePlaceholder?: boolean
 }
 
 export interface SocialShopManagerProps {
@@ -60,7 +61,7 @@ export interface SocialShopManagerProps {
 export type MainTab = 'posts' | 'import' | 'accounts'
 export type PostFilter = 'all' | 'unlinked' | 'featured' | 'hidden'
 export type TriOption = 'date_desc' | 'date_asc' | 'unlinked_first' | 'linked_first' | 'featured_first' | 'platform'
-export type PlatformFilter = 'all' | 'instagram' | 'tiktok' | 'facebook'
+export type PlatformFilter = 'all' | 'instagram' | 'tiktok' | 'facebook' | 'youtube'
 export type ImportMode = 'profile' | 'batch' | 'single'
 
 export interface SocialStats {

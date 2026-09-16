@@ -485,7 +485,7 @@ async function fetchInstagramProfileOG(username) {
  * L'API Graph officielle n'est utilisée que si le marchand a lui-même fourni son
  * propre token OAuth via social_accounts.access_token (fonctionnalité future).
  */
-async function exploreProfile(platform, rawUser) {
+async function exploreProfile(platform, rawUser, options = {}) {
   const username = cleanUsername(rawUser);
   if (!username) {
     return { success: false, platform, username: '', error: 'Nom d\'utilisateur invalide', posts: [] };
@@ -531,7 +531,44 @@ async function exploreProfile(platform, rawUser) {
     }
 
     if (platform === 'instagram') {
-      // Exploration Web Réelle Instagram (extraction des shortcodes /p/ ou /reel/)
+      // 1. Aspiration directe officielle si token marchand disponible OU compte Nopalou (@nopalousn)
+      const targetToken = options?.accessToken || (username === 'nopalousn' ? await getLiveMetaToken() : null);
+      const targetIgUserId = options?.igUserId || (username === 'nopalousn' ? (process.env.IG_USER_ID || '17841414834263910') : 'me');
+
+      if (targetToken) {
+        try {
+          const graphUrl = `https://graph.facebook.com/v19.0/${targetIgUserId}/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&limit=25&access_token=${encodeURIComponent(targetToken)}`;
+          const graphData = await httpGetJson(graphUrl, 8000);
+          if (graphData && Array.isArray(graphData.data) && graphData.data.length > 0) {
+            for (const item of graphData.data) {
+              const isVideo = item.media_type === 'VIDEO';
+              posts.push({
+                externalPostId: item.id,
+                url: item.permalink || `https://www.instagram.com/p/${item.id}/`,
+                platform: 'instagram',
+                mediaType: isVideo ? 'REEL' : 'POST',
+                thumbnailUrl: item.thumbnail_url || item.media_url || null,
+                caption: item.caption || `Publication @${username}`,
+                author: `@${username}`,
+                publishedAt: item.timestamp || new Date().toISOString(),
+                isProfilePlaceholder: false,
+              });
+            }
+            return {
+              success: true,
+              platform: 'instagram',
+              username,
+              posts,
+              source: 'meta_graph_api',
+              notice: `${posts.length} publication(s) réelle(s) synchronisée(s) avec succès depuis Instagram.`
+            };
+          }
+        } catch (errIgGraph) {
+          console.warn('[EXPLORE_IG_GRAPH_WARN]', errIgGraph.message);
+        }
+      }
+
+      // 2. Exploration Web Réelle Instagram (extraction des shortcodes /p/ ou /reel/)
       try {
         const profileUrl = `https://www.instagram.com/${username}/`;
         const resp = await axios.get(profileUrl, {
@@ -694,6 +731,61 @@ async function exploreProfile(platform, rawUser) {
         isProfilePlaceholder: true,
       });
       return { success: true, platform: 'facebook', username, posts, source: 'facebook_page_embed' };
+    }
+
+    if (platform === 'youtube') {
+      try {
+        const channelUrl = `https://www.youtube.com/@${username}/videos`;
+        const resp = await axios.get(channelUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8',
+          },
+          timeout: 7000,
+          validateStatus: status => status < 500,
+        });
+
+        const html = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data || '');
+        const vidMatches = [...html.matchAll(/\/watch\?v=([A-Za-z0-9_-]{11})/g)].map(m => m[1]);
+        const uniqueVidIds = [...new Set(vidMatches)].slice(0, 10);
+
+        for (const vidId of uniqueVidIds) {
+          const vUrl = `https://www.youtube.com/watch?v=${vidId}`;
+          const meta = await fetchOEmbedMetadata(vUrl, 'youtube');
+          posts.push({
+            externalPostId: vidId,
+            url: vUrl,
+            platform: 'youtube',
+            mediaType: 'YOUTUBE_VIDEO',
+            thumbnailUrl: meta.thumbnailUrl || `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg`,
+            caption: meta.caption || meta.title || `Vidéo YouTube (${username})`,
+            author: meta.author || `@${username}`,
+            embedHtml: meta.embedHtml,
+            isProfilePlaceholder: false,
+          });
+        }
+      } catch (errYt) {
+        console.warn('[EXPLORE_YOUTUBE_SCRAPE_WARN]', errYt.message);
+      }
+
+      if (posts.length > 0) {
+        return {
+          success: true,
+          platform: 'youtube',
+          username,
+          posts,
+          source: 'youtube_channel_discovery',
+          notice: `${posts.length} vidéo(s) YouTube trouvée(s) sur la chaîne @${username}.`
+        };
+      }
+
+      return {
+        success: false,
+        platform: 'youtube',
+        username,
+        error: `Impossible de trouver des vidéos publiques pour la chaîne YouTube @${username}. Vérifiez le pseudo de votre chaîne ou collez directement le lien d'une vidéo.`,
+        posts: []
+      };
     }
 
     return { success: false, platform, username, error: 'Plateforme non supportée pour l\'exploration', posts: [] };

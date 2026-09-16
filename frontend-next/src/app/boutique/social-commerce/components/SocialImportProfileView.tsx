@@ -4,10 +4,11 @@ import React from 'react'
 import ExternalImg from '@/components/ExternalImg'
 import { Sparkles, RefreshCw, Search, Film } from 'lucide-react'
 import { DiscoveredPost, SocialAccountAdmin } from '../types'
+import { SocialProfilePlaceholderCard } from './SocialProfilePlaceholderCard'
 
 interface SocialImportProfileViewProps {
-  profilePlatform: 'tiktok' | 'instagram' | 'facebook'
-  setProfilePlatform: (p: 'tiktok' | 'instagram' | 'facebook') => void
+  profilePlatform: 'tiktok' | 'instagram' | 'facebook' | 'youtube'
+  setProfilePlatform: (p: 'tiktok' | 'instagram' | 'facebook' | 'youtube') => void
   profileUsername: string
   setProfileUsername: (u: string) => void
   exploringProfile: boolean
@@ -18,6 +19,10 @@ interface SocialImportProfileViewProps {
   setSelectedDiscoveredUrls: React.Dispatch<React.SetStateAction<Set<string>>>
   importingDiscovered: boolean
   handleImportDiscovered: () => Promise<void>
+  batchUrlsText?: string
+  setBatchUrlsText?: (text: string) => void
+  batchImporting?: boolean
+  handleImportBatch?: (e: React.FormEvent) => Promise<void>
 }
 
 export function SocialImportProfileView({
@@ -33,7 +38,14 @@ export function SocialImportProfileView({
   setSelectedDiscoveredUrls,
   importingDiscovered,
   handleImportDiscovered,
+  batchUrlsText = '',
+  setBatchUrlsText,
+  batchImporting = false,
+  handleImportBatch,
 }: SocialImportProfileViewProps) {
+  const placeholderPost = discoveredPosts.find(p => p.isProfilePlaceholder)
+  const realPosts = discoveredPosts.filter(p => !p.isProfilePlaceholder)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div
@@ -51,7 +63,7 @@ export function SocialImportProfileView({
       >
         <Sparkles size={16} style={{ flexShrink: 0 }} />
         <span>
-          <strong>Zéro copier-coller :</strong> Renseignez votre pseudo public. Nopalou explore votre compte et affiche vos vidéos dans une grille prête à cocher.
+          <strong>Zéro copier-coller :</strong> Renseignez votre pseudo ou collez des liens de vidéos. Nopalou explore vos contenus et les prépare pour votre catalogue.
         </span>
       </div>
 
@@ -72,13 +84,14 @@ export function SocialImportProfileView({
         >
           <option value="tiktok">TikTok</option>
           <option value="instagram">Instagram</option>
+          <option value="youtube">YouTube</option>
           <option value="facebook">Facebook</option>
         </select>
 
         <div style={{ flex: '1 1 180px', minWidth: 0, position: 'relative' }}>
           <input
             type="text"
-            placeholder="Ex: @votre_boutique"
+            placeholder="Ex: @votre_boutique ou collez des liens de vidéos..."
             value={profileUsername}
             onChange={e => setProfileUsername(e.target.value)}
             required
@@ -158,8 +171,20 @@ export function SocialImportProfileView({
         </div>
       )}
 
+      {/* Carte Profil Vérifié + Zone d'import rapide si timeline protégée */}
+      {placeholderPost && (
+        <SocialProfilePlaceholderCard
+          placeholderPost={placeholderPost}
+          profileUsername={profileUsername}
+          batchUrlsText={batchUrlsText}
+          setBatchUrlsText={setBatchUrlsText}
+          batchImporting={batchImporting}
+          handleImportBatch={handleImportBatch}
+        />
+      )}
+
       {/* Grille des publications découvertes à cocher */}
-      {discoveredPosts.length > 0 && (
+      {realPosts.length > 0 && (
         <div style={{ border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '14px', background: '#f8fafc' }}>
           <div
             style={{
@@ -173,7 +198,7 @@ export function SocialImportProfileView({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                {discoveredPosts.length} trouvée(s)
+                {realPosts.length} trouvée(s)
               </span>
               <span
                 style={{
@@ -194,7 +219,7 @@ export function SocialImportProfileView({
                 type="button"
                 onClick={() => {
                   const all = new Set<string>()
-                  discoveredPosts.forEach(p => all.add(p.url))
+                  realPosts.forEach(p => all.add(p.url))
                   setSelectedDiscoveredUrls(all)
                 }}
                 style={{
@@ -229,7 +254,7 @@ export function SocialImportProfileView({
 
           {/* Grille 2 colonnes ultra-compacte */}
           <div className="social-discovered-grid">
-            {discoveredPosts.map((p, idx) => {
+            {realPosts.map((p, idx) => {
               const isSelected = selectedDiscoveredUrls.has(p.url)
               return (
                 <div

@@ -12,8 +12,8 @@ interface SocialImportViewProps {
   setImportMode: (m: ImportMode) => void
   autoMatch: boolean
   setAutoMatch: (b: boolean) => void
-  profilePlatform: 'tiktok' | 'instagram' | 'facebook'
-  setProfilePlatform: (p: 'tiktok' | 'instagram' | 'facebook') => void
+  profilePlatform: 'tiktok' | 'instagram' | 'facebook' | 'youtube'
+  setProfilePlatform: (p: 'tiktok' | 'instagram' | 'facebook' | 'youtube') => void
   profileUsername: string
   setProfileUsername: (u: string) => void
   exploringProfile: boolean
@@ -131,6 +131,10 @@ export function SocialImportView({
           setSelectedDiscoveredUrls={setSelectedDiscoveredUrls}
           importingDiscovered={importingDiscovered}
           handleImportDiscovered={handleImportDiscovered}
+          batchUrlsText={batchUrlsText}
+          setBatchUrlsText={setBatchUrlsText}
+          batchImporting={batchImporting}
+          handleImportBatch={handleImportBatch}
         />
       )}
 

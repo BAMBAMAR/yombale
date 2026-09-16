@@ -839,9 +839,61 @@ router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/e
       return res.status(400).json({ error: 'Plateforme et nom d\'utilisateur requis' });
     }
 
+    // 1. Détection intelligente : si le commerçant a collé un ou plusieurs liens directs dans le champ
+    const batchDetected = parseBatchUrls(username);
+    if (batchDetected.length > 0) {
+      const posts = [];
+      for (const item of batchDetected.slice(0, 15)) {
+        try {
+          const meta = await fetchOEmbedMetadata(item.url, item.platform);
+          posts.push({
+            externalPostId: item.externalPostId || meta.externalPostId,
+            url: item.url,
+            platform: item.platform,
+            mediaType: meta.mediaType || 'POST',
+            thumbnailUrl: meta.thumbnailUrl || null,
+            caption: meta.caption || meta.title || '',
+            author: meta.author || `@${cleanUsername(username)}`,
+            embedHtml: meta.embedHtml,
+            isProfilePlaceholder: false,
+          });
+        } catch (_) {}
+      }
+
+      if (posts.length > 0) {
+        const existingRes = await pool.query(
+          `SELECT post_url, external_post_id FROM social_posts WHERE boutique_id = $1`,
+          [boutique.id]
+        );
+        const existingUrls = new Set(existingRes.rows.map(r => r.post_url));
+        const existingExtIds = new Set(existingRes.rows.map(r => r.external_post_id).filter(Boolean));
+
+        const postsWithStatus = posts.map(p => ({
+          ...p,
+          is_already_imported: existingUrls.has(p.url) || (p.externalPostId ? existingExtIds.has(p.externalPostId) : false),
+        }));
+
+        return res.json({
+          success: true,
+          plateforme: posts[0].platform,
+          username: cleanUsername(username) || 'liens_directs',
+          source: 'batch_url_auto_detected',
+          notice: `${posts.length} publication(s) détectée(s) et résolue(s) directement depuis vos liens.`,
+          posts: postsWithStatus,
+        });
+      }
+    }
+
+    // 2. Exploration normale de profil avec token de boutique si disponible
     const cleanUser = cleanUsername(username);
+    const accRow = await pool.query(
+      `SELECT access_token FROM social_accounts WHERE boutique_id = $1 AND plateforme = $2 AND access_token IS NOT NULL`,
+      [boutique.id, plateforme.toLowerCase()]
+    );
+    const boutiqueToken = accRow.rows[0]?.access_token || null;
+
     const exploration = await Promise.race([
-      exploreProfile(plateforme.toLowerCase(), cleanUser),
+      exploreProfile(plateforme.toLowerCase(), cleanUser, { accessToken: boutiqueToken }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Le délai d\'exploration a expiré (timeout 25s)')), 25000)),
     ]);
 
@@ -900,7 +952,7 @@ router.post(['/:id/social/admin/sync-account/:accountId', '/boutiques/:id/social
 
     const account = accRes.rows[0];
     const exploration = await Promise.race([
-      exploreProfile(account.plateforme, account.nom_compte),
+      exploreProfile(account.plateforme, account.nom_compte, { accessToken: account.access_token }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Le délai de synchronisation a expiré (timeout 25s)')), 25000)),
     ]);
 

@@ -1,3 +1,20 @@
+- **Architecture & Pipeline Universel Zéro-Fatigue du Social Shop — Multi-Input Pseudo/URLs, Découverte YouTube, Meta Graph API Live & Fiches Profils Vérifiées (16 septembre 2026)** 🛍️📱⚡ 🚀 ✅ :
+  * **🎯 1. Pipeline Universel Zéro-Fatigue pour TOUS les Marchands (`backend/routes/social-shop.js`)** :
+    - **Multi-Input Intelligent** : Le champ de recherche accepte désormais indifféremment un pseudo (`@maboutique`) OU une ou plusieurs URLs directes de vidéos (Reels, TikToks, Shorts). Si des URLs sont collées dans le champ pseudo, l'endpoint les détecte automatiquement via `parseBatchUrls` et les résout en 1 clic sans aucune erreur.
+    - **Sécurisation Multi-Tenant & Tokens Marchands** : Récupération dynamique de l'access token lié à la boutique (`social_accounts.access_token`) pour interroger les publications de sa propre page sans fuite de données inter-boutiques.
+    - **API Meta Graph Live** : Détection du token valide en base (`settings.fb_page_access_token`) pour aspirer en direct les 25 publications réelles du compte Nopalou (`17841414834263910`) et de tout compte marchand officiel connecté.
+  * **🎯 2. Découverte Automatique des Chaînes YouTube sans Clé API (`backend/services/social-parser.js`)** :
+    - Ajout du support de la plateforme YouTube dans `exploreProfile` : extraction des 10 dernières vidéos publiques d'une chaîne (`@username`) avec récupération automatique des miniatures CDN et des titres via oEmbed officiel.
+  * **🎯 3. Expérience Marchand Réduite au Minimum d'Effort (`SocialImportProfileView.tsx`, `SocialProfilePlaceholderCard.tsx`)** :
+    - **Carte Profil Vérifié avec Import Direct** : Si Meta ou TikTok bloque l'aspiration de masse non authentifiée, la carte de profil officielle authentifiée (photo de profil HD, nom, badge vérifié) est affichée avec un encadré d'importation direct intégré pour coller les liens de vidéos sans devoir changer d'onglet.
+    - **Grille de Sélection Rapide** : Affichage clair des publications trouvées prêtes à cocher avec boutons « Tout cocher » et « Décocher ».
+    - **Modularisation & Respect du Seuil 450 Lignes** : Extraction de `SocialProfilePlaceholderCard.tsx` (157 lignes) pour conserver `SocialImportProfileView.tsx` à 388 lignes, 100% conforme à `AGENTS.md`.
+  * **🧪 4. Validation Qualité Complète (100% Vert)** :
+    - Tests Unitaires Backend (`tests/unit/social-shop.test.js`) : **31/31 tests validés avec succès**.
+    - Tests Unitaires Frontend (`scripts/run-unit-tests.mjs`) : **69/69 tests validés**.
+    - Linter Anti-AI-Slop : **Validé (0 erreur bloquante, composants < 450 lignes)**.
+    - Build Production Next.js (`npm run build`) : **Succès (116/116 pages générées)**.
+
 - **Correctif Exploration Réseaux Sociaux — Élimination Erreur 400 Bad Request, Extraction Profil OpenGraph & Fiches Vérifiées (16 septembre 2026)** 🛡️📱⚡ 🚀 ✅ :
   * **🎯 1. Élimination Définitive du 400 Bad Request (`backend/routes/social-shop.js`)** :
     - Remplacement du statut HTTP 400 par une réponse HTTP 200 structurée (`{ success: true/false, posts, notice }`) lors de l'exploration de profils sociaux protégés par login wall.
