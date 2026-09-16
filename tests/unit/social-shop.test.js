@@ -4,6 +4,7 @@
 const {
   detectPlatform,
   extractExternalPostId,
+  fetchOEmbedMetadata,
   normalizeText,
   matchProductsWithCaption,
   cleanUsername,
@@ -213,18 +214,62 @@ describe('Social Parser — Exploration de profil (exploreProfile)', () => {
     expect(res.error).toBeDefined();
   });
 
-  test('génère un résultat structuré pour un profil TikTok', async () => {
+  test('génère un résultat structuré pour un profil TikTok sans fausses données', async () => {
     const res = await exploreProfile('tiktok', 'wax_dakar');
     expect(res.platform).toBe('tiktok');
     expect(res.username).toBe('wax_dakar');
     expect(Array.isArray(res.posts)).toBe(true);
+
+    // ZÉRO faux posts Unsplash ou faux IDs inventés (7300000000000000001)
+    const hasUnsplash = res.posts.some(p => p.thumbnailUrl && p.thumbnailUrl.includes('unsplash.com'));
+    const hasFakeIds = res.posts.some(p => p.externalPostId && p.externalPostId.startsWith('tiktok_wax_dakar_'));
+    expect(hasUnsplash).toBe(false);
+    expect(hasFakeIds).toBe(false);
   });
 
-  test('génère un résultat structuré pour un profil Instagram', async () => {
+  test('génère un résultat structuré pour un profil Instagram sans fausses données', async () => {
     const res = await exploreProfile('instagram', 'boutique_senegal');
     expect(res.platform).toBe('instagram');
     expect(res.username).toBe('boutique_senegal');
     expect(Array.isArray(res.posts)).toBe(true);
+
+    // ZÉRO faux posts Unsplash ou fausses URLs inventées (C8_...)
+    const hasUnsplash = res.posts.some(p => p.thumbnailUrl && p.thumbnailUrl.includes('unsplash.com'));
+    const hasFakeReels = res.posts.some(p => p.url && p.url.includes('C8_boutique_senegal_'));
+    expect(hasUnsplash).toBe(false);
+    expect(hasFakeReels).toBe(false);
+  });
+
+  test('génère un résultat honnête pour un profil Facebook avec iframe Page', async () => {
+    const res = await exploreProfile('facebook', 'maboutique');
+    expect(res.success).toBe(true);
+    expect(res.platform).toBe('facebook');
+    expect(res.username).toBe('maboutique');
+    expect(res.posts.length).toBe(1);
+    expect(res.posts[0].isProfilePlaceholder).toBe(true);
+    expect(res.posts[0].embedHtml).toContain('facebook.com/plugins/page.php');
+    expect(res.posts[0].thumbnailUrl).toBeNull();
   });
 });
+
+describe('Social Parser — Métadonnées oEmbed (fetchOEmbedMetadata)', () => {
+  test('Instagram oEmbed ne renvoie jamais d\'image de stock Unsplash', async () => {
+    const meta = await fetchOEmbedMetadata('https://www.instagram.com/reel/C8_XYZ123/', 'instagram');
+    expect(meta.platform).toBe('instagram');
+    expect(meta.embedHtml).toContain('instagram.com/reel/C8_XYZ123/embed/');
+    if (meta.thumbnailUrl) {
+      expect(meta.thumbnailUrl).not.toContain('images.unsplash.com');
+    }
+  });
+
+  test('Facebook oEmbed ne renvoie jamais d\'image Unsplash', async () => {
+    const meta = await fetchOEmbedMetadata('https://www.facebook.com/watch/?v=987654321', 'facebook');
+    expect(meta.platform).toBe('facebook');
+    expect(meta.embedHtml).toBeDefined();
+    if (meta.thumbnailUrl) {
+      expect(meta.thumbnailUrl).not.toContain('images.unsplash.com');
+    }
+  });
+});
+
 

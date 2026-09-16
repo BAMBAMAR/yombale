@@ -1,3 +1,21 @@
+- **Correctif Critique & Sécurisation Social Shop — Éradication des Fausses Données Unsplash, Résolution oEmbed Meta v19 & Scraping Réel Multi-Réseaux (16 septembre 2026)** 🛍️📱🎥 🚀 ✅ :
+  * **🎯 1. Éradication Complète des Fausses Données & Photos de Stock Unsplash (`backend/services/social-parser.js`)** :
+    - **Suppression des Mock Posts Inventés** : Retrait définitif des 4 faux Reels Instagram avec fausses URLs (`/reel/C8_${username}_01/`) et des 2 fausses vidéos TikTok avec IDs fictifs (`7300000000000000001`).
+    - **Purge Totale des Images Unsplash** : Élimination de toutes les images stock `images.unsplash.com` qui trompaient les commerçants dans le Social Shop.
+    - **Sécurisation Multi-Tenant Absolue** : Suppression du bloc exploitant les credentials corporate Nopalou (`IG_USER_ID=17841414834263910` et `FB_PAGE_ACCESS_TOKEN`) qui polluait le Social Shop de chaque marchand avec les publications officielles de Nopalou au lieu des siennes.
+  * **🎯 2. Résolution oEmbed Officielle & Exploration Réelle Multi-Plateforme (`backend/services/social-parser.js`)** :
+    - **Instagram** : Requête vers l'endpoint officiel Meta `graph.facebook.com/v19.0/instagram_oembed` avec fallback universel iframe officiel Instagram ne dépendant d'aucune image externe. Scraping ciblé des shortcodes réels (`/p/` et `/reel/`) avec fallback honnête et message clair guidant vers l'import de lien direct si Instagram bloque l'accès non authentifié.
+    - **TikTok** : Extraction des identifiants vidéo réels combinée à l'endpoint oEmbed officiel TikTok retournant titre, auteur et miniatures CDN réelles. Fallback explicite sans aucune donnée fictive.
+    - **Facebook** : Intégration de l'oEmbed officiel `facebook_oembed_post` / `facebook_oembed_video` et du composant officiel Facebook Page Plugin iframe.
+    - **YouTube** : Préservation du scraping de chaîne et de l'oEmbed officiel YouTube (100% fonctionnel).
+  * **🎯 3. Garde-fous de Timeout & Performance (`backend/routes/social-shop.js`)** :
+    - Ajout de `Promise.race` (25s) sur les routes `explore-profile` et `sync-account` pour éliminer les blocages réseau serveur.
+    - Plafond de 10 publications et réutilisation des métadonnées déjà extraites dans `sync-account`.
+  * **🧪 4. Validation Qualité Globale (100% Vert)** :
+    - Tests Unitaires Backend (`social-shop.test.js`) : **30/30 tests passés avec succès**.
+    - Tests Unitaires Frontend Next.js : **69/69 tests validés (100%)**.
+    - Linter Anti-AI-Slop : **Validé**.
+
 - **Optimisation Hiérarchie Visuelle Mobile & Guidage Nom de Produit (15 septembre 2026)** 📱🏪✨ 🚀 ✅ :
   * **🎯 1. Hiérarchie Visuelle & Densité Mobile (~278px Libérés au-dessus de la ligne de flottaison)** :
     - **Masquage Contextuel CSS (`boutique-dashboard.css`, `BoutiqueManage.tsx`)** : Ajout de l'attribut `data-tab` sur `<aside>` pour masquer dynamiquement la carte d'identité boutique (`.bq-sidebar-header`) et le titre H2 redondant (`.bq-main-tab-header`) sur mobile lorsque le marchand navigue dans les modules profonds (`commandes`, `produits`, `compta`, etc.).

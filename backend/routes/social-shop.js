@@ -840,7 +840,10 @@ router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/e
     }
 
     const cleanUser = cleanUsername(username);
-    const exploration = await exploreProfile(plateforme.toLowerCase(), cleanUser);
+    const exploration = await Promise.race([
+      exploreProfile(plateforme.toLowerCase(), cleanUser),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Le délai d\'exploration a expiré (timeout 25s)')), 25000)),
+    ]);
 
     if (!exploration.success && (!exploration.posts || exploration.posts.length === 0)) {
       return res.status(400).json({ error: exploration.error || 'Impossible d\'explorer ce profil' });
@@ -891,7 +894,10 @@ router.post(['/:id/social/admin/sync-account/:accountId', '/boutiques/:id/social
     if (!accRes.rows[0]) return res.status(404).json({ error: 'Compte social introuvable' });
 
     const account = accRes.rows[0];
-    const exploration = await exploreProfile(account.plateforme, account.nom_compte);
+    const exploration = await Promise.race([
+      exploreProfile(account.plateforme, account.nom_compte),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Le délai de synchronisation a expiré (timeout 25s)')), 25000)),
+    ]);
 
     let newlyImported = 0;
     if (exploration.success && Array.isArray(exploration.posts)) {
@@ -901,9 +907,10 @@ router.post(['/:id/social/admin/sync-account/:accountId', '/boutiques/:id/social
       );
       const produits = prodsRes.rows;
 
-      for (const item of exploration.posts) {
+      const itemsToSync = exploration.posts.slice(0, 10);
+      for (const item of itemsToSync) {
         try {
-          const meta = await fetchOEmbedMetadata(item.url, account.plateforme);
+          const meta = item.embedHtml ? item : await fetchOEmbedMetadata(item.url, account.plateforme);
           const insertRes = await pool.query(
             `INSERT INTO social_posts (
                boutique_id, social_account_id, plateforme, external_post_id, post_url,

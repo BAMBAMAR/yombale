@@ -3,6 +3,7 @@
 
 const https = require('https');
 const http = require('http');
+const axios = require('axios');
 
 /**
  * Normalise une chaîne de texte pour comparaison textuelle
@@ -121,28 +122,60 @@ async function fetchOEmbedMetadata(url, platform) {
     const isReel = /\/reel\//i.test(url);
     result.mediaType = isReel ? 'REEL' : 'POST';
     const postId = result.externalPostId;
+    const embedType = isReel ? 'reel' : 'p';
 
-    if (postId) {
-      const embedType = isReel ? 'reel' : 'p';
-      const rawIgMedia = `https://www.instagram.com/p/${postId}/media/?size=l`;
-      result.thumbnailUrl = `https://wsrv.nl/?url=${encodeURIComponent(rawIgMedia)}`;
+    // 1. Tenter l'endpoint oEmbed officiel Meta Instagram
+    const token = process.env.FB_PAGE_ACCESS_TOKEN || (process.env.FB_APP_ID && process.env.FB_APP_SECRET ? `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}` : '');
+    const metaOembedUrl = `https://graph.facebook.com/v19.0/instagram_oembed?url=${encodeURIComponent(url)}${token ? `&access_token=${encodeURIComponent(token)}` : ''}&omitscript=true`;
+    const metaData = await httpGetJson(metaOembedUrl, 4000);
+
+    if (metaData && metaData.html) {
+      result.embedHtml = metaData.html;
+      result.title = metaData.title || '';
+      result.caption = metaData.title || '';
+      result.author = metaData.author_name ? `@${metaData.author_name}` : '';
+      if (metaData.thumbnail_url) {
+        result.thumbnailUrl = metaData.thumbnail_url;
+      }
+    } else if (postId) {
+      // 2. Fallback universel iframe officiel Instagram (aucune fausse image Unsplash injectée)
       result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
+      result.thumbnailUrl = null;
     }
   } else if (platform === 'facebook') {
     const isVideoOrReel = /\/(reel|videos|watch)/i.test(url);
     const isPage = !isVideoOrReel && !/\/(posts|photos|story\.php|permalink\.php)/i.test(url);
     result.mediaType = isVideoOrReel ? 'REEL' : 'POST';
 
-    let fbPluginUrl = '';
-    if (isVideoOrReel) {
-      fbPluginUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=`;
-    } else if (isPage) {
-      fbPluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(url)}&tabs=timeline&width=380&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId=`;
-    } else {
-      fbPluginUrl = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=`;
+    // 1. Tenter l'oEmbed officiel Meta Facebook pour les posts et vidéos
+    if (!isPage) {
+      const endpoint = isVideoOrReel ? 'facebook_oembed_video' : 'facebook_oembed_post';
+      const token = process.env.FB_PAGE_ACCESS_TOKEN || (process.env.FB_APP_ID && process.env.FB_APP_SECRET ? `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}` : '');
+      const fbOembedUrl = `https://graph.facebook.com/v19.0/${endpoint}?url=${encodeURIComponent(url)}${token ? `&access_token=${encodeURIComponent(token)}` : ''}&omitscript=true`;
+      const fbData = await httpGetJson(fbOembedUrl, 4000);
+      if (fbData) {
+        if (fbData.html) result.embedHtml = fbData.html;
+        if (fbData.title) {
+          result.title = fbData.title;
+          result.caption = fbData.title;
+        }
+        if (fbData.author_name) result.author = fbData.author_name;
+        if (fbData.thumbnail_url) result.thumbnailUrl = fbData.thumbnail_url;
+      }
     }
 
-    result.embedHtml = `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+    // 2. Fallback officiel Facebook Plugin iframe
+    if (!result.embedHtml) {
+      let fbPluginUrl = '';
+      if (isVideoOrReel) {
+        fbPluginUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=${process.env.FB_APP_ID || ''}`;
+      } else if (isPage) {
+        fbPluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(url)}&tabs=timeline&width=380&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId=${process.env.FB_APP_ID || ''}`;
+      } else {
+        fbPluginUrl = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=${process.env.FB_APP_ID || ''}`;
+      }
+      result.embedHtml = `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+    }
   } else if (platform === 'youtube') {
     result.mediaType = 'VIDEO';
     let videoId = null;
@@ -394,64 +427,158 @@ function normalizeSocialUrl(rawInput, platform) {
 async function exploreProfile(platform, rawUser) {
   const username = cleanUsername(rawUser);
   if (!username) {
-    return { success: false, error: 'Nom d\'utilisateur invalide', posts: [] };
+    return { success: false, platform, username: '', error: 'Nom d\'utilisateur invalide', posts: [] };
   }
 
   const posts = [];
 
   try {
+    if (platform === 'youtube') {
+      try {
+        const channelUrl = `https://www.youtube.com/@${username}/videos`;
+        const resp = await axios.get(channelUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8',
+          },
+          timeout: 7000,
+        });
+        const matches = resp.data.match(/\/watch\?v=[a-zA-Z0-9_-]{11}/g) || [];
+        const uniqueIds = [...new Set(matches.map(m => m.replace('/watch?v=', '')))].slice(0, 10);
+        for (const vid of uniqueIds) {
+          const vUrl = `https://www.youtube.com/watch?v=${vid}`;
+          const meta = await fetchOEmbedMetadata(vUrl, 'youtube');
+          posts.push({
+            externalPostId: vid,
+            url: vUrl,
+            platform: 'youtube',
+            mediaType: 'VIDEO',
+            thumbnailUrl: meta.thumbnailUrl || `https://img.youtube.com/vi/${vid}/hqdefault.jpg`,
+            caption: meta.title || `Vidéo YouTube (${vid})`,
+            author: meta.author || `@${username}`,
+            isProfilePlaceholder: false,
+          });
+        }
+      } catch (errYt) {
+        console.warn('[YOUTUBE_DISCOVERY_WARN]', errYt.message);
+      }
+
+      if (posts.length > 0) {
+        return { success: true, platform: 'youtube', username, posts, source: 'youtube_discovery' };
+      }
+      return { success: false, platform: 'youtube', username, error: `Aucune vidéo publique trouvée sur la chaîne YouTube de @${username}`, posts: [] };
+    }
+
     if (platform === 'instagram') {
-      // Sécurité : NE PAS utiliser process.env.IG_USER_ID ni getLiveMetaToken() ici.
-      // Ces credentials appartiennent au compte Nopalou et non au marchand.
-      // → Exploration publique uniquement via iframe embed placeholder.
-      const profileUrl = `https://www.instagram.com/${username}/`;
+      // Exploration Web Réelle Instagram (extraction des shortcodes /p/ ou /reel/)
+      try {
+        const profileUrl = `https://www.instagram.com/${username}/`;
+        const resp = await axios.get(profileUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8',
+          },
+          timeout: 7000,
+          validateStatus: status => status < 500,
+        });
 
-      posts.push({
-        externalPostId: `ig_${username}_latest_1`,
-        url: profileUrl,
+        const html = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data || '');
+        const shortcodeRegex = /(?:\/(?:p|reel|tv)\/|"shortcode":\s*")([A-Za-z0-9_-]{9,})/g;
+        const foundCodes = new Set();
+        let match;
+        while ((match = shortcodeRegex.exec(html)) !== null) {
+          const code = match[1];
+          if (!['explore', 'direct', 'stories', 'accounts', 'developer', 'about'].includes(code.toLowerCase())) {
+            foundCodes.add(code);
+          }
+        }
+
+        const uniqueCodes = Array.from(foundCodes).slice(0, 8);
+        for (const code of uniqueCodes) {
+          const postUrl = `https://www.instagram.com/p/${code}/`;
+          const meta = await fetchOEmbedMetadata(postUrl, 'instagram');
+          posts.push({
+            externalPostId: code,
+            url: postUrl,
+            platform: 'instagram',
+            mediaType: meta.mediaType || 'POST',
+            thumbnailUrl: meta.thumbnailUrl || null,
+            caption: meta.caption || `Publication @${username}`,
+            author: meta.author || `@${username}`,
+            embedHtml: meta.embedHtml,
+            isProfilePlaceholder: false,
+          });
+        }
+      } catch (errIg) {
+        console.warn('[EXPLORE_IG_SCRAPE_WARN]', errIg.message);
+      }
+
+      if (posts.length > 0) {
+        return { success: true, platform: 'instagram', username, posts, source: 'instagram_web_discovery' };
+      }
+
+      // Fallback honnête sans fausses données ni images Unsplash inventées
+      return {
+        success: false,
         platform: 'instagram',
-        mediaType: 'REEL',
-        thumbnailUrl: null,
-        caption: `Dernières publications de @${username}`,
-        author: `@${username}`,
-        isProfilePlaceholder: true,
-      });
-
-      return { success: true, platform: 'instagram', username, posts, source: 'web_discovery' };
+        username,
+        error: `Instagram protège l'accès direct aux publications de @${username} (connexion requise). Vous pouvez importer vos Reels et posts en collant directement leurs liens dans l'onglet "Importer par lien".`,
+        posts: [],
+        source: 'instagram_protected'
+      };
     }
 
     if (platform === 'tiktok') {
-      // TikTok oEmbed public — pas de token requis, isolation garantie.
-      const profileUrl = `https://www.tiktok.com/@${username}`;
-      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
-      const data = await httpGetJson(oembedUrl, 6000);
+      // Exploration Web Réelle TikTok
+      try {
+        const profileUrl = `https://www.tiktok.com/@${username}`;
+        const resp = await axios.get(profileUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8',
+          },
+          timeout: 7000,
+          validateStatus: status => status < 500,
+        });
 
-      if (data) {
-        posts.push({
-          externalPostId: `tiktok_${username}_profile`,
-          url: profileUrl,
-          platform: 'tiktok',
-          mediaType: 'TIKTOK_VIDEO',
-          thumbnailUrl: data.thumbnail_url || null,
-          caption: data.title || `Vidéos de @${username}`,
-          author: data.author_name ? `@${data.author_name}` : `@${username}`,
-          source: 'oembed',
-        });
-      } else {
-        // Fallback sans oEmbed
-        posts.push({
-          externalPostId: `tiktok_${username}_profile`,
-          url: profileUrl,
-          platform: 'tiktok',
-          mediaType: 'TIKTOK_VIDEO',
-          thumbnailUrl: null,
-          caption: `Vidéos de @${username}`,
-          author: `@${username}`,
-          isProfilePlaceholder: true,
-        });
+        const html = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data || '');
+        const vidMatches = html.match(/\/video\/(\d{15,22})/g) || [];
+        const uniqueVidIds = [...new Set(vidMatches.map(m => m.replace('/video/', '')))].slice(0, 8);
+
+        for (const vidId of uniqueVidIds) {
+          const vUrl = `https://www.tiktok.com/@${username}/video/${vidId}`;
+          const meta = await fetchOEmbedMetadata(vUrl, 'tiktok');
+          posts.push({
+            externalPostId: vidId,
+            url: vUrl,
+            platform: 'tiktok',
+            mediaType: 'TIKTOK_VIDEO',
+            thumbnailUrl: meta.thumbnailUrl || null,
+            caption: meta.caption || meta.title || `Vidéo TikTok (@${username})`,
+            author: meta.author || `@${username}`,
+            embedHtml: meta.embedHtml,
+            isProfilePlaceholder: false,
+          });
+        }
+      } catch (errTt) {
+        console.warn('[EXPLORE_TIKTOK_SCRAPE_WARN]', errTt.message);
       }
 
-      return { success: true, platform: 'tiktok', username, posts, source: 'tiktok_discovery' };
+      if (posts.length > 0) {
+        return { success: true, platform: 'tiktok', username, posts, source: 'tiktok_discovery' };
+      }
+
+      // Fallback honnête sans fausses données ni IDs inventés
+      return {
+        success: false,
+        platform: 'tiktok',
+        username,
+        error: `TikTok restreint l'accès direct aux vidéos de @${username} sans session active. Vous pouvez importer vos vidéos en collant directement leurs liens dans l'onglet "Importer par lien".`,
+        posts: [],
+        source: 'tiktok_protected'
+      };
     }
 
     if (platform === 'facebook') {
@@ -459,38 +586,25 @@ async function exploreProfile(platform, rawUser) {
       // Cela retournerait les posts de la page officielle Nopalou, pas ceux du marchand.
       // → Fallback iframe Plugin Facebook public uniquement.
       const pageUrl = `https://www.facebook.com/${username}`;
+      const fbPluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(pageUrl)}&tabs=timeline&width=380&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId=${process.env.FB_APP_ID || ''}`;
       posts.push({
         externalPostId: `fb_${username}_page`,
         url: pageUrl,
         platform: 'facebook',
         mediaType: 'POST',
         thumbnailUrl: null,
-        caption: `Publications de la page ${username}`,
+        caption: `Page Facebook de @${username}. Pour associer des publications ou vidéos spécifiques à vos produits, collez leurs liens directs dans "Importer par lien".`,
         author: username,
+        embedHtml: `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`,
         isProfilePlaceholder: true,
       });
-      return { success: true, platform: 'facebook', username, posts, source: 'facebook_discovery' };
+      return { success: true, platform: 'facebook', username, posts, source: 'facebook_page_embed' };
     }
 
-    if (platform === 'youtube') {
-      const channelUrl = `https://www.youtube.com/@${username}`;
-      posts.push({
-        externalPostId: `yt_${username}_channel`,
-        url: channelUrl,
-        platform: 'youtube',
-        mediaType: 'VIDEO',
-        thumbnailUrl: null,
-        caption: `Chaîne YouTube de @${username}`,
-        author: `@${username}`,
-        isProfilePlaceholder: true,
-      });
-      return { success: true, platform: 'youtube', username, posts, source: 'youtube_discovery' };
-    }
-
-    return { success: false, error: 'Plateforme non supportée pour l\'exploration', posts: [] };
+    return { success: false, platform, username, error: 'Plateforme non supportée pour l\'exploration', posts: [] };
   } catch (err) {
     console.error('[EXPLORE_PROFILE_ERR]', err);
-    return { success: false, error: err.message, posts: [] };
+    return { success: false, platform, username, error: err.message, posts: [] };
   }
 }
 
