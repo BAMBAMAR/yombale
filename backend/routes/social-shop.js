@@ -846,7 +846,11 @@ router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/e
     ]);
 
     if (!exploration.success && (!exploration.posts || exploration.posts.length === 0)) {
-      return res.status(400).json({ error: exploration.error || 'Impossible d\'explorer ce profil' });
+      return res.status(200).json({
+        success: false,
+        error: exploration.error || 'Impossible d\'explorer ce profil',
+        posts: [],
+      });
     }
 
     // Vérifier les posts déjà importés pour cette boutique
@@ -867,6 +871,7 @@ router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/e
       plateforme: exploration.platform,
       username: exploration.username,
       source: exploration.source,
+      notice: exploration.notice || null,
       posts: postsWithStatus,
     });
   } catch (err) {
@@ -909,6 +914,10 @@ router.post(['/:id/social/admin/sync-account/:accountId', '/boutiques/:id/social
 
       const itemsToSync = exploration.posts.slice(0, 10);
       for (const item of itemsToSync) {
+        if (item.isProfilePlaceholder) {
+          // Ignorer la fiche profil globale pour éviter de créer un produit factice en base
+          continue;
+        }
         try {
           const meta = item.embedHtml ? item : await fetchOEmbedMetadata(item.url, account.plateforme);
           const insertRes = await pool.query(

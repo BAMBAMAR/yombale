@@ -104,7 +104,7 @@ export function useSocialImports({
       })
 
       const data = await res.json()
-      if (!res.ok) {
+      if (!res.ok || data.success === false) {
         setMessage({ type: 'error', text: data.error || "Impossible d'explorer ce profil" })
         return
       }
@@ -114,16 +114,23 @@ export function useSocialImports({
 
       const initialSelected = new Set<string>()
       found.forEach(p => {
-        if (!p.is_already_imported) {
+        if (!p.is_already_imported && !p.isProfilePlaceholder) {
           initialSelected.add(p.url)
         }
       })
       setSelectedDiscoveredUrls(initialSelected)
 
-      setMessage({
-        type: 'success',
-        text: `${found.length} publication(s) détectée(s) pour @${data.username} (${initialSelected.size} nouvelle(s)).`,
-      })
+      if (data.notice) {
+        setMessage({
+          type: 'info',
+          text: data.notice,
+        })
+      } else {
+        setMessage({
+          type: 'success',
+          text: `${found.length} publication(s) détectée(s) pour @${data.username} (${initialSelected.size} nouvelle(s)).`,
+        })
+      }
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Erreur de connexion' })
     } finally {

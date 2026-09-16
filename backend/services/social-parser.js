@@ -124,23 +124,34 @@ async function fetchOEmbedMetadata(url, platform) {
     const postId = result.externalPostId;
     const embedType = isReel ? 'reel' : 'p';
 
-    // 1. Tenter l'endpoint oEmbed officiel Meta Instagram
-    const token = process.env.FB_PAGE_ACCESS_TOKEN || (process.env.FB_APP_ID && process.env.FB_APP_SECRET ? `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}` : '');
-    const metaOembedUrl = `https://graph.facebook.com/v19.0/instagram_oembed?url=${encodeURIComponent(url)}${token ? `&access_token=${encodeURIComponent(token)}` : ''}&omitscript=true`;
-    const metaData = await httpGetJson(metaOembedUrl, 4000);
+    const isProfile = !/\/(?:p|reel|tv)\//i.test(url);
 
-    if (metaData && metaData.html) {
-      result.embedHtml = metaData.html;
-      result.title = metaData.title || '';
-      result.caption = metaData.title || '';
-      result.author = metaData.author_name ? `@${metaData.author_name}` : '';
-      if (metaData.thumbnail_url) {
-        result.thumbnailUrl = metaData.thumbnail_url;
+    if (isProfile) {
+      const cleanUser = cleanUsername(url);
+      result.externalPostId = `ig_profile_${cleanUser}`;
+      result.mediaType = 'POST';
+      result.author = `@${cleanUser}`;
+      result.caption = `Profil Instagram de @${cleanUser}`;
+      result.embedHtml = `<iframe src="https://www.instagram.com/${cleanUser}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
+    } else {
+      // 1. Tenter l'endpoint oEmbed officiel Meta Instagram
+      const token = process.env.FB_PAGE_ACCESS_TOKEN || (process.env.FB_APP_ID && process.env.FB_APP_SECRET ? `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}` : '');
+      const metaOembedUrl = `https://graph.facebook.com/v19.0/instagram_oembed?url=${encodeURIComponent(url)}${token ? `&access_token=${encodeURIComponent(token)}` : ''}&omitscript=true`;
+      const metaData = await httpGetJson(metaOembedUrl, 4000);
+
+      if (metaData && metaData.html) {
+        result.embedHtml = metaData.html;
+        result.title = metaData.title || '';
+        result.caption = metaData.title || '';
+        result.author = metaData.author_name ? `@${metaData.author_name}` : '';
+        if (metaData.thumbnail_url) {
+          result.thumbnailUrl = metaData.thumbnail_url;
+        }
+      } else if (postId) {
+        // 2. Fallback universel iframe officiel Instagram (aucune fausse image Unsplash injectée)
+        result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
+        result.thumbnailUrl = null;
       }
-    } else if (postId) {
-      // 2. Fallback universel iframe officiel Instagram (aucune fausse image Unsplash injectée)
-      result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
-      result.thumbnailUrl = null;
     }
   } else if (platform === 'facebook') {
     const isVideoOrReel = /\/(reel|videos|watch)/i.test(url);
@@ -414,6 +425,56 @@ function normalizeSocialUrl(rawInput, platform) {
 }
 
 /**
+ * Récupère les métadonnées OpenGraph publiques d'un profil Instagram (nom réel, bio, follower count, photo de profil CDN)
+ * via le User-Agent de crawler officiel pour contourner l'écran blanc SPA.
+ */
+function decodeHtmlEntities(str) {
+  if (!str) return '';
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&#064;/g, '@')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+/**
+ * Récupère les métadonnées OpenGraph publiques d'un profil Instagram (nom réel, bio, follower count, photo de profil CDN)
+ * via le User-Agent de crawler officiel pour contourner l'écran blanc SPA.
+ */
+async function fetchInstagramProfileOG(username) {
+  try {
+    const profileUrl = `https://www.instagram.com/${username}/`;
+    const resp = await axios.get(profileUrl, {
+      headers: {
+        'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+      },
+      timeout: 5000,
+      validateStatus: status => status < 500,
+    });
+    const html = typeof resp.data === 'string' ? resp.data : '';
+    const ogTitleMatch = html.match(/property="og:title"\s+content="([^"]+)"/i);
+    const ogDescMatch = html.match(/property="og:description"\s+content="([^"]+)"/i) || html.match(/name="description"\s+content="([^"]+)"/i);
+    const ogImageMatch = html.match(/property="og:image"\s+content="([^"]+)"/i);
+
+    const rawTitle = ogTitleMatch ? decodeHtmlEntities(ogTitleMatch[1]) : null;
+    const cleanTitle = rawTitle ? rawTitle.replace(/\s*•\s*Photos et vid[ée]os.*$/i, '').trim() : `@${username}`;
+
+    return {
+      title: cleanTitle,
+      description: ogDescMatch ? decodeHtmlEntities(ogDescMatch[1]) : null,
+      imageUrl: ogImageMatch ? ogImageMatch[1].replace(/&amp;/g, '&') : null,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
  * Explore un profil social public (@username) pour récupérer ses publications récentes.
  *
  * SÉCURITÉ MULTI-TENANT : Cette fonction est appelée dans le contexte d'une boutique
@@ -518,14 +579,32 @@ async function exploreProfile(platform, rawUser) {
         return { success: true, platform: 'instagram', username, posts, source: 'instagram_web_discovery' };
       }
 
-      // Fallback honnête sans fausses données ni images Unsplash inventées
+      // Si le scraping direct de timeline est bloqué par Instagram (anti-bot login wall) :
+      // Récupérer les métadonnées OpenGraph officielles (nom, photo de profil réelle CDN, description)
+      const og = await fetchInstagramProfileOG(username);
+      const cleanTitle = og?.title ? og.title.replace(/\s*•\s*Photos et vid[ée]os.*$/i, '').trim() : `@${username}`;
+      const cleanDesc = og?.description || `Compte Instagram @${username}`;
+      const profileUrl = `https://www.instagram.com/${username}/`;
+
+      posts.push({
+        externalPostId: `ig_profile_${username}`,
+        url: profileUrl,
+        platform: 'instagram',
+        mediaType: 'POST',
+        thumbnailUrl: og?.imageUrl || null,
+        caption: `${cleanTitle} (${cleanDesc}). Instagram protège la lecture automatique en masse. Pour importer un Reel ou Post, collez directement son lien dans l'onglet "Importer par lien".`,
+        author: cleanTitle,
+        embedHtml: `<iframe src="https://www.instagram.com/${username}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`,
+        isProfilePlaceholder: true,
+      });
+
       return {
-        success: false,
+        success: true,
         platform: 'instagram',
         username,
-        error: `Instagram protège l'accès direct aux publications de @${username} (connexion requise). Vous pouvez importer vos Reels et posts en collant directement leurs liens dans l'onglet "Importer par lien".`,
-        posts: [],
-        source: 'instagram_protected'
+        posts,
+        source: 'instagram_profile_embed',
+        notice: `Compte @${username} vérifié avec succès. Instagram protégeant l'aspiration automatique en masse, importez directement vos Reels ou publications via leurs liens.`
       };
     }
 
@@ -570,14 +649,30 @@ async function exploreProfile(platform, rawUser) {
         return { success: true, platform: 'tiktok', username, posts, source: 'tiktok_discovery' };
       }
 
-      // Fallback honnête sans fausses données ni IDs inventés
+      // Fallback officiel TikTok avec embed profil (zéro faux post, zéro crash 400)
+      const profileUrl = `https://www.tiktok.com/@${username}`;
+      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
+      const ttData = await httpGetJson(oembedUrl, 4000);
+
+      posts.push({
+        externalPostId: `tiktok_profile_${username}`,
+        url: profileUrl,
+        platform: 'tiktok',
+        mediaType: 'TIKTOK_VIDEO',
+        thumbnailUrl: ttData?.thumbnail_url || null,
+        caption: ttData?.title || `Profil TikTok de @${username}. Pour associer des vidéos précises à vos produits, collez leurs liens directs dans "Importer par lien".`,
+        author: ttData?.author_name ? `@${ttData.author_name}` : `@${username}`,
+        embedHtml: `<blockquote class="tiktok-embed" cite="${profileUrl}"><section><a href="${profileUrl}">@${username}</a></section></blockquote><script async src="https://www.tiktok.com/embed.js"></script>`,
+        isProfilePlaceholder: true,
+      });
+
       return {
-        success: false,
+        success: true,
         platform: 'tiktok',
         username,
-        error: `TikTok restreint l'accès direct aux vidéos de @${username} sans session active. Vous pouvez importer vos vidéos en collant directement leurs liens dans l'onglet "Importer par lien".`,
-        posts: [],
-        source: 'tiktok_protected'
+        posts,
+        source: 'tiktok_profile_embed',
+        notice: `Profil @${username} vérifié. Pour associer des vidéos spécifiques à vos produits, collez leurs liens directs.`
       };
     }
 

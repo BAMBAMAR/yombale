@@ -134,7 +134,7 @@ export default function SocialShopManager({
       })
 
       const data = await res.json()
-      if (!res.ok) {
+      if (!res.ok || data.success === false) {
         setMessage({ type: 'error', text: data.error || "Impossible d'explorer ce profil" })
         return
       }
@@ -144,13 +144,18 @@ export default function SocialShopManager({
 
       const initialSelected = new Set<string>()
       found.forEach((p: any) => {
-        if (!p.is_already_imported) {
+        if (!p.is_already_imported && !p.isProfilePlaceholder) {
           initialSelected.add(p.url)
         }
       })
       importsState.setSelectedDiscoveredUrls(initialSelected)
 
-      if (found.length > 0) {
+      if (data.notice) {
+        setMessage({
+          type: 'info',
+          text: data.notice,
+        })
+      } else if (found.length > 0) {
         setMessage({
           type: 'success',
           text: `Synchronisation pour @${acc.nom_compte} : ${found.length} publication(s) trouvée(s). Cochez celles que vous souhaitez ajouter :`,
