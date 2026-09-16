@@ -836,7 +836,6 @@ async function exploreProfile(platform, rawUser, options = {}) {
         embedHtml: `<iframe src="https://www.instagram.com/${username}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`,
         isProfilePlaceholder: true,
       });
->>>>>>> origin/main
 
       return {
         success: true,
