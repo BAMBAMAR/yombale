@@ -134,10 +134,13 @@ async function fetchOEmbedMetadata(url, platform) {
       result.caption = `Profil Instagram de @${cleanUser}`;
       result.embedHtml = `<iframe src="https://www.instagram.com/${cleanUser}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
     } else {
-      // 1. Tenter l'endpoint oEmbed officiel Meta Instagram
+      // 1. Tenter l'endpoint oEmbed officiel Meta Instagram si token disponible
       const token = process.env.FB_PAGE_ACCESS_TOKEN || (process.env.FB_APP_ID && process.env.FB_APP_SECRET ? `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}` : '');
-      const metaOembedUrl = `https://graph.facebook.com/v19.0/instagram_oembed?url=${encodeURIComponent(url)}${token ? `&access_token=${encodeURIComponent(token)}` : ''}&omitscript=true`;
-      const metaData = await httpGetJson(metaOembedUrl, 4000);
+      let metaData = null;
+      if (token) {
+        const metaOembedUrl = `https://graph.facebook.com/v19.0/instagram_oembed?url=${encodeURIComponent(url)}&access_token=${encodeURIComponent(token)}&omitscript=true`;
+        metaData = await httpGetJson(metaOembedUrl, 3000);
+      }
 
       if (metaData && metaData.html) {
         result.embedHtml = metaData.html;
@@ -147,10 +150,22 @@ async function fetchOEmbedMetadata(url, platform) {
         if (metaData.thumbnail_url) {
           result.thumbnailUrl = metaData.thumbnail_url;
         }
-      } else if (postId) {
-        // 2. Fallback universel iframe officiel Instagram (aucune fausse image Unsplash injectée)
+      } else {
+        // 2. Crawler OpenGraph officiel Twitterbot pour extraire la vraie légende, auteur et miniature CDN
+        const og = await fetchInstagramPostOG(url);
+        if (og) {
+          if (og.caption) {
+            result.caption = og.caption;
+            result.title = og.caption;
+          }
+          if (og.author) result.author = og.author;
+          if (og.thumbnailUrl) result.thumbnailUrl = og.thumbnailUrl;
+        }
+      }
+
+      if (postId && !result.embedHtml) {
+        // Fallback universel iframe officiel Instagram
         result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
-        result.thumbnailUrl = null;
       }
     }
   } else if (platform === 'facebook') {
@@ -205,6 +220,20 @@ async function fetchOEmbedMetadata(url, platform) {
       result.externalPostId = videoId;
       result.thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
       result.embedHtml = `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:12px;"></iframe>`;
+
+      // Récupérer le titre officiel et l'auteur via l'oEmbed officiel YouTube (public, sans clé API)
+      try {
+        const ytOembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+        const ytData = await httpGetJson(ytOembedUrl, 3000);
+        if (ytData) {
+          result.title = ytData.title || '';
+          result.caption = ytData.title || '';
+          result.author = ytData.author_name ? `@${ytData.author_name}` : '';
+          if (ytData.thumbnail_url) {
+            result.thumbnailUrl = ytData.thumbnail_url;
+          }
+        }
+      } catch (_) {}
     }
   }
 
@@ -580,6 +609,65 @@ async function fetchInstagramProfileOG(username) {
 }
 
 /**
+ * Récupère les métadonnées OpenGraph publiques d'un post ou Reel Instagram
+ * (légende réelle, auteur, image CDN haute définition)
+ * via le User-Agent crawler Twitterbot sans blocage d'API.
+ */
+async function fetchInstagramPostOG(url) {
+  try {
+    const cleanUrl = url.split('?')[0].replace(/\/$/, '') + '/';
+    const resp = await axios.get(cleanUrl, {
+      headers: {
+        'User-Agent': 'Twitterbot/1.0',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+      },
+      timeout: 5000,
+      validateStatus: status => status < 500,
+    });
+    const html = typeof resp.data === 'string' ? resp.data : '';
+    const ogTitleMatch = html.match(/property=["']og:title["']\s+content=["']([^"']+)["']/i) || html.match(/content=["']([^"']+)["']\s+property=["']og:title["']/i);
+    const ogDescMatch = html.match(/property=["']og:description["']\s+content=["']([^"']+)["']/i) || html.match(/content=["']([^"']+)["']\s+property=["']og:description["']/i);
+    const ogImageMatch = html.match(/property=["']og:image["']\s+content=["']([^"']+)["']/i) || html.match(/content=["']([^"']+)["']\s+property=["']og:image["']/i);
+
+    let caption = '';
+    let author = '';
+
+    if (ogTitleMatch) {
+      const rawTitle = decodeHtmlEntities(ogTitleMatch[1]);
+      const captionInQuotes = rawTitle.match(/[:\s][«"“]([\s\S]+?)[»"”]?$/);
+      if (captionInQuotes) {
+        caption = captionInQuotes[1].trim();
+      } else {
+        caption = rawTitle;
+      }
+
+      const authorMatch = rawTitle.match(/^([^:]+?)\s+(?:sur Instagram|on Instagram)/i);
+      if (authorMatch) {
+        author = authorMatch[1].trim();
+      }
+    }
+
+    if (!author && ogDescMatch) {
+      const rawDesc = decodeHtmlEntities(ogDescMatch[1]);
+      const handleMatch = rawDesc.match(/-\s*([a-zA-Z0-9._]+)\s+le\b/i) || rawDesc.match(/-\s*([a-zA-Z0-9._]+)\s+on\b/i);
+      if (handleMatch) {
+        author = `@${handleMatch[1].trim()}`;
+      }
+    }
+
+    const imageUrl = ogImageMatch ? ogImageMatch[1].replace(/&amp;/g, '&') : null;
+
+    return {
+      caption,
+      author,
+      thumbnailUrl: imageUrl,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
  * Explore un profil social public (@username) pour récupérer ses publications récentes.
  *
  * SÉCURITÉ MULTI-TENANT : Cette fonction est appelée dans le contexte d'une boutique
@@ -912,5 +1000,7 @@ module.exports = {
   parseBatchUrls,
   exploreProfile,
   normalizeSocialUrl,
+  fetchInstagramPostOG,
+  fetchInstagramProfileOG,
 };
 

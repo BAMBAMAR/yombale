@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react'
 import ExternalImg from '@/components/ExternalImg'
-import { fcfa } from '@/lib/format'
 import {
   Film,
   Star,
@@ -10,16 +9,13 @@ import {
   EyeOff,
   Trash2,
   ExternalLink,
-  ShoppingBag,
-  Plus,
   CheckSquare,
   Square,
-  Sparkles,
   Pencil,
 } from 'lucide-react'
 import { ProduitCatalogue, SocialPostAdmin } from '../types'
 import { matchProductsClient } from '../matching'
-import { QuickProductPicker } from './QuickProductPicker'
+import { SocialPostCardProducts } from './SocialPostCardProducts'
 import EditPostModal from './EditPostModal'
 
 interface SocialPostCardProps {
@@ -49,16 +45,31 @@ export function SocialPostCard({
   onDirectAssociate,
   onUpdatePost,
 }: SocialPostCardProps) {
-  const [showQuickPicker, setShowQuickPicker] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
-  const [associating, setAssociating] = useState(false)
 
-  // Résolution miniature : miniature officielle ou première image du produit lié
+  // Fallbacks intelligents pour YouTube et Instagram
+  const ytVideoId =
+    post.plateforme === 'youtube' && !post.thumbnail_url
+      ? post.external_post_id || post.post_url?.match(/(?:youtu\.be\/|watch\?v=)([a-zA-Z0-9_-]{11})/)?.[1]
+      : null
+  const ytFallbackThumb = ytVideoId ? `https://img.youtube.com/vi/${ytVideoId}/hqdefault.jpg` : null
+
   const merchantThumb =
     post.thumbnail_url ||
+    ytFallbackThumb ||
     (post.produits && post.produits.length > 0 && post.produits[0].images?.[0]
       ? post.produits[0].images[0]
       : null)
+
+  const igPostId =
+    post.plateforme === 'instagram' && !merchantThumb
+      ? post.external_post_id && !post.external_post_id.startsWith('ig_profile_')
+        ? post.external_post_id
+        : post.post_url?.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/)?.[1] || null
+      : null
+  const igEmbedUrl = igPostId
+    ? `https://www.instagram.com/${post.media_type === 'REEL' ? 'reel' : 'p'}/${igPostId}/embed/`
+    : null
 
   // Smart Matching instantané côté client
   const smartSuggestions = useMemo(() => {
@@ -67,7 +78,6 @@ export function SocialPostCard({
     return matchProductsClient(combinedText, catalogue)
   }, [post.caption, post.ocr_text, catalogue])
 
-  const topSuggestion = smartSuggestions[0]
   return (
     <div
       className={`social-compact-post-card ${isSelected ? 'selected' : ''}`}
@@ -111,7 +121,36 @@ export function SocialPostCard({
           title={onUpdatePost ? 'Modifier la miniature ou la légende' : undefined}
         >
           {merchantThumb ? (
-            <ExternalImg src={merchantThumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <ExternalImg
+              src={merchantThumb}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              fallback={
+                igEmbedUrl ? (
+                  <iframe
+                    src={igEmbedUrl}
+                    style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                    scrolling="no"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                    <Film size={20} />
+                  </div>
+                )
+              }
+            />
+          ) : igEmbedUrl ? (
+            <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', pointerEvents: 'none' }}>
+              <iframe
+                src={igEmbedUrl}
+                style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                scrolling="no"
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+            </div>
           ) : (
             <div
               style={{
@@ -204,155 +243,14 @@ export function SocialPostCard({
           </p>
 
           {/* Pastilles de Produits associés & Suggestions Smart Matching */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-            {post.produits && post.produits.length > 0 ? (
-              <>
-                {post.produits.map(prod => (
-                  <span key={prod.id} className="social-prod-pill">
-                    <ShoppingBag size={10} style={{ color: '#C75B00', flexShrink: 0 }} />
-                    <span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {prod.nom} ({prod.prix ? fcfa(prod.prix) : '—'})
-                    </span>
-                    <button
-                      onClick={() => onDissociateProduct(post.id, prod.id)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#94a3b8',
-                        padding: 0,
-                        fontSize: 12,
-                        lineHeight: 1,
-                        marginLeft: 2,
-                      }}
-                      title="Dissocier ce produit"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                <button
-                  onClick={() => setShowQuickPicker(!showQuickPicker)}
-                  style={{
-                    background: '#fff',
-                    border: '1px dashed #cbd5e1',
-                    color: '#64748b',
-                    borderRadius: 6,
-                    padding: '2px 5px',
-                    fontSize: 10,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                  title="Associer un autre produit"
-                >
-                  +
-                </button>
-              </>
-            ) : topSuggestion ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: '#FFF7ED',
-                    border: '1px solid #FED7AA',
-                    borderRadius: 6,
-                    padding: '2px 8px',
-                    fontSize: 11,
-                  }}
-                >
-                  <Sparkles size={12} style={{ color: '#C75B00', flexShrink: 0 }} />
-                  <span style={{ fontWeight: 700, color: '#9a3412' }}>
-                    Suggéré ({Math.round(topSuggestion.confidence_score * 100)}%) : {topSuggestion.produit.nom} {topSuggestion.produit.prix ? `(${fcfa(topSuggestion.produit.prix)})` : ''}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={associating}
-                    onClick={async () => {
-                      if (onDirectAssociate) {
-                        setAssociating(true)
-                        await onDirectAssociate(post.id, topSuggestion.produit.id)
-                        setAssociating(false)
-                      } else {
-                        onOpenAssociateModal(post)
-                      }
-                    }}
-                    style={{
-                      background: '#C75B00',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: 4,
-                      padding: '2px 6px',
-                      fontSize: 10,
-                      fontWeight: 800,
-                      cursor: associating ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    {associating ? '...' : 'Associer en 1 clic'}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowQuickPicker(!showQuickPicker)}
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    color: '#64748b',
-                    borderRadius: 6,
-                    padding: '2px 6px',
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                  }}
-                >
-                  <Plus size={10} />
-                  <span>Autre</span>
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowQuickPicker(!showQuickPicker)}
-                style={{
-                  background: '#fff7ed',
-                  border: '1px solid #fed7aa',
-                  color: '#c2410c',
-                  borderRadius: 6,
-                  padding: '2px 8px',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                }}
-              >
-                <Plus size={11} />
-                <span>Associer un produit</span>
-              </button>
-            )}
-          </div>
-
-          {/* Sélecteur de produit rapide inline */}
-          {showQuickPicker && (
-            <QuickProductPicker
-              catalogue={catalogue}
-              suggestions={smartSuggestions}
-              onSelect={async (prodId) => {
-                if (onDirectAssociate) {
-                  setAssociating(true)
-                  await onDirectAssociate(post.id, prodId)
-                  setAssociating(false)
-                }
-                setShowQuickPicker(false)
-              }}
-              onClose={() => setShowQuickPicker(false)}
-              isSubmitting={associating}
-            />
-          )}
+          <SocialPostCardProducts
+            post={post}
+            catalogue={catalogue}
+            smartSuggestions={smartSuggestions}
+            onDissociateProduct={onDissociateProduct}
+            onOpenAssociateModal={onOpenAssociateModal}
+            onDirectAssociate={onDirectAssociate}
+          />
         </div>
       </div>
 

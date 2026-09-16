@@ -361,6 +361,36 @@ router.get(['/:id/social/admin/posts', '/boutiques/:id/social/admin/posts', '/:i
     `;
 
     const { rows } = await pool.query(sql, [boutique.id]);
+
+    // Auto-enrichissement transparent : si des publications ont une légende ou miniature manquante
+    const needingEnrichment = rows.filter(p => (!p.caption || !p.thumbnail_url) && p.post_url);
+    if (needingEnrichment.length > 0 && needingEnrichment.length <= 5) {
+      await Promise.allSettled(
+        needingEnrichment.map(async (p) => {
+          try {
+            const meta = await fetchOEmbedMetadata(p.post_url, p.plateforme);
+            if (meta && (meta.caption || meta.thumbnailUrl)) {
+              if (meta.caption && !p.caption) p.caption = meta.caption;
+              if (meta.author && !p.auteur) p.auteur = meta.author;
+              if (meta.thumbnailUrl && !p.thumbnail_url) p.thumbnail_url = meta.thumbnailUrl;
+              if (meta.embedHtml && !p.embed_html) p.embed_html = meta.embedHtml;
+              await pool.query(
+                `UPDATE social_posts
+                 SET
+                   caption = COALESCE(NULLIF($1, ''), caption),
+                   auteur = COALESCE(NULLIF($2, ''), auteur),
+                   thumbnail_url = COALESCE(NULLIF($3, ''), thumbnail_url),
+                   embed_html = COALESCE(NULLIF($4, ''), embed_html),
+                   updated_at = NOW()
+                 WHERE id = $5`,
+                [meta.caption || '', meta.author || '', meta.thumbnailUrl || null, meta.embedHtml || null, p.id]
+              );
+            }
+          } catch (_) {}
+        })
+      );
+    }
+
     res.json({ posts: rows });
   } catch (err) {
     console.error('[SOCIAL_ADMIN_GET_POSTS_ERR]', err);
@@ -404,9 +434,10 @@ router.post(['/:id/social/admin/import-url', '/boutiques/:id/social/admin/import
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
       ON CONFLICT (boutique_id, post_url) DO UPDATE SET
-        thumbnail_url = EXCLUDED.thumbnail_url,
-        embed_html = EXCLUDED.embed_html,
+        thumbnail_url = COALESCE(EXCLUDED.thumbnail_url, social_posts.thumbnail_url),
+        embed_html = COALESCE(EXCLUDED.embed_html, social_posts.embed_html),
         caption = COALESCE(NULLIF(EXCLUDED.caption, ''), social_posts.caption),
+        auteur = COALESCE(NULLIF(EXCLUDED.auteur, ''), social_posts.auteur),
         derniere_sync_at = NOW(),
         updated_at = NOW()
       RETURNING *
@@ -789,9 +820,10 @@ router.post(['/:id/social/admin/import-batch', '/boutiques/:id/social/admin/impo
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
           ON CONFLICT (boutique_id, post_url) DO UPDATE SET
-            thumbnail_url = EXCLUDED.thumbnail_url,
-            embed_html = EXCLUDED.embed_html,
+            thumbnail_url = COALESCE(EXCLUDED.thumbnail_url, social_posts.thumbnail_url),
+            embed_html = COALESCE(EXCLUDED.embed_html, social_posts.embed_html),
             caption = COALESCE(NULLIF(EXCLUDED.caption, ''), social_posts.caption),
+            auteur = COALESCE(NULLIF(EXCLUDED.auteur, ''), social_posts.auteur),
             derniere_sync_at = NOW(),
             updated_at = NOW()
           RETURNING *

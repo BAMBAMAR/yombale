@@ -1,3 +1,21 @@
+- **Correctif Social Shop — Extraction Automatique Légendes & Miniatures Instagram & YouTube + Aperçu Visuel Compte Marchand (16 septembre 2026)** 🛍️📸⚡ 🚀 ✅ :
+  * **🎯 1. Crawler OpenGraph Twitterbot pour Instagram (`backend/services/social-parser.js`)** :
+    - **Bypass Meta oEmbed Restriction** : Meta bloquait l'endpoint `/instagram_oembed` sans App Review préalable (code 10), laissant les légendes vides et les miniatures nulles.
+    - **Extraction Intelligente OpenGraph** : Utilisation du User-Agent `Twitterbot/1.0` pour récupérer les balises `og:title` (contenant la vraie légende et le nom du créateur) et `og:image` (image haute résolution CDN `scontent.cdninstagram.com`).
+    - **Intégration YouTube oEmbed Public** : Appel automatique de `https://www.youtube.com/oembed` (sans clé API) pour récupérer le titre officiel du média, le nom de la chaîne et la miniature.
+  * **🎯 2. Enrichissement Base de Données & Auto-Enrichissement Backend (`backend/routes/social-shop.js`)** :
+    - **Backfill Immédiat** : Mise à jour en base de données de tous les posts existants avec leurs vraies légendes et miniatures.
+    - **Auto-Enrichissement Transparent** : Dès qu'un marchand charge ses publications (`GET /social/admin/posts`), les éventuels posts sans légende ou miniature sont automatiquement analysés et complétés en base de données.
+    - **Protection Anti-Écrasement `ON CONFLICT`** : Sécurisation des clauses `INSERT INTO social_posts ... ON CONFLICT DO UPDATE` pour préserver les miniatures et légendes existantes (`COALESCE(EXCLUDED.thumbnail_url, social_posts.thumbnail_url)`).
+  * **🎯 3. Affichage Complet & Iframe Fallback dans le Compte Marchand (`SocialPostCard.tsx`, `SocialPostCardProducts.tsx`)** :
+    - **Affichage des Miniatures Officielles & Légendes** : Le compte marchand affiche désormais la vraie miniature CDN haute résolution et la vraie légende (fin des libellés *« Publication sans légende »* et des boîtes noires avec icône film).
+    - **Fallback Double Niveau** : Si une miniature expire ou est indisponible, affichage automatique de l'iframe embed Instagram natif ou de la miniature YouTube standard.
+    - **Modularisation Anti-Dette Technique (< 450 lignes)** : Extraction du sous-composant `SocialPostCardProducts.tsx` (184 lignes), ramenant `SocialPostCard.tsx` de 475 à **326 lignes**, en conformité stricte avec `AGENTS.md`.
+  * **🧪 4. Validation Qualité Complète (100% Vert)** :
+    - Tests Unitaires Backend (`tests/unit/social-shop.test.js`) : **42/42 tests validés avec succès**.
+    - Typecheck TypeScript Frontend (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **Conforme (composants < 450 lignes, zéro emoji dans l'UI, tokens stricts)**.
+
 - **Optimisation Visuelle & Aperçu Instagram Social Shop — Dimensions Compactes (310px), Intégration Native Iframe Instagram & Édition Rapide (16 septembre 2026)** 🛍️📐⚡ 🚀 ✅ :
   * **🎯 1. Dimensions Compactes & Réduction de Taille par Deux (`vitrine-publique.css`, `SocialPostCard.tsx`)** :
     - **Grille Compacte Bornée** : Remplacement du dimensionnement étiré par des colonnes `minmax(190px, 230px)` avec alignement naturel à gauche (`max-width: 240px` par carte). Évite que 1 à 3 cartes ne s'étirent à 400px de large.
