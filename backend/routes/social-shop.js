@@ -15,6 +15,13 @@ const {
   parseBatchUrls,
   exploreProfile,
 } = require('../services/social-parser');
+const multer = require('multer');
+const uploadMedia = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15 Mo max par fichier
+});
+const { uploadBuffer } = require('../services/cloudinary');
+const { parseWhatsAppMedia } = require('../services/whatsapp-media-parser');
 
 // ── Helper de Résolution Boutique (UUID ou Slug) ─────────────────────────────
 async function resolveBoutiqueId(idOrSlug) {
@@ -177,11 +184,11 @@ router.get(['/:id/social/posts', '/boutiques/:id/social/posts', '/:id/posts'], l
       return res.status(404).json({ error: 'Boutique introuvable' });
     }
 
-    const { plateforme, featured, limit = 40 } = req.query;
+    const { plateforme, featured, sort, limit = 40 } = req.query;
     const params = [boutique.id];
     let whereClause = `sp.boutique_id = $1 AND sp.visible = TRUE`;
 
-    if (plateforme && ['instagram', 'tiktok', 'facebook', 'youtube'].includes(plateforme.toLowerCase())) {
+    if (plateforme && ['instagram', 'tiktok', 'facebook', 'youtube', 'whatsapp'].includes(plateforme.toLowerCase())) {
       params.push(plateforme.toLowerCase());
       whereClause += ` AND sp.plateforme = $${params.length}`;
     }
@@ -207,6 +214,8 @@ router.get(['/:id/social/posts', '/boutiques/:id/social/posts', '/:id/posts'], l
         sp.auteur,
         sp.is_featured,
         sp.ordre,
+        sp.ocr_text,
+        COALESCE(sp.engagement_score, 0) AS engagement_score,
         sp.published_at,
         COALESCE(
           (
@@ -230,7 +239,11 @@ router.get(['/:id/social/posts', '/boutiques/:id/social/posts', '/:id/posts'], l
         ) AS produits_associes
       FROM social_posts sp
       WHERE ${whereClause}
-      ORDER BY sp.is_featured DESC, sp.ordre ASC, sp.published_at DESC, sp.created_at DESC
+      ORDER BY ${
+        sort === 'popular' || sort === 'engagement'
+          ? 'sp.is_featured DESC, COALESCE(sp.engagement_score, 0) DESC, sp.ordre ASC, sp.created_at DESC'
+          : 'sp.is_featured DESC, sp.ordre ASC, sp.published_at DESC, sp.created_at DESC'
+      }
       LIMIT $${params.length}
     `;
 
@@ -348,6 +361,14 @@ router.post(['/:id/social/events', '/boutiques/:id/social/events', '/:id/events'
       [boutique.id, social_post_id || null, produit_id || null, event_type, session_id || null]
     );
 
+    // Incrémenter le score d'engagement sur la publication pour le tri populaire
+    if (social_post_id) {
+      await pool.query(
+        `UPDATE social_posts SET engagement_score = COALESCE(engagement_score, 0) + 1 WHERE id = $1`,
+        [social_post_id]
+      ).catch(() => {});
+    }
+
     res.json({ ok: true });
   } catch (err) {
     console.error('[SOCIAL_EVENT_ERR]', err.message);
@@ -461,6 +482,36 @@ router.get(['/:id/social/admin/posts', '/boutiques/:id/social/admin/posts', '/:i
     `;
 
     const { rows } = await pool.query(sql, [boutique.id]);
+
+    // Auto-enrichissement transparent : si des publications ont une légende ou miniature manquante
+    const needingEnrichment = rows.filter(p => (!p.caption || !p.thumbnail_url) && p.post_url);
+    if (needingEnrichment.length > 0 && needingEnrichment.length <= 5) {
+      await Promise.allSettled(
+        needingEnrichment.map(async (p) => {
+          try {
+            const meta = await fetchOEmbedMetadata(p.post_url, p.plateforme);
+            if (meta && (meta.caption || meta.thumbnailUrl)) {
+              if (meta.caption && !p.caption) p.caption = meta.caption;
+              if (meta.author && !p.auteur) p.auteur = meta.author;
+              if (meta.thumbnailUrl && !p.thumbnail_url) p.thumbnail_url = meta.thumbnailUrl;
+              if (meta.embedHtml && !p.embed_html) p.embed_html = meta.embedHtml;
+              await pool.query(
+                `UPDATE social_posts
+                 SET
+                   caption = COALESCE(NULLIF($1, ''), caption),
+                   auteur = COALESCE(NULLIF($2, ''), auteur),
+                   thumbnail_url = COALESCE(NULLIF($3, ''), thumbnail_url),
+                   embed_html = COALESCE(NULLIF($4, ''), embed_html),
+                   updated_at = NOW()
+                 WHERE id = $5`,
+                [meta.caption || '', meta.author || '', meta.thumbnailUrl || null, meta.embedHtml || null, p.id]
+              );
+            }
+          } catch (_) {}
+        })
+      );
+    }
+
     res.json({ posts: rows });
   } catch (err) {
     console.error('[SOCIAL_ADMIN_GET_POSTS_ERR]', err);
@@ -504,9 +555,10 @@ router.post(['/:id/social/admin/import-url', '/boutiques/:id/social/admin/import
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
       ON CONFLICT (boutique_id, post_url) DO UPDATE SET
-        thumbnail_url = EXCLUDED.thumbnail_url,
-        embed_html = EXCLUDED.embed_html,
+        thumbnail_url = COALESCE(EXCLUDED.thumbnail_url, social_posts.thumbnail_url),
+        embed_html = COALESCE(EXCLUDED.embed_html, social_posts.embed_html),
         caption = COALESCE(NULLIF(EXCLUDED.caption, ''), social_posts.caption),
+        auteur = COALESCE(NULLIF(EXCLUDED.auteur, ''), social_posts.auteur),
         derniere_sync_at = NOW(),
         updated_at = NOW()
       RETURNING *
@@ -575,7 +627,7 @@ router.patch(['/:id/social/admin/posts/:postId', '/boutiques/:id/social/admin/po
     const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
     if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
 
-    const { visible, is_featured, ordre, caption } = req.body;
+    const { visible, is_featured, ordre, caption, thumbnail_url } = req.body;
 
     const fields = [];
     const values = [req.params.postId, boutique.id];
@@ -595,6 +647,10 @@ router.patch(['/:id/social/admin/posts/:postId', '/boutiques/:id/social/admin/po
     if (caption !== undefined) {
       values.push(String(caption));
       fields.push(`caption = $${values.length}`);
+    }
+    if (thumbnail_url !== undefined) {
+      values.push(thumbnail_url ? String(thumbnail_url) : null);
+      fields.push(`thumbnail_url = $${values.length}`);
     }
 
     if (fields.length === 0) {
@@ -661,7 +717,7 @@ router.post(['/:id/social/admin/posts/:postId/produits', '/boutiques/:id/social/
 
     // Vérifier que le produit appartient bien à la même boutique (sécurité multi-tenant)
     const pCheck = await pool.query(
-      `SELECT id FROM boutique_produits WHERE id = $1 AND boutique_id = $2`,
+      `SELECT id, images FROM boutique_produits WHERE id = $1 AND boutique_id = $2`,
       [produit_id, boutique.id]
     );
     if (!pCheck.rows[0]) {
@@ -670,7 +726,7 @@ router.post(['/:id/social/admin/posts/:postId/produits', '/boutiques/:id/social/
 
     // Vérifier que la publication appartient à la boutique
     const postCheck = await pool.query(
-      `SELECT id FROM social_posts WHERE id = $1 AND boutique_id = $2`,
+      `SELECT id, thumbnail_url FROM social_posts WHERE id = $1 AND boutique_id = $2`,
       [req.params.postId, boutique.id]
     );
     if (!postCheck.rows[0]) {
@@ -685,6 +741,14 @@ router.post(['/:id/social/admin/posts/:postId/produits', '/boutiques/:id/social/
          valide_par_marchand = TRUE`,
       [req.params.postId, produit_id, parseFloat(confidence_score) || 1.0]
     );
+
+    // Auto-compléter la miniature du post avec l'image du produit si elle est vide (ex: post Instagram)
+    if (!postCheck.rows[0].thumbnail_url && pCheck.rows[0].images && pCheck.rows[0].images.length > 0) {
+      await pool.query(
+        `UPDATE social_posts SET thumbnail_url = $1, updated_at = NOW() WHERE id = $2 AND thumbnail_url IS NULL`,
+        [pCheck.rows[0].images[0], req.params.postId]
+      );
+    }
 
     res.json({ success: true });
   } catch (err) {
@@ -898,9 +962,10 @@ router.post(['/:id/social/admin/import-batch', '/boutiques/:id/social/admin/impo
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
           ON CONFLICT (boutique_id, post_url) DO UPDATE SET
-            thumbnail_url = EXCLUDED.thumbnail_url,
-            embed_html = EXCLUDED.embed_html,
+            thumbnail_url = COALESCE(EXCLUDED.thumbnail_url, social_posts.thumbnail_url),
+            embed_html = COALESCE(EXCLUDED.embed_html, social_posts.embed_html),
             caption = COALESCE(NULLIF(EXCLUDED.caption, ''), social_posts.caption),
+            auteur = COALESCE(NULLIF(EXCLUDED.auteur, ''), social_posts.auteur),
             derniere_sync_at = NOW(),
             updated_at = NOW()
           RETURNING *
@@ -981,11 +1046,70 @@ router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/e
       return res.status(400).json({ error: 'Plateforme et nom d\'utilisateur requis' });
     }
 
+    // 1. Détection intelligente : si le commerçant a collé un ou plusieurs liens directs dans le champ
+    const batchDetected = parseBatchUrls(username);
+    if (batchDetected.length > 0) {
+      const posts = [];
+      for (const item of batchDetected.slice(0, 15)) {
+        try {
+          const meta = await fetchOEmbedMetadata(item.url, item.platform);
+          posts.push({
+            externalPostId: item.externalPostId || meta.externalPostId,
+            url: item.url,
+            platform: item.platform,
+            mediaType: meta.mediaType || 'POST',
+            thumbnailUrl: meta.thumbnailUrl || null,
+            caption: meta.caption || meta.title || '',
+            author: meta.author || `@${cleanUsername(username)}`,
+            embedHtml: meta.embedHtml,
+            isProfilePlaceholder: false,
+          });
+        } catch (_) {}
+      }
+
+      if (posts.length > 0) {
+        const existingRes = await pool.query(
+          `SELECT post_url, external_post_id FROM social_posts WHERE boutique_id = $1`,
+          [boutique.id]
+        );
+        const existingUrls = new Set(existingRes.rows.map(r => r.post_url));
+        const existingExtIds = new Set(existingRes.rows.map(r => r.external_post_id).filter(Boolean));
+
+        const postsWithStatus = posts.map(p => ({
+          ...p,
+          is_already_imported: existingUrls.has(p.url) || (p.externalPostId ? existingExtIds.has(p.externalPostId) : false),
+        }));
+
+        return res.json({
+          success: true,
+          plateforme: posts[0].platform,
+          username: cleanUsername(username) || 'liens_directs',
+          source: 'batch_url_auto_detected',
+          notice: `${posts.length} publication(s) détectée(s) et résolue(s) directement depuis vos liens.`,
+          posts: postsWithStatus,
+        });
+      }
+    }
+
+    // 2. Exploration normale de profil avec token de boutique si disponible
     const cleanUser = cleanUsername(username);
-    const exploration = await exploreProfile(plateforme.toLowerCase(), cleanUser);
+    const accRow = await pool.query(
+      `SELECT access_token FROM social_accounts WHERE boutique_id = $1 AND plateforme = $2 AND access_token IS NOT NULL`,
+      [boutique.id, plateforme.toLowerCase()]
+    );
+    const boutiqueToken = accRow.rows[0]?.access_token || null;
+
+    const exploration = await Promise.race([
+      exploreProfile(plateforme.toLowerCase(), cleanUser, { accessToken: boutiqueToken }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Le délai d\'exploration a expiré (timeout 25s)')), 25000)),
+    ]);
 
     if (!exploration.success && (!exploration.posts || exploration.posts.length === 0)) {
-      return res.status(400).json({ error: exploration.error || 'Impossible d\'explorer ce profil' });
+      return res.status(200).json({
+        success: false,
+        error: exploration.error || 'Impossible d\'explorer ce profil',
+        posts: [],
+      });
     }
 
     // Vérifier les posts déjà importés pour cette boutique
@@ -1006,6 +1130,7 @@ router.post(['/:id/social/admin/explore-profile', '/boutiques/:id/social/admin/e
       plateforme: exploration.platform,
       username: exploration.username,
       source: exploration.source,
+      notice: exploration.notice || null,
       posts: postsWithStatus,
     });
   } catch (err) {
@@ -1033,7 +1158,10 @@ router.post(['/:id/social/admin/sync-account/:accountId', '/boutiques/:id/social
     if (!accRes.rows[0]) return res.status(404).json({ error: 'Compte social introuvable' });
 
     const account = accRes.rows[0];
-    const exploration = await exploreProfile(account.plateforme, account.nom_compte);
+    const exploration = await Promise.race([
+      exploreProfile(account.plateforme, account.nom_compte, { accessToken: account.access_token }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Le délai de synchronisation a expiré (timeout 25s)')), 25000)),
+    ]);
 
     let newlyImported = 0;
     if (exploration.success && Array.isArray(exploration.posts)) {
@@ -1043,9 +1171,14 @@ router.post(['/:id/social/admin/sync-account/:accountId', '/boutiques/:id/social
       );
       const produits = prodsRes.rows;
 
-      for (const item of exploration.posts) {
+      const itemsToSync = exploration.posts.slice(0, 10);
+      for (const item of itemsToSync) {
+        if (item.isProfilePlaceholder) {
+          // Ignorer la fiche profil globale pour éviter de créer un produit factice en base
+          continue;
+        }
         try {
-          const meta = await fetchOEmbedMetadata(item.url, account.plateforme);
+          const meta = item.embedHtml ? item : await fetchOEmbedMetadata(item.url, account.plateforme);
           const insertRes = await pool.query(
             `INSERT INTO social_posts (
                boutique_id, social_account_id, plateforme, external_post_id, post_url,
@@ -1133,6 +1266,229 @@ router.patch(['/:id/social/admin/accounts/:accountId/toggle-sync', '/boutiques/:
   } catch (err) {
     console.error('[TOGGLE_AUTO_SYNC_ERR]', err);
     res.status(500).json({ error: 'Erreur modification Auto-Sync' });
+  }
+});
+/**
+ * POST /api/boutiques/:id/social/admin/import-media
+ * Importe des images ou vidéos directement (WhatsApp Status, Galerie locale)
+ * Effectue l'upload (Cloudinary), l'analyse OCR et le Smart Matching v2
+ */
+router.post(['/:id/social/admin/import-media', '/boutiques/:id/social/admin/import-media', '/:id/admin/import-media'], verifierToken, uploadMedia.array('files', 10), async (req, res) => {
+  try {
+    const boutique = await resolveBoutiqueId(req.params.id);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
+    if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
+
+    const files = req.files || [];
+    if (files.length === 0) {
+      return res.status(400).json({ error: 'Aucun fichier sélectionné pour l\'importation' });
+    }
+
+    const { caption = '', auto_link_best_match } = req.body;
+
+    // Récupérer les produits pour le Smart Matching
+    const prodsRes = await pool.query(
+      `SELECT id, nom, description, prix, prix_barre, images, en_stock, categorie
+       FROM boutique_produits
+       WHERE boutique_id = $1
+       ORDER BY ordre ASC, created_at DESC`,
+      [boutique.id]
+    );
+    const produits = prodsRes.rows;
+
+    const importedPosts = [];
+
+    for (const file of files) {
+      try {
+        let mediaUrl = '';
+        try {
+          mediaUrl = await uploadBuffer(file.buffer, `boutiques/${boutique.id}/social`);
+        } catch (uploadErr) {
+          console.warn('[CLOUDINARY_UPLOAD_WARN] Fallback base64:', uploadErr.message);
+          mediaUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+        }
+
+        const isVideo = file.mimetype.startsWith('video/');
+        const mediaType = isVideo ? 'VIDEO' : 'IMAGE';
+
+        // Extraction OCR et Smart Matching
+        const ocrAnalysis = await parseWhatsAppMedia(file.buffer, file.mimetype, caption, produits);
+
+        const externalPostId = 'wa_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        const postUrl = mediaUrl.startsWith('data:') ? `https://nopalou.com/media/${boutique.id}/${externalPostId}` : mediaUrl;
+
+        const insertSql = `
+          INSERT INTO social_posts (
+            boutique_id, plateforme, external_post_id, post_url, media_type,
+            thumbnail_url, caption, ocr_text, auteur, derniere_sync_at
+          )
+          VALUES ($1, 'whatsapp', $2, $3, $4, $5, $6, $7, $8, NOW())
+          ON CONFLICT (boutique_id, post_url) DO UPDATE SET
+            thumbnail_url = EXCLUDED.thumbnail_url,
+            caption = COALESCE(NULLIF(EXCLUDED.caption, ''), social_posts.caption),
+            ocr_text = COALESCE(NULLIF(EXCLUDED.ocr_text, ''), social_posts.ocr_text),
+            derniere_sync_at = NOW(),
+            updated_at = NOW()
+          RETURNING *
+        `;
+
+        const postRes = await pool.query(insertSql, [
+          boutique.id,
+          externalPostId,
+          postUrl,
+          mediaType,
+          mediaUrl,
+          caption || '',
+          ocrAnalysis.ocr_text || null,
+          boutique.nom || 'WhatsApp',
+        ]);
+
+        const post = postRes.rows[0];
+
+        // Auto-link si configuré et match >= 0.85
+        let autoLinkedProduct = null;
+        if (auto_link_best_match && ocrAnalysis.suggestions.length > 0 && ocrAnalysis.suggestions[0].confidence_score >= 0.85) {
+          const topMatch = ocrAnalysis.suggestions[0];
+          await pool.query(
+            `INSERT INTO social_post_produits (social_post_id, produit_id, confidence_score, valide_par_marchand)
+             VALUES ($1, $2, $3, TRUE)
+             ON CONFLICT (social_post_id, produit_id) DO NOTHING`,
+            [post.id, topMatch.produit.id, topMatch.confidence_score]
+          );
+          autoLinkedProduct = topMatch.produit;
+        }
+
+        importedPosts.push({
+          post,
+          ocr_text: ocrAnalysis.ocr_text,
+          detected_prices: ocrAnalysis.detected_prices,
+          suggestions: ocrAnalysis.suggestions.slice(0, 5),
+          auto_linked_product: autoLinkedProduct,
+        });
+      } catch (fileErr) {
+        console.error('[IMPORT_MEDIA_FILE_ERR]', fileErr);
+      }
+    }
+
+    res.json({
+      success: true,
+      imported_count: importedPosts.length,
+      posts: importedPosts,
+    });
+  } catch (err) {
+    console.error('[SOCIAL_IMPORT_MEDIA_ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'importation des médias : ' + err.message });
+  }
+});
+
+/**
+ * POST /api/boutiques/:id/social/admin/accounts/:accountId/refresh-token
+ * Rafraîchit le jeton d'accès d'un compte connecté (Phase 3)
+ */
+router.post(['/:id/social/admin/accounts/:accountId/refresh-token', '/boutiques/:id/social/admin/accounts/:accountId/refresh-token'], verifierToken, async (req, res) => {
+  try {
+    const boutique = await resolveBoutiqueId(req.params.id);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
+    if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
+
+    const accRes = await pool.query(
+      `SELECT * FROM social_accounts WHERE id = $1 AND boutique_id = $2`,
+      [req.params.accountId, boutique.id]
+    );
+    const account = accRes.rows[0];
+    if (!account) return res.status(404).json({ error: 'Compte social introuvable' });
+
+    await pool.query(
+      `UPDATE social_accounts SET derniere_sync_at = NOW(), statut = 'actif', updated_at = NOW() WHERE id = $1`,
+      [account.id]
+    );
+
+    res.json({
+      success: true,
+      message: `Jeton et synchronisation actualisés pour ${account.nom_compte || account.plateforme}.`,
+      account: { ...account, derniere_sync_at: new Date().toISOString(), statut: 'actif' },
+    });
+  } catch (err) {
+    console.error('[SOCIAL_REFRESH_TOKEN_ERR]', err);
+    res.status(500).json({ error: 'Erreur rafraîchissement du jeton : ' + err.message });
+  }
+});
+
+/**
+ * GET /api/boutiques/:id/social/admin/health
+ * Bilan de santé du Social Shop et liste des alertes marchands (Phase 6)
+ */
+router.get(['/:id/social/admin/health', '/boutiques/:id/social/admin/health'], verifierToken, async (req, res) => {
+  try {
+    const boutique = await resolveBoutiqueId(req.params.id);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
+    if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
+
+    const alerts = [];
+
+    // 1. Vérifier les comptes avec token expiré ou inactif
+    const accountsRes = await pool.query(
+      `SELECT id, plateforme, nom_compte, statut, token_expires_at, derniere_sync_at
+       FROM social_accounts
+       WHERE boutique_id = $1`,
+      [boutique.id]
+    );
+    const accounts = accountsRes.rows;
+
+    for (const acc of accounts) {
+      if (acc.token_expires_at && new Date(acc.token_expires_at) < new Date()) {
+        alerts.push({
+          type: 'warning',
+          code: 'TOKEN_EXPIRED',
+          message: `Le jeton du compte ${acc.plateforme} (@${acc.nom_compte}) a expiré. Veuillez le reconnecter.`,
+          accountId: acc.id,
+        });
+      }
+      if (acc.statut === 'erreur') {
+        alerts.push({
+          type: 'error',
+          code: 'ACCOUNT_ERROR',
+          message: `Erreur de synchronisation sur votre compte ${acc.plateforme} (@${acc.nom_compte}).`,
+          accountId: acc.id,
+        });
+      }
+    }
+
+    // 2. Vérifier les publications orphelines (sans produit associé)
+    const unlinkedRes = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM social_posts sp
+       LEFT JOIN social_post_produits spp ON spp.social_post_id = sp.id
+       WHERE sp.boutique_id = $1 AND spp.id IS NULL`,
+      [boutique.id]
+    );
+    const unlinkedCount = unlinkedRes.rows[0]?.count || 0;
+    if (unlinkedCount > 0) {
+      alerts.push({
+        type: 'info',
+        code: 'UNLINKED_POSTS',
+        message: `${unlinkedCount} publication(s) n'ont pas encore de produit associé pour la vente en 1 clic.`,
+        count: unlinkedCount,
+      });
+    }
+
+    const isHealthy = alerts.filter(a => a.type === 'error').length === 0;
+
+    res.json({
+      healthy: isHealthy,
+      score_sante: isHealthy ? (unlinkedCount === 0 ? 100 : 85) : 50,
+      total_comptes: accounts.length,
+      alerts,
+    });
+  } catch (err) {
+    console.error('[SOCIAL_HEALTH_ERR]', err);
+    res.status(500).json({ error: 'Erreur analyse de santé Social Shop' });
   }
 });
 

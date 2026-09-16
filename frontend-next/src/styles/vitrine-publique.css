@@ -353,11 +353,17 @@
   padding-right: 4px;
 }
 
-/* Grille vitrine publique 2 colonnes mobile */
+/* Grille vitrine publique moderne et compacte */
 .social-feed-grid-public {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(190px, 230px));
+  justify-content: flex-start;
   gap: 16px;
+}
+
+.social-public-post-card {
+  max-width: 240px;
+  width: 100%;
 }
 
 /* ── ADAPTATION TABLETTE & MOBILE (<= 768px) ── */

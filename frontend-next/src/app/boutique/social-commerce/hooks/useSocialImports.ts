@@ -7,7 +7,7 @@ import { authFetch } from '../utils'
 interface UseSocialImportsProps {
   boutiqueId: string
   reloadData: () => Promise<void>
-  setMessage: (msg: { type: 'success' | 'error'; text: string } | null) => void
+  setMessage: (msg: { type: 'success' | 'error' | 'info'; text: string } | null) => void
 }
 
 export function useSocialImports({
@@ -19,7 +19,7 @@ export function useSocialImports({
   const [autoMatch, setAutoMatch] = useState(true)
 
   // Mode 1 : Aspirateur de profil (@pseudo)
-  const [profilePlatform, setProfilePlatform] = useState<'tiktok' | 'instagram' | 'facebook'>('tiktok')
+  const [profilePlatform, setProfilePlatform] = useState<'tiktok' | 'instagram' | 'facebook' | 'youtube'>('tiktok')
   const [profileUsername, setProfileUsername] = useState('')
   const [exploringProfile, setExploringProfile] = useState(false)
   const [discoveredPosts, setDiscoveredPosts] = useState<DiscoveredPost[]>([])
@@ -33,6 +33,9 @@ export function useSocialImports({
   // Mode 3 : Lien unique rapide
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
+
+  // Mode 4 : Import direct médias (WhatsApp Status / Galerie)
+  const [mediaUploading, setMediaUploading] = useState(false)
 
   // 1. Import d'une publication par URL
   async function handleImportUrl(e: React.FormEvent) {
@@ -104,7 +107,7 @@ export function useSocialImports({
       })
 
       const data = await res.json()
-      if (!res.ok) {
+      if (!res.ok || data.success === false) {
         setMessage({ type: 'error', text: data.error || "Impossible d'explorer ce profil" })
         return
       }
@@ -114,16 +117,23 @@ export function useSocialImports({
 
       const initialSelected = new Set<string>()
       found.forEach(p => {
-        if (!p.is_already_imported) {
+        if (!p.is_already_imported && !p.isProfilePlaceholder) {
           initialSelected.add(p.url)
         }
       })
       setSelectedDiscoveredUrls(initialSelected)
 
-      setMessage({
-        type: 'success',
-        text: `${found.length} publication(s) détectée(s) pour @${data.username} (${initialSelected.size} nouvelle(s)).`,
-      })
+      if (data.notice) {
+        setMessage({
+          type: 'info',
+          text: data.notice,
+        })
+      } else {
+        setMessage({
+          type: 'success',
+          text: `${found.length} publication(s) détectée(s) pour @${data.username} (${initialSelected.size} nouvelle(s)).`,
+        })
+      }
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Erreur de connexion' })
     } finally {
@@ -215,6 +225,52 @@ export function useSocialImports({
     }
   }
 
+  // 4. Import direct médias & WhatsApp Status (avec OCR et Smart Matching)
+  async function handleImportMedia(files: File[], caption = '') {
+    if (!files || files.length === 0) return
+
+    try {
+      setMediaUploading(true)
+      setMessage(null)
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+
+      const formData = new FormData()
+      for (const file of files) {
+        formData.append('files', file)
+      }
+      formData.append('caption', caption)
+      formData.append('auto_link_best_match', String(autoMatch))
+
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/import-media`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setMessage({
+          type: 'success',
+          text: `Succès : ${data.imported_count} publication(s) WhatsApp / média importée(s) avec analyse OCR.`,
+        })
+        await reloadData()
+      } else {
+        setMessage({
+          type: 'error',
+          text: data.error || 'Erreur lors de l\'importation des médias.',
+        })
+      }
+    } catch (err: any) {
+      console.error(err)
+      setMessage({ type: 'error', text: err.message || 'Erreur réseau lors de l\'importation.' })
+    } finally {
+      setMediaUploading(false)
+    }
+  }
+
   return {
     importMode,
     setImportMode,
@@ -235,6 +291,8 @@ export function useSocialImports({
     handleExploreProfile,
     handleImportDiscovered,
     handleImportBatch,
+    handleImportMedia,
+    mediaUploading,
     batchUrlsText,
     setBatchUrlsText,
     batchImporting,

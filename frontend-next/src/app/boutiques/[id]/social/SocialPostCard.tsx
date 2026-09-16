@@ -31,12 +31,31 @@ export default function SocialPostCard({
   const hasProducts = post.produits_associes && post.produits_associes.length > 0
   const firstProduct = hasProducts ? post.produits_associes[0] : null
 
+  // Résolution intelligente de la miniature :
+  // 1. Miniature officielle enregistrée (TikTok CDN, YouTube HQ, upload direct)
+  // 2. Fallback photo du produit associé au post (pour ne jamais laisser un post sans image)
+  const resolvedThumbnail =
+    post.thumbnail_url ||
+    (firstProduct?.images?.[0] ? cloudinaryHQ(firstProduct.images[0], { width: 400 }) : null)
+
+  // Aperçu Iframe officiel Instagram si aucune image n'est disponible
+  const igPostId =
+    post.plateforme === 'instagram' && !resolvedThumbnail
+      ? post.external_post_id && !post.external_post_id.startsWith('ig_profile_')
+        ? post.external_post_id
+        : post.post_url?.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/)?.[1] || null
+      : null
+  const igEmbedUrl = igPostId
+    ? `https://www.instagram.com/${post.media_type === 'REEL' ? 'reel' : 'p'}/${igPostId}/embed/`
+    : null
+
   return (
     <div
       onClick={() => onSelect(post)}
+      className="social-public-post-card"
       style={{
         background: '#ffffff',
-        borderRadius: 16,
+        borderRadius: 14,
         overflow: 'hidden',
         border: '1px solid #e2e8f0',
         boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
@@ -55,11 +74,11 @@ export default function SocialPostCard({
         e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.03)'
       }}
     >
-      {/* Image de couverture verticale / Miniature HD */}
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '9/14', background: '#0f172a', overflow: 'hidden' }}>
-        {post.thumbnail_url ? (
+      {/* Image de couverture / Miniature vidéo compacte (ratio 4/5) */}
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', background: '#0f172a', overflow: 'hidden' }}>
+        {resolvedThumbnail ? (
           <ExternalImg
-            src={post.thumbnail_url}
+            src={resolvedThumbnail}
             alt={post.caption || 'Publication sociale'}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             loading="lazy"
@@ -77,15 +96,31 @@ export default function SocialPostCard({
                       ? 'linear-gradient(135deg, #405DE6 0%, #833AB4 50%, #E1306C 100%)'
                       : 'linear-gradient(135deg, #1e293b, #0f172a)',
                   color: '#ffffff',
-                  padding: 16,
+                  padding: 14,
                   textAlign: 'center',
                 }}
               >
-                <PlatformIcon size={32} style={{ marginBottom: 6 }} />
-                <span style={{ fontSize: 12, fontWeight: 800 }}>{formatHandle(post.auteur) || conf.label}</span>
+                <PlatformIcon size={28} style={{ marginBottom: 4 }} />
+                <span style={{ fontSize: 11, fontWeight: 800 }}>{formatHandle(post.auteur) || conf.label}</span>
               </div>
             }
           />
+        ) : igEmbedUrl ? (
+          <div style={{ width: '100%', height: '100%', position: 'relative', background: '#0f172a' }}>
+            <iframe
+              src={igEmbedUrl}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                pointerEvents: 'none',
+                objectFit: 'cover',
+              }}
+              scrolling="no"
+              tabIndex={-1}
+              aria-hidden="true"
+            />
+          </div>
         ) : (
           <div
             style={{
@@ -102,30 +137,30 @@ export default function SocialPostCard({
                   ? 'linear-gradient(135deg, #000000 0%, #161823 100%)'
                   : 'linear-gradient(135deg, #1877F2 0%, #0c4a9e 100%)',
               color: '#ffffff',
-              padding: 20,
+              padding: 16,
               textAlign: 'center',
             }}
           >
             <div
               style={{
-                width: 52,
-                height: 52,
+                width: 44,
+                height: 44,
                 borderRadius: '50%',
                 background: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(8px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginBottom: 10,
+                marginBottom: 8,
                 border: '1.5px solid rgba(255,255,255,0.35)',
               }}
             >
-              <PlatformIcon size={24} />
+              <PlatformIcon size={20} />
             </div>
-            <p style={{ margin: 0, fontWeight: 900, fontSize: 13, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+            <p style={{ margin: 0, fontWeight: 900, fontSize: 12, color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
               {formatHandle(post.auteur) || `@${boutiqueNom}`}
             </p>
-            <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.85)', marginTop: 4, fontWeight: 700 }}>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', marginTop: 2, fontWeight: 700 }}>
               Profil officiel connecté
             </span>
           </div>
@@ -136,7 +171,7 @@ export default function SocialPostCard({
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, transparent 40%, rgba(0,0,0,0.85) 100%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 45%, rgba(0,0,0,0.8) 100%)',
           }}
         />
 
@@ -189,51 +224,56 @@ export default function SocialPostCard({
           </div>
         )}
 
-        {/* Icône Centrale Play */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 46,
-            height: 46,
-            borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.85)',
-            color: '#0f172a',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-          }}
-        >
-          <Play size={20} style={{ marginLeft: 2 }} />
-        </div>
+        {/* Icône Centrale Play (affichée uniquement si ce n'est pas une iframe embed interactive) */}
+        {!igEmbedUrl && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 38,
+              height: 38,
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.9)',
+              color: '#0f172a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+            }}
+          >
+            <Play size={16} style={{ marginLeft: 2 }} />
+          </div>
+        )}
 
         {/* Légende en bas de miniature */}
-        <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-          {post.auteur && (
-            <p style={{ margin: '0 0 2px', fontSize: 11.5, fontWeight: 800, color: '#f8fafc' }}>
-              {formatHandle(post.auteur)}
-            </p>
-          )}
-          {post.caption && (
-            <p
-              style={{
-                margin: 0,
-                fontSize: 12,
-                color: '#cbd5e1',
-                lineHeight: 1.35,
-                overflow: 'hidden',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-              }}
-            >
-              {post.caption}
-            </p>
-          )}
-        </div>
+        {!igEmbedUrl && (post.auteur || post.caption) && (
+          <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10 }}>
+            {post.auteur && (
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 800, color: '#f8fafc', textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+                {formatHandle(post.auteur)}
+              </p>
+            )}
+            {post.caption && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 11.5,
+                  color: '#e2e8f0',
+                  lineHeight: 1.3,
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                }}
+              >
+                {post.caption}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Accroche produit attachée sous la carte */}

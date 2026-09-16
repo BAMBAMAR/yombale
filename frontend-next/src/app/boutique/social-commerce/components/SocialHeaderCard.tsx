@@ -23,8 +23,8 @@ interface SocialHeaderCardProps {
   activeMainTab: MainTab
   setActiveMainTab: (tab: MainTab) => void
   setPostFilter: (filter: PostFilter) => void
-  message: { type: 'success' | 'error'; text: string } | null
-  setMessage: (msg: { type: 'success' | 'error'; text: string } | null) => void
+  message: { type: 'success' | 'error' | 'info'; text: string } | null
+  setMessage: (msg: { type: 'success' | 'error' | 'info'; text: string } | null) => void
 }
 
 export function SocialHeaderCard({
@@ -213,9 +213,9 @@ export function SocialHeaderCard({
           style={{
             padding: '10px 14px',
             borderRadius: 10,
-            background: message.type === 'success' ? '#f0fdf4' : '#fef2f2',
-            border: `1px solid ${message.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
-            color: message.type === 'success' ? '#15803d' : '#b91c1c',
+            background: message.type === 'success' ? '#f0fdf4' : message.type === 'info' ? '#f0f9ff' : '#fef2f2',
+            border: `1px solid ${message.type === 'success' ? '#bbf7d0' : message.type === 'info' ? '#bae6fd' : '#fecaca'}`,
+            color: message.type === 'success' ? '#15803d' : message.type === 'info' ? '#0369a1' : '#b91c1c',
             fontSize: 12.5,
             fontWeight: 700,
             display: 'flex',

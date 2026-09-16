@@ -97,6 +97,31 @@ export function useSocialPostsManagement({
     }
   }
 
+  // 3b. Mise à jour de la légende ou de la miniature
+  async function handleUpdatePost(postId: string, data: { caption?: string; thumbnail_url?: string }) {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (res.ok) {
+        setPosts(prev => prev.map(p => (p.id === postId ? { ...p, ...data } : p)))
+        setMessage({ type: 'success', text: 'Publication mise à jour avec succès' })
+      }
+    } catch (err) {
+      console.error(err)
+      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour' })
+    }
+  }
+
   // 4. Association produit
   async function handleAssociateProduct(productId: string) {
     if (!selectedPostForProduct) return
@@ -117,6 +142,29 @@ export function useSocialPostsManagement({
       if (res.ok) {
         await reloadData()
         setSelectedPostForProduct(null)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  // 4b. Association directe 1-clic (Smart Matching)
+  async function handleDirectAssociateProduct(postId: string, productId: string, confidenceScore = 1.0) {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}/produits`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ produit_id: productId, confidence_score: confidenceScore }),
+      })
+
+      if (res.ok) {
+        await reloadData()
       }
     } catch (err) {
       console.error(err)
@@ -380,7 +428,9 @@ export function useSocialPostsManagement({
     handleToggleVisible,
     handleToggleFeatured,
     handleDeletePost,
+    handleUpdatePost,
     handleAssociateProduct,
+    handleDirectAssociateProduct,
     handleDissociateProduct,
     handleBatchToggleVisibility,
     handleBatchToggleFeatured,

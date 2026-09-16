@@ -4,8 +4,11 @@
 const {
   detectPlatform,
   extractExternalPostId,
+  fetchOEmbedMetadata,
   normalizeText,
   matchProductsWithCaption,
+  extractPricesFromText,
+  extractHashtags,
   cleanUsername,
   parseBatchUrls,
   exploreProfile,
@@ -147,10 +150,82 @@ describe('Social Parser — Moteur de Smart Matching (matchProductsWithCaption)'
     expect(matches.length).toBe(0);
   });
 
+  test('booste le score lorsqu\'un prix correspondant est détecté dans la légende', () => {
+    // prod-1 est à 25000 FCFA
+    const caption = 'Superbe Robe Satinée Noire disponible au prix exceptionnel de 25 000 FCFA à Dakar !';
+    const matches = matchProductsWithCaption(caption, mockProducts);
+
+    expect(matches.length).toBeGreaterThan(0);
+    const topMatch = matches[0];
+    expect(topMatch.produit.id).toBe('prod-1');
+    expect(topMatch.price_matched).toBe(true);
+    expect(topMatch.matched_price).toBe(25000);
+    expect(topMatch.confidence_score).toBe(1.0);
+    expect(topMatch.confidence_level).toBe('high');
+  });
+
+  test('booste le score lorsqu\'un hashtag correspondant est détecté', () => {
+    // prod-3 a la catégorie 'accessoires'
+    const caption = 'Nouvelle montre dorée pour vos tenues chics #accessoires #dakar';
+    const matches = matchProductsWithCaption(caption, mockProducts);
+
+    expect(matches.length).toBeGreaterThan(0);
+    const matchMontre = matches.find(m => m.produit.id === 'prod-3');
+    expect(matchMontre).toBeDefined();
+    expect(matchMontre.matched_hashtags).toContain('accessoires');
+  });
+
   test('gère gracieusement les captions vides ou sans produits', () => {
     expect(matchProductsWithCaption('', mockProducts)).toEqual([]);
     expect(matchProductsWithCaption('Super vidéo', [])).toEqual([]);
     expect(matchProductsWithCaption(null, null)).toEqual([]);
+  });
+});
+
+describe('Social Parser — Extraction de prix (extractPricesFromText)', () => {
+  test('détecte les formats courants sénégalais (FCFA, CFA, F, XOF)', () => {
+    expect(extractPricesFromText('Prix: 15000f')).toEqual([15000]);
+    expect(extractPricesFromText('Robe à 25.000 FCFA')).toEqual([25000]);
+    expect(extractPricesFromText('Montre 18 000 CFA')).toEqual([18000]);
+    expect(extractPricesFromText('Smartphones 350 000 XOF')).toEqual([350000]);
+  });
+
+  test('détecte les montants avec suffixe k (ex: 25k f)', () => {
+    expect(extractPricesFromText('Promotion 25k f seulement')).toEqual([25000]);
+    expect(extractPricesFromText('Tarif 50k fcfa')).toEqual([50000]);
+  });
+
+  test('détecte avec le préfixe "prix :" même sans suffixe monétaire', () => {
+    expect(extractPricesFromText('Disponible, prix : 18 000')).toEqual([18000]);
+    expect(extractPricesFromText('Super look ! Tarif : 25000')).toEqual([25000]);
+  });
+
+  test('renvoie un tableau vide pour des textes sans montants', () => {
+    expect(extractPricesFromText('Venez découvrir nos nouveautés')).toEqual([]);
+    expect(extractPricesFromText('')).toEqual([]);
+    expect(extractPricesFromText(null)).toEqual([]);
+  });
+});
+
+describe('Social Parser — Extraction de hashtags (extractHashtags)', () => {
+  test('extrait et normalise les hashtags d\'une publication', () => {
+    const tags = extractHashtags('Magnifique collection #RobeSoirée #Mode_Dakar #wax');
+    expect(tags).toContain('robesoiree');
+    expect(tags).toContain('wax');
+  });
+
+  test('filtre les stop-words parmi les hashtags', () => {
+    const tags = extractHashtags('#promo #dakar #senegal #bazin');
+    // promo, dakar, senegal sont des stop words
+    expect(tags).toContain('bazin');
+    expect(tags).not.toContain('promo');
+    expect(tags).not.toContain('dakar');
+  });
+
+  test('renvoie un tableau vide si aucun hashtag', () => {
+    expect(extractHashtags('Texte sans hashtag')).toEqual([]);
+    expect(extractHashtags('')).toEqual([]);
+    expect(extractHashtags(null)).toEqual([]);
   });
 });
 
@@ -213,18 +288,101 @@ describe('Social Parser — Exploration de profil (exploreProfile)', () => {
     expect(res.error).toBeDefined();
   });
 
-  test('génère un résultat structuré pour un profil TikTok', async () => {
+  test('génère un résultat structuré pour un profil TikTok sans fausses données', async () => {
     const res = await exploreProfile('tiktok', 'wax_dakar');
     expect(res.platform).toBe('tiktok');
     expect(res.username).toBe('wax_dakar');
     expect(Array.isArray(res.posts)).toBe(true);
+
+    // ZÉRO faux posts Unsplash ou faux IDs inventés (7300000000000000001)
+    const hasUnsplash = res.posts.some(p => p.thumbnailUrl && p.thumbnailUrl.includes('unsplash.com'));
+    const hasFakeIds = res.posts.some(p => p.externalPostId && p.externalPostId.startsWith('tiktok_wax_dakar_'));
+    expect(hasUnsplash).toBe(false);
+    expect(hasFakeIds).toBe(false);
   });
 
-  test('génère un résultat structuré pour un profil Instagram', async () => {
+  test('génère un résultat structuré pour un profil Instagram sans fausses données', async () => {
     const res = await exploreProfile('instagram', 'boutique_senegal');
     expect(res.platform).toBe('instagram');
     expect(res.username).toBe('boutique_senegal');
     expect(Array.isArray(res.posts)).toBe(true);
+
+    // ZÉRO faux posts Unsplash ou fausses URLs inventées (C8_...)
+    const hasUnsplash = res.posts.some(p => p.thumbnailUrl && p.thumbnailUrl.includes('unsplash.com'));
+    const hasFakeReels = res.posts.some(p => p.url && p.url.includes('C8_boutique_senegal_'));
+    expect(hasUnsplash).toBe(false);
+    expect(hasFakeReels).toBe(false);
+  });
+
+  test('génère un résultat honnête pour un profil Facebook avec iframe Page', async () => {
+    const res = await exploreProfile('facebook', 'maboutique');
+    expect(res.success).toBe(true);
+    expect(res.platform).toBe('facebook');
+    expect(res.username).toBe('maboutique');
+    expect(res.posts.length).toBe(1);
+    expect(res.posts[0].isProfilePlaceholder).toBe(true);
+    expect(res.posts[0].embedHtml).toContain('facebook.com/plugins/page.php');
+    expect(res.posts[0].thumbnailUrl).toBeNull();
+  });
+
+  test('génère un résultat pour un profil YouTube sans fausses données', async () => {
+    const res = await exploreProfile('youtube', 'apple');
+    expect(res.platform).toBe('youtube');
+    expect(res.username).toBe('apple');
+    expect(Array.isArray(res.posts)).toBe(true);
+    const hasUnsplash = res.posts.some(p => p.thumbnailUrl && p.thumbnailUrl.includes('unsplash.com'));
+    expect(hasUnsplash).toBe(false);
   });
 });
+
+describe('Social Parser — Métadonnées oEmbed (fetchOEmbedMetadata)', () => {
+  test('Instagram oEmbed ne renvoie jamais d\'image de stock Unsplash', async () => {
+    const meta = await fetchOEmbedMetadata('https://www.instagram.com/reel/C8_XYZ123/', 'instagram');
+    expect(meta.platform).toBe('instagram');
+    expect(meta.embedHtml).toContain('instagram.com/reel/C8_XYZ123/embed/');
+    if (meta.thumbnailUrl) {
+      expect(meta.thumbnailUrl).not.toContain('images.unsplash.com');
+    }
+  });
+
+  test('Facebook oEmbed ne renvoie jamais d\'image Unsplash', async () => {
+    const meta = await fetchOEmbedMetadata('https://www.facebook.com/watch/?v=987654321', 'facebook');
+    expect(meta.platform).toBe('facebook');
+    expect(meta.embedHtml).toBeDefined();
+    if (meta.thumbnailUrl) {
+      expect(meta.thumbnailUrl).not.toContain('images.unsplash.com');
+    }
+  });
+});
+
+const { parseWhatsAppMedia } = require('../../backend/services/whatsapp-media-parser');
+
+describe('WhatsApp & Media Parser (parseWhatsAppMedia)', () => {
+  const mockProducts = [
+    {
+      id: 'prod-w1',
+      nom: 'Bazin Riche Getzner',
+      prix: 45000,
+      categorie: 'tissus',
+    },
+  ];
+
+  test('analyse le texte et extrait les prix et suggestions sans OCR si pas d\'image', async () => {
+    const res = await parseWhatsAppMedia(Buffer.from(''), 'text/plain', 'Bazin Riche Getzner disponible 45.000 FCFA #tissus', mockProducts);
+    expect(res.full_text).toContain('Bazin Riche Getzner');
+    expect(res.detected_prices).toContain(45000);
+    expect(res.detected_hashtags).toContain('tissus');
+    expect(res.suggestions.length).toBeGreaterThan(0);
+    expect(res.suggestions[0].produit.id).toBe('prod-w1');
+    expect(res.suggestions[0].price_matched).toBe(true);
+  });
+
+  test('gère gracieusement les buffers vides ou types inconnus sans lever d\'exception', async () => {
+    const res = await parseWhatsAppMedia(null, null, '', []);
+    expect(res.ocr_text).toBe('');
+    expect(res.detected_prices).toEqual([]);
+    expect(res.suggestions).toEqual([]);
+  });
+});
+
 

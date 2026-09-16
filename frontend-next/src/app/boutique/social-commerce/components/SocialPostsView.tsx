@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { SocialPostAdmin, PlatformFilter, PostFilter, TriOption } from '../types'
+import { SocialPostAdmin, PlatformFilter, PostFilter, TriOption, ProduitCatalogue } from '../types'
 import { SocialPostsToolbar } from './SocialPostsToolbar'
 import { SocialPostCard } from './SocialPostCard'
 
@@ -12,6 +12,7 @@ interface SocialPostsViewProps {
   featuredPosts: SocialPostAdmin[]
   hiddenPosts: SocialPostAdmin[]
   selectedPostIds: Set<string>
+  catalogue?: ProduitCatalogue[]
   postFilter: PostFilter
   setPostFilter: (f: PostFilter) => void
   rechercheTexte: string
@@ -28,6 +29,8 @@ interface SocialPostsViewProps {
   handleDeletePost: (postId: string) => void
   handleDissociateProduct: (postId: string, productId: string) => void
   setSelectedPostForProduct: (post: SocialPostAdmin | null) => void
+  onDirectAssociate?: (postId: string, productId: string) => Promise<void> | void
+  onUpdatePost?: (postId: string, data: { caption?: string; thumbnail_url?: string }) => Promise<void>
 }
 
 export function SocialPostsView({
@@ -53,6 +56,9 @@ export function SocialPostsView({
   handleDeletePost,
   handleDissociateProduct,
   setSelectedPostForProduct,
+  catalogue = [],
+  onDirectAssociate,
+  onUpdatePost,
 }: SocialPostsViewProps) {
   return (
     <div className="social-shop-compact-card">
@@ -141,12 +147,15 @@ export function SocialPostsView({
               key={post.id}
               post={post}
               isSelected={selectedPostIds.has(post.id)}
+              catalogue={catalogue}
               onToggleSelect={toggleSelectPost}
               onToggleVisible={handleToggleVisible}
               onToggleFeatured={handleToggleFeatured}
               onDelete={handleDeletePost}
               onDissociateProduct={handleDissociateProduct}
               onOpenAssociateModal={setSelectedPostForProduct}
+              onDirectAssociate={onDirectAssociate}
+              onUpdatePost={onUpdatePost}
             />
           ))}
         </div>

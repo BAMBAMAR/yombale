@@ -1,8 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import ExternalImg from '@/components/ExternalImg'
-import { fcfa } from '@/lib/format'
 import {
   Film,
   Star,
@@ -10,34 +9,75 @@ import {
   EyeOff,
   Trash2,
   ExternalLink,
-  ShoppingBag,
-  Plus,
   CheckSquare,
   Square,
+  Pencil,
 } from 'lucide-react'
-import { SocialPostAdmin } from '../types'
+import { ProduitCatalogue, SocialPostAdmin } from '../types'
+import { matchProductsClient } from '../matching'
+import { SocialPostCardProducts } from './SocialPostCardProducts'
+import EditPostModal from './EditPostModal'
 
 interface SocialPostCardProps {
   post: SocialPostAdmin
   isSelected: boolean
+  catalogue?: ProduitCatalogue[]
   onToggleSelect: (id: string) => void
   onToggleVisible: (post: SocialPostAdmin) => void
   onToggleFeatured: (post: SocialPostAdmin) => void
   onDelete: (id: string) => void
   onDissociateProduct: (postId: string, productId: string) => void
   onOpenAssociateModal: (post: SocialPostAdmin) => void
+  onDirectAssociate?: (postId: string, productId: string) => Promise<void> | void
+  onUpdatePost?: (postId: string, data: { caption?: string; thumbnail_url?: string }) => Promise<void>
 }
 
 export function SocialPostCard({
   post,
   isSelected,
+  catalogue = [],
   onToggleSelect,
   onToggleVisible,
   onToggleFeatured,
   onDelete,
   onDissociateProduct,
   onOpenAssociateModal,
+  onDirectAssociate,
+  onUpdatePost,
 }: SocialPostCardProps) {
+  const [showEditModal, setShowEditModal] = useState(false)
+
+  // Fallbacks intelligents pour YouTube et Instagram
+  const ytVideoId =
+    post.plateforme === 'youtube' && !post.thumbnail_url
+      ? post.external_post_id || post.post_url?.match(/(?:youtu\.be\/|watch\?v=)([a-zA-Z0-9_-]{11})/)?.[1]
+      : null
+  const ytFallbackThumb = ytVideoId ? `https://img.youtube.com/vi/${ytVideoId}/hqdefault.jpg` : null
+
+  const merchantThumb =
+    post.thumbnail_url ||
+    ytFallbackThumb ||
+    (post.produits && post.produits.length > 0 && post.produits[0].images?.[0]
+      ? post.produits[0].images[0]
+      : null)
+
+  const igPostId =
+    post.plateforme === 'instagram' && !merchantThumb
+      ? post.external_post_id && !post.external_post_id.startsWith('ig_profile_')
+        ? post.external_post_id
+        : post.post_url?.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/)?.[1] || null
+      : null
+  const igEmbedUrl = igPostId
+    ? `https://www.instagram.com/${post.media_type === 'REEL' ? 'reel' : 'p'}/${igPostId}/embed/`
+    : null
+
+  // Smart Matching instantané côté client
+  const smartSuggestions = useMemo(() => {
+    if (!catalogue || catalogue.length === 0) return []
+    const combinedText = [post.caption, post.ocr_text].filter(Boolean).join(' ')
+    return matchProductsClient(combinedText, catalogue)
+  }, [post.caption, post.ocr_text, catalogue])
+
   return (
     <div
       className={`social-compact-post-card ${isSelected ? 'selected' : ''}`}
@@ -74,9 +114,43 @@ export function SocialPostCard({
         </button>
 
         {/* Miniature vidéo */}
-        <div className="social-compact-thumb">
-          {post.thumbnail_url ? (
-            <ExternalImg src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div
+          className="social-compact-thumb"
+          onClick={() => onUpdatePost && setShowEditModal(true)}
+          style={{ cursor: onUpdatePost ? 'pointer' : 'default' }}
+          title={onUpdatePost ? 'Modifier la miniature ou la légende' : undefined}
+        >
+          {merchantThumb ? (
+            <ExternalImg
+              src={merchantThumb}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              fallback={
+                igEmbedUrl ? (
+                  <iframe
+                    src={igEmbedUrl}
+                    style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                    scrolling="no"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                    <Film size={20} />
+                  </div>
+                )
+              }
+            />
+          ) : igEmbedUrl ? (
+            <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', pointerEvents: 'none' }}>
+              <iframe
+                src={igEmbedUrl}
+                style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                scrolling="no"
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+            </div>
           ) : (
             <div
               style={{
@@ -105,7 +179,7 @@ export function SocialPostCard({
               textTransform: 'uppercase',
             }}
           >
-            {post.plateforme === 'instagram' ? 'IG' : post.plateforme === 'tiktok' ? 'TT' : 'FB'}
+            {post.plateforme === 'instagram' ? 'IG' : post.plateforme === 'tiktok' ? 'TT' : post.plateforme === 'youtube' ? 'YT' : post.plateforme === 'whatsapp' ? 'WA' : 'FB'}
           </span>
         </div>
 
@@ -165,76 +239,18 @@ export function SocialPostCard({
               maxWidth: '100%',
             }}
           >
-            {post.caption || 'Publication sans légende'}
+            {post.caption || (post.ocr_text ? `[OCR] ${post.ocr_text}` : 'Publication sans légende')}
           </p>
 
-          {/* Pastilles de Produits associés */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
-            {post.produits && post.produits.length > 0 ? (
-              <>
-                {post.produits.map(prod => (
-                  <span key={prod.id} className="social-prod-pill">
-                    <ShoppingBag size={10} style={{ color: '#C75B00', flexShrink: 0 }} />
-                    <span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {prod.nom} ({prod.prix ? fcfa(prod.prix) : '—'})
-                    </span>
-                    <button
-                      onClick={() => onDissociateProduct(post.id, prod.id)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#94a3b8',
-                        padding: 0,
-                        fontSize: 12,
-                        lineHeight: 1,
-                        marginLeft: 2,
-                      }}
-                      title="Dissocier ce produit"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                <button
-                  onClick={() => onOpenAssociateModal(post)}
-                  style={{
-                    background: '#fff',
-                    border: '1px dashed #cbd5e1',
-                    color: '#64748b',
-                    borderRadius: 6,
-                    padding: '2px 5px',
-                    fontSize: 10,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                  title="Associer un autre produit"
-                >
-                  +
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => onOpenAssociateModal(post)}
-                style={{
-                  background: '#fff7ed',
-                  border: '1px solid #fed7aa',
-                  color: '#c2410c',
-                  borderRadius: 6,
-                  padding: '2px 8px',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                }}
-              >
-                <Plus size={11} />
-                <span>Associer un produit</span>
-              </button>
-            )}
-          </div>
+          {/* Pastilles de Produits associés & Suggestions Smart Matching */}
+          <SocialPostCardProducts
+            post={post}
+            catalogue={catalogue}
+            smartSuggestions={smartSuggestions}
+            onDissociateProduct={onDissociateProduct}
+            onOpenAssociateModal={onOpenAssociateModal}
+            onDirectAssociate={onDirectAssociate}
+          />
         </div>
       </div>
 
@@ -276,6 +292,17 @@ export function SocialPostCard({
           <ExternalLink size={12} />
         </a>
 
+        {onUpdatePost && (
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="social-compact-action-btn"
+            style={{ color: '#0f172a' }}
+            title="Modifier la miniature ou la légende"
+          >
+            <Pencil size={12} />
+          </button>
+        )}
+
         <button
           onClick={() => onDelete(post.id)}
           className="social-compact-action-btn"
@@ -285,6 +312,15 @@ export function SocialPostCard({
           <Trash2 size={12} />
         </button>
       </div>
+
+      {/* Modal de modification rapide de miniature et légende */}
+      {showEditModal && onUpdatePost && (
+        <EditPostModal
+          post={post}
+          onClose={() => setShowEditModal(false)}
+          onSave={onUpdatePost}
+        />
+      )}
     </div>
   )
 }

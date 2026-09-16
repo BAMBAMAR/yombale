@@ -130,27 +130,86 @@ async function fetchOEmbedMetadata(url, platform) {
     const isReel = /\/reel\//i.test(url);
     result.mediaType = isReel ? 'REEL' : 'POST';
     const postId = result.externalPostId;
+    const embedType = isReel ? 'reel' : 'p';
 
-    if (postId) {
-      const embedType = isReel ? 'reel' : 'p';
-      result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
-      result.thumbnailUrl = `https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=600&q=80`;
+    const isProfile = !/\/(?:p|reel|tv)\//i.test(url);
+
+    if (isProfile) {
+      const cleanUser = cleanUsername(url);
+      result.externalPostId = `ig_profile_${cleanUser}`;
+      result.mediaType = 'POST';
+      result.author = `@${cleanUser}`;
+      result.caption = `Profil Instagram de @${cleanUser}`;
+      result.embedHtml = `<iframe src="https://www.instagram.com/${cleanUser}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
+    } else {
+      // 1. Tenter l'endpoint oEmbed officiel Meta Instagram si token disponible
+      const token = process.env.FB_PAGE_ACCESS_TOKEN || (process.env.FB_APP_ID && process.env.FB_APP_SECRET ? `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}` : '');
+      let metaData = null;
+      if (token) {
+        const metaOembedUrl = `https://graph.facebook.com/v19.0/instagram_oembed?url=${encodeURIComponent(url)}&access_token=${encodeURIComponent(token)}&omitscript=true`;
+        metaData = await httpGetJson(metaOembedUrl, 3000);
+      }
+
+      if (metaData && metaData.html) {
+        result.embedHtml = metaData.html;
+        result.title = metaData.title || '';
+        result.caption = metaData.title || '';
+        result.author = metaData.author_name ? `@${metaData.author_name}` : '';
+        if (metaData.thumbnail_url) {
+          result.thumbnailUrl = metaData.thumbnail_url;
+        }
+      } else {
+        // 2. Crawler OpenGraph officiel Twitterbot pour extraire la vraie légende, auteur et miniature CDN
+        const og = await fetchInstagramPostOG(url);
+        if (og) {
+          if (og.caption) {
+            result.caption = og.caption;
+            result.title = og.caption;
+          }
+          if (og.author) result.author = og.author;
+          if (og.thumbnailUrl) result.thumbnailUrl = og.thumbnailUrl;
+        }
+      }
+
+      if (postId && !result.embedHtml) {
+        // Fallback universel iframe officiel Instagram
+        result.embedHtml = `<iframe src="https://www.instagram.com/${embedType}/${postId}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`;
+      }
     }
   } else if (platform === 'facebook') {
     const isVideoOrReel = /\/(reel|videos|watch)/i.test(url);
     const isPage = !isVideoOrReel && !/\/(posts|photos|story\.php|permalink\.php)/i.test(url);
     result.mediaType = isVideoOrReel ? 'REEL' : 'POST';
 
-    let fbPluginUrl = '';
-    if (isVideoOrReel) {
-      fbPluginUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=`;
-    } else if (isPage) {
-      fbPluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(url)}&tabs=timeline&width=380&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId=`;
-    } else {
-      fbPluginUrl = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=`;
+    // 1. Tenter l'oEmbed officiel Meta Facebook pour les posts et vidéos
+    if (!isPage) {
+      const endpoint = isVideoOrReel ? 'facebook_oembed_video' : 'facebook_oembed_post';
+      const token = process.env.FB_PAGE_ACCESS_TOKEN || (process.env.FB_APP_ID && process.env.FB_APP_SECRET ? `${process.env.FB_APP_ID}|${process.env.FB_APP_SECRET}` : '');
+      const fbOembedUrl = `https://graph.facebook.com/v19.0/${endpoint}?url=${encodeURIComponent(url)}${token ? `&access_token=${encodeURIComponent(token)}` : ''}&omitscript=true`;
+      const fbData = await httpGetJson(fbOembedUrl, 4000);
+      if (fbData) {
+        if (fbData.html) result.embedHtml = fbData.html;
+        if (fbData.title) {
+          result.title = fbData.title;
+          result.caption = fbData.title;
+        }
+        if (fbData.author_name) result.author = fbData.author_name;
+        if (fbData.thumbnail_url) result.thumbnailUrl = fbData.thumbnail_url;
+      }
     }
 
-    result.embedHtml = `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+    // 2. Fallback officiel Facebook Plugin iframe
+    if (!result.embedHtml) {
+      let fbPluginUrl = '';
+      if (isVideoOrReel) {
+        fbPluginUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=${process.env.FB_APP_ID || ''}`;
+      } else if (isPage) {
+        fbPluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(url)}&tabs=timeline&width=380&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId=${process.env.FB_APP_ID || ''}`;
+      } else {
+        fbPluginUrl = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&width=380&show_text=true&appId=${process.env.FB_APP_ID || ''}`;
+      }
+      result.embedHtml = `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
+    }
   } else if (platform === 'youtube') {
     result.mediaType = 'VIDEO';
     let videoId = null;
@@ -170,14 +229,19 @@ async function fetchOEmbedMetadata(url, platform) {
       result.thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
       result.embedHtml = `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:12px;"></iframe>`;
 
-      // Récupérer le titre et l'auteur officiel via l'oEmbed gratuit de YouTube
-      const ytData = await httpGetJson(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`, 5000);
-      if (ytData) {
-        result.title = ytData.title || '';
-        result.caption = ytData.title || '';
-        result.author = ytData.author_name || '';
-        if (ytData.thumbnail_url) result.thumbnailUrl = ytData.thumbnail_url;
-      }
+      // Récupérer le titre officiel et l'auteur via l'oEmbed officiel YouTube (public, sans clé API)
+      try {
+        const ytOembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+        const ytData = await httpGetJson(ytOembedUrl, 3000);
+        if (ytData) {
+          result.title = ytData.title || '';
+          result.caption = ytData.title || '';
+          result.author = ytData.author_name ? `@${ytData.author_name}` : '';
+          if (ytData.thumbnail_url) {
+            result.thumbnailUrl = ytData.thumbnail_url;
+          }
+        }
+      } catch (_) {}
     }
   }
 
@@ -200,9 +264,72 @@ const STOP_WORDS = new Set([
 ]);
 
 /**
- * Moteur de Smart Matching :
- * Compare la légende sociale (`caption`) avec les noms, descriptions et catégories des produits
- * Retourne une liste ordonnée par score de pertinence (0.00 à 1.00)
+ * Extrait les montants monétaires détectés dans un texte
+ * Spécifique aux formats ouest-africains (FCFA, F, CFA, XOF, ou "prix : X")
+ * Retourne une liste de montants numériques dédoublonnés (ex: [25000, 15000])
+ */
+function extractPricesFromText(text) {
+  if (!text || typeof text !== 'string') return [];
+
+  const foundPrices = new Set();
+
+  // 1. Détection avec symbole de devise ou suffixe monétaire (ex: 15000f, 15.000 FCFA, 15 000 CFA, 25k f, etc.)
+  const currencyRegex = /(?:^|[^\w])(\d{1,3}(?:[\s.,]\d{3})+|\d+)\s*(k)?\s*(?:f(?:cfa)?|cfa|fcfa|xof)\b/gi;
+  let match;
+  while ((match = currencyRegex.exec(text)) !== null) {
+    const rawNum = match[1].replace(/[\s.,]/g, '');
+    let num = parseInt(rawNum, 10);
+    if (!isNaN(num) && num > 0) {
+      if (match[2] && match[2].toLowerCase() === 'k') {
+        num *= 1000;
+      }
+      if (num >= 100 && num <= 50000000) {
+        foundPrices.add(num);
+      }
+    }
+  }
+
+  // 2. Détection avec mot-clé "prix", "tarif" ou "montant" (ex: "prix: 25 000", "prix 15000")
+  const prefixRegex = /\b(?:prix|tarif|montant)\s*[:=]?\s*(\d{1,3}(?:[\s.,]\d{3})+|\d+)\s*(k)?\b/gi;
+  while ((match = prefixRegex.exec(text)) !== null) {
+    const rawNum = match[1].replace(/[\s.,]/g, '');
+    let num = parseInt(rawNum, 10);
+    if (!isNaN(num) && num > 0) {
+      if (match[2] && match[2].toLowerCase() === 'k') {
+        num *= 1000;
+      }
+      if (num >= 500 && num <= 50000000) {
+        foundPrices.add(num);
+      }
+    }
+  }
+
+  return Array.from(foundPrices);
+}
+
+/**
+ * Extrait les hashtags d'un texte et les normalise
+ * Ex: "#Robe_Soirée #Mode2024" -> ['robesoiree', 'mode2024']
+ */
+function extractHashtags(text) {
+  if (!text || typeof text !== 'string') return [];
+  const hashtagRegex = /#([a-zA-Z0-9_\u00C0-\u017F]+)/g;
+  const tags = new Set();
+  let match;
+  while ((match = hashtagRegex.exec(text)) !== null) {
+    const rawTag = match[1].replace(/_/g, '');
+    const norm = normalizeText(rawTag);
+    if (norm && norm.length > 1 && !STOP_WORDS.has(norm)) {
+      tags.add(norm);
+    }
+  }
+  return Array.from(tags);
+}
+
+/**
+ * Moteur de Smart Matching v2 :
+ * Compare la légende sociale (`caption`) avec les noms, descriptions, catégories, prix et hashtags des produits
+ * Retourne une liste ordonnée par score de pertinence (0.00 à 1.00) avec niveau de confiance
  */
 function matchProductsWithCaption(caption, products = []) {
   if (!caption || !products || products.length === 0) return [];
@@ -211,7 +338,11 @@ function matchProductsWithCaption(caption, products = []) {
   if (!normCaption) return [];
 
   const captionWords = normCaption.split(' ').filter(w => w.length > 2 && !STOP_WORDS.has(w));
-  if (captionWords.length === 0) return [];
+  const captionPrices = extractPricesFromText(caption);
+  const captionHashtags = extractHashtags(caption);
+
+  // S'il n'y a ni mots informatifs, ni prix, ni hashtags exploitables, abandonner
+  if (captionWords.length === 0 && captionPrices.length === 0 && captionHashtags.length === 0) return [];
 
   const matches = [];
 
@@ -219,8 +350,12 @@ function matchProductsWithCaption(caption, products = []) {
     const normNom = normalizeText(p.nom || '');
     const normDesc = normalizeText(p.description || '');
     const normCat = normalizeText(p.categorie || '');
+    const productPrice = Number(p.prix);
 
     let score = 0;
+    let priceMatched = false;
+    let matchedPriceValue = null;
+    const matchedHashtags = [];
 
     // 1. Correspondance exacte du nom complet dans la légende (Score très élevé)
     if (normNom.length > 3 && normCaption.includes(normNom)) {
@@ -256,14 +391,48 @@ function matchProductsWithCaption(caption, products = []) {
       }
     }
 
+    // 5. Smart Matching v2 : Matching par PRIX (tolérance ±5%)
+    if (productPrice > 0 && captionPrices.length > 0) {
+      for (const cp of captionPrices) {
+        const diffRatio = Math.abs(productPrice - cp) / productPrice;
+        if (diffRatio <= 0.05) {
+          score += 0.25;
+          priceMatched = true;
+          matchedPriceValue = cp;
+          break;
+        }
+      }
+    }
+
+    // 6. Smart Matching v2 : Matching par HASHTAGS
+    if (captionHashtags.length > 0) {
+      for (const tag of captionHashtags) {
+        if ((normNom && normNom.includes(tag)) || (normCat && normCat.includes(tag))) {
+          matchedHashtags.push(tag);
+        }
+      }
+      if (matchedHashtags.length > 0) {
+        // +0.10 par hashtag correspondant, max +0.20
+        score += Math.min(0.20, matchedHashtags.length * 0.10);
+      }
+    }
+
     const finalScore = Math.min(1.0, Math.round(score * 100) / 100);
 
     // Seuil de pertinence minimum
     if (finalScore >= 0.35) {
+      let confidenceLevel = 'low';
+      if (finalScore >= 0.75) confidenceLevel = 'high';
+      else if (finalScore >= 0.50) confidenceLevel = 'medium';
+
       matches.push({
         produit: p,
         confidence_score: finalScore,
+        confidence_level: confidenceLevel,
         suggested: true,
+        price_matched: priceMatched,
+        matched_price: matchedPriceValue,
+        matched_hashtags: matchedHashtags,
       });
     }
   }
@@ -400,6 +569,115 @@ function normalizeSocialUrl(rawInput, platform) {
 }
 
 /**
+ * Récupère les métadonnées OpenGraph publiques d'un profil Instagram (nom réel, bio, follower count, photo de profil CDN)
+ * via le User-Agent de crawler officiel pour contourner l'écran blanc SPA.
+ */
+function decodeHtmlEntities(str) {
+  if (!str) return '';
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&#064;/g, '@')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+/**
+ * Récupère les métadonnées OpenGraph publiques d'un profil Instagram (nom réel, bio, follower count, photo de profil CDN)
+ * via le User-Agent de crawler officiel pour contourner l'écran blanc SPA.
+ */
+async function fetchInstagramProfileOG(username) {
+  try {
+    const profileUrl = `https://www.instagram.com/${username}/`;
+    const resp = await axios.get(profileUrl, {
+      headers: {
+        'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+      },
+      timeout: 5000,
+      validateStatus: status => status < 500,
+    });
+    const html = typeof resp.data === 'string' ? resp.data : '';
+    const ogTitleMatch = html.match(/property="og:title"\s+content="([^"]+)"/i);
+    const ogDescMatch = html.match(/property="og:description"\s+content="([^"]+)"/i) || html.match(/name="description"\s+content="([^"]+)"/i);
+    const ogImageMatch = html.match(/property="og:image"\s+content="([^"]+)"/i);
+
+    const rawTitle = ogTitleMatch ? decodeHtmlEntities(ogTitleMatch[1]) : null;
+    const cleanTitle = rawTitle ? rawTitle.replace(/\s*•\s*Photos et vid[ée]os.*$/i, '').trim() : `@${username}`;
+
+    return {
+      title: cleanTitle,
+      description: ogDescMatch ? decodeHtmlEntities(ogDescMatch[1]) : null,
+      imageUrl: ogImageMatch ? ogImageMatch[1].replace(/&amp;/g, '&') : null,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Récupère les métadonnées OpenGraph publiques d'un post ou Reel Instagram
+ * (légende réelle, auteur, image CDN haute définition)
+ * via le User-Agent crawler Twitterbot sans blocage d'API.
+ */
+async function fetchInstagramPostOG(url) {
+  try {
+    const cleanUrl = url.split('?')[0].replace(/\/$/, '') + '/';
+    const resp = await axios.get(cleanUrl, {
+      headers: {
+        'User-Agent': 'Twitterbot/1.0',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+      },
+      timeout: 5000,
+      validateStatus: status => status < 500,
+    });
+    const html = typeof resp.data === 'string' ? resp.data : '';
+    const ogTitleMatch = html.match(/property=["']og:title["']\s+content=["']([^"']+)["']/i) || html.match(/content=["']([^"']+)["']\s+property=["']og:title["']/i);
+    const ogDescMatch = html.match(/property=["']og:description["']\s+content=["']([^"']+)["']/i) || html.match(/content=["']([^"']+)["']\s+property=["']og:description["']/i);
+    const ogImageMatch = html.match(/property=["']og:image["']\s+content=["']([^"']+)["']/i) || html.match(/content=["']([^"']+)["']\s+property=["']og:image["']/i);
+
+    let caption = '';
+    let author = '';
+
+    if (ogTitleMatch) {
+      const rawTitle = decodeHtmlEntities(ogTitleMatch[1]);
+      const captionInQuotes = rawTitle.match(/[:\s][«"“]([\s\S]+?)[»"”]?$/);
+      if (captionInQuotes) {
+        caption = captionInQuotes[1].trim();
+      } else {
+        caption = rawTitle;
+      }
+
+      const authorMatch = rawTitle.match(/^([^:]+?)\s+(?:sur Instagram|on Instagram)/i);
+      if (authorMatch) {
+        author = authorMatch[1].trim();
+      }
+    }
+
+    if (!author && ogDescMatch) {
+      const rawDesc = decodeHtmlEntities(ogDescMatch[1]);
+      const handleMatch = rawDesc.match(/-\s*([a-zA-Z0-9._]+)\s+le\b/i) || rawDesc.match(/-\s*([a-zA-Z0-9._]+)\s+on\b/i);
+      if (handleMatch) {
+        author = `@${handleMatch[1].trim()}`;
+      }
+    }
+
+    const imageUrl = ogImageMatch ? ogImageMatch[1].replace(/&amp;/g, '&') : null;
+
+    return {
+      caption,
+      author,
+      thumbnailUrl: imageUrl,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
  * Explore un profil social public (@username) pour récupérer ses publications récentes.
  *
  * SÉCURITÉ MULTI-TENANT : Cette fonction est appelée dans le contexte d'une boutique
@@ -410,10 +688,10 @@ function normalizeSocialUrl(rawInput, platform) {
  * L'API Graph officielle n'est utilisée que si le marchand a lui-même fourni son
  * propre token OAuth via social_accounts.access_token (fonctionnalité future).
  */
-async function exploreProfile(platform, rawUser) {
+async function exploreProfile(platform, rawUser, options = {}) {
   const username = cleanUsername(rawUser);
   if (!username) {
-    return { success: false, error: 'Nom d\'utilisateur invalide', posts: [] };
+    return { success: false, platform, username: '', error: 'Nom d\'utilisateur invalide', posts: [] };
   }
 
   const posts = [];
@@ -448,153 +726,272 @@ async function exploreProfile(platform, rawUser) {
       } catch (errYt) {
         console.warn('[YOUTUBE_DISCOVERY_WARN]', errYt.message);
       }
-
       if (posts.length > 0) {
         return { success: true, platform: 'youtube', username, posts, source: 'youtube_discovery' };
       }
-      return { success: false, error: `Aucune vidéo publique trouvée sur la chaîne YouTube de @${username}`, posts: [] };
+      return { success: false, platform: 'youtube', username, error: `Aucune vidéo publique trouvée sur la chaîne YouTube de @${username}`, posts: [] };
     }
 
     if (platform === 'instagram') {
-      // 1. Si Graph API est disponible et valide
-      const igUserId = process.env.IG_USER_ID;
-      const fbToken = process.env.FB_PAGE_ACCESS_TOKEN;
-      if (igUserId && fbToken) {
+      // 1. Aspiration directe officielle si token marchand disponible OU compte Nopalou (@nopalousn)
+      const targetToken = options?.accessToken || (username === 'nopalousn' ? await getLiveMetaToken() : null);
+      const targetIgUserId = options?.igUserId || (username === 'nopalousn' ? (process.env.IG_USER_ID || '17841414834263910') : 'me');
+
+      if (targetToken) {
         try {
-          const graphUrl = `https://graph.facebook.com/v19.0/${igUserId}/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&limit=8&access_token=${encodeURIComponent(fbToken)}`;
-          const graphData = await httpGetJson(graphUrl, 5000);
+          const graphUrl = `https://graph.facebook.com/v19.0/${targetIgUserId}/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&limit=25&access_token=${encodeURIComponent(targetToken)}`;
+          const graphData = await httpGetJson(graphUrl, 8000);
           if (graphData && Array.isArray(graphData.data) && graphData.data.length > 0) {
             for (const item of graphData.data) {
+              const isVideo = item.media_type === 'VIDEO';
               posts.push({
                 externalPostId: item.id,
-                url: item.permalink || `https://www.instagram.com/reel/${item.id}/`,
+                url: item.permalink || `https://www.instagram.com/p/${item.id}/`,
                 platform: 'instagram',
-                mediaType: item.media_type === 'VIDEO' ? 'REEL' : 'POST',
-                thumbnailUrl: item.thumbnail_url || item.media_url || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
+                mediaType: isVideo ? 'REEL' : 'POST',
+                thumbnailUrl: item.thumbnail_url || item.media_url || null,
                 caption: item.caption || `Publication @${username}`,
                 author: `@${username}`,
                 publishedAt: item.timestamp || new Date().toISOString(),
                 isProfilePlaceholder: false,
               });
             }
-            return { success: true, platform: 'instagram', username, posts, source: 'graph_api' };
+            return {
+              success: true,
+              platform: 'instagram',
+              username,
+              posts,
+              source: 'meta_graph_api',
+              notice: `${posts.length} publication(s) réelle(s) synchronisée(s) avec succès depuis Instagram.`
+            };
           }
-        } catch (graphErr) {
-          console.warn('[EXPLORE_IG_GRAPH_WARN]', graphErr.message);
+        } catch (errIgGraph) {
+          console.warn('[EXPLORE_IG_GRAPH_WARN]', errIgGraph.message);
         }
       }
 
-      // 2. Exploration Web Actionnable : Fournit 4 publications Reels prêtes à être associées et diffusées
-      posts.push(
-        {
-          externalPostId: `ig_${username}_reel_1`,
-          url: `https://www.instagram.com/reel/C8_${username}_01/`,
-          platform: 'instagram',
-          mediaType: 'REEL',
-          thumbnailUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-          caption: `Visite guidée exclusive & opportunité d'investissement - @${username}`,
-          author: `@${username}`,
-          isProfilePlaceholder: false,
-        },
-        {
-          externalPostId: `ig_${username}_reel_2`,
-          url: `https://www.instagram.com/reel/C8_${username}_02/`,
-          platform: 'instagram',
-          mediaType: 'REEL',
-          thumbnailUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80',
-          caption: `Nouvel arrivage : Villa de prestige avec piscine - @${username}`,
-          author: `@${username}`,
-          isProfilePlaceholder: false,
-        },
-        {
-          externalPostId: `ig_${username}_reel_3`,
-          url: `https://www.instagram.com/reel/C8_${username}_03/`,
-          platform: 'instagram',
-          mediaType: 'REEL',
-          thumbnailUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=600&q=80',
-          caption: `Appartement haut standing vue mer - @${username}`,
-          author: `@${username}`,
-          isProfilePlaceholder: false,
-        },
-        {
-          externalPostId: `ig_${username}_reel_4`,
-          url: `https://www.instagram.com/reel/C8_${username}_04/`,
-          platform: 'instagram',
-          mediaType: 'REEL',
-          thumbnailUrl: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=600&q=80',
-          caption: `Opportunité locative meublée standing - @${username}`,
-          author: `@${username}`,
-          isProfilePlaceholder: false,
-        }
-      );
+      // 2. Exploration Web Réelle Instagram (extraction des shortcodes /p/ ou /reel/)
+      try {
+        const profileUrl = `https://www.instagram.com/${username}/`;
+        const resp = await axios.get(profileUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8',
+          },
+          timeout: 7000,
+          validateStatus: status => status < 500,
+        });
 
-      return { success: true, platform: 'instagram', username, posts, source: 'web_discovery' };
+        const html = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data || '');
+        const shortcodeRegex = /(?:\/(?:p|reel|tv)\/|"shortcode":\s*")([A-Za-z0-9_-]{9,})/g;
+        const foundCodes = new Set();
+        let match;
+        while ((match = shortcodeRegex.exec(html)) !== null) {
+          const code = match[1];
+          if (!['explore', 'direct', 'stories', 'accounts', 'developer', 'about'].includes(code.toLowerCase())) {
+            foundCodes.add(code);
+          }
+        }
+
+        const uniqueCodes = Array.from(foundCodes).slice(0, 8);
+        for (const code of uniqueCodes) {
+          const postUrl = `https://www.instagram.com/p/${code}/`;
+          const meta = await fetchOEmbedMetadata(postUrl, 'instagram');
+          posts.push({
+            externalPostId: code,
+            url: postUrl,
+            platform: 'instagram',
+            mediaType: meta.mediaType || 'POST',
+            thumbnailUrl: meta.thumbnailUrl || null,
+            caption: meta.caption || `Publication @${username}`,
+            author: meta.author || `@${username}`,
+            embedHtml: meta.embedHtml,
+            isProfilePlaceholder: false,
+          });
+        }
+      } catch (errIg) {
+        console.warn('[EXPLORE_IG_SCRAPE_WARN]', errIg.message);
+      }
+
+      if (posts.length > 0) {
+        return { success: true, platform: 'instagram', username, posts, source: 'instagram_web_discovery' };
+      }
+
+      // Si le scraping direct de timeline est bloqué par Instagram (anti-bot login wall) :
+      // Récupérer les métadonnées OpenGraph officielles (nom, photo de profil réelle CDN, description)
+      const og = await fetchInstagramProfileOG(username);
+      const cleanTitle = og?.title ? og.title.replace(/\s*•\s*Photos et vid[ée]os.*$/i, '').trim() : `@${username}`;
+      const cleanDesc = og?.description || `Compte Instagram @${username}`;
+      const profileUrl = `https://www.instagram.com/${username}/`;
+
+      posts.push({
+        externalPostId: `ig_profile_${username}`,
+        url: profileUrl,
+        platform: 'instagram',
+        mediaType: 'POST',
+        thumbnailUrl: og?.imageUrl || null,
+        caption: `${cleanTitle} (${cleanDesc}). Instagram protège la lecture automatique en masse. Pour importer un Reel ou Post, collez directement son lien dans l'onglet "Importer par lien".`,
+        author: cleanTitle,
+        embedHtml: `<iframe src="https://www.instagram.com/${username}/embed/" width="100%" height="480" frameborder="0" scrolling="no" allowtransparency="true" allow="encrypted-media" style="border-radius:12px; border:1px solid #e2e8f0;"></iframe>`,
+        isProfilePlaceholder: true,
+      });
+>>>>>>> origin/main
+
+      return {
+        success: true,
+        platform: 'instagram',
+        username,
+        posts,
+        source: 'instagram_profile_embed',
+        notice: `Compte @${username} vérifié avec succès. Instagram protégeant l'aspiration automatique en masse, importez directement vos Reels ou publications via leurs liens.`
+      };
     }
 
     if (platform === 'tiktok') {
-      const profileUrl = `https://www.tiktok.com/@${username}`;
-      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
-      const data = await httpGetJson(oembedUrl, 6000);
-
-      if (data && data.title) {
-        posts.push({
-          externalPostId: `tiktok_${username}_profile`,
-          url: profileUrl,
-          platform: 'tiktok',
-          mediaType: 'TIKTOK_VIDEO',
-          thumbnailUrl: data.thumbnail_url || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-          caption: data.title || `Vidéos de @${username}`,
-          author: data.author_name ? `@${data.author_name}` : `@${username}`,
-          source: 'oembed',
-          isProfilePlaceholder: false,
-        });
-      } else {
-        posts.push(
-          {
-            externalPostId: `tiktok_${username}_1`,
-            url: `https://www.tiktok.com/@${username}/video/7300000000000000001`,
-            platform: 'tiktok',
-            mediaType: 'TIKTOK_VIDEO',
-            thumbnailUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-            caption: `Visite immersive format court - @${username}`,
-            author: `@${username}`,
-            isProfilePlaceholder: false,
+      // Exploration Web Réelle TikTok
+      try {
+        const profileUrl = `https://www.tiktok.com/@${username}`;
+        const resp = await axios.get(profileUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8',
           },
-          {
-            externalPostId: `tiktok_${username}_2`,
-            url: `https://www.tiktok.com/@${username}/video/7300000000000000002`,
+          timeout: 7000,
+          validateStatus: status => status < 500,
+        });
+
+        const html = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data || '');
+        const vidMatches = html.match(/\/video\/(\d{15,22})/g) || [];
+        const uniqueVidIds = [...new Set(vidMatches.map(m => m.replace('/video/', '')))].slice(0, 8);
+
+        for (const vidId of uniqueVidIds) {
+          const vUrl = `https://www.tiktok.com/@${username}/video/${vidId}`;
+          const meta = await fetchOEmbedMetadata(vUrl, 'tiktok');
+          posts.push({
+            externalPostId: vidId,
+            url: vUrl,
             platform: 'tiktok',
             mediaType: 'TIKTOK_VIDEO',
-            thumbnailUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80',
-            caption: `Visite guidée en direct - @${username}`,
-            author: `@${username}`,
+            thumbnailUrl: meta.thumbnailUrl || null,
+            caption: meta.caption || meta.title || `Vidéo TikTok (@${username})`,
+            author: meta.author || `@${username}`,
+            embedHtml: meta.embedHtml,
             isProfilePlaceholder: false,
-          }
-        );
+          });
+        }
+      } catch (errTt) {
+        console.warn('[EXPLORE_TIKTOK_SCRAPE_WARN]', errTt.message);
       }
 
-      return { success: true, platform: 'tiktok', username, posts, source: 'tiktok_discovery' };
+      if (posts.length > 0) {
+        return { success: true, platform: 'tiktok', username, posts, source: 'tiktok_discovery' };
+      }
+
+      // Fallback officiel TikTok avec embed profil (zéro faux post, zéro crash 400)
+      const profileUrl = `https://www.tiktok.com/@${username}`;
+      const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(profileUrl)}`;
+      const ttData = await httpGetJson(oembedUrl, 4000);
+
+      posts.push({
+        externalPostId: `tiktok_profile_${username}`,
+        url: profileUrl,
+        platform: 'tiktok',
+        mediaType: 'TIKTOK_VIDEO',
+        thumbnailUrl: ttData?.thumbnail_url || null,
+        caption: ttData?.title || `Profil TikTok de @${username}. Pour associer des vidéos précises à vos produits, collez leurs liens directs dans "Importer par lien".`,
+        author: ttData?.author_name ? `@${ttData.author_name}` : `@${username}`,
+        embedHtml: `<blockquote class="tiktok-embed" cite="${profileUrl}"><section><a href="${profileUrl}">@${username}</a></section></blockquote><script async src="https://www.tiktok.com/embed.js"></script>`,
+        isProfilePlaceholder: true,
+      });
+
+      return {
+        success: true,
+        platform: 'tiktok',
+        username,
+        posts,
+        source: 'tiktok_profile_embed',
+        notice: `Profil @${username} vérifié. Pour associer des vidéos spécifiques à vos produits, collez leurs liens directs.`
+      };
     }
 
     if (platform === 'facebook') {
       const pageUrl = `https://www.facebook.com/${username}`;
+      const fbPluginUrl = `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(pageUrl)}&tabs=timeline&width=380&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId=${process.env.FB_APP_ID || ''}`;
       posts.push({
         externalPostId: `fb_${username}_page`,
         url: pageUrl,
         platform: 'facebook',
         mediaType: 'POST',
         thumbnailUrl: null,
-        caption: `Publications de la page ${username}`,
+        caption: `Page Facebook de @${username}. Pour associer des publications ou vidéos spécifiques à vos produits, collez leurs liens directs dans "Importer par lien".`,
         author: username,
+        embedHtml: `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`,
         isProfilePlaceholder: true,
       });
-      return { success: true, platform: 'facebook', username, posts, source: 'facebook_discovery' };
+      return { success: true, platform: 'facebook', username, posts, source: 'facebook_page_embed' };
     }
 
-    return { success: false, error: 'Plateforme non supportée pour l\'exploration', posts: [] };
+    if (platform === 'youtube') {
+      try {
+        const channelUrl = `https://www.youtube.com/@${username}/videos`;
+        const resp = await axios.get(channelUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8',
+          },
+          timeout: 7000,
+          validateStatus: status => status < 500,
+        });
+
+        const html = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data || '');
+        const vidMatches = [...html.matchAll(/\/watch\?v=([A-Za-z0-9_-]{11})/g)].map(m => m[1]);
+        const uniqueVidIds = [...new Set(vidMatches)].slice(0, 10);
+
+        for (const vidId of uniqueVidIds) {
+          const vUrl = `https://www.youtube.com/watch?v=${vidId}`;
+          const meta = await fetchOEmbedMetadata(vUrl, 'youtube');
+          posts.push({
+            externalPostId: vidId,
+            url: vUrl,
+            platform: 'youtube',
+            mediaType: 'YOUTUBE_VIDEO',
+            thumbnailUrl: meta.thumbnailUrl || `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg`,
+            caption: meta.caption || meta.title || `Vidéo YouTube (${username})`,
+            author: meta.author || `@${username}`,
+            embedHtml: meta.embedHtml,
+            isProfilePlaceholder: false,
+          });
+        }
+      } catch (errYt) {
+        console.warn('[EXPLORE_YOUTUBE_SCRAPE_WARN]', errYt.message);
+      }
+
+      if (posts.length > 0) {
+        return {
+          success: true,
+          platform: 'youtube',
+          username,
+          posts,
+          source: 'youtube_channel_discovery',
+          notice: `${posts.length} vidéo(s) YouTube trouvée(s) sur la chaîne @${username}.`
+        };
+      }
+
+      return {
+        success: false,
+        platform: 'youtube',
+        username,
+        error: `Impossible de trouver des vidéos publiques pour la chaîne YouTube @${username}. Vérifiez le pseudo de votre chaîne ou collez directement le lien d'une vidéo.`,
+        posts: []
+      };
+    }
+
+    return { success: false, platform, username, error: 'Plateforme non supportée pour l\'exploration', posts: [] };
   } catch (err) {
     console.error('[EXPLORE_PROFILE_ERR]', err);
-    return { success: false, error: err.message, posts: [] };
+    return { success: false, platform, username, error: err.message, posts: [] };
   }
 }
 
@@ -603,10 +1000,14 @@ module.exports = {
   extractExternalPostId,
   fetchOEmbedMetadata,
   matchProductsWithCaption,
+  extractPricesFromText,
+  extractHashtags,
   normalizeText,
   cleanUsername,
   parseBatchUrls,
   exploreProfile,
   normalizeSocialUrl,
+  fetchInstagramPostOG,
+  fetchInstagramProfileOG,
 };
 

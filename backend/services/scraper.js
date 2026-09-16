@@ -1363,6 +1363,12 @@ function demarrerCronsMetier() {
   } catch (e) {
     console.error('[CRON RELANCE PANIER INIT ERR]:', e.message);
   }
+  try {
+    const { startSocialAutoSyncCron } = require('./social-auto-sync');
+    startSocialAutoSyncCron();
+  } catch (e) {
+    console.error('[CRON SOCIAL AUTO-SYNC INIT ERR]:', e.message);
+  }
 }
 
 module.exports = { 
