@@ -142,6 +142,13 @@ export function DashboardRubriques({ slug }: DashboardRubriquesProps) {
       badge: 'Visibilité',
       tools: [
         {
+          href: `/agence/${slug}/studio`,
+          title: 'Studio Vitrine & Thèmes',
+          desc: 'Personnalisation visuelle, bannières de prestige, slogan et agencement des blocs',
+          icon: Sparkles,
+          color: '#7C3AED',
+        },
+        {
           href: `/agence/${slug}/social`,
           title: 'Social Shop & Vidéos',
           desc: 'Aspirateur de Reels TikTok/Instagram, tagging de biens et marketing',

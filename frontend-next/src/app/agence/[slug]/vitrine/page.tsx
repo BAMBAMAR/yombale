@@ -117,101 +117,159 @@ function VitrinePubliqueContent() {
       <VitrineBanner agence={agence} waNum={waNum} />
 
       {/* ── Section Visites Virtuelles & Reels ── */}
-      <VitrineVideoReels
-        agence={agence}
-        onOpenPost={(post) => setActiveVideoPost(post)}
-      />
+      {/* ── Rendu Dynamique des Sections selon la configuration du Studio ── */}
+      {(() => {
+        const disposition = (agence?.parametres as any)?.studio?.disposition_sections || [
+          { id: 'reels', visible: true },
+          { id: 'catalogue', visible: true },
+          { id: 'confiance', visible: true },
+        ];
 
-      {/* ── Barre de Filtres & Recherche Dynamique ── */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 24,
-          padding: '12px 16px',
-          background: '#FFFFFF',
-          borderRadius: 12,
-          border: '1px solid var(--border, #E8DDD2)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-        }}
-      >
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          {(['tous', 'location', 'vente'] as const).map((op) => (
-            <button
-              key={op}
-              type="button"
-              onClick={() => setFilterOp(op)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 700,
-                border: 'none',
-                background: filterOp === op ? 'var(--navy, #1C2B4A)' : '#F1F5F9',
-                color: filterOp === op ? '#FFFFFF' : '#475569',
-                cursor: 'pointer',
-              }}
-            >
-              {op === 'tous' ? 'Tous les biens' : op === 'location' ? 'Location' : 'Vente'}
-            </button>
-          ))}
+        return disposition.map((sec: any) => {
+          if (!sec.visible) return null;
 
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            aria-label="Filtrer par type de bien"
-            style={{
-              padding: '6px 12px',
-              borderRadius: 8,
-              border: '1px solid var(--border, #E8DDD2)',
-              fontSize: 13,
-              color: 'var(--navy, #1C2B4A)',
-              background: '#FFFFFF',
-              outline: 'none',
-            }}
-          >
-            <option value="tous">Toutes les typologies</option>
-            <option value="appartement">Appartements</option>
-            <option value="villa">Villas</option>
-            <option value="studio">Studios</option>
-            <option value="terrain">Terrains</option>
-            <option value="bureau">Bureaux</option>
-          </select>
-        </div>
+          if (sec.id === 'reels') {
+            return (
+              <VitrineVideoReels
+                key="reels"
+                agence={agence}
+                onOpenPost={(post) => setActiveVideoPost(post)}
+              />
+            );
+          }
 
-        {/* Champ de recherche rapide */}
-        <div style={{ position: 'relative', minWidth: 220, flex: '1 1 220px', maxWidth: 320 }}>
-          <Search size={14} style={{ position: 'absolute', left: 10, top: 10, color: '#94A3B8' }} />
-          <input
-            type="text"
-            placeholder="Rechercher (quartier, titre...)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '7px 12px 7px 32px',
-              borderRadius: 8,
-              border: '1px solid var(--border, #E8DDD2)',
-              fontSize: 12.5,
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
-      </div>
+          if (sec.id === 'catalogue') {
+            return (
+              <React.Fragment key="catalogue">
+                {/* ── Barre de Filtres & Recherche Dynamique ── */}
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 12,
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 24,
+                    padding: '12px 16px',
+                    background: '#FFFFFF',
+                    borderRadius: 12,
+                    border: '1px solid var(--border, #E8DDD2)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {(['tous', 'location', 'vente'] as const).map((op) => (
+                      <button
+                        key={op}
+                        type="button"
+                        onClick={() => setFilterOp(op)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          border: 'none',
+                          background: filterOp === op ? 'var(--navy, #1C2B4A)' : '#F1F5F9',
+                          color: filterOp === op ? '#FFFFFF' : '#475569',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {op === 'tous' ? 'Tous les biens' : op === 'location' ? 'Location' : 'Vente'}
+                      </button>
+                    ))}
 
-      {/* ── Grille des Biens ── */}
-      <VitrineBiensGrid
-        biens={biensFiltres}
-        agence={agence}
-        waNum={waNum}
-        socialPosts={visibleSocialPosts}
-        onRequestVisite={(bien) => setActiveBienForVisite(bien)}
-        onOpenVideo={(post) => setActiveVideoPost(post)}
-      />
+                    <select
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      aria-label="Filtrer par type de bien"
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        border: '1px solid var(--border, #E8DDD2)',
+                        fontSize: 13,
+                        color: 'var(--navy, #1C2B4A)',
+                        background: '#FFFFFF',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="tous">Toutes les typologies</option>
+                      <option value="appartement">Appartements</option>
+                      <option value="villa">Villas</option>
+                      <option value="studio">Studios</option>
+                      <option value="terrain">Terrains</option>
+                      <option value="bureau">Bureaux</option>
+                    </select>
+                  </div>
+
+                  {/* Champ de recherche rapide */}
+                  <div style={{ position: 'relative', minWidth: 220, flex: '1 1 220px', maxWidth: 320 }}>
+                    <Search size={14} style={{ position: 'absolute', left: 10, top: 10, color: '#94A3B8' }} />
+                    <input
+                      type="text"
+                      placeholder="Rechercher (quartier, titre...)"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '7px 12px 7px 32px',
+                        borderRadius: 8,
+                        border: '1px solid var(--border, #E8DDD2)',
+                        fontSize: 12.5,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* ── Grille des Biens ── */}
+                <div style={{ marginBottom: 36 }}>
+                  <VitrineBiensGrid
+                    biens={biensFiltres}
+                    agence={agence}
+                    waNum={waNum}
+                    socialPosts={visibleSocialPosts}
+                    onRequestVisite={(bien) => setActiveBienForVisite(bien)}
+                    onOpenVideo={(post) => setActiveVideoPost(post)}
+                  />
+                </div>
+              </React.Fragment>
+            );
+          }
+
+          if (sec.id === 'confiance') {
+            return (
+              <div
+                key="confiance"
+                style={{
+                  marginBottom: 36,
+                  background: '#F0FDF4',
+                  border: '1px solid #BBF7D0',
+                  borderRadius: 14,
+                  padding: '20px 24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <h4 style={{ fontSize: 16, fontWeight: 800, color: '#166534', margin: '0 0 4px' }}>
+                    Transactions Immobilières Sécurisées & Agréées
+                  </h4>
+                  <p style={{ fontSize: 13, color: '#15803D', margin: 0 }}>
+                    Agence officiellement enregistrée{agence?.numero_agrement ? ` sous l'agrément n° ${agence.numero_agrement}` : ''}.
+                    Visites accompagnées et contrats rédigés dans le strict respect de la législation.
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
+          return null;
+        });
+      })()}
 
       {/* ── Modale Lecteur Vidéo In-App ── */}
       {activeVideoPost && (
