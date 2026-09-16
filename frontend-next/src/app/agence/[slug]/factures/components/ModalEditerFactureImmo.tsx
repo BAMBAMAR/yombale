@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { X, Save, AlertCircle } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface FactureItem {
   id: string
@@ -79,15 +80,10 @@ export default function ModalEditerFactureImmo({
 
     try {
       setSaving(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      }
 
       const res = await fetch(`/api/factures-immo/agence/${slug}/${facture.id}`, {
         method: 'PUT',
-        headers,
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           ...form,
           montant_ht: ht,

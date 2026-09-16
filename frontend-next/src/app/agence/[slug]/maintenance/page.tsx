@@ -14,6 +14,7 @@ import {
   Filter,
   Check
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface TicketItem {
   id: string
@@ -68,8 +69,8 @@ export default function AgenceMaintenancePage() {
     try {
       setLoading(true)
       const [resTickets, resBiens] = await Promise.all([
-        fetch(`/api/locatif-immo/agence/${slug}/maintenance`),
-        fetch(`/api/biens/agence/${slug}?statut=actif`),
+        fetch(`/api/locatif-immo/agence/${slug}/maintenance`, { headers: getImmoAuthHeaders() }),
+        fetch(`/api/biens/agence/${slug}?statut=actif`, { headers: getImmoAuthHeaders() }),
       ])
       const dataT = await resTickets.json()
       const dataB = await resBiens.json()
@@ -100,7 +101,7 @@ export default function AgenceMaintenancePage() {
       setSaving(true)
       const res = await fetch(`/api/locatif-immo/agence/${slug}/maintenance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(form),
       })
       const data = await res.json()
@@ -131,7 +132,7 @@ export default function AgenceMaintenancePage() {
     try {
       const res = await fetch(`/api/locatif-immo/agence/${slug}/maintenance/${ticketId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ statut: nouveauStatut }),
       })
       const data = await res.json()

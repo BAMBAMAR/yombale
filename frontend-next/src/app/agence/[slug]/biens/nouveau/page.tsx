@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { Home, ArrowLeft, Plus, CheckCircle2, AlertCircle } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 export default function NouveauBienPage() {
   const params = useParams()
@@ -57,7 +58,7 @@ export default function NouveauBienPage() {
 
       const res = await fetch(`/api/biens/agence/${slug}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
       const data = await res.json()

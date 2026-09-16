@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 export default function AgenceProspectDetailPage() {
   const params = useParams()
@@ -35,8 +36,7 @@ export default function AgenceProspectDetailPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const headers = getImmoAuthHeaders()
 
       const [resContact, resMatch, resOffres] = await Promise.all([
         fetch(`/api/crm-immo/agence/${slug}/contacts/${contactId}`, { headers }),

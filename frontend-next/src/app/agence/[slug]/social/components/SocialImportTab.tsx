@@ -16,6 +16,7 @@ import {
 import { BienItem, SocialPostItem } from '../types'
 import { SocialDiscoveredGrid, DiscoveredItem } from './SocialDiscoveredGrid'
 import { matchBiensClient } from '../matching-immo-client'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface SocialImportTabProps {
   biens: BienItem[]
@@ -89,7 +90,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     try {
       const res = await fetch('/api/social-shop/parse-url', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           url: singleUrl.trim(),
           fallback_thumbnail: fallbackThumb || undefined,
@@ -143,7 +144,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     try {
       const res = await fetch('/api/social-shop/parse-batch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           raw_urls: batchUrls,
           fallback_thumbnail: fallbackThumb || undefined,
@@ -202,7 +203,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     try {
       const res = await fetch('/api/social-shop/explore-profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           plateforme: platform,
           platform: platform,

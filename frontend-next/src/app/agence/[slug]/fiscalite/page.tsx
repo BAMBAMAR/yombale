@@ -10,6 +10,7 @@ import {
   DollarSign,
   Scale
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 const CG_MANDAT_DEFAUT = `CONDITIONS GÉNÉRALES DE GESTION LOCATIVE & MANDAT
 
@@ -48,7 +49,9 @@ export default function FiscaliteAgencePage() {
   async function chargerFiscalite() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/agences/${slug}`)
+      const res = await fetch(`/api/agences/${slug}`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success && data.agence) {
         const a = data.agence
@@ -85,7 +88,9 @@ export default function FiscaliteAgencePage() {
     try {
       setSaving(true)
       // Récupérer les paramètres actuels
-      const resGet = await fetch(`/api/agences/${slug}`)
+      const resGet = await fetch(`/api/agences/${slug}`, {
+        headers: getImmoAuthHeaders(),
+      })
       const dataGet = await resGet.json()
       const currentParametres = dataGet.agence?.parametres || {}
 
@@ -107,7 +112,7 @@ export default function FiscaliteAgencePage() {
 
       const res = await fetch(`/api/agences/${slug}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           numero_agrement: form.numero_agrement,
           parametres: updatedParametres,

@@ -20,6 +20,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { ModalCreerMandat } from './components/ModalCreerMandat'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface MandatItem {
   id: string
@@ -64,8 +65,7 @@ export default function AgenceMandatsPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const headers = getImmoAuthHeaders()
 
       const [resMandats, resStats, resBiens, resProps] = await Promise.all([
         fetch(`/api/mandats-immo/agence/${slug}?statut=${filterStatut}&type_mandat=${filterType}&search=${encodeURIComponent(searchTerm)}`, { headers }),

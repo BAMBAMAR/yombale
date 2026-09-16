@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { X, Check, Briefcase } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface BienOption {
   id: string
@@ -81,14 +82,10 @@ export function ModalCreerTransaction({
     try {
       setSaving(true)
       setErrorMsg(null)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
       const res = await fetch(`/api/transactions-immo/agence/${slug}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           bien_id: form.bien_id,
           type_transaction: form.type_transaction,

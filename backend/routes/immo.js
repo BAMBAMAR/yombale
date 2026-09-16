@@ -43,13 +43,17 @@ const ORDER_MAP = {
 router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => {
   try {
     const {
-      ville, quartier, type_bien, transaction = 'location',
+      ville, quartier, type_bien, transaction,
       prixMin, prixMax, surfaceMin, nbPieces, nbChambres, meuble, source, commodite,
       tri = 'recent', limit = 24, page = 1,
     } = req.query;
 
     const offset  = (page - 1) * limit;
     const orderBy = ORDER_MAP[tri] || ORDER_MAP.recent;
+
+    const txParam = (!transaction || transaction === 'tous' || transaction === 'all')
+      ? null
+      : transaction;
 
     const sql = `
       SELECT ai.*, 
@@ -91,7 +95,7 @@ router.get('/', blockScraperUA, tokenOptional, limiterBulk, async (req, res) => 
       LIMIT $13 OFFSET $14`;
 
     const params = [
-      transaction || null, ville || null, quartier || null,
+      txParam, ville || null, quartier || null,
       type_bien || null, prixMin || null, prixMax || null,
       surfaceMin || null, nbPieces || null, nbChambres || null,
       meuble === 'true' ? true : meuble === 'false' ? false : null,

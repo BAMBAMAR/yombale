@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import ModalAjouterMembre from './components/ModalAjouterMembre'
 import ModalEditerMembre, { MembreItem } from './components/ModalEditerMembre'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 const ROLES: Record<string, string> = {
   admin_agence: 'Administrateur Agence',
@@ -37,10 +38,9 @@ export default function EquipePage() {
   async function chargerMembres() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
-
-      const res = await fetch(`/api/agences/${slug}/membres`, { headers })
+      const res = await fetch(`/api/agences/${slug}/membres`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success) {
         setMembres(data.membres || [])
@@ -59,12 +59,9 @@ export default function EquipePage() {
   async function handleSupprimerMembre(membreId: string) {
     if (!confirm('Êtes-vous sûr de vouloir retirer ce collaborateur de l’agence ?')) return
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
-
       const res = await fetch(`/api/agences/${slug}/membres/${membreId}`, {
         method: 'DELETE',
-        headers,
+        headers: getImmoAuthHeaders(),
       })
       const data = await res.json()
       if (data.success) {

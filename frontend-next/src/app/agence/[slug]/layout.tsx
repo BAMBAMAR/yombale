@@ -29,6 +29,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import '../agence.css'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface AgenceData {
   id: string
@@ -60,9 +61,8 @@ export default function AgenceWorkspaceLayout({
   async function chargerAgence() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const res = await fetch(`/api/agences/${slug}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: getImmoAuthHeaders(),
       })
       if (res.status === 401) {
         router.push(`/connexion?redirect=/agence/${slug}`)

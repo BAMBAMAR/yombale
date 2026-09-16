@@ -497,4 +497,156 @@ router.get('/agence/:slugOrId/:bienId/matching', verifierToken, requireAgenceAcc
   }
 });
 
+// ── DELETE /api/biens/agence/:slugOrId/:bienId — Supprimer ou archiver un bien ──
+router.delete('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bienId } = req.params;
+
+    const { rows: bienRows } = await pool.query(
+      `SELECT * FROM biens_immo WHERE id = $1 AND agence_id = $2`,
+      [bienId, agenceId]
+    );
+    if (!bienRows[0]) {
+      return res.status(404).json({ success: false, error: 'Bien introuvable ou non autorisé.' });
+    }
+
+    // Vérifier les baux actifs rattachés
+    const { rows: bauxActifs } = await pool.query(
+      `SELECT count(*) FROM baux_immo WHERE bien_id = $1 AND statut = 'actif'`,
+      [bienId]
+    );
+    const hasActiveBail = parseInt(bauxActifs[0]?.count || 0, 10) > 0;
+
+    // Dépublier toute annonce marketplace rattachée
+    await pool.query(
+      `UPDATE annonces_immo SET actif = false, supprimee = true WHERE bien_id = $1`,
+      [bienId]
+    );
+
+    if (hasActiveBail) {
+      // Archivage sécurisé pour préserver l'historique comptable et locatif
+      await pool.query(
+        `UPDATE biens_immo SET statut = 'archive', updated_at = NOW() WHERE id = $1`,
+        [bienId]
+      );
+      return res.json({
+        success: true,
+        message: 'Le bien comporte un bail en cours. Il a été archivé et retiré de la vente/location.',
+        mode: 'archive'
+      });
+    }
+
+    // Tentative de suppression définitive si aucun lien étranger bloquant
+    try {
+      await pool.query(`DELETE FROM biens_immo WHERE id = $1 AND agence_id = $2`, [bienId, agenceId]);
+      res.json({ success: true, message: 'Bien supprimé avec succès.', mode: 'delete' });
+    } catch (fkErr) {
+      await pool.query(
+        `UPDATE biens_immo SET statut = 'archive', updated_at = NOW() WHERE id = $1`,
+        [bienId]
+      );
+      res.json({
+        success: true,
+        message: 'Bien archivé avec succès (conservé pour historique).',
+        mode: 'archive'
+      });
+    }
+  } catch (err) {
+    console.error('[DELETE /api/biens/agence/:slugOrId/:bienId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la suppression du bien' });
+  }
+});
+
+// ── POST /api/biens/agence/:slugOrId/:bienId/archiver — Basculer l'état archive/actif ──
+router.post('/agence/:slugOrId/:bienId/archiver', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bienId } = req.params;
+
+    const { rows: bienRows } = await pool.query(
+      `SELECT id, statut FROM biens_immo WHERE id = $1 AND agence_id = $2`,
+      [bienId, agenceId]
+    );
+    if (!bienRows[0]) {
+      return res.status(404).json({ success: false, error: 'Bien introuvable.' });
+    }
+
+    const newStatut = bienRows[0].statut === 'archive' ? 'actif' : 'archive';
+    await pool.query(`UPDATE biens_immo SET statut = $1, updated_at = NOW() WHERE id = $2`, [newStatut, bienId]);
+
+    // Si archivé, dépublier l'annonce
+    if (newStatut === 'archive') {
+      await pool.query(`UPDATE annonces_immo SET actif = false, supprimee = true WHERE bien_id = $1`, [bienId]);
+    }
+
+    res.json({
+      success: true,
+      statut: newStatut,
+      message: newStatut === 'archive' ? 'Bien archivé.' : 'Bien réactivé.'
+    });
+  } catch (err) {
+    console.error('[POST /api/biens/agence/:slugOrId/:bienId/archiver]', err.message);
+    res.status(500).json({ success: false, error: "Erreur lors de l'archivage du bien" });
+  }
+});
+
+// ── POST /api/biens/agence/:slugOrId/:bienId/dupliquer — Dupliquer un bien existant ──
+router.post('/agence/:slugOrId/:bienId/dupliquer', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bienId } = req.params;
+
+    const { rows: bRows } = await pool.query(
+      `SELECT * FROM biens_immo WHERE id = $1 AND agence_id = $2`,
+      [bienId, agenceId]
+    );
+    if (!bRows[0]) {
+      return res.status(404).json({ success: false, error: 'Bien source introuvable.' });
+    }
+
+    const b = bRows[0];
+    const newRef = `REF-${Math.floor(1000 + Math.random() * 9000)}-CP`;
+    const newTitre = `${b.titre} (Copie)`;
+
+    const { rows: dupRows } = await pool.query(
+      `INSERT INTO biens_immo (
+        agence_id, proprietaire_id, agent_id, reference, type_bien, sous_type,
+        titre, description, adresse, quartier, ville, region, pays,
+        surface_m2, surface_terrain, nb_pieces, nb_chambres, nb_sdb, nb_salons,
+        etage, nb_etages, ascenseur, parking, gardien, piscine, terrasse, balcon,
+        climatisation, meuble, equipements, etat, annee_construction,
+        prix_location, prix_vente, charges, depot_garantie, photos, videos,
+        statut_occupation, statut, notes_internes
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6,
+        $7, $8, $9, $10, $11, $12, $13,
+        $14, $15, $16, $17, $18, $19,
+        $20, $21, $22, $23, $24, $25, $26, $27,
+        $28, $29, $30, $31, $32,
+        $33, $34, $35, $36, $37, $38,
+        'disponible', 'actif', $39
+      ) RETURNING *`,
+      [
+        agenceId, b.proprietaire_id, b.agent_id, newRef, b.type_bien, b.sous_type,
+        newTitre, b.description, b.adresse, b.quartier, b.ville, b.region, b.pays,
+        b.surface_m2, b.surface_terrain, b.nb_pieces, b.nb_chambres, b.nb_sdb, b.nb_salons,
+        b.etage, b.nb_etages, b.ascenseur, b.parking, b.gardien, b.piscine, b.terrasse, b.balcon,
+        b.climatisation, b.meuble, JSON.stringify(b.equipements || []), b.etat, b.annee_construction,
+        b.prix_location, b.prix_vente, b.charges, b.depot_garantie, JSON.stringify(b.photos || []), JSON.stringify(b.videos || []),
+        b.notes_internes
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Bien dupliqué avec succès.',
+      bien: dupRows[0]
+    });
+  } catch (err) {
+    console.error('[POST /api/biens/agence/:slugOrId/:bienId/dupliquer]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la duplication du bien' });
+  }
+});
+
 module.exports = router;

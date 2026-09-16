@@ -25,6 +25,7 @@ import { SocialAccountsTab } from './components/SocialAccountsTab'
 import { SocialImportTab } from './components/SocialImportTab'
 import { SocialPostsFeedTab } from './components/SocialPostsFeedTab'
 import { SocialMarketingGeneratorTab } from './components/SocialMarketingGeneratorTab'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface AgenceItem {
   id: string
@@ -71,11 +72,9 @@ export default function AgencySocialShopManagerPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = getAuthToken()
-      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
       const [resAgence, resBiens] = await Promise.all([
-        fetch(`/api/agences/${slug}`, { headers: authHeaders }),
-        fetch(`/api/biens/agence/${slug}?statut=actif`),
+        fetch(`/api/agences/${slug}`, { headers: getImmoAuthHeaders() }),
+        fetch(`/api/biens/agence/${slug}?statut=actif`, { headers: getImmoAuthHeaders() }),
       ])
       const dataAgence = await resAgence.json()
       const dataBiens = await resBiens.json()
@@ -118,14 +117,8 @@ export default function AgencySocialShopManagerPage() {
   async function persistData(updatedPosts?: SocialPostItem[], updatedAccounts?: SocialAccountsConfig) {
     try {
       setSaving(true)
-      const token = getAuthToken()
-      const authHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      }
-
       const resGet = await fetch(`/api/agences/${slug}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: getImmoAuthHeaders(),
       })
       const dataGet = await resGet.json()
       const currentParametres = dataGet.agence?.parametres || {}
@@ -135,7 +128,7 @@ export default function AgencySocialShopManagerPage() {
 
       const res = await fetch(`/api/agences/${slug}`, {
         method: 'PUT',
-        headers: authHeaders,
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           whatsapp: nextAccounts.whatsapp,
           site_web: nextAccounts.site_web,

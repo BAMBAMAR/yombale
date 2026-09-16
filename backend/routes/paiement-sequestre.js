@@ -37,7 +37,7 @@ async function migrerColonnesSequestre() {
       CREATE TABLE IF NOT EXISTS reservations_sequestre_immo (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         reference VARCHAR(50) UNIQUE NOT NULL,
-        bien_id INT,
+        bien_id TEXT,
         agence_id UUID,
         prospect_nom VARCHAR(120) NOT NULL,
         prospect_telephone VARCHAR(30) NOT NULL,
@@ -54,6 +54,7 @@ async function migrerColonnesSequestre() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE reservations_sequestre_immo ALTER COLUMN bien_id TYPE TEXT USING bien_id::text;
     `);
     colsMigrated = true;
   } catch (e) {
@@ -266,16 +267,14 @@ router.get('/:reference/statut', async (req, res) => {
 router.post('/immo/reserver', async (req, res) => {
   try {
     await migrerColonnesSequestre();
-    const {
-      bienId,
-      agenceId,
-      prospectNom,
-      prospectTelephone,
-      prospectEmail,
-      typeReservation = 'caution_location', // 'caution_location', 'acompte_vente', 'frais_visite_vip'
-      montant,
-      notes
-    } = req.body;
+    const bienId = req.body.bienId || req.body.bien_id;
+    const agenceId = req.body.agenceId || req.body.agence_id;
+    const prospectNom = req.body.prospectNom || req.body.prospect_nom;
+    const prospectTelephone = req.body.prospectTelephone || req.body.prospect_telephone;
+    const prospectEmail = req.body.prospectEmail || req.body.prospect_email;
+    const typeReservation = req.body.typeReservation || req.body.type_reservation || 'caution_location';
+    const montant = req.body.montant;
+    const notes = req.body.notes;
 
     const montantNum = parseFloat(montant);
     if (!montantNum || montantNum <= 0) {

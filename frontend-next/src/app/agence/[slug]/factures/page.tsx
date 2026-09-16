@@ -17,6 +17,7 @@ import ModalCreerFactureImmo from './components/ModalCreerFactureImmo'
 import ModalApercuFactureImmo from './components/ModalApercuFactureImmo'
 import ModalEditerFactureImmo from './components/ModalEditerFactureImmo'
 import ExportCsvButton from '../../components/ExportCsvButton'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface FactureItem {
   id: string
@@ -64,8 +65,7 @@ export default function AgenceFacturesPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const headers = getImmoAuthHeaders()
 
       const [resFactures, resBiens] = await Promise.all([
         fetch(`/api/factures-immo/agence/${slug}`, { headers }),
@@ -89,15 +89,9 @@ export default function AgenceFacturesPage() {
 
   async function handleEncaisserFacture(factureId: string) {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      }
-
       const res = await fetch(`/api/factures-immo/agence/${slug}/${factureId}/encaisser`, {
         method: 'PATCH',
-        headers,
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ mode_paiement: 'wave' }),
       })
       const data = await res.json()

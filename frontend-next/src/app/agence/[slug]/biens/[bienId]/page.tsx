@@ -26,6 +26,7 @@ import {
   Clock,
   ShieldCheck
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 export default function AgenceBienDetailPage() {
   const params = useParams()
@@ -46,8 +47,7 @@ export default function AgenceBienDetailPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const headers = getImmoAuthHeaders()
 
       const [resBien, resMatch, resOffres] = await Promise.all([
         fetch(`/api/biens/agence/${slug}/${bienId}`, { headers }),
@@ -78,13 +78,9 @@ export default function AgenceBienDetailPage() {
   async function handleTogglePublication() {
     try {
       setPublishing(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const res = await fetch(`/api/biens/agence/${slug}/${bienId}/publier`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
       })
       const data = await res.json()
       if (res.ok && data.success) {

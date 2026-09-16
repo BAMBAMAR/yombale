@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { UserCheck, Plus, Phone, Mail, Home, MapPin, CheckCircle2 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface Proprietaire {
   id: string
@@ -37,7 +38,9 @@ export default function BailleursPage() {
   async function chargerBailleurs() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/crm-immo/agence/${slug}/proprietaires`)
+      const res = await fetch(`/api/crm-immo/agence/${slug}/proprietaires`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success) {
         setProprietaires(data.proprietaires || [])
@@ -61,7 +64,7 @@ export default function BailleursPage() {
       setSaving(true)
       const res = await fetch(`/api/crm-immo/agence/${slug}/proprietaires`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(form),
       })
       const data = await res.json()

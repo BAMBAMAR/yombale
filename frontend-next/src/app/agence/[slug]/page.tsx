@@ -15,6 +15,7 @@ import {
   DollarSign
 } from 'lucide-react'
 import { DashboardRubriques } from './components/DashboardRubriques'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface StatsData {
   biens: {
@@ -53,7 +54,9 @@ export default function AgenceDashboardPage() {
   async function chargerStats() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/agences/${slug}/stats`)
+      const res = await fetch(`/api/agences/${slug}/stats`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success) {
         setStats(data.stats)

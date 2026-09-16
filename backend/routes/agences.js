@@ -619,6 +619,7 @@ router.post('/:slugOrId/membres', verifierToken, requireAgenceAccess('admin_agen
   try {
     const agenceId = req.agence.id;
     const {
+      utilisateur_id,
       emailOrPhone,
       email,
       telephone,
@@ -632,17 +633,27 @@ router.post('/:slugOrId/membres', verifierToken, requireAgenceAccess('admin_agen
       commission_taux,
     } = req.body;
 
-    const identifier = (email || telephone || emailOrPhone || '').trim();
-    if (!identifier && !nom) {
+    let targetUser = null;
+    if (utilisateur_id) {
+      const { rows: uRows } = await pool.query(
+        `SELECT id, nom, prenom, email, telephone FROM utilisateurs WHERE id = $1`,
+        [utilisateur_id]
+      );
+      if (uRows.length > 0) {
+        targetUser = uRows[0];
+      }
+    }
+
+    const identifier = (email || telephone || emailOrPhone || targetUser?.email || targetUser?.telephone || '').trim();
+    if (!targetUser && !identifier && !nom) {
       return res.status(400).json({ success: false, error: "Identifiant (email, téléphone ou nom) requis." });
     }
 
-    const searchEmail = (email || (identifier.includes('@') ? identifier : '')).trim();
-    const searchTel = (telephone || (!identifier.includes('@') ? identifier : '')).trim();
+    const searchEmail = (email || (identifier.includes('@') ? identifier : (targetUser?.email || ''))).trim();
+    const searchTel = (telephone || (!identifier.includes('@') ? identifier : (targetUser?.telephone || ''))).trim();
 
     // 1. Chercher si l'utilisateur existe déjà
-    let targetUser = null;
-    if (searchEmail || searchTel) {
+    if (!targetUser && (searchEmail || searchTel)) {
       const { rows: userRows } = await pool.query(
         `SELECT id, nom, prenom, email, telephone FROM utilisateurs 
          WHERE (LOWER(email) = LOWER($1) AND $1 <> '') OR (telephone = $2 AND $2 <> '')`,

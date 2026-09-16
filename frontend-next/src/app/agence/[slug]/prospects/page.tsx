@@ -15,6 +15,7 @@ import {
   X,
   AlertCircle
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface Prospect {
   id: string
@@ -80,7 +81,9 @@ export default function ProspectsCRMPage() {
   async function chargerProspects() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/crm-immo/agence/${slug}/contacts?type_contact=prospect`)
+      const res = await fetch(`/api/crm-immo/agence/${slug}/contacts?type_contact=prospect`, {
+        headers: getImmoAuthHeaders()
+      })
       const data = await res.json()
       if (data.success) {
         setProspects(data.contacts || [])
@@ -100,7 +103,7 @@ export default function ProspectsCRMPage() {
     try {
       await fetch(`/api/crm-immo/agence/${slug}/contacts/${contactId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ statut_crm: nouveauStatut }),
       })
       chargerProspects()
@@ -113,7 +116,9 @@ export default function ProspectsCRMPage() {
     try {
       setMatchingProspect(prospect)
       setLoadingMatch(true)
-      const res = await fetch(`/api/crm-immo/agence/${slug}/contacts/${prospect.id}/matching`)
+      const res = await fetch(`/api/crm-immo/agence/${slug}/contacts/${prospect.id}/matching`, {
+        headers: getImmoAuthHeaders()
+      })
       const data = await res.json()
       if (data.success) {
         setMatchedBiens(data.biens_matches || [])
@@ -133,7 +138,7 @@ export default function ProspectsCRMPage() {
       setSaving(true)
       const res = await fetch(`/api/crm-immo/agence/${slug}/contacts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(form),
       })
       const data = await res.json()

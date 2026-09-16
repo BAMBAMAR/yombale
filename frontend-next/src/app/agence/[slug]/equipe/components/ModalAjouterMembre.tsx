@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { X, UserPlus, Briefcase, Users, AlertCircle } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface ModalAjouterMembreProps {
   slug: string
@@ -51,11 +52,6 @@ export default function ModalAjouterMembre({ slug, onClose, onSuccess }: ModalAj
 
     try {
       setSaving(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      }
 
       const payload = {
         nom: form.nom.trim(),
@@ -70,7 +66,7 @@ export default function ModalAjouterMembre({ slug, onClose, onSuccess }: ModalAj
 
       const res = await fetch(`/api/agences/${slug}/membres`, {
         method: 'POST',
-        headers,
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
 

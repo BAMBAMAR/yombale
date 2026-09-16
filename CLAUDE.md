@@ -1,3 +1,22 @@
+- **Campagne E2E Exhaustive & Qualification Intégrale Nopalou Immobilier (`agences.js`, `biens.js`, `paiement-sequestre.js`, 22 écrans `frontend-next`, `test_immo_comprehensive.js`) (16 septembre 2026)** 🏢🧪⚡ 🚀 ✅ :
+  * **🎯 1. Cartographie Exhaustive de la Verticale Immobilière** :
+    - **Front-End** : Inventaire exhaustif automatisé de **202 boutons interactifs**, **70 liens de navigation**, **28 formulaires**, **185 modales/dialogues** répartis sur 22 écrans agence (`/agence`, `/agence/[slug]/...`).
+    - **Back-End & DB** : 56 routes API réparties sur 16 routeurs Express et 18 tables relationnelles PostgreSQL dédiées à l'immobilier.
+  * **🎯 2. Résolution Critique P0 : Standardisation Universelle de l'Authentification Client (`getImmoAuthHeaders`)** :
+    - **Éradication des Déconnexions Inopinées (401 Unauthorized)** : Propagation de `getImmoAuthHeaders()` sur l'ensemble des 22 écrans et composants modaux agence (`page.tsx`, `layout.tsx`, `bailleurs`, `locataires`, `biens`, `mandats`, `transactions`, `commissions`, `credits`, `factures`, `journal`, `parametres`, `fiscalite`, `studio`, `social`, `maintenance`).
+    - **Résolution Multi-Stockage** : Prise en charge transparente et unifiée des clés `token`, `nopalou_token` et `sessionStorage`.
+  * **🎯 3. Complétion du Cycle de Vie des Biens Immobiliers Backend & Frontend (`biens.js`, `biens/page.tsx`)** :
+    - **Nouvelles Routes API Métier** : `DELETE /agence/:slugOrId/:bienId` (suppression/archivage sécurisé), `POST /agence/:slugOrId/:bienId/archiver` (bascule d'état actif/archivé), `POST /agence/:slugOrId/:bienId/dupliquer` (duplication instantanée de mandat).
+    - **Actions Complètes dans le Tableau des Biens** : Boutons d'action unifiés (Consulter Fiche 360°, Voir Annonce Marketplace, Dupliquer, Archiver, Supprimer avec modale de confirmation).
+  * **🎯 4. Correctifs & Migrations Base de Données (`reservations_sequestre_immo`, `agences.js`)** :
+    - **Migration Type UUID Séquestre** : Correction du schéma DB pour `reservations_sequestre_immo.bien_id` (`INT` → `TEXT` UUID) et support double camelCase / snake_case.
+    - **Résolution Membres d'Équipe** : Support de la résolution directe par `utilisateur_id` dans `POST /api/agences/:slugOrId/membres`.
+  * **🧪 5. Validation Qualité Complète (100% Vert)** :
+    - Suite E2E Réelle Multi-Phases (`test_immo_comprehensive.js`) : **53/53 scénarios PASS (100% succès) sur base live PostgreSQL**.
+    - Tests Unitaires Backend Jest : **41/41 suites validées, 314/314 tests passés avec succès**.
+    - Tests Unitaires Frontend : **69/69 tests validés avec succès**.
+    - Linter Anti-AI-Slop : **0 violation (0 silent catch, 0 composant > 450 lignes, 100% SVGs Lucide)**.
+
 - **Lancement Studio Personnalisation Agence Immo, Upload Direct Fichiers & Vitrine Publique (`studio/page.tsx`, `StudioAgenceBranding.tsx`, `backend/routes/agences.js`, `api/agences/[...path]/route.ts`, `layout.tsx`, `vitrine/page.tsx`) (16 septembre 2026)** 🎨🏢📱 🚀 ✅ :
   * **🎯 1. Téléversement Direct Logo & Bannière depuis l'Appareil (`StudioAgenceBranding.tsx`, `agences.js`, `route.ts`)** :
     - **Upload Multimédia Intégré** : Deux boutons dédiés `[📁 Télécharger un logo]` et `[📁 Télécharger une bannière]` permettent de téléverser directement des images depuis son ordinateur ou téléphone sans passer par une URL externe.

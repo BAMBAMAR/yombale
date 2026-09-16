@@ -12,6 +12,7 @@ import {
   Filter
 } from 'lucide-react'
 import ExportCsvButton from '../../components/ExportCsvButton'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface AuditLogItem {
   id: string
@@ -36,14 +37,12 @@ export default function AgenceJournalPage() {
   async function chargerLogs() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
 
       let url = `/api/agences/agence/${slug}/logs?limit=100`
       if (filtreType !== 'tous') url += `&type=${encodeURIComponent(filtreType)}`
       if (recherche.trim()) url += `&q=${encodeURIComponent(recherche.trim())}`
 
-      const res = await fetch(url, { headers })
+      const res = await fetch(url, { headers: getImmoAuthHeaders() })
       const data = await res.json()
 
       if (data.success) {

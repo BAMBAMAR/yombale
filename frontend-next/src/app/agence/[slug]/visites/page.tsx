@@ -13,6 +13,7 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface Visite {
   id: string
@@ -65,7 +66,7 @@ export default function VisitesPage() {
       setLoading(true)
       let url = `/api/crm-immo/agence/${slug}/visites`
       if (filterDate !== 'tous') url += `?date=${filterDate}`
-      const res = await fetch(url)
+      const res = await fetch(url, { headers: getImmoAuthHeaders() })
       const data = await res.json()
       if (data.success) {
         setVisites(data.visites || [])
@@ -80,8 +81,8 @@ export default function VisitesPage() {
   async function chargerOptions() {
     try {
       const [resBiens, resContacts] = await Promise.all([
-        fetch(`/api/biens/agence/${slug}?statut=actif`),
-        fetch(`/api/crm-immo/agence/${slug}/contacts`),
+        fetch(`/api/biens/agence/${slug}?statut=actif`, { headers: getImmoAuthHeaders() }),
+        fetch(`/api/crm-immo/agence/${slug}/contacts`, { headers: getImmoAuthHeaders() }),
       ])
       const dataBiens = await resBiens.json()
       const dataContacts = await resContacts.json()
@@ -107,7 +108,7 @@ export default function VisitesPage() {
       setSaving(true)
       const res = await fetch(`/api/crm-immo/agence/${slug}/visites`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(form),
       })
       const data = await res.json()
@@ -126,7 +127,7 @@ export default function VisitesPage() {
     try {
       await fetch(`/api/crm-immo/agence/${slug}/visites/${visiteId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ statut }),
       })
       chargerVisites()

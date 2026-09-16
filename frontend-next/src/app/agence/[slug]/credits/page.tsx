@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { ParametresEchelonnementImmo } from './components/ParametresEchelonnementImmo'
 import { ModalCreerCredit } from './components/ModalCreerCredit'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface EcheanceItem {
   numero: number
@@ -63,8 +64,7 @@ export default function AgenceCreditsPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const headers = getImmoAuthHeaders()
 
       const [resCredits, resBiens] = await Promise.all([
         fetch(`/api/credits-immo/agence/${slug}`, { headers }),
@@ -89,15 +89,12 @@ export default function AgenceCreditsPage() {
   async function handleEncaisserEcheance(creditId: string, numeroEcheance: number, montant: number) {
     try {
       setEncaissementId(`${creditId}-${numeroEcheance}`)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const res = await fetch(`/api/credits-immo/agence/${slug}/${creditId}/encaisser-echeance`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           numero_echeance: numeroEcheance,
+          mode_paiement: 'wave',
           montant,
         }),
       })

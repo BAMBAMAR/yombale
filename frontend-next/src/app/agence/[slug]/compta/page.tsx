@@ -13,6 +13,7 @@ import {
   Wallet
 } from 'lucide-react'
 import ExportCsvButton from '../../components/ExportCsvButton'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface MoisBilan {
   periode: string
@@ -49,10 +50,9 @@ export default function AgenceComptaPage() {
   async function chargerCompta() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
-
-      const res = await fetch(`/api/locatif-immo/agence/${slug}/compta`, { headers })
+      const res = await fetch(`/api/locatif-immo/agence/${slug}/compta`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success) {
         setBilan(data.bilan)

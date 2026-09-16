@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { X, Check, FileSignature } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface BienOption {
   id: string
@@ -67,14 +68,10 @@ export function ModalCreerMandat({
     try {
       setSaving(true)
       setErrorMsg(null)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
       const res = await fetch(`/api/mandats-immo/agence/${slug}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           bien_id: form.bien_id,
           proprietaire_id: form.proprietaire_id,

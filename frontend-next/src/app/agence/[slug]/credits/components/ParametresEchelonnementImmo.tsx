@@ -13,6 +13,7 @@ import {
   Building2,
   Layers
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface EchelonnementImmoConfig {
   caution_active: boolean
@@ -64,9 +65,9 @@ export function ParametresEchelonnementImmo({ slug }: ParametresEchelonnementImm
     async function loadConfig() {
       try {
         setLoading(true)
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
-        const res = await fetch(`/api/credits-immo/agence/${slug}/config`, { headers })
+        const res = await fetch(`/api/credits-immo/agence/${slug}/config`, {
+          headers: getImmoAuthHeaders(),
+        })
         const data = await res.json()
         if (data.success && data.config) {
           setConfig(data.config)
@@ -111,13 +112,9 @@ export function ParametresEchelonnementImmo({ slug }: ParametresEchelonnementImm
       setErrorMsg(null)
       setSuccessMsg(null)
 
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const res = await fetch(`/api/credits-immo/agence/${slug}/config`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(config),
       })
 

@@ -18,6 +18,7 @@ import {
   Share2
 } from 'lucide-react'
 import '@/app/agence/agence.css'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface AgenceItem {
   id: string
@@ -58,8 +59,7 @@ export default function AgenceAbonnementPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = getAuthToken()
-      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {}
+      const headers = getImmoAuthHeaders()
 
       const [resAgence, resMine] = await Promise.all([
         fetch(`/api/agences/${slug}`, { headers }),
@@ -90,13 +90,9 @@ export default function AgenceAbonnementPage() {
     try {
       setPayingSponsoring(true)
       setSponsoringNotice(null)
-      const token = getAuthToken()
       const res = await fetch(`/api/agences/${slug}/sponsoring`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
       })
       const data = await res.json()
       if (data.wave_url) {
@@ -116,13 +112,9 @@ export default function AgenceAbonnementPage() {
   async function handleActivationDirecte() {
     if (!confirm('Activer la mise en avant de cette agence pour 30 jours ?')) return
     try {
-      const token = getAuthToken()
       const res = await fetch(`/api/agences/${slug}/activer-sponsoring-direct`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ duree_jours: 30 }),
       })
       const data = await res.json()

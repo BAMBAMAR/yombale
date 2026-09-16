@@ -14,6 +14,7 @@ import {
   Wallet,
   DollarSign
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface CommissionItem {
   id: string
@@ -53,8 +54,7 @@ export default function AgenceCommissionsPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const headers = getImmoAuthHeaders()
 
       const [resCom, resStats] = await Promise.all([
         fetch(`/api/commissions-immo/agence/${slug}?statut=${filterStatut}&search=${encodeURIComponent(searchTerm)}`, { headers }),
@@ -87,13 +87,9 @@ export default function AgenceCommissionsPage() {
 
     try {
       setPayingId(com.id)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const res = await fetch(`/api/commissions-immo/agence/${slug}/${com.id}/regler`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ montant_verse: montant }),
       })
       if (res.ok) {

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { X, Save, AlertCircle } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 export interface MembreItem {
   id: string
@@ -64,11 +65,6 @@ export default function ModalEditerMembre({
 
     try {
       setSaving(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      }
 
       const payload = {
         nom: form.nom.trim(),
@@ -76,15 +72,15 @@ export default function ModalEditerMembre({
         telephone: form.telephone.trim(),
         email: form.email.trim(),
         role: form.role,
+        actif: form.actif,
         cabinet: form.cabinet.trim(),
         specialite: form.specialite.trim(),
         commission_taux: parseFloat(form.commission_taux) || 0,
-        actif: form.actif,
       }
 
       const res = await fetch(`/api/agences/${slug}/membres/${membre.id}`, {
         method: 'PUT',
-        headers,
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
 

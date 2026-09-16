@@ -23,6 +23,7 @@ import StudioAgenceBranding from './components/StudioAgenceBranding';
 import StudioAgenceMarketingTexts from './components/StudioAgenceMarketingTexts';
 import StudioAgenceDispositionSections from './components/StudioAgenceDispositionSections';
 import StudioAgenceMockupPreview from './components/StudioAgenceMockupPreview';
+import { getImmoAuthHeaders } from '@/lib/immo-auth';
 
 export default function AgenceStudioPage() {
   const params = useParams();
@@ -82,9 +83,8 @@ export default function AgenceStudioPage() {
   async function chargerDonnees() {
     try {
       setLoading(true);
-      const token = getAuthToken();
       const res = await fetch(`/api/agences/${slug}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: getImmoAuthHeaders(),
       });
       const data = await res.json();
 
@@ -139,13 +139,8 @@ export default function AgenceStudioPage() {
     try {
       setSaving(true);
       setErrorMsg(null);
-      const token = getAuthToken();
-      const authHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
 
-      const resGet = await fetch(`/api/agences/${slug}`, { headers: authHeaders });
+      const resGet = await fetch(`/api/agences/${slug}`, { headers: getImmoAuthHeaders() });
       const dataGet = await resGet.json();
       const currentParametres = dataGet.agence?.parametres || {};
 
@@ -167,13 +162,13 @@ export default function AgenceStudioPage() {
 
         res = await fetch(`/api/agences/${slug}`, {
           method: 'PUT',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers: getImmoAuthHeaders(),
           body: formData,
         });
       } else {
         res = await fetch(`/api/agences/${slug}`, {
           method: 'PUT',
-          headers: authHeaders,
+          headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({
             logo_url: config.logo_url,
             parametres: {

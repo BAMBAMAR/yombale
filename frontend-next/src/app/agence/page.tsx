@@ -20,6 +20,7 @@ import {
 import './agence.css'
 import { ModalCreerAgence } from './components/ModalCreerAgence'
 import { ModalMultiAgence } from './components/ModalMultiAgence'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface AgenceItem {
   id: string
@@ -69,7 +70,9 @@ export default function AgencesHubPage() {
   async function chargerAgences() {
     try {
       setLoading(true)
-      const res = await fetch('/api/agences/mine')
+      const res = await fetch('/api/agences/mine', {
+        headers: getImmoAuthHeaders(),
+      })
       if (res.status === 401) {
         router.push('/connexion?redirect=/agence')
         return
@@ -113,7 +116,7 @@ export default function AgencesHubPage() {
       setCreating(true)
       const res = await fetch('/api/agences', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(formData),
       })
       const data = await res.json()

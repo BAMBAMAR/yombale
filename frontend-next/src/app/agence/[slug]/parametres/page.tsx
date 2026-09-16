@@ -10,6 +10,7 @@ import {
   Power
 } from 'lucide-react'
 import ParametresFacturationImmo from './components/ParametresFacturationImmo'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 export default function AgenceParametresPage() {
   const params = useParams()
@@ -51,7 +52,9 @@ export default function AgenceParametresPage() {
   async function chargerParametres() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/agences/${slug}`)
+      const res = await fetch(`/api/agences/${slug}`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success && data.agence) {
         const a = data.agence
@@ -101,7 +104,9 @@ export default function AgenceParametresPage() {
 
     try {
       setSaving(true)
-      const resGet = await fetch(`/api/agences/${slug}`)
+      const resGet = await fetch(`/api/agences/${slug}`, {
+        headers: getImmoAuthHeaders(),
+      })
       const dataGet = await resGet.json()
       const currentParams = dataGet.agence?.parametres || {}
 
@@ -137,7 +142,7 @@ export default function AgenceParametresPage() {
 
       const res = await fetch(`/api/agences/${slug}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       })
       const data = await res.json()

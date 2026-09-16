@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { X, Building, User, Calendar, DollarSign, Check, Loader2 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface Bien {
   id: string
@@ -53,8 +54,7 @@ export default function ModalCreerBail({ slug, onClose, onSuccess }: ModalCreerB
     async function loadSelects() {
       try {
         setLoadingData(true)
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+        const headers = getImmoAuthHeaders()
 
         const [resBiens, resContacts] = await Promise.all([
           fetch(`/api/biens/agence/${slug}?statut=actif`, { headers }),
@@ -121,11 +121,7 @@ export default function ModalCreerBail({ slug, onClose, onSuccess }: ModalCreerB
     try {
       setSubmitting(true)
       setError(null)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      }
+      const headers = getImmoAuthHeaders({ 'Content-Type': 'application/json' })
 
       let finalLocataireId = locataireId
 

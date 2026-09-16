@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, FileText, Check, Loader2 } from 'lucide-react'
 import SimulateurHonorairesImmo from './SimulateurHonorairesImmo'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface BienOption {
   id: string
@@ -101,15 +102,10 @@ export default function ModalCreerFactureImmo({
     try {
       setSaving(true)
       setError(null)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      }
 
       const res = await fetch(`/api/factures-immo/agence/${slug}`, {
         method: 'POST',
-        headers,
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           type_facture: typeFacture,
           client_nom: clientNom.trim(),

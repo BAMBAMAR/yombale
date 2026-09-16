@@ -12,8 +12,13 @@ import {
   Send,
   CheckCircle2,
   AlertCircle,
-  Share2
+  Share2,
+  Copy,
+  Archive,
+  Trash2,
+  ExternalLink
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface BienItem {
   id: string
@@ -55,7 +60,7 @@ export default function BiensListPage() {
       if (filterStatut !== 'tous') url += `&statut_occupation=${filterStatut}`
       if (searchTerm) url += `&recherche=${encodeURIComponent(searchTerm)}`
 
-      const res = await fetch(url)
+      const res = await fetch(url, { headers: getImmoAuthHeaders() })
       const data = await res.json()
       if (data.success) {
         setBiens(data.biens || [])
@@ -76,6 +81,7 @@ export default function BiensListPage() {
       setPublishingId(bienId)
       const res = await fetch(`/api/biens/agence/${slug}/${bienId}/publier`, {
         method: 'POST',
+        headers: getImmoAuthHeaders(),
       })
       const data = await res.json()
       if (data.success) {
@@ -87,6 +93,58 @@ export default function BiensListPage() {
       console.error('[PUBLISH_ERR]', err)
     } finally {
       setPublishingId(null)
+    }
+  }
+
+  async function handleDupliquer(bienId: string) {
+    try {
+      const res = await fetch(`/api/biens/agence/${slug}/${bienId}/dupliquer`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders(),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setToastMsg('Bien dupliqué avec succès !')
+        chargerBiens()
+        setTimeout(() => setToastMsg(null), 4000)
+      }
+    } catch (err) {
+      console.error('[DUPLIQUER_ERR]', err)
+    }
+  }
+
+  async function handleArchiver(bienId: string) {
+    try {
+      const res = await fetch(`/api/biens/agence/${slug}/${bienId}/archiver`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders(),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setToastMsg(data.message || 'Statut du bien mis à jour.')
+        chargerBiens()
+        setTimeout(() => setToastMsg(null), 4000)
+      }
+    } catch (err) {
+      console.error('[ARCHIVER_ERR]', err)
+    }
+  }
+
+  async function handleSupprimer(bienId: string) {
+    if (!window.confirm('Voulez-vous vraiment supprimer ce bien immobilier ?')) return
+    try {
+      const res = await fetch(`/api/biens/agence/${slug}/${bienId}`, {
+        method: 'DELETE',
+        headers: getImmoAuthHeaders(),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setToastMsg(data.message || 'Bien supprimé.')
+        chargerBiens()
+        setTimeout(() => setToastMsg(null), 4000)
+      }
+    } catch (err) {
+      console.error('[SUPPRIMER_ERR]', err)
     }
   }
 
@@ -273,12 +331,11 @@ export default function BiensListPage() {
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
                       <Link
-                        href={`/immo/${bien.annonce_publiee_id || bien.id}`}
-                        target="_blank"
+                        href={`/agence/${slug}/biens/${bien.id}`}
                         style={{
-                          padding: '6px',
+                          padding: '6px 8px',
                           borderRadius: 6,
                           background: '#FAF8F5',
                           border: '1px solid var(--border, #E8DDD2)',
@@ -286,11 +343,90 @@ export default function BiensListPage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          textDecoration: 'none'
                         }}
-                        title="Voir la fiche"
+                        title="Gérer la fiche interne"
                       >
-                        <Eye size={15} />
+                        <Eye size={14} />
                       </Link>
+
+                      {bien.annonce_publiee_id && (
+                        <Link
+                          href={`/immo/${bien.annonce_publiee_id}`}
+                          target="_blank"
+                          style={{
+                            padding: '6px 8px',
+                            borderRadius: 6,
+                            background: '#F0FDF4',
+                            border: '1px solid #BBF7D0',
+                            color: '#166534',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textDecoration: 'none'
+                          }}
+                          title="Voir sur la marketplace"
+                        >
+                          <ExternalLink size={14} />
+                        </Link>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleDupliquer(bien.id)}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 6,
+                          background: '#FAF8F5',
+                          border: '1px solid var(--border, #E8DDD2)',
+                          color: 'var(--navy, #1C2B4A)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title="Dupliquer ce bien"
+                      >
+                        <Copy size={14} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleArchiver(bien.id)}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 6,
+                          background: '#FAF8F5',
+                          border: '1px solid var(--border, #E8DDD2)',
+                          color: '#64748B',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title="Archiver ce bien"
+                      >
+                        <Archive size={14} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSupprimer(bien.id)}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 6,
+                          background: '#FEF2F2',
+                          border: '1px solid #FECACA',
+                          color: '#DC2626',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title="Supprimer ce bien"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </td>
                 </tr>

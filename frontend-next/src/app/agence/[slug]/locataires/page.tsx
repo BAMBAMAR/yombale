@@ -15,6 +15,7 @@ import {
   Calendar,
   DollarSign
 } from 'lucide-react'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface LocataireItem {
   id: string
@@ -73,7 +74,9 @@ export default function LocatairesPage() {
   async function chargerLocataires() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/crm-immo/agence/${slug}/contacts?type_contact=locataire`)
+      const res = await fetch(`/api/crm-immo/agence/${slug}/contacts?type_contact=locataire`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success) {
         setLocataires(data.contacts || [])
@@ -87,7 +90,9 @@ export default function LocatairesPage() {
 
   async function chargerBiens() {
     try {
-      const res = await fetch(`/api/biens/agence/${slug}?statut=actif`)
+      const res = await fetch(`/api/biens/agence/${slug}?statut=actif`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success) {
         setBiensDispo(data.biens || [])
@@ -113,7 +118,7 @@ export default function LocatairesPage() {
       // 1. Créer le contact locataire
       const resContact = await fetch(`/api/crm-immo/agence/${slug}/contacts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           nom: form.nom,
           prenom: form.prenom,
@@ -131,7 +136,7 @@ export default function LocatairesPage() {
       if (dataContact.success && form.bien_id && form.loyer_mensuel) {
         await fetch(`/api/locatif-immo/agence/${slug}/baux`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({
             bien_id: form.bien_id,
             locataire_id: dataContact.contact.id,

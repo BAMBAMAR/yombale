@@ -17,6 +17,7 @@ import {
   Building2
 } from 'lucide-react'
 import { ModalCreerTransaction } from './components/ModalCreerTransaction'
+import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface TransactionItem {
   id: string
@@ -77,8 +78,7 @@ export default function AgenceTransactionsPage() {
   async function chargerDonnees() {
     try {
       setLoading(true)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const headers = getImmoAuthHeaders()
 
       const [resTx, resPipe, resBiens, resContacts, resProps, resMembres] = await Promise.all([
         fetch(`/api/transactions-immo/agence/${slug}?statut=${filterStatut}&search=${encodeURIComponent(searchTerm)}`, { headers }),
@@ -128,13 +128,9 @@ export default function AgenceTransactionsPage() {
 
     try {
       setAdvancingId(tx.id)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const res = await fetch(`/api/transactions-immo/agence/${slug}/${tx.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ statut: nextStage.key }),
       })
       if (res.ok) {
