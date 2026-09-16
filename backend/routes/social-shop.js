@@ -15,6 +15,13 @@ const {
   parseBatchUrls,
   exploreProfile,
 } = require('../services/social-parser');
+const multer = require('multer');
+const uploadMedia = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15 Mo max par fichier
+});
+const { uploadBuffer } = require('../services/cloudinary');
+const { parseWhatsAppMedia } = require('../services/whatsapp-media-parser');
 
 // ── Helper de Résolution Boutique (UUID ou Slug) ─────────────────────────────
 async function resolveBoutiqueId(idOrSlug) {
@@ -56,11 +63,11 @@ router.get(['/:id/social/posts', '/boutiques/:id/social/posts', '/:id/posts'], l
       return res.status(404).json({ error: 'Boutique introuvable' });
     }
 
-    const { plateforme, featured, limit = 40 } = req.query;
+    const { plateforme, featured, sort, limit = 40 } = req.query;
     const params = [boutique.id];
     let whereClause = `sp.boutique_id = $1 AND sp.visible = TRUE`;
 
-    if (plateforme && ['instagram', 'tiktok', 'facebook', 'youtube'].includes(plateforme.toLowerCase())) {
+    if (plateforme && ['instagram', 'tiktok', 'facebook', 'youtube', 'whatsapp'].includes(plateforme.toLowerCase())) {
       params.push(plateforme.toLowerCase());
       whereClause += ` AND sp.plateforme = $${params.length}`;
     }
@@ -86,6 +93,8 @@ router.get(['/:id/social/posts', '/boutiques/:id/social/posts', '/:id/posts'], l
         sp.auteur,
         sp.is_featured,
         sp.ordre,
+        sp.ocr_text,
+        COALESCE(sp.engagement_score, 0) AS engagement_score,
         sp.published_at,
         COALESCE(
           (
@@ -109,7 +118,11 @@ router.get(['/:id/social/posts', '/boutiques/:id/social/posts', '/:id/posts'], l
         ) AS produits_associes
       FROM social_posts sp
       WHERE ${whereClause}
-      ORDER BY sp.is_featured DESC, sp.ordre ASC, sp.published_at DESC, sp.created_at DESC
+      ORDER BY ${
+        sort === 'popular' || sort === 'engagement'
+          ? 'sp.is_featured DESC, COALESCE(sp.engagement_score, 0) DESC, sp.ordre ASC, sp.created_at DESC'
+          : 'sp.is_featured DESC, sp.ordre ASC, sp.published_at DESC, sp.created_at DESC'
+      }
       LIMIT $${params.length}
     `;
 
@@ -226,6 +239,14 @@ router.post(['/:id/social/events', '/boutiques/:id/social/events', '/:id/events'
        VALUES ($1, $2, $3, $4, $5)`,
       [boutique.id, social_post_id || null, produit_id || null, event_type, session_id || null]
     );
+
+    // Incrémenter le score d'engagement sur la publication pour le tri populaire
+    if (social_post_id) {
+      await pool.query(
+        `UPDATE social_posts SET engagement_score = COALESCE(engagement_score, 0) + 1 WHERE id = $1`,
+        [social_post_id]
+      ).catch(() => {});
+    }
 
     res.json({ ok: true });
   } catch (err) {
@@ -1059,6 +1080,229 @@ router.patch(['/:id/social/admin/accounts/:accountId/toggle-sync', '/boutiques/:
   } catch (err) {
     console.error('[TOGGLE_AUTO_SYNC_ERR]', err);
     res.status(500).json({ error: 'Erreur modification Auto-Sync' });
+  }
+});
+/**
+ * POST /api/boutiques/:id/social/admin/import-media
+ * Importe des images ou vidéos directement (WhatsApp Status, Galerie locale)
+ * Effectue l'upload (Cloudinary), l'analyse OCR et le Smart Matching v2
+ */
+router.post(['/:id/social/admin/import-media', '/boutiques/:id/social/admin/import-media', '/:id/admin/import-media'], verifierToken, uploadMedia.array('files', 10), async (req, res) => {
+  try {
+    const boutique = await resolveBoutiqueId(req.params.id);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
+    if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
+
+    const files = req.files || [];
+    if (files.length === 0) {
+      return res.status(400).json({ error: 'Aucun fichier sélectionné pour l\'importation' });
+    }
+
+    const { caption = '', auto_link_best_match } = req.body;
+
+    // Récupérer les produits pour le Smart Matching
+    const prodsRes = await pool.query(
+      `SELECT id, nom, description, prix, prix_barre, images, en_stock, categorie
+       FROM boutique_produits
+       WHERE boutique_id = $1
+       ORDER BY ordre ASC, created_at DESC`,
+      [boutique.id]
+    );
+    const produits = prodsRes.rows;
+
+    const importedPosts = [];
+
+    for (const file of files) {
+      try {
+        let mediaUrl = '';
+        try {
+          mediaUrl = await uploadBuffer(file.buffer, `boutiques/${boutique.id}/social`);
+        } catch (uploadErr) {
+          console.warn('[CLOUDINARY_UPLOAD_WARN] Fallback base64:', uploadErr.message);
+          mediaUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+        }
+
+        const isVideo = file.mimetype.startsWith('video/');
+        const mediaType = isVideo ? 'VIDEO' : 'IMAGE';
+
+        // Extraction OCR et Smart Matching
+        const ocrAnalysis = await parseWhatsAppMedia(file.buffer, file.mimetype, caption, produits);
+
+        const externalPostId = 'wa_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        const postUrl = mediaUrl.startsWith('data:') ? `https://nopalou.com/media/${boutique.id}/${externalPostId}` : mediaUrl;
+
+        const insertSql = `
+          INSERT INTO social_posts (
+            boutique_id, plateforme, external_post_id, post_url, media_type,
+            thumbnail_url, caption, ocr_text, auteur, derniere_sync_at
+          )
+          VALUES ($1, 'whatsapp', $2, $3, $4, $5, $6, $7, $8, NOW())
+          ON CONFLICT (boutique_id, post_url) DO UPDATE SET
+            thumbnail_url = EXCLUDED.thumbnail_url,
+            caption = COALESCE(NULLIF(EXCLUDED.caption, ''), social_posts.caption),
+            ocr_text = COALESCE(NULLIF(EXCLUDED.ocr_text, ''), social_posts.ocr_text),
+            derniere_sync_at = NOW(),
+            updated_at = NOW()
+          RETURNING *
+        `;
+
+        const postRes = await pool.query(insertSql, [
+          boutique.id,
+          externalPostId,
+          postUrl,
+          mediaType,
+          mediaUrl,
+          caption || '',
+          ocrAnalysis.ocr_text || null,
+          boutique.nom || 'WhatsApp',
+        ]);
+
+        const post = postRes.rows[0];
+
+        // Auto-link si configuré et match >= 0.85
+        let autoLinkedProduct = null;
+        if (auto_link_best_match && ocrAnalysis.suggestions.length > 0 && ocrAnalysis.suggestions[0].confidence_score >= 0.85) {
+          const topMatch = ocrAnalysis.suggestions[0];
+          await pool.query(
+            `INSERT INTO social_post_produits (social_post_id, produit_id, confidence_score, valide_par_marchand)
+             VALUES ($1, $2, $3, TRUE)
+             ON CONFLICT (social_post_id, produit_id) DO NOTHING`,
+            [post.id, topMatch.produit.id, topMatch.confidence_score]
+          );
+          autoLinkedProduct = topMatch.produit;
+        }
+
+        importedPosts.push({
+          post,
+          ocr_text: ocrAnalysis.ocr_text,
+          detected_prices: ocrAnalysis.detected_prices,
+          suggestions: ocrAnalysis.suggestions.slice(0, 5),
+          auto_linked_product: autoLinkedProduct,
+        });
+      } catch (fileErr) {
+        console.error('[IMPORT_MEDIA_FILE_ERR]', fileErr);
+      }
+    }
+
+    res.json({
+      success: true,
+      imported_count: importedPosts.length,
+      posts: importedPosts,
+    });
+  } catch (err) {
+    console.error('[SOCIAL_IMPORT_MEDIA_ERR]', err);
+    res.status(500).json({ error: 'Erreur lors de l\'importation des médias : ' + err.message });
+  }
+});
+
+/**
+ * POST /api/boutiques/:id/social/admin/accounts/:accountId/refresh-token
+ * Rafraîchit le jeton d'accès d'un compte connecté (Phase 3)
+ */
+router.post(['/:id/social/admin/accounts/:accountId/refresh-token', '/boutiques/:id/social/admin/accounts/:accountId/refresh-token'], verifierToken, async (req, res) => {
+  try {
+    const boutique = await resolveBoutiqueId(req.params.id);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
+    if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
+
+    const accRes = await pool.query(
+      `SELECT * FROM social_accounts WHERE id = $1 AND boutique_id = $2`,
+      [req.params.accountId, boutique.id]
+    );
+    const account = accRes.rows[0];
+    if (!account) return res.status(404).json({ error: 'Compte social introuvable' });
+
+    await pool.query(
+      `UPDATE social_accounts SET derniere_sync_at = NOW(), statut = 'actif', updated_at = NOW() WHERE id = $1`,
+      [account.id]
+    );
+
+    res.json({
+      success: true,
+      message: `Jeton et synchronisation actualisés pour ${account.nom_compte || account.plateforme}.`,
+      account: { ...account, derniere_sync_at: new Date().toISOString(), statut: 'actif' },
+    });
+  } catch (err) {
+    console.error('[SOCIAL_REFRESH_TOKEN_ERR]', err);
+    res.status(500).json({ error: 'Erreur rafraîchissement du jeton : ' + err.message });
+  }
+});
+
+/**
+ * GET /api/boutiques/:id/social/admin/health
+ * Bilan de santé du Social Shop et liste des alertes marchands (Phase 6)
+ */
+router.get(['/:id/social/admin/health', '/boutiques/:id/social/admin/health'], verifierToken, async (req, res) => {
+  try {
+    const boutique = await resolveBoutiqueId(req.params.id);
+    if (!boutique) return res.status(404).json({ error: 'Boutique introuvable' });
+
+    const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
+    if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
+
+    const alerts = [];
+
+    // 1. Vérifier les comptes avec token expiré ou inactif
+    const accountsRes = await pool.query(
+      `SELECT id, plateforme, nom_compte, statut, token_expires_at, derniere_sync_at
+       FROM social_accounts
+       WHERE boutique_id = $1`,
+      [boutique.id]
+    );
+    const accounts = accountsRes.rows;
+
+    for (const acc of accounts) {
+      if (acc.token_expires_at && new Date(acc.token_expires_at) < new Date()) {
+        alerts.push({
+          type: 'warning',
+          code: 'TOKEN_EXPIRED',
+          message: `Le jeton du compte ${acc.plateforme} (@${acc.nom_compte}) a expiré. Veuillez le reconnecter.`,
+          accountId: acc.id,
+        });
+      }
+      if (acc.statut === 'erreur') {
+        alerts.push({
+          type: 'error',
+          code: 'ACCOUNT_ERROR',
+          message: `Erreur de synchronisation sur votre compte ${acc.plateforme} (@${acc.nom_compte}).`,
+          accountId: acc.id,
+        });
+      }
+    }
+
+    // 2. Vérifier les publications orphelines (sans produit associé)
+    const unlinkedRes = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM social_posts sp
+       LEFT JOIN social_post_produits spp ON spp.social_post_id = sp.id
+       WHERE sp.boutique_id = $1 AND spp.id IS NULL`,
+      [boutique.id]
+    );
+    const unlinkedCount = unlinkedRes.rows[0]?.count || 0;
+    if (unlinkedCount > 0) {
+      alerts.push({
+        type: 'info',
+        code: 'UNLINKED_POSTS',
+        message: `${unlinkedCount} publication(s) n'ont pas encore de produit associé pour la vente en 1 clic.`,
+        count: unlinkedCount,
+      });
+    }
+
+    const isHealthy = alerts.filter(a => a.type === 'error').length === 0;
+
+    res.json({
+      healthy: isHealthy,
+      score_sante: isHealthy ? (unlinkedCount === 0 ? 100 : 85) : 50,
+      total_comptes: accounts.length,
+      alerts,
+    });
+  } catch (err) {
+    console.error('[SOCIAL_HEALTH_ERR]', err);
+    res.status(500).json({ error: 'Erreur analyse de santé Social Shop' });
   }
 });
 

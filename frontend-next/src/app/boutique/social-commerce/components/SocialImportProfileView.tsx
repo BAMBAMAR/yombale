@@ -3,8 +3,9 @@
 import React from 'react'
 import ExternalImg from '@/components/ExternalImg'
 import { Sparkles, RefreshCw, Search, Film } from 'lucide-react'
-import { DiscoveredPost, SocialAccountAdmin } from '../types'
+import { DiscoveredPost, SocialAccountAdmin, ProduitCatalogue } from '../types'
 import { SocialProfilePlaceholderCard } from './SocialProfilePlaceholderCard'
+import { matchProductsClient } from '../matching'
 
 interface SocialImportProfileViewProps {
   profilePlatform: 'tiktok' | 'instagram' | 'facebook' | 'youtube'
@@ -19,6 +20,7 @@ interface SocialImportProfileViewProps {
   setSelectedDiscoveredUrls: React.Dispatch<React.SetStateAction<Set<string>>>
   importingDiscovered: boolean
   handleImportDiscovered: () => Promise<void>
+  catalogue?: ProduitCatalogue[]
   batchUrlsText?: string
   setBatchUrlsText?: (text: string) => void
   batchImporting?: boolean
@@ -38,6 +40,7 @@ export function SocialImportProfileView({
   setSelectedDiscoveredUrls,
   importingDiscovered,
   handleImportDiscovered,
+  catalogue = [],
   batchUrlsText = '',
   setBatchUrlsText,
   batchImporting = false,
@@ -333,11 +336,27 @@ export function SocialImportProfileView({
                     >
                       {p.caption || 'Sans légende'}
                     </p>
+
+                    {/* Aperçu du produit correspondant via Smart Matching */}
+                    {(() => {
+                      const match = catalogue.length > 0 ? matchProductsClient(p.caption || '', catalogue)[0] : null
+                      if (!match) return null
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                          <Sparkles size={10} style={{ color: '#C75B00', flexShrink: 0 }} />
+                          <span style={{ fontSize: 9.5, fontWeight: 700, color: '#9a3412', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            Match : {match.produit.nom} ({Math.round(match.confidence_score * 100)}%)
+                          </span>
+                        </div>
+                      )
+                    })()}
+
                     <span
                       style={{
                         fontSize: 10,
                         color: p.is_already_imported ? '#16a34a' : isSelected ? '#C75B00' : '#64748b',
                         fontWeight: 800,
+                        marginTop: 2,
                       }}
                     >
                       {p.is_already_imported ? '✓ Déjà importé' : isSelected ? '✓ Sélectionné' : '+ Sélectionner'}

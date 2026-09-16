@@ -123,6 +123,29 @@ export function useSocialPostsManagement({
     }
   }
 
+  // 4b. Association directe 1-clic (Smart Matching)
+  async function handleDirectAssociateProduct(postId: string, productId: string, confidenceScore = 1.0) {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const token = localStorage.getItem('nopalou_token') || ''
+
+      const res = await authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/posts/${postId}/produits`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ produit_id: productId, confidence_score: confidenceScore }),
+      })
+
+      if (res.ok) {
+        await reloadData()
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   // 5. Dissociation produit
   async function handleDissociateProduct(postId: string, productId: string) {
     try {
@@ -381,6 +404,7 @@ export function useSocialPostsManagement({
     handleToggleFeatured,
     handleDeletePost,
     handleAssociateProduct,
+    handleDirectAssociateProduct,
     handleDissociateProduct,
     handleBatchToggleVisibility,
     handleBatchToggleFeatured,

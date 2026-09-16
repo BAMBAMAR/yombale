@@ -9,16 +9,18 @@ export interface ProduitCatalogue {
 
 export interface SocialPostAdmin {
   id: string
-  plateforme: 'instagram' | 'tiktok' | 'facebook' | 'youtube'
+  plateforme: 'instagram' | 'tiktok' | 'facebook' | 'youtube' | 'whatsapp'
   external_post_id?: string | null
   post_url: string
   media_type: string
   thumbnail_url?: string | null
   caption?: string | null
+  ocr_text?: string | null
   auteur?: string | null
   visible: boolean
   is_featured: boolean
   ordre: number
+  engagement_score?: number
   created_at: string
   produits: Array<{
     id: string
@@ -50,6 +52,32 @@ export interface DiscoveredPost {
   author?: string
   is_already_imported?: boolean
   isProfilePlaceholder?: boolean
+  matchedSuggestion?: ProductMatchSuggestion | null
+}
+
+export interface ProductMatchSuggestion {
+  produit: ProduitCatalogue
+  confidence_score: number
+  confidence_level?: 'high' | 'medium' | 'low'
+  suggested?: boolean
+  price_matched?: boolean
+  matched_price?: number | null
+  matched_hashtags?: string[]
+}
+
+export interface SocialHealthAlert {
+  type: 'info' | 'warning' | 'error'
+  code: string
+  message: string
+  accountId?: string
+  count?: number
+}
+
+export interface SocialHealthReport {
+  healthy: boolean
+  score_sante: number
+  total_comptes: number
+  alerts: SocialHealthAlert[]
 }
 
 export interface SocialShopManagerProps {
@@ -61,8 +89,8 @@ export interface SocialShopManagerProps {
 export type MainTab = 'posts' | 'import' | 'accounts'
 export type PostFilter = 'all' | 'unlinked' | 'featured' | 'hidden'
 export type TriOption = 'date_desc' | 'date_asc' | 'unlinked_first' | 'linked_first' | 'featured_first' | 'platform'
-export type PlatformFilter = 'all' | 'instagram' | 'tiktok' | 'facebook' | 'youtube'
-export type ImportMode = 'profile' | 'batch' | 'single'
+export type PlatformFilter = 'all' | 'instagram' | 'tiktok' | 'facebook' | 'youtube' | 'whatsapp'
+export type ImportMode = 'profile' | 'batch' | 'single' | 'media'
 
 export interface SocialStats {
   posts_affiches?: number
@@ -74,3 +102,4 @@ export interface SocialAnalytics {
   vues_sociales?: number
   clics_whatsapp?: number
 }
+

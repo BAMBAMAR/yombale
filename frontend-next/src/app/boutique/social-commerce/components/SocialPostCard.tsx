@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import ExternalImg from '@/components/ExternalImg'
 import { fcfa } from '@/lib/format'
 import {
@@ -14,30 +14,48 @@ import {
   Plus,
   CheckSquare,
   Square,
+  Sparkles,
 } from 'lucide-react'
-import { SocialPostAdmin } from '../types'
+import { ProduitCatalogue, SocialPostAdmin } from '../types'
+import { matchProductsClient } from '../matching'
+import { QuickProductPicker } from './QuickProductPicker'
 
 interface SocialPostCardProps {
   post: SocialPostAdmin
   isSelected: boolean
+  catalogue?: ProduitCatalogue[]
   onToggleSelect: (id: string) => void
   onToggleVisible: (post: SocialPostAdmin) => void
   onToggleFeatured: (post: SocialPostAdmin) => void
   onDelete: (id: string) => void
   onDissociateProduct: (postId: string, productId: string) => void
   onOpenAssociateModal: (post: SocialPostAdmin) => void
+  onDirectAssociate?: (postId: string, productId: string) => Promise<void> | void
 }
 
 export function SocialPostCard({
   post,
   isSelected,
+  catalogue = [],
   onToggleSelect,
   onToggleVisible,
   onToggleFeatured,
   onDelete,
   onDissociateProduct,
   onOpenAssociateModal,
+  onDirectAssociate,
 }: SocialPostCardProps) {
+  const [showQuickPicker, setShowQuickPicker] = useState(false)
+  const [associating, setAssociating] = useState(false)
+
+  // Smart Matching instantané côté client
+  const smartSuggestions = useMemo(() => {
+    if (!catalogue || catalogue.length === 0) return []
+    const combinedText = [post.caption, post.ocr_text].filter(Boolean).join(' ')
+    return matchProductsClient(combinedText, catalogue)
+  }, [post.caption, post.ocr_text, catalogue])
+
+  const topSuggestion = smartSuggestions[0]
   return (
     <div
       className={`social-compact-post-card ${isSelected ? 'selected' : ''}`}
@@ -105,7 +123,7 @@ export function SocialPostCard({
               textTransform: 'uppercase',
             }}
           >
-            {post.plateforme === 'instagram' ? 'IG' : post.plateforme === 'tiktok' ? 'TT' : 'FB'}
+            {post.plateforme === 'instagram' ? 'IG' : post.plateforme === 'tiktok' ? 'TT' : post.plateforme === 'youtube' ? 'YT' : post.plateforme === 'whatsapp' ? 'WA' : 'FB'}
           </span>
         </div>
 
@@ -165,11 +183,11 @@ export function SocialPostCard({
               maxWidth: '100%',
             }}
           >
-            {post.caption || 'Publication sans légende'}
+            {post.caption || (post.ocr_text ? `[OCR] ${post.ocr_text}` : 'Publication sans légende')}
           </p>
 
-          {/* Pastilles de Produits associés */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
+          {/* Pastilles de Produits associés & Suggestions Smart Matching */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
             {post.produits && post.produits.length > 0 ? (
               <>
                 {post.produits.map(prod => (
@@ -197,7 +215,7 @@ export function SocialPostCard({
                   </span>
                 ))}
                 <button
-                  onClick={() => onOpenAssociateModal(post)}
+                  onClick={() => setShowQuickPicker(!showQuickPicker)}
                   style={{
                     background: '#fff',
                     border: '1px dashed #cbd5e1',
@@ -213,9 +231,74 @@ export function SocialPostCard({
                   +
                 </button>
               </>
+            ) : topSuggestion ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: '#FFF7ED',
+                    border: '1px solid #FED7AA',
+                    borderRadius: 6,
+                    padding: '2px 8px',
+                    fontSize: 11,
+                  }}
+                >
+                  <Sparkles size={12} style={{ color: '#C75B00', flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, color: '#9a3412' }}>
+                    Suggéré ({Math.round(topSuggestion.confidence_score * 100)}%) : {topSuggestion.produit.nom} {topSuggestion.produit.prix ? `(${fcfa(topSuggestion.produit.prix)})` : ''}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={associating}
+                    onClick={async () => {
+                      if (onDirectAssociate) {
+                        setAssociating(true)
+                        await onDirectAssociate(post.id, topSuggestion.produit.id)
+                        setAssociating(false)
+                      } else {
+                        onOpenAssociateModal(post)
+                      }
+                    }}
+                    style={{
+                      background: '#C75B00',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: 4,
+                      padding: '2px 6px',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      cursor: associating ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {associating ? '...' : 'Associer en 1 clic'}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowQuickPicker(!showQuickPicker)}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    color: '#64748b',
+                    borderRadius: 6,
+                    padding: '2px 6px',
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                  }}
+                >
+                  <Plus size={10} />
+                  <span>Autre</span>
+                </button>
+              </div>
             ) : (
               <button
-                onClick={() => onOpenAssociateModal(post)}
+                onClick={() => setShowQuickPicker(!showQuickPicker)}
                 style={{
                   background: '#fff7ed',
                   border: '1px solid #fed7aa',
@@ -235,6 +318,24 @@ export function SocialPostCard({
               </button>
             )}
           </div>
+
+          {/* Sélecteur de produit rapide inline */}
+          {showQuickPicker && (
+            <QuickProductPicker
+              catalogue={catalogue}
+              suggestions={smartSuggestions}
+              onSelect={async (prodId) => {
+                if (onDirectAssociate) {
+                  setAssociating(true)
+                  await onDirectAssociate(post.id, prodId)
+                  setAssociating(false)
+                }
+                setShowQuickPicker(false)
+              }}
+              onClose={() => setShowQuickPicker(false)}
+              isSubmitting={associating}
+            />
+          )}
         </div>
       </div>
 

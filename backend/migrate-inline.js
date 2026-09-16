@@ -1595,6 +1595,8 @@ module.exports = async function migrateInline() {
       CREATE INDEX IF NOT EXISTS idx_social_posts_boutique_visible ON social_posts(boutique_id, visible, ordre);
       CREATE INDEX IF NOT EXISTS idx_social_posts_plateforme ON social_posts(boutique_id, plateforme);
       CREATE INDEX IF NOT EXISTS idx_social_posts_featured ON social_posts(boutique_id, is_featured) WHERE is_featured = TRUE;
+      ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS ocr_text TEXT;
+      ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS engagement_score INT DEFAULT 0;
 
       CREATE TABLE IF NOT EXISTS social_post_produits (
         id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

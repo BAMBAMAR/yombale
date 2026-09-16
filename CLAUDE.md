@@ -1,3 +1,29 @@
+- **Évolution Majeure du Social Shop — Smart Matching v2, Import Direct WhatsApp Status avec OCR & Association Produit en 1 Clic (16 septembre 2026)** 🛍️📱⚡ 🚀 ✅ :
+  * **🎯 1. Moteur de Smart Matching v2 Multi-Critères (`backend/services/social-parser.js`, `matching.ts`)** :
+    - **Détection de Prix Sénégalais (`extractPricesFromText`)** : Extraction regex des montants en devises locales (`15000f`, `15.000 FCFA`, `15 000 CFA`, `25k f`, `prix: 30 000`, `350 000 XOF`). Bonus de score +0.25 en cas de correspondance avec le prix d'un produit (tolérance ±5%).
+    - **Extraction de Hashtags (`extractHashtags`)** : Extraction et normalisation des tags (#mode, #robesoiree, #bazin) avec bonus de score +0.10 par tag correspondant à la catégorie ou au nom du produit.
+    - **Niveaux de Confiance Normalisés** : Attribution des niveaux `high` (≥ 75%), `medium` (≥ 50%), `low` (≥ 35%).
+    - **Moteur Client Instantané (0ms)** : Implémentation de `matchProductsClient` pour un calcul immédiat côté navigateur sans latence serveur.
+  * **🎯 2. Import Direct Médias & WhatsApp Status avec OCR (`backend/services/whatsapp-media-parser.js`, `SocialImportMediaView.tsx`)** :
+    - **Extraction OCR par Tesseract.js** : Analyse optique des captures d'écran et photos de statut WhatsApp pour extraire le texte, détecter les prix et déclencher le Smart Matching.
+    - **Route Backend Dédiée (`POST /api/boutiques/:id/social/admin/import-media`)** : Téléversement jusqu'à 10 médias simultanés, upload vers Cloudinary avec fallback base64, validation stricte multi-tenant marchand.
+    - **Zone Dropzone Intuitive** : Interface de glisser-déposer avec prévisualisation des fichiers et indicateur d'analyse en temps réel.
+    - **Migrations Base de Données (`migrate-inline.js`)** : Ajout des colonnes `ocr_text TEXT` et `engagement_score INT DEFAULT 0` sur `social_posts`, intégration de la plateforme `whatsapp`.
+  * **🎯 3. UX d'Association Produit en « 1 Clic » (`QuickProductPicker.tsx`, `SocialPostCard.tsx`, `SocialImportProfileView.tsx`)** :
+    - **Bouton Direct « Associer en 1 clic »** : Toute publication sans produit affiche directement la meilleure suggestion de produit avec son score de confiance (%) et un bouton d'association immédiate sans ouvrir de modale.
+    - **Sélecteur Rapide Compact (`QuickProductPicker.tsx`)** : Miniatures de produits, prix formatés en FCFA, recherche temps réel et suggestions prioritaires.
+    - **Aperçu Pré-Import dans l'Aspirateur** : Lors de l'aspiration d'un profil (@pseudo), les produits correspondants sont prévisualisés dès la grille de sélection avant validation.
+  * **🎯 4. CRON d'Auto-Synchronisation & Veille Sociale (`backend/services/social-auto-sync.js`, `scraper.js`)** :
+    - **Tâche de Fond Périodique (6h)** : Veille automatique sur tous les comptes marchands connectés avec `auto_sync = TRUE`, découverte des nouveaux posts et auto-association des produits si score ≥ 85%.
+    - **Route de Refresh Jeton** : `POST /api/boutiques/:id/social/admin/accounts/:accountId/refresh-token`.
+  * **🎯 5. Monitoring de Santé & Vitrine Acheteur Enrichie (`social-shop.js`, `SocialShopManager.tsx`)** :
+    - **Bilan de Santé Marchand (`GET /api/boutiques/:id/social/admin/health`)** : Détection des jetons expirés et alertes avec bouton direct « Voir et associer » pour les posts orphelins.
+    - **Vitrine Publique** : Ajout du filtre plateforme `whatsapp` et du tri par popularité/engagement (`?sort=popular`).
+  * **🧪 6. Validation Qualité Complète (100% Vert)** :
+    - Tests Unitaires Backend (`tests/unit/social-shop.test.js`) : **42/42 tests validés avec succès**.
+    - Typecheck TypeScript Frontend (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **Conforme (composants < 450 lignes, zéro emoji dans l'UI, tokens CSS stricts)**.
+
 - **Architecture & Pipeline Universel Zéro-Fatigue du Social Shop — Multi-Input Pseudo/URLs, Découverte YouTube, Meta Graph API Live & Fiches Profils Vérifiées (16 septembre 2026)** 🛍️📱⚡ 🚀 ✅ :
   * **🎯 1. Pipeline Universel Zéro-Fatigue pour TOUS les Marchands (`backend/routes/social-shop.js`)** :
     - **Multi-Input Intelligent** : Le champ de recherche accepte désormais indifféremment un pseudo (`@maboutique`) OU une ou plusieurs URLs directes de vidéos (Reels, TikToks, Shorts). Si des URLs sont collées dans le champ pseudo, l'endpoint les détecte automatiquement via `parseBatchUrls` et les résout en 1 clic sans aucune erreur.

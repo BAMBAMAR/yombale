@@ -227,9 +227,72 @@ const STOP_WORDS = new Set([
 ]);
 
 /**
- * Moteur de Smart Matching :
- * Compare la légende sociale (`caption`) avec les noms, descriptions et catégories des produits
- * Retourne une liste ordonnée par score de pertinence (0.00 à 1.00)
+ * Extrait les montants monétaires détectés dans un texte
+ * Spécifique aux formats ouest-africains (FCFA, F, CFA, XOF, ou "prix : X")
+ * Retourne une liste de montants numériques dédoublonnés (ex: [25000, 15000])
+ */
+function extractPricesFromText(text) {
+  if (!text || typeof text !== 'string') return [];
+
+  const foundPrices = new Set();
+
+  // 1. Détection avec symbole de devise ou suffixe monétaire (ex: 15000f, 15.000 FCFA, 15 000 CFA, 25k f, etc.)
+  const currencyRegex = /(?:^|[^\w])(\d{1,3}(?:[\s.,]\d{3})+|\d+)\s*(k)?\s*(?:f(?:cfa)?|cfa|fcfa|xof)\b/gi;
+  let match;
+  while ((match = currencyRegex.exec(text)) !== null) {
+    const rawNum = match[1].replace(/[\s.,]/g, '');
+    let num = parseInt(rawNum, 10);
+    if (!isNaN(num) && num > 0) {
+      if (match[2] && match[2].toLowerCase() === 'k') {
+        num *= 1000;
+      }
+      if (num >= 100 && num <= 50000000) {
+        foundPrices.add(num);
+      }
+    }
+  }
+
+  // 2. Détection avec mot-clé "prix", "tarif" ou "montant" (ex: "prix: 25 000", "prix 15000")
+  const prefixRegex = /\b(?:prix|tarif|montant)\s*[:=]?\s*(\d{1,3}(?:[\s.,]\d{3})+|\d+)\s*(k)?\b/gi;
+  while ((match = prefixRegex.exec(text)) !== null) {
+    const rawNum = match[1].replace(/[\s.,]/g, '');
+    let num = parseInt(rawNum, 10);
+    if (!isNaN(num) && num > 0) {
+      if (match[2] && match[2].toLowerCase() === 'k') {
+        num *= 1000;
+      }
+      if (num >= 500 && num <= 50000000) {
+        foundPrices.add(num);
+      }
+    }
+  }
+
+  return Array.from(foundPrices);
+}
+
+/**
+ * Extrait les hashtags d'un texte et les normalise
+ * Ex: "#Robe_Soirée #Mode2024" -> ['robesoiree', 'mode2024']
+ */
+function extractHashtags(text) {
+  if (!text || typeof text !== 'string') return [];
+  const hashtagRegex = /#([a-zA-Z0-9_\u00C0-\u017F]+)/g;
+  const tags = new Set();
+  let match;
+  while ((match = hashtagRegex.exec(text)) !== null) {
+    const rawTag = match[1].replace(/_/g, '');
+    const norm = normalizeText(rawTag);
+    if (norm && norm.length > 1 && !STOP_WORDS.has(norm)) {
+      tags.add(norm);
+    }
+  }
+  return Array.from(tags);
+}
+
+/**
+ * Moteur de Smart Matching v2 :
+ * Compare la légende sociale (`caption`) avec les noms, descriptions, catégories, prix et hashtags des produits
+ * Retourne une liste ordonnée par score de pertinence (0.00 à 1.00) avec niveau de confiance
  */
 function matchProductsWithCaption(caption, products = []) {
   if (!caption || !products || products.length === 0) return [];
@@ -238,7 +301,11 @@ function matchProductsWithCaption(caption, products = []) {
   if (!normCaption) return [];
 
   const captionWords = normCaption.split(' ').filter(w => w.length > 2 && !STOP_WORDS.has(w));
-  if (captionWords.length === 0) return [];
+  const captionPrices = extractPricesFromText(caption);
+  const captionHashtags = extractHashtags(caption);
+
+  // S'il n'y a ni mots informatifs, ni prix, ni hashtags exploitables, abandonner
+  if (captionWords.length === 0 && captionPrices.length === 0 && captionHashtags.length === 0) return [];
 
   const matches = [];
 
@@ -246,8 +313,12 @@ function matchProductsWithCaption(caption, products = []) {
     const normNom = normalizeText(p.nom || '');
     const normDesc = normalizeText(p.description || '');
     const normCat = normalizeText(p.categorie || '');
+    const productPrice = Number(p.prix);
 
     let score = 0;
+    let priceMatched = false;
+    let matchedPriceValue = null;
+    const matchedHashtags = [];
 
     // 1. Correspondance exacte du nom complet dans la légende (Score très élevé)
     if (normNom.length > 3 && normCaption.includes(normNom)) {
@@ -283,14 +354,48 @@ function matchProductsWithCaption(caption, products = []) {
       }
     }
 
+    // 5. Smart Matching v2 : Matching par PRIX (tolérance ±5%)
+    if (productPrice > 0 && captionPrices.length > 0) {
+      for (const cp of captionPrices) {
+        const diffRatio = Math.abs(productPrice - cp) / productPrice;
+        if (diffRatio <= 0.05) {
+          score += 0.25;
+          priceMatched = true;
+          matchedPriceValue = cp;
+          break;
+        }
+      }
+    }
+
+    // 6. Smart Matching v2 : Matching par HASHTAGS
+    if (captionHashtags.length > 0) {
+      for (const tag of captionHashtags) {
+        if ((normNom && normNom.includes(tag)) || (normCat && normCat.includes(tag))) {
+          matchedHashtags.push(tag);
+        }
+      }
+      if (matchedHashtags.length > 0) {
+        // +0.10 par hashtag correspondant, max +0.20
+        score += Math.min(0.20, matchedHashtags.length * 0.10);
+      }
+    }
+
     const finalScore = Math.min(1.0, Math.round(score * 100) / 100);
 
     // Seuil de pertinence minimum
     if (finalScore >= 0.35) {
+      let confidenceLevel = 'low';
+      if (finalScore >= 0.75) confidenceLevel = 'high';
+      else if (finalScore >= 0.50) confidenceLevel = 'medium';
+
       matches.push({
         produit: p,
         confidence_score: finalScore,
+        confidence_level: confidenceLevel,
         suggested: true,
+        price_matched: priceMatched,
+        matched_price: matchedPriceValue,
+        matched_hashtags: matchedHashtags,
       });
     }
   }
@@ -800,6 +905,8 @@ module.exports = {
   extractExternalPostId,
   fetchOEmbedMetadata,
   matchProductsWithCaption,
+  extractPricesFromText,
+  extractHashtags,
   normalizeText,
   cleanUsername,
   parseBatchUrls,

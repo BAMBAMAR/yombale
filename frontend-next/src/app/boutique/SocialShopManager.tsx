@@ -7,10 +7,12 @@ import {
   ProduitCatalogue,
   SocialAccountAdmin,
   SocialAnalytics,
+  SocialHealthReport,
   SocialPostAdmin,
   SocialShopManagerProps,
   SocialStats,
 } from './social-commerce/types'
+import { AlertCircle } from 'lucide-react'
 import { authFetch } from './social-commerce/utils'
 import { useSocialImports } from './social-commerce/hooks/useSocialImports'
 import { useSocialPostsManagement } from './social-commerce/hooks/useSocialPostsManagement'
@@ -28,7 +30,7 @@ export default function SocialShopManager({
   boutiqueSlug,
 }: SocialShopManagerProps) {
   const [, setLoading] = useState(true)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('posts')
 
   const [posts, setPosts] = useState<SocialPostAdmin[]>([])
@@ -36,6 +38,7 @@ export default function SocialShopManager({
   const [stats, setStats] = useState<SocialStats>({})
   const [analytics, setAnalytics] = useState<SocialAnalytics>({})
   const [catalogue, setCatalogue] = useState<ProduitCatalogue[]>([])
+  const [healthReport, setHealthReport] = useState<SocialHealthReport | null>(null)
 
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null)
   const [editingPlatform, setEditingPlatform] = useState<string | null>(null)
@@ -48,7 +51,7 @@ export default function SocialShopManager({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const token = localStorage.getItem('nopalou_token') || ''
 
-      const [overviewRes, postsRes, prodsRes] = await Promise.all([
+      const [overviewRes, postsRes, prodsRes, healthRes] = await Promise.all([
         authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/overview`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -56,6 +59,9 @@ export default function SocialShopManager({
           headers: { Authorization: `Bearer ${token}` },
         }),
         authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/produits`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        authFetch(`${backendUrl}/api/boutiques/${boutiqueId}/social/admin/health`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ])
@@ -75,6 +81,11 @@ export default function SocialShopManager({
       if (prodsRes.ok && (prodsRes.headers.get('content-type') || '').includes('application/json')) {
         const d = await prodsRes.json()
         setCatalogue(d.produits || [])
+      }
+
+      if (healthRes.ok && (healthRes.headers.get('content-type') || '').includes('application/json')) {
+        const d = await healthRes.json()
+        setHealthReport(d)
       }
     } catch (err) {
       console.error('[LOAD_SOCIAL_ADMIN_ERR]', err)
@@ -241,6 +252,55 @@ export default function SocialShopManager({
         setMessage={setMessage}
       />
 
+      {/* Alertes de Santé du Social Shop (Phase 6) */}
+      {healthReport && healthReport.alerts && healthReport.alerts.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {healthReport.alerts.map((alt, idx) => (
+            <div
+              key={idx}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                background: alt.type === 'error' ? '#fef2f2' : alt.type === 'warning' ? '#fffbeb' : '#f0fdf4',
+                border: `1px solid ${alt.type === 'error' ? '#fecaca' : alt.type === 'warning' ? '#fde68a' : '#bbf7d0'}`,
+                color: alt.type === 'error' ? '#991b1b' : alt.type === 'warning' ? '#92400e' : '#166534',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                <span>{alt.message}</span>
+              </div>
+              {alt.code === 'UNLINKED_POSTS' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMainTab('posts')
+                    postsMgmt.setPostFilter('unlinked')
+                  }}
+                  style={{
+                    background: '#C75B00',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '3px 8px',
+                    fontSize: 11,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Voir et associer
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {activeMainTab === 'posts' && (
         <SocialPostsView
           posts={posts}
@@ -249,6 +309,8 @@ export default function SocialShopManager({
           featuredPosts={postsMgmt.featuredPosts}
           hiddenPosts={postsMgmt.hiddenPosts}
           selectedPostIds={postsMgmt.selectedPostIds}
+          catalogue={catalogue}
+          onDirectAssociate={postsMgmt.handleDirectAssociateProduct}
           postFilter={postsMgmt.postFilter}
           setPostFilter={postsMgmt.setPostFilter}
           rechercheTexte={postsMgmt.rechercheTexte}
@@ -286,6 +348,7 @@ export default function SocialShopManager({
           setSelectedDiscoveredUrls={importsState.setSelectedDiscoveredUrls}
           importingDiscovered={importsState.importingDiscovered}
           handleImportDiscovered={importsState.handleImportDiscovered}
+          catalogue={catalogue}
           batchUrlsText={importsState.batchUrlsText}
           setBatchUrlsText={importsState.setBatchUrlsText}
           batchImporting={importsState.batchImporting}
@@ -294,6 +357,8 @@ export default function SocialShopManager({
           setImportUrl={importsState.setImportUrl}
           importing={importsState.importing}
           handleImportUrl={importsState.handleImportUrl}
+          handleImportMedia={importsState.handleImportMedia}
+          mediaUploading={importsState.mediaUploading}
         />
       )}
 

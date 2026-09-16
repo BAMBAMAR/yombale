@@ -7,6 +7,8 @@ const {
   fetchOEmbedMetadata,
   normalizeText,
   matchProductsWithCaption,
+  extractPricesFromText,
+  extractHashtags,
   cleanUsername,
   parseBatchUrls,
   exploreProfile,
@@ -148,10 +150,82 @@ describe('Social Parser — Moteur de Smart Matching (matchProductsWithCaption)'
     expect(matches.length).toBe(0);
   });
 
+  test('booste le score lorsqu\'un prix correspondant est détecté dans la légende', () => {
+    // prod-1 est à 25000 FCFA
+    const caption = 'Superbe Robe Satinée Noire disponible au prix exceptionnel de 25 000 FCFA à Dakar !';
+    const matches = matchProductsWithCaption(caption, mockProducts);
+
+    expect(matches.length).toBeGreaterThan(0);
+    const topMatch = matches[0];
+    expect(topMatch.produit.id).toBe('prod-1');
+    expect(topMatch.price_matched).toBe(true);
+    expect(topMatch.matched_price).toBe(25000);
+    expect(topMatch.confidence_score).toBe(1.0);
+    expect(topMatch.confidence_level).toBe('high');
+  });
+
+  test('booste le score lorsqu\'un hashtag correspondant est détecté', () => {
+    // prod-3 a la catégorie 'accessoires'
+    const caption = 'Nouvelle montre dorée pour vos tenues chics #accessoires #dakar';
+    const matches = matchProductsWithCaption(caption, mockProducts);
+
+    expect(matches.length).toBeGreaterThan(0);
+    const matchMontre = matches.find(m => m.produit.id === 'prod-3');
+    expect(matchMontre).toBeDefined();
+    expect(matchMontre.matched_hashtags).toContain('accessoires');
+  });
+
   test('gère gracieusement les captions vides ou sans produits', () => {
     expect(matchProductsWithCaption('', mockProducts)).toEqual([]);
     expect(matchProductsWithCaption('Super vidéo', [])).toEqual([]);
     expect(matchProductsWithCaption(null, null)).toEqual([]);
+  });
+});
+
+describe('Social Parser — Extraction de prix (extractPricesFromText)', () => {
+  test('détecte les formats courants sénégalais (FCFA, CFA, F, XOF)', () => {
+    expect(extractPricesFromText('Prix: 15000f')).toEqual([15000]);
+    expect(extractPricesFromText('Robe à 25.000 FCFA')).toEqual([25000]);
+    expect(extractPricesFromText('Montre 18 000 CFA')).toEqual([18000]);
+    expect(extractPricesFromText('Smartphones 350 000 XOF')).toEqual([350000]);
+  });
+
+  test('détecte les montants avec suffixe k (ex: 25k f)', () => {
+    expect(extractPricesFromText('Promotion 25k f seulement')).toEqual([25000]);
+    expect(extractPricesFromText('Tarif 50k fcfa')).toEqual([50000]);
+  });
+
+  test('détecte avec le préfixe "prix :" même sans suffixe monétaire', () => {
+    expect(extractPricesFromText('Disponible, prix : 18 000')).toEqual([18000]);
+    expect(extractPricesFromText('Super look ! Tarif : 25000')).toEqual([25000]);
+  });
+
+  test('renvoie un tableau vide pour des textes sans montants', () => {
+    expect(extractPricesFromText('Venez découvrir nos nouveautés')).toEqual([]);
+    expect(extractPricesFromText('')).toEqual([]);
+    expect(extractPricesFromText(null)).toEqual([]);
+  });
+});
+
+describe('Social Parser — Extraction de hashtags (extractHashtags)', () => {
+  test('extrait et normalise les hashtags d\'une publication', () => {
+    const tags = extractHashtags('Magnifique collection #RobeSoirée #Mode_Dakar #wax');
+    expect(tags).toContain('robesoiree');
+    expect(tags).toContain('wax');
+  });
+
+  test('filtre les stop-words parmi les hashtags', () => {
+    const tags = extractHashtags('#promo #dakar #senegal #bazin');
+    // promo, dakar, senegal sont des stop words
+    expect(tags).toContain('bazin');
+    expect(tags).not.toContain('promo');
+    expect(tags).not.toContain('dakar');
+  });
+
+  test('renvoie un tableau vide si aucun hashtag', () => {
+    expect(extractHashtags('Texte sans hashtag')).toEqual([]);
+    expect(extractHashtags('')).toEqual([]);
+    expect(extractHashtags(null)).toEqual([]);
   });
 });
 
@@ -278,6 +352,36 @@ describe('Social Parser — Métadonnées oEmbed (fetchOEmbedMetadata)', () => {
     if (meta.thumbnailUrl) {
       expect(meta.thumbnailUrl).not.toContain('images.unsplash.com');
     }
+  });
+});
+
+const { parseWhatsAppMedia } = require('../../backend/services/whatsapp-media-parser');
+
+describe('WhatsApp & Media Parser (parseWhatsAppMedia)', () => {
+  const mockProducts = [
+    {
+      id: 'prod-w1',
+      nom: 'Bazin Riche Getzner',
+      prix: 45000,
+      categorie: 'tissus',
+    },
+  ];
+
+  test('analyse le texte et extrait les prix et suggestions sans OCR si pas d\'image', async () => {
+    const res = await parseWhatsAppMedia(Buffer.from(''), 'text/plain', 'Bazin Riche Getzner disponible 45.000 FCFA #tissus', mockProducts);
+    expect(res.full_text).toContain('Bazin Riche Getzner');
+    expect(res.detected_prices).toContain(45000);
+    expect(res.detected_hashtags).toContain('tissus');
+    expect(res.suggestions.length).toBeGreaterThan(0);
+    expect(res.suggestions[0].produit.id).toBe('prod-w1');
+    expect(res.suggestions[0].price_matched).toBe(true);
+  });
+
+  test('gère gracieusement les buffers vides ou types inconnus sans lever d\'exception', async () => {
+    const res = await parseWhatsAppMedia(null, null, '', []);
+    expect(res.ocr_text).toBe('');
+    expect(res.detected_prices).toEqual([]);
+    expect(res.suggestions).toEqual([]);
   });
 });
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Camera, Music, Share2, RefreshCw } from 'lucide-react'
+import { Camera, Music, Share2, RefreshCw, Film } from 'lucide-react'
 import { SocialAccountAdmin } from '../types'
 
 interface SocialAccountsViewProps {
@@ -20,6 +20,7 @@ const PLATFORMS_CONFIG = [
   { key: 'instagram', label: 'Instagram', Icon: Camera, placeholder: '@maboutique ou lien profil' },
   { key: 'tiktok', label: 'TikTok', Icon: Music, placeholder: '@maboutique ou lien profil' },
   { key: 'facebook', label: 'Facebook', Icon: Share2, placeholder: 'Page ou profil Facebook' },
+  { key: 'youtube', label: 'YouTube', Icon: Film, placeholder: '@machaîne ou lien chaîne' },
 ]
 
 export function SocialAccountsView({
