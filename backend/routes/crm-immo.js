@@ -66,6 +66,7 @@ router.post('/public/lead', async (req, res) => {
   try {
     const {
       annonce_id,
+      bien_id,
       agence_id,
       nom,
       prenom = '',
@@ -112,6 +113,29 @@ router.post('/public/lead', async (req, res) => {
         annonceQuartier = ad.quartier || annonceQuartier;
         annonceTypeBien = ad.type_bien;
         annonceTypeOp = ad.transaction || annonceTypeOp;
+      }
+    }
+
+    // Si bien_id est fourni (ou si annonce_id était un bien_id de vitrine non synchronisé)
+    const effectiveBienId = bien_id || (annonce_id && !annonceTitre ? annonce_id : null);
+    if (effectiveBienId && !annonceTitre) {
+      const { rows: bRows } = await pool.query(
+        `SELECT b.id, b.titre, COALESCE(b.prix_location, b.prix_vente) AS prix, b.quartier, b.ville, b.type_bien,
+                CASE WHEN b.prix_location IS NOT NULL THEN 'location' ELSE 'vente' END AS transaction,
+                b.agence_id, b.agent_id
+         FROM biens_immo b
+         WHERE b.id = $1`,
+        [effectiveBienId]
+      );
+      if (bRows.length > 0) {
+        const b = bRows[0];
+        if (!cibleAgenceId && b.agence_id) cibleAgenceId = b.agence_id;
+        if (b.agent_id) cibleAgentId = b.agent_id;
+        annonceTitre = b.titre;
+        annoncePrix = b.prix;
+        annonceQuartier = b.quartier || annonceQuartier;
+        annonceTypeBien = b.type_bien;
+        annonceTypeOp = b.transaction || annonceTypeOp;
       }
     }
 

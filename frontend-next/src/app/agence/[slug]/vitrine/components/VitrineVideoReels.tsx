@@ -1,14 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Video } from 'lucide-react';
+import { Video, Play } from 'lucide-react';
 import { AgenceData } from './VitrineBanner';
 
 interface VitrineVideoReelsProps {
   agence: AgenceData | null;
+  onOpenPost?: (post: any) => void;
 }
 
-export default function VitrineVideoReels({ agence }: VitrineVideoReelsProps) {
+export default function VitrineVideoReels({ agence, onOpenPost }: VitrineVideoReelsProps) {
   const socialPosts = (agence?.parametres as any)?.social_posts || [];
   const visiblePosts = socialPosts.filter((p: any) => p.visible);
   if (visiblePosts.length === 0) return null;
@@ -21,7 +22,7 @@ export default function VitrineVideoReels({ agence }: VitrineVideoReelsProps) {
             Visites Virtuelles & Reels
           </h2>
           <p style={{ fontSize: 12.5, color: '#64748B', margin: '2px 0 0' }}>
-            Découvrez nos biens en immersion vidéo directe.
+            Découvrez nos biens en immersion vidéo directe. Cliquez sur une visite pour lancer le lecteur interactif.
           </p>
         </div>
       </div>
@@ -38,17 +39,20 @@ export default function VitrineVideoReels({ agence }: VitrineVideoReelsProps) {
           return (
             <div
               key={post.id}
+              onClick={() => onOpenPost?.(post)}
               style={{
                 background: '#FFFFFF',
-                borderRadius: 12,
+                borderRadius: 14,
                 border: '1px solid var(--border, #E8DDD2)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                cursor: 'pointer',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
             >
-              <div style={{ position: 'relative', height: 220, background: '#0F172A', overflow: 'hidden' }}>
+              <div style={{ position: 'relative', height: 230, background: '#0F172A', overflow: 'hidden' }}>
                 {(post.thumbnail_url || bien?.image_url) ? (
                   <img
                     src={post.thumbnail_url || bien?.image_url}
@@ -61,30 +65,26 @@ export default function VitrineVideoReels({ agence }: VitrineVideoReelsProps) {
                   </div>
                 )}
 
-                {/* Bouton lecture */}
-                <a
-                  href={post.post_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Regarder la visite vidéo"
+                {/* Bouton lecture interactif */}
+                <div
                   style={{
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    width: 44,
-                    height: 44,
+                    width: 48,
+                    height: 48,
                     borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.9)',
+                    background: 'rgba(255,255,255,0.92)',
                     color: 'var(--navy, #1C2B4A)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    textDecoration: 'none',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
                   }}
                 >
-                  <Video size={20} />
-                </a>
+                  <Play size={20} fill="var(--navy, #1C2B4A)" />
+                </div>
 
                 {/* Badge Plateforme */}
                 <div
@@ -92,7 +92,7 @@ export default function VitrineVideoReels({ agence }: VitrineVideoReelsProps) {
                     position: 'absolute',
                     top: 10,
                     left: 10,
-                    background: 'rgba(0,0,0,0.65)',
+                    background: 'rgba(0,0,0,0.7)',
                     backdropFilter: 'blur(4px)',
                     color: '#FFFFFF',
                     padding: '3px 8px',
@@ -106,10 +106,10 @@ export default function VitrineVideoReels({ agence }: VitrineVideoReelsProps) {
                 </div>
               </div>
 
-              <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8, flex: 1, justifyContent: 'space-between' }}>
                 <div
                   style={{
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: 700,
                     color: 'var(--navy, #1C2B4A)',
                     overflow: 'hidden',
@@ -120,21 +120,25 @@ export default function VitrineVideoReels({ agence }: VitrineVideoReelsProps) {
                   {post.caption || 'Visite exclusive'}
                 </div>
 
-                {bien && (
+                {bien ? (
                   <div
                     style={{
                       background: '#FAF8F5',
-                      borderRadius: 6,
-                      padding: '6px 8px',
+                      borderRadius: 8,
+                      padding: '8px 10px',
                       border: '1px solid var(--border, #E8DDD2)',
                     }}
                   >
-                    <div style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--navy, #1C2B4A)' }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 750, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {bien.titre}
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)' }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 900, color: 'var(--accent, #C75B00)', marginTop: 2 }}>
                       {Number(bien.prix).toLocaleString('fr-FR')} FCFA {bien.type_operation === 'location' ? '/ mois' : ''}
                     </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>
+                    Visite d'agence
                   </div>
                 )}
               </div>

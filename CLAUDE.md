@@ -1,3 +1,28 @@
+- **Refonte Interactive Vitrine Agence & Élévation Social Shop Immobilier (`VitrineBiensGrid.tsx`, `VitrineVideoReels.tsx`, `page.tsx`, `ModalDemandeVisiteVitrine.tsx`, `ModalLecteurVideoImmo.tsx`, `crm-immo.js`, `immo.js`) (16 septembre 2026)** 🏢🎥✨ 🚀 ✅ :
+  * **🎯 1. Lecteur Vidéo Immersif "In-App" (`ModalLecteurVideoImmo.tsx`, `VitrineVideoReels.tsx`)** :
+    - **Éradication de la Fuite Prospect** : Les clics sur les visites virtuelles et reels ne redirigent plus vers Instagram ou TikTok hors du site.
+    - **Player Intégré & Navigation Fluide** : Modal responsive haute définition avec support des embeds TikTok, Instagram Reels, YouTube Shorts et fichiers vidéo directs, avec boutons *Précédente* / *Suivante* et raccourcis clavier.
+    - **Fiche du Bien Connectée** : Affichage synchronisé de la fiche du bien présenté dans la vidéo (photo, loyer/prix, quartier, caractéristiques) et bouton direct *"Demander une visite pour ce bien"*.
+  * **🎯 2. Cartes de Biens Enrichies & Badge "Visite Vidéo" (`VitrineBiensGrid.tsx`)** :
+    - **Visuels Haute Qualité** : Intégration des photos réelles des biens (`b.photos[0]`) avec gestion des fallbacks élégants et compteur de visuels.
+    - **Liaison Bidirectionnelle Social Shop 🔁 Biens** : Badge interactif vibrant `[🎥 Visite Vidéo]` sur chaque bien disposant d'un reel dans `parametres.social_posts`, déclenchant immédiatement le lecteur vidéo centré sur le bien.
+    - **Badges Métier & Actions Claires** : Badges Location/Vente, Typologie, Meublé, bouton direct `[📅 Demander une visite]`, lien vers l'annonce complète et contact rapide WhatsApp.
+  * **🎯 3. Capture de Leads CRM & Demande de Visite par Bien (`ModalDemandeVisiteVitrine.tsx`, `crm-immo.js`)** :
+    - **Modale de Visite Interactive** : Permet au prospect de choisir une date, un créneau (Matin, Après-midi, Indifférent) et de renseigner ses coordonnées.
+    - **Ingestion Automatique dans le CRM Agence** : Appel direct à `POST /api/crm-immo/public/lead` créant ou mettant à jour le prospect dans `contacts_immo` (statut `nouveau`, type `demande_visite`, déduplication téléphonique).
+    - **Bascule WhatsApp Structurée** : Après soumission, ouverture fluide de WhatsApp avec message pré-formaté reprenant la référence, le titre, le prix et le créneau souhaité.
+  * **🎯 4. Support des Deep Links & Recherche Temps Réel (`vitrine/page.tsx`)** :
+    - **Conversion du Trafic Social Media** : Prise en charge des paramètres d'URL `?bien=ID` (ouvre la modale de visite) et `?video=ID` / `?post=ID` (ouvre le lecteur vidéo immersif).
+    - **Recherche Instantanée** : Filtres rapides par typologie, mode de transaction (Location / Vente) et champ de recherche dynamique sur les quartiers et titres.
+  * **🎯 5. Fiabilisation Backend Multi-Source (`crm-immo.js`, `immo.js`)** :
+    - Extension de `POST /api/crm-immo/public/lead` pour accepter `bien_id` et extraire automatiquement les informations depuis `biens_immo`.
+    - Fallback transparent de `GET /api/immo/:id` sur `biens_immo` pour garantir l'absence d'erreurs 404 lors des clics depuis la vitrine.
+  * **🧪 6. Validation Qualité Complète (100% Vert)** :
+    - Tests Unitaires Backend Jest : **41/41 suites validées, 314/314 tests passés avec succès**.
+    - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop : **0 violation (0 silent catch, 0 composant > 450 lignes, 100% Lucide SVGs)**.
+    - Quality Gate Nopalou : **100% Validé**.
+
 - **Transformation PropTech Nopalou Immo — Livraison P2 : Tiers de Confiance Séquestre Garanti, SEO Agences & Données Structurées Schema.org, Cache PWA Hors-Ligne (`paiement-sequestre.js`, `immo-sequestre.test.js`, `sitemap.ts`, `agences/[slug]/page.tsx`, `agences/page.tsx`, `AgenceDirectoryCard.tsx`, `sw.ts`) (16 septembre 2026)** 🔒🏢🗺️ 🚀 ✅ :
   * **🎯 1. Module Séquestre Tiers de Confiance Pay Safe Immo (`backend/routes/paiement-sequestre.js`, `immo-sequestre.test.js`)** :
     - **Sécurité Diaspora & Acheteurs** : Protection des transactions immobilières à fort enjeu (cautions locatives, acomptes sur vente, frais de visite VIP) via un séquestre tiers de confiance avec code PIN à 4 chiffres généré et transmis au prospect via WhatsApp.

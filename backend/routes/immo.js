@@ -351,9 +351,70 @@ router.get('/:id', async (req, res) => {
        LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
        LEFT JOIN biens_immo b ON ai.bien_id = b.id
        LEFT JOIN utilisateurs u ON (b.agent_id = u.id OR ai.utilisateur_id = u.id)
-       WHERE ai.id = $1`, [req.params.id]
+       WHERE ai.id = $1 OR ai.bien_id = $1`, [req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+    if (!rows.length) {
+      const { rows: bRows } = await pool.query(
+        `SELECT b.*,
+                COALESCE(b.prix_location, b.prix_vente) AS prix,
+                CASE WHEN b.prix_location IS NOT NULL THEN 'location' ELSE 'vente' END AS transaction,
+                ag.id AS agence_id_ref,
+                ag.nom AS agence_nom,
+                ag.slug AS agence_slug,
+                ag.logo_url AS agence_logo_url,
+                ag.description AS agence_description,
+                ag.adresse AS agence_adresse,
+                ag.ville AS agence_ville,
+                ag.quartier AS agence_quartier,
+                ag.telephone AS agence_telephone,
+                ag.whatsapp AS agence_whatsapp,
+                ag.email_contact AS agence_email,
+                ag.site_web AS agence_site_web,
+                ag.numero_agrement AS agence_numero_agrement,
+                (ag.sponsorise = true AND ag.sponsor_jusqu_au > NOW()) AS agence_sponsorisee,
+                u.id AS agent_id,
+                u.nom AS agent_nom,
+                u.telephone AS agent_telephone,
+                u.email AS agent_email
+         FROM biens_immo b
+         LEFT JOIN agences_immo ag ON b.agence_id = ag.id
+         LEFT JOIN utilisateurs u ON b.agent_id = u.id
+         WHERE b.id = $1`,
+        [req.params.id]
+      );
+      if (bRows.length > 0) {
+        const b = bRows[0];
+        const agence = b.agence_id ? {
+          id: b.agence_id,
+          nom: b.agence_nom,
+          slug: b.agence_slug,
+          logo_url: b.agence_logo_url,
+          description: b.agence_description,
+          adresse: b.agence_adresse,
+          ville: b.agence_ville,
+          quartier: b.agence_quartier,
+          telephone: b.agence_telephone,
+          whatsapp: b.agence_whatsapp,
+          email_contact: b.agence_email,
+          site_web: b.agence_site_web,
+          numero_agrement: b.agence_numero_agrement,
+          sponsorise: !!b.agence_sponsorisee
+        } : null;
+        const agent = b.agent_id ? {
+          id: b.agent_id,
+          nom: b.agent_nom,
+          telephone: b.agent_telephone,
+          email: b.agent_email
+        } : null;
+        return res.json({
+          ...b,
+          photos: Array.isArray(b.photos) ? b.photos : (b.photos ? [b.photos] : []),
+          agence,
+          agent
+        });
+      }
+      return res.status(404).json({ error: 'Annonce introuvable' });
+    }
 
     const row = rows[0];
     const agence = row.agence_id ? {
