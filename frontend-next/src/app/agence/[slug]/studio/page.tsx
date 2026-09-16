@@ -36,6 +36,24 @@ export default function AgenceStudioPage() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'editeur' | 'apercu'>('editeur');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+
+  function handleLogoFile(file: File | null) {
+    setLogoFile(file);
+    if (file) {
+      const localUrl = URL.createObjectURL(file);
+      setConfig((prev) => ({ ...prev, logo_url: localUrl }));
+    }
+  }
+
+  function handleCoverFile(file: File | null) {
+    setCoverFile(file);
+    if (file) {
+      const localUrl = URL.createObjectURL(file);
+      setConfig((prev) => ({ ...prev, cover_url: localUrl }));
+    }
+  }
 
   const [config, setConfig] = useState<AgenceStudioConfig>({
     theme_id: 'institutionnel',
@@ -131,22 +149,53 @@ export default function AgenceStudioPage() {
       const dataGet = await resGet.json();
       const currentParametres = dataGet.agence?.parametres || {};
 
-      const res = await fetch(`/api/agences/${slug}`, {
-        method: 'PUT',
-        headers: authHeaders,
-        body: JSON.stringify({
-          logo_url: config.logo_url,
-          parametres: {
+      let res: Response;
+      if (logoFile || coverFile) {
+        const formData = new FormData();
+        if (logoFile) formData.append('logo', logoFile);
+        if (coverFile) formData.append('cover', coverFile);
+        if (!logoFile && config.logo_url) formData.append('logo_url', config.logo_url);
+        if (!coverFile && config.cover_url) formData.append('cover_url', config.cover_url);
+        formData.append(
+          'parametres',
+          JSON.stringify({
             ...currentParametres,
             studio: config,
             message_accueil_wa: config.message_accueil_wa,
-          },
-        }),
-      });
+          })
+        );
+
+        res = await fetch(`/api/agences/${slug}`, {
+          method: 'PUT',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        });
+      } else {
+        res = await fetch(`/api/agences/${slug}`, {
+          method: 'PUT',
+          headers: authHeaders,
+          body: JSON.stringify({
+            logo_url: config.logo_url,
+            parametres: {
+              ...currentParametres,
+              studio: config,
+              message_accueil_wa: config.message_accueil_wa,
+            },
+          }),
+        });
+      }
 
       const data = await res.json();
       if (data.success) {
         setToastMsg('Vitrine personnalisée enregistrée avec succès !');
+        setLogoFile(null);
+        setCoverFile(null);
+        if (data.agence?.logo_url) {
+          setConfig((prev) => ({ ...prev, logo_url: data.agence.logo_url }));
+        }
+        if (data.agence?.parametres?.studio?.cover_url) {
+          setConfig((prev) => ({ ...prev, cover_url: data.agence.parametres.studio.cover_url }));
+        }
         setTimeout(() => setToastMsg(null), 3500);
       } else {
         setErrorMsg(data.error || 'Erreur lors de la sauvegarde');
@@ -308,9 +357,19 @@ export default function AgenceStudioPage() {
 
             <StudioAgenceBranding
               logoUrl={config.logo_url}
-              onChangeLogoUrl={(url) => setConfig((p) => ({ ...p, logo_url: url }))}
+              onChangeLogoUrl={(url) => {
+                setLogoFile(null);
+                setConfig((p) => ({ ...p, logo_url: url }));
+              }}
+              logoFile={logoFile}
+              onChangeLogoFile={handleLogoFile}
               coverUrl={config.cover_url}
-              onChangeCoverUrl={(url) => setConfig((p) => ({ ...p, cover_url: url }))}
+              onChangeCoverUrl={(url) => {
+                setCoverFile(null);
+                setConfig((p) => ({ ...p, cover_url: url }));
+              }}
+              coverFile={coverFile}
+              onChangeCoverFile={handleCoverFile}
               couleurAccent={config.couleur_accent}
               onChangeCouleurAccent={(color) => setConfig((p) => ({ ...p, couleur_accent: color }))}
               formeBoutons={config.forme_boutons}

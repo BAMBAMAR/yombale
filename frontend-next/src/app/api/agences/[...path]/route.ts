@@ -20,11 +20,17 @@ async function forwardRequest(req: NextRequest, { params }: { params: { path?: s
   }
 
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-    try {
-      const body = await req.json()
-      options.body = JSON.stringify(body)
-    } catch {
-      // Pas de body JSON
+    const reqContentType = req.headers.get('content-type') || ''
+    if (reqContentType.includes('multipart/form-data')) {
+      options.body = await req.formData()
+    } else {
+      try {
+        const body = await req.json()
+        options.body = JSON.stringify(body)
+        headers['Content-Type'] = 'application/json'
+      } catch {
+        // Pas de body JSON
+      }
     }
   }
 

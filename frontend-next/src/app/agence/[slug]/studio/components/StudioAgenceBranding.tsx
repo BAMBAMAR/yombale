@@ -1,14 +1,18 @@
 'use client';
 
-import React from 'react';
-import { Palette, Image as ImageIcon, Check } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Palette, Image as ImageIcon, Check, Upload } from 'lucide-react';
 import { BANNIERES_IMMO_PRESETS, PALETTES_ACCENT_IMMO } from '../constants';
 
 interface StudioAgenceBrandingProps {
   logoUrl: string;
   onChangeLogoUrl: (val: string) => void;
+  logoFile?: File | null;
+  onChangeLogoFile?: (file: File | null) => void;
   coverUrl: string;
   onChangeCoverUrl: (val: string) => void;
+  coverFile?: File | null;
+  onChangeCoverFile?: (file: File | null) => void;
   couleurAccent: string;
   onChangeCouleurAccent: (val: string) => void;
   formeBoutons: 'squircle' | 'arrondi' | 'droit';
@@ -19,14 +23,35 @@ interface StudioAgenceBrandingProps {
 export default function StudioAgenceBranding({
   logoUrl,
   onChangeLogoUrl,
+  logoFile,
+  onChangeLogoFile,
   coverUrl,
   onChangeCoverUrl,
+  coverFile,
+  onChangeCoverFile,
   couleurAccent,
   onChangeCouleurAccent,
   formeBoutons,
   onChangeFormeBoutons,
   agenceNom,
 }: StudioAgenceBrandingProps) {
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file && onChangeLogoFile) {
+      onChangeLogoFile(file);
+    }
+  }
+
+  function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file && onChangeCoverFile) {
+      onChangeCoverFile(file);
+    }
+  }
+
   return (
     <div
       style={{
@@ -46,18 +71,56 @@ export default function StudioAgenceBranding({
             Identité Visuelle & Bannière
           </h3>
           <p style={{ margin: '2px 0 0', fontSize: 12.5, color: '#64748B' }}>
-            Personnalisez la bannière de couverture, le logo et la couleur signature de votre agence.
+            Téléversez vos fichiers ou choisissez parmi nos bannières haute définition.
           </p>
         </div>
       </div>
 
-      {/* ── Galerie des Bannières Recommandées ── */}
+      {/* ── Galerie des Bannières Recommandées & Upload ── */}
       <div>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 750, color: 'var(--navy, #1C2B4A)', marginBottom: 8 }}>
-          Bannière de couverture de la vitrine
-        </label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
+          <label style={{ fontSize: 13, fontWeight: 750, color: 'var(--navy, #1C2B4A)' }}>
+            Bannière de couverture de la vitrine
+          </label>
+          <div>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleCoverChange}
+            />
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 13px',
+                borderRadius: 8,
+                background: '#F1F5F9',
+                border: '1px solid #CBD5E1',
+                color: 'var(--navy, #1C2B4A)',
+                fontSize: 12.5,
+                fontWeight: 750,
+                cursor: 'pointer',
+              }}
+            >
+              <Upload size={14} />
+              <span>Télécharger une bannière</span>
+            </button>
+          </div>
+        </div>
+
+        {coverFile && (
+          <div style={{ padding: '6px 10px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 8, fontSize: 12, color: '#065F46', marginBottom: 10, fontWeight: 600 }}>
+            Image sélectionnée : <strong>{coverFile.name}</strong> (sera enregistrée lors de la validation)
+          </div>
+        )}
+
         <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 12px' }}>
-          Choisissez parmi nos visuels d'exception ou insérez l'adresse web de votre propre photo :
+          Sélectionnez un modèle architectural HD ou insérez votre propre fichier/lien :
         </p>
 
         <div
@@ -69,11 +132,14 @@ export default function StudioAgenceBranding({
           }}
         >
           {BANNIERES_IMMO_PRESETS.map((b) => {
-            const isSelected = coverUrl === b.url;
+            const isSelected = !coverFile && coverUrl === b.url;
             return (
               <div
                 key={b.id}
-                onClick={() => onChangeCoverUrl(b.url)}
+                onClick={() => {
+                  if (onChangeCoverFile) onChangeCoverFile(null);
+                  onChangeCoverUrl(b.url);
+                }}
                 style={{
                   position: 'relative',
                   height: 100,
@@ -138,7 +204,10 @@ export default function StudioAgenceBranding({
             type="url"
             placeholder="Ou collez l'URL d'une image personnalisée (https://...)"
             value={coverUrl}
-            onChange={(e) => onChangeCoverUrl(e.target.value)}
+            onChange={(e) => {
+              if (onChangeCoverFile) onChangeCoverFile(null);
+              onChangeCoverUrl(e.target.value);
+            }}
             style={{
               flex: 1,
               padding: '8px 12px',
@@ -151,12 +220,12 @@ export default function StudioAgenceBranding({
         </div>
       </div>
 
-      {/* ── Logo de l'Agence ── */}
+      {/* ── Logo de l'Agence & Upload ── */}
       <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
         <div
           style={{
-            width: 58,
-            height: 58,
+            width: 60,
+            height: 60,
             borderRadius: 12,
             background: logoUrl ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
             border: '1px solid var(--border, #E8DDD2)',
@@ -168,6 +237,7 @@ export default function StudioAgenceBranding({
             color: '#FFFFFF',
             fontWeight: 800,
             fontSize: 22,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
           }}
         >
           {logoUrl ? (
@@ -182,14 +252,55 @@ export default function StudioAgenceBranding({
         </div>
 
         <div style={{ flex: 1, minWidth: 240 }}>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 750, color: 'var(--navy, #1C2B4A)', marginBottom: 4 }}>
-            Logo officiel de l'agence
-          </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <label style={{ fontSize: 13, fontWeight: 750, color: 'var(--navy, #1C2B4A)' }}>
+              Logo officiel de l'agence
+            </label>
+            <div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleLogoChange}
+              />
+              <button
+                type="button"
+                onClick={() => logoInputRef.current?.click()}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '5px 10px',
+                  borderRadius: 6,
+                  background: '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  fontSize: 11.5,
+                  fontWeight: 750,
+                  cursor: 'pointer',
+                  color: 'var(--navy, #1C2B4A)',
+                }}
+              >
+                <Upload size={13} />
+                <span>Télécharger un logo</span>
+              </button>
+            </div>
+          </div>
+
+          {logoFile && (
+            <div style={{ padding: '4px 8px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 6, fontSize: 11.5, color: '#065F46', marginBottom: 6, fontWeight: 600 }}>
+              Fichier logo sélectionné : <strong>{logoFile.name}</strong>
+            </div>
+          )}
+
           <input
             type="url"
-            placeholder="URL du logo officiel (ex: https://...)"
+            placeholder="Ou lien URL vers le logo (https://...)"
             value={logoUrl}
-            onChange={(e) => onChangeLogoUrl(e.target.value)}
+            onChange={(e) => {
+              if (onChangeLogoFile) onChangeLogoFile(null);
+              onChangeLogoUrl(e.target.value);
+            }}
             style={{
               width: '100%',
               padding: '8px 12px',

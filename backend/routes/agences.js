@@ -8,6 +8,25 @@ const bcrypt = require('bcryptjs');
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
+const multer = require('multer');
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+const { uploadBuffer } = require('../services/cloudinary');
+
+function multerAgenceFields(req, res, next) {
+  upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'cover', maxCount: 1 },
+  ])(req, res, (err) => {
+    if (err) {
+      console.error('[AGENCES PUT MULTER]', err.code, err.message);
+      return res.status(400).json({ success: false, error: err.message || 'Erreur upload fichier' });
+    }
+    next();
+  });
+}
 
 const cfg = require('../lib/settingsCache');
 
@@ -316,13 +335,12 @@ router.get('/:slugOrId', verifierToken, requireAgenceAccess(), async (req, res) 
 });
 
 // ── PUT /api/agences/:slugOrId — Mettre à jour les paramètres de l'agence ──
-router.put('/:slugOrId', verifierToken, requireAgenceAccess('admin_agence'), async (req, res) => {
+router.put('/:slugOrId', verifierToken, requireAgenceAccess('admin_agence'), multerAgenceFields, async (req, res) => {
   try {
     const agenceId = req.agence.id;
     const {
       nom,
       description,
-      logo_url,
       adresse,
       ville,
       quartier,
@@ -331,8 +349,40 @@ router.put('/:slugOrId', verifierToken, requireAgenceAccess('admin_agence'), asy
       email_contact,
       site_web,
       numero_agrement,
-      parametres
     } = req.body;
+
+    let logo_url = req.body.logo_url;
+    if (req.files?.logo?.[0]) {
+      try {
+        logo_url = await uploadBuffer(req.files.logo[0].buffer, 'agences_logo');
+      } catch (err) {
+        console.error('[UPLOAD_LOGO_ERR]', err.message);
+      }
+    }
+
+    let parametres = req.body.parametres;
+    if (typeof parametres === 'string') {
+      try {
+        parametres = JSON.parse(parametres);
+      } catch (e) {
+        parametres = null;
+      }
+    }
+
+    let cover_url = req.body.cover_url;
+    if (req.files?.cover?.[0]) {
+      try {
+        cover_url = await uploadBuffer(req.files.cover[0].buffer, 'agences_cover');
+      } catch (err) {
+        console.error('[UPLOAD_COVER_ERR]', err.message);
+      }
+    }
+
+    if (parametres) {
+      if (!parametres.studio) parametres.studio = {};
+      if (cover_url) parametres.studio.cover_url = cover_url;
+      if (logo_url) parametres.studio.logo_url = logo_url;
+    }
 
     const { rows } = await pool.query(
       `UPDATE agences_immo SET

@@ -25,7 +25,8 @@ import {
   FileSignature,
   Percent,
   History,
-  Share2
+  Share2,
+  Sparkles
 } from 'lucide-react'
 import '../agence.css'
 
@@ -49,6 +50,8 @@ export default function AgenceWorkspaceLayout({
   const pathname = usePathname()
   const router = useRouter()
   const slug = params?.slug as string
+
+  const isVitrineRoute = pathname?.endsWith('/vitrine') || pathname?.includes('/vitrine/')
 
   const [agence, setAgence] = useState<AgenceData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -81,8 +84,14 @@ export default function AgenceWorkspaceLayout({
   }
 
   useEffect(() => {
-    if (slug) chargerAgence()
-  }, [slug])
+    if (!isVitrineRoute && slug) {
+      chargerAgence()
+    }
+  }, [slug, isVitrineRoute])
+
+  if (isVitrineRoute) {
+    return <>{children}</>
+  }
 
   const navSections = [
     {
@@ -122,6 +131,7 @@ export default function AgenceWorkspaceLayout({
     {
       titre: 'Marketing & Vitrine',
       items: [
+        { href: `/agence/${slug}/studio`, label: 'Studio & Thèmes', icon: Sparkles },
         { href: `/agence/${slug}/social`, label: 'Social Shop & Réseaux', icon: Share2 },
         { href: `/agence/${slug}/vitrine`, label: 'Vitrine Publique', icon: ExternalLink },
       ],

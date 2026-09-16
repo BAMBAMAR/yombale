@@ -1,24 +1,14 @@
-- **Lancement Studio Personnalisation Agence Immo & Vitrine Modulable (`studio/page.tsx`, `StudioAgenceMockupPreview.tsx`, `StudioAgenceDispositionSections.tsx`, `StudioAgenceThemeSelector.tsx`, `StudioAgenceBranding.tsx`, `StudioAgenceMarketingTexts.tsx`, `VitrineBanner.tsx`, `vitrine/page.tsx`, `DashboardRubriques.tsx`) (16 septembre 2026)** 🎨🏢📱 🚀 ✅ :
-  * **🎯 1. Espace Studio Agence Dédié (`/agence/[slug]/studio`)** :
-    - **Parité d'Excellence avec Boutique** : Mise à disposition pour chaque agence immobilière agréée d'un studio complet de branding et personnalisation, accessible depuis le tableau de bord de l'agence.
-    - **Aperçu Smartphone Dynamique en Temps Réel (`StudioAgenceMockupPreview.tsx`)** : Rendu interactif instantané du rendu visuel de la vitrine au fur et à mesure des modifications (thème, bannière, slogan, bandeau d'annonce, ordre des sections).
-  * **🎯 2. Système de Thèmes Immobiliers Haute Couture (`StudioAgenceThemeSelector.tsx`, `constants.ts`)** :
-    - **4 Thèmes Distinctifs Signature** :
-      * *Prestige & Luxe* (Marine & Or / Champagne)
-      * *Éco-Durable & Nature* (Émeraude & Forêt)
-      * *Moderne & Métropolitain* (Ardoise & Cuivre Énergique)
-      * *Solaire & Teranga* (Terre Cuite & Sable Chaud)
-    - **Palette & Couleurs d'Accent Personnalisables** : Sélection rapide parmi 6 accents chromatiques harmonieux et pré-calibrés.
-  * **🎯 3. Branding, Couvertures HD & Bandeau d'Annonce (`StudioAgenceBranding.tsx`, `StudioAgenceMarketingTexts.tsx`)** :
-    - **Bibliothèque de Bannières de Couverture HD** : Sélection instantanée parmi des photographies architecturales haute définition (Villas modernes, Immeubles contemporains, Salons d'exception, etc.) ou saisie d'URL sur-mesure.
-    - **Bandeau d'Annonce Événementiel** : Activation/désactivation en 1 clic d'un ruban d'alerte en vitrine (ex: *"Journée Portes Ouvertes Samedi"*, *"Nouveaux programmes neufs disponibles"*).
-    - **Slogan & Phrase d'Accroche** : Personnalisation du positionnement commercial affiché sous le nom officiel de l'agence.
-  * **🎯 4. Réorganisation Modulable des Sections par Glisser-Déposer (`StudioAgenceDispositionSections.tsx`, `vitrine/page.tsx`)** :
-    - **Contrôle Total de la Disposition** : Les agences peuvent masquer ou réordonner leurs sections vitrine (Bannière, Social Shop & Reels Vidéo, Biens à la Location, Biens en Vente, Coordonnées & Accès).
-    - **Rendu Dynamique Côté Vitrine Public** : `vitrine/page.tsx` itère sur la configuration enregistrée dans `parametres.studio.disposition_sections` pour composer la vitrine sur-mesure.
-  * **🎯 5. Persistance Transparente Sans Migration SQL** :
-    - Exploitation du champ JSONB natif `parametres` dans `agences_immo`, sauvegardé via `PUT /api/agences/:slug`.
-  * **🧪 6. Validation Qualité Complète (100% Vert)** :
+- **Lancement Studio Personnalisation Agence Immo, Upload Direct Fichiers & Vitrine Publique (`studio/page.tsx`, `StudioAgenceBranding.tsx`, `backend/routes/agences.js`, `api/agences/[...path]/route.ts`, `layout.tsx`, `vitrine/page.tsx`) (16 septembre 2026)** 🎨🏢📱 🚀 ✅ :
+  * **🎯 1. Téléversement Direct Logo & Bannière depuis l'Appareil (`StudioAgenceBranding.tsx`, `agences.js`, `route.ts`)** :
+    - **Upload Multimédia Intégré** : Deux boutons dédiés `[📁 Télécharger un logo]` et `[📁 Télécharger une bannière]` permettent de téléverser directement des images depuis son ordinateur ou téléphone sans passer par une URL externe.
+    - **Prévisualisation Locale Instantanée** : Génération d'un objet URL local (`URL.createObjectURL(file)`) pour affichage immédiat dans le simulateur smartphone avant validation.
+    - **Pipeline Cloudinary & Multer Backend** : Prise en charge multipart/form-data dans `PUT /api/agences/:slugOrId` avec stockage Cloudinary automatique (`agences_logo` et `agences_cover`).
+  * **🎯 2. Correction Routage & Isolation Vitrine Publique (`layout.tsx`, `vitrine/page.tsx`)** :
+    - **Éradication de la Fausse Redirection Compte** : Les routes de vitrine publique `/agence/[slug]/vitrine` et `/agences/[slug]` court-circuitent désormais le layout privé et les vérifications de droits administrateurs, garantissant un accès public direct sans redirection vers `/connexion` ou `/compte`.
+    - **Affichage Full-Width Sans Sidebar Admin** : La vitrine publique s'affiche en plein écran sans les barres latérales privées de gestion d'agence.
+  * **🎯 3. Espace Studio Agence Dédié (`/agence/[slug]/studio`)** :
+    - **Parité d'Excellence avec Studio Boutique** : Thèmes immobiliers haute couture, bannières architecturales HD, bandeau d'annonce événementiel et agencement modulable des sections par glisser-déposer.
+  * **🧪 4. Validation Qualité Complète (100% Vert)** :
     - Tests Unitaires Backend Jest : **41/41 suites validées, 314/314 tests passés avec succès**.
     - Tests Unitaires Frontend : **69/69 tests validés avec succès**.
     - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
