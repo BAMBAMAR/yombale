@@ -337,6 +337,7 @@ export default function LocatifPage() {
           slug={slug}
           baux={baux}
           onNouveauBail={() => setShowCreerBail(true)}
+          onRefresh={chargerDonnees}
         />
       )}
 

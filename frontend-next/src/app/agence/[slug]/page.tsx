@@ -9,12 +9,12 @@ import {
   Calendar,
   AlertTriangle,
   Plus,
-  ArrowRight,
   TrendingUp,
   CheckCircle2,
-  DollarSign
+  DollarSign,
 } from 'lucide-react'
 import { DashboardRubriques } from './components/DashboardRubriques'
+import { DashboardAlertesPrioritaires, CompteursAlertes } from './components/DashboardAlertesPrioritaires'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface StatsData {
@@ -49,27 +49,46 @@ export default function AgenceDashboardPage() {
   const slug = params?.slug as string
 
   const [stats, setStats] = useState<StatsData | null>(null)
+  const [compteurs, setCompteurs] = useState<CompteursAlertes>({
+    demandes_visite: 0,
+    loyers_retard: 0,
+    mandats_expirants: 0,
+    baux_expirants: 0,
+    tickets_urgents: 0,
+    total_alertes: 0,
+  })
   const [loading, setLoading] = useState(true)
 
-  async function chargerStats() {
+  async function chargerDonnees() {
     try {
       setLoading(true)
-      const res = await fetch(`/api/agences/${slug}/stats`, {
-        headers: getImmoAuthHeaders(),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setStats(data.stats)
+      const headers = getImmoAuthHeaders()
+
+      const [resStats, resNotifs] = await Promise.all([
+        fetch(`/api/agences/${slug}/stats`, { headers }),
+        fetch(`/api/agences/agence/${slug}/notifications`, { headers }),
+      ])
+
+      const [dataStats, dataNotifs] = await Promise.all([
+        resStats.json(),
+        resNotifs.json(),
+      ])
+
+      if (dataStats.success) {
+        setStats(dataStats.stats)
+      }
+      if (dataNotifs.success && dataNotifs.compteurs) {
+        setCompteurs(dataNotifs.compteurs)
       }
     } catch (err) {
-      console.error('[LOAD_STATS_ERR]', err)
+      console.error('[LOAD_DASHBOARD_DATA_ERR]', err)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (slug) chargerStats()
+    if (slug) chargerDonnees()
   }, [slug])
 
   if (loading) {
@@ -137,6 +156,9 @@ export default function AgenceDashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* ── Bannière Alertes Prioritaires (Modulaire) ── */}
+      <DashboardAlertesPrioritaires slug={slug} compteurs={compteurs} />
 
       {/* ── KPI Grid (Priorité 1) ── */}
       <div className="kpi-grid">

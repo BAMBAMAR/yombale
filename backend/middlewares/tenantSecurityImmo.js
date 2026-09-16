@@ -89,7 +89,8 @@ async function checkAgenceAccess(agenceIdOrSlug, userId) {
  */
 function requireAgenceAccess(requiredRoleOrPerm = null, paramName = 'id') {
   return async (req, res, next) => {
-    if (!req.user || !req.user.userId) {
+    const userId = req.user?.userId || req.user?.id;
+    if (!req.user || !userId) {
       return res.status(401).json({
         success: false,
         error: 'Authentification requise pour accéder à cette agence immobilière.',
@@ -98,12 +99,12 @@ function requireAgenceAccess(requiredRoleOrPerm = null, paramName = 'id') {
     }
 
     const agenceIdOrSlug =
-      req.params[paramName] ||
       req.params.slugOrId ||
       req.params.agenceId ||
       req.params.agenceSlug ||
-      req.params.id ||
+      (paramName !== 'id' ? req.params[paramName] : null) ||
       req.params.slug ||
+      req.params.id ||
       req.body?.agence_id ||
       req.query?.agence_id;
 
@@ -116,7 +117,7 @@ function requireAgenceAccess(requiredRoleOrPerm = null, paramName = 'id') {
     }
 
     try {
-      const access = await checkAgenceAccess(agenceIdOrSlug, req.user.userId);
+      const access = await checkAgenceAccess(agenceIdOrSlug, userId);
       if (!access) {
         return res.status(403).json({
           success: false,

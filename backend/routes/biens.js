@@ -311,8 +311,8 @@ router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
         nb_chambres = COALESCE($10, nb_chambres),
         nb_sdb = COALESCE($11, nb_sdb),
         statut_occupation = COALESCE($12, statut_occupation),
-        prix_location = COALESCE($13, prix_location),
-        prix_vente = COALESCE($14, prix_vente),
+        prix_location = CASE WHEN $13 = 'null' THEN NULL WHEN $13 IS NOT NULL THEN $13::numeric ELSE prix_location END,
+        prix_vente = CASE WHEN $14 = 'null' THEN NULL WHEN $14 IS NOT NULL THEN $14::numeric ELSE prix_vente END,
         charges = COALESCE($15, charges),
         depot_garantie = COALESCE($16, depot_garantie),
         photos = COALESCE($17::jsonb, photos),
@@ -321,8 +321,17 @@ router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
         notes_internes = COALESCE($20, notes_internes),
         proprietaire_id = COALESCE($21, proprietaire_id),
         agent_id = COALESCE($22, agent_id),
+        ascenseur = COALESCE($23, ascenseur),
+        parking = COALESCE($24, parking),
+        gardien = COALESCE($25, gardien),
+        piscine = COALESCE($26, piscine),
+        terrasse = COALESCE($27, terrasse),
+        balcon = COALESCE($28, balcon),
+        climatisation = COALESCE($29, climatisation),
+        etage = COALESCE($30, etage),
+        equipements = COALESCE($31::jsonb, equipements),
         updated_at = NOW()
-       WHERE id = $23 AND agence_id = $24
+       WHERE id = $32 AND agence_id = $33
        RETURNING *`,
       [
         data.titre ? data.titre.trim() : null,
@@ -337,8 +346,8 @@ router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
         data.nb_chambres ? parseInt(data.nb_chambres, 10) : null,
         data.nb_sdb ? parseInt(data.nb_sdb, 10) : null,
         data.statut_occupation || null,
-        data.prix_location !== undefined ? (data.prix_location ? parseFloat(data.prix_location) : null) : null,
-        data.prix_vente !== undefined ? (data.prix_vente ? parseFloat(data.prix_vente) : null) : null,
+        data.prix_location !== undefined ? (data.prix_location !== null && data.prix_location !== '' ? String(data.prix_location) : 'null') : null,
+        data.prix_vente !== undefined ? (data.prix_vente !== null && data.prix_vente !== '' ? String(data.prix_vente) : 'null') : null,
         data.charges !== undefined ? parseFloat(data.charges) : null,
         data.depot_garantie !== undefined ? parseFloat(data.depot_garantie) : null,
         data.photos ? JSON.stringify(data.photos) : null,
@@ -347,6 +356,15 @@ router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
         data.notes_internes !== undefined ? data.notes_internes : null,
         data.proprietaire_id !== undefined ? (data.proprietaire_id || null) : null,
         data.agent_id !== undefined ? (data.agent_id || null) : null,
+        data.ascenseur !== undefined ? !!data.ascenseur : null,
+        data.parking !== undefined ? !!data.parking : null,
+        data.gardien !== undefined ? !!data.gardien : null,
+        data.piscine !== undefined ? !!data.piscine : null,
+        data.terrasse !== undefined ? !!data.terrasse : null,
+        data.balcon !== undefined ? !!data.balcon : null,
+        data.climatisation !== undefined ? !!data.climatisation : null,
+        data.etage !== undefined ? (data.etage !== '' ? parseInt(data.etage, 10) : null) : null,
+        data.equipements ? JSON.stringify(Array.isArray(data.equipements) ? data.equipements : []) : null,
         bienId,
         agenceId
       ]
@@ -356,10 +374,55 @@ router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
       return res.status(404).json({ success: false, error: 'Bien introuvable dans cette agence.' });
     }
 
+    const updatedBien = rows[0];
+
+    // Synchronisation automatique de l'annonce si elle existe
+    try {
+      const isLocation = !!updatedBien.prix_location;
+      const prix = isLocation ? updatedBien.prix_location : (updatedBien.prix_vente || 0);
+      const transaction = isLocation ? 'location' : 'vente';
+
+      await pool.query(
+        `UPDATE annonces_immo SET
+          titre = $1,
+          description = $2,
+          type_bien = $3,
+          transaction = $4,
+          prix = $5,
+          surface_m2 = $6,
+          nb_pieces = $7,
+          nb_chambres = $8,
+          ville = $9,
+          quartier = $10,
+          meuble = $11,
+          photos = COALESCE($12::jsonb, photos),
+          updated_at = NOW()
+         WHERE bien_id = $13 AND agence_id = $14`,
+        [
+          updatedBien.titre,
+          updatedBien.description,
+          updatedBien.type_bien,
+          transaction,
+          prix,
+          updatedBien.surface_m2 ? Math.round(updatedBien.surface_m2) : null,
+          updatedBien.nb_pieces,
+          updatedBien.nb_chambres,
+          updatedBien.ville,
+          updatedBien.quartier,
+          updatedBien.meuble,
+          updatedBien.photos ? JSON.stringify(updatedBien.photos) : null,
+          bienId,
+          agenceId
+        ]
+      );
+    } catch (eSync) {
+      console.warn('[SYNC_ANNONCE_WARN]', eSync.message);
+    }
+
     res.json({
       success: true,
       message: 'Bien mis à jour avec succès',
-      bien: rows[0]
+      bien: updatedBien
     });
   } catch (err) {
     console.error('[PUT /api/biens/agence/:slugOrId/:bienId]', err.message);

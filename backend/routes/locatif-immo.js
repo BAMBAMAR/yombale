@@ -153,6 +153,75 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
   }
 });
 
+// ── POST /api/locatif-immo/agence/:slugOrId/baux/:bailId/resilier — Clôture anticipée / fin de bail ──
+router.post('/agence/:slugOrId/baux/:bailId/resilier', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { bailId } = req.params;
+    const { motif = 'Fin de bail convenue' } = req.body;
+
+    const { rows: bailRows } = await pool.query(
+      `SELECT bx.*, b.titre AS bien_titre, c.nom AS locataire_nom 
+       FROM baux_immo bx
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       WHERE bx.id = $1 AND bx.agence_id = $2`,
+      [bailId, agenceId]
+    );
+
+    if (bailRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Contrat de bail introuvable.' });
+    }
+
+    const bail = bailRows[0];
+
+    // 1. Clôturer le bail
+    const { rows: updatedBail } = await pool.query(
+      `UPDATE baux_immo SET
+        statut = 'resilie',
+        date_fin = CURRENT_DATE,
+        conditions = COALESCE(conditions, '') || $1,
+        updated_at = NOW()
+       WHERE id = $2 AND agence_id = $3
+       RETURNING *`,
+      [` [Résilié le ${new Date().toLocaleDateString('fr-FR')} - Motif : ${motif}]`, bailId, agenceId]
+    );
+
+    // 2. Libérer le bien pour le remettre en disponibilité
+    await pool.query(
+      `UPDATE biens_immo SET statut_occupation = 'disponible', updated_at = NOW() WHERE id = $1 AND agence_id = $2`,
+      [bail.bien_id, agenceId]
+    );
+
+    // 3. Annuler les échéances de loyer futures qui étaient encore en attente
+    await pool.query(
+      `UPDATE loyers_echeances SET statut = 'annule', updated_at = NOW() 
+       WHERE bail_id = $1 AND agence_id = $2 AND statut = 'en_attente' AND date_echeance > CURRENT_DATE`,
+      [bailId, agenceId]
+    );
+
+    // 4. Audit log
+    enregistrerAgenceAuditLog(
+      agenceId,
+      req.user?.id,
+      null,
+      'resiliation_bail',
+      `Résiliation du bail ${bailId} pour le bien "${bail.bien_titre}" (Locataire : ${bail.locataire_nom}). Bien remis en disponibilité.`,
+      { bail_id: bailId, bien_id: bail.bien_id, motif },
+      req
+    );
+
+    res.json({
+      success: true,
+      message: 'Bail résilié avec succès. Le bien a été remis en statut disponible.',
+      bail: updatedBail[0]
+    });
+  } catch (err) {
+    console.error('[POST /baux/:bailId/resilier]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors de la résiliation du bail' });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════
 // 2. LOYERS / ÉCHÉANCES & ENCAISSEMENTS
 // ══════════════════════════════════════════════════════════════

@@ -17,10 +17,12 @@ import {
   Layers,
   ArrowRight,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  FileText,
+  Sparkles
 } from 'lucide-react'
 import { ModalCreerMandat } from './components/ModalCreerMandat'
-import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import { getImmoAuthHeaders, getImmoAuthToken } from '@/lib/immo-auth'
 
 interface MandatItem {
   id: string
@@ -61,6 +63,8 @@ export default function AgenceMandatsPage() {
   const [filterStatut, setFilterStatut] = useState('actif')
   const [filterType, setFilterType] = useState('tous')
   const [searchTerm, setSearchTerm] = useState('')
+
+  const token = getImmoAuthToken()
 
   async function chargerDonnees() {
     try {
@@ -144,7 +148,10 @@ export default function AgenceMandatsPage() {
         </div>
 
         <div style={{ background: '#fff', padding: '14px 16px', borderRadius: 10, border: '1px solid #bbf7d0', backgroundClip: 'padding-box' }}>
-          <div style={{ fontSize: 12, color: '#15803d', fontWeight: 600, marginBottom: 4 }}>Mandats Exclusifs ⭐</div>
+          <div style={{ fontSize: 12, color: '#15803d', fontWeight: 600, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Sparkles size={14} color="#15803d" />
+            <span>Mandats Exclusifs</span>
+          </div>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#15803d' }}>
             {stats.total_exclusifs || 0}
           </div>
@@ -300,11 +307,15 @@ export default function AgenceMandatsPage() {
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{
-                          fontWeight: 700,
+                          fontWeight: 750,
                           fontSize: 12,
                           color: m.type_mandat === 'exclusif' ? '#15803d' : '#334155',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
                         }}>
-                          {m.type_mandat === 'exclusif' ? 'Exclusif ⭐' : m.type_mandat === 'co_exclusif' ? 'Co-exclusif' : 'Simple'}
+                          {m.type_mandat === 'exclusif' && <Sparkles size={13} color="#15803d" />}
+                          <span>{m.type_mandat === 'exclusif' ? 'Exclusif' : m.type_mandat === 'co_exclusif' ? 'Co-exclusif' : 'Simple'}</span>
                         </span>
                       </div>
                       <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 3 }}>
@@ -343,21 +354,46 @@ export default function AgenceMandatsPage() {
                     </td>
 
                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      <Link
-                        href={`/agence/${slug}/biens/${m.bien_id}`}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: 'var(--accent, #C75B00)',
-                          textDecoration: 'none',
-                        }}
-                      >
-                        <span>Fiche bien</span>
-                        <ArrowRight size={13} />
-                      </Link>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
+                        <a
+                          href={`/api/agences/agence/${slug}/documents/mandat/${m.id}.pdf${token ? `?token=${encodeURIComponent(token)}` : ''}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Télécharger le Mandat officiel PDF"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '5px 9px',
+                            borderRadius: 6,
+                            background: '#F1F5F9',
+                            border: '1px solid #CBD5E1',
+                            color: 'var(--navy, #1C2B4A)',
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                          }}
+                        >
+                          <FileText size={12} />
+                          <span>Mandat PDF</span>
+                        </a>
+
+                        <Link
+                          href={`/agence/${slug}/biens/${m.bien_id}`}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: 'var(--accent, #C75B00)',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          <span>Fiche bien</span>
+                          <ArrowRight size={13} />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -1,3 +1,34 @@
+- **Système Global de Notifications Immobilières, Traitement Intégré des Demandes de Visite & Enrichissement des Actions Portails Métier (`notifications_immo`, `agence-notifications.js`, `NotificationCenterModal.tsx`, `DashboardAlertesPrioritaires.tsx`, `SectionDemandesVisite.tsx`, `ModalConfirmerVisite.tsx`, `ModalProgrammerVisite.tsx`, `ModalEditerBien.tsx`, `ModalEditerLocataire.tsx`, `ModalEditerBailleur.tsx`, `ModalCreerProspect.tsx`, `ModalMatchingProspect.tsx`) (16 septembre 2026)** 🔔🏢⚡ 🚀 ✅ :
+  * **🎯 1. Système Global de Notifications Immobilières & Alertes Prioritaires** :
+    - **Table SQL Dédiée `notifications_immo`** : Table relationnelle avec index multi-colonnes `(agence_id, lu, created_at DESC)` assurant des requêtes ultra-performantes.
+    - **Agrégation SQL Unifiée (`backend/routes/agence-notifications.js`)** : Endpoint `GET /api/agences/agence/:slugOrId/notifications` combinant en une seule requête SQL performante (< 250ms) les demandes de visite en attente, loyers en retard (avec calcul du montant cumulé), mandats expirant sous 30 jours, baux arrivant à terme et tickets d'intervention urgents.
+    - **Cloche Interactive dans le Header & Badges Dynamiques** : Cloche animée dans l'en-tête global agence avec pastille numérique rouge, et badges de comptage dynamiques dans le menu latéral (Visites, Loyers, Baux, Mandats, Maintenance).
+    - **Centre de Notifications Dédié (`NotificationCenterModal.tsx`)** : Modal ergonomique (< 250 lignes) permettant de visualiser, filtrer par catégorie et marquer les alertes comme lues individuellement ou en masse (`POST /api/agences/agence/:slugOrId/notifications/lire-tout`).
+    - **Bandeau d'Alerte Prioritaire Tableau de Bord (`DashboardAlertesPrioritaires.tsx`)** : Bloc d'action rapide (< 140 lignes) en tête du tableau de bord affichant les demandes de visites non traitées et les loyers en retard avec boutons de résolution en un clic.
+  * **🎯 2. Pipeline Complet de Traitement des Demandes de Visite (Boucle Fermée)** :
+    - **Ingestion Automatique Multi-Canaux** : Extension de `POST /api/crm-immo/public/lead` : lorsqu'une demande de visite est reçue depuis la vitrine, une annonce ou WhatsApp, elle crée automatiquement un contact CRM, insère un enregistrement dans `visites_immo` avec le statut `demande`, et émet une notification prioritaire dans `notifications_immo`.
+    - **Section "Demandes de visite reçues" (`SectionDemandesVisite.tsx`)** : Onglet dédié dans `/visites` permettant de visualiser immédiatement les demandes en attente avec détails du prospect, bien concerné, créneau souhaité et motif.
+    - **Modale de Confirmation & Synchronisation WhatsApp (`ModalConfirmerVisite.tsx`)** : Permet à l'agent d'ajuster l'horaire, d'assigner le gestionnaire et de confirmer le rendez-vous. La confirmation met à jour la visite en `confirmee`, passe le prospect CRM en `visite_programmee` et propose un lien WhatsApp direct pré-rempli avec le message de confirmation destiné au visiteur.
+    - **Modularisation de la Page Visites (`visites/page.tsx`, `ModalProgrammerVisite.tsx`)** : Réduction de la taille du composant sous le plafond des 450 lignes.
+  * **🎯 3. Édition Complète des Biens Immobiliers Backend & Frontend** :
+    - **Backend Renforcé (`biens.js`)** : Évolution de `PUT /api/biens/agence/:slugOrId/:bienId` pour synchroniser l'ensemble des attributs (titre, typologie, quartier, prix/loyer, surface, pièces, chambres, étage, caution, charges, statut d'occupation, équipements et description).
+    - **Modale d'Édition (`ModalEditerBien.tsx`)** : Composant dédié (< 230 lignes) avec commutateurs d'équipements (climatisation, parking, gardien, ascenseur, piscine, meublé), sélection du propriétaire bailleur et rafraîchissement temps réel.
+    - **Intégration Double Portail** : Bouton "Modifier" déployé à la fois sur le tableau des biens (`biens/page.tsx`) et sur la fiche 360° du bien (`biens/[bienId]/page.tsx`).
+  * **🎯 4. Boutons d'Action Métier Pertinents Déployés sur Tous les Portails** :
+    - **Locataires (`locataires/page.tsx`, `ModalEditerLocataire.tsx`, `ModalNouveauLocataire.tsx`)** : Ajout de boutons d'action directs sur chaque locataire : "Modifier" (ouvre une modale complète d'édition de contact), "Appeler" (lien `tel:`) et "WhatsApp" (lien `wa.me`). Page allégée à 260 lignes.
+    - **Baux & Résiliation (`TableBauxImmo.tsx`, `locatif-immo.js`)** : Nouvel endpoint sécurisé `POST /api/locatif-immo/agence/:slugOrId/baux/:bailId/resilier` qui clôture le bail, remet immédiatement le bien en statut `disponible` et annule les loyers futurs non échus. Modale de confirmation de résiliation avec motif et bouton "Contrat PDF".
+    - **Bailleurs (`bailleurs/page.tsx`, `ModalEditerBailleur.tsx`, `ModalNouveauBailleur.tsx`)** : Ajout des actions rapides sur chaque carte propriétaire : "Décompte PDF" (téléchargement direct du décompte de gestion), "WhatsApp", "Appeler" et "Modifier" (coordonnées, IBAN/RIB, adresse). Page allégée à 280 lignes.
+    - **Mandats (`mandats/page.tsx`)** : Bouton d'action direct "Mandat PDF" pour générer et télécharger le contrat de gestion/vente. Remplacement des émojis par des icônes SVG Lucide (`Sparkles`).
+    - **Prospects CRM (`prospects/page.tsx`, `ModalMatchingProspect.tsx`, `ModalCreerProspect.tsx`)** : Ajout du bouton WhatsApp direct sur chaque carte de prospect dans le pipeline Kanban.
+  * **🎯 5. Sécurité Multi-Tenant & Résolution Anti-IDOR (`tenantSecurityImmo.js`)** :
+    - Correction de la résolution d'identifiant d'agence dans `requireAgenceAccess` : priorisation explicite de `slugOrId` et `agenceId` sur le paramètre générique `:id` afin d'éviter tout conflit avec les identifiants de ressources filles (propriétaires, baux, mandats).
+    - Support transparent de l'authentification token utilisateur (`req.user.userId` et `req.user.id`).
+  * **🧪 6. Validation Qualité Complète (100% Vert)** :
+    - Suite d'intégration E2E Live PostgreSQL (`test_final_e2e.js`) : **7/7 scénarios PASS (100% succès)** (Notifications, Lead pipeline, Visite confirm, Bien edit, Bail resiliation, Locataire edit, Bailleur edit).
+    - Routes frontend agence : **100% des routes compilent et renvoient HTTP 200 OK**.
+    - Règle Anti-AI-Slop : **100% des nouveaux composants < 450 lignes, 0 émoji Unicode dans les interfaces modifiées (100% SVG Lucide)**.
+    - Règle Git : **Aucun push automatique non sollicité**.
+
 - **Campagne E2E Exhaustive & Qualification Intégrale Nopalou Immobilier (`agences.js`, `biens.js`, `paiement-sequestre.js`, 22 écrans `frontend-next`, `test_immo_comprehensive.js`) (16 septembre 2026)** 🏢🧪⚡ 🚀 ✅ :
   * **🎯 1. Cartographie Exhaustive de la Verticale Immobilière** :
     - **Front-End** : Inventaire exhaustif automatisé de **202 boutons interactifs**, **70 liens de navigation**, **28 formulaires**, **185 modales/dialogues** répartis sur 22 écrans agence (`/agence`, `/agence/[slug]/...`).

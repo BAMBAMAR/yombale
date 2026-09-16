@@ -16,8 +16,11 @@ import {
   Copy,
   Archive,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Pencil
 } from 'lucide-react'
+import ModalEditerBien from './components/ModalEditerBien'
+import { FiltresBiensBar } from './components/FiltresBiensBar'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface BienItem {
@@ -51,6 +54,7 @@ export default function BiensListPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [bienAEditer, setBienAEditer] = useState<any | null>(null)
 
   async function chargerBiens() {
     try {
@@ -197,56 +201,16 @@ export default function BiensListPage() {
         </div>
       )}
 
-      {/* ── Filtres & Recherche ── */}
-      <div
-        className="agence-card"
-        style={{
-          padding: 16,
-          display: 'flex',
-          gap: 12,
-          flexWrap: 'wrap',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 200, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Search size={16} color="#64748B" />
-          <input
-            type="text"
-            placeholder="Rechercher par titre, quartier, référence..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && chargerBiens()}
-            className="form-input"
-            style={{ padding: '8px 12px' }}
-          />
-        </div>
-
-        <select
-          value={filterType}
-          onChange={e => setFilterType(e.target.value)}
-          className="form-select"
-          style={{ width: 'auto', padding: '8px 12px' }}
-        >
-          <option value="tous">Tous les types</option>
-          <option value="appartement">Appartement</option>
-          <option value="villa">Villa</option>
-          <option value="studio">Studio</option>
-          <option value="terrain">Terrain</option>
-          <option value="bureau">Bureau / Commerce</option>
-        </select>
-
-        <select
-          value={filterStatut}
-          onChange={e => setFilterStatut(e.target.value)}
-          className="form-select"
-          style={{ width: 'auto', padding: '8px 12px' }}
-        >
-          <option value="tous">Tous les statuts</option>
-          <option value="disponible">Disponible</option>
-          <option value="loue">Loué</option>
-          <option value="vendu">Vendu</option>
-        </select>
-      </div>
+      {/* ── Filtres & Recherche (Modulaire) ── */}
+      <FiltresBiensBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filterType={filterType}
+        setFilterType={setFilterType}
+        filterStatut={filterStatut}
+        setFilterStatut={setFilterStatut}
+        onSearch={chargerBiens}
+      />
 
       {/* ── Tableau des Biens ── */}
       {loading ? (
@@ -350,6 +314,25 @@ export default function BiensListPage() {
                         <Eye size={14} />
                       </Link>
 
+                      <button
+                        type="button"
+                        onClick={() => setBienAEditer(bien)}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 6,
+                          background: '#FAF8F5',
+                          border: '1px solid var(--border, #E8DDD2)',
+                          color: 'var(--accent, #C75B00)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        title="Modifier ce bien"
+                      >
+                        <Pencil size={14} />
+                      </button>
+
                       {bien.annonce_publiee_id && (
                         <Link
                           href={`/immo/${bien.annonce_publiee_id}`}
@@ -434,6 +417,20 @@ export default function BiensListPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {bienAEditer && (
+        <ModalEditerBien
+          slug={slug}
+          bien={bienAEditer}
+          onClose={() => setBienAEditer(null)}
+          onSuccess={() => {
+            setBienAEditer(null)
+            chargerBiens()
+            setToastMsg('Bien mis à jour avec succès.')
+            setTimeout(() => setToastMsg(null), 3500)
+          }}
+        />
       )}
     </div>
   )

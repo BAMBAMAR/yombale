@@ -86,7 +86,7 @@ router.post('/public/lead', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Numéro de téléphone ou nom requis.' });
     }
 
-    let cibleAgenceId = agence_id;
+    let cibleAgenceId = agence_id || req.query?.agence_id || req.query?.agence;
     let cibleAgentId = null;
     let annonceTitre = '';
     let annoncePrix = null;
@@ -213,10 +213,77 @@ router.post('/public/lead', async (req, res) => {
       contactId = newContact[0].id;
     }
 
+    // Si c'est une demande de visite et qu'un bien est ciblé : enregistrer dans visites_immo et générer une alerte
+    let visiteId = null;
+    if (type_action === 'demande_visite' && effectiveBienId) {
+      try {
+        const { rows: vRows } = await pool.query(
+          `INSERT INTO visites_immo (
+            agence_id, bien_id, contact_id, agent_id, date_visite, duree_min, statut, notes
+          ) VALUES (
+            $1, $2, $3, $4, COALESCE($5::timestamptz, NOW() + INTERVAL '1 day'), 30, 'demande', $6
+          ) RETURNING id`,
+          [
+            cibleAgenceId,
+            effectiveBienId,
+            contactId,
+            cibleAgentId,
+            req.body.date_visite || null,
+            message || (req.body.creneau ? `Créneau souhaité : ${req.body.creneau}` : 'Demande de visite web')
+          ]
+        );
+        if (vRows.length > 0) visiteId = vRows[0].id;
+
+        await pool.query(
+          `INSERT INTO notifications_immo (
+            agence_id, type, titre, message, lien, priorite, metadonnees
+          ) VALUES ($1, 'demande_visite', $2, $3, $4, 'urgente', $5)`,
+          [
+            cibleAgenceId,
+            'Nouvelle demande de visite reçue',
+            `${cleanNom} (${contactTel || 'Web'}) souhaite visiter "${annonceTitre || 'un bien'}"${req.body.date_visite ? ` le ${req.body.date_visite}` : ''}`,
+            `/visites`,
+            JSON.stringify({
+              visite_id: visiteId,
+              contact_id: contactId,
+              bien_id: effectiveBienId,
+              telephone: contactTel,
+              message: message || null
+            })
+          ]
+        );
+      } catch (eNotif) {
+        console.error('[DEMANDE_VISITE_NOTIF_ERR]', eNotif.message);
+      }
+    } else {
+      try {
+        await pool.query(
+          `INSERT INTO notifications_immo (
+            agence_id, type, titre, message, lien, priorite, metadonnees
+          ) VALUES ($1, 'nouveau_lead', $2, $3, $4, 'normale', $5)`,
+          [
+            cibleAgenceId,
+            'Nouveau prospect enregistré',
+            `${cleanNom} (${contactTel || 'Direct'}) a manifesté son intérêt pour "${annonceTitre || 'l agence'}"`,
+            `/prospects`,
+            JSON.stringify({
+              contact_id: contactId,
+              bien_id: effectiveBienId,
+              telephone: contactTel,
+              type_action
+            })
+          ]
+        );
+      } catch (eNotif) {
+        console.error('[LEAD_NOTIF_ERR]', eNotif.message);
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: 'Prospect enregistré dans le CRM de l\'agence avec succès',
-      contactId
+      message: 'Prospect et demande enregistrés avec succès',
+      contactId,
+      visiteId
     });
   } catch (err) {
     console.error('[POST /api/crm-immo/public/lead]', err.message);
@@ -341,8 +408,10 @@ router.put('/agence/:slugOrId/contacts/:contactId', verifierToken, requireAgence
         prochaine_action_le = COALESCE($13, prochaine_action_le),
         notes = COALESCE($14, notes),
         agent_id = COALESCE($15, agent_id),
+        profession = COALESCE($16, profession),
+        revenus_mensuels = COALESCE($17, revenus_mensuels),
         updated_at = NOW()
-       WHERE id = $16 AND agence_id = $17
+       WHERE id = $18 AND agence_id = $19
        RETURNING *`,
       [
         data.nom ? data.nom.trim() : null,
@@ -360,6 +429,8 @@ router.put('/agence/:slugOrId/contacts/:contactId', verifierToken, requireAgence
         data.prochaine_action_le || null,
         data.notes !== undefined ? data.notes : null,
         data.agent_id !== undefined ? data.agent_id : null,
+        data.profession !== undefined ? data.profession : null,
+        data.revenus_mensuels !== undefined ? (data.revenus_mensuels ? parseFloat(data.revenus_mensuels) : null) : null,
         contactId,
         agenceId
       ]
@@ -434,15 +505,36 @@ router.get('/agence/:slugOrId/visites', verifierToken, requireAgenceAccess(), as
       query += ` AND v.date_visite::date = CURRENT_DATE`;
     } else if (date === 'a_venir') {
       query += ` AND v.date_visite >= NOW()`;
+    } else if (date === 'demandes') {
+      query += ` AND v.statut = 'demande'`;
     }
 
-    query += ` ORDER BY v.date_visite ASC`;
+    if (statut === 'demande' || date === 'demandes') {
+      query += ` ORDER BY v.created_at DESC`;
+    } else {
+      query += ` ORDER BY v.date_visite ASC`;
+    }
 
     const { rows } = await pool.query(query, params);
 
+    // Calculer les compteurs rapides
+    const countRes = await pool.query(
+      `SELECT 
+        COUNT(*) FILTER (WHERE statut = 'demande') AS nb_demandes,
+        COUNT(*) FILTER (WHERE statut = 'confirmee') AS nb_confirmees,
+        COUNT(*) FILTER (WHERE statut = 'realisee') AS nb_realisees
+       FROM visites_immo WHERE agence_id = $1`,
+      [agenceId]
+    );
+
     res.json({
       success: true,
-      visites: rows
+      visites: rows,
+      statistiques: {
+        nb_demandes: parseInt(countRes.rows[0]?.nb_demandes || '0', 10),
+        nb_confirmees: parseInt(countRes.rows[0]?.nb_confirmees || '0', 10),
+        nb_realisees: parseInt(countRes.rows[0]?.nb_realisees || '0', 10),
+      }
     });
   } catch (err) {
     console.error('[GET /api/crm-immo/agence/:slugOrId/visites]', err.message);
@@ -507,7 +599,7 @@ router.put('/agence/:slugOrId/visites/:visiteId', verifierToken, requireAgenceAc
   try {
     const agenceId = req.agence.id;
     const { visiteId } = req.params;
-    const { statut, resultat, notes, prochaine_action } = req.body;
+    const { statut, resultat, notes, prochaine_action, date_visite, duree_min, lieu_rdv, agent_id } = req.body;
 
     const { rows } = await pool.query(
       `UPDATE visites_immo SET
@@ -515,14 +607,22 @@ router.put('/agence/:slugOrId/visites/:visiteId', verifierToken, requireAgenceAc
         resultat = COALESCE($2, resultat),
         notes = COALESCE($3, notes),
         prochaine_action = COALESCE($4, prochaine_action),
+        date_visite = COALESCE($5::timestamptz, date_visite),
+        duree_min = COALESCE($6, duree_min),
+        lieu_rdv = COALESCE($7, lieu_rdv),
+        agent_id = COALESCE($8, agent_id),
         updated_at = NOW()
-       WHERE id = $5 AND agence_id = $6
+       WHERE id = $9 AND agence_id = $10
        RETURNING *`,
       [
         statut || null,
         resultat || null,
         notes !== undefined ? notes : null,
         prochaine_action !== undefined ? prochaine_action : null,
+        date_visite || null,
+        duree_min ? parseInt(duree_min, 10) : null,
+        lieu_rdv || null,
+        agent_id || null,
         visiteId,
         agenceId
       ]
@@ -530,6 +630,13 @@ router.put('/agence/:slugOrId/visites/:visiteId', verifierToken, requireAgenceAc
 
     if (rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Visite introuvable.' });
+    }
+
+    if (statut === 'confirmee') {
+      await pool.query(
+        `UPDATE contacts_immo SET statut_crm = 'visite_programmee', updated_at = NOW() WHERE id = $1`,
+        [rows[0].contact_id]
+      );
     }
 
     res.json({

@@ -254,6 +254,7 @@ app.use('/api/agences',       require('./routes/agences'));
 app.use('/api/agences',       require('./routes/agence-export'));
 app.use('/api/agences',       require('./routes/agence-logs'));
 app.use('/api/agences',       require('./routes/agence-documents-pdf'));
+app.use('/api/agences',       require('./routes/agence-notifications'));
 app.use('/api/biens',         require('./routes/biens'));
 app.use('/api/crm-immo',      require('./routes/crm-immo'));
 app.use('/api/locatif-immo',  require('./routes/locatif-immo'));

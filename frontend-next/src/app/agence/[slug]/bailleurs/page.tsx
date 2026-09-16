@@ -2,8 +2,19 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { UserCheck, Plus, Phone, Mail, Home, MapPin, CheckCircle2 } from 'lucide-react'
-import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import {
+  UserCheck,
+  Plus,
+  Phone,
+  Mail,
+  CheckCircle2,
+  FileText,
+  MessageCircle,
+  Pencil,
+} from 'lucide-react'
+import { getImmoAuthHeaders, getImmoAuthToken } from '@/lib/immo-auth'
+import { ModalEditerBailleur, BailleurEditData } from './components/ModalEditerBailleur'
+import { ModalNouveauBailleur } from './components/ModalNouveauBailleur'
 
 interface Proprietaire {
   id: string
@@ -13,6 +24,9 @@ interface Proprietaire {
   whatsapp?: string
   email?: string
   type_bailleur: string
+  adresse?: string
+  iban?: string
+  notes?: string
   nb_biens_total: number
   nb_biens_loues: number
 }
@@ -23,17 +37,11 @@ export default function BailleursPage() {
 
   const [proprietaires, setProprietaires] = useState<Proprietaire[]>([])
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [showModalNouveau, setShowModalNouveau] = useState(false)
+  const [bailleurAEditer, setBailleurAEditer] = useState<BailleurEditData | null>(null)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
 
-  const [form, setForm] = useState({
-    nom: '',
-    prenom: '',
-    telephone: '',
-    whatsapp: '',
-    email: '',
-    type_bailleur: 'particulier',
-  })
+  const token = getImmoAuthToken()
 
   async function chargerBailleurs() {
     try {
@@ -56,30 +64,6 @@ export default function BailleursPage() {
     if (slug) chargerBailleurs()
   }, [slug])
 
-  async function handleCreerBailleur(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.nom.trim()) return
-
-    try {
-      setSaving(true)
-      const res = await fetch(`/api/crm-immo/agence/${slug}/proprietaires`, {
-        method: 'POST',
-        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(form),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setShowModal(false)
-        setForm({ nom: '', prenom: '', telephone: '', whatsapp: '', email: '', type_bailleur: 'particulier' })
-        chargerBailleurs()
-      }
-    } catch (err) {
-      console.error('[CREATE_BAILLEUR_ERR]', err)
-    } finally {
-      setSaving(false)
-    }
-  }
-
   return (
     <div>
       {/* ── En-tête ── */}
@@ -91,7 +75,7 @@ export default function BailleursPage() {
 
         <button
           type="button"
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowModalNouveau(true)}
           className="btn-npl"
           style={{
             display: 'inline-flex',
@@ -111,6 +95,26 @@ export default function BailleursPage() {
         </button>
       </div>
 
+      {toastMsg && (
+        <div
+          style={{
+            padding: '12px 16px',
+            background: '#DCFCE7',
+            color: '#166534',
+            borderRadius: 8,
+            fontSize: 13.5,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 16,
+          }}
+        >
+          <CheckCircle2 size={18} />
+          {toastMsg}
+        </div>
+      )}
+
       {/* ── Liste des Bailleurs ── */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>
@@ -126,176 +130,204 @@ export default function BailleursPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
             gap: 16,
           }}
         >
-          {proprietaires.map(p => (
-            <div key={p.id} className="agence-card" style={{ padding: 18, marginBottom: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+          {proprietaires.map(p => {
+            const decomptePdfUrl = `/api/agences/agence/${slug}/documents/decompte-bailleur/${p.id}.pdf${token ? `?token=${encodeURIComponent(token)}` : ''}`
+
+            return (
+              <div
+                key={p.id}
+                className="agence-card"
+                style={{
+                  padding: 18,
+                  marginBottom: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  border: '1px solid var(--border, #E8DDD2)',
+                }}
+              >
                 <div>
-                  <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 15 }}>
-                    {p.nom} {p.prenom || ''}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 15.5 }}>
+                        {p.nom} {p.prenom || ''}
+                      </div>
+                      <span style={{ fontSize: 12, color: '#64748B', textTransform: 'capitalize', fontWeight: 500 }}>
+                        {p.type_bailleur || 'Particulier'}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: 8,
+                        background: '#FAF8F5',
+                        border: '1px solid var(--border, #E8DDD2)',
+                        fontSize: 12,
+                        fontWeight: 750,
+                        color: 'var(--navy, #1C2B4A)',
+                      }}
+                    >
+                      {p.nb_biens_total} bien(s)
+                    </div>
                   </div>
-                  <span style={{ fontSize: 11.5, color: '#64748B', textTransform: 'capitalize' }}>
-                    {p.type_bailleur}
-                  </span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, color: '#475569', marginBottom: 14 }}>
+                    {p.telephone && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Phone size={13} color="var(--navy, #1C2B4A)" />
+                        <a href={`tel:${p.telephone}`} style={{ color: 'inherit', textDecoration: 'none', fontWeight: 500 }}>
+                          {p.telephone}
+                        </a>
+                      </div>
+                    )}
+                    {p.email && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Mail size={13} color="#64748B" />
+                        <span style={{ color: '#64748B' }}>{p.email}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Barre d'Actions Bailleurs */}
                 <div
                   style={{
-                    padding: '4px 8px',
-                    borderRadius: 8,
-                    background: '#FAF8F5',
-                    border: '1px solid var(--border, #E8DDD2)',
-                    fontSize: 12,
-                    fontWeight: 750,
-                    color: 'var(--navy, #1C2B4A)',
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 1fr 1fr auto',
+                    gap: 6,
+                    paddingTop: 12,
+                    borderTop: '1px solid var(--border, #E8DDD2)',
+                    alignItems: 'center',
                   }}
                 >
-                  {p.nb_biens_total} bien(s)
+                  {/* Modifier */}
+                  <button
+                    type="button"
+                    onClick={() => setBailleurAEditer(p)}
+                    title="Modifier les coordonnées"
+                    style={{
+                      padding: '7px 9px',
+                      borderRadius: 6,
+                      background: '#F8F5F0',
+                      border: '1px solid var(--border, #E8DDD2)',
+                      color: 'var(--navy, #1C2B4A)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Pencil size={13} />
+                  </button>
+
+                  {/* Décompte PDF Officiel */}
+                  <a
+                    href={decomptePdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Générer le Décompte de Gestion officiel PDF"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 4,
+                      padding: '7px 8px',
+                      borderRadius: 6,
+                      background: '#F1F5F9',
+                      border: '1px solid #CBD5E1',
+                      color: 'var(--navy, #1C2B4A)',
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <FileText size={12} />
+                    <span>Décompte</span>
+                  </a>
+
+                  {/* WhatsApp */}
+                  <a
+                    href={`https://wa.me/${(p.whatsapp || p.telephone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                      `Bonjour ${p.nom}, ceci est un message de votre agence concernant la gestion de vos biens immobiliers.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 4,
+                      padding: '7px 8px',
+                      borderRadius: 6,
+                      background: 'rgba(22, 163, 74, 0.08)',
+                      color: '#166534',
+                      fontWeight: 700,
+                      fontSize: 11.5,
+                      textDecoration: 'none',
+                      border: '1px solid rgba(22, 163, 74, 0.2)',
+                    }}
+                  >
+                    <MessageCircle size={12} />
+                    <span>WhatsApp</span>
+                  </a>
+
+                  {/* Téléphone */}
+                  {p.telephone ? (
+                    <a
+                      href={`tel:${p.telephone}`}
+                      title="Appeler directement"
+                      style={{
+                        padding: '7px 9px',
+                        borderRadius: 6,
+                        background: 'rgba(28, 43, 74, 0.06)',
+                        border: '1px solid rgba(28, 43, 74, 0.12)',
+                        color: 'var(--navy, #1C2B4A)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <Phone size={13} />
+                    </a>
+                  ) : (
+                    <div />
+                  )}
                 </div>
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, color: '#475569' }}>
-                {p.telephone && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Phone size={13} />
-                    <a href={`tel:${p.telephone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                      {p.telephone}
-                    </a>
-                  </div>
-                )}
-                {p.email && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Mail size={13} />
-                    <span>{p.email}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
       {/* ── Modale Ajout Propriétaire ── */}
-      {showModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(28, 43, 74, 0.5)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 14,
-              maxWidth: 460,
-              width: '100%',
-              padding: 24,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
-                Ajouter un propriétaire / bailleur
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: 20, color: '#94A3B8', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
+      <ModalNouveauBailleur
+        slug={slug}
+        isOpen={showModalNouveau}
+        onClose={() => setShowModalNouveau(false)}
+        onSuccess={() => {
+          setToastMsg('Propriétaire bailleur enregistré avec succès !')
+          chargerBailleurs()
+          setTimeout(() => setToastMsg(null), 4000)
+        }}
+      />
 
-            <form onSubmit={handleCreerBailleur}>
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Nom *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Sarr"
-                    value={form.nom}
-                    onChange={e => setForm({ ...form, nom: e.target.value })}
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Prénom</label>
-                  <input
-                    type="text"
-                    placeholder="Fatou"
-                    value={form.prenom}
-                    onChange={e => setForm({ ...form, prenom: e.target.value })}
-                    className="form-input"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Téléphone / WhatsApp</label>
-                <input
-                  type="tel"
-                  placeholder="+221 77 000 00 00"
-                  value={form.telephone}
-                  onChange={e => setForm({ ...form, telephone: e.target.value, whatsapp: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  placeholder="bailleur@exemple.sn"
-                  value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '9px 14px',
-                    borderRadius: 8,
-                    background: '#FAF8F5',
-                    border: '1px solid var(--border, #E8DDD2)',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    background: 'var(--accent, #C75B00)',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    fontWeight: 700,
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {saving ? 'Enregistrement...' : 'Enregistrer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ── Modale Édition Propriétaire ── */}
+      <ModalEditerBailleur
+        slug={slug}
+        bailleur={bailleurAEditer}
+        isOpen={!!bailleurAEditer}
+        onClose={() => setBailleurAEditer(null)}
+        onSuccess={() => {
+          setToastMsg('Propriétaire bailleur mis à jour avec succès !')
+          chargerBailleurs()
+          setTimeout(() => setToastMsg(null), 4000)
+        }}
+      />
     </div>
   )
 }

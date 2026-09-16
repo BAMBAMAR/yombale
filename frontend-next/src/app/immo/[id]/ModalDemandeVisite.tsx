@@ -25,6 +25,7 @@ export default function ModalDemandeVisite({
 }: ModalDemandeVisiteProps) {
   const [nomVisiteur, setNomVisiteur] = useState('');
   const [telVisiteur, setTelVisiteur] = useState('');
+  const [dateVisite, setDateVisite] = useState('');
   const [messageVisiteur, setMessageVisiteur] = useState('');
   const [loading, setLoading] = useState(false);
   const [visiteEnvoyee, setVisiteEnvoyee] = useState(false);
@@ -49,7 +50,8 @@ export default function ModalDemandeVisite({
           nom: nomVisiteur || 'Visiteur Site',
           telephone: telVisiteur,
           whatsapp: telVisiteur,
-          message: messageVisiteur,
+          date_visite: dateVisite || null,
+          message: dateVisite ? `Date souhaitée : ${dateVisite} — ${messageVisiteur}` : messageVisiteur,
           type_action: 'demande_visite',
           type_operation: transaction || 'location',
           budget: prix,
@@ -169,6 +171,25 @@ export default function ModalDemandeVisite({
                 value={telVisiteur}
                 onChange={(e) => setTelVisiteur(e.target.value)}
                 placeholder="Ex: 77 123 45 67"
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: 8,
+                  border: '1.5px solid var(--border, #E8DDD2)',
+                  fontSize: 13.5,
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+                Date souhaitée pour la visite (optionnel)
+              </label>
+              <input
+                type="date"
+                value={dateVisite}
+                onChange={(e) => setDateVisite(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '9px 12px',

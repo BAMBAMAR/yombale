@@ -84,6 +84,8 @@ export default function ModalDemandeVisiteVitrine({
           telephone: telephone.trim(),
           whatsapp: telephone.trim(),
           type_action: 'demande_visite',
+          date_visite: dateVisite || null,
+          creneau: creneau || null,
           message: detailMessage,
           type_operation: isLoc ? 'location' : 'vente',
           budget: bien.prix_location || bien.prix_vente || 0,

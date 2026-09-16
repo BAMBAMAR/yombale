@@ -26,9 +26,11 @@ import {
   Percent,
   History,
   Share2,
-  Sparkles
+  Sparkles,
+  Bell
 } from 'lucide-react'
 import '../agence.css'
+import NotificationCenterModal, { NotificationItem, CompteursAlertes } from './components/NotificationCenterModal'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface AgenceData {
@@ -57,6 +59,30 @@ export default function AgenceWorkspaceLayout({
   const [agence, setAgence] = useState<AgenceData | null>(null)
   const [loading, setLoading] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [compteurs, setCompteurs] = useState<CompteursAlertes>({
+    demandes_visite: 0,
+    loyers_retard: 0,
+    mandats_expirants: 0,
+    baux_expirants: 0,
+    tickets_urgents: 0,
+  })
+  const [showNotifCenter, setShowNotifCenter] = useState(false)
+
+  async function chargerNotifications() {
+    try {
+      const res = await fetch(`/api/agences/agence/${slug}/notifications`, {
+        headers: getImmoAuthHeaders(),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setNotifications(data.notifications || [])
+        if (data.compteurs) setCompteurs(data.compteurs)
+      }
+    } catch (err) {
+      console.error('[LOAD_NOTIFS_ERR]', err)
+    }
+  }
 
   async function chargerAgence() {
     try {
@@ -86,6 +112,7 @@ export default function AgenceWorkspaceLayout({
   useEffect(() => {
     if (!isVitrineRoute && slug) {
       chargerAgence()
+      chargerNotifications()
     }
   }, [slug, isVitrineRoute])
 
@@ -104,19 +131,19 @@ export default function AgenceWorkspaceLayout({
       titre: 'Transactions & Ventes',
       items: [
         { href: `/agence/${slug}/biens`, label: 'Biens Immobiliers', icon: Home },
-        { href: `/agence/${slug}/mandats`, label: 'Mandats de Vente & Gestion', icon: FileSignature },
+        { href: `/agence/${slug}/mandats`, label: 'Mandats de Vente & Gestion', icon: FileSignature, badge: compteurs.mandats_expirants > 0 ? compteurs.mandats_expirants : null, badgeColor: '#D97706' },
         { href: `/agence/${slug}/transactions`, label: 'Pipeline des Transactions', icon: Briefcase },
         { href: `/agence/${slug}/prospects`, label: 'CRM Prospects & Acquéreurs', icon: Users2 },
-        { href: `/agence/${slug}/visites`, label: 'Agenda & Visites', icon: Calendar },
+        { href: `/agence/${slug}/visites`, label: 'Agenda & Visites', icon: Calendar, badge: compteurs.demandes_visite > 0 ? compteurs.demandes_visite : null, badgeColor: 'var(--accent, #C75B00)' },
       ],
     },
     {
       titre: 'Gestion Locative',
       items: [
-        { href: `/agence/${slug}/locatif`, label: 'Baux, Loyers & Quittances', icon: Key },
+        { href: `/agence/${slug}/locatif`, label: 'Baux, Loyers & Quittances', icon: Key, badge: compteurs.loyers_retard > 0 ? compteurs.loyers_retard : null, badgeColor: '#DC2626' },
         { href: `/agence/${slug}/locataires`, label: 'Locataires', icon: UserCheck },
         { href: `/agence/${slug}/bailleurs`, label: 'Bailleurs Propriétaires', icon: Building2 },
-        { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench },
+        { href: `/agence/${slug}/maintenance`, label: 'Maintenance & Travaux', icon: Wrench, badge: compteurs.tickets_urgents > 0 ? compteurs.tickets_urgents : null, badgeColor: '#991B1B' },
       ],
     },
     {
@@ -252,9 +279,26 @@ export default function AgenceWorkspaceLayout({
                       key={item.href}
                       href={item.href}
                       className={`sidebar-nav-item ${active ? 'active' : ''}`}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                     >
-                      <Icon size={16} />
-                      <span>{item.label}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Icon size={16} />
+                        <span>{item.label}</span>
+                      </div>
+                      {(item as any).badge ? (
+                        <span
+                          style={{
+                            background: (item as any).badgeColor || 'var(--accent, #C75B00)',
+                            color: '#FFFFFF',
+                            fontSize: 10.5,
+                            fontWeight: 900,
+                            padding: '1px 6px',
+                            borderRadius: 10,
+                          }}
+                        >
+                          {(item as any).badge}
+                        </span>
+                      ) : null}
                     </Link>
                   )
                 })}
@@ -314,17 +358,134 @@ export default function AgenceWorkspaceLayout({
             </span>
           </div>
 
-          <Link
-            href="/agence"
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: '#64748B',
-              textDecoration: 'none',
-            }}
-          >
-            Changer d'agence
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => setShowNotifCenter(true)}
+              style={{
+                position: 'relative',
+                background: '#FAF8F5',
+                border: '1px solid var(--border, #E8DDD2)',
+                borderRadius: 6,
+                padding: '6px 8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                color: 'var(--navy, #1C2B4A)',
+              }}
+              title="Centre d'alertes"
+            >
+              <Bell size={16} />
+              {compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants > 0 && (
+                <span
+                  style={{
+                    background: 'var(--accent, #C75B00)',
+                    color: '#FFFFFF',
+                    fontSize: 10,
+                    fontWeight: 900,
+                    padding: '1px 5px',
+                    borderRadius: 8,
+                  }}
+                >
+                  {compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants}
+                </span>
+              )}
+            </button>
+
+            <Link
+              href="/agence"
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#64748B',
+                textDecoration: 'none',
+              }}
+            >
+              Changer
+            </Link>
+          </div>
+        </div>
+
+        {/* Topbar Desktop */}
+        <div
+          style={{
+            height: 52,
+            borderBottom: '1px solid var(--border, #E8DDD2)',
+            background: '#FFFFFF',
+            padding: '0 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+          className="desktop-topbar-immo"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+              {agence?.nom}
+            </span>
+            <span style={{ fontSize: 12, color: '#94A3B8' }}>•</span>
+            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Portail de Gestion Immobilière</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              type="button"
+              onClick={() => setShowNotifCenter(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                borderRadius: 8,
+                background: '#FAF8F5',
+                border: '1px solid var(--border, #E8DDD2)',
+                color: 'var(--navy, #1C2B4A)',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+              title="Centre de notifications et alertes"
+            >
+              <Bell size={15} />
+              <span>Alertes & Notifs</span>
+              {compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants > 0 && (
+                <span
+                  style={{
+                    background: 'var(--accent, #C75B00)',
+                    color: '#FFFFFF',
+                    fontSize: 10.5,
+                    fontWeight: 900,
+                    padding: '1px 6px',
+                    borderRadius: 10,
+                  }}
+                >
+                  {compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants}
+                </span>
+              )}
+            </button>
+
+            <Link
+              href={`/agence/${slug}/vitrine`}
+              target="_blank"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--navy, #1C2B4A)',
+                textDecoration: 'none',
+                padding: '6px 12px',
+                borderRadius: 8,
+                background: '#FAF8F5',
+                border: '1px solid var(--border, #E8DDD2)',
+              }}
+            >
+              <span>Vitrine Publique</span>
+              <ExternalLink size={13} />
+            </Link>
+          </div>
         </div>
 
         {/* Tiroir Mobile avec Rubriques */}
@@ -368,6 +529,17 @@ export default function AgenceWorkspaceLayout({
         {/* ── Main Content Area ── */}
         <main className="workspace-content">{children}</main>
       </div>
+
+      {/* ── Centre de Notifications Déroulant ── */}
+      {showNotifCenter && (
+        <NotificationCenterModal
+          slug={slug}
+          notifications={notifications}
+          compteurs={compteurs}
+          onClose={() => setShowNotifCenter(false)}
+          onRefresh={chargerNotifications}
+        />
+      )}
     </div>
   )
 }

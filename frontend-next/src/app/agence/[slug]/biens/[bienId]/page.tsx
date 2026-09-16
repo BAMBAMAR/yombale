@@ -24,8 +24,15 @@ import {
   Globe,
   RefreshCw,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  Pencil,
+  Wind,
+  Car,
+  Waves,
+  ArrowUpDown,
+  Armchair
 } from 'lucide-react'
+import ModalEditerBien from '../components/ModalEditerBien'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 export default function AgenceBienDetailPage() {
@@ -43,6 +50,7 @@ export default function AgenceBienDetailPage() {
   const [activeTab, setActiveTab] = useState<'apercu' | 'matching' | 'visites' | 'bail' | 'offres'>('apercu')
   const [publishing, setPublishing] = useState(false)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [showModalEditer, setShowModalEditer] = useState(false)
 
   async function chargerDonnees() {
     try {
@@ -196,27 +204,50 @@ export default function AgenceBienDetailPage() {
               {isLocation && <span style={{ fontSize: 14, fontWeight: 600, color: '#64748b' }}> / mois</span>}
             </div>
 
-            <button
-              type="button"
-              onClick={handleTogglePublication}
-              disabled={publishing}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: isPublie ? '#f0fdf4' : 'var(--accent, #C75B00)',
-                color: isPublie ? '#15803d' : '#fff',
-                border: isPublie ? '1px solid #bbf7d0' : 'none',
-                borderRadius: 8,
-                padding: '7px 12px',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: publishing ? 'not-allowed' : 'pointer',
-              }}
-            >
-              <Globe size={13} />
-              <span>{publishing ? 'Patientez…' : isPublie ? 'En ligne sur Marketplace ✓' : 'Publier sur Marketplace'}</span>
-            </button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setShowModalEditer(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: '#FAF8F5',
+                  color: 'var(--navy, #1C2B4A)',
+                  border: '1px solid var(--border, #E8DDD2)',
+                  borderRadius: 8,
+                  padding: '7px 12px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <Pencil size={13} />
+                <span>Modifier</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTogglePublication}
+                disabled={publishing}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: isPublie ? '#f0fdf4' : 'var(--accent, #C75B00)',
+                  color: isPublie ? '#15803d' : '#fff',
+                  border: isPublie ? '1px solid #bbf7d0' : 'none',
+                  borderRadius: 8,
+                  padding: '7px 12px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: publishing ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <Globe size={13} />
+                <span>{publishing ? 'Patientez…' : isPublie ? 'En ligne sur Marketplace' : 'Publier sur Marketplace'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -301,12 +332,12 @@ export default function AgenceBienDetailPage() {
               Équipements & Atouts
             </h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {bien.climatisation && <span style={{ padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}>❄️ Climatisation</span>}
-              {bien.parking && <span style={{ padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}>🚗 Parking réservé</span>}
-              {bien.gardien && <span style={{ padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}>🛡️ Gardiennage 24/7</span>}
-              {bien.ascenseur && <span style={{ padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}>🛗 Ascenseur</span>}
-              {bien.piscine && <span style={{ padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}>🏊 Piscine</span>}
-              {bien.meuble && <span style={{ padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}>🛋️ Meublé</span>}
+              {bien.climatisation && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}><Wind size={13} color="var(--navy, #1C2B4A)" /> Climatisation</span>}
+              {bien.parking && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}><Car size={13} color="var(--navy, #1C2B4A)" /> Parking réservé</span>}
+              {bien.gardien && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}><ShieldCheck size={13} color="var(--navy, #1C2B4A)" /> Gardiennage 24/7</span>}
+              {bien.ascenseur && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}><ArrowUpDown size={13} color="var(--navy, #1C2B4A)" /> Ascenseur</span>}
+              {bien.piscine && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}><Waves size={13} color="var(--navy, #1C2B4A)" /> Piscine</span>}
+              {bien.meuble && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}><Armchair size={13} color="var(--navy, #1C2B4A)" /> Meublé</span>}
             </div>
           </div>
 
@@ -387,8 +418,9 @@ export default function AgenceBienDetailPage() {
                     {m.raisons && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
                         {m.raisons.map((r: string, idx: number) => (
-                          <span key={idx} style={{ fontSize: 10.5, padding: '1px 6px', background: '#e2e8f0', borderRadius: 4, color: '#475569' }}>
-                            ✓ {r}
+                          <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, padding: '1px 6px', background: '#e2e8f0', borderRadius: 4, color: '#475569' }}>
+                            <CheckCircle2 size={10} color="#10b981" />
+                            {r}
                           </span>
                         ))}
                       </div>
@@ -501,6 +533,20 @@ export default function AgenceBienDetailPage() {
             </div>
           )}
         </div>
+      )}
+
+      {showModalEditer && bien && (
+        <ModalEditerBien
+          slug={slug}
+          bien={bien}
+          onClose={() => setShowModalEditer(false)}
+          onSuccess={(updated) => {
+            setShowModalEditer(false)
+            setBien(updated)
+            setToastMsg('Informations du bien mises à jour avec succès.')
+            setTimeout(() => setToastMsg(null), 3500)
+          }}
+        />
       )}
     </div>
   )
