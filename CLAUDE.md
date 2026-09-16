@@ -1,3 +1,24 @@
+- **Intégration & Déclinaison des Évolutions Majeures du Social Shop depuis `main` dans le Vertical Immobilier (16 septembre 2026)** 🛍️🏢⚡ 🚀 ✅ :
+  * **🎯 1. Fusion Complète de `origin/main` & Résolution des Conflits** :
+    - **Synchronisation Git de `main`** : Récupération des commits récents de `main` (`56285da0`, `fec039d5`, `87769cf6`, `0d0602d0`) intégrant le Social Shop v2, le pipeline universel zéro-fatigue, le scraper Twitterbot OpenGraph d'Instagram, l'oEmbed officiel YouTube public, l'OCR WhatsApp et l'auto-sync cron.
+    - **Résolution sans Perte de Code** : Fusion propre des fichiers `backend/services/social-parser.js`, `SocialAccountsView.tsx` et `CLAUDE.md`, préservant à 100% à la fois les acquis de l'immobilier et les avancées du commerce général.
+  * **🎯 2. Moteur de Smart Matching Immobilier (`matching-immo-client.ts`)** :
+    - **Scoring Multi-Critères Spécifique Immo** : Détection des loyers et prix de vente sénégalais (jusqu'en millions/milliards FCFA : `85M`, `120 millions`, `350 000 F/mois`), recoupement automatique des quartiers dakarois (*Almadies, Ngor, Ouakam, Mermoz, Plateau, Fann, Saly...*) et des typologies de biens (*villa, appartement, studio, terrain, bureau*).
+    - **Association IA en « 1 Clic »** : Tout post sans bien affiche directement la suggestion la plus pertinente avec son niveau de confiance (`high`, `medium`, `low`) et un bouton direct « Associer ».
+  * **🎯 3. Cartes Compactes & Fallback Natif Iframe Instagram (`SocialPostCardImmo.tsx`)** :
+    - **Format Élégant & Proportionné** : Dimensions compactes ~310px remplaçant les cartes étirées, suppression définitive de tous les mocks Unsplash résiduels.
+    - **Aperçu Visuel Résilient** : Priorité à la miniature officielle CDN extraite par le scraper backend, fallback immédiat sur la photo du bien immobilier associé, et injection de l'iframe embed officielle Instagram (`pointer-events: none`) si la miniature est indisponible.
+  * **🎯 4. Modularisation Stricte & Règle des 450 Lignes (`AGENTS.md`)** :
+    - Extraction de `SocialPostCardImmo.tsx` (310 lignes) et `ModalAssocierBien.tsx` (240 lignes).
+    - `SocialPostsFeedTab.tsx` ramené de **528 à 145 lignes** (< 450 lignes).
+    - `SocialImportTab.tsx` ramené de **484 à 365 lignes** (< 450 lignes).
+  * **🧪 5. Validation Qualité Exhaustive (100% Vert)** :
+    - Tests Unitaires Backend Jest : **38/38 suites réussies, 296/296 tests passés avec succès**.
+    - Tests Unitaires Spécifiques Social Shop (`social-shop.test.js`) : **42/42 tests validés**.
+    - Tests Unitaires Frontend Next.js : **69/69 tests validés**.
+    - Compilateur TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop : **0 violation**.
+
 - **Correctif Social Shop — Extraction Automatique Légendes & Miniatures Instagram & YouTube + Aperçu Visuel Compte Marchand (16 septembre 2026)** 🛍️📸⚡ 🚀 ✅ :
   * **🎯 1. Crawler OpenGraph Twitterbot pour Instagram (`backend/services/social-parser.js`)** :
     - **Bypass Meta oEmbed Restriction** : Meta bloquait l'endpoint `/instagram_oembed` sans App Review préalable (code 10), laissant les légendes vides et les miniatures nulles.

@@ -327,12 +327,18 @@ export default function AgenceVitrinePubliquePage() {
                       boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
                     }}
                   >
-                    <div style={{ position: 'relative', height: 260, background: '#0F172A' }}>
-                      <img
-                        src={post.thumbnail_url || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'}
-                        alt={post.caption || 'Visite vidéo'}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
+                    <div style={{ position: 'relative', height: 220, background: '#0F172A', overflow: 'hidden' }}>
+                      {(post.thumbnail_url || bien?.image_url) ? (
+                        <img
+                          src={post.thumbnail_url || bien?.image_url}
+                          alt={post.caption || 'Visite vidéo'}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
+                          <Video size={36} />
+                        </div>
+                      )}
 
                       {/* Bouton lecture */}
                       <a
