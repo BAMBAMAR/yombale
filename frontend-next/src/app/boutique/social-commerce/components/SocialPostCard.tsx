@@ -15,10 +15,12 @@ import {
   CheckSquare,
   Square,
   Sparkles,
+  Pencil,
 } from 'lucide-react'
 import { ProduitCatalogue, SocialPostAdmin } from '../types'
 import { matchProductsClient } from '../matching'
 import { QuickProductPicker } from './QuickProductPicker'
+import EditPostModal from './EditPostModal'
 
 interface SocialPostCardProps {
   post: SocialPostAdmin
@@ -31,6 +33,7 @@ interface SocialPostCardProps {
   onDissociateProduct: (postId: string, productId: string) => void
   onOpenAssociateModal: (post: SocialPostAdmin) => void
   onDirectAssociate?: (postId: string, productId: string) => Promise<void> | void
+  onUpdatePost?: (postId: string, data: { caption?: string; thumbnail_url?: string }) => Promise<void>
 }
 
 export function SocialPostCard({
@@ -44,9 +47,18 @@ export function SocialPostCard({
   onDissociateProduct,
   onOpenAssociateModal,
   onDirectAssociate,
+  onUpdatePost,
 }: SocialPostCardProps) {
   const [showQuickPicker, setShowQuickPicker] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [associating, setAssociating] = useState(false)
+
+  // Résolution miniature : miniature officielle ou première image du produit lié
+  const merchantThumb =
+    post.thumbnail_url ||
+    (post.produits && post.produits.length > 0 && post.produits[0].images?.[0]
+      ? post.produits[0].images[0]
+      : null)
 
   // Smart Matching instantané côté client
   const smartSuggestions = useMemo(() => {
@@ -92,9 +104,14 @@ export function SocialPostCard({
         </button>
 
         {/* Miniature vidéo */}
-        <div className="social-compact-thumb">
-          {post.thumbnail_url ? (
-            <ExternalImg src={post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div
+          className="social-compact-thumb"
+          onClick={() => onUpdatePost && setShowEditModal(true)}
+          style={{ cursor: onUpdatePost ? 'pointer' : 'default' }}
+          title={onUpdatePost ? 'Modifier la miniature ou la légende' : undefined}
+        >
+          {merchantThumb ? (
+            <ExternalImg src={merchantThumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <div
               style={{
@@ -377,6 +394,17 @@ export function SocialPostCard({
           <ExternalLink size={12} />
         </a>
 
+        {onUpdatePost && (
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="social-compact-action-btn"
+            style={{ color: '#0f172a' }}
+            title="Modifier la miniature ou la légende"
+          >
+            <Pencil size={12} />
+          </button>
+        )}
+
         <button
           onClick={() => onDelete(post.id)}
           className="social-compact-action-btn"
@@ -386,6 +414,15 @@ export function SocialPostCard({
           <Trash2 size={12} />
         </button>
       </div>
+
+      {/* Modal de modification rapide de miniature et légende */}
+      {showEditModal && onUpdatePost && (
+        <EditPostModal
+          post={post}
+          onClose={() => setShowEditModal(false)}
+          onSave={onUpdatePost}
+        />
+      )}
     </div>
   )
 }

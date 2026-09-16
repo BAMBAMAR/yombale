@@ -1,3 +1,19 @@
+- **Optimisation Visuelle & Aperçu Instagram Social Shop — Dimensions Compactes (310px), Intégration Native Iframe Instagram & Édition Rapide (16 septembre 2026)** 🛍️📐⚡ 🚀 ✅ :
+  * **🎯 1. Dimensions Compactes & Réduction de Taille par Deux (`vitrine-publique.css`, `SocialPostCard.tsx`)** :
+    - **Grille Compacte Bornée** : Remplacement du dimensionnement étiré par des colonnes `minmax(190px, 230px)` avec alignement naturel à gauche (`max-width: 240px` par carte). Évite que 1 à 3 cartes ne s'étirent à 400px de large.
+    - **Ratio d'Aspect Élégant `4/5`** : Transition du ratio démesuré `9/14` (1.55) vers un ratio moderne `4/5` (1.25), ramenant la hauteur totale de chaque carte de 620px à **~310px** (parfaitement proportionnée pour écran d'ordinateur et mobile sans défilement excessif).
+  * **🎯 2. Moteur d'Aperçu Instagram Multi-Niveaux (`SocialPostCard.tsx`)** :
+    - **Iframe Embed Officielle Instagram sans Clé API** : Si Meta bloque l'oEmbed serveur ou que `thumbnail_url` est nul, la carte injecte directement l'iframe embed native Instagram (`https://www.instagram.com/reel/<id>/embed/` avec `pointer-events: none`). Le navigateur charge ainsi le visuel natif du Reel/Post, son affiche vidéo, son bouton play et son auteur sans aucune dépendance serveur.
+    - **Fallback Automatique sur le Produit Associé** : Si un produit du catalogue est lié au post, la photo du produit est instantanément utilisée comme miniature du post.
+  * **🎯 3. Gestion & Édition des Publications Côté Marchand (`EditPostModal.tsx`, `social-shop.js`, `SocialPostCard.tsx`)** :
+    - **Composant `EditPostModal.tsx`** : Modale légère permettant au marchand de modifier la légende (*« Publication sans légende »*) et de coller une URL de miniature ou de sélectionner en 1 clic l'une des photos des produits associés.
+    - **Déclenchement Intuitif** : Clic direct sur la miniature ou via le nouveau bouton d'édition (Crayon).
+    - **Support Backend `PATCH` & Auto-Backfill** : `PATCH /api/boutiques/:id/social/admin/posts/:postId` accepte désormais `thumbnail_url`, et l'association produit (`POST /:postId/produits`) auto-complète la miniature si elle était vide.
+  * **🧪 4. Validation Qualité Complète (100% Vert)** :
+    - Tests Unitaires Backend (`tests/unit/social-shop.test.js`) : **42/42 tests validés avec succès**.
+    - Typecheck TypeScript Frontend (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **Conforme (composants < 450 lignes, tokens stricts, zéro emoji dans l'UI)**.
+
 - **Évolution Majeure du Social Shop — Smart Matching v2, Import Direct WhatsApp Status avec OCR & Association Produit en 1 Clic (16 septembre 2026)** 🛍️📱⚡ 🚀 ✅ :
   * **🎯 1. Moteur de Smart Matching v2 Multi-Critères (`backend/services/social-parser.js`, `matching.ts`)** :
     - **Détection de Prix Sénégalais (`extractPricesFromText`)** : Extraction regex des montants en devises locales (`15000f`, `15.000 FCFA`, `15 000 CFA`, `25k f`, `prix: 30 000`, `350 000 XOF`). Bonus de score +0.25 en cas de correspondance avec le prix d'un produit (tolérance ±5%).

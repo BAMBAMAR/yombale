@@ -327,6 +327,7 @@ export default function SocialShopManager({
           handleDeletePost={postsMgmt.handleDeletePost}
           handleDissociateProduct={postsMgmt.handleDissociateProduct}
           setSelectedPostForProduct={postsMgmt.setSelectedPostForProduct}
+          onUpdatePost={postsMgmt.handleUpdatePost}
         />
       )}
 

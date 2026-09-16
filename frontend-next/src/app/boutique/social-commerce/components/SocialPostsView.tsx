@@ -30,6 +30,7 @@ interface SocialPostsViewProps {
   handleDissociateProduct: (postId: string, productId: string) => void
   setSelectedPostForProduct: (post: SocialPostAdmin | null) => void
   onDirectAssociate?: (postId: string, productId: string) => Promise<void> | void
+  onUpdatePost?: (postId: string, data: { caption?: string; thumbnail_url?: string }) => Promise<void>
 }
 
 export function SocialPostsView({
@@ -57,6 +58,7 @@ export function SocialPostsView({
   setSelectedPostForProduct,
   catalogue = [],
   onDirectAssociate,
+  onUpdatePost,
 }: SocialPostsViewProps) {
   return (
     <div className="social-shop-compact-card">
@@ -153,6 +155,7 @@ export function SocialPostsView({
               onDissociateProduct={handleDissociateProduct}
               onOpenAssociateModal={setSelectedPostForProduct}
               onDirectAssociate={onDirectAssociate}
+              onUpdatePost={onUpdatePost}
             />
           ))}
         </div>

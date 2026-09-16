@@ -475,7 +475,7 @@ router.patch(['/:id/social/admin/posts/:postId', '/boutiques/:id/social/admin/po
     const hasAccess = await verifierAccesBoutique(boutique.id, req.user.userId);
     if (!hasAccess) return res.status(403).json({ error: 'Accès non autorisé' });
 
-    const { visible, is_featured, ordre, caption } = req.body;
+    const { visible, is_featured, ordre, caption, thumbnail_url } = req.body;
 
     const fields = [];
     const values = [req.params.postId, boutique.id];
@@ -495,6 +495,10 @@ router.patch(['/:id/social/admin/posts/:postId', '/boutiques/:id/social/admin/po
     if (caption !== undefined) {
       values.push(String(caption));
       fields.push(`caption = $${values.length}`);
+    }
+    if (thumbnail_url !== undefined) {
+      values.push(thumbnail_url ? String(thumbnail_url) : null);
+      fields.push(`thumbnail_url = $${values.length}`);
     }
 
     if (fields.length === 0) {
@@ -561,7 +565,7 @@ router.post(['/:id/social/admin/posts/:postId/produits', '/boutiques/:id/social/
 
     // Vérifier que le produit appartient bien à la même boutique (sécurité multi-tenant)
     const pCheck = await pool.query(
-      `SELECT id FROM boutique_produits WHERE id = $1 AND boutique_id = $2`,
+      `SELECT id, images FROM boutique_produits WHERE id = $1 AND boutique_id = $2`,
       [produit_id, boutique.id]
     );
     if (!pCheck.rows[0]) {
@@ -570,7 +574,7 @@ router.post(['/:id/social/admin/posts/:postId/produits', '/boutiques/:id/social/
 
     // Vérifier que la publication appartient à la boutique
     const postCheck = await pool.query(
-      `SELECT id FROM social_posts WHERE id = $1 AND boutique_id = $2`,
+      `SELECT id, thumbnail_url FROM social_posts WHERE id = $1 AND boutique_id = $2`,
       [req.params.postId, boutique.id]
     );
     if (!postCheck.rows[0]) {
@@ -585,6 +589,14 @@ router.post(['/:id/social/admin/posts/:postId/produits', '/boutiques/:id/social/
          valide_par_marchand = TRUE`,
       [req.params.postId, produit_id, parseFloat(confidence_score) || 1.0]
     );
+
+    // Auto-compléter la miniature du post avec l'image du produit si elle est vide (ex: post Instagram)
+    if (!postCheck.rows[0].thumbnail_url && pCheck.rows[0].images && pCheck.rows[0].images.length > 0) {
+      await pool.query(
+        `UPDATE social_posts SET thumbnail_url = $1, updated_at = NOW() WHERE id = $2 AND thumbnail_url IS NULL`,
+        [pCheck.rows[0].images[0], req.params.postId]
+      );
+    }
 
     res.json({ success: true });
   } catch (err) {
