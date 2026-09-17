@@ -67,33 +67,37 @@ router.post('/message', limiterRecherche, async (req, res) => {
 
   // 0. Détection Comparateur de Prix Multi-Marchands (Audit M5)
   if (detecterIntentionComparateur(rawText)) {
-    const sujet = extraireSujetComparaison(rawText) || rawText;
-    const resComp = await comparerPrixProduits(sujet);
-    if (resComp.offres && resComp.offres.length > 0) {
-      let reply = `⚖️ Comparatif des prix relevés pour "${sujet}", classé par ordre croissant :\n`;
-      if (resComp.economieMax > 0) {
-        reply += `💡 Jusqu'à ${resComp.economieMax.toLocaleString('fr-FR')} FCFA d'écart constaté entre nos marchands partenaires !`;
+    try {
+      const sujet = extraireSujetComparaison(rawText) || rawText;
+      const resComp = await comparerPrixProduits(sujet);
+      if (resComp && resComp.offres && resComp.offres.length > 0) {
+        let reply = `⚖️ Comparatif des prix relevés pour "${sujet}", classé par ordre croissant :\n`;
+        if (resComp.economieMax > 0) {
+          reply += `💡 Jusqu'à ${resComp.economieMax.toLocaleString('fr-FR')} FCFA d'écart constaté entre nos marchands partenaires !`;
+        }
+        return res.json({
+          success: true,
+          reply,
+          items: resComp.offres.map((it) => ({
+            id: it.id,
+            titre: it.nom,
+            prix: it.prix,
+            photo: Array.isArray(it.photos) ? it.photos[0] : it.photos,
+            type: it.source === 'boutique' ? 'produit' : 'marketplace',
+            boutiqueNom: it.boutique_nom,
+            url: it.source === 'boutique'
+              ? `/boutiques/${it.boutique_slug || 'boutique'}/produits/${it.id}`
+              : `/produit/${it.id}`,
+          })),
+          chips: [
+            { label: 'Comparer sur le site', url: `/recherche?q=${encodeURIComponent(sujet)}` },
+            { label: 'Commander sur WhatsApp', url: whatsappUrl },
+          ],
+          whatsappUrl,
+        });
       }
-      return res.json({
-        success: true,
-        reply,
-        items: resComp.offres.map((it) => ({
-          id: it.id,
-          titre: it.nom,
-          prix: it.prix,
-          photo: Array.isArray(it.photos) ? it.photos[0] : it.photos,
-          type: it.source === 'boutique' ? 'produit' : 'marketplace',
-          boutiqueNom: it.boutique_nom,
-          url: it.source === 'boutique'
-            ? `/boutiques/${it.boutique_slug || 'boutique'}/produits/${it.id}`
-            : `/produit/${it.id}`,
-        })),
-        chips: [
-          { label: 'Comparer sur le site', url: `/recherche?q=${encodeURIComponent(sujet)}` },
-          { label: 'Commander sur WhatsApp', url: whatsappUrl },
-        ],
-        whatsappUrl,
-      });
+    } catch (errComp) {
+      console.warn('[CHAT API COMPARATOR WARN]:', errComp.message);
     }
   }
 

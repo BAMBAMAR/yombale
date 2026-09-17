@@ -45,34 +45,49 @@ async function comparerPrixProduits(sujet) {
     return { offres: [], sujet: '', minPrix: 0, maxPrix: 0, economieMax: 0 };
   }
 
-  // 1. Offres Boutiques Partenaires
-  const rBoutiques = await pool.query(
-    `SELECT bp.id, bp.nom, bp.prix, bp.stock_quantite, bp.photos,
-            b.nom as boutique_nom, b.slug as boutique_slug, bp.boutique_id,
-            'boutique' as source
-     FROM boutique_produits bp
-     JOIN boutiques b ON b.id = bp.boutique_id
-     WHERE b.actif = true AND bp.statut = 'actif'
-       AND (bp.stock_quantite IS NULL OR bp.stock_quantite > 0)
-       AND (bp.nom ILIKE '%' || $1 || '%' OR bp.description ILIKE '%' || $1 || '%')
-     ORDER BY bp.prix ASC
-     LIMIT 5`,
-    [sujet]
-  );
+  let boutiquesRows = [];
+  let marketRows = [];
 
-  // 2. Offres Marketplace Générale
-  const rMarket = await pool.query(
-    `SELECT p.id, p.titre as nom, p.prix, NULL as stock_quantite, p.images as photos,
-            'Marketplace Nopalou' as boutique_nom, NULL as boutique_slug, NULL as boutique_id,
-            'marketplace' as source
-     FROM produits p
-     WHERE p.actif = true AND (p.titre ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%')
-     ORDER BY p.prix ASC
-     LIMIT 5`,
-    [sujet]
-  );
+  try {
+    // 1. Offres Boutiques Partenaires
+    const rBoutiques = await pool.query(
+      `SELECT bp.id, bp.nom, bp.prix, bp.stock_quantite, bp.images as photos,
+              b.nom as boutique_nom, b.slug as boutique_slug, bp.boutique_id,
+              'boutique' as source
+       FROM boutique_produits bp
+       JOIN boutiques b ON b.id = bp.boutique_id
+       WHERE b.actif = true 
+         AND (bp.en_stock = true OR bp.en_stock IS NULL)
+         AND (bp.stock_quantite IS NULL OR bp.stock_quantite > 0)
+         AND (bp.nom ILIKE '%' || $1 || '%' OR bp.description ILIKE '%' || $1 || '%')
+       ORDER BY bp.prix ASC
+       LIMIT 5`,
+      [sujet]
+    );
+    boutiquesRows = rBoutiques.rows || [];
+  } catch (errBq) {
+    console.warn('[COMPARATEUR BOUTIQUES WARN]:', errBq.message);
+  }
 
-  const toutesOffres = [...rBoutiques.rows, ...rMarket.rows]
+  try {
+    // 2. Offres Marketplace Générale
+    const rMarket = await pool.query(
+      `SELECT p.id, p.nom, p.prix_min as prix, NULL as stock_quantite, p.image_url as photos,
+              'Marketplace Nopalou' as boutique_nom, NULL as boutique_slug, NULL as boutique_id,
+              'marketplace' as source
+       FROM produits p
+       WHERE (p.nom ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%')
+         AND p.prix_min IS NOT NULL AND p.prix_min > 0
+       ORDER BY p.prix_min ASC
+       LIMIT 5`,
+      [sujet]
+    );
+    marketRows = rMarket.rows || [];
+  } catch (errMkt) {
+    console.warn('[COMPARATEUR MARKETPLACE WARN]:', errMkt.message);
+  }
+
+  const toutesOffres = [...boutiquesRows, ...marketRows]
     .filter(o => o.prix && Number(o.prix) > 0)
     .sort((a, b) => Number(a.prix) - Number(b.prix))
     .slice(0, 5);
