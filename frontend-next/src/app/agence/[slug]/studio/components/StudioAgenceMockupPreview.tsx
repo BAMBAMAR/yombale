@@ -109,7 +109,7 @@ export default function StudioAgenceMockupPreview({
               <img
                 src={config.cover_url}
                 alt="Bannière"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.65 }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.95 }}
               />
             )}
 
@@ -121,6 +121,9 @@ export default function StudioAgenceMockupPreview({
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
+                background: config.cover_url
+                  ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.6) 100%)'
+                  : 'transparent',
                 color: '#FFFFFF',
               }}
             >

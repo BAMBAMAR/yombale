@@ -95,7 +95,7 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
       <div
         style={{
           background: coverImg
-            ? `linear-gradient(135deg, rgba(28, 43, 74, 0.92) 0%, rgba(15, 23, 42, 0.85) 100%), url(${coverImg}) center/cover no-repeat`
+            ? `linear-gradient(180deg, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0.58) 100%), url(${coverImg}) center/cover no-repeat`
             : 'linear-gradient(135deg, #1C2B4A 0%, #2A3F6D 100%)',
           borderRadius: 16,
           padding: '32px 24px',
@@ -135,7 +135,7 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: '-0.02em' }}>
+                <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: '-0.02em', textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)' }}>
                   {agence.nom}
                 </h1>
                 {studio?.theme_id && (
@@ -145,8 +145,9 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                       fontWeight: 800,
                       padding: '3px 8px',
                       borderRadius: 6,
-                      background: 'rgba(255,255,255,0.15)',
-                      backdropFilter: 'blur(4px)',
+                      background: 'rgba(15, 23, 42, 0.65)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      backdropFilter: 'blur(6px)',
                       color: '#FFFFFF',
                       textTransform: 'uppercase',
                     }}
@@ -157,12 +158,12 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
               </div>
 
               {slogan && (
-                <p style={{ margin: '4px 0 0', fontSize: 13.5, color: '#F8FAFC', fontStyle: 'italic', fontWeight: 600 }}>
+                <p style={{ margin: '4px 0 0', fontSize: 13.5, color: '#FFFFFF', fontStyle: 'italic', fontWeight: 600, textShadow: '0 1px 4px rgba(0, 0, 0, 0.7)' }}>
                   « {slogan} »
                 </p>
               )}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, fontSize: 13, color: '#E2E8F0', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, fontSize: 13, color: '#F1F5F9', textShadow: '0 1px 4px rgba(0, 0, 0, 0.7)', flexWrap: 'wrap' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <MapPin size={14} />
                   {agence.quartier ? `${agence.quartier}, ${agence.ville}` : agence.ville}
@@ -175,13 +176,13 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
           </div>
 
           {agence.description && (
-            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: '#CBD5E1', maxWidth: 800 }}>
+            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: '#F1F5F9', textShadow: '0 1px 4px rgba(0, 0, 0, 0.7)', maxWidth: 800 }}>
               {agence.description}
             </p>
           )}
 
         {/* Coordonnées & Réseaux Sociaux */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.2)' }}>
           {waNum && (
             <a
               href={`https://wa.me/${waNum}?text=${encodeURIComponent(`Bonjour ${agence.nom}, je visite votre vitrine Nopalou et souhaite me renseigner sur vos biens disponibles.`)}`}
@@ -198,6 +199,7 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                 fontSize: 13,
                 fontWeight: 750,
                 textDecoration: 'none',
+                boxShadow: '0 2px 8px rgba(37, 211, 102, 0.35)',
               }}
             >
               <MessageCircle size={16} />
@@ -212,7 +214,9 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                background: 'rgba(255,255,255,0.1)',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(8px)',
                 color: '#FFFFFF',
                 padding: '8px 16px',
                 borderRadius: 8,
@@ -235,7 +239,9 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                background: 'rgba(255,255,255,0.1)',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(8px)',
                 color: '#FFFFFF',
                 padding: '8px 14px',
                 borderRadius: 8,
@@ -262,7 +268,9 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                 width: 36,
                 height: 36,
                 borderRadius: 8,
-                background: 'rgba(255,255,255,0.1)',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(8px)',
                 color: '#FFFFFF',
               }}
             >
@@ -283,7 +291,9 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                 width: 36,
                 height: 36,
                 borderRadius: 8,
-                background: 'rgba(255,255,255,0.1)',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(8px)',
                 color: '#FFFFFF',
               }}
             >
@@ -304,7 +314,9 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                 width: 36,
                 height: 36,
                 borderRadius: 8,
-                background: 'rgba(255,255,255,0.1)',
+                background: 'rgba(15, 23, 42, 0.65)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(8px)',
                 color: '#FFFFFF',
               }}
             >
@@ -331,9 +343,10 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(15, 23, 42, 0.65)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(8px)',
               color: '#FFFFFF',
-              border: 'none',
               padding: '8px 14px',
               borderRadius: 8,
               fontSize: 12.5,

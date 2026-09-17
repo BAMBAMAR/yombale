@@ -38,6 +38,8 @@ interface LoyerCardMobileProps {
   onEncaisser: (loyer: LoyerEcheance) => void
   onRelancer: (loyerId: string) => void
   onEditer: (loyer: LoyerEcheance) => void
+  isSelected?: boolean
+  onToggleSelect?: (loyerId: string) => void
 }
 
 export function LoyerCardMobile({
@@ -46,6 +48,8 @@ export function LoyerCardMobile({
   onEncaisser,
   onRelancer,
   onEditer,
+  isSelected = false,
+  onToggleSelect,
 }: LoyerCardMobileProps) {
   const token = getImmoAuthToken()
   const telNet = (loyer.locataire_tel || '').replace(/[^0-9]/g, '')
@@ -61,22 +65,32 @@ export function LoyerCardMobile({
   const waUrl = telNet ? `https://wa.me/${telNet}?text=${encodeURIComponent(waMessage)}` : null
 
   const isPaye = loyer.statut === 'paye'
-  const isRetard = loyer.statut === 'retard'
+  const isRetard = loyer.statut === 'retard' || loyer.statut === 'impaye'
 
   return (
     <div
       style={{
         background: '#FFFFFF',
         borderRadius: 14,
-        border: `1px solid ${isRetard ? '#FECACA' : 'var(--border, #E8DDD2)'}`,
-        boxShadow: '0 2px 8px rgba(28, 43, 74, 0.04)',
+        border: isSelected
+          ? '2px solid var(--accent, #C75B00)'
+          : `1px solid ${isRetard ? '#FECACA' : 'var(--border, #E8DDD2)'}`,
+        boxShadow: isSelected ? '0 4px 12px rgba(199, 91, 0, 0.1)' : '0 2px 8px rgba(28, 43, 74, 0.04)',
         padding: 14,
         marginBottom: 12,
       }}
     >
-      {/* Ligne d'en-tête : Période + Statut */}
+      {/* Ligne d'en-tête : Checkbox + Période + Statut */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {onToggleSelect && (
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggleSelect(loyer.id)}
+              className="immo-checkbox"
+            />
+          )}
           <Calendar size={14} color="#64748B" />
           <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--navy, #1C2B4A)' }}>
             {loyer.periode}

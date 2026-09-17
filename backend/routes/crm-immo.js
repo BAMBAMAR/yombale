@@ -847,4 +847,37 @@ router.delete('/agence/:slugOrId/proprietaires/:id', verifierToken, requireAgenc
   }
 });
 
+// ── PUT /api/crm-immo/agence/:slugOrId/visites/batch-statut — Mise à jour groupée statut visites ──
+router.put(
+  ['/agence/:slugOrId/visites/batch-statut', '/:slugOrId/visites/batch-statut'],
+  verifierToken,
+  requireAgenceAccess(),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { visiteIds, statut } = req.body;
+
+      if (!Array.isArray(visiteIds) || visiteIds.length === 0 || !statut) {
+        return res.status(400).json({ success: false, error: 'Visites et statut requis.' });
+      }
+
+      await pool.query(
+        `UPDATE visites_immo
+         SET statut = $1, updated_at = NOW()
+         WHERE id = ANY($2::uuid[]) AND agence_id = $3`,
+        [statut, visiteIds, agenceId]
+      );
+
+      res.json({
+        success: true,
+        message: `${visiteIds.length} visite(s) marquée(s) comme "${statut}".`
+      });
+    } catch (err) {
+      console.error('[BATCH_VISITES_STATUT_ERR]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur mise à jour groupée des visites' });
+    }
+  }
+);
+
 module.exports = router;
+

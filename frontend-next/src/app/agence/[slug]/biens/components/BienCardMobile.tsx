@@ -9,14 +9,15 @@ import {
   MessageCircle,
   MoreVertical,
   Globe,
-  Copy,
-  Archive,
-  Trash2,
   Home,
   CheckCircle2,
   Maximize2,
   BedDouble
 } from 'lucide-react'
+import BienCardMenu from './BienCardMenu'
+
+
+
 
 export interface BienItem {
   id: string
@@ -37,6 +38,8 @@ export interface BienItem {
   annonce_publiee_actif?: boolean
   nb_visites?: number
   nb_baux_actifs?: number
+  created_at?: string
+  date_creation?: string
 }
 
 interface BienCardMobileProps {
@@ -48,6 +51,8 @@ interface BienCardMobileProps {
   onDelete: (bienId: string) => void
   onPublish: (bienId: string) => void
   isPublishing?: boolean
+  isSelected?: boolean
+  onToggleSelect?: (bienId: string) => void
 }
 
 export function BienCardMobile({
@@ -59,6 +64,8 @@ export function BienCardMobile({
   onDelete,
   onPublish,
   isPublishing = false,
+  isSelected = false,
+  onToggleSelect,
 }: BienCardMobileProps) {
   const [showMenu, setShowMenu] = useState(false)
 
@@ -77,8 +84,9 @@ export function BienCardMobile({
         overflow: 'hidden',
         marginBottom: 12,
         borderRadius: 12,
-        border: '1px solid var(--border, #E8DDD2)',
+        border: isSelected ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
         background: '#FFFFFF',
+        boxShadow: isSelected ? '0 4px 12px rgba(199, 91, 0, 0.12)' : undefined,
       }}
     >
       {/* ── Partie Haute : Photo & Badges ── */}
@@ -110,8 +118,17 @@ export function BienCardMobile({
           </div>
         )}
 
-        {/* Badge Statut d'occupation */}
-        <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {/* Badge Statut d'occupation & Checkbox */}
+        <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+          {onToggleSelect && (
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggleSelect(bien.id)}
+              className="immo-checkbox"
+              style={{ width: 20, height: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }}
+            />
+          )}
           <span
             style={{
               fontSize: 10.5,
@@ -337,120 +354,18 @@ export function BienCardMobile({
 
         {/* Menu Contextuel Déroulé */}
         {showMenu && (
-          <div
-            style={{
-              marginTop: 10,
-              padding: '8px 10px',
-              background: '#FAF8F5',
-              borderRadius: 8,
-              border: '1px solid var(--border, #E8DDD2)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-            }}
-          >
-            {/* Publier / Dépublier Marketplace */}
-            <button
-              type="button"
-              disabled={isPublishing}
-              onClick={() => {
-                setShowMenu(false)
-                onPublish(bien.id)
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'none',
-                border: 'none',
-                fontSize: 12,
-                fontWeight: 700,
-                color: isPublie ? '#92400E' : 'var(--accent, #C75B00)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                padding: '4px 0',
-              }}
-            >
-              <Globe size={14} />
-              <span>{isPublie ? 'Retirer de la marketplace' : 'Publier sur la marketplace'}</span>
-            </button>
-
-            {/* Dupliquer */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowMenu(false)
-                onDuplicate(bien.id)
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'none',
-                border: 'none',
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--navy, #1C2B4A)',
-                cursor: 'pointer',
-                textAlign: 'left',
-                padding: '4px 0',
-              }}
-            >
-              <Copy size={14} />
-              <span>Dupliquer ce bien</span>
-            </button>
-
-            {/* Archiver */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowMenu(false)
-                onArchive(bien.id)
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'none',
-                border: 'none',
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#64748B',
-                cursor: 'pointer',
-                textAlign: 'left',
-                padding: '4px 0',
-              }}
-            >
-              <Archive size={14} />
-              <span>Archiver</span>
-            </button>
-
-            {/* Supprimer */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowMenu(false)
-                onDelete(bien.id)
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'none',
-                border: 'none',
-                fontSize: 12,
-                fontWeight: 700,
-                color: '#DC2626',
-                cursor: 'pointer',
-                textAlign: 'left',
-                padding: '4px 0',
-              }}
-            >
-              <Trash2 size={14} />
-              <span>Supprimer définitivement</span>
-            </button>
-          </div>
+          <BienCardMenu
+            bienId={bien.id}
+            isPublie={isPublie}
+            isPublishing={isPublishing}
+            onPublish={onPublish}
+            onDuplicate={onDuplicate}
+            onArchive={onArchive}
+            onDelete={onDelete}
+            onClose={() => setShowMenu(false)}
+          />
         )}
+
       </div>
     </div>
   )

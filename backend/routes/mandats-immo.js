@@ -330,4 +330,53 @@ router.delete('/agence/:slugOrId/:mandatId', verifierToken, requireAgenceAccess(
   }
 });
 
+// ── POST /api/mandats-immo/agence/:slugOrId/batch — Actions groupées sur mandats ──
+router.post(
+  ['/agence/:slugOrId/batch', '/:slugOrId/batch'],
+  verifierToken,
+  requireAgenceAccess('directeur'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { ids, action } = req.body;
+
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucun mandat sélectionné.' });
+      }
+
+      if (action === 'resilier') {
+        await pool.query(
+          `UPDATE mandats_immo SET statut = 'resilie', updated_at = NOW()
+           WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+          [ids, agenceId]
+        );
+        return res.json({ success: true, message: `${ids.length} mandat(s) résilié(s).` });
+      }
+
+      if (action === 'archiver') {
+        await pool.query(
+          `UPDATE mandats_immo SET statut = 'archive', updated_at = NOW()
+           WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+          [ids, agenceId]
+        );
+        return res.json({ success: true, message: `${ids.length} mandat(s) archivé(s).` });
+      }
+
+      if (action === 'supprimer') {
+        await pool.query(
+          `DELETE FROM mandats_immo WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+          [ids, agenceId]
+        );
+        return res.json({ success: true, message: `${ids.length} mandat(s) supprimé(s).` });
+      }
+
+      return res.status(400).json({ success: false, error: 'Action non reconnue' });
+    } catch (err) {
+      console.error('[BATCH_MANDATS_ERR]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur lors de l’action groupée' });
+    }
+  }
+);
+
 module.exports = router;
+

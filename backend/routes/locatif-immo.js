@@ -1155,16 +1155,193 @@ router.post('/public/payer-loyer/:echeanceId', async (req, res) => {
       methodePaiement: methode_paiement
     }).catch(() => {});
 
-    res.json({
-      success: true,
-      message: 'Paiement enregistré et quittance générée avec succès',
-      quittance_url: `/api/locatif-immo/mes-locations/quittance/${echeanceId}.pdf`
-    });
-  } catch (err) {
-    console.error('[POST /api/locatif-immo/public/payer-loyer/:echeanceId]', err.message);
-    res.status(500).json({ success: false, error: 'Erreur traitement du paiement de loyer' });
+      res.json({
+        success: true,
+        message: 'Paiement enregistré et quittance générée avec succès',
+        quittance_url: `/api/locatif-immo/mes-locations/quittance/${echeanceId}.pdf`
+      });
+    } catch (err) {
+      console.error('[POST /api/locatif-immo/public/payer-loyer/:echeanceId]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur traitement du paiement de loyer' });
+    }
   }
-});
+);
+
+// ── POST /api/locatif-immo/agence/:slugOrId/loyers/batch-encaisser — Encaissement groupé ──
+router.post(
+  ['/agence/:slugOrId/loyers/batch-encaisser', '/:slugOrId/loyers/batch-encaisser'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { loyerIds, mode_paiement = 'wave' } = req.body;
+
+      if (!Array.isArray(loyerIds) || loyerIds.length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucun loyer sélectionné.' });
+      }
+
+      const { rows } = await pool.query(
+        `UPDATE loyers_echeances
+         SET statut = 'paye',
+             montant_paye = montant_du,
+             montant_restant = 0,
+             date_paiement = NOW(),
+             mode_paiement = $1,
+             updated_at = NOW()
+         WHERE id = ANY($2::uuid[]) AND agence_id = $3
+         RETURNING id`,
+        [mode_paiement, loyerIds, agenceId]
+      );
+
+      // Déclencher les notifications de quittance pour chaque loyer
+      for (const row of rows) {
+        notifierConfirmationPaiementLoyerWhatsApp({
+          loyerId: row.id,
+          methodePaiement: mode_paiement
+        }).catch(() => {});
+      }
+
+      res.json({
+        success: true,
+        message: `${rows.length} loyer(s) encaissé(s) avec succès.`,
+        count: rows.length
+      });
+    } catch (err) {
+      console.error('[BATCH_ENCAISSER_LOYERS_ERR]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur encaissement groupé des loyers' });
+    }
+  }
+);
+
+// ── POST /api/locatif-immo/agence/:slugOrId/loyers/batch-relance — Relance WhatsApp groupée ──
+router.post(
+  ['/agence/:slugOrId/loyers/batch-relance', '/:slugOrId/loyers/batch-relance'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { loyerIds } = req.body;
+
+      if (!Array.isArray(loyerIds) || loyerIds.length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucun loyer sélectionné.' });
+      }
+
+      const { notifierRelanceLoyerWhatsApp } = require('../services/immo-whatsapp-notifications');
+      let envoyes = 0;
+
+      for (const id of loyerIds) {
+        try {
+          const ok = await notifierRelanceLoyerWhatsApp({ agenceId, loyerId: id });
+          if (ok) envoyes++;
+        } catch (e) {
+          console.warn('[BATCH_RELANCE_LOYER_WARN]', id, e.message);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `${envoyes} rappel(s) WhatsApp envoyé(s) avec succès.`,
+        envoyes
+      });
+    } catch (err) {
+      console.error('[BATCH_RELANCE_LOYERS_ERR]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur lors de la relance groupée' });
+    }
+  }
+);
+
+// ── POST /api/locatif-immo/agence/:slugOrId/baux/batch-resilier — Résiliation groupée de baux ──
+router.post(
+  ['/agence/:slugOrId/baux/batch-resilier', '/:slugOrId/baux/batch-resilier'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { bailIds, motif = 'Résiliation groupée' } = req.body;
+
+      if (!Array.isArray(bailIds) || bailIds.length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucun bail sélectionné.' });
+      }
+
+      const { rows: baux } = await pool.query(
+        `SELECT id, bien_id FROM baux_immo WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+        [bailIds, agenceId]
+      );
+
+      // Résilier les baux
+      await pool.query(
+        `UPDATE baux_immo SET statut = 'resilie', date_fin = CURRENT_DATE, updated_at = NOW()
+         WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+        [bailIds, agenceId]
+      );
+
+      // Libérer les biens associés
+      const bienIds = baux.map(b => b.bien_id).filter(Boolean);
+      if (bienIds.length > 0) {
+        await pool.query(
+          `UPDATE biens_immo SET statut_occupation = 'disponible', updated_at = NOW()
+           WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+          [bienIds, agenceId]
+        );
+      }
+
+      // Annuler les échéances de loyer futures
+      await pool.query(
+        `UPDATE loyers_echeances SET statut = 'annule', updated_at = NOW()
+         WHERE bail_id = ANY($1::uuid[]) AND agence_id = $2 AND statut = 'en_attente' AND date_echeance > CURRENT_DATE`,
+        [bailIds, agenceId]
+      );
+
+      res.json({
+        success: true,
+        message: `${baux.length} bail(s) résilié(s). Les biens associés ont été libérés.`,
+        count: baux.length
+      });
+    } catch (err) {
+      console.error('[BATCH_RESILIER_BAUX_ERR]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur résiliation groupée' });
+    }
+  }
+);
+
+// ── PATCH /api/locatif-immo/agence/:slugOrId/maintenance/batch-statut — Statut groupé tickets ──
+router.patch(
+  ['/agence/:slugOrId/maintenance/batch-statut', '/:slugOrId/maintenance/batch-statut'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { ticketIds, statut } = req.body;
+
+      if (!Array.isArray(ticketIds) || ticketIds.length === 0 || !statut) {
+        return res.status(400).json({ success: false, error: 'Tickets et statut requis.' });
+      }
+
+      const dateRes = statut === 'resolu' ? 'CURRENT_DATE' : 'NULL';
+      await pool.query(
+        `UPDATE maintenance_immo
+         SET statut = $1,
+             date_resolution = ${dateRes},
+             updated_at = NOW()
+         WHERE id = ANY($2::uuid[]) AND agence_id = $3`,
+        [statut, ticketIds, agenceId]
+      );
+
+      res.json({
+        success: true,
+        message: `${ticketIds.length} ticket(s) mis à jour vers le statut "${statut}".`
+      });
+    } catch (err) {
+      console.error('[BATCH_MAINTENANCE_STATUT_ERR]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur mise à jour tickets' });
+    }
+  }
+);
 
 module.exports = router;
+
 

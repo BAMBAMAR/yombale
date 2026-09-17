@@ -1,46 +1,28 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import {
   Wrench,
   Plus,
   CheckCircle2,
-  AlertCircle,
-  Clock,
-  Home,
-  User,
-  DollarSign,
-  Filter,
-  Check
+  Check,
+  Download,
+  Play
 } from 'lucide-react'
+import ModalNouveauTicket, { BienOption } from './components/ModalNouveauTicket'
+import TicketMaintenanceCard, { TicketItem } from './components/TicketMaintenanceCard'
+import AgenceTableToolbar, { SortOption } from '@/app/agence/components/AgenceTableToolbar'
+import AgenceBatchActionBar, { BatchAction } from '@/app/agence/components/AgenceBatchActionBar'
+import { exportToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
-interface TicketItem {
-  id: string
-  bien_id: string
-  bien_titre: string
-  bien_quartier?: string
-  bien_ville?: string
-  type: string
-  description: string
-  priorite: string
-  statut: string
-  demandeur: string
-  technicien?: string
-  cout_estime?: number
-  cout_reel?: number
-  a_charge_de: string
-  date_signal: string
-  date_resolution?: string
-}
-
-interface BienOption {
-  id: string
-  titre: string
-  quartier?: string
-  ville: string
-}
+const SORT_OPTIONS: SortOption[] = [
+  { value: 'date_signal', label: 'Date de signalement' },
+  { value: 'priorite', label: 'Priorité' },
+  { value: 'cout_estime', label: 'Coût estimé' },
+  { value: 'bien_titre', label: 'Bien immobilier' },
+]
 
 export default function AgenceMaintenancePage() {
   const params = useParams()
@@ -50,20 +32,15 @@ export default function AgenceMaintenancePage() {
   const [biens, setBiens] = useState<BienOption[]>([])
   const [loading, setLoading] = useState(true)
   const [filtreStatut, setFiltreStatut] = useState('tous')
-  const [showModal, setShowModal] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [filtrePriorite, setFiltrePriorite] = useState('tous')
+  const [search, setSearch] = useState('')
+  const [sortField, setSortField] = useState('date_signal')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchLoading, setBatchLoading] = useState(false)
 
-  const [form, setForm] = useState({
-    bien_id: '',
-    type: 'plomberie',
-    description: '',
-    priorite: 'normale',
-    demandeur: 'locataire',
-    technicien: '',
-    cout_estime: '',
-    a_charge_de: 'proprietaire',
-  })
+  const [showModal, setShowModal] = useState(false)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
 
   async function chargerDonnees() {
     try {
@@ -76,12 +53,7 @@ export default function AgenceMaintenancePage() {
       const dataB = await resBiens.json()
 
       if (dataT.success) setTickets(dataT.tickets || [])
-      if (dataB.success && dataB.biens) {
-        setBiens(dataB.biens)
-        if (dataB.biens.length > 0 && !form.bien_id) {
-          setForm(prev => ({ ...prev, bien_id: dataB.biens[0].id }))
-        }
-      }
+      if (dataB.success && dataB.biens) setBiens(dataB.biens)
     } catch (err) {
       console.error('[LOAD_MAINTENANCE_ERR]', err)
     } finally {
@@ -93,41 +65,6 @@ export default function AgenceMaintenancePage() {
     if (slug) chargerDonnees()
   }, [slug])
 
-  async function handleCreerTicket(e: React.FormEvent) {
-    e.preventDefault()
-    if (!form.bien_id || !form.description.trim()) return
-
-    try {
-      setSaving(true)
-      const res = await fetch(`/api/locatif-immo/agence/${slug}/maintenance`, {
-        method: 'POST',
-        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(form),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setToastMsg('Incident / Travail enregistré avec succès.')
-        setShowModal(false)
-        setForm({
-          bien_id: biens[0]?.id || '',
-          type: 'plomberie',
-          description: '',
-          priorite: 'normale',
-          demandeur: 'locataire',
-          technicien: '',
-          cout_estime: '',
-          a_charge_de: 'proprietaire',
-        })
-        chargerDonnees()
-        setTimeout(() => setToastMsg(null), 4000)
-      }
-    } catch (err) {
-      console.error('[CREATE_TICKET_ERR]', err)
-    } finally {
-      setSaving(false)
-    }
-  }
-
   async function handleChangerStatut(ticketId: string, nouveauStatut: string) {
     try {
       const res = await fetch(`/api/locatif-immo/agence/${slug}/maintenance/${ticketId}`, {
@@ -137,8 +74,8 @@ export default function AgenceMaintenancePage() {
       })
       const data = await res.json()
       if (data.success) {
-        setTickets(prev =>
-          prev.map(t => (t.id === ticketId ? { ...t, statut: nouveauStatut } : t))
+        setTickets((prev) =>
+          prev.map((t) => (t.id === ticketId ? { ...t, statut: nouveauStatut } : t))
         )
       }
     } catch (err) {
@@ -146,10 +83,152 @@ export default function AgenceMaintenancePage() {
     }
   }
 
-  const ticketsFiltres = tickets.filter(t => {
-    if (filtreStatut === 'tous') return true
-    return t.statut === filtreStatut
-  })
+  // Filtrage et Tri
+  const ticketsFiltres = useMemo(() => {
+    let list = tickets
+
+    if (filtreStatut !== 'tous') {
+      list = list.filter((t) => t.statut === filtreStatut)
+    }
+
+    if (filtrePriorite !== 'tous') {
+      list = list.filter((t) => t.priorite === filtrePriorite)
+    }
+
+    if (search.trim()) {
+      const s = search.toLowerCase()
+      list = list.filter(
+        (t) =>
+          t.bien_titre?.toLowerCase().includes(s) ||
+          t.bien_ville?.toLowerCase().includes(s) ||
+          t.bien_quartier?.toLowerCase().includes(s) ||
+          t.description?.toLowerCase().includes(s) ||
+          t.type?.toLowerCase().includes(s) ||
+          t.technicien?.toLowerCase().includes(s) ||
+          t.demandeur?.toLowerCase().includes(s)
+      )
+    }
+
+    return [...list].sort((a, b) => {
+      let valA: any = a[sortField as keyof TicketItem] || ''
+      let valB: any = b[sortField as keyof TicketItem] || ''
+
+      if (sortField === 'date_signal') {
+        valA = new Date(valA).getTime() || 0
+        valB = new Date(valB).getTime() || 0
+      } else if (sortField === 'cout_estime') {
+        valA = Number(valA) || 0
+        valB = Number(valB) || 0
+      } else if (sortField === 'priorite') {
+        const orderMap: Record<string, number> = { urgente: 3, normale: 2, basse: 1 }
+        valA = orderMap[valA] || 0
+        valB = orderMap[valB] || 0
+      } else {
+        valA = String(valA).toLowerCase()
+        valB = String(valB).toLowerCase()
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [tickets, filtreStatut, filtrePriorite, search, sortField, sortOrder])
+
+  // Sélection
+  function toggleSelect(id: string) {
+    const next = new Set(selectedIds)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSelectedIds(next)
+  }
+
+  function toggleSelectAll() {
+    if (ticketsFiltres.length > 0 && ticketsFiltres.every((t) => selectedIds.has(t.id))) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(ticketsFiltres.map((t) => t.id)))
+    }
+  }
+
+  // Actions groupées
+  async function handleBatchStatut(nouveauStatut: 'resolu' | 'en_cours') {
+    if (selectedIds.size === 0) return
+    const count = selectedIds.size
+    const label = nouveauStatut === 'resolu' ? 'marquer comme résolu(s)' : 'démarrer les travaux pour'
+    if (!confirm(`Voulez-vous ${label} ${count} ticket(s) sélectionné(s) ?`)) return
+
+    try {
+      setBatchLoading(true)
+      const res = await fetch(`/api/locatif-immo/agence/${slug}/maintenance/batch-statut`, {
+        method: 'PATCH',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ ticketIds: Array.from(selectedIds), statut: nouveauStatut }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSelectedIds(new Set())
+        chargerDonnees()
+        setToastMsg(`${count} ticket(s) mis à jour vers "${nouveauStatut}".`)
+        setTimeout(() => setToastMsg(null), 4000)
+      } else {
+        alert(data.error || 'Erreur lors de la mise à jour groupée.')
+      }
+    } catch (err) {
+      console.error('[BATCH_MAINTENANCE_ERR]', err)
+      alert('Erreur réseau lors de la mise à jour groupée.')
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  function handleExportCsv() {
+    const dataToExport = tickets.filter((t) => selectedIds.has(t.id))
+    exportToCsv(
+      dataToExport.map((t) => ({
+        'Bien': t.bien_titre,
+        'Ville': t.bien_ville || '',
+        'Quartier': t.bien_quartier || '',
+        'Type': t.type,
+        'Priorité': t.priorite,
+        'Statut': t.statut,
+        'Description': t.description,
+        'Demandeur': t.demandeur,
+        'Prise en charge': t.a_charge_de,
+        'Coût estimé (FCFA)': t.cout_estime || 0,
+        'Prestataire': t.technicien || '',
+        'Date signalement': t.date_signal,
+      })),
+      `maintenance-${slug}-${new Date().toISOString().slice(0, 10)}.csv`
+    )
+  }
+
+  const batchActions: BatchAction[] = [
+    {
+      id: 'en_cours',
+      label: 'Démarrer travaux',
+      icon: <Play size={14} />,
+      variant: 'secondary',
+      onClick: () => handleBatchStatut('en_cours'),
+    },
+    {
+      id: 'resolu',
+      label: 'Marquer résolu(s)',
+      icon: <Check size={14} />,
+      variant: 'primary',
+      onClick: () => handleBatchStatut('resolu'),
+    },
+    {
+      id: 'export',
+      label: 'Exporter CSV',
+      icon: <Download size={14} />,
+      variant: 'secondary',
+      onClick: handleExportCsv,
+    },
+  ]
+
+  const allSelected = ticketsFiltres.length > 0 && ticketsFiltres.every((t) => selectedIds.has(t.id))
+  const someSelected = ticketsFiltres.some((t) => selectedIds.has(t.id))
+  const activeFiltersCount = (filtreStatut !== 'tous' ? 1 : 0) + (filtrePriorite !== 'tous' ? 1 : 0)
 
   return (
     <div>
@@ -202,36 +281,84 @@ export default function AgenceMaintenancePage() {
         </div>
       )}
 
-      {/* ── Filtres de statut ── */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        {[
-          { id: 'tous', label: 'Tous les tickets' },
-          { id: 'signale', label: 'Signalés' },
-          { id: 'en_cours', label: 'En cours d’intervention' },
-          { id: 'resolu', label: 'Résolus' },
-        ].map(f => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => setFiltreStatut(f.id)}
-            style={{
-              padding: '7px 14px',
-              borderRadius: 6,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: '1px solid',
-              borderColor: filtreStatut === f.id ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
-              background: filtreStatut === f.id ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-              color: filtreStatut === f.id ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      {/* ── Barre d'outils (Recherche, Tri, Filtres) ── */}
+      <AgenceTableToolbar
+        searchPlaceholder="Rechercher incident, bien, technicien, quartier..."
+        searchValue={search}
+        onSearchChange={setSearch}
+        sortOptions={SORT_OPTIONS}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        onSortFieldChange={setSortField}
+        onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+        activeFiltersCount={activeFiltersCount}
+        onResetFilters={() => {
+          setSearch('')
+          setFiltreStatut('tous')
+          setFiltrePriorite('tous')
+        }}
+        totalResults={ticketsFiltres.length}
+        resultsLabel="ticket"
+        filterSlot={
+          <>
+            <select
+              value={filtreStatut}
+              onChange={(e) => setFiltreStatut(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--border, #E8DDD2)',
+                fontSize: 13,
+                background: '#FFFFFF',
+                color: 'var(--navy, #1C2B4A)',
+              }}
+            >
+              <option value="tous">Statut : Tous</option>
+              <option value="signale">Signalé</option>
+              <option value="en_cours">En cours</option>
+              <option value="resolu">Résolu</option>
+            </select>
 
-      {/* ── Liste des Tickets ── */}
+            <select
+              value={filtrePriorite}
+              onChange={(e) => setFiltrePriorite(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--border, #E8DDD2)',
+                fontSize: 13,
+                background: '#FFFFFF',
+                color: 'var(--navy, #1C2B4A)',
+              }}
+            >
+              <option value="tous">Priorité : Toutes</option>
+              <option value="urgente">Urgente</option>
+              <option value="normale">Normale</option>
+              <option value="basse">Basse</option>
+            </select>
+          </>
+        }
+      />
+
+      {/* ── Option Sélection Rapide ── */}
+      {ticketsFiltres.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: 'var(--navy, #1C2B4A)' }}>
+            <input
+              type="checkbox"
+              className="immo-checkbox"
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = !allSelected && someSelected
+              }}
+              onChange={toggleSelectAll}
+            />
+            <span>Tout sélectionner ({ticketsFiltres.length})</span>
+          </label>
+        </div>
+      )}
+
+      {/* ── Grille des Tickets ── */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>
           <p>Chargement des incidents...</p>
@@ -239,275 +366,44 @@ export default function AgenceMaintenancePage() {
       ) : ticketsFiltres.length === 0 ? (
         <div className="agence-card" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
           <Wrench size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-          <p style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 16 }}>Aucun incident à signaler</p>
-          <p style={{ fontSize: 13.5 }}>Tous vos biens sous gestion sont actuellement en parfait état.</p>
+          <p style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 16 }}>Aucun incident trouvé</p>
+          <p style={{ fontSize: 13.5 }}>Modifiez vos critères de recherche ou signalez un nouvel incident.</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-          {ticketsFiltres.map(ticket => (
-            <div key={ticket.id} className="agence-card" style={{ padding: 18, marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      padding: '3px 8px',
-                      borderRadius: 4,
-                      background: ticket.priorite === 'urgente' ? '#FEE2E2' : '#F1F5F9',
-                      color: ticket.priorite === 'urgente' ? '#991B1B' : '#475569',
-                    }}
-                  >
-                    {ticket.type} • {ticket.priorite}
-                  </span>
-
-                  <span className={`status-badge ${ticket.statut === 'resolu' ? 'actif' : 'pause'}`}>
-                    {ticket.statut === 'resolu' ? 'Résolu' : ticket.statut === 'en_cours' ? 'En cours' : 'Signalé'}
-                  </span>
-                </div>
-
-                <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 14.5, marginBottom: 4 }}>
-                  {ticket.bien_titre}
-                </div>
-                <div style={{ fontSize: 12, color: '#64748B', marginBottom: 10 }}>
-                  {ticket.bien_quartier ? `${ticket.bien_quartier}, ${ticket.bien_ville}` : ticket.bien_ville}
-                </div>
-
-                <p style={{ fontSize: 13, color: '#334155', lineHeight: 1.5, margin: '0 0 12px', whiteSpace: 'pre-wrap' }}>
-                  {ticket.description}
-                </p>
-
-                <div style={{ fontSize: 12, color: '#64748B', display: 'flex', flexDirection: 'column', gap: 4, padding: '10px', background: '#FAF8F5', borderRadius: 6, marginBottom: 14 }}>
-                  <div><strong>Demandeur :</strong> {ticket.demandeur}</div>
-                  <div><strong>Prise en charge :</strong> {ticket.a_charge_de === 'proprietaire' ? 'Bailleur' : 'Locataire'}</div>
-                  {ticket.cout_estime && <div><strong>Coût estimé :</strong> {Number(ticket.cout_estime).toLocaleString('fr-FR')} FCFA</div>}
-                  {ticket.technicien && <div><strong>Artisan / Prestataire :</strong> {ticket.technicien}</div>}
-                </div>
-              </div>
-
-              {/* Actions de Statut */}
-              <div style={{ display: 'flex', gap: 8, borderTop: '1px solid var(--border, #E8DDD2)', paddingTop: 12 }}>
-                {ticket.statut !== 'en_cours' && ticket.statut !== 'resolu' && (
-                  <button
-                    type="button"
-                    onClick={() => handleChangerStatut(ticket.id, 'en_cours')}
-                    style={{
-                      flex: 1,
-                      padding: '7px',
-                      borderRadius: 6,
-                      background: '#FAF8F5',
-                      border: '1px solid var(--border, #E8DDD2)',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Démarrer travaux
-                  </button>
-                )}
-                {ticket.statut !== 'resolu' && (
-                  <button
-                    type="button"
-                    onClick={() => handleChangerStatut(ticket.id, 'resolu')}
-                    style={{
-                      flex: 1,
-                      padding: '7px',
-                      borderRadius: 6,
-                      background: '#16a34a',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    <Check size={14} />
-                    Marquer résolu
-                  </button>
-                )}
-              </div>
-            </div>
+          {ticketsFiltres.map((ticket) => (
+            <TicketMaintenanceCard
+              key={ticket.id}
+              ticket={ticket}
+              isSelected={selectedIds.has(ticket.id)}
+              onToggleSelect={toggleSelect}
+              onChangerStatut={handleChangerStatut}
+            />
           ))}
         </div>
       )}
 
-      {/* ── Modale Nouveau Ticket ── */}
-      {showModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(28, 43, 74, 0.5)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 14,
-              maxWidth: 520,
-              width: '100%',
-              padding: 24,
-              maxHeight: '90vh',
-              overflowY: 'auto',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Wrench size={20} color="var(--accent, #C75B00)" />
-                <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
-                  Signaler un incident / Travaux
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: 20, color: '#94A3B8', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
+      {/* ── Barre d'actions groupées ── */}
+      <AgenceBatchActionBar
+        selectedCount={selectedIds.size}
+        onClearSelection={() => setSelectedIds(new Set())}
+        actions={batchActions}
+        loading={batchLoading}
+      />
 
-            <form onSubmit={handleCreerTicket}>
-              <div className="form-group">
-                <label className="form-label">Bien concerné *</label>
-                <select
-                  required
-                  value={form.bien_id}
-                  onChange={e => setForm({ ...form, bien_id: e.target.value })}
-                  className="form-select"
-                >
-                  {biens.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {b.titre} ({b.quartier ? `${b.quartier}, ${b.ville}` : b.ville})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Type d'incident</label>
-                  <select
-                    value={form.type}
-                    onChange={e => setForm({ ...form, type: e.target.value })}
-                    className="form-select"
-                  >
-                    <option value="plomberie">Plomberie & Fuites</option>
-                    <option value="electricite">Électricité & Disjoncteur</option>
-                    <option value="climatisation">Climatisation</option>
-                    <option value="peinture">Peinture & Murs</option>
-                    <option value="serrurerie">Serrurerie & Portes</option>
-                    <option value="autre">Autre incident</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Priorité</label>
-                  <select
-                    value={form.priorite}
-                    onChange={e => setForm({ ...form, priorite: e.target.value })}
-                    className="form-select"
-                  >
-                    <option value="basse">Basse</option>
-                    <option value="normale">Normale</option>
-                    <option value="urgente">Urgente</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Description du problème *</label>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Ex: Fuite d'eau sous l'évier de la cuisine nécessitant le remplacement d'un joint..."
-                  value={form.description}
-                  onChange={e => setForm({ ...form, description: e.target.value })}
-                  className="form-textarea"
-                />
-              </div>
-
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Prise en charge</label>
-                  <select
-                    value={form.a_charge_de}
-                    onChange={e => setForm({ ...form, a_charge_de: e.target.value })}
-                    className="form-select"
-                  >
-                    <option value="proprietaire">Propriétaire (Bailleur)</option>
-                    <option value="locataire">Locataire (Entretien courant)</option>
-                    <option value="agence">Agence (Garantie)</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Coût estimé (FCFA)</label>
-                  <input
-                    type="number"
-                    placeholder="25000"
-                    value={form.cout_estime}
-                    onChange={e => setForm({ ...form, cout_estime: e.target.value })}
-                    className="form-input"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Prestataire / Artisan assigné (Optionnel)</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Babacar Plombier (+221 77 ...)"
-                  value={form.technicien}
-                  onChange={e => setForm({ ...form, technicien: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '9px 14px',
-                    borderRadius: 8,
-                    background: '#FAF8F5',
-                    border: '1px solid var(--border, #E8DDD2)',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 8,
-                    background: 'var(--accent, #C75B00)',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    fontWeight: 700,
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {saving ? 'Enregistrement...' : 'Enregistrer le ticket'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ── Modale Nouveau Ticket (Modulaire) ── */}
+      <ModalNouveauTicket
+        slug={slug}
+        isOpen={showModal}
+        biens={biens}
+        onClose={() => setShowModal(false)}
+        onSuccess={() => {
+          setShowModal(false)
+          setToastMsg('Incident / Travail enregistré avec succès.')
+          chargerDonnees()
+          setTimeout(() => setToastMsg(null), 4000)
+        }}
+      />
     </div>
   )
 }

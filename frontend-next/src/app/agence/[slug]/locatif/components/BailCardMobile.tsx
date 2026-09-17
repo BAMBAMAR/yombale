@@ -19,9 +19,11 @@ interface BailCardMobileProps {
   slug: string
   bail: BailItem
   onResilier: (bail: BailItem) => void
+  isSelected?: boolean
+  onToggleSelect?: (bailId: string) => void
 }
 
-export function BailCardMobile({ slug, bail, onResilier }: BailCardMobileProps) {
+export function BailCardMobile({ slug, bail, onResilier, isSelected = false, onToggleSelect }: BailCardMobileProps) {
   const token = getImmoAuthToken()
   const isActif = bail.statut === 'actif'
   const telNet = (bail.locataire_tel || '').replace(/[^0-9]/g, '')
@@ -33,15 +35,23 @@ export function BailCardMobile({ slug, bail, onResilier }: BailCardMobileProps) 
       style={{
         background: '#FFFFFF',
         borderRadius: 14,
-        border: '1px solid var(--border, #E8DDD2)',
-        boxShadow: '0 2px 8px rgba(28, 43, 74, 0.04)',
+        border: isSelected ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
+        boxShadow: isSelected ? '0 4px 12px rgba(199, 91, 0, 0.1)' : '0 2px 8px rgba(28, 43, 74, 0.04)',
         padding: 14,
         marginBottom: 12,
       }}
     >
-      {/* Ligne d'en-tête : Bien + Statut */}
+      {/* Ligne d'en-tête : Checkbox + Bien + Statut */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {onToggleSelect && (
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggleSelect(bail.id)}
+              className="immo-checkbox"
+            />
+          )}
           <Home size={15} color="var(--accent, #C75B00)" />
           <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--navy, #1C2B4A)' }}>
             {bail.bien_titre}

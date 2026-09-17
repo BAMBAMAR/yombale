@@ -1,40 +1,32 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import {
   Calendar,
   Plus,
   Clock,
-  MapPin,
-  User,
-  Phone,
   CheckCircle2,
   XCircle,
-  AlertCircle,
-  MessageCircle
+  Download
 } from 'lucide-react'
 import SectionDemandesVisite from './components/SectionDemandesVisite'
 import ModalConfirmerVisite from './components/ModalConfirmerVisite'
 import { ModalProgrammerVisite, OptionItem } from './components/ModalProgrammerVisite'
+import VisitesTabs from './components/VisitesTabs'
 import VisiteCardMobile from './components/VisiteCardMobile'
+import TableVisitesDesktop, { Visite } from './components/TableVisitesDesktop'
+import AgenceTableToolbar, { SortOption } from '@/app/agence/components/AgenceTableToolbar'
+import AgenceBatchActionBar, { BatchAction } from '@/app/agence/components/AgenceBatchActionBar'
+import { exportToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
-interface Visite {
-  id: string
-  date_visite: string
-  duree_min: number
-  lieu_rdv?: string
-  statut: string
-  resultat?: string
-  bien_titre: string
-  bien_quartier?: string
-  bien_ville: string
-  contact_nom: string
-  contact_prenom?: string
-  contact_tel?: string
-  agent_nom?: string
-}
+const SORT_OPTIONS: SortOption[] = [
+  { value: 'date_visite', label: 'Date de visite' },
+  { value: 'contact_nom', label: 'Prospect (A-Z)' },
+  { value: 'bien_titre', label: 'Bien immobilier' },
+  { value: 'statut', label: 'Statut' },
+]
 
 export default function VisitesPage() {
   const params = useParams()
@@ -43,6 +35,13 @@ export default function VisitesPage() {
   const [visites, setVisites] = useState<Visite[]>([])
   const [loading, setLoading] = useState(true)
   const [filterDate, setFilterDate] = useState('tous')
+  const [filterStatut, setFilterStatut] = useState('tous')
+  const [search, setSearch] = useState('')
+  const [sortField, setSortField] = useState('date_visite')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchLoading, setBatchLoading] = useState(false)
+
   const [showModal, setShowModal] = useState(false)
   const [ongletActif, setOngletActif] = useState<'agenda' | 'demandes'>('agenda')
   const [visiteAConfirmer, setVisiteAConfirmer] = useState<any | null>(null)
@@ -90,8 +89,6 @@ export default function VisitesPage() {
     }
   }, [slug, filterDate])
 
-
-
   async function updateStatut(visiteId: string, statut: string) {
     try {
       await fetch(`/api/crm-immo/agence/${slug}/visites/${visiteId}`, {
@@ -104,6 +101,133 @@ export default function VisitesPage() {
       console.error('[UPDATE_VISITE_ERR]', err)
     }
   }
+
+  // Filtrage et Tri
+  const filteredVisites = useMemo(() => {
+    let list = visites.filter((v) => v.statut !== 'demande')
+
+    if (filterStatut !== 'tous') {
+      list = list.filter((v) => v.statut === filterStatut)
+    }
+
+    if (search.trim()) {
+      const s = search.toLowerCase()
+      list = list.filter(
+        (v) =>
+          v.contact_nom?.toLowerCase().includes(s) ||
+          v.contact_prenom?.toLowerCase().includes(s) ||
+          v.contact_tel?.toLowerCase().includes(s) ||
+          v.bien_titre?.toLowerCase().includes(s) ||
+          v.bien_ville?.toLowerCase().includes(s) ||
+          v.bien_quartier?.toLowerCase().includes(s) ||
+          v.agent_nom?.toLowerCase().includes(s)
+      )
+    }
+
+    return [...list].sort((a, b) => {
+      let valA: any = a[sortField as keyof Visite] || ''
+      let valB: any = b[sortField as keyof Visite] || ''
+      if (sortField === 'date_visite') {
+        valA = new Date(valA).getTime() || 0
+        valB = new Date(valB).getTime() || 0
+      } else {
+        valA = String(valA).toLowerCase()
+        valB = String(valB).toLowerCase()
+      }
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [visites, filterStatut, search, sortField, sortOrder])
+
+  // Sélection
+  function toggleSelect(id: string) {
+    const next = new Set(selectedIds)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSelectedIds(next)
+  }
+
+  function toggleSelectAll() {
+    if (filteredVisites.length > 0 && filteredVisites.every((v) => selectedIds.has(v.id))) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredVisites.map((v) => v.id)))
+    }
+  }
+
+  // Actions groupées
+  async function handleBatchStatut(statut: 'realisee' | 'annulee') {
+    if (selectedIds.size === 0) return
+    const count = selectedIds.size
+    const actionLabel = statut === 'realisee' ? 'marquer comme réalisée(s)' : 'annuler'
+    if (!confirm(`Voulez-vous ${actionLabel} ${count} visite(s) sélectionnée(s) ?`)) return
+
+    try {
+      setBatchLoading(true)
+      const res = await fetch(`/api/crm-immo/agence/${slug}/visites/batch-statut`, {
+        method: 'PUT',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ visiteIds: Array.from(selectedIds), statut }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSelectedIds(new Set())
+        chargerVisites()
+      } else {
+        alert(data.error || 'Erreur lors de la mise à jour groupée.')
+      }
+    } catch (err) {
+      console.error('[BATCH_VISITES_ERR]', err)
+      alert('Erreur réseau lors de la mise à jour.')
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  function handleExportCsv() {
+    const dataToExport = visites.filter((v) => selectedIds.has(v.id))
+    exportToCsv(
+      dataToExport.map((v) => ({
+        'Date & Heure': v.date_visite,
+        'Durée (min)': v.duree_min,
+        'Bien': v.bien_titre,
+        'Ville': v.bien_ville,
+        'Quartier': v.bien_quartier || '',
+        'Prospect': `${v.contact_nom} ${v.contact_prenom || ''}`.trim(),
+        'Téléphone': v.contact_tel || '',
+        'Statut': v.statut,
+        'Agent': v.agent_nom || '',
+      })),
+      `visites-${slug}-${new Date().toISOString().slice(0, 10)}.csv`
+    )
+  }
+
+  const batchActions: BatchAction[] = [
+    {
+      id: 'realisee',
+      label: 'Marquer réalisée(s)',
+      icon: <CheckCircle2 size={15} />,
+      variant: 'primary',
+      onClick: () => handleBatchStatut('realisee'),
+    },
+    {
+      id: 'annulee',
+      label: 'Annuler',
+      icon: <XCircle size={15} />,
+      variant: 'danger',
+      onClick: () => handleBatchStatut('annulee'),
+    },
+    {
+      id: 'export',
+      label: 'Exporter CSV',
+      icon: <Download size={15} />,
+      variant: 'secondary',
+      onClick: handleExportCsv,
+    },
+  ]
+
+  const activeFiltersCount = (filterStatut !== 'tous' ? 1 : 0) + (filterDate !== 'tous' ? 1 : 0)
 
   return (
     <div>
@@ -137,274 +261,135 @@ export default function VisitesPage() {
       </div>
 
       {/* ── Onglets Principaux ── */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <button
-          type="button"
-          onClick={() => setOngletActif('agenda')}
-          style={{
-            padding: '9px 16px',
-            borderRadius: 8,
-            fontWeight: 700,
-            fontSize: 13.5,
-            cursor: 'pointer',
-            border: '1px solid var(--border, #E8DDD2)',
-            background: ongletActif === 'agenda' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-            color: ongletActif === 'agenda' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <Calendar size={15} />
-          <span>Agenda des Visites ({visites.filter(v => v.statut !== 'demande').length})</span>
-        </button>
+      <VisitesTabs
+        ongletActif={ongletActif}
+        onSelectOnglet={setOngletActif}
+        totalAgenda={visites.filter((v) => v.statut !== 'demande').length}
+        totalDemandes={visites.filter((v) => v.statut === 'demande').length}
+      />
 
-        <button
-          type="button"
-          onClick={() => setOngletActif('demandes')}
-          style={{
-            padding: '9px 16px',
-            borderRadius: 8,
-            fontWeight: 700,
-            fontSize: 13.5,
-            cursor: 'pointer',
-            border: '1px solid var(--border, #E8DDD2)',
-            background: ongletActif === 'demandes' ? 'var(--accent, #C75B00)' : '#FFFFFF',
-            color: ongletActif === 'demandes' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
-          <Clock size={15} />
-          <span>Demandes reçues en attente</span>
-          {visites.filter(v => v.statut === 'demande').length > 0 && (
-            <span
-              style={{
-                background: ongletActif === 'demandes' ? '#FFFFFF' : 'var(--accent, #C75B00)',
-                color: ongletActif === 'demandes' ? 'var(--accent, #C75B00)' : '#FFFFFF',
-                fontSize: 11,
-                fontWeight: 900,
-                padding: '2px 7px',
-                borderRadius: 10,
-              }}
-            >
-              {visites.filter(v => v.statut === 'demande').length}
-            </span>
-          )}
-        </button>
-      </div>
 
       {ongletActif === 'demandes' ? (
         <SectionDemandesVisite
-          demandes={visites.filter(v => v.statut === 'demande') as any}
-          onConfirmer={v => setVisiteAConfirmer(v)}
-          onDecliner={id => updateStatut(id, 'annulee')}
+          demandes={visites.filter((v) => v.statut === 'demande') as any}
+          onConfirmer={(v) => setVisiteAConfirmer(v)}
+          onDecliner={(id) => updateStatut(id, 'annulee')}
         />
       ) : (
         <>
-          {/* ── Filtres ── */}
-          <div className="agence-card" style={{ padding: 14, display: 'flex', gap: 10, alignItems: 'center' }}>
-        <button
-          type="button"
-          onClick={() => setFilterDate('tous')}
-          style={{
-            padding: '6px 14px',
-            borderRadius: 6,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-            border: '1px solid var(--border, #E8DDD2)',
-            background: filterDate === 'tous' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-            color: filterDate === 'tous' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-          }}
-        >
-          Toutes
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterDate('aujourdhui')}
-          style={{
-            padding: '6px 14px',
-            borderRadius: 6,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-            border: '1px solid var(--border, #E8DDD2)',
-            background: filterDate === 'aujourdhui' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-            color: filterDate === 'aujourdhui' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-          }}
-        >
-          Aujourd'hui
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterDate('a_venir')}
-          style={{
-            padding: '6px 14px',
-            borderRadius: 6,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-            border: '1px solid var(--border, #E8DDD2)',
-            background: filterDate === 'a_venir' ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-            color: filterDate === 'a_venir' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-          }}
-        >
-          À venir
-        </button>
-      </div>
+          {/* ── Toolbar Recherche, Tri & Filtres ── */}
+          <AgenceTableToolbar
+            searchPlaceholder="Rechercher par prospect, bien, quartier, agent..."
+            searchValue={search}
+            onSearchChange={setSearch}
+            sortOptions={SORT_OPTIONS}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSortFieldChange={setSortField}
+            onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+            activeFiltersCount={activeFiltersCount}
+            onResetFilters={() => {
+              setSearch('')
+              setFilterStatut('tous')
+              setFilterDate('tous')
+            }}
+            totalResults={filteredVisites.length}
+            resultsLabel="visite"
+            filterSlot={
+              <>
+                <select
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border, #E8DDD2)',
+                    fontSize: 13,
+                    background: '#FFFFFF',
+                    color: 'var(--navy, #1C2B4A)',
+                  }}
+                >
+                  <option value="tous">Période : Toutes</option>
+                  <option value="aujourdhui">Aujourd'hui</option>
+                  <option value="a_venir">À venir</option>
+                </select>
 
-      {/* ── Liste des Visites ── */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>
-          <p>Chargement des visites...</p>
-        </div>
-      ) : visites.length === 0 ? (
-        <div className="agence-card" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
-          <Calendar size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-          <p style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 16 }}>Aucune visite trouvée</p>
-          <p style={{ fontSize: 13.5 }}>Programmez votre premier rendez-vous de visite avec un prospect.</p>
-        </div>
-      ) : (
-        <>
-          {/* ── Vue Mobile : Cartes Tactiles (< 768px) ── */}
-          <div className="immo-mobile-only" style={{ flexDirection: 'column' }}>
-            {visites.map(v => (
-              <VisiteCardMobile
-                key={v.id}
-                visite={v}
+                <select
+                  value={filterStatut}
+                  onChange={(e) => setFilterStatut(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border, #E8DDD2)',
+                    fontSize: 13,
+                    background: '#FFFFFF',
+                    color: 'var(--navy, #1C2B4A)',
+                  }}
+                >
+                  <option value="tous">Statut : Tous</option>
+                  <option value="confirmee">Confirmée</option>
+                  <option value="realisee">Réalisée</option>
+                  <option value="annulee">Annulée</option>
+                </select>
+              </>
+            }
+          />
+
+          {/* ── Liste des Visites ── */}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>
+              <p>Chargement des visites...</p>
+            </div>
+          ) : filteredVisites.length === 0 ? (
+            <div className="agence-card" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
+              <Calendar size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+              <p style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 16 }}>Aucune visite trouvée</p>
+              <p style={{ fontSize: 13.5 }}>Modifiez vos filtres ou programmez votre premier rendez-vous.</p>
+            </div>
+          ) : (
+            <>
+              {/* ── Vue Mobile : Cartes Tactiles (< 768px) ── */}
+              <div className="immo-mobile-only" style={{ flexDirection: 'column', gap: 10 }}>
+                {filteredVisites.map((v) => (
+                  <VisiteCardMobile
+                    key={v.id}
+                    visite={v}
+                    onUpdateStatut={updateStatut}
+                    isSelected={selectedIds.has(v.id)}
+                    onToggleSelect={toggleSelect}
+                  />
+                ))}
+              </div>
+
+              {/* ── Vue Desktop : Tableau Complet (>= 768px) ── */}
+              <TableVisitesDesktop
+                visites={filteredVisites}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onToggleSelectAll={toggleSelectAll}
                 onUpdateStatut={updateStatut}
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSortChange={(field) => {
+                  if (sortField === field) setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))
+                  else {
+                    setSortField(field)
+                    setSortOrder('asc')
+                  }
+                }}
               />
-            ))}
-          </div>
-
-          {/* ── Vue Desktop : Tableau Complet (>= 768px) ── */}
-          <div className="agence-table-wrapper immo-desktop-only">
-            <table className="agence-table">
-            <thead>
-              <tr>
-                <th>Date & Heure</th>
-                <th>Bien Immobilier</th>
-                <th>Prospect</th>
-                <th>Statut</th>
-                <th style={{ textAlign: 'right' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visites.map(v => {
-                const d = new Date(v.date_visite)
-                const dateFormatee = d.toLocaleDateString('fr-FR', {
-                  weekday: 'short',
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-                return (
-                  <tr key={v.id}>
-                    <td>
-                      <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Clock size={14} color="#64748B" />
-                        {dateFormatee}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: '#64748B' }}>Durée : {v.duree_min} min</div>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>{v.bien_titre}</div>
-                      <div style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <MapPin size={12} />
-                        {v.bien_quartier ? `${v.bien_quartier}, ${v.bien_ville}` : v.bien_ville}
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 700 }}>
-                        {v.contact_nom} {v.contact_prenom || ''}
-                      </div>
-                      {v.contact_tel && (
-                        <div style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <Phone size={11} />
-                          {v.contact_tel}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`status-badge ${v.statut}`}>
-                        {v.statut === 'confirmee' ? 'Confirmée' : v.statut === 'realisee' ? 'Réalisée' : v.statut}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
-                        {v.contact_tel && (
-                          <a
-                            href={`https://wa.me/${(v.contact_tel || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour ${v.contact_nom}, nous vous confirmons votre rendez-vous de visite pour le bien "${v.bien_titre}".`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              padding: '5px 8px',
-                              borderRadius: 6,
-                              background: 'rgba(22, 163, 74, 0.08)',
-                              color: '#166534',
-                              border: '1px solid rgba(22, 163, 74, 0.25)',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              textDecoration: 'none',
-                            }}
-                            title="Écrire sur WhatsApp"
-                          >
-                            <MessageCircle size={13} />
-                          </a>
-                        )}
-
-                        {v.statut !== 'realisee' && (
-                          <button
-                            type="button"
-                            onClick={() => updateStatut(v.id, 'realisee')}
-                            style={{
-                              padding: '5px 10px',
-                              borderRadius: 6,
-                              background: '#DCFCE7',
-                              color: '#166534',
-                              border: 'none',
-                              fontSize: 12,
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Réalisée
-                          </button>
-                        )}
-                        {v.statut !== 'annulee' && (
-                          <button
-                            type="button"
-                            onClick={() => updateStatut(v.id, 'annulee')}
-                            style={{
-                              padding: '5px 10px',
-                              borderRadius: 6,
-                              background: '#FEE2E2',
-                              color: '#991B1B',
-                              border: 'none',
-                              fontSize: 12,
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Annuler
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </>
+            </>
+          )}
+        </>
       )}
-      </>
-      )}
+
+      {/* ── Barre d'actions groupées flottante ── */}
+      <AgenceBatchActionBar
+        selectedCount={selectedIds.size}
+        onClearSelection={() => setSelectedIds(new Set())}
+        actions={batchActions}
+        loading={batchLoading}
+      />
 
       {/* ── Modale Confirmation de Visite ── */}
       {visiteAConfirmer && (

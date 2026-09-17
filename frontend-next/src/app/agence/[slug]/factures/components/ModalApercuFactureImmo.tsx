@@ -3,7 +3,7 @@
 import React from 'react'
 import { X, FileText, Download, Check, Building2, User } from 'lucide-react'
 
-interface FactureItem {
+export interface FactureItem {
   id: string
   numero_facture: string
   type_facture: string

@@ -302,5 +302,42 @@ router.delete('/agence/:slugOrId/:factureId', verifierToken, requireAgenceAccess
   }
 });
 
+// ── PATCH /api/factures-immo/agence/:slugOrId/batch-encaisser — Encaisser factures par lot ──
+router.patch(
+  ['/agence/:slugOrId/batch-encaisser', '/:slugOrId/batch-encaisser'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { factureIds, mode_paiement = 'wave' } = req.body;
+
+      if (!Array.isArray(factureIds) || factureIds.length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucune facture sélectionnée.' });
+      }
+
+      const { rows } = await pool.query(
+        `UPDATE factures_immo
+         SET statut = 'payee',
+             mode_paiement = $1,
+             updated_at = NOW()
+         WHERE id = ANY($2::uuid[]) AND agence_id = $3
+         RETURNING id`,
+        [mode_paiement, factureIds, agenceId]
+      );
+
+      res.json({
+        success: true,
+        message: `${rows.length} facture(s) d'honoraires marquée(s) comme payée(s).`,
+        count: rows.length
+      });
+    } catch (err) {
+      console.error('[BATCH_ENCAISSER_FACTURES_ERR]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur encaissement groupé des factures' });
+    }
+  }
+);
+
 module.exports = router;
+
 

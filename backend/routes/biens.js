@@ -857,4 +857,101 @@ router.post('/agence/:slugOrId/:bienId/dupliquer', verifierToken, requireAgenceA
   }
 });
 
+// ── POST /api/biens/agence/:slugOrId/batch — Actions par lot sur biens immobiliers ──
+router.post('/agence/:slugOrId/batch', verifierToken, requireAgenceAccess(), async (req, res) => {
+  try {
+    const agenceId = req.agence.id;
+    const { action, bienIds } = req.body;
+
+    if (!Array.isArray(bienIds) || bienIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'Aucun bien sélectionné.' });
+    }
+
+    if (action === 'archiver') {
+      await pool.query(
+        `UPDATE biens_immo SET statut = 'archive', updated_at = NOW()
+         WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+        [bienIds, agenceId]
+      );
+      // Désactiver également les annonces associées
+      await pool.query(
+        `UPDATE annonces_immo SET actif = false, updated_at = NOW()
+         WHERE bien_id = ANY($1::uuid[])`,
+        [bienIds]
+      );
+      return res.json({ success: true, message: `${bienIds.length} bien(s) archivé(s) avec succès.` });
+    }
+
+    if (action === 'desarchiver') {
+      await pool.query(
+        `UPDATE biens_immo SET statut = 'actif', updated_at = NOW()
+         WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+        [bienIds, agenceId]
+      );
+      return res.json({ success: true, message: `${bienIds.length} bien(s) réactivé(s) avec succès.` });
+    }
+
+    if (action === 'publier') {
+      // Activer les annonces pour les biens sélectionnés
+      for (const bienId of bienIds) {
+        const { rows: bRows } = await pool.query(
+          `SELECT * FROM biens_immo WHERE id = $1 AND agence_id = $2`,
+          [bienId, agenceId]
+        );
+        if (bRows.length > 0) {
+          const b = bRows[0];
+          const prix = b.prix_location || b.prix_vente || 0;
+          const typeTx = b.prix_vente && !b.prix_location ? 'vente' : 'location';
+
+          const { rows: exist } = await pool.query(
+            `SELECT id FROM annonces_immo WHERE bien_id = $1`,
+            [bienId]
+          );
+
+          if (exist.length > 0) {
+            await pool.query(
+              `UPDATE annonces_immo SET actif = true, supprimee = false, updated_at = NOW()
+               WHERE bien_id = $1`,
+              [bienId]
+            );
+          } else {
+            await pool.query(
+              `INSERT INTO annonces_immo (
+                agence_id, bien_id, titre, type_bien, transaction, prix, charges,
+                ville, quartier, surface_m2, nb_pieces, nb_chambres, nb_sdb, meuble,
+                photos, actif, reference
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, true, $16)`,
+              [
+                agenceId, bienId, b.titre, b.type_bien, typeTx, prix, b.charges || 0,
+                b.ville, b.quartier, b.surface_m2, b.nb_pieces, b.nb_chambres, b.nb_sdb, b.meuble,
+                JSON.stringify(b.photos || []), b.reference
+              ]
+            );
+          }
+        }
+      }
+      return res.json({ success: true, message: `${bienIds.length} annonce(s) publiée(s) sur la marketplace.` });
+    }
+
+    if (action === 'supprimer') {
+      await pool.query(
+        `UPDATE annonces_immo SET supprimee = true, actif = false, updated_at = NOW()
+         WHERE bien_id = ANY($1::uuid[])`,
+        [bienIds]
+      );
+      await pool.query(
+        `DELETE FROM biens_immo WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+        [bienIds, agenceId]
+      );
+      return res.json({ success: true, message: `${bienIds.length} bien(s) supprimé(s).` });
+    }
+
+    res.status(400).json({ success: false, error: 'Action par lot inconnue.' });
+  } catch (err) {
+    console.error('[POST /api/biens/agence/:slugOrId/batch]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur traitement action par lot' });
+  }
+});
+
 module.exports = router;
+

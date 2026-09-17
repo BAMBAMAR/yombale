@@ -1,49 +1,26 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import {
-  Home,
-  Plus,
-  Search,
-  MapPin,
-  Eye,
-  Send,
-  CheckCircle2,
-  AlertCircle,
-  Share2,
-  Copy,
-  Archive,
-  Trash2,
-  ExternalLink,
-  Pencil
-} from 'lucide-react'
+import { Home, Plus, CheckCircle2, Archive, Trash2, Globe, Download } from 'lucide-react'
 import ModalEditerBien from './components/ModalEditerBien'
-import { FiltresBiensBar } from './components/FiltresBiensBar'
-import BienCardMobile from './components/BienCardMobile'
+import BienCardMobile, { BienItem } from './components/BienCardMobile'
+import TableBiensDesktop from './components/TableBiensDesktop'
+import { AgenceTableToolbar, SortOption } from '../../components/AgenceTableToolbar'
+import { AgenceBatchActionBar, BatchActionItem } from '../../components/AgenceBatchActionBar'
+import { exportDataToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
-interface BienItem {
-  id: string
-  reference: string
-  titre: string
-  type_bien: string
-  photos?: string[]
-  ville: string
-  quartier?: string
-  surface_m2?: number
-  nb_pieces?: number
-  nb_chambres?: number
-  statut_occupation: string
-  prix_location?: number
-  prix_vente?: number
-  meuble: boolean
-  annonce_publiee_id?: string
-  annonce_publiee_actif?: boolean
-  nb_visites: number
-  nb_baux_actifs: number
-}
+const SORT_OPTIONS: SortOption[] = [
+
+  { value: 'date_desc', label: 'Plus récents en premier' },
+  { value: 'date_asc', label: 'Plus anciens en premier' },
+  { value: 'prix_desc', label: 'Prix le plus élevé' },
+  { value: 'prix_asc', label: 'Prix le plus bas' },
+  { value: 'titre_asc', label: 'Titre (A - Z)' },
+  { value: 'surface_desc', label: 'Surface m² (décroissante)' },
+]
 
 export default function BiensListPage() {
   const params = useParams()
@@ -51,9 +28,19 @@ export default function BiensListPage() {
 
   const [biens, setBiens] = useState<BienItem[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Filtres, Recherche, Tri
   const [filterType, setFilterType] = useState('tous')
   const [filterStatut, setFilterStatut] = useState('tous')
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentSort, setCurrentSort] = useState('date_desc')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+
+  // Sélections & Actions par Lot
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isExecutingBatch, setIsExecutingBatch] = useState(false)
+
+  // Modales & Toasts
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [bienAEditer, setBienAEditer] = useState<any | null>(null)
@@ -61,12 +48,9 @@ export default function BiensListPage() {
   async function chargerBiens() {
     try {
       setLoading(true)
-      let url = `/api/biens/agence/${slug}?statut=actif`
-      if (filterType !== 'tous') url += `&type_bien=${filterType}`
-      if (filterStatut !== 'tous') url += `&statut_occupation=${filterStatut}`
-      if (searchTerm) url += `&recherche=${encodeURIComponent(searchTerm)}`
-
-      const res = await fetch(url, { headers: getImmoAuthHeaders() })
+      const res = await fetch(`/api/biens/agence/${slug}?statut=tous&limit=200`, {
+        headers: getImmoAuthHeaders(),
+      })
       const data = await res.json()
       if (data.success) {
         setBiens(data.biens || [])
@@ -80,7 +64,7 @@ export default function BiensListPage() {
 
   useEffect(() => {
     if (slug) chargerBiens()
-  }, [slug, filterType, filterStatut])
+  }, [slug])
 
   async function handlePublierAnnonce(bienId: string) {
     try {
@@ -154,8 +138,152 @@ export default function BiensListPage() {
     }
   }
 
+  // Filtrage et Tri en mémoire
+  const biensFiltres = useMemo(() => {
+    let list = [...biens]
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase()
+      list = list.filter(
+        b =>
+          b.titre.toLowerCase().includes(q) ||
+          b.reference.toLowerCase().includes(q) ||
+          b.ville.toLowerCase().includes(q) ||
+          (b.quartier && b.quartier.toLowerCase().includes(q))
+      )
+    }
+
+    if (filterType !== 'tous') {
+      list = list.filter(b => b.type_bien === filterType)
+    }
+
+    if (filterStatut !== 'tous') {
+      list = list.filter(b => b.statut_occupation === filterStatut)
+    }
+
+    // Tri
+    list.sort((a, b) => {
+      let cmp = 0
+      const prixA = a.prix_location || a.prix_vente || 0
+      const prixB = b.prix_location || b.prix_vente || 0
+
+      if (currentSort.startsWith('prix')) {
+        cmp = prixB - prixA
+        if (currentSort === 'prix_asc' || sortDirection === 'asc') cmp = -cmp
+      } else if (currentSort.startsWith('surface')) {
+        cmp = Number(b.surface_m2 || 0) - Number(a.surface_m2 || 0)
+        if (sortDirection === 'asc') cmp = -cmp
+      } else if (currentSort.startsWith('titre')) {
+        cmp = a.titre.localeCompare(b.titre)
+        if (sortDirection === 'desc') cmp = -cmp
+      } else {
+        const dateA = new Date(a.created_at || 0).getTime()
+        const dateB = new Date(b.created_at || 0).getTime()
+        cmp = dateB - dateA
+        if (currentSort === 'date_asc' || sortDirection === 'asc') cmp = -cmp
+      }
+      return cmp
+    })
+
+    return list
+  }, [biens, searchTerm, filterType, filterStatut, currentSort, sortDirection])
+
+  function handleToggleSelect(id: string) {
+    setSelectedIds(prev => (prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]))
+  }
+
+  function handleSelectAll() {
+    if (selectedIds.length === biensFiltres.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(biensFiltres.map(b => b.id))
+    }
+  }
+
+  function handleSortColumn(key: string) {
+    if (currentSort === key) {
+      setSortDirection(d => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setCurrentSort(key)
+      setSortDirection('desc')
+    }
+  }
+
+  // Actions Batch
+  async function executeBatchAction(action: 'publier' | 'archiver' | 'supprimer') {
+    if (action === 'supprimer' && !confirm(`Supprimer définitivement les ${selectedIds.length} biens sélectionnés ?`)) return
+    try {
+      setIsExecutingBatch(true)
+      const res = await fetch(`/api/biens/agence/${slug}/batch`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ action, bienIds: selectedIds }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setToastMsg(data.message || 'Action exécutée avec succès.')
+        setSelectedIds([])
+        chargerBiens()
+        setTimeout(() => setToastMsg(null), 3500)
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsExecutingBatch(false)
+    }
+  }
+
+  function handleBatchExportCsv() {
+    const items = selectedIds.length > 0 ? biens.filter((b) => selectedIds.includes(b.id)) : biensFiltres
+    exportDataToCsv(
+      'portefeuille-biens-immo',
+      [
+        { header: 'Référence', key: 'reference' },
+        { header: 'Titre', key: 'titre' },
+        { header: 'Type', key: 'type_bien' },
+        { header: 'Ville', key: 'ville' },
+        { header: 'Quartier', key: 'quartier' },
+        { header: 'Statut Occupation', key: 'statut_occupation' },
+        { header: 'Prix Location FCFA', key: 'prix_location' },
+        { header: 'Prix Vente FCFA', key: 'prix_vente' },
+        { header: 'Surface m2', key: 'surface_m2' },
+      ],
+      items
+    )
+  }
+
+  const batchActions: BatchActionItem[] = [
+    {
+      id: 'publier',
+      label: 'Publier Marketplace',
+      icon: Globe,
+      onClick: () => executeBatchAction('publier'),
+      variant: 'primary',
+    },
+    {
+      id: 'archiver',
+      label: 'Archiver',
+      icon: Archive,
+      onClick: () => executeBatchAction('archiver'),
+    },
+    {
+      id: 'export_csv',
+      label: 'Exporter CSV',
+      icon: Download,
+      onClick: handleBatchExportCsv,
+    },
+    {
+      id: 'supprimer',
+      label: 'Supprimer',
+      icon: Trash2,
+      onClick: () => executeBatchAction('supprimer'),
+      variant: 'danger',
+    },
+  ]
+
+
   return (
-    <div>
+    <div style={{ paddingBottom: 60 }}>
       {/* ── En-tête ── */}
       <div className="agence-header">
         <div>
@@ -179,267 +307,124 @@ export default function BiensListPage() {
           }}
         >
           <Plus size={18} />
-          Ajouter un bien
+          <span>Ajouter un bien</span>
         </Link>
       </div>
 
       {toastMsg && (
-        <div
-          style={{
-            padding: '12px 16px',
-            background: '#DCFCE7',
-            color: '#166534',
-            borderRadius: 8,
-            fontSize: 13.5,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 16,
-          }}
-        >
+        <div style={{ padding: '12px 16px', background: '#DCFCE7', color: '#166534', borderRadius: 8, fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <CheckCircle2 size={18} />
           {toastMsg}
         </div>
       )}
 
-      {/* ── Filtres & Recherche (Modulaire) ── */}
-      <FiltresBiensBar
+      {/* ── Toolbar : Recherche, Tri & Filtres ── */}
+      <AgenceTableToolbar
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filterType={filterType}
-        setFilterType={setFilterType}
-        filterStatut={filterStatut}
-        setFilterStatut={setFilterStatut}
-        onSearch={chargerBiens}
-      />
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Rechercher par titre, quartier, ville, référence..."
+        sortOptions={SORT_OPTIONS}
+        currentSort={currentSort}
+        onSortChange={setCurrentSort}
+        sortDirection={sortDirection}
+        onToggleSortDirection={() => setSortDirection(d => (d === 'asc' ? 'desc' : 'asc'))}
+        totalCount={biens.length}
+        filteredCount={biensFiltres.length}
+        hasActiveFilters={Boolean(searchTerm || filterType !== 'tous' || filterStatut !== 'tous')}
+        onResetFilters={() => {
+          setSearchTerm('')
+          setFilterType('tous')
+          setFilterStatut('tous')
+        }}
+      >
+        <select
+          value={filterType}
+          onChange={e => setFilterType(e.target.value)}
+          className="form-select"
+          style={{ width: 'auto', padding: '6px 10px', fontSize: 12.5 }}
+        >
+          <option value="tous">Tous types de biens</option>
+          <option value="appartement">Appartement</option>
+          <option value="villa">Villa</option>
+          <option value="studio">Studio</option>
+          <option value="terrain">Terrain</option>
+          <option value="bureau">Bureau / Local</option>
+        </select>
+
+        <select
+          value={filterStatut}
+          onChange={e => setFilterStatut(e.target.value)}
+          className="form-select"
+          style={{ width: 'auto', padding: '6px 10px', fontSize: 12.5 }}
+        >
+          <option value="tous">Tous statuts d&apos;occupation</option>
+          <option value="disponible">Disponible</option>
+          <option value="loue">Loué</option>
+          <option value="vendu">Vendu</option>
+        </select>
+      </AgenceTableToolbar>
 
       {/* ── Tableau des Biens ── */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>
           <p>Chargement des biens...</p>
         </div>
-      ) : biens.length === 0 ? (
+      ) : biensFiltres.length === 0 ? (
         <div className="agence-card" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
           <Home size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
           <p style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', fontSize: 16 }}>Aucun bien trouvé</p>
-          <p style={{ fontSize: 13.5 }}>Ajoutez votre premier bien immobilier pour commencer à gérer votre agence.</p>
+          <p style={{ fontSize: 13.5 }}>Modifiez votre recherche ou ajoutez un nouveau bien immobilier.</p>
         </div>
       ) : (
         <>
           {/* ── Vue Mobile : Cartes Dédiées (< 768px) ── */}
           <div className="immo-mobile-only" style={{ flexDirection: 'column' }}>
-            {biens.map(bien => (
+            {biensFiltres.map(bien => (
               <BienCardMobile
                 key={bien.id}
                 slug={slug}
                 bien={bien}
-                onEdit={(b) => setBienAEditer(b)}
-                onDuplicate={(id) => handleDupliquer(id)}
-                onArchive={(id) => handleArchiver(id)}
-                onDelete={(id) => handleSupprimer(id)}
-                onPublish={(id) => handlePublierAnnonce(id)}
+                onEdit={b => setBienAEditer(b)}
+                onDuplicate={id => handleDupliquer(id)}
+                onArchive={id => handleArchiver(id)}
+                onDelete={id => handleSupprimer(id)}
+                onPublish={id => handlePublierAnnonce(id)}
                 isPublishing={publishingId === bien.id}
+                isSelected={selectedIds.includes(bien.id)}
+                onToggleSelect={handleToggleSelect}
               />
             ))}
           </div>
 
           {/* ── Vue Desktop : Tableau Complet (>= 768px) ── */}
-          <div className="agence-table-wrapper immo-desktop-only">
-            <table className="agence-table">
-            <thead>
-              <tr>
-                <th>Bien & Référence</th>
-                <th>Type & Localisation</th>
-                <th>Prix</th>
-                <th>Occupation</th>
-                <th>Marketplace</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {biens.map(bien => (
-                <tr key={bien.id}>
-                  <td>
-                    <div style={{ fontWeight: 750, color: 'var(--navy, #1C2B4A)' }}>{bien.titre}</div>
-                    <div style={{ fontSize: 11.5, color: '#64748B' }}>{bien.reference}</div>
-                  </td>
-                  <td>
-                    <div style={{ textTransform: 'capitalize', fontWeight: 600 }}>{bien.type_bien}</div>
-                    <div style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <MapPin size={12} />
-                      {bien.quartier ? `${bien.quartier}, ${bien.ville}` : bien.ville}
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                      {bien.prix_location
-                        ? `${Number(bien.prix_location).toLocaleString('fr-FR')} FCFA/mois`
-                        : bien.prix_vente
-                        ? `${Number(bien.prix_vente).toLocaleString('fr-FR')} FCFA`
-                        : 'Sur demande'}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${bien.statut_occupation}`}>
-                      {bien.statut_occupation}
-                    </span>
-                  </td>
-                  <td>
-                    {bien.annonce_publiee_id ? (
-                      <span className="status-badge actif">
-                        <CheckCircle2 size={12} />
-                        En ligne
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={publishingId === bien.id}
-                        onClick={() => handlePublierAnnonce(bien.id)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '4px 10px',
-                          borderRadius: 6,
-                          background: 'rgba(199, 91, 0, 0.08)',
-                          color: 'var(--accent, #C75B00)',
-                          border: '1px solid rgba(199, 91, 0, 0.2)',
-                          fontSize: 11.5,
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Send size={12} />
-                        {publishingId === bien.id ? 'Publication...' : 'Publier'}
-                      </button>
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
-                      <Link
-                        href={`/agence/${slug}/biens/${bien.id}`}
-                        style={{
-                          padding: '6px 8px',
-                          borderRadius: 6,
-                          background: '#FAF8F5',
-                          border: '1px solid var(--border, #E8DDD2)',
-                          color: 'var(--navy, #1C2B4A)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          textDecoration: 'none'
-                        }}
-                        title="Gérer la fiche interne"
-                      >
-                        <Eye size={14} />
-                      </Link>
-
-                      <button
-                        type="button"
-                        onClick={() => setBienAEditer(bien)}
-                        style={{
-                          padding: '6px 8px',
-                          borderRadius: 6,
-                          background: '#FAF8F5',
-                          border: '1px solid var(--border, #E8DDD2)',
-                          color: 'var(--accent, #C75B00)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                        title="Modifier ce bien"
-                      >
-                        <Pencil size={14} />
-                      </button>
-
-                      {bien.annonce_publiee_id && (
-                        <Link
-                          href={`/immo/${bien.annonce_publiee_id}`}
-                          target="_blank"
-                          style={{
-                            padding: '6px 8px',
-                            borderRadius: 6,
-                            background: '#F0FDF4',
-                            border: '1px solid #BBF7D0',
-                            color: '#166534',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            textDecoration: 'none'
-                          }}
-                          title="Voir sur la marketplace"
-                        >
-                          <ExternalLink size={14} />
-                        </Link>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleDupliquer(bien.id)}
-                        style={{
-                          padding: '6px 8px',
-                          borderRadius: 6,
-                          background: '#FAF8F5',
-                          border: '1px solid var(--border, #E8DDD2)',
-                          color: 'var(--navy, #1C2B4A)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        title="Dupliquer ce bien"
-                      >
-                        <Copy size={14} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleArchiver(bien.id)}
-                        style={{
-                          padding: '6px 8px',
-                          borderRadius: 6,
-                          background: '#FAF8F5',
-                          border: '1px solid var(--border, #E8DDD2)',
-                          color: '#64748B',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        title="Archiver ce bien"
-                      >
-                        <Archive size={14} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleSupprimer(bien.id)}
-                        style={{
-                          padding: '6px 8px',
-                          borderRadius: 6,
-                          background: '#FEF2F2',
-                          border: '1px solid #FECACA',
-                          color: '#DC2626',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        title="Supprimer ce bien"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </>
+          <TableBiensDesktop
+            biens={biensFiltres}
+            selectedIds={selectedIds}
+            currentSort={currentSort}
+            sortDirection={sortDirection}
+            onSortColumn={handleSortColumn}
+            onToggleSelect={handleToggleSelect}
+            onSelectAll={handleSelectAll}
+            onEdit={setBienAEditer}
+            onDupliquer={handleDupliquer}
+            onSupprimer={handleSupprimer}
+            onPublier={handlePublierAnnonce}
+            publishingId={publishingId}
+          />
+        </>
       )}
+
+
+      {/* ── Barre d'Actions par Lot (Batch Actions) ── */}
+      <AgenceBatchActionBar
+        selectedCount={selectedIds.length}
+        totalCount={biensFiltres.length}
+        onClearSelection={() => setSelectedIds([])}
+        actions={batchActions}
+        isExecuting={isExecutingBatch}
+        labelSingulier="bien sélectionné"
+        labelPluriel="biens sélectionnés"
+      />
 
       {bienAEditer && (
         <ModalEditerBien
@@ -449,8 +434,6 @@ export default function BiensListPage() {
           onSuccess={() => {
             setBienAEditer(null)
             chargerBiens()
-            setToastMsg('Bien mis à jour avec succès.')
-            setTimeout(() => setToastMsg(null), 3500)
           }}
         />
       )}

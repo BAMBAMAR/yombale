@@ -1,55 +1,32 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import {
-  CreditCard,
-  Plus,
-  CheckCircle2,
-  DollarSign,
-  Calendar,
-  MessageCircle,
-  Layers,
-  AlertCircle,
-  Clock,
-  Check,
-  Settings
-} from 'lucide-react'
+import { Download, Trash2, CheckCheck, MessageCircle, CreditCard, Zap } from 'lucide-react'
+import CreditsHeader from './components/CreditsHeader'
 import { ParametresEchelonnementImmo } from './components/ParametresEchelonnementImmo'
 import { ModalCreerCredit } from './components/ModalCreerCredit'
+import { ModalNouveauCreditWave } from './components/ModalNouveauCreditWave'
+import { CreditCardItem, CreditItem } from './components/CreditCardItem'
+import { AgenceTableToolbar, SortOption } from '../../components/AgenceTableToolbar'
+import { AgenceBatchActionBar, BatchActionItem } from '../../components/AgenceBatchActionBar'
+import { exportDataToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
-
-interface EcheanceItem {
-  numero: number
-  date_echeance: string
-  montant: number
-  statut: string
-  montant_paye?: number
-  date_paiement?: string
-}
-
-interface CreditItem {
-  id: string
-  type_credit: string
-  beneficiaire_nom: string
-  beneficiaire_tel?: string
-  bien_titre?: string
-  montant_total: number
-  apport_initial: number
-  solde_restant: number
-  nb_echeances: number
-  frequence: string
-  statut: string
-  echeances: EcheanceItem[]
-  notes?: string
-}
 
 interface BienOption {
   id: string
   titre: string
 }
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: 'solde_desc', label: 'Solde restant (élevé)' },
+  { value: 'solde_asc', label: 'Solde restant (faible)' },
+  { value: 'total_desc', label: 'Montant total (élevé)' },
+  { value: 'nom_asc', label: 'Bénéficiaire (A - Z)' },
+]
+
 export default function AgenceCreditsPage() {
+
   const params = useParams()
   const slug = params?.slug as string
 
@@ -57,7 +34,23 @@ export default function AgenceCreditsPage() {
   const [credits, setCredits] = useState<CreditItem[]>([])
   const [biens, setBiens] = useState<BienOption[]>([])
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
+
+  // Modales
+  const [showModalSimple, setShowModalSimple] = useState(false)
+  const [showModalWave, setShowModalWave] = useState(false)
+
+  // Filtres, Recherche, Tri
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatut, setFilterStatut] = useState('tous')
+  const [filterType, setFilterType] = useState('tous')
+  const [currentSort, setCurrentSort] = useState('solde_desc')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+
+  // Sélection & Actions par Lot
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isExecutingBatch, setIsExecutingBatch] = useState(false)
+
+  // En cours
   const [encaissementId, setEncaissementId] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
 
@@ -114,141 +107,273 @@ export default function AgenceCreditsPage() {
     }
   }
 
+  // Filtrage et Tri
+  const creditsFiltres = useMemo(() => {
+    let result = [...credits]
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase()
+      result = result.filter(
+        c =>
+          c.beneficiaire_nom.toLowerCase().includes(q) ||
+          (c.beneficiaire_tel && c.beneficiaire_tel.includes(q)) ||
+          (c.bien_titre && c.bien_titre.toLowerCase().includes(q))
+      )
+    }
+
+    if (filterStatut !== 'tous') {
+      result = result.filter(c => c.statut === filterStatut)
+    }
+
+    if (filterType !== 'tous') {
+      result = result.filter(c => c.type_credit === filterType)
+    }
+
+    // Tri
+    result.sort((a, b) => {
+      let cmp = 0
+      if (currentSort.startsWith('solde')) {
+        cmp = Number(b.solde_restant || 0) - Number(a.solde_restant || 0)
+        if (currentSort === 'solde_asc' || sortDirection === 'asc') cmp = -cmp
+      } else if (currentSort.startsWith('total')) {
+        cmp = Number(b.montant_total || 0) - Number(a.montant_total || 0)
+        if (sortDirection === 'asc') cmp = -cmp
+      } else if (currentSort.startsWith('nom')) {
+        cmp = a.beneficiaire_nom.localeCompare(b.beneficiaire_nom)
+        if (sortDirection === 'desc') cmp = -cmp
+      }
+      return cmp
+    })
+
+    return result
+  }, [credits, searchTerm, filterStatut, filterType, currentSort, sortDirection])
+
+  function handleToggleSelect(id: string) {
+    setSelectedIds(prev => (prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]))
+  }
+
+  function handleSelectAll() {
+    if (selectedIds.length === creditsFiltres.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(creditsFiltres.map(c => c.id))
+    }
+  }
+
+  // Actions Batch
+  async function handleBatchSolder() {
+    if (!confirm(`Confirmez-vous le solde de ${selectedIds.length} plan(s) de financement ?`)) return
+    try {
+      setIsExecutingBatch(true)
+      const res = await fetch(`/api/credits-immo/agence/${slug}/batch`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ action: 'solder', creditIds: selectedIds }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setToastMsg(data.message || 'Plans marqués comme soldés.')
+        setSelectedIds([])
+        chargerDonnees()
+        setTimeout(() => setToastMsg(null), 3500)
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsExecutingBatch(false)
+    }
+  }
+
+  async function handleBatchSupprimer() {
+    if (!confirm(`Attention : supprimer définitivement ces ${selectedIds.length} plan(s) de financement ?`)) return
+    try {
+      setIsExecutingBatch(true)
+      const res = await fetch(`/api/credits-immo/agence/${slug}/batch`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ action: 'supprimer', creditIds: selectedIds }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setToastMsg(data.message || 'Plans supprimés.')
+        setSelectedIds([])
+        chargerDonnees()
+        setTimeout(() => setToastMsg(null), 3500)
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsExecutingBatch(false)
+    }
+  }
+
+  function handleBatchExportCsv() {
+    const itemsToExport = selectedIds.length > 0
+      ? credits.filter(c => selectedIds.includes(c.id))
+      : creditsFiltres
+
+    exportDataToCsv('credits-plans-financement', [
+      { header: 'Bénéficiaire', key: 'beneficiaire_nom' },
+      { header: 'Téléphone', key: 'beneficiaire_tel' },
+      { header: 'Bien Rattaché', key: 'bien_titre' },
+      { header: 'Type Opération', key: 'type_credit' },
+      { header: 'Montant Total FCFA', key: 'montant_total' },
+      { header: 'Apport Initial FCFA', key: 'apport_initial' },
+      { header: 'Solde Restant FCFA', key: 'solde_restant' },
+      { header: 'Nb Échéances', key: 'nb_echeances' },
+      { header: 'Statut', key: 'statut' },
+    ], itemsToExport)
+  }
+
+  function handleBatchRelanceWhatsApp() {
+    const clientsAvecSolde = credits.filter(c => selectedIds.includes(c.id) && c.solde_restant > 0 && c.beneficiaire_tel)
+    if (clientsAvecSolde.length === 0) {
+      alert('Aucun des clients sélectionnés n\'a de solde restant ou de numéro de téléphone renseigné.')
+      return
+    }
+    // Ouvre la première relance et notifie
+    const premier = clientsAvecSolde[0]
+    const tel = premier.beneficiaire_tel?.replace(/\D/g, '') || ''
+    const waUrl = `https://wa.me/${tel.length === 9 ? `221${tel}` : tel}?text=${encodeURIComponent(`Bonjour ${premier.beneficiaire_nom}, rappel de votre financement Nopalou : solde restant de ${Number(premier.solde_restant).toLocaleString('fr-FR')} FCFA.`)}`
+    window.open(waUrl, '_blank')
+    setToastMsg(`Relance ouverte pour ${premier.beneficiaire_nom}. ${clientsAvecSolde.length - 1} autre(s) client(s) sélectionné(s).`)
+  }
+
+  const batchActions: BatchActionItem[] = [
+    {
+      id: 'relance_wa',
+      label: 'Relance WhatsApp',
+      icon: MessageCircle,
+      onClick: handleBatchRelanceWhatsApp,
+      variant: 'success',
+    },
+    {
+      id: 'solder',
+      label: 'Marquer Soldé(s)',
+      icon: CheckCheck,
+      onClick: handleBatchSolder,
+      variant: 'primary',
+    },
+    {
+      id: 'export_csv',
+      label: 'Exporter CSV',
+      icon: Download,
+      onClick: handleBatchExportCsv,
+    },
+    {
+      id: 'supprimer',
+      label: 'Supprimer',
+      icon: Trash2,
+      onClick: handleBatchSupprimer,
+      variant: 'danger',
+    },
+  ]
+
   const totalFinancement = credits.reduce((acc, c) => acc + Number(c.montant_total || 0), 0)
   const totalRestant = credits.reduce((acc, c) => acc + Number(c.solde_restant || 0), 0)
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', paddingBottom: 40 }}>
-      {/* ── En-tête de la Page ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CreditCard size={24} color="var(--accent, #C75B00)" />
-            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, color: 'var(--navy, #1C2B4A)' }}>
-              Crédits & Plans d&apos;Échelonnement
-            </h1>
-          </div>
-          <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0 0' }}>
-            Caution locative en 2x/3x/4x, vente de terrains et VEFA par tranches avec suivi des mensualités
-          </p>
-        </div>
-
-        {activeTab === 'plans' && (
-          <button
-            type="button"
-            onClick={() => setShowModal(true)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 18px',
-              borderRadius: 8,
-              background: 'var(--accent, #C75B00)',
-              color: '#FFFFFF',
-              fontWeight: 700,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 13,
-            }}
-          >
-            <Plus size={16} />
-            <span>Nouveau plan d&apos;échelonnement</span>
-          </button>
-        )}
-      </div>
-
-      {/* ── Onglets Principaux ── */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #E2E8F0', marginBottom: 20 }}>
-        <button
-          type="button"
-          onClick={() => setActiveTab('plans')}
-          style={{
-            padding: '10px 18px',
-            fontSize: 13.5,
-            fontWeight: 700,
-            border: 'none',
-            background: 'none',
-            color: activeTab === 'plans' ? 'var(--accent, #C75B00)' : '#64748B',
-            borderBottom: activeTab === 'plans' ? '2px solid var(--accent, #C75B00)' : '2px solid transparent',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <Layers size={15} />
-          <span>Échéanciers en cours ({credits.length})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('parametres')}
-          style={{
-            padding: '10px 18px',
-            fontSize: 13.5,
-            fontWeight: 700,
-            border: 'none',
-            background: 'none',
-            color: activeTab === 'parametres' ? 'var(--accent, #C75B00)' : '#64748B',
-            borderBottom: activeTab === 'parametres' ? '2px solid var(--accent, #C75B00)' : '2px solid transparent',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <Settings size={15} />
-          <span>Paramètres & Politiques d&apos;Échelonnement</span>
-        </button>
-      </div>
-
-      {toastMsg && (
-        <div style={{ padding: '12px 16px', background: '#DCFCE7', color: '#166534', borderRadius: 8, fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <CheckCircle2 size={18} />
-          {toastMsg}
-        </div>
-      )}
+    <div style={{ maxWidth: 1100, margin: '0 auto', paddingBottom: 60 }}>
+      {/* ── En-tête de la Page, Onglets et KPIs ── */}
+      <CreditsHeader
+        totalCredits={credits.length}
+        totalFinancement={totalFinancement}
+        totalRestant={totalRestant}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        onOpenWaveModal={() => setShowModalWave(true)}
+        onOpenSimpleModal={() => setShowModalSimple(true)}
+        toastMsg={toastMsg}
+      />
 
       {activeTab === 'parametres' ? (
         <ParametresEchelonnementImmo slug={slug} />
       ) : (
         <>
-          {/* ── KPIs Financements ── */}
-          <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 20 }}>
-            <div className="kpi-card" style={{ background: '#fff', padding: '14px 16px', borderRadius: 10, border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginBottom: 4 }}>Total Échelonné</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                {Number(totalFinancement).toLocaleString('fr-FR')} FCFA
-              </div>
-              <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 3 }}>{credits.length} contrat(s) actif(s)</div>
-            </div>
+          {/* ── Toolbar : Recherche, Tri & Filtres ── */}
 
-            <div className="kpi-card" style={{ background: '#fff', padding: '14px 16px', borderRadius: 10, border: totalRestant > 0 ? '1px solid #FCA5A5' : '1px solid #bbf7d0' }}>
-              <div style={{ fontSize: 12, color: totalRestant > 0 ? '#DC2626' : '#15803d', fontWeight: 600, marginBottom: 4 }}>Solde Restant Dû</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: totalRestant > 0 ? '#DC2626' : '#15803d' }}>
-                {Number(totalRestant).toLocaleString('fr-FR')} FCFA
-              </div>
-              <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 3 }}>À recouvrer sur échéances</div>
-            </div>
-          </div>
+          <AgenceTableToolbar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Rechercher par bénéficiaire, téléphone, bien..."
+            sortOptions={SORT_OPTIONS}
+            currentSort={currentSort}
+            onSortChange={setCurrentSort}
+            sortDirection={sortDirection}
+            onToggleSortDirection={() => setSortDirection(d => (d === 'asc' ? 'desc' : 'asc'))}
+            totalCount={credits.length}
+            filteredCount={creditsFiltres.length}
+            hasActiveFilters={Boolean(searchTerm || filterStatut !== 'tous' || filterType !== 'tous')}
+            onResetFilters={() => {
+              setSearchTerm('')
+              setFilterStatut('tous')
+              setFilterType('tous')
+            }}
+          >
+            {/* Filtre Statut */}
+            <select
+              value={filterStatut}
+              onChange={e => setFilterStatut(e.target.value)}
+              className="form-select"
+              style={{ width: 'auto', padding: '6px 10px', fontSize: 12.5 }}
+            >
+              <option value="tous">Tous les statuts</option>
+              <option value="actif">En cours</option>
+              <option value="solde">Soldés</option>
+            </select>
 
-          {/* ── Liste des Plans Échelonnés ── */}
+            {/* Filtre Type */}
+            <select
+              value={filterType}
+              onChange={e => setFilterType(e.target.value)}
+              className="form-select"
+              style={{ width: 'auto', padding: '6px 10px', fontSize: 12.5 }}
+            >
+              <option value="tous">Toutes les opérations</option>
+              <option value="caution_echelonnee">Caution étalée</option>
+              <option value="acompte_reservation">Acompte réservation</option>
+              <option value="terrain_parcelles">Terrain / Parcelles</option>
+              <option value="vefa">VEFA</option>
+            </select>
+
+            {/* Tout sélectionner */}
+            {creditsFiltres.length > 0 && (
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  border: '1px solid var(--border, #E8DDD2)',
+                  background: selectedIds.length === creditsFiltres.length ? 'var(--navy, #1C2B4A)' : '#fff',
+                  color: selectedIds.length === creditsFiltres.length ? '#fff' : 'var(--navy, #1C2B4A)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                {selectedIds.length === creditsFiltres.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+              </button>
+            )}
+          </AgenceTableToolbar>
+
+          {/* ── Liste des Plans ── */}
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>
               <p>Chargement des plans de financement...</p>
             </div>
-          ) : credits.length === 0 ? (
+          ) : creditsFiltres.length === 0 ? (
             <div className="agence-card" style={{ textAlign: 'center', padding: '48px 20px', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0' }}>
               <CreditCard size={36} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
               <p style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 16, margin: 0 }}>
-                Aucun plan d&apos;échelonnement actif
+                Aucun plan d&apos;échelonnement trouvé
               </p>
               <p style={{ fontSize: 13, color: '#64748B', margin: '6px 0 18px' }}>
-                Proposez à vos locataires ou acheteurs d&apos;étaler leur caution ou achat en plusieurs fois.
+                Proposez à vos locataires ou acheteurs d&apos;étaler leur caution ou achat avec un lien Wave direct.
               </p>
               <button
                 type="button"
-                onClick={() => setShowModal(true)}
+                onClick={() => setShowModalWave(true)}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -263,160 +388,58 @@ export default function AgenceCreditsPage() {
                   cursor: 'pointer',
                 }}
               >
-                <Plus size={15} />
-                <span>Créer un premier plan</span>
+                <Zap size={15} />
+                <span>Créer un financement Wave</span>
               </button>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
-              {credits.map(cr => (
-                <div key={cr.id} style={{ background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
-                          padding: '3px 8px',
-                          borderRadius: 4,
-                          background: '#E0F2FE',
-                          color: '#0369A1',
-                        }}
-                      >
-                        {cr.type_credit.replace(/_/g, ' ')}
-                      </span>
-                      <span style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: 4,
-                        background: cr.statut === 'solde' ? '#f0fdf4' : '#fef3c7',
-                        color: cr.statut === 'solde' ? '#166534' : '#92400e',
-                      }}>
-                        {cr.statut === 'solde' ? 'Soldé' : 'En cours'}
-                      </span>
-                    </div>
-
-                    <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 15, marginBottom: 2 }}>
-                      {cr.beneficiaire_nom}
-                    </div>
-                    {cr.beneficiaire_tel && (
-                      <div style={{ fontSize: 12, color: '#64748B', marginBottom: 10 }}>
-                        Tél : {cr.beneficiaire_tel}
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                      <span style={{ color: '#64748B' }}>Montant total :</span>
-                      <span style={{ fontWeight: 700 }}>{Number(cr.montant_total).toLocaleString('fr-FR')} FCFA</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                      <span style={{ color: '#64748B' }}>Apport initial :</span>
-                      <span style={{ fontWeight: 700, color: '#166534' }}>{Number(cr.apport_initial).toLocaleString('fr-FR')} FCFA</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 12 }}>
-                      <span style={{ color: '#64748B' }}>Solde restant :</span>
-                      <span style={{ fontWeight: 800, color: cr.solde_restant > 0 ? '#DC2626' : '#166534' }}>
-                        {Number(cr.solde_restant).toLocaleString('fr-FR')} FCFA
-                      </span>
-                    </div>
-
-                    {/* Échéancier détaillé */}
-                    <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 10 }}>
-                      <div style={{ fontSize: 11.5, fontWeight: 700, color: '#475569', marginBottom: 6 }}>
-                        Échéances ({cr.echeances?.length || 0})
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {cr.echeances?.map(ech => (
-                          <div
-                            key={ech.numero}
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              padding: '6px 10px',
-                              background: ech.statut === 'paye' ? '#F0FDF4' : '#F8FAFC',
-                              borderRadius: 6,
-                              fontSize: 12,
-                            }}
-                          >
-                            <div>
-                              <span style={{ fontWeight: 700 }}>#{ech.numero}</span> · {new Date(ech.date_echeance).toLocaleDateString('fr-FR')}
-                              <div style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>
-                                {Number(ech.montant).toLocaleString('fr-FR')} FCFA
-                              </div>
-                            </div>
-
-                            {ech.statut === 'paye' ? (
-                              <span style={{ color: '#166534', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                <Check size={13} /> Payé
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleEncaisserEcheance(cr.id, ech.numero, ech.montant)}
-                                disabled={encaissementId === `${cr.id}-${ech.numero}`}
-                                style={{
-                                  padding: '4px 8px',
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  background: 'var(--accent, #C75B00)',
-                                  color: '#fff',
-                                  border: 'none',
-                                  borderRadius: 4,
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Encaisser
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {cr.beneficiaire_tel && (
-                    <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid #F1F5F9' }}>
-                      <a
-                        href={`https://wa.me/${cr.beneficiaire_tel.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour ${cr.beneficiaire_nom}, nous vous rappelons votre échéance de caution/financement de ${Number(cr.solde_restant).toLocaleString('fr-FR')} FCFA.`)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6,
-                          width: '100%',
-                          padding: '7px 0',
-                          background: '#25D366',
-                          color: '#fff',
-                          borderRadius: 6,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          textDecoration: 'none',
-                        }}
-                      >
-                        <MessageCircle size={14} />
-                        <span>Relance WhatsApp</span>
-                      </a>
-                    </div>
-                  )}
-                </div>
+              {creditsFiltres.map(cr => (
+                <CreditCardItem
+                  key={cr.id}
+                  slug={slug}
+                  credit={cr}
+                  isSelected={selectedIds.includes(cr.id)}
+                  onToggleSelect={handleToggleSelect}
+                  onEncaisserEcheance={handleEncaisserEcheance}
+                  encaissementId={encaissementId}
+                />
               ))}
             </div>
           )}
+
+          {/* ── Barre d'Actions par Lot (Batch Actions) ── */}
+          <AgenceBatchActionBar
+            selectedCount={selectedIds.length}
+            totalCount={creditsFiltres.length}
+            onClearSelection={() => setSelectedIds([])}
+            actions={batchActions}
+            isExecuting={isExecutingBatch}
+            labelSingulier="plan sélectionné"
+            labelPluriel="plans sélectionnés"
+          />
         </>
       )}
 
-      {showModal && (
+      {/* Modale Nouveau Financement & Lien Wave */}
+      <ModalNouveauCreditWave
+        slug={slug}
+        biens={biens}
+        isOpen={showModalWave}
+        onClose={() => setShowModalWave(false)}
+        onSuccess={() => {
+          chargerDonnees()
+        }}
+      />
+
+      {/* Modale Standard */}
+      {showModalSimple && (
         <ModalCreerCredit
           slug={slug}
           biens={biens}
-          onClose={() => setShowModal(false)}
+          onClose={() => setShowModalSimple(false)}
           onSuccess={() => {
-            setShowModal(false)
+            setShowModalSimple(false)
             chargerDonnees()
           }}
         />

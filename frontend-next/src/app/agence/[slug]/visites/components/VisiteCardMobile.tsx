@@ -30,11 +30,15 @@ export interface VisiteItem {
 interface VisiteCardMobileProps {
   visite: VisiteItem
   onUpdateStatut: (id: string, statut: string) => void
+  isSelected?: boolean
+  onToggleSelect?: (id: string) => void
 }
 
 export function VisiteCardMobile({
   visite,
   onUpdateStatut,
+  isSelected = false,
+  onToggleSelect,
 }: VisiteCardMobileProps) {
   const d = new Date(visite.date_visite)
   const dateFormatee = !isNaN(d.getTime())
@@ -66,13 +70,22 @@ export function VisiteCardMobile({
         padding: 14,
         marginBottom: 10,
         borderRadius: 12,
-        border: '1px solid var(--border, #E8DDD2)',
+        border: isSelected ? '2px solid var(--accent, #C75B00)' : '1px solid var(--border, #E8DDD2)',
         background: '#FFFFFF',
+        boxShadow: isSelected ? '0 4px 12px rgba(199, 91, 0, 0.1)' : undefined,
       }}
     >
-      {/* ── Heure & Statut ── */}
+      {/* ── Checkbox + Heure & Statut ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 13.5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: 'var(--navy, #1C2B4A)', fontSize: 13.5 }}>
+          {onToggleSelect && (
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggleSelect(visite.id)}
+              className="immo-checkbox"
+            />
+          )}
           <Clock size={15} color="var(--accent, #C75B00)" />
           <span>{dateFormatee}</span>
           <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>({visite.duree_min} min)</span>

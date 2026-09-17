@@ -1,3 +1,48 @@
+- **Mise à Niveau Opérationnelle Agence Immobilière : Recherche, Tri, Filtre, Actions Batch & Financement Wave 1-Clic WhatsApp (Branche feature/vertical-immobilier) (17 septembre 2026)** 🏢⚡🔍📊💳📱🚀 ✅ :
+  * **🎯 1. Composants Réutilisables Haute Performance** :
+    - `AgenceTableToolbar.tsx` : barre unifiée de recherche textuelle en temps réel avec debounce, tri dynamique multi-critères, bascule d'ordre croissant/décroissant, injection fluide de filtres contextuels personnalisés (`filterSlot`/`children`), compteur dynamique de résultats (`filteredCount` / `totalCount`) et bouton de réinitialisation instantanée des filtres.
+    - `AgenceBatchActionBar.tsx` : barre flottante contextuelle animée (`slideUpBatch`), badge de sélection numérique, support polymorphe d'icônes SVG Lucide (composant ou JSX element), boutons d'action stylisés selon le niveau de criticité (`primary`, `secondary`, `danger`, `success`), indicateur de chargement (`Loader2`) et bouton de désélection globale.
+    - `AgenceTableTh.tsx` : en-têtes de tableau interactifs supportant le tri par colonne avec flèches SVG directionnelles (`ArrowUp`, `ArrowDown`, `ArrowUpDown`) et mise en évidence de la colonne active.
+    - `immo-csv-export.ts` : utilitaire d'export CSV universel polymorphe avec encodage BOM UTF-8 (`\uFEFF`) garantissant une ouverture sans altération des accents sous Microsoft Excel et Google Sheets.
+  * **🎯 2. Déploiement Intégral sur les 9 Pages Métier Opérationnelles** :
+    - **Page 1 : Financements & Crédits Échelonnés (`/credits`)** :
+      - Recherche (bénéficiaire, référence, téléphone), tri (solde restant, montant total, nom), filtres statut (`en_cours`, `solde`, `en_retard`), actions batch (relance WhatsApp groupée, archivage, export CSV).
+      - Module « ⚡ Nouveau Financement & Lien Wave 💬 » : création rapide de cautions locatives étalées (2x/3x/4x), acomptes de réservation de bien, achat de terrain par tranches, programmes neufs VEFA. Génération instantanée du lien Wave direct et composition automatique du message WhatsApp 1-clic personnalisé.
+    - **Page 2 : Parc Immobilier (`/biens`)** :
+      - Recherche (titre, référence, quartier, ville), tri (date, prix, surface, titre), filtres croisés (type de bien, statut d'occupation), actions batch (publication vitrine, archivage, désarchivage, suppression, export CSV).
+    - **Page 3 : Répertoire Locataires (`/locataires`)** :
+      - Recherche (nom, téléphone, email, bien loué, quartier), tri (nom A-Z, loyer mensuel, impayés, date d'entrée), filtres (à jour, en retard de loyer, sans bail), actions batch (relance WhatsApp en masse, export CSV).
+    - **Page 4 : Bailleurs & Propriétaires Mandants (`/bailleurs`)** :
+      - Recherche (nom, téléphone, email, profession), tri (nom A-Z, nombre de biens gérés), filtres (avec biens actifs, sans mandat), actions batch (communication WhatsApp groupée, export CSV).
+    - **Page 5 : Gestion Locative & Baux (`/locatif`)** :
+      - Onglet Loyers : recherche (bien, locataire, période), tri (échéance, montant dû, nom locataire), filtres (en attente, payé, en retard), actions batch (encaissement groupé avec émission de quittances certifiées, relance WhatsApp groupée, export CSV).
+      - Onglet Baux : recherche, tri (loyer, date début, locataire), actions batch (résiliation de baux par lot avec libération automatique des biens, export CSV).
+    - **Page 6 : Factures & Honoraires d'Agence (`/factures`)** :
+      - Recherche (numéro, client, bien, type de prestation), tri (date d'émission, montant TTC, nom client), filtres (payée, en attente, annulée), actions batch (encaissement en lot avec reçu, export CSV).
+    - **Page 7 : CRM Visites & Calendrier (`/visites`)** :
+      - Recherche (visiteur, téléphone, bien, agent), tri (date & heure chronologique, visiteur), filtres statut (`planifiee`, `effectuee`, `annulee`), actions batch (marquer effectuées en lot, annuler en masse, export CSV).
+    - **Page 8 : Maintenance & Incidents Techniques (`/maintenance`)** :
+      - Recherche (incident, bien, artisan, quartier), tri (priorité, date de signalement, coût estimé), filtres statut (`signale`, `en_cours`, `resolu`) et priorité, actions batch (démarrer travaux en lot, marquer résolu en lot, export CSV).
+    - **Page 9 : Mandats de Gestion & Vente (`/mandats`)** :
+      - Recherche (référence, bailleur, bien, type de mandat), tri (date d'effet, date d'échéance, taux de commission), filtres statut (actif, expiré, résilié) et type exclusif/simple, actions batch (résilier en lot, archiver, export CSV).
+  * **🎯 3. Backend & Endpoints d'Actions par Lot Sécurisés (Multi-Tenant Anti-IDOR)** :
+    - `POST /api/biens/agence/:slugOrId/batch` : publication vitrine, archivage, désarchivage, suppression groupée.
+    - `POST /api/locatif-immo/agence/:slugOrId/loyers/batch-encaisser` : enregistrement transactionnel des règlements et émission des quittances.
+    - `POST /api/locatif-immo/agence/:slugOrId/loyers/batch-relance` : journalisation et relance groupée.
+    - `POST /api/locatif-immo/agence/:slugOrId/baux/batch-resilier` : résiliation groupée de baux et mise à jour de l'état d'occupation.
+    - `PATCH /api/locatif-immo/agence/:slugOrId/maintenance/batch-statut` : transition d'état technique par lot.
+    - `PATCH /api/factures-immo/agence/:slugOrId/batch-encaisser` : encaissement et clôture comptable en masse.
+    - `PUT /api/crm-immo/agence/:slugOrId/visites/batch-statut` : mise à jour de statut des visites CRM.
+    - `POST /api/mandats-immo/agence/:slugOrId/batch` : résiliation et archivage des mandats par lot.
+    - `POST /api/credits-immo/agence/:slugOrId/direct-wave` : génération sécurisée de liens de paiement Wave Business avec webhook et fallback gracieux.
+  * **🎯 4. Respect Rigoureux des Règles d'Ingénierie Senior & Anti-Slop** :
+    - **Plafond de 450 lignes respecté sur 100% des fichiers** : 35 fichiers TypeScript/React audités et certifiés `<= 450 lignes`. Modularisation en sous-composants dédiés (`TableBiensDesktop`, `BienCardMobile`, `BienCardMenu`, `LocataireCardItem`, `BailleurCardItem`, `TableLoyersDesktop`, `TableBauxImmo`, `ModalResilierBail`, `LocatifModals`, `TableFacturesDesktop`, `TableVisitesDesktop`, `VisitesTabs`, `ModalNouveauTicket`, `TicketMaintenanceCard`, `TableMandatsDesktop`, `CreditsHeader`, `CreditCardItem`, `CreditWaveSuccessView`, `ModalNouveauCreditWave`).
+    - **Zéro Émojis dans l'Interface** : utilisation exclusive d'icônes vectorielles SVG `lucide-react`.
+    - **Zéro Téléchargement Externe de Polices** : conformité intégrale avec la règle anti-CDN et utilisation des polices système natives.
+    - **Sécurité Multi-Tenant** : toutes les routes backend protégées par `requireAgenceAccess` et vérification stricte de l'agence ID.
+    - **Compilation & Linters** : `npx tsc --noEmit` validé avec **0 erreur**, `npm run lint:slop` validé avec **0 silent catch**.
+    - **Démasquage de la Photo de Couverture Agence (`VitrineBanner.tsx` & `StudioAgenceMockupPreview.tsx`)** : suppression de l'ancien voile bleu opaque (`rgba(28, 43, 74, 0.92)`) qui masquait 92% de la photo de bannière par un dégradé neutre subtil (`rgba(15, 23, 42, 0.18)` vers `0.58`), révélant les vraies couleurs et la luminosité naturelle de l'image tout en garantissant un contraste parfait grâce à des ombres portées (`textShadow`) et des pilules d'actions en verre dépoli (`backdropFilter: blur(8px)`).
+
 - **Campagne de Test Réelle, Exhaustive et Homologation End-to-End de Toute la Plateforme Nopalou (Branche `immo`) (17 septembre 2026)** 🏆🛡️🧪📱🤖🚀 ✅ :
   * **🎯 1. Synthèse Globale des 36 Phases de Qualification & Chiffres Clés** :
     - **Périmètre Total Contrôlé** : 166 pages Next.js réelles, 31 tests API avec vérification PostgreSQL directe, 81 assertions responsive Playwright sur 9 viewports, 14 scénarios grandeur nature (30 étapes), 7 assertions bimodal chatbot et audit complet des codes HTTP observés (24 576 requêtes).

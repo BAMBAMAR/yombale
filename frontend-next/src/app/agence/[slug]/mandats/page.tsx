@@ -1,53 +1,29 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import {
   FileSignature,
   Plus,
-  Search,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Building2,
-  User,
-  Percent,
-  Calendar,
-  Layers,
-  ArrowRight,
-  ShieldCheck,
-  RefreshCw,
-  FileText,
-  Sparkles
+  Sparkles,
+  Download,
+  XCircle,
+  Archive
 } from 'lucide-react'
 import { ModalCreerMandat } from './components/ModalCreerMandat'
+import TableMandatsDesktop, { MandatItem } from './components/TableMandatsDesktop'
+import AgenceTableToolbar, { SortOption } from '@/app/agence/components/AgenceTableToolbar'
+import AgenceBatchActionBar, { BatchAction } from '@/app/agence/components/AgenceBatchActionBar'
+import { exportToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders, getImmoAuthToken } from '@/lib/immo-auth'
 
-interface MandatItem {
-  id: string
-  bien_id: string
-  proprietaire_id: string
-  type_mandat: string
-  type_operation: string
-  date_debut: string
-  date_fin?: string
-  duree_mois: number
-  taux_commission?: number
-  montant_commission_fixe?: number
-  conditions?: string
-  statut: string
-  expire_bientot?: boolean
-  jours_restants?: number | null
-  bien_titre: string
-  bien_quartier?: string
-  bien_ville?: string
-  bien_images?: string[]
-  proprietaire_nom: string
-  proprietaire_telephone?: string
-  agent_nom?: string
-  agent_prenom?: string
-}
+const SORT_OPTIONS: SortOption[] = [
+  { value: 'date_fin', label: 'Date d’expiration' },
+  { value: 'date_debut', label: 'Date de début' },
+  { value: 'bien_titre', label: 'Bien immobilier' },
+  { value: 'proprietaire_nom', label: 'Propriétaire' },
+  { value: 'taux_commission', label: 'Commission' },
+]
 
 export default function AgenceMandatsPage() {
   const params = useParams()
@@ -60,9 +36,13 @@ export default function AgenceMandatsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
 
-  const [filterStatut, setFilterStatut] = useState('actif')
+  const [filterStatut, setFilterStatut] = useState('tous')
   const [filterType, setFilterType] = useState('tous')
-  const [searchTerm, setSearchTerm] = useState('')
+  const [search, setSearch] = useState('')
+  const [sortField, setSortField] = useState('date_fin')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchLoading, setBatchLoading] = useState(false)
 
   const token = getImmoAuthToken()
 
@@ -72,7 +52,7 @@ export default function AgenceMandatsPage() {
       const headers = getImmoAuthHeaders()
 
       const [resMandats, resStats, resBiens, resProps] = await Promise.all([
-        fetch(`/api/mandats-immo/agence/${slug}?statut=${filterStatut}&type_mandat=${filterType}&search=${encodeURIComponent(searchTerm)}`, { headers }),
+        fetch(`/api/mandats-immo/agence/${slug}?statut=tous&type_mandat=tous`, { headers }),
         fetch(`/api/mandats-immo/agence/${slug}/stats`, { headers }),
         fetch(`/api/biens/agence/${slug}?statut=actif`, { headers }),
         fetch(`/api/crm-immo/agence/${slug}/proprietaires`, { headers }),
@@ -98,7 +78,144 @@ export default function AgenceMandatsPage() {
 
   useEffect(() => {
     if (slug) chargerDonnees()
-  }, [slug, filterStatut, filterType])
+  }, [slug])
+
+  // Filtrage et Tri
+  const filteredMandats = useMemo(() => {
+    let list = mandats
+
+    if (filterStatut !== 'tous') {
+      list = list.filter((m) => m.statut === filterStatut)
+    }
+
+    if (filterType !== 'tous') {
+      list = list.filter((m) => m.type_mandat === filterType)
+    }
+
+    if (search.trim()) {
+      const s = search.toLowerCase()
+      list = list.filter(
+        (m) =>
+          m.bien_titre?.toLowerCase().includes(s) ||
+          m.proprietaire_nom?.toLowerCase().includes(s) ||
+          m.proprietaire_telephone?.toLowerCase().includes(s) ||
+          m.bien_ville?.toLowerCase().includes(s) ||
+          m.bien_quartier?.toLowerCase().includes(s)
+      )
+    }
+
+    return [...list].sort((a, b) => {
+      let valA: any = a[sortField as keyof MandatItem] || ''
+      let valB: any = b[sortField as keyof MandatItem] || ''
+
+      if (sortField === 'date_fin' || sortField === 'date_debut') {
+        valA = valA ? new Date(valA).getTime() : 0
+        valB = valB ? new Date(valB).getTime() : 0
+      } else if (sortField === 'taux_commission') {
+        valA = Number(valA) || 0
+        valB = Number(valB) || 0
+      } else {
+        valA = String(valA).toLowerCase()
+        valB = String(valB).toLowerCase()
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [mandats, filterStatut, filterType, search, sortField, sortOrder])
+
+  // Sélection
+  function toggleSelect(id: string) {
+    const next = new Set(selectedIds)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSelectedIds(next)
+  }
+
+  function toggleSelectAll() {
+    if (filteredMandats.length > 0 && filteredMandats.every((m) => selectedIds.has(m.id))) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredMandats.map((m) => m.id)))
+    }
+  }
+
+  // Actions groupées
+  async function handleBatchAction(action: 'resilier' | 'archiver') {
+    if (selectedIds.size === 0) return
+    const count = selectedIds.size
+    const label = action === 'resilier' ? 'résilier' : 'archiver'
+    if (!confirm(`Voulez-vous ${label} ${count} mandat(s) sélectionné(s) ?`)) return
+
+    try {
+      setBatchLoading(true)
+      const res = await fetch(`/api/mandats-immo/agence/${slug}/batch`, {
+        method: 'POST',
+        headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ ids: Array.from(selectedIds), action }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSelectedIds(new Set())
+        chargerDonnees()
+      } else {
+        alert(data.error || 'Erreur lors de l’action groupée.')
+      }
+    } catch (err) {
+      console.error('[BATCH_MANDATS_ERR]', err)
+      alert('Erreur réseau lors de l’action groupée.')
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  function handleExportCsv() {
+    const dataToExport = mandats.filter((m) => selectedIds.has(m.id))
+    exportToCsv(
+      dataToExport.map((m) => ({
+        'Bien': m.bien_titre,
+        'Type Opération': m.type_operation,
+        'Ville': m.bien_ville || '',
+        'Quartier': m.bien_quartier || '',
+        'Propriétaire': m.proprietaire_nom,
+        'Téléphone': m.proprietaire_telephone || '',
+        'Type Mandat': m.type_mandat,
+        'Date Début': m.date_debut,
+        'Date Fin': m.date_fin || 'Indéterminée',
+        'Commission (%)': m.taux_commission || '',
+        'Commission Fixe (FCFA)': m.montant_commission_fixe || '',
+        'Statut': m.statut,
+      })),
+      `mandats-${slug}-${new Date().toISOString().slice(0, 10)}.csv`
+    )
+  }
+
+  const batchActions: BatchAction[] = [
+    {
+      id: 'resilier',
+      label: 'Résilier mandats',
+      icon: <XCircle size={14} />,
+      variant: 'danger',
+      onClick: () => handleBatchAction('resilier'),
+    },
+    {
+      id: 'archiver',
+      label: 'Archiver mandats',
+      icon: <Archive size={14} />,
+      variant: 'secondary',
+      onClick: () => handleBatchAction('archiver'),
+    },
+    {
+      id: 'export',
+      label: 'Exporter CSV',
+      icon: <Download size={14} />,
+      variant: 'secondary',
+      onClick: handleExportCsv,
+    },
+  ]
+
+  const activeFiltersCount = (filterStatut !== 'tous' ? 1 : 0) + (filterType !== 'tous' ? 1 : 0)
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', paddingBottom: 40 }}>
@@ -147,7 +264,7 @@ export default function AgenceMandatsPage() {
           </div>
         </div>
 
-        <div style={{ background: '#fff', padding: '14px 16px', borderRadius: 10, border: '1px solid #bbf7d0', backgroundClip: 'padding-box' }}>
+        <div style={{ background: '#fff', padding: '14px 16px', borderRadius: 10, border: '1px solid #bbf7d0' }}>
           <div style={{ fontSize: 12, color: '#15803d', fontWeight: 600, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}>
             <Sparkles size={14} color="#15803d" />
             <span>Mandats Exclusifs</span>
@@ -174,51 +291,64 @@ export default function AgenceMandatsPage() {
         </div>
       </div>
 
-      {/* Barre de filtres */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-          <input
-            type="text"
-            placeholder="Rechercher par bien, propriétaire..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && chargerDonnees()}
-            style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13 }}
-          />
-        </div>
+      {/* Barre d'outils Recherche, Tri, Filtres */}
+      <AgenceTableToolbar
+        searchPlaceholder="Rechercher par bien, propriétaire, ville..."
+        searchValue={search}
+        onSearchChange={setSearch}
+        sortOptions={SORT_OPTIONS}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        onSortFieldChange={setSortField}
+        onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+        activeFiltersCount={activeFiltersCount}
+        onResetFilters={() => {
+          setSearch('')
+          setFilterStatut('tous')
+          setFilterType('tous')
+        }}
+        totalResults={filteredMandats.length}
+        resultsLabel="mandat"
+        filterSlot={
+          <>
+            <select
+              value={filterStatut}
+              onChange={(e) => setFilterStatut(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--border, #E8DDD2)',
+                fontSize: 13,
+                background: '#FFFFFF',
+                color: 'var(--navy, #1C2B4A)',
+              }}
+            >
+              <option value="tous">Statut : Tous</option>
+              <option value="actif">En vigueur</option>
+              <option value="expire">Expirés</option>
+              <option value="resilie">Résiliés</option>
+            </select>
 
-        <select
-          value={filterStatut}
-          onChange={e => setFilterStatut(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff' }}
-        >
-          <option value="actif">Statut : Actifs</option>
-          <option value="expire">Statut : Expirés</option>
-          <option value="resilie">Statut : Résiliés</option>
-          <option value="tous">Statut : Tous</option>
-        </select>
-
-        <select
-          value={filterType}
-          onChange={e => setFilterType(e.target.value)}
-          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 13, background: '#fff' }}
-        >
-          <option value="tous">Type : Tous</option>
-          <option value="simple">Mandats Simples</option>
-          <option value="exclusif">Mandats Exclusifs</option>
-          <option value="co_exclusif">Co-exclusifs</option>
-        </select>
-
-        <button
-          type="button"
-          onClick={chargerDonnees}
-          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer' }}
-          title="Actualiser"
-        >
-          <RefreshCw size={14} className={loading ? 'spin' : ''} />
-        </button>
-      </div>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--border, #E8DDD2)',
+                fontSize: 13,
+                background: '#FFFFFF',
+                color: 'var(--navy, #1C2B4A)',
+              }}
+            >
+              <option value="tous">Type : Tous</option>
+              <option value="simple">Mandats Simples</option>
+              <option value="exclusif">Mandats Exclusifs</option>
+              <option value="co_exclusif">Co-exclusifs</option>
+            </select>
+          </>
+        }
+      />
 
       {/* Tableau des mandats */}
       <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
@@ -226,12 +356,12 @@ export default function AgenceMandatsPage() {
           <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 13 }}>
             Chargement des mandats…
           </div>
-        ) : mandats.length === 0 ? (
+        ) : filteredMandats.length === 0 ? (
           <div style={{ padding: '48px 20px', textAlign: 'center' }}>
             <FileSignature size={40} color="#cbd5e1" style={{ margin: '0 auto 12px' }} />
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#334155', margin: 0 }}>Aucun mandat trouvé</h3>
             <p style={{ fontSize: 13, color: '#94a3b8', margin: '4px 0 16px' }}>
-              Enregistrez vos mandats de vente et de gestion pour formaliser vos relations bailleurs.
+              Modifiez vos critères ou enregistrez vos mandats de vente et de gestion.
             </p>
             <button
               type="button"
@@ -255,153 +385,33 @@ export default function AgenceMandatsPage() {
             </button>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Bien & Opération</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Propriétaire Mandant</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Type & Validité</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Honoraires</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Statut</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mandats.map(m => (
-                  <tr key={m.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '14px 16px' }}>
-                      <Link
-                        href={`/agence/${slug}/biens/${m.bien_id}`}
-                        style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', textDecoration: 'none', display: 'block' }}
-                      >
-                        {m.bien_titre}
-                      </Link>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                        <span style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: '1px 6px',
-                          borderRadius: 4,
-                          background: m.type_operation === 'vente' ? '#fef3c7' : '#e0f2fe',
-                          color: m.type_operation === 'vente' ? '#92400e' : '#0369a1',
-                          textTransform: 'uppercase',
-                        }}>
-                          {m.type_operation}
-                        </span>
-                        <span style={{ fontSize: 11.5, color: '#64748b' }}>
-                          {m.bien_quartier ? `${m.bien_quartier}, ` : ''}{m.bien_ville}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ fontWeight: 600, color: '#1e293b' }}>{m.proprietaire_nom}</div>
-                      {m.proprietaire_telephone && (
-                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                          {m.proprietaire_telephone}
-                        </div>
-                      )}
-                    </td>
-
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{
-                          fontWeight: 750,
-                          fontSize: 12,
-                          color: m.type_mandat === 'exclusif' ? '#15803d' : '#334155',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                        }}>
-                          {m.type_mandat === 'exclusif' && <Sparkles size={13} color="#15803d" />}
-                          <span>{m.type_mandat === 'exclusif' ? 'Exclusif' : m.type_mandat === 'co_exclusif' ? 'Co-exclusif' : 'Simple'}</span>
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 3 }}>
-                        Du {new Date(m.date_debut).toLocaleDateString('fr-FR')} au {m.date_fin ? new Date(m.date_fin).toLocaleDateString('fr-FR') : 'Indéterminée'}
-                      </div>
-                      {m.expire_bientot && (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, color: '#b45309', fontSize: 11, fontWeight: 700 }}>
-                          <AlertTriangle size={12} />
-                          <span>Expire dans {m.jours_restants}j</span>
-                        </div>
-                      )}
-                    </td>
-
-                    <td style={{ padding: '14px 16px' }}>
-                      {m.taux_commission ? (
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{m.taux_commission}%</div>
-                      ) : m.montant_commission_fixe ? (
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{Number(m.montant_commission_fixe).toLocaleString('fr-FR')} F</div>
-                      ) : (
-                        <span style={{ color: '#94a3b8' }}>Non défini</span>
-                      )}
-                    </td>
-
-                    <td style={{ padding: '14px 16px' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: '3px 8px',
-                        borderRadius: 6,
-                        background: m.statut === 'actif' ? '#f0fdf4' : m.statut === 'expire' ? '#fef2f2' : '#f1f5f9',
-                        color: m.statut === 'actif' ? '#166534' : m.statut === 'expire' ? '#dc2626' : '#475569',
-                      }}>
-                        {m.statut === 'actif' ? 'En vigueur' : m.statut === 'expire' ? 'Expiré' : m.statut}
-                      </span>
-                    </td>
-
-                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
-                        <a
-                          href={`/api/agences/agence/${slug}/documents/mandat/${m.id}.pdf${token ? `?token=${encodeURIComponent(token)}` : ''}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Télécharger le Mandat officiel PDF"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            padding: '5px 9px',
-                            borderRadius: 6,
-                            background: '#F1F5F9',
-                            border: '1px solid #CBD5E1',
-                            color: 'var(--navy, #1C2B4A)',
-                            fontSize: 11.5,
-                            fontWeight: 700,
-                            textDecoration: 'none',
-                          }}
-                        >
-                          <FileText size={12} />
-                          <span>Mandat PDF</span>
-                        </a>
-
-                        <Link
-                          href={`/agence/${slug}/biens/${m.bien_id}`}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: 'var(--accent, #C75B00)',
-                            textDecoration: 'none',
-                          }}
-                        >
-                          <span>Fiche bien</span>
-                          <ArrowRight size={13} />
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <TableMandatsDesktop
+            mandats={filteredMandats}
+            slug={slug}
+            token={token}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSortChange={(field) => {
+              if (sortField === field) setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))
+              else {
+                setSortField(field)
+                setSortOrder('asc')
+              }
+            }}
+          />
         )}
       </div>
+
+      {/* Barre d'actions groupées */}
+      <AgenceBatchActionBar
+        selectedCount={selectedIds.size}
+        onClearSelection={() => setSelectedIds(new Set())}
+        actions={batchActions}
+        loading={batchLoading}
+      />
 
       {showModal && (
         <ModalCreerMandat

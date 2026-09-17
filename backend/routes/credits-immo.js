@@ -257,4 +257,222 @@ router.post(
   }
 );
 
+// ── POST /api/credits-immo/agence/:slugOrId/direct-wave — Nouveau Financement & Lien Wave ──
+router.post(
+  ['/agence/:slugOrId/direct-wave', '/:slugOrId/direct-wave'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const {
+        type_credit = 'caution_echelonnee',
+        beneficiaire_nom,
+        beneficiaire_tel,
+        bien_id,
+        bail_id,
+        montant_total,
+        apport_initial = 0,
+        nb_echeances = 3,
+        frequence = 'mensuel',
+        date_premiere_echeance,
+        notes,
+        mode_paiement_initial = 'wave'
+      } = req.body;
+
+      if (!beneficiaire_nom || !montant_total) {
+        return res.status(400).json({ success: false, error: 'Bénéficiaire et montant total obligatoires.' });
+      }
+
+      const total = parseFloat(montant_total) || 0;
+      const apport = parseFloat(apport_initial) || 0;
+      const solde = Math.max(0, total - apport);
+      const nEch = parseInt(nb_echeances, 10) || 3;
+      const montantParEcheance = solde > 0 ? Math.round(solde / nEch) : 0;
+
+      // Générer les sous-échéances
+      const echeancesList = [];
+      const startDate = date_premiere_echeance ? new Date(date_premiere_echeance) : new Date();
+
+      for (let i = 1; i <= nEch; i++) {
+        const d = new Date(startDate);
+        d.setMonth(d.getMonth() + (i - 1));
+        echeancesList.push({
+          numero: i,
+          date_echeance: d.toISOString().split('T')[0],
+          montant: i === nEch ? (solde - (montantParEcheance * (nEch - 1))) : montantParEcheance,
+          statut: 'en_attente',
+          montant_paye: 0
+        });
+      }
+
+      const { rows } = await pool.query(
+        `INSERT INTO credits_immo (
+          agence_id, type_credit, beneficiaire_nom, beneficiaire_tel, bien_id, bail_id,
+          montant_total, apport_initial, solde_restant, nb_echeances, frequence,
+          statut, echeances, notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'actif', $12, $13)
+        RETURNING *`,
+        [
+          agenceId,
+          type_credit,
+          beneficiaire_nom.trim(),
+          beneficiaire_tel || null,
+          bien_id || null,
+          bail_id || null,
+          total,
+          apport,
+          solde,
+          nEch,
+          frequence,
+          JSON.stringify(echeancesList),
+          notes || null
+        ]
+      );
+
+      const credit = rows[0];
+      const reference = `FIN-${credit.id.slice(0, 8).toUpperCase()}`;
+      const montantAEncaisser = apport > 0 ? apport : (echeancesList[0]?.montant || total);
+
+      // Générer le lien de paiement Wave
+      let wave_url = '';
+      const SITE = process.env.NEXT_PUBLIC_APP_URL || process.env.BASE_URL || 'https://nopalou.com';
+
+      try {
+        const { createCheckoutSession } = require('../services/wave');
+        const session = await createCheckoutSession({
+          amount: montantAEncaisser,
+          client_reference: reference,
+          success_url: `${SITE}/compte?tab=locations&credit_paid=${credit.id}`,
+          error_url: `${SITE}/compte?tab=locations&credit_cancel=${credit.id}`,
+        });
+        if (session && session.wave_url) {
+          wave_url = session.wave_url;
+        }
+      } catch (waveErr) {
+        console.warn('[CREDIT_WAVE_SESSION_WARN] Fallback session Wave:', waveErr.message);
+      }
+
+      if (!wave_url) {
+        wave_url = `${SITE}/payer-loyer/${credit.id}?amount=${montantAEncaisser}&ref=${reference}&pay=wave`;
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Plan de financement créé et lien Wave généré avec succès',
+        credit,
+        reference,
+        wave_url,
+        montant_immediat: montantAEncaisser
+      });
+    } catch (err) {
+      console.error('[POST /api/credits-immo/direct-wave]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur création plan & lien Wave' });
+    }
+  }
+);
+
+// ── POST /api/credits-immo/agence/:slugOrId/:creditId/echeances/:numero/wave-link ──
+router.post(
+  ['/agence/:slugOrId/:creditId/echeances/:numero/wave-link', '/:slugOrId/:creditId/echeances/:numero/wave-link'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { creditId, numero } = req.params;
+      const numEch = parseInt(numero, 10);
+
+      const { rows } = await pool.query(
+        `SELECT * FROM credits_immo WHERE id = $1 AND agence_id = $2`,
+        [creditId, agenceId]
+      );
+      if (rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Plan introuvable' });
+      }
+
+      const credit = rows[0];
+      const ech = (credit.echeances || []).find(e => e.numero === numEch);
+      if (!ech) {
+        return res.status(404).json({ success: false, error: 'Échéance introuvable' });
+      }
+
+      const ref = `ECH-${credit.id.slice(0, 5).toUpperCase()}-${numEch}`;
+      const SITE = process.env.NEXT_PUBLIC_APP_URL || process.env.BASE_URL || 'https://nopalou.com';
+      let wave_url = '';
+
+      try {
+        const { createCheckoutSession } = require('../services/wave');
+        const session = await createCheckoutSession({
+          amount: ech.montant,
+          client_reference: ref,
+          success_url: `${SITE}/compte?tab=locations&paid=${ref}`,
+          error_url: `${SITE}/compte?tab=locations&cancel=${ref}`,
+        });
+        if (session && session.wave_url) {
+          wave_url = session.wave_url;
+        }
+      } catch (waveErr) {
+        console.warn('[ECHEANCE_WAVE_WARN]:', waveErr.message);
+      }
+
+      if (!wave_url) {
+        wave_url = `${SITE}/payer-loyer/${credit.id}?ech=${numEch}&amount=${ech.montant}&ref=${ref}&pay=wave`;
+      }
+
+      res.json({
+        success: true,
+        wave_url,
+        reference: ref,
+        montant: ech.montant,
+        beneficiaire_nom: credit.beneficiaire_nom,
+        beneficiaire_tel: credit.beneficiaire_tel
+      });
+    } catch (err) {
+      console.error('[POST wave-link echeance]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur génération lien Wave' });
+    }
+  }
+);
+
+// ── POST /api/credits-immo/agence/:slugOrId/batch — Actions par lot sur crédits ──
+router.post(
+  ['/agence/:slugOrId/batch', '/:slugOrId/batch'],
+  verifierToken,
+  requireAgenceAccess('agent'),
+  async (req, res) => {
+    try {
+      const agenceId = req.agence.id;
+      const { action, creditIds } = req.body;
+
+      if (!Array.isArray(creditIds) || creditIds.length === 0) {
+        return res.status(400).json({ success: false, error: 'Aucun crédit sélectionné.' });
+      }
+
+      if (action === 'supprimer') {
+        await pool.query(
+          `DELETE FROM credits_immo WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+          [creditIds, agenceId]
+        );
+        return res.json({ success: true, message: `${creditIds.length} plan(s) supprimé(s).` });
+      }
+
+      if (action === 'solder') {
+        await pool.query(
+          `UPDATE credits_immo SET statut = 'solde', solde_restant = 0, updated_at = NOW()
+           WHERE id = ANY($1::uuid[]) AND agence_id = $2`,
+          [creditIds, agenceId]
+        );
+        return res.json({ success: true, message: `${creditIds.length} plan(s) marqué(s) comme soldé(s).` });
+      }
+
+      res.status(400).json({ success: false, error: 'Action non reconnue.' });
+    } catch (err) {
+      console.error('[POST /api/credits-immo/batch]', err.message);
+      res.status(500).json({ success: false, error: 'Erreur traitement action par lot' });
+    }
+  }
+);
+
 module.exports = router;
+
