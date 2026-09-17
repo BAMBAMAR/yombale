@@ -4,9 +4,10 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import HeroDualTrack from './HeroDualTrack'
 import MerchantShowcase from './MerchantShowcase'
+import { AgenceLandingPublicView } from './agence/components/AgenceLandingPublicView'
 
 interface Props {
-  initialMode?: 'acheteur' | 'marchand'
+  initialMode?: 'acheteur' | 'marchand' | 'agence'
   prixTafTaf?: number
   searchBarSlot: React.ReactNode
   categoriesSlot: React.ReactNode
@@ -35,26 +36,36 @@ function HomeDualTrackContainerContent({
     searchParams.get('sousType')
   )
 
-  // Calcul du mode effectif : Acheteur prioritaire si filtre ou si pas explicitement marchand
-  const effectiveMode: 'acheteur' | 'marchand' = (
+  // Calcul du mode effectif : Acheteur prioritaire si filtre de recherche actif
+  const effectiveMode: 'acheteur' | 'marchand' | 'agence' = (
     !hasFilter && (urlMode === 'marchand' || urlMode === 'commercant')
-  ) ? 'marchand' : 'acheteur'
+  ) ? 'marchand' : (
+    !hasFilter && (urlMode === 'agence' || urlMode === 'immo-pro')
+  ) ? 'agence' : 'acheteur'
 
-  const [activeTab, setActiveTab] = useState<'acheteur' | 'marchand'>(effectiveMode)
+  const [activeTab, setActiveTab] = useState<'acheteur' | 'marchand' | 'agence'>(effectiveMode)
 
   // Synchronisation réactive immédiate quand l'URL ou les filtres changent
   useEffect(() => {
     setActiveTab(effectiveMode)
   }, [effectiveMode])
 
-  function handleTabChange(tab: 'acheteur' | 'marchand') {
+  function handleTabChange(tab: 'acheteur' | 'marchand' | 'agence') {
     setActiveTab(tab)
     try {
       if (typeof window !== 'undefined') {
         const url = new URL(window.location.href)
         if (tab === 'marchand') {
           url.searchParams.set('mode', 'marchand')
-          // Supprimer les filtres de recherche lors du basculement volontaire vers marchand
+          url.searchParams.delete('q')
+          url.searchParams.delete('categorie')
+          url.searchParams.delete('prixMin')
+          url.searchParams.delete('prixMax')
+          url.searchParams.delete('etat')
+          url.searchParams.delete('tri')
+          url.searchParams.delete('sousType')
+        } else if (tab === 'agence') {
+          url.searchParams.set('mode', 'agence')
           url.searchParams.delete('q')
           url.searchParams.delete('categorie')
           url.searchParams.delete('prixMin')
@@ -74,7 +85,7 @@ function HomeDualTrackContainerContent({
 
   return (
     <>
-      {/* ── SECTION HERO AVEC TRANSFORMATION DUELLE ── */}
+      {/* ── SECTION HERO AVEC TRANSFORMATION DUELLE & TRIPARTITE ── */}
       <section style={{
         background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 60%, var(--bg, #F8F5F0) 100%)',
         borderBottom: '1px solid var(--border, #E8DDD2)',
@@ -93,17 +104,22 @@ function HomeDualTrackContainerContent({
         </div>
       </section>
 
-      {/* ── CONTENU DU CORPS DE PAGE : METAMORPHOSE TOTALE ── */}
+      {/* ── CONTENU DU CORPS DE PAGE : METAMORPHOSE TOTALE SANS RECHARGEMENT ── */}
       <main id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
         {activeTab === 'acheteur' ? (
           /* VUE 1 : CATALOGUE ACHETEUR, COMPARATEUR DE PRIX & FILTRES */
           <div>
             {buyerContentSlot}
           </div>
-        ) : (
+        ) : activeTab === 'marchand' ? (
           /* VUE 2 : SHOWCASE COMPLET DÉDIÉ AUX COMMERÇANTS & CAISSE POS */
           <div>
             <MerchantShowcase prixTafTaf={prixTafTaf} />
+          </div>
+        ) : (
+          /* VUE 3 : SHOWCASE COMPLET DÉDIÉ AUX AGENCES IMMOBILIÈRES & GESTION LOCATIVE */
+          <div>
+            <AgenceLandingPublicView />
           </div>
         )}
       </main>

@@ -1,15 +1,15 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { ShoppingBag, Store, Building2 } from 'lucide-react'
 import HeroAcheteurView from './hero/HeroAcheteurView'
 import HeroMarchandView from './hero/HeroMarchandView'
+import HeroAgenceHeaderView from './hero/HeroAgenceHeaderView'
 
 interface Props {
-  initialMode?: 'acheteur' | 'marchand'
-  activeTab?: 'acheteur' | 'marchand'
-  onTabChange?: (tab: 'acheteur' | 'marchand') => void
+  initialMode?: 'acheteur' | 'marchand' | 'agence'
+  activeTab?: 'acheteur' | 'marchand' | 'agence'
+  onTabChange?: (tab: 'acheteur' | 'marchand' | 'agence') => void
   prixTafTaf?: number
   searchBarSlot: React.ReactNode
   categoriesSlot: React.ReactNode
@@ -23,7 +23,7 @@ export default function HeroDualTrack({
   searchBarSlot,
   categoriesSlot
 }: Props) {
-  const [internalTab, setInternalTab] = useState<'acheteur' | 'marchand'>(initialMode)
+  const [internalTab, setInternalTab] = useState<'acheteur' | 'marchand' | 'agence'>(initialMode)
   const activeTab = activeTabProp !== undefined ? activeTabProp : internalTab
   const [activeBoutiqueNom, setActiveBoutiqueNom] = useState<string | null>(null)
 
@@ -51,7 +51,13 @@ export default function HeroDualTrack({
           return
         }
 
-        // 3. Par défaut : Toujours Acheteur
+        // 3. Si URL explicite ?mode=agence
+        if (urlMode === 'agence' || urlMode === 'immo-pro') {
+          setInternalTab('agence')
+          return
+        }
+
+        // 4. Par défaut : Toujours Acheteur
         setInternalTab('acheteur')
       }
     } catch (err) {
@@ -59,7 +65,7 @@ export default function HeroDualTrack({
     }
   }, [activeTabProp])
 
-  function switchTab(tab: 'acheteur' | 'marchand') {
+  function switchTab(tab: 'acheteur' | 'marchand' | 'agence') {
     if (onTabChange) {
       onTabChange(tab)
     } else {
@@ -69,15 +75,14 @@ export default function HeroDualTrack({
 
   return (
     <div style={{ width: '100%' }}>
-      {/* ── SÉLECTEUR D'INTENTION DUAL-TRACK (ACHETEUR / COMMERÇANT / AGENCES) ── */}
+      {/* ── SÉLECTEUR D'INTENTION TRIPARTITE UNIFIÉ DANS LA MÊME CAPSULE (HAUTE VISIBILITÉ) ── */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          gap: 8,
-          marginBottom: 14,
-          flexWrap: 'wrap'
+          marginBottom: 16,
+          padding: '0 8px'
         }}
       >
         <div
@@ -85,14 +90,20 @@ export default function HeroDualTrack({
           aria-label="Mode d'utilisation Nopalou"
           style={{
             display: 'inline-flex',
-            background: '#EDE8E1',
-            padding: '4px',
+            alignItems: 'center',
+            background: '#FFFFFF',
+            padding: '5px',
             borderRadius: '9999px',
-            border: '1px solid var(--border, #E8DDD2)',
-            gap: 4,
-            boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.06)'
+            border: '1.5px solid var(--border, #D8CEC0)',
+            gap: 5,
+            boxShadow: '0 4px 16px rgba(28, 43, 74, 0.08), 0 1px 3px rgba(0,0,0,0.04)',
+            maxWidth: '100%',
+            overflowX: 'auto',
+            flexWrap: 'wrap',
+            justifyContent: 'center'
           }}
         >
+          {/* 1. Acheteur & Comparateur */}
           <button
             type="button"
             role="tab"
@@ -104,23 +115,25 @@ export default function HeroDualTrack({
               gap: 8,
               padding: '8px 18px',
               borderRadius: '9999px',
-              fontSize: 13,
-              fontWeight: activeTab === 'acheteur' ? 800 : 600,
+              fontSize: 13.5,
+              fontWeight: activeTab === 'acheteur' ? 800 : 650,
               border: 'none',
               cursor: 'pointer',
-              background: activeTab === 'acheteur' ? '#FFFFFF' : 'transparent',
-              color: activeTab === 'acheteur' ? 'var(--navy, #1C2B4A)' : 'var(--text2, #5A4E42)',
-              boxShadow: activeTab === 'acheteur' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
-              transition: 'all 0.15s ease'
+              background: activeTab === 'acheteur' ? 'var(--navy, #1C2B4A)' : 'transparent',
+              color: activeTab === 'acheteur' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+              boxShadow: activeTab === 'acheteur' ? '0 3px 10px rgba(28,43,74,0.25)' : 'none',
+              transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap'
             }}
           >
             <ShoppingBag
               size={16}
-              color={activeTab === 'acheteur' ? 'var(--accent, #C75B00)' : 'currentColor'}
+              color={activeTab === 'acheteur' ? '#FED7AA' : 'var(--accent, #C75B00)'}
             />
             <span>Acheteur &amp; Comparateur</span>
           </button>
 
+          {/* 2. Commerçant & Caisse POS [PRO] */}
           <button
             type="button"
             role="tab"
@@ -132,77 +145,69 @@ export default function HeroDualTrack({
               gap: 8,
               padding: '8px 18px',
               borderRadius: '9999px',
-              fontSize: 13,
-              fontWeight: activeTab === 'marchand' ? 800 : 600,
+              fontSize: 13.5,
+              fontWeight: activeTab === 'marchand' ? 800 : 650,
               border: 'none',
               cursor: 'pointer',
               background: activeTab === 'marchand' ? 'var(--navy, #1C2B4A)' : 'transparent',
-              color: activeTab === 'marchand' ? '#FFFFFF' : 'var(--text2, #5A4E42)',
+              color: activeTab === 'marchand' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
               boxShadow: activeTab === 'marchand' ? '0 3px 10px rgba(28,43,74,0.25)' : 'none',
-              transition: 'all 0.15s ease'
+              transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap'
             }}
           >
             <Store size={16} color={activeTab === 'marchand' ? '#FED7AA' : 'currentColor'} />
             <span>Commerçant &amp; Caisse POS</span>
-            <span className="badge-npl badge-npl-accent" style={{ fontSize: 10, padding: '2px 6px' }}>
+            <span className="badge-npl badge-npl-accent" style={{ fontSize: 10, padding: '2px 6px', fontWeight: 800 }}>
+              PRO
+            </span>
+          </button>
+
+          {/* 3. Agences Immo [PRO] (même badge PRO que commerçant) */}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'agence'}
+            onClick={() => switchTab('agence')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 18px',
+              borderRadius: '9999px',
+              fontSize: 13.5,
+              fontWeight: activeTab === 'agence' ? 800 : 650,
+              border: 'none',
+              cursor: 'pointer',
+              background: activeTab === 'agence' ? 'var(--navy, #1C2B4A)' : 'transparent',
+              color: activeTab === 'agence' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+              boxShadow: activeTab === 'agence' ? '0 3px 10px rgba(28,43,74,0.25)' : 'none',
+              transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <Building2 size={16} color={activeTab === 'agence' ? '#FED7AA' : 'var(--price, #0A5C36)'} />
+            <span>Agences Immo</span>
+            <span className="badge-npl badge-npl-accent" style={{ fontSize: 10, padding: '2px 6px', fontWeight: 800 }}>
               PRO
             </span>
           </button>
         </div>
-
-        {/* Passerelle Immédiate : Agences & Baux Pro */}
-        <Link
-          href="/agence"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '7px 14px',
-            borderRadius: '9999px',
-            fontSize: 12.5,
-            fontWeight: 800,
-            background: 'var(--bg, #F8F5F0)',
-            color: 'var(--navy, #1C2B4A)',
-            border: '1px solid var(--border, #E8DDD2)',
-            textDecoration: 'none',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-            transition: 'all 0.15s ease'
-          }}
-          title="Accéder à l'espace dédié aux agences immobilières et bailleurs"
-        >
-          <Building2 size={15} color="var(--price, #0A5C36)" />
-          <span>Agences &amp; Baux</span>
-          <span
-            style={{
-              fontSize: 9.5,
-              fontWeight: 900,
-              background: 'rgba(10, 92, 54, 0.12)',
-              color: 'var(--price, #0A5C36)',
-              padding: '1px 6px',
-              borderRadius: 6
-            }}
-          >
-            IMMO
-          </span>
-        </Link>
       </div>
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* VUE 1 : EXPÉRIENCE 100% ACHETEUR & COMPARATEUR DE PRIX        */}
-      {/* ───────────────────────────────────────────────────────────── */}
+      {/* ── RENDU DYNAMIQUE DU HERO SELON L'ONGLET ACTIF ── */}
       {activeTab === 'acheteur' ? (
         <HeroAcheteurView
           searchBarSlot={searchBarSlot}
           categoriesSlot={categoriesSlot}
         />
-      ) : (
-        /* ───────────────────────────────────────────────────────────── */
-        /* VUE 2 : HUB MARCHAND, CAISSE POS & AGENCES IMMOBILIÈRES       */
-        /* ───────────────────────────────────────────────────────────── */
+      ) : activeTab === 'marchand' ? (
         <HeroMarchandView
           prixTafTaf={prixTafTaf}
           activeBoutiqueNom={activeBoutiqueNom}
         />
+      ) : (
+        <HeroAgenceHeaderView />
       )}
     </div>
   )

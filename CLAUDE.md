@@ -1,3 +1,58 @@
+- **Refonte Visuelle & Typographique du Menu d'En-Tête : Gras Marqué, Capsule Dock & Badges PRO Énergiques (17 septembre 2026)** 🧭✨🚀 ✅ :
+  * **🎯 1. Résolution de la Lisibilité & Typographie ExtraBold (Poids 800)** :
+    - Diagnostic : `globals.css` imposait un `font-weight: 600` qui, sous Windows / Segoe UI, apparaissait fin et délavé sans présence visuelle.
+    - Correction : Passage de `.navbar-link` et `.navbar-guides-btn` à `font-weight: 800` (ExtraBold) et Navy contrasté `#1C2B4A` (`letter-spacing: -0.01em`) dans `navbar.css` et `globals.css`.
+  * **🎯 2. Encapsulation Moderne en Capsule Dock (`.navbar-links`)** :
+    - Remplacement des liens flottant sur fond blanc par un dock segmenté élégant : fond clair `background: #F8F5F0`, bordure discrète `1px solid var(--border, #E8DDD2)`, padding doux et arrondi `border-radius: 30px`.
+    - Effet hover surélevé : pilule blanche `#FFFFFF`, ombre `0 2px 6px rgba(28,43,74,0.08)` et texte accentué orange `var(--accent, #C75B00)`.
+  * **🎯 3. Composant Client & Détection de Route Active ([NavbarLinksNav.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/components/NavbarLinksNav.tsx))** :
+    - Détection dynamique de l'URL courante via `usePathname()`.
+    - La page active reçoit la classe `.navbar-link--active` (pilule blanche en relief, ombre portée nette, `font-weight: 900`).
+    - Navigation fluide sans rechargement de page via `next/link`.
+  * **🎯 4. Badges PRO Haut Contraste & Identité Visuelle ([.navbar-pro-badge])** :
+    - Fin de la pilule beige terne et effacée.
+    - Nouveau badge dégradé orange vif `linear-gradient(135deg, #FF6600 0%, #C75B00 100%)`, texte blanc pur, `font-weight: 900`, `letter-spacing: 0.04em` et micro-ombre portée.
+  * **🎯 5. Contrôles Qualité Validés** :
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Anti-AI-Slop Linter : 0 composant > 450 lignes, 0 émoji UI, polices système natives.
+
+- **Parité d'Accès Annuaire Agences (`/agences`), Liens Vitrines & Allègement du Hero Commerçant (17 septembre 2026)** 🏢🛍️⚡ 🚀 ✅ :
+  * **🎯 1. Parité Complète entre Boutiques et Agences dans la Navigation** :
+    - Distinction claire entre les espaces :
+      - Grand Public : `/boutiques` (annuaire boutiques) & `/agences` (annuaire des agences immobilières partenaires avec filtres villes Dakar/Thiès/Saly et vitrines `/agences/[slug]`).
+      - Espace Professionnel : `/boutique` (gestion commerce/caisse) & `/agence` (gestion ERP immo, baux, mandats).
+    - Mise à jour du lien d'en-tête desktop `layout.tsx` : `Agences Immo [PRO]` pointe désormais vers `/agences` (comme `Boutiques [PRO]` pointe vers `/boutiques`).
+    - Ajout du bouton direct *« Consulter l'annuaire des agences »* dans [HeroAgenceHeaderView.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/hero/HeroAgenceHeaderView.tsx) et d'un lien passerelle dans [AgenceLandingPublicView.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/components/AgenceLandingPublicView.tsx).
+  * **🎯 2. Allègement & Harmonisation du Hero Commerçant (`HeroMarchandView.tsx`)** :
+    - Réduction de 455 à 289 lignes (respect strict du plafond de 450 lignes).
+    - Éradication de la disparité de couleurs (arrières-plans sombres, verts et dépareillés remplacés par 4 cartes blanches unifiées `#FFFFFF`, bordure `var(--border)`, titres `--navy` et 1 seul CTA clair par carte).
+    - Suppression de la carte immobilière parasite qui encombrait l'espace marchand (l'immo possédant désormais son propre pilier dédié).
+    - Transition fluide et adoucie avec la section démo et témoignages (`MerchantDemoCtaAndTestimonials.tsx`).
+  * **🎯 3. Contrôles Qualité Validés** :
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Anti-AI-Slop Linter : 0 composant > 450 lignes, 0 émoji UI, polices système natives.
+
+- **Harmonisation Navbar, Capsule d'Accueil Tripartite In-Page & Refonte Majeure de la Vitrine ERP Agences (17 septembre 2026)** 🧭🏢⚡ 🚀 ✅ :
+  * **🎯 1. Réarrangement & Haute Visibilité du Menu d'En-Tête (Navbar globale)** :
+    - Réorganisation logique de la navigation : `Produits` ➔ `Boutiques [PRO]` ➔ `Immobilier` ➔ `Agences Immo [PRO]` ➔ `Télécoms` (avec un S) ➔ `Annonces` ➔ `Guides ▾`.
+    - Harmonisation des badges : `Boutiques` et `Agences Immo` reçoivent le même badge crochet `[PRO]`.
+    - Rehaussement du contraste et de la lisibilité (`font-weight: 700`, Navy profond `#1C2B4A`, padding équilibré).
+  * **🎯 2. Capsule d'Accueil Hero Tripartite Unifiée (Zéro Bouton Détaché)** :
+    - Intégration des 3 piliers dans une capsule blanche surélevée unique haute visibilité : `[ 🛍️ Acheteur & Comparateur ]` `[ 🏪 Commerçant & Caisse POS PRO ]` `[ 🏢 Agences Immo PRO ]`.
+    - Fin du bouton détaché d'agences et harmonisation visuelle complète (`border: 1.5px solid #D8CEC0`, ombre portée moderne `0 4px 16px rgba(28,43,74,0.08)`).
+  * **🎯 3. Comportement In-Page Unifié Sans Rechargement** :
+    - Le clic sur `Agences Immo` adopte le même comportement fluide que `Commerçant` : il active dynamiquement le mode Agences sur la page d'accueil sans rechargement ni redirection externe (`HomeDualTrackContainer.tsx`, `HeroDualTrack.tsx`, `HeroAgenceHeaderView.tsx`).
+  * **🎯 4. Refonte Métier de la Vitrine Agence : Révélation de l'ERP Immo Complet (22 Modules)** :
+    - Découpage modulaire respectant la règle < 450 lignes :
+      - `AgenceErpModulesGrid.tsx` (< 250 lignes) : les 8 grands pôles métiers (Baux OHADA, Bailleurs & Reddition de comptes, Mandats & Portefeuille, CRM & Matching WhatsApp IA, Agenda Visites, Maintenance, Compta SYSCOHADA, Collecte Wave).
+      - `AgenceComparativeTable.tsx` (< 170 lignes) : tableau comparatif direct « Gestion Manuelle (Excel + Papier) vs Agence Nopalou ERP ».
+      - `AgenceSimulatorSection.tsx` (< 210 lignes) : simulateur interactif de gains et ROI pour cabinets de gestion à Dakar (heures gagnées, 95% de recouvrement à J+5, 0 litige).
+  * **🎯 5. Contrôles Qualité & Validation Rigoureuse** :
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Linter Anti-AI-Slop : 0 composant monolithique, 0 émoji UI, polices système natives.
+    - Tests Unitaires : 69/69 validés (100% PASS).
+    - Audit Mobile Playwright : 55/55 validés de 320px à 412px (0 débordement horizontal).
+
 - **Audit Stratégique de Valorisation, Résolution du Value Gap & Adaptation Mobile / Chatbot Nopalou (17 septembre 2026)** 📱🤖🏢⚡ 🚀 ✅ :
   * **🎯 1. Audit Stratégique de Valorisation Exhaustif (34 Sections, 0 Fonctionnalité Fantôme)** :
     - Réalisation de l'audit stratégique (`AUDIT_STRATEGIQUE_VALORISATION_NOPALOU.md`) quantifiant le « Nopalou Value Gap » à -57.8% (Score de Réalité Technique 100% vs Score de Valeur Perçue 42.2%).

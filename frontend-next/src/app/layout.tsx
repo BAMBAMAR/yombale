@@ -54,7 +54,7 @@ try {
 
 import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
-import NavbarGuides from './NavbarGuides';
+import NavbarLinksNav from './components/NavbarLinksNav';
 import NavbarProSwitcher from '@/components/NavbarProSwitcher';
 import MobileNav from './MobileNav';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -272,15 +272,7 @@ export default async function RootLayout({
                 <Image src="/icons/logo-mark.svg" alt="" className="logo-icon" width={28} height={28} priority />
                 <span className="logo-name"><span className="logo-nopa">Nopa</span><span className="logo-lou">lou</span></span>
               </a>
-              <div className="navbar-links" style={{ whiteSpace: 'nowrap' }}>
-                <a href="/" className="navbar-link">Produits</a>
-                <a href="/immo" className="navbar-link">Immobilier</a>
-                <a href="/telecom" className="navbar-link">Télécom</a>
-                <a href="/annonces" className="navbar-link">Annonces</a>
-                <a href="/boutiques" className="navbar-link">Boutiques</a>
-                <a href="/agences" className="navbar-link">Agences</a>
-                <NavbarGuides />
-              </div>
+              <NavbarLinksNav />
               <div className="navbar-search-desktop">
                 <NavbarSearch />
               </div>

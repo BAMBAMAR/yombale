@@ -7,12 +7,12 @@ export default function MerchantDemoCtaAndTestimonials() {
     <section style={{ marginBottom: 48 }}>
       <div
         style={{
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+          background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #152238 100%)',
           borderRadius: 20,
-          border: '1px solid rgba(255,255,255,0.1)',
-          padding: '26px 24px',
+          border: '1.5px solid rgba(255,255,255,0.12)',
+          padding: '28px 24px',
           color: '#ffffff',
-          boxShadow: '0 10px 30px rgba(15,23,42,0.15)',
+          boxShadow: '0 8px 24px rgba(28,43,74,0.15)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -55,7 +55,7 @@ export default function MerchantDemoCtaAndTestimonials() {
               padding: '12px 22px',
               borderRadius: 10,
               background: '#ffffff',
-              color: '#0F172A',
+              color: 'var(--navy, #1C2B4A)',
               fontSize: 13,
               fontWeight: 900,
               textDecoration: 'none',
@@ -65,7 +65,7 @@ export default function MerchantDemoCtaAndTestimonials() {
               boxShadow: '0 4px 14px rgba(0,0,0,0.2)'
             }}
           >
-            <Play size={14} fill="#0F172A" />
+            <Play size={14} fill="var(--navy, #1C2B4A)" />
             <span>Lancer la Démo Marchand</span>
           </Link>
 
