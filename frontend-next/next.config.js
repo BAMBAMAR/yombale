@@ -51,6 +51,16 @@ const nextConfig = {
         destination: '/boutiques/:slug/produits/:produitId',
         permanent: true,
       },
+      {
+        source: '/creer-boutique-en-ligne',
+        destination: '/marchands',
+        permanent: true,
+      },
+      {
+        source: '/alternative-shopify-senegal',
+        destination: '/pourquoi-nopalou',
+        permanent: true,
+      },
     ]
   },
 

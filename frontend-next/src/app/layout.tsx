@@ -55,6 +55,7 @@ try {
 import NavbarActions from './NavbarActions';
 import NavbarSearch from './NavbarSearch';
 import NavbarGuides from './NavbarGuides';
+import NavbarProSwitcher from '@/components/NavbarProSwitcher';
 import MobileNav from './MobileNav';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import NavbarCartBtn from '@/components/NavbarCartBtn';
@@ -287,10 +288,7 @@ export default async function RootLayout({
                 <NavbarWhatsappBtn />
                 <NavbarCartBtn />
                 {session ? (
-                  <a href="/boutique" className="navbar-maboutique hidden-mobile" aria-label="Accéder à ma boutique" style={{ background: 'var(--navy)', color: '#fff', padding: '6px 11px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', border: '1px solid rgba(255,255,255,0.15)' }}>
-                    <Store size={14} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-                    <span className="navbar-maboutique-text">Ma Boutique</span>
-                  </a>
+                  <NavbarProSwitcher />
                 ) : (
                   <a href="/creer-boutique" className="navbar-taftaf hidden-mobile" aria-label="Créer Boutique Taf Taf" style={{ background: 'var(--navy)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: 8, fontWeight: 700, textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'all 0.2s', boxShadow: '0 2px 6px rgba(28,43,74,0.15)' }}>
                     <Zap size={14} style={{ color: 'var(--accent, #C75B00)' }} />
@@ -377,7 +375,17 @@ export default async function RootLayout({
                 <a href="/demo?role=marchand">Tester la Caisse &amp; Boutique</a>
               </div>
 
-              {/* Colonne 3 — Catégories */}
+              {/* Colonne 3 — Immobilier & Agences Pro */}
+              <div className="footer-col">
+                <p className="footer-col-titre">Immobilier &amp; Agences</p>
+                <a href="/agences" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Agences Immobilières</a>
+                <a href="/agence">Espace Agence Pro &amp; Baux</a>
+                <a href="/immo">Biens &amp; Locations Dakar</a>
+                <a href="/deposer-immo">Publier un Bien Immo</a>
+                <a href="/guide-immo">Guide Immobilier &amp; Baux</a>
+              </div>
+
+              {/* Colonne 4 — Catégories */}
               <div className="footer-col">
                 <p className="footer-col-titre">Catégories</p>
                 <a href="/categorie/smartphones">Téléphones</a>
@@ -387,17 +395,17 @@ export default async function RootLayout({
                 <a href="/categorie/maison">Maison</a>
                 <a href="/categorie/auto-moto">Auto &amp; Moto</a>
                 <a href="/telecom">Télécom</a>
-                <a href="/immo">Immobilier</a>
                 <a href="/annonces">Annonces</a>
               </div>
 
-              {/* Colonne 4 — Mon compte */}
+              {/* Colonne 5 — Mon compte */}
               <div className="footer-col">
                 <p className="footer-col-titre">Mon compte</p>
                 <a href="/connexion">Connexion</a>
                 <a href="/inscription">Inscription</a>
                 <a href="/creer-boutique">Créer ma boutique</a>
                 <a href="/boutique">Gérer ma boutique</a>
+                <a href="/compte?tab=mes-locations">Mes locations &amp; Quittances</a>
                 <a href="/compte/apporteur">Programme Apporteur (20%)</a>
                 <a href="/favoris">Mes favoris</a>
                 <a href="/suivi-commande" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>

@@ -369,6 +369,10 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                 <FileText size={15} style={{ color: '#0A5C36', marginRight: 8 }} />
                 <span>Mes annonces &amp; Biens</span>
               </a>
+              <a href="/compte?tab=mes-locations" className="mobile-nav-link" onClick={close}>
+                <Home size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
+                <span>Mes locations &amp; Quittances</span>
+              </a>
               <a href="/compte?tab=mes-alertes" className="mobile-nav-link" onClick={close}>
                 <Bell size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
                 <span>Mes alertes prix</span>

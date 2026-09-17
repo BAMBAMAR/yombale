@@ -6,6 +6,7 @@ import { Scale } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import BlocAgenceAnnonce, { AgenceInfo, AgentInfo } from './BlocAgenceAnnonce'
 import SponsoringImmoBtn from './SponsoringImmoBtn'
+import BadgePaySafe from '@/components/BadgePaySafe'
 
 interface FicheImmoSidebarProps {
   annonce: {
@@ -108,6 +109,11 @@ export default function FicheImmoSidebar({
             <span>Comparaison détaillée côte à côte</span>
           </Link>
         )}
+
+        {/* Sceau de confiance Nopalou Pay Safe Immo */}
+        <div style={{ marginTop: 14, marginBottom: 12 }}>
+          <BadgePaySafe type="immo" compact={true} />
+        </div>
 
         {/* Carte Agence Certifiée & Lead Capture CRM */}
         <BlocAgenceAnnonce

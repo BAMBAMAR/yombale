@@ -17,6 +17,7 @@ const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
 const { trouverProspectsPourBien } = require('../services/matching-immo');
+const { notifierMatchingProspectsAgenceWhatsApp } = require('../services/immo-whatsapp-notifications');
 
 // ── GET /api/biens/public/agence/:slugOrId — Biens disponibles pour la vitrine publique ──
 router.get('/public/agence/:slugOrId', async (req, res) => {
@@ -236,10 +237,29 @@ router.post('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (re
       ]
     );
 
+    const bienCree = rows[0];
+
+    // Notification proactive de matching CRM WhatsApp (déclenchée en tâche de fond)
+    setImmediate(async () => {
+      try {
+        const prospects = await trouverProspectsPourBien(bienCree.id, agenceId, 5);
+        const qualifies = (prospects || []).filter(p => (p.score_matching || 0) >= 65);
+        if (qualifies.length > 0) {
+          await notifierMatchingProspectsAgenceWhatsApp({
+            bien: bienCree,
+            prospects: qualifies,
+            agence: req.agence
+          });
+        }
+      } catch (errMatch) {
+        console.warn('[BIENS_MATCHING_POST_WARN]:', errMatch.message);
+      }
+    });
+
     res.status(201).json({
       success: true,
       message: 'Bien ajouté au portefeuille avec succès',
-      bien: rows[0]
+      bien: bienCree
     });
   } catch (err) {
     console.error('[POST /api/biens/agence/:slugOrId]', err.message);

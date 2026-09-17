@@ -26,6 +26,7 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
         { href: '/compte?tab=suivi-commande',    label: t('account.navTrackOrder'),     tab: 'suivi-commande' },
         { href: '/compte?tab=mes-annonces',      label: t('account.navMyAds'),          tab: 'mes-annonces' },
         { href: '/compte?tab=mes-annonces-immo', label: t('account.navMyRealEstate'),   tab: 'mes-annonces-immo' },
+        { href: '/compte?tab=mes-locations',     label: 'Mes locations & Quittances',   tab: 'mes-locations' },
         { href: '/compte?tab=mes-alertes',       label: t('account.navPriceAlerts'),    tab: 'mes-alertes' },
         { href: '/compte?tab=favoris',           label: t('account.navFavorites'),      tab: 'favoris' },
       ],

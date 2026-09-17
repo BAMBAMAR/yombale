@@ -9,6 +9,8 @@ import ProduitCTA from './ProduitCTA'
 import BoutonPartager from '@/components/BoutonPartager'
 import CardActions from '@/app/CardActions'
 import PageHeader from '@/components/PageHeader'
+import BadgePaySafe from '@/components/BadgePaySafe'
+import { Store } from 'lucide-react'
 
 
 interface ProduitDetail {
@@ -253,7 +255,7 @@ export default async function FicheProduitPage(
               {p.boutique_logo
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={cloudinaryHQ(p.boutique_logo, { width: 80 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span style={{ fontSize: 20 }}></span>
+                : <Store size={20} color="#64748b" />
               }
             </div>
             <div style={{ flex: 1 }}>
@@ -274,6 +276,11 @@ export default async function FicheProduitPage(
             variantesSkus={p.variantes_skus ?? []}
             uniteVente={p.unite_vente}
           />
+
+          {/* Sceau de confiance Nopalou Pay Safe */}
+          <div style={{ marginTop: 12 }}>
+            <BadgePaySafe type="produit" />
+          </div>
 
           <BoutonPartager
             lien={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/boutiques/${id}/produits/${produitId}`}

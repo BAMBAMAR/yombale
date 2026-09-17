@@ -3,7 +3,7 @@ import Link from 'next/link'
 import {
   Smartphone, WifiOff, QrCode, Receipt, Users, Zap, ShieldCheck,
   CheckCircle2, ArrowRight, Printer, Sparkles, HelpCircle, Store,
-  CreditCard, BarChart2, Laptop, Clock, ShoppingBag
+  CreditCard, BarChart2, Laptop, Clock, ShoppingBag, Monitor, Package, Boxes
 } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -172,7 +172,9 @@ export default function PosLandingPage() {
             borderRadius: '16px 16px 0 0', flexWrap: 'wrap', gap: 10
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 18 }}>🖥️</span>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Monitor size={17} color="#a7f3d0" />
+              </div>
               <span style={{ fontWeight: 900, fontSize: 14 }}>Nopalou POS &bull; Caisse Principale #01</span>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -195,20 +197,25 @@ export default function PosLandingPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                 {[
-                  { nom: 'Sac de Riz 50kg', prix: '22 500 F', emoji: '🌾' },
-                  { nom: 'Huile Dinor 5L', prix: '7 500 F', emoji: '🍾' },
-                  { nom: 'Sucre Morceau 1kg', prix: '850 F', emoji: '🧊' },
-                  { nom: 'Lait Bonnet Bleu', prix: '2 400 F', emoji: '🥛' },
-                ].map((art, idx) => (
-                  <div key={idx} style={{
-                    background: '#f8fafc', padding: '12px', borderRadius: 12, border: '1.5px solid #e2e8f0',
-                    cursor: 'pointer', textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: 24, marginBottom: 4 }}>{art.emoji}</div>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{art.nom}</div>
-                    <div style={{ fontSize: 13, fontWeight: 900, color: '#C75B00', marginTop: 4 }}>{art.prix}</div>
-                  </div>
-                ))}
+                  { nom: 'Sac de Riz 50kg', prix: '22 500 F', icon: Package, color: '#C75B00', bg: '#FFF3E8' },
+                  { nom: 'Huile Dinor 5L', prix: '7 500 F', icon: ShoppingBag, color: '#1D4ED8', bg: '#EFF6FF' },
+                  { nom: 'Sucre Morceau 1kg', prix: '850 F', icon: Boxes, color: '#0A5C36', bg: '#F0FDF4' },
+                  { nom: 'Lait Bonnet Bleu', prix: '2 400 F', icon: Store, color: '#7C3AED', bg: '#F5F3FF' },
+                ].map((art, idx) => {
+                  const ArtIcon = art.icon
+                  return (
+                    <div key={idx} style={{
+                      background: '#f8fafc', padding: '12px', borderRadius: 12, border: '1.5px solid #e2e8f0',
+                      cursor: 'pointer', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
+                    }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: art.bg, color: art.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+                        <ArtIcon size={20} />
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{art.nom}</div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: '#C75B00', marginTop: 4 }}>{art.prix}</div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
@@ -246,8 +253,8 @@ export default function PosLandingPage() {
                   <button style={{ background: '#1d4ed8', color: '#fff', border: 'none', padding: '10px 6px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
                     Wave
                   </button>
-                  <button style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '10px 6px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}>
-                    🟠 OM
+                  <button style={{ background: '#ea580c', color: '#fff', border: 'none', padding: '10px 6px', borderRadius: 10, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                    <span>Orange Money</span>
                   </button>
                 </div>
               </div>

@@ -3,10 +3,15 @@
 
 const express = require('express');
 const router = express.Router();
+const PDFDocument = require('pdfkit');
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
 const { enregistrerAgenceAuditLog } = require('../lib/auditLoggerImmo');
+const {
+  notifierConfirmationPaiementLoyerWhatsApp,
+  notifierNouveauBailLocataireWhatsApp
+} = require('../services/immo-whatsapp-notifications');
 
 // ══════════════════════════════════════════════════════════════
 // 1. BAUX IMMOBILIERS
@@ -141,6 +146,13 @@ router.post('/agence/:slugOrId/baux', verifierToken, requireAgenceAccess(), asyn
         [bail.id, agenceId, periode, dateStr, montantTotalMensuel]
       );
     }
+
+    // Notification WhatsApp automatique du locataire (Espace Locataire + détails du bail)
+    setImmediate(() => {
+      notifierNouveauBailLocataireWhatsApp({ bailId: bail.id }).catch((errWa) => {
+        console.warn('[BAIL_WA_NOTIF_WARN]:', errWa.message);
+      });
+    });
 
     res.status(201).json({
       success: true,
@@ -744,4 +756,415 @@ router.get('/agence/:slugOrId/compta', verifierToken, requireAgenceAccess(), asy
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// 5. ESPACE LOCATAIRE GRAND PUBLIC (CONSULTATION & QUITTANCES)
+// ══════════════════════════════════════════════════════════════
+
+const cleanPdfText = (str) => String(str || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+const fmtPdfNum = (n) => {
+  const num = Math.round(Number(n || 0));
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+};
+const PDF_NAVY = '#1C2B4A';
+const PDF_PRICE_GREEN = '#0A5C36';
+const PDF_GRAY = '#4B5563';
+
+function genererPdfQuittanceStream(res, d) {
+  const quittanceRef = d.quittance_url || `QT-${d.periode}-${d.id.slice(0, 8).toUpperCase()}`;
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="quittance_${quittanceRef}.pdf"`);
+
+  const doc = new PDFDocument({ margin: 45, size: 'A4' });
+  doc.pipe(res);
+
+  doc.fillColor(PDF_PRICE_GREEN).fontSize(7.5).font('Helvetica-Bold')
+     .text("RÉPUBLIQUE DU SÉNÉGAL • CODE DES OBLIGATIONS CIVILES ET COMMERCIALES (COCC) • GESTION LOCATIVE CONFORME", 45, 40);
+
+  doc.fillColor(PDF_NAVY).fontSize(18).font('Helvetica-Bold').text(d.agence_nom, 45, 58);
+  let infoY = 80;
+  doc.fontSize(8.5).font('Helvetica').fillColor(PDF_GRAY);
+  if (d.numero_agrement) { doc.text(`Agrément Professionnel : ${d.numero_agrement}`, 45, infoY); infoY += 12; }
+  if (d.agence_adresse) { doc.text(d.agence_adresse + (d.agence_ville ? `, ${d.agence_ville}` : ''), 45, infoY); infoY += 12; }
+  if (d.agence_tel) { doc.text(`Tél : ${d.agence_tel}${d.agence_email ? ` • Email : ${d.agence_email}` : ''}`, 45, infoY); infoY += 12; }
+
+  doc.moveTo(45, infoY + 6).lineTo(550, infoY + 6).strokeColor(PDF_NAVY).lineWidth(1.5).stroke();
+
+  const titleY = infoY + 18;
+  doc.fillColor(PDF_NAVY).fontSize(18).font('Helvetica-Bold').text('QUITTANCE DE LOYER', 45, titleY);
+  doc.fillColor(PDF_GRAY).fontSize(9).font('Helvetica')
+     .text(`Réf : ${quittanceRef}`, 45, titleY + 22)
+     .text(`Période acquittée : ${d.periode}`, 45, titleY + 34)
+     .text(`Date d'émission : ${new Date(d.date_paiement || d.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`, 45, titleY + 46);
+
+  const partiesY = titleY + 70;
+  doc.roundedRect(305, partiesY, 245, 95, 6).fillColor('#F8FAFC').fillAndStroke('#E2E8F0');
+  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text('LOCATAIRE (PRENEUR)', 315, partiesY + 10);
+  doc.fillColor('#1F2937').fontSize(9.5).font('Helvetica-Bold')
+     .text(`${cleanPdfText(d.locataire_prenom)} ${cleanPdfText(d.locataire_nom)}`.trim(), 315, partiesY + 26);
+  doc.font('Helvetica').fontSize(8.5).fillColor(PDF_GRAY)
+     .text(`Téléphone : ${d.locataire_tel || 'N/A'}`, 315, partiesY + 42)
+     .text(`Email : ${d.locataire_email || 'N/A'}`, 315, partiesY + 54)
+     .text(`Bail Réf : ${d.bail_id ? d.bail_id.slice(0, 8).toUpperCase() : 'N/A'}`, 315, partiesY + 66);
+
+  doc.roundedRect(45, partiesY, 250, 95, 6).fillColor('#F8FAFC').fillAndStroke('#E2E8F0');
+  doc.fillColor(PDF_NAVY).fontSize(10).font('Helvetica-Bold').text('BIEN LOUÉ & PROPRIÉTAIRE', 55, partiesY + 10);
+  doc.fillColor('#1F2937').fontSize(9.5).font('Helvetica-Bold')
+     .text(cleanPdfText(d.bien_titre), 55, partiesY + 26, { width: 230 });
+  let bY = partiesY + 42;
+  if (d.bien_adresse || d.bien_quartier) {
+    doc.font('Helvetica').fontSize(8.5).fillColor(PDF_GRAY)
+       .text(`${d.bien_adresse || ''} ${d.bien_quartier ? `(${d.bien_quartier})` : ''} - ${d.bien_ville || 'Dakar'}`, 55, bY, { width: 230 });
+    bY += 24;
+  }
+  const propNom = [d.bailleur_prenom, d.bailleur_nom].filter(Boolean).join(' ') || 'Propriétaire Mandant';
+  doc.font('Helvetica').fontSize(8.5).fillColor(PDF_GRAY)
+     .text(`Bailleur : ${propNom} (représenté)`, 55, bY);
+
+  const tableY = partiesY + 115;
+  doc.rect(45, tableY, 505, 24).fillColor(PDF_NAVY).fill();
+  doc.fillColor('#FFFFFF').fontSize(9.5).font('Helvetica-Bold')
+     .text('DÉSIGNATION DES SOMMES ACQUITTÉES', 55, tableY + 7)
+     .text('PÉRIODE', 320, tableY + 7)
+     .text('MONTANT', 465, tableY + 7, { align: 'right', width: 75 });
+
+  let currentY = tableY + 24;
+  const loyerNu = Math.max(Number(d.loyer_mensuel || d.montant_du) - Number(d.charges_bail || 0), 0);
+  const charges = Number(d.charges_bail || 0);
+  const timbre = 100;
+  const totalPaye = Number(d.montant_paye || d.montant_du);
+
+  doc.rect(45, currentY, 505, 22).fillColor('#F8F9FA').fill();
+  doc.fillColor('#1F2937').fontSize(9).font('Helvetica').text('Loyer principal d\'habitation', 55, currentY + 6);
+  doc.fillColor(PDF_GRAY).fontSize(8.5).text(d.periode, 320, currentY + 6);
+  doc.fillColor('#1F2937').fontSize(9).font('Helvetica-Bold').text(`${fmtPdfNum(loyerNu)} FCFA`, 440, currentY + 6, { align: 'right', width: 100 });
+  currentY += 22;
+
+  if (charges > 0) {
+    doc.rect(45, currentY, 505, 22).fillColor('#F8F9FA').fill();
+    doc.fillColor('#1F2937').fontSize(9).font('Helvetica').text('Provisions pour charges locatives', 55, currentY + 6);
+    doc.fillColor(PDF_GRAY).fontSize(8.5).text(d.periode, 320, currentY + 6);
+    doc.fillColor('#1F2937').fontSize(9).font('Helvetica-Bold').text(`${fmtPdfNum(charges)} FCFA`, 440, currentY + 6, { align: 'right', width: 100 });
+    currentY += 22;
+  }
+
+  doc.rect(45, currentY, 505, 22).fillColor('#F8F9FA').fill();
+  doc.fillColor('#1F2937').fontSize(9).font('Helvetica').text('Droit de timbre de quittance (COCC)', 55, currentY + 6);
+  doc.fillColor(PDF_GRAY).fontSize(8.5).text('Légal', 320, currentY + 6);
+  doc.fillColor('#1F2937').fontSize(9).font('Helvetica-Bold').text(`${fmtPdfNum(timbre)} FCFA`, 440, currentY + 6, { align: 'right', width: 100 });
+  currentY += 22;
+
+  doc.rect(45, currentY, 505, 28).fillColor('#ECFDF5').strokeColor(PDF_PRICE_GREEN).lineWidth(1).fillAndStroke();
+  doc.fillColor(PDF_PRICE_GREEN).fontSize(11).font('Helvetica-Bold')
+     .text('TOTAL INTÉGRALEMENT ACQUITTÉ', 55, currentY + 8)
+     .text(`${fmtPdfNum(totalPaye)} FCFA`, 400, currentY + 8, { align: 'right', width: 140 });
+
+  currentY += 38;
+  doc.fillColor(PDF_GRAY).fontSize(8).font('Helvetica')
+     .text(`Je soussigné, représentant de l'agence ${d.agence_nom}, mandataire du propriétaire, déclare avoir reçu de Monsieur / Madame ${d.locataire_nom} la somme de ${fmtPdfNum(totalPaye)} Francs CFA en règlement du loyer et des charges pour la période mentionnée ci-dessus.`, 45, currentY, { width: 505, align: 'justify' });
+
+  const stampY = currentY + 40;
+  doc.roundedRect(340, stampY, 210, 80, 4).strokeColor(PDF_NAVY).lineWidth(1).stroke();
+  doc.fillColor(PDF_NAVY).fontSize(8.5).font('Helvetica-Bold')
+     .text("POUR L'AGENCE (MANDATAIRE)", 350, stampY + 8, { align: 'center', width: 190 });
+  doc.fillColor(PDF_GRAY).fontSize(8).font('Helvetica')
+     .text(cleanPdfText(d.agence_nom), 350, stampY + 24, { align: 'center', width: 190 })
+     .text(`Délivré le ${new Date(d.date_paiement || Date.now()).toLocaleDateString('fr-FR')}`, 350, stampY + 38, { align: 'center', width: 190 })
+     .text("[ DOCUMENT OFFICIEL CERTIFIÉ ]", 350, stampY + 58, { align: 'center', width: 190 });
+
+  doc.end();
+}
+
+// ── GET /api/locatif-immo/mes-locations — Espace Locataire connecté ──
+router.get('/mes-locations', verifierToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = (req.user.email || '').trim().toLowerCase();
+    const cleanPh = String(req.user.telephone || '').replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const query = `
+      SELECT bx.id AS bail_id, bx.date_debut, bx.date_fin, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance, bx.statut AS statut_bail,
+             b.id AS bien_id, b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville, b.type_bien, b.photos AS bien_photos,
+             a.id AS agence_id, a.nom AS agence_nom, a.slug AS agence_slug, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.email_contact AS agence_email,
+             c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email
+      FROM baux_immo bx
+      JOIN biens_immo b ON bx.bien_id = b.id
+      JOIN agences_immo a ON bx.agence_id = a.id
+      JOIN contacts_immo c ON bx.locataire_id = c.id
+      WHERE (
+        c.utilisateur_id = $1
+        OR ($2 != '' AND LOWER(c.email) = $2)
+        OR ($3 != '' AND RIGHT(REPLACE(REPLACE(c.telephone, ' ', ''), '+', ''), 9) = $3)
+      )
+      ORDER BY bx.date_debut DESC
+    `;
+
+    const { rows: baux } = await pool.query(query, [userId, userEmail, shortPh]);
+
+    const locations = [];
+    for (const bail of baux) {
+      const { rows: echeances } = await pool.query(
+        `SELECT id, periode, date_echeance, montant_du, montant_paye, date_paiement, statut, mode_paiement, quittance_url
+         FROM loyers_echeances
+         WHERE bail_id = $1
+         ORDER BY date_echeance DESC`,
+        [bail.bail_id]
+      );
+
+      locations.push({
+        bail_id: bail.bail_id,
+        date_debut: bail.date_debut,
+        date_fin: bail.date_fin,
+        loyer_mensuel: Number(bail.loyer_mensuel),
+        charges: Number(bail.charges || 0),
+        depot_garantie: Number(bail.depot_garantie || 0),
+        jour_echeance: bail.jour_echeance,
+        statut_bail: bail.statut_bail,
+        bien: {
+          id: bail.bien_id,
+          titre: bail.bien_titre,
+          adresse: bail.bien_adresse,
+          quartier: bail.bien_quartier,
+          ville: bail.bien_ville,
+          type_bien: bail.type_bien,
+          photos: bail.bien_photos,
+        },
+        agence: {
+          id: bail.agence_id,
+          nom: bail.agence_nom,
+          slug: bail.agence_slug,
+          telephone: bail.agence_tel,
+          whatsapp: bail.agence_wa,
+          email: bail.agence_email,
+        },
+        locataire: {
+          nom: bail.locataire_nom,
+          prenom: bail.locataire_prenom,
+          telephone: bail.locataire_tel,
+          email: bail.locataire_email,
+        },
+        echeances: echeances.map(e => ({
+          id: e.id,
+          periode: e.periode,
+          date_echeance: e.date_echeance,
+          montant_du: Number(e.montant_du),
+          montant_paye: Number(e.montant_paye),
+          date_paiement: e.date_paiement,
+          statut: e.statut,
+          mode_paiement: e.mode_paiement,
+          quittance_url: e.statut === 'paye' ? `/api/locatif-immo/mes-locations/quittance/${e.id}.pdf` : null,
+        })),
+      });
+    }
+
+    res.json({ success: true, locations });
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/mes-locations]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement des locations' });
+  }
+});
+
+// ── GET /api/locatif-immo/mes-locations/quittance/:loyerId.pdf — Téléchargement Quittance Locataire ──
+router.get('/mes-locations/quittance/:loyerId.pdf', verifierToken, async (req, res) => {
+  try {
+    const { loyerId } = req.params;
+    const userId = req.user.id;
+    const userEmail = (req.user.email || '').trim().toLowerCase();
+    const cleanPh = String(req.user.telephone || '').replace(/\D/g, '');
+    const shortPh = cleanPh.length >= 9 ? cleanPh.slice(-9) : cleanPh;
+
+    const { rows } = await pool.query(
+      `SELECT le.*,
+              bx.id AS bail_id, bx.loyer_mensuel, bx.charges AS charges_bail, bx.depot_garantie,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville, b.reference AS bien_reference,
+              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email,
+              p.nom AS bailleur_nom, p.prenom AS bailleur_prenom, p.telephone AS bailleur_tel,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.email_contact AS agence_email,
+              a.adresse AS agence_adresse, a.ville AS agence_ville, a.numero_agrement
+       FROM loyers_echeances le
+       JOIN baux_immo bx ON le.bail_id = bx.id
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       LEFT JOIN proprietaires_immo p ON b.proprietaire_id = p.id
+       JOIN agences_immo a ON le.agence_id = a.id
+       WHERE le.id = $1
+         AND (
+           c.utilisateur_id = $2
+           OR ($3 != '' AND LOWER(c.email) = $3)
+           OR ($4 != '' AND RIGHT(REPLACE(REPLACE(c.telephone, ' ', ''), '+', ''), 9) = $4)
+           OR EXISTS (SELECT 1 FROM agence_membres am WHERE am.agence_id = a.id AND am.utilisateur_id = $2)
+         )`,
+      [loyerId, userId, userEmail, shortPh]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Quittance de loyer introuvable ou accès non autorisé' });
+    }
+
+    const d = rows[0];
+    genererPdfQuittanceStream(res, d);
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/mes-locations/quittance/:loyerId.pdf]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur génération quittance' });
+  }
+});
+
+// ── GET /api/locatif-immo/public/echeance/:echeanceId — Détails publics pour paiement de loyer ──
+router.get('/public/echeance/:echeanceId', async (req, res) => {
+  try {
+    const { echeanceId } = req.params;
+    const { rows } = await pool.query(
+      `SELECT le.id, le.periode, le.date_echeance, le.montant_du, le.montant_paye, le.montant_restant,
+              le.statut, le.quittance_url,
+              ba.loyer_mensuel, ba.charges,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville,
+              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.slug AS agence_slug, a.logo_url AS agence_logo
+       FROM loyers_echeances le
+       JOIN baux_immo ba ON le.bail_id = ba.id
+       JOIN biens_immo b ON ba.bien_id = b.id
+       JOIN contacts_immo c ON ba.locataire_id = c.id
+       JOIN agences_immo a ON le.agence_id = a.id
+       WHERE le.id = $1`,
+      [echeanceId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Échéance de loyer introuvable' });
+    }
+
+    const ech = rows[0];
+    res.json({
+      success: true,
+      echeance: {
+        id: ech.id,
+        periode: ech.periode,
+        date_echeance: ech.date_echeance,
+        montant_du: Number(ech.montant_du || ech.loyer_mensuel),
+        montant_paye: Number(ech.montant_paye || 0),
+        montant_restant: Number(ech.montant_restant || 0),
+        statut: ech.statut,
+        quittance_url: ech.statut === 'paye' ? `/api/locatif-immo/public/quittance/${ech.id}.pdf` : null,
+        loyer_mensuel: Number(ech.loyer_mensuel),
+        charges: Number(ech.charges || 0),
+        bien: {
+          titre: ech.bien_titre,
+          adresse: ech.bien_adresse,
+          quartier: ech.bien_quartier,
+          ville: ech.bien_ville,
+        },
+        locataire: {
+          nom: ech.locataire_nom,
+          prenom: ech.locataire_prenom,
+          telephone: ech.locataire_tel,
+        },
+        agence: {
+          nom: ech.agence_nom,
+          telephone: ech.agence_tel,
+          whatsapp: ech.agence_wa,
+          slug: ech.agence_slug,
+          logo_url: ech.agence_logo,
+        }
+      }
+    });
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/public/echeance/:echeanceId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur chargement des détails de l\'échéance' });
+  }
+});
+
+// ── GET /api/locatif-immo/public/quittance/:loyerId.pdf — Téléchargement Quittance public certifié ──
+router.get('/public/quittance/:loyerId.pdf', async (req, res) => {
+  try {
+    const { loyerId } = req.params;
+
+    const { rows } = await pool.query(
+      `SELECT le.*,
+              bx.id AS bail_id, bx.loyer_mensuel, bx.charges AS charges_bail, bx.depot_garantie,
+              b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville, b.reference AS bien_reference,
+              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email,
+              p.nom AS bailleur_nom, p.prenom AS bailleur_prenom, p.telephone AS bailleur_tel,
+              a.nom AS agence_nom, a.telephone AS agence_tel, a.email_contact AS agence_email,
+              a.adresse AS agence_adresse, a.ville AS agence_ville, a.numero_agrement
+       FROM loyers_echeances le
+       JOIN baux_immo bx ON le.bail_id = bx.id
+       JOIN biens_immo b ON bx.bien_id = b.id
+       JOIN contacts_immo c ON bx.locataire_id = c.id
+       LEFT JOIN proprietaires_immo p ON b.proprietaire_id = p.id
+       JOIN agences_immo a ON le.agence_id = a.id
+       WHERE le.id = $1 AND le.statut = 'paye'`,
+      [loyerId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Quittance introuvable ou loyer non acquitté' });
+    }
+
+    const d = rows[0];
+    genererPdfQuittanceStream(res, d);
+  } catch (err) {
+    console.error('[GET /api/locatif-immo/public/quittance/:loyerId.pdf]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur génération quittance' });
+  }
+});
+
+// ── POST /api/locatif-immo/public/payer-loyer/:echeanceId — Paiement 1-clic Wave/Orange Money ──
+router.post('/public/payer-loyer/:echeanceId', async (req, res) => {
+  try {
+    const { echeanceId } = req.params;
+    const { methode_paiement = 'Wave', reference_paiement } = req.body;
+
+    const { rows: echRows } = await pool.query(
+      `SELECT le.*, ba.agence_id, ba.bien_id, ba.locataire_id
+       FROM loyers_echeances le
+       JOIN baux_immo ba ON le.bail_id = ba.id
+       WHERE le.id = $1`,
+      [echeanceId]
+    );
+
+    if (echRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Échéance de loyer introuvable' });
+    }
+
+    const ech = echRows[0];
+    if (ech.statut === 'paye') {
+      return res.json({ success: true, message: 'Loyer déjà acquitté', quittance_url: `/api/locatif-immo/mes-locations/quittance/${ech.id}.pdf` });
+    }
+
+    const montantPaye = Number(ech.montant_du);
+    const quittanceRef = `QT-${ech.periode}-${ech.id.slice(0, 8).toUpperCase()}`;
+
+    await pool.query(
+      `UPDATE loyers_echeances
+       SET statut = 'paye',
+           montant_paye = $1,
+           montant_restant = 0,
+           date_paiement = NOW(),
+           mode_paiement = $2,
+           reference_paiement = $3,
+           quittance_url = $4,
+           updated_at = NOW()
+       WHERE id = $5`,
+      [montantPaye, methode_paiement, reference_paiement || `PAY-${Date.now()}`, quittanceRef, echeanceId]
+    );
+
+    // Notification WhatsApp automatique
+    notifierConfirmationPaiementLoyerWhatsApp({
+      loyerId: echeanceId,
+      methodePaiement: methode_paiement
+    }).catch(() => {});
+
+    res.json({
+      success: true,
+      message: 'Paiement enregistré et quittance générée avec succès',
+      quittance_url: `/api/locatif-immo/mes-locations/quittance/${echeanceId}.pdf`
+    });
+  } catch (err) {
+    console.error('[POST /api/locatif-immo/public/payer-loyer/:echeanceId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur traitement du paiement de loyer' });
+  }
+});
+
 module.exports = router;
+

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Search, Camera, AlignJustify, LayoutGrid, Barcode, X, Store } from 'lucide-react'
+import { Search, Camera, AlignJustify, LayoutGrid, Barcode, X, Store, Smartphone } from 'lucide-react'
 import { CATEGORIES } from '@/lib/categories'
 import { fcfa } from '@/lib/format'
 import PosVoiceInput from './PosVoiceInput'
@@ -196,9 +196,10 @@ export default function PosCatalogueSection({
               transition: 'all 0.15s ease',
               flexShrink: 0,
             }}
-            title="Connecter la caméra de votre smartphone comme douchette sans fil"
+            title="Connecter la caméra de votre smartphone comme douchette sans fil gratuite"
           >
-            <span>Douchette</span>
+            <Smartphone size={17} style={{ color: '#C75B00' }} />
+            <span>Douchette Mobile</span>
           </button>
 
           <PosVoiceInput

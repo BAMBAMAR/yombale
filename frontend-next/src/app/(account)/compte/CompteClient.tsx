@@ -15,8 +15,10 @@ import ApporteurClient from '../compte/apporteur/ApporteurClient'
 import FonctionnalitesClient from '../compte/fonctionnalites/FonctionnalitesClient'
 import SuiviCommandeClient from './tabs/SuiviCommandeClient'
 import AlertesClientTab from './tabs/AlertesClientTab'
+import MesLocationsClient from './tabs/MesLocationsClient'
 import AccountDashboardHub from './tabs/AccountDashboardHub'
 import AccountSubHeader from '../components/AccountSubHeader'
+import { Building2 } from 'lucide-react'
 
 export default function CompteClient({ 
   nom, 
@@ -237,6 +239,17 @@ export default function CompteClient({
               icon={Package}
             />
             <SuiviCommandeClient userPhone={telephone || session?.telephone || session?.user?.telephone || ''} />
+          </>
+        )}
+
+        {(tab === 'mes-locations' || tab === 'locations' || tab === 'baux') && (
+          <>
+            <AccountSubHeader
+              title="Mes Locations & Quittances"
+              subtitle="Consultez vos baux en cours, l'état de vos loyers et téléchargez vos quittances officielles certifiées"
+              icon={Building2}
+            />
+            <MesLocationsClient />
           </>
         )}
 
