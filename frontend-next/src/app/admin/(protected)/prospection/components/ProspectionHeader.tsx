@@ -1,12 +1,14 @@
-import { Zap, Sparkles, UserPlus, Users, Send, MessageSquare, CheckCircle2, Ban } from 'lucide-react'
+import { Zap, Sparkles, UserPlus, Users, Send, MessageSquare, CheckCircle2, Ban, Building2, Clock } from 'lucide-react'
 import type { StatsLeads } from './types'
 
 interface Props {
   stats: StatsLeads
   isCleaningLeads: boolean
   isAutoSourcing: boolean
+  isReconciling?: boolean
   onNettoyerLeads: () => void
   onAutoSource: () => void
+  onReconcilierAgences?: () => void
   onOpenAddModal: () => void
 }
 
@@ -14,18 +16,25 @@ export default function ProspectionHeader({
   stats,
   isCleaningLeads,
   isAutoSourcing,
+  isReconciling = false,
   onNettoyerLeads,
   onAutoSource,
+  onReconcilierAgences,
   onOpenAddModal,
 }: Props) {
+  const boutiquesCount = stats.boutiques_converties !== undefined ? stats.boutiques_converties : stats.convertis
+  const agencesCount = stats.agences_converties || 0
+
   const kpis = [
     { label: 'Total Collectés', val: stats.total, color: '#1C2B4A', bg: '#F8FAFC', icon: Users, pct: null },
-    { label: 'Qualifiés (Score ≥70)', val: stats.qualifies, color: '#7C3AED', bg: '#F5F3FF', icon: Sparkles, pct: stats.total ? Math.round(stats.qualifies / stats.total * 100) : 0 },
+    { label: 'Qualifiés (≥70)', val: stats.qualifies, color: '#7C3AED', bg: '#F5F3FF', icon: Sparkles, pct: stats.total ? Math.round(stats.qualifies / stats.total * 100) : 0 },
     { label: 'Nouveaux', val: stats.nouveaux, color: '#2563EB', bg: '#EFF6FF', icon: UserPlus, pct: stats.total ? Math.round(stats.nouveaux / stats.total * 100) : 0 },
     { label: 'Contactés', val: stats.contactes, color: '#C75B00', bg: '#FFF7ED', icon: Send, pct: stats.total ? Math.round(stats.contactes / stats.total * 100) : 0 },
     { label: 'En Discussion', val: stats.en_discussion, color: '#D97706', bg: '#FFFBEB', icon: MessageSquare, pct: stats.total ? Math.round(stats.en_discussion / stats.total * 100) : 0 },
-    { label: 'Boutiques Créées', val: stats.convertis, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2, pct: stats.contactes ? Math.round(stats.convertis / stats.contactes * 100) : 0 },
-    { label: 'Invalides / Hors cible', val: stats.invalides + (stats.desinscrits || 0), color: '#64748B', bg: '#F1F5F9', icon: Ban, pct: stats.total ? Math.round((stats.invalides + (stats.desinscrits || 0)) / stats.total * 100) : 0 },
+    { label: 'Boutiques Créées', val: boutiquesCount, color: '#16A34A', bg: '#F0FDF4', icon: CheckCircle2, pct: stats.contactes ? Math.round(boutiquesCount / stats.contactes * 100) : 0 },
+    { label: 'Agences Immo', val: agencesCount, color: '#0284C7', bg: '#F0F9FF', icon: Building2, pct: null },
+    { label: 'Sans Réponse', val: stats.sans_reponse || 0, color: '#64748B', bg: '#F8FAFC', icon: Clock, pct: stats.contactes ? Math.round((stats.sans_reponse || 0) / stats.contactes * 100) : 0 },
+    { label: 'Invalides / Hors cible', val: stats.invalides + (stats.desinscrits || 0), color: '#94A3B8', bg: '#F1F5F9', icon: Ban, pct: stats.total ? Math.round((stats.invalides + (stats.desinscrits || 0)) / stats.total * 100) : 0 },
   ]
 
   return (
@@ -51,11 +60,27 @@ export default function ProspectionHeader({
               CRM Leads &amp; Moteur de Prospection Automatisée
             </h1>
             <p style={{ fontSize: 15, color: '#CBD5E1', maxWidth: 840, lineHeight: 1.5, margin: 0 }}>
-              Collectez des contacts qualifiés de commerçants à Dakar, normalisez les numéros (+221 Orange / Free / Expresso), générez des requêtes Dorking et dispatchez des messages WhatsApp &amp; E-mail personnalisés.
+              Collectez des contacts qualifiés de commerçants et agences à Dakar, normalisez les numéros (+221 Orange / Free / Expresso), dispatchez des messages WhatsApp personnalisés par persona.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {onReconcilierAgences && (
+              <button
+                onClick={onReconcilierAgences}
+                disabled={isReconciling}
+                style={{
+                  background: '#0284C7', color: '#fff', border: 'none', padding: '12px 18px',
+                  borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: isReconciling ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 14px rgba(2,132,199,0.3)',
+                }}
+                title="Rapprocher automatiquement les agences et boutiques clientes existantes"
+              >
+                <Building2 size={18} />
+                <span>{isReconciling ? 'Rapprochement...' : 'Rapprocher Agences & Boutiques'}</span>
+              </button>
+            )}
+
             <button
               onClick={onNettoyerLeads}
               disabled={isCleaningLeads}

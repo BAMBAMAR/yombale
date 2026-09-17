@@ -7,7 +7,8 @@ export function computeFilteredLeads(
   sourceFilter: string,
   operateurFilter: string,
   quartierFilter: string,
-  search: string
+  search: string,
+  sousProfilFilter?: string
 ): Lead[] {
   return leads.filter((l) => {
     if (catFilter !== 'tous') {
@@ -17,6 +18,7 @@ export function computeFilteredLeads(
       else if (l.categorie !== catFilter) return false
     }
     if (statutFilter !== 'tous' && l.statut !== statutFilter) return false
+    if (sousProfilFilter && sousProfilFilter !== 'tous' && l.sous_profil !== sousProfilFilter) return false
     if (sourceFilter !== 'tous') {
       if (sourceFilter === 'facebook' && !(l.source || '').startsWith('annonce_facebook')) return false
       else if (sourceFilter !== 'facebook' && l.source !== sourceFilter) return false

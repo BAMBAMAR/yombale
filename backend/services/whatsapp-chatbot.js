@@ -2077,6 +2077,7 @@ async function handleIncomingInternal(msg) {
       const isSubAction =
         state?.startsWith('AJOUT_PRODUIT_') ||
         state?.startsWith('CREER_BOUTIQUE_') ||
+        state?.startsWith('CREER_AGENCE_') ||
         ['MARCHAND_CHANGE_PIN_ACTUEL', 'MARCHAND_CHANGE_PIN_NOUVEAU', 'MARCHAND_DETTES_CLIENT', 'MARCHAND_DETTES_MONTANT', 'MARCHAND_DETTES_NOTE'].includes(state);
 
       // 2.A. Si l'utilisateur est dans un tunnel de saisie (ajout produit, modification PIN, carnet de dettes...)
@@ -2159,6 +2160,7 @@ async function handleIncomingInternal(msg) {
       const bqExistante = await trouverBoutiqueMarchand(phone);
       if (!bqExistante && interactiveId !== 'sat_oui') {
         // Enregistrer l'engagement dans le CRM prospection et la timeline
+        let leadFound = null;
         try {
           const normPh = normalisePhone(phone);
           const rLead = await pool.query(
@@ -2172,12 +2174,13 @@ async function handleIncomingInternal(msg) {
                next_best_action = 'relance_commerciale_personnalisee',
                updated_at = NOW()
              WHERE (telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3) AND (statut LIKE 'contacte%' OR statut = 'nouveau')
-             RETURNING id`,
+             RETURNING id, categorie, sous_profil, nom_boutique`,
             [phone, normPh, phone.slice(-9)]
           );
 
           if (rLead.rows.length > 0) {
-            const leadId = rLead.rows[0].id;
+            leadFound = rLead.rows[0];
+            const leadId = leadFound.id;
             // Retrouver la dernière campagne ayant ciblé ce lead
             const rCamp = await pool.query(`
               SELECT campagne_id FROM prospection_messages_log 
@@ -2206,6 +2209,22 @@ async function handleIncomingInternal(msg) {
           }
         } catch (errHook) {
           console.warn('[PROSPECTION WA HOOK ERR]:', errHook.message);
+        }
+
+        const estImmo = leadFound && (leadFound.categorie === 'immo' || leadFound.categorie === 'immobilier');
+        if (estImmo) {
+          await setSession(phone, 'CREER_AGENCE_NOM', { leadId: leadFound.id, categorie: 'immo' });
+          await sendWhatsAppText(
+            phone,
+            "Parfait ! 🏢 Bienvenue sur *Nopalou Immo* — la solution tout-en-un pour les agences et gestionnaires immobiliers :\n\n" +
+            "1️⃣ 📱 *Vitrine Immobilière Mobile* : Partagez vos biens avec photos, fiches détaillées et géolocalisation.\n" +
+            "2️⃣ 🔑 *Gestion Locative & Quittances* : Suivi des locataires, loyers Wave/OM et génération automatique des quittances.\n" +
+            "3️⃣ 🤝 *Mandats & Visites WhatsApp* : Vos clients prennent rendez-vous directement en ligne.\n\n" +
+            "🎁 *Vos 30 premiers jours sont 100% offerts sans aucun engagement.*\n\n" +
+            "👉 Pour activer votre accès tout de suite, quel est le *nom de votre agence ou cabinet* ?\n" +
+            "_(ex: Almadies Immo, Cabinet Teranga, Diallo Immobilier...)_"
+          );
+          return;
         }
 
         await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
@@ -2267,6 +2286,7 @@ async function handleIncomingInternal(msg) {
   const etatsExclusNum = [
     'COMMANDE_NOM', 'COMMANDE_TELEPHONE', 'COMMANDE_ADRESSE', 'COMMANDE_ZONE', 'COMMANDE_QUANTITE',
     'AJOUT_PRODUIT_NOM', 'AJOUT_PRODUIT_PRIX', 'AJOUT_PRODUIT_STOCK', 'AJOUT_PRODUIT_PHOTO', 'CREER_BOUTIQUE_NOM', 'CREER_BOUTIQUE_QUARTIER',
+    'CREER_AGENCE_NOM', 'CREER_AGENCE_VILLE',
     'MARCHAND_CHANGE_PIN_ACTUEL', 'MARCHAND_CHANGE_PIN_NOUVEAU', 'MARCHAND_RESET_OTP', 'MARCHAND_RESET_NOUVEAU_PIN',
     'MARCHAND_PIN'
   ];
@@ -2570,6 +2590,26 @@ async function handleIncomingInternal(msg) {
       'Lancez votre commerce en 30 secondes chrono !\n' +
       '🎁 *30 jours offerts* & 0% de commission sur vos ventes.\n\n' +
       '👉 Quel est le *nom de votre boutique* ? (ex: Dakar Fashion, Touba Tech, Keur Fatou...)'
+    );
+    return;
+  }
+
+  // Déclencheur Création d'Agence Immobilière Nopalou Immo
+  if (
+    interactiveId === 'creer_agence' ||
+    normTxtLower === 'creer agence' ||
+    normTxtLower === 'creer mon agence' ||
+    normTxtLower === 'ouvrir agence' ||
+    normTxtLower === 'nopalou immo' ||
+    normTxtLower === 'agence immo'
+  ) {
+    await setSession(phone, 'CREER_AGENCE_NOM', { categorie: 'immo' });
+    await sendWhatsAppText(
+      phone,
+      '🏢 *Création de votre Agence Immobilière Nopalou Immo*\n\n' +
+      'Publiez vos biens, gérez vos mandats et vos locataires en toute simplicité !\n' +
+      '🎁 *30 jours offerts* & vitrine web personnalisée.\n\n' +
+      '👉 Quel est le *nom de votre agence ou cabinet* ? (ex: Almadies Immo, Cabinet Teranga...)'
     );
     return;
   }
@@ -4381,6 +4421,153 @@ async function handleIncomingInternal(msg) {
     } catch (errCreate) {
       console.error('[CREER BOUTIQUE WA ERR]:', errCreate);
       await sendWhatsAppText(phone, '😕 Une erreur est survenue lors de la création. Réessayez en tapant *créer boutique* ou contactez le support.');
+      await setSession(phone, 'IDLE', {});
+      return;
+    }
+  }
+
+  // ── CREER_AGENCE_NOM → Nom de l'agence immobilière ─────────────────────────
+  if (state === 'CREER_AGENCE_NOM') {
+    if (!text || text.trim().length < 2) {
+      await sendWhatsAppText(phone, '⚠️ Veuillez entrer un nom valide pour votre agence (au moins 2 caractères).');
+      return;
+    }
+    const nomAgence = text.trim();
+    await setSession(phone, 'CREER_AGENCE_VILLE', { nom_agence: nomAgence, leadId: context?.leadId });
+    await sendWhatsAppText(
+      phone,
+      `📍 Parfait pour *${nomAgence}* !\n\nDans quel *quartier ou ville* se situe votre agence ? (ex: Almadies, Ngor, Mermoz, Plateau, Thiès, Saly...)`
+    );
+    return;
+  }
+
+  // ── CREER_AGENCE_VILLE → Finalisation Création Agence Immobilière ───────────
+  if (state === 'CREER_AGENCE_VILLE') {
+    const quartier = (text || 'Dakar').trim();
+    const nomAgence = context?.nom_agence || 'Mon Agence Immo';
+    const normPh = normalisePhone(phone);
+
+    try {
+      // 1. Trouver ou créer l'utilisateur
+      let userId;
+      const userRes = await pool.query(
+        'SELECT id FROM utilisateurs WHERE telephone = $1 OR telephone = $2 LIMIT 1',
+        [normPh, phone.replace(/\D/g, '').slice(-9)]
+      );
+
+      if (userRes.rows.length > 0) {
+        userId = userRes.rows[0].id;
+      } else {
+        const emailTemp = `agence_${normPh.replace(/\D/g, '')}_${Date.now().toString(36)}@nopalou.com`;
+        const newUser = await pool.query(
+          `INSERT INTO utilisateurs (nom, email, telephone, email_verifie, mot_de_passe_hash)
+           VALUES ($1, $2, $3, true, 'wa_autocreated')
+           RETURNING id`,
+          [nomAgence, emailTemp, normPh]
+        );
+        userId = newUser.rows[0].id;
+      }
+
+      // 2. Générer le slug unique
+      let baseSlug = normaliserTexte(nomAgence).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'agence';
+      let slug = baseSlug;
+      let suffix = 1;
+      while (true) {
+        const existSlug = await pool.query('SELECT id FROM agences_immo WHERE slug = $1', [slug]);
+        if (!existSlug.rows.length) break;
+        slug = `${baseSlug}-${suffix++}`;
+      }
+
+      // 3. Insérer dans agences_immo
+      const resAg = await pool.query(
+        `INSERT INTO agences_immo (
+          utilisateur_id, nom, slug, telephone, whatsapp, adresse, ville, quartier, parametres
+        ) VALUES ($1, $2, $3, $4, $5, $6, 'Dakar', $6, '{"source": "whatsapp_bot"}'::jsonb)
+        RETURNING id, nom, slug`,
+        [userId, nomAgence, slug, normPh, normPh, quartier]
+      );
+      const agenceCreee = resAg.rows[0];
+
+      // 4. Membre fondateur
+      await pool.query(
+        `INSERT INTO agence_membres (agence_id, utilisateur_id, role, permissions, actif)
+         VALUES ($1, $2, 'admin_agence', '{"all": true}'::jsonb, true)
+         ON CONFLICT (agence_id, utilisateur_id) DO NOTHING`,
+        [agenceCreee.id, userId]
+      );
+
+      // 5. Hook de conversion automatique CRM prospection
+      try {
+        const rLead = await pool.query(
+          `UPDATE prospection_leads 
+           SET 
+             statut = 'converti', 
+             categorie = 'immo',
+             sous_profil = 'agence',
+             nom_boutique = $1,
+             conversion_score = 100,
+             engagement_score = 100,
+             priority_score = 0,
+             next_best_action = 'agence_onboarding',
+             derniere_action_at = NOW(), 
+             updated_at = NOW() 
+           WHERE telephone = $2 OR telephone = $3 OR telephone LIKE '%' || $4
+           RETURNING id`,
+          [nomAgence, normPh, phone, normPh.slice(-9)]
+        );
+
+        if (rLead.rows.length > 0) {
+          const lId = rLead.rows[0].id;
+          await pool.query(
+            `INSERT INTO prospection_lead_events (
+              lead_id, type_evenement, canal, description, metadata
+            ) VALUES ($1, 'agence_creee', 'whatsapp', $2, $3)`,
+            [
+              lId,
+              `Agence immobilière "${nomAgence}" créée avec succès via WhatsApp`,
+              JSON.stringify({ agence_id: agenceCreee.id, slug: agenceCreee.slug, nom: nomAgence })
+            ]
+          ).catch(() => {});
+        }
+      } catch (errConv) {
+        console.warn('[CRM CONVERSION HOOK IMMO ERR]:', errConv.message);
+      }
+
+      // 6. Abonnement d'essai 30 jours offerts
+      const finEssai = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      try {
+        await pool.query(
+          `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
+          [userId]
+        );
+        await pool.query(
+          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref, is_trial)
+           VALUES ($1, 'decouverte', 'actif', 2500, $2, $3, TRUE)`,
+          [userId, finEssai, `wa_trial_immo_${normPh}_${Date.now().toString(36)}`]
+        );
+      } catch (eAbon) {
+        console.warn('[ABONNEMENT ESSAI IMMO WA WARN]:', eAbon.message);
+      }
+
+      await setSession(phone, 'IDLE', {});
+
+      await sendWhatsAppText(
+        phone,
+        `🎉 *Félicitations ! Votre agence immobilière est créée avec succès !*\n\n` +
+        `🏢 *${nomAgence}*\n` +
+        `🌐 *Votre vitrine web :* ${SITE}/agence/${slug}\n` +
+        `📱 *Espace gestion :* ${SITE}/connexion\n\n` +
+        `🔑 *Ce que vous pouvez faire dès maintenant :*\n` +
+        `• Publier vos premiers biens (appartements, villas, terrains)\n` +
+        `• Partager votre lien d'agence directement avec vos clients sur WhatsApp\n` +
+        `• Gérer vos mandats et baux de location\n\n` +
+        `🎁 *30 jours d'essai 100% offerts activés.*\n\n` +
+        `Tapez *MENU* à tout moment pour revenir à l'accueil.`
+      );
+      return;
+    } catch (errCreerAg) {
+      console.error('[CREER_AGENCE_VILLE ERR]:', errCreerAg.message);
+      await sendWhatsAppText(phone, "⚠️ Une erreur est survenue lors de la création de votre agence. Veuillez réessayer ou contacter notre support.");
       await setSession(phone, 'IDLE', {});
       return;
     }

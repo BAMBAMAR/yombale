@@ -232,6 +232,29 @@ export function useProspectionLeads({
     }
   }
 
+  const [isReconciling, setIsReconciling] = useState(false)
+
+  const handleReconcilierAgences = async () => {
+    setIsReconciling(true)
+    try {
+      const res = await fetch('/api/prospection/leads/reconcilier-agences', {
+        method: 'POST',
+        headers: { 'x-admin-secret': secret },
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        showToast(data.message || 'Réconciliation terminée avec succès !')
+        await reloadLeads()
+      } else {
+        showToast(`${data.error || 'Erreur lors de la réconciliation'}`)
+      }
+    } catch (e: any) {
+      showToast(`Échec de la réconciliation: ${e.message}`)
+    } finally {
+      setIsReconciling(false)
+    }
+  }
+
   const handleAddSingle = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -269,6 +292,7 @@ export function useProspectionLeads({
     isImporting,
     isAutoSourcing,
     isCleaningLeads,
+    isReconciling,
     reloadLeads,
     handleSaveEdit,
     handleStatutChange,
@@ -277,6 +301,7 @@ export function useProspectionLeads({
     handleAutoSource,
     handleImportVrac,
     handleNettoyerLeads,
+    handleReconcilierAgences,
     handleAddSingle,
   }
 }

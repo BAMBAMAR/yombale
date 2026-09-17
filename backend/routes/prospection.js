@@ -12,6 +12,8 @@ const {
   lancerCampagne,
   genererLienWhatsApp,
   nettoyerTousLesLeadsBdd,
+  reconcilierAgencesEtBoutiquesExistantes,
+  traiterRelancesProspectsAutomatiques,
   diagnostiquerCampagne,
   analyserToutesLesCampagnes,
   recommanderProchaineCampagne,
@@ -22,7 +24,7 @@ const {
 // Liste paginée avec filtres et statistiques globales
 router.get('/leads', adminOnly, async (req, res) => {
   try {
-    const { search, categorie, statut, ville, page = 1, limit = 50 } = req.query;
+    const { search, categorie, statut, sous_profil, ville, page = 1, limit = 50 } = req.query;
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     const conditions = [];
@@ -47,6 +49,12 @@ router.get('/leads', adminOnly, async (req, res) => {
       pIdx++;
     }
 
+    if (sous_profil && sous_profil !== 'tous') {
+      conditions.push(`sous_profil = $${pIdx}`);
+      params.push(sous_profil);
+      pIdx++;
+    }
+
     if (ville && ville !== 'tous') {
       conditions.push(`ville = $${pIdx}`);
       params.push(ville);
@@ -68,6 +76,9 @@ router.get('/leads', adminOnly, async (req, res) => {
           COUNT(*) FILTER (WHERE statut LIKE 'contacte%') AS contactes,
           COUNT(*) FILTER (WHERE statut = 'en_discussion') AS en_discussion,
           COUNT(*) FILTER (WHERE statut = 'converti') AS convertis,
+          COUNT(*) FILTER (WHERE statut = 'converti' AND (categorie = 'immo' OR sous_profil = 'agence')) AS agences_converties,
+          COUNT(*) FILTER (WHERE statut = 'converti' AND categorie != 'immo' AND (sous_profil != 'agence' OR sous_profil IS NULL)) AS boutiques_converties,
+          COUNT(*) FILTER (WHERE statut = 'sans_reponse') AS sans_reponse,
           COUNT(*) FILTER (WHERE statut = 'desinscrit') AS desinscrits,
           COUNT(*) FILTER (WHERE statut = 'invalide') AS invalides,
           ROUND(AVG(score), 0) AS avg_score,
@@ -94,6 +105,9 @@ router.get('/leads', adminOnly, async (req, res) => {
         contactes: parseInt(resStats.rows[0].contactes, 10) || 0,
         en_discussion: parseInt(resStats.rows[0].en_discussion, 10) || 0,
         convertis: parseInt(resStats.rows[0].convertis, 10) || 0,
+        agences_converties: parseInt(resStats.rows[0].agences_converties, 10) || 0,
+        boutiques_converties: parseInt(resStats.rows[0].boutiques_converties, 10) || 0,
+        sans_reponse: parseInt(resStats.rows[0].sans_reponse, 10) || 0,
         desinscrits: parseInt(resStats.rows[0].desinscrits, 10) || 0,
         invalides: parseInt(resStats.rows[0].invalides, 10) || 0,
         qualifies: parseInt(resStats.rows[0].qualifies, 10) || 0,
@@ -309,6 +323,22 @@ router.post('/leads/nettoyer', adminOnly, async (req, res) => {
   } catch (err) {
     console.error('[PROSPECTION NETTOYER ERR]:', err);
     res.status(500).json({ error: err.message || 'Erreur lors du nettoyage de la base de prospects' });
+  }
+});
+
+// ── POST /api/prospection/leads/reconcilier-agences ──────────────────────────
+// Réconciliation manuelle des agences et boutiques clientes avec la table prospection_leads
+router.post('/leads/reconcilier-agences', adminOnly, async (_req, res) => {
+  try {
+    const stats = await reconcilierAgencesEtBoutiquesExistantes();
+    res.json({
+      success: true,
+      message: `Réconciliation terminée : ${stats.agences_reconciliees} agence(s) et ${stats.boutiques_reconciliees} boutique(s) réconciliées avec le CRM.`,
+      stats,
+    });
+  } catch (err) {
+    console.error('[PROSPECTION RECONCILIER ERR]:', err);
+    res.status(500).json({ error: err.message || 'Erreur lors de la réconciliation' });
   }
 });
 
@@ -539,7 +569,7 @@ router.post('/campagnes/lancer', adminOnly, async (req, res) => {
 });
 
 // ── POST /api/prospection/relances/lancer ─────────────────────────────────────
-// Déclenchement manuel immédiat des relances marchands & carnet de dettes
+// Déclenchement manuel immédiat des relances marchands, carnet de dettes & prospects
 router.post('/relances/lancer', adminOnly, async (req, res) => {
   try {
     const { type = 'tout' } = req.body;
@@ -556,6 +586,10 @@ router.post('/relances/lancer', adminOnly, async (req, res) => {
       resultats.dettes = await traiterRelancesAutomatiquesWhatsApp();
     }
 
+    if (type === 'tout' || type === 'prospects') {
+      resultats.prospects = await traiterRelancesProspectsAutomatiques({ limite: 30, simulation: false });
+    }
+
     res.json({
       success: true,
       resultats,
@@ -567,15 +601,31 @@ router.post('/relances/lancer', adminOnly, async (req, res) => {
   }
 });
 
+// ── POST /api/prospection/relances/prospects ──────────────────────────────────
+// Déclenchement spécifique des relances automatiques prospects (J+3, J+7, clôture J+14)
+router.post('/relances/prospects', adminOnly, async (req, res) => {
+  try {
+    const { limite = 30, simulation = false } = req.body;
+    const stats = await traiterRelancesProspectsAutomatiques({ limite: parseInt(limite, 10) || 30, simulation });
+    res.json({
+      success: true,
+      message: `Relances prospects exécutées : ${stats.relancesJ3} à J+3, ${stats.relancesJ7} à J+7, ${stats.cloturesJ14} clôturés J+14.`,
+      stats,
+    });
+  } catch (err) {
+    console.error('[PROSPECTION RELANCES PROSPECTS ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── POST /api/prospection/scraper/lancer ──────────────────────────────────────
-// Déclenchement manuel immédiat du scraper de prospection
+// Déclenchement manuel du scraper pour une zone donnée
 router.post('/scraper/lancer', adminOnly, async (req, res) => {
   try {
-    const { zone = 'Sandaga', categorie = 'all', limite = 30 } = req.body;
-    const { lancerScrapingProspection } = require('../services/scraper-prospection');
-
-    const resultats = await lancerScrapingProspection({ zone, categorie, limite: parseInt(limite, 10) || 30 });
-    res.json(resultats);
+    const { zone = 'Sandaga', limite = 20 } = req.body;
+    const { sourcerZoneDakar } = require('../services/scraper-prospection');
+    const stats = await sourcerZoneDakar(zone, parseInt(limite, 10) || 20);
+    res.json(stats);
   } catch (err) {
     console.error('[PROSPECTION SCRAPER ERR]:', err);
     res.status(500).json({ error: err.message });
@@ -593,6 +643,8 @@ router.get('/crons/status', adminOnly, async (_req, res) => {
           COUNT(*) FILTER (WHERE statut = 'nouveau') AS nouveaux,
           COUNT(*) FILTER (WHERE statut = 'contacte_wa') AS contactes_wa,
           COUNT(*) FILTER (WHERE statut = 'converti') AS convertis,
+          COUNT(*) FILTER (WHERE statut = 'converti' AND (categorie = 'immo' OR sous_profil = 'agence')) AS agences_converties,
+          COUNT(*) FILTER (WHERE statut = 'sans_reponse') AS sans_reponse,
           COUNT(*) FILTER (WHERE statut = 'desinscrit') AS desinscrits
         FROM prospection_leads
       `),
@@ -619,6 +671,12 @@ router.get('/crons/status', adminOnly, async (_req, res) => {
 
     res.json({
       crons: {
+        relancesProspects: {
+          nom: 'Relances Automatiques Prospects (J+3, J+7, J+14)',
+          statut: 'actif',
+          frequence: 'Lun-Sam à 11h00',
+          description: 'Relance 1 à J+3, Relance 2 à J+7, Clôture sans_reponse à J+14',
+        },
         relancesMarchands: {
           nom: 'Relances Marchands (J+1, J+7, J+25)',
           statut: 'actif',

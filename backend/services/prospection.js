@@ -198,7 +198,7 @@ Nopalou Immo (https://nopalou.com/immo) simplifie la diffusion de vos biens :
 ✅ 0% de commission sur vos transactions
 🎁 30 jours d'essai gratuit pour booster vos mandats !
 
-Lien d'accès pro : https://nopalou.com/guide-creer-boutique
+Lien d'accès pro : https://nopalou.com/agence
 
 Avez-vous un bien disponible que nous pouvons mettre en avant cette semaine ?` + FOOTER_OPTOUT
   },
@@ -541,7 +541,7 @@ function estLeadEmploiOuInvalide(lead) {
   const texte = `${lead.nom_boutique || ''} ${lead.notes || ''} ${lead.contact_nom || ''}`.toLowerCase();
   
   // Regex complète couvrant les offres, demandes d'emploi, services domestiques et annonces de perte
-  const regexEmploi = /\b(cherche\s+(?:un\s+)?(?:travail|emploi|boulot|stage|job|place|poste)|demande\s+d['’]emploi|recherche\s+(?:d['’])?(?:emploi|stage|travail)|chercheuse\s+d['’]emploi|recrutement|recrute|embauche|agents?\s+de\s+s[eé]c(?:urit[eé])?|chauffeur\s+cherche|cherche\s+(?:vendeuse|chauffeur|nounou|cuisinier|serveur|femme\s+de\s+m[eé]nage|vigile|gouvernante)|call\s+center|t[eé]l[eé]conseiller|avis\s+de\s+recherche|perte\s+de\s+pi[eè]ce|perdu\s+cl[eé]|donne\s+contre\s+bon\s+soin)\b/i;
+  const regexEmploi = /\b(offre\s+d['’]emploi|demande\s+d['’]emploi|recherche\s+(?:d['’])?(?:emploi|stage|travail)|cherche\s+(?:un\s+)?(?:travail|emploi|boulot|stage|job|place|poste)|chercheuse\s+d['’]emploi|recrutement|recrute|embauche|chauffeur\s+(?:cherche|particulier|disponible)|cherche\s+(?:vendeuse|chauffeur|nounou|cuisinier|cuisini[eè]re|serveur|femme\s+de\s+m[eé]nage|vigile|gouvernante)|agents?\s+de\s+s[eé]c(?:urit[eé])?|call\s+center|t[eé]l[eé]conseiller|avis\s+de\s+recherche|perte\s+de\s+pi[eè]ce|perdu\s+cl[eé]|donne\s+contre\s+bon\s+soin)\b/i;
 
   return regexEmploi.test(texte);
 }
@@ -601,12 +601,18 @@ function calculerNopalouFitScore(lead) {
   if (['mode', 'smartphones', 'tech', 'beaute', 'cosmetique', 'superette', 'alimentation'].includes(cat)) {
     fit += 40;
     details.push('+40 Coeur de cible catalogue WhatsApp & encaissements');
+  } else if (cat === 'immo' || cat === 'immobilier') {
+    fit += 35;
+    details.push('+35 Agence & Professionnel Immobilier (Mandats, Commissions & Gestion Locative)');
+  } else if (cat === 'restaurant') {
+    fit += 35;
+    details.push('+35 Restaurant & Fast-Food (Menu Digital & Commandes WhatsApp)');
   } else if (['maison', 'tv-electro', 'grossiste', 'quincaillerie'].includes(cat)) {
     fit += 30;
     details.push('+30 Caisse POS & gestion d\'inventaire');
-  } else if (['auto-moto', 'immo'].includes(cat)) {
-    fit += 15;
-    details.push('+15 Vitrine sans commande en ligne');
+  } else if (cat === 'auto-moto') {
+    fit += 25;
+    details.push('+25 Concessionnaire & Parc Auto (Vitrine & Contacts Qualifiés)');
   } else {
     fit += 10;
     details.push('+10 Commerce général');
@@ -824,6 +830,27 @@ function evaluerLeadComplet(lead, historiqueEvents = []) {
   };
 }
 
+function detecterSousProfilLead(nom, notes, categorie) {
+  const cat = String(categorie || '').toLowerCase();
+  const texte = `${nom || ''} ${notes || ''}`.toLowerCase();
+  
+  if (cat === 'immo' || cat === 'immobilier') {
+    if (/\b(courtier|courtage|apporteur|financement)\b/i.test(texte)) return 'courtier';
+    if (/\b(promoteur|programme|résidence|residence|lotisseur|lotissement)\b/i.test(texte)) return 'promoteur';
+    if (/\b(gestion|locatif|locative|syndic|bailleur|administrateur|gérance)\b/i.test(texte)) return 'gestionnaire';
+    if (/\b(agence|cabinet|prestige|immo|immobilier|immobiliere|immobilière)\b/i.test(texte)) return 'agence';
+    return 'agent';
+  }
+  
+  if (cat === 'auto-moto') {
+    if (/\b(concessionnaire|parc\s*auto|garage)\b/i.test(texte)) return 'concessionnaire';
+    if (/\b(moto|scooter|tmax|yamaha)\b/i.test(texte)) return 'moto';
+    return 'vendeur_auto';
+  }
+
+  return 'commerce';
+}
+
 function nettoyerEtEnrichirLead(lead) {
   const rawNom = lead.nom_boutique || '';
   const rawQuartier = lead.quartier || lead.ville || 'Dakar';
@@ -837,7 +864,7 @@ function nettoyerEtEnrichirLead(lead) {
 
   const normTel = normaliserTelephoneSenegal(lead.telephone);
   const estNumeroInvalide = !normTel.valide || !normTel.estMobileWhatsApp;
-  const estHorsCible = estLeadEmploiOuInvalide(lead);
+  const estHorsCible = estLeadEmploiOuInvalide(lead) || rawCat === 'emploi';
   const estInvalide = estHorsCible || estNumeroInvalide;
   
   // 2. Détection du quartier dans le nom, notes, quartier brut
@@ -845,6 +872,7 @@ function nettoyerEtEnrichirLead(lead) {
   const quartierFinal = qDetecte || (rawQuartier !== 'Dakar' ? rawQuartier : 'Dakar');
   
   const nomPropre = nettoyerNomBoutique(rawNom, rawCat, quartierFinal);
+  const sousProfil = detecterSousProfilLead(nomPropre, lead.notes, rawCat);
   
   let contactNom = lead.contact_nom;
   if (!contactNom || contactNom.toLowerCase() === 'responsable' || contactNom.toLowerCase() === 'vendeur' || contactNom.length < 2 || contactNom.includes('"') || contactNom.length > 30) {
@@ -859,6 +887,7 @@ function nettoyerEtEnrichirLead(lead) {
     contact_nom: contactNom,
     quartier: quartierFinal,
     categorie: rawCat,
+    sous_profil: sousProfil,
     telephone: normTel.national || lead.telephone,
     telephone_brut: lead.telephone_brut,
     ville: lead.ville,
@@ -878,13 +907,14 @@ function nettoyerEtEnrichirLead(lead) {
     contact_nom: contactNom,
     quartier: quartierFinal,
     categorie: rawCat,
-    score: evalLead.score,
-    fit_score: evalLead.fit_score,
-    engagement_score: evalLead.engagement_score,
-    conversion_score: evalLead.conversion_score,
-    contactability_score: evalLead.contactability_score,
-    priority_score: evalLead.priority_score,
-    next_best_action: evalLead.next_best_action,
+    sous_profil: sousProfil,
+    score: estInvalide ? 0 : evalLead.score,
+    fit_score: estInvalide ? 0 : evalLead.fit_score,
+    engagement_score: estInvalide ? 0 : evalLead.engagement_score,
+    conversion_score: estInvalide ? 0 : evalLead.conversion_score,
+    contactability_score: estInvalide ? 0 : evalLead.contactability_score,
+    priority_score: estInvalide ? 0 : evalLead.priority_score,
+    next_best_action: estInvalide ? 'hors_cible' : evalLead.next_best_action,
     scoring_details: JSON.stringify(evalLead.scoring_details),
     statut: estInvalide ? 'invalide' : (lead.statut === 'invalide' ? 'invalide' : (lead.statut || 'nouveau')),
     notes: notesFinales,
@@ -968,8 +998,9 @@ async function nettoyerTousLesLeadsBdd() {
             scoring_details = $12::jsonb,
             statut = $13,
             notes = $14,
+            sous_profil = $15,
             updated_at = NOW()
-          WHERE id = $15
+          WHERE id = $16
         `, [
           enrichi.nom_boutique,
           enrichi.contact_nom,
@@ -985,6 +1016,7 @@ async function nettoyerTousLesLeadsBdd() {
           enrichi.scoring_details,
           enrichi.statut,
           enrichi.notes,
+          enrichi.sous_profil,
           lead.id
         ]);
         nettoyes++;
@@ -994,13 +1026,124 @@ async function nettoyerTousLesLeadsBdd() {
     }
   }
 
+  // 3. Réconciliation automatique des agences et boutiques clientes existantes
+  const recStats = await reconcilierAgencesEtBoutiquesExistantes();
+
   return {
     total: leads.length,
     nettoyes,
     invalidesEmploi,
     quartiersEnrichis,
     categoriesReclassees,
+    agencesReconciliees: recStats.agences_reconciliees,
+    boutiquesReconciliees: recStats.boutiques_reconciliees,
   };
+}
+
+// ── Réconciliation Automatique des Agences & Boutiques Existantes ───────────
+async function reconcilierAgencesEtBoutiquesExistantes() {
+  await ensureProspectionTables();
+  const stats = { agences_reconciliees: 0, boutiques_reconciliees: 0 };
+
+  // 1. Réconciliation des Agences Immobilières (agences_immo)
+  try {
+    const { rows: agences } = await pool.query(`
+      SELECT a.id, a.nom, a.slug, a.telephone, a.whatsapp, u.telephone as user_tel
+      FROM agences_immo a
+      LEFT JOIN utilisateurs u ON a.utilisateur_id = u.id
+    `);
+
+    for (const ag of agences) {
+      const phones = [ag.telephone, ag.whatsapp, ag.user_tel].filter(Boolean);
+      for (const rawP of phones) {
+        const norm = normaliserTelephoneSenegal(rawP);
+        if (norm.valide) {
+          const resUp = await pool.query(`
+            UPDATE prospection_leads
+            SET
+              statut = 'converti',
+              categorie = 'immo',
+              sous_profil = 'agence',
+              nom_boutique = CASE 
+                WHEN nom_boutique IS NULL OR nom_boutique IN ('Immobilière', 'Agence Immobilière', 'Commerce Général', 'Mode') OR nom_boutique ILIKE '%galaxy%'
+                THEN $1
+                ELSE nom_boutique
+              END,
+              conversion_score = 100,
+              engagement_score = 100,
+              priority_score = 0,
+              next_best_action = 'agence_onboarding',
+              derniere_action_at = NOW(),
+              updated_at = NOW()
+            WHERE (telephone = $2 OR telephone = $3 OR telephone LIKE '%' || $4)
+              AND (statut != 'converti' OR nom_boutique ILIKE '%galaxy%' OR nom_boutique = 'Immobilière')
+            RETURNING id
+          `, [ag.nom, norm.national, norm.local, norm.local.slice(-9)]);
+
+          if (resUp.rows.length > 0) {
+            stats.agences_reconciliees += resUp.rows.length;
+            for (const r of resUp.rows) {
+              await pool.query(`
+                INSERT INTO prospection_lead_events (
+                  lead_id, type_evenement, canal, description, metadata
+                ) VALUES ($1, 'agence_creee', 'reconciliation', $2, $3)
+              `, [
+                r.id,
+                `Réconciliation historique : Agence Immobilière "${ag.nom}" active sur Nopalou Immo`,
+                JSON.stringify({ agence_id: ag.id, slug: ag.slug, nom: ag.nom })
+              ]).catch(() => {});
+            }
+          }
+        }
+      }
+    }
+  } catch (errAg) {
+    console.warn('[RECONCILIATION AGENCES ERR]:', errAg.message);
+  }
+
+  // 2. Réconciliation des Boutiques Marchandes (boutiques)
+  try {
+    const { rows: boutiques } = await pool.query(`
+      SELECT b.id, b.nom, b.slug, b.telephone, b.categorie
+      FROM boutiques b
+      WHERE b.actif = true
+    `);
+
+    for (const bq of boutiques) {
+      if (bq.telephone) {
+        const norm = normaliserTelephoneSenegal(bq.telephone);
+        if (norm.valide) {
+          const resUp = await pool.query(`
+            UPDATE prospection_leads
+            SET
+              statut = 'converti',
+              nom_boutique = CASE 
+                WHEN nom_boutique IS NULL OR nom_boutique IN ('Commerce Général', 'Mode', 'Véhicules', 'Commerce & Boutique')
+                THEN $1
+                ELSE nom_boutique
+              END,
+              conversion_score = 100,
+              engagement_score = 100,
+              priority_score = 0,
+              next_best_action = 'boutique_onboarding',
+              derniere_action_at = NOW(),
+              updated_at = NOW()
+            WHERE (telephone = $2 OR telephone = $3 OR telephone LIKE '%' || $4)
+              AND statut != 'converti'
+            RETURNING id
+          `, [bq.nom, norm.national, norm.local, norm.local.slice(-9)]);
+
+          if (resUp.rows.length > 0) {
+            stats.boutiques_reconciliees += resUp.rows.length;
+          }
+        }
+      }
+    }
+  } catch (errBq) {
+    console.warn('[RECONCILIATION BOUTIQUES ERR]:', errBq.message);
+  }
+
+  return stats;
 }
 
 // ── Support Spintax anti-spam ({Option 1|Option 2|Option 3}) ─────────────────
@@ -1470,6 +1613,7 @@ async function ensureProspectionTables() {
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS dernier_contact_at TIMESTAMPTZ;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_reponse_at TIMESTAMPTZ;
       ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS derniere_action_at TIMESTAMPTZ;
+      ALTER TABLE prospection_leads ADD COLUMN IF NOT EXISTS sous_profil VARCHAR(50);
     `);
 
     // 4. Table prospection_campagnes (avec granularité et mémoire complète)
@@ -1498,6 +1642,7 @@ async function ensureProspectionTables() {
         nb_interesses          INT DEFAULT 0,
         nb_inscrits            INT DEFAULT 0,
         nb_boutiques_creees    INT DEFAULT 0,
+        nb_agences_creees      INT DEFAULT 0,
         nb_boutiques_actives   INT DEFAULT 0,
         nb_clients_payants     INT DEFAULT 0,
         nb_optout              INT DEFAULT 0,
@@ -1512,6 +1657,7 @@ async function ensureProspectionTables() {
         date_fin               TIMESTAMPTZ,
         created_at             TIMESTAMPTZ DEFAULT NOW()
       );
+      ALTER TABLE prospection_campagnes ADD COLUMN IF NOT EXISTS nb_agences_creees INT DEFAULT 0;
     `);
 
     // 4.b Migration à chaud des colonnes prospection_campagnes si elle existait déjà
@@ -1603,6 +1749,76 @@ async function ensureProspectionTables() {
   } catch (err) {
     console.warn('[PROSPECTION] ensureProspectionTables warning:', err.message);
   }
+}
+
+// ── Résolution des Paramètres Meta Template par Persona/Catégorie ───────────
+function resoudreParametresMetaTemplate(lead) {
+  const cat = String(lead?.categorie || '').toLowerCase();
+  const sousProfil = String(lead?.sous_profil || '').toLowerCase();
+  const enseigneAuth = estNomPropreAuthentique(lead?.nom_boutique) ? lead.nom_boutique.trim() : null;
+
+  if (cat === 'immo' || cat === 'immobilier') {
+    const isGestionnaire = sousProfil === 'gestionnaire';
+    const titre = isGestionnaire 
+      ? (enseigneAuth ? `🏢 Nopalou Immo — ${enseigneAuth}`.slice(0, 50) : '🏢 Nopalou Immo — Gestion Locative')
+      : (enseigneAuth ? `🏢 Nopalou Immo — ${enseigneAuth}`.slice(0, 50) : '🏢 Nopalou Immo — Agence & Mandats');
+    
+    return {
+      features: isGestionnaire
+        ? '🏢 Quittances automatiques, loyers Wave/OM & baux sur mobile.'
+        : '🏢 Mandats, visites WhatsApp & vitrine immobilière mobile.',
+      googleProof: '🎁 30j offerts & baux (tapez Nopalou Immo sur Google 🇸🇳)',
+      title: titre,
+      detail: isGestionnaire
+        ? '🏢 Gérez vos biens, quittances automatiques et loyers Wave/OM sans commission. 30 jours offerts. Tapez Nopalou Immo sur Google 🇸🇳. Répondez OUI pour activer votre espace.'
+        : '🏢 Gérez vos mandats, visites WhatsApp et vitrine agence sans commission. 30 jours offerts. Tapez Nopalou Immo sur Google 🇸🇳. Répondez OUI pour activer votre agence en 30s.',
+      url: 'https://nopalou.com/agence',
+      buttonParam: 'agence',
+    };
+  }
+
+  if (cat === 'auto-moto') {
+    return {
+      features: '🚗 Vitrine véhicules, fiches techniques & contacts WhatsApp.',
+      googleProof: '🎁 30 jours offerts (tapez Nopalou sur Google 🇸🇳)',
+      title: enseigneAuth ? `🚗 Nopalou Auto — ${enseigneAuth}`.slice(0, 50) : '🚗 Nopalou Auto — Showroom & Vente',
+      detail: '🚗 Présentez votre parc auto, fiches techniques et recevez vos acheteurs directement sur WhatsApp. 30 jours offerts. Répondez OUI pour activer votre showroom.',
+      url: 'https://nopalou.com/annonces',
+      buttonParam: 'auto',
+    };
+  }
+
+  if (cat === 'grossiste') {
+    return {
+      features: '📦 Catalogue de gros, tarifs dégressifs & encaissement mobile.',
+      googleProof: '🎁 30 jours offerts (tapez Nopalou sur Google 🇸🇳)',
+      title: enseigneAuth ? `📦 Nopalou B2B — ${enseigneAuth}`.slice(0, 50) : '📦 Nopalou Gros & Demi-gros',
+      detail: '📦 Partagez votre catalogue de gros avec tarifs dégressifs et encaissez par Wave/OM sans commission. 30 jours offerts. Répondez OUI pour configurer votre catalogue.',
+      url: 'https://nopalou.com/tarifs-boutique',
+      buttonParam: 'grossiste',
+    };
+  }
+
+  if (cat === 'restaurant') {
+    return {
+      features: '🍽️ Menu digital interactif, commandes WhatsApp & livraison.',
+      googleProof: '🎁 30 jours offerts (tapez Nopalou sur Google 🇸🇳)',
+      title: enseigneAuth ? `🍽️ Nopalou Resto — ${enseigneAuth}`.slice(0, 50) : '🍽️ Nopalou — Menu & Commandes',
+      detail: '🍽️ Partagez votre carte sur WhatsApp, recevez les commandes et encaissez par Wave/OM sans commission. 30 jours offerts. Répondez OUI pour créer votre menu.',
+      url: 'https://nopalou.com/tarifs-boutique',
+      buttonParam: 'restaurant',
+    };
+  }
+
+  // Par défaut (mode, tech, divers, superette, etc.)
+  return {
+    features: '📱 Vendez & encaissez par Wave / OM sans commission sur mobile.',
+    googleProof: '🎁 30 jours offerts & factures (tapez Nopalou sur Google 🇸🇳)',
+    title: enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse & Gestion',
+    detail: '📱 Vendez & encaissez par Wave / OM sans commission. 30 jours offerts. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour ouvrir votre boutique en 30s.',
+    url: 'https://nopalou.com/tarifs-boutique',
+    buttonParam: 'boutique',
+  };
 }
 
 // ── Résolution Dynamique de Template par Catégorie Métier ───────────────────
@@ -1744,28 +1960,25 @@ async function lancerCampagne({ campagneId, leadIds, canal, templateMessage, sim
     if (!simulation) {
       if (canal === 'whatsapp') {
         try {
-          // Pour la prospection à froid (fenêtre 24h fermée), on utilise le template pur texte nopalou_contact_direct.
-          // Paramètres ultra-courts pour éliminer 100% l'apparition de '... Voir plus' sur smartphone.
+          // Pour la prospection à froid (fenêtre 24h fermée), on résout dynamiquement le persona
+          const metaParams = resoudreParametresMetaTemplate(lead);
           let metaResponse = null;
           try {
             metaResponse = await sendWhatsAppProspectionDirecte(lead.telephone, {
-              features: '📱 Vendez & encaissez par Wave / OM sans commission sur mobile.',
-              googleProof: '🎁 30 jours offerts & factures (tapez Nopalou sur Google 🇸🇳)',
+              features: metaParams.features,
+              googleProof: metaParams.googleProof,
             });
           } catch (eDir) {
             console.warn(`[PROSPECTION DIRECTE FAIL, FALLBACK NOTIF] ${lead.telephone}:`, eDir.message);
           }
 
           if (!metaResponse || metaResponse.success === false) {
-            const enseigneAuth = estNomPropreAuthentique(lead.nom_boutique) ? lead.nom_boutique.trim() : null;
-            const titreNotif = enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse & Gestion';
-            const detailNotif = '📱 Vendez & encaissez par Wave / OM sans commission. 30 jours offerts. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour ouvrir votre boutique en 30s.';
             metaResponse = await sendWhatsAppNotification(lead.telephone, {
               textMessage: null, // Pas de texte libre pour éviter l'erreur 131047
-              title: titreNotif,
-              detail: detailNotif,
-              url: 'https://nopalou.com/tarifs-boutique',
-              buttonParam: 'boutique',
+              title: metaParams.title,
+              detail: metaParams.detail,
+              url: metaParams.url,
+              buttonParam: metaParams.buttonParam,
               templateOnly: true,
             });
           }
@@ -2271,6 +2484,175 @@ async function obtenirTimelineLead(leadId) {
   };
 }
 
+// ── Traitement des Relances Commerciales Automatisées (J+3, J+7, J+14) ────────
+async function traiterRelancesProspectsAutomatiques({ limite = 30, simulation = false } = {}) {
+  await ensureProspectionTables();
+  const stats = { relancesJ3: 0, relancesJ7: 0, cloturesJ14: 0, erreurs: 0 };
+
+  // 1. Clôture automatique J+14 (leads contactés au moins 2 fois, sans réponse depuis > 7 jours)
+  try {
+    const { rows: leadsACloturer } = await pool.query(`
+      SELECT id, telephone, nom_boutique, categorie
+      FROM prospection_leads
+      WHERE statut = 'contacte_wa'
+        AND nb_contacts >= 2
+        AND derniere_reponse_at IS NULL
+        AND dernier_contact_at <= NOW() - INTERVAL '7 days'
+      LIMIT 100
+    `);
+
+    for (const l of leadsACloturer) {
+      await pool.query(`
+        UPDATE prospection_leads
+        SET 
+          statut = 'sans_reponse',
+          priority_score = 0,
+          next_best_action = 'abandon',
+          derniere_action_at = NOW(),
+          updated_at = NOW()
+        WHERE id = $1
+      `, [l.id]);
+
+      await pool.query(`
+        INSERT INTO prospection_lead_events (
+          lead_id, type_evenement, canal, description, metadata
+        ) VALUES ($1, 'sans_reponse', 'crm', 'Prospect clôturé sans réponse après relances (J+14)', $2)
+      `, [l.id, JSON.stringify({ categorie: l.categorie, nom_boutique: l.nom_boutique })]).catch(() => {});
+
+      stats.cloturesJ14++;
+    }
+  } catch (errCloture) {
+    console.warn('[RELANCES CLOTURE ERR]:', errCloture.message);
+  }
+
+  // 2. Relance 2 (J+7) : leads contactés avec nb_contacts = 2, sans réponse depuis > 4 jours après relance 1
+  try {
+    const { rows: leadsRelance2 } = await pool.query(`
+      SELECT id, telephone, nom_boutique, contact_nom, categorie, sous_profil, nb_contacts, dernier_contact_at
+      FROM prospection_leads
+      WHERE statut = 'contacte_wa'
+        AND nb_contacts = 2
+        AND derniere_reponse_at IS NULL
+        AND dernier_contact_at <= NOW() - INTERVAL '4 days'
+      ORDER BY priority_score DESC, dernier_contact_at ASC
+      LIMIT $1
+    `, [limite]);
+
+    for (const lead of leadsRelance2) {
+      if (await estDesinscrit(lead.telephone)) {
+        await pool.query("UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE id = $1", [lead.id]).catch(() => {});
+        continue;
+      }
+
+      if (!simulation) {
+        try {
+          const resp = await sendWhatsAppProspectionDirecte(lead.telephone, {
+            features: lead.categorie === 'immo'
+              ? '🏢 Référencez vos biens gratuitement sur Nopalou Immo.'
+              : '📱 Activez vos 30 jours offerts sans commission sur Nopalou.',
+            googleProof: '🎁 Répondez OUI pour démarrer, ou STOP pour vous désinscrire.',
+          });
+          if (resp && resp.success !== false) {
+            stats.relancesJ7++;
+          } else {
+            stats.erreurs++;
+          }
+        } catch (err) {
+          stats.erreurs++;
+        }
+      } else {
+        stats.relancesJ7++;
+      }
+
+      await pool.query(`
+        UPDATE prospection_leads
+        SET 
+          nb_contacts = COALESCE(nb_contacts, 0) + 1,
+          dernier_contact_at = NOW(),
+          derniere_action_at = NOW(),
+          updated_at = NOW()
+        WHERE id = $1
+      `, [lead.id]);
+
+      await pool.query(`
+        INSERT INTO prospection_lead_events (
+          lead_id, type_evenement, canal, description, metadata
+        ) VALUES ($1, 'relance', 'whatsapp', 'Relance 2 envoyée (J+7)', $2)
+      `, [lead.id, JSON.stringify({ simulation, nb_contacts: 3 })]).catch(() => {});
+
+      if (!simulation) {
+        await new Promise((r) => setTimeout(r, 12000));
+      }
+    }
+  } catch (errR2) {
+    console.warn('[RELANCES J7 ERR]:', errR2.message);
+  }
+
+  // 3. Relance 1 (J+3) : leads contactés 1 fois, sans réponse depuis > 3 jours
+  try {
+    const { rows: leadsRelance1 } = await pool.query(`
+      SELECT id, telephone, nom_boutique, contact_nom, categorie, sous_profil, nb_contacts, dernier_contact_at
+      FROM prospection_leads
+      WHERE statut = 'contacte_wa'
+        AND (nb_contacts = 1 OR nb_contacts IS NULL)
+        AND derniere_reponse_at IS NULL
+        AND dernier_contact_at <= NOW() - INTERVAL '3 days'
+      ORDER BY priority_score DESC, dernier_contact_at ASC
+      LIMIT $1
+    `, [limite]);
+
+    for (const lead of leadsRelance1) {
+      if (await estDesinscrit(lead.telephone)) {
+        await pool.query("UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE id = $1", [lead.id]).catch(() => {});
+        continue;
+      }
+
+      const metaParams = resoudreParametresMetaTemplate(lead);
+      if (!simulation) {
+        try {
+          const resp = await sendWhatsAppProspectionDirecte(lead.telephone, {
+            features: metaParams.features,
+            googleProof: '🎁 Avez-vous pu tester ? Répondez OUI pour 30 jours offerts.',
+          });
+          if (resp && resp.success !== false) {
+            stats.relancesJ3++;
+          } else {
+            stats.erreurs++;
+          }
+        } catch (err) {
+          stats.erreurs++;
+        }
+      } else {
+        stats.relancesJ3++;
+      }
+
+      await pool.query(`
+        UPDATE prospection_leads
+        SET 
+          nb_contacts = COALESCE(nb_contacts, 0) + 1,
+          dernier_contact_at = NOW(),
+          derniere_action_at = NOW(),
+          updated_at = NOW()
+        WHERE id = $1
+      `, [lead.id]);
+
+      await pool.query(`
+        INSERT INTO prospection_lead_events (
+          lead_id, type_evenement, canal, description, metadata
+        ) VALUES ($1, 'relance', 'whatsapp', 'Relance 1 envoyée (J+3)', $2)
+      `, [lead.id, JSON.stringify({ simulation, nb_contacts: 2 })]).catch(() => {});
+
+      if (!simulation) {
+        await new Promise((r) => setTimeout(r, 12000));
+      }
+    }
+  } catch (errR1) {
+    console.warn('[RELANCES J3 ERR]:', errR1.message);
+  }
+
+  return stats;
+}
+
 module.exports = {
   ensureProspectionTables,
   estNomPropreAuthentique,
@@ -2285,6 +2667,7 @@ module.exports = {
   estLeadEmploiOuInvalide,
   nettoyerEtEnrichirLead,
   nettoyerTousLesLeadsBdd,
+  reconcilierAgencesEtBoutiquesExistantes,
   interpolerMessage,
   genererLienWhatsApp,
   extraireLeadsDepuisTexte,
@@ -2295,6 +2678,7 @@ module.exports = {
   calculerContactabilityScore,
   evaluerLeadComplet,
   resoudreTemplatePourLead,
+  resoudreParametresMetaTemplate,
   autoSourcerDepuisAnnonces,
   genererRequetesDorking,
   lancerCampagne,
@@ -2302,4 +2686,6 @@ module.exports = {
   analyserToutesLesCampagnes,
   recommanderProchaineCampagne,
   obtenirTimelineLead,
+  traiterRelancesProspectsAutomatiques,
 };
+

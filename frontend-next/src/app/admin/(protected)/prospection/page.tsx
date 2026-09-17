@@ -27,6 +27,7 @@ export interface Lead {
   nb_contacts?: number
   dernier_contact_at?: string | null
   derniere_reponse_at?: string | null
+  sous_profil?: string | null
   notes: string | null
   derniere_action_at: string | null
   created_at: string
@@ -38,6 +39,9 @@ export interface StatsLeads {
   contactes: number
   en_discussion: number
   convertis: number
+  agences_converties?: number
+  boutiques_converties?: number
+  sans_reponse?: number
   desinscrits: number
   invalides: number
   qualifies: number

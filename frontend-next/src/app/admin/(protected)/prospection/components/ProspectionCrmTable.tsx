@@ -112,10 +112,22 @@ export default function ProspectionCrmTable({
                       )}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#475569', display: 'block', textTransform: 'capitalize' }}>
-                        {lead.categorie}
-                      </span>
-                      <span style={{ fontSize: 12, color: '#94A3B8' }}>{lead.quartier || lead.ville}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#475569', textTransform: 'capitalize' }}>
+                          {lead.categorie}
+                        </span>
+                        {lead.sous_profil && (
+                          <span style={{
+                            fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 4,
+                            background: lead.sous_profil === 'agence' ? '#E0F2FE' : '#FEF3C7',
+                            color: lead.sous_profil === 'agence' ? '#0369A1' : '#92400E',
+                            textTransform: 'capitalize',
+                          }}>
+                            {lead.sous_profil}
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginTop: 2 }}>{lead.quartier || lead.ville}</span>
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <select
@@ -132,6 +144,7 @@ export default function ProspectionCrmTable({
                         <option value="contacte_email">Contacté Email</option>
                         <option value="en_discussion">En discussion</option>
                         <option value="converti">Converti</option>
+                        <option value="sans_reponse">Sans Réponse</option>
                         <option value="desinscrit">Désinscrit</option>
                         <option value="invalide">Invalide</option>
                       </select>

@@ -48,6 +48,7 @@ export default function ProspectionClient({
   // Filtres CRM & Campagnes
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('tous')
+  const [sousProfilFilter, setSousProfilFilter] = useState('tous')
   const [statutFilter, setStatutFilter] = useState('nouveau')
   const [sourceFilter, setSourceFilter] = useState('tous')
   const [operateurFilter, setOperateurFilter] = useState('tous')
@@ -89,8 +90,8 @@ export default function ProspectionClient({
 
   // Filtrage et tris mémoïsés
   const filteredLeads = useMemo(() => {
-    return computeFilteredLeads(leads, catFilter, statutFilter, sourceFilter, operateurFilter, quartierFilter, search)
-  }, [leads, catFilter, statutFilter, sourceFilter, operateurFilter, quartierFilter, search])
+    return computeFilteredLeads(leads, catFilter, statutFilter, sourceFilter, operateurFilter, quartierFilter, search, sousProfilFilter)
+  }, [leads, catFilter, statutFilter, sourceFilter, operateurFilter, quartierFilter, search, sousProfilFilter])
 
   const sortedFilteredLeads = useMemo(() => {
     return computeSortedLeads(filteredLeads, sortBy)
@@ -146,6 +147,7 @@ export default function ProspectionClient({
   const handleResetFilters = () => {
     setSearch('')
     setCatFilter('tous')
+    setSousProfilFilter('tous')
     setStatutFilter('nouveau')
     setSourceFilter('tous')
     setOperateurFilter('tous')
@@ -170,8 +172,10 @@ export default function ProspectionClient({
         stats={stats}
         isCleaningLeads={leadOps.isCleaningLeads}
         isAutoSourcing={leadOps.isAutoSourcing}
+        isReconciling={leadOps.isReconciling}
         onNettoyerLeads={leadOps.handleNettoyerLeads}
         onAutoSource={leadOps.handleAutoSource}
+        onReconcilierAgences={leadOps.handleReconcilierAgences}
         onOpenAddModal={() => setShowAddModal(true)}
       />
 
@@ -200,6 +204,8 @@ export default function ProspectionClient({
           loadingLeads={leadOps.loadingLeads}
           catFilter={catFilter}
           setCatFilter={setCatFilter}
+          sousProfilFilter={sousProfilFilter}
+          setSousProfilFilter={setSousProfilFilter}
           statutFilter={statutFilter}
           setStatutFilter={setStatutFilter}
           sourceFilter={sourceFilter}

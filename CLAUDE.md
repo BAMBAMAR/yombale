@@ -1,3 +1,43 @@
+- **Audit Exhaustif de la Prospection Commerciale Nopalou & Intégration Verticale Immobilier / Multi-Profils (Branche feature/vertical-immobilier) (17 septembre 2026)** 🏢🛍️⚡📊🤖🛡️ ✅ :
+  * **🔍 1. Audit Réel de la Base (1 301 leads, 663 messages, 6 agences)** :
+    - Audit complet sans chiffres inventés de l'ensemble du système de prospection Nopalou.
+    - Identification des causes d'échec : plafond d'engagement Meta (erreur 131049), déconnexion sémantique entre messages e-commerce envoyés aux professionnels de l'immobilier/auto, absence de relances séquencées et absence de réconciliation des agences clientes existantes.
+  * **🤝 2. Réconciliation Automatique des Agences & Boutiques Clientes (`reconcilierAgencesEtBoutiquesExistantes`)** :
+    - Fonction de rapprochement automatique bidirectionnel entre `agences_immo`, `boutiques` et `prospection_leads` sur les numéros nationaux et locaux (+221).
+    - Cas concret résolu : l'agence active AMAR IMMO (`777202086`), historiquement enregistrée sous un faux nom de smartphone (`Samsung Galaxy A33 5g`), a été restaurée sous le nom de l'agence, classée `immo / agence`, convertie à 100% avec événement d'onboarding tracé dans `prospection_lead_events`.
+    - Hook de conversion automatique et tracé d'événement ajouté lors de chaque création d'agence (`POST /api/agences`) et de boutique.
+    - Endpoint dédié `POST /api/prospection/leads/reconcilier-agences`.
+  * **🎯 3. Moteur Dynamique Meta WhatsApp par Persona Métier (`resoudreParametresMetaTemplate`)** :
+    - Résolution dynamique des paramètres des templates officiels Meta Cloud API (`nopalou_contact_direct` et `nopalou_acces_direct`) selon le secteur et sous-profil du prospect :
+      - *Immobilier (`immo`)* : vitrine agence, mandats, visites WhatsApp, lien vers `https://nopalou.com/agence`, bouton `agence`.
+      - *Auto-Moto (`auto-moto`)* : showroom parc auto, fiches techniques, lien vers `https://nopalou.com/annonces`, bouton `auto`.
+      - *Grossiste (`grossiste`)* : catalogue de gros B2B, tarifs dégressifs.
+      - *Restaurant (`restaurant`)* : carte & menu digital, commandes WhatsApp.
+      - *Commerce Général / Mode* : caisse tactile, Wave/OM sans commission.
+  * **🤖 4. Aiguillage Bot WhatsApp Dédié Immobilier (`CREER_AGENCE_NOM` & `CREER_AGENCE_VILLE`)** :
+    - Lorsque le prospect répond positivement ("OUI", "OK", "WAAW", etc.), détection de sa catégorie :
+      - Si `immo`, déclenchement de l'onboarding Nopalou Immo (vitrine, visites, mandats, quittances) au lieu du scanner magasin.
+      - Tunnel interactif en 2 étapes WhatsApp : saisie du nom de l'agence (`CREER_AGENCE_NOM`), puis quartier/ville (`CREER_AGENCE_VILLE`).
+      - Création sécurisée de l'utilisateur, génération du slug unique, insertion dans `agences_immo`, attribution du rôle `admin_agence`, activation de l'essai 30 jours offerts et conversion automatique du lead CRM.
+      - Message de confirmation immédiat avec URL de vitrine publique (`https://nopalou.com/agence/[slug]`).
+      - Déclencheurs directs ajoutés sur "creer agence", "nopalou immo", etc.
+  * **⏰ 5. Moteur de Relances Automatisées Séquencées & Cron (`cron-relances-prospects.js`)** :
+    - Implémentation du cycle de vie commercial automatisé :
+      - Relance 1 douce à J+3 pour les leads sans réponse.
+      - Relance 2 avec mention légale de désinscription STOP à J+7.
+      - Clôture automatique sans spam à J+14 (`statut = 'sans_reponse'`, priorité ramenée à 0).
+    - Service cron planifié du lundi au samedi à 11h00 (pic d'engagement B2B Dakar) et enregistré sur le boot serveur `backend/app.js`.
+    - Endpoints d'administration `POST /api/prospection/relances/prospects` et mise à jour de `POST /api/prospection/relances/lancer`.
+  * **🖥️ 6. Refonte UX/UI du CRM Prospection & Métriques Sectorielles** :
+    - `ProspectionHeader.tsx` : affichage des compteurs dédiés "Agences Immo Créées" (Lucide `Building2`), "Boutiques Créées", "Sans Réponse", et bouton d'action directe "Rapprocher Agences & Boutiques".
+    - `ProspectionTabCrm.tsx` : ajout du filtre par `sous_profil` (Agence, Courtier, Gestionnaire, Promoteur, Concessionnaire) et filtre par statut `sans_reponse`.
+    - `ProspectionCrmTable.tsx` : badges visuels distincts de sous-profil dans la colonne catégorie et support du statut sans réponse.
+    - Zéro emoji d'interface, icônes Lucide SVG vectorielles exclusives, typographie système native haute performance.
+  * **✅ 7. Validation & Tests E2E / Base de Données Réelle** :
+    - 17 tests unitaires Jest validés avec succès dans `tests/unit/prospection.test.js`.
+    - Typecheck `npx tsc --noEmit` et linter `npm run lint:slop` 100% conformes.
+    - Exécution du nettoyage global sur les 1 301 leads : 639 leads enrichis/corrigés, AMAR IMMO réconcilié, 97 profils emploi invalidés.
+
 - **Exécution du Plan Opérationnel Post-Audit & Benchmark Mondial Nopalou (Branche feature/vertical-immobilier) (17 septembre 2026)** 🏆💎🚀⚡📦🏷️📊🛡️ ✅ :
   * **🎯 1. P0 — Scission du Monolithe Server Actions Admin (`admin.ts`) & Wizard Création Boutique** :
     - Scission de `frontend-next/src/app/actions/admin.ts` (985 lignes) en 6 sous-modules spécialisés dans `src/app/actions/admin/`, tous inférieurs à 260 lignes :

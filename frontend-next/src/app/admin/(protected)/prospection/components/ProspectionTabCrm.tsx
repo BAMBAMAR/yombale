@@ -1,6 +1,6 @@
 import { Search, SlidersHorizontal, Sparkles, Download, Trash2, RotateCcw, Ban } from 'lucide-react'
 import type { Lead } from './types'
-import { CATEGORIES_OPTIONS, SOURCES_OPTIONS, OPERATEURS_OPTIONS } from './utils'
+import { CATEGORIES_OPTIONS, SOURCES_OPTIONS, OPERATEURS_OPTIONS, SOUS_PROFILS_OPTIONS } from './utils'
 import ProspectionCrmTable from './ProspectionCrmTable'
 
 interface Props {
@@ -15,6 +15,8 @@ interface Props {
   loadingLeads: boolean
   catFilter: string
   setCatFilter: (c: string) => void
+  sousProfilFilter: string
+  setSousProfilFilter: (sp: string) => void
   statutFilter: string
   setStatutFilter: (s: string) => void
   sourceFilter: string
@@ -53,6 +55,8 @@ export default function ProspectionTabCrm({
   loadingLeads,
   catFilter,
   setCatFilter,
+  sousProfilFilter,
+  setSousProfilFilter,
   statutFilter,
   setStatutFilter,
   sourceFilter,
@@ -81,6 +85,7 @@ export default function ProspectionTabCrm({
   const hasActiveFilters = Boolean(
     search ||
     catFilter !== 'tous' ||
+    sousProfilFilter !== 'tous' ||
     statutFilter !== 'tous' ||
     sourceFilter !== 'tous' ||
     operateurFilter !== 'tous' ||
@@ -194,6 +199,21 @@ export default function ProspectionTabCrm({
             ))}
           </select>
 
+          {/* Sous-Profil Métier (Agences, Courtiers, etc.) */}
+          <select
+            value={sousProfilFilter}
+            onChange={(e) => setSousProfilFilter(e.target.value)}
+            style={{
+              padding: '7px 10px', borderRadius: 8, border: '1px solid #CBD5E1',
+              fontSize: 12, fontWeight: 700, background: sousProfilFilter !== 'tous' ? '#EFF6FF' : '#fff',
+              color: sousProfilFilter !== 'tous' ? '#1D4ED8' : '#1E293B',
+            }}
+          >
+            {SOUS_PROFILS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+
           {/* Statut */}
           <select
             value={statutFilter}
@@ -209,6 +229,7 @@ export default function ProspectionTabCrm({
             <option value="contacte_wa">Contacté WhatsApp</option>
             <option value="en_discussion">En discussion</option>
             <option value="converti">Converti (Actif)</option>
+            <option value="sans_reponse">Sans réponse (J+14)</option>
             <option value="desinscrit">Désinscrit</option>
             <option value="invalide">Invalide (Emploi / Hors Cible)</option>
           </select>

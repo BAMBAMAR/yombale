@@ -5,10 +5,33 @@ export const STATUT_LABELS: Record<string, { label: string; color: string; bg: s
   contacte_wa: { label: 'Contacté WhatsApp', color: '#16A34A', bg: '#F0FDF4' },
   contacte_email: { label: 'Contacté Email', color: '#7C3AED', bg: '#F5F3FF' },
   en_discussion: { label: 'En Discussion', color: '#D97706', bg: '#FFFBEB' },
-  converti: { label: 'Converti (Boutique Active)', color: '#059669', bg: '#ECFDF5' },
+  converti: { label: 'Converti (Boutique / Agence)', color: '#059669', bg: '#ECFDF5' },
+  sans_reponse: { label: 'Sans Réponse (J+14)', color: '#64748B', bg: '#F1F5F9' },
   desinscrit: { label: 'Désinscrit / Refus', color: '#DC2626', bg: '#FEF2F2' },
   invalide: { label: 'Invalide / Emploi (Hors Cible)', color: '#64748B', bg: '#F1F5F9' },
 }
+
+export const STATUTS_OPTIONS = [
+  { value: 'tous', label: 'Tous les statuts' },
+  { value: 'nouveau', label: 'Nouveau' },
+  { value: 'contacte_wa', label: 'Contacté WhatsApp' },
+  { value: 'contacte_email', label: 'Contacté Email' },
+  { value: 'en_discussion', label: 'En Discussion' },
+  { value: 'converti', label: 'Converti (Boutique ou Agence)' },
+  { value: 'sans_reponse', label: 'Sans Réponse (J+14)' },
+  { value: 'desinscrit', label: 'Désinscrit / Refus' },
+  { value: 'invalide', label: 'Invalide / Hors Cible' },
+]
+
+export const SOUS_PROFILS_OPTIONS = [
+  { value: 'tous', label: 'Tous les sous-profils' },
+  { value: 'agence', label: 'Agence Immobilière' },
+  { value: 'courtier', label: 'Courtier / Démarcheur' },
+  { value: 'gestionnaire', label: 'Gestionnaire Locatif' },
+  { value: 'promoteur', label: 'Promoteur Immobilier' },
+  { value: 'agent', label: 'Agent Immobilier' },
+  { value: 'concessionnaire', label: 'Concessionnaire / Garage Auto' },
+]
 
 export const OPERATEUR_COLORS: Record<string, { color: string; bg: string }> = {
   Orange: { color: '#C75B00', bg: '#FFF7ED' },

@@ -244,6 +244,52 @@ router.post('/', verifierToken, async (req, res) => {
       [agence.id, userId]
     );
 
+    // Hook automatique de conversion CRM prospection pour les agences immobilières
+    const telToCheck = [telephone, whatsapp, currentUser.telephone].filter(Boolean);
+    for (const t of telToCheck) {
+      const clean9 = String(t).replace(/\D/g, '').slice(-9);
+      if (clean9.length === 9) {
+        try {
+          const rLead = await pool.query(
+            `UPDATE prospection_leads 
+             SET 
+               statut = 'converti',
+               categorie = 'immo',
+               nom_boutique = CASE 
+                 WHEN nom_boutique IS NULL OR nom_boutique IN ('Immobilière', 'Agence Immobilière', 'Commerce Général', 'Mode') OR nom_boutique ILIKE '%galaxy%'
+                 THEN $1 
+                 ELSE nom_boutique 
+               END,
+               conversion_score = 100,
+               engagement_score = 100,
+               priority_score = 0,
+               next_best_action = 'agence_onboarding',
+               derniere_action_at = NOW(),
+               updated_at = NOW()
+             WHERE telephone LIKE '%' || $2
+             RETURNING id`,
+            [agence.nom, clean9]
+          );
+
+          if (rLead.rows.length > 0) {
+            const leadId = rLead.rows[0].id;
+            await pool.query(
+              `INSERT INTO prospection_lead_events (
+                lead_id, type_evenement, canal, description, metadata
+              ) VALUES ($1, 'agence_creee', 'web', $2, $3)`,
+              [
+                leadId,
+                `Conversion réussie : Agence Immobilière "${agence.nom}" créée sur Nopalou Immo`,
+                JSON.stringify({ agence_id: agence.id, slug: agence.slug, nom: agence.nom })
+              ]
+            ).catch(() => {});
+          }
+        } catch (eConv) {
+          console.warn('[CRM AGENCES CONVERSION HOOK WARN]:', eConv.message);
+        }
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Agence créée avec succès',

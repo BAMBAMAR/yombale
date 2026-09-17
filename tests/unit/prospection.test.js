@@ -140,5 +140,67 @@ describe('Moteur de Prospection & Normalisation Leads Sénégal', () => {
       expect(regexInternes.test('boutique_dakar-fashion')).toBe(false);
     });
   });
+
+  describe('9. Résolution Dynamique des Paramètres Meta Template par Persona', () => {
+    const { resoudreParametresMetaTemplate } = require('../../backend/services/prospection');
+
+    test('adapte les paramètres pour les agences immobilières (Nopalou Immo)', () => {
+      const p = resoudreParametresMetaTemplate({
+        categorie: 'immo',
+        sous_profil: 'agence',
+        nom_boutique: 'Amar Immo',
+      });
+      expect(p.url).toBe('https://nopalou.com/agence');
+      expect(p.buttonParam).toBe('agence');
+      expect(p.title).toContain('Amar Immo');
+      expect(p.features).toContain('Mandats');
+    });
+
+    test('adapte les paramètres pour les vendeurs auto-moto', () => {
+      const p = resoudreParametresMetaTemplate({
+        categorie: 'auto-moto',
+        nom_boutique: 'Dakar Motors',
+      });
+      expect(p.url).toBe('https://nopalou.com/annonces');
+      expect(p.buttonParam).toBe('auto');
+      expect(p.title).toContain('Dakar Motors');
+      expect(p.features).toContain('véhicules');
+    });
+
+    test('utilise le profil e-commerce par défaut pour la mode et tech', () => {
+      const p = resoudreParametresMetaTemplate({
+        categorie: 'mode',
+        nom_boutique: 'Boutique Chic',
+      });
+      expect(p.url).toBe('https://nopalou.com/tarifs-boutique');
+      expect(p.buttonParam).toBe('boutique');
+      expect(p.features).toContain('Wave');
+    });
+  });
+
+  describe('10. Détection Anti-Emploi & Qualification des Leads', () => {
+    const { estLeadEmploiOuInvalide, nettoyerEtEnrichirLead } = require('../../backend/services/prospection');
+
+    test('détecte les offres et demandes d\'emploi comme hors-cible', () => {
+      expect(estLeadEmploiOuInvalide({ nom_boutique: 'Cherche Cuisinière Expérimentée' })).toBe(true);
+      expect(estLeadEmploiOuInvalide({ nom_boutique: 'Chauffeur Particulier Disponible' })).toBe(true);
+      expect(estLeadEmploiOuInvalide({ notes: 'Offre d\'emploi pour vigile de nuit' })).toBe(true);
+      expect(estLeadEmploiOuInvalide({ nom_boutique: 'Teranga Mode Sacs' })).toBe(false);
+    });
+
+    test('force le statut invalide et le score à zéro pour les profils emploi', () => {
+      const lead = {
+        nom_boutique: 'Recrutement Standardiste Dakar',
+        telephone: '771234567',
+        categorie: 'emploi',
+      };
+      const enrichi = nettoyerEtEnrichirLead(lead);
+      expect(enrichi.statut).toBe('invalide');
+      expect(enrichi.score).toBe(0);
+      expect(enrichi.fit_score).toBe(0);
+      expect(enrichi.next_best_action).toBe('hors_cible');
+    });
+  });
 });
+
 
