@@ -1,3 +1,20 @@
+- **Ajout de la Recherche et des Filtres Dédiés dans l'Onglet « Visites Vidéo & Reels » (`VitrineVideoReels.tsx`, `vitrine/page.tsx`, `globals.css`) (Branche feature/vertical-immobilier) (17 septembre 2026)** 🎬🔍🏷️📱⚡✅ :
+  * **🔍 1. Moteur de Recherche et Filtres Dédiés aux Visites Vidéo** :
+    - Constat : lorsque l'utilisateur basculait sur l'onglet *« Visites Vidéo & Reels »*, la barre de filtres et recherche disparaissait car elle était cantonnée au catalogue de biens statiques, rendant impossible la recherche d'une vidéo par quartier, mot-clé ou type d'opération.
+    - Solution complète intégrée directement dans `VitrineVideoReels.tsx` :
+      1. *Filtres d'Opération (Pills dynamiques)* : `Tous (N)`, `Location (N)`, `Vente (N)` calculés automatiquement en temps réel sur les vidéos et reels disponibles.
+      2. *Sélecteur de Source / Plateforme* : filtrage entre toutes les sources, visites virtuelles directes de biens, Instagram Reels, TikTok, et YouTube.
+      3. *Sélecteur de Typologie* : filtrage par typologie de bien associé (*Appartements, Villas, Studios, Terrains, Bureaux*).
+      4. *Barre de Recherche en Temps Réel* : recherche instantanée sur le titre du bien, le quartier, la ville, la légende du post et la plateforme, avec bouton d'effacement rapide `[×]`.
+      5. *Compteur dynamique & Réinitialisation* : affichage du nombre exact de vidéos correspondantes, pastille « Filtres actifs » et bouton « Réinitialiser filtres ».
+      6. *État Vide Ergonomique* : message clair invitant à modifier la recherche ou réinitialiser les filtres en 1 tap si 0 vidéo ne correspond.
+  * **🎨 2. Design Responsive & Tokens Nopalou (`globals.css`)** :
+    - Classes `.vitrine-video-filters-bar`, `.vitrine-video-filters-top`, `.vitrine-video-controls-group`, `.vitrine-video-op-btn`, `.vitrine-video-op-badge`, `.vitrine-video-select`, `.vitrine-video-search-wrap`, `.vitrine-video-search-input`, `.vitrine-video-clear-btn`.
+    - Harmonisation complète avec le design system (tokens `--navy`, `--accent`, `--border`, `--bg`).
+  * **🧪 3. Contrôles Qualité & Validation** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 0 Silent Catches, 0 Monolithes (< 370 lignes), 100% conforme.
+
 - **Optimisation Compacte du Héro de la Vitrine Agence sur Mobile (Hauteur Réduite de 35% / ~200px) (`VitrineBanner.tsx`, `page.tsx`, `globals.css`) (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱🏢📐⚡✅ :
   * **📐 1. Résolution de l'Étirage Vertical Excessif sur Mobile** :
     - Constat : sur mobile, le bandeau de l'agence occupait 100% du premier écran (hauteur ~640px) à cause d'une couverture trop haute (185px), d'un logo de 74px, d'une barre d'horaires imposante, et d'un empilement de marges et de séparateurs pour les boutons d'actions et les réseaux sociaux, repoussant les onglets de biens sous la ligne de flottaison.

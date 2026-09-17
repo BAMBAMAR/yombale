@@ -163,6 +163,8 @@ function VitrinePubliqueContent() {
             agence={agence}
             biens={biens}
             onOpenPost={(post) => setActiveVideoPost(post)}
+            initialSearchQuery={searchQuery}
+            initialFilterOp={filterOp}
           />
         </div>
       ) : (
