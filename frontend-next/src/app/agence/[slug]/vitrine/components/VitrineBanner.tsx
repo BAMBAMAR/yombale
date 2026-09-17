@@ -9,7 +9,8 @@ import {
   Share2,
   Video,
   Camera,
-  Music
+  Music,
+  Building2
 } from 'lucide-react';
 import { showToast } from '@/context/ToastContext';
 
@@ -139,23 +140,6 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                 <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0, letterSpacing: '-0.02em', textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)' }}>
                   {agence.nom}
                 </h1>
-                {studio?.theme_id && (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      background: 'rgba(15, 23, 42, 0.65)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      backdropFilter: 'blur(6px)',
-                      color: '#FFFFFF',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {studio.theme_id}
-                  </span>
-                )}
               </div>
 
               {slogan && (
@@ -358,6 +342,30 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
             <Share2 size={14} />
             <span>Partager la vitrine</span>
           </button>
+
+          {/* Raccourci Espace Agence / Gestion */}
+          <a
+            href={`/agence/${agence.slug}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'var(--navy, #1C2B4A)',
+              border: '1.5px solid rgba(255, 255, 255, 0.35)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+              color: '#FFFFFF',
+              padding: '8px 14px',
+              borderRadius: 8,
+              fontSize: 12.5,
+              fontWeight: 800,
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}
+            title="Accéder à l'espace de gestion de l'agence"
+          >
+            <Building2 size={14} style={{ color: 'var(--accent, #C75B00)' }} />
+            <span>Espace Agence</span>
+          </a>
           </div>
         </div>
       </div>

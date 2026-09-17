@@ -102,12 +102,13 @@ export default function PosCatalogueSection({
             onChange={(e) => setRecherche(e.target.value)}
             style={{
               width: '100%',
-              padding: '13px 16px 13px 42px',
-              borderRadius: 12,
+              height: 38,
+              padding: '8px 14px 8px 36px',
+              borderRadius: 10,
               border: '1.5px solid var(--pos-border)',
               background: 'var(--pos-surface)',
               color: 'var(--pos-text)',
-              fontSize: 14.5,
+              fontSize: 13.5,
               fontWeight: 600,
               boxSizing: 'border-box',
               boxShadow: 'var(--pos-shadow)',
@@ -127,14 +128,14 @@ export default function PosCatalogueSection({
               onClick={() => setRecherche('')}
               style={{
                 position: 'absolute',
-                right: 12,
+                right: 10,
                 top: '50%',
                 transform: 'translateY(-50%)',
                 background: 'var(--pos-surface2)',
                 border: 'none',
                 borderRadius: '50%',
-                width: 22,
-                height: 22,
+                width: 20,
+                height: 20,
                 color: 'var(--pos-text2)',
                 cursor: 'pointer',
                 display: 'flex',
@@ -142,37 +143,38 @@ export default function PosCatalogueSection({
                 justifyContent: 'center',
               }}
             >
-              <X size={13} />
+              <X size={12} />
             </button>
           )}
         </div>
 
-        <div className="caisse-search-row-btns" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <div className="caisse-search-row-btns" style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
           <button
             type="button"
             onClick={demarrerScannerCamera}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 7,
-              padding: '0 14px',
-              height: 46,
-              borderRadius: 12,
+              justifyContent: 'center',
+              gap: 6,
+              padding: '0 10px',
+              height: 38,
+              borderRadius: 10,
               background: '#0284c7',
               color: '#ffffff',
               border: 'none',
-              fontWeight: 800,
-              fontSize: 13,
+              fontWeight: 750,
+              fontSize: 12.5,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              boxShadow: '0 4px 12px rgba(2,132,199,0.3)',
+              boxShadow: '0 2px 8px rgba(2,132,199,0.25)',
               transition: 'all 0.15s ease',
               flexShrink: 0,
             }}
-            title="Scanner avec la caméra"
+            title="Scanner avec la caméra (Code-barres EAN / QR)"
           >
-            <Camera size={18} />
-            <span>Scanner</span>
+            <Camera size={16} />
+            <span className="caisse-search-btn-label">Scanner</span>
           </button>
 
           <button
@@ -181,15 +183,16 @@ export default function PosCatalogueSection({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 7,
-              padding: '0 14px',
-              height: 46,
-              borderRadius: 12,
+              justifyContent: 'center',
+              gap: 6,
+              padding: '0 10px',
+              height: 38,
+              borderRadius: 10,
               background: 'var(--pos-surface)',
               color: 'var(--pos-text)',
               border: '1.5px solid var(--pos-border)',
-              fontWeight: 800,
-              fontSize: 13,
+              fontWeight: 750,
+              fontSize: 12.5,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               boxShadow: 'var(--pos-shadow)',
@@ -198,8 +201,8 @@ export default function PosCatalogueSection({
             }}
             title="Connecter la caméra de votre smartphone comme douchette sans fil gratuite"
           >
-            <Smartphone size={17} style={{ color: '#C75B00' }} />
-            <span>Douchette Mobile</span>
+            <Smartphone size={16} style={{ color: '#C75B00' }} />
+            <span className="caisse-search-btn-label">Douchette</span>
           </button>
 
           <PosVoiceInput

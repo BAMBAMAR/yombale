@@ -1,3 +1,69 @@
+- **Enrichissement du Bouton « Créer » (+) Mobile sur l'Accueil avec Action Sheet Hub Multimodal (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱➕✨🛒🏢🏷️⚡✅ :
+  * **✨ 1. Création de l'Action Sheet Hub « Créer sur Nopalou » (`CreateQuickActionsSheet.tsx`)** :
+    - Alignement complet du comportement du bouton central `(+) Créer` de l'accueil sur l'ergonomie appréciée des espaces Agence et Boutique (`AgenceQuickActionsSheet` et `BoutiqueQuickActionsSheet`).
+    - Au lieu de rediriger de façon rigide vers `/creer-boutique`, le bouton ouvre instantanément une Action Sheet moderne coulissante depuis le bas (avec poignée tactile, en-tête `Sparkles`, backdrop flouté et fermeture `Escape` / clic externe).
+    - Détection intelligente et adaptative du profil utilisateur (commerçant avec boutique, agent immobilier, ou visiteur).
+    - **6 actions rapides proposées en 1 tap** :
+      1. *Caisse POS Tactile (Vente & Reçu)* (`/boutique/caisse`) : accès prioritaire pour les commerçants au terminal physique d'encaissement.
+      2. *Ajouter un Produit Boutique* (`/boutique?tab=produits`) : ajout photo et publication catalogue rapide.
+      3. *Vendre un article (Petite Annonce)* (`/deposer-annonce`) : formulaire de dépôt pour téléphones, auto, mode, services.
+      4. *Publier un bien immobilier* (`/deposer-immo`) : vente de villa, terrain, location appartement ou bureau.
+      5. *Créer ma Boutique en Ligne & Caisse* (`/creer-boutique`) : pour lancer son activité e-commerce.
+      6. *Espace Agence Immobilière Pro* (`/agence`) : mandats, baux, suivi des loyers et vitrine de biens.
+      7. *Créer une alerte de prix WhatsApp* (`/compte?tab=mes-alertes`) : notifications automatiques sur baisse de prix.
+  * **📱 2. Intégration dans la Navigation Mobile Basse (`MobileBottomNav.tsx`)** :
+    - Remplacement du `<Link href="/creer-boutique">` direct par un bouton déclencheur tactile ouvrant `CreateQuickActionsSheet`.
+    - Préservation rigoureuse du style visuel identitaire (bouton circulaire FAB orange `--accent: #C75B00` avec icône `Plus` blanche et libellé *« Créer »*).
+  * **🎨 3. Styles & Transitions Fluides (`globals.css`)** :
+    - Ajout des classes de design system `.npl-create-sheet-backdrop`, `.npl-create-sheet`, `.npl-create-sheet-pill`, `.npl-create-sheet-item` avec animations `nplFadeIn` et `nplSlideUp`.
+  * **🧪 4. Contrôles Qualité & Validation** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 0 Silent Catches, 0 Monolithes, 100% conforme.
+
+- **Correctifs Ergonomie Caisse POS (Badge Quantité Non Tronqué, Compacité Recherche & Boutons 3 Colonnes) & Option Masquer sur le Bouton Flottant « Aide & Recherche » (Branche feature/vertical-immobilier) (17 septembre 2026)** 🛒🏷️🔍💬⚡✅ :
+  * **🏷️ 1. Correction du Badge de Quantité Produit Non Tronqué en Caisse POS (`globals.css` & `PosProductCard.tsx`)** :
+    - Remplacement de `overflow: hidden;` par `overflow: visible;` sur `.pos-produit-card` dans `globals.css` afin de ne plus rogner les éléments en débordement.
+    - Repositionnement et stylisation du badge `.pos-qte-badge` : bordure de séparation blanche nette (`border: 2px solid var(--pos-surface)`), élévation `z-index: 10`, `minWidth: 22px`, `padding: 0 5px` pour que les quantités (chiffres 1, 2, 3+) soient parfaitement lisibles sans coupure dans le coin supérieur droit.
+  * **🔍 2. Optimisation de la Barre de Recherche & Compacité des Boutons en 3 Colonnes (`PosCatalogueSection.tsx` & `caisse.css`)** :
+    - Harmonisation de la hauteur de la barre de recherche et des boutons d'outils (Scanner, Douchette, Vocal) à 38px (au lieu de 46px).
+    - Masquage responsive des libellés textuels (`.caisse-search-btn-label`) en mode 3 colonnes (`.has-3-cols`) et sous 1360px : les boutons deviennent des boutons carrés compacts ultra-nets (icônes Lucide `Camera`, `Smartphone`, `Mic`) avec infobulles explicatives (`title`), libérant plus de 200px supplémentaires pour l'input de recherche.
+    - Rééquilibrage de la grille 3 colonnes dans `caisse.css` (`grid-template-columns: minmax(0, 1.55fr) 250px minmax(380px, 1fr)`) pour donner plus d'ampleur naturelle au catalogue.
+  * **💬 3. Option de Masquage Persistant du Bouton Flottant « Aide & Recherche » (`ChatbotWidget.tsx`, `chat-widget.css` & `caisse.css`)** :
+    - Intégration d'un bouton de masquage discret `[×]` (`.npl-chat-hide-btn`) sur le côté de la pilule `[● 💬 Aide & Recherche]`, permettant à l'utilisateur de fermer/masquer le bouton d'un simple clic sans ouvrir le chat.
+    - Ajout d'une option « Masquer l'assistant » (icône `EyeOff`) dans l'en-tête de la fenêtre de chat.
+    - Mémorisation du choix dans `localStorage` (`npl_chat_widget_hidden`) pour ne plus afficher la grande pilule si l'utilisateur souhaite un écran dégagé.
+    - Affichage d'un bouton de restauration discret (`.npl-chat-restore-btn`, 36px) permettant de réactiver l'Aide d'un clic à tout moment.
+    - Masquage automatique complet de tous les éléments du widget flottant dans l'interface de Caisse enregistreuse POS (`body.in-caisse-pos`).
+  * **🧪 4. Contrôles Qualité & Validation** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 0 Silent Catches, 0 Monolithes, 100% conforme aux règles du projet.
+
+- **Correction Vitrine Agence (Suppression Mention Thème), Déblocage Accès Mobile Espace Agence & Harmonisation Ordre Menu Mobile (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱🏢🎨🧭⚡✅ :
+  * **🎨 1. Suppression de la mention du Thème sur la Vitrine Publique Agence (`VitrineBanner.tsx`)** :
+    - Retrait complet du badge `{studio.theme_id}` affichant les identifiants techniques de studio (ex: `PRESTIGE`, `MODERNE`, etc.) à côté du nom de l'agence.
+    - Ajout d'un bouton d'accès direct *« Espace Agence »* (icône Lucide `Building2`) dans la rangée d'actions de la vitrine, permettant d'accéder au dashboard agence (`/agence/${slug}`) sur mobile comme sur desktop.
+  * **🧭 2. Harmonisation de l'Ordre du Menu Mobile sur le Menu Web Desktop (`MobileNav.tsx`)** :
+    - Alignement strict de la section *« Acheter & Explorer »* sur l'ordre du menu desktop (`NavbarLinksNav.tsx`) :
+      1. Produits & Comparatifs (`/`)
+      2. Boutiques Vérifiées (`/boutiques`) avec badge `PRO`
+      3. Immobilier & Terrains (`/immo`)
+      4. Agences Immobilières (`/agences`) avec badge `PRO`
+      5. Forfaits Télécom (`/telecom`)
+      6. Petites Annonces (`/annonces`)
+      7. Assistant WhatsApp & Chatbot (`/assistant-whatsapp`)
+    - Ajout du raccourci *« Mon Espace Agence Pro »* dans la section *« Mon Espace »* pour les utilisateurs connectés.
+  * **📱 3. Accès Rapide « Mon Agence Pro » dans l'En-tête du Menu Mobile (`MobileNavUserCard.tsx`)** :
+    - Détection asynchrone des espaces professionnels de l'utilisateur (`/api/agences/mine` et `/api/boutiques/mine`).
+    - Affichage immédiat du bouton *« Mon Agence Pro »* en haut du tiroir coulissant dès qu'une agence appartient à l'utilisateur.
+  * **🔓 4. Déblocage du Hub Agence pour les Sessions par Cookies (`/agence/page.tsx`)** :
+    - Suppression de la vérification bloquante `localStorage.getItem('token')` qui refoulait vers la page publique les utilisateurs authentifiés par cookies HTTP standard Next.js.
+    - Ajout d'une redirection automatique et fluide vers le tableau de bord de l'agence (`/agence/${slug}`) lorsque l'utilisateur connecté possède une agence unique.
+  * **📊 5. Prise en Charge de la Vitrine dans la Navigation Basse Mobile (`MobileBottomNav.tsx`)** :
+    - Adaptation de la condition d'affichage pour maintenir active la barre mobile basse sur les vitrines publiques d'agences (`/agence/[slug]/vitrine`), avec surlignage automatique du contexte `Immo`.
+  * **🧪 6. Contrôles Qualité & Validation** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 100% conforme.
+
 - **Campagne de Recette Qualité Réelle, Exhaustive et End-to-End de Toute la Plateforme Nopalou (Phases 0 à 36) (Branche feature/vertical-immobilier) (17 septembre 2026)** 🧪🔬🌐📱🏢🛒⚖️🛡️🚀 ✅ :
   * **🔍 1. Homologation Globale de la Plateforme (100% PASS — Production Ready)** :
     - Exécution tripartite complète (Interface Web Next.js / API Backend Express / Persistance PostgreSQL 100 tables réelles).

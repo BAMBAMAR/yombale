@@ -1,11 +1,17 @@
 /* frontend-next/src/styles/chat-widget.css */
 /* Design System Nopalou — Widget Chatbot Web Client */
 
-.npl-chat-floating-btn {
+.npl-chat-floating-wrapper {
   position: fixed;
   bottom: 24px;
   right: 24px;
   z-index: 9990;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.npl-chat-floating-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -30,6 +36,53 @@
 
 .npl-chat-floating-btn:active {
   transform: translateY(0);
+}
+
+.npl-chat-hide-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--navy, #1c2b4a);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(28, 43, 74, 0.2);
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.npl-chat-hide-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  transform: scale(1.1);
+}
+
+.npl-chat-restore-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9990;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--navy, #1c2b4a);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(28, 43, 74, 0.25);
+  transition: transform 0.2s ease, background 0.15s ease;
+}
+
+.npl-chat-restore-btn:hover {
+  transform: scale(1.1);
+  background: #15223a;
 }
 
 .npl-chat-status-dot {
@@ -383,9 +436,13 @@
 
 /* ── Responsive Mobile ─────────────────────────────────────── */
 @media (max-width: 640px) {
-  .npl-chat-floating-btn {
+  .npl-chat-floating-wrapper,
+  .npl-chat-restore-btn {
     bottom: 74px; /* Au-dessus de la barre de navigation mobile */
     right: 16px;
+  }
+
+  .npl-chat-floating-btn {
     padding: 10px 14px;
     font-size: 13px;
   }

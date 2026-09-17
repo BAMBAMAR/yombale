@@ -1,10 +1,10 @@
 'use client'
 
-import React, { Suspense } from 'react'
+import React, { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { Home, Heart, User, Store, Plus, Zap, Building2 } from 'lucide-react'
-
+import CreateQuickActionsSheet from './CreateQuickActionsSheet'
 
 interface Props {
   isLoggedIn?: boolean
@@ -16,10 +16,11 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const [effectiveIsMerchant, setEffectiveIsMerchant] = React.useState<boolean>(
+  const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false)
+  const [effectiveIsMerchant, setEffectiveIsMerchant] = useState<boolean>(
     isMerchant || pathname.startsWith('/boutique')
   )
-  const [effectiveIsLoggedIn, setEffectiveIsLoggedIn] = React.useState<boolean>(
+  const [effectiveIsLoggedIn, setEffectiveIsLoggedIn] = useState<boolean>(
     isLoggedIn || pathname.startsWith('/boutique') || pathname.startsWith('/compte')
   )
 
@@ -40,8 +41,10 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
     } catch (err) { console.warn('[Nopalou:MobileBottomNav:L39]', err); }
   }, [pathname])
 
+  const isVitrine = pathname.includes('/vitrine')
+
   if (
-    pathname.startsWith('/agence') ||
+    (pathname.startsWith('/agence') && !isVitrine) ||
     pathname.startsWith('/boutique') ||
     pathname.startsWith('/compte') ||
     pathname.startsWith('/admin')
@@ -51,7 +54,7 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
 
   const currentTab = pathname === '/compte' ? searchParams.get('tab') : null
   const isHome = pathname === '/'
-  const isImmoContext = pathname.startsWith('/immo') || pathname.startsWith('/agences') || pathname.startsWith('/payer-loyer')
+  const isImmoContext = pathname.startsWith('/immo') || pathname.startsWith('/agences') || pathname.startsWith('/payer-loyer') || isVitrine
   const isExplorer = pathname === '/boutiques' || pathname.startsWith('/boutiques/') || pathname.startsWith('/categorie')
   const isCreerBoutique = pathname === '/creer-boutique' || pathname.startsWith('/creer-boutique')
   const isFavorites = pathname === '/favoris' || (pathname === '/compte' && currentTab === 'favoris')
@@ -62,6 +65,7 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
 
 
   return (
+    <>
     <nav className="mobile-bottom-nav" aria-label="Navigation principale mobile">
       {/* 1. Accueil */}
       <Link
@@ -104,42 +108,36 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
       )}
 
 
-      {/* 3. Bouton central adaptatif : Caisse POS si commerçant, Créer si visiteur */}
-      {effectiveIsMerchant ? (
-        <Link
-          href="/boutique/caisse"
-          className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${pathname.startsWith('/boutique/caisse') ? ' active' : ''}`}
-          aria-label="Caisse POS rapide"
-          title="Caisse POS"
-          aria-current={pathname.startsWith('/boutique/caisse') ? 'page' : undefined}
-        >
-          <div className="mobile-bottom-nav-icon-wrap">
-            <div className="mobile-bottom-nav-cta-btn" style={{ background: 'var(--accent, #C75B00)', boxShadow: '0 2px 8px rgba(199,91,0,0.4)' }}>
-              <Zap size={15} strokeWidth={2.8} fill="#ffffff" color="#ffffff" />
-            </div>
+      {/* 3. Bouton central FAB enrichi : Action Sheet Créer & Actions Rapides */}
+      <button
+        type="button"
+        onClick={() => setIsCreateSheetOpen(true)}
+        className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreateSheetOpen ? ' active' : ''}`}
+        aria-label="Actions rapides et création"
+        title="Créer une annonce, boutique, bien immobilier ou ouvrir la caisse"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+      >
+        <div className="mobile-bottom-nav-icon-wrap">
+          <div
+            className="mobile-bottom-nav-cta-btn"
+            style={{
+              background: 'var(--accent, #C75B00)',
+              boxShadow: '0 2px 8px rgba(199,91,0,0.4)',
+            }}
+          >
+            <Plus size={16} strokeWidth={3} />
           </div>
-          <span style={{ fontWeight: 800, color: 'var(--accent, #C75B00)', whiteSpace: 'nowrap' }}>
-            Caisse
-          </span>
-        </Link>
-      ) : (
-        <Link
-          href="/creer-boutique"
-          className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreerBoutique ? ' active' : ''}`}
-          aria-label="Créer une boutique"
-          title="Créer une boutique"
-          aria-current={isCreerBoutique ? 'page' : undefined}
+        </div>
+        <span
+          style={{
+            fontWeight: 800,
+            color: isCreateSheetOpen ? 'var(--accent, #C75B00)' : 'inherit',
+            whiteSpace: 'nowrap',
+          }}
         >
-          <div className="mobile-bottom-nav-icon-wrap">
-            <div className="mobile-bottom-nav-cta-btn">
-              <Plus size={14} strokeWidth={3} />
-            </div>
-          </div>
-          <span style={{ fontWeight: 700, color: isCreerBoutique ? 'var(--accent, #C75B00)' : 'inherit', whiteSpace: 'nowrap' }}>
-            Créer
-          </span>
-        </Link>
-      )}
+          Créer
+        </span>
+      </button>
 
       {/* 4. Favoris */}
       <Link
@@ -179,13 +177,32 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
         <span>{effectiveIsLoggedIn ? 'Compte' : 'Connexion'}</span>
       </Link>
     </nav>
+
+    {/* Action Sheet Mobile Globale "Créer sur Nopalou" */}
+    <CreateQuickActionsSheet
+      isOpen={isCreateSheetOpen}
+      onClose={() => setIsCreateSheetOpen(false)}
+      isMerchant={effectiveIsMerchant}
+    />
+    </>
   )
 }
 
 function MobileBottomNavFallback({ isLoggedIn = false, isMerchant = false }: Props) {
   const pathname = usePathname() || ''
+  const isVitrine = pathname.includes('/vitrine')
+
+  if (
+    (pathname.startsWith('/agence') && !isVitrine) ||
+    pathname.startsWith('/boutique') ||
+    pathname.startsWith('/compte') ||
+    pathname.startsWith('/admin')
+  ) {
+    return null
+  }
+
   const isHome = pathname === '/'
-  const isImmoContext = pathname.startsWith('/immo') || pathname.startsWith('/agences') || pathname.startsWith('/payer-loyer')
+  const isImmoContext = pathname.startsWith('/immo') || pathname.startsWith('/agences') || pathname.startsWith('/payer-loyer') || isVitrine
   const isExplorer = pathname === '/boutiques' || pathname.startsWith('/boutiques/') || pathname.startsWith('/categorie')
   const isCreerBoutique = pathname === '/creer-boutique' || pathname.startsWith('/creer-boutique')
   const isFavorites = pathname === '/favoris'
@@ -212,17 +229,10 @@ function MobileBottomNavFallback({ isLoggedIn = false, isMerchant = false }: Pro
         </Link>
       )}
 
-      {isMerchant ? (
-        <Link href="/boutique/caisse" className="mobile-bottom-nav-item mobile-bottom-nav-item--cta" aria-label="Caisse POS">
-          <div className="mobile-bottom-nav-icon-wrap"><div className="mobile-bottom-nav-cta-btn" style={{ background: 'var(--accent, #C75B00)' }}><Zap size={15} strokeWidth={2.8} fill="#ffffff" color="#ffffff" /></div></div>
-          <span style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Caisse</span>
-        </Link>
-      ) : (
-        <Link href="/creer-boutique" className={`mobile-bottom-nav-item mobile-bottom-nav-item--cta${isCreerBoutique ? ' active' : ''}`} aria-label="Créer">
-          <div className="mobile-bottom-nav-icon-wrap"><div className="mobile-bottom-nav-cta-btn"><Plus size={14} strokeWidth={3} /></div></div>
-          <span>Créer</span>
-        </Link>
-      )}
+      <Link href="/deposer-annonce" className="mobile-bottom-nav-item mobile-bottom-nav-item--cta" aria-label="Créer">
+        <div className="mobile-bottom-nav-icon-wrap"><div className="mobile-bottom-nav-cta-btn"><Plus size={16} strokeWidth={3} /></div></div>
+        <span style={{ fontWeight: 800 }}>Créer</span>
+      </Link>
       <Link href={favHref} className={`mobile-bottom-nav-item${isFavorites ? ' active' : ''}`} aria-label="Mes favoris">
         <div className="mobile-bottom-nav-icon-wrap"><Heart size={20} /></div>
         <span>Favoris</span>

@@ -9,16 +9,36 @@
   body.in-caisse-pos .mobile-bottom-nav,
   body.in-caisse-pos .bottom-bars,
   body.in-caisse-pos footer,
-  body.in-caisse-pos .site-footer {
+  body.in-caisse-pos .site-footer,
+  body.in-caisse-pos .npl-chat-floating-btn,
+  body.in-caisse-pos .npl-chat-floating-wrapper,
+  body.in-caisse-pos .npl-chat-restore-btn,
+  body.in-caisse-pos .npl-chat-panel {
     display: none !important;
   }
 
   .caisse-main-layout.has-3-cols {
     display: grid !important;
-    grid-template-columns: minmax(0, 1.35fr) 280px minmax(420px, 1fr) !important;
+    grid-template-columns: minmax(0, 1.55fr) 250px minmax(380px, 1fr) !important;
     height: calc(100vh - 52px) !important;
     max-height: calc(100vh - 52px) !important;
     overflow: hidden !important;
+  }
+
+  /* Compacité des boutons d'outils caisse (Scanner, Douchette, Vocal) */
+  .caisse-search-row-btns button,
+  .caisse-search-row-btns > div button {
+    height: 38px !important;
+  }
+
+  .has-3-cols .caisse-search-btn-label {
+    display: none !important;
+  }
+
+  @media (max-width: 1360px) {
+    .caisse-search-btn-label {
+      display: none !important;
+    }
   }
 
   .caisse-main-layout.has-2-cols {

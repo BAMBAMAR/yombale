@@ -54,16 +54,19 @@ export default function PosProductCard({
             right: -6,
             background: 'var(--pos-primary, #ea580c)',
             color: '#fff',
-            borderRadius: 10,
-            width: 22,
+            borderRadius: 11,
+            minWidth: 22,
             height: 22,
+            padding: '0 5px',
             fontSize: 11,
             fontWeight: 900,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(249,115,22,0.4)',
-            zIndex: 2,
+            border: '2px solid var(--pos-surface, #ffffff)',
+            zIndex: 10,
+            boxSizing: 'border-box',
           }}
         >
           {qteAuPanier}

@@ -7,6 +7,7 @@ import {
   Send,
   Sparkles,
   ExternalLink,
+  EyeOff,
 } from 'lucide-react'
 import ChatbotMessageItem, { type ChatMessage } from './ChatbotMessageItem'
 
@@ -32,11 +33,44 @@ const INITIAL_MESSAGE: ChatMessage = {
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isHidden, setIsHidden] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('npl_chat_widget_hidden')
+        if (stored === 'true') {
+          setIsHidden(true)
+        }
+      }
+    } catch (e) {
+      console.debug('[CHAT] localStorage indisponible:', e)
+    }
+  }, [])
+
+  const handleHideWidget = () => {
+    setIsHidden(true)
+    setIsOpen(false)
+    try {
+      localStorage.setItem('npl_chat_widget_hidden', 'true')
+    } catch (e) {
+      console.debug('[CHAT] localStorage set indisponible:', e)
+    }
+  }
+
+  const handleRestoreWidget = () => {
+    setIsHidden(false)
+    try {
+      localStorage.removeItem('npl_chat_widget_hidden')
+    } catch (e) {
+      console.debug('[CHAT] localStorage remove indisponible:', e)
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -102,27 +136,53 @@ export default function ChatbotWidget() {
 
   return (
     <>
-      {/* Bouton Flottant Déclencheur */}
-      <button
-        type="button"
-        className="npl-chat-floating-btn"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-label={isOpen ? "Fermer l'assistant" : "Ouvrir l'assistant Nopalou"}
-        title="Assistant Nopalou"
-      >
-        <span className="npl-chat-status-dot" />
-        {isOpen ? (
-          <X size={18} />
-        ) : (
-          <MessageCircle size={18} />
-        )}
-        <span className="npl-chat-floating-label">
-          {isOpen ? 'Fermer' : 'Aide & Recherche'}
-        </span>
-      </button>
+      {/* Bouton de Restauration Discret si Masqué */}
+      {isHidden ? (
+        <button
+          type="button"
+          className="npl-chat-restore-btn"
+          onClick={handleRestoreWidget}
+          title="Afficher l'Aide & Recherche Nopalou"
+          aria-label="Afficher l'assistant"
+        >
+          <MessageCircle size={16} />
+        </button>
+      ) : (
+        /* Bouton Flottant Déclencheur avec Option Masquer */
+        <div className="npl-chat-floating-wrapper">
+          <button
+            type="button"
+            className="npl-chat-floating-btn"
+            onClick={() => setIsOpen((prev) => !prev)}
+            aria-label={isOpen ? "Fermer l'assistant" : "Ouvrir l'assistant Nopalou"}
+            title="Assistant Nopalou — Aide & Recherche"
+          >
+            <span className="npl-chat-status-dot" />
+            {isOpen ? <X size={18} /> : <MessageCircle size={18} />}
+            <span className="npl-chat-floating-label">
+              {isOpen ? 'Fermer' : 'Aide & Recherche'}
+            </span>
+          </button>
+
+          {!isOpen && (
+            <button
+              type="button"
+              className="npl-chat-hide-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleHideWidget()
+              }}
+              title="Masquer le bouton Aide & Recherche"
+              aria-label="Masquer ce bouton d'aide"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Fenêtre Panel de Chat */}
-      {isOpen && (
+      {isOpen && !isHidden && (
         <aside className="npl-chat-panel" aria-label="Assistant interactif Nopalou">
           {/* Header */}
           <div className="npl-chat-header">
@@ -150,6 +210,15 @@ export default function ChatbotWidget() {
               >
                 <ExternalLink size={15} />
               </a>
+              <button
+                type="button"
+                className="npl-chat-btn-icon"
+                onClick={handleHideWidget}
+                title="Masquer l'assistant"
+                aria-label="Masquer l'assistant"
+              >
+                <EyeOff size={15} />
+              </button>
               <button
                 type="button"
                 className="npl-chat-btn-icon"

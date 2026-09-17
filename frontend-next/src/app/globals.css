@@ -502,7 +502,7 @@
     border-color 0.12s ease;
   user-select: none;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 .pos-produit-card:hover {
   transform: scale(1.025);
@@ -1014,6 +1014,70 @@ a {
   /* Neutralisation définitive de tout bouton flottant superposé */
   .drawer-cart-floating-btn {
     display: none !important;
+  }
+
+  /* ── Mobile Quick Actions Sheet Globale (Bouton Créer Accueil) ── */
+  .npl-create-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 43, 74, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    animation: nplFadeIn 0.2s ease-out;
+  }
+
+  .npl-create-sheet {
+    background: #FFFFFF;
+    border-radius: 20px 20px 0 0;
+    padding: 16px 16px max(24px, env(safe-area-inset-bottom, 16px));
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
+    animation: nplSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 85vh;
+    overflow-y: auto;
+    z-index: 9999;
+  }
+
+  .npl-create-sheet-pill {
+    width: 36px;
+    height: 4px;
+    background: #CBD5E1;
+    border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+
+  .npl-create-sheet-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 13px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--navy, #1C2B4A);
+    background: #FAF8F5;
+    border: 1px solid var(--border, #E8DDD2);
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  .npl-create-sheet-item:hover {
+    background: #F4EFEA;
+  }
+
+  .npl-create-sheet-item:active {
+    background: #ECE4D9;
+    transform: scale(0.985);
+  }
+
+  @keyframes nplFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes nplSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
   }
 
   /* Padding bas de sécurité sur mobile pour que le contenu ne soit jamais masqué */

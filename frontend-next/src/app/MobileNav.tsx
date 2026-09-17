@@ -178,15 +178,25 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             </div>
           )}
 
-          {/* ── 2. SERVICES PRINCIPAUX NOPALOU ── */}
+          {/* ── 2. SERVICES PRINCIPAUX NOPALOU (Ordre strict aligné sur le menu Web) ── */}
           <div className="mobile-nav-section">Acheter &amp; Explorer</div>
           <a href="/" className="mobile-nav-link" onClick={close}>
             <ShoppingBag size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
             <span>Produits &amp; Comparatifs</span>
           </a>
+          <a href="/boutiques" className="mobile-nav-link" onClick={close}>
+            <Store size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
+            <span>Boutiques Vérifiées</span>
+            <span style={{ marginLeft: 'auto', background: 'var(--navy, #1C2B4A)', color: '#fff', fontSize: 9.5, padding: '1px 5px', borderRadius: 6, fontWeight: 800 }}>PRO</span>
+          </a>
           <a href="/immo" className="mobile-nav-link" onClick={close}>
             <Home size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
             <span>Immobilier &amp; Terrains</span>
+          </a>
+          <a href="/agences" className="mobile-nav-link" onClick={close}>
+            <Building2 size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
+            <span>Agences Immobilières</span>
+            <span style={{ marginLeft: 'auto', background: 'var(--navy, #1C2B4A)', color: '#fff', fontSize: 9.5, padding: '1px 5px', borderRadius: 6, fontWeight: 800 }}>PRO</span>
           </a>
           <a href="/telecom" className="mobile-nav-link" onClick={close}>
             <Radio size={15} style={{ color: '#2563EB', marginRight: 8 }} />
@@ -195,14 +205,6 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           <a href="/annonces" className="mobile-nav-link" onClick={close}>
             <FileText size={15} style={{ color: '#0A5C36', marginRight: 8 }} />
             <span>Petites Annonces</span>
-          </a>
-          <a href="/boutiques" className="mobile-nav-link" onClick={close}>
-            <Store size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
-            <span>Boutiques Vérifiées</span>
-          </a>
-          <a href="/agences" className="mobile-nav-link" onClick={close}>
-            <Building2 size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
-            <span>Agences Immobilières</span>
           </a>
           <a href="/assistant-whatsapp" className="mobile-nav-link" onClick={close} style={{ background: '#f0fdf4' }}>
             <MessageCircle size={15} style={{ color: '#16a34a', marginRight: 8 }} />
@@ -248,6 +250,10 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           {isLoggedIn && (
             <>
               <div className="mobile-nav-section">Mon Espace</div>
+              <a href="/agence" className="mobile-nav-link" onClick={close} style={{ background: '#FAF8F5' }}>
+                <Building2 size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
+                <span style={{ fontWeight: 750 }}>Mon Espace Agence Pro</span>
+              </a>
               <a href="/compte?tab=suivi-commande" className="mobile-nav-link" onClick={close}>
                 <Package size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
                 <span>Suivre ma commande</span>

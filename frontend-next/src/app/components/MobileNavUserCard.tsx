@@ -1,8 +1,8 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { logout } from '@/app/actions/auth'
-import { Store, ShoppingCart, LogOut } from 'lucide-react'
+import { Store, ShoppingCart, LogOut, Building2 } from 'lucide-react'
 
 interface MobileNavUserCardProps {
   displayName: string
@@ -11,6 +11,38 @@ interface MobileNavUserCardProps {
 }
 
 export default function MobileNavUserCard({ displayName, initiale, onClose }: MobileNavUserCardProps) {
+  const [hasAgence, setHasAgence] = useState(false)
+  const [agenceSlug, setAgenceSlug] = useState<string | null>(null)
+  const [hasBoutique, setHasBoutique] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+    Promise.allSettled([
+      fetch('/api/boutiques/mine', { priority: 'low' } as any),
+      fetch('/api/agences/mine', { priority: 'low' } as any),
+    ]).then(([resBq, resAg]) => {
+      if (!isMounted) return
+      if (resBq.status === 'fulfilled' && resBq.value.ok) {
+        resBq.value.json().then((data) => {
+          if (isMounted && data?.boutiques && data.boutiques.length > 0) {
+            setHasBoutique(true)
+          }
+        }).catch(() => {})
+      }
+      if (resAg.status === 'fulfilled' && resAg.value.ok) {
+        resAg.value.json().then((data) => {
+          if (isMounted && data?.agences && data.agences.length > 0) {
+            setHasAgence(true)
+            setAgenceSlug(data.agences[0]?.slug || null)
+          }
+        }).catch(() => {})
+      }
+    })
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   return (
     <div style={{ padding: '12px 16px', background: 'linear-gradient(135deg, #FAF8F5 0%, #FFF3E8 100%)', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -80,51 +112,126 @@ export default function MobileNavUserCard({ displayName, initiale, onClose }: Mo
         </form>
       </div>
 
-      {/* Accès Rapide Espace Boutique */}
+      {/* Accès Rapide Espaces Pro */}
       <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-        <a
-          href="/boutique"
-          onClick={onClose}
-          style={{
-            flex: 1,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            padding: '8px 10px',
-            borderRadius: 8,
-            background: 'var(--accent, #C75B00)',
-            color: '#ffffff',
-            fontSize: 12,
-            fontWeight: 800,
-            textDecoration: 'none',
-            boxShadow: '0 2px 6px rgba(199,91,0,0.2)',
-          }}
-        >
-          <Store size={14} />
-          <span>Ma Boutique Pro</span>
-        </a>
-        <a
-          href="/boutique/caisse"
-          onClick={onClose}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            padding: '8px 10px',
-            borderRadius: 8,
-            background: '#ffffff',
-            border: '1.5px solid #0A5C36',
-            color: '#0A5C36',
-            fontSize: 12,
-            fontWeight: 800,
-            textDecoration: 'none',
-          }}
-        >
-          <ShoppingCart size={14} />
-          <span>POS Caisse</span>
-        </a>
+        {hasAgence ? (
+          <>
+            <a
+              href={agenceSlug ? `/agence/${agenceSlug}` : '/agence'}
+              onClick={onClose}
+              style={{
+                flex: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '8px 10px',
+                borderRadius: 8,
+                background: 'var(--navy, #1C2B4A)',
+                color: '#ffffff',
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(28,43,74,0.2)',
+              }}
+            >
+              <Building2 size={14} style={{ color: 'var(--accent, #C75B00)' }} />
+              <span>Mon Agence Pro</span>
+            </a>
+
+            {hasBoutique ? (
+              <a
+                href="/boutique"
+                onClick={onClose}
+                style={{
+                  flex: 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  background: 'var(--accent, #C75B00)',
+                  color: '#ffffff',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 6px rgba(199,91,0,0.2)',
+                }}
+              >
+                <Store size={14} />
+                <span>Ma Boutique</span>
+              </a>
+            ) : (
+              <a
+                href={agenceSlug ? `/agence/${agenceSlug}/biens` : '/agence'}
+                onClick={onClose}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  background: '#ffffff',
+                  border: '1.5px solid var(--navy, #1C2B4A)',
+                  color: 'var(--navy, #1C2B4A)',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                }}
+              >
+                <span>Mes Biens</span>
+              </a>
+            )}
+          </>
+        ) : (
+          <>
+            <a
+              href="/boutique"
+              onClick={onClose}
+              style={{
+                flex: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '8px 10px',
+                borderRadius: 8,
+                background: 'var(--accent, #C75B00)',
+                color: '#ffffff',
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(199,91,0,0.2)',
+              }}
+            >
+              <Store size={14} />
+              <span>Ma Boutique Pro</span>
+            </a>
+            <a
+              href="/boutique/caisse"
+              onClick={onClose}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                padding: '8px 10px',
+                borderRadius: 8,
+                background: '#ffffff',
+                border: '1.5px solid #0A5C36',
+                color: '#0A5C36',
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: 'none',
+              }}
+            >
+              <ShoppingCart size={14} />
+              <span>POS Caisse</span>
+            </a>
+          </>
+        )}
       </div>
     </div>
   )

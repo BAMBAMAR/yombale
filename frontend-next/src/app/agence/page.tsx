@@ -48,16 +48,6 @@ export default function AgencesHubPage() {
     try {
       setLoading(true)
       const headers = getImmoAuthHeaders()
-      // Si aucun token présent dans le stockage local, basculer directement sur la vitrine publique
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token') || localStorage.getItem('nopalou_token') || sessionStorage.getItem('token')
-        if (!token) {
-          setIsUnauthenticated(true)
-          setLoading(false)
-          return
-        }
-      }
-
       const res = await fetch('/api/agences/mine', {
         headers,
       })
@@ -68,9 +58,15 @@ export default function AgencesHubPage() {
       }
       const data = await res.json()
       if (data.success) {
-        setAgences(data.agences || [])
+        const agencesList = data.agences || []
+        setAgences(agencesList)
         if (data.quotas) {
           setQuotas(data.quotas)
+        }
+        // Si l'utilisateur possède une agence unique, redirection fluide directe vers son dashboard
+        if (agencesList.length === 1 && typeof window !== 'undefined' && !window.location.search.includes('hub=true')) {
+          router.replace(`/agence/${agencesList[0].slug}`)
+          return
         }
       }
     } catch (err) {
