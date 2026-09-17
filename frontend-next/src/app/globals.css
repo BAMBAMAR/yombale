@@ -1016,7 +1016,17 @@ a {
     display: none !important;
   }
 
-  /* ── Mobile Quick Actions Sheet Globale (Bouton Créer Accueil) ── */
+  /* Padding bas de sécurité sur mobile pour que le contenu ne soit jamais masqué */
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .bottom-bars-wrap {
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* ── Mobile Quick Actions Sheet Globale (Bouton Créer Accueil) ── */
   .npl-create-sheet-backdrop {
     position: fixed;
     inset: 0;
@@ -1483,16 +1493,6 @@ a {
     background: #EFE8DF;
     transform: translateY(-1px);
   }
-
-  /* Padding bas de sécurité sur mobile pour que le contenu ne soit jamais masqué */
-  body {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  .bottom-bars-wrap {
-    bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-}
 
 
 /* ── Bandeau email non vérifié ─────────────────────────────────── */

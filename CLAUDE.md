@@ -6,6 +6,7 @@
     - **Identité claire & lisible** : Nom d'agence en typographie `--navy`, badge vert officiel *« Agence Partenaire »*, slogan en italique soigné, puces géolocalisation et numéro d'agrément SN.
     - **Volet interactif des horaires d'ouverture** : barre cliquable affichant l'horaire du jour + accordéon déroulant sur les 7 jours de la semaine avec surbrillance du jour actuel.
     - **Grille d'actions 2x2 symétrique & rangée sociale** : boutons d'action prioritaires (`WhatsApp Agence`, `Téléphone`, `Espace Agence Pro`, `Partager la vitrine`) et rangée dédiée aux réseaux sociaux (Instagram, TikTok, YouTube) et site web officiel.
+    - **Correction portée CSS (`globals.css`)** : fermeture rigoureuse de la media query mobile `@media (max-width: 768px)` avant la déclaration des classes de vitrine pour garantir leur application immédiate sur desktop (>768px) comme sur mobile.
   * **🕒 2. Paramétrage des Horaires dans l'Espace Agence (`ParametresHorairesImmo.tsx` & `parametres/page.tsx`)** :
     - Nouveau composant dédié et modulaire `<ParametresHorairesImmo />` pour l'espace de gestion agence (`/agence/[slug]/parametres`).
     - Gestion granulaire des 7 jours de la semaine : switch Ouvert/Fermé, sélecteurs d'heures de début et fin.
