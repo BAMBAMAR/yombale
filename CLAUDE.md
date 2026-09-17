@@ -1,3 +1,17 @@
+- **Optimisation Compacte du Héro de la Vitrine Agence sur Mobile (Hauteur Réduite de 35% / ~200px) (`VitrineBanner.tsx`, `page.tsx`, `globals.css`) (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱🏢📐⚡✅ :
+  * **📐 1. Résolution de l'Étirage Vertical Excessif sur Mobile** :
+    - Constat : sur mobile, le bandeau de l'agence occupait 100% du premier écran (hauteur ~640px) à cause d'une couverture trop haute (185px), d'un logo de 74px, d'une barre d'horaires imposante, et d'un empilement de marges et de séparateurs pour les boutons d'actions et les réseaux sociaux, repoussant les onglets de biens sous la ligne de flottaison.
+    - Solution appliquée (gain net de **~200px** en vertical) :
+      1. *Couverture Panoramique optimisée* : réduite à 115px sur mobile (175px sur tablette, 235px sur desktop) tout en restant panoramique et lisible.
+      2. *Logo & Marges condensés* : taille du logo ajustée à 54×54px (décalage de -24px), paddings du corps de carte resserrés (`padding: 0 12px 12px; gap: 8px`).
+      3. *Barre Horaires Ultra-Fine* : hauteur réduite à 28px (`padding: 5px 10px; font-size: 11.5px`) avec pastille de statut compacte et mention `7j/7 ▾`.
+      4. *Boutons d'Action 2x2 Densifiés* : hauteur de 34px (`padding: 6px 9px; font-size: 11.5px`) conservant une cible tactile confortable sans encombrer l'écran.
+      5. *Ligne Réseaux Sociaux en Ligne (Inline)* : suppression du diviseur pointillé redondant, affichage des badges sociaux sous forme de micro-pilules horizontales de 25px directement sous les actions.
+      6. *Marges Conteneur & Bandeau Réduites* : passage à `.vitrine-page-container` (`padding: 10px 12px 40px` sur mobile) et `.vitrine-banner-wrapper` (`margin-bottom: 12px`).
+  * **🧪 2. Contrôles Qualité & Validation** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 0 Silent Catches, 0 Monolithes, 100% conforme.
+
 - **Affichage Enrichi des Réseaux Sociaux sur la Vitrine Agence & Gestion dans les Paramètres Agence (`VitrineBanner.tsx`, `ParametresReseauxSociauxImmo.tsx`, `globals.css`) (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱🏢🌐📸🎬💼⚡✅ :
   * **🌐 1. Affichage Lisible & Branded des Réseaux Officiels (`VitrineBanner.tsx` & `globals.css`)** :
     - Constat : sur la vitrine publique (`/agence/[slug]/vitrine`), les réseaux sociaux étaient presque invisibles (représentés par une unique icône caméra sans texte pour Instagram, les autres réseaux comme Facebook, LinkedIn, Twitter n'étant pas gérés). De plus, pour l'agence `AMAR IMMO`, seul Instagram était renseigné en base de données (`@nopalousn`), rendant la présence des réseaux inexistante au premier coup d'œil.

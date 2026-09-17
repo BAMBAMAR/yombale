@@ -151,7 +151,7 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
   ].filter((s) => Boolean(s.url));
 
   return (
-    <div style={{ marginBottom: 26 }}>
+    <div className="vitrine-banner-wrapper">
       {/* ── Bandeau d'Alerte / Événement spécial ── */}
       {bandeauActif && (
         <div
@@ -271,18 +271,18 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
               className="vitrine-hours-bar"
               title="Consulter les horaires d'ouverture de l'agence"
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <Clock size={15} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: 'var(--navy, #1C2B4A)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap' }}>
+                <Clock size={13} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
+                <span className="vitrine-hours-text">
                   Aujourd&apos;hui : <strong>{statut.plageAujourdhui}</strong>
                 </span>
                 <span className={`vitrine-hours-pill ${statut.ouvert ? 'open' : 'closed'}`}>
                   {statut.ouvert ? 'Ouvert' : 'Fermé'}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#64748B', fontWeight: 700, flexShrink: 0 }}>
-                <span>Horaires 7j/7</span>
-                {showHoraires ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              <div className="vitrine-hours-toggle">
+                <span>7j/7</span>
+                {showHoraires ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </div>
             </button>
 
@@ -403,27 +403,25 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
             {socialList.length > 0 && (
               <div className="vitrine-social-links-container">
                 <span className="vitrine-social-label">
-                  Réseaux officiels :
+                  Réseaux :
                 </span>
-                <div className="vitrine-actions-links-row">
-                  {socialList.map((s) => (
-                    <a
-                      key={s.id}
-                      href={s.url!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`vitrine-social-pill vitrine-social-pill--${s.id}`}
-                      title={`${s.label} de l'agence`}
-                    >
-                      <span style={{ display: 'inline-flex', alignItems: 'center', color: s.color }}>
-                        {s.svg}
-                      </span>
-                      <span>
-                        {s.handle ? `@${s.handle}` : s.label}
-                      </span>
-                    </a>
-                  ))}
-                </div>
+                {socialList.map((s) => (
+                  <a
+                    key={s.id}
+                    href={s.url!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`vitrine-social-pill vitrine-social-pill--${s.id}`}
+                    title={`${s.label} de l'agence`}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', color: s.color }}>
+                      {s.svg}
+                    </span>
+                    <span>
+                      {s.handle ? `@${s.handle}` : s.label}
+                    </span>
+                  </a>
+                ))}
               </div>
             )}
           </div>

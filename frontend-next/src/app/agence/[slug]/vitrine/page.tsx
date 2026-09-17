@@ -126,7 +126,7 @@ function VitrinePubliqueContent() {
   }
 
   return (
-    <div style={{ maxWidth: 1140, margin: '0 auto', padding: '20px 16px 60px' }}>
+    <div className="vitrine-page-container">
       {/* ── Bannière / Identité de l'Agence ── */}
       <VitrineBanner agence={agence} waNum={waNum} />
 
