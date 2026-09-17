@@ -1,3 +1,17 @@
+- **Affichage Enrichi des Réseaux Sociaux sur la Vitrine Agence & Gestion dans les Paramètres Agence (`VitrineBanner.tsx`, `ParametresReseauxSociauxImmo.tsx`, `globals.css`) (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱🏢🌐📸🎬💼⚡✅ :
+  * **🌐 1. Affichage Lisible & Branded des Réseaux Officiels (`VitrineBanner.tsx` & `globals.css`)** :
+    - Constat : sur la vitrine publique (`/agence/[slug]/vitrine`), les réseaux sociaux étaient presque invisibles (représentés par une unique icône caméra sans texte pour Instagram, les autres réseaux comme Facebook, LinkedIn, Twitter n'étant pas gérés). De plus, pour l'agence `AMAR IMMO`, seul Instagram était renseigné en base de données (`@nopalousn`), rendant la présence des réseaux inexistante au premier coup d'œil.
+    - Solution : intégration d'un conteneur dédié `.vitrine-social-links-container` avec libellé clair *« Réseaux officiels : »*.
+    - Chaque réseau actif est présenté sous la forme d'une pilule interactive moderne (`.vitrine-social-pill`) incluant le logo vectoriel SVG de la marque et son nom / handle (ex: `Instagram • @nopalousn`, `Facebook`, `TikTok`, `LinkedIn`, `YouTube`, `X (Twitter)`, `Site Web`).
+    - Couleurs de marque et états de survol distinctifs (`.vitrine-social-pill--instagram`, `--facebook`, `--tiktok`, `--linkedin`, `--youtube`, `--twitter`, `--site_web`).
+    - Modularisation : extraction du calcul du statut d'ouverture dans `vitrine/lib/vitrineStatut.ts` maintenant `VitrineBanner.tsx` strictement sous 410 lignes (< 450 lignes, Règle d'or #2).
+  * **⚙️ 2. Gestion Centralisée des Réseaux dans les Paramètres Agence (`ParametresReseauxSociauxImmo.tsx` & `parametres/page.tsx`)** :
+    - Création du sous-composant modulaire `<ParametresReseauxSociauxImmo />` pour `/agence/[slug]/parametres`.
+    - Permet aux agences de configurer et mettre à jour directement tous leurs profils sociaux (Instagram, Facebook, TikTok, LinkedIn, YouTube, Twitter/X, et Site Web officiel) avec liens d'aide, préfixes de handles et persistance automatique via `PUT /api/agences/${slug}` dans `parametres.reseaux_sociaux`.
+  * **🧪 3. Contrôles Qualité & Validation** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 0 Silent Catches, 0 Monolithes, 100% conforme.
+
 - **Refonte Vitrine Agence Moderne (Option 1 : Héro Panoramique Dégagé, Badge Temps Réel, Horaires Paramétrables dans l'Espace Agence, Système d'Onglets & Cartes Compact Pro) (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱🏢🕒🎬📐🎨⚡✅ :
   * **🏢 1. Héro Vitrine Moderne Option 1 (`VitrineBanner.tsx` & `globals.css`)** :
     - **Photo de couverture panoramique 100% dégagée** : suppression de toute superposition encombrante de boutons sur l'image. Hauteur ergonomique (185px mobile / 245px desktop).

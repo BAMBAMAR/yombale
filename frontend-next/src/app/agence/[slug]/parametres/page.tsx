@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import ParametresFacturationImmo from './components/ParametresFacturationImmo'
 import ParametresHorairesImmo, { HorairesMap, HORAIRES_DEFAUT_IMMO } from './components/ParametresHorairesImmo'
+import ParametresReseauxSociauxImmo, { ReseauxSociauxMap } from './components/ParametresReseauxSociauxImmo'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 export default function AgenceParametresPage() {
@@ -49,6 +50,7 @@ export default function AgenceParametresPage() {
     autoriser_caution_3x: true,
     autoriser_vente_tranches: true,
     horaires: HORAIRES_DEFAUT_IMMO as HorairesMap,
+    reseaux_sociaux: {} as ReseauxSociauxMap,
   })
 
   async function chargerParametres() {
@@ -87,6 +89,7 @@ export default function AgenceParametresPage() {
           autoriser_caution_3x: p.autoriser_caution_3x !== false,
           autoriser_vente_tranches: p.autoriser_vente_tranches !== false,
           horaires: (p.horaires && Object.keys(p.horaires).length > 0) ? p.horaires : HORAIRES_DEFAUT_IMMO,
+          reseaux_sociaux: p.reseaux_sociaux || {},
         })
       }
     } catch (err) {
@@ -141,6 +144,7 @@ export default function AgenceParametresPage() {
           autoriser_caution_3x: form.autoriser_caution_3x,
           autoriser_vente_tranches: form.autoriser_vente_tranches,
           horaires: form.horaires,
+          reseaux_sociaux: form.reseaux_sociaux,
         },
       }
 
@@ -327,6 +331,12 @@ export default function AgenceParametresPage() {
         <ParametresHorairesImmo
           horaires={form.horaires}
           onChange={(h) => setForm((f) => ({ ...f, horaires: h }))}
+        />
+
+        {/* ── Réseaux Sociaux & Liens Officiels ── */}
+        <ParametresReseauxSociauxImmo
+          reseaux={form.reseaux_sociaux}
+          onChange={(r) => setForm((f) => ({ ...f, reseaux_sociaux: r }))}
         />
 
         {/* ── Commissions & WhatsApp ── */}
