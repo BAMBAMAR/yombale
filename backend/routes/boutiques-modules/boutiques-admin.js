@@ -24,6 +24,48 @@ const {
 } = require('./helpers');
 router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
   try {
+    const { page, limit: queryLimit, q, plan, actif } = req.query;
+    const limit = queryLimit ? Math.min(2000, Math.max(1, parseInt(queryLimit))) : 1000;
+    const offset = page ? (Math.max(1, parseInt(page)) - 1) * limit : 0;
+
+    const conditions = [];
+    const values = [];
+    let i = 1;
+
+    if (q && q.trim()) {
+      conditions.push(`(b.nom ILIKE $${i} OR b.slug ILIKE $${i} OR b.telephone ILIKE $${i} OR u.nom ILIKE $${i} OR u.email ILIKE $${i})`);
+      values.push(`%${q.trim()}%`);
+      i++;
+    }
+
+    if (actif !== undefined && actif !== '') {
+      conditions.push(`b.actif = $${i}`);
+      values.push(actif === 'true' || actif === '1');
+      i++;
+    }
+
+    if (plan && plan !== 'tous') {
+      conditions.push(`a.plan = $${i}`);
+      values.push(plan);
+      i++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countRes = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM boutiques b
+       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+       LEFT JOIN LATERAL (
+         SELECT plan, fin FROM abonnements
+         WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
+         ORDER BY fin DESC LIMIT 1
+       ) a ON true
+       ${whereClause}`,
+      values
+    );
+    const total = countRes.rows[0]?.count || 0;
+
     const { rows } = await pool.query(
       `SELECT b.id, b.nom, b.slug, b.description, b.categorie, b.telephone, b.whatsapp, b.adresse, b.ville,
               b.logo_url, b.actif, b.sponsorise, b.sponsor_jusqu_au, b.created_at,
@@ -39,12 +81,14 @@ router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
          WHERE utilisateur_id = b.utilisateur_id AND statut='actif' AND fin > NOW()
          ORDER BY fin DESC LIMIT 1
        ) a ON true
+       ${whereClause}
        ORDER BY
          CASE a.plan WHEN 'business' THEN 0 WHEN 'pro' THEN 1 ELSE 2 END ASC,
          b.created_at DESC
-       LIMIT 5000`
+       LIMIT $${i} OFFSET $${i + 1}`,
+      [...values, limit, offset]
     );
-    res.json({ boutiques: rows });
+    res.json({ boutiques: rows, total, page: page ? parseInt(page) : 1, limit });
   } catch (err) {
     console.error('[GET_BOUTIQUES_ADMIN_TOUTES_ERR]', err.message);
     res.status(500).json({ error: 'Erreur serveur' });

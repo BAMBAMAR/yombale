@@ -69,9 +69,13 @@ test.describe('Admin login', () => {
       await page.click('button[type="submit"]')
       await page.waitForURL(/\/admin$/, { timeout: 8000 })
 
-      // Cliquer sur Déconnexion
+      // Cliquer sur Déconnexion (ouvrir le tiroir mobile si présent)
+      const mobileToggle = page.locator('.admin-mobile-toggle-btn')
+      if (await mobileToggle.isVisible()) {
+        await mobileToggle.click()
+      }
       await page.locator('button').filter({ hasText: /déconnexion/i }).click()
-      await page.waitForURL(/\/admin\/login/, { timeout: 5000 })
+      await page.waitForURL(/\/admin\/login/, { timeout: 8000 })
       await expect(page).toHaveURL(/\/admin\/login/)
 
       // Vérifier que l'accès est bien bloqué

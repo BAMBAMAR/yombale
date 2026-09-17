@@ -1,3 +1,32 @@
+- **Refonte Majeure : NOPALOU ADMIN CONTROL CENTER & Architecture Unifiée (17 septembre 2026)** 🛡️⚡🏢💳📊 🚀 ✅ :
+  * **🎯 1. Vision & Architecture : Du Back-Office Fragmenté au Control Center Unifié** :
+    - Unification complète du back-office administrateur sous une architecture modulaire et cohérente articulée autour des 8 piliers métier de Nopalou.
+    - Élimination des silos et des écrans orphelins : navigation globale unifiée par fil d'Ariane (`AdminBreadcrumbs.tsx`), accordéons thématiques par domaine métier et moteur de recherche omniscient (omnisearch).
+  * **🎯 2. Piliers Métier & Nouvelles Fonctionnalités d'Administration** :
+    - **Direction & Supervision Système** (`/admin`, `/admin/system`) : Tableau de bord exécutif consolidé avec KPIs temps réel (revenus, marchands, annonces, agences, transactions, santé système) et alertes opérationnelles immédiates.
+    - **Identités, Équipe & RBAC Nominatif** (`/admin/equipe-admin`, `/admin/comptes`, `/admin/compte`) : Migration SQL de la table `admin_utilisateurs`, authentification nominative (JWT + bcrypt), 5 rôles granulaires (`super_admin`, `admin_operationnel`, `support_client`, `moderateur`, `finance`), journal d'audit enrichi avec l'identité de l'opérateur, et mode secours break-glass (`ADMIN_SECRET`).
+    - **Commerce, Produits & Réseau POS** (`/admin/pos`, `/admin/carnet-dettes`, `/admin/produits`, `/admin/boutiques`, `/admin/commandes`) :
+      - *Superviseur POS* (`/admin/pos`) : Monitoring des caisses actives, détection des écarts de clôture de caisse (théorique vs réel), réconciliation des fonds de tiroir.
+      - *Carnet de dettes & Crédits* (`/admin/carnet-dettes`) : Supervision des créances clients commerçants, suivi des échéances en souffrance, relances WhatsApp intégrées et plafonds de crédit.
+      - *Catalogue & Stocks* (`/admin/produits`) : Modération du catalogue marchand, alertes ruptures de stock, détection des produits orphelins et validation de conformité.
+      - *Détail Commandes & Pagination* : Endpoint `GET /api/admin/commandes/:id` avec lignes d'articles détaillées et pagination serveur optimisée sur les boutiques.
+    - **Immobilier & Gestion Patrimoniale** (`/admin/immo`, `/admin/immo/agences`, `/admin/immo/biens`) :
+      - *Dashboard Exécutif Immo* : Vue globale du parc immobilier (locations, ventes, taux d'occupation, baux actifs, loyers impayés).
+      - *Répertoire Agences Agréées* (`/admin/immo/agences`) : Gestion des agences immobilières partenaires, validation des statuts, commissionnement et suivi de performance.
+      - *Inventaire des Biens* (`/admin/immo/biens`) : Supervision du stock d'appartements, villas, bureaux, statuts d'occupation et contrôle des annonces liées.
+    - **Finances, Trésorerie & Payouts** (`/admin/paiements`, `/admin/reversements`, `/admin/abonnements`, `/admin/plans`) :
+      - *Journal Financier Unifié* (`/admin/paiements`) : Consolidation multi-canaux (Wave, Orange Money, Caisse POS, Dépôts manuels) avec statuts, références et rapprochement bancaire.
+      - *Gestion Centralisée des Abonnements* : Déduplication et synchronisation du cache des plans marchands (`backend/routes/abonnements.js`).
+  * **🎯 3. Ergonomie, Design System & Sécurité Frontend** :
+    - [AdminSidebarClient.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/admin/(protected)/AdminSidebarClient.tsx) : Sidebar rétractable 260px organisée en 8 sections collapsibles avec badges dynamiques, profil administrateur connecté et déconnexion sécurisée.
+    - [AdminBreadcrumbs.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/components/admin/AdminBreadcrumbs.tsx) : Fil d'Ariane contextuel guidant l'administrateur à travers toute la hiérarchie.
+    - Respect absolu des règles Anti-AI-Slop : **0 émoji UI** (100% icônes vectorielles Lucide), aucun composant > 450 lignes (tous < 270 lignes), tokens CSS stricts (`--navy`, `--accent`, `--price`, `--bg`, `--border`).
+    - Élimination des fuites de secret côté client : les sessions sont validées côté serveur dans `layout.tsx` sans jamais exposer le token brut au DOM.
+  * **🎯 4. Contrôles Qualité & Validation Complète** :
+    - TypeScript : `npx tsc --noEmit` validé avec **0 erreur**.
+    - Anti-Slop Linter : `npm run lint:slop` validé avec **0 avertissement**.
+    - Tests E2E Playwright : `tests/e2e/04-admin.spec.ts` validé à **100%** (14/14 tests passants sur Chromium et Mobile-360).
+
 - **Harmonisation Globale : Biens Immo, Photos, Vidéos, Album Interactif & Vitrine Publique (17 septembre 2026)** 📸🎥🏢🖼️ 🚀 ✅ :
   * **🎯 1. Résolution de la Non-Cliquabilité & Navigation Directe sur les Biens** :
     - Diagnostic : Sur la vitrine publique ([VitrineBiensGrid.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/vitrine/components/VitrineBiensGrid.tsx)), seule une minuscule icône externe en pied de carte possédait un lien. L'image de couverture et le titre n'étaient pas cliquables.

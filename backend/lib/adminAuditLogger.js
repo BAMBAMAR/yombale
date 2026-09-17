@@ -40,14 +40,16 @@ async function enregistrerAdminLog({
   try {
     await ensureAuditLogsTable();
     const ip = req ? (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim() : null;
+    const realAdminNom = (req && req.adminUser && req.adminUser.nom) ? req.adminUser.nom : adminNom;
+    const realAdminRole = (req && req.adminUser && req.adminUser.role) ? req.adminUser.role : adminRole;
 
     await pool.query(
       `INSERT INTO admin_audit_logs (
         admin_nom, admin_role, action, cible_type, cible_id, description, ancienne_valeur, nouvelle_valeur, ip_adresse, created_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
       [
-        adminNom,
-        adminRole,
+        realAdminNom,
+        realAdminRole,
         action,
         cibleType,
         cibleId ? String(cibleId) : null,

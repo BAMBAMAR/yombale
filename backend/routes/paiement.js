@@ -12,6 +12,8 @@ const { uploadBuffer } = require('../services/cloudinary');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
 // Prix dynamiques — lus depuis la table settings (avec cache 5 min)
+const plansCache = require('../lib/plansCache');
+
 async function getPrix() {
   const [annonce, sponsoring, boost, boostJours, decouverte, pro, business, commissionBiz, promoActive, promoReduc] = await Promise.all([
     cfg.getNum('prix_annonce'),
@@ -25,14 +27,19 @@ async function getPrix() {
     cfg.getBool('promo_active'),
     cfg.getNum('promo_reduction'),
   ]);
+
+  const pDecouverte = await plansCache.getPlan('decouverte');
+  const pPro        = await plansCache.getPlan('pro');
+  const pBusiness   = await plansCache.getPlan('business');
+
   return {
     annonce:       annonce    || 1500,
     sponsoring:    sponsoring || 5000,
     boost:         boost      || 500,
     boostJours:    boostJours || 7,
-    decouverte:    decouverte || 5000,
-    pro:           pro        || 15000,
-    business:      business   || 35000,
+    decouverte:    pDecouverte?.prix_mensuel || decouverte || 2500,
+    pro:           pPro?.prix_mensuel        || pro        || 5000,
+    business:      pBusiness?.prix_mensuel   || business   || 10000,
     commissionBiz: commissionBiz || 2.0,
     promo:         promoActive ? promoReduc : 0,
   };

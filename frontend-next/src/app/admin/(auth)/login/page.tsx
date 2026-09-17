@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import { AlertCircle } from 'lucide-react'
 import AdminLoginForm from './AdminLoginForm'
 
 export const metadata: Metadata = {
@@ -8,8 +9,8 @@ export const metadata: Metadata = {
 }
 
 const MESSAGES: Record<string, string> = {
-  secret_requis:    'Le secret administrateur est requis.',
-  secret_incorrect: 'Secret incorrect. Vérifiez vos identifiants.',
+  secret_requis:    'Identifiants requis.',
+  secret_incorrect: 'Identifiants incorrects ou accès révoqué.',
   erreur_serveur:   'Erreur serveur — réessayez dans quelques instants.',
 }
 
@@ -31,9 +32,9 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
         </div>
 
         {errorMsg && (
-          <div className="auth-error" role="alert">
-            <span className="auth-error-icon">⚠</span>
-            {errorMsg}
+          <div className="auth-error" role="alert" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertCircle size={16} />
+            <span>{errorMsg}</span>
           </div>
         )}
 

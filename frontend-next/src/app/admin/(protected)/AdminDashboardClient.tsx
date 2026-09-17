@@ -5,7 +5,8 @@ import Link from 'next/link'
 import {
   DollarSign, TrendingUp, Users, Store, ShoppingBag, AlertCircle, CheckCircle2,
   Clock, ShieldAlert, Zap, MessageCircle, Package, Layers, Award,
-  ArrowUpRight, RefreshCw, Smartphone, Home, Tag, Handshake, Briefcase, Flag
+  ArrowUpRight, RefreshCw, Smartphone, Home, Tag, Handshake, Briefcase, Flag,
+  Monitor, CreditCard, Building2, Wallet
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 
@@ -606,6 +607,120 @@ export default function AdminDashboardClient({
           }}
         >
           <MessageCircle size={16} /> Campagnes WhatsApp
+        </Link>
+
+        <Link
+          href="/admin/pos"
+          style={{
+            background: '#ecfdf5',
+            border: '1px solid #a7f3d0',
+            borderRadius: 10,
+            padding: '14px',
+            textDecoration: 'none',
+            color: '#047857',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <Monitor size={16} /> Réseau POS & Caisses
+        </Link>
+
+        <Link
+          href="/admin/carnet-dettes"
+          style={{
+            background: '#fff7ed',
+            border: '1px solid #fed7aa',
+            borderRadius: 10,
+            padding: '14px',
+            textDecoration: 'none',
+            color: '#c2410c',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <CreditCard size={16} /> Carnet de Dettes & Crédits
+        </Link>
+
+        <Link
+          href="/admin/produits"
+          style={{
+            background: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            borderRadius: 10,
+            padding: '14px',
+            textDecoration: 'none',
+            color: '#0284c7',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <Package size={16} /> Catalogue & Stocks
+        </Link>
+
+        <Link
+          href="/admin/immo/agences"
+          style={{
+            background: '#f5f3ff',
+            border: '1px solid #ddd6fe',
+            borderRadius: 10,
+            padding: '14px',
+            textDecoration: 'none',
+            color: '#6d28d9',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <Building2 size={16} /> Agences Immobilières
+        </Link>
+
+        <Link
+          href="/admin/paiements"
+          style={{
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: 10,
+            padding: '14px',
+            textDecoration: 'none',
+            color: '#1d4ed8',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <Wallet size={16} /> Flux Financiers Wave/OM
+        </Link>
+
+        <Link
+          href="/admin/equipe-admin"
+          style={{
+            background: '#fef3c7',
+            border: '1px solid #fde68a',
+            borderRadius: 10,
+            padding: '14px',
+            textDecoration: 'none',
+            color: '#b45309',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <ShieldAlert size={16} /> Équipe & Droits RBAC
         </Link>
       </div>
     </div>

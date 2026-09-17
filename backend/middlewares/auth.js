@@ -78,35 +78,11 @@ async function requireEmailVerifie(req, res, next) {
   }
 }
 
-// Protège par ADMIN_SECRET (variable d'env Railway/Render) — header X-Admin-Secret ou cookie nopalou_admin
-// SÉCURITÉ P0 : FAIL-CLOSED strict. Si ADMIN_SECRET n'est pas configuré, rejet immédiat 500 (pas de bypass).
-function adminSecretOnly(req, res, next) {
-  const adminSecret = process.env.ADMIN_SECRET;
-  if (!adminSecret || adminSecret.trim().length === 0) {
-    console.error('[CRITICAL SECURITY CONFIG] ADMIN_SECRET is not configured on server.');
-    return res.status(500).json({ error: 'Configuration de sécurité serveur incomplète (ADMIN_SECRET non défini).' });
-  }
-
-  let secret = req.headers['x-admin-secret'];
-
-  // Fallback si cookie admin présent (nopalou_admin)
-  if (!secret && req.headers.cookie) {
-    const cookies = Object.fromEntries(
-      req.headers.cookie.split(';').map(c => {
-        const parts = c.trim().split('=');
-        return [parts[0], parts.slice(1).join('=')];
-      })
-    );
-    const raw = cookies['nopalou_admin'];
-    if (raw) {
-      try { secret = decodeURIComponent(raw); } catch { secret = raw; }
-    }
-  }
-
-  if (!secret || !secretsMatch(secret, adminSecret)) {
-    return res.status(401).json({ error: 'Secret admin invalide ou absent. Header X-Admin-Secret requis.' });
-  }
-  next();
+// Protège par session admin JWT nominative ou par ADMIN_SECRET (break-glass technique)
+// SÉCURITÉ P0 : FAIL-CLOSED strict avec support RBAC multi-utilisateurs.
+async function adminSecretOnly(req, res, next) {
+  const { requireAdminAuth } = require('./admin-rbac');
+  return requireAdminAuth(req, res, next);
 }
 
 module.exports = { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie, secretsMatch };

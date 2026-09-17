@@ -5,11 +5,17 @@ const { limiterEcriture, limiterGeneral } = require('../middlewares/rateLimit');
 const cfg = require('../lib/settingsCache');
 const wave = require('../services/wave');
 
+const plansCache = require('../lib/plansCache');
+
 async function getPlans() {
+  const decouvertePlan = await plansCache.getPlan('decouverte');
+  const proPlan        = await plansCache.getPlan('pro');
+  const businessPlan   = await plansCache.getPlan('business');
+
   return {
-    decouverte: { prix: await cfg.getNum('plan_decouverte_prix') || 2500,  label: await cfg.get('plan_decouverte_label') || 'Boutique Taf Taf' },
-    pro:        { prix: await cfg.getNum('plan_pro_prix')        || 5000, label: await cfg.get('plan_pro_label')        || 'Boutique Pro' },
-    business:   { prix: await cfg.getNum('plan_business_prix')   || 10000, label: await cfg.get('plan_business_label')   || 'Boutique Business' },
+    decouverte: { prix: decouvertePlan?.prix_mensuel || await cfg.getNum('plan_decouverte_prix') || 2500,  label: decouvertePlan?.label || await cfg.get('plan_decouverte_label') || 'Boutique Taf Taf' },
+    pro:        { prix: proPlan?.prix_mensuel        || await cfg.getNum('plan_pro_prix')        || 5000, label: proPlan?.label        || await cfg.get('plan_pro_label')        || 'Boutique Pro' },
+    business:   { prix: businessPlan?.prix_mensuel   || await cfg.getNum('plan_business_prix')   || 10000, label: businessPlan?.label   || await cfg.get('plan_business_label')   || 'Boutique Business' },
   };
 }
 

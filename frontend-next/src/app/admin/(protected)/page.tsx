@@ -7,15 +7,23 @@ const COOKIE  = 'nopalou_admin'
 export const metadata = { title: 'Dashboard — Console Admin Nopalou' }
 
 export default async function AdminDashboardPage() {
-  const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value ?? ''
-  if (!secret) return null
+  const jar   = await cookies()
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  if (!token) return null
 
   let stats: any = null
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token.startsWith('eyJ')) {
+    headers['Authorization'] = `Bearer ${token}`
+    headers['Cookie'] = `nopalou_admin_jwt=${token}`
+  } else {
+    headers['X-Admin-Secret'] = token
+  }
+
   try {
     const res = await fetch(`${BACKEND}/api/admin/dashboard/stats?period=30d`, {
-      headers: { 'X-Admin-Secret': secret },
+      headers,
       cache: 'no-store',
     })
     if (res.ok) {
@@ -27,7 +35,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="admin-content">
-      <AdminDashboardClient initialStats={stats} secret={secret} />
+      <AdminDashboardClient initialStats={stats} secret={token} />
     </div>
   )
 }

@@ -682,6 +682,43 @@ module.exports = async function migrateInline() {
     console.log('[MIGRATE] ✅ Table admin_audit_logs OK');
   } catch (e) { console.warn('[MIGRATE] admin_audit_logs:', e.message); }
 
+  // Table admin_utilisateurs (comptes nominatifs et RBAC pour le personnel administratif)
+  try {
+    const bcrypt = require('bcryptjs');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin_utilisateurs (
+        id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        nom                   VARCHAR(150) NOT NULL,
+        email                 VARCHAR(255) UNIQUE NOT NULL,
+        mot_de_passe_hash     VARCHAR(255) NOT NULL,
+        role                  VARCHAR(50) NOT NULL DEFAULT 'admin_operationnel' CHECK (role IN ('super_admin', 'admin_operationnel', 'support_client', 'moderateur', 'finance')),
+        permissions           JSONB DEFAULT '{}'::jsonb,
+        actif                 BOOLEAN DEFAULT TRUE,
+        derniere_connexion_at TIMESTAMPTZ,
+        created_at            TIMESTAMPTZ DEFAULT NOW(),
+        updated_at            TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_admin_utilisateurs_email ON admin_utilisateurs(email);
+      CREATE INDEX IF NOT EXISTS idx_admin_utilisateurs_role ON admin_utilisateurs(role);
+    `);
+
+    // Bootstrap du compte Super Admin initial si la table est vide
+    const { rows: countAdmins } = await pool.query('SELECT COUNT(*)::int AS count FROM admin_utilisateurs');
+    if (countAdmins[0]?.count === 0) {
+      const defaultEmail = process.env.ADMIN_EMAIL || 'admin@nopalou.com';
+      const initialPassword = process.env.ADMIN_SECRET || 'NopalouAdmin2026!';
+      const hash = await bcrypt.hash(initialPassword, 10);
+      await pool.query(
+        `INSERT INTO admin_utilisateurs (nom, email, mot_de_passe_hash, role, actif, permissions)
+         VALUES ($1, $2, $3, 'super_admin', TRUE, '{"all": true}')
+         ON CONFLICT (email) DO NOTHING`,
+        ['Super Administrateur', defaultEmail, hash]
+      );
+      console.log(`[MIGRATE] 👤 Compte Super Admin bootstrapé : ${defaultEmail}`);
+    }
+    console.log('[MIGRATE] ✅ Table admin_utilisateurs OK');
+  } catch (e) { console.warn('[MIGRATE] admin_utilisateurs:', e.message); }
+
   // Table clics_affiliation — tracking des clics vers marchands externes
   try {
     await pool.query(`

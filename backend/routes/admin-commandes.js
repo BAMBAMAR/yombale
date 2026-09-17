@@ -40,7 +40,8 @@ router.get('/', adminSecretOnly, async (req, res) => {
 
     const { rows: commandes } = await pool.query(`
       SELECT c.*,
-             b.nom AS boutique_nom, b.slug AS boutique_slug, b.telephone AS boutique_tel
+             b.nom AS boutique_nom, b.slug AS boutique_slug, b.telephone AS boutique_tel,
+             (SELECT COUNT(*)::int FROM commandes_boutique_items WHERE commande_id = c.id) AS items_count
       FROM commandes_boutique c
       LEFT JOIN boutiques b ON b.id = c.boutique_id
       ${whereClause}
@@ -67,6 +68,37 @@ router.get('/', adminSecretOnly, async (req, res) => {
       page: parseInt(page),
       limit,
       stats: statsRows[0],
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/commandes/:id — Détails d'une commande avec toutes ses lignes d'articles
+router.get('/:id', adminSecretOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows: cmdRows } = await pool.query(`
+      SELECT c.*,
+             b.nom AS boutique_nom, b.slug AS boutique_slug, b.telephone AS boutique_tel, b.email AS boutique_email
+      FROM commandes_boutique c
+      LEFT JOIN boutiques b ON b.id = c.boutique_id
+      WHERE c.id = $1
+    `, [id]);
+
+    if (!cmdRows[0]) {
+      return res.status(404).json({ error: 'Commande introuvable' });
+    }
+
+    const { rows: items } = await pool.query(`
+      SELECT * FROM commandes_boutique_items
+      WHERE commande_id = $1
+      ORDER BY created_at ASC
+    `, [id]);
+
+    res.json({
+      commande: cmdRows[0],
+      items,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
