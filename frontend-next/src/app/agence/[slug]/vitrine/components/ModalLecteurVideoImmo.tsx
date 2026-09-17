@@ -245,9 +245,12 @@ export default function ModalLecteurVideoImmo({
           {isDirectVideo ? (
             <video
               src={url}
+              poster={post.thumbnail_url || post.biens_associes?.[0]?.image_url || undefined}
               controls
               autoPlay
               playsInline
+              preload="metadata"
+              onError={() => setIframeError(true)}
               style={{ width: '100%', height: '100%', maxHeight: '90vh', objectFit: 'contain' }}
             />
           ) : embedSrc && !iframeError ? (

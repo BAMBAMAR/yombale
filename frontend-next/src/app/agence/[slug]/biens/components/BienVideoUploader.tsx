@@ -94,8 +94,8 @@ export function BienVideoUploader({
   }
 
   // 2. Ajout via lien externe (YouTube, TikTok, Reel, Matterport 3D, MP4)
-  async function handleAddLink(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleAddLink(e?: React.SyntheticEvent) {
+    if (e) e.preventDefault()
     setUploadError(null)
     setUploadSuccess(null)
 
@@ -201,8 +201,8 @@ export function BienVideoUploader({
         </button>
       </div>
 
-      {/* ── Formulaire d'Ajout par Lien Externe ── */}
-      <form onSubmit={handleAddLink} style={{ display: 'flex', gap: 8 }}>
+      {/* ── Ajout par Lien Externe (Div non imbriqué dans form) ── */}
+      <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ position: 'relative', flex: 1 }}>
           <div
             style={{
@@ -221,6 +221,12 @@ export function BienVideoUploader({
             type="url"
             value={linkInput}
             onChange={(e) => setLinkInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleAddLink()
+              }
+            }}
             placeholder="Lien YouTube, TikTok, Matterport 3D ou MP4..."
             disabled={addingLink || videos.length >= maxVideos}
             style={{
@@ -236,7 +242,8 @@ export function BienVideoUploader({
           />
         </div>
         <button
-          type="submit"
+          type="button"
+          onClick={() => handleAddLink()}
           disabled={addingLink || !linkInput.trim() || videos.length >= maxVideos}
           style={{
             padding: '0 16px',
@@ -263,44 +270,18 @@ export function BienVideoUploader({
             </>
           )}
         </button>
-      </form>
+      </div>
 
       {/* Messages Feedback */}
       {uploadError && (
-        <div
-          style={{
-            padding: '10px 14px',
-            background: '#FEE2E2',
-            borderRadius: 8,
-            border: '1px solid #FCA5A5',
-            color: '#991B1B',
-            fontSize: 12.5,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
+        <div style={{ padding: '10px 14px', background: '#FEE2E2', borderRadius: 8, border: '1px solid #FCA5A5', color: '#991B1B', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
           <AlertCircle size={16} />
           <span>{uploadError}</span>
         </div>
       )}
 
       {uploadSuccess && (
-        <div
-          style={{
-            padding: '10px 14px',
-            background: '#F0FDF4',
-            borderRadius: 8,
-            border: '1px solid #BBF7D0',
-            color: '#166534',
-            fontSize: 12.5,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
+        <div style={{ padding: '10px 14px', background: '#F0FDF4', borderRadius: 8, border: '1px solid #BBF7D0', color: '#166534', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
           <CheckCircle2 size={16} />
           <span>{uploadSuccess}</span>
         </div>
@@ -316,71 +297,21 @@ export function BienVideoUploader({
             return (
               <div
                 key={idx}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  background: '#FAF8F5',
-                  border: '1px solid var(--border, #E8DDD2)',
-                  gap: 12,
-                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 8, background: '#FAF8F5', border: '1px solid var(--border, #E8DDD2)', gap: 12 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      background: 'rgba(199, 91, 0, 0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--accent, #C75B00)',
-                      flexShrink: 0,
-                    }}
-                  >
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(199, 91, 0, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent, #C75B00)', flexShrink: 0 }}>
                     {isDirectVideo ? <Film size={18} /> : <Video size={18} />}
                   </div>
 
                   <div style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: 'var(--navy, #1C2B4A)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}
-                    >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span>Vidéo {idx + 1}</span>
-                      <span
-                        style={{
-                          fontSize: 10.5,
-                          padding: '1px 6px',
-                          borderRadius: 4,
-                          background: '#E2E8F0',
-                          color: '#475569',
-                          textTransform: 'uppercase',
-                          fontWeight: 800,
-                        }}
-                      >
+                      <span style={{ fontSize: 10.5, padding: '1px 6px', borderRadius: 4, background: '#E2E8F0', color: '#475569', textTransform: 'uppercase', fontWeight: 800 }}>
                         {vType}
                       </span>
                     </div>
-                    <div
-                      style={{
-                        fontSize: 11.5,
-                        color: '#64748B',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        maxWidth: 320,
-                      }}
-                      title={vidUrl}
-                    >
+                    <div style={{ fontSize: 11.5, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }} title={vidUrl}>
                       {vidUrl}
                     </div>
                   </div>
@@ -391,18 +322,7 @@ export function BienVideoUploader({
                     href={vidUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 32,
-                      height: 32,
-                      borderRadius: 6,
-                      background: '#FFFFFF',
-                      border: '1px solid var(--border, #E8DDD2)',
-                      color: 'var(--navy, #1C2B4A)',
-                      textDecoration: 'none',
-                    }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, background: '#FFFFFF', border: '1px solid var(--border, #E8DDD2)', color: 'var(--navy, #1C2B4A)', textDecoration: 'none' }}
                     title="Voir la vidéo"
                   >
                     <ExternalLink size={14} />
@@ -411,18 +331,7 @@ export function BienVideoUploader({
                   <button
                     type="button"
                     onClick={() => handleRemove(idx)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 32,
-                      height: 32,
-                      borderRadius: 6,
-                      background: '#FEE2E2',
-                      border: '1px solid #FCA5A5',
-                      color: '#991B1B',
-                      cursor: 'pointer',
-                    }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B', cursor: 'pointer' }}
                     title="Supprimer cette vidéo"
                   >
                     <Trash2 size={14} />
@@ -433,17 +342,7 @@ export function BienVideoUploader({
           })}
         </div>
       ) : (
-        <div
-          style={{
-            padding: '16px 14px',
-            background: '#FAF8F5',
-            borderRadius: 10,
-            border: '1.5px dashed var(--border, #E8DDD2)',
-            textAlign: 'center',
-            color: '#64748B',
-            fontSize: 12.5,
-          }}
-        >
+        <div style={{ padding: '16px 14px', background: '#FAF8F5', borderRadius: 10, border: '1.5px dashed var(--border, #E8DDD2)', textAlign: 'center', color: '#64748B', fontSize: 12.5 }}>
           Aucune vidéo ajoutée. Ajoutez une vidéo de visite ou collez un lien YouTube / Matterport 3D pour booster l'engagement.
         </div>
       )}

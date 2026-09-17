@@ -81,6 +81,7 @@ app.use(helmet({
       styleSrcElem:  ["'self'", "'unsafe-inline'"],
       fontSrc:       ["'self'", "data:"],
       imgSrc:        ["'self'", "data:", "https:"],
+      mediaSrc:      ["'self'", "data:", "blob:", "https:"],
 
       objectSrc:     ["'none'"],
       frameAncestors:["'self'"],

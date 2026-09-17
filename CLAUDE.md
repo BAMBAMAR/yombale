@@ -1,3 +1,88 @@
+- **Harmonisation Globale : Biens Immo, Photos, Vidéos, Album Interactif & Vitrine Publique (17 septembre 2026)** 📸🎥🏢🖼️ 🚀 ✅ :
+  * **🎯 1. Résolution de la Non-Cliquabilité & Navigation Directe sur les Biens** :
+    - Diagnostic : Sur la vitrine publique ([VitrineBiensGrid.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/vitrine/components/VitrineBiensGrid.tsx)), seule une minuscule icône externe en pied de carte possédait un lien. L'image de couverture et le titre n'étaient pas cliquables.
+    - Solution : Rendu de l'image de couverture et du titre cliquables avec redirection naturelle vers la fiche complète (`/immo/${b.annonce_publiee_id || b.id}`). Ajout de curseur pointer et d'animations au survol.
+  * **🎯 2. Album Photo & Mini-Slider Déroulant sur Carte et Fiche Complète** :
+    - [ModalAlbumPhotos.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/vitrine/components/ModalAlbumPhotos.tsx) (245 lignes) : Création d'une modale Lightbox / Album plein écran avec navigation clavier (Flèches / Échap), boutons tactiles, compteur de photos (`Photo X / Y`) et galerie de miniatures.
+    - [VitrineBiensGrid.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/vitrine/components/VitrineBiensGrid.tsx) : Flèches Gauche/Droite (`<` et `>`) superposées sur l'image pour faire défiler les photos directement sur la carte sans quitter la vitrine, puces indicatrices (`● ○`), et clic sur la photo/badge ouvrant l'album plein écran.
+    - [GaleriePhotosFiche.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/immo/[id]/GaleriePhotosFiche.tsx) (208 lignes) : Intégration de la galerie interactive sur la fiche détaillée `/immo/[id]` avec slider, miniatures et ouverture de l'album haute résolution.
+  * **🎯 3. Intégration Prioritaire des Vraies Vidéos du Bien (Élimination du Conflit Instagram)** :
+    - Diagnostic : Le badge « Visite Vidéo » de la carte ouvrait un post Instagram promotionnel Nopalou issu de `social_posts`, ignorant les vidéos réellement renseignées ou téléversées sur le bien.
+    - Solution : Priorité absolue donnée aux vidéos réelles du bien (`b.videos`) : le clic sur « Visite Vidéo » ouvre désormais directement la vidéo YouTube, Cloudinary MP4, ou Matterport 3D du bien dans [ModalLecteurVideoImmo.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/vitrine/components/ModalLecteurVideoImmo.tsx) avec le titre et le prix réels.
+    - [SectionVideoImmo.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/immo/[id]/SectionVideoImmo.tsx) (183 lignes) : Bloc dédié de visite virtuelle/vidéo ajouté sur la fiche publique `/immo/[id]` avec lecteur responsive 16:9.
+  * **🎯 4. Cohérence Absolue des Prix & Synchronisation Vitrine / Reels** :
+    - Diagnostic : La section « Visites Virtuelles & Reels » affichait un ancien prix statique de 200 000 FCFA issu de `social_posts` alors que le bien réel était à 300 000 FCFA.
+    - Solution : [VitrineVideoReels.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/vitrine/components/VitrineVideoReels.tsx) synchronise désormais dynamiquement les données avec la liste active des biens (`biens`), garantissant un prix (300 000 FCFA) et un titre 100% identiques en temps réel.
+    - Les vidéos réelles des biens sont automatiquement présentées en tête de section « Visites Virtuelles & Reels ».
+  * **🎯 5. Enrichissement des API Backend & Assainissement Base** :
+    - [backend/routes/biens.js](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/biens.js) : `GET /api/biens/public/agence/:slugOrId` retourne `b.videos`, `b.photos` et `ai.id AS annonce_publiee_id`.
+    - [backend/routes/immo.js](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/immo.js) : `GET /api/immo/:id` retourne `b.videos` et fiabilise `photos`.
+    - Base de données : Photos réelles Cloudinary synchronisées entre `biens_immo` et `annonces_immo` pour le bien `6b8f6650-18ac-482e-a0f0-04c201bc2ab7` (`supprimee = false`, `actif = true`).
+  * **🎯 6. Contrôles Qualité Validés** :
+    - TypeScript : `npx tsc --noEmit` validé avec 0 erreur.
+    - Anti-AI-Slop Linter : 100% conforme, 0 émoji UI, chaque composant < 450 lignes.
+
+- **Correction Critique Mise à Jour Bien Immo : Parsing Sécurisé PostgreSQL & Élimination Hydration Form (17 septembre 2026)** 🛠️⚡🏢 🚀 ✅ :
+  * **🎯 1. Résolution de l'Erreur 500 (`invalid input syntax for type integer: "NaN"`)** :
+    - Diagnostic : Dans `backend/routes/biens.js`, les colonnes numériques optionnelles (ex: `etage`, `surface_m2`, `charges`, `depot_garantie`) évaluaient des expressions comme `data.etage !== '' ? parseInt(data.etage, 10) : null`. Lorsque le frontend envoyait `null` (ex: bien sans étage comme une villa ou rez-de-chaussée), `null !== ''` valait `true` et `parseInt(null, 10)` produisait `NaN`. PostgreSQL rejetait cette valeur avec l'erreur `invalid input syntax for type integer: "NaN"`.
+    - Solution Backend :
+      - Création de helpers de sérialisation stricts [backend/routes/biens.js](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/biens.js) : `toParamNumber(val)` et `toParamInt(val)` convertissant `undefined` en `null` (conservation en DB), `null`/`''`/`'null'` en chaîne `'null'` (mise à `NULL` en DB), et rejetant tout `NaN`.
+      - Requête SQL `UPDATE` sécurisée avec clauses conditionnelles : `etage = CASE WHEN $31 = 'null' THEN NULL WHEN $31 IS NOT NULL THEN $31::integer ELSE etage END`, `surface_m2 = CASE WHEN $8 = 'null' THEN NULL WHEN $8 IS NOT NULL THEN $8::numeric ELSE surface_m2 END`, `charges = CASE WHEN $15 = 'null' THEN NULL WHEN $15 IS NOT NULL THEN $15::numeric ELSE charges END`, etc.
+      - Sécurisation de `proprietaire_id` et `agent_id` pour permettre leur réinitialisation propre sans erreur UUID.
+  * **🎯 2. Résolution du Warning React d'Imbrication de `<form>` (Hydration Error)** :
+    - Diagnostic : Dans [BienVideoUploader.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienVideoUploader.tsx), la section d'ajout de lien vidéo externe utilisait un élément `<form onSubmit={handleAddLink}>`, imbriqué à l'intérieur du formulaire principal `<form onSubmit={handleSubmit}>` de [BienForm.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienForm.tsx), déclenchant l'avertissement React `Warning: In HTML, <form> cannot be a descendant of <form>`.
+    - Solution : Remplacement du `<form>` imbriqué par un conteneur standard `<div>`, bouton d'ajout en `type="button"`, écouteur `onKeyDown` pour la touche Entrée sur le champ URL, et compacification du composant à 358 lignes (conforme au plafond strict de 450 lignes).
+  * **🎯 3. Assainissement des Photos de Test 404** :
+    - Diagnostic : Le bien de test `6b8f6650-18ac-482e-a0f0-04c201bc2ab7` conservait des URLs factices (`salon.jpg`, `chambre.jpg`) générant des erreurs réseau 404 dans la console du navigateur.
+    - Solution : Réinitialisation du champ `photos` à `[]` en base de données PostgreSQL, éliminant les requêtes en échec.
+  * **🎯 4. Validation End-to-End** :
+    - Requête HTTP `PUT /api/biens/agence/amar-immo/6b8f6650-18ac-482e-a0f0-04c201bc2ab7` testée et validée avec code HTTP **200 OK**.
+    - Persistance vérifiée en base : titre mis à jour, vidéo YouTube enregistrée dans `videos` (`jsonb`), `surface_m2` et `etage` à `null` sans aucune erreur SQL.
+    - TypeScript : `npx tsc --noEmit` validé avec 0 erreur.
+    - Anti-AI-Slop : 100% conforme (aucun composant > 450 lignes, 0 émoji UI).
+
+- **Parité Complète des Formulaires Bien Immo : Ajout Photos/Vidéos & Unification Création/Modification (17 septembre 2026)** 📸🎥🏢 🚀 ✅ :
+  * **🎯 1. Résolution de la Divergence entre Création et Modification de Bien** :
+    - Diagnostic : Le formulaire de modification (`ModalEditerBien.tsx`) était incomplet et dépourvu des téléverseurs multimédias (`BienPhotoUploader`, `BienVideoUploader`), privant les utilisateurs de la gestion des photos et vidéos lors de l'édition.
+    - Solution : Création d'un composant formulaire unifié [BienForm.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienForm.tsx) partagé entre la création et la modification, garantissant une parité visuelle et fonctionnelle à 100%.
+  * **🎯 2. Découpage Modulaire & Respect Strict du Plafond de 450 Lignes (Règle Anti-Slop 2)** :
+    - [BienSectionOperation.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienSectionOperation.tsx) (132 lignes) : Sélecteur Location/Vente, titre, type de bien, prix dynamique.
+    - [BienSectionLocalisation.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienSectionLocalisation.tsx) (73 lignes) : Ville, quartier, adresse précise.
+    - [BienSectionCaracteristiques.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienSectionCaracteristiques.tsx) (121 lignes) : Grille surfaces, pièces, chambres, SDB, étage, statut d'occupation et commodités vectorielles.
+    - [BienSectionFinances.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienSectionFinances.tsx) (52 lignes) : Charges mensuelles et dépôt de garantie/caution.
+    - [BienSectionDescription.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienSectionDescription.tsx) (50 lignes) : Description commerciale et notes internes privées.
+    - [BienForm.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienForm.tsx) (366 lignes) : Orchestrateur unifié avec `BienPhotoUploader` et `BienVideoUploader`.
+    - [ModalEditerBien.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/ModalEditerBien.tsx) (104 lignes) : Modale ergonomique plein écran avec en-tête fixe et corps scrollable.
+    - [nouveau/page.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/nouveau/page.tsx) (48 lignes) : Page de création épurée déléguant à `BienForm`.
+    - [editer/page.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/[bienId]/editer/page.tsx) (120 lignes) : Nouvelle page de modification plein écran accessible directement par URL `/agence/[slug]/biens/[bienId]/editer`.
+  * **🎯 3. Persistance Backend & Synchronisation SQL** :
+    - Fichier modifié : [backend/routes/biens.js](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/biens.js).
+    - Route `PUT /api/biens/agence/:slugOrId/:bienId` :
+      - Ajout de la mise à jour de la colonne `videos = CASE WHEN $18::text IS NOT NULL THEN $18::jsonb ELSE videos END` (auparavant absente de la requête SQL).
+      - Correction du remplacement des `photos = CASE WHEN $17::text IS NOT NULL THEN $17::jsonb ELSE photos END` permettant d'ajouter, modifier ou vider la liste de photos.
+      - Casting explicite `::text` pour compatibilité PostgreSQL stricte avec les paramètres optionnels.
+  * **🎯 4. Contrôles Qualité Validés** :
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Anti-AI-Slop Linter : 0 composant > 450 lignes, 0 émoji UI, design system Nopalou strict.
+    - Test fonctionnel exécuté : validation de la mise à jour simultanée des photos, vidéos (YouTube/Cloudinary) et commodités avec code HTTP 200 et persistance en base.
+
+- **Assainissement de la Base de Données : Suppression des Agences et Biens de Test (17 septembre 2026)** 🧹🏢🗑️ 🚀 ✅ :
+  * **🎯 1. Nettoyage Transactionnel des Données de Test (PostgreSQL)** :
+    - Fichier créé : [scripts/clean-test-agences.js](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/scripts/clean-test-agences.js).
+    - Exécution dans une transaction SQL atomique (`BEGIN` ... `COMMIT` / `ROLLBACK`).
+    - Conservation garantie : L'agence principale **AMAR IMMO** (`amar-immo`, `dieteltouba@gmail.com`) et ses biens (`APPART FOIRE`, `Villa Duplex Almadies 5P`) ainsi que l'ensemble des **2958 annonces scrapées** (CoinAfrique et Expat-Dakar) sont intégralement préservés.
+  * **🎯 2. Bilan Précis des Suppressions Réalisées** :
+    - Agences de test supprimées : **29 agences** (générées lors des campagnes de tests E2E / QA).
+    - Biens de test supprimés : **31 biens** rattachés aux agences de test.
+    - Annonces de test supprimées : **17 annonces** (`source = 'utilisateur'`).
+    - Baux et loyers de test supprimés : **14 baux** et **168 échéances de loyers**.
+    - CRM et relations supprimés : **18 visites**, **14 commissions**, **7 transactions**, **9 mandats**, **33 contacts**, **15 propriétaires**, **35 membres d'agence**, **8 logs** et **13 notifications**.
+    - Comptes utilisateurs de test supprimés : **66 comptes de test** (`@test.nopalou.sn`, `@nopalou-test.sn`, `client.%@example.com`).
+  * **🎯 3. État Final Post-Nettoyage** :
+    - `agences_immo` : 1 agence active (`AMAR IMMO`).
+    - `biens_immo` : 2 biens réels rattachés (`APPART FOIRE`, `Villa Duplex Almadies 5P`).
+    - `annonces_immo` : 2959 annonces au total (2522 CoinAfrique, 436 Expat-Dakar, 1 annonce utilisateur pour `APPART FOIRE`).
+
 - **Correction Fiches Immo : Conditionnement PaySafe & Demande de Visite, et Extraction des Numéros Scrapés (17 septembre 2026)** 🏢📞🛡️ 🚀 ✅ :
   * **🎯 1. Conditionnement Strict de Nopalou Pay Safe aux Agences Agréées** :
     - Fichier modifié : [FicheImmoSidebar.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/immo/[id]/FicheImmoSidebar.tsx).
@@ -8436,5 +8521,26 @@ Toutes les remédiations du plan stratégique ont été menées à bien, intégr
   - **Backend** : 24/24 suites passées, 209/209 tests validés (0 échec).
   - **Frontend** : 46/46 tests unitaires validés (0 échec).
   - **Mobile Playwright** : 55/55 contrôles validés sur 5 viewports (320px à 412px) sans aucun débordement horizontal.
+
+---
+
+## 5. Mises à Jour Nopalou Immobilier : Album Photos, Vidéos Réelles, Cohérence Prix & Sécurité CSP (17 septembre 2026) 🏢✨
+- **Résolution du blocage de chargement vidéo Cloudinary (Erreur CSP `default-src 'self'`)** :
+  - Ajout explicite de la directive `media-src 'self' blob: data: https: https://res.cloudinary.com` dans le Content Security Policy de [`frontend-next/src/middleware.ts`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/middleware.ts) et dans le middleware Helmet de [`backend/app.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/app.js).
+  - Extension des directives `frame-src` pour autoriser YouTube sans cookies (`https://www.youtube-nocookie.com`) et les visites virtuelles 3D Matterport (`https://my.matterport.com`, `https://*.matterport.com`).
+- **Suppression définitive de l'écran noir sur les lecteurs vidéo (`SectionVideoImmo.tsx`, `ModalLecteurVideoImmo.tsx`)** :
+  - Transmission systématique de la photo de couverture principale en attribut `poster` du lecteur `<video>` HTML5 pour afficher le visuel haute qualité du bien dès le chargement au lieu d'un cadre noir.
+  - Ajout de `preload="metadata"` pour un affichage instantané de la première image et durée.
+  - Gestion d'état d'erreur vidéo avec repli gracieux (`videoError` / `onError`) offrant un bouton de relance et un lien d'ouverture directe.
+- **Album Photos Interactif & Navigation Vitrine** :
+  - Mini-carrousel interactif avec flèches `<` et `>` et puces de pagination sur chaque carte de bien dans [`VitrineBiensGrid.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/vitrine/components/VitrineBiensGrid.tsx).
+  - Visionneuse modale plein écran [`ModalAlbumPhotos.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/vitrine/components/ModalAlbumPhotos.tsx) avec commandes clavier et bande de miniatures.
+  - Clic sur l'image et le titre de carte ouvrant directement la fiche détaillée du bien (`/immo/[id]`).
+- **Harmonisation des Prix et Priorité aux Visites Réelles** :
+  - Résolution dynamique des données des biens associés aux Reels sociaux pour éliminer les disparités de prix (300 000 FCFA unifié sur toutes les sections).
+  - Le bouton « Visite Vidéo » de la carte ouvre en priorité absolue la vidéo réelle du bien (`b.videos`).
+- **Robustesse Backend & Formulaires** :
+  - Helper de conversion sécurisé `toParamNumber` / `toParamInt` dans [`backend/routes/biens.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/biens.js) prévenant les erreurs SQL `NaN`.
+  - Suppression de l'imbrication illégale `<form>` dans [`BienVideoUploader.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienVideoUploader.tsx).
 
 

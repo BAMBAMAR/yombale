@@ -133,6 +133,7 @@ function VitrinePubliqueContent() {
               <VitrineVideoReels
                 key="reels"
                 agence={agence}
+                biens={biens}
                 onOpenPost={(post) => setActiveVideoPost(post)}
               />
             );

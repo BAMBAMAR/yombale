@@ -3,16 +3,81 @@
 import React from 'react';
 import { Video, Play } from 'lucide-react';
 import { AgenceData } from './VitrineBanner';
+import { BienItem } from './VitrineBiensGrid';
 
 interface VitrineVideoReelsProps {
   agence: AgenceData | null;
+  biens?: BienItem[];
   onOpenPost?: (post: any) => void;
 }
 
-export default function VitrineVideoReels({ agence, onOpenPost }: VitrineVideoReelsProps) {
+function detectPlatform(url: string): 'youtube' | 'tiktok' | 'instagram' | 'direct' {
+  if (!url) return 'direct';
+  const l = url.toLowerCase();
+  if (l.includes('youtube.com') || l.includes('youtu.be')) return 'youtube';
+  if (l.includes('tiktok.com')) return 'tiktok';
+  if (l.includes('instagram.com')) return 'instagram';
+  return 'direct';
+}
+
+export default function VitrineVideoReels({ agence, biens = [], onOpenPost }: VitrineVideoReelsProps) {
+  // 1. Visites vidéos issues directement des biens de l'agence
+  const propertyVideoCards = (biens || [])
+    .filter((b) => Array.isArray(b.videos) && b.videos.length > 0 && !!b.videos[0])
+    .map((b) => {
+      const isLoc = !!b.prix_location;
+      const prix = b.prix_location || b.prix_vente || 0;
+      return {
+        id: `prop-video-${b.id}`,
+        post_url: b.videos![0],
+        plateforme: detectPlatform(b.videos![0]),
+        caption: b.titre,
+        thumbnail_url: b.photos?.[0] || null,
+        is_property_video: true,
+        biens_associes: [
+          {
+            id: b.id,
+            titre: b.titre,
+            prix,
+            type_operation: isLoc ? 'location' : 'vente',
+            quartier: b.quartier,
+            image_url: b.photos?.[0],
+          },
+        ],
+      };
+    });
+
+  // 2. Posts réseaux sociaux (synchronisés dynamiquement avec les données réelles des biens)
   const socialPosts = (agence?.parametres as any)?.social_posts || [];
-  const visiblePosts = socialPosts.filter((p: any) => p.visible);
-  if (visiblePosts.length === 0) return null;
+  const socialCards = socialPosts
+    .filter((p: any) => p.visible)
+    .map((post: any) => {
+      // Synchronisation dynamique : si rattaché à un bien, on prend les données réelles du bien
+      const linked = post.biens_associes?.[0];
+      const liveBien = linked ? biens.find((b) => b.id === linked.id) : null;
+
+      const bienData = liveBien
+        ? {
+            id: liveBien.id,
+            titre: liveBien.titre,
+            prix: liveBien.prix_location || liveBien.prix_vente || 0,
+            type_operation: liveBien.prix_location ? 'location' : 'vente',
+            quartier: liveBien.quartier,
+            image_url: liveBien.photos?.[0] || linked.image_url,
+          }
+        : linked;
+
+      return {
+        ...post,
+        thumbnail_url: post.thumbnail_url || bienData?.image_url,
+        biens_associes: bienData ? [bienData] : [],
+      };
+    });
+
+  // Combiner en évitant les doublons exacts
+  const allVideoCards = [...propertyVideoCards, ...socialCards];
+
+  if (allVideoCards.length === 0) return null;
 
   return (
     <div style={{ marginBottom: 36 }}>
@@ -34,8 +99,10 @@ export default function VitrineVideoReels({ agence, onOpenPost }: VitrineVideoRe
           gap: 14,
         }}
       >
-        {visiblePosts.map((post: any) => {
+        {allVideoCards.map((post: any) => {
           const bien = post.biens_associes?.[0];
+          const isLoc = bien?.type_operation === 'location';
+
           return (
             <div
               key={post.id}
@@ -86,13 +153,13 @@ export default function VitrineVideoReels({ agence, onOpenPost }: VitrineVideoRe
                   <Play size={20} fill="var(--navy, #1C2B4A)" />
                 </div>
 
-                {/* Badge Plateforme */}
+                {/* Badge Plateforme ou Visite Bien */}
                 <div
                   style={{
                     position: 'absolute',
                     top: 10,
                     left: 10,
-                    background: 'rgba(0,0,0,0.7)',
+                    background: post.is_property_video ? 'var(--accent, #C75B00)' : 'rgba(0,0,0,0.7)',
                     backdropFilter: 'blur(4px)',
                     color: '#FFFFFF',
                     padding: '3px 8px',
@@ -102,7 +169,7 @@ export default function VitrineVideoReels({ agence, onOpenPost }: VitrineVideoRe
                     textTransform: 'uppercase',
                   }}
                 >
-                  {post.plateforme}
+                  {post.is_property_video ? 'Visite Vidéo' : post.plateforme}
                 </div>
               </div>
 
@@ -133,12 +200,12 @@ export default function VitrineVideoReels({ agence, onOpenPost }: VitrineVideoRe
                       {bien.titre}
                     </div>
                     <div style={{ fontSize: 11.5, fontWeight: 900, color: 'var(--accent, #C75B00)', marginTop: 2 }}>
-                      {Number(bien.prix).toLocaleString('fr-FR')} FCFA {bien.type_operation === 'location' ? '/ mois' : ''}
+                      {Number(bien.prix).toLocaleString('fr-FR')} FCFA {isLoc ? '/ mois' : ''}
                     </div>
                   </div>
                 ) : (
                   <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>
-                    Visite d'agence
+                    Visite d&apos;agence
                   </div>
                 )}
               </div>

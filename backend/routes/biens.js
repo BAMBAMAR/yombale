@@ -35,13 +35,15 @@ router.get('/public/agence/:slugOrId', async (req, res) => {
 
     const agenceId = agenceRows[0].id;
     const { rows: biens } = await pool.query(
-      `SELECT id, reference, titre, type_bien, description, ville, quartier, adresse,
-              prix_location, charges, depot_garantie, prix_vente,
-              surface_m2, nb_pieces, nb_chambres, nb_sdb, etage, meuble, equipements,
-              photos, statut_occupation, created_at
-       FROM biens_immo
-       WHERE agence_id = $1 AND statut = 'actif' AND statut_occupation = 'disponible'
-       ORDER BY created_at DESC`,
+      `SELECT b.id, b.reference, b.titre, b.type_bien, b.description, b.ville, b.quartier, b.adresse,
+              b.prix_location, b.charges, b.depot_garantie, b.prix_vente,
+              b.surface_m2, b.nb_pieces, b.nb_chambres, b.nb_sdb, b.etage, b.meuble, b.equipements,
+              b.photos, b.videos, b.statut_occupation, b.created_at,
+              ai.id AS annonce_publiee_id
+       FROM biens_immo b
+       LEFT JOIN annonces_immo ai ON ai.bien_id = b.id AND ai.supprimee = false
+       WHERE b.agence_id = $1 AND b.statut = 'actif' AND b.statut_occupation = 'disponible'
+       ORDER BY b.created_at DESC`,
       [agenceId]
     );
 
@@ -417,6 +419,20 @@ router.get('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
   }
 });
 
+function toParamNumber(val) {
+  if (val === undefined) return null;
+  if (val === null || val === '' || val === 'null') return 'null';
+  const n = Number(val);
+  return Number.isNaN(n) ? 'null' : String(n);
+}
+
+function toParamInt(val) {
+  if (val === undefined) return null;
+  if (val === null || val === '' || val === 'null') return 'null';
+  const n = parseInt(val, 10);
+  return Number.isNaN(n) ? 'null' : String(n);
+}
+
 // ── PUT /api/biens/agence/:slugOrId/:bienId — Mettre à jour un bien ──
 router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), async (req, res) => {
   try {
@@ -433,32 +449,33 @@ router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
         adresse = COALESCE($5, adresse),
         quartier = COALESCE($6, quartier),
         ville = COALESCE($7, ville),
-        surface_m2 = COALESCE($8, surface_m2),
-        nb_pieces = COALESCE($9, nb_pieces),
-        nb_chambres = COALESCE($10, nb_chambres),
-        nb_sdb = COALESCE($11, nb_sdb),
+        surface_m2 = CASE WHEN $8 = 'null' THEN NULL WHEN $8 IS NOT NULL THEN $8::numeric ELSE surface_m2 END,
+        nb_pieces = CASE WHEN $9 = 'null' THEN NULL WHEN $9 IS NOT NULL THEN $9::integer ELSE nb_pieces END,
+        nb_chambres = CASE WHEN $10 = 'null' THEN NULL WHEN $10 IS NOT NULL THEN $10::integer ELSE nb_chambres END,
+        nb_sdb = CASE WHEN $11 = 'null' THEN NULL WHEN $11 IS NOT NULL THEN $11::integer ELSE nb_sdb END,
         statut_occupation = COALESCE($12, statut_occupation),
         prix_location = CASE WHEN $13 = 'null' THEN NULL WHEN $13 IS NOT NULL THEN $13::numeric ELSE prix_location END,
         prix_vente = CASE WHEN $14 = 'null' THEN NULL WHEN $14 IS NOT NULL THEN $14::numeric ELSE prix_vente END,
-        charges = COALESCE($15, charges),
-        depot_garantie = COALESCE($16, depot_garantie),
-        photos = COALESCE($17::jsonb, photos),
-        meuble = COALESCE($18, meuble),
-        statut = COALESCE($19, statut),
-        notes_internes = COALESCE($20, notes_internes),
-        proprietaire_id = COALESCE($21, proprietaire_id),
-        agent_id = COALESCE($22, agent_id),
-        ascenseur = COALESCE($23, ascenseur),
-        parking = COALESCE($24, parking),
-        gardien = COALESCE($25, gardien),
-        piscine = COALESCE($26, piscine),
-        terrasse = COALESCE($27, terrasse),
-        balcon = COALESCE($28, balcon),
-        climatisation = COALESCE($29, climatisation),
-        etage = COALESCE($30, etage),
-        equipements = COALESCE($31::jsonb, equipements),
+        charges = CASE WHEN $15 = 'null' THEN NULL WHEN $15 IS NOT NULL THEN $15::numeric ELSE charges END,
+        depot_garantie = CASE WHEN $16 = 'null' THEN NULL WHEN $16 IS NOT NULL THEN $16::numeric ELSE depot_garantie END,
+        photos = CASE WHEN $17::text IS NOT NULL THEN $17::jsonb ELSE photos END,
+        videos = CASE WHEN $18::text IS NOT NULL THEN $18::jsonb ELSE videos END,
+        meuble = COALESCE($19, meuble),
+        statut = COALESCE($20, statut),
+        notes_internes = COALESCE($21, notes_internes),
+        proprietaire_id = CASE WHEN $22 = 'null' THEN NULL WHEN $22 IS NOT NULL THEN $22::uuid ELSE proprietaire_id END,
+        agent_id = CASE WHEN $23 = 'null' THEN NULL WHEN $23 IS NOT NULL THEN $23::uuid ELSE agent_id END,
+        ascenseur = COALESCE($24, ascenseur),
+        parking = COALESCE($25, parking),
+        gardien = COALESCE($26, gardien),
+        piscine = COALESCE($27, piscine),
+        terrasse = COALESCE($28, terrasse),
+        balcon = COALESCE($29, balcon),
+        climatisation = COALESCE($30, climatisation),
+        etage = CASE WHEN $31 = 'null' THEN NULL WHEN $31 IS NOT NULL THEN $31::integer ELSE etage END,
+        equipements = COALESCE($32::jsonb, equipements),
         updated_at = NOW()
-       WHERE id = $32 AND agence_id = $33
+       WHERE id = $33 AND agence_id = $34
        RETURNING *`,
       [
         data.titre ? data.titre.trim() : null,
@@ -468,21 +485,22 @@ router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
         data.adresse !== undefined ? data.adresse : null,
         data.quartier !== undefined ? data.quartier : null,
         data.ville || null,
-        data.surface_m2 ? parseFloat(data.surface_m2) : null,
-        data.nb_pieces ? parseInt(data.nb_pieces, 10) : null,
-        data.nb_chambres ? parseInt(data.nb_chambres, 10) : null,
-        data.nb_sdb ? parseInt(data.nb_sdb, 10) : null,
+        toParamNumber(data.surface_m2),
+        toParamInt(data.nb_pieces),
+        toParamInt(data.nb_chambres),
+        toParamInt(data.nb_sdb),
         data.statut_occupation || null,
-        data.prix_location !== undefined ? (data.prix_location !== null && data.prix_location !== '' ? String(data.prix_location) : 'null') : null,
-        data.prix_vente !== undefined ? (data.prix_vente !== null && data.prix_vente !== '' ? String(data.prix_vente) : 'null') : null,
-        data.charges !== undefined ? parseFloat(data.charges) : null,
-        data.depot_garantie !== undefined ? parseFloat(data.depot_garantie) : null,
-        data.photos ? JSON.stringify(data.photos) : null,
+        toParamNumber(data.prix_location),
+        toParamNumber(data.prix_vente),
+        toParamNumber(data.charges),
+        toParamNumber(data.depot_garantie),
+        data.photos !== undefined ? JSON.stringify(Array.isArray(data.photos) ? data.photos : []) : null,
+        data.videos !== undefined ? JSON.stringify(Array.isArray(data.videos) ? data.videos : []) : null,
         data.meuble !== undefined ? !!data.meuble : null,
         data.statut || null,
         data.notes_internes !== undefined ? data.notes_internes : null,
-        data.proprietaire_id !== undefined ? (data.proprietaire_id || null) : null,
-        data.agent_id !== undefined ? (data.agent_id || null) : null,
+        data.proprietaire_id !== undefined ? (data.proprietaire_id || 'null') : null,
+        data.agent_id !== undefined ? (data.agent_id || 'null') : null,
         data.ascenseur !== undefined ? !!data.ascenseur : null,
         data.parking !== undefined ? !!data.parking : null,
         data.gardien !== undefined ? !!data.gardien : null,
@@ -490,7 +508,7 @@ router.put('/agence/:slugOrId/:bienId', verifierToken, requireAgenceAccess(), as
         data.terrasse !== undefined ? !!data.terrasse : null,
         data.balcon !== undefined ? !!data.balcon : null,
         data.climatisation !== undefined ? !!data.climatisation : null,
-        data.etage !== undefined ? (data.etage !== '' ? parseInt(data.etage, 10) : null) : null,
+        toParamInt(data.etage),
         data.equipements ? JSON.stringify(Array.isArray(data.equipements) ? data.equipements : []) : null,
         bienId,
         agenceId

@@ -333,6 +333,8 @@ router.get('/:id', async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT ai.*,
+              b.videos AS bien_videos,
+              b.photos AS bien_photos,
               ag.id AS agence_id_ref,
               ag.nom AS agence_nom,
               ag.slug AS agence_slug,
@@ -410,9 +412,12 @@ router.get('/:id', async (req, res) => {
           telephone: b.agent_telephone,
           email: b.agent_email
         } : null;
+        const photos = Array.isArray(b.photos) ? b.photos : (b.photos ? [b.photos] : []);
+        const videos = Array.isArray(b.videos) ? b.videos : [];
         return res.json({
           ...b,
-          photos: Array.isArray(b.photos) ? b.photos : (b.photos ? [b.photos] : []),
+          photos,
+          videos,
           agence,
           agent
         });
@@ -445,8 +450,15 @@ router.get('/:id', async (req, res) => {
       email: row.agent_email
     } : null;
 
+    const photos = (Array.isArray(row.photos) && row.photos.length > 0)
+      ? row.photos
+      : (Array.isArray(row.bien_photos) ? row.bien_photos : []);
+    const videos = Array.isArray(row.bien_videos) ? row.bien_videos : [];
+
     res.json({
       ...row,
+      photos,
+      videos,
       agence,
       agent
     });

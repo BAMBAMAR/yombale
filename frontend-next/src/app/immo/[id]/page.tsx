@@ -13,6 +13,8 @@ import PageHeader from '@/components/PageHeader';
 import { Scale } from 'lucide-react';
 import { AgenceInfo, AgentInfo } from './BlocAgenceAnnonce';
 import FicheImmoSidebar from './FicheImmoSidebar';
+import GaleriePhotosFiche from './GaleriePhotosFiche';
+import SectionVideoImmo from './SectionVideoImmo';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +37,7 @@ interface AnnonceImmo {
   contact_tel: string | null;
   created_at: string | null;
   photos: string[] | null;
+  videos?: string[] | null;
   source: string | null;
   utilisateur_id: string | null;
   sponsorisee: boolean | null;
@@ -240,29 +243,8 @@ export default async function FicheImmoPage({
         {/* Colonne principale */}
         <div className="fiche-main">
           <div className="fiche-immo-hero">
-            {/* Photo principale */}
-            {mainPhoto && (
-              <div style={{ position: 'relative', width: '100%', height: '360px', marginBottom: '12px', borderRadius: '10px', overflow: 'hidden', background: 'var(--bg)' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={cloudinaryHQ(mainPhoto, { width: 900 })}
-                  alt={annonce.titre}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  loading="eager"
-                />
-              </div>
-            )}
-            {/* Galerie miniatures */}
-            {photos.length > 1 && (
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 20, paddingBottom: 4 }}>
-                {photos.slice(1).map((url, i) => (
-                  <div key={i} style={{ flexShrink: 0, width: 100, height: 72, borderRadius: 6, overflow: 'hidden', background: 'var(--bg)' }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={cloudinaryHQ(url, { width: 200 })} alt={`Photo ${i + 2}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Galerie Photos avec Album Plein Écran et Slider */}
+            <GaleriePhotosFiche photos={photos} titre={annonce.titre} />
             {annonce.type_bien && (
               <span
                 className="type-badge"
@@ -315,6 +297,15 @@ export default async function FicheImmoPage({
             {/* Description */}
             {annonce.description && (
               <p className="description">{annonce.description}</p>
+            )}
+
+            {/* Vidéo / Visite Virtuelle si disponible */}
+            {Array.isArray(annonce.videos) && annonce.videos.length > 0 && (
+              <SectionVideoImmo
+                videos={annonce.videos}
+                titre={annonce.titre}
+                posterPhoto={photos[0] ?? null}
+              />
             )}
           </div>
         </div>
