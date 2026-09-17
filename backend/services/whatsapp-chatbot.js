@@ -2092,8 +2092,21 @@ async function handleIncomingInternal(msg) {
         return;
       }
 
-      // 2.C. Si l'utilisateur est DÉJÀ au menu marchand (ou neutre) et demande "menu", "quitter", "quitte", "annuler", "retour", "accueil", "0"
-      // -> Il souhaite quitter l'espace marchand pour accéder au menu général Nopalou !
+      // 2.C. Si l'utilisateur tape "menu" en contexte marchand, lui proposer le double choix
+      if (normTxtLower === 'menu') {
+        const buttons = [
+          { id: 'menu_marchand', title: '🏪 Menu Marchand' },
+          { id: 'menu_general', title: '🌐 Menu Principal' },
+        ];
+        await sendWhatsAppButtons3(
+          phone,
+          `📍 Vous êtes dans votre espace de gestion *${bqMarchand.nom}*.\n\nQuel menu souhaitez-vous ouvrir ?`,
+          buttons
+        ).catch(() => {});
+        return;
+      }
+
+      // 2.D. Si l'utilisateur demande explicitement de quitter ("quitter", "annuler", "retour", "accueil", "0")
       await setSession(phone, 'MENU', {});
       await sendWhatsAppText(phone, `👋 Retour au menu principal Nopalou :`).catch(() => {});
       await sendMenu(phone);

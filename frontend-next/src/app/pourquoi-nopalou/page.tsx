@@ -3,7 +3,7 @@ import Link from 'next/link'
 import {
   Check, X, CheckCircle2, ArrowRight, Sparkles, HelpCircle,
   Store, Smartphone, CreditCard, Receipt, TrendingUp, ShieldCheck,
-  Zap, Award, Users
+  Zap, Award, Users, Scale, Monitor
 } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -24,7 +24,6 @@ export const metadata: Metadata = {
 const COMPARATIFS = [
   {
     titre: "Nopalou vs WhatsApp Seul",
-    emoji: "",
     description: "WhatsApp est parfait pour discuter, mais devient un cauchemar dès que vous avez plus de 10 commandes par jour.",
     nopalou: [
       "Vos clients voient tout votre catalogue avec prix, tailles et photos sans vous solliciter",
@@ -41,7 +40,6 @@ const COMPARATIFS = [
   },
   {
     titre: "Nopalou vs Carnet Papier & Cahier de Dettes",
-    emoji: "",
     description: "Le cahier traditionnel est gratuit au départ, mais vous fait perdre des dizaines de milliers de FCFA en oublis chaque mois.",
     nopalou: [
       "Historique sécurisé dans le Cloud : impossible de perdre vos comptes",
@@ -58,7 +56,6 @@ const COMPARATIFS = [
   },
   {
     titre: "Nopalou vs Shopify & Plateformes Internationales",
-    emoji: "",
     description: "Shopify est conçu pour les États-Unis et l'Europe, pas pour les commerçants de Dakar, Sandaga ou Thiès.",
     nopalou: [
       "Dès 2 500 FCFA/mois, payable directement par Wave ou Orange Money",
@@ -75,7 +72,6 @@ const COMPARATIFS = [
   },
   {
     titre: "Nopalou vs Caisse Enregistreuse Classique",
-    emoji: "🖥️",
     description: "Les caisses enregistreuses traditionnelles coûtent des centaines de milliers de FCFA et s'arrêtent à la porte du magasin.",
     nopalou: [
       "Fonctionne sur le smartphone ou la tablette que vous avez déjà (0 F de matériel)",
@@ -100,7 +96,7 @@ export default function PourquoiNopalouPage() {
       <section style={{
         background: 'linear-gradient(135deg, #1C2B4A 0%, #0d1728 100%)',
         color: '#ffffff',
-        padding: '70px 20px 100px',
+        padding: '50px 16px 80px',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden'
@@ -113,15 +109,16 @@ export default function PourquoiNopalouPage() {
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             background: 'rgba(199,91,0,0.2)', color: '#fed7aa',
-            padding: '6px 18px', borderRadius: 30, fontSize: 13, fontWeight: 800,
+            padding: '6px 14px', borderRadius: 30, fontSize: 12, fontWeight: 800,
             marginBottom: 20, border: '1px solid rgba(199,91,0,0.4)',
             letterSpacing: '0.05em'
           }}>
-            ⚖️ COMPARATIF OBJECTIF &amp; TRANSPARENT
+            <Scale size={14} />
+            COMPARATIF OBJECTIF &amp; TRANSPARENT
           </span>
 
           <h1 style={{
-            fontSize: 'clamp(32px, 5vw, 54px)',
+            fontSize: 'clamp(26px, 5vw, 54px)',
             fontWeight: 900,
             margin: '0 0 18px',
             lineHeight: 1.15,
@@ -167,38 +164,39 @@ export default function PourquoiNopalouPage() {
       </section>
 
       {/* ── 2. LES 4 GRANDES CONFRONTATIONS DÉTAILLÉES ── */}
-      <section style={{ maxWidth: 1160, margin: '-50px auto 90px', padding: '0 20px', position: 'relative', zIndex: 3 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
+      <section style={{ maxWidth: 1160, margin: '-40px auto 70px', padding: '0 12px', position: 'relative', zIndex: 3 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
           {COMPARATIFS.map((comp, idx) => (
             <div
               key={idx}
               style={{
                 background: '#ffffff',
-                borderRadius: 24,
-                padding: '32px 28px',
+                borderRadius: 20,
+                padding: 'clamp(20px, 3.5vw, 32px) clamp(14px, 3vw, 28px)',
                 border: '1px solid #cbd5e1',
                 boxShadow: '0 10px 30px rgba(15, 23, 42, 0.05)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                <span style={{ fontSize: 28 }}>{comp.emoji}</span>
-                <h2 style={{ fontSize: 22, fontWeight: 900, color: '#0f172a', margin: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <CheckCircle2 size={24} color="#C75B00" />
+                <h2 style={{ fontSize: 'clamp(18px, 3.5vw, 22px)', fontWeight: 900, color: '#0f172a', margin: 0 }}>
                   {comp.titre}
                 </h2>
               </div>
-              <p style={{ color: '#64748b', fontSize: 14.5, lineHeight: 1.5, margin: '0 0 24px' }}>
+              <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>
                 {comp.description}
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: 16 }}>
                 {/* Colonne Nopalou */}
-                <div style={{ background: '#fff7ed', borderRadius: 16, padding: 20, border: '1.5px solid #fed7aa' }}>
-                  <div style={{ fontWeight: 900, color: '#C75B00', fontSize: 15, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>🧡 Avec Nopalou :</span>
+                <div style={{ background: '#fff7ed', borderRadius: 16, padding: '16px 14px', border: '1.5px solid #fed7aa' }}>
+                  <div style={{ fontWeight: 900, color: '#C75B00', fontSize: 14.5, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Sparkles size={16} color="#C75B00" />
+                    <span>Avec Nopalou :</span>
                   </div>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {comp.nopalou.map((pt, pIdx) => (
-                      <li key={pIdx} style={{ fontSize: 13.5, color: '#334155', fontWeight: 600, display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.4 }}>
+                      <li key={pIdx} style={{ fontSize: 13, color: '#334155', fontWeight: 600, display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.4 }}>
                         <span style={{ color: '#10b981', fontWeight: 900, marginTop: 1 }}>✓</span>
                         <span>{pt}</span>
                       </li>
@@ -207,13 +205,14 @@ export default function PourquoiNopalouPage() {
                 </div>
 
                 {/* Colonne Alternative */}
-                <div style={{ background: '#f8fafc', borderRadius: 16, padding: 20, border: '1.5px solid #e2e8f0' }}>
-                  <div style={{ fontWeight: 900, color: '#64748b', fontSize: 15, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ background: '#f8fafc', borderRadius: 16, padding: '16px 14px', border: '1.5px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: 900, color: '#64748b', fontSize: 14.5, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <HelpCircle size={16} color="#64748b" />
                     <span>Sans Nopalou :</span>
                   </div>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {comp.autre.map((pt, pIdx) => (
-                      <li key={pIdx} style={{ fontSize: 13.5, color: '#64748b', display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.4 }}>
+                      <li key={pIdx} style={{ fontSize: 13, color: '#64748b', display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.4 }}>
                         <span style={{ color: '#ef4444', fontWeight: 900, marginTop: 1 }}>✕</span>
                         <span>{pt}</span>
                       </li>

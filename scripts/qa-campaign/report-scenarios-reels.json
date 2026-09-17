@@ -1,0 +1,210 @@
+[
+  {
+    "scenarioId": "SCENARIO-01",
+    "step": "1.1",
+    "description": "Recherche catalogue par visiteur anonyme",
+    "status": "PASS",
+    "details": "Produits trouvés: 5",
+    "timestamp": "2026-09-17T01:39:22.988Z"
+  },
+  {
+    "scenarioId": "SCENARIO-01",
+    "step": "1.2",
+    "description": "Consultation fiche produit détaillée",
+    "status": "PASS",
+    "details": "Produit: ASICS KAYANO 14",
+    "timestamp": "2026-09-17T01:39:23.159Z"
+  },
+  {
+    "scenarioId": "SCENARIO-01",
+    "step": "1.3",
+    "description": "Passage commande Express + Enregistrement SQL",
+    "status": "PASS",
+    "details": "Commande ref=CMD-2026-8419",
+    "timestamp": "2026-09-17T01:39:23.568Z"
+  },
+  {
+    "scenarioId": "SCENARIO-02",
+    "step": "2.1",
+    "description": "Inscription particulier vendeur",
+    "status": "PASS",
+    "details": "User ID: 412f7880-0333-483c-8678-4ff50b6a7eea",
+    "timestamp": "2026-09-17T01:39:24.198Z"
+  },
+  {
+    "scenarioId": "SCENARIO-02",
+    "step": "2.2",
+    "description": "Publication annonce + Persistance DB",
+    "status": "PASS",
+    "details": "Annonce id=ee60bf8d-5b9e-4543-9bd1-572745efd852",
+    "timestamp": "2026-09-17T01:39:24.744Z"
+  },
+  {
+    "scenarioId": "SCENARIO-03",
+    "step": "3.1",
+    "description": "Création boutique commerçant",
+    "status": "PASS",
+    "details": "Boutique id=08c814e2-b7a6-46a7-84c6-a328f675efa9",
+    "timestamp": "2026-09-17T01:39:26.242Z"
+  },
+  {
+    "scenarioId": "SCENARIO-03",
+    "step": "3.2",
+    "description": "Ajout article avec stock (20 unités)",
+    "status": "PASS",
+    "details": "Produit id=bf38da2c-6101-45f4-abf3-645462d0285f",
+    "timestamp": "2026-09-17T01:39:26.667Z"
+  },
+  {
+    "scenarioId": "SCENARIO-03",
+    "step": "3.3",
+    "description": "Ouverture session de caisse POS",
+    "status": "PASS",
+    "details": "Session id=bbe9bcfd-8c00-46bf-93bb-22ef4a272c23",
+    "timestamp": "2026-09-17T01:39:27.299Z"
+  },
+  {
+    "scenarioId": "SCENARIO-03",
+    "step": "3.4",
+    "description": "Ventes POS multi-modes + Décrément de stock (20 -> 15)",
+    "status": "PASS",
+    "details": "Stock actuel SQL: 15",
+    "timestamp": "2026-09-17T01:39:28.801Z"
+  },
+  {
+    "scenarioId": "SCENARIO-03",
+    "step": "3.5",
+    "description": "Clôture caisse avec réconciliation parfaite (Écart: 0)",
+    "status": "PASS",
+    "details": "Écart: 0.00",
+    "timestamp": "2026-09-17T01:39:29.216Z"
+  },
+  {
+    "scenarioId": "SCENARIO-04",
+    "step": "4.1",
+    "description": "Création agence immobilière",
+    "status": "PASS",
+    "details": "Slug: agence-teranga-properties-161875",
+    "timestamp": "2026-09-17T01:39:30.385Z"
+  },
+  {
+    "scenarioId": "SCENARIO-04",
+    "step": "4.2",
+    "description": "Publication bien locatif agence",
+    "status": "PASS",
+    "details": "Bien id=e7472257-036d-44c5-90a2-be22fe7cc13a",
+    "timestamp": "2026-09-17T01:39:30.568Z"
+  },
+  {
+    "scenarioId": "SCENARIO-05",
+    "step": "5.1",
+    "description": "Création du bail locatif avec loyer et garantie",
+    "status": "PASS",
+    "details": "Bail id=743ac419-5a6b-465e-bbba-d9c2e76cce07",
+    "timestamp": "2026-09-17T01:39:32.433Z"
+  },
+  {
+    "scenarioId": "SCENARIO-05",
+    "step": "5.2",
+    "description": "Mise à jour automatique statut bien (loué)",
+    "status": "PASS",
+    "details": "Statut: loue",
+    "timestamp": "2026-09-17T01:39:32.509Z"
+  },
+  {
+    "scenarioId": "SCENARIO-06",
+    "step": "6.1",
+    "description": "Ingestion lead public & demande de visite",
+    "status": "PASS",
+    "details": "Lead contactId=5a83e39d-4911-4e49-8387-f1557812cb76",
+    "timestamp": "2026-09-17T01:39:32.909Z"
+  },
+  {
+    "scenarioId": "SCENARIO-06",
+    "step": "6.2",
+    "description": "Prise en charge & confirmation visite CRM",
+    "status": "PASS",
+    "details": "Visite 9c9b6b17-7bcf-4f14-ae48-e38ec1e56352",
+    "timestamp": "2026-09-17T01:39:33.240Z"
+  },
+  {
+    "scenarioId": "SCENARIO-07",
+    "step": "7.1",
+    "description": "Génération des notifications transactionnelles",
+    "status": "PASS",
+    "details": "Dernières notifs: 3",
+    "timestamp": "2026-09-17T01:39:33.323Z"
+  },
+  {
+    "scenarioId": "SCENARIO-08",
+    "step": "8.1",
+    "description": "Recherche multi-critères globale",
+    "status": "PASS",
+    "details": "Réponse 200",
+    "timestamp": "2026-09-17T01:39:34.172Z"
+  },
+  {
+    "scenarioId": "SCENARIO-08",
+    "step": "8.2",
+    "description": "Recherche avec tentative d'injection SQL/XSS",
+    "status": "PASS",
+    "details": "Filtré et sécurisé sans crash",
+    "timestamp": "2026-09-17T01:39:37.182Z"
+  },
+  {
+    "scenarioId": "SCENARIO-09",
+    "step": "9.1",
+    "description": "Compte unique gérant simultanément Boutique et Agence",
+    "status": "PASS",
+    "details": "Boutique: true, Agence: true",
+    "timestamp": "2026-09-17T01:39:39.824Z"
+  },
+  {
+    "scenarioId": "SCENARIO-09",
+    "step": "9.2",
+    "description": "Lecture profil unifié et tokens de session",
+    "status": "PASS",
+    "details": "Profil synchronisé",
+    "timestamp": "2026-09-17T01:39:39.903Z"
+  },
+  {
+    "scenarioId": "SCENARIO-10",
+    "step": "10.1",
+    "description": "Blocage tentative usurpation boutique (403/404)",
+    "status": "PASS",
+    "details": "Code reçu: 404",
+    "timestamp": "2026-09-17T01:39:40.100Z"
+  },
+  {
+    "scenarioId": "SCENARIO-10",
+    "step": "10.2",
+    "description": "Blocage tentative usurpation bien immobilier (403)",
+    "status": "PASS",
+    "details": "Code reçu: 403",
+    "timestamp": "2026-09-17T01:39:40.225Z"
+  },
+  {
+    "scenarioId": "SCENARIO-11",
+    "step": "11.1",
+    "description": "Disponibilité API & Service Health (Latence < 200ms)",
+    "status": "PASS",
+    "details": "Statut: ok",
+    "timestamp": "2026-09-17T01:39:40.411Z"
+  },
+  {
+    "scenarioId": "SCENARIO-12",
+    "step": "12.1",
+    "description": "Rejet immédiat d'un jeton altéré ou expiré (401)",
+    "status": "PASS",
+    "details": "Code reçu: 401",
+    "timestamp": "2026-09-17T01:39:40.426Z"
+  },
+  {
+    "scenarioId": "SCENARIO-12",
+    "step": "12.2",
+    "description": "Rejet requête protégée sans token (401)",
+    "status": "PASS",
+    "details": "Code reçu: 401",
+    "timestamp": "2026-09-17T01:39:40.431Z"
+  }
+]

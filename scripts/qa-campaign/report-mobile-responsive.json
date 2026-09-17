@@ -1,0 +1,202 @@
+{
+  "testedAt": "2026-09-17T01:41:06.241Z",
+  "viewportsTested": 9,
+  "pagesTested": 9,
+  "totalChecks": 81,
+  "passedChecks": 80,
+  "failedChecks": 0,
+  "manifestCheck": {
+    "status": "PASS",
+    "details": {
+      "id": "/",
+      "name": "Nopalou — Plateforme de Commerce Digital au Sénégal",
+      "short_name": "Nopalou",
+      "version": "17",
+      "description": "Plateforme de commerce digital au Sénégal : comparez les offres, achetez auprès de boutiques vérifiées et gérez votre commerce avec caisse POS tactile.",
+      "start_url": "/",
+      "scope": "/",
+      "display": "standalone",
+      "display_override": [
+        "window-controls-overlay",
+        "standalone",
+        "minimal-ui"
+      ],
+      "orientation": "any",
+      "background_color": "#FFFFFF",
+      "theme_color": "#C75B00",
+      "lang": "fr",
+      "dir": "ltr",
+      "categories": [
+        "shopping",
+        "finance",
+        "business",
+        "utilities"
+      ],
+      "prefer_related_applications": false,
+      "launch_handler": {
+        "client_mode": [
+          "focus-existing",
+          "auto"
+        ]
+      },
+      "icons": [
+        {
+          "src": "/icons/icon-1024.png?v=17",
+          "sizes": "1024x1024",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/icons/icon-512.png?v=17",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/icons/icon-192.png?v=17",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "/icons/icon-512.svg?v=17",
+          "sizes": "any",
+          "type": "image/svg+xml",
+          "purpose": "any"
+        }
+      ],
+      "screenshots": [
+        {
+          "src": "/screenshots/desktop-1.png",
+          "sizes": "1280x720",
+          "type": "image/png",
+          "form_factor": "wide",
+          "label": "Nopalou — Recherche et Comparatif d'Offres à Dakar (Desktop)"
+        },
+        {
+          "src": "/screenshots/mobile-1.png",
+          "sizes": "750x1334",
+          "type": "image/png",
+          "form_factor": "narrow",
+          "label": "Nopalou — Recherche et Caisse POS sur Smartphone (Mobile)"
+        }
+      ],
+      "shortcuts": [
+        {
+          "name": "Caisse Tactile POS",
+          "short_name": "Caisse POS",
+          "url": "/boutique/caisse",
+          "description": "Accéder directement à la caisse tactile du magasin",
+          "icons": [
+            {
+              "src": "/icons/icon-192.png?v=17",
+              "sizes": "192x192"
+            }
+          ]
+        },
+        {
+          "name": "Déposer une annonce",
+          "short_name": "Déposer",
+          "url": "/deposer-annonce",
+          "description": "Publier une nouvelle offre de vente",
+          "icons": [
+            {
+              "src": "/icons/icon-192.png?v=17",
+              "sizes": "192x192"
+            }
+          ]
+        },
+        {
+          "name": "Mes favoris",
+          "short_name": "Favoris",
+          "url": "/favoris",
+          "description": "Consulter les articles et prix sauvegardés",
+          "icons": [
+            {
+              "src": "/icons/icon-192.png?v=17",
+              "sizes": "192x192"
+            }
+          ]
+        },
+        {
+          "name": "Assistant WhatsApp",
+          "short_name": "WhatsApp",
+          "url": "/assistant-whatsapp",
+          "description": "Ouvrir l'assistant shopping et commandes WhatsApp",
+          "icons": [
+            {
+              "src": "/icons/icon-192.png?v=17",
+              "sizes": "192x192"
+            }
+          ]
+        }
+      ],
+      "share_target": {
+        "action": "/recherche",
+        "method": "GET",
+        "enctype": "application/x-www-form-urlencoded",
+        "params": {
+          "title": "title",
+          "text": "q",
+          "url": "url"
+        }
+      },
+      "file_handlers": [
+        {
+          "action": "/boutique/caisse",
+          "name": "Importer Catalogue ou Facture Nopalou",
+          "accept": {
+            "text/csv": [
+              ".csv"
+            ],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+              ".xlsx"
+            ]
+          },
+          "icons": [
+            {
+              "src": "/icons/icon-192.png",
+              "sizes": "192x192"
+            }
+          ]
+        }
+      ],
+      "protocol_handlers": [
+        {
+          "protocol": "web+nopalou",
+          "url": "/recherche?q=%s"
+        }
+      ],
+      "edge_side_panel": {
+        "preferred_width": 440
+      },
+      "widgets": [
+        {
+          "name": "Bons Plans Nopalou",
+          "description": "Suivez les meilleures réductions et comparatifs de prix en direct à Dakar",
+          "tag": "nopalou-bons-plans",
+          "template": "widget-template",
+          "ms_ac_template": "/widget.json",
+          "data": "/api/widgets/bons-plans",
+          "type": "application/json",
+          "screenshots": [
+            {
+              "src": "/icons/icon-512.png",
+              "sizes": "512x512",
+              "label": "Bons Plans Nopalou"
+            }
+          ],
+          "icons": [
+            {
+              "src": "/icons/icon-192.png",
+              "sizes": "192x192"
+            }
+          ],
+          "auth": false,
+          "update": 3600
+        }
+      ]
+    }
+  },
+  "anomalies": []
+}

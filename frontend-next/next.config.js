@@ -46,6 +46,11 @@ const nextConfig = {
         destination: '/boutique?tab=commandes',
         permanent: false,
       },
+      {
+        source: '/b/:slug/produits/:produitId',
+        destination: '/boutiques/:slug/produits/:produitId',
+        permanent: true,
+      },
     ]
   },
 

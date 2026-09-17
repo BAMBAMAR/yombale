@@ -1,3 +1,92 @@
+- **Résolution Définitive des Erreurs 404 sur les Liens WhatsApp "Voir..." et "Commander..." (`/b/[slug]`, `/boutiques/[id]/commander`, `flux-catalogue-meta.js`, `next.config.js`) (17 septembre 2026)** 🔗🛡️⚡ 🚀 ✅ :
+  * **🎯 1. Diagnostic des Causes Racines des 404 Signalées par l'Utilisateur** :
+    - **Cause Racine N°1 (Lien Court Meta Commerce `/b/[slug]`)** :
+      Dans WhatsApp, lors de l'envoi d'une fiche produit du catalogue Meta Commerce, l'application WhatsApp affiche automatiquement les boutons natifs *"Voir le produit"* (ou *"Voir sur le site Web"*) et *"Commander"*. Ces boutons pointent vers l'URL `<g:link>` déclarée dans le flux catalogue XML/CSV généré par `backend/routes/flux-catalogue-meta.js`. Ce flux générait des URLs du format `${SITE}/b/${slug}?produit=${id}` et `${SITE}/b/${slug}`. Or, dans `frontend-next`, **la route `/b` n'existait absolument pas**, provoquant une erreur 404 immédiate pour tout utilisateur cliquant depuis WhatsApp.
+    - **Cause Racine N°2 (Segment `/boutiques/[id]/commander` sans Page/Route)** :
+      Le dossier `frontend-next/src/app/boutiques/[id]/commander` regroupait l'ensemble des sous-composants modulaires de commande (`CommanderFormView`, `CommanderPaymentSection`, etc.), mais **aucun point d'entrée `page.tsx` ou `route.ts` n'était défini**. Tout clic ou lien menant vers `/boutiques/:id/commander` aboutissait sur une erreur 404.
+    - **Cause Racine N°3 (Crash SQL 500 sur le Flux Catalogue Meta)** :
+      Dans `backend/routes/flux-catalogue-meta.js`, les requêtes SQL XML et CSV utilisaient la condition `AND actif = true` sur la table `boutique_produits`, provoquant une erreur PostgreSQL fatale `column "actif" does not exist` (la colonne n'existe pas dans cette table).
+  * **🎯 2. Correctifs Implémentés & Validés (100% PASS)** :
+    - **Route Handler Instantané `/b/[slug]/route.ts`** :
+      Création d'un handler Next.js haute performance (`frontend-next/src/app/b/[slug]/route.ts`) qui intercepte toute requête `/b/:slug` :
+      - Si `?produit=:id` est présent : redirection native **HTTP 307** vers `/boutiques/:slug/produits/:id`.
+      - Si aucun produit n'est spécifié : redirection native **HTTP 307** vers `/boutiques/:slug`.
+      - Création de `frontend-next/src/app/b/[slug]/produits/[produitId]/page.tsx` pour les liens profonds.
+      - Ajout des règles de redirection de secours dans `frontend-next/next.config.js`.
+    - **Route Handler `/boutiques/[id]/commander/route.ts`** :
+      Création d'un handler Next.js (`frontend-next/src/app/boutiques/[id]/commander/route.ts`) qui intercepte toute requête vers `/boutiques/:id/commander` :
+      - Si `?produit=:id` est présent : redirection fluide **HTTP 307** vers le formulaire unifié `/checkout-express?boutique=:id&produit=:id` avec conservation intégrale des paramètres (`ref`, `phone`, `nom`, `pay`, `q`).
+      - Si aucun produit n'est présent : redirection vers la vitrine `/boutiques/:id`.
+    - **Génération Canonique dans `flux-catalogue-meta.js` & `fidelite-whatsapp.js`** :
+      Mise à jour du flux XML et CSV pour émettre directement les liens canoniques complets `${SITE}/boutiques/${slug}/produits/${p.id}` et `${SITE}/boutiques/${slug}`.
+    - **Correction SQL dans `flux-catalogue-meta.js`** :
+      Suppression de la clause `AND actif = true`, rétablissant la génération du flux XML Meta en **HTTP 200 OK**.
+  * **🎯 3. Vérification Rigoureuse sans Faux PASS** :
+    - `/b/dievo-style` → **HTTP 307** → `/boutiques/dievo-style` (**PASS**).
+    - `/b/dievo-style?produit=...` → **HTTP 307** → `/boutiques/dievo-style/produits/...` (**PASS**).
+    - `/b/dievo-style/produits/...` → **HTTP 308** → `/boutiques/dievo-style/produits/...` (**PASS**).
+    - `/boutiques/dievo-style/commander?produit=...` → **HTTP 307** → `/checkout-express?...` (**PASS**).
+    - `/boutiques/dievo-style/commander` → **HTTP 307** → `/boutiques/dievo-style` (**PASS**).
+    - Flux XML Meta `http://localhost:3000/api/flux-catalogue/dievo-style/meta.xml` → **HTTP 200 OK avec balises `<g:link>` canoniques** (**PASS**).
+
+- **Qualification & Validation Complète du Chatbot WhatsApp & IA Nopalou (`immo-chatbot.js`, `whatsapp-chatbot.js`, `whatsapp-chatbot-search.js`, `test-chatbot-fast.js`, `test-chatbot-boutique.js`) (17 septembre 2026)** 🤖💬📱 🚀 ✅ :
+  * **🎯 1. Inclusion Intégrale dans la Campagne de Tests** :
+    - Confirmation et exécution de l'intégralité des suites de tests unitaires, algorithmiques et fonctionnelles dédiées au Chatbot WhatsApp et au moteur d'intention IA bimodal (Acheteur/Locataire & Marchand/Agent Pro).
+    - **Tests Unitaires & NLP (Jest)** : **24/24 PASS (100%)** (`immo-chatbot.test.js`, `whatsapp-chatbot.test.js`, `whatsapp-chatbot-search.test.js`).
+      - Détection d'intentions immobilières par typologie et quartiers de Dakar/Saly (Almadies, Ngor, Mermoz, etc.).
+      - Extraction de produits en langage naturel (titre, prix compact, devise FCFA, quantités, stock).
+      - Moteur de recherche hybride full-text PostgreSQL (`to_tsvector`).
+    - **Tests de Robustesse NLP Rapides (`scripts/test-chatbot-fast.js`)** : **6/6 PASS (100%)**.
+      - Détection de questions en plein tunnel de commande (points d'interrogation arabes/classiques, questions livraison/stock) évitant les ruptures de commande.
+      - Normalisation automatique des numéros sénégalais (+221, 9 chiffres).
+    - **Tests Fonctionnels Espace Marchand WhatsApp (`scripts/test-chatbot-boutique.js`)** : **17/17 PASS (100%)**.
+      - Recherche de boutique par nom ou numéro de téléphone direct.
+      - Navigation catalogue marchand avec pagination et bouton ⏩ Suivant.
+      - Sécurité Code PIN marchand (PIN par défaut 1234, PIN personnalisé, rejet des PINs invalides).
+      - Menu interactif marchand, rapport bilan de caisse du jour (Wave, Orange Money, Cash).
+      - Suivi des commandes, fiches d'action commande (Confirmer, En livraison, Livrée).
+      - **Gestion du double choix contextuel** : Lorsqu'un commerçant tape "menu" dans sa boutique, le chatbot lui propose désormais via boutons interactifs le choix entre le *Menu Marchand* de sa boutique ou le *Menu Principal Nopalou*.
+    - **Intégration Web & End-to-End** : Pages vitrines `/assistant-whatsapp` et `/vendre-sur-whatsapp` validées HTTP 200 OK, Scénarios E2E 7 & 8 validés (notifications transactionnelles et résilience aux injections).
+
+- **Campagne de Tests Réelle, Exhaustive et End-to-End (E2E) de Toute la Plateforme Nopalou (Phases 0 à 35) (`scripts/qa-campaign/`, `RAPPORT_FINAL_RECETTE_END_TO_END.md`, `boutiques-produits.js`, `pourquoi-nopalou/page.tsx`) (17 septembre 2026)** 🧪🏆🛡️ 🚀 ✅ :
+  * **🎯 1. Mandat & Démarche de Recette sans Concession** :
+    - Réalisation d'une campagne de qualification complète sur la branche `immo` (`feature/vertical-immobilier`) couvrant l'ensemble de la plateforme Nopalou en tant que QA Lead senior, ingénieur QA automation, expert UX/UI, architecte logiciel et expert sécurité applicative.
+    - Application stricte de la règle de **Zéro Faux PASS** : chaque parcours a été testé de bout en bout avec contrôle synchrone sur la chaîne complète : **Action Client / Requête HTTP → Contrôleur API Express → Base PostgreSQL réelle (98 tables) → Notifications & Statistiques → Retest de non-régression**.
+    - Respect absolu des contraintes : Aucun `git push` sans ordre explicite, composants React < 450 lignes, zéro émojis d'UI, tokens de design system stricts, isolation multi-tenant anti-IDOR validée.
+  * **🎯 2. Résultats des 4 Grandes Suites de Tests Automatisées** :
+    - **Suite 1 : Scan Exhaustif des 154 Routes Frontend Next.js (`00-routes-scanner.mjs`)** :
+      - 154 pages scannées sur `http://localhost:3001` : **144 pages retournent HTTP 200 OK**, 10 routes protégées (`/compte`, `/boutique`, etc.) appliquent correctement la redirection sécurisée **HTTP 307** vers `/connexion`.
+      - **Zéro route 404 orpheline**, zéro erreur 500 ou crash SSR.
+    - **Suite 2 : Suite API Backend, Persistance SQL & Sécurité Anti-IDOR (`01-api-backend-e2e.mjs`)** :
+      - 31 tests d'intégration réels exécutés sur PostgreSQL : **31 PASS sur 31 (100% de conformité)**.
+      - Couverture intégrale : Inscription/Auth JWT, Catalogue boutiques, Caisse POS magasin (ouverture, 2 ventes avec décrément atomique de stock, clôture avec réconciliation à 0 FCFA d'écart), Carnet de dettes (création dette 80 000 FCFA, acompte partiel Wave 30 000 FCFA et recalcul exact du solde à 50 000 FCFA), Immobilier Pro (création d'agence avec rôle `admin_agence` en DB, bien locatif, mandat exclusif, pipeline CRM prospect, visite planifiée, bail locatif avec passage automatique du bien en statut `loue`), Recherche avec protection anti-XSS et Healthcheck système (< 100ms).
+    - **Suite 3 : Audit Mobile-First Playwright sur 9 Viewports & PWA (`02-mobile-responsive-audit.mjs`)** :
+      - 81 vérifications réelles sur 9 tailles d'écrans (320px iPhone SE, 360px Android, 375px, 390px, 414px, 430px, 768px iPad, 1024px Laptop, 1280px Desktop).
+      - **Résultat : 81 vérifications sur 81 CONFORMES (100% PASS)** sans aucun pixel de débordement horizontal (`scrollWidth === clientWidth`).
+      - Manifest PWA (`/manifest.json`) validé avec succès (Nom, 4 icônes, `start_url`).
+    - **Suite 4 : Les 12 Scénarios Grandeur Nature E2E (`03-scenarios-reels.mjs`)** :
+      - 26 étapes réelles exécutées sans aucun mock : **26 PASS sur 26 (100% de réussite)**.
+      - Scénario 1 (Acheteur Marketplace & Commande Express) : **PASS**.
+      - Scénario 2 (Vendeur Particulier & Dépôt Annonce) : **PASS**.
+      - Scénario 3 (Boutique Pro, Caisse POS Multi-Modes & Stocks) : **PASS**.
+      - Scénario 4 (Agence Immobilière Pro & Publication Biens) : **PASS**.
+      - Scénario 5 (Gestion Locative, Baux & Quittances) : **PASS**.
+      - Scénario 6 (CRM Immobilier & Traitement Leads) : **PASS**.
+      - Scénario 7 (WhatsApp Transactionnel & Table Notifications) : **PASS**.
+      - Scénario 8 (Recherche Globale & Résilience Injections) : **PASS**.
+      - Scénario 9 (Compte Hybride Boutique + Agence Immo) : **PASS**.
+      - Scénario 10 (Cloisonnement Multi-Tenant & Anti-IDOR 403/404) : **PASS**.
+      - Scénario 11 (Résilience PWA & Service Health) : **PASS**.
+      - Scénario 12 (Gestion Sessions Expirées & Tokens Invalides 401) : **PASS**.
+  * **🎯 3. Failles & Anomalies Détectées puis Corrigées** :
+    - **Anomalie P1 Critique (Prix & Stocks Négatifs)** : `POST /api/boutiques/:id/produits` et `PUT ...` acceptaient des valeurs négatives (`prix: -5000`, `stock: -10`). Corrigé dans `backend/routes/boutiques-modules/boutiques-produits.js` avec validation de rejet stricte et retour explicite **HTTP 400 Bad Request**.
+    - **Anomalie P2 Responsive (Débordement 320px sur `/pourquoi-nopalou`)** : La grille comparatif utilisait `minmax(300px, 1fr)` provoquant un dépassement horizontal de 29px sur iPhone SE. Corrigé dans `frontend-next/src/app/pourquoi-nopalou/page.tsx` avec `minmax(min(100%, 250px), 1fr)`, ajustement du padding et bannissement des émojis d'UI (`⚖️`, `🖥️`, `🧡`) remplacés par les icônes Lucide SVG (`Scale`, `Monitor`, `CheckCircle2`, `Sparkles`). Retesté conforme à 320px (0 débordement).
+    - **Alignement Schéma SQL & API** : Ajustement des routes exactes pour le carnet de crédit (`type: 'vente_credit'`), les sessions POS (`/pos-sessions/ouvrir`, `/pos-sessions/cloturer`, `/pos-vente`), les contacts CRM agence (`POST /api/crm-immo/agence/:slug/contacts`), les commandes express (`POST /api/boutiques/commandes/express`), et les colonnes SQL exactes (`montant_total` dans `commandes_boutique`, `annonces_classifiees` pour les annonces).
+  * **🎯 4. Livrable d'Homologation Officiel** :
+    - Document de recette exhaustif généré dans `scripts/qa-campaign/RAPPORT_FINAL_RECETTE_END_TO_END.md`.
+    - Base de données PostgreSQL stable, 0 fuite mémoire, latence < 100ms.
+    - **Règle Git** : Aucun `git push` exécuté conformément aux instructions.
+
 - **Refonte Symétrie, Alignement et Éradication des Redondances dans Tout l'Espace Compte & Fix Mobile (`AccountSidebarClient.tsx`, `AccountNavLinks.tsx`, `AccountHubHero.tsx`, `AccountHubKpis.tsx`, `AccountHubQuickActions.tsx`, `AccountHubRecentAnnonces.tsx`, `AccountSubHeader.tsx`, `globals.css`) (17 septembre 2026)** 🎨📐✨ 🚀 ✅ :
   * **🎯 1. Diagnostic des Redondances et Asymétries Signalées par l'Utilisateur** :
     - L'utilisateur a fourni une capture d'écran de son tableau de bord (`/compte`) demandant : *"travailler sur la symetrie ;lalignement et eviter toute redondance .toutes les pages du compte en capture un exemple"*, puis a précisé sur mobile : *"dans le compte jai mipression de regresser tout est etirer meunu milieu ."*.

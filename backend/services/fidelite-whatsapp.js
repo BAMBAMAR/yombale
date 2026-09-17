@@ -4,6 +4,7 @@
 
 const { pool } = require('../models/db');
 const { sendWhatsAppText, normalisePhone, estDesinscrit } = require('./whatsapp');
+const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 
 /**
  * Génère une chaîne aléatoire courte pour le code promo
@@ -115,7 +116,7 @@ Pour vous remercier, nous vous offrons une remise immédiate exclusive de *-10%*
 
 🏷️ Votre Code Promo : *${codePromo}*
 ⏳ Valable pendant 30 jours sur notre boutique :
-🔗 https://nopalou.com/b/${boutique.slug || boutique.id}
+🔗 ${SITE}/boutiques/${boutique.slug || boutique.id}
 
 Nopalou vous remercie de votre confiance ! 🌟`;
 

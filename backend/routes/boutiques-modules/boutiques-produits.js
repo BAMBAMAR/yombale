@@ -122,10 +122,22 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     if (!nom?.trim()) return res.status(400).json({ error: 'Nom requis' });
 
     const safePrix = (prix !== undefined && prix !== null && String(prix).trim() !== '' && !isNaN(Number(prix))) ? Number(prix) : null;
+    if (safePrix !== null && safePrix < 0) {
+      return res.status(400).json({ error: 'Le prix du produit ne peut pas être négatif' });
+    }
     const safePrixBarre = (prix_barre !== undefined && prix_barre !== null && String(prix_barre).trim() !== '' && !isNaN(Number(prix_barre))) ? Number(prix_barre) : null;
+    if (safePrixBarre !== null && safePrixBarre < 0) {
+      return res.status(400).json({ error: 'Le prix barré ne peut pas être négatif' });
+    }
     const safePrixAchat = (prix_achat !== undefined && prix_achat !== null && String(prix_achat).trim() !== '' && !isNaN(Number(prix_achat))) ? Number(prix_achat) : null;
+    if (safePrixAchat !== null && safePrixAchat < 0) {
+      return res.status(400).json({ error: 'Le prix d’achat ne peut pas être négatif' });
+    }
     const rawStock = stock_quantite !== undefined ? stock_quantite : quantite_stock;
     const safeStock = (rawStock !== undefined && rawStock !== null && String(rawStock).trim() !== '' && !isNaN(Number(rawStock))) ? Number(rawStock) : null;
+    if (safeStock !== null && safeStock < 0) {
+      return res.status(400).json({ error: 'La quantité en stock ne peut pas être négative' });
+    }
     const finalEnStock = safeStock !== null ? (safeStock > 0) : (en_stock !== 'false');
 
     let images = [];
@@ -259,13 +271,25 @@ router.put('/:id/produits/:prodId', verifierToken, param('id').isUUID(), param('
     const codeBarreVal = rawCodeBarre !== undefined ? (rawCodeBarre && typeof rawCodeBarre === 'string' && rawCodeBarre.trim() ? rawCodeBarre.trim() : null) : existing.rows[0].code_barre;
 
     const safePrix = (prix !== undefined && prix !== null && String(prix).trim() !== '' && !isNaN(Number(prix))) ? Number(prix) : (prix === '' ? null : existing.rows[0].prix);
+    if (safePrix !== null && safePrix !== undefined && Number(safePrix) < 0) {
+      return res.status(400).json({ error: 'Le prix du produit ne peut pas être négatif' });
+    }
     const safePrixBarre = (prix_barre !== undefined && prix_barre !== null && String(prix_barre).trim() !== '' && !isNaN(Number(prix_barre))) ? Number(prix_barre) : (prix_barre === '' ? null : existing.rows[0].prix_barre);
+    if (safePrixBarre !== null && safePrixBarre !== undefined && Number(safePrixBarre) < 0) {
+      return res.status(400).json({ error: 'Le prix barré ne peut pas être négatif' });
+    }
     const safePrixAchat = (prix_achat !== undefined && prix_achat !== null && String(prix_achat).trim() !== '' && !isNaN(Number(prix_achat))) ? Number(prix_achat) : (prix_achat === '' ? null : existing.rows[0].prix_achat);
+    if (safePrixAchat !== null && safePrixAchat !== undefined && Number(safePrixAchat) < 0) {
+      return res.status(400).json({ error: 'Le prix d’achat ne peut pas être négatif' });
+    }
 
     const rawStock = stock_quantite !== undefined ? stock_quantite : quantite_stock;
     const safeStock = (rawStock !== undefined && rawStock !== null && String(rawStock).trim() !== '' && !isNaN(Number(rawStock)))
       ? Number(rawStock)
       : (rawStock === '' ? null : existing.rows[0].stock_quantite);
+    if (safeStock !== null && safeStock !== undefined && Number(safeStock) < 0) {
+      return res.status(400).json({ error: 'La quantité en stock ne peut pas être négative' });
+    }
     const finalEnStock = safeStock !== null ? (safeStock > 0) : (en_stock !== 'false');
 
     const hasVariants = (skusArray && skusArray.length > 0) || (variantesJson.length > 0 && variantesJson.some(v => v.valeurs && v.valeurs.length > 0));

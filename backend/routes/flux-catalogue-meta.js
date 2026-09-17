@@ -39,9 +39,8 @@ router.get(['/:slug/meta.xml', '/:slug/catalog.xml', '/:slug/google.xml'], async
     const prodRes = await pool.query(
       `SELECT id, nom, description, prix, prix_barre, images, en_stock, stock_quantite, categorie, created_at
        FROM boutique_produits
-       WHERE boutique_id = $1 AND actif = true
-       ORDER BY created_at DESC
-       LIMIT 500`,
+       WHERE boutique_id = $1
+       ORDER BY created_at DESC`,
       [bq.id]
     );
 
@@ -55,7 +54,7 @@ router.get(['/:slug/meta.xml', '/:slug/catalog.xml', '/:slug/google.xml'], async
       const enStock = p.en_stock !== false && (p.stock_quantite === null || Number(p.stock_quantite) > 0);
       const dispo = enStock ? 'in stock' : 'out of stock';
       const prixXOF = `${Math.round(Number(p.prix || 0))} XOF`;
-      const lienProduit = `${SITE}/b/${bq.slug || bq.id}?produit=${p.id}`;
+      const lienProduit = `${SITE}/boutiques/${bq.slug || bq.id}/produits/${p.id}`;
 
       let addImgsTag = '';
       for (const img of additionalImages) {
@@ -81,7 +80,7 @@ router.get(['/:slug/meta.xml', '/:slug/catalog.xml', '/:slug/google.xml'], async
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>${echapperXML(bq.nom)} — Catalogue Nopalou</title>
-    <link>${SITE}/b/${echapperXML(bq.slug || bq.id)}</link>
+    <link>${SITE}/boutiques/${echapperXML(bq.slug || bq.id)}</link>
     <description>Catalogue officiel de produits en vente chez ${echapperXML(bq.nom)}</description>
 ${itemsXML}
   </channel>
@@ -116,7 +115,7 @@ router.get('/:slug/catalogue.csv', async (req, res) => {
     const prodRes = await pool.query(
       `SELECT id, nom, description, prix, images, en_stock, stock_quantite, categorie
        FROM boutique_produits
-       WHERE boutique_id = $1 AND actif = true
+       WHERE boutique_id = $1
        ORDER BY created_at DESC`,
       [bq.id]
     );
@@ -131,7 +130,7 @@ router.get('/:slug/catalogue.csv', async (req, res) => {
       const enStock = p.en_stock !== false && (p.stock_quantite === null || Number(p.stock_quantite) > 0);
       const dispo = enStock ? 'in stock' : 'out of stock';
       const prix = `${Math.round(Number(p.prix || 0))} XOF`;
-      const lien = `${SITE}/b/${bq.slug || bq.id}?produit=${p.id}`;
+      const lien = `${SITE}/boutiques/${bq.slug || bq.id}/produits/${p.id}`;
 
       csv += [
         escapeCsv(p.id),

@@ -1,0 +1,943 @@
+{
+  "pass": [
+    {
+      "route": "/",
+      "url": "/",
+      "status": 200,
+      "duration": 129
+    },
+    {
+      "route": "/admin",
+      "url": "/admin",
+      "status": 200,
+      "duration": 2577
+    },
+    {
+      "route": "/admin/abonnements",
+      "url": "/admin/abonnements",
+      "status": 200,
+      "duration": 1418
+    },
+    {
+      "route": "/admin/affiliates/tracking",
+      "url": "/admin/affiliates/tracking",
+      "status": 200,
+      "duration": 930
+    },
+    {
+      "route": "/admin/affiliation",
+      "url": "/admin/affiliation",
+      "status": 200,
+      "duration": 890
+    },
+    {
+      "route": "/admin/annonces",
+      "url": "/admin/annonces",
+      "status": 200,
+      "duration": 1006
+    },
+    {
+      "route": "/admin/apporteurs",
+      "url": "/admin/apporteurs",
+      "status": 200,
+      "duration": 980
+    },
+    {
+      "route": "/admin/audit-logs",
+      "url": "/admin/audit-logs",
+      "status": 200,
+      "duration": 2050
+    },
+    {
+      "route": "/admin/boutiques",
+      "url": "/admin/boutiques",
+      "status": 200,
+      "duration": 1862
+    },
+    {
+      "route": "/admin/categories",
+      "url": "/admin/categories",
+      "status": 200,
+      "duration": 1356
+    },
+    {
+      "route": "/admin/commandes",
+      "url": "/admin/commandes",
+      "status": 200,
+      "duration": 1192
+    },
+    {
+      "route": "/admin/communication",
+      "url": "/admin/communication",
+      "status": 200,
+      "duration": 1304
+    },
+    {
+      "route": "/admin/compte",
+      "url": "/admin/compte",
+      "status": 200,
+      "duration": 1213
+    },
+    {
+      "route": "/admin/comptes",
+      "url": "/admin/comptes",
+      "status": 200,
+      "duration": 1183
+    },
+    {
+      "route": "/admin/comptes/[id]",
+      "url": "/admin/comptes/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 1725
+    },
+    {
+      "route": "/admin/developer",
+      "url": "/admin/developer",
+      "status": 200,
+      "duration": 1237
+    },
+    {
+      "route": "/admin/feature-flags",
+      "url": "/admin/feature-flags",
+      "status": 200,
+      "duration": 1335
+    },
+    {
+      "route": "/admin/force-de-vente",
+      "url": "/admin/force-de-vente",
+      "status": 200,
+      "duration": 1930
+    },
+    {
+      "route": "/admin/immo",
+      "url": "/admin/immo",
+      "status": 200,
+      "duration": 1453
+    },
+    {
+      "route": "/admin/integrations",
+      "url": "/admin/integrations",
+      "status": 200,
+      "duration": 1437
+    },
+    {
+      "route": "/admin/login",
+      "url": "/admin/login",
+      "status": 200,
+      "duration": 1430
+    },
+    {
+      "route": "/admin/migration",
+      "url": "/admin/migration",
+      "status": 200,
+      "duration": 1519
+    },
+    {
+      "route": "/admin/paiements-manuels",
+      "url": "/admin/paiements-manuels",
+      "status": 200,
+      "duration": 1521
+    },
+    {
+      "route": "/admin/partenaires",
+      "url": "/admin/partenaires",
+      "status": 200,
+      "duration": 1627
+    },
+    {
+      "route": "/admin/plans",
+      "url": "/admin/plans",
+      "status": 200,
+      "duration": 1649
+    },
+    {
+      "route": "/admin/prospection",
+      "url": "/admin/prospection",
+      "status": 200,
+      "duration": 4900
+    },
+    {
+      "route": "/admin/prospection/intelligence",
+      "url": "/admin/prospection/intelligence",
+      "status": 200,
+      "duration": 1844
+    },
+    {
+      "route": "/admin/publications",
+      "url": "/admin/publications",
+      "status": 200,
+      "duration": 1765
+    },
+    {
+      "route": "/admin/qualite",
+      "url": "/admin/qualite",
+      "status": 200,
+      "duration": 1715
+    },
+    {
+      "route": "/admin/revenus",
+      "url": "/admin/revenus",
+      "status": 200,
+      "duration": 1773
+    },
+    {
+      "route": "/admin/reversements",
+      "url": "/admin/reversements",
+      "status": 200,
+      "duration": 1950
+    },
+    {
+      "route": "/admin/sante-donnees",
+      "url": "/admin/sante-donnees",
+      "status": 200,
+      "duration": 2333
+    },
+    {
+      "route": "/admin/seo",
+      "url": "/admin/seo",
+      "status": 200,
+      "duration": 2084
+    },
+    {
+      "route": "/admin/system",
+      "url": "/admin/system",
+      "status": 200,
+      "duration": 1929
+    },
+    {
+      "route": "/admin/tarifs",
+      "url": "/admin/tarifs",
+      "status": 200,
+      "duration": 1935
+    },
+    {
+      "route": "/admin/telecom",
+      "url": "/admin/telecom",
+      "status": 200,
+      "duration": 2065
+    },
+    {
+      "route": "/admin/whatsapp",
+      "url": "/admin/whatsapp",
+      "status": 200,
+      "duration": 2160
+    },
+    {
+      "route": "/admin/whatsapp/templates",
+      "url": "/admin/whatsapp/templates",
+      "status": 200,
+      "duration": 2242
+    },
+    {
+      "route": "/agence",
+      "url": "/agence",
+      "status": 200,
+      "duration": 5258
+    },
+    {
+      "route": "/agence/[slug]",
+      "url": "/agence/amar-immo",
+      "status": 200,
+      "duration": 191
+    },
+    {
+      "route": "/agence/[slug]/abonnement",
+      "url": "/agence/amar-immo/abonnement",
+      "status": 200,
+      "duration": 10400
+    },
+    {
+      "route": "/agence/[slug]/bailleurs",
+      "url": "/agence/amar-immo/bailleurs",
+      "status": 200,
+      "duration": 5555
+    },
+    {
+      "route": "/agence/[slug]/biens",
+      "url": "/agence/amar-immo/biens",
+      "status": 200,
+      "duration": 2891
+    },
+    {
+      "route": "/agence/[slug]/biens/[bienId]",
+      "url": "/agence/amar-immo/biens/b0000000-0000-0000-0000-000000000001",
+      "status": 200,
+      "duration": 9865
+    },
+    {
+      "route": "/agence/[slug]/biens/nouveau",
+      "url": "/agence/amar-immo/biens/nouveau",
+      "status": 200,
+      "duration": 3616
+    },
+    {
+      "route": "/agence/[slug]/commissions",
+      "url": "/agence/amar-immo/commissions",
+      "status": 200,
+      "duration": 5415
+    },
+    {
+      "route": "/agence/[slug]/compta",
+      "url": "/agence/amar-immo/compta",
+      "status": 200,
+      "duration": 7146
+    },
+    {
+      "route": "/agence/[slug]/credits",
+      "url": "/agence/amar-immo/credits",
+      "status": 200,
+      "duration": 3708
+    },
+    {
+      "route": "/agence/[slug]/equipe",
+      "url": "/agence/amar-immo/equipe",
+      "status": 200,
+      "duration": 2850
+    },
+    {
+      "route": "/agence/[slug]/factures",
+      "url": "/agence/amar-immo/factures",
+      "status": 200,
+      "duration": 1842
+    },
+    {
+      "route": "/agence/[slug]/fiscalite",
+      "url": "/agence/amar-immo/fiscalite",
+      "status": 200,
+      "duration": 2485
+    },
+    {
+      "route": "/agence/[slug]/journal",
+      "url": "/agence/amar-immo/journal",
+      "status": 200,
+      "duration": 1839
+    },
+    {
+      "route": "/agence/[slug]/locataires",
+      "url": "/agence/amar-immo/locataires",
+      "status": 200,
+      "duration": 1797
+    },
+    {
+      "route": "/agence/[slug]/locatif",
+      "url": "/agence/amar-immo/locatif",
+      "status": 200,
+      "duration": 4547
+    },
+    {
+      "route": "/agence/[slug]/maintenance",
+      "url": "/agence/amar-immo/maintenance",
+      "status": 200,
+      "duration": 1862
+    },
+    {
+      "route": "/agence/[slug]/mandats",
+      "url": "/agence/amar-immo/mandats",
+      "status": 200,
+      "duration": 2828
+    },
+    {
+      "route": "/agence/[slug]/parametres",
+      "url": "/agence/amar-immo/parametres",
+      "status": 200,
+      "duration": 2789
+    },
+    {
+      "route": "/agence/[slug]/prospects",
+      "url": "/agence/amar-immo/prospects",
+      "status": 200,
+      "duration": 4589
+    },
+    {
+      "route": "/agence/[slug]/prospects/[id]",
+      "url": "/agence/amar-immo/prospects/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 2207
+    },
+    {
+      "route": "/agence/[slug]/social",
+      "url": "/agence/amar-immo/social",
+      "status": 200,
+      "duration": 3172
+    },
+    {
+      "route": "/agence/[slug]/studio",
+      "url": "/agence/amar-immo/studio",
+      "status": 200,
+      "duration": 4378
+    },
+    {
+      "route": "/agence/[slug]/transactions",
+      "url": "/agence/amar-immo/transactions",
+      "status": 200,
+      "duration": 2320
+    },
+    {
+      "route": "/agence/[slug]/visites",
+      "url": "/agence/amar-immo/visites",
+      "status": 200,
+      "duration": 3960
+    },
+    {
+      "route": "/agence/[slug]/vitrine",
+      "url": "/agence/amar-immo/vitrine",
+      "status": 200,
+      "duration": 4540
+    },
+    {
+      "route": "/agences",
+      "url": "/agences",
+      "status": 200,
+      "duration": 3041
+    },
+    {
+      "route": "/agences/[slug]",
+      "url": "/agences/amar-immo",
+      "status": 200,
+      "duration": 2548
+    },
+    {
+      "route": "/aide",
+      "url": "/aide",
+      "status": 200,
+      "duration": 1802
+    },
+    {
+      "route": "/alternative-shopify-senegal",
+      "url": "/alternative-shopify-senegal",
+      "status": 200,
+      "duration": 1781
+    },
+    {
+      "route": "/annonces",
+      "url": "/annonces",
+      "status": 200,
+      "duration": 2762
+    },
+    {
+      "route": "/annonces/[id]",
+      "url": "/annonces/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 3232
+    },
+    {
+      "route": "/assistant-whatsapp",
+      "url": "/assistant-whatsapp",
+      "status": 200,
+      "duration": 10555
+    },
+    {
+      "route": "/boutique/abonnement",
+      "url": "/boutique/abonnement",
+      "status": 200,
+      "duration": 9741
+    },
+    {
+      "route": "/boutique/analytics",
+      "url": "/boutique/analytics",
+      "status": 200,
+      "duration": 2070
+    },
+    {
+      "route": "/boutique/caisse",
+      "url": "/boutique/caisse",
+      "status": 200,
+      "duration": 4556
+    },
+    {
+      "route": "/boutique/studio",
+      "url": "/boutique/studio",
+      "status": 200,
+      "duration": 2103
+    },
+    {
+      "route": "/boutiques",
+      "url": "/boutiques",
+      "status": 200,
+      "duration": 81
+    },
+    {
+      "route": "/boutiques/[id]",
+      "url": "/boutiques/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 13415
+    },
+    {
+      "route": "/boutiques/[id]/blog",
+      "url": "/boutiques/9f51e682-296f-4f57-ac86-98116487a3ed/blog",
+      "status": 200,
+      "duration": 7595
+    },
+    {
+      "route": "/boutiques/[id]/blog/[slug]",
+      "url": "/boutiques/9f51e682-296f-4f57-ac86-98116487a3ed/blog/amar-immo",
+      "status": 200,
+      "duration": 2703
+    },
+    {
+      "route": "/boutiques/[id]/produits/[produitId]",
+      "url": "/boutiques/9f51e682-296f-4f57-ac86-98116487a3ed/produits/p0000000-0000-0000-0000-000000000001",
+      "status": 200,
+      "duration": 7470
+    },
+    {
+      "route": "/categorie/[slug]",
+      "url": "/categorie/amar-immo",
+      "status": 200,
+      "duration": 1884
+    },
+    {
+      "route": "/categorie/[slug]/[sousCategorie]",
+      "url": "/categorie/amar-immo/telephones-portables",
+      "status": 200,
+      "duration": 1706
+    },
+    {
+      "route": "/cgu",
+      "url": "/cgu",
+      "status": 200,
+      "duration": 1247
+    },
+    {
+      "route": "/checkout-express",
+      "url": "/checkout-express",
+      "status": 200,
+      "duration": 2391
+    },
+    {
+      "route": "/comparaison",
+      "url": "/comparaison",
+      "status": 200,
+      "duration": 2345
+    },
+    {
+      "route": "/comparer/[a]/[b]",
+      "url": "/comparer/samsung-s23/iphone-15",
+      "status": 200,
+      "duration": 2788
+    },
+    {
+      "route": "/confidentialite",
+      "url": "/confidentialite",
+      "status": 200,
+      "duration": 1282
+    },
+    {
+      "route": "/connexion",
+      "url": "/connexion",
+      "status": 200,
+      "duration": 3528
+    },
+    {
+      "route": "/creer-boutique",
+      "url": "/creer-boutique",
+      "status": 200,
+      "duration": 3828
+    },
+    {
+      "route": "/creer-boutique-en-ligne",
+      "url": "/creer-boutique-en-ligne",
+      "status": 200,
+      "duration": 4803
+    },
+    {
+      "route": "/demo",
+      "url": "/demo",
+      "status": 200,
+      "duration": 9294
+    },
+    {
+      "route": "/favoris",
+      "url": "/favoris",
+      "status": 200,
+      "duration": 4222
+    },
+    {
+      "route": "/gestion-stock-carnet-dettes",
+      "url": "/gestion-stock-carnet-dettes",
+      "status": 200,
+      "duration": 1838
+    },
+    {
+      "route": "/guide-achat",
+      "url": "/guide-achat",
+      "status": 200,
+      "duration": 1597
+    },
+    {
+      "route": "/guide-creer-boutique",
+      "url": "/guide-creer-boutique",
+      "status": 200,
+      "duration": 1571
+    },
+    {
+      "route": "/guide-emploi",
+      "url": "/guide-emploi",
+      "status": 200,
+      "duration": 10915
+    },
+    {
+      "route": "/guide-forfait",
+      "url": "/guide-forfait",
+      "status": 200,
+      "duration": 5179
+    },
+    {
+      "route": "/guide-immo",
+      "url": "/guide-immo",
+      "status": 200,
+      "duration": 1949
+    },
+    {
+      "route": "/guide-prix",
+      "url": "/guide-prix",
+      "status": 200,
+      "duration": 1959
+    },
+    {
+      "route": "/guide-sourcing-revente",
+      "url": "/guide-sourcing-revente",
+      "status": 200,
+      "duration": 5032
+    },
+    {
+      "route": "/guide-utilisation",
+      "url": "/guide-utilisation",
+      "status": 200,
+      "duration": 8226
+    },
+    {
+      "route": "/immo",
+      "url": "/immo",
+      "status": 200,
+      "duration": 8932
+    },
+    {
+      "route": "/immo/[id]",
+      "url": "/immo/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 6809
+    },
+    {
+      "route": "/immo/comparaison",
+      "url": "/immo/comparaison",
+      "status": 200,
+      "duration": 2106
+    },
+    {
+      "route": "/immo/location-appartement-dakar",
+      "url": "/immo/location-appartement-dakar",
+      "status": 200,
+      "duration": 2018
+    },
+    {
+      "route": "/immo/location-chambre-dakar",
+      "url": "/immo/location-chambre-dakar",
+      "status": 200,
+      "duration": 2578
+    },
+    {
+      "route": "/immo/location-maison-dakar",
+      "url": "/immo/location-maison-dakar",
+      "status": 200,
+      "duration": 3010
+    },
+    {
+      "route": "/immo/location-studio-dakar",
+      "url": "/immo/location-studio-dakar",
+      "status": 200,
+      "duration": 2317
+    },
+    {
+      "route": "/immo/vente-appartement-dakar",
+      "url": "/immo/vente-appartement-dakar",
+      "status": 200,
+      "duration": 2244
+    },
+    {
+      "route": "/immo/vente-maison-dakar",
+      "url": "/immo/vente-maison-dakar",
+      "status": 200,
+      "duration": 2387
+    },
+    {
+      "route": "/immo/vente-terrain-dakar",
+      "url": "/immo/vente-terrain-dakar",
+      "status": 200,
+      "duration": 3320
+    },
+    {
+      "route": "/inscription",
+      "url": "/inscription",
+      "status": 200,
+      "duration": 2272
+    },
+    {
+      "route": "/logiciel-caisse-senegal",
+      "url": "/logiciel-caisse-senegal",
+      "status": 200,
+      "duration": 2354
+    },
+    {
+      "route": "/marchands",
+      "url": "/marchands",
+      "status": 200,
+      "duration": 5810
+    },
+    {
+      "route": "/mentions-legales",
+      "url": "/mentions-legales",
+      "status": 200,
+      "duration": 2253
+    },
+    {
+      "route": "/mes-alertes",
+      "url": "/mes-alertes",
+      "status": 200,
+      "duration": 3618
+    },
+    {
+      "route": "/migration",
+      "url": "/migration",
+      "status": 200,
+      "duration": 2621
+    },
+    {
+      "route": "/mot-de-passe-oublie",
+      "url": "/mot-de-passe-oublie",
+      "status": 200,
+      "duration": 2348
+    },
+    {
+      "route": "/paiement-en-ligne-senegal",
+      "url": "/paiement-en-ligne-senegal",
+      "status": 200,
+      "duration": 3941
+    },
+    {
+      "route": "/paiement/erreur",
+      "url": "/paiement/erreur",
+      "status": 200,
+      "duration": 2679
+    },
+    {
+      "route": "/paiement/succes",
+      "url": "/paiement/succes",
+      "status": 200,
+      "duration": 2687
+    },
+    {
+      "route": "/partenaires",
+      "url": "/partenaires",
+      "status": 200,
+      "duration": 2761
+    },
+    {
+      "route": "/payer-annonce/[id]",
+      "url": "/payer-annonce/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 4772
+    },
+    {
+      "route": "/payer-boost/[id]",
+      "url": "/payer-boost/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 4077
+    },
+    {
+      "route": "/payer-sponsoring-boutique/[id]",
+      "url": "/payer-sponsoring-boutique/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 3986
+    },
+    {
+      "route": "/payer-sponsoring-immo/[id]",
+      "url": "/payer-sponsoring-immo/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 11365
+    },
+    {
+      "route": "/payer-sponsoring-produit/[id]",
+      "url": "/payer-sponsoring-produit/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 2199
+    },
+    {
+      "route": "/pos",
+      "url": "/pos",
+      "status": 200,
+      "duration": 9022
+    },
+    {
+      "route": "/pourquoi-nopalou",
+      "url": "/pourquoi-nopalou",
+      "status": 200,
+      "duration": 1787
+    },
+    {
+      "route": "/produit/[id]",
+      "url": "/produit/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 6854
+    },
+    {
+      "route": "/promo",
+      "url": "/promo",
+      "status": 200,
+      "duration": 1535
+    },
+    {
+      "route": "/recherche",
+      "url": "/recherche",
+      "status": 200,
+      "duration": 1937
+    },
+    {
+      "route": "/retour-paiement",
+      "url": "/retour-paiement",
+      "status": 200,
+      "duration": 3391
+    },
+    {
+      "route": "/suivi-commande",
+      "url": "/suivi-commande",
+      "status": 200,
+      "duration": 5880
+    },
+    {
+      "route": "/tarifs-boutique",
+      "url": "/tarifs-boutique",
+      "status": 200,
+      "duration": 1708
+    },
+    {
+      "route": "/telecom",
+      "url": "/telecom",
+      "status": 200,
+      "duration": 10450
+    },
+    {
+      "route": "/telecom/[id]",
+      "url": "/telecom/9f51e682-296f-4f57-ac86-98116487a3ed",
+      "status": 200,
+      "duration": 13178
+    },
+    {
+      "route": "/telecom/comparaison",
+      "url": "/telecom/comparaison",
+      "status": 200,
+      "duration": 5118
+    },
+    {
+      "route": "/telecom/expresso",
+      "url": "/telecom/expresso",
+      "status": 200,
+      "duration": 11296
+    },
+    {
+      "route": "/telecom/orange",
+      "url": "/telecom/orange",
+      "status": 200,
+      "duration": 1654
+    },
+    {
+      "route": "/telecom/promobile",
+      "url": "/telecom/promobile",
+      "status": 200,
+      "duration": 1663
+    },
+    {
+      "route": "/telecom/yas",
+      "url": "/telecom/yas",
+      "status": 200,
+      "duration": 4489
+    },
+    {
+      "route": "/vendre-sur-whatsapp",
+      "url": "/vendre-sur-whatsapp",
+      "status": 200,
+      "duration": 11067
+    },
+    {
+      "route": "/whatsapp",
+      "url": "/whatsapp",
+      "status": 200,
+      "duration": 1875
+    }
+  ],
+  "fail": [],
+  "redirect": [
+    {
+      "route": "/boutique",
+      "url": "/boutique",
+      "status": 307,
+      "loc": "/connexion?redirect=%2Fboutique",
+      "duration": 39
+    },
+    {
+      "route": "/compte",
+      "url": "/compte",
+      "status": 307,
+      "loc": "/connexion?redirect=%2Fcompte",
+      "duration": 8
+    },
+    {
+      "route": "/compte/apporteur",
+      "url": "/compte/apporteur",
+      "status": 307,
+      "loc": "/compte?tab=apporteur",
+      "duration": 9
+    },
+    {
+      "route": "/deposer-annonce",
+      "url": "/deposer-annonce",
+      "status": 307,
+      "loc": "/connexion?redirect=%2Fdeposer-annonce",
+      "duration": 36
+    },
+    {
+      "route": "/deposer-immo",
+      "url": "/deposer-immo",
+      "status": 307,
+      "loc": "/connexion?redirect=%2Fdeposer-immo",
+      "duration": 11
+    },
+    {
+      "route": "/immo/boutique",
+      "url": "/immo/boutique",
+      "status": 307,
+      "loc": "/boutique?tab=commandes",
+      "duration": 16
+    },
+    {
+      "route": "/mes-annonces",
+      "url": "/mes-annonces",
+      "status": 307,
+      "loc": "/compte?tab=mes-annonces",
+      "duration": 13
+    },
+    {
+      "route": "/mes-annonces-immo",
+      "url": "/mes-annonces-immo",
+      "status": 307,
+      "loc": "/compte?tab=mes-annonces-immo",
+      "duration": 8
+    },
+    {
+      "route": "/mes-annonces-immo/[id]/modifier",
+      "url": "/mes-annonces-immo/9f51e682-296f-4f57-ac86-98116487a3ed/modifier",
+      "status": 307,
+      "loc": "/connexion?redirect=%2Fmes-annonces-immo%2F9f51e682-296f-4f57-ac86-98116487a3ed%2Fmodifier",
+      "duration": 16
+    },
+    {
+      "route": "/mes-annonces/[id]/modifier",
+      "url": "/mes-annonces/9f51e682-296f-4f57-ac86-98116487a3ed/modifier",
+      "status": 307,
+      "loc": "/connexion?redirect=%2Fmes-annonces%2F9f51e682-296f-4f57-ac86-98116487a3ed%2Fmodifier",
+      "duration": 25
+    }
+  ],
+  "authRequired": [],
+  "notFound": []
+}
