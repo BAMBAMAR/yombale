@@ -27,6 +27,7 @@ import '@/styles/social-shop.css';
 import '@/styles/studio.css';
 import '@/styles/admin.css';
 import '@/styles/toast.css';
+import '@/styles/chat-widget.css';
 import './globals.css';
 
 import { getOptionalSession } from '@/lib/dal';
@@ -68,6 +69,7 @@ import PwaInstallPrompt from '@/components/PwaInstallPrompt';
 import FavToast from './FavToast';
 import VerifyEmailToast from './VerifyEmailToast';
 import DrawerCart from '@/components/DrawerCart';
+import ChatbotWidget from '@/components/chat/ChatbotWidget';
 import WebVitals from '@/components/WebVitals';
 import { CartProvider } from '@/context/CartContext';
 import { Suspense } from 'react';
@@ -320,6 +322,7 @@ export default async function RootLayout({
 
         <DrawerCart />
         <BottomBars />
+        <ChatbotWidget />
         <MobileBottomNav isLoggedIn={!!session} />
         <RegisterSW />
         <WebVitals />

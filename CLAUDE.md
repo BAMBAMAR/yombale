@@ -1,3 +1,61 @@
+- **Audit Exhaustif et Correctifs P0, P1, M4, M5 & M6 du Chatbot Nopalou (Branche feature/vertical-immobilier) (17 septembre 2026)** 🤖💬🛡️🔐⚡📊🛒⚖️ ✅ :
+  * **🔍 1. Audit Exhaustif E2E & Fonctionnel du Chatbot** :
+    - Audit réel de l'architecture conversationnelle : confirmation de l'architecture WhatsApp Business Cloud API (machine à états persistée en base dans `whatsapp_sessions`).
+    - Matrice de 64 scénarios de test sur 7 catégories (Visiteur, Immo, Marchand, Acheteur, Sécurité, Gestion d'erreurs, Performance).
+    - Taux de succès initial : 82.8% PASS, 0 fausse confirmation, 0 hallucination, 0 fuite de données inter-boutiques.
+  * **🔐 2. Protection Anti-Brute-Force sur le Code PIN Marchand (Correctif H1)** :
+    - Ajout d'un compteur de tentatives consécutives (`pinAttempts`) persisté dans le contexte de session DB.
+    - Notification du nombre d'essais restants à chaque échec (`tentative 1/3`, `tentative 2/3`).
+    - Verrouillage automatique de 15 minutes dès le 3e échec consécutif (`pinLockedUntil`), avec message explicite et décompte des minutes restantes.
+    - Maintien d'une issue de secours en continu via le mot-clé `pin oublié` déclenchant une vérification OTP à 4 chiffres.
+    - Réinitialisation complète du compteur et levée du verrou dès saisie du PIN valide ou succès de la réinitialisation OTP.
+  * **⚡ 3. Élimination du Silence Radio en Cas de Panne DB / Backend (Correctif H2)** :
+    - Enveloppement global de `handleIncoming(msg)` dans un `try / catch` avec expédition d'un message d'indisponibilité bienveillant à l'utilisateur plutôt qu'un abandon silencieux lors d'un crash ou timeout.
+  * **💾 4. Persistance Robuste et Expiration des Codes OTP (Correctif H3)** :
+    - Stockage du code OTP et de son expiration (`otpExpiresAt = Date.now() + 10 min`) directement dans le contexte persistant de la table `whatsapp_sessions`.
+    - Résilience complète face aux redémarrages serveur : validation possible même si le cache mémoire a été recyclé.
+    - Rejet systématique des codes de vérification expirés.
+  * **🧹 5. Nettoyage et Prévention des Fuites Mémoire (Correctif L1)** :
+    - Définition de `nettoyerTamponsMemoire()` pour purger les caches temporaires `_recentsProduitsCrees` (> 5 min) et `_otpCodesMarchand` (> 10 min).
+    - Intégration dans les routines périodiques `cleanupOldMessages()` et `resetInactiveSessions()`.
+  * **🔤 6. Tolérance aux Fautes d'Orthographe & Fuzzy Matching (Correctif M2)** :
+    - Implémentation de la distance de Levenshtein (`distanceLevenshtein`) et d'un dictionnaire étendu de termes courants sénégalais (appartement, climatiseur, réfrigérateur, chaussure, almadies, mermoz, etc.).
+    - Correction automatique des requêtes de recherche avec suggestion explicite à l'utilisateur lorsqu'une faute de frappe est détectée (ex: "climatisseur" -> "climatiseur").
+    - Recherche de secours souple `ILIKE` sur les sous-chaînes (`searchContentIlike`) en cas d'échec de la recherche plein-texte FTS.
+    - Tolérance aux fautes intégrée dans le moteur d'intention immobilière (`detecterIntentionImmo`).
+  * **🔄 7. Mécanisme de Correction d'Intention & Reprise Fluide (Correctif M3)** :
+    - Détection intelligente des expressions de rectification ("non je voulais dire", "je me suis trompé", "pas ça", "changer nom", "recommencer").
+    - Au lieu de chercher un faux produit ou de bloquer le formulaire, le bot effectue un retour arrière précis sur l'étape précédente (nom de boutique, nom d'agence, coordonnées de commande, produit) ou propose une réinitialisation propre vers le menu d'accueil.
+  * **🛒 8. Édition Interactive de la Commande & Panier WhatsApp (Correctif M6)** :
+    - Ajout des boutons interactifs `➕ Ajouter (+1)` (`cmd_plus_un`) et `➖ Réduire (-1)` (`cmd_moins_un`) directement sur le récapitulatif de commande final WhatsApp (`envoyerRecapFinal`).
+    - Possibilité de saisir directement un chiffre (ex: "3", "5") pour ajuster la quantité instantanément avec recalcul en direct du sous-total, des frais de livraison et du montant total.
+    - Contrôle strict du stock disponible en temps réel et blocage bienveillant en cas de dépassement.
+    - Prise en charge de la commande textuelle "changer adresse" / "modifier adresse" pour ajuster le point de livraison sans tout annuler.
+  * **⏳ 9. Persistance 24h & Lutte Anti-Abandon de Panier Conversationnel (Correctif M4)** :
+    - Évolution de `resetInactiveSessions()` : expiration des sessions conversationnelles ordinaires après 1 heure, mais conservation garantie des états de commande (`COMMANDE_%`) pendant 24 heures.
+    - Détection automatique lors d'une salutation ("bonjour", "salut", "salam", "nanga def") si l'acheteur a une commande en attente, avec proposition interactive : `🛒 Finaliser commande`, `❌ Annuler commande` ou `🌐 Menu principal`.
+    - Reprise instantanée via le bouton `reprendre_commande` ou mot-clé "reprendre", renvoyant le récapitulatif complet prêt à confirmer.
+  * **⚖️ 10. Moteur de Comparaison de Prix Multi-Marchands (Correctif M5 & whatsapp-comparator.js)** :
+    - Création du service modulaire `backend/services/whatsapp-comparator.js` mutualisé entre WhatsApp et le web.
+    - Détection intelligente des requêtes comparatives ("comparer iphone 13", "moins cher frigo", "meilleur prix téléviseur", "comparatif climatiseur").
+    - Extraction du sujet nettoyé avec exclusion des stopwords et préservation des décimales ("climatiseur 1.5cv").
+    - Agrégation en temps réel des offres boutiques actives (`boutique_produits`) et marketplace (`produits`), triées par prix croissant.
+    - Calcul de l'écart maximal d'économie ("💡 Jusqu'à 35 000 FCFA d'écart constaté entre marchands !").
+    - Mise à disposition d'un bouton d'action directe pour commander immédiatement l'offre la moins chère en 1 clic.
+    - Intégration omnicanale : disponible sur WhatsApp et dans l'API Web `POST /api/chat/message`.
+  * **🌐 11. Widget Chatbot Web Client & API Omnicanale (Option C)** :
+    - Développement du composant interactif flottant `ChatbotWidget.tsx` et de son sous-composant `ChatbotMessageItem.tsx` dans `frontend-next/src/components/chat/` (< 250 lignes chacun).
+    - Respect strict du design system Nopalou : tokens CSS déclarés, zéro emoji d'interface, icônes Lucide SVG vectorielles exclusives (`MessageCircle`, `X`, `Send`, `Sparkles`, `ExternalLink`), styles dédiés dans `src/styles/chat-widget.css`.
+    - Création de la route API Express `backend/routes/chat.js` (`POST /api/chat/message`) et du proxy Next.js `src/app/api/chat/route.ts` supportant la FAQ interactive, le comparateur de prix multi-marchands, l'intention immobilière, la recherche fuzzy de produits et le bouton de continuité directe vers WhatsApp officiel.
+    - Intégration globale dans le `RootLayout` (`frontend-next/src/app/layout.tsx`).
+  * **🧪 12. Suite de Tests Unitaires P0/P1/M4/M5 & Validation Globale** :
+    - `tests/unit/whatsapp-chatbot-p0.test.js` : 13/13 tests PASS.
+    - `tests/unit/chat-api.test.js` : 4/4 tests PASS.
+    - `tests/unit/whatsapp-comparator-and-cart.test.js` : 5/5 tests PASS (comparateur de prix, extraction sujet, agrégation DB, formatage WhatsApp, rétention 24h).
+    - Validation TypeScript frontend : `npx tsc --noEmit` -> 0 erreurs.
+    - Validation lint AI-slop : `npm run lint:slop` -> 0 silent catches, 0 monoliths.
+    - Validation globale du projet : 43 suites de tests réussies, 341 tests passés avec zéro régression.
+
 - **Audit Exhaustif de la Prospection Commerciale Nopalou & Intégration Verticale Immobilier / Multi-Profils (Branche feature/vertical-immobilier) (17 septembre 2026)** 🏢🛍️⚡📊🤖🛡️ ✅ :
   * **🔍 1. Audit Réel de la Base (1 301 leads, 663 messages, 6 agences)** :
     - Audit complet sans chiffres inventés de l'ensemble du système de prospection Nopalou.

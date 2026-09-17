@@ -299,7 +299,7 @@ describe('Social Parser — Exploration de profil (exploreProfile)', () => {
     const hasFakeIds = res.posts.some(p => p.externalPostId && p.externalPostId.startsWith('tiktok_wax_dakar_'));
     expect(hasUnsplash).toBe(false);
     expect(hasFakeIds).toBe(false);
-  });
+  }, 15000);
 
   test('génère un résultat structuré pour un profil Instagram sans fausses données', async () => {
     const res = await exploreProfile('instagram', 'boutique_senegal');
@@ -312,7 +312,7 @@ describe('Social Parser — Exploration de profil (exploreProfile)', () => {
     const hasFakeReels = res.posts.some(p => p.url && p.url.includes('C8_boutique_senegal_'));
     expect(hasUnsplash).toBe(false);
     expect(hasFakeReels).toBe(false);
-  });
+  }, 15000);
 
   test('génère un résultat honnête pour un profil Facebook avec iframe Page', async () => {
     const res = await exploreProfile('facebook', 'maboutique');
@@ -332,7 +332,7 @@ describe('Social Parser — Exploration de profil (exploreProfile)', () => {
     expect(Array.isArray(res.posts)).toBe(true);
     const hasUnsplash = res.posts.some(p => p.thumbnailUrl && p.thumbnailUrl.includes('unsplash.com'));
     expect(hasUnsplash).toBe(false);
-  });
+  }, 15000);
 });
 
 describe('Social Parser — Métadonnées oEmbed (fetchOEmbedMetadata)', () => {

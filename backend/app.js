@@ -293,6 +293,7 @@ app.use('/api/admin/migration',    require('./routes/admin-migration'));
 app.use('/api/click',           require('./routes/click'));
 app.use('/api/analytics',       require('./routes/analytics'));
 app.use('/api/whatsapp',        require('./routes/whatsapp'));
+app.use('/api/chat',            require('./routes/chat'));
 app.use('/api/comptabilite',    require('./routes/comptabilite'));
 app.use('/api/search',          require('./routes/search'));
 app.use('/api/v1',              require('./routes/api-partenaire'));

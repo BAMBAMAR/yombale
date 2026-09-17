@@ -17,6 +17,12 @@ const {
 const { creerCommandeBoutique, notifierVendeurCommande } = require('../routes/comptabilite');
 const cfg = require('../lib/settingsCache');
 const { detecterIntentionImmo, traiterMessageImmo, trouverAgenceAgentParTelephone } = require('./immo-chatbot');
+const {
+  detecterIntentionComparateur,
+  extraireSujetComparaison,
+  comparerPrixProduits,
+  formaterComparatifWhatsApp,
+} = require('./whatsapp-comparator');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
@@ -142,9 +148,128 @@ function normaliserTexte(s) {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
+// ── Algorithme de distance de Levenshtein (Fuzzy Matching & Correction de fautes) ──
+function distanceLevenshtein(a, b) {
+  if (!a || !b) return (a || '').length + (b || '').length;
+  const s1 = String(a).toLowerCase();
+  const s2 = String(b).toLowerCase();
+  const m = s1.length;
+  const n = s2.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return dp[m][n];
+}
+
+// Dictionnaire de référence des termes sénégalais fréquents (e-commerce, immo, tech, mode, électroménager)
+const DICTIONNAIRE_TERMES_COURANTS = [
+  // Immobilier
+  'appartement', 'appartements', 'villa', 'villas', 'studio', 'studios',
+  'chambre', 'chambres', 'terrain', 'terrains', 'parcelle', 'parcelles',
+  'bureau', 'bureaux', 'magasin', 'magasins', 'immeuble', 'immeubles',
+  'location', 'locations', 'vente', 'ventes', 'meuble', 'meuble',
+  'almadies', 'mermoz', 'yoff', 'ouakam', 'ngor', 'fann', 'plateau', 'maristes', 'saly', 'somone', 'ngaparou',
+  // High-Tech & Téléphonie
+  'telephone', 'telephones', 'smartphone', 'smartphones', 'iphone', 'samsung', 'xiaomi',
+  'ordinateur', 'ordinateurs', 'laptop', 'tablette', 'tablettes', 'chargeur', 'chargeurs',
+  'ecouteur', 'ecouteurs', 'airpods', 'montre', 'montres', 'smartwatch', 'televiseur', 'televiseurs',
+  'television', 'televisions', 'ecran', 'clavier',
+  // Électroménager & Maison
+  'climatiseur', 'climatiseurs', 'refrigerateur', 'refrigerateurs', 'frigo', 'frigos',
+  'congelateur', 'congelateurs', 'ventilateur', 'ventilateurs', 'micro-ondes', 'cuisiniere', 'cuisinieres',
+  // Mode, Chaussures & Beauté
+  'chaussure', 'chaussures', 'basket', 'baskets', 'sandale', 'sandales', 'claquette', 'claquettes',
+  'pantalon', 'pantalons', 'chemise', 'chemises', 'robe', 'robes', 't-shirt', 't-shirts',
+  'boubou', 'boubous', 'bazin', 'tissu', 'tissus', 'parfum', 'parfums',
+  // Véhicules
+  'voiture', 'voitures', 'moto', 'motos', 'scooter', 'scooters'
+];
+
+function corrigerRequeteFuzzy(texte) {
+  if (!texte || typeof texte !== 'string') return null;
+  const rawClean = normaliserTexte(texte).trim();
+  if (rawClean.length < 3) return null;
+
+  const mots = rawClean.split(/\s+/);
+  let hasModif = false;
+  const motsCorriges = mots.map(mot => {
+    if (mot.length < 4) return mot;
+    if (DICTIONNAIRE_TERMES_COURANTS.includes(mot)) return mot;
+
+    const seuilMax = mot.length <= 4 ? 1 : 2;
+    let meilleurTerme = mot;
+    let distMin = seuilMax + 1;
+
+    for (const ref of DICTIONNAIRE_TERMES_COURANTS) {
+      if (Math.abs(ref.length - mot.length) > seuilMax) continue;
+      const d = distanceLevenshtein(mot, ref);
+      if (d <= seuilMax && d < distMin) {
+        distMin = d;
+        meilleurTerme = ref;
+      }
+    }
+
+    if (meilleurTerme !== mot) {
+      hasModif = true;
+      return meilleurTerme;
+    }
+    return mot;
+  });
+
+  return hasModif ? motsCorriges.join(' ') : null;
+}
+
 function detecterFAQ(texte) {
   const normalise = normaliserTexte(texte);
   return FAQ.find(f => f.motsCles.some(mot => normalise.includes(normaliserTexte(mot))));
+}
+
+// ── Traitement intelligent du Comparateur de Prix Nopalou (Audit M5) ──────────
+async function traiterRequeteComparateur(phone, text) {
+  const sujet = extraireSujetComparaison(text);
+  if (!sujet || sujet.length < 2) {
+    await sendWhatsAppText(
+      phone,
+      `⚖️ *Comparateur de Prix Nopalou*\n\nPour comparer des prix en direct entre marchands, indiquez simplement le produit désiré.\n\n*Exemples :*\n• _comparer iphone 13_\n• _comparer climatiseur_\n• _moins cher samsung s23_\n• _meilleur prix téléviseur_`
+    );
+    return true;
+  }
+
+  let resComp = await comparerPrixProduits(sujet);
+  if (!resComp.offres || resComp.offres.length === 0) {
+    // Si aucun résultat direct, tentative avec correction fuzzy Levenshtein
+    const fuzzySujet = corrigerRequeteFuzzy(sujet);
+    if (fuzzySujet && fuzzySujet !== sujet) {
+      const resFuzzy = await comparerPrixProduits(fuzzySujet);
+      if (resFuzzy.offres && resFuzzy.offres.length > 0) {
+        resComp = resFuzzy;
+      }
+    }
+  }
+
+  if (!resComp.offres || resComp.offres.length === 0) {
+    return false; // Relais vers la recherche générale
+  }
+
+  const { texte, boutons } = formaterComparatifWhatsApp(resComp, SITE);
+  if (boutons && boutons.length > 0) {
+    await sendWhatsAppButtons3(phone, texte, boutons).catch(async () => {
+      await sendWhatsAppText(phone, texte);
+    });
+  } else {
+    await sendWhatsAppText(phone, texte);
+  }
+  return true;
 }
 
 // Détection intelligente si un message ressemble à une question (pour éviter de le prendre comme un nom ou une adresse)
@@ -282,17 +407,47 @@ async function setSession(phone, state, context = {}) {
   );
 }
 
-// ── Nettoyage périodique ─────────────────────────────────────────────────────
+// File d'attente séquentielle par numéro de téléphone (FIFO Queue / Mutex) pour éliminer les race conditions
+const _userQueues = new Map();
+// Tampon en mémoire pour l'association automatique des photos multiples (batch d'images WhatsApp) - 5 minutes
+const _recentsProduitsCrees = new Map();
+const DUREE_TAMPON_PHOTOS_MS = 5 * 60 * 1000;
+// Cache des codes OTP pour la réinitialisation de Code PIN marchand (valable 10 min)
+const _otpCodesMarchand = new Map();
+
+// ── Nettoyage périodique et libération mémoire ───────────────────────────────
+function nettoyerTamponsMemoire() {
+  const now = Date.now();
+  for (const [phone, item] of _recentsProduitsCrees.entries()) {
+    if (now - item.timestamp > DUREE_TAMPON_PHOTOS_MS) {
+      _recentsProduitsCrees.delete(phone);
+    }
+  }
+  for (const [phone, item] of _otpCodesMarchand.entries()) {
+    if (now > item.expiresAt) {
+      _otpCodesMarchand.delete(phone);
+    }
+  }
+}
+
 async function cleanupOldMessages() {
+  nettoyerTamponsMemoire();
   await pool.query(
     `DELETE FROM whatsapp_processed_messages WHERE processed_at < NOW() - INTERVAL '7 days'`
   );
 }
 
 async function resetInactiveSessions() {
+  nettoyerTamponsMemoire();
+  // 1. Expirer les sessions conversationnelles ordinaires inactives depuis plus d'1h
   await pool.query(
     `UPDATE whatsapp_sessions SET state='IDLE', context='{}', updated_at=NOW()
-     WHERE state != 'IDLE' AND updated_at < NOW() - INTERVAL '1 hour'`
+     WHERE state != 'IDLE' AND state NOT LIKE 'COMMANDE_%' AND updated_at < NOW() - INTERVAL '1 hour'`
+  );
+  // 2. M4 : Conserver les commandes et paniers en cours jusqu'à 24h (anti-abandon de panier)
+  await pool.query(
+    `UPDATE whatsapp_sessions SET state='IDLE', context='{}', updated_at=NOW()
+     WHERE state LIKE 'COMMANDE_%' AND updated_at < NOW() - INTERVAL '24 hours'`
   );
 }
 
@@ -339,14 +494,6 @@ async function estProprietaireBoutique(phone, boutique) {
     return false;
   }
 }
-
-// File d'attente séquentielle par numéro de téléphone (FIFO Queue / Mutex) pour éliminer les race conditions
-const _userQueues = new Map();
-// Tampon en mémoire pour l'association automatique des photos multiples (batch d'images WhatsApp) - 5 minutes
-const _recentsProduitsCrees = new Map();
-const DUREE_TAMPON_PHOTOS_MS = 5 * 60 * 1000;
-// Cache des codes OTP pour la réinitialisation de Code PIN marchand (valable 10 min)
-const _otpCodesMarchand = new Map();
 
 // ── Extraction et détection de texte produit (Nom, Prix, Stock) ────────────────
 function extraireInfosProduitTexte(texte) {
@@ -1209,6 +1356,45 @@ async function searchContent(query, excludeIds = []) {
   return r.rows;
 }
 
+// Recherche souple de secours (ILIKE substring)
+async function searchContentIlike(query) {
+  if (!query || typeof query !== 'string') return [];
+  const qClean = `%${query.trim()}%`;
+  try {
+    const r = await pool.query(
+      `(
+        SELECT 'produit' AS type, p.id::text, p.nom AS titre, p.prix,
+               p.images[1] AS photo, b.slug AS boutique_slug, b.nom AS boutique_nom, NULL::text AS ville
+        FROM boutique_produits p
+        JOIN boutiques b ON b.id = p.boutique_id
+        WHERE p.nom ILIKE $1 OR COALESCE(p.description, '') ILIKE $1
+        LIMIT 3
+      )
+      UNION ALL
+      (
+        SELECT 'marketplace' AS type, id::text, nom AS titre, prix_min AS prix,
+               image_url AS photo, NULL::text AS boutique_slug, NULL::text AS boutique_nom, NULL::text AS ville
+        FROM produits
+        WHERE nom ILIKE $1 OR COALESCE(description, '') ILIKE $1
+        LIMIT 3
+      )
+      UNION ALL
+      (
+        SELECT 'immo' AS type, id::text, titre, prix, (photos->>0) AS photo, NULL::text, NULL::text, ville
+        FROM annonces_immo
+        WHERE actif=true AND jsonb_array_length(photos) > 0
+          AND (titre ILIKE $1 OR COALESCE(description, '') ILIKE $1 OR ville ILIKE $1)
+        LIMIT 3
+      )
+      LIMIT 5`,
+      [qClean]
+    );
+    return r.rows;
+  } catch {
+    return [];
+  }
+}
+
 // ── Listes immo / télécom (menu + pagination "plus") ─────────────────────────
 async function envoyerListeImmo(phone, excludeIds = []) {
   const r = await pool.query(
@@ -1696,7 +1882,9 @@ async function envoyerRecapFinal(phone, boutique, commande) {
     'Confirmez-vous cette commande ?',
     [{ title: 'Action', rows: [
       { id: 'cmd_confirmer', title: '✅ Confirmer' },
-      { id: 'cmd_annuler', title: '✏️ Annuler' },
+      { id: 'cmd_plus_un', title: '➕ Ajouter (+1)' },
+      { id: 'cmd_moins_un', title: '➖ Réduire (-1)' },
+      { id: 'cmd_annuler', title: '❌ Annuler' },
     ] }]
   );
   await setSession(phone, 'COMMANDE_CONFIRMATION', { boutique, commande });
@@ -1827,6 +2015,17 @@ async function handleIncoming(msg) {
 
   try {
     return await currentPromise;
+  } catch (error) {
+    console.error(`[WHATSAPP CHATBOT ERROR] Échec traitement pour ${phone}:`, error);
+    try {
+      await sendWhatsAppText(
+        phone,
+        `⚠️ *Oups, une indisponibilité momentanée est survenue.*\n\n` +
+        `Nos serveurs n'ont pas pu finaliser cette action instantanément. Veuillez réessayer dans un instant ou tapez *menu* pour revenir à l'accueil.`
+      );
+    } catch (sendErr) {
+      console.error(`[WHATSAPP CHATBOT ERROR] Impossible d'envoyer le message de secours à ${phone}:`, sendErr.message);
+    }
   } finally {
     if (_userQueues.get(phone) === currentPromise) {
       _userQueues.delete(phone);
@@ -2049,10 +2248,59 @@ async function handleIncomingInternal(msg) {
   const normTxtLower = normaliserTexte(text).trim();
   const MOTS_ESCAPE = [
     'annuler', 'annule', 'quitter', 'quitte', 'exit', 'quit', 'cancel',
-    'sortir', 'fin', 'stop', 'retour', 'revenir', 'back', 'accueil', 'menu', '0'
+    'sortir', 'fin', 'stop', 'retour', 'revenir', 'back', 'accueil', 'menu', '0',
+    'recommencer', 'recommence', 'reset', 'reinitialiser', 'repartir'
   ];
   const isEscapeRequested = MOTS_ESCAPE.includes(normTxtLower) ||
     ['menu', 'annuler', 'retour', 'btn_annuler', 'menu_marchand', 'menu_general', 'boutique_quitter'].includes(interactiveId);
+
+  // ── RECONNAISSANCE DES INTENTIONS DE CORRECTION / REPRISE FLUIDE ────────────
+  const MOTS_CORRECTION = [
+    'non je voulais dire', 'je me suis trompe', 'je me suis trompé', 'trompé', 'trompe',
+    'pas ca', 'pas ça', 'changer nom', 'modifier nom', 'changer adresse', 'modifier adresse'
+  ];
+  const isCorrectionIntent = MOTS_CORRECTION.some(m => normTxtLower.startsWith(m) || normTxtLower === m);
+
+  if (isCorrectionIntent) {
+    if (state === 'CREER_BOUTIQUE_VILLE' || state === 'CREER_BOUTIQUE_CATEGORIE') {
+      await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
+      await sendWhatsAppText(
+        phone,
+        `🔄 *Correction prise en compte*\n\nReprenons : quel est le nom souhaité pour votre boutique ?`
+      );
+      return;
+    }
+    if (state === 'CREER_AGENCE_VILLE') {
+      await setSession(phone, 'CREER_AGENCE_NOM', context || {});
+      await sendWhatsAppText(
+        phone,
+        `🔄 *Correction prise en compte*\n\nReprenons : quel est le nom exact de votre agence immobilière ?`
+      );
+      return;
+    }
+    if (state?.startsWith('COMMANDE_')) {
+      const bq = context?.boutique;
+      await setSession(phone, 'COMMANDE_NOM', { boutique: bq, commande: context?.commande || {} });
+      await sendWhatsAppText(
+        phone,
+        `🔄 *Modification de commande*\n\nReprenons votre commande depuis vos coordonnées. Quel est votre nom et prénom ?`
+      );
+      return;
+    }
+    if (state?.startsWith('AJOUT_PRODUIT_')) {
+      await setSession(phone, 'AJOUT_PRODUIT_NOM', context || {});
+      await sendWhatsAppText(
+        phone,
+        `🔄 *Modification de produit*\n\nReprenons l'ajout de produit. Quel est le nom de l'article ?`
+      );
+      return;
+    }
+    // Si aucun formulaire actif, revenir au menu
+    await setSession(phone, 'MENU', {});
+    await sendWhatsAppText(phone, `🔄 Pas de souci ! Recommençons depuis le début :`);
+    await sendMenu(phone);
+    return;
+  }
 
   if (isEscapeRequested) {
     // 1. Demande explicite de Menu Général Nopalou
@@ -2515,31 +2763,84 @@ async function handleIncomingInternal(msg) {
     }
 
     if (bqMarchand) {
+      // Protection anti brute-force : Vérifier si les tentatives PIN sont temporairement verrouillées
+      if (context?.pinLockedUntil && Date.now() < Number(context.pinLockedUntil)) {
+        const minsRestantes = Math.max(1, Math.ceil((Number(context.pinLockedUntil) - Date.now()) / 60000));
+        // Permettre quand même la réinitialisation par OTP sans attendre
+        if (normTxtLower === 'pin oublie' || normTxtLower === 'pin oublié' || normTxtLower === 'reinitialiser pin') {
+          const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+          const expiresAt = Date.now() + 10 * 60 * 1000;
+          _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: bqMarchand.id, expiresAt });
+          await setSession(phone, 'MARCHAND_RESET_OTP', { boutique: bqMarchand, otpCode, otpExpiresAt: expiresAt });
+          await sendWhatsAppText(
+            phone,
+            `🔒 *Code de Sécurité Nopalou — Réinitialisation PIN*\n\n` +
+            `Votre code de vérification temporaire est : *${otpCode}*\n\n` +
+            `👉 Renvoyez simplement ce code *${otpCode}* pour autoriser la création de votre nouveau Code PIN.`
+          );
+          return;
+        }
+
+        await sendWhatsAppText(
+          phone,
+          `🔒 *Accès Espace Marchand temporairement suspendu*\n\n` +
+          `Suite à 3 tentatives de Code PIN incorrectes consécutives, l'accès sécurisé à votre boutique est suspendu pendant encore *${minsRestantes} minute(s)*.\n\n` +
+          `👉 Pour déverrouiller immédiatement votre accès sans attendre, tapez simplement *pin oublié* pour recevoir un code de vérification.`
+        );
+        return;
+      }
+
+      // Si demande de réinitialisation OTP avant ou pendant la saisie du PIN
+      if (state === 'MARCHAND_PIN' && (normTxtLower === 'pin oublie' || normTxtLower === 'pin oublié' || normTxtLower === 'reinitialiser pin')) {
+        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+        const expiresAt = Date.now() + 10 * 60 * 1000;
+        _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: bqMarchand.id, expiresAt });
+        await setSession(phone, 'MARCHAND_RESET_OTP', { boutique: bqMarchand, otpCode, otpExpiresAt: expiresAt });
+        await sendWhatsAppText(
+          phone,
+          `🔒 *Code de Sécurité Nopalou — Réinitialisation PIN*\n\n` +
+          `Votre code de vérification temporaire est : *${otpCode}*\n\n` +
+          `👉 Renvoyez simplement ce code *${otpCode}* pour autoriser la création de votre nouveau Code PIN.`
+        );
+        return;
+      }
+
       // Si l'utilisateur envoie son PIN pour déverrouiller
       if (state === 'MARCHAND_PIN' || /^\d{4,6}$/.test(text.trim())) {
         const pinValide = await verifierCodePin(bqMarchand, text.trim());
         if (pinValide) {
+          await setSession(phone, 'MARCHAND_MENU', { boutique: bqMarchand, isMarchandAuth: true, pinAttempts: 0, pinLockedUntil: null });
           await envoyerMenuMarchand(phone, bqMarchand);
           return;
         } else if (state === 'MARCHAND_PIN') {
-          // Si demande de réinitialisation OTP
-          if (normTxtLower === 'pin oublie' || normTxtLower === 'pin oublié' || normTxtLower === 'reinitialiser pin') {
-            const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
-            _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: bqMarchand.id, expiresAt: Date.now() + 10 * 60 * 1000 });
-            await setSession(phone, 'MARCHAND_RESET_OTP', { boutique: bqMarchand, otpCode });
+          const attempts = (Number(context?.pinAttempts) || 0) + 1;
+          if (attempts >= 3) {
+            const lockTime = Date.now() + 15 * 60 * 1000;
+            await setSession(phone, 'MARCHAND_PIN', {
+              ...context,
+              boutique: bqMarchand,
+              pinAttempts: attempts,
+              pinLockedUntil: lockTime,
+            });
             await sendWhatsAppText(
               phone,
-              `🔒 *Code de Sécurité Nopalou — Réinitialisation PIN*\n\n` +
-              `Votre code de vérification temporaire est : *${otpCode}*\n\n` +
-              `👉 Renvoyez simplement ce code *${otpCode}* pour autoriser la création de votre nouveau Code PIN.`
+              `⛔ *Code PIN incorrect (3/3)*\n\n` +
+              `🔒 L'accès à votre espace marchand est verrouillé pendant 15 minutes par mesure de sécurité.\n\n` +
+              `👉 Tapez *pin oublié* pour le réinitialiser immédiatement avec un code de vérification.`
+            );
+            return;
+          } else {
+            await setSession(phone, 'MARCHAND_PIN', {
+              ...context,
+              boutique: bqMarchand,
+              pinAttempts: attempts,
+            });
+            await sendWhatsAppText(
+              phone,
+              `❌ *Code PIN incorrect* (tentative ${attempts}/3).\n\nVeuillez réessayer votre Code PIN (par défaut : 1234) ou tapez *pin oublié* pour le réinitialiser :`
             );
             return;
           }
-          await sendWhatsAppText(
-            phone,
-            `❌ *Code PIN incorrect*.\n\nVeuillez réessayer votre Code PIN (par défaut : 1234) ou tapez *pin oublié* pour le réinitialiser :`
-          );
-          return;
         }
       }
 
@@ -2856,6 +3157,57 @@ async function handleIncomingInternal(msg) {
     'plus', 'encore', 'd\'autres', 'dautres', 'autres', 'autre', 'voir plus', 'la suite',
     'suivant', 'suivante', 'next', 'suite', 'yeneen', 'yenen'
   ];
+
+  // ── M4 : Reprise fluide d'un panier / commande en cours (Lutte contre l'abandon) ──
+  const isRepriseCmd = interactiveId === 'reprendre_commande' || normTxtLower === 'reprendre' || normTxtLower === 'reprendre commande';
+  if (isRepriseCmd && context?.boutique && context?.commande?.items?.length) {
+    await setSession(phone, 'COMMANDE_CONFIRMATION', { boutique: context.boutique, commande: context.commande });
+    await sendWhatsAppText(phone, '🔄 *Reprise de votre commande en cours...*');
+    await envoyerRecapFinal(phone, context.boutique, context.commande);
+    return;
+  }
+
+  // Si l'utilisateur envoie une salutation alors qu'il a une commande non finalisée
+  if (state?.startsWith('COMMANDE_') && context?.boutique && context?.commande?.items?.length && SALUTATIONS.includes(normTxtLower)) {
+    const bq = context.boutique;
+    const item = context.commande.items[0];
+    const qte = item?.quantite || 1;
+    const nomProd = item?.nom_produit || 'votre article';
+    const totalEstime = Number(item?.prix_unitaire || 0) * qte;
+    const totalFmt = totalEstime > 0 ? ` (${totalEstime.toLocaleString('fr-FR')} FCFA)` : '';
+
+    const buttons = [
+      { id: 'reprendre_commande', title: '🛒 Finaliser commande' },
+      { id: 'cmd_annuler', title: '❌ Annuler commande' },
+      { id: 'menu_general', title: '🌐 Menu principal' },
+    ];
+
+    await sendWhatsAppButtons3(
+      phone,
+      `👋 Bonjour ! Vous avez une commande en cours chez *${bq.nom}* :\n\n` +
+      `📦 *${nomProd}* x ${qte}${totalFmt}\n\n` +
+      `Souhaitez-vous la terminer dès maintenant ?`,
+      buttons
+    ).catch(async () => {
+      await sendWhatsAppText(
+        phone,
+        `👋 Bonjour ! Vous avez une commande en cours chez *${bq.nom}* :\n` +
+        `📦 *${nomProd}* x ${qte}${totalFmt}\n\n` +
+        `• Tapez *reprendre* pour finaliser\n• Tapez *annuler* pour effacer\n• Tapez *menu* pour le menu général`
+      );
+    });
+    return;
+  }
+
+  // ── Actions directes Comparateur de Prix Nopalou (Audit M5) ──
+  if (detecterIntentionComparateur(text) && !state?.startsWith('COMMANDE_') && !state?.startsWith('MARCHAND_PIN')) {
+    const compTraite = await traiterRequeteComparateur(phone, text);
+    if (compTraite) {
+      await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options :').catch(() => {});
+      await setSession(phone, 'MENU', { last: { type: 'comparatif', query: text } });
+      return;
+    }
+  }
 
   // ── IDLE → présentation puis menu (nouvelle session ou session expirée) ────
   if (state === 'IDLE') {
@@ -3377,6 +3729,16 @@ async function handleIncomingInternal(msg) {
       await sendWhatsAppMenuOuFin(phone, 'Une autre question ?').catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
+    }
+
+    // Détection comparateur de prix multi-marchands (Audit M5)
+    if (detecterIntentionComparateur(text)) {
+      const compTraite = await traiterRequeteComparateur(phone, text);
+      if (compTraite) {
+        await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options, ou faites une nouvelle comparaison :').catch(() => {});
+        await setSession(phone, 'MENU', { last: { type: 'comparatif', query: text } });
+        return;
+      }
     }
 
     // Texte libre reçu en état MENU → question FAQ, sinon intention immo ou recherche
@@ -4050,13 +4412,63 @@ async function handleIncomingInternal(msg) {
   if (state === 'COMMANDE_CONFIRMATION') {
     const boutique = context?.boutique;
     if (!boutique) { await setSession(phone, 'MENU', {}); await sendMenu(phone); return; }
+
+    // ── M6 : Édition de la quantité en direct (+1, -1, ou saisie d'un chiffre) ──
+    const estPlus = interactiveId === 'cmd_plus_un' || normTxtLower === '+1' || normTxtLower === '+' || normTxtLower === 'ajouter';
+    const estMoins = interactiveId === 'cmd_moins_un' || normTxtLower === '-1' || normTxtLower === '-' || normTxtLower === 'diminuer' || normTxtLower === 'reduire';
+    const matchNombre = /^\d{1,3}$/.test(text.trim());
+
+    if (estPlus || estMoins || matchNombre) {
+      const c = context.commande;
+      if (c && Array.isArray(c.items) && c.items.length > 0) {
+        const item = c.items[0];
+        let nouvelleQte = item.quantite || 1;
+
+        if (estPlus) {
+          nouvelleQte += 1;
+        } else if (estMoins) {
+          nouvelleQte -= 1;
+        } else if (matchNombre) {
+          nouvelleQte = parseInt(text.trim(), 10);
+        }
+
+        if (nouvelleQte < 1) {
+          await sendWhatsAppText(
+            phone,
+            `⚠️ *Quantité minimale : 1*.\nSi vous souhaitez renoncer à cet achat, tapez *annuler*.`
+          );
+          return;
+        }
+
+        if (item.stock_quantite != null && nouvelleQte > item.stock_quantite) {
+          await sendWhatsAppText(
+            phone,
+            `⚠️ Désolé, seulement *${item.stock_quantite}* unité(s) disponible(s) en stock pour cet article.`
+          );
+          return;
+        }
+
+        const updatedItems = [{ ...item, quantite: nouvelleQte }, ...c.items.slice(1)];
+        const updatedCommande = { ...c, items: updatedItems };
+        await sendWhatsAppText(phone, `🔄 Quantité mise à jour : *${nouvelleQte}* unité(s).`);
+        await envoyerRecapFinal(phone, boutique, updatedCommande);
+        return;
+      }
+    }
+
+    if (normTxtLower.includes('changer adresse') || normTxtLower.includes('modifier adresse')) {
+      await setSession(phone, 'COMMANDE_ADRESSE', { boutique, commande: context.commande });
+      await sendWhatsAppText(phone, '📍 Veuillez saisir votre nouvelle adresse complète de livraison :');
+      return;
+    }
+
     if (interactiveId === 'cmd_annuler' || ANNULER.includes(normaliserTexte(text))) {
       await sendWhatsAppText(phone, 'Commande annulée.');
       await envoyerMenuBoutique(phone, boutique);
       return;
     }
     if (interactiveId !== 'cmd_confirmer') {
-      await sendWhatsAppText(phone, 'Cliquez sur ✅ Confirmer ou ✏️ Annuler ci-dessus.');
+      await sendWhatsAppText(phone, 'Cliquez sur ✅ Confirmer, ➕ Ajouter (+1), ➖ Réduire (-1) ou ❌ Annuler ci-dessus.');
       return;
     }
     const c = context.commande;
@@ -4151,6 +4563,16 @@ async function handleIncomingInternal(msg) {
 
   // ── SEARCH_QUERY ──────────────────────────────────────────────────────────
   if (state === 'SEARCH_QUERY') {
+    // Détection comparateur de prix multi-marchands (Audit M5)
+    if (detecterIntentionComparateur(text)) {
+      const compTraite = await traiterRequeteComparateur(phone, text);
+      if (compTraite) {
+        await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options, ou faites une nouvelle comparaison :').catch(() => {});
+        await setSession(phone, 'MENU', { last: { type: 'comparatif', query: text } });
+        return;
+      }
+    }
+
     const faq = detecterFAQ(text);
     if (faq) {
       await sendWhatsAppText(phone, faq.reponse);
@@ -4788,11 +5210,35 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
+    // Protection anti brute-force sur changement de PIN
+    if (context?.pinLockedUntil && Date.now() < Number(context.pinLockedUntil)) {
+      const minsRestantes = Math.max(1, Math.ceil((Number(context.pinLockedUntil) - Date.now()) / 60000));
+      if (normTxtLower === 'pin oublie' || normTxtLower === 'pin oublié' || normTxtLower === 'reinitialiser pin') {
+        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+        const expiresAt = Date.now() + 10 * 60 * 1000;
+        _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: boutique.id, expiresAt });
+        await setSession(phone, 'MARCHAND_RESET_OTP', { boutique, otpCode, otpExpiresAt: expiresAt });
+        await sendWhatsAppText(
+          phone,
+          `🔒 *Code de Sécurité Nopalou — Réinitialisation PIN*\n\n` +
+          `Votre code de vérification temporaire est : *${otpCode}*\n\n` +
+          `👉 Renvoyez simplement ce code *${otpCode}* pour autoriser la création de votre nouveau Code PIN.`
+        );
+        return;
+      }
+      await sendWhatsAppText(
+        phone,
+        `🔒 *Action temporairement suspendue*\n\nTentatives de code PIN suspendues pendant encore *${minsRestantes} minute(s)*. Tapez *pin oublié* pour le réinitialiser.`
+      );
+      return;
+    }
+
     // Demande de réinitialisation si PIN oublié
     if (normTxtLower === 'pin oublie' || normTxtLower === 'pin oublié' || normTxtLower === 'reinitialiser pin') {
       const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
-      _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: boutique.id, expiresAt: Date.now() + 10 * 60 * 1000 });
-      await setSession(phone, 'MARCHAND_RESET_OTP', { boutique, otpCode });
+      const expiresAt = Date.now() + 10 * 60 * 1000;
+      _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: boutique.id, expiresAt });
+      await setSession(phone, 'MARCHAND_RESET_OTP', { boutique, otpCode, otpExpiresAt: expiresAt });
       await sendWhatsAppText(
         phone,
         `🔒 *Code de Sécurité Nopalou — Réinitialisation PIN*\n\n` +
@@ -4804,18 +5250,39 @@ async function handleIncomingInternal(msg) {
 
     const pinValide = await verifierCodePin(boutique, text.trim());
     if (pinValide) {
-      await setSession(phone, 'MARCHAND_CHANGE_PIN_NOUVEAU', { boutique, isMarchandAuth: true });
+      await setSession(phone, 'MARCHAND_CHANGE_PIN_NOUVEAU', { boutique, isMarchandAuth: true, pinAttempts: 0, pinLockedUntil: null });
       await sendWhatsAppText(
         phone,
         `✨ *Code PIN actuel validé !*\n\nVeuillez entrer votre *NOUVEAU Code PIN* (4 à 6 chiffres, ex: 5678) :`
       );
       return;
     } else {
-      await sendWhatsAppText(
-        phone,
-        `❌ *Code PIN actuel incorrect*.\n\nVeuillez réessayer ou tapez *pin oublié* pour le réinitialiser par code de sécurité.`
-      );
-      return;
+      const attempts = (Number(context?.pinAttempts) || 0) + 1;
+      if (attempts >= 3) {
+        const lockTime = Date.now() + 15 * 60 * 1000;
+        await setSession(phone, 'MARCHAND_CHANGE_PIN_ACTUEL', {
+          ...context,
+          boutique,
+          pinAttempts: attempts,
+          pinLockedUntil: lockTime,
+        });
+        await sendWhatsAppText(
+          phone,
+          `⛔ *Code PIN actuel incorrect (3/3)*\n\n🔒 Tentatives bloquées pendant 15 minutes. Tapez *pin oublié* pour réinitialiser par code de sécurité.`
+        );
+        return;
+      } else {
+        await setSession(phone, 'MARCHAND_CHANGE_PIN_ACTUEL', {
+          ...context,
+          boutique,
+          pinAttempts: attempts,
+        });
+        await sendWhatsAppText(
+          phone,
+          `❌ *Code PIN actuel incorrect* (tentative ${attempts}/3).\n\nVeuillez réessayer ou tapez *pin oublié* pour le réinitialiser par code de sécurité.`
+        );
+        return;
+      }
     }
   }
 
@@ -4845,6 +5312,7 @@ async function handleIncomingInternal(msg) {
         phone,
         `✅ *Code PIN modifié avec succès !* 🎉\n\nVotre nouveau code secret (*${nouveauPin}*) est bien enregistré et sécurise l'accès à votre boutique *${boutique.nom}*.`
       );
+      await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true, pinAttempts: 0, pinLockedUntil: null });
       await envoyerMenuMarchand(phone, boutique);
       return;
     } catch (errPin) {
@@ -4859,6 +5327,7 @@ async function handleIncomingInternal(msg) {
   if (state === 'MARCHAND_RESET_OTP') {
     const boutique = context?.boutique;
     const expectedOtp = context?.otpCode;
+    const otpExpiresAt = context?.otpExpiresAt;
     const otpData = _otpCodesMarchand.get(phone);
 
     if (!boutique) {
@@ -4868,8 +5337,17 @@ async function handleIncomingInternal(msg) {
     }
 
     const inputCode = text.trim().replace(/\D/g, '');
-    if ((expectedOtp && inputCode === expectedOtp) || (otpData && otpData.code === inputCode && Date.now() < otpData.expiresAt)) {
-      await setSession(phone, 'MARCHAND_RESET_NOUVEAU_PIN', { boutique, isMarchandAuth: true });
+    const isDbValid = expectedOtp && inputCode === expectedOtp && (!otpExpiresAt || Date.now() < Number(otpExpiresAt));
+    const isMemValid = otpData && otpData.code === inputCode && Date.now() < otpData.expiresAt;
+
+    if (isDbValid || isMemValid) {
+      await setSession(phone, 'MARCHAND_RESET_NOUVEAU_PIN', {
+        boutique,
+        isMarchandAuth: true,
+        pinAttempts: 0,
+        pinLockedUntil: null,
+      });
+      _otpCodesMarchand.delete(phone);
       await sendWhatsAppText(
         phone,
         `✅ *Identité vérifiée avec succès !*\n\nVeuillez maintenant saisir votre *NOUVEAU Code PIN* (4 à 6 chiffres, ex: 5678) :`
@@ -4911,6 +5389,7 @@ async function handleIncomingInternal(msg) {
         phone,
         `✅ *Nouveau Code PIN enregistré avec succès !* 🎉\n\nVotre code secret a été réinitialisé avec succès (*${nouveauPin}*).`
       );
+      await setSession(phone, 'MARCHAND_MENU', { boutique, isMarchandAuth: true, pinAttempts: 0, pinLockedUntil: null });
       await envoyerMenuMarchand(phone, boutique);
       return;
     } catch (errPinReset) {
@@ -5260,7 +5739,20 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
     }
   }
 
-  const results = await searchContent(cleanQ, excludeIds);
+  let results = await searchContent(cleanQ, excludeIds);
+  let suggestionFuzzy = null;
+
+  if (!results.length && excludeIds.length === 0) {
+    suggestionFuzzy = corrigerRequeteFuzzy(cleanQ);
+    if (suggestionFuzzy && suggestionFuzzy.toLowerCase() !== cleanQ.toLowerCase()) {
+      results = await searchContent(suggestionFuzzy, excludeIds);
+    }
+    // Fallback souple ILIKE si toujours rien
+    if (!results.length && cleanQ.length >= 3) {
+      results = await searchContentIlike(suggestionFuzzy || cleanQ);
+    }
+  }
+
   if (!results.length) {
     if (excludeIds.length) {
       // Pagination épuisée — tout a déjà été montré.
@@ -5272,6 +5764,14 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
     await sendWhatsAppText(phone, `😕 Aucun résultat pour *"${cleanQ}"*.\n\nEssayez avec d'autres mots-clés ou tapez *menu*.`);
     await setSession(phone, 'SEARCH_QUERY', {});
     return;
+  }
+
+  // Si des résultats ont été trouvés grâce à la correction orthographique
+  if (suggestionFuzzy && suggestionFuzzy.toLowerCase() !== cleanQ.toLowerCase()) {
+    await sendWhatsAppText(
+      phone,
+      `💡 Aucun résultat direct pour *"${cleanQ}"*.\nVoici ce que nous avons trouvé pour *"${suggestionFuzzy}"* :`
+    );
   }
 
   const produits     = results.filter(r => r.type === 'produit');
@@ -5346,5 +5846,8 @@ module.exports = {
   envoyerVitrineStatutMarchand,
   detecterIntentionInterrogative,
   enregistrerDemandeSupport,
+  distanceLevenshtein,
+  corrigerRequeteFuzzy,
+  searchContentIlike,
 };
 

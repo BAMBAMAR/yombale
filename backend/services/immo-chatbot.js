@@ -9,16 +9,16 @@ const prixFmt = (p) => (p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' :
 
 // Mots-clés déclencheurs d'intention immobilière spécifiques
 const MOTS_CLES_IMMO = [
-  'immo', 'immobilier', 'immobiliere', 'appartement', 'appartements', 'appart', 'apparts',
-  'villa', 'villas', 'maison', 'maisons', 'terrain', 'terrains',
-  'studio', 'studios', 'immeuble', 'immeubles', 'hangar', 'duplex',
+  'immo', 'immobilier', 'immobiliere', 'appartement', 'appartements', 'apartement', 'apartements', 'appart', 'apparts',
+  'villa', 'villas', 'maison', 'maisons', 'terrain', 'terrains', 'terain', 'terains', 'parcelle', 'parcelles',
+  'studio', 'studios', 'immeuble', 'immeubles', 'hangar', 'duplex', 'chambre', 'chambres',
   'louer', 'location', 'a louer', 'bail', 'baux', 'loyer', 'loyers', 'quittance',
   'a vendre', 'agence immo', 'visite', 'visites', 'prospect', 'prospects', 'rdv visite'
 ];
 
 // Termes géographiques à combiner avec verbes ou recherche
 const QUARTIERS_IMMO = [
-  'almadies', 'ngor', 'ouakam', 'mermoz', 'fann', 'plateau', 'point e',
+  'almadies', 'almadie', 'ngor', 'ngore', 'ouakam', 'mermoz', 'fann', 'plateau', 'point e',
   'yoff', 'nord foire', 'sud foire', 'sacré coeur', 'sacre coeur', 'maristes',
   'liberté', 'liberte', 'vdn', 'saly', 'somone', 'ngaparou'
 ];
