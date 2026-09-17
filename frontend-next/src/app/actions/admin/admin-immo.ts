@@ -2,7 +2,8 @@
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { BACKEND, COOKIE, getAdminToken, adminHeaders } from './admin-auth'
+import { BACKEND, COOKIE, adminHeaders } from './admin-common'
+import { getAdminToken } from './admin-auth'
 
 // ── Activer sponsoring immo ─────────────────────────────────────────
 export async function activerSponsoring(

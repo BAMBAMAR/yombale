@@ -113,13 +113,17 @@ describe('cleanupOldMessages', () => {
 });
 
 describe('resetInactiveSessions', () => {
-  test('exécute un UPDATE sur whatsapp_sessions', async () => {
+  test('exécute les UPDATE sur whatsapp_sessions (1h ordinaire et 24h commandes)', async () => {
     await resetInactiveSessions();
-    expect(mockQuery).toHaveBeenCalledTimes(1);
-    const sql = mockQuery.mock.calls[0][0];
-    expect(sql).toMatch(/UPDATE whatsapp_sessions/i);
-    expect(sql).toMatch(/IDLE/);
-    expect(sql).toMatch(/1 hour/i);
+    expect(mockQuery).toHaveBeenCalledTimes(2);
+    const sql1 = mockQuery.mock.calls[0][0];
+    expect(sql1).toMatch(/UPDATE whatsapp_sessions/i);
+    expect(sql1).toMatch(/IDLE/);
+    expect(sql1).toMatch(/1 hour/i);
+    const sql2 = mockQuery.mock.calls[1][0];
+    expect(sql2).toMatch(/UPDATE whatsapp_sessions/i);
+    expect(sql2).toMatch(/COMMANDE_%/);
+    expect(sql2).toMatch(/24 hours/i);
   });
 
   test("ne reset pas les sessions déjà IDLE (WHERE state != 'IDLE')", async () => {

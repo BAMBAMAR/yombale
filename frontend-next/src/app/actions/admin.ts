@@ -1,5 +1,3 @@
-'use server'
-
 /**
  * Nopalou Admin Server Actions (Barrel File)
  *

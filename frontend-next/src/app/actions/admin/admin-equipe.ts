@@ -1,7 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { BACKEND, getAdminToken, adminHeaders } from './admin-auth'
+import { BACKEND, adminHeaders } from './admin-common'
+import { getAdminToken } from './admin-auth'
 
 // ── Équipe & RBAC Administrateur ───────────────────────────────────
 export async function adminGetEquipe(): Promise<{ success?: boolean; membres?: any[]; error?: string }> {

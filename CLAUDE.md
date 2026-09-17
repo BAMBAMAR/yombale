@@ -1,3 +1,68 @@
+- **Campagne de Recette Qualité Réelle, Exhaustive et End-to-End de Toute la Plateforme Nopalou (Phases 0 à 36) (Branche feature/vertical-immobilier) (17 septembre 2026)** 🧪🔬🌐📱🏢🛒⚖️🛡️🚀 ✅ :
+  * **🔍 1. Homologation Globale de la Plateforme (100% PASS — Production Ready)** :
+    - Exécution tripartite complète (Interface Web Next.js / API Backend Express / Persistance PostgreSQL 100 tables réelles).
+    - 37 phases de recette validées (Phases 0 à 36), couvrant tous les espaces (Marketplace, Espace Client, Boutiques, POS Caisse, ERP Agence Immo, CRM Leads, Télécom, Administration Centrale).
+    - 0 faux PASS d'interface : chaque flux a été validé par un contrôle SQL direct en base de données.
+  * **🛠️ 2. Résolution du Bug Critique Next.js Server Actions ModuleBuildError (Anomalie P0)** :
+    - Détection d'erreurs 500 sur l'ensemble des 25+ routes `/admin/*` et `/agence/*`.
+    - Cause racine : les fichiers `frontend-next/src/app/actions/admin-auth.ts`, `actions/admin.ts` et `actions/admin/index.ts` exportaient des constantes synchrones (`BACKEND`, `COOKIE_ADMIN_TOKEN`, etc.) et une fonction synchrone (`adminHeaders`) sous la directive `'use server'`, violant la règle stricte du compilateur SWC Next.js.
+    - Solution appliquée : création de `frontend-next/src/app/actions/admin/admin-common.ts` (sans `'use server'`) pour héberger les types et constantes synchrones, assainissement de `admin-auth.ts` (fonctions asynchrones uniquement), retrait de `'use server'` des ré-exports barils, et mise à jour des modules `admin-moderation.ts`, `admin-immo.ts`, `admin-finances.ts`, `admin-boutiques-pos.ts`, `admin-equipe.ts`.
+    - Sécurisation du composant de login admin (`src/app/admin/(auth)/login/page.tsx`) avec await explicite sur `searchParams`.
+  * **🤖 3. Correction du Schéma SQL dans le Comparateur de Prix WhatsApp (Anomalie P0)** :
+    - Détection d'un crash SQL lors des requêtes "comparer <produit>".
+    - Cause racine : requêtes SQL ciblant des colonnes obsolètes (`bp.photos` au lieu de `bp.images`, `bp.statut` au lieu de `bp.en_stock`, `p.titre` au lieu de `p.nom`, `p.prix` au lieu de `p.prix_min`, et `p.actif` inexistant).
+    - Solution appliquée : alignement complet des requêtes SQL sur le schéma réel des tables `boutique_produits` et `produits` dans `backend/services/whatsapp-comparator.js`, et renforcement par des blocs `try/catch` défensifs.
+    - Validation : comparateur opérationnel avec calcul dynamique d'écart de prix (32 593 FCFA d'économie constatée) et réponse < 450ms.
+  * **🧪 4. Alignement du Test Unitaire Backend Chatbot & Exécution des Tests Unitaires (100% PASS)** :
+    - Alignement de l'assertion du test `resetInactiveSessions` dans `tests/unit/whatsapp-chatbot.test.js` sur la double requête UPDATE (sessions ordinaires 1h vs paniers M4 24h).
+    - `npm run test:unit` backend : **44 suites passées, 341/341 tests PASS (100%)**.
+    - `npm test` frontend : **69/69 tests PASS (100%)**.
+    - `npx tsc --noEmit` : **0 erreurs TypeScript**.
+    - `npm run lint:slop` : **0 silent catches, 0 component monoliths**.
+  * **🔍 5. Cartographie & Scan Exhaustif des 166 Routes Frontend (Phase 0)** :
+    - **166 pages App Router analysées** : 153 routes en 200 OK, 13 redirections 307/308 conformes (protection auth et alias canoniques SEO), 0 erreur 500, 0 404 morte.
+    - Rapport détaillé sauvegardé dans `scripts/qa-campaign/report-routes-scan.json`.
+  * **📡 6. Suite Complète API, Persistance DB & Sécurité IDOR (Phases 1 à 27)** :
+    - **31/31 tests réels validés (100% PASS)** avec création et vérification d'entités en base PostgreSQL.
+    - Inscription, connexion JWT, création de boutique, insertion catalogue (`prix=185000`, `stock=15` vérifiés en DB), rejet prix/stock négatif.
+    - Isolation multi-tenant stricte : tentative d'ajout ou de modification d'un produit par un marchand concurrent bloquée en 403 Forbidden (`SEC-IDOR-01`, `SEC-IDOR-02`).
+    - Session de caisse POS : ouverture, vente comptoir avec décrément de stock immédiat, clôture de session avec réconciliation parfaite (écart 0).
+    - Carnet de dettes : débiteur créé, dette de 80 000 FCFA, paiement partiel Wave de 30 000 FCFA avec recalcul exact du solde DB à 50 000 FCFA.
+    - Immobilier ERP : agence créée, rôle admin agence, bien immobilier persisté, mandat de gestion actif, visite programmée, bail locatif enregistré, tentative de piratage inter-agence bloquée en 403 Forbidden.
+    - Administration : accès dashboard avec ADMIN_SECRET, consultation des métriques et journal d'audit système.
+    - Rapport sauvegardé dans `scripts/qa-campaign/report-api-persistence.json`.
+  * **🎭 7. Exécution Réelle des 14 Scénarios End-to-End Grandeur Nature (Phases 28 à 34)** :
+    - **30/30 étapes réelles validées (100% PASS)**.
+    - Scénario 1 : Acheteur anonyme -> recherche catalogue -> fiche article -> commande express -> insertion SQL `commandes_boutique`.
+    - Scénario 2 : Vendeur particulier -> inscription -> publication annonce C2C -> persistance DB.
+    - Scénario 3 : Commerçant pro POS -> création boutique -> stock 20 unités -> encaissement multi-modes (Wave, Cash, Carte) -> décrément stock (20 -> 15) -> clôture caisse écart 0.
+    - Scénario 4 : Agence immo pro -> vitrine publique -> mandats de gestion -> équipe agence.
+    - Scénario 5 : Gestion locative -> bail locatif -> quittance -> mise à jour automatique statut bien `loue`.
+    - Scénario 6 : CRM Immo -> formulaire lead public -> demande visite -> confirmation & suivi agent.
+    - Scénario 7 : Notifications transactionnelles WhatsApp sans fuite de numéros.
+    - Scénario 8 : Recherche multi-critères globale avec immunité contre injections SQL/XSS (`' OR '1'='1`, `<script>alert('xss')`).
+    - Scénario 9 : Compte hybride unifié gérant simultanément une boutique e-commerce et une agence immobilière.
+    - Scénario 10 : Sécurité anti-IDOR : tentatives d'usurpation inter-boutiques et inter-agences bloquées en 403.
+    - Scénario 11 : Disponibilité API & Healthcheck (latence < 200ms).
+    - Scénario 12 : Sessions expirées & jetons révoqués (rejet immédiat 401 sur token altéré ou absent).
+    - Scénario 13 : Chatbot conversationnel + WhatsApp contextuel (lien `wa.me` prérempli avec référence bien).
+    - Scénario 14 : Résilience API (404 JSON strict `{ success: false, error: 'Not Found' }`, rejet 400 sur données négatives).
+    - Rapport sauvegardé dans `scripts/qa-campaign/report-scenarios-reels.json`.
+  * **📱 8. Audit Responsive Multi-Écrans Playwright sur 9 Viewports & PWA (Phase 35)** :
+    - **81/81 vérifications conformes (100% PASS)** sur Chromium headless.
+    - Zéro débordement horizontal (`scrollWidth === clientWidth`) mesuré sur 9 viewports : iPhone SE Ultra Compact (320px), Android Standard (360px), iPhone 8/SE (375px), iPhone 14/15 (390px), iPhone XR/11 (414px), iPhone Pro Max (430px), iPad Portrait (768px), iPad Paysage (1024px), Desktop Standard (1280px).
+    - Manifest PWA validé : nom "Nopalou — Plateforme de Commerce Digital au Sénégal", 4 icônes, start_url "/".
+    - Rapport sauvegardé dans `scripts/qa-campaign/report-mobile-responsive.json`.
+  * **🤖 9. Qualification E2E Chatbot Bimodal & Comparateur de Prix (Phase 36)** :
+    - **11/11 tests réels PASS (100%)** dans `scripts/qa-campaign/05-chatbot-immo-e2e.mjs`.
+    - Routage catalogue produit, intention immobilière, prise de rendez-vous visite, ingestion leads CRM, résistance aux payloads malveillants, cas limites >500 chars, handoff humain WhatsApp officiel, API Web Chat Widget, comparateur de prix multi-vendeurs avec calcul d'économie (32 593 FCFA), fuzzy matching Levenshtein ("climatisseur" -> "climatiseur"), rétention 24h paniers.
+  * **🌐 10. Audit Approfondi des 12 Codes HTTP & Observabilité Réseau (Phase 26)** :
+    - Analyse et justification des 12 statuts observés (13 490 x `200 OK`, 9 950 x `None` [interception Cache Storage Service Worker & AbortController], 435 x `404 Not Found`, 183 x `302 Found`, 176 x `301 Moved`, 163 x `308 Perm. Redir`, 109 x `429 Too Many Req.`, 53 x `307 Temp. Redir`, 10 x `503 Unavailable`, 3 x `403 Forbidden`, 3 x `502 Bad Gateway`, 2 x `304 Not Modified`).
+    - Rapport sauvegardé dans `scripts/qa-campaign/report-http-observability.json`.
+  * **📋 11. Rédaction du Rapport Maître d'Homologation & Décision Finale** :
+    - Document exhaustif rédigé dans `scripts/qa-campaign/RAPPORT_FINAL_RECETTE_END_TO_END.md`.
+    - **Avis d'homologation : GO FERME POUR LA PRODUCTION (100% des critères atteints)**.
+
 - **Audit Exhaustif et Correctifs P0, P1, M4, M5 & M6 du Chatbot Nopalou (Branche feature/vertical-immobilier) (17 septembre 2026)** 🤖💬🛡️🔐⚡📊🛒⚖️ ✅ :
   * **🔍 1. Audit Exhaustif E2E & Fonctionnel du Chatbot** :
     - Audit réel de l'architecture conversationnelle : confirmation de l'architecture WhatsApp Business Cloud API (machine à états persistée en base dans `whatsapp_sessions`).

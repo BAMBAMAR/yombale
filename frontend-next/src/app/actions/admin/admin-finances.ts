@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { BACKEND, COOKIE, adminHeaders } from './admin-auth'
+import { BACKEND, COOKIE, adminHeaders } from './admin-common'
 
 // ── Reversements Wave Marchands 1-Clic ──────────────────────────────
 export async function fetchReversementsDus(): Promise<{ reversements?: any[]; error?: string }> {

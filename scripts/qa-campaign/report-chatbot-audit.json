@@ -6,7 +6,7 @@
     "expected": "200 OK avec liste produits",
     "actual": "Trouvés: 10",
     "details": null,
-    "timestamp": "2026-09-17T16:05:14.899Z"
+    "timestamp": "2026-09-17T21:16:22.266Z"
   },
   {
     "testId": "CHATBOT-02",
@@ -15,7 +15,7 @@
     "expected": "200 OK assaini",
     "actual": "Interrogation sans faille",
     "details": null,
-    "timestamp": "2026-09-17T16:05:17.530Z"
+    "timestamp": "2026-09-17T21:16:25.017Z"
   },
   {
     "testId": "CHATBOT-03",
@@ -24,7 +24,7 @@
     "expected": "Accès visites sécurisé",
     "actual": "Visites trouvées: 1",
     "details": null,
-    "timestamp": "2026-09-17T16:05:17.690Z"
+    "timestamp": "2026-09-17T21:16:25.189Z"
   },
   {
     "testId": "CHATBOT-04",
@@ -33,7 +33,7 @@
     "expected": "Accès CRM qualifié",
     "actual": "Leads trouvés: 1",
     "details": null,
-    "timestamp": "2026-09-17T16:05:17.766Z"
+    "timestamp": "2026-09-17T21:16:25.268Z"
   },
   {
     "testId": "CHATBOT-05",
@@ -42,7 +42,7 @@
     "expected": "Tous filtrés sans crash 500",
     "actual": "Assainissement 100%",
     "details": null,
-    "timestamp": "2026-09-17T16:05:34.114Z"
+    "timestamp": "2026-09-17T21:16:39.710Z"
   },
   {
     "testId": "CHATBOT-06",
@@ -51,7 +51,7 @@
     "expected": "Pas de débordement ni de blocage serveur",
     "actual": "Statuts maîtrisés",
     "details": null,
-    "timestamp": "2026-09-17T16:05:37.982Z"
+    "timestamp": "2026-09-17T21:16:42.733Z"
   },
   {
     "testId": "CHATBOT-07",
@@ -60,6 +60,45 @@
     "expected": "Lien wa.me valide",
     "actual": "https://wa.me/221770000000?text=Bonjour%20Nopalou%2C%20je%20recherche%20une%20villa%20%C3%A0%20Saly%20avec%20piscine.",
     "details": null,
-    "timestamp": "2026-09-17T16:05:37.982Z"
+    "timestamp": "2026-09-17T21:16:42.734Z"
+  },
+  {
+    "testId": "CHATBOT-08",
+    "action": "Interrogation FAQ Web Chat Widget (reply + chips)",
+    "status": "PASS",
+    "expected": "200 OK avec réponse et chips interactifs",
+    "actual": "Nopalou livre partout à Dakar sous 2 à 4 heures, et dans les",
+    "details": null,
+    "timestamp": "2026-09-17T21:16:43.447Z"
+  },
+  {
+    "testId": "CHATBOT-09",
+    "action": "Détection intention comparateur prix & agrégation marchands",
+    "status": "PASS",
+    "expected": "200 OK avec comparatif ou orientation catalogue",
+    "actual": "⚖️ Comparatif des prix relevés pour \"smartphone\", classé par",
+    "details": null,
+    "timestamp": "2026-09-17T21:16:43.818Z"
+  },
+  {
+    "testId": "CHATBOT-10",
+    "action": "Correction automatique mot déformé (\"climatisseur\")",
+    "status": "PASS",
+    "expected": "200 OK avec suggestions assainies",
+    "actual": "Je n'ai pas trouvé de correspondance exacte pour \"climatisse",
+    "details": null,
+    "timestamp": "2026-09-17T21:16:43.966Z"
+  },
+  {
+    "testId": "CHATBOT-11",
+    "action": "Partitionnement des états de sessions (chat 1h vs commandes 24h)",
+    "status": "PASS",
+    "expected": "Comptage différencié DB",
+    "actual": {
+      "active_chat": "6",
+      "active_orders": "0"
+    },
+    "details": null,
+    "timestamp": "2026-09-17T21:16:44.054Z"
   }
 ]

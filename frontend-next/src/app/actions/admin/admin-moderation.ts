@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { BACKEND, COOKIE, adminHeaders } from './admin-auth'
+import { BACKEND, COOKIE, adminHeaders } from './admin-common'
 
 // ── Modérer annonce classifiée ──────────────────────────────────────
 export async function modererAnnonce(

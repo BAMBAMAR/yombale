@@ -14,8 +14,9 @@ const MESSAGES: Record<string, string> = {
   erreur_serveur:   'Erreur serveur — réessayez dans quelques instants.',
 }
 
-export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams
+export default async function AdminLoginPage({ searchParams }: { searchParams?: Promise<{ error?: string }> | { error?: string } }) {
+  const resolved = searchParams ? await searchParams : {}
+  const error = resolved?.error
   const errorMsg = error ? (MESSAGES[error] ?? 'Erreur inconnue.') : null
 
   return (

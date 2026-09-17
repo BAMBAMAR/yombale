@@ -3,18 +3,8 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-export const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
-export const COOKIE_SECRET = 'nopalou_admin'
-export const COOKIE_JWT    = 'nopalou_admin_jwt'
-export const COOKIE        = COOKIE_SECRET
-
-export interface AdminUserSession {
-  id: string
-  nom: string
-  email: string
-  role: 'super_admin' | 'admin_operationnel' | 'support_client' | 'moderateur' | 'finance'
-  permissions: string[]
-}
+import { BACKEND, COOKIE_SECRET, COOKIE_JWT, type AdminUserSession } from './admin-common'
+export type { AdminUserSession }
 
 export async function getAdminToken(): Promise<string | undefined> {
   const jar = await cookies()
@@ -56,18 +46,6 @@ export async function getAdminSession(): Promise<AdminUserSession | null> {
   }
 
   return null
-}
-
-export function adminHeaders(secretOrJwt?: string): HeadersInit {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (secretOrJwt) {
-    if (secretOrJwt.startsWith('eyJ')) {
-      headers['Authorization'] = `Bearer ${secretOrJwt}`
-      headers['Cookie'] = `${COOKIE_JWT}=${secretOrJwt}`
-    }
-    headers['X-Admin-Secret'] = secretOrJwt
-  }
-  return headers
 }
 
 // ── Login ──────────────────────────────────────────────────────────
