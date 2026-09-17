@@ -380,6 +380,7 @@ export default async function RootLayout({
                 <p className="footer-col-titre">Immobilier &amp; Agences</p>
                 <a href="/agences" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Agences Immobilières</a>
                 <a href="/agence">Espace Agence Pro &amp; Baux</a>
+                <a href="/payer-loyer" style={{ color: '#16a34a', fontWeight: 700 }}>Payer mon Loyer (Wave/OM)</a>
                 <a href="/immo">Biens &amp; Locations Dakar</a>
                 <a href="/deposer-immo">Publier un Bien Immo</a>
                 <a href="/guide-immo">Guide Immobilier &amp; Baux</a>
@@ -444,6 +445,7 @@ export default async function RootLayout({
               <a href="/vendre-sur-whatsapp" style={{ color: '#fed7aa', fontWeight: 700 }}>Vendre sur WhatsApp Sénégal</a>
               <a href="/paiement-en-ligne-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Paiement Wave boutique en ligne</a>
               <a href="/gestion-stock-carnet-dettes" style={{ color: '#fed7aa', fontWeight: 700 }}>Carnet de dettes commerçant</a>
+              <a href="/logiciel-gestion-locative-senegal" style={{ color: '#fed7aa', fontWeight: 700 }}>Logiciel gestion locative Dakar</a>
             </div>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Recherches populaires &amp; Comparatifs d&apos;achats</p>
             <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13 }}>

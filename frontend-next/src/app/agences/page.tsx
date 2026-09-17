@@ -10,7 +10,8 @@ import {
   Sparkles,
   Plus,
   Phone,
-  ExternalLink
+  ExternalLink,
+  CreditCard
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import AgenceDirectoryCard, { AgenceItem } from './components/AgenceDirectoryCard'
@@ -139,6 +140,26 @@ export default async function PublicAgencesDirectoryPage({
             >
               <Plus size={16} />
               Espace Professionnel Agence
+            </Link>
+
+            <Link
+              href="/payer-loyer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '10px 20px',
+                borderRadius: 8,
+                background: 'rgba(16, 185, 129, 0.2)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                color: '#86efac',
+                fontWeight: 800,
+                fontSize: 13.5,
+                textDecoration: 'none',
+              }}
+            >
+              <CreditCard size={16} />
+              Payer mon loyer (Wave &amp; OM)
             </Link>
           </div>
         </div>

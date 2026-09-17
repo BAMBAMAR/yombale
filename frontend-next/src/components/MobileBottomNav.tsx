@@ -3,7 +3,8 @@
 import React, { Suspense } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
-import { Home, Heart, User, Store, Plus, Zap } from 'lucide-react'
+import { Home, Heart, User, Store, Plus, Zap, Building2 } from 'lucide-react'
+
 
 interface Props {
   isLoggedIn?: boolean
@@ -50,6 +51,7 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
 
   const currentTab = pathname === '/compte' ? searchParams.get('tab') : null
   const isHome = pathname === '/'
+  const isImmoContext = pathname.startsWith('/immo') || pathname.startsWith('/agences') || pathname.startsWith('/payer-loyer')
   const isExplorer = pathname === '/boutiques' || pathname.startsWith('/boutiques/') || pathname.startsWith('/categorie')
   const isCreerBoutique = pathname === '/creer-boutique' || pathname.startsWith('/creer-boutique')
   const isFavorites = pathname === '/favoris' || (pathname === '/compte' && currentTab === 'favoris')
@@ -57,6 +59,7 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
   const isAccount = (pathname.startsWith('/compte') && currentTab !== 'favoris') || pathname === '/connexion' || pathname === '/inscription' || isBoutique
 
   const favHref = (effectiveIsLoggedIn || pathname.startsWith('/compte')) ? '/compte?tab=favoris' : '/favoris'
+
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Navigation principale mobile">
@@ -73,18 +76,33 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
         <span>Accueil</span>
       </Link>
 
-      {/* 2. Boutiques & Vendeurs */}
-      <Link
-        href="/boutiques"
-        className={`mobile-bottom-nav-item${isExplorer ? ' active' : ''}`}
-        aria-label="Boutiques et Catalogues Partenaires"
-        aria-current={isExplorer ? 'page' : undefined}
-      >
-        <div className="mobile-bottom-nav-icon-wrap">
-          <Store size={20} strokeWidth={isExplorer ? 2.5 : 2} />
-        </div>
-        <span>Boutiques</span>
-      </Link>
+      {/* 2. Boutiques & Vendeurs OU Immo si contexte */}
+      {isImmoContext ? (
+        <Link
+          href="/immo"
+          className="mobile-bottom-nav-item active"
+          aria-label="Immobilier et locations"
+          aria-current="page"
+        >
+          <div className="mobile-bottom-nav-icon-wrap">
+            <Building2 size={20} strokeWidth={2.5} />
+          </div>
+          <span>Immo</span>
+        </Link>
+      ) : (
+        <Link
+          href="/boutiques"
+          className={`mobile-bottom-nav-item${isExplorer ? ' active' : ''}`}
+          aria-label="Boutiques et Catalogues Partenaires"
+          aria-current={isExplorer ? 'page' : undefined}
+        >
+          <div className="mobile-bottom-nav-icon-wrap">
+            <Store size={20} strokeWidth={isExplorer ? 2.5 : 2} />
+          </div>
+          <span>Boutiques</span>
+        </Link>
+      )}
+
 
       {/* 3. Bouton central adaptatif : Caisse POS si commerçant, Créer si visiteur */}
       {effectiveIsMerchant ? (
@@ -167,6 +185,7 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
 function MobileBottomNavFallback({ isLoggedIn = false, isMerchant = false }: Props) {
   const pathname = usePathname() || ''
   const isHome = pathname === '/'
+  const isImmoContext = pathname.startsWith('/immo') || pathname.startsWith('/agences') || pathname.startsWith('/payer-loyer')
   const isExplorer = pathname === '/boutiques' || pathname.startsWith('/boutiques/') || pathname.startsWith('/categorie')
   const isCreerBoutique = pathname === '/creer-boutique' || pathname.startsWith('/creer-boutique')
   const isFavorites = pathname === '/favoris'
@@ -181,10 +200,18 @@ function MobileBottomNavFallback({ isLoggedIn = false, isMerchant = false }: Pro
         <div className="mobile-bottom-nav-icon-wrap"><Home size={20} /></div>
         <span>Accueil</span>
       </Link>
-      <Link href="/boutiques" className={`mobile-bottom-nav-item${isExplorer ? ' active' : ''}`} aria-label="Boutiques">
-        <div className="mobile-bottom-nav-icon-wrap"><Store size={20} /></div>
-        <span>Boutiques</span>
-      </Link>
+      {isImmoContext ? (
+        <Link href="/immo" className="mobile-bottom-nav-item active" aria-label="Immo">
+          <div className="mobile-bottom-nav-icon-wrap"><Building2 size={20} /></div>
+          <span>Immo</span>
+        </Link>
+      ) : (
+        <Link href="/boutiques" className={`mobile-bottom-nav-item${isExplorer ? ' active' : ''}`} aria-label="Boutiques">
+          <div className="mobile-bottom-nav-icon-wrap"><Store size={20} /></div>
+          <span>Boutiques</span>
+        </Link>
+      )}
+
       {isMerchant ? (
         <Link href="/boutique/caisse" className="mobile-bottom-nav-item mobile-bottom-nav-item--cta" aria-label="Caisse POS">
           <div className="mobile-bottom-nav-icon-wrap"><div className="mobile-bottom-nav-cta-btn" style={{ background: 'var(--accent, #C75B00)' }}><Zap size={15} strokeWidth={2.8} fill="#ffffff" color="#ffffff" /></div></div>

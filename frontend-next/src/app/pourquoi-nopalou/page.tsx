@@ -85,6 +85,22 @@ const COMPARATIFS = [
       "Frais de maintenance et réparations techniques complexes",
       "Tickets papier uniquement, sans partage digital"
     ]
+  },
+  {
+    titre: "Nopalou Immo vs Gestion Locative Papier & Carnet Souche",
+    description: "Les reçus sur carnet papier et les fichiers Excel dispersés créent des litiges locatifs permanents et des retards d'encaissement.",
+    nopalou: [
+      "Baux numériques conformes au droit sénégalais et OHADA générés en 2 minutes",
+      "Relance automatique WhatsApp et paiement direct du loyer par Wave ou Orange Money",
+      "Quittance officielle certifiée avec QR Code anti-fraude téléchargeable instantanément",
+      "Tableau de bord des encaissements et des impayés en temps réel"
+    ],
+    autre: [
+      "Baux papier génériques sans protection juridique contre les contestations",
+      "Relances téléphoniques gênantes et retards de paiement chroniques",
+      "Quittances papier manuelles faciles à perdre, falsifier ou contester",
+      "Calculs fastidieux et risque d'oubli de régularisation des charges"
+    ]
   }
 ]
 

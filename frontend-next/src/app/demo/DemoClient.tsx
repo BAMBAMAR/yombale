@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { ShoppingCart, Store, Briefcase } from 'lucide-react'
+import { ShoppingCart, Store, Briefcase, Building2 } from 'lucide-react'
 import {
   PublicSettings,
   DemoExplanation,
@@ -14,15 +14,17 @@ import {
   DemoMerchantSandbox,
   DemoAcheteurSandbox,
   DemoApporteurSandbox,
+  DemoAgenceSandbox,
   DemoCalculator,
   DemoModals
 } from './components'
+
 
 export type { PublicSettings }
 
 interface DemoClientProps {
   initialRef?: string
-  initialRole?: 'acheteur' | 'marchand' | 'apporteur'
+  initialRole?: 'acheteur' | 'marchand' | 'apporteur' | 'agence'
   initialSettings?: PublicSettings
 }
 
@@ -32,7 +34,7 @@ export default function DemoClient({
   initialSettings = {},
 }: DemoClientProps) {
   // State variables
-  const [activeRole, setActiveRole] = useState<'acheteur' | 'marchand' | 'apporteur'>(initialRole)
+  const [activeRole, setActiveRole] = useState<'acheteur' | 'marchand' | 'apporteur' | 'agence'>(initialRole)
   const [referralCode, setReferralCode] = useState<string>(initialRef)
   const [copiedLink, setCopiedLink] = useState<boolean>(false)
   const [showShareModal, setShowShareModal] = useState<boolean>(false)
@@ -84,7 +86,7 @@ export default function DemoClient({
   const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://nopalou.com'
   const shareableUrl = currentHost + '/demo?role=' + activeRole + (referralCode ? '&ref=' + referralCode : '')
 
-  const handleRoleChange = (role: 'acheteur' | 'marchand' | 'apporteur') => {
+  const handleRoleChange = (role: 'acheteur' | 'marchand' | 'apporteur' | 'agence') => {
     setActiveRole(role)
   }
 
@@ -272,7 +274,33 @@ export default function DemoClient({
                 Commissions {tauxCommissionPourcent}% &amp; Kit Commercial
               </span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => handleRoleChange('agence')}
+              style={{
+                background: activeRole === 'agence' ? 'linear-gradient(90deg, #1C2B4A, #2563EB)' : 'var(--bg)',
+                color: activeRole === 'agence' ? '#FFF' : 'var(--text1)',
+                border: activeRole === 'agence' ? 'none' : '1px solid var(--border)',
+                padding: '12px 14px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: 800,
+                fontSize: 13,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3
+              }}
+            >
+              <Building2 size={18} />
+              <span>4. Parcours Agence Immo</span>
+              <span style={{ fontSize: 11, opacity: activeRole === 'agence' ? 0.9 : 0.7, fontWeight: 400 }}>
+                Baux, Loyers Wave &amp; Quittances PDF
+              </span>
+            </button>
           </div>
+
 
           {/* SIMULATOR SCREEN FRAME */}
           <div
@@ -341,7 +369,9 @@ export default function DemoClient({
               )}
 
               {activeRole === 'apporteur' && <DemoApporteurSandbox />}
+              {activeRole === 'agence' && <DemoAgenceSandbox />}
             </div>
+
           </div>
         </section>
 

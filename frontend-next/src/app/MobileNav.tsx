@@ -6,34 +6,18 @@ import {
   Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
   Bell, Heart, Users, BookOpen, Sparkles, Plus, LogOut, ChevronDown,
   MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon, Zap,
-  Menu, X, Building2
+  Menu, X, Building2, CreditCard
 } from 'lucide-react'
+import { GUIDES } from './components/mobileNavData'
+import MobileNavUserCard from './components/MobileNavUserCard'
+
 
 interface Props {
   isLoggedIn: boolean
   nom?: string
 }
 
-interface GuideItem {
-  href: string
-  icon: LucideIcon
-  label: string
-  highlight?: boolean
-  badge?: string
-  badgeColor?: string
-}
 
-const GUIDES: GuideItem[] = [
-  { href: '/tarifs-boutique', icon: Tag, label: 'Tarifs & Forfaits Vendeurs', highlight: true, badge: 'OFFRE', badgeColor: '#C75B00' },
-  { href: '/guide-creer-boutique', icon: Package, label: 'Guide Vendeur & Sourcing' },
-  { href: '/demo', icon: Sparkles, label: 'Démo Commerciale', highlight: true, badge: 'NOUVEAU', badgeColor: 'var(--accent)' },
-  { href: '/guide-achat',   icon: Trophy, label: 'Guide d\'achat intelligent' },
-  { href: '/guide-forfait', icon: Radio, label: 'Guide forfait télécom' },
-  { href: '/guide-immo',   icon: Home, label: 'Guide immobilier' },
-  { href: '/guide-prix',   icon: TrendingDown, label: 'Guide des prix' },
-  { href: '/guide-emploi', icon: BookOpen, label: 'Comment utiliser Nopalou' },
-  { href: '/assistant-whatsapp', icon: MessageCircle, label: 'Assistant WhatsApp' },
-]
 
 export default function MobileNav({ isLoggedIn, nom }: Props) {
   const [open, setOpen] = useState(false)
@@ -123,123 +107,9 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
         </div>
 
         <nav style={{ paddingBottom: 24 }}>
-          {/* ── 1. UTILISATEUR CONNECTÉ : CARTE EN HAUT AVEC DÉCONNEXION DIRECTE ── */}
+          {/* ── 1. UTILISATEUR CONNECTÉ : CARTE EN HAUT MODULARISÉE ── */}
           {isLoggedIn ? (
-            <div style={{ padding: '12px 16px', background: 'linear-gradient(135deg, #FAF8F5 0%, #FFF3E8 100%)', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <a
-                  href="/compte"
-                  onClick={close}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', minWidth: 0, flex: 1 }}
-                >
-                  <div
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, var(--accent, #C75B00) 100%)',
-                      color: '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 16,
-                      fontWeight: 900,
-                      boxShadow: '0 2px 6px rgba(28,43,74,0.2)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {initiale}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 800, fontSize: 13.5, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {displayName}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 11.5, color: 'var(--accent, #C75B00)', fontWeight: 700 }}>
-                      Gérer mon profil →
-                    </p>
-                  </div>
-                </a>
-
-                {/* Bouton Déconnexion Direct & Visible */}
-                <form action={logout} style={{ margin: 0 }}>
-                  <button
-                    type="submit"
-                    onClick={() => {
-                      if (typeof document !== 'undefined') {
-                        document.cookie = 'nopalou_locale=fr; path=/; max-age=31536000; SameSite=Lax'
-                        document.documentElement.lang = 'fr'
-                        document.documentElement.dir = 'ltr'
-                      }
-                    }}
-                    title="Se déconnecter"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '6px 10px',
-                      borderRadius: 8,
-                      background: '#FEF2F2',
-                      border: '1px solid #FECACA',
-                      color: '#DC2626',
-                      fontSize: 11.5,
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <LogOut size={13} />
-                    <span>Quitter</span>
-                  </button>
-                </form>
-              </div>
-
-              {/* Accès Rapide Espace Boutique */}
-              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                <a
-                  href="/boutique"
-                  onClick={close}
-                  style={{
-                    flex: 1,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                    background: 'var(--accent, #C75B00)',
-                    color: '#ffffff',
-                    fontSize: 12,
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                    boxShadow: '0 2px 6px rgba(199,91,0,0.2)',
-                  }}
-                >
-                  <Store size={14} />
-                  <span>Ma Boutique Pro</span>
-                </a>
-                <a
-                  href="/boutique/caisse"
-                  onClick={close}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 4,
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                    background: '#ffffff',
-                    border: '1.5px solid #0A5C36',
-                    color: '#0A5C36',
-                    fontSize: 12,
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                  }}
-                >
-                  <ShoppingCart size={14} />
-                  <span>POS Caisse</span>
-                </a>
-              </div>
-            </div>
+            <MobileNavUserCard displayName={displayName} initiale={initiale} onClose={close} />
           ) : (
             /* ── VISITEUR NON CONNECTÉ : BOUTONS CONNEXION / INSCRIPTION ── */
             <div style={{ padding: '14px 16px', background: '#FAF8F5', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
@@ -334,6 +204,11 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
             <Building2 size={15} style={{ color: 'var(--navy)', marginRight: 8 }} />
             <span>Agences Immobilières</span>
           </a>
+          <a href="/assistant-whatsapp" className="mobile-nav-link" onClick={close} style={{ background: '#f0fdf4' }}>
+            <MessageCircle size={15} style={{ color: '#16a34a', marginRight: 8 }} />
+            <span style={{ fontWeight: 750, color: '#166534' }}>Assistant WhatsApp &amp; Chatbot</span>
+            <span style={{ marginLeft: 'auto', background: '#16a34a', color: '#fff', fontSize: 10, padding: '1px 6px', borderRadius: 8, fontWeight: 900 }}>24/7</span>
+          </a>
 
           {/* ── 2.5 SOLUTIONS MARCHANDS & FORFAITS ── */}
           <div className="mobile-nav-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -354,8 +229,20 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
           </a>
           <a href="/demo?role=marchand" className="mobile-nav-link" onClick={close}>
             <Sparkles size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
-            <span>Tester la Démo Caisse Gratuite</span>
+            <span>Tester la Démo Interactive</span>
           </a>
+
+          {/* ── 2.6 SOLUTIONS AGENCES & GESTION LOCATIVE ── */}
+          <div className="mobile-nav-section">Gestion Locative &amp; Baux</div>
+          <a href="/agence" className="mobile-nav-link" onClick={close}>
+            <Building2 size={15} style={{ color: 'var(--accent)', marginRight: 8 }} />
+            <span>Espace Agence Pro &amp; Mandats</span>
+          </a>
+          <a href="/payer-loyer" className="mobile-nav-link" onClick={close}>
+            <CreditCard size={15} style={{ color: '#16a34a', marginRight: 8 }} />
+            <span>Payer mon Loyer (Wave / OM)</span>
+          </a>
+
 
           {/* ── 3. ESPACE UTILISATEUR (Si connecté, regroupé & sans doublon) ── */}
           {isLoggedIn && (

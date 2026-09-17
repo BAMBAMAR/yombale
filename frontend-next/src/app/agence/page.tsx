@@ -12,6 +12,7 @@ import './agence.css'
 import { ModalCreerAgence } from './components/ModalCreerAgence'
 import { ModalMultiAgence } from './components/ModalMultiAgence'
 import { AgenceHubCard, type AgenceItem } from './components/AgenceHubCard'
+import { AgenceLandingPublicView } from './components/AgenceLandingPublicView'
 import AccountWorkspaceWrapper from '@/app/(account)/components/AccountWorkspaceWrapper'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
@@ -28,6 +29,7 @@ export default function AgencesHubPage() {
   const [agences, setAgences] = useState<AgenceItem[]>([])
   const [quotas, setQuotas] = useState<QuotaData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isUnauthenticated, setIsUnauthenticated] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [showMultiModal, setShowMultiModal] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -45,11 +47,23 @@ export default function AgencesHubPage() {
   async function chargerAgences() {
     try {
       setLoading(true)
+      const headers = getImmoAuthHeaders()
+      // Si aucun token présent dans le stockage local, basculer directement sur la vitrine publique
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token') || localStorage.getItem('nopalou_token') || sessionStorage.getItem('token')
+        if (!token) {
+          setIsUnauthenticated(true)
+          setLoading(false)
+          return
+        }
+      }
+
       const res = await fetch('/api/agences/mine', {
-        headers: getImmoAuthHeaders(),
+        headers,
       })
       if (res.status === 401) {
-        router.push('/connexion?redirect=/agence')
+        setIsUnauthenticated(true)
+        setLoading(false)
         return
       }
       const data = await res.json()
@@ -117,6 +131,18 @@ export default function AgencesHubPage() {
   const userOwnerCount = agences.filter(a => a.is_owner).length
   const quotaMax = quotas?.max_agences || 1
   const isQuotaReached = userOwnerCount >= quotaMax
+
+  if (isUnauthenticated) {
+    return <AgenceLandingPublicView />
+  }
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748B', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <p style={{ fontSize: 15, fontWeight: 700 }}>Chargement de vos espaces immobiliers...</p>
+      </div>
+    )
+  }
 
   return (
     <AccountWorkspaceWrapper

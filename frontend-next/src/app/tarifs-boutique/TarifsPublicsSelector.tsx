@@ -1,107 +1,20 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-
-interface DureeOption {
-  mois: number
-  label: string
-  sousTitre: string
-  remise: number
-  badge: string | null
-}
-
-const DUREES: DureeOption[] = [
-  { mois: 1, label: '1 mois', sousTitre: 'Tarif mensuel', remise: 0, badge: null },
-  { mois: 3, label: '3 mois', sousTitre: 'Trimestriel', remise: 0.10, badge: '-10%' },
-  { mois: 6, label: '6 mois', sousTitre: 'Semestriel', remise: 0.15, badge: '-15%' },
-  { mois: 12, label: '12 mois (1 an)', sousTitre: 'Annuel', remise: 0.25, badge: '-25% (3 mois offerts)' },
-]
-
-interface PlanConfig {
-  id: string
-  nom: string
-  tag: string
-  badgeSection?: string
-  badgeCouleur?: string
-  description: string
-  prixMensuelBase: number
-  populaire?: boolean
-  recommande?: boolean
-  features: string[]
-  ctaText: string
-  ctaHref: string
-}
-
-const PLANS_CONFIG: PlanConfig[] = [
-  {
-    id: 'taf_taf',
-    nom: 'Boutique Taf Taf',
-    tag: 'Formule Populaire',
-    description: 'Idéal pour débuter son commerce, gérer ses ventes sur WhatsApp et tenir son carnet de dettes.',
-    prixMensuelBase: 2500,
-    populaire: true,
-    features: [
-      'Vitrine e-commerce personnalisée + Catalogue produits illimités',
-      'Panier web & Commandes directes sur WhatsApp',
-      'Carnet de dettes client ("Bor") & historique des paiements',
-      'Import Intelligent Multi-Plateformes (Shopify, WooCommerce, Excel, AliExpress, SHEIN)',
-      'Assistant Marchand WhatsApp & Alertes de stock',
-      'Lien court dédié & QR Code boutique pour flyers et réseaux',
-      'Encaissement direct Wave & Orange Money (0% commission)',
-      '1er mois 100% OFFERT',
-    ],
-    ctaText: 'Choisir cette formule (1 mois offert)',
-    ctaHref: '/creer-boutique?plan=decouverte',
-  },
-  {
-    id: 'pro',
-    nom: 'Boutique Pro',
-    tag: 'Booster de Ventes & POS',
-    description: 'Pour les commerces établis voulant la caisse enregistreuse POS, les factures pro et un référencement prioritaire.',
-    prixMensuelBase: 5000,
-    recommande: true,
-    features: [
-      'Tout le contenu de la formule Taf Taf',
-      'Caisse enregistreuse POS tactile magasin (Mode 100% Hors-Ligne)',
-      'Scan des codes-barres par caméra smartphone & Impression tickets',
-      'Relances WhatsApp 1-Clic personnalisées avec lien Wave prérempli',
-      'Factures & Devis PDF professionnels (Normes OHADA)',
-      'Gestion des commandes & Dispatch livreur Tiak-Tiak sur WhatsApp',
-      'Import par lot du carnet clients & dettes (CSV / Excel)',
-      'Référencement prioritaire comparateur & Badge Vendeur Pro vérifié',
-      'Export intégral de votre boutique en 1 clic (.JSON / .CSV)',
-      '1er mois 100% OFFERT',
-    ],
-    ctaText: 'Devenir Vendeur Pro (1 mois offert)',
-    ctaHref: '/creer-boutique?plan=pro',
-  },
-  {
-    id: 'business',
-    nom: 'Boutique Business VIP',
-    tag: 'Solution Globale & Multi-Sites',
-    description: 'Pour les grandes enseignes, chaînes de magasins, grossistes et marques d\'importation.',
-    prixMensuelBase: 10000,
-    features: [
-      'Tout le contenu de la formule Boutique Pro',
-      'Caisse POS Multi-Caissiers (Codes PIN individuels & Clôtures Z)',
-      'Multi-Magasins, dépôts physiques & transferts de stock',
-      'Relances WhatsApp automatiques selon l\'échéance du carnet',
-      'Automation WhatsApp Relance automatique des paniers abandonnés',
-      'Comptabilité avancée (Fournisseurs, bons de commande & marges nettes)',
-      'Portail Développeur Clés API REST & Webhooks temps réel',
-      'Bannière publicitaire sponsorisée prioritaire en tête de catégorie',
-      'Account Manager VIP dédié 7j/7 avec support prioritaire',
-      '1er mois 100% OFFERT',
-    ],
-    ctaText: 'Rejoindre le Business VIP (1 mois offert)',
-    ctaHref: '/creer-boutique?plan=business',
-  },
-]
+import { Store, Building2, Check, Sparkles, Zap, ArrowRight } from 'lucide-react'
+import {
+  type DureeOption,
+  type PlanConfig,
+  DUREES_INITIALES,
+  PLANS_BOUTIQUES_CONFIG,
+  PLANS_AGENCES_CONFIG
+} from './tarifsData'
 
 export default function TarifsPublicsSelector() {
+  const [secteur, setSecteur] = useState<'commerce' | 'immo'>('commerce')
   const [duree, setDuree] = useState<number>(12) // 12 mois par défaut
-  const [plans, setPlans] = useState<PlanConfig[]>(PLANS_CONFIG)
-  const [dureesOptions, setDureesOptions] = useState<DureeOption[]>(DUREES)
+  const [plans, setPlans] = useState<PlanConfig[]>(PLANS_BOUTIQUES_CONFIG)
+  const [dureesOptions, setDureesOptions] = useState<DureeOption[]>(DUREES_INITIALES)
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'}/api/settings/public`)
@@ -149,9 +62,66 @@ export default function TarifsPublicsSelector() {
   }, []);
 
   const optionDuree = dureesOptions.find((d) => d.mois === duree) || dureesOptions[0]
+  const activePlans = secteur === 'immo' ? PLANS_AGENCES_CONFIG : plans
 
   return (
     <div style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+      
+      {/* SÉLECTEUR D'UNIVERS : COMMERCES VS AGENCES IMMOBILIÈRES */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+        <div style={{
+          display: 'inline-flex',
+          background: '#ffffff',
+          padding: '5px',
+          borderRadius: 30,
+          border: '1.5px solid var(--border, #E8DDD2)',
+          boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
+          gap: 6,
+          maxWidth: '100%',
+          flexWrap: 'wrap',
+          justifyContent: 'center'
+        }}>
+          <button
+            type="button"
+            onClick={() => setSecteur('commerce')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '9px 18px', borderRadius: 24, fontSize: 13,
+              fontWeight: secteur === 'commerce' ? 850 : 650,
+              border: 'none', cursor: 'pointer',
+              background: secteur === 'commerce' ? 'var(--navy, #1C2B4A)' : 'transparent',
+              color: secteur === 'commerce' ? '#ffffff' : 'var(--navy, #1C2B4A)',
+              boxShadow: secteur === 'commerce' ? '0 3px 10px rgba(28,43,74,0.2)' : 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Store size={15} color={secteur === 'commerce' ? '#fed7aa' : 'currentColor'} />
+            <span>Commerces, Boutiques &amp; POS</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSecteur('immo')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '9px 18px', borderRadius: 24, fontSize: 13,
+              fontWeight: secteur === 'immo' ? 850 : 650,
+              border: 'none', cursor: 'pointer',
+              background: secteur === 'immo' ? 'var(--navy, #1C2B4A)' : 'transparent',
+              color: secteur === 'immo' ? '#ffffff' : 'var(--navy, #1C2B4A)',
+              boxShadow: secteur === 'immo' ? '0 3px 10px rgba(28,43,74,0.2)' : 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Building2 size={15} color={secteur === 'immo' ? '#fed7aa' : 'currentColor'} />
+            <span>Agences &amp; Gestion Locative</span>
+            <span style={{ fontSize: 9.5, fontWeight: 900, background: 'rgba(16,185,129,0.2)', color: secteur === 'immo' ? '#86efac' : '#10b981', padding: '1px 5px', borderRadius: 6 }}>
+              IMMO
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* SÉLECTEUR DE DURÉE */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <p
@@ -234,9 +204,9 @@ export default function TarifsPublicsSelector() {
         </div>
       </div>
 
-      {/* GRILLE DES CARTES DE FORFAITS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-        {plans.map((plan) => {
+      {/* GRILLE DES CARTES DE FORFAITS (RESPONSIVE SANS DÉBORDEMENT) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 24 }}>
+        {activePlans.map((plan) => {
           const totalBrut = plan.prixMensuelBase * duree
           const totalApresRemise = Math.round(totalBrut * (1 - optionDuree.remise))
           const mensuelEquiv = Math.round(totalApresRemise / duree)
@@ -302,13 +272,13 @@ export default function TarifsPublicsSelector() {
                 {/* TARIFICATION DYNAMIQUE */}
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                    <span style={{ fontSize: 34, fontWeight: 900, color: '#0f172a' }}>
-                      {mensuelEquiv.toLocaleString('fr-FR')} FCFA
+                    <span style={{ fontSize: 34, fontWeight: 900, color: plan.prixMensuelBase === 0 ? '#10b981' : '#0f172a' }}>
+                      {plan.prixMensuelBase === 0 ? '100% Gratuit' : `${mensuelEquiv.toLocaleString('fr-FR')} FCFA`}
                     </span>
-                    <span style={{ color: '#64748b', fontSize: 14 }}>/ mois</span>
+                    {plan.prixMensuelBase > 0 && <span style={{ color: '#64748b', fontSize: 14 }}>/ mois</span>}
                   </div>
 
-                  {duree > 1 && (
+                  {duree > 1 && plan.prixMensuelBase > 0 && (
                     <div style={{ marginTop: 6, fontSize: 13, color: '#475569', fontWeight: 600 }}>
                       Facturé <strong style={{ color: '#0f172a' }}>{totalApresRemise.toLocaleString('fr-FR')} FCFA</strong> pour {duree} mois
                     </div>
