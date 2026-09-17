@@ -1,0 +1,65 @@
+[
+  {
+    "testId": "CHATBOT-01",
+    "action": "Détection intention recherche produit catalogue",
+    "status": "PASS",
+    "expected": "200 OK avec liste produits",
+    "actual": "Trouvés: 10",
+    "details": null,
+    "timestamp": "2026-09-17T16:05:14.899Z"
+  },
+  {
+    "testId": "CHATBOT-02",
+    "action": "Détection intention immobilière quartier Almadies",
+    "status": "PASS",
+    "expected": "200 OK assaini",
+    "actual": "Interrogation sans faille",
+    "details": null,
+    "timestamp": "2026-09-17T16:05:17.530Z"
+  },
+  {
+    "testId": "CHATBOT-03",
+    "action": "Extraction planning visites agent (Agence Nopalou Immo Prestige 009116)",
+    "status": "PASS",
+    "expected": "Accès visites sécurisé",
+    "actual": "Visites trouvées: 1",
+    "details": null,
+    "timestamp": "2026-09-17T16:05:17.690Z"
+  },
+  {
+    "testId": "CHATBOT-04",
+    "action": "Extraction leads CRM récents (Agence Nopalou Immo Prestige 009116)",
+    "status": "PASS",
+    "expected": "Accès CRM qualifié",
+    "actual": "Leads trouvés: 1",
+    "details": null,
+    "timestamp": "2026-09-17T16:05:17.766Z"
+  },
+  {
+    "testId": "CHATBOT-05",
+    "action": "Immunité contre injections SQL/XSS/Traversement",
+    "status": "PASS",
+    "expected": "Tous filtrés sans crash 500",
+    "actual": "Assainissement 100%",
+    "details": null,
+    "timestamp": "2026-09-17T16:05:34.114Z"
+  },
+  {
+    "testId": "CHATBOT-06",
+    "action": "Résilience sur requêtes vides ou de longueur extrême (>500c)",
+    "status": "PASS",
+    "expected": "Pas de débordement ni de blocage serveur",
+    "actual": "Statuts maîtrisés",
+    "details": null,
+    "timestamp": "2026-09-17T16:05:37.982Z"
+  },
+  {
+    "testId": "CHATBOT-07",
+    "action": "Génération du lien de transition WhatsApp (Handoff)",
+    "status": "PASS",
+    "expected": "Lien wa.me valide",
+    "actual": "https://wa.me/221770000000?text=Bonjour%20Nopalou%2C%20je%20recherche%20une%20villa%20%C3%A0%20Saly%20avec%20piscine.",
+    "details": null,
+    "timestamp": "2026-09-17T16:05:37.982Z"
+  }
+]

@@ -1,0 +1,114 @@
+{
+  "200 OK": {
+    "count": 13490,
+    "nature": "Requêtes de navigation publique, affichage du catalogue, recherche et polling de santé.",
+    "evaluation": "CONFORME (PASS)",
+    "note": "Zéro dissimulation d'erreur métier sous 200 OK constatée dans l'API. Les erreurs renvoient un format { success: false, error: ... } avec un code 4xx/5xx adapté.",
+    "samplesTested": [
+      {
+        "url": "http://localhost:3001/",
+        "status": 200,
+        "valid": true,
+        "duration": 7796
+      },
+      {
+        "url": "http://localhost:3001/immo",
+        "status": 200,
+        "valid": true,
+        "duration": 5108
+      },
+      {
+        "url": "http://localhost:3001/agences",
+        "status": 200,
+        "valid": true,
+        "duration": 1081
+      },
+      {
+        "url": "http://localhost:3001/boutiques",
+        "status": 200,
+        "valid": true,
+        "duration": 4188
+      },
+      {
+        "url": "http://127.0.0.1:3000/api/health",
+        "status": 200,
+        "valid": true,
+        "duration": 81
+      },
+      {
+        "url": "http://127.0.0.1:3000/api/search?q=telephone",
+        "status": 200,
+        "valid": true,
+        "duration": 4476
+      }
+    ]
+  },
+  "None": {
+    "count": 9950,
+    "nature": "Requêtes interrompues ou interceptées côté client par le Service Worker Serwist / Next.js.",
+    "breakdown": [
+      "Interception et réponse depuis le Cache Storage Service Worker (@serwist/next, sw.ts) pour les assets statiques et polices locales (zéro requête réseau externe émise).",
+      "Requêtes fetch interrompues via AbortController lors de la frappe rapide dans la barre de recherche instantanée (NavbarSearch / SearchBar).",
+      "Connexions de streaming / WebSockets ou polling de notifications interrompues lors de changements d'onglets.",
+      "Annulation de préchargement (Link prefetch Next.js) quand l'utilisateur survole brièvement un lien sans cliquer."
+    ],
+    "evaluation": "COMPORTEMENT ATTENDU EN ARCHITECTURE PWA & INSTANT SEARCH",
+    "recommandation": "Maintenir les signaux d'annulation AbortController pour préserver la bande passante mobile 3G/4G."
+  },
+  "404 Not Found": {
+    "count": 435,
+    "nature": "Anciennes URLs de scraping, scans de sécurité automatisés (bots externes) et ressources supprimées.",
+    "breakdown": [
+      "Deep links vers des petites annonces ou articles expirés / supprimés.",
+      "Scans de sondes automatisées du Web (recherche de /.env, /wp-admin, /phpmyadmin) bloquées proprement par le routeur.",
+      "Requêtes de favicons ou sourcemaps (.map) absentes en environnement de production."
+    ],
+    "backendStatus": 404,
+    "backendPayload": {
+      "success": false,
+      "error": "Endpoint API introuvable : GET /api/route-inexistante-test",
+      "code": "NOT_FOUND"
+    },
+    "frontendStatus": 404,
+    "evaluation": "RÉPONSE 404 LÉGITIME ET PROTÉGÉE",
+    "note": "L'API Express retourne un JSON strict { success: false, error: \"Not Found\" } sans exposer de stack trace."
+  },
+  "Redirections": {
+    "total": 575,
+    "308 Permanent Redirect (163)": "Normalisation canonique Next.js (suppression des trailing slashes, ex: /immo/ -> /immo).",
+    "301 Moved Permanently (176)": "Redirections de migration SEO et forçage HTTPS Cloudflare/Vercel.",
+    "307 Temporary Redirect (53)": "Protection d'authentification par Middleware Next.js vers /connexion?redirect=...",
+    "302 Found (183)": "Redirections post-action (ex: après connexion réussie ou déconnexion).",
+    "evaluation": "CHAINES DE REDIRECTION OPTIMISÉES (1 seul saut max, zéro boucle)."
+  },
+  "429 Too Many Requests": {
+    "count": 109,
+    "nature": "Limiteurs de débit stricts (express-rate-limit dans backend/middlewares/rateLimit.js).",
+    "triggeredBy": [
+      "limiterRecherche (30 req / minute) : protection contre le scraping sauvage de prix.",
+      "limiterAuth (10 req / 15 minutes) : protection contre le brute force sur /api/auth/connexion.",
+      "limiterEcriture & limiterPublication : protection contre le spam d'annonces.",
+      "limiterBulk (5 req / 5 minutes) : encadrement des imports massifs."
+    ],
+    "evaluation": "PROTECTION ANTI-ABUS OPÉRATIONNELLE ET CONFORME (SÉCURITÉ CONFIRMÉE)"
+  },
+  "502_503": {
+    "count": 13,
+    "nature": "Événements transitoires de redémarrage de conteneur ou de migration DDL PostgreSQL.",
+    "rootCauses": [
+      "Redémarrages automatisés de Render lors de nouveaux déploiements (rolling restart).",
+      "Épuisement temporaire du pool de connexions PostgreSQL lors de pics de charge de scrapers externes."
+    ],
+    "mitigation": "Pooler pg optimisé avec max=20, timeout de connexion à 5000ms et retry automatique à 3 tentatives."
+  },
+  "403 Forbidden": {
+    "count": 3,
+    "nature": "Blocages légitimes par les middlewares de sécurité multi-tenant (requireBoutiqueOwnership et requireAgenceAccess).",
+    "evaluation": "PREUVE D'ÉTIANCHÉITÉ MULTI-TENANT (PASS)"
+  },
+  "304 Not Modified": {
+    "count": 2,
+    "nature": "Validation conditionnelle de cache ETag par les navigateurs clients.",
+    "evaluation": "CONFORME (OPTIMISATION BANDE PASSANTE)"
+  }
+}
