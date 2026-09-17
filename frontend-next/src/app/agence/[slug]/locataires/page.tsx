@@ -176,8 +176,8 @@ export default function LocatairesPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: 16,
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
+            gap: 14,
           }}
         >
           {locatairesFiltres.map(loc => (
@@ -239,9 +239,9 @@ export default function LocatairesPage() {
               {/* Barre d'Actions complètes */}
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'auto 1fr 1fr',
+                  display: 'flex',
                   gap: 8,
+                  flexWrap: 'wrap',
                   paddingTop: 12,
                   borderTop: '1px solid var(--border, #E8DDD2)',
                 }}
@@ -255,41 +255,43 @@ export default function LocatairesPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '8px 10px',
-                    borderRadius: 6,
+                    minHeight: 44,
+                    minWidth: 44,
+                    padding: '8px 12px',
+                    borderRadius: 8,
                     background: '#F8F5F0',
                     color: 'var(--navy, #1C2B4A)',
                     border: '1px solid var(--border, #E8DDD2)',
                     cursor: 'pointer',
                   }}
                 >
-                  <Pencil size={14} />
+                  <Pencil size={15} />
                 </button>
 
                 {/* Bouton Téléphone */}
-                {loc.telephone ? (
+                {loc.telephone && (
                   <a
                     href={`tel:${loc.telephone}`}
                     style={{
+                      flex: 1,
+                      minHeight: 44,
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: 5,
-                      padding: '8px',
-                      borderRadius: 6,
+                      gap: 6,
+                      padding: '8px 12px',
+                      borderRadius: 8,
                       background: 'rgba(28, 43, 74, 0.06)',
                       color: 'var(--navy, #1C2B4A)',
                       fontWeight: 700,
-                      fontSize: 12,
+                      fontSize: 12.5,
                       textDecoration: 'none',
                       border: '1px solid rgba(28, 43, 74, 0.12)',
                     }}
                   >
-                    <Phone size={13} />
+                    <Phone size={14} />
                     Appeler
                   </a>
-                ) : (
-                  <div />
                 )}
 
                 {/* Bouton WhatsApp */}
@@ -300,21 +302,23 @@ export default function LocatairesPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
+                    flex: 1,
+                    minHeight: 44,
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 5,
-                    padding: '8px',
-                    borderRadius: 6,
+                    gap: 6,
+                    padding: '8px 12px',
+                    borderRadius: 8,
                     background: 'rgba(22, 163, 74, 0.08)',
                     color: '#166534',
-                    fontWeight: 700,
-                    fontSize: 12,
+                    fontWeight: 750,
+                    fontSize: 12.5,
                     textDecoration: 'none',
                     border: '1px solid rgba(22, 163, 74, 0.2)',
                   }}
                 >
-                  <MessageCircle size={13} />
+                  <MessageCircle size={14} />
                   WhatsApp
                 </a>
               </div>

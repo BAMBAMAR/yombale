@@ -37,58 +37,64 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
-      {/* Carte d'Identité Utilisateur */}
-      <div
+      {/* En-tête Espace Personnel sobre et aligné */}
+      <Link
+        href="/compte?tab=profil"
         className="account-sidebar-identity-card"
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          padding: '10px 14px',
+          padding: '12px 14px',
           background: 'linear-gradient(135deg, #FAF8F5 0%, #F5EFE6 100%)',
           borderRadius: 14,
           border: '1px solid #E8DDD2',
-          boxShadow: '0 2px 6px rgba(26,22,18,0.04)',
+          textDecoration: 'none',
+          boxShadow: '0 2px 6px rgba(26,22,18,0.03)',
+          transition: 'transform 0.15s ease, border-color 0.15s ease',
         }}
+        title="Gérer mon profil & sécurité"
       >
         <div
           aria-hidden="true"
           style={{
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, var(--accent, #C75B00) 100%)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 17,
+            fontSize: 16,
             fontWeight: 900,
-            boxShadow: '0 3px 8px rgba(28,43,74,0.2)',
+            boxShadow: '0 2px 8px rgba(28,43,74,0.18)',
             flexShrink: 0,
           }}
         >
           {initiale}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <p
-            style={{
-              margin: 0,
-              fontWeight: 800,
-              fontSize: 14,
-              color: 'var(--navy, #1C2B4A)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {nom}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <p
+              style={{
+                margin: 0,
+                fontWeight: 800,
+                fontSize: 13.5,
+                color: 'var(--navy, #1C2B4A)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {nom}
+            </p>
+          </div>
           {email && (
             <p
               style={{
                 margin: '2px 0 0',
-                fontSize: 11.5,
+                fontSize: 11,
                 color: '#64748B',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -100,29 +106,23 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
             </p>
           )}
         </div>
-        <Link
-          href="/compte?tab=profil"
+        <div
           style={{
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
-            gap: 4,
-            fontSize: 11,
-            fontWeight: 750,
-            color: 'var(--navy, #1C2B4A)',
+            justifyContent: 'center',
+            width: 26,
+            height: 26,
+            borderRadius: 7,
             background: '#ffffff',
             border: '1px solid #E2E8F0',
-            padding: '5px 9px',
-            borderRadius: 8,
-            textDecoration: 'none',
+            color: 'var(--accent, #C75B00)',
             flexShrink: 0,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-            transition: 'all 0.15s ease',
           }}
         >
-          <User size={13} style={{ color: 'var(--accent, #C75B00)' }} />
-          <span>Profil</span>
-        </Link>
-      </div>
+          <ChevronRight size={14} />
+        </div>
+      </Link>
 
       {/* Navigation Accordéon Desktop / Tabs Mobile */}
       <div className="account-sidebar-nav-wrapper" style={{ flex: 1, minHeight: 0, width: '100%' }}>
@@ -140,30 +140,6 @@ export default function AccountSidebarClient({ nom, email, initiale }: Props) {
           gap: 6,
         }}
       >
-        <Link
-          href="/boutique"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '9px 12px',
-            fontSize: 12.5,
-            color: 'var(--navy, #1C2B4A)',
-            textDecoration: 'none',
-            borderRadius: 10,
-            fontWeight: 750,
-            background: 'linear-gradient(135deg, #FAF8F5 0%, #F5EFE6 100%)',
-            border: '1.5px solid #E8DDD2',
-            boxShadow: '0 1px 3px rgba(28,43,74,0.03)',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Store size={15} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-            <span>{t('shop.merchantAccount') || 'Mon compte marchand'}</span>
-          </div>
-          <ChevronRight size={14} style={{ color: '#94A3B8' }} />
-        </Link>
 
         <Link
           href="/guide-utilisation"

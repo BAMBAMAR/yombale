@@ -12,9 +12,13 @@ import {
   TrendingUp,
   CheckCircle2,
   DollarSign,
+  ArrowRight,
+  Sparkles,
+  Key
 } from 'lucide-react'
 import { DashboardRubriques } from './components/DashboardRubriques'
 import { DashboardAlertesPrioritaires, CompteursAlertes } from './components/DashboardAlertesPrioritaires'
+import DashboardMobileVisitesDuJour from './components/DashboardMobileVisitesDuJour'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface StatsData {
@@ -49,6 +53,7 @@ export default function AgenceDashboardPage() {
   const slug = params?.slug as string
 
   const [stats, setStats] = useState<StatsData | null>(null)
+  const [visitesAujourdhui, setVisitesAujourdhui] = useState<any[]>([])
   const [compteurs, setCompteurs] = useState<CompteursAlertes>({
     demandes_visite: 0,
     loyers_retard: 0,
@@ -64,21 +69,22 @@ export default function AgenceDashboardPage() {
       setLoading(true)
       const headers = getImmoAuthHeaders()
 
-      const [resStats, resNotifs] = await Promise.all([
+      const [resStats, resNotifs, resVisites] = await Promise.all([
         fetch(`/api/agences/${slug}/stats`, { headers }),
         fetch(`/api/agences/agence/${slug}/notifications`, { headers }),
+        fetch(`/api/crm-immo/agence/${slug}/visites?date=aujourdhui`, { headers }),
       ])
 
-      const [dataStats, dataNotifs] = await Promise.all([
+      const [dataStats, dataNotifs, dataVisites] = await Promise.all([
         resStats.json(),
         resNotifs.json(),
+        resVisites.json(),
       ])
 
-      if (dataStats.success) {
-        setStats(dataStats.stats)
-      }
-      if (dataNotifs.success && dataNotifs.compteurs) {
-        setCompteurs(dataNotifs.compteurs)
+      if (dataStats.success) setStats(dataStats.stats)
+      if (dataNotifs.success && dataNotifs.compteurs) setCompteurs(dataNotifs.compteurs)
+      if (dataVisites.success && Array.isArray(dataVisites.visites)) {
+        setVisitesAujourdhui(dataVisites.visites)
       }
     } catch (err) {
       console.error('[LOAD_DASHBOARD_DATA_ERR]', err)
@@ -115,7 +121,8 @@ export default function AgenceDashboardPage() {
           <p className="agence-subtitle">Vue d'ensemble de vos activités immobilières et gestion locative.</p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {/* Boutons Desktop */}
+        <div className="immo-desktop-flex" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Link
             href={`/agence/${slug}/biens/nouveau`}
             className="btn-npl"
@@ -157,13 +164,48 @@ export default function AgenceDashboardPage() {
         </div>
       </div>
 
+      {/* ── Raccourcis Tactiles Horizontaux Mobile (< 768px) ── */}
+      <div className="immo-mobile-only" style={{ marginBottom: 14 }}>
+        <div className="immo-chips-scroller">
+          <Link
+            href={`/agence/${slug}/biens/nouveau`}
+            className="immo-chip"
+            style={{ background: 'var(--accent, #C75B00)', color: '#FFFFFF', borderColor: 'var(--accent, #C75B00)' }}
+          >
+            <Plus size={14} />
+            <span>Ajouter bien</span>
+          </Link>
+          <Link href={`/agence/${slug}/prospects`} className="immo-chip">
+            <Users size={14} color="var(--navy, #1C2B4A)" />
+            <span>Nouveau prospect</span>
+          </Link>
+          <Link href={`/agence/${slug}/visites`} className="immo-chip">
+            <Calendar size={14} color="#0284C7" />
+            <span>Planifier visite</span>
+          </Link>
+          <Link href={`/agence/${slug}/locatif`} className="immo-chip">
+            <Key size={14} color="var(--price, #0A5C36)" />
+            <span>Encaisser loyer</span>
+          </Link>
+        </div>
+      </div>
+
       {/* ── Bannière Alertes Prioritaires (Modulaire) ── */}
       <DashboardAlertesPrioritaires slug={slug} compteurs={compteurs} />
+
+      {/* ── Visites du Jour (Mobile-First) ── */}
+      <div className="immo-mobile-only" style={{ flexDirection: 'column' }}>
+        <DashboardMobileVisitesDuJour
+          slug={slug}
+          visites={visitesAujourdhui}
+          nbAujourdhui={s.visites.aujourdhui}
+        />
+      </div>
 
       {/* ── KPI Grid (Priorité 1) ── */}
       <div className="kpi-grid">
         {/* Card 1 : Biens Actifs */}
-        <div className="kpi-card">
+        <Link href={`/agence/${slug}/biens`} className="kpi-card" style={{ textDecoration: 'none' }}>
           <div className="kpi-card-header">
             <span className="kpi-card-title">Portefeuille Biens</span>
             <div className="kpi-card-icon">
@@ -172,12 +214,12 @@ export default function AgenceDashboardPage() {
           </div>
           <div className="kpi-card-value">{s.biens.actifs}</div>
           <div className="kpi-card-sub">
-            {s.biens.disponibles} disponibles • {s.biens.loues} loués
+            {s.biens.disponibles} disponible{s.biens.disponibles > 1 ? 's' : ''} • {s.biens.loues} loué{s.biens.loues > 1 ? 's' : ''}
           </div>
-        </div>
+        </Link>
 
         {/* Card 2 : Annonces Publiques */}
-        <div className="kpi-card">
+        <Link href={`/agence/${slug}/biens`} className="kpi-card" style={{ textDecoration: 'none' }}>
           <div className="kpi-card-header">
             <span className="kpi-card-title">Annonces En Ligne</span>
             <div className="kpi-card-icon" style={{ color: 'var(--accent, #C75B00)' }}>
@@ -185,25 +227,42 @@ export default function AgenceDashboardPage() {
             </div>
           </div>
           <div className="kpi-card-value">{s.biens.annonces_publiees}</div>
-          <div className="kpi-card-sub">Diffusées sur Nopalou Immo</div>
-        </div>
+          <div
+            className="kpi-card-sub"
+            style={{
+              color: s.biens.annonces_publiees === 0 ? 'var(--accent, #C75B00)' : '#64748B',
+              fontWeight: s.biens.annonces_publiees === 0 ? 700 : 500,
+            }}
+          >
+            {s.biens.annonces_publiees === 0 ? 'Diffuser un bien →' : 'Diffusées sur Nopalou Immo'}
+          </div>
+        </Link>
 
         {/* Card 3 : Visites */}
-        <div className="kpi-card">
+        <Link href={`/agence/${slug}/visites`} className="kpi-card" style={{ textDecoration: 'none' }}>
           <div className="kpi-card-header">
             <span className="kpi-card-title">Visites à venir</span>
-            <div className="kpi-card-icon">
+            <div className="kpi-card-icon" style={{ color: '#0284C7' }}>
               <Calendar size={18} />
             </div>
           </div>
           <div className="kpi-card-value">{s.visites.a_venir}</div>
           <div className="kpi-card-sub">
-            {s.visites.aujourdhui > 0 ? `${s.visites.aujourdhui} programmée(s) aujourd'hui` : "Aucune visite aujourd'hui"}
+            {s.visites.aujourdhui > 0
+              ? `${s.visites.aujourdhui} programmée${s.visites.aujourdhui > 1 ? 's' : ''} aujourd'hui`
+              : "Aucune visite aujourd'hui"}
           </div>
-        </div>
+        </Link>
 
         {/* Card 4 : Impayés */}
-        <div className="kpi-card" style={{ borderColor: s.locatif.nb_impayes > 0 ? '#FCA5A5' : 'var(--border, #E8DDD2)' }}>
+        <Link
+          href={`/agence/${slug}/locatif`}
+          className="kpi-card"
+          style={{
+            textDecoration: 'none',
+            borderColor: s.locatif.nb_impayes > 0 ? '#FCA5A5' : 'var(--border, #E8DDD2)',
+          }}
+        >
           <div className="kpi-card-header">
             <span className="kpi-card-title">Suivi des Loyers</span>
             <div className="kpi-card-icon" style={{ color: s.locatif.nb_impayes > 0 ? '#DC2626' : '#166534' }}>
@@ -211,18 +270,18 @@ export default function AgenceDashboardPage() {
             </div>
           </div>
           <div className="kpi-card-value" style={{ color: s.locatif.nb_impayes > 0 ? '#DC2626' : 'var(--navy, #1C2B4A)' }}>
-            {s.locatif.nb_impayes > 0 ? `${s.locatif.nb_impayes} impayé(s)` : 'À jour'}
+            {s.locatif.nb_impayes > 0 ? `${s.locatif.nb_impayes} impayé${s.locatif.nb_impayes > 1 ? 's' : ''}` : 'À jour'}
           </div>
           <div className="kpi-card-sub">
             {s.locatif.nb_impayes > 0
               ? `${Number(s.locatif.montant_impayes).toLocaleString('fr-FR')} FCFA en attente`
-              : `${s.locatif.baux_actifs} baux actifs sous gestion`}
+              : `${s.locatif.baux_actifs} ${s.locatif.baux_actifs > 1 ? 'baux actifs' : 'bail actif'} sous gestion`}
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* ── Section 2 Colonnes : CRM & Gestion Locative ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: 16 }}>
         {/* Pipeline CRM Prospects */}
         <div className="agence-card">
           <div className="agence-card-header">
@@ -234,26 +293,26 @@ export default function AgenceDashboardPage() {
               href={`/agence/${slug}/prospects`}
               style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--accent, #C75B00)', textDecoration: 'none' }}
             >
-              Voir Kanban →
+              Gérer CRM →
             </Link>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, textAlign: 'center' }}>
-            <div style={{ padding: '12px 8px', background: '#FEF3C7', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#92400E' }}>Nouveaux</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#92400E' }}>{s.crm.nouveaux}</div>
+            <div style={{ padding: '10px 4px', background: '#FEF3C7', borderRadius: 8 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: '#92400E' }}>Nouveaux</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#92400E' }}>{s.crm.nouveaux}</div>
             </div>
-            <div style={{ padding: '12px 8px', background: '#E0F2FE', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#0369A1' }}>En Visite</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#0369A1' }}>{s.crm.en_visite}</div>
+            <div style={{ padding: '10px 4px', background: '#E0F2FE', borderRadius: 8 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: '#0369A1' }}>En Visite</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#0369A1' }}>{s.crm.en_visite}</div>
             </div>
-            <div style={{ padding: '12px 8px', background: '#EDE9FE', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#5B21B6' }}>Offres</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#5B21B6' }}>{s.crm.offre}</div>
+            <div style={{ padding: '10px 4px', background: '#EDE9FE', borderRadius: 8 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: '#5B21B6' }}>Offres</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#5B21B6' }}>{s.crm.offre}</div>
             </div>
-            <div style={{ padding: '12px 8px', background: '#DCFCE7', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#166534' }}>Total Actifs</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#166534' }}>{s.crm.prospects_actifs}</div>
+            <div style={{ padding: '10px 4px', background: '#DCFCE7', borderRadius: 8 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: '#166534' }}>Actifs</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#166534' }}>{s.crm.prospects_actifs}</div>
             </div>
           </div>
         </div>
@@ -273,14 +332,14 @@ export default function AgenceDashboardPage() {
             </Link>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
               <span style={{ color: '#64748B' }}>Loyers attendus :</span>
               <span style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
                 {Number(s.locatif.loyers_attendus_mois).toLocaleString('fr-FR')} FCFA
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
               <span style={{ color: '#64748B' }}>Loyers encaissés :</span>
               <span style={{ fontWeight: 800, color: '#166534' }}>
                 {Number(s.locatif.loyers_encaisses_mois).toLocaleString('fr-FR')} FCFA

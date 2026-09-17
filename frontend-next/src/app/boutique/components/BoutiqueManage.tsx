@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/i18n/context'
 import type { Boutique } from '../types'
@@ -12,6 +12,10 @@ import BoutiqueManageSidebarNav from './manage/BoutiqueManageSidebarNav'
 import BoutiqueManageHeader from './manage/BoutiqueManageHeader'
 import BoutiqueManagePlanGate from './manage/BoutiqueManagePlanGate'
 import BoutiqueManageContent from './manage/BoutiqueManageContent'
+import BoutiqueTopNavbar from './BoutiqueTopNavbar'
+import BoutiqueBottomNav from './BoutiqueBottomNav'
+import BoutiqueQuickActionsSheet from './BoutiqueQuickActionsSheet'
+import BoutiqueMobileDrawer from './BoutiqueMobileDrawer'
 
 export default function BoutiqueManage({
   boutique,
@@ -39,6 +43,15 @@ export default function BoutiqueManage({
   const router = useRouter()
   const { t, formatNumber } = useTranslation() as { t: any; formatNumber: any }
   const [showQrModal, setShowQrModal] = useState(false)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false)
+
+  useEffect(() => {
+    document.body.classList.add('in-boutique-workspace')
+    return () => {
+      document.body.classList.remove('in-boutique-workspace')
+    }
+  }, [])
 
   const nav = useBoutiqueManageNav({
     boutique,
@@ -52,7 +65,17 @@ export default function BoutiqueManage({
   }, [router])
 
   return (
-    <>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* ── Entête Unique au niveau Nopalou (56px Desktop & Mobile) ── */}
+      <BoutiqueTopNavbar
+        boutique={boutique}
+        nbEnAttente={nav.nbEnAttente}
+        onNavigateTab={nav.handleNavigateTab}
+        onOpenMenu={() => setMobileDrawerOpen(true)}
+        onBack={onBack}
+      />
+
+      {/* ── Corps : Sidebar à gauche sous Nopalou + Contenu Marchand ── */}
       <div className="bq-manage-layout">
         {/* Sidebar */}
         <aside className={`bq-sidebar${!nav.isSidebarOpen ? ' bq-sidebar--hidden' : ''}`} data-tab={nav.tab}>
@@ -143,6 +166,41 @@ export default function BoutiqueManage({
           )}
         </main>
       </div>
-    </>
+
+      {/* ── Pied Mobile (Barre basse fixe 5 boutons avec FAB central) ── */}
+      <BoutiqueBottomNav
+        currentTab={nav.tab}
+        onNavigateTab={nav.handleNavigateTab}
+        onOpenQuickActions={() => setQuickActionsOpen(true)}
+        onOpenDrawer={() => setMobileDrawerOpen(true)}
+        nbEnAttente={nav.nbEnAttente}
+      />
+
+      {/* ── Action Sheet Rapide Marchande ── */}
+      <BoutiqueQuickActionsSheet
+        nom={boutique.nom}
+        boutiqueId={boutique.id}
+        isOpen={quickActionsOpen}
+        onClose={() => setQuickActionsOpen(false)}
+        onNavigateTab={nav.handleNavigateTab}
+        onOpenQrModal={() => setShowQrModal(true)}
+      />
+
+      {/* ── Tiroir Latéral Navigation Complète Mobile (27 Outils) ── */}
+      <BoutiqueMobileDrawer
+        boutique={boutique}
+        isOpen={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        currentTab={nav.tab}
+        onNavigateTab={nav.handleNavigateTab}
+        onBack={onBack}
+        nbEnAttente={nav.nbEnAttente}
+        isAllowed={nav.isAllowed}
+        t={t}
+        hasMultipleBoutiques={hasMultipleBoutiques}
+        boutiques={boutiques}
+        onSelectBoutique={onSelectBoutique}
+      />
+    </div>
   )
 }

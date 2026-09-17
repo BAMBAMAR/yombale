@@ -203,41 +203,39 @@ export default function BoutiqueClient({
   // Mode gestion — layout pleine largeur avec sidebar
   if (typeof mode === 'object' && 'managing' in mode) {
     return (
-      <div className="bq-manage-outer-wrap" style={{ maxWidth: 1360, margin: '32px auto', padding: '0 24px' }}>
-        <BoutiqueManage
-          boutique={mode.managing}
-          boutiques={boutiquesList}
-          planActif={planActifEffectif ?? null}
-          initialTab={tabParam ?? undefined}
-          hasMultipleBoutiques={boutiquesList.length > 1}
-          onSelectBoutique={(b) => {
-            if (typeof window !== 'undefined') {
-              const url = new URL(window.location.href)
-              url.searchParams.set('manage', b.id)
-              window.history.replaceState(null, '', url.toString())
-            }
-            setMode({ managing: b })
-          }}
-          onCreateBoutique={() => setMode('create')}
-          onBack={() => {
-            if (typeof window !== 'undefined') {
-              const url = new URL(window.location.href)
-              url.searchParams.delete('manage')
-              url.searchParams.delete('id')
-              url.searchParams.delete('tab')
-              url.searchParams.delete('locked')
-              window.history.replaceState(null, '', url.pathname)
-            }
-            setMode('list')
-          }}
-          onEdit={() => {
-            setSuccessMsg('Boutique modifiée avec succès !')
-            setMode('list')
-            router.refresh()
-          }}
-          prixPro={prixPro}
-        />
-      </div>
+      <BoutiqueManage
+        boutique={mode.managing}
+        boutiques={boutiquesList}
+        planActif={planActifEffectif ?? null}
+        initialTab={tabParam ?? undefined}
+        hasMultipleBoutiques={boutiquesList.length > 1}
+        onSelectBoutique={(b) => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href)
+            url.searchParams.set('manage', b.id)
+            window.history.replaceState(null, '', url.toString())
+          }
+          setMode({ managing: b })
+        }}
+        onCreateBoutique={() => setMode('create')}
+        onBack={() => {
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href)
+            url.searchParams.delete('manage')
+            url.searchParams.delete('id')
+            url.searchParams.delete('tab')
+            url.searchParams.delete('locked')
+            window.history.replaceState(null, '', url.pathname)
+          }
+          setMode('list')
+        }}
+        onEdit={() => {
+          setSuccessMsg('Boutique modifiée avec succès !')
+          setMode('list')
+          router.refresh()
+        }}
+        prixPro={prixPro}
+      />
     )
   }
 

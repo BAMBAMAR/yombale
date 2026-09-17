@@ -77,10 +77,11 @@ export interface Produit {
 export type ManageTab = 'dashboard' | 'produits' | 'commandes' | 'carnet' | 'express' | 'compta' | 'analytics' | 'personnaliser' | 'studio' | 'infos' | 'marketing' | 'social' | 'equipe' | 'admins' | 'caissiers' | 'documents' | 'fournisseurs' | 'fiscalite' | 'journal' | 'developer' | 'fidelite' | 'echelonnement' | 'appstore' | 'entrepots' | 'abtesting' | 'blog' | 'abonnements'
 
 export interface NavItem {
-  key: ManageTab
+  key: ManageTab | 'caisse'
   icon: any
   label: string
   minPlan?: 'pro' | 'business'
+  href?: string
 }
 
 export interface NavGroup {

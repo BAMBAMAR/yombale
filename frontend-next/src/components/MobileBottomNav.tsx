@@ -39,6 +39,15 @@ function MobileBottomNavContent({ isLoggedIn = false, isMerchant = false }: Prop
     } catch (err) { console.warn('[Nopalou:MobileBottomNav:L39]', err); }
   }, [pathname])
 
+  if (
+    pathname.startsWith('/agence') ||
+    pathname.startsWith('/boutique') ||
+    pathname.startsWith('/compte') ||
+    pathname.startsWith('/admin')
+  ) {
+    return null
+  }
+
   const currentTab = pathname === '/compte' ? searchParams.get('tab') : null
   const isHome = pathname === '/'
   const isExplorer = pathname === '/boutiques' || pathname.startsWith('/boutiques/') || pathname.startsWith('/categorie')

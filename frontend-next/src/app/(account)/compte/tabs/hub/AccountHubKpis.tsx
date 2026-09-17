@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Store, Tag, Package, Users } from 'lucide-react'
+import { Store, Tag, Package, Users, ArrowRight } from 'lucide-react'
 
 interface AccountHubKpisProps {
   hasBoutique: boolean
@@ -20,47 +20,43 @@ export default function AccountHubKpis({
   onNavigateTab,
 }: AccountHubKpisProps) {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(145px, 100%), 1fr))',
-        gap: 10,
-      }}
-    >
+    <div className="account-kpis-grid">
       {/* KPI 1 : Ma Boutique */}
       <Link
         href={hasBoutique ? '/boutique' : '/creer-boutique'}
         style={{
           background: '#ffffff',
-          borderRadius: 12,
-          padding: '12px 14px',
-          border: '1.5px solid #E8DDD2',
+          borderRadius: 14,
+          padding: '14px 16px',
+          border: '1px solid var(--border, #E8DDD2)',
           textDecoration: 'none',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
+          minHeight: 114,
           boxShadow: '0 2px 6px rgba(26,22,18,0.02)',
-          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Ma Boutique
+            Mes Boutiques
           </span>
-          <div style={{ width: 26, height: 26, borderRadius: 6, background: '#FFF3E8', color: 'var(--accent, #C75B00)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Store size={14} />
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: '#FFF3E8', color: 'var(--accent, #C75B00)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Store size={15} />
           </div>
         </div>
-        <div style={{ margin: '8px 0 2px' }}>
-          <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+        <div style={{ margin: '8px 0 4px' }}>
+          <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
             {hasBoutique ? boutiques.length : '0'}
           </span>
-          <span style={{ fontSize: 12, color: '#64748B', marginLeft: 4 }}>
-            {hasBoutique ? (boutiques.length > 1 ? 'boutiques' : 'boutique') : 'boutique'}
+          <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>
+            {hasBoutique ? (boutiques.length > 1 ? 'boutiques actives' : 'boutique active') : 'boutique active'}
           </span>
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent, #C75B00)', display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-          {hasBoutique ? 'Ouvrir le tableau ➔' : 'Créer ma boutique ➔'}
+        <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent, #C75B00)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span>{hasBoutique ? 'Gérer ma boutique' : 'Créer ma boutique'}</span>
+          <ArrowRight size={12} />
         </span>
       </Link>
 
@@ -73,35 +69,37 @@ export default function AccountHubKpis({
         }}
         style={{
           background: '#ffffff',
-          borderRadius: 12,
-          padding: '12px 14px',
-          border: '1.5px solid #E8DDD2',
+          borderRadius: 14,
+          padding: '14px 16px',
+          border: '1px solid var(--border, #E8DDD2)',
           textDecoration: 'none',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
+          minHeight: 114,
           boxShadow: '0 2px 6px rgba(26,22,18,0.02)',
-          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Mes Annonces
           </span>
-          <div style={{ width: 26, height: 26, borderRadius: 6, background: '#F0FDF4', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Tag size={14} />
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: '#F0FDF4', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Tag size={15} />
           </div>
         </div>
-        <div style={{ margin: '8px 0 2px' }}>
-          <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+        <div style={{ margin: '8px 0 4px' }}>
+          <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
             {annoncesActives}
           </span>
-          <span style={{ fontSize: 12, color: '#64748B', marginLeft: 4 }}>
-            / {annonces.length} actives
+          <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>
+            / {annonces.length} en ligne
           </span>
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-          Gérer mes annonces ➔
+        <span style={{ fontSize: 11.5, fontWeight: 700, color: '#16A34A', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span>Gérer mes annonces</span>
+          <ArrowRight size={12} />
         </span>
       </Link>
 
@@ -114,39 +112,41 @@ export default function AccountHubKpis({
         }}
         style={{
           background: '#ffffff',
-          borderRadius: 12,
-          padding: '12px 14px',
-          border: '1.5px solid #E8DDD2',
+          borderRadius: 14,
+          padding: '14px 16px',
+          border: '1px solid var(--border, #E8DDD2)',
           textDecoration: 'none',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
+          minHeight: 114,
           boxShadow: '0 2px 6px rgba(26,22,18,0.02)',
-          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Commandes
+            Mes Commandes
           </span>
-          <div style={{ width: 26, height: 26, borderRadius: 6, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Package size={14} />
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Package size={15} />
           </div>
         </div>
-        <div style={{ margin: '8px 0 2px' }}>
-          <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+        <div style={{ margin: '8px 0 4px' }}>
+          <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
             Suivi
           </span>
-          <span style={{ fontSize: 12, color: '#64748B', marginLeft: 4 }}>
-            en direct
+          <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>
+            en temps réel
           </span>
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-          Voir mes achats ➔
+        <span style={{ fontSize: 11.5, fontWeight: 700, color: '#2563EB', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span>Suivre mes achats</span>
+          <ArrowRight size={12} />
         </span>
       </Link>
 
-      {/* KPI 4 : Affiliation 20% */}
+      {/* KPI 4 : Affiliation & Commissions */}
       <Link
         href="/compte?tab=apporteur"
         onClick={e => {
@@ -155,35 +155,37 @@ export default function AccountHubKpis({
         }}
         style={{
           background: '#ffffff',
-          borderRadius: 12,
-          padding: '12px 14px',
-          border: '1.5px solid #E8DDD2',
+          borderRadius: 14,
+          padding: '14px 16px',
+          border: '1px solid var(--border, #E8DDD2)',
           textDecoration: 'none',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
+          minHeight: 114,
           boxShadow: '0 2px 6px rgba(26,22,18,0.02)',
-          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Commissions
           </span>
-          <div style={{ width: 26, height: 26, borderRadius: 6, background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Users size={14} />
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Users size={15} />
           </div>
         </div>
-        <div style={{ margin: '8px 0 2px' }}>
-          <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+        <div style={{ margin: '8px 0 4px' }}>
+          <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
             20%
           </span>
-          <span style={{ fontSize: 12, color: '#64748B', marginLeft: 4 }}>
-            parrainage
+          <span style={{ fontSize: 12, color: '#64748B', marginLeft: 6 }}>
+            parrainage à vie
           </span>
         </div>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-          Espace apporteur ➔
+        <span style={{ fontSize: 11.5, fontWeight: 700, color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span>Espace apporteur</span>
+          <ArrowRight size={12} />
         </span>
       </Link>
     </div>

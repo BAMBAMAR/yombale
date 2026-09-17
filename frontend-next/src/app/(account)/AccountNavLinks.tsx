@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ShoppingBag, Building2, User, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
 import MobileBottomSheetNav, { type NavGroup, type NavLinkItem } from './MobileBottomSheetNav'
 
@@ -139,93 +139,6 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
 
   return (
     <nav aria-label={t('account.navTitle')} style={{ width: '100%' }}>
-      {/* ── Multi-Activity Context Switcher (Boutique / Agence Immo / Espace Perso) ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 6,
-          padding: 4,
-          background: '#FAF8F5',
-          borderRadius: 12,
-          marginBottom: 14,
-          border: '1.5px solid var(--border, #E8DDD2)',
-        }}
-      >
-        <Link
-          href="/boutique"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            padding: '8px 4px',
-            borderRadius: 8,
-            fontSize: 11,
-            fontWeight: 800,
-            textDecoration: 'none',
-            background: pathname.startsWith('/boutique') ? 'var(--accent, #C75B00)' : '#FFFFFF',
-            color: pathname.startsWith('/boutique') ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            border: pathname.startsWith('/boutique') ? '1px solid transparent' : '1px solid var(--border, #E8DDD2)',
-            textAlign: 'center',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <ShoppingBag size={14} />
-          <span>Boutique</span>
-        </Link>
-        <Link
-          href="/agence"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            padding: '8px 4px',
-            borderRadius: 8,
-            fontSize: 11,
-            fontWeight: 800,
-            textDecoration: 'none',
-            background: pathname.startsWith('/agence') ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-            color: pathname.startsWith('/agence') ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            border: pathname.startsWith('/agence') ? '1px solid transparent' : '1px solid var(--border, #E8DDD2)',
-            textAlign: 'center',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <Building2 size={14} />
-          <span>Agence Immo</span>
-        </Link>
-        <Link
-          href="/compte"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            padding: '8px 4px',
-            borderRadius: 8,
-            fontSize: 11,
-            fontWeight: 800,
-            textDecoration: 'none',
-            background: pathname === '/compte' && !pathname.startsWith('/boutique') && !pathname.startsWith('/agence') ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
-            color: pathname === '/compte' && !pathname.startsWith('/boutique') && !pathname.startsWith('/agence') ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            border: pathname === '/compte' && !pathname.startsWith('/boutique') && !pathname.startsWith('/agence') ? '1px solid transparent' : '1px solid var(--border, #E8DDD2)',
-            textAlign: 'center',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <User size={14} />
-          <span>Mon Profil</span>
-        </Link>
-      </div>
-
       {/* ── 1. AFFICHAGE DESKTOP (Accordéons soignés) ── */}
       <div className="account-nav-desktop">
         {groupes.map(group => {

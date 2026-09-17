@@ -20,6 +20,7 @@ import ModalCreerBail from './components/ModalCreerBail'
 import ModalEncaisserLoyer from './components/ModalEncaisserLoyer'
 import ModalEditerQuittanceImmo from './components/ModalEditerQuittanceImmo'
 import TableBauxImmo, { BailItem } from './components/TableBauxImmo'
+import LoyerCardMobile from './components/LoyerCardMobile'
 import ExportCsvButton from '../../components/ExportCsvButton'
 import { getImmoAuthHeaders, getImmoAuthToken } from '@/lib/immo-auth'
 
@@ -139,7 +140,7 @@ export default function LocatifPage() {
       )}
 
       {/* ── Onglets de bascule ── */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+      <div className="immo-chips-scroller" style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <button
           type="button"
           onClick={() => setTab('loyers')}
@@ -201,132 +202,149 @@ export default function LocatifPage() {
               </button>
             </div>
           ) : (
-            <div className="agence-table-wrapper">
-              <table className="agence-table">
-                <thead>
-                  <tr>
-                    <th>Période & Échéance</th>
-                    <th>Bien & Locataire</th>
-                    <th>Montant Dû</th>
-                    <th>Statut</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loyers.map(l => (
-                    <tr key={l.id}>
-                      <td>
-                        <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{l.periode}</div>
-                        <div style={{ fontSize: 11.5, color: '#64748B' }}>
-                          Échéance : {new Date(l.date_echeance).toLocaleDateString('fr-FR')}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>{l.bien_titre}</div>
-                        <div style={{ fontSize: 12, color: '#64748B' }}>
-                          {l.locataire_nom} {l.locataire_prenom || ''}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-                          {Number(l.montant_du).toLocaleString('fr-FR')} FCFA
-                        </div>
-                        {l.montant_paye > 0 && l.statut !== 'paye' && (
-                          <div style={{ fontSize: 11.5, color: '#0A5C36', fontWeight: 600 }}>
-                            Acompte : {Number(l.montant_paye).toLocaleString('fr-FR')} FCFA
+            <>
+              {/* ── Version Mobile : Cartes tactiles ── */}
+              <div className="immo-mobile-only">
+                {loyers.map((l) => (
+                  <LoyerCardMobile
+                    key={l.id}
+                    slug={slug}
+                    loyer={l}
+                    onEncaisser={(loyer) => setSelectedLoyer(loyer)}
+                    onRelancer={(id) => handleRelance(id)}
+                    onEditer={(loyer) => setLoyerAEditer(loyer)}
+                  />
+                ))}
+              </div>
+
+              {/* ── Version Desktop : Table complète ── */}
+              <div className="immo-desktop-only agence-table-wrapper">
+                <table className="agence-table">
+                  <thead>
+                    <tr>
+                      <th>Période & Échéance</th>
+                      <th>Bien & Locataire</th>
+                      <th>Montant Dû</th>
+                      <th>Statut</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loyers.map(l => (
+                      <tr key={l.id}>
+                        <td>
+                          <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>{l.periode}</div>
+                          <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                            Échéance : {new Date(l.date_echeance).toLocaleDateString('fr-FR')}
                           </div>
-                        )}
-                      </td>
-                      <td>
-                        {l.statut === 'paye' && <span className="status-badge actif">Payé</span>}
-                        {l.statut === 'en_attente' && <span className="status-badge brouillon">En attente</span>}
-                        {l.statut === 'retard' && <span className="status-badge suspendu">En retard</span>}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                          {l.statut !== 'paye' ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedLoyer(l)}
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)' }}>{l.bien_titre}</div>
+                          <div style={{ fontSize: 12, color: '#64748B' }}>
+                            {l.locataire_nom} {l.locataire_prenom || ''}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                            {Number(l.montant_du).toLocaleString('fr-FR')} FCFA
+                          </div>
+                          {l.montant_paye > 0 && l.statut !== 'paye' && (
+                            <div style={{ fontSize: 11.5, color: '#0A5C36', fontWeight: 600 }}>
+                              Acompte : {Number(l.montant_paye).toLocaleString('fr-FR')} FCFA
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          {l.statut === 'paye' && <span className="status-badge actif">Payé</span>}
+                          {l.statut === 'en_attente' && <span className="status-badge brouillon">En attente</span>}
+                          {l.statut === 'retard' && <span className="status-badge suspendu">En retard</span>}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                            {l.statut !== 'paye' ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedLoyer(l)}
+                                  style={{
+                                    padding: '5px 10px',
+                                    borderRadius: 6,
+                                    background: 'var(--accent, #C75B00)',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  Encaisser
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRelance(l.id)}
+                                  style={{
+                                    padding: '5px 8px',
+                                    borderRadius: 6,
+                                    background: '#FAF8F5',
+                                    border: '1px solid var(--border, #E8DDD2)',
+                                    color: 'var(--navy, #1C2B4A)',
+                                    cursor: 'pointer',
+                                  }}
+                                  title="Envoyer une relance"
+                                >
+                                  <Send size={13} />
+                                </button>
+                              </>
+                            ) : (
+                              <a
+                                href={`/api/agences/agence/${slug}/documents/quittance/${l.id}.pdf${getImmoAuthToken() ? `?token=${encodeURIComponent(getImmoAuthToken()!)}` : ''}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 5,
                                   padding: '5px 10px',
                                   borderRadius: 6,
-                                  background: 'var(--accent, #C75B00)',
-                                  color: '#FFFFFF',
-                                  border: 'none',
+                                  background: '#ECFDF5',
+                                  border: '1px solid #A7F3D0',
+                                  color: '#065F46',
                                   fontSize: 12,
                                   fontWeight: 700,
-                                  cursor: 'pointer',
+                                  textDecoration: 'none',
                                 }}
+                                title="Télécharger la Quittance de loyer officielle"
                               >
-                                Encaisser
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleRelance(l.id)}
-                                style={{
-                                  padding: '5px 8px',
-                                  borderRadius: 6,
-                                  background: '#FAF8F5',
-                                  border: '1px solid var(--border, #E8DDD2)',
-                                  color: 'var(--navy, #1C2B4A)',
-                                  cursor: 'pointer',
-                                }}
-                                title="Envoyer une relance"
-                              >
-                                <Send size={13} />
-                              </button>
-                            </>
-                          ) : (
-                            <a
-                              href={`/api/agences/agence/${slug}/documents/quittance/${l.id}.pdf${getImmoAuthToken() ? `?token=${encodeURIComponent(getImmoAuthToken()!)}` : ''}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                                <FileText size={13} />
+                                <span>Quittance PDF</span>
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setLoyerAEditer(l)}
                               style={{
+                                padding: '5px 8px',
+                                borderRadius: 6,
+                                background: '#FAF8F5',
+                                border: '1px solid var(--border, #E8DDD2)',
+                                color: 'var(--navy, #1C2B4A)',
+                                cursor: 'pointer',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: 5,
-                                padding: '5px 10px',
-                                borderRadius: 6,
-                                background: '#ECFDF5',
-                                border: '1px solid #A7F3D0',
-                                color: '#065F46',
-                                fontSize: 12,
-                                fontWeight: 700,
-                                textDecoration: 'none',
+                                gap: 4,
                               }}
-                              title="Télécharger la Quittance de loyer officielle"
+                              title="Modifier les montants, statut ou références de la quittance"
                             >
-                              <FileText size={13} />
-                              <span>Quittance PDF</span>
-                            </a>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setLoyerAEditer(l)}
-                            style={{
-                              padding: '5px 8px',
-                              borderRadius: 6,
-                              background: '#FAF8F5',
-                              border: '1px solid var(--border, #E8DDD2)',
-                              color: 'var(--navy, #1C2B4A)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                            }}
-                            title="Modifier les montants, statut ou références de la quittance"
-                          >
-                            <Pencil size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                              <Pencil size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}

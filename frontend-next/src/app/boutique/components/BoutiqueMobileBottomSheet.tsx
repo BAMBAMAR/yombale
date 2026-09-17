@@ -215,7 +215,14 @@ export default function BoutiqueMobileBottomSheet({
                             type="button"
                             className={`mobile-bs-item${isActive ? ' mobile-bs-item--active' : ''}`}
                             onClick={() => {
-                              onSetTab(item.key)
+                              if (item.key === 'caisse') {
+                                if (typeof window !== 'undefined') {
+                                  localStorage.setItem('nopalou_pos_active_boutique_id', boutiqueId)
+                                  window.location.href = `/boutique/caisse?b=${boutiqueId}`
+                                }
+                              } else {
+                                onSetTab(item.key as ManageTab)
+                              }
                               closeSheet()
                             }}
                           >

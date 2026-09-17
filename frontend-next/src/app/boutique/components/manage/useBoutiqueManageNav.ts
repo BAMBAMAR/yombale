@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { Boutique, ManageTab, NavGroup } from '../../types'
-import { VALID_TABS, getNavEssential, getNavCommerce, getNavAdvanced, getTabInfoMap } from './constants'
+import { VALID_TABS, getBoutiqueNavSections, getNavEssential, getNavCommerce, getNavAdvanced, getTabInfoMap } from './constants'
 
 export function useBoutiqueManageNav({
   boutique,
@@ -24,63 +24,19 @@ export function useBoutiqueManageNav({
   const navAdvanced = useMemo(() => getNavAdvanced(t), [t])
   const tabInfoMap = useMemo(() => getTabInfoMap(t), [t])
 
-  const [navTier, setNavTierState] = useState<'essential' | 'commerce' | 'all'>(() => {
-    if (navAdvanced.some((g) => g.items.some((i) => i.key === resolvedInitialTab))) {
-      return 'all'
-    }
-    if (navCommerce.some((g) => g.items.some((i) => i.key === resolvedInitialTab))) {
-      return 'commerce'
-    }
-    try {
-      const stored = localStorage.getItem('nopalou_dashboard_nav_tier')
-      if (stored === 'commerce' || stored === 'all' || stored === 'essential') return stored as any
-    } catch (e) {
-      console.warn('[useBoutiqueManageNav:storage:get]', e)
-    }
-    return 'essential'
-  })
+  const [navTier, setNavTierState] = useState<'essential' | 'commerce' | 'all'>('all')
 
   const setNavTier = useCallback((tier: 'essential' | 'commerce' | 'all') => {
     setNavTierState(tier)
-    try {
-      localStorage.setItem('nopalou_dashboard_nav_tier', tier)
-    } catch (e) {
-      console.warn('[useBoutiqueManageNav:storage:set]', e)
-    }
   }, [])
 
-  const showAdvancedNav = navTier === 'all'
-  const setShowAdvancedNav = useCallback((show: boolean | ((prev: boolean) => boolean)) => {
-    setNavTierState((prevTier) => {
-      const isCurrentlyAll = prevTier === 'all'
-      const nextShow = typeof show === 'function' ? show(isCurrentlyAll) : show
-      const nextTier = nextShow ? 'all' : 'essential'
-      try {
-        localStorage.setItem('nopalou_dashboard_nav_tier', nextTier)
-      } catch (e) {
-        console.warn('[useBoutiqueManageNav:storage:set]', e)
-      }
-      return nextTier
-    })
-  }, [])
-
-  const toggleNavTier = useCallback(() => {
-    setNavTierState((prev) => {
-      const next = prev === 'essential' ? 'commerce' : prev === 'commerce' ? 'all' : 'essential'
-      try {
-        localStorage.setItem('nopalou_dashboard_nav_tier', next)
-      } catch (e) {
-        console.warn('[useBoutiqueManageNav:storage:set]', e)
-      }
-      return next
-    })
-  }, [])
+  const showAdvancedNav = true
+  const setShowAdvancedNav = useCallback(() => {}, [])
+  const toggleNavTier = useCallback(() => {}, [])
 
   const navGroups: NavGroup[] = useMemo(() => {
-    if (navTier === 'all') return [...navEssential, ...navCommerce, ...navAdvanced]
-    if (navTier === 'commerce') return [...navEssential, ...navCommerce]
-    return navEssential
-  }, [navTier, navEssential, navCommerce, navAdvanced])
+    return getBoutiqueNavSections(t, boutique.id)
+  }, [t, boutique.id])
 
   const [tab, setTab] = useState<ManageTab>(resolvedInitialTab)
   const [subTabCompta, setSubTabCompta] = useState<'bilan' | 'dashboard' | 'express' | 'ventes' | 'depenses'>('bilan')

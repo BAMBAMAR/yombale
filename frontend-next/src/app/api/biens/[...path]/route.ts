@@ -8,16 +8,36 @@ async function forwardRequest(req: NextRequest, { params }: { params: { path?: s
   const search = req.nextUrl.search || ''
   const fullPath = `/api/biens/${subPath}${search}`
 
+  const headers: Record<string, string> = {}
+  const clientAuth = req.headers.get('authorization')
+  if (clientAuth) {
+    headers['Authorization'] = clientAuth
+  }
+  const clientContentType = req.headers.get('content-type') || ''
+  if (clientContentType && !clientContentType.includes('multipart/form-data')) {
+    headers['Content-Type'] = clientContentType
+  }
+
   const options: RequestInit = {
     method: req.method,
+    headers,
   }
 
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-    try {
-      const body = await req.json()
-      options.body = JSON.stringify(body)
-    } catch {
-      // Pas de body JSON
+    const contentType = req.headers.get('content-type') || ''
+    if (contentType.includes('multipart/form-data')) {
+      try {
+        options.body = await req.formData()
+      } catch {
+        // Fallback
+      }
+    } else {
+      try {
+        const body = await req.json()
+        options.body = JSON.stringify(body)
+      } catch {
+        // Pas de body JSON
+      }
     }
   }
 

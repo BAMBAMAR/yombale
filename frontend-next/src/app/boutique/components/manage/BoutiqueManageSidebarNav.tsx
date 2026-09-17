@@ -2,17 +2,16 @@
 
 import React, { useState } from 'react'
 import type { Boutique, ManageTab, NavGroup } from '../../types'
-import BoutiqueMobileBottomSheet from '../BoutiqueMobileBottomSheet'
-import { ChevronRight, ChevronDown, ShoppingCart, BookOpen, ExternalLink, Store } from 'lucide-react'
+import { ChevronRight, ShoppingCart, BookOpen, ExternalLink, Store } from 'lucide-react'
 
 interface BoutiqueManageSidebarNavProps {
   navGroups: NavGroup[]
-  navAdvanced: NavGroup[]
+  navAdvanced?: NavGroup[]
   tab: ManageTab
   onNavigateTab: (targetTab: ManageTab) => void
-  showAdvancedNav: boolean
+  showAdvancedNav?: boolean
   navTier?: 'essential' | 'commerce' | 'all'
-  onToggleAdvancedNav: () => void
+  onToggleAdvancedNav?: () => void
   isAllowed: (minPlan?: 'pro' | 'business') => boolean
   nbEnAttente: number
   formatNumber: (n: number) => string
@@ -26,20 +25,12 @@ interface BoutiqueManageSidebarNavProps {
 
 export default function BoutiqueManageSidebarNav({
   navGroups,
-  navAdvanced,
   tab,
   onNavigateTab,
-  showAdvancedNav,
-  navTier,
-  onToggleAdvancedNav,
   isAllowed,
   nbEnAttente,
   formatNumber,
   boutique,
-  onBack,
-  hasMultipleBoutiques = false,
-  boutiques = [],
-  onSelectBoutique,
   t,
 }: BoutiqueManageSidebarNavProps) {
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>(() => {
@@ -52,7 +43,7 @@ export default function BoutiqueManageSidebarNav({
 
   return (
     <>
-      {/* Nav Desktop */}
+      {/* ── Menu Latéral Desktop : 6 Pôles Métiers & 27 Outils (Zéro Omission) ── */}
       <nav className="bq-nav bq-nav-desktop" style={{ padding: '8px 4px' }}>
         {navGroups.map((group, gIdx) => {
           const hasActiveItem = group.items.some((i) => i.key === tab)
@@ -150,10 +141,77 @@ export default function BoutiqueManageSidebarNav({
                   const allowed = isAllowed(item.minPlan)
                   const isActive = tab === item.key
                   const ItemIcon = item.icon
+
+                  if (item.href) {
+                    return (
+                      <a
+                        key={item.key}
+                        href={item.href}
+                        onClick={() => {
+                          if (item.key === 'caisse' && typeof window !== 'undefined') {
+                            localStorage.setItem('nopalou_pos_active_boutique_id', boutique.id)
+                          }
+                        }}
+                        className={`bq-nav-item${isActive ? ' active' : ''}`}
+                        style={{
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          width: '100%',
+                          gap: 8,
+                          padding: '8px 10px',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: 'var(--price, #0A5C36)',
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'background 0.12s, color 0.12s',
+                        }}
+                      >
+                        <ItemIcon
+                          size={16}
+                          style={{
+                            color: 'var(--price, #0A5C36)',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            whiteSpace: 'nowrap',
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {item.label}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 9,
+                            background: '#DCFCE7',
+                            color: '#166534',
+                            padding: '1px 5px',
+                            borderRadius: 4,
+                            fontWeight: 800,
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            marginLeft: 'auto',
+                          }}
+                        >
+                          POS
+                        </span>
+                      </a>
+                    )
+                  }
+
                   return (
                     <button
                       key={item.key}
-                      onClick={() => onNavigateTab(item.key)}
+                      onClick={() => onNavigateTab(item.key as ManageTab)}
                       className={`bq-nav-item${isActive ? ' active' : ''}`}
                       style={{
                         opacity: allowed ? 1 : 0.85,
@@ -205,7 +263,7 @@ export default function BoutiqueManageSidebarNav({
                             marginLeft: 'auto',
                           }}
                         >
-                          {item.minPlan === 'business' ? 'Business' : 'Pro'}
+                          {item.minPlan === 'business' ? 'VIP' : 'PRO'}
                         </span>
                       )}
                       {allowed && item.key === 'commandes' && nbEnAttente > 0 && (
@@ -220,177 +278,12 @@ export default function BoutiqueManageSidebarNav({
         })}
       </nav>
 
-      {/* Bouton bascule : Afficher/Masquer les options avancées */}
-      <div className="bq-sidebar-tools-toggle" style={{ padding: '4px 12px 12px' }}>
-        <button
-          type="button"
-          onClick={onToggleAdvancedNav}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '10px 14px',
-            borderRadius: 10,
-            border: showAdvancedNav
-              ? '1.5px solid var(--accent, #C75B00)'
-              : '1.5px dashed var(--border-medium, #D1C4B4)',
-            background: showAdvancedNav ? 'var(--orange2, #FFF3E8)' : 'transparent',
-            cursor: 'pointer',
-            fontSize: 12.5,
-            fontWeight: 800,
-            color: showAdvancedNav ? 'var(--accent, #C75B00)' : 'var(--text-subtle, #8C7E74)',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <ChevronDown
-            size={14}
-            style={{
-              transform: showAdvancedNav ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s ease',
-            }}
-          />
-          <span>
-            {navTier
-              ? navTier === 'essential'
-                ? "Voir plus d'outils (carnet, fidélité...)"
-                : navTier === 'commerce'
-                ? "Outils Pro & Avancés (compta, TVA...)"
-                : "Revenir au mode essentiel"
-              : showAdvancedNav
-              ? 'Masquer les options avancées'
-              : "Plus d'options (comptabilité, rapports...)"}
-          </span>
-        </button>
-
-        {showAdvancedNav && (
-          <div
-            className="bq-advanced-mobile-panel"
-            style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}
-          >
-            {navAdvanced.map((group, gIdx) => (
-              <div
-                key={gIdx}
-                style={{
-                  background: '#FAF8F5',
-                  border: '1px solid #E8DDD2',
-                  borderRadius: 10,
-                  padding: '10px 12px',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    marginBottom: 8,
-                    fontSize: 11,
-                    fontWeight: 800,
-                    color: 'var(--navy, #1C2B4A)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  <group.icon size={13} style={{ color: 'var(--accent, #C75B00)' }} />
-                  <span>{group.title}</span>
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                    gap: 6,
-                  }}
-                >
-                  {group.items.map((item) => {
-                    const allowed = isAllowed(item.minPlan)
-                    const isActive = tab === item.key
-                    const ItemIcon = item.icon
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => onNavigateTab(item.key)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          padding: '8px 10px',
-                          borderRadius: 8,
-                          fontSize: 12,
-                          fontWeight: 800,
-                          color: isActive ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
-                          background: isActive ? 'var(--orange2, #FFF3E8)' : '#ffffff',
-                          border: isActive ? '1.5px solid var(--accent, #C75B00)' : '1px solid #E2E8F0',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          boxShadow: isActive ? '0 2px 6px rgba(199,91,0,0.15)' : '0 1px 2px rgba(0,0,0,0.03)',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <ItemIcon
-                          size={14}
-                          style={{ color: isActive ? 'var(--accent, #C75B00)' : '#64748B', flexShrink: 0 }}
-                        />
-                        <span
-                          style={{
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            flex: 1,
-                            minWidth: 0,
-                          }}
-                        >
-                          {item.label}
-                        </span>
-                        {!allowed && (
-                          <span
-                            style={{
-                              fontSize: 8.5,
-                              background: item.minPlan === 'business' ? 'var(--navy, #1C2B4A)' : 'var(--accent, #C75B00)',
-                              color: '#fff',
-                              padding: '1px 4px',
-                              borderRadius: 3,
-                              fontWeight: 800,
-                            }}
-                          >
-                            {item.minPlan === 'business' ? 'VIP' : 'PRO'}
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom-Sheet Mobile Navigation — Boutique */}
-      <BoutiqueMobileBottomSheet
-        navGroups={navGroups}
-        activeTab={tab}
-        onSetTab={(newTab) => onNavigateTab(newTab)}
-        isAllowed={isAllowed}
-        nbEnAttente={nbEnAttente}
-        formatNumber={formatNumber}
-        sheetTitle={boutique.nom}
-        onBack={onBack}
-        boutiqueId={boutique.id}
-        hasMultipleBoutiques={hasMultipleBoutiques}
-        boutiques={boutiques}
-        onSelectBoutique={onSelectBoutique}
-        showAdvancedNav={showAdvancedNav}
-        onToggleAdvancedNav={onToggleAdvancedNav}
-      />
-
-      {/* Liens rapides (Desktop seulement) */}
+      {/* ── Liens Rapides Bas de Sidebar (Desktop Seulement) ── */}
       <div
         className="bq-sidebar-quick-links"
         style={{
           padding: '12px 8px',
-          borderTop: '1px solid var(--border-light)',
+          borderTop: '1px solid var(--border-light, #E8DDD2)',
           display: 'flex',
           flexDirection: 'column',
           gap: 6,

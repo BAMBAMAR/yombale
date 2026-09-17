@@ -14,8 +14,6 @@ import {
   ShieldAlert,
   Settings,
   ArrowLeft,
-  Menu,
-  X,
   ExternalLink,
   Wallet,
   Wrench,
@@ -31,6 +29,10 @@ import {
 } from 'lucide-react'
 import '../agence.css'
 import NotificationCenterModal, { NotificationItem, CompteursAlertes } from './components/NotificationCenterModal'
+import AgenceBottomNav from './components/AgenceBottomNav'
+import AgenceQuickActionsSheet from './components/AgenceQuickActionsSheet'
+import AgenceTopNavbar from './components/AgenceTopNavbar'
+import AgenceMobileDrawer from './components/AgenceMobileDrawer'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface AgenceData {
@@ -58,7 +60,8 @@ export default function AgenceWorkspaceLayout({
 
   const [agence, setAgence] = useState<AgenceData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [compteurs, setCompteurs] = useState<CompteursAlertes>({
     demandes_visite: 0,
@@ -115,6 +118,15 @@ export default function AgenceWorkspaceLayout({
       chargerNotifications()
     }
   }, [slug, isVitrineRoute])
+
+  useEffect(() => {
+    if (!isVitrineRoute) {
+      document.body.classList.add('in-agence-workspace')
+      return () => {
+        document.body.classList.remove('in-agence-workspace')
+      }
+    }
+  }, [isVitrineRoute])
 
   if (isVitrineRoute) {
     return <>{children}</>
@@ -191,9 +203,22 @@ export default function AgenceWorkspaceLayout({
   }
 
   return (
-    <div className="workspace-layout">
-      {/* ── Sidebar Desktop ── */}
-      <aside className="workspace-sidebar">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* ── Entête Unique au niveau Nopalou (Desktop & Mobile 56px) ── */}
+      <AgenceTopNavbar
+        nom={agence?.nom || 'Agence'}
+        slug={slug}
+        ville={agence?.ville}
+        sponsorise={agence?.sponsorise}
+        totalAlertes={compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants + compteurs.tickets_urgents}
+        onOpenAlertes={() => setShowNotifCenter(true)}
+        onOpenMenu={() => setMobileDrawerOpen(true)}
+      />
+
+      {/* ── Corps : Sidebar à gauche sous Nopalou + Contenu Principal ── */}
+      <div className="workspace-layout">
+        {/* ── Sidebar Desktop (Directement sous Nopalou à gauche) ── */}
+        <aside className="workspace-sidebar">
         <div style={{ padding: '16px', borderBottom: '1px solid var(--border, #E8DDD2)' }}>
           <Link
             href="/agence"
@@ -332,203 +357,33 @@ export default function AgenceWorkspaceLayout({
         </div>
       </aside>
 
-      {/* ── Menu Mobile Toggle Bar (Visible uniquement < 768px) ── */}
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <div className="agence-topbar-mobile">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{
-                background: 'none',
-                border: '1px solid var(--border, #E8DDD2)',
-                borderRadius: 6,
-                padding: '6px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--navy, #1C2B4A)',
-              }}
-            >
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-            <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-              {agence?.nom}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              type="button"
-              onClick={() => setShowNotifCenter(true)}
-              style={{
-                position: 'relative',
-                background: '#FAF8F5',
-                border: '1px solid var(--border, #E8DDD2)',
-                borderRadius: 6,
-                padding: '6px 8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                color: 'var(--navy, #1C2B4A)',
-              }}
-              title="Centre d'alertes"
-            >
-              <Bell size={16} />
-              {compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants > 0 && (
-                <span
-                  style={{
-                    background: 'var(--accent, #C75B00)',
-                    color: '#FFFFFF',
-                    fontSize: 10,
-                    fontWeight: 900,
-                    padding: '1px 5px',
-                    borderRadius: 8,
-                  }}
-                >
-                  {compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants}
-                </span>
-              )}
-            </button>
-
-            <Link
-              href="/agence"
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: '#64748B',
-                textDecoration: 'none',
-              }}
-            >
-              Changer
-            </Link>
-          </div>
-        </div>
-
-        {/* Topbar Desktop */}
-        <div
-          style={{
-            height: 52,
-            borderBottom: '1px solid var(--border, #E8DDD2)',
-            background: '#FFFFFF',
-            padding: '0 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-          className="desktop-topbar-immo"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-              {agence?.nom}
-            </span>
-            <span style={{ fontSize: 12, color: '#94A3B8' }}>•</span>
-            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Portail de Gestion Immobilière</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button
-              type="button"
-              onClick={() => setShowNotifCenter(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 8,
-                background: '#FAF8F5',
-                border: '1px solid var(--border, #E8DDD2)',
-                color: 'var(--navy, #1C2B4A)',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-              title="Centre de notifications et alertes"
-            >
-              <Bell size={15} />
-              <span>Alertes & Notifs</span>
-              {compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants > 0 && (
-                <span
-                  style={{
-                    background: 'var(--accent, #C75B00)',
-                    color: '#FFFFFF',
-                    fontSize: 10.5,
-                    fontWeight: 900,
-                    padding: '1px 6px',
-                    borderRadius: 10,
-                  }}
-                >
-                  {compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants}
-                </span>
-              )}
-            </button>
-
-            <Link
-              href={`/agence/${slug}/vitrine`}
-              target="_blank"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'var(--navy, #1C2B4A)',
-                textDecoration: 'none',
-                padding: '6px 12px',
-                borderRadius: 8,
-                background: '#FAF8F5',
-                border: '1px solid var(--border, #E8DDD2)',
-              }}
-            >
-              <span>Vitrine Publique</span>
-              <ExternalLink size={13} />
-            </Link>
-          </div>
-        </div>
-
-        {/* Tiroir Mobile avec Rubriques */}
-        {mobileMenuOpen && (
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderBottom: '1px solid var(--border, #E8DDD2)',
-              padding: '12px 16px',
-              maxHeight: '75vh',
-              overflowY: 'auto',
-            }}
-          >
-            {navSections.map(section => (
-              <div key={section.titre} className="sidebar-section">
-                <div className="sidebar-section-title">
-                  <span>{section.titre}</span>
-                </div>
-                <div>
-                  {section.items.map(item => {
-                    const Icon = item.icon
-                    const active = isLinkActive(item)
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`sidebar-nav-item ${active ? 'active' : ''}`}
-                      >
-                        <Icon size={16} />
-                        <span>{item.label}</span>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Main Content Area ── */}
+        {/* ── Main Content Area (Directement sous l'entête unique sans barre redondante) ── */}
         <main className="workspace-content">{children}</main>
       </div>
+
+      {/* ── Navigation Basse Persistante Mobile (< 768px) ── */}
+      <AgenceBottomNav
+        slug={slug}
+        onOpenQuickActions={() => setQuickActionsOpen(true)}
+        onOpenDrawer={() => setMobileDrawerOpen(true)}
+        compteursTotal={compteurs.demandes_visite + compteurs.loyers_retard + compteurs.mandats_expirants + compteurs.tickets_urgents}
+      />
+
+      {/* ── Bottom Sheet d'Actions Rapides ── */}
+      <AgenceQuickActionsSheet
+        slug={slug}
+        isOpen={quickActionsOpen}
+        onClose={() => setQuickActionsOpen(false)}
+      />
+
+      {/* ── Tiroir Latéral Navigation Complète Mobile ── */}
+      <AgenceMobileDrawer
+        slug={slug}
+        nom={agence?.nom || 'Agence'}
+        isOpen={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        compteurs={compteurs}
+      />
 
       {/* ── Centre de Notifications Déroulant ── */}
       {showNotifCenter && (

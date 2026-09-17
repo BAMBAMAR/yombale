@@ -3187,41 +3187,65 @@ a {
 /* ── Dashboard compte utilisateur (/compte/*) ── */
 .account-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 28px;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 24px;
   align-items: start;
   padding: 24px 20px 80px;
-  max-width: 1280px;
+  max-width: 1260px;
   margin: 0 auto;
 }
 
 @media (max-width: 860px) {
   .account-layout {
-    display: flex;
-    flex-direction: column;
-    padding: 12px 12px 80px;
-    gap: 14px;
+    display: block;
+    padding: 12px 12px 84px;
     width: 100%;
     box-sizing: border-box;
+  }
+
+  /* Élimination totale du menu desktop au milieu sur mobile (accès via BottomNav & MobileDrawer) */
+  .account-sidebar {
+    display: none !important;
   }
 }
 
 .account-sidebar {
-  background: var(--card);
+  background: #ffffff;
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(26, 22, 18, 0.05);
-  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(26, 22, 18, 0.04);
+  padding: 16px;
   position: sticky;
-  top: 84px; /* sous la navbar sticky (62px) + marge */
+  top: 72px; /* sous la navbar sticky (56px) + 16px de marge */
 }
 
-@media (max-width: 860px) {
-  .account-sidebar {
-    position: static;
-    top: auto;
-    width: 100%;
-    box-sizing: border-box;
+/* ── Grilles Responsives Compte : 4 colonnes desktop / 2x2 compact mobile (Zéro étirement) ── */
+.account-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.account-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .account-kpis-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .account-actions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .account-hub-hero-card > div {
+    padding: 12px 14px !important;
+    gap: 10px !important;
   }
 }
 

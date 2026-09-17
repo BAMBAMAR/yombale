@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Repeat,
   CreditCard,
+  Calculator,
   LucideIcon,
 } from 'lucide-react'
 
@@ -57,6 +58,80 @@ export const VALID_TABS: ManageTab[] = [
   'blog',
   'abonnements',
 ]
+
+/**
+ * 6 Pôles Métiers exhaustifs pour la navigation Boutique (Desktop & Mobile)
+ * Aucun élément n'est omis (27 outils accessibles en 1 clic).
+ */
+export function getBoutiqueNavSections(t: (key: string) => string, boutiqueId?: string): NavGroup[] {
+  const caisseHref = boutiqueId ? `/boutique/caisse?b=${boutiqueId}` : '/boutique/caisse'
+
+  return [
+    {
+      icon: LayoutDashboard,
+      title: 'Activité & Ventes',
+      items: [
+        { key: 'dashboard', icon: LayoutDashboard, label: t('shop.overview') || 'Accueil / Tableau de bord' },
+        { key: 'commandes', icon: ClipboardList, label: t('shop.orders') || 'Mes commandes' },
+        { key: 'analytics', icon: BarChart3, label: t('shop.analytics') || 'Statistiques & Ventes', minPlan: 'pro' },
+      ],
+    },
+    {
+      icon: Store,
+      title: 'Point de Vente & Caisse',
+      items: [
+        { key: 'caisse', icon: Calculator, label: 'Caisse POS Tactile', href: caisseHref },
+        { key: 'carnet', icon: BookOpen, label: t('shop.debts') || 'Carnet de dettes & crédits' },
+        { key: 'echelonnement', icon: CreditCard, label: 'Paiements échelonnés' },
+        { key: 'express', icon: Zap, label: t('shop.saisieExpress') || 'Saisie Express (Recettes & Dépenses)' },
+      ],
+    },
+    {
+      icon: Package,
+      title: 'Catalogue & Stocks',
+      items: [
+        { key: 'produits', icon: ShoppingBag, label: t('shop.catalog') || 'Catalogue articles' },
+        { key: 'fournisseurs', icon: Truck, label: t('shop.suppliers') || 'Fournisseurs & Réassort', minPlan: 'pro' },
+        { key: 'entrepots', icon: Warehouse, label: 'Entrepôts & Dépôts', minPlan: 'pro' },
+      ],
+    },
+    {
+      icon: Megaphone,
+      title: 'Marketing & Fidélité',
+      items: [
+        { key: 'social', icon: Share2, label: 'Social Shop (Reels & Vidéos)' },
+        { key: 'fidelite', icon: Gift, label: t('shop.fidelitePromos') || 'Fidélité & Promotions' },
+        { key: 'marketing', icon: Megaphone, label: t('shop.marketing') || 'Partager ma boutique & QR Code' },
+        { key: 'abonnements', icon: Repeat, label: 'Abonnements & Récurrence', minPlan: 'pro' },
+        { key: 'blog', icon: FileText, label: 'Blog & Articles SEO', minPlan: 'pro' },
+        { key: 'abtesting', icon: Split, label: 'A/B Testing Vitrine', minPlan: 'pro' },
+      ],
+    },
+    {
+      icon: Receipt,
+      title: 'Comptabilité & Factures',
+      items: [
+        { key: 'compta', icon: Receipt, label: t('shop.accounting') || 'Comptabilité & Bilan', minPlan: 'pro' },
+        { key: 'documents', icon: FileText, label: t('shop.documents') || 'Factures, Devis & Reçus', minPlan: 'pro' },
+        { key: 'fiscalite', icon: Scale, label: t('shop.taxSettings') || 'Fiscalité & TVA (18%)', minPlan: 'pro' },
+      ],
+    },
+    {
+      icon: Settings,
+      title: 'Équipe & Configuration',
+      items: [
+        { key: 'personnaliser', icon: Palette, label: 'Studio Design Vitrine' },
+        { key: 'equipe', icon: Users, label: t('shop.team') || 'Mon équipe & Rôles', minPlan: 'business' },
+        { key: 'admins', icon: ShieldCheck, label: t('shop.admins') || 'Administrateurs', minPlan: 'business' },
+        { key: 'caissiers', icon: Store, label: t('shop.caissiers') || 'Caissiers & Vendeurs', minPlan: 'pro' },
+        { key: 'journal', icon: ScrollText, label: t('shop.auditLog') || 'Journal d\'activité & Audit', minPlan: 'business' },
+        { key: 'infos', icon: Settings, label: t('shop.settings') || 'Paramètres généraux' },
+        { key: 'appstore', icon: Boxes, label: 'App Store & Extensions', minPlan: 'pro' },
+        { key: 'developer', icon: Code2, label: t('shop.developer') || 'Portail développeur & API', minPlan: 'business' },
+      ],
+    },
+  ]
+}
 
 export function getNavEssential(t: (key: string) => string): NavGroup[] {
   return [

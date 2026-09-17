@@ -1,8 +1,8 @@
 import { getOptionalSession } from '@/lib/dal'
 import { backendAuthFetch } from '@/lib/backendFetch'
 import AccountSidebarClient from './AccountSidebarClient'
-import AccountMobileHeader from './AccountMobileHeader'
 import BannerEmailNonVerifie from './BannerEmailNonVerifie'
+import AccountWorkspaceWrapper from './components/AccountWorkspaceWrapper'
 
 // Toutes les routes de ce groupe sauf /favoris sont dans PROTECTED_ROUTES
 // (middleware.ts) — session garantie non-nulle pour elles. /favoris est la
@@ -30,7 +30,7 @@ export default async function CompteLayout({ children }: { children: React.React
   const initiale = nom.charAt(0).toUpperCase()
 
   return (
-    <>
+    <AccountWorkspaceWrapper nom={nom} email={session.email ?? null} initiale={initiale}>
       {!emailVerifie && <BannerEmailNonVerifie />}
       <div className="account-layout">
         <AccountSidebarClient
@@ -39,11 +39,10 @@ export default async function CompteLayout({ children }: { children: React.React
           initiale={initiale}
         />
         <main className="account-main">
-          <AccountMobileHeader />
           {children}
         </main>
       </div>
-    </>
+    </AccountWorkspaceWrapper>
   )
 }
 

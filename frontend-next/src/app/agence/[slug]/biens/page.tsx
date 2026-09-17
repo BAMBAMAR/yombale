@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import ModalEditerBien from './components/ModalEditerBien'
 import { FiltresBiensBar } from './components/FiltresBiensBar'
+import BienCardMobile from './components/BienCardMobile'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface BienItem {
@@ -28,6 +29,7 @@ interface BienItem {
   reference: string
   titre: string
   type_bien: string
+  photos?: string[]
   ville: string
   quartier?: string
   surface_m2?: number
@@ -224,8 +226,27 @@ export default function BiensListPage() {
           <p style={{ fontSize: 13.5 }}>Ajoutez votre premier bien immobilier pour commencer à gérer votre agence.</p>
         </div>
       ) : (
-        <div className="agence-table-wrapper">
-          <table className="agence-table">
+        <>
+          {/* ── Vue Mobile : Cartes Dédiées (< 768px) ── */}
+          <div className="immo-mobile-only" style={{ flexDirection: 'column' }}>
+            {biens.map(bien => (
+              <BienCardMobile
+                key={bien.id}
+                slug={slug}
+                bien={bien}
+                onEdit={(b) => setBienAEditer(b)}
+                onDuplicate={(id) => handleDupliquer(id)}
+                onArchive={(id) => handleArchiver(id)}
+                onDelete={(id) => handleSupprimer(id)}
+                onPublish={(id) => handlePublierAnnonce(id)}
+                isPublishing={publishingId === bien.id}
+              />
+            ))}
+          </div>
+
+          {/* ── Vue Desktop : Tableau Complet (>= 768px) ── */}
+          <div className="agence-table-wrapper immo-desktop-only">
+            <table className="agence-table">
             <thead>
               <tr>
                 <th>Bien & Référence</th>
@@ -417,6 +438,7 @@ export default function BiensListPage() {
             </tbody>
           </table>
         </div>
+      </>
       )}
 
       {bienAEditer && (

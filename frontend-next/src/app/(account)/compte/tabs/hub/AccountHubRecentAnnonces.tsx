@@ -26,7 +26,7 @@ export default function AccountHubRecentAnnonces({
           background: '#ffffff',
           borderRadius: 14,
           padding: '16px 20px',
-          border: '1.5px solid #E8DDD2',
+          border: '1px solid var(--border, #E8DDD2)',
           boxShadow: '0 2px 8px rgba(26,22,18,0.03)',
           display: 'flex',
           alignItems: 'center',
@@ -112,7 +112,7 @@ export default function AccountHubRecentAnnonces({
         background: '#ffffff',
         borderRadius: 14,
         padding: '16px 18px',
-        border: '1.5px solid #E8DDD2',
+        border: '1px solid var(--border, #E8DDD2)',
         boxShadow: '0 2px 8px rgba(26,22,18,0.03)',
       }}
     >

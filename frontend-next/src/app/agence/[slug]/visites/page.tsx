@@ -17,6 +17,7 @@ import {
 import SectionDemandesVisite from './components/SectionDemandesVisite'
 import ModalConfirmerVisite from './components/ModalConfirmerVisite'
 import { ModalProgrammerVisite, OptionItem } from './components/ModalProgrammerVisite'
+import VisiteCardMobile from './components/VisiteCardMobile'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface Visite {
@@ -266,8 +267,21 @@ export default function VisitesPage() {
           <p style={{ fontSize: 13.5 }}>Programmez votre premier rendez-vous de visite avec un prospect.</p>
         </div>
       ) : (
-        <div className="agence-table-wrapper">
-          <table className="agence-table">
+        <>
+          {/* ── Vue Mobile : Cartes Tactiles (< 768px) ── */}
+          <div className="immo-mobile-only" style={{ flexDirection: 'column' }}>
+            {visites.map(v => (
+              <VisiteCardMobile
+                key={v.id}
+                visite={v}
+                onUpdateStatut={updateStatut}
+              />
+            ))}
+          </div>
+
+          {/* ── Vue Desktop : Tableau Complet (>= 768px) ── */}
+          <div className="agence-table-wrapper immo-desktop-only">
+            <table className="agence-table">
             <thead>
               <tr>
                 <th>Date & Heure</th>
@@ -387,6 +401,7 @@ export default function VisitesPage() {
             </tbody>
           </table>
         </div>
+      </>
       )}
       </>
       )}

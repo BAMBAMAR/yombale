@@ -834,4 +834,94 @@
     font-weight: 600;
   }
 }
-
+
+/* ── Masquage du Header et Footer publics dans l'espace Compte (/compte) ── */
+body.in-account-workspace header[role="banner"],
+body.in-account-workspace .site-footer,
+body.in-account-workspace .mobile-bottom-nav,
+body:has(.account-top-navbar) header[role="banner"],
+body:has(.account-top-navbar) .site-footer,
+body:has(.account-top-navbar) .mobile-bottom-nav {
+  display: none !important;
+}
+
+body.in-account-workspace {
+  background: var(--bg, #F8F5F0) !important;
+}
+
+/* ── Barre Inférieure Dédiée Compte (Mobile) ── */
+.account-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: #FFFFFF;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 90;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 16px rgba(28, 43, 74, 0.06);
+}
+
+@media (min-width: 861px) {
+  .account-bottom-nav {
+    display: none !important;
+  }
+}
+
+.account-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748B;
+  flex: 1;
+  height: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.15s ease;
+  position: relative;
+}
+
+.account-bottom-nav-item.active {
+  color: var(--accent, #C75B00);
+}
+
+.account-bottom-nav-item:active {
+  transform: scale(0.96);
+}
+
+.account-bottom-nav-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent, #C75B00) 0%, #A34A00 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(199, 91, 0, 0.35);
+  border: 3px solid #FFFFFF;
+  cursor: pointer;
+  margin-top: -20px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.account-bottom-nav-fab:active {
+  transform: scale(0.92);
+}
+
+@media (max-width: 860px) {
+  .account-mobile-burger-btn {
+    display: inline-flex !important;
+  }
+}

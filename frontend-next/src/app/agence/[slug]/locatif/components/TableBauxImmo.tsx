@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Key, Plus, FileText, XCircle, AlertTriangle } from 'lucide-react'
 import { getImmoAuthToken, getImmoAuthHeaders } from '@/lib/immo-auth'
+import BailCardMobile from './BailCardMobile'
 
 export interface BailItem {
   id: string
@@ -86,7 +87,24 @@ export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: 
 
   return (
     <>
-      <div className="agence-table-wrapper">
+      {/* ── Version Mobile : Cartes tactiles ── */}
+      <div className="immo-mobile-only">
+        {baux.map((b) => (
+          <BailCardMobile
+            key={b.id}
+            slug={slug}
+            bail={b}
+            onResilier={(item) => {
+              setBailAResilier(item)
+              setMotif('')
+              setErrorMsg(null)
+            }}
+          />
+        ))}
+      </div>
+
+      {/* ── Version Desktop : Table complète ── */}
+      <div className="immo-desktop-only agence-table-wrapper">
         <table className="agence-table">
           <thead>
             <tr>

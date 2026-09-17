@@ -3,6 +3,16 @@
 
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
+const uploadVideo = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }
+});
+const { uploadBuffer, uploadVideoBuffer } = require('../services/cloudinary');
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
@@ -234,6 +244,103 @@ router.post('/agence/:slugOrId', verifierToken, requireAgenceAccess(), async (re
   } catch (err) {
     console.error('[POST /api/biens/agence/:slugOrId]', err.message);
     res.status(500).json({ success: false, error: "Erreur lors de l'enregistrement du bien" });
+  }
+});
+
+// ── POST /api/biens/agence/:slugOrId/upload-photos — Téléversement de photos (multipart ou base64) ──
+router.post('/agence/:slugOrId/upload-photos', verifierToken, requireAgenceAccess(), upload.array('photos', 10), async (req, res) => {
+  try {
+    const urls = [];
+
+    // 1. Fichiers envoyés en multipart (f.buffer)
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          const url = await uploadBuffer(file.buffer, 'biens_immo');
+          if (url) urls.push(url);
+        } catch (uErr) {
+          console.error('[UPLOAD_PHOTO_CLOUDINARY_ERR]', uErr.message);
+        }
+      }
+    }
+
+    // 2. Images envoyées en base64 JSON ({ images: [dataUrl, ...] } ou { photos: [...] })
+    const base64List = (req.body && (req.body.images || req.body.photos)) || [];
+    if (Array.isArray(base64List) && base64List.length > 0) {
+      for (const item of base64List) {
+        try {
+          if (typeof item === 'string') {
+            if (item.startsWith('http://') || item.startsWith('https://')) {
+              urls.push(item);
+            } else {
+              const base64Data = item.replace(/^data:image\/\w+;base64,/, '');
+              const buffer = Buffer.from(base64Data, 'base64');
+              const url = await uploadBuffer(buffer, 'biens_immo');
+              if (url) urls.push(url);
+            }
+          }
+        } catch (bErr) {
+          console.error('[UPLOAD_BASE64_PHOTO_ERR]', bErr.message);
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      urls,
+      count: urls.length
+    });
+  } catch (err) {
+    console.error('[POST /api/biens/agence/:slugOrId/upload-photos]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors du téléversement des photos' });
+  }
+});
+
+// ── POST /api/biens/agence/:slugOrId/upload-video — Téléversement ou enregistrement d'une vidéo ──
+router.post('/agence/:slugOrId/upload-video', verifierToken, requireAgenceAccess(), uploadVideo.single('video'), async (req, res) => {
+  try {
+    let videoUrl = null;
+
+    // 1. Fichier envoyé en multipart
+    if (req.file && req.file.buffer) {
+      try {
+        videoUrl = await uploadVideoBuffer(req.file.buffer, 'biens_videos');
+      } catch (vErr) {
+        console.error('[UPLOAD_VIDEO_CLOUDINARY_ERR]', vErr.message);
+      }
+    }
+
+    // 2. Vidéo transmise en URL externe (YouTube, TikTok, Reel, Matterport, MP4) ou base64
+    const candidate = req.body && (req.body.video || req.body.url || req.body.videoUrl);
+    if (!videoUrl && candidate && typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        videoUrl = trimmed;
+      } else if (trimmed.startsWith('data:video/')) {
+        try {
+          const base64Data = trimmed.replace(/^data:video\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          videoUrl = await uploadVideoBuffer(buffer, 'biens_videos');
+        } catch (bErr) {
+          console.error('[UPLOAD_BASE64_VIDEO_ERR]', bErr.message);
+        }
+      }
+    }
+
+    if (!videoUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Aucune vidéo ou lien vidéo valide reçu (fournissez un fichier MP4/MOV ou un lien YouTube/TikTok/Reel).'
+      });
+    }
+
+    res.json({
+      success: true,
+      url: videoUrl
+    });
+  } catch (err) {
+    console.error('[POST /api/biens/agence/:slugOrId/upload-video]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur lors du traitement de la vidéo' });
   }
 });
 

@@ -1,3 +1,231 @@
+- **Refonte Symétrie, Alignement et Éradication des Redondances dans Tout l'Espace Compte & Fix Mobile (`AccountSidebarClient.tsx`, `AccountNavLinks.tsx`, `AccountHubHero.tsx`, `AccountHubKpis.tsx`, `AccountHubQuickActions.tsx`, `AccountHubRecentAnnonces.tsx`, `AccountSubHeader.tsx`, `globals.css`) (17 septembre 2026)** 🎨📐✨ 🚀 ✅ :
+  * **🎯 1. Diagnostic des Redondances et Asymétries Signalées par l'Utilisateur** :
+    - L'utilisateur a fourni une capture d'écran de son tableau de bord (`/compte`) demandant : *"travailler sur la symetrie ;lalignement et eviter toute redondance .toutes les pages du compte en capture un exemple"*, puis a précisé sur mobile : *"dans le compte jai mipression de regresser tout est etirer meunu milieu ."*.
+    - **Redondance Critique N°1 (Double Carte Profil)** : La sidebar affichait en haut une carte complète (Avatar, BAMBA, email, bouton `[Profil]`) placée côte-à-côte avec la carte Hero du contenu principal qui réaffichait exactement le même Avatar, le même nom, le même email et un deuxième bouton `[Profil]` !
+    - **Redondance Critique N°2 (Switcher Contexte 3 Boutons en Doublon)** : La sidebar intégrait un bloc de 3 boutons `[Boutique] [Agence Immo] [Mon Profil]` doublant à 100% le sélecteur déjà présent dans la barre supérieure (`AccountTopNavbar.tsx`).
+    - **Redondance Critique N°3 (KPIs vs Actions Rapides à 75% Identiques)** : Dans le dashboard, la rangée "Actions Rapides" dupliquait 3 fois sur 4 les tuiles des KPIs juste au-dessus (`Ma Boutique`, `Mes Commandes`, `Mes Commissions`), suivie d'un ruban de pills désaxés (`Caisse POS`, `Favoris`, `Immobilier`, `Agence Immo Pro`, `Explorer boutiques`) répétant à nouveau les liens du menu.
+    - **Redondance N°4 (Pied de Sidebar)** : Le lien `Mon compte marchand` était répété au bas de la sidebar alors qu'il figurait déjà dans les accordéons et la top bar.
+    - **Régression Mobile Détectée ("Menu Milieu" & Cartes Étirées)** : Sur mobile (`max-width: 860px`), `.account-sidebar` était affichée en bloc au-dessus du contenu, forçant un menu accordéon vertical encombrant en plein milieu de l'écran. De plus, `minmax(min(200px, 100%), 1fr)` causait l'effondrement de la grille en 1 seule colonne sur les écrans < 420px, étirant chaque carte sur toute la largeur avec un grand vide horizontal.
+  * **🎯 2. Éradication des Doublons & Épure Visuelle** :
+    - **Sidebar Épurée (`AccountSidebarClient.tsx`)** : Remplacement de la lourde carte profil par un en-tête d'identité sobre et élégant avec avatar 38px, nom d'utilisateur, email compact et chevron discret vers les paramètres de profil. Suppression du lien dupliqué dans le footer (préservation exclusive de l'aide/guide et de la déconnexion).
+    - **Retrait du Switcher Redondant (`AccountNavLinks.tsx`)** : Suppression du bloc 3 boutons, allégeant la sidebar de 60px et déléguant le changement d'espace à la Top Navbar globale.
+    - **Actions Rapides 100% Utilitaires & Non-Redondantes (`AccountHubQuickActions.tsx`)** :
+      - Fin de la duplication des KPIs.
+      - 4 cartes d'action complémentaires à forte valeur ajoutée : (1) `Vendre un article` (annonce classique, accent orange), (2) `Publier un bien immo` (mandat immo, navy blue), (3) `Caisse POS Tactile` (caisse physique si marchand, ou création de boutique), (4) `Explorer les boutiques` (découverte des marchands).
+      - Élimination intégrale du ruban de pills flottants redondants.
+  * **🎯 3. Correction Mobile Radicale & Grille 2x2 Symétrique** :
+    - **Suppression du "Menu Milieu" sur Mobile (`globals.css`)** : Masquage total de la sidebar desktop sur mobile via `@media (max-width: 860px) { .account-sidebar { display: none !important; } }`. La navigation mobile de l'espace compte est désormais assurée de manière native par la `AccountBottomNav` et le tiroir latéral `AccountMobileDrawer` (bouton menu hamburger en haut à gauche), libérant immédiatement l'écran.
+    - **Grille 2x2 Compacte pour KPIs et Actions Rapides (`.account-kpis-grid`, `.account-actions-grid`)** : Sur mobile (`< 768px`), les cartes ne s'effondrent plus en 1 colonne étirée. Elles adoptent une grille stricte `repeat(2, 1fr)` avec un `gap: 10px`, des typographies et paddings calibrés pour smartphone, garantissant une symétrie parfaite sans aucun étirement.
+    - **Hero Card Mobile Optimisée** : Ratios et paddings réduits à `12px 14px` sur smartphone pour un affichage compact et dynamique.
+  * **🎯 4. Alignement & Symétrie Parfaite sur Tout l'Espace Compte** :
+    - **Grille Globale (`globals.css`)** : `.account-layout` calibré sur `grid-template-columns: 280px minmax(0, 1fr)` avec un `gap: 24px` strict et alignement au pixel près de la sidebar sticky (`top: 72px`, sous la barre de 56px + 16px de marge).
+    - **Symétrie 4x4 des Blocs Métiers** : Les 4 cartes KPIs (`AccountHubKpis.tsx`) et les 4 cartes Actions Rapides (`AccountHubQuickActions.tsx`) partagent la même structure 4 colonnes sur desktop et 2x2 sur mobile, avec des rayons de 14px, des bordures harmonisées `1px solid var(--border, #E8DDD2)` et un alignement vertical constant des libellés et des flèches d'action `→`.
+    - **Harmonisation sur Toutes les Sous-Pages (`AccountSubHeader.tsx`)** : Les 8 onglets du compte (`mes-annonces`, `mes-annonces-immo`, `suivi-commande`, `mes-alertes`, `favoris`, `profil`, `apporteur`, `fonctionnalites`) bénéficient du même alignement millimétré, sans aucun décalage visuel par rapport à la sidebar.
+  * **🧪 5. Validation Qualité Complète** :
+    - Toutes les routes et sous-pages du compte testées avec succès (HTTP 200).
+    - `npx tsc --noEmit` : **0 erreur**.
+    - `npm run lint:slop` : **0 violation**.
+    - Tous les composants React restent strictement sous le plafond de 450 lignes.
+    - **Règle Git** : Aucun `git push` non sollicité conformément aux règles strictes du projet.
+
+
+- **Activation Complète de l'Inclusion de Photos et Vidéos dans l'Ajout de Biens Immobiliers (`BienPhotoUploader.tsx`, `BienVideoUploader.tsx`, `BienCommoditesSelector.tsx`, `nouveau/page.tsx`, `[bienId]/page.tsx`, `backend/routes/biens.js`, `backend/services/cloudinary.js`, `api/biens/[...path]/route.ts`) (17 septembre 2026)** 📸🎥✨ 🚀 ✅ :
+  * **🎯 1. Diagnostic de la Panne Remontée par l'Utilisateur** :
+    - *"dans lajout de bien on ne peut pas inclure des photo ou video"*.
+    - **Cause Racine N°1 (Upload Photo Impossible)** : Dans `frontend-next/src/app/api/biens/[...path]/route.ts`, le proxy Next.js instanciat `options = { method: req.method }` sans propager les en-têtes clients. L'en-tête `Authorization: Bearer <token>` était systématiquement supprimé, entraînant un rejet immédiat `401 Unauthorized: Token manquant` par le middleware `verifierToken` du backend lors de l'appel à `/api/biens/agence/:slug/upload-photos`.
+    - **Cause Racine N°2 (Absence Totale de Support Vidéo)** : La colonne `videos` existait en base de données, mais le formulaire de création `nouveau/page.tsx` ne déclarait aucun état `videos`, ne transmettait aucun champ `videos` dans le payload de soumission, et le backend ne disposait d'aucune route d'upload ou de streaming vidéo.
+  * **🎯 2. Résolution Backend & Stockage Multimédia Cloudinary** :
+    - **Stream Vidéo Cloudinary (`backend/services/cloudinary.js`)** : Implémentation de `uploadVideoBuffer(buffer, folder)` avec `resource_type: 'video'` et plafond jusqu'à 50 Mo pour gérer les vidéos natives de visites immobilières.
+    - **Route d'Upload Vidéo (`POST /api/biens/agence/:slugOrId/upload-video`)** :
+      - Accepte les fichiers directs MP4, MOV, WebM via `multer` (mémoire tampon jusqu'à 50 Mo) et les héberge sur Cloudinary.
+      - Accepte et valide les liens externes : YouTube, TikTok, Instagram Reels, visites virtuelles Matterport 3D, ou flux MP4 direct.
+    - **Persistance en Base de Données (`backend/routes/biens.js`)** :
+      - Création (`POST /api/biens/agence/:slugOrId`) : insertion de `videos` sous forme de tableau JSONB.
+      - Mise à jour (`PUT /api/biens/agence/:slugOrId/:bienId`) : mise à jour sécurisée `videos = COALESCE($34::jsonb, videos)`.
+  * **🎯 3. Résolution Proxy & En-têtes Next.js (`route.ts`)** :
+    - Propagation intégrale du token d'authentification client `req.headers.get('authorization')` et des `Content-Type` JSON ou multipart vers le backend Express.
+  * **🎯 4. Refonte Modulaire du Formulaire Frontend (`nouveau/page.tsx`)** :
+    - **`BienPhotoUploader.tsx` (Photo Smartphone & Galerie)** :
+      - Déclencheur direct caméra smartphone (`capture="environment"`).
+      - Sélecteur multiple galerie d'images avec compression légère côté client pour téléversement rapide sans blocage réseau.
+      - Gestion de la photo principale (icône étoile pour définir la photo de couverture) et suppression individuelle.
+    - **`BienVideoUploader.tsx` (Composant Neuf Dédié Vidéos & Visites 3D)** :
+      - Bouton de téléversement direct de fichier vidéo MP4/MOV jusqu'à 50 Mo avec indicateur de progression.
+      - Champ de saisie instantané d'URLs externes (YouTube, TikTok, Matterport 3D, URL MP4) avec badges visuels typés.
+      - Lecteur / prévisualisation et lien externe direct pour tester la vidéo en 1 clic.
+    - **`BienCommoditesSelector.tsx`** : Extraction modulaire des équipements, garantissant que tous les composants React restent strictement sous la barre des 450 lignes (`nouveau/page.tsx` abaissé à 362 lignes).
+  * **🎯 5. Rendu Multimédia 360° sur la Fiche du Bien (`[bienId]/page.tsx`)** :
+    - Ajout du bloc dynamique *Vidéos & Visite Virtuelle* sur l'onglet Aperçu : lecture native avec `<video controls>` pour les fichiers directs et bouton interactif d'ouverture externe pour les liens YouTube/Matterport 3D.
+  * **🧪 6. Validation Qualité Complète** :
+    - Tests automatisés end-to-end exécutés avec succès : Upload Cloudinary OK (200), Upload lien vidéo YouTube OK (200), Forwarding Proxy Next.js OK (200).
+    - `npx tsc --noEmit` : **0 erreur**.
+    - `npm run lint:slop` : **0 violation**.
+    - **Règle Git** : Aucun `git push` non sollicité conformément aux règles strictes du projet.
+
+- **Résolution du Menu Tronqué sur Agence & Optimisations Majeures du Dashboard Immo (`AccountTopNavbar.tsx`, `AgenceTopNavbar.tsx`, `backend/routes/agences.js`, `agence/[slug]/page.tsx`) (17 septembre 2026)** 🏢📱✨ 🚀 ✅ :
+  * **🎯 1. Résolution du Débordement et du Bouton Menu Hamburger Tronqué sur Mobile** :
+    - **Diagnostic du Problème Remonté par l'Utilisateur** : Sur `/agence` et `/agence/[slug]`, le cumul du logo `Nopalou`, du badge `IMMOBILIER PRO` (14 lettres), de la cloche d'alertes, du badge avatar `[ (B) ∨ ]` et du bouton hamburger `[ ☰ ]` totalisait ~410px, provoquant un débordement horizontal sur écran mobile (360px - 390px) et coupant en deux le bouton hamburger à droite de l'écran.
+    - **Corrections Appliquées** :
+      - Badge responsive : Affichage compact `[IMMO]` sur mobile (`immo-mobile-only`) et `[IMMOBILIER PRO]` sur desktop (`hidden-mobile`), libérant immédiatement plus de 50px de largeur.
+      - Avatar épuré sur mobile : Masquage du chevron `∨` (`hidden-mobile`) et réduction du padding périphérique du bouton avatar.
+      - Espacements harmonisés : `padding: 0 12px` et `gap: 7px` sur la barre d'entête.
+      - **Résultat** : Zéro troncature, alignement au pixel près avec une marge de respiration sur tous les smartphones.
+  * **🎯 2. Améliorations Métier & Corrections Critiques sur le Dashboard Agence** :
+    - **Correction Grammaticale Immédiate** : Remplacement de la faute *"1 baux actifs sous gestion"* par **`"1 bail actif sous gestion"`** (accord dynamique français strict : 1 bail, 2+ baux).
+    - **Suppression des Béquilles Template** : Remplacement de *"1 programmée(s) aujourd'hui"* par **`"1 programmée aujourd'hui"`** (accord pluriel dynamique sans parenthèses).
+    - **Résolution de l'Incohérence Mathématique** : Dans `backend/routes/agences.js`, application stricte de la condition `WHERE statut = 'actif'` sur les compteurs d'occupation (`disponible`, `loue`, `vendu`), éliminant l'anomalie où un bien archivé comptait comme disponible (ex: 1 bien actif mais 2 disponibles).
+    - **Cartes KPI 100% Cliquables & Interactives** : Transformation des 4 `div` statiques en composants `Link` avec hover subtil (`transform: translateY(-2px)` + ombre portée) redirigeant directement vers `/biens`, `/visites` et `/locatif`.
+    - **Valorisation des États à Zéro (Annonces En Ligne)** : Quand `annonces_publiees === 0`, affichage d'un call-to-action dynamique `Diffuser un bien →` en couleur accent (`--accent: #C75B00`) pour stimuler l'activité de l'agent.
+  * **🧪 3. Validation Technique** :
+    - `npx tsc --noEmit` : **0 erreur**.
+    - `npm run lint:slop` : **0 violation**.
+    - Aucun `git push` exécuté.
+
+- **Élimination du Triple Menu Mobile & Architecture Exhaustive des 27 Outils Boutique sans Aucune Omission (`BoutiqueMobileDrawer.tsx`, `BoutiqueQuickActionsSheet.tsx`, `BoutiqueManageSidebarNav.tsx`, `BoutiqueManage.tsx`, `constants.ts`) (17 septembre 2026)** 🛍️📱⚡ 🚀 ✅ :
+  * **🎯 1. Élimination du "Menu du Milieu" Redondant sur Écran Mobile** :
+    - **Diagnostic de l'Utilisateur** : *"je parlais plus des trois menu un en bas un en haut et un au mileu"* -> L'utilisateur constatait 3 menus empilés simultanément sur mobile : (1) Top navbar 56px, (2) Sélecteur pill dropdown central `[←] [Vue d'ensemble ∨]` + volet accordéon en pointillés inséré au milieu de l'écran par `BoutiqueMobileBottomSheet`, et (3) Barre basse à 5 boutons.
+    - **Suppression du Menu Médian** : Suppression de `BoutiqueMobileBottomSheet` et de `.bq-sidebar-tools-toggle` dans `BoutiqueManageSidebarNav.tsx`. L'écran mobile est désormais fluide et 100% dédié au contenu de vente, encadré uniquement par le header supérieur (56px) et la barre basse (56px).
+  * **🎯 2. Règle Stricte de Zéro Omission : Préservation Intégrale des 27 Outils Métiers** :
+    - **Exigence Absolue de l'Utilisateur** : *"veillez a ne pas omettre un element du menu"*.
+    - **6 Pôles Métiers Exhaustifs (`getBoutiqueNavSections`)** :
+      1. *Activité & Ventes (3)* : Accueil / Tableau de bord (`dashboard`), Mes commandes (`commandes` avec badge temps réel), Statistiques & Ventes (`analytics` Pro).
+      2. *Point de Vente & Caisse (4)* : Caisse POS Tactile (`caisse` vers `/boutique/caisse?b=...`), Carnet de dettes & crédits (`carnet`), Paiements échelonnés (`echelonnement`), Saisie Express Recettes/Dépenses (`express`).
+      3. *Catalogue & Stocks (3)* : Catalogue articles (`produits`), Fournisseurs & Réassort (`fournisseurs` Pro), Entrepôts & Dépôts (`entrepots` Pro).
+      4. *Marketing & Fidélité (6)* : Social Shop Reels/Vidéos (`social`), Fidélité & Promotions (`fidelite`), Partager ma boutique & QR Code (`marketing`), Abonnements & Commandes récurrentes (`abonnements` Pro), Blog & Articles SEO (`blog` Pro), A/B Testing Vitrine (`abtesting` Pro).
+      5. *Comptabilité & Factures (3)* : Comptabilité & Bilan (`compta` Pro), Factures & Devis PDF (`documents` Pro), Fiscalité & TVA 18% (`fiscalite` Pro).
+      6. *Équipe & Configuration (8)* : Studio Design Vitrine (`personnaliser`), Mon équipe & Rôles (`equipe` VIP), Administrateurs (`admins` VIP), Caissiers & Vendeurs (`caissiers` Pro), Journal d'activité & Audit (`journal` VIP), Paramètres généraux (`infos`), App Store & Extensions Pixels (`appstore` Pro), Portail développeur & API (`developer` VIP).
+      + Raccourcis externes : Voir ma vitrine en ligne (`/boutiques/${slug}`), Guide d'utilisation (`/guide-utilisation`), Mon compte marchand (`/compte`), Mes boutiques.
+    - **Refonte Complète du Tiroir Mobile (`BoutiqueMobileDrawer.tsx`)** : Remplacement de l'ancien tiroir partiel (qui n'avait que 9 boutons) par le catalogue complet des 27 outils, avec barre de recherche instantanée intégrée pour trouver n'importe quelle fonctionnalité (ex: "tva", "caisse", "stock", "facture") en moins d'une seconde.
+  * **🎯 3. Correction Définitive du Lien Vers la Caisse POS Tactile** :
+    - **Diagnostic** : Auparavant, les boutons "Caisse POS" dans `BoutiqueQuickActionsSheet` et l'ancien tiroir renvoyaient vers l'onglet `express` (simple table comptable des recettes/dépenses), générant une frustration majeure.
+    - **Résolution** : Le bouton *Caisse POS Tactile* dans `BoutiqueQuickActionsSheet`, `BoutiqueMobileDrawer` et la sidebar desktop redirige désormais directement vers l'application physique de caisse `/boutique/caisse?b=${boutiqueId}`, tout en enregistrant `nopalou_pos_active_boutique_id` dans le `localStorage`. La *Saisie Express* comptable reste disponible distinctement.
+  * **🎯 4. Respect Rigoureux des 4 Règles d'Or Anti-IA-Slop & Standard Ingénieur Senior** :
+    - **Modularisation** : `BoutiqueMobileDrawer.tsx` (422 lignes) et `BoutiqueManageSidebarNav.tsx` (296 lignes) respectent strictement le plafond des 450 lignes.
+    - **Zéro Émojis UI** : Remplacement intégral par les icônes vectorielles SVG `lucide-react`.
+    - **Zéro Couleurs Arbitraires** : Utilisation exclusive des tokens CSS Nopalou (`--navy: #1C2B4A`, `--accent: #C75B00`, `--price: #0A5C36`, `--surface-muted: #FAF8F5`, `--border: #E8DDD2`).
+  * **🧪 5. Validation Qualité Complète** :
+    - `npx tsc --noEmit` : **0 erreur**.
+    - `npm run lint:slop` : **0 violation**.
+    - **Règle Git** : Aucun `git push` non sollicité conformément aux règles strictes du projet.
+
+- **Résolution des Redondances & Éléments Tronqués dans l'Espace Boutique Mobile (`BoutiqueTopNavbar.tsx`, `AgenceTopNavbar.tsx`, `BoutiqueClient.tsx`, `boutique-dashboard.css`) (16 septembre 2026)** 🛍️📱✨ 🚀 ✅ :
+  * **🎯 1. Éradication de la Troncature & du Débordement Horizontal de l'Avatar dans la Top Navbar** :
+    - **Diagnostic du Problème Remonté par l'Utilisateur** : Sur écran mobile (360px - 390px), la barre supérieure cumulait le logo, le badge, la cloche d'alertes, le bouton vitrine externe, le nom de la boutique (`AMAR`), la ville (`Dakar`) et l'avatar. L'avatar de profil débordait à droite et se retrouvait tronqué/coupé en deux.
+    - **Allègement Intelligent Mobile (`hidden-mobile`)** :
+      - Masquage sur mobile du bouton `Vitrine` (déjà accessible en évidence sous forme de bouton principal sur la carte boutique et dans le menu).
+      - Masquage sur mobile du bloc texte `nom + ville` (`hidden-mobile`), déjà affiché en grand 20px plus bas dans la carte boutique.
+      - Alignement parfait sur mobile : à gauche `[Nopalou BOUTIQUE]`, à droite `[🔔 Cloche]` + `[Avatar boutique 34x34]`. Zéro débordement, zéro troncature.
+      - **Harmonisation de la Couleur du Badge `[BOUTIQUE]` & Switcher (`BoutiqueTopNavbar.tsx`, `AccountTopNavbar.tsx`)** : Remplacement du vert arbitraire `--price: #0A5C36` par le bleu marine officiel Nopalou `var(--navy, #1C2B4A)` pour une unité graphique totale avec les badges `[MON COMPTE]` et `[AGENCE]`.
+    - **Application Uniforme à l'Espace Agence (`AgenceTopNavbar.tsx`)** : Même protection appliquée à l'entête agence pour prévenir tout débordement sur petit écran.
+  * **🎯 2. Suppression de l'Empilement Abusif & des Redondances Visuelles sur le Tableau de Bord** :
+    - **Fin du Triple Affichage "Vue d'ensemble"** :
+      - L'utilisateur avait à la fois le bouton `[Accueil]` actif dans la barre basse, un sélecteur dropdown `[←] [Vue d'ensemble ∨]` sous la carte, et un titre H2 `Vue d'ensemble` au-dessus des KPIs.
+      - Sur `tab === 'dashboard'`, le sélecteur compact `mobile-nav-compact` et le titre H2 `bq-main-tab-header` sont désormais masqués sur mobile. L'onglet `Accueil` de la barre basse fixe suffit amplement.
+      - Dès que l'utilisateur bascule sur un sous-module (`catalogue`, `commandes`, `comptabilité`, etc.), la barre compacte réapparaît automatiquement avec son bouton `←` pour revenir au dashboard ou naviguer rapidement.
+    - **Élimination du Bouton Accordéon en Pointillés** :
+      - Masquage sur mobile de `.bq-sidebar-tools-toggle` (*"Voir plus d'outils (carnet, fidélité...)"*), qui s'intercalait lourdement au milieu de l'écran alors que tous ces outils sont accessibles en 1 clic via le bouton `Menu` (tiroir), le FAB `+` (actions rapides) et les cartes d'accès du dashboard.
+  * **🎯 3. Éradication du Grand Vide Blanc & Correction de la Hauteur de Sidebar (`boutique-dashboard.css`, `BoutiqueClient.tsx`)** :
+    - **Correction Critique du `height: calc(100vh - 56px)`** : La règle `body.in-boutique-workspace .bq-sidebar` appliquait inconditionnellement une hauteur de 100vh sur la sidebar. Sur mobile (où la sidebar est empilée au-dessus du contenu), cela créait un gouffre blanc de 500px repoussant tous les KPIs hors de l'écran. Règle désormais strictement réservée à `@media (min-width: 768px)`, avec un `height: auto` propre sur mobile.
+    - **Suppression du Wrapper Externe (`BoutiqueClient.tsx`)** : Suppression du conteneur `bq-manage-outer-wrap` qui encadrait `BoutiqueManage` avec 8px de marge/padding sur mobile, permettant à la `BoutiqueTopNavbar` de s'étendre en pleine largeur bord-à-bord (100%), exactement comme sur `/compte` et `/agence`.
+    - **Résultat Immédiat** : Les statistiques clés (CA du mois, commandes en attente, alertes de stock) et les actions rapides s'affichent désormais immédiatement sous la carte boutique, sans défilement inutile ni zone vide.
+  * **🧪 4. Validation Qualité Complète** :
+    - `npx tsc --noEmit` : **0 erreur**.
+    - `npm run lint:slop` : **0 violation**.
+    - Respect des 4 règles d'or : composants modulaires < 450 lignes, zéro émoji dans l'UI, tokens Nopalou préservés.
+
+- **Continuité Totale Inter-Espaces & Résolution Définitive de la Rupture sur `/agence` (`AgenceHubCard.tsx`, `AccountTopNavbar.tsx`, `AccountWorkspaceWrapper.tsx`, `agence/page.tsx`, `AgenceTopNavbar.tsx`, `BoutiqueTopNavbar.tsx`, `AgenceMobileDrawer.tsx`, `BoutiqueMobileDrawer.tsx`, `MobileBottomNav.tsx`) (16 septembre 2026)** 🏢👤🛍️⚡ 🚀 ✅ :
+  * **🎯 1. Résolution de la Rupture Critique sur le Hub Agences (`/agence`)** :
+    - **Diagnostic du Problème Remonté par l'Utilisateur** : Sur la page `/agence` ("Nopalou Immobilier Pro"), aucun entête n'était visible, aucun avatar n'indiquait la session connectée, aucun fil d'Ariane ni bouton ne permettait de revenir à son compte (`/compte`), créant un sentiment d'isolement total.
+    - **Intégration d'AccountWorkspaceWrapper sur `/agence`** : La page `/agence` est désormais encapsulée dans le layout unifié avec `activeSpace="agence"`.
+    - **Entête Unique 56px sur `/agence`** : Badge `[IMMOBILIER PRO]`, commutateur tri-activités avec `Agence Immo` actif, bouton d'action contextuel `[+ Créer une agence]`, avatar utilisateur avec dropdown (*Mon Profil*, *Mes Annonces*, *Mes Favoris*, *Déconnexion*) et burger mobile.
+    - **Épuration & Clarté Visuelle Maximale** : Suppression de tout texte redondant "Retour à Mon Compte" sur la page, le commutateur supérieur `[👤 Espace Perso]` et l'avatar assurant déjà un retour immédiat et intuitif en 1 clic.
+    - **Barre Basse Mobile Permanente** : `AccountBottomNav` (5 boutons + FAB central `+`) et tiroir mobile `AccountMobileDrawer` désormais actifs sur `/agence`.
+  * **🎯 2. Commutateur Tri-Activités Universel Déployé sur Tous les Espaces (Desktop 56px)** :
+    - **Présence Systématique au Centre de la Navbar** :
+      - Sur `/compte` : `[👤 Espace Perso (Actif)]` | `[🛍️ Ma Boutique]` | `[🏢 Agence Immo]`.
+      - Sur `/agence` et `/agence/[slug]` : `[👤 Espace Perso]` | `[🛍️ Ma Boutique]` | `[🏢 Agence Immo (Actif)]`.
+      - Sur `/boutique` : `[👤 Espace Perso]` | `[🛍️ Ma Boutique (Actif)]` | `[🏢 Agence Immo]`.
+    - Permet à l'utilisateur de naviguer instantanément entre ses activités sans jamais repasser par des menus profonds.
+  * **🎯 3. Liens de Retour Rapides dans les Tiroirs Mobiles Agence & Boutique** :
+    - `AgenceMobileDrawer` : Ajout du bouton d'action rapide `[← Mon compte]` (`/compte`) dans la barre supérieure du tiroir mobile.
+    - `BoutiqueMobileDrawer` : Ajout du bouton d'action rapide `[← Mon compte]` (`/compte`) aux côtés de `Mes boutiques`.
+  * **🎯 4. Modularisation & Qualité Strictes Anti-IA-Slop** :
+    - **Composant `AgenceHubCard.tsx`** : Extraction des cartes agences hors de `page.tsx`, réduisant la taille de la page de 459 lignes à 316 lignes (100% sous le plafond de 450 lignes).
+    - **Correction Règle des Hooks React (`MobileBottomNav.tsx`)** : Déplacement de la condition d'exclusion après tous les hooks d'état, éliminant l'erreur *"Rendered more hooks than during the previous render"*.
+    - **Zero Emojis & Conformité Design Tokens** : 100% SVG Lucide, tokens CSS Nopalou respectés.
+  * **🧪 5. Validation Qualité Complète** :
+    - `npx tsc --noEmit` : **0 erreur TypeScript**.
+    - `npm run lint:slop` : **0 violation**.
+    - Playwright Visual Tests : Validation réussie sur Desktop 1280px et Mobile 375px (`scratch_agence_hub_desktop.png`, `scratch_agence_hub_mobile.png`, `scratch_agence_dashboard_desktop.png`).
+    - Serveur de dev Next.js & Backend Node.js en ligne (HTTP 200).
+
+- **Refonte Majeure de la Navigabilité & Éradication de la Coupure Espace Compte (`AccountTopNavbar.tsx`, `AccountBottomNav.tsx`, `AccountQuickActionsSheet.tsx`, `AccountMobileDrawer.tsx`, `AccountSubHeader.tsx`, `AccountWorkspaceWrapper.tsx`, `navbar.css`, `CompteClient.tsx`, `AnnoncesClient.tsx`) (16 septembre 2026)** 👤🛡️⚡ 🚀 ✅ :
+  * **🎯 1. Éradication Définitive du Sentiment de "Coupure" & Rupture de Navigation** :
+    - **Diagnostic du Problème** : Auparavant, l'accès à `/compte?tab=...` ou aux sous-écrans (`mes-annonces`, `profil`, `suivi-commande`, `favoris`) provoquait une disparition brutale des repères de navigation. Sur mobile, `.account-sidebar--sub` avait un `display: none !important` masquant le menu, et l'ancien `AccountMobileHeader` renvoyait `null` sur `/compte`. L'utilisateur se retrouvait subitement isolé sans retour possible ni barre d'outils.
+    - **Résolution Architecturelle** : Création d'un environnement clos et persistant via `AccountWorkspaceWrapper` appliquant la classe `body.in-account-workspace`. Les éléments e-commerce grand public (barre de recherche publique, panier d'achat, boutons WhatsApp consommateur, pied de page public) sont masqués pour laisser place à un espace de travail personnel et pro de niveau SaaS.
+  * **🎯 2. Entête Unique Dédié Espace Compte 56px (`AccountTopNavbar.tsx`)** :
+    - **Identité Visuelle & Alignement Nopalou** : Hauteur fixe 56px au design system Nopalou (`--navy: #1C2B4A`, `--border: #E8DDD2`). À gauche : logo vectoriel `Nopalou` + badge distinctif `[MON COMPTE]`.
+    - **Sélecteur Multi-Activités Intégré (Desktop)** : Permet de basculer en 1 clic entre son *Espace Perso*, *Ma Boutique* (ou créer sa boutique) et *Agence Immo* (ou créer son agence).
+    - **Actions & Profil Utilisateur** : Cloche de notifications interactive `[🔔]`, bouton d'action contextuel `[+ Publier]`, et menu avatar avec initiales ouvrant un menu déroulant complet (Mon profil, Mes favoris, Programme apporteur 20%, Guide utilisateur, Déconnexion sécurisée).
+    - **Menu Burger Mobile** : Bouton d'accès rapide ouvrant le tiroir complet sur mobile.
+  * **🎯 3. Barre Basse Mobile ("Pied") Harmonisée à 5 Boutons & FAB `+` (`AccountBottomNav.tsx`, `AccountQuickActionsSheet.tsx`)** :
+    - **5 Boutons Tactiles Dédiés Espace Compte** :
+      1. `Accueil` : Retour immédiat au tableau de bord `/compte`.
+      2. `Annonces` : Accès direct à ses annonces marketplace (`/compte?tab=mes-annonces`) avec badge dynamique.
+      3. `FAB Central +` : Bouton surélevé flottant aux couleurs de la marque (`--accent: #C75B00`) pour création express.
+      4. `Commandes` : Suivi des commandes d'achat (`/compte?tab=suivi-commande`).
+      5. `Menu` : Déclencheur du tiroir latéral complet.
+    - **Feuille d'Actions Rapides Tactiles (`AccountQuickActionsSheet.tsx`)** : Déclenchée par le FAB central `+` : *Vendre un article (Marketplace), Publier un bien immobilier, Accéder à ma Boutique / Caisse POS, Gérer mon Agence Immobilière, Créer une Alerte de recherche*.
+  * **🎯 4. Tiroir Mobile Exhaustif Espace Compte (`AccountMobileDrawer.tsx`)** :
+    - Fiche identité utilisateur (nom, email, rôle, date d'inscription).
+    - Raccourcis multi-activités vers Boutique et Agence.
+    - Liste ordonnée et catégorisée de tous les modules : Tableau de bord, Mes Annonces Marketplace, Mes Biens Immo, Suivi Commandes, Mes Alertes, Mes Favoris, Mon Profil, Programme Apporteur (20% récurrents), Guide, Déconnexion.
+  * **🎯 5. Sous-Entête Contextuel & Fil d'Ariane sur Tous les Onglets (`AccountSubHeader.tsx`)** :
+    - Déployé sur tous les onglets (`CompteClient.tsx`) : affiche un bouton de retour explicite `← Tableau de bord`, l'icône vectorielle du module, son titre, son badge de comptage et son bouton d'action principal.
+    - Éradique toute confusion : l'utilisateur sait toujours où il se trouve et peut revenir au tableau de bord en 1 tap.
+  * **🎯 6. Harmonisation des Sous-Pages & Respect Strict Anti-IA-Slop** :
+    - **Pages Centralisées & Redirections Fluides** : `/favoris`, `/mes-alertes` et `/compte/apporteur` redirigent intelligemment les utilisateurs connectés vers l'onglet `/compte?tab=...` correspondant pour maintenir le layout unifié sans rechargement lourd.
+    - **Éradication Totale des Émojis** : Nettoyage de tous les émojis (`📣`, `❤️`, `🏪`, etc.) dans `AnnoncesClient.tsx`, `favoris/page.tsx`, etc., remplacés à 100% par les icônes vectorielles SVG de `lucide-react`.
+    - **Conformité Modulaire** : Tous les nouveaux composants font strictement moins de 400 lignes de code.
+  * **🧪 7. Validation & Robustesse** :
+    - `npx tsc --noEmit` : **0 erreur TypeScript**.
+    - `npm run lint:slop` : **0 violation** (0 composant > 450 lignes, 0 catch silencieux).
+    - Tests Visuels & Responsive Playwright : Validation à 375px (iPhone), 768px (iPad) et 1280px (Desktop) avec session connectée réelle.
+
+- **Unification Architecturelle de l'Entête et du Pied de Page Espace Agence & Espace Boutique (`AgenceTopNavbar.tsx`, `BoutiqueTopNavbar.tsx`, `AgenceBottomNav.tsx`, `BoutiqueBottomNav.tsx`, `BoutiqueQuickActionsSheet.tsx`, `BoutiqueMobileDrawer.tsx`, `agence.css`, `boutique-dashboard.css`, `MobileBottomNav.tsx`) (16 septembre 2026)** 🏢🛍️⚡ 🚀 ✅ :
+  * **🎯 1. Entête Unique au Niveau Nopalou (Desktop & Mobile 56px)** :
+    - **Fusion & Élimination de la Double Barre** : Remplacement complet de la navbar publique et des barres intermédiaires par un entête SaaS épuré de 56px (`AgenceTopNavbar` et `BoutiqueTopNavbar`).
+    - **À gauche** : Logo SVG `Nopalou` + badge distinctif (`[AGENCE]` en marine ou `[BOUTIQUE]` en vert émeraude `#0A5C36`).
+    - **Au centre** : Espace pur SaaS dégagé : masquage systématique des menus e-commerce grand public (Produits, Télécom, Annonces...), de la recherche publique, du panier 🛒 et des boutons WhatsApp consommateur via `body.in-agence-workspace` et `body.in-boutique-workspace`.
+    - **À droite** : Cloche de notifications dynamique (`[🔔]` alertes immo ou commandes en attente), bouton discret `[Vitrine Publique ↗]`, nom de l'entité (`AMAR IMMO` ou `TOUBA MARKET`) et avatar stylisé (`[A]` ou `[T]`).
+    - **Sidebar Directement sous Nopalou** : Le menu latéral métier démarre immédiatement sous le logo à gauche (`top: 56px; height: calc(100vh - 56px)`), garantissant l'alignement strict demandé.
+  * **🎯 2. Barre Basse Mobile ("Pied") Harmonisée à 5 Boutons & Action Sheet FAB `+`** :
+    - **Pied Agence Immobilière (`AgenceBottomNav.tsx`)** : 5 boutons pouce-friendly (`Accueil`, `Biens`, `FAB Central +`, `Prospects CRM`, `Menu`). Action Sheet pour enregistrer un bien (prise de vue), prospect, visite, loyer ou mandat.
+    - **Pied Boutique Marchande (`BoutiqueBottomNav.tsx`, `BoutiqueQuickActionsSheet.tsx`, `BoutiqueMobileDrawer.tsx`)** : 5 boutons métier indispensables (`Accueil`, `Catalogue & Stock`, `FAB Central +`, `Commandes` avec badge rouge dynamique `nbEnAttente`, `Menu`).
+    - **Action Sheet Marchande Express** : Déclenchée par le bouton central surélevé `+` : *Ajouter un produit (photo appareil), Vente Express / Caisse POS tactile, Nouvelle commande client, Noter une dette client (Carnet de crédit), Partager ma vitrine (QR Code & WhatsApp)*.
+    - **Tiroir Mobile Complet Marchand (`BoutiqueMobileDrawer.tsx`)** : Accès direct à l'ensemble des modules (Caisse POS, Commandes, Dettes, Clients, Livraisons, Compta, Studio, Paramètres).
+    - **Isolation du RootLayout** : `MobileBottomNav` consommateur retourne strictement `null` sur `/agence`, `/boutique` et `/admin`.
+  * **🎯 2. Prise de Vue & Téléversement Direct Photos Smartphone (`BienPhotoUploader.tsx`, `backend/routes/biens.js`, `api/biens/[...path]/route.ts`)** :
+    - **Capture Terrain Directe** : Prise en charge de la prise de photo immédiate (`capture="environment"`) ou sélection depuis la galerie smartphone.
+    - **Compression d'Image Côté Client (Canvas)** : Réduction intelligente de la taille des photos avant envoi pour accélérer le transfert sur réseaux mobiles 3G/4G sans perte de qualité perçue.
+    - **Gestion Tactile Complète** : Prévisualisation immédiate en grille, étoile d'attribution de la photo principale et suppression en 1 tap.
+    - **Double Support d'Upload Backend** : Endpoint `POST /api/biens/agence/:slugOrId/upload-photos` supportant à la fois `multipart/form-data` (Multer) et payload JSON Base64 avec téléversement Cloudinary sécurisé.
+  * **🎯 3. Tableau de Bord Mobile Hyper-Contextuel (`agence/[slug]/page.tsx`, `DashboardMobileVisitesDuJour.tsx`)** :
+    - **Focus Immédiat "Visites du Jour"** : Bloc prioritaire affichant les rendez-vous de la journée avec heure, adresse, contact client et bouton direct d'ouverture WhatsApp.
+    - **Actions Rapides Tactiles** : Chips de raccourcis horizontaux pour accès direct sans friction.
+    - **Grille de KPI 2x2 Adaptée** : Réorganisation des cartes statistiques en grille 2x2 compacte sans débordement horizontal.
+  * **🎯 4. Vues Mobiles Dédiées en Cartes Tactiles (Double Mode Responsive)** :
+    - **Biens Immobiliers (`BienCardMobile.tsx`, `biens/page.tsx`, `biens/nouveau/page.tsx`)** : Cartes verticales élégantes avec miniature photo, badges statut/mandat, prix en FCFA, surface, quartier et actions directes (fiche, modification, suppression).
+    - **Prospects CRM (`ProspectCardMobile.tsx`, `prospects/page.tsx`)** : Cartes prospects tactiles remplaçant le tableau Kanban sur mobile, avec sélecteur de statut par pastilles, actions d'appel direct `tel:`, WhatsApp pré-rempli et déclenchement de l'IA Matching.
+    - **Visites Immobilières (`VisiteCardMobile.tsx`, `visites/page.tsx`)** : Cartes de rendez-vous avec badges date/heure, coordonnées visiteurs, confirmation WhatsApp et validation de visite réalisée en un clic.
+    - **Gestion Locative & Loyers (`LoyerCardMobile.tsx`, `BailCardMobile.tsx`, `TableBauxImmo.tsx`, `locatif/page.tsx`)** : Cartes d'échéances avec bouton d'encaissement direct, relance WhatsApp pré-rédigée, téléchargement de la quittance certifiée PDF et cartes de contrats de bail avec résiliation instantanée.
+    - **Locataires & Bailleurs (`locataires/page.tsx`, `bailleurs/page.tsx`)** : Grilles ajustées à `minmax(min(100%, 280px), 1fr)` et barres d'actions tactiles avec cibles de 44px min pour éliminer tout débordement de 320px à 768px.
+  * **🎯 5. Respect Rigoureux des Directives & Règles d'Or** :
+    - **Anti-AI-Slop** : 100% des icônes issues de `lucide-react`, 0 emoji d'interface utilisateur, tous les nouveaux composants sous le plafond des 450 lignes.
+    - **Design System Nopalou** : Tokens CSS natifs respectés (`--navy: #1C2B4A`, `--accent: #C75B00`, `--price: #0A5C36`, `--bg: #F8F5F0`, `--border: #E8DDD2`).
+    - **TypeScript & Qualité** : `npx tsc --noEmit` validé avec 0 erreur.
+    - **Règle Git** : Aucun `git push` sans demande explicite de l'utilisateur.
+
 - **Système Global de Notifications Immobilières, Traitement Intégré des Demandes de Visite & Enrichissement des Actions Portails Métier (`notifications_immo`, `agence-notifications.js`, `NotificationCenterModal.tsx`, `DashboardAlertesPrioritaires.tsx`, `SectionDemandesVisite.tsx`, `ModalConfirmerVisite.tsx`, `ModalProgrammerVisite.tsx`, `ModalEditerBien.tsx`, `ModalEditerLocataire.tsx`, `ModalEditerBailleur.tsx`, `ModalCreerProspect.tsx`, `ModalMatchingProspect.tsx`) (16 septembre 2026)** 🔔🏢⚡ 🚀 ✅ :
   * **🎯 1. Système Global de Notifications Immobilières & Alertes Prioritaires** :
     - **Table SQL Dédiée `notifications_immo`** : Table relationnelle avec index multi-colonnes `(agence_id, lu, created_at DESC)` assurant des requêtes ultra-performantes.

@@ -15,6 +15,7 @@ import {
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 import { ModalMatchingProspect, MatchedBien } from './components/ModalMatchingProspect'
 import { ModalCreerProspect } from './components/ModalCreerProspect'
+import ProspectCardMobile from './components/ProspectCardMobile'
 
 interface Prospect {
   id: string
@@ -52,6 +53,11 @@ export default function ProspectsCRMPage() {
   const [matchingProspect, setMatchingProspect] = useState<Prospect | null>(null)
   const [matchedBiens, setMatchedBiens] = useState<MatchedBien[]>([])
   const [loadingMatch, setLoadingMatch] = useState(false)
+  const [mobileStage, setMobileStage] = useState<string>('tous')
+
+  const prospectsFiltresMobile = mobileStage === 'tous'
+    ? prospects
+    : prospects.filter(p => p.statut_crm === mobileStage)
 
   async function chargerProspects() {
     try {
@@ -142,15 +148,61 @@ export default function ProspectsCRMPage() {
           <p>Chargement du pipeline CRM...</p>
         </div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, minmax(240px, 1fr))',
-            gap: 14,
-            overflowX: 'auto',
-            paddingBottom: 16,
-          }}
-        >
+        <>
+          {/* ── Vue Mobile : Sélecteur d'Étape & Cartes Tactiles (< 768px) ── */}
+          <div className="immo-mobile-only" style={{ flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+            {/* Chips d'étapes défilables */}
+            <div className="immo-chips-scroller">
+              <button
+                type="button"
+                onClick={() => setMobileStage('tous')}
+                className={`immo-chip ${mobileStage === 'tous' ? 'active' : ''}`}
+              >
+                <span>Tous ({prospects.length})</span>
+              </button>
+              {COLUMNS.map(col => {
+                const count = prospects.filter(p => p.statut_crm === col.id).length
+                return (
+                  <button
+                    key={col.id}
+                    type="button"
+                    onClick={() => setMobileStage(col.id)}
+                    className={`immo-chip ${mobileStage === col.id ? 'active' : ''}`}
+                  >
+                    <span>{col.label} ({count})</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Cartes prospects mobiles */}
+            {prospectsFiltresMobile.length === 0 ? (
+              <div className="agence-card" style={{ textAlign: 'center', padding: '30px 16px', color: '#64748B' }}>
+                <p style={{ margin: 0, fontSize: 13.5 }}>Aucun prospect dans cette étape.</p>
+              </div>
+            ) : (
+              prospectsFiltresMobile.map(p => (
+                <ProspectCardMobile
+                  key={p.id}
+                  prospect={p}
+                  onStatusChange={changerStatut}
+                  onOpenMatching={ouvrirMatching}
+                />
+              ))
+            )}
+          </div>
+
+          {/* ── Vue Desktop : Pipeline Kanban Multi-Colonnes (>= 768px) ── */}
+          <div
+            className="immo-desktop-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(5, minmax(240px, 1fr))',
+              gap: 14,
+              overflowX: 'auto',
+              paddingBottom: 16,
+            }}
+          >
           {COLUMNS.map(col => {
             const list = prospects.filter(p => p.statut_crm === col.id)
             return (
@@ -334,6 +386,7 @@ export default function ProspectsCRMPage() {
             )
           })}
         </div>
+      </>
       )}
 
       {/* ── Modale Matching Intelligent ── */}

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { User } from 'lucide-react'
+import { User, ArrowRight } from 'lucide-react'
 
 interface AccountHubHeroProps {
   nom: string
@@ -23,11 +23,11 @@ export default function AccountHubHero({
     <div className="account-hub-hero-card">
       <div
         style={{
-          background: 'linear-gradient(135deg, #FAF8F5 0%, #FFF3E8 100%)',
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF8F5 100%)',
           borderRadius: 14,
           padding: '16px 20px',
-          border: '1.5px solid #E8DDD2',
-          boxShadow: '0 2px 10px rgba(26,22,18,0.03)',
+          border: '1px solid var(--border, #E8DDD2)',
+          boxShadow: '0 2px 8px rgba(26,22,18,0.03)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -38,22 +38,23 @@ export default function AccountHubHero({
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: 1 }}>
           <div
             style={{
-              width: 48,
-              height: 48,
+              width: 46,
+              height: 46,
               borderRadius: '50%',
               background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, var(--accent, #C75B00) 100%)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 20,
+              fontSize: 19,
               fontWeight: 900,
-              boxShadow: '0 3px 10px rgba(28,43,74,0.2)',
+              boxShadow: '0 3px 10px rgba(28,43,74,0.18)',
               flexShrink: 0,
             }}
           >
             {initiale}
           </div>
+
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <h1
@@ -74,7 +75,7 @@ export default function AccountHubHero({
                 style={{
                   fontSize: 11,
                   fontWeight: 800,
-                  padding: '2px 7px',
+                  padding: '2px 8px',
                   borderRadius: 10,
                   background: '#DCFCE7',
                   color: '#166534',
@@ -92,9 +93,9 @@ export default function AccountHubHero({
                   style={{
                     fontSize: 11,
                     fontWeight: 800,
-                    padding: '2px 7px',
+                    padding: '2px 8px',
                     borderRadius: 10,
-                    background: 'var(--orange2, #FFF3E8)',
+                    background: '#FFF3E8',
                     color: 'var(--accent, #C75B00)',
                     border: '1px solid rgba(199,91,0,0.2)',
                   }}
@@ -103,9 +104,10 @@ export default function AccountHubHero({
                 </span>
               )}
             </div>
+
             <p
               style={{
-                margin: '2px 0 0',
+                margin: '3px 0 0',
                 fontSize: 12.5,
                 color: '#64748B',
                 whiteSpace: 'nowrap',
@@ -113,7 +115,7 @@ export default function AccountHubHero({
                 textOverflow: 'ellipsis',
               }}
             >
-              {email || 'Centre de contrôle de votre compte Nopalou'}
+              {email || 'Centre de contrôle de votre espace Nopalou'}
             </p>
           </div>
         </div>
@@ -128,20 +130,21 @@ export default function AccountHubHero({
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: 750,
             color: 'var(--navy, #1C2B4A)',
             background: '#ffffff',
-            border: '1.5px solid var(--border, #E8DDD2)',
+            border: '1px solid var(--border, #E8DDD2)',
             padding: '7px 14px',
             borderRadius: 8,
             textDecoration: 'none',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             transition: 'all 0.15s ease',
           }}
         >
           <User size={14} style={{ color: 'var(--accent, #C75B00)' }} />
-          <span>Profil</span>
+          <span>Gérer mon profil</span>
+          <ArrowRight size={13} style={{ color: '#94A3B8' }} />
         </Link>
       </div>
     </div>

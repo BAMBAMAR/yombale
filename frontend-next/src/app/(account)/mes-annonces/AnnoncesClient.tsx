@@ -6,6 +6,7 @@ import { deleteAnnonce } from '@/app/actions/annonces'
 import { cloudinaryHQ } from '@/lib/cloudinary'
 import { useTranslation } from '@/i18n/context'
 import { fcfa } from '@/lib/format'
+import { Megaphone } from 'lucide-react'
 
 interface Annonce {
   id: string
@@ -25,11 +26,11 @@ interface Annonce {
 const CAT_LABELS: Record<string, string> = {
   smartphones: 'Téléphone',
   informatique: 'Info',
-  'tv-electro': '📺 TV/Électro',
-  mode: '👗 Mode',
+  'tv-electro': 'TV/Électro',
+  mode: 'Mode',
   maison: 'Maison',
   'auto-moto': 'Auto',
-  jeux: '🎮 Jeux',
+  jeux: 'Jeux',
   services: 'Services',
 }
 
@@ -353,14 +354,13 @@ export default function AnnoncesClient({
         </div>
       )}
 
-      <div className="mes-annonces-header">
-        <p style={{ fontSize: 14, color: 'var(--text2)', margin: 0 }}>
-          {annonces.length} {t('account.adsCount')}
-        </p>
-        <Link href="/deposer-annonce" className="annonce-new-btn">
-          + {t('account.navPublishAd')}
-        </Link>
-      </div>
+      {annonces.length > 0 && (
+        <div className="mes-annonces-header" style={{ marginBottom: 16 }}>
+          <p style={{ fontSize: 13.5, color: '#64748B', fontWeight: 650, margin: 0 }}>
+            {annonces.length} {t('account.adsCount')}
+          </p>
+        </div>
+      )}
 
       {annonces.length === 0 ? (
         <div style={{
@@ -381,11 +381,10 @@ export default function AnnoncesClient({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 30,
             marginBottom: 16,
             boxShadow: '0 4px 12px rgba(199,91,0,0.15)',
           }}>
-            📣
+            <Megaphone size={28} />
           </div>
           <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
             Vous n&apos;avez aucune annonce en ligne pour le moment

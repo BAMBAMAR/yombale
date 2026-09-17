@@ -499,9 +499,9 @@ router.get('/:slugOrId/stats', verifierToken, requireAgenceAccess(), async (req,
     const { rows: biensStats } = await pool.query(
       `SELECT 
         COUNT(*) FILTER (WHERE statut = 'actif') AS nb_biens_actifs,
-        COUNT(*) FILTER (WHERE statut_occupation = 'disponible') AS nb_biens_disponibles,
-        COUNT(*) FILTER (WHERE statut_occupation = 'loue') AS nb_biens_loues,
-        COUNT(*) FILTER (WHERE statut_occupation = 'vendu') AS nb_biens_vendus
+        COUNT(*) FILTER (WHERE statut = 'actif' AND statut_occupation = 'disponible') AS nb_biens_disponibles,
+        COUNT(*) FILTER (WHERE statut = 'actif' AND statut_occupation = 'loue') AS nb_biens_loues,
+        COUNT(*) FILTER (WHERE statut = 'actif' AND statut_occupation = 'vendu') AS nb_biens_vendus
        FROM biens_immo 
        WHERE agence_id = $1`,
       [agenceId]

@@ -130,8 +130,8 @@ export default function BailleursPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: 16,
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
+            gap: 14,
           }}
         >
           {proprietaires.map(p => {
@@ -196,9 +196,9 @@ export default function BailleursPage() {
                 {/* Barre d'Actions Bailleurs */}
                 <div
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'auto 1fr 1fr auto',
+                    display: 'flex',
                     gap: 6,
+                    flexWrap: 'wrap',
                     paddingTop: 12,
                     borderTop: '1px solid var(--border, #E8DDD2)',
                     alignItems: 'center',
@@ -210,8 +210,10 @@ export default function BailleursPage() {
                     onClick={() => setBailleurAEditer(p)}
                     title="Modifier les coordonnées"
                     style={{
-                      padding: '7px 9px',
-                      borderRadius: 6,
+                      minHeight: 44,
+                      minWidth: 44,
+                      padding: '8px 12px',
+                      borderRadius: 8,
                       background: '#F8F5F0',
                       border: '1px solid var(--border, #E8DDD2)',
                       color: 'var(--navy, #1C2B4A)',
@@ -221,7 +223,7 @@ export default function BailleursPage() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Pencil size={13} />
+                    <Pencil size={15} />
                   </button>
 
                   {/* Décompte PDF Officiel */}
@@ -231,21 +233,23 @@ export default function BailleursPage() {
                     rel="noopener noreferrer"
                     title="Générer le Décompte de Gestion officiel PDF"
                     style={{
+                      flex: 1,
+                      minHeight: 44,
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: 4,
-                      padding: '7px 8px',
-                      borderRadius: 6,
+                      gap: 5,
+                      padding: '8px 12px',
+                      borderRadius: 8,
                       background: '#F1F5F9',
                       border: '1px solid #CBD5E1',
                       color: 'var(--navy, #1C2B4A)',
-                      fontSize: 11.5,
-                      fontWeight: 700,
+                      fontSize: 12,
+                      fontWeight: 750,
                       textDecoration: 'none',
                     }}
                   >
-                    <FileText size={12} />
+                    <FileText size={13} />
                     <span>Décompte</span>
                   </a>
 
@@ -257,32 +261,36 @@ export default function BailleursPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
+                      flex: 1,
+                      minHeight: 44,
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: 4,
-                      padding: '7px 8px',
-                      borderRadius: 6,
+                      gap: 5,
+                      padding: '8px 12px',
+                      borderRadius: 8,
                       background: 'rgba(22, 163, 74, 0.08)',
                       color: '#166534',
-                      fontWeight: 700,
-                      fontSize: 11.5,
+                      fontWeight: 750,
+                      fontSize: 12,
                       textDecoration: 'none',
                       border: '1px solid rgba(22, 163, 74, 0.2)',
                     }}
                   >
-                    <MessageCircle size={12} />
+                    <MessageCircle size={13} />
                     <span>WhatsApp</span>
                   </a>
 
                   {/* Téléphone */}
-                  {p.telephone ? (
+                  {p.telephone && (
                     <a
                       href={`tel:${p.telephone}`}
                       title="Appeler directement"
                       style={{
-                        padding: '7px 9px',
-                        borderRadius: 6,
+                        minHeight: 44,
+                        minWidth: 44,
+                        padding: '8px 12px',
+                        borderRadius: 8,
                         background: 'rgba(28, 43, 74, 0.06)',
                         border: '1px solid rgba(28, 43, 74, 0.12)',
                         color: 'var(--navy, #1C2B4A)',
@@ -292,10 +300,8 @@ export default function BailleursPage() {
                         textDecoration: 'none',
                       }}
                     >
-                      <Phone size={13} />
+                      <Phone size={15} />
                     </a>
-                  ) : (
-                    <div />
                   )}
                 </div>
               </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useTranslation } from '@/i18n/context'
-// Sous-composants
+import { Tag, Home, Package, Bell, Heart, User, Users, Sparkles } from 'lucide-react'
 
 // Sous-composants
 import AnnoncesClient from '../mes-annonces/AnnoncesClient'
@@ -16,6 +16,7 @@ import FonctionnalitesClient from '../compte/fonctionnalites/FonctionnalitesClie
 import SuiviCommandeClient from './tabs/SuiviCommandeClient'
 import AlertesClientTab from './tabs/AlertesClientTab'
 import AccountDashboardHub from './tabs/AccountDashboardHub'
+import AccountSubHeader from '../components/AccountSubHeader'
 
 export default function CompteClient({ 
   nom, 
@@ -163,7 +164,6 @@ export default function CompteClient({
   }, [isOnline, session?.userId])
 
   const userId = session?.userId || ''
-
   const { t } = useTranslation()
 
   const handleNavigateTab = (tabKey: string) => {
@@ -182,35 +182,7 @@ export default function CompteClient({
         </div>
       )}
 
-      <div className="account-client-content">
-        {/* En-tête de retour au Dashboard si on est dans un sous-onglet */}
-        {!isDashboard && (
-          <div style={{ marginBottom: 18 }}>
-            <button
-              type="button"
-              onClick={() => handleNavigateTab('accueil')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                fontSize: 13,
-                fontWeight: 800,
-                color: 'var(--navy, #1C2B4A)',
-                background: '#ffffff',
-                border: '1.5px solid var(--border, #E8DDD2)',
-                padding: '7px 16px',
-                borderRadius: 20,
-                cursor: 'pointer',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <span style={{ color: 'var(--accent, #C75B00)', fontSize: 16 }}>←</span>
-              <span>Tableau de bord</span>
-            </button>
-          </div>
-        )}
-
+      <div className="account-client-content" style={{ minWidth: 0 }}>
         {isDashboard && (
           <AccountDashboardHub
             nom={nom}
@@ -221,8 +193,17 @@ export default function CompteClient({
             onNavigateTab={handleNavigateTab}
           />
         )}
+
         {tab === 'mes-annonces' && (
-           <AnnoncesClient 
+          <>
+            <AccountSubHeader
+              title="Mes Annonces Classifiées"
+              subtitle="Gérez la visibilité, les détails et la mise en vedette de vos articles"
+              icon={Tag}
+              actionLabel="+ Publier une annonce"
+              actionHref="/deposer-annonce"
+            />
+            <AnnoncesClient 
               created={false} 
               updated={false} 
               userId={userId} 
@@ -231,15 +212,91 @@ export default function CompteClient({
               numeroWave="" 
               numeroOM="" 
               waveActif={true} 
-           />
+            />
+          </>
         )}
-        {tab === 'mes-annonces-immo' && <AnnoncesImmoClient />}
-        {tab === 'suivi-commande' && <SuiviCommandeClient userPhone={telephone || session?.telephone || session?.user?.telephone || ''} />}
-        {(tab === 'mes-alertes' || tab === 'alertes') && <AlertesClientTab userId={userId} />}
-        {tab === 'favoris' && <FavorisClient />}
-        {tab === 'profil' && <ProfilClient nom={nom} email={email || ''} telephone={telephone || session?.telephone || ''} />}
-        {tab === 'apporteur' && <ApporteurClient />}
-        {(tab === 'fonctionnalites' || tab === 'abonnement' || tab === 'tarifs') && <FonctionnalitesClient />}
+
+        {tab === 'mes-annonces-immo' && (
+          <>
+            <AccountSubHeader
+              title="Mes Annonces Immobilières"
+              subtitle="Gérez vos biens à louer et à vendre sur Nopalou Immobilier"
+              icon={Home}
+              actionLabel="+ Publier bien immo"
+              actionHref="/deposer-immo"
+            />
+            <AnnoncesImmoClient />
+          </>
+        )}
+
+        {tab === 'suivi-commande' && (
+          <>
+            <AccountSubHeader
+              title="Suivi de Mes Commandes"
+              subtitle="Consultez l'avancement, le statut de préparation et la livraison de vos achats"
+              icon={Package}
+            />
+            <SuiviCommandeClient userPhone={telephone || session?.telephone || session?.user?.telephone || ''} />
+          </>
+        )}
+
+        {(tab === 'mes-alertes' || tab === 'alertes') && (
+          <>
+            <AccountSubHeader
+              title="Mes Alertes Prix"
+              subtitle="Recevez des notifications instantanées par WhatsApp ou email quand un produit baisse"
+              icon={Bell}
+            />
+            <AlertesClientTab userId={userId} />
+          </>
+        )}
+
+        {tab === 'favoris' && (
+          <>
+            <AccountSubHeader
+              title="Mes Favoris"
+              subtitle="Vos produits, boutiques et biens immobiliers coup de cœur enregistrés"
+              icon={Heart}
+              iconColor="#DB2777"
+            />
+            <FavorisClient />
+          </>
+        )}
+
+        {tab === 'profil' && (
+          <>
+            <AccountSubHeader
+              title="Mon Profil & Sécurité"
+              subtitle="Gérez vos coordonnées personnelles, vos accès et votre mot de passe"
+              icon={User}
+            />
+            <ProfilClient nom={nom} email={email || ''} telephone={telephone || session?.telephone || ''} />
+          </>
+        )}
+
+        {tab === 'apporteur' && (
+          <>
+            <AccountSubHeader
+              title="Programme Apporteur d'Affaires"
+              subtitle="Gagnez 20% de commissions récurrentes à vie sur chaque commerçant parrainé"
+              icon={Users}
+              iconColor="#D97706"
+              countBadge="20% à vie"
+            />
+            <ApporteurClient />
+          </>
+        )}
+
+        {(tab === 'fonctionnalites' || tab === 'abonnement' || tab === 'tarifs') && (
+          <>
+            <AccountSubHeader
+              title="Formules & Avantages"
+              subtitle="Découvrez toutes les fonctionnalités disponibles pour votre profil et vos boutiques"
+              icon={Sparkles}
+            />
+            <FonctionnalitesClient />
+          </>
+        )}
       </div>
     </>
   )

@@ -3,8 +3,20 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { Home, ArrowLeft, Plus, CheckCircle2, AlertCircle } from 'lucide-react'
+import {
+  Home,
+  ArrowLeft,
+  Camera,
+  Video,
+  MapPin,
+  FileText,
+  AlertCircle,
+  Sliders
+} from 'lucide-react'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import BienPhotoUploader from '../components/BienPhotoUploader'
+import BienVideoUploader from '../components/BienVideoUploader'
+import BienCommoditesSelector, { CommoditesState } from '../components/BienCommoditesSelector'
 
 export default function NouveauBienPage() {
   const params = useParams()
@@ -14,6 +26,8 @@ export default function NouveauBienPage() {
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [operationType, setOperationType] = useState<'location' | 'vente'>('location')
+  const [photos, setPhotos] = useState<string[]>([])
+  const [videos, setVideos] = useState<string[]>([])
 
   const [form, setForm] = useState({
     titre: '',
@@ -39,6 +53,10 @@ export default function NouveauBienPage() {
     notes_internes: '',
   })
 
+  function handleCommoditeChange(key: keyof CommoditesState, checked: boolean) {
+    setForm(prev => ({ ...prev, [key]: checked }))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErrorMsg(null)
@@ -54,6 +72,8 @@ export default function NouveauBienPage() {
         ...form,
         prix_location: operationType === 'location' ? form.prix_location : null,
         prix_vente: operationType === 'vente' ? form.prix_vente : null,
+        photos,
+        videos,
       }
 
       const res = await fetch(`/api/biens/agence/${slug}`, {
@@ -78,68 +98,69 @@ export default function NouveauBienPage() {
   }
 
   return (
-    <div style={{ maxWidth: 840, margin: '0 auto' }}>
-      {/* ── En-tête ── */}
-      <div style={{ marginBottom: 20 }}>
+    <div style={{ maxWidth: 800, margin: '0 auto', paddingBottom: 60 }}>
+      {/* ── En-tête Mobile-First ── */}
+      <div style={{ marginBottom: 16 }}>
         <Link
           href={`/agence/${slug}/biens`}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            fontSize: 13,
+            fontSize: 12.5,
             fontWeight: 700,
             color: '#64748B',
             textDecoration: 'none',
-            marginBottom: 8,
+            marginBottom: 6,
           }}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={15} />
           Retour au portefeuille
         </Link>
-        <h1 className="agence-title">Ajouter un bien immobilier</h1>
-        <p className="agence-subtitle">Remplissez les détails du bien pour l'intégrer à votre gestion d'agence.</p>
+        <h1 className="agence-title" style={{ fontSize: 22 }}>Ajouter un bien immobilier</h1>
+        <p className="agence-subtitle" style={{ fontSize: 13 }}>
+          Création rapide depuis le terrain avec photos directes par smartphone et vidéos.
+        </p>
       </div>
 
       {errorMsg && (
         <div
           style={{
-            padding: '12px 16px',
+            padding: '12px 14px',
             background: '#FEE2E2',
             color: '#991B1B',
             borderRadius: 8,
-            fontSize: 13.5,
-            fontWeight: 700,
+            fontSize: 13,
+            fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            marginBottom: 20,
+            marginBottom: 16,
           }}
         >
-          <AlertCircle size={18} />
-          {errorMsg}
+          <AlertCircle size={17} />
+          <span>{errorMsg}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* ── Type d'opération & Titre ── */}
+        {/* ── 1. Type & Opération ── */}
         <div className="agence-card">
           <div className="agence-card-header">
             <div className="agence-card-title">
-              <Home size={18} />
-              Informations Principales
+              <Home size={17} color="var(--accent, #C75B00)" />
+              Opération & Type de bien
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Type d'opération *</label>
-            <div style={{ display: 'flex', gap: 12 }}>
+            <label className="form-label">Type d&apos;opération *</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <button
                 type="button"
                 onClick={() => setOperationType('location')}
                 style={{
-                  flex: 1,
-                  padding: '10px',
+                  padding: '12px',
                   borderRadius: 8,
                   fontWeight: 700,
                   fontSize: 13.5,
@@ -148,16 +169,16 @@ export default function NouveauBienPage() {
                   borderColor: operationType === 'location' ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
                   background: operationType === 'location' ? 'rgba(199, 91, 0, 0.08)' : '#FFFFFF',
                   color: operationType === 'location' ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                  minHeight: 46,
                 }}
               >
-                Location (Loyer mensuel)
+                Location
               </button>
               <button
                 type="button"
                 onClick={() => setOperationType('vente')}
                 style={{
-                  flex: 1,
-                  padding: '10px',
+                  padding: '12px',
                   borderRadius: 8,
                   fontWeight: 700,
                   fontSize: 13.5,
@@ -166,9 +187,10 @@ export default function NouveauBienPage() {
                   borderColor: operationType === 'vente' ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)',
                   background: operationType === 'vente' ? 'rgba(199, 91, 0, 0.08)' : '#FFFFFF',
                   color: operationType === 'vente' ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
+                  minHeight: 46,
                 }}
               >
-                Vente (Prix d'achat)
+                Vente
               </button>
             </div>
           </div>
@@ -178,14 +200,14 @@ export default function NouveauBienPage() {
             <input
               type="text"
               required
-              placeholder="Ex: Superbe Appartement F4 Vue Mer - Almadies"
+              placeholder="Ex: Villa F5 Standing avec Jardin - Almadies"
               value={form.titre}
               onChange={e => setForm({ ...form, titre: e.target.value })}
               className="form-input"
             />
           </div>
 
-          <div className="form-grid-2">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
             <div className="form-group">
               <label className="form-label">Type de bien *</label>
               <select
@@ -221,13 +243,38 @@ export default function NouveauBienPage() {
           </div>
         </div>
 
-        {/* ── Localisation ── */}
+        {/* ── 2. Photos du bien (Smartphone Ready) ── */}
         <div className="agence-card">
           <div className="agence-card-header">
-            <div className="agence-card-title">Localisation</div>
+            <div className="agence-card-title">
+              <Camera size={17} color="var(--accent, #C75B00)" />
+              Photos du bien
+            </div>
+          </div>
+          <BienPhotoUploader slug={slug} photos={photos} onChange={setPhotos} />
+        </div>
+
+        {/* ── 3. Vidéos & Visite Virtuelle ── */}
+        <div className="agence-card">
+          <div className="agence-card-header">
+            <div className="agence-card-title">
+              <Video size={17} color="var(--accent, #C75B00)" />
+              Vidéos & Visite Virtuelle
+            </div>
+          </div>
+          <BienVideoUploader slug={slug} videos={videos} onChange={setVideos} />
+        </div>
+
+        {/* ── 4. Localisation ── */}
+        <div className="agence-card">
+          <div className="agence-card-header">
+            <div className="agence-card-title">
+              <MapPin size={17} color="var(--accent, #C75B00)" />
+              Localisation
+            </div>
           </div>
 
-          <div className="form-grid-3">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
             <div className="form-group">
               <label className="form-label">Ville *</label>
               <select
@@ -253,39 +300,42 @@ export default function NouveauBienPage() {
                 className="form-input"
               />
             </div>
+          </div>
 
-            <div className="form-group">
-              <label className="form-label">Adresse / Rue</label>
-              <input
-                type="text"
-                placeholder="Ex: Rue 10 angle Boulevard..."
-                value={form.adresse}
-                onChange={e => setForm({ ...form, adresse: e.target.value })}
-                className="form-input"
-              />
-            </div>
+          <div className="form-group">
+            <label className="form-label">Adresse / Rue</label>
+            <input
+              type="text"
+              placeholder="Ex: Rue 10 angle Boulevard..."
+              value={form.adresse}
+              onChange={e => setForm({ ...form, adresse: e.target.value })}
+              className="form-input"
+            />
           </div>
         </div>
 
-        {/* ── Caractéristiques & Équipements ── */}
+        {/* ── 5. Caractéristiques & Équipements ── */}
         <div className="agence-card">
           <div className="agence-card-header">
-            <div className="agence-card-title">Caractéristiques & Équipements</div>
+            <div className="agence-card-title">
+              <Sliders size={17} color="var(--accent, #C75B00)" />
+              Caractéristiques & Équipements
+            </div>
           </div>
 
-          <div className="form-grid-3">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
             <div className="form-group">
               <label className="form-label">Surface (m²)</label>
               <input
                 type="number"
-                placeholder="Ex: 120"
+                placeholder="120"
                 value={form.surface_m2}
                 onChange={e => setForm({ ...form, surface_m2: e.target.value })}
                 className="form-input"
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Nombre de pièces</label>
+              <label className="form-label">Pièces</label>
               <input
                 type="number"
                 value={form.nb_pieces}
@@ -304,61 +354,55 @@ export default function NouveauBienPage() {
             </div>
           </div>
 
-          {/* Checkboxes équipements */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-              gap: 12,
-              marginTop: 12,
+          <BienCommoditesSelector
+            values={{
+              meuble: form.meuble,
+              climatisation: form.climatisation,
+              gardien: form.gardien,
+              parking: form.parking,
+              ascenseur: form.ascenseur,
+              piscine: form.piscine,
             }}
-          >
-            {[
-              { key: 'meuble', label: 'Meublé' },
-              { key: 'climatisation', label: 'Climatisé' },
-              { key: 'gardien', label: 'Gardiennage' },
-              { key: 'parking', label: 'Parking' },
-              { key: 'ascenseur', label: 'Ascenseur' },
-              { key: 'piscine', label: 'Piscine' },
-            ].map(item => (
-              <label
-                key={item.key}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 13.5,
-                  fontWeight: 600,
-                  color: 'var(--navy, #1C2B4A)',
-                  cursor: 'pointer',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={(form as any)[item.key]}
-                  onChange={e => setForm({ ...form, [item.key]: e.target.checked })}
-                  style={{ width: 16, height: 16, accentColor: 'var(--accent, #C75B00)' }}
-                />
-                {item.label}
-              </label>
-            ))}
+            onChange={handleCommoditeChange}
+          />
+        </div>
+
+        {/* ── 6. Description ── */}
+        <div className="agence-card">
+          <div className="agence-card-header">
+            <div className="agence-card-title">
+              <FileText size={17} color="var(--accent, #C75B00)" />
+              Description & Prestations
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <textarea
+              rows={3}
+              placeholder="Décrivez les atouts majeurs, proximité des écoles/commerces, finitions..."
+              value={form.description}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+              className="form-textarea"
+            />
           </div>
         </div>
 
-        {/* ── Boutons d'Action ── */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 40 }}>
+        {/* ── 7. Boutons d'Action ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10, marginTop: 16 }}>
           <Link
             href={`/agence/${slug}/biens`}
             style={{
-              padding: '11px 20px',
+              padding: '12px',
               borderRadius: 8,
               background: '#FFFFFF',
               border: '1px solid var(--border, #E8DDD2)',
               color: 'var(--navy, #1C2B4A)',
               fontWeight: 700,
+              fontSize: 13.5,
               textDecoration: 'none',
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 46,
             }}
           >
             Annuler
@@ -368,7 +412,7 @@ export default function NouveauBienPage() {
             type="submit"
             disabled={saving}
             style={{
-              padding: '11px 24px',
+              padding: '12px 20px',
               borderRadius: 8,
               background: 'var(--accent, #C75B00)',
               color: '#FFFFFF',
@@ -377,9 +421,14 @@ export default function NouveauBienPage() {
               fontSize: 14,
               cursor: saving ? 'not-allowed' : 'pointer',
               opacity: saving ? 0.7 : 1,
+              minHeight: 46,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
             }}
           >
-            {saving ? 'Enregistrement...' : 'Enregistrer le bien'}
+            {saving ? 'Enregistrement…' : 'Enregistrer le bien'}
           </button>
         </div>
       </form>

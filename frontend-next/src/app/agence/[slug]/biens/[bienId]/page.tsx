@@ -30,7 +30,9 @@ import {
   Car,
   Waves,
   ArrowUpDown,
-  Armchair
+  Armchair,
+  Video,
+  ExternalLink
 } from 'lucide-react'
 import ModalEditerBien from '../components/ModalEditerBien'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
@@ -319,8 +321,74 @@ export default function AgenceBienDetailPage() {
 
       {/* Contenu de l'onglet actif */}
       {activeTab === 'apercu' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
           <div style={{ background: '#fff', padding: 20, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            {/* Galerie Photos */}
+            {Array.isArray(bien.photos) && bien.photos.length > 0 && (
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ width: '100%', height: 240, borderRadius: 10, overflow: 'hidden', background: '#F1EBE3', marginBottom: 8 }}>
+                  <img src={bien.photos[0]} alt={bien.titre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                {bien.photos.length > 1 && (
+                  <div className="immo-chips-scroller">
+                    {bien.photos.map((p: string, idx: number) => (
+                      <div key={idx} style={{ width: 70, height: 50, borderRadius: 6, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border, #E8DDD2)' }}>
+                        <img src={p} alt={`Vue ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Vidéos & Visites Virtuelles */}
+            {Array.isArray(bien.videos) && bien.videos.length > 0 && (
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy, #1C2B4A)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Video size={16} color="var(--accent, #C75B00)" />
+                  <span>Vidéos & Visite Virtuelle ({bien.videos.length})</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {bien.videos.map((vidUrl: string, idx: number) => {
+                    const isDirect = Boolean(vidUrl.match(/\.(mp4|webm|mov)(\?.*)?$/i) || vidUrl.includes('video/upload'))
+                    return (
+                      <div key={idx} style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border, #E8DDD2)', background: '#FAF8F5', padding: 8 }}>
+                        {isDirect ? (
+                          <video src={vidUrl} controls style={{ width: '100%', maxHeight: 220, borderRadius: 6, background: '#000' }} />
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px' }}>
+                            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--navy, #1C2B4A)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>
+                              {vidUrl}
+                            </div>
+                            <a
+                              href={vidUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '5px 10px',
+                                background: 'var(--accent, #C75B00)',
+                                color: '#FFFFFF',
+                                borderRadius: 6,
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                textDecoration: 'none',
+                              }}
+                            >
+                              <span>Ouvrir</span>
+                              <ExternalLink size={12} />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 12px', color: 'var(--navy, #1C2B4A)' }}>
               Description & Prestations
             </h3>
