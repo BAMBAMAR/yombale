@@ -1080,6 +1080,410 @@ a {
     to { transform: translateY(0); }
   }
 
+  /* ── Hero Vitrine Agence Moderne (Option 1) ── */
+  .vitrine-hero-card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid var(--border, #E8DDD2);
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(28, 43, 74, 0.06);
+  }
+
+  .vitrine-hero-cover {
+    position: relative;
+    height: 185px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  @media (min-width: 768px) {
+    .vitrine-hero-cover {
+      height: 245px;
+    }
+  }
+
+  .vitrine-badge-status {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 750;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+  }
+
+  .vitrine-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .vitrine-status-dot.open {
+    background: #22C55E;
+    box-shadow: 0 0 8px #22C55E;
+  }
+
+  .vitrine-status-dot.closed {
+    background: #EF4444;
+  }
+
+  .vitrine-badge-annonce {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    right: 12px;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(6px);
+    color: #FEF08A;
+    font-size: 12px;
+    font-weight: 750;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(254, 240, 138, 0.3);
+    text-align: center;
+  }
+
+  .vitrine-hero-body {
+    padding: 0 16px 18px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  @media (min-width: 640px) {
+    .vitrine-hero-body {
+      padding: 0 24px 22px;
+      gap: 16px;
+    }
+  }
+
+  .vitrine-hero-logo-wrap {
+    margin-top: -38px;
+    display: flex;
+    align-items: flex-end;
+    justifyContent: space-between;
+    margin-bottom: 2px;
+    position: relative;
+    z-index: 3;
+  }
+
+  .vitrine-hero-logo {
+    width: 74px;
+    height: 74px;
+    border-radius: 16px;
+    background: #FFFFFF;
+    border: 3.5px solid #FFFFFF;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--navy, #1C2B4A);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 640px) {
+    .vitrine-hero-logo {
+      width: 82px;
+      height: 82px;
+    }
+  }
+
+  .vitrine-hero-title {
+    font-size: 21px;
+    font-weight: 900;
+    margin: 0;
+    color: var(--navy, #1C2B4A);
+    letter-spacing: -0.02em;
+  }
+
+  @media (min-width: 640px) {
+    .vitrine-hero-title {
+      font-size: 25px;
+    }
+  }
+
+  .vitrine-hero-slogan {
+    font-size: 13px;
+    font-style: italic;
+    color: #64748B;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .vitrine-meta-chips-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+
+  .vitrine-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+    color: #475569;
+    font-weight: 650;
+  }
+
+  .vitrine-hero-desc {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: #475569;
+    margin: 0;
+    max-width: 820px;
+  }
+
+  .vitrine-hours-bar {
+    display: flex;
+    align-items: center;
+    justifyContent: space-between;
+    padding: 8px 14px;
+    background: #F8F5F0;
+    border: 1px solid var(--border, #E8DDD2);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+  }
+
+  .vitrine-hours-bar:hover {
+    background: #F2ECE4;
+  }
+
+  .vitrine-hours-pill {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+
+  .vitrine-hours-pill.open {
+    background: #DCFCE7;
+    color: #166534;
+  }
+
+  .vitrine-hours-pill.closed {
+    background: #FEE2E2;
+    color: #991B1B;
+  }
+
+  .vitrine-hours-dropdown {
+    margin-top: 8px;
+    padding: 12px;
+    background: #FFFFFF;
+    border: 1px solid var(--border, #E8DDD2);
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  }
+
+  /* ── Onglets Navigation Vitrine (Catalogue vs Reels) ── */
+  .vitrine-tabs-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    border-bottom: 2px solid var(--border, #E8DDD2);
+    padding-bottom: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .vitrine-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    border-radius: 10px 10px 0 0;
+    font-size: 13.5px;
+    font-weight: 750;
+    border: none;
+    background: transparent;
+    color: #64748B;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+    bottom: -2px;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+
+  .vitrine-tab-btn:hover {
+    color: var(--navy, #1C2B4A);
+    background: rgba(28, 43, 74, 0.03);
+  }
+
+  .vitrine-tab-btn.active {
+    color: var(--navy, #1C2B4A);
+    border-bottom: 3px solid var(--accent, #C75B00);
+    font-weight: 850;
+    background: #FFFFFF;
+  }
+
+  .vitrine-tab-badge {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #F1F5F9;
+    color: var(--navy, #1C2B4A);
+  }
+
+  .vitrine-tab-btn.active .vitrine-tab-badge {
+    background: rgba(199, 91, 0, 0.12);
+    color: var(--accent, #C75B00);
+  }
+
+  /* ── Agencement Responsive Actions Vitrine Agence ── */
+  .vitrine-actions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border, #E8DDD2);
+    width: 100%;
+  }
+
+  .vitrine-actions-primary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .vitrine-actions-links-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 639px) {
+    .vitrine-actions-links-row {
+      justify-content: center;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .vitrine-actions-wrapper {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .vitrine-actions-primary-grid {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      width: auto;
+    }
+  }
+
+  .vitrine-btn-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box;
+    min-height: 38px;
+    transition: transform 0.12s ease, opacity 0.15s ease, background 0.15s ease;
+  }
+
+  .vitrine-btn-base:active {
+    transform: scale(0.97);
+  }
+
+  .vitrine-btn-wa {
+    background: #25D366;
+    color: #FFFFFF;
+    border: none;
+    box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+  }
+
+  .vitrine-btn-phone {
+    background: #F8F5F0;
+    border: 1px solid var(--border, #E8DDD2);
+    color: var(--navy, #1C2B4A);
+  }
+
+  .vitrine-btn-phone:hover {
+    background: #EFE8DF;
+  }
+
+  .vitrine-btn-pro {
+    background: var(--navy, #1C2B4A);
+    border: 1.5px solid var(--navy, #1C2B4A);
+    box-shadow: 0 2px 8px rgba(28, 43, 74, 0.2);
+    color: #FFFFFF;
+  }
+
+  .vitrine-btn-share {
+    background: #F8F5F0;
+    border: 1px solid var(--border, #E8DDD2);
+    color: var(--navy, #1C2B4A);
+  }
+
+  .vitrine-btn-share:hover {
+    background: #EFE8DF;
+  }
+
+  .vitrine-btn-site {
+    background: #F8F5F0;
+    border: 1px solid var(--border, #E8DDD2);
+    color: var(--navy, #1C2B4A);
+  }
+
+  .vitrine-btn-site:hover {
+    background: #EFE8DF;
+  }
+
+  .vitrine-social-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #F8F5F0;
+    border: 1px solid var(--border, #E8DDD2);
+    color: var(--navy, #1C2B4A);
+    text-decoration: none;
+    transition: transform 0.12s ease, background 0.15s ease;
+  }
+
+  .vitrine-social-icon-btn:hover {
+    background: #EFE8DF;
+    transform: translateY(-1px);
+  }
+
   /* Padding bas de sécurité sur mobile pour que le contenu ne soit jamais masqué */
   body {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;

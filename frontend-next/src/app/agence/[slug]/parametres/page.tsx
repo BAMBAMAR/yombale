@@ -10,6 +10,7 @@ import {
   Power
 } from 'lucide-react'
 import ParametresFacturationImmo from './components/ParametresFacturationImmo'
+import ParametresHorairesImmo, { HorairesMap, HORAIRES_DEFAUT_IMMO } from './components/ParametresHorairesImmo'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 export default function AgenceParametresPage() {
@@ -47,6 +48,7 @@ export default function AgenceParametresPage() {
     mentions_facture: '',
     autoriser_caution_3x: true,
     autoriser_vente_tranches: true,
+    horaires: HORAIRES_DEFAUT_IMMO as HorairesMap,
   })
 
   async function chargerParametres() {
@@ -84,6 +86,7 @@ export default function AgenceParametresPage() {
           mentions_facture: p.mentions_facture || '',
           autoriser_caution_3x: p.autoriser_caution_3x !== false,
           autoriser_vente_tranches: p.autoriser_vente_tranches !== false,
+          horaires: (p.horaires && Object.keys(p.horaires).length > 0) ? p.horaires : HORAIRES_DEFAUT_IMMO,
         })
       }
     } catch (err) {
@@ -137,6 +140,7 @@ export default function AgenceParametresPage() {
           mentions_facture: form.mentions_facture,
           autoriser_caution_3x: form.autoriser_caution_3x,
           autoriser_vente_tranches: form.autoriser_vente_tranches,
+          horaires: form.horaires,
         },
       }
 
@@ -318,6 +322,12 @@ export default function AgenceParametresPage() {
             </div>
           </div>
         </div>
+
+        {/* ── Horaires d'Ouverture & Accueil Public ── */}
+        <ParametresHorairesImmo
+          horaires={form.horaires}
+          onChange={(h) => setForm((f) => ({ ...f, horaires: h }))}
+        />
 
         {/* ── Commissions & WhatsApp ── */}
         <div className="agence-card">

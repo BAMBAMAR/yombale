@@ -92,8 +92,8 @@ export default function VitrineBiensGrid({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: 22,
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: 16,
         }}
       >
         {biens.map((b) => {
@@ -133,7 +133,7 @@ export default function VitrineBiensGrid({
               <div
                 style={{
                   position: 'relative',
-                  height: 215,
+                  height: 175,
                   background: '#0F172A',
                   overflow: 'hidden',
                   cursor: photosList.length > 0 ? 'pointer' : 'default',
@@ -418,13 +418,13 @@ export default function VitrineBiensGrid({
               </div>
 
               {/* ── Contenu du Bien & Lien vers Fiche ── */}
-              <div style={{ padding: '16px 18px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent, #C75B00)', textTransform: 'capitalize' }}>
+              <div style={{ padding: '12px 14px 10px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--accent, #C75B00)', textTransform: 'capitalize' }}>
                     {b.type_bien}
                   </span>
                   {b.reference && (
-                    <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600 }}>
+                    <span style={{ fontSize: 10.5, color: '#94A3B8', fontWeight: 600 }}>
                       Réf. {b.reference}
                     </span>
                   )}
@@ -438,34 +438,40 @@ export default function VitrineBiensGrid({
                 >
                   <h3
                     style={{
-                      fontSize: 16,
+                      fontSize: 14.5,
                       fontWeight: 800,
                       color: 'var(--navy, #1C2B4A)',
-                      margin: '0 0 8px',
-                      lineHeight: 1.35,
+                      margin: '0 0 4px',
+                      lineHeight: 1.3,
                       cursor: 'pointer',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
                     }}
                   >
                     {b.titre}
                   </h3>
                 </Link>
 
-                <div style={{ fontSize: 12.5, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 12 }}>
-                  <MapPin size={13} style={{ flexShrink: 0 }} />
-                  <span>{b.quartier ? `${b.quartier}, ${b.ville}` : b.ville}</span>
+                <div style={{ fontSize: 11.5, color: '#64748B', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+                  <MapPin size={12} style={{ flexShrink: 0 }} />
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {b.quartier ? `${b.quartier}, ${b.ville}` : b.ville}
+                  </span>
                 </div>
 
                 <div
                   style={{
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                     color: '#475569',
                     display: 'flex',
-                    gap: 12,
+                    gap: 10,
                     flexWrap: 'wrap',
-                    marginBottom: 16,
-                    padding: '8px 12px',
+                    marginBottom: 10,
+                    padding: '5px 8px',
                     background: '#F8F5F0',
-                    borderRadius: 8,
+                    borderRadius: 6,
                   }}
                 >
                   {b.surface_m2 && <span><strong>{b.surface_m2}</strong> m²</span>}
@@ -473,7 +479,7 @@ export default function VitrineBiensGrid({
                   {b.nb_chambres && <span><strong>{b.nb_chambres}</strong> ch.</span>}
                 </div>
 
-                <div style={{ marginTop: 'auto', fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                <div style={{ marginTop: 'auto', fontSize: 15.5, fontWeight: 850, color: 'var(--navy, #1C2B4A)' }}>
                   {prix}
                 </div>
               </div>
@@ -481,11 +487,11 @@ export default function VitrineBiensGrid({
               {/* ── Barre d'Actions ── */}
               <div
                 style={{
-                  padding: '12px 16px',
+                  padding: '8px 12px',
                   borderTop: '1px solid var(--border, #E8DDD2)',
                   background: '#FAF8F5',
                   display: 'flex',
-                  gap: 8,
+                  gap: 6,
                   alignItems: 'center',
                 }}
               >
@@ -498,18 +504,19 @@ export default function VitrineBiensGrid({
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 6,
-                    padding: '9px 12px',
-                    borderRadius: 8,
+                    gap: 5,
+                    padding: '7px 10px',
+                    borderRadius: 7,
                     background: 'var(--navy, #1C2B4A)',
                     color: '#FFFFFF',
-                    fontSize: 12.5,
-                    fontWeight: 800,
+                    fontSize: 12,
+                    fontWeight: 750,
                     border: 'none',
                     cursor: 'pointer',
+                    minHeight: 34,
                   }}
                 >
-                  <Calendar size={14} />
+                  <Calendar size={13} />
                   <span>Demander une visite</span>
                 </button>
 
@@ -520,18 +527,19 @@ export default function VitrineBiensGrid({
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '9px 12px',
-                    borderRadius: 8,
+                    padding: '7px 9px',
+                    borderRadius: 7,
                     background: '#FFFFFF',
                     color: 'var(--navy, #1C2B4A)',
                     border: '1px solid var(--border, #E8DDD2)',
-                    fontSize: 12.5,
+                    fontSize: 12,
                     fontWeight: 700,
                     textDecoration: 'none',
+                    minHeight: 34,
                   }}
                   title="Consulter la fiche détaillée"
                 >
-                  <ExternalLink size={14} />
+                  <ExternalLink size={13} />
                 </Link>
 
                 {/* Bouton WhatsApp Rapide */}
@@ -546,14 +554,15 @@ export default function VitrineBiensGrid({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      padding: '9px 12px',
-                      borderRadius: 8,
+                      padding: '7px 9px',
+                      borderRadius: 7,
                       background: '#16a34a',
                       color: '#FFFFFF',
+                      minHeight: 34,
                     }}
                     title="Échanger directement sur WhatsApp"
                   >
-                    <MessageCircle size={15} />
+                    <MessageCircle size={14} />
                   </a>
                 )}
               </div>

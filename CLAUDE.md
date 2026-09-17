@@ -1,3 +1,48 @@
+- **Refonte Vitrine Agence Moderne (Option 1 : Héro Panoramique Dégagé, Badge Temps Réel, Horaires Paramétrables dans l'Espace Agence, Système d'Onglets & Cartes Compact Pro) (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱🏢🕒🎬📐🎨⚡✅ :
+  * **🏢 1. Héro Vitrine Moderne Option 1 (`VitrineBanner.tsx` & `globals.css`)** :
+    - **Photo de couverture panoramique 100% dégagée** : suppression de toute superposition encombrante de boutons sur l'image. Hauteur ergonomique (185px mobile / 245px desktop).
+    - **Badge d'ouverture en temps réel (Glassmorphism)** : calcul dynamique (`calculerStatutAgence`) selon le jour et l'heure courante (fuseau UTC/Sénégal) affichant `● Ouvert • Ferme à 18h30` (pastille verte éclatante) ou `● Fermé • Ouvre à 08h30` / `Fermé` (pastille rouge).
+    - **Logo agence chevauchant** : logo 74×74px (82×82px desktop) positionné en bas à gauche avec décalage négatif (`margin-top: -38px`), bordure blanche et ombre douce.
+    - **Identité claire & lisible** : Nom d'agence en typographie `--navy`, badge vert officiel *« Agence Partenaire »*, slogan en italique soigné, puces géolocalisation et numéro d'agrément SN.
+    - **Volet interactif des horaires d'ouverture** : barre cliquable affichant l'horaire du jour + accordéon déroulant sur les 7 jours de la semaine avec surbrillance du jour actuel.
+    - **Grille d'actions 2x2 symétrique & rangée sociale** : boutons d'action prioritaires (`WhatsApp Agence`, `Téléphone`, `Espace Agence Pro`, `Partager la vitrine`) et rangée dédiée aux réseaux sociaux (Instagram, TikTok, YouTube) et site web officiel.
+  * **🕒 2. Paramétrage des Horaires dans l'Espace Agence (`ParametresHorairesImmo.tsx` & `parametres/page.tsx`)** :
+    - Nouveau composant dédié et modulaire `<ParametresHorairesImmo />` pour l'espace de gestion agence (`/agence/[slug]/parametres`).
+    - Gestion granulaire des 7 jours de la semaine : switch Ouvert/Fermé, sélecteurs d'heures de début et fin.
+    - Raccourcis de pré-remplissage en 1 clic : *Bureau Standard* (Lun-Ven 08:30-18:30, Sam matin), *Journée Continue* (Lun-Sam 08:00-19:00), *Ouvert 7j/7*.
+    - Bouton rapide *« Copier Lun-Ven »* pour dupliquer les heures du lundi sur toute la semaine ouvrée.
+    - Persistance directe via `PUT /api/agences/${slug}` dans `parametres.horaires` (support natif `jsonb` côté backend sans modification SQL requise).
+  * **🎬 3. Système d'Onglets Segmentés Catalogue vs Reels (`vitrine/page.tsx` & `globals.css`)** :
+    - Suppression radicale du "double niveau" vertical : remplacement de l'empilement rigide (Reels puis Catalogue) par des onglets modernes sous la bannière.
+    - Onglet 1 : `[ 🏠 Catalogue des biens (N) ]` avec filtres et barre de recherche.
+    - Onglet 2 : `[ 🎬 Visites Vidéo & Reels (N) ]` (affiché dynamiquement dès que des vidéos ou reels existent).
+    - Prise en charge des deep links URL (`?onglet=reels`, `?video=ID`, `?post=ID`).
+  * **📐 4. Optimisation Compacte de la Carte de Bien ("Compact Pro") (`VitrineBiensGrid.tsx`)** :
+    - Hauteur de l'image réduite de 215px à 175px pour un affichage plus aérien.
+    - Paddings internes resserrés (-25% d'encombrement vertical).
+    - Typographie optimisée : titre à 14.5px (clampé sur 2 lignes), prix net à 15.5px.
+    - Bloc caractéristiques compact (`3 pièces • 2 ch.`) sans pavé gris massif.
+    - Boutons d'action affinés à 34-36px (au lieu de 44px).
+    - Grille responsive resserrée (`minmax(280px, 1fr)` avec gap de 16px au lieu de 22px), permettant de visualiser 2 biens en un coup d'œil sur mobile sans défilement excessif.
+  * **🧪 5. Contrôles Qualité & Validation** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 0 Silent Catches, 0 Monolithes, 100% conforme.
+
+- **Correction de l'Agencement Mobile de la Vitrine Agence : Grille 2x2 Symétrique & Organisation Réseaux (`VitrineBanner.tsx` & `globals.css`) (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱🏢🎨⚖️⚡✅ :
+  * **⚖️ 1. Résolution du Déséquilibre Visuel et des Boutons Orphelins sur Mobile** :
+    - Constat : sur mobile, les boutons flottaient avec des largeurs disparates et un `marginLeft: 'auto'` sur le bouton Partager qui reléguait le bouton *« Espace Agence »* tout seul sur une 3ème ligne orpheline en bas à gauche, à côté d'un bouton photo isolé.
+    - Solution : restructuration complète avec une grille 2x2 symétrique et équilibrée (`.vitrine-actions-primary-grid`) :
+      - Rangée 1 : `[💬 WhatsApp Agence]` (vert `#25D366`) | `[📞 Téléphone]` (sombre translucide)
+      - Rangée 2 : `[🏢 Espace Agence]` (bleu nuit `var(--navy)`) | `[🔗 Partager la vitrine]` (sombre translucide)
+    - Rangée secondaire dédiée (`.vitrine-actions-links-row`) en dessous pour le site officiel et les réseaux sociaux (Instagram, TikTok, YouTube) centrés avec infobulles claires.
+  * **🎨 2. Styles Responsives & Design System (`globals.css`)** :
+    - Classes `.vitrine-actions-wrapper`, `.vitrine-actions-primary-grid`, `.vitrine-btn-base`, `.vitrine-btn-wa`, `.vitrine-btn-phone`, `.vitrine-btn-pro`, `.vitrine-btn-share`, `.vitrine-social-icon-btn`.
+    - Sur mobile (<640px) : grille 2x2 à colonnes égales (`repeat(2, 1fr)`), boutons centrés avec hauteur tactile confortable (40px).
+    - Sur desktop (≥640px) : disposition horizontale fluide et équilibrée.
+  * **🧪 3. Contrôles Qualité & Validation** :
+    - `npx tsc --noEmit` : 0 erreur TypeScript.
+    - `npm run lint:slop` : 0 Silent Catches, 0 Monolithes, 100% conforme.
+
 - **Enrichissement du Bouton « Créer » (+) Mobile sur l'Accueil avec Action Sheet Hub Multimodal (Branche feature/vertical-immobilier) (17 septembre 2026)** 📱➕✨🛒🏢🏷️⚡✅ :
   * **✨ 1. Création de l'Action Sheet Hub « Créer sur Nopalou » (`CreateQuickActionsSheet.tsx`)** :
     - Alignement complet du comportement du bouton central `(+) Créer` de l'accueil sur l'ergonomie appréciée des espaces Agence et Boutique (`AgenceQuickActionsSheet` et `BoutiqueQuickActionsSheet`).
