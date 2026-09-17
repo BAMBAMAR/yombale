@@ -51,6 +51,8 @@ interface BlocAgenceAnnonceProps {
   contactNom: string | null;
   agence: AgenceInfo | null;
   agent: AgentInfo | null;
+  urlSource?: string | null;
+  source?: string | null;
 }
 
 export default function BlocAgenceAnnonce({
@@ -64,8 +66,11 @@ export default function BlocAgenceAnnonce({
   contactNom,
   agence,
   agent,
+  urlSource,
+  source,
 }: BlocAgenceAnnonceProps) {
   const [showModalVisite, setShowModalVisite] = useState(false);
+  const isAgence = Boolean(agence?.id);
 
   // Numéro WhatsApp prioritaire : WhatsApp agence > WhatsApp agent > téléphone contact
   const rawWa = agence?.whatsapp || agence?.telephone || agent?.telephone || contactTel || '';
@@ -147,16 +152,22 @@ export default function BlocAgenceAnnonce({
                 justifyContent: 'center',
               }}
             >
-              <Building2 size={24} style={{ color: '#ffffff' }} />
+              {isAgence ? (
+                <Building2 size={24} style={{ color: '#ffffff' }} />
+              ) : (
+                <User size={24} style={{ color: '#ffffff' }} />
+              )}
             </div>
           )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 15, fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
-                {agence ? agence.nom : (contactNom || 'Annonce Particulier')}
+                {isAgence
+                  ? agence!.nom
+                  : (contactNom || (source === 'coinafrique' ? 'Annonce CoinAfrique' : source === 'expat-dakar' ? 'Annonce Expat-Dakar' : 'Annonce Particulier'))}
               </span>
-              {agence?.sponsorise && (
+              {isAgence && agence?.sponsorise && (
                 <span
                   style={{
                     display: 'inline-flex',
@@ -182,21 +193,25 @@ export default function BlocAgenceAnnonce({
                   <CheckCircle2 size={12} />
                   <span>Agréée N° {agence.numero_agrement}</span>
                 </span>
-              ) : agence ? (
+              ) : isAgence ? (
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>
                   Agence Immobilière Vérifiée
                 </span>
               ) : (
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>
-                  Propriétaire Particulier
+                  {source === 'coinafrique'
+                    ? 'Annonceur CoinAfrique'
+                    : source === 'expat-dakar'
+                    ? 'Annonceur Expat-Dakar'
+                    : 'Propriétaire Particulier'}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Détail de l'Agent Responsable si renseigné */}
-        {agent?.nom && (
+        {/* Détail de l'Agent Responsable si agence */}
+        {isAgence && agent?.nom && (
           <div
             style={{
               marginTop: 12,
@@ -217,7 +232,7 @@ export default function BlocAgenceAnnonce({
 
       {/* ── Corps : Coordonnées & Actions ── */}
       <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {/* Téléphone direct */}
+        {/* Téléphone direct si présent */}
         {cleanWa && (
           <a
             href={`tel:${cleanWa}`}
@@ -241,7 +256,7 @@ export default function BlocAgenceAnnonce({
           </a>
         )}
 
-        {/* Bouton WhatsApp officiel avec capture automatique CRM */}
+        {/* Bouton WhatsApp avec capture lead CRM si agence */}
         {cleanWa && (
           <a
             href={waUrl}
@@ -268,32 +283,52 @@ export default function BlocAgenceAnnonce({
           </a>
         )}
 
-        {/* Bouton Demande de Visite Formelle */}
-        <button
-          type="button"
-          onClick={() => setShowModalVisite(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '11px 14px',
-            borderRadius: 10,
-            background: 'var(--accent, #C75B00)',
-            color: '#ffffff',
-            fontSize: 13.5,
-            fontWeight: 800,
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(199,91,0,0.2)',
-          }}
-        >
-          <Calendar size={16} />
-          <span>Demander une visite</span>
-        </button>
+        {/* Message d'information si aucun numéro direct disponible */}
+        {!cleanWa && !isAgence && (
+          <div
+            style={{
+              padding: '11px 14px',
+              borderRadius: 10,
+              background: 'var(--bg, #F8F5F0)',
+              border: '1px solid var(--border, #E8DDD2)',
+              fontSize: '0.82rem',
+              color: '#64748B',
+              textAlign: 'center',
+              lineHeight: '1.45',
+            }}
+          >
+            Coordonnées directes non publiées. Consultez la source originale ci-dessous pour contacter l&apos;annonceur.
+          </div>
+        )}
+
+        {/* Bouton Demande de Visite Formelle — STRICTEMENT RÉSERVÉ AUX AGENCES NOPALOU */}
+        {isAgence && (
+          <button
+            type="button"
+            onClick={() => setShowModalVisite(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: '11px 14px',
+              borderRadius: 10,
+              background: 'var(--accent, #C75B00)',
+              color: '#ffffff',
+              fontSize: 13.5,
+              fontWeight: 800,
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(199,91,0,0.2)',
+            }}
+          >
+            <Calendar size={16} />
+            <span>Demander une visite</span>
+          </button>
+        )}
 
         {/* Lien direct vers la Vitrine Publique de l'Agence */}
-        {agence?.slug && (
+        {isAgence && agence?.slug && (
           <Link
             href={`/agences/${agence.slug}`}
             style={{
@@ -317,8 +352,8 @@ export default function BlocAgenceAnnonce({
         )}
       </div>
 
-      {/* ── Modale Modulaire de Demande de Visite ── */}
-      {showModalVisite && (
+      {/* ── Modale Modulaire de Demande de Visite — UNIQUEMENT pour agences ── */}
+      {showModalVisite && isAgence && (
         <ModalDemandeVisite
           annonceId={annonceId}
           prix={prix}

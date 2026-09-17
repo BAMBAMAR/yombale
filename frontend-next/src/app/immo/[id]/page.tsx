@@ -10,6 +10,7 @@ import BoutonWhatsApp from '@/components/BoutonWhatsApp';
 import SimilRow from '@/components/SimilRow';
 import { sanitizeImgUrl } from '@/lib/sanitizeImg';
 import PageHeader from '@/components/PageHeader';
+import { Scale } from 'lucide-react';
 import { AgenceInfo, AgentInfo } from './BlocAgenceAnnonce';
 import FicheImmoSidebar from './FicheImmoSidebar';
 
@@ -416,8 +417,9 @@ export default async function FicheImmoPage({
               </tbody>
             </table>
             <div style={{ textAlign: 'center', marginTop: 20 }}>
-              <Link href={`/immo/comparaison?ids=${idsComparaison}`} className="comparaison-cta-btn">
-                ⚖ Comparaison détaillée côte à côte
+              <Link href={`/immo/comparaison?ids=${idsComparaison}`} className="comparaison-cta-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Scale size={16} />
+                <span>Comparaison détaillée côte à côte</span>
               </Link>
             </div>
           </section>

@@ -93,15 +93,52 @@ function extractNbPieces(titre) {
 
 function parseLocalisation(txt) {
   if (!txt) return { ville: 'Dakar', quartier: null };
+  const clean = txt.replace(/location_on/gi, '').replace(/,\s*Sénégal/gi, '').trim();
+  if (/cfa/i.test(clean) || /^\d[\d\s]*$/.test(clean)) {
+    return { ville: 'Dakar', quartier: null };
+  }
   const VILLES = ['Dakar', 'Thiès', 'Saint-Louis', 'Ziguinchor', 'Kaolack',
                   'Mbour', 'Touba', 'Diourbel', 'Louga', 'Kolda', 'Tambacounda'];
-  const t = txt.trim();
   for (const v of VILLES) {
-    if (t.toLowerCase().includes(v.toLowerCase())) {
-      return { ville: v, quartier: t };
+    if (clean.toLowerCase().includes(v.toLowerCase())) {
+      const parts = clean.split(',');
+      const quartier = parts.length > 1 ? parts[0].trim() : (clean.toLowerCase() === v.toLowerCase() ? null : clean);
+      return { ville: v, quartier: quartier || null };
     }
   }
-  return { ville: 'Dakar', quartier: t };
+  return { ville: 'Dakar', quartier: clean || null };
+}
+
+async function extraireContactDetail(url) {
+  if (!url) return { contact_tel: null, contact_nom: null, description: null };
+  try {
+    const $ = await fetchPage(url);
+    if (!$) return { contact_tel: null, contact_nom: null, description: null };
+
+    // Téléphone : a[href^="tel:"] ou whatsapp
+    let phone = null;
+    const telHref = $('a[href^="tel:"]').first().attr('href');
+    if (telHref) {
+      phone = telHref.replace(/^tel:/, '').trim();
+    } else {
+      const waHref = $('a[href*="wa.me"], a[href*="whatsapp"]').first().attr('href');
+      if (waHref) {
+        const m = waHref.match(/(?:\+|phone=)(\d{9,15})/);
+        if (m) phone = '+' + m[1];
+      }
+    }
+
+    // Nom annonceur : .username
+    const nom = $('.username').first().text().trim() || null;
+
+    // Description complète
+    const description = $('.ad__info-description').first().text().trim() || null;
+
+    return { contact_tel: phone, contact_nom: nom, description };
+  } catch (err) {
+    if (err.response?.status === 404) throw err;
+    return { contact_tel: null, contact_nom: null, description: null };
+  }
 }
 
 async function scraperPage(url, type_bien_defaut) {
@@ -137,9 +174,9 @@ async function scraperPage(url, type_bien_defaut) {
       const img = $el.find('img.ad__card-img, img').first();
       const photo = img.attr('src') || img.attr('data-src') || null;
 
-      // Localisation : dans le texte de la carte ou depuis le slug
-      const locTxt = $el.find('[class*="location"], [class*="city"], [class*="place"], p').first().text().trim()
-                  || $el.find('.card-content p').first().text().trim();
+      // Localisation : cibler directement .ad__card-location et exclure les prix
+      const locEl  = $el.find('.ad__card-location, [class*="location"], [class*="city"]').first();
+      const locTxt = locEl.length ? locEl.text().trim() : '';
       const loc    = parseLocalisation(locTxt);
 
       // Référence externe : ID numérique en fin de slug, ou hash URL en secours pour éviter les doublons
@@ -178,23 +215,29 @@ async function upsertAnnonce(a) {
   await pool.query(`
     INSERT INTO annonces_immo
       (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
-       ville, quartier, description, photos, url_source, source, ref_externe, meuble)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15)
+       ville, quartier, description, photos, url_source, source, ref_externe, meuble,
+       contact_nom, contact_tel)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15,$16,$17)
     ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
     DO UPDATE SET
-      titre      = EXCLUDED.titre,
-      prix       = COALESCE(EXCLUDED.prix, annonces_immo.prix),
-      photos     = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0
-                        THEN EXCLUDED.photos ELSE annonces_immo.photos END,
-      meuble     = EXCLUDED.meuble,
-      nb_pieces  = COALESCE(EXCLUDED.nb_pieces, annonces_immo.nb_pieces),
-      actif      = true,
-      updated_at = NOW()
+      titre       = EXCLUDED.titre,
+      prix        = COALESCE(EXCLUDED.prix, annonces_immo.prix),
+      photos      = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0
+                         THEN EXCLUDED.photos ELSE annonces_immo.photos END,
+      meuble      = EXCLUDED.meuble,
+      nb_pieces   = COALESCE(EXCLUDED.nb_pieces, annonces_immo.nb_pieces),
+      quartier    = COALESCE(EXCLUDED.quartier, annonces_immo.quartier),
+      ville       = COALESCE(EXCLUDED.ville, annonces_immo.ville),
+      description = COALESCE(EXCLUDED.description, annonces_immo.description),
+      contact_nom = COALESCE(EXCLUDED.contact_nom, annonces_immo.contact_nom),
+      contact_tel = COALESCE(EXCLUDED.contact_tel, annonces_immo.contact_tel),
+      actif       = true,
+      updated_at  = NOW()
   `, [
     a.titre, a.type_bien, a.transaction, a.prix || null, null,
-    a.nb_pieces || null, null, a.ville, a.quartier || null, null,
-    JSON.stringify(a.photos || []), a.url_source, a.source, a.ref_externe,
-    a.meuble || false,
+    a.nb_pieces || null, null, a.ville, a.quartier || null,
+    a.description || null, JSON.stringify(a.photos || []), a.url_source, a.source,
+    a.ref_externe, a.meuble || false, a.contact_nom || null, a.contact_tel || null,
   ]);
 }
 
@@ -251,4 +294,13 @@ async function scraperImmo({ dryRun = false } = {}) {
   return stats;
 }
 
-module.exports = { scraperImmo };
+module.exports = {
+  scraperImmo,
+  extraireContactDetail,
+  upsertAnnonce,
+  parseLocalisation,
+  extractNbPieces,
+  raffinerTypeBien,
+  typeBienFromUrl,
+  transactionFromUrl,
+};

@@ -23,6 +23,7 @@ interface FicheImmoSidebarProps {
     contact_tel: string | null
     contact_nom: string | null
     url_source: string | null
+    source?: string | null
     sponsorisee_jusqu_au: string | null
     agence?: AgenceInfo | null
     agent?: AgentInfo | null
@@ -110,12 +111,14 @@ export default function FicheImmoSidebar({
           </Link>
         )}
 
-        {/* Sceau de confiance Nopalou Pay Safe Immo */}
-        <div style={{ marginTop: 14, marginBottom: 12 }}>
-          <BadgePaySafe type="immo" compact={true} />
-        </div>
+        {/* Sceau de confiance Nopalou Pay Safe Immo — UNIQUEMENT pour agences Nopalou certifiées */}
+        {annonce.agence?.id && (
+          <div style={{ marginTop: 14, marginBottom: 12 }}>
+            <BadgePaySafe type="immo" compact={true} />
+          </div>
+        )}
 
-        {/* Carte Agence Certifiée & Lead Capture CRM */}
+        {/* Carte Agence Certifiée ou Vendeur Particulier */}
         <BlocAgenceAnnonce
           annonceId={annonce.id}
           titre={annonce.titre}
@@ -128,6 +131,8 @@ export default function FicheImmoSidebar({
           contactNom={annonce.contact_nom}
           agence={annonce.agence || null}
           agent={annonce.agent || null}
+          urlSource={annonce.url_source || null}
+          source={annonce.source || null}
         />
 
         <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)', fontSize: '0.76rem', color: '#64748B', textAlign: 'center', lineHeight: '1.4' }}>

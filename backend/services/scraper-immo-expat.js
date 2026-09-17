@@ -164,27 +164,64 @@ async function scraperPage(url, type_bien, transaction) {
   return annonces;
 }
 
+async function extraireContactDetail(url) {
+  if (!url) return { contact_tel: null, contact_nom: null, description: null };
+  try {
+    const $ = await fetchPage(url);
+    if (!$) return { contact_tel: null, contact_nom: null, description: null };
+
+    // Téléphone : .listing-item-contact__contact-phone__number, .contact-bar__contact__number-inner, ou a[href^="tel:"]
+    let phone = null;
+    const phoneEl = $('.listing-item-contact__contact-phone__number, .contact-bar__contact__number-inner, a[href^="tel:"]').first();
+    if (phoneEl.length) {
+      const raw = phoneEl.attr('href')?.replace(/^tel:/, '') || phoneEl.text();
+      const digits = raw.replace(/\D/g, '');
+      if (digits.length >= 9) {
+        if (digits.startsWith('221')) {
+          phone = '+' + digits;
+        } else {
+          phone = '+221' + digits;
+        }
+      }
+    }
+
+    const nom = $('.listing-item-contact__header__title, .contact-bar__contact-seller').first().text().replace(/Contacter.*:?/i, '').trim() || null;
+    const description = $('.ad__description, .listing-item__description').first().text().trim() || null;
+
+    return { contact_tel: phone, contact_nom: nom, description };
+  } catch (err) {
+    if (err.response?.status === 404) throw err;
+    return { contact_tel: null, contact_nom: null, description: null };
+  }
+}
+
 async function upsertAnnonce(a) {
   await pool.query(`
     INSERT INTO annonces_immo
       (titre, type_bien, transaction, prix, surface_m2, nb_pieces, nb_chambres,
-       ville, quartier, description, photos, url_source, source, ref_externe, meuble)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15)
+       ville, quartier, description, photos, url_source, source, ref_externe, meuble,
+       contact_nom, contact_tel)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15,$16,$17)
     ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
     DO UPDATE SET
-      titre      = EXCLUDED.titre,
-      prix       = COALESCE(EXCLUDED.prix, annonces_immo.prix),
-      photos     = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0
-                        THEN EXCLUDED.photos ELSE annonces_immo.photos END,
-      meuble     = EXCLUDED.meuble,
-      nb_pieces  = COALESCE(EXCLUDED.nb_pieces, annonces_immo.nb_pieces),
-      actif      = true,
-      updated_at = NOW()
+      titre       = EXCLUDED.titre,
+      prix        = COALESCE(EXCLUDED.prix, annonces_immo.prix),
+      photos      = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0
+                         THEN EXCLUDED.photos ELSE annonces_immo.photos END,
+      meuble      = EXCLUDED.meuble,
+      nb_pieces   = COALESCE(EXCLUDED.nb_pieces, annonces_immo.nb_pieces),
+      quartier    = COALESCE(EXCLUDED.quartier, annonces_immo.quartier),
+      ville       = COALESCE(EXCLUDED.ville, annonces_immo.ville),
+      description = COALESCE(EXCLUDED.description, annonces_immo.description),
+      contact_nom = COALESCE(EXCLUDED.contact_nom, annonces_immo.contact_nom),
+      contact_tel = COALESCE(EXCLUDED.contact_tel, annonces_immo.contact_tel),
+      actif       = true,
+      updated_at  = NOW()
   `, [
     a.titre, a.type_bien, a.transaction, a.prix || null, a.surface_m2 || null,
-    a.nb_pieces || null, a.nb_chambres || null, a.ville, a.quartier || null, null,
-    JSON.stringify(a.photos || []), a.url_source, a.source, a.ref_externe,
-    a.meuble || false,
+    a.nb_pieces || null, a.nb_chambres || null, a.ville, a.quartier || null,
+    a.description || null, JSON.stringify(a.photos || []), a.url_source, a.source,
+    a.ref_externe, a.meuble || false, a.contact_nom || null, a.contact_tel || null,
   ]);
 }
 
@@ -231,4 +268,14 @@ async function scraperImmo({ dryRun = false } = {}) {
   return stats;
 }
 
-module.exports = { scraperImmo };
+module.exports = {
+  scraperImmo,
+  extraireContactDetail,
+  upsertAnnonce,
+  parseLocalisation,
+  parsePrix,
+  parseNbChambres,
+  parseSurfaceTitre,
+  extractNbPieces,
+  raffinerTypeExpat,
+};

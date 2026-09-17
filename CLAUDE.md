@@ -1,3 +1,30 @@
+- **Correction Fiches Immo : Conditionnement PaySafe & Demande de Visite, et Extraction des Numéros Scrapés (17 septembre 2026)** 🏢📞🛡️ 🚀 ✅ :
+  * **🎯 1. Conditionnement Strict de Nopalou Pay Safe aux Agences Agréées** :
+    - Fichier modifié : [FicheImmoSidebar.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/immo/[id]/FicheImmoSidebar.tsx).
+    - Correction : Le composant `<BadgePaySafe type="immo" compact={true} />` est désormais strictement conditionné par `Boolean(annonce.agence?.id)`. Les annonces de particuliers et les annonces scrapées (CoinAfrique, Expat-Dakar, etc.) n'affichent plus le badge de séquestre Pay Safe.
+  * **🎯 2. Suppression de « Demander une visite » sur les Annonces Hors Agence Nopalou** :
+    - Fichier modifié : [BlocAgenceAnnonce.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/immo/[id]/BlocAgenceAnnonce.tsx).
+    - Correction : Le bouton « Demander une visite » et la modale [ModalDemandeVisite.tsx](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/immo/[id]/ModalDemandeVisite.tsx) sont désormais strictement réservés aux agences disposant d'un compte CRM Nopalou (`Boolean(agence?.id)`).
+    - Adaptation pour les particuliers & scrapés : L'en-tête affiche une icône `User` au lieu de `Building2`, le nom du vendeur ou de la source, et les boutons directs « Appeler » et « Discuter sur WhatsApp ». Si aucun numéro n'est disponible, une mention explicative invite à consulter la source originale.
+  * **🎯 3. Résolution de l'Absence de Numéros sur les Annonces Scrapées (CoinAfrique & Expat-Dakar)** :
+    - Cause identifiée : Les scrapers n'extrayaient pas les coordonnées de la fiche détaillée et la fonction `upsertAnnonce` n'enregistrait pas `contact_tel` ni `contact_nom` en base.
+    - [scraper-immo-coinafrique.js](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/services/scraper-immo-coinafrique.js) :
+      - Ajout de `extraireContactDetail` : extraction du numéro (`a[href^="tel:"]`, `wa.me`), du nom vendeur (`.username`) et de la description.
+      - Sélecteur de quartier corrigé : priorisation de `.ad__card-location` pour éviter d'absorber le prix `<p class="ad__card-price">` (ex: `"200 000CFA"`).
+      - Persistance SQL : inclusion de `contact_nom` et `contact_tel` dans `upsertAnnonce`.
+    - [scraper-immo-expat.js](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/services/scraper-immo-expat.js) :
+      - Ajout de `extraireContactDetail` : extraction du numéro (`.listing-item-contact__contact-phone__number`, `a[href^="tel:"]`), du nom et de la description.
+      - Persistance SQL : inclusion de `contact_nom` et `contact_tel` dans `upsertAnnonce`.
+  * **🎯 4. Script de Rétro-Enrichissement & Assainissement Automatique** :
+    - Fichier créé : [scripts/enrich-immo-contacts.js](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/scripts/enrich-immo-contacts.js).
+    - Traitement par lot ou par ID (`--id <uuid>`, `--limit N`, `--all`) : enrichit automatiquement les annonces scrapées en base avec leur numéro et vendeur.
+    - Nettoyage automatique des quartiers corrompus et détection intelligente par motif dans le titre.
+    - Désactivation automatique (`actif = false`) des annonces supprimées ou expirées (404) sur le site source.
+  * **🎯 5. Contrôles Qualité Validés** :
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Anti-AI-Slop Linter : 0 émoji UI (remplacement de `⚖` par `Scale` de `lucide-react` dans `page.tsx`).
+    - Rendu HTML vérifié : confirmation de l'absence de PaySafe et visite sur annonce scrapée, et présence du numéro `+221774723333` et WhatsApp.
+
 - **Refonte Visuelle & Typographique du Menu d'En-Tête : Gras Marqué, Capsule Dock & Badges PRO Énergiques (17 septembre 2026)** 🧭✨🚀 ✅ :
   * **🎯 1. Résolution de la Lisibilité & Typographie ExtraBold (Poids 800)** :
     - Diagnostic : `globals.css` imposait un `font-weight: 600` qui, sous Windows / Segoe UI, apparaissait fin et délavé sans présence visuelle.
