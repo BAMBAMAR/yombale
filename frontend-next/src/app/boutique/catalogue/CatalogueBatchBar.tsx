@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { CheckSquare, MessageCircle, Package, Copy, Trash2, X } from 'lucide-react'
+import { CheckSquare, MessageCircle, Package, Copy, Trash2, X, Tag } from 'lucide-react'
 
 interface CatalogueBatchBarProps {
   count: number
@@ -11,6 +11,7 @@ interface CatalogueBatchBarProps {
   onCopyList: () => void
   onBatchDelete: () => void
   onClearSelection: () => void
+  onPrintLabels?: () => void
 }
 
 export default function CatalogueBatchBar({
@@ -21,6 +22,7 @@ export default function CatalogueBatchBar({
   onCopyList,
   onBatchDelete,
   onClearSelection,
+  onPrintLabels,
 }: CatalogueBatchBarProps) {
   if (count === 0) return null
 
@@ -41,6 +43,19 @@ export default function CatalogueBatchBar({
         <MessageCircle size={13} />
         <span>Partager</span>
       </button>
+
+      {onPrintLabels && (
+        <button
+          type="button"
+          onClick={onPrintLabels}
+          disabled={batchLoading}
+          className="saas-batch-btn saas-batch-btn-ghost"
+          title="Imprimer les étiquettes codes-barres (A4 ou thermique)"
+        >
+          <Tag size={13} />
+          <span>Étiquettes</span>
+        </button>
+      )}
 
       <button
         type="button"

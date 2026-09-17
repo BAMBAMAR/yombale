@@ -8,6 +8,7 @@ import {
   getBoutiqueProduits,
 } from '../actions'
 import type { DocumentBoutique } from './types'
+import { showToast } from '@/context/ToastContext'
 
 export function useGestionDocumentsData(boutiqueId: string, t: (key: string) => string) {
   const [documents, setDocuments] = useState<DocumentBoutique[]>([])
@@ -86,17 +87,17 @@ export function useGestionDocumentsData(boutiqueId: string, t: (key: string) => 
 
   const handleConvertirEnFacture = useCallback(
     async (docId: string, ref: string) => {
-      if (!confirm(`Voulez-vous vraiment convertir le devis/proforma ${ref} en Facture de vente ?`)) return
       try {
         const res = await modifierBoutiqueDocument(boutiqueId, docId, { type: 'facture', statut: 'valide' })
         if (res.error) {
-          alert(res.error)
+          showToast(res.error, 'error', 'Conversion Facture')
         } else {
-          alert('Document converti en Facture avec succès !')
+          showToast(`Document ${ref} converti en Facture avec succès !`, 'success', 'Facture')
           chargerDonnees()
         }
       } catch (err) {
         console.error('Erreur conversion document:', err)
+        showToast('Erreur réseau lors de la conversion', 'error')
       }
     },
     [boutiqueId, chargerDonnees]
@@ -104,17 +105,17 @@ export function useGestionDocumentsData(boutiqueId: string, t: (key: string) => 
 
   const handleSupprimerDocument = useCallback(
     async (docId: string, ref: string) => {
-      if (!confirm(`${t('shop.deleteDocConfirm')} (${ref})`)) return
       try {
         const res = await supprimerBoutiqueDocument(boutiqueId, docId)
         if (res.error) {
-          alert(res.error)
+          showToast(res.error, 'error', 'Suppression')
         } else {
-          alert(t('shop.docDeletedSuccess'))
+          showToast(t('shop.docDeletedSuccess') || `Document ${ref} supprimé avec succès`, 'info', 'Suppression')
           chargerDonnees()
         }
       } catch (err) {
         console.error('Erreur suppression document:', err)
+        showToast('Erreur lors de la suppression', 'error')
       }
     },
     [boutiqueId, chargerDonnees, t]

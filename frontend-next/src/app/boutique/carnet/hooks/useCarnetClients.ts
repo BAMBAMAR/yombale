@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { listCommandes, updateStatutCommande } from '../../actions'
 import { fcfa } from '@/lib/format'
+import { useToast } from '@/context/ToastContext'
 import type { ClientCredit, TransactionCredit, ProduitBoutique, BoutiqueCarnetInfo } from '../types'
 
 interface UseCarnetClientsProps {
@@ -10,6 +11,7 @@ interface UseCarnetClientsProps {
 }
 
 export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
+  const { toast, confirmModal } = useToast()
   const [clients, setClients] = useState<ClientCredit[]>([])
   const [produits, setProduits] = useState<ProduitBoutique[]>([])
   const [loading, setLoading] = useState(true)
@@ -104,18 +106,20 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
           if (data.client) {
             ouvrirFicheClient(data.client)
           }
+          toast.success(`Client "${data.client.nom}" créé avec succès !`)
           return { ok: true, client: data.client }
         } else {
           const err = await res.json()
-          alert(err.error || 'Erreur lors de la création du profil client.')
+          toast.error(err.error || 'Erreur lors de la création du profil client.')
           return { ok: false, error: err.error }
         }
       } catch (err) {
         console.error('Erreur création client carnet:', err)
+        toast.error('Erreur réseau')
         return { ok: false, error: 'Erreur réseau' }
       }
     },
-    [boutique.id, chargerDonnees, ouvrirFicheClient]
+    [boutique.id, chargerDonnees, ouvrirFicheClient, toast]
   )
 
   const handleEnregistrerEditClient = useCallback(
@@ -133,19 +137,20 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
           if (data.client && clientSelectionne?.id === data.client.id) {
             setClientSelectionne(data.client)
           }
-          alert('Profil client mis à jour avec succès !')
+          toast.success('Profil client mis à jour avec succès !')
           return { ok: true, client: data.client }
         } else {
           const err = await res.json()
-          alert(err.error || 'Erreur lors de la modification du client.')
+          toast.error(err.error || 'Erreur lors de la modification du client.')
           return { ok: false, error: err.error }
         }
       } catch (err) {
         console.error('Erreur modification client carnet:', err)
+        toast.error('Erreur réseau')
         return { ok: false, error: 'Erreur réseau' }
       }
     },
-    [boutique.id, chargerDonnees, clientSelectionne?.id]
+    [boutique.id, chargerDonnees, clientSelectionne?.id, toast]
   )
 
   const handleChangerStatutClient = useCallback(
@@ -161,32 +166,32 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
           if (clientSelectionne?.id === c.id) {
             setClientSelectionne((prev) => (prev ? { ...prev, statut: nouveauStatut } : null))
           }
-          alert(
+          toast.success(
             nouveauStatut === 'bloque'
               ? `Le client ${c.nom} a été blacklisté.`
               : `Le client ${c.nom} a été réactivé.`
           )
         } else {
           const err = await res.json()
-          alert(err.error || 'Erreur lors du changement de statut du client.')
+          toast.error(err.error || 'Erreur lors du changement de statut du client.')
         }
       } catch (e) {
         console.error('Erreur changement statut client:', e)
-        alert('Impossible de joindre le serveur.')
+        toast.error('Impossible de joindre le serveur.')
       }
     },
-    [boutique.id, chargerDonnees, clientSelectionne?.id]
+    [boutique.id, chargerDonnees, clientSelectionne?.id, toast]
   )
 
   const handleSupprimerClient = useCallback(
     async (c: ClientCredit) => {
-      if (
-        !confirm(
-          `Êtes-vous sûr de vouloir supprimer définitivement le client "${c.nom}" du carnet ?\nCette action est irréversible.`
-        )
-      ) {
-        return
-      }
+      const ok = await confirmModal({
+        title: 'Supprimer ce client',
+        message: `Êtes-vous sûr de vouloir supprimer définitivement le client "${c.nom}" du carnet ? Cette action est irréversible.`,
+        confirmLabel: 'Supprimer',
+        isDanger: true,
+      })
+      if (!ok) return
       try {
         const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${c.id}`, {
           method: 'DELETE',
@@ -196,17 +201,17 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
             setClientSelectionne(null)
           }
           await chargerDonnees()
-          alert(`Client "${c.nom}" supprimé avec succès du carnet.`)
+          toast.success(`Client "${c.nom}" supprimé avec succès du carnet.`)
         } else {
           const err = await res.json()
-          alert(err.error || 'Erreur lors de la suppression du client.')
+          toast.error(err.error || 'Erreur lors de la suppression du client.')
         }
       } catch (e) {
         console.error('Erreur suppression client:', e)
-        alert('Impossible de joindre le serveur.')
+        toast.error('Impossible de joindre le serveur.')
       }
     },
-    [boutique.id, chargerDonnees, clientSelectionne?.id]
+    [boutique.id, chargerDonnees, clientSelectionne?.id, toast]
   )
 
   const handleRelancerWhatsApp = useCallback(
@@ -220,17 +225,17 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
           if (data.lienWhatsapp) {
             window.open(data.lienWhatsapp, '_blank')
           } else {
-            alert('Relance WhatsApp envoyée !')
+            toast.success('Relance WhatsApp envoyée !')
           }
         } else {
           const err = await res.json()
-          alert(err.error || 'Impossible d’envoyer la relance.')
+          toast.error(err.error || 'Impossible d’envoyer la relance.')
         }
       } catch (e) {
         console.error('Erreur relance whatsapp:', e)
       }
     },
-    [boutique.id]
+    [boutique.id, toast]
   )
 
   const handleRelancerEcheances = useCallback(async () => {
@@ -240,19 +245,19 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
       })
       const data = await res.json()
       if (res.ok) {
-        alert(data.message || 'Traitement des relances terminé !')
+        toast.success(data.message || 'Traitement des relances terminé !')
         await chargerDonnees()
         if (clientSelectionne) {
           await chargerHistoriqueClient(clientSelectionne.id)
         }
       } else {
-        alert(data.error || 'Erreur lors du déclenchement des relances.')
+        toast.error(data.error || 'Erreur lors du déclenchement des relances.')
       }
     } catch (e) {
       console.error('Erreur relance echeances:', e)
-      alert('Erreur réseau lors de la relance des échéances.')
+      toast.error('Erreur réseau lors de la relance des échéances.')
     }
-  }, [boutique.id, chargerDonnees, chargerHistoriqueClient, clientSelectionne])
+  }, [boutique.id, chargerDonnees, chargerHistoriqueClient, clientSelectionne, toast])
 
   const handleApprouverCommandeCredit = useCallback(
     async (cmd: any) => {
@@ -272,52 +277,49 @@ export function useCarnetClients({ boutique }: UseCarnetClientsProps) {
         })
         const data = await res.json()
         if (!res.ok) {
-          alert(data.error || 'Erreur approbation')
+          toast.error(data.error || 'Erreur approbation')
           return
         }
         setCommandesCreditEnAttente((prev) => prev.filter((c) => c.id !== cmd.id))
         await chargerDonnees()
         window.dispatchEvent(new Event('carnet_updated'))
+        toast.success(`Demande de crédit de ${cmd.client_nom} approuvée !`)
         const cleanTel = cmd.client_telephone.replace(/\D/g, '')
         const msgWa = encodeURIComponent(
           `Bonjour ${cmd.client_nom}, votre demande d'achat à crédit de ${fcfa(cmd.montant_total)} (${cmd.nom_produit}) a été approuvée par la boutique et enregistrée dans votre Carnet !`
         )
-        if (
-          confirm(
-            `Demande d'achat à crédit de ${cmd.client_nom} approuvée avec succès !\n\nSouhaitez-vous lui envoyer un message sur WhatsApp ?`
-          )
-        ) {
-          window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
-        }
+        toast.success(`Demande de ${cmd.client_nom} approuvée et ajoutée au carnet !`)
+        window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
       } catch (e) {
-        alert('Erreur lors du traitement.')
+        toast.error('Erreur lors du traitement.')
       }
     },
-    [boutique.id, chargerDonnees]
+    [boutique.id, chargerDonnees, toast]
   )
 
   const handleRefuserCommandeCredit = useCallback(
     async (cmd: any) => {
-      if (
-        !confirm(
-          `Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${cmd.client_nom} (${fcfa(cmd.montant_total)}) ?`
-        )
-      ) {
-        return
-      }
+      const ok = await confirmModal({
+        title: 'Refuser la demande',
+        message: `Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${cmd.client_nom} (${fcfa(cmd.montant_total)}) ?`,
+        confirmLabel: 'Rejeter',
+        isDanger: true,
+      })
+      if (!ok) return
       try {
         const res = await updateStatutCommande(boutique.id, cmd.id, 'annulee')
         if (res.success) {
           setCommandesCreditEnAttente((prev) => prev.filter((c) => c.id !== cmd.id))
           await chargerDonnees()
+          toast.success('Demande de crédit annulée.')
         } else {
-          alert(res.error || 'Erreur lors du rejet de la demande.')
+          toast.error(res.error || 'Erreur lors du rejet de la demande.')
         }
       } catch (e) {
-        alert('Erreur lors du traitement.')
+        toast.error('Erreur lors du traitement.')
       }
     },
-    [boutique.id, chargerDonnees]
+    [boutique.id, chargerDonnees, toast]
   )
 
   const clientsFiltres = useMemo(() => {

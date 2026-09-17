@@ -5,6 +5,7 @@ import { CONFIG_SCANNER_EAN_PRO, capturerZoneViseurExacte, jouerBipEtVibrer } fr
 import { fcfa } from '@/lib/format'
 import { creerBoutiqueDocument, modifierBoutiqueDocument } from '../actions'
 import type { LigneDocument, DocumentBoutique } from './types'
+import { showToast } from '@/context/ToastContext'
 
 export function useGestionDocumentsModal({
   boutiqueId,
@@ -123,11 +124,11 @@ export function useGestionDocumentsModal({
     const qte = Number(qteLibreInput) || 1
 
     if (!libelle) {
-      alert('Veuillez saisir le nom ou la désignation de l’article / prestation.')
+      showToast('Veuillez saisir le nom ou la désignation de l’article / prestation.', 'warning', 'Article Requis')
       return
     }
     if (isNaN(prix) || prix < 0) {
-      alert('Veuillez renseigner un prix unitaire valide.')
+      showToast('Veuillez renseigner un prix unitaire valide.', 'warning', 'Prix Invalide')
       return
     }
 
@@ -389,7 +390,7 @@ export function useGestionDocumentsModal({
     async (e: React.FormEvent) => {
       e.preventDefault()
       if (lignesSelectionnees.length === 0) {
-        alert('Veuillez ajouter au moins un produit ou article au document.')
+        showToast('Veuillez ajouter au moins un produit ou article au document.', 'warning', 'Document Vide')
         return
       }
 
@@ -417,9 +418,9 @@ export function useGestionDocumentsModal({
         if (documentEnEdition) {
           const res = await modifierBoutiqueDocument(boutiqueId, documentEnEdition.id, payload)
           if (res.error) {
-            alert(res.error)
+            showToast(res.error, 'error', 'Erreur Modification')
           } else {
-            alert(`Document ${documentEnEdition.reference} modifié avec succès !`)
+            showToast(`Document ${documentEnEdition.reference} modifié avec succès !`, 'success', 'Document Enregistré')
             setModalOuvert(false)
             resetForm()
             await chargerDonnees()
@@ -427,9 +428,9 @@ export function useGestionDocumentsModal({
         } else {
           const res = await creerBoutiqueDocument(boutiqueId, payload)
           if (res.error) {
-            alert(res.error)
+            showToast(res.error, 'error', 'Erreur Création')
           } else {
-            alert(`Document ${res.reference} créé avec succès !`)
+            showToast(`Document ${res.reference} créé avec succès !`, 'success', 'Document Créé')
             setModalOuvert(false)
             resetForm()
             await chargerDonnees()
@@ -437,6 +438,7 @@ export function useGestionDocumentsModal({
         }
       } catch (err) {
         console.error('Erreur soumission document:', err)
+        showToast('Erreur inattendue lors de l’enregistrement', 'error')
       } finally {
         setIsSubmitting(false)
       }

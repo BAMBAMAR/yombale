@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import { adminModererBien } from '@/app/actions/admin'
+import { showToast } from '@/context/ToastContext'
 
 interface BiensImmoClientProps {
   initialBiens: any[]
@@ -35,8 +36,9 @@ export default function BiensImmoClient({ initialBiens, total }: BiensImmoClient
         setBiens((prev) =>
           prev.map((b) => (b.id === bienId ? { ...b, statut_occupation: newStatut } : b))
         )
+        showToast(`Statut du bien mis à jour vers "${newStatut}".`, 'success', 'Modération Bien')
       } else {
-        alert(res.error || 'Erreur lors de la mise à jour')
+        showToast(res.error || 'Erreur lors de la mise à jour', 'error', 'Modération Bien')
       }
     } finally {
       setLoadingId(null)

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { fcfa, fmtDate } from '@/lib/format'
 import CarnetModalCreerPlan from './CarnetModalCreerPlan'
+import { showToast, showConfirm } from '@/context/ToastContext'
 
 export interface PlanEcheance {
   id: string
@@ -141,9 +142,12 @@ export default function CarnetPlansEchelonnes({
   }
 
   const handleSolderAnticipe = async (plan: PlanEchelonne) => {
-    if (!window.confirm(`Confirmez-vous le solde anticipé de ${fcfa(plan.solde_restant)} pour le plan ${plan.reference} ?`)) {
-      return
-    }
+    const ok = await showConfirm({
+      title: 'Solde anticipé',
+      message: `Confirmez-vous le solde anticipé de ${fcfa(plan.solde_restant)} pour le plan ${plan.reference} ?`,
+      confirmLabel: 'Encaisser & solder',
+    })
+    if (!ok) return
     setLoadingAction(true)
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/credits-clients/${clientId}/solder-anticipe`, {
@@ -156,13 +160,14 @@ export default function CarnetPlansEchelonnes({
       })
       const data = await res.json()
       if (!res.ok || !data.success) {
-        alert(data.error || 'Erreur lors du solde anticipé')
+        showToast(data.error || 'Erreur lors du solde anticipé', 'error', 'Solde Anticipé')
       } else {
+        showToast('Plan soldé par anticipation avec succès !', 'success', 'Solde Anticipé')
         loadPlans()
         onPlanUpdated()
       }
     } catch {
-      alert('Erreur réseau lors du solde anticipé')
+      showToast('Erreur réseau lors du solde anticipé', 'error', 'Réseau')
     } finally {
       setLoadingAction(false)
     }

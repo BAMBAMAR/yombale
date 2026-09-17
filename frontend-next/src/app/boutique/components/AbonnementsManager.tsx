@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Repeat, Plus, Play, Pause, XCircle, ShoppingBag, MessageCircle, Calendar, Phone, MapPin, X } from 'lucide-react'
 import { fcfa } from '@/lib/format'
+import { showToast } from '@/context/ToastContext'
 
 interface Abonnement {
   id: string
@@ -146,11 +147,14 @@ export default function AbonnementsManager({ boutiqueId, boutiqueNom = 'Ma Bouti
       })
       const data = await res.json()
       if (res.ok && data.commande) {
-        alert(`Commande générée avec succès : ${data.commande.reference} (${fcfa(data.commande.montant_total)})`)
+        showToast(`Commande générée : ${data.commande.reference} (${fcfa(data.commande.montant_total)})`, 'success', 'Abonnement Renouvelé')
         fetchAbonnements()
+      } else if (data?.error) {
+        showToast(data.error, 'error', 'Abonnement')
       }
     } catch (err) {
       console.warn('[ABO GEN CMD ERR]', err)
+      showToast('Erreur de génération de commande', 'error')
     } finally {
       setActionLoadingId(null)
     }

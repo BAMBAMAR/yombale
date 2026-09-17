@@ -18,6 +18,7 @@ import {
   adminModifierMembreEquipe,
   adminSupprimerMembreEquipe,
 } from '@/app/actions/admin'
+import { showToast } from '@/context/ToastContext'
 
 interface EquipeAdminClientProps {
   initialMembres: any[]
@@ -50,12 +51,13 @@ export default function EquipeAdminClient({ initialMembres, initialError }: Equi
       const res = await adminCreerMembreEquipe({ nom, email, motDePasse, role })
       if (res.success && res.membre) {
         setMembres((prev) => [...prev, res.membre])
+        showToast(`Membre d'équipe ${nom} créé avec succès !`, 'success', 'Équipe Admin')
         setModalOpen(false)
         setNom('')
         setEmail('')
         setMotDePasse('')
       } else {
-        alert(res.error || 'Erreur lors de la création du compte')
+        showToast(res.error || 'Erreur lors de la création du compte', 'error', 'Équipe Admin')
       }
     } finally {
       setSaving(false)
@@ -71,8 +73,9 @@ export default function EquipeAdminClient({ initialMembres, initialError }: Equi
         setMembres((prev) =>
           prev.map((item) => (item.id === m.id ? { ...item, actif: nextActif } : item))
         )
+        showToast(`Compte ${m.nom} : statut ${nextActif ? 'activé' : 'désactivé'}.`, 'info', 'Équipe Admin')
       } else {
-        alert(res.error || 'Erreur modification')
+        showToast(res.error || 'Erreur modification', 'error', 'Équipe Admin')
       }
     } finally {
       setActionLoading(null)
@@ -80,14 +83,14 @@ export default function EquipeAdminClient({ initialMembres, initialError }: Equi
   }
 
   const handleDelete = async (m: any) => {
-    if (!confirm(`Supprimer définitivement l'accès administrateur de ${m.nom} (${m.email}) ?`)) return
     setActionLoading(m.id)
     try {
       const res = await adminSupprimerMembreEquipe(m.id)
       if (res.success) {
         setMembres((prev) => prev.filter((item) => item.id !== m.id))
+        showToast(`Accès de ${m.nom} supprimé.`, 'info', 'Équipe Admin')
       } else {
-        alert(res.error || 'Erreur suppression')
+        showToast(res.error || 'Erreur suppression', 'error', 'Équipe Admin')
       }
     } finally {
       setActionLoading(null)

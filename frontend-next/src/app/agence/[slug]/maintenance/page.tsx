@@ -16,6 +16,7 @@ import AgenceTableToolbar, { SortOption } from '@/app/agence/components/AgenceTa
 import AgenceBatchActionBar, { BatchAction } from '@/app/agence/components/AgenceBatchActionBar'
 import { exportToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import { showToast } from '@/context/ToastContext'
 
 const SORT_OPTIONS: SortOption[] = [
   { value: 'date_signal', label: 'Date de signalement' },
@@ -168,14 +169,15 @@ export default function AgenceMaintenancePage() {
       if (data.success) {
         setSelectedIds(new Set())
         chargerDonnees()
+        showToast(`${count} ticket(s) mis à jour vers "${nouveauStatut}".`, 'success', 'Maintenance')
         setToastMsg(`${count} ticket(s) mis à jour vers "${nouveauStatut}".`)
         setTimeout(() => setToastMsg(null), 4000)
       } else {
-        alert(data.error || 'Erreur lors de la mise à jour groupée.')
+        showToast(data.error || 'Erreur lors de la mise à jour groupée.', 'error', 'Maintenance')
       }
     } catch (err) {
       console.error('[BATCH_MAINTENANCE_ERR]', err)
-      alert('Erreur réseau lors de la mise à jour groupée.')
+      showToast('Erreur réseau lors de la mise à jour groupée.', 'error', 'Réseau')
     } finally {
       setBatchLoading(false)
     }

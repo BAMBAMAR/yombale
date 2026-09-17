@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useToast } from '@/context/ToastContext'
 import {
   Store,
   Layers,
@@ -45,6 +46,7 @@ export default function AppStoreBoutique({
   const [ga4, setGa4] = useState(initialGa4)
   const [sauvegardeEnCours, setSauvegardeEnCours] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const { toast } = useToast()
   const [modalAppActive, setModalAppActive] = useState<string | null>(null)
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') || sessionStorage.getItem('token') : null
@@ -78,13 +80,12 @@ export default function AppStoreBoutique({
         })
       })
       if (!res.ok) throw new Error('Échec de la sauvegarde')
-      setToastMessage('Paramètres de l’application enregistrés avec succès !')
+      toast.success('Paramètres de l’application enregistrés avec succès !')
       setModalAppActive(null)
     } catch (err: any) {
-      alert(err.message || 'Erreur lors de la sauvegarde.')
+      toast.error(err.message || 'Erreur lors de la sauvegarde.')
     } finally {
       setSauvegardeEnCours(false)
-      setTimeout(() => setToastMessage(null), 3000)
     }
   }
 

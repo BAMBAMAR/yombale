@@ -17,6 +17,7 @@ export function usePosModalsState() {
   const [modalScannerCamera, setModalScannerCamera] = useState(false)
   const [modalPairageSmartphone, setModalPairageSmartphone] = useState(false)
   const [modalCarnet, setModalCarnet] = useState(false)
+  const [modalMaterielGuide, setModalMaterielGuide] = useState(false)
 
   // Superviseur Modal State
   const [modalSuperviseur, setModalSuperviseur] = useState(false)
@@ -59,6 +60,8 @@ export function usePosModalsState() {
     setModalPairageSmartphone,
     modalCarnet,
     setModalCarnet,
+    modalMaterielGuide,
+    setModalMaterielGuide,
     modalSuperviseur,
     setModalSuperviseur,
     superviseurTitre,

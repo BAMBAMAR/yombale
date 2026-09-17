@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslation } from '@/i18n/context'
+import { useToast } from '@/context/ToastContext'
 import { Lock } from 'lucide-react'
 import DevCodeSnippets from './components/DevCodeSnippets'
 
@@ -24,6 +25,7 @@ export interface Webhook {
 
 export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { boutiqueId: string; planActif: string }) {
   const { t, isRtl } = useTranslation()
+  const { toast, confirmModal } = useToast()
   const [keys, setKeys] = useState<ApiKey[]>([])
   const [webhooks, setWebhooks] = useState<Webhook[]>([])
   const [loading, setLoading] = useState<boolean>(true)
@@ -113,29 +115,36 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
       if (rawKey) {
         try {
           await navigator.clipboard.writeText(rawKey)
-          alert(`Clé API générée et copiée automatiquement dans le presse-papier :\n\n${rawKey}\n\nConservez-la en lieu sûr !`)
+          toast.success('Clé API générée et copiée automatiquement dans le presse-papier !', 'Succès')
         } catch (_) {
-          alert(`Clé API générée avec succès :\n\n${rawKey}\n\nCopiez-la dans la boîte verte qui vient d'apparaître !`)
+          toast.success('Clé API générée avec succès !', 'Succès')
         }
       }
     } catch (err: any) {
-      alert(`Erreur : ${err.message}`)
+      toast.error(err.message || 'Erreur lors de la génération de la clé API')
     } finally {
       setCreationCleEnCours(false)
     }
   }
 
   const revoquerCleApi = async (keyId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir révoquer cette clé API ? Les applications l\'utilisant perdront leur accès.')) return
+    const ok = await confirmModal({
+      title: 'Révoquer la clé API',
+      message: "Êtes-vous sûr de vouloir révoquer cette clé API ? Les applications l'utilisant perdront leur accès.",
+      confirmLabel: 'Révoquer la clé',
+      isDanger: true,
+    })
+    if (!ok) return
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/api-keys/${keyId}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (!res.ok) throw new Error('Erreur lors de la suppression')
+      toast.success('Clé API révoquée avec succès.')
       setKeys(prev => prev.filter(k => k.id !== keyId))
     } catch (err: any) {
-      alert(`Erreur : ${err.message}`)
+      toast.error(err.message || 'Erreur lors de la révocation de la clé API')
     }
   }
 
@@ -163,25 +172,33 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
       const rawSecret = data.secret || data.webhook?.secret || data.webhookSecret
       setWebhookSecretCree(rawSecret)
       setUrlWebhook('')
+      toast.success('Webhook enregistré avec succès !', 'Succès')
       chargerDonnees()
     } catch (err: any) {
-      alert(`Erreur : ${err.message}`)
+      toast.error(err.message || 'Échec de l\'ajout du Webhook')
     } finally {
       setCreationWebhookEnCours(false)
     }
   }
 
   const supprimerWebhook = async (webhookId: string) => {
-    if (!confirm('Supprimer ce webhook ?')) return
+    const ok = await confirmModal({
+      title: 'Supprimer le webhook',
+      message: 'Êtes-vous sûr de vouloir supprimer ce webhook ? Les événements ne seront plus transmis.',
+      confirmLabel: 'Supprimer',
+      isDanger: true,
+    })
+    if (!ok) return
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/webhooks/${webhookId}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       if (!res.ok) throw new Error('Erreur lors de la suppression')
+      toast.success('Webhook supprimé avec succès.')
       setWebhooks(prev => prev.filter(w => w.id !== webhookId))
     } catch (err: any) {
-      alert(`Erreur : ${err.message}`)
+      toast.error(err.message || 'Erreur lors de la suppression du webhook')
     }
   }
 
@@ -268,7 +285,7 @@ export default function PortailDeveloppeurBoutique({ boutiqueId, planActif }: { 
                 type="button"
                 onClick={() => {
                   navigator.clipboard.writeText(cleBruteCreee)
-                  alert('Clé API copiée dans le presse-papier !')
+                  toast.success('Clé API copiée dans le presse-papier !')
                 }}
                 style={{ padding: '10px 16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
               >

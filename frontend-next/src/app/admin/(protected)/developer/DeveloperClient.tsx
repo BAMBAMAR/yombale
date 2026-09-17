@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { showToast } from '@/context/ToastContext'
 
 export interface ApiKeyItem {
   id: string
@@ -69,16 +70,16 @@ export default function DeveloperClient({ secret }: { secret: string }) {
       })
       if (!res.ok) throw new Error('Erreur lors de la révocation')
       setMessageSuccess(`Clé API "${nomKey}" révoquée avec succès.`)
+      showToast(`Clé API "${nomKey}" révoquée avec succès.`, 'info', 'Clé API')
       setKeys(prev => prev.filter(k => k.id !== keyId))
     } catch (err: any) {
-      alert(`Échec de la révocation : ${err.message}`)
+      showToast(`Échec de la révocation : ${err.message}`, 'error', 'Clé API')
     } finally {
       setRevokingId(null)
     }
   }
 
   const supprimerWebhook = async (webhookId: string, urlWebhook: string) => {
-    if (!confirm(`Supprimer le webhook "${urlWebhook}" ?`)) return
     try {
       setRevokingId(webhookId)
       const res = await fetch(`/api/boutiques/admin/webhooks/${webhookId}`, {
@@ -87,9 +88,10 @@ export default function DeveloperClient({ secret }: { secret: string }) {
       })
       if (!res.ok) throw new Error('Erreur lors de la suppression du webhook')
       setMessageSuccess(`Webhook supprimé avec succès.`)
+      showToast('Webhook supprimé avec succès.', 'info', 'Webhook')
       setWebhooks(prev => prev.filter(w => w.id !== webhookId))
     } catch (err: any) {
-      alert(`Échec de la suppression : ${err.message}`)
+      showToast(`Échec de la suppression : ${err.message}`, 'error', 'Webhook')
     } finally {
       setRevokingId(null)
     }

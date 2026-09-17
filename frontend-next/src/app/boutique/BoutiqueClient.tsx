@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { deleteBoutique } from './actions'
 import { useTranslation } from '@/i18n/context'
 import { useOnlineStatus } from '@/lib/useOnlineStatus'
+import { useToast } from '@/context/ToastContext'
 
 import type { Boutique, Variante, Produit, ManageTab, NavItem, NavGroup } from './types'
 import BoutiqueCard from './components/BoutiqueCard'
@@ -51,6 +52,7 @@ export default function BoutiqueClient({
   settings: Record<string, string>
 }) {
   const { t } = useTranslation()
+  const { toast, confirmModal } = useToast()
   type Mode = 'list' | 'create' | { editing: Boutique } | { managing: Boutique }
   const [mode, setMode] = useState<Mode>('list')
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -169,12 +171,21 @@ export default function BoutiqueClient({
   const prixPro = Number(settings.plan_pro_prix) || 5000
 
   async function handleDelete(id: string) {
-    if (!confirm('Supprimer cette boutique définitivement ?')) return
+    const ok = await confirmModal({
+      title: 'Supprimer la boutique',
+      message: 'Souhaitez-vous vraiment supprimer cette boutique définitivement ? Cette action est irréversible.',
+      confirmLabel: 'Supprimer définitivement',
+      isDanger: true,
+    })
+    if (!ok) return
     setDeleteError(null)
     const result = await deleteBoutique(id)
-    if (result.error) setDeleteError(result.error)
-    else {
+    if (result.error) {
+      setDeleteError(result.error)
+      toast.error(result.error)
+    } else {
       setSuccessMsg('Boutique supprimée.')
+      toast.success('Boutique supprimée avec succès.')
       router.refresh()
     }
   }

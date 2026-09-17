@@ -15,6 +15,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { adminModererAgence } from '@/app/actions/admin'
+import { showToast } from '@/context/ToastContext'
 
 interface AgencesImmoClientProps {
   initialAgences: any[]
@@ -28,8 +29,6 @@ export default function AgencesImmoClient({ initialAgences, total }: AgencesImmo
 
   const handleToggleStatut = async (agence: any) => {
     const nextStatut = agence.statut === 'actif' ? 'suspendue' : 'active'
-    if (!confirm(`Confirmer le changement de statut de "${agence.nom}" en "${nextStatut}" ?`)) return
-
     setLoadingId(agence.id)
     try {
       const res = await adminModererAgence(agence.id, { statut: nextStatut as any })
@@ -37,8 +36,9 @@ export default function AgencesImmoClient({ initialAgences, total }: AgencesImmo
         setAgences((prev) =>
           prev.map((a) => (a.id === agence.id ? { ...a, statut: nextStatut === 'active' ? 'actif' : 'suspendu' } : a))
         )
+        showToast(`Agence "${agence.nom}" : statut mis à jour vers "${nextStatut}".`, 'success', 'Modération Agence')
       } else {
-        alert(res.error || 'Erreur lors de la modération de l\'agence')
+        showToast(res.error || 'Erreur lors de la modération de l\'agence', 'error', 'Modération Agence')
       }
     } finally {
       setLoadingId(null)

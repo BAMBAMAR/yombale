@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from '@/i18n/context'
+import { useToast } from '@/context/ToastContext'
 import { useSyncOffline } from '@/lib/sync-manager'
 import { ajouterDetteHorsLigne } from '@/lib/db-offline'
 
@@ -36,6 +37,7 @@ interface CarnetDettesProps {
 
 export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps) {
   const { t, isRtl } = useTranslation() as { t: any; isRtl: boolean }
+  const { toast } = useToast()
 
   // Sync Offline
   const {
@@ -224,7 +226,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         await chargerHistoriqueClient(params.client.id)
       } else {
         const err = await res.json()
-        alert(err.error || 'Erreur lors de l’enregistrement de la transaction.')
+        toast.error(err.error || 'Erreur lors de l’enregistrement de la transaction.')
       }
     } catch (e) {
       console.warn('[Carnet Dettes] Mode Hors-Ligne:', e)
@@ -248,10 +250,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         const optSolde = Number(params.client.solde || 0) + delta
         setClientSelectionne((prev) => (prev ? { ...prev, solde: optSolde } : null))
         setClients((prev) => prev.map((c) => (c.id === params.client.id ? { ...c, solde: optSolde } : c)))
-        alert('Hors-Ligne : Opération enregistrée localement sur votre appareil. Elle sera automatiquement synchronisée.')
+        toast.info('Opération enregistrée localement sur votre appareil. Elle sera automatiquement synchronisée à la reconnexion.', 'Mode Hors-Ligne')
       } catch (errDb) {
         console.error('Erreur enregistrement local carnet:', errDb)
-        alert('Erreur critique de sauvegarde locale.')
+        toast.error('Erreur critique de sauvegarde locale.', 'Erreur IndexedDB')
       }
     }
   }, [boutique.id, chargerDonnees, chargerHistoriqueClient, rafraichirCompteurCarnet, setClients])

@@ -1,6 +1,8 @@
 // frontend-next/src/lib/immo-csv-export.ts
 // Utilitaire d'export CSV sécurisé avec BOM UTF-8 pour Excel & Google Sheets
 
+import { showToast } from '@/context/ToastContext'
+
 export interface CsvColumn<T = any> {
   header: string
   key?: keyof T | string
@@ -17,7 +19,7 @@ export function exportDataToCsv<T = any>(
   data: T[]
 ): void {
   if (!data || data.length === 0) {
-    alert('Aucune donnée à exporter.')
+    showToast('Aucune donnée à exporter.', 'warning')
     return
   }
 
@@ -38,30 +40,31 @@ export function exportDataToCsv<T = any>(
         }
         if (val === null || val === undefined) val = ''
         // Nettoyage et échappement des guillemets
-        const cleanStr = String(val).replace(/"/g, '""')
-        return `"${cleanStr}"`
+        return `"${String(val).replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`
       })
       .join(';')
   })
 
-  // 3. Concaténation avec BOM UTF-8 (\uFEFF) et retours chariots CRLF
+  // 3. BOM UTF-8 (\uFEFF)
   const csvContent = '\uFEFF' + [headerRow, ...rows].join('\r\n')
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
 
-  // 4. Déclenchement du téléchargement
+  // 4. Téléchargement via ancre éphémère
   const link = document.createElement('a')
   link.setAttribute('href', url)
-  const safeFilename = filename.endsWith('.csv') ? filename : `${filename}.csv`
-  link.setAttribute('download', safeFilename)
+  link.setAttribute('download', filename.endsWith('.csv') ? filename : `${filename}.csv`)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
 
+/**
+ * Version polymorphe : accepte soit (filename, columns, data) soit (data, filename)
+ */
 export function exportToCsv<T = any>(
-  arg1: string | Record<string, any>[],
+  arg1: string | T[],
   arg2?: CsvColumn<T>[] | string,
   arg3?: T[]
 ): void {
@@ -69,7 +72,7 @@ export function exportToCsv<T = any>(
     const data = arg1
     const filename = (typeof arg2 === 'string' ? arg2 : 'export.csv')
     if (data.length === 0) {
-      alert('Aucune donnée à exporter.')
+      showToast('Aucune donnée à exporter.', 'warning')
       return
     }
     const headers = Object.keys(data[0] || {})

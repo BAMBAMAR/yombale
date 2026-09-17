@@ -7,6 +7,8 @@ import { Info, ChevronRight } from 'lucide-react'
 interface BoutiqueDashboardKpiGridProps {
   loading: boolean
   caMois: number | null
+  margeBruteMois?: number | null
+  tauxMargeMois?: number | null
   nbEnAttente: number
   stockAlertsCount: number | null
   dettesTotal: number | null
@@ -20,6 +22,8 @@ interface BoutiqueDashboardKpiGridProps {
 export default function BoutiqueDashboardKpiGrid({
   loading,
   caMois,
+  margeBruteMois,
+  tauxMargeMois,
   nbEnAttente,
   stockAlertsCount,
   dettesTotal,
@@ -80,6 +84,36 @@ export default function BoutiqueDashboardKpiGrid({
             ● Ce mois
           </span>
         </div>
+
+        {/* Badge Marge Brute si calculable */}
+        {margeBruteMois !== undefined && margeBruteMois !== null && margeBruteMois > 0 && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--price, #0A5C36)',
+            }}
+          >
+            <span>Marge brute : {formatPrice(margeBruteMois)}</span>
+            {tauxMargeMois !== undefined && tauxMargeMois !== null && tauxMargeMois > 0 && (
+              <span
+                style={{
+                  background: '#ECFDF5',
+                  color: '#065F46',
+                  borderRadius: 4,
+                  padding: '1px 5px',
+                  fontSize: 10,
+                  fontWeight: 800,
+                }}
+              >
+                {tauxMargeMois}%
+              </span>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>Chiffre d&apos;affaires</span>

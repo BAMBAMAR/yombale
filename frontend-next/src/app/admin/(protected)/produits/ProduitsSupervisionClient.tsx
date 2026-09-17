@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import { adminModererProduit } from '@/app/actions/admin'
+import { showToast } from '@/context/ToastContext'
 
 interface ProduitsSupervisionClientProps {
   initialData: {
@@ -40,8 +41,9 @@ export default function ProduitsSupervisionClient({ initialData }: ProduitsSuper
         setProduits((prev) =>
           prev.map((p) => (p.id === produit.id ? { ...p, en_stock: nextStock } : p))
         )
+        showToast(`Produit "${produit.nom}" : visibilité stock mise à jour.`, 'info', 'Modération Produit')
       } else {
-        alert(res.error || 'Erreur lors de la modération')
+        showToast(res.error || 'Erreur lors de la modération', 'error', 'Modération Produit')
       }
     } finally {
       setLoadingId(null)

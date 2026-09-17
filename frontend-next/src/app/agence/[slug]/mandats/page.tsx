@@ -16,6 +16,7 @@ import AgenceTableToolbar, { SortOption } from '@/app/agence/components/AgenceTa
 import AgenceBatchActionBar, { BatchAction } from '@/app/agence/components/AgenceBatchActionBar'
 import { exportToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders, getImmoAuthToken } from '@/lib/immo-auth'
+import { showToast } from '@/context/ToastContext'
 
 const SORT_OPTIONS: SortOption[] = [
   { value: 'date_fin', label: 'Date d’expiration' },
@@ -157,14 +158,15 @@ export default function AgenceMandatsPage() {
       })
       const data = await res.json()
       if (data.success) {
+        showToast(`Action exécutée sur ${selectedIds.size} mandat(s).`, 'success', 'Mandats')
         setSelectedIds(new Set())
         chargerDonnees()
       } else {
-        alert(data.error || 'Erreur lors de l’action groupée.')
+        showToast(data.error || 'Erreur lors de l’action groupée.', 'error', 'Mandats')
       }
     } catch (err) {
       console.error('[BATCH_MANDATS_ERR]', err)
-      alert('Erreur réseau lors de l’action groupée.')
+      showToast('Erreur réseau lors de l’action groupée.', 'error', 'Réseau')
     } finally {
       setBatchLoading(false)
     }

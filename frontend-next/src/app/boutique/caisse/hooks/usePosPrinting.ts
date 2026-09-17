@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { fcfa } from '@/lib/format'
+import { showToast } from '@/context/ToastContext'
 import type { ProduitCaisse } from '../components/PosCatalogueSection'
 
 export function usePosPrinting({
@@ -20,7 +21,12 @@ export function usePosPrinting({
 
   async function connecterImprimanteBluetooth() {
     if (typeof window === 'undefined' || !('bluetooth' in navigator)) {
-      alert("L'API WebBluetooth Direct est supportée sur Chrome et Edge (Android et PC Windows). Pour les imprimantes système, le mode Web/USB standard reste actif.")
+      showToast(
+        "L'API WebBluetooth Direct est supportée sur Chrome et Edge. Le mode impression web standard reste actif.",
+        'info',
+        'Impression Bluetooth',
+        5000
+      )
       return
     }
     try {
@@ -50,17 +56,21 @@ export function usePosPrinting({
       }
 
       if (!characteristic) {
-        alert("Imprimante Bluetooth détectée mais canal d'écriture binaire ESC/POS non trouvé.")
+        showToast("Imprimante détectée mais canal d'écriture ESC/POS non trouvé.", 'warning', 'Bluetooth POS')
         return
       }
 
       setBtDeviceName(device.name || 'Imprimante POS Bluetooth')
       setBtCharacteristic(characteristic)
-      alert(`Imprimante Bluetooth "${device.name || 'POS'}" connectée avec succès ! Les tickets s'imprimeront en 1-clic direct.`)
+      showToast(
+        `Imprimante Bluetooth "${device.name || 'POS'}" connectée ! Tickets prêts en 1-clic direct.`,
+        'success',
+        'Imprimante Connectée'
+      )
     } catch (err: any) {
       console.error('[BLUETOOTH PRINT ERR]', err)
       if (err.name !== 'NotFoundError') {
-        alert(`Information Bluetooth : ${err.message || err}`)
+        showToast(`Information Bluetooth : ${err.message || err}`, 'error', 'Bluetooth')
       }
     }
   }
@@ -102,7 +112,7 @@ export function usePosPrinting({
         return
       } catch (err: any) {
         console.error('[BT PRINT EXEC ERR]', err)
-        alert("Impression Bluetooth directe interrompue. Ouverture du module d'impression web standard.")
+        showToast("Impression Bluetooth directe interrompue. Basculement vers l'impression standard.", 'warning', 'Impression')
       }
     }
 

@@ -4,6 +4,7 @@ import { devenirApporteur, type StatsApporteur } from './actions'
 import { fcfa } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
 import { useScrollNudge } from '@/hooks/useScrollNudge'
+import { showToast } from '@/context/ToastContext'
 import Link from 'next/link'
 import {
   Store, Award, MessageSquare, BookOpen, Printer, CheckCircle2,
@@ -649,7 +650,7 @@ export default function ApporteurClient({ statsInitiales }: { statsInitiales?: S
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(pitchActuel.pitch)
-                    alert('Pitch copié !')
+                    showToast('Pitch commercial copié dans le presse-papier !', 'success', 'Kit Apporteur')
                   }}
                   style={{ padding: '6px 12px', background: '#1C2B4A', color: '#fff', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                 >

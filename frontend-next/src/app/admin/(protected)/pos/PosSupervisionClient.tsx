@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import { adminFermerSessionPOS } from '@/app/actions/admin'
+import { showToast } from '@/context/ToastContext'
 
 interface PosSupervisionClientProps {
   initialStats: any
@@ -28,7 +29,6 @@ export default function PosSupervisionClient({ initialStats, initialSessions }: 
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
 
   const handleForceCloture = async (sessionId: string) => {
-    if (!confirm('Confirmer la fermeture administrative forcée de cette session de caisse ?')) return
     setLoadingAction(sessionId)
     try {
       const res = await adminFermerSessionPOS(sessionId, { notes: 'Fermeture forcée depuis le Control Center' })
@@ -36,8 +36,9 @@ export default function PosSupervisionClient({ initialStats, initialSessions }: 
         setSessions((prev) =>
           prev.map((s) => (s.id === sessionId ? { ...s, statut: 'fermee', ecart: 0 } : s))
         )
+        showToast('Session de caisse fermée administrativement avec succès.', 'success', 'Supervision POS')
       } else {
-        alert(res.error || 'Erreur lors de la clôture')
+        showToast(res.error || 'Erreur lors de la clôture', 'error', 'Supervision POS')
       }
     } finally {
       setLoadingAction(null)

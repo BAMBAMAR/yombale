@@ -11,6 +11,7 @@ import {
   Camera,
   Music
 } from 'lucide-react';
+import { showToast } from '@/context/ToastContext';
 
 export interface AgenceData {
   id: string;
@@ -335,7 +336,7 @@ export default function VitrineBanner({ agence, waNum }: VitrineBannerProps) {
                 }).catch(() => {});
               } else {
                 navigator.clipboard.writeText(window.location.href);
-                alert('Lien copié dans le presse-papier !');
+                showToast('Lien copié dans le presse-papier !', 'info', 'Partage Vitrine');
               }
             }}
             style={{

@@ -10,6 +10,8 @@ interface BoutiqueDashboardEssentielViewProps {
   produitsCount: number | null
   dettesTotal: number | null
   caMois: number | null
+  margeBruteMois?: number | null
+  tauxMargeMois?: number | null
   nbEnAttente: number
   formatNumber: (n: number) => string
   formatPrice: (n: number) => string
@@ -22,6 +24,8 @@ export default function BoutiqueDashboardEssentielView({
   produitsCount,
   dettesTotal,
   caMois,
+  margeBruteMois,
+  tauxMargeMois,
   nbEnAttente,
   formatNumber,
   formatPrice,
@@ -360,6 +364,12 @@ export default function BoutiqueDashboardEssentielView({
               </span>
             )}
           </div>
+          {margeBruteMois !== undefined && margeBruteMois !== null && margeBruteMois > 0 && (
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--price, #0A5C36)', marginTop: 4 }}>
+              Marge brute estimée : {formatPrice(margeBruteMois)}
+              {tauxMargeMois ? ` (${tauxMargeMois}%)` : ''}
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button

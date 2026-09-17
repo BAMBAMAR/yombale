@@ -51,7 +51,7 @@ export default function StudioThemeSelector({
                 gap: 3,
               }}
             >
-              <Sparkles size={11} /> 5 Thèmes
+              <Sparkles size={11} /> 8 Thèmes Sectoriels
             </span>
           </h2>
           <p style={{ fontSize: 12, color: '#64748B', margin: '2px 0 0' }}>

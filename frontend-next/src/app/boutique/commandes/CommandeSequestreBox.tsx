@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import type { Commande } from './types'
+import { useToast } from '@/context/ToastContext'
 
 interface CommandeSequestreBoxProps {
   commande: Commande
@@ -13,6 +14,7 @@ export default function CommandeSequestreBox({
   commande,
   onUpdate,
 }: CommandeSequestreBoxProps) {
+  const { toast } = useToast()
   const [showPinModal, setShowPinModal] = useState(false)
   const [pinSaisi, setPinSaisi] = useState('')
   const [pinLoading, setPinLoading] = useState(false)
@@ -46,7 +48,7 @@ export default function CommandeSequestreBox({
         setPinErreur(data.error || 'Code PIN incorrect')
         return
       }
-      alert(data.message || 'Fonds débloqués avec succès ! Commande validée comme livrée.')
+      toast.success(data.message || 'Fonds débloqués avec succès ! Commande validée comme livrée.')
       setShowPinModal(false)
       onUpdate()
     } catch {

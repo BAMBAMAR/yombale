@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import { adminAjusterCreditClient } from '@/app/actions/admin'
+import { showToast } from '@/context/ToastContext'
 
 interface CarnetDettesClientProps {
   initialStats: any
@@ -42,8 +43,9 @@ export default function CarnetDettesClient({ initialStats, initialClients }: Car
           prev.map((c) => (c.id === editingClient.id ? { ...c, limite_credit: newLimit } : c))
         )
         setEditingClient(null)
+        showToast('Plafond de crédit mis à jour avec succès.', 'success', 'Carnet Dettes')
       } else {
-        alert(res.error || 'Erreur lors de la mise à jour')
+        showToast(res.error || 'Erreur lors de la mise à jour', 'error', 'Carnet Dettes')
       }
     } finally {
       setSaving(false)

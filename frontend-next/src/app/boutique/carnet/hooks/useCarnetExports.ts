@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
+import { useToast } from '@/context/ToastContext'
 import type { ClientCredit, TransactionCredit, BoutiqueCarnetInfo } from '../types'
 
 interface UseCarnetExportsProps {
@@ -11,6 +12,8 @@ interface UseCarnetExportsProps {
 }
 
 export function useCarnetExports({ boutique, clients }: UseCarnetExportsProps) {
+  const { toast } = useToast()
+
   const obtenirClientsAvecHistorique = useCallback(async (): Promise<ClientCredit[]> => {
     try {
       const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients?include_historique=true`)
@@ -28,7 +31,7 @@ export function useCarnetExports({ boutique, clients }: UseCarnetExportsProps) {
 
   const handleExportCSV = useCallback(async () => {
     if (clients.length === 0) {
-      alert('Aucun client enregistré dans le carnet.')
+      toast.warning('Aucun client enregistré dans le carnet.')
       return
     }
 
@@ -99,7 +102,7 @@ export function useCarnetExports({ boutique, clients }: UseCarnetExportsProps) {
 
   const handleExportPDF = useCallback(async () => {
     if (clients.length === 0) {
-      alert('Aucun client enregistré dans le carnet.')
+      toast.warning('Aucun client enregistré dans le carnet.')
       return
     }
 

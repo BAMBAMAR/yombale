@@ -1,7 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { fcfa } from '@/lib/format'
+import { showToast } from '@/context/ToastContext'
+import { Award, QrCode, MessageCircle, Tag, Sparkles } from 'lucide-react'
+import QRCode from 'qrcode-svg'
 
 export interface ClientFidelite {
   id: string
@@ -38,6 +41,7 @@ export default function PosFideliteModal({
   const [clients, setClients] = useState<ClientFidelite[]>([])
   const [loading, setLoading] = useState(false)
   const [modeEnrolement, setModeEnrolement] = useState(false)
+  const [showQrPass, setShowQrPass] = useState(false)
 
   // Formulaire enrôlement
   const [nouveauNom, setNouveauNom] = useState('')
@@ -78,16 +82,44 @@ export default function PosFideliteModal({
         const data = await res.json()
         if (data.client) {
           onSelectClient(data.client)
+          showToast(`Client fidélité ${data.client.nom} enrôlé avec succès !`, 'success', 'Fidélité')
           onClose()
         }
       } else {
-        alert('Erreur lors de l’enrôlement fidélité.')
+        showToast('Erreur lors de l’enrôlement fidélité.', 'error', 'Fidélité')
       }
     } catch (e) {
       console.error('[ENROLER ERR]', e)
+      showToast('Erreur réseau lors de l’enrôlement', 'error')
     } finally {
       setEnroling(false)
     }
+  }
+
+  const qrSvgPass = useMemo(() => {
+    if (!clientSelectionne) return ''
+    try {
+      const qr = new QRCode({
+        content: `nopalou:fidelite:${clientSelectionne.telephone}`,
+        padding: 1,
+        width: 110,
+        height: 110,
+        color: '#1C2B4A',
+        background: '#ffffff',
+        ecl: 'M',
+      })
+      return qr.svg()
+    } catch {
+      return ''
+    }
+  }, [clientSelectionne])
+
+  const handlePartagerPassWhatsApp = () => {
+    if (!clientSelectionne) return
+    let cleanTel = clientSelectionne.telephone.replace(/\D/g, '')
+    if (cleanTel.length === 9) cleanTel = `221${cleanTel}`
+    const msg = `Bonjour ${clientSelectionne.nom} !\n\nVoici votre relevé de fidélité officiel Nopalou :\n• Rang : ${clientSelectionne.rang_fidelite.toUpperCase()}\n• Cagnotte disponible : ${fcfa(clientSelectionne.cagnotte_fcfa)}\n• Tampons récoltés : ${clientSelectionne.tampons_actuels}/10\n\nMerci pour votre fidélité !`
+    window.open(`https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   return (
@@ -122,7 +154,8 @@ export default function PosFideliteModal({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span></span> Programme de Fidélité Client
+            <Award size={20} color="var(--accent, #C75B00)" />
+            <span>Programme de Fidélité Client</span>
           </h3>
           <button
             type="button"
@@ -160,11 +193,81 @@ export default function PosFideliteModal({
               </div>
               <div>
                 <span style={{ fontSize: 10, color: '#94a3b8', display: 'block' }}>Tampons Récoltés</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: '#fbbf24' }}>
-                  {clientSelectionne.tampons_actuels} / 10 🎫
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#fbbf24', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Tag size={13} />
+                  <span>{clientSelectionne.tampons_actuels} / 10</span>
                 </span>
               </div>
             </div>
+
+            {/* Actions Rapides Pass & WhatsApp */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setShowQrPass(!showQrPass)}
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  background: 'rgba(255,255,255,0.12)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 5,
+                }}
+              >
+                <QrCode size={13} />
+                <span>{showQrPass ? 'Masquer QR Pass' : 'Afficher QR Pass'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handlePartagerPassWhatsApp}
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  background: '#25D366',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 5,
+                }}
+              >
+                <MessageCircle size={13} />
+                <span>Envoyer Pass WhatsApp</span>
+              </button>
+            </div>
+
+            {/* Aperçu QR Pass Client */}
+            {showQrPass && qrSvgPass && (
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: 12,
+                  padding: 14,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: '#0f172a',
+                }}
+              >
+                <div dangerouslySetInnerHTML={{ __html: qrSvgPass }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b' }}>
+                  Scannable au comptoir : {clientSelectionne.telephone}
+                </span>
+              </div>
+            )}
 
             {/* Boutons d'utilisation de la cagnotte */}
             {clientSelectionne.cagnotte_fcfa > 0 && totalPanier > 0 && (

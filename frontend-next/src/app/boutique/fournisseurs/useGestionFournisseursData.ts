@@ -14,6 +14,7 @@ import {
   uploadJustificatifAchat,
   getBoutiqueProduits,
 } from '../actions'
+import { useToast } from '@/context/ToastContext'
 import type { Fournisseur, CommandeFournisseur, LigneCommandeForm } from './types'
 
 export function useGestionFournisseursData(boutiqueId: string, t: (key: string) => string) {
@@ -23,6 +24,7 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
   const [loading, setLoading] = useState<boolean>(true)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [uploadingFile, setUploadingFile] = useState<boolean>(false)
+  const { toast } = useToast()
 
   const chargerDonnees = useCallback(async () => {
     const cacheKeyFous = `nopalou_offline_fournisseurs_${boutiqueId}`
@@ -81,7 +83,7 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
 
   const envoyerBonCommandeWhatsApp = (fournisseur: Fournisseur, articles: any[]) => {
     if (!fournisseur?.telephone) {
-      alert('Veuillez renseigner le numéro de téléphone de ce fournisseur.')
+      toast.warning('Veuillez renseigner le numéro de téléphone de ce fournisseur.')
       return
     }
     const cleanTel = fournisseur.telephone.replace(/\D/g, '')
@@ -114,10 +116,10 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
       }
 
       if (res?.error) {
-        alert(res.error)
+        toast.error(res.error)
         return false
       } else {
-        alert(fouEditId ? 'Fournisseur modifié avec succès !' : 'Fournisseur ajouté avec succès !')
+        toast.success(fouEditId ? 'Fournisseur modifié avec succès !' : 'Fournisseur ajouté avec succès !')
         await chargerDonnees()
         return true
       }
@@ -134,9 +136,9 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
     try {
       const res = await supprimerFournisseur(boutiqueId, fId)
       if (res?.error) {
-        alert(res.error)
+        toast.error(res.error)
       } else {
-        alert(t('shop.docDeletedSuccess'))
+        toast.success(t('shop.docDeletedSuccess') || 'Fournisseur supprimé avec succès.')
         await chargerDonnees()
       }
     } catch (err) {
@@ -151,11 +153,11 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
     cmdJustificatifUrl: string
   ) => {
     if (!cmdFournisseurId) {
-      alert('Veuillez sélectionner un fournisseur.')
+      toast.warning('Veuillez sélectionner un fournisseur.')
       return false
     }
     if (cmdLignes.length === 0) {
-      alert('Veuillez ajouter au moins un produit à la commande.')
+      toast.warning('Veuillez ajouter au moins un produit à la commande.')
       return false
     }
 
@@ -182,10 +184,10 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
         : await creerCommandeFournisseur(boutiqueId, payload)
 
       if (res?.error) {
-        alert(res.error)
+        toast.error(res.error)
         return false
       } else {
-        alert(cmdEditId ? 'Bon de commande modifié avec succès !' : 'Bon de commande créé avec succès !')
+        toast.success(cmdEditId ? 'Bon de commande modifié avec succès !' : 'Bon de commande créé avec succès !')
         await chargerDonnees()
         return true
       }
@@ -208,10 +210,10 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
         justificatif_url: receptionJustificatifUrl || null,
       })
       if (res?.error) {
-        alert(res.error)
+        toast.error(res.error)
         return false
       } else {
-        alert('Commande réceptionnée et stocks mis à jour !')
+        toast.success('Commande réceptionnée et stocks mis à jour !')
         await chargerDonnees()
         return true
       }
@@ -230,7 +232,7 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
       fd.append('justificatif', file)
       const res = await uploadJustificatifAchat(boutiqueId, fd)
       if (res?.error) {
-        alert(res.error)
+        toast.error(res.error)
         return null
       } else if (res?.url) {
         return res.url
@@ -238,7 +240,7 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
       return null
     } catch (err) {
       console.error(err)
-      alert('Erreur lors du téléchargement du fichier')
+      toast.error('Erreur lors du téléchargement du fichier')
       return null
     } finally {
       setUploadingFile(false)
@@ -250,9 +252,9 @@ export function useGestionFournisseursData(boutiqueId: string, t: (key: string) 
     try {
       const res = await supprimerCommandeFournisseur(boutiqueId, cmdId)
       if (res?.error) {
-        alert(res.error)
+        toast.error(res.error)
       } else {
-        alert(t('shop.docDeletedSuccess'))
+        toast.success(t('shop.docDeletedSuccess') || 'Bon de commande supprimé avec succès.')
         await chargerDonnees()
       }
     } catch (err) {

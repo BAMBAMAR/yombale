@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { Forfait } from './page'
 import BatchActionBar, { BatchActionConfig } from '@/components/admin/BatchActionBar'
+import { showToast } from '@/context/ToastContext'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -106,14 +107,20 @@ export default function AdminTelecomClient({
   }
 
   async function deactivate(id: string) {
-    if (!confirm('Désactiver ce forfait ?')) return
     try {
       const r = await fetch(`/api/telecom/${id}`, {
         method: 'DELETE',
         headers: { 'X-Admin-Secret': adminSecret },
       })
-      if (r.ok) setForfaits(prev => prev.filter(f => f.id !== id))
-    } catch { alert('Erreur lors de la désactivation.') }
+      if (r.ok) {
+        setForfaits(prev => prev.filter(f => f.id !== id))
+        showToast('Forfait télécom désactivé.', 'info', 'Télécom')
+      } else {
+        showToast('Erreur lors de la désactivation du forfait.', 'error', 'Télécom')
+      }
+    } catch {
+      showToast('Erreur réseau lors de la désactivation.', 'error', 'Réseau')
+    }
   }
 
   const handleBatchDeactivate = async () => {

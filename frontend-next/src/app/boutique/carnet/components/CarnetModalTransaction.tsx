@@ -8,6 +8,7 @@ import type { ClientCredit, ProduitBoutique } from '../types'
 import CarnetModalCataloguePicker from './CarnetModalCataloguePicker'
 import CarnetModalManualArticleForm from './CarnetModalManualArticleForm'
 import CarnetModalDueDateSection from './CarnetModalDueDateSection'
+import { showToast } from '@/context/ToastContext'
 
 interface CarnetModalTransactionProps {
   isOpen: boolean
@@ -73,8 +74,14 @@ export default function CarnetModalTransaction({
     : Number(montantManuel) || 0
 
   const handleAjouterArticleCustom = () => {
-    if (!libelleCustomInput.trim()) return alert('Veuillez saisir le nom / la désignation de l\'article.')
-    if (!prixCustomInput || Number(prixCustomInput) <= 0) return alert('Veuillez saisir un prix unitaire valide.')
+    if (!libelleCustomInput.trim()) {
+      showToast('Veuillez saisir le nom / la désignation de l\'article.', 'warning', 'Article Requis')
+      return
+    }
+    if (!prixCustomInput || Number(prixCustomInput) <= 0) {
+      showToast('Veuillez saisir un prix unitaire valide.', 'warning', 'Prix Invalide')
+      return
+    }
     setItemsCustomPanier((prev) => [...prev, {
       id: 'custom_' + Date.now(),
       nom: libelleCustomInput.trim(),
@@ -89,7 +96,7 @@ export default function CarnetModalTransaction({
   const handleValider = async () => {
     const montantFinal = totalTransactionCourante
     if (!montantFinal || montantFinal <= 0) {
-      alert('Veuillez ajouter au moins un produit ou saisir un montant valide.')
+      showToast('Veuillez ajouter au moins un produit ou saisir un montant valide.', 'warning', 'Montant Invalide')
       return
     }
 

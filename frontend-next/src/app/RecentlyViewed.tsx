@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Clock } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
 
@@ -38,7 +39,10 @@ export default function RecentlyViewed() {
 
   return (
     <section className="recents-section">
-      <h2 className="recents-titre">🕐 Récemment consultés</h2>
+      <h2 className="recents-titre" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Clock size={20} style={{ color: 'var(--accent, #C75B00)' }} />
+        <span>Récemment consultés</span>
+      </h2>
       <div className="recents-grid">
         {recents.map(p => (
           <Link key={p.id} href={`/produit/${p.id}`} className="recents-card">

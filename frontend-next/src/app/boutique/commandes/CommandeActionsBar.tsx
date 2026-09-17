@@ -10,6 +10,7 @@ import {
 import { creerBoutiqueDocument } from '../actions'
 import { fcfa } from '@/lib/format'
 import type { Commande } from './types'
+import { useToast } from '@/context/ToastContext'
 
 interface CommandeActionsBarProps {
   commande: Commande
@@ -34,6 +35,7 @@ export default function CommandeActionsBar({
   onRetour,
   t,
 }: CommandeActionsBarProps) {
+  const { toast, confirmModal } = useToast()
   return (
     <div
       style={{
@@ -144,7 +146,7 @@ export default function CommandeActionsBar({
                       )
                       const data = await res.json()
                       if (!res.ok) {
-                        alert(data.error || "Erreur lors de l'approbation de la demande à crédit.")
+                        toast.error(data.error || "Erreur lors de l'approbation de la demande à crédit.")
                         return
                       }
                       if (typeof onUpdate === 'function') onUpdate()
@@ -157,15 +159,10 @@ export default function CommandeActionsBar({
                         )} (${commande.nom_produit}) a été approuvée par la boutique et ajoutée à votre Carnet !`
                       )
 
-                      if (
-                        confirm(
-                          `Demande d'achat à crédit de ${commande.client_nom} approuvée et ajoutée au Carnet client avec succès !\n\nSouhaitez-vous ouvrir WhatsApp pour envoyer la confirmation au client ?`
-                        )
-                      ) {
-                        window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
-                      }
+                      toast.success(`Demande de ${commande.client_nom} approuvée et ajoutée au Carnet client !`)
+                      window.open(`https://wa.me/${cleanTel}?text=${msgWa}`, '_blank')
                     } catch {
-                      alert('Erreur lors du traitement de la demande.')
+                      toast.error('Erreur lors du traitement de la demande.')
                     } finally {
                       setLoading(false)
                     }
@@ -190,12 +187,13 @@ export default function CommandeActionsBar({
 
                 <button
                   onClick={async () => {
-                    if (
-                      !confirm(
-                        `Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${commande.client_nom} ?`
-                      )
-                    )
-                      return
+                    const ok = await confirmModal({
+                      title: "Rejeter l'achat à crédit",
+                      message: `Souhaitez-vous vraiment rejeter la demande d'achat à crédit de ${commande.client_nom} ?`,
+                      confirmLabel: 'Rejeter la demande',
+                      isDanger: true,
+                    })
+                    if (!ok) return
                     changeStatut('annulee')
                   }}
                   disabled={loading}
@@ -236,10 +234,13 @@ export default function CommandeActionsBar({
                   },
                 ],
               })
-              if (res?.error) alert(res.error)
-              else alert(`Facture ${res?.reference || ''} générée avec succès !`)
+              if (res?.error) {
+                toast.error(res.error)
+              } else {
+                toast.success(`Facture ${res?.reference || ''} générée avec succès !`)
+              }
             } catch {
-              alert('Erreur lors de la création de la facture.')
+              toast.error('Erreur lors de la création de la facture.')
             } finally {
               setLoading(false)
             }

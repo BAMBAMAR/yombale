@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Download, Search, RefreshCw, User } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
+import { showToast } from '@/context/ToastContext'
 
 interface LogEntry {
   id: string
@@ -64,7 +65,7 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
   function handleExportCSV(e: React.MouseEvent) {
     e.preventDefault()
     if (logs.length === 0) {
-      alert('Aucun événement à exporter dans le journal d\'audit.')
+      showToast('Aucun événement à exporter dans le journal d\'audit.', 'warning', 'Journal Vide')
       return
     }
     setDownloadingCsv(true)
@@ -87,8 +88,9 @@ export default function BoutiqueLogs({ boutiqueId }: { boutiqueId: string }) {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
+      showToast('Journal d\'audit exporté en CSV avec succès !', 'success', 'Export CSV')
     } catch (err: any) {
-      alert(err.message || 'Erreur lors de la génération du CSV')
+      showToast(err.message || 'Erreur lors de la génération du CSV', 'error', 'Export CSV')
     } finally {
       setDownloadingCsv(false)
     }

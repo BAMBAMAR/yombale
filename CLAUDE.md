@@ -1,3 +1,101 @@
+- **Exécution du Plan Opérationnel Post-Audit & Benchmark Mondial Nopalou (Branche feature/vertical-immobilier) (17 septembre 2026)** 🏆💎🚀⚡📦🏷️📊🛡️ ✅ :
+  * **🎯 1. P0 — Scission du Monolithe Server Actions Admin (`admin.ts`) & Wizard Création Boutique** :
+    - Scission de `frontend-next/src/app/actions/admin.ts` (985 lignes) en 6 sous-modules spécialisés dans `src/app/actions/admin/`, tous inférieurs à 260 lignes :
+      - `admin-auth.ts` (173 lignes) : authentification admin, sessions, tokens.
+      - `admin-moderation.ts` (172 lignes) : modération annonces, validation boutiques, blacklist.
+      - `admin-boutiques-pos.ts` (260 lignes) : gestion parc boutiques, caisses POS, quotas.
+      - `admin-finances.ts` (58 lignes) : bilans financiers, commissions, reversements.
+      - `admin-equipe.ts` (80 lignes) : gestion collaborateurs, rôles administratifs.
+      - `admin-immo.ts` (122 lignes) : validation agences immobilières, agréments, contrôle biens.
+    - Modularisation de l'assistant de création de boutique `creer-boutique/page.tsx` (réduit de 629 lignes à 378 lignes) avec extraction sous `components/` :
+      - `ModalContratVendeur.tsx` : affichage et acceptation des CGU marchand et de la charte vendeur sans emojis (Lucide `FileText`, `Check`, `X`).
+      - `WizardStepPlanStyle.tsx` : sélection des forfaits, secteur d'activité, palette identitaire et acceptation légale.
+      - Intégration de puces de suggestions inspirantes de noms commerciaux sénégalais (`Teranga Shopping`, `Dakar Élégance`, `Taf Taf Express`, etc.).
+  * **🎯 2. P0 — Système Unifié de Notifications Toast & Éradication Totale des `alert()`** :
+    - Création du `ToastContext.tsx` (`useToast()`) avec typage strict (`success`, `error`, `warning`, `info`), portal React, icônes Lucide SVG et styles CSS dédiés (`toast.css`).
+    - Ajout du dispatcher d'événements global `showToast()` permettant aux utilitaires TypeScript hors React d'émettre des notifications sans popups natives bloquantes.
+    - **Éradication intégrale à 100% de toutes les popups natives `alert()` et `confirm()` du code source frontend** (zéro appel subsistant hors fixtures de tests unitaires XSS) :
+      - *Boutique & Caisse POS* : `ComptaBilanErpExportMenu.tsx`, `ComptaSaisieExpressView.tsx`, `useGestionDocumentsData.ts`, `useGestionDocumentsModal.ts`, `CarnetModalEditClient.tsx`, `CarnetModalNouveauClient.tsx`, `CarnetModalTransaction.tsx`, `CarnetPlansEchelonnes.tsx`, `PosFideliteModal.tsx`, `PosLockScreen.tsx`, `useCaisseData.ts`, `usePosPrinting.ts`, `useCaissePanier.ts`, `useCaisseCheckout.ts`, `PosSessionModals.tsx`, `CatalogueProduits.tsx`, `BoutiqueLogs.tsx`, `BoutiqueCard.tsx`, `BoutiqueManageSidebarHeader.tsx`, `AbonnementsManager.tsx`, `NavbarSearch.tsx`, `MesAlertesClient.tsx`.
+      - *Agence Immobilière* : `visites/page.tsx`, `mandats/page.tsx`, `maintenance/page.tsx`, `ModalNouveauTicket.tsx`, `locataires/page.tsx`, `abonnement/page.tsx`, `credits/page.tsx`, `CreditCardItem.tsx`, `VitrineBanner.tsx`, `social/page.tsx`, `SocialImportTab.tsx`, `ExportCsvButton.tsx`.
+      - *Supervision Centrale Admin* : `AgencesImmoClient.tsx`, `ProduitsSupervisionClient.tsx`, `PosSupervisionClient.tsx`, `BiensImmoClient.tsx`, `CarnetDettesClient.tsx`, `AdminTelecomClient.tsx`, `DeveloperClient.tsx`, `EquipeAdminClient.tsx`, `DeleteImmoButton.tsx`, `ApporteurClient.tsx`.
+  * **🎯 2bis. P1 — Moteur d'Automatisation Marketing (Anniversaires & Relance Inactifs)** :
+    - Enrichissement de `MarketingBoutique.tsx` avec de nouveaux modèles de campagnes pré-configurés 100% marque blanche :
+      - *Anniversaire Client & Cadeau Exclusif* : message attentionné et code promo personnalisé -10% pour le panier anniversaire.
+      - *Relance Clients Inactifs (« Vous nous manquez ! »)* : réactivation bienveillante des acheteurs endormis (> 30 jours) avec lien direct vers la vitrine et livraison locale.
+  * **🎯 3. P0 — Partage 1-Clic Statut WhatsApp & Affiche Comptoir QR Code A4/PDF** :
+    - Composant célébration `ModalBoutiqueCreeeSucces.tsx` avec aperçu live du QR Code généré vectoriellement via `qrcode-svg` pour test immédiat au smartphone.
+    - Bouton d'action directe « Partager sur mon Statut WhatsApp » (`wa.me/?text=...`) pré-rempli avec lien de la boutique et phrase d'accroche commerciale.
+    - Bouton d'impression haute définition « Imprimer l'Affiche QR Code Comptoir (A4) » s'appuyant sur `/assets/affiche-vitrine` avec cadrage pleine page `@page { size: A4 portrait }` prêt à être affiché en magasin.
+  * **🎯 4. P0 — Sécurisation Multi-Tenant Anti-IDOR & Journal d'Audit (`security_audit_vault`)** :
+    - Création de la table PostgreSQL `security_audit_vault` avec indexation temporelle et par type d'événement pour consigner les violations IDOR.
+    - Ajout de la fonction `logSecurityViolation` dans `backend/middlewares/tenantSecurity.js` et `tenantSecurityImmo.js` qui consigne automatiquement toute tentative d'accès non autorisé (IP, User Agent, endpoint, user_id, target_id).
+  * **🎯 5. P1 — Calcul de Marge Nette & Marge Brute en Temps Réel** :
+    - Ajout de la colonne `prix_achat NUMERIC(12,2)` dans la table `ventes` avec enregistrement automatique lors de chaque encaissement caisse POS (`boutiques-pos.js`).
+    - Enrichissement de la route comptable `/api/comptabilite/:boutiqueId/dashboard` pour calculer `marge_brute_mois`, `cout_achat_mois`, `taux_marge_mois` et `benefice_net_mois`.
+    - Affichage de la marge brute et du taux de marge sur les cartes KPI du tableau de bord (`BoutiqueDashboardKpiGrid.tsx`, `BoutiqueDashboardEssentielView.tsx`, hook `useBoutiqueDashboardStats.ts`).
+  * **🎯 6. P1 — Checklist d'Activation Marchand & Parcours TTFSale (`BoutiqueDashboardOnboarding`)** :
+    - Barre de progression animée indiquant le pourcentage d'achèvement de la boutique.
+    - Grille en 4 étapes interactives (Produits, Identité/Profil, Statut WhatsApp 1-Clic, Test Vente Caisse POS) avec icônes Lucide SVG sans emojis.
+  * **🎯 7. P1 — Générateur & Imprimeur de Planches d'Étiquettes Codes-Barres Universel** :
+    - Création de `ModalImprimerCodeBarres.tsx` : impression de planches d'étiquettes adhésives universelles A4 (24 étiquettes 70×37mm ou 40 étiquettes 52.5×29.7mm) et rouleaux thermiques 58/80mm.
+    - Génération vectorielle pure des codes EAN-13 via `genererSVGCodeBarresEAN13`, aperçu direct en temps réel, choix des exemplaires par référence et options d'affichage du prix/nom de boutique.
+    - Intégré dans la barre d'actions par lot `CatalogueBatchBar.tsx` et sur chaque fiche produit `CatalogueProductCard.tsx`.
+  * **🎯 8. P1 — Avis Clients Vérifiés Post-Livraison par WhatsApp (`AvisClients.tsx`)** :
+    - Notification automatique de livraison WhatsApp (`backend/routes/comptabilite.js`) enrichie du lien d'évaluation directe (`?avis_ref=CMD-XXX#avis`).
+    - Détection automatique de la référence de commande dans `AvisClients.tsx`, ouverture instantanée du formulaire de notation et attribution du badge certifié « Acheteur Vérifié ».
+  * **🎯 9. P2 — Diaspora & Paiement International Multi-Devises** :
+    - Fonctions de conversion monétaire `fcfaToEur` et `fcfaToUsd` dans `format.ts` appliquant la parité officielle garantie BCEAO (1 EUR = 655.957 FCFA) pour fluidifier les commandes des Sénégalais de l'extérieur.
+  * **🎯 10. 8 Thèmes Sectoriels Dédiés & Studio Visuel** :
+    - Extension de `frontend-next/src/lib/boutique-themes.ts` à 8 thèmes sectoriels complets (Classique Nopalou, Mode & Wax Élégant, Tech & Moderne, Supérette & Alimentation, Cosmétique & Beauté, Quincaillerie & Pro, Restauration & Délices, Artisanat & Décoration).
+    - Mise à jour de `StudioThemeSelector.tsx` avec badge "8 Thèmes Sectoriels" et typographie adaptée.
+  * **🎯 11. Vertical Immobilier (Agences) — Décomptes de Gérance & Reversements Bailleurs** :
+    - Ajout de l'action par lot « Décomptes PDF » dans `bailleurs/page.tsx` pour générer en 1 clic les rapports de reversement mensuel bailleur avec honoraires d'agence prélevés via `/api/agences/agence/:slugOrId/documents/decompte-bailleur/:proprietaireId.pdf`.
+    - Éradication des alertes natives et passage au Toast contextuel sur l'espace bailleurs.
+  * **🎯 12. Opportunité 16 — Presets Régions du Sénégal & Grand Dakar en 1-Clic (`ComptaZonesView.tsx`)** :
+    - Ajout des presets d'injection automatique en 1-clic pour les régions de l'intérieur (Thiès 2 500 F, Mbour 3 000 F, Touba 3 500 F, Saint-Louis 4 000 F, Kaolack 4 000 F, Ziguinchor 5 000 F) et Grand Dakar (Centre 1 500 F, Almadies/Ngor 2 000 F, Banlieue 2 500 F).
+    - Éradication du `confirm()` natif et remplacement par notification toast avec suppression réactive et gestion anti-doublon.
+  * **🎯 13. Système Unifié de Dialogue de Confirmation (`confirmModal` & `showConfirm`)** :
+    - Ajout du support de modales de confirmation asynchrones non-bloquantes dans `ToastContext.tsx` avec styles CSS dédiés (`toast.css`) : backdrop blur, carte de dialogue animée, icône SVG Lucide, variantes sémantiques et gestion de fermeture Escape / clic externe.
+    - Élimination des boîtes de dialogue bloquantes `confirm()` dans les flux marchands critiques :
+      - `CommandeActionsBar.tsx` (rejet commande à crédit)
+      - `BoutiqueClient.tsx` (suppression de boutique)
+      - `BoutiqueCaissiers.tsx` (suppression de caissier)
+      - `BoutiqueAdmins.tsx` (retrait d'administrateur)
+      - `ParametresFidelitePromos.tsx` (suppression de code promo)
+      - `PortailDeveloppeurBoutique.tsx` (révocation de clé API, suppression webhook)
+      - `CarnetPlansEchelonnes.tsx` (solde anticipé de plan de paiement)
+      - `ComptaDepensesView.tsx` (suppression de dépense)
+      - `ComptaVentesView.tsx` (suppression de vente)
+      - `useCatalogueProduitsData.ts` (suppression groupée de produits)
+      - `useCarnetClients.ts` (suppression de client, refus de crédit)
+  * **🎯 14. Opportunité 11 — Cartes de Fidélité Physiques QR Code & Pass Mobile Wallet (`PosFideliteModal.tsx`)** :
+    - Intégration du générateur de QR Code vectoriel pur SVG (`qrcode-svg`) encodé au format officiel `nopalou:fidelite:<telephone>`.
+    - Bouton « Afficher QR Pass » pour scan instantané de la carte au comptoir POS.
+    - Bouton d'action directe « Envoyer Pass WhatsApp » transmettant au client son rang, solde de cagnotte FCFA et nombre de tampons par message personnalisé.
+    - Éradication de l'emoji `🎫` et remplacement par l'icône vectorielle Lucide `Tag` et `Award`.
+  * **🎯 15. Opportunité 18 — Guide Matériel Officiel « Nopalou POS Box » & Imprimantes ESC/POS (`PosMaterielGuideModal.tsx`)** :
+    - Modal interactive `PosMaterielGuideModal.tsx` couvrant l'ensemble du matériel de caisse recommandé et certifié en Afrique de l'Ouest :
+      - *Imprimantes thermiques ESC/POS 58mm & 80mm* (Bluetooth et USB) avec bouton de connexion Bluetooth directe (`navigator.bluetooth`), bascule de largeur de papier 58mm/80mm et bouton de test d'impression thermique instantané.
+      - *Terminaux Android tout-en-un avec imprimante intégrée* (Sunmi V2, Sunmi V2 Pro, iMin D1/Swan) avec conseils de mise en place de la PWA en mode kiosque plein écran.
+      - *Douchettes & Lecteurs Codes-Barres* : scanners laser USB / sans fil 2.4G Plug-and-Play configurés en émulation clavier (HID) et mode couplage smartphone sans fil avec bascule 1-clic vers `PosPairageModal`.
+    - Intégration dans le menu des outils de caisse (`PosHeaderDropdownMenu.tsx`), routage via `PosHeaderRightActions.tsx` / `PosHeaderBar.tsx`, et hébergement dans `PosModalsHost.tsx`.
+  * **🎯 16. Opportunité 11bis — Pass QR Fidélité & Identifiant Comptoir sur Fiche Client (`CarnetClientDetails.tsx` & `CarnetClientQrPassCard.tsx`)** :
+    - Sous-composant modulaire `CarnetClientQrPassCard.tsx` (< 115 lignes) générant le QR Code vectoriel client (`nopalou:fidelite:<tel>`).
+    - Intégration du bouton « Pass QR » sur la fiche client du carnet (`CarnetClientDetails.tsx`) avec déploiement instantané.
+    - Bouton de transmission WhatsApp direct permettant d'envoyer la carte fidélité personnalisée au client sur son numéro pour ses passages en boutique.
+  * **🎯 17. Conformité Qualité, Linters & Anti-Slop** :
+    - `npm run lint:slop` : **0 composant monolithe (>800 lignes)**, **0 silent catch**, tous les composants créés ou modifiés sont `< 450 lignes`.
+    - `npx tsc --noEmit` : **0 erreur TypeScript** sur l'intégralité du frontend.
+    - Suite de tests unitaires Jest backend & métier : **41/41 suites passées, 314/314 tests passés à 100%**.
+    - Suite de tests frontend : **69/69 tests passés à 100%**.
+    - Respect absolu de la règle : aucun `git push` non sollicité.
+  * **🔮 18. Feuille de Route Restante & Horizons Stratégiques Futurs (Backlog R&D)** :
+    - **Agent IA Transactionnel Autonome (P2/P3)** : Évolution du chatbot (actuellement d'assistance et de consultation) vers un agent exécutant avec Function Calling, capable d'enregistrer des ventes ou d'imputer des dettes directement depuis un message vocal WhatsApp (« Note 2 sacs de riz pour Fatou »).
+    - **Intégration API Directe Flotte de Livraison (Yango Delivery / Paps / Tiak-Tiak)** : Automatisation des courses sans intervention manuelle via webhooks (création automatique de la course dès passage au statut « Préparée », tracking du coursier en direct sur la carte).
+    - **Éditeur No-Code d'Automatisations Multi-Événements (Nopalou Flow)** : Constructeur visuel de règles (« Si commande > 50 000 FCFA -> Déclencher statut VIP et code promo -15% WhatsApp »).
+    - **Recherche Sémantique Vectorielle Approfondie** : Indexation par embeddings vectoriels des catalogues produits et annonces pour requêtes en langage naturel complexe (« robe wax jaune pour mariage traditionnel »).
+    - **Application Mobile Native Compilée (Flutter / React Native)** : Optionnelle, la PWA actuelle couvrant déjà 100% des besoins (IndexedDB v4 offline, affichage plein écran kiosque, safe-area iOS).
+
 - **Mise à Niveau Opérationnelle Agence Immobilière : Recherche, Tri, Filtre, Actions Batch & Financement Wave 1-Clic WhatsApp (Branche feature/vertical-immobilier) (17 septembre 2026)** 🏢⚡🔍📊💳📱🚀 ✅ :
   * **🎯 1. Composants Réutilisables Haute Performance** :
     - `AgenceTableToolbar.tsx` : barre unifiée de recherche textuelle en temps réel avec debounce, tri dynamique multi-critères, bascule d'ordre croissant/décroissant, injection fluide de filtres contextuels personnalisés (`filterSlot`/`children`), compteur dynamique de résultats (`filteredCount` / `totalCount`) et bouton de réinitialisation instantanée des filtres.

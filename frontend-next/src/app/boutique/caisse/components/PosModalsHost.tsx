@@ -5,6 +5,7 @@ import PosModalsManager from './PosModalsManager'
 import PosModalGestionPins from './PosModalGestionPins'
 import PosSuperviseurPinModal from './PosSuperviseurPinModal'
 import PosTicketPrintView from './PosTicketPrintView'
+import PosMaterielGuideModal from './PosMaterielGuideModal'
 import type { CaissierItem } from './PosChangerCaissierModal'
 import type { PosModalsState } from '../hooks/usePosModalsState'
 
@@ -123,6 +124,8 @@ export default function PosModalsHost(props: PosModalsHostProps) {
     setModalPairageSmartphone,
     modalChangerCaissier,
     setModalChangerCaissier,
+    modalMaterielGuide,
+    setModalMaterielGuide,
     modalSuperviseur,
     setModalSuperviseur,
     superviseurTitre,
@@ -170,6 +173,15 @@ export default function PosModalsHost(props: PosModalsHostProps) {
         onSuccess={() => {
           setModalSuperviseur(false)
           if (superviseurAction) superviseurAction()
+        }}
+      />
+
+      <PosMaterielGuideModal
+        isOpen={modalMaterielGuide}
+        onClose={() => setModalMaterielGuide(false)}
+        onOuvrirPairageScanner={() => {
+          setModalMaterielGuide(false)
+          setModalPairageSmartphone(true)
         }}
       />
 

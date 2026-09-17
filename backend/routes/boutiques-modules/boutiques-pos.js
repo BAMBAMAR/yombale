@@ -189,7 +189,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
                SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
                    en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
                WHERE id = $2 AND boutique_id = $3
-               RETURNING id, nom, prix, stock_quantite`,
+               RETURNING id, nom, prix, stock_quantite, prix_achat`,
               [qte, item.id, boutiqueId]
             );
           }
@@ -200,20 +200,23 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
                SET stock_quantite = GREATEST(0, COALESCE(stock_quantite, 10) - $1),
                    en_stock = (GREATEST(0, COALESCE(stock_quantite, 10) - $1) > 0)
                WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3
-               RETURNING id, nom, prix, stock_quantite`,
+               RETURNING id, nom, prix, stock_quantite, prix_achat`,
               [qte, item.nom.trim(), boutiqueId]
             );
           }
 
           const nomProduit = item.nom || pRes?.rows[0]?.nom || 'Article POS';
           const prixUnitaire = Number(item.prix_unitaire || pRes?.rows[0]?.prix || 0);
+          const prixAchat = item.prix_achat !== undefined && item.prix_achat !== null
+            ? Number(item.prix_achat)
+            : (pRes?.rows[0]?.prix_achat ? Number(pRes.rows[0].prix_achat) : null);
           const totalLigne = prixUnitaire * qte;
           const prodIdReal = pRes?.rows[0]?.id || (item.id && /^[0-9a-f-]{36}$/i.test(item.id) ? item.id : null);
           const itemRef = calculation.items.length > 1 ? `${refVente}-${idx + 1}` : refVente;
 
           await dbClient.query(
-            `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, frais_livraison, montant_total, client_nom, methode_paiement, caissier_nom, caissier_id, session_id, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, $10, $11, $12, NOW())`,
+            `INSERT INTO ventes (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, prix_achat, frais_livraison, montant_total, client_nom, methode_paiement, caissier_nom, caissier_id, session_id, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, $10, $11, $12, $13, NOW())`,
             [
               itemRef,
               boutiqueId,
@@ -221,6 +224,7 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
               nomProduit,
               qte,
               prixUnitaire,
+              prixAchat,
               totalLigne,
               nomCaissierFinal ? `Caisse POS (${nomCaissierFinal})` : 'Caisse POS',
               modePaiement || 'cash',

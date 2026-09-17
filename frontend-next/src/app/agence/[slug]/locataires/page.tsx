@@ -18,6 +18,7 @@ import { ModalEditerLocataire, LocataireEditData } from './components/ModalEdite
 import { AgenceTableToolbar, SortOption } from '../../components/AgenceTableToolbar'
 import { AgenceBatchActionBar, BatchActionItem } from '../../components/AgenceBatchActionBar'
 import { exportDataToCsv } from '@/lib/immo-csv-export'
+import { showToast } from '@/context/ToastContext'
 
 interface LocataireItem {
   id: string
@@ -177,7 +178,7 @@ export default function LocatairesPage() {
   function handleBatchRelanceWhatsApp() {
     const locs = locataires.filter(l => selectedIds.includes(l.id) && (l.whatsapp || l.telephone))
     if (locs.length === 0) {
-      alert('Aucun numéro de téléphone WhatsApp disponible pour les locataires sélectionnés.')
+      showToast('Aucun numéro de téléphone WhatsApp disponible pour les locataires sélectionnés.', 'warning', 'Relance WhatsApp')
       return
     }
     const premier = locs[0]

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import '@/app/agence/agence.css'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import { showToast } from '@/context/ToastContext'
 
 interface AgenceItem {
   id: string
@@ -100,17 +101,16 @@ export default function AgenceAbonnementPage() {
       } else if (data.fallback_manuel) {
         setSponsoringNotice(`Paiement manuel : envoyez ${data.montant || 5000} FCFA par Wave au ${data.numero_depot} avec la référence ${data.reference}`)
       } else {
-        alert(data.error || "Impossible d'initialiser le paiement Wave.")
+        showToast(data.error || "Impossible d'initialiser le paiement Wave.", 'error', 'Paiement Wave')
       }
     } catch (err: any) {
-      alert(err.message || 'Erreur réseau lors de la commande')
+      showToast(err.message || 'Erreur réseau lors de la commande', 'error', 'Réseau')
     } finally {
       setPayingSponsoring(false)
     }
   }
 
   async function handleActivationDirecte() {
-    if (!confirm('Activer la mise en avant de cette agence pour 30 jours ?')) return
     try {
       const res = await fetch(`/api/agences/${slug}/activer-sponsoring-direct`, {
         method: 'POST',
@@ -120,12 +120,12 @@ export default function AgenceAbonnementPage() {
       const data = await res.json()
       if (data.success) {
         setAgence(data.agence)
-        alert('Mise en avant activée avec succès pour 30 jours !')
+        showToast('Mise en avant activée avec succès pour 30 jours !', 'success', 'Sponsoring Activé')
       } else {
-        alert(data.error || "Erreur lors de l'activation")
+        showToast(data.error || "Erreur lors de l'activation", 'error', 'Sponsoring')
       }
     } catch (err: any) {
-      alert(err.message || 'Erreur réseau')
+      showToast(err.message || 'Erreur réseau', 'error', 'Réseau')
     }
   }
 

@@ -7,6 +7,7 @@ import { exportToCSV, printPDFReport } from '@/lib/export'
 import { fcfa, inputStyle, labelStyle, CAT_DEPENSES, MOIS_NOMS } from '../utils'
 import { capturerZoneViseurExacte, jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { useTranslation } from '@/i18n/context'
+import { useToast } from '@/context/ToastContext'
 import { ComptaDepenseCard } from './ComptaDepenseCard'
 
 interface ComptaDepensesViewProps {
@@ -15,6 +16,7 @@ interface ComptaDepensesViewProps {
 
 export function ComptaDepensesView({ boutiqueId }: ComptaDepensesViewProps) {
   const { t } = useTranslation()
+  const { toast, confirmModal } = useToast()
   const [depenses, setDepenses] = useState<Depense[]>([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -145,9 +147,19 @@ export function ComptaDepensesView({ boutiqueId }: ComptaDepensesViewProps) {
     })
   }
 
-  function remove(id: string) {
-    if (!confirm(t('common.confirmDelete') || 'Supprimer cette dépense ?')) return
-    startTransition(async () => { await deleteDepense(boutiqueId, id); load() })
+  async function remove(id: string) {
+    const ok = await confirmModal({
+      title: 'Supprimer la dépense',
+      message: t('common.confirmDelete') || 'Voulez-vous vraiment supprimer cette dépense ?',
+      confirmLabel: 'Supprimer',
+      isDanger: true,
+    })
+    if (!ok) return
+    startTransition(async () => {
+      await deleteDepense(boutiqueId, id)
+      toast.success('Dépense supprimée')
+      load()
+    })
   }
 
   const total = depenses.reduce((s, d) => s + Number(d.montant), 0)

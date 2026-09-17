@@ -10,6 +10,7 @@ import {
 } from '@/lib/db-offline'
 import type { ProduitCaisse } from '../components/PosCatalogueSection'
 import type { BoutiquePOS, SessionCaisse } from '../types'
+import { showToast } from '@/context/ToastContext'
 export type { BoutiquePOS, SessionCaisse }
 
 export function useCaisseData({
@@ -358,8 +359,11 @@ export function useCaisseData({
 
   async function changerBoutiqueActive(newBId: string) {
     if (session) {
-      alert(
-        'Vous avez une session de caisse en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.'
+      showToast(
+        'Vous avez une session de caisse en cours sur cette boutique. Veuillez clôturer votre caisse (Clôture Z) avant de changer de boutique.',
+        'warning',
+        'Session Active',
+        5000
       )
       return
     }

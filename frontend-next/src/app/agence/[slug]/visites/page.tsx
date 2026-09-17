@@ -20,6 +20,7 @@ import AgenceTableToolbar, { SortOption } from '@/app/agence/components/AgenceTa
 import AgenceBatchActionBar, { BatchAction } from '@/app/agence/components/AgenceBatchActionBar'
 import { exportToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import { showToast } from '@/context/ToastContext'
 
 const SORT_OPTIONS: SortOption[] = [
   { value: 'date_visite', label: 'Date de visite' },
@@ -172,14 +173,15 @@ export default function VisitesPage() {
       })
       const data = await res.json()
       if (data.success) {
+        showToast(`Statut mis à jour pour ${selectedIds.size} visite(s).`, 'success', 'Visites')
         setSelectedIds(new Set())
         chargerVisites()
       } else {
-        alert(data.error || 'Erreur lors de la mise à jour groupée.')
+        showToast(data.error || 'Erreur lors de la mise à jour groupée.', 'error', 'Visites')
       }
     } catch (err) {
       console.error('[BATCH_VISITES_ERR]', err)
-      alert('Erreur réseau lors de la mise à jour.')
+      showToast('Erreur réseau lors de la mise à jour.', 'error', 'Réseau')
     } finally {
       setBatchLoading(false)
     }

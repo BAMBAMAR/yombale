@@ -17,6 +17,7 @@ import { BienItem, SocialPostItem } from '../types'
 import { SocialDiscoveredGrid, DiscoveredItem } from './SocialDiscoveredGrid'
 import { matchBiensClient } from '../matching-immo-client'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import { showToast } from '@/context/ToastContext'
 
 interface SocialImportTabProps {
   biens: BienItem[]
@@ -127,7 +128,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
       setSuccessMsg(`Publication ${postData.plateforme.toUpperCase()} importée avec succès !${matchNotice}`)
       setTimeout(() => setSuccessMsg(null), 4000)
     } catch (err: any) {
-      alert(err.message || 'Impossible d\'importer cette vidéo')
+      showToast(err.message || 'Impossible d\'importer cette vidéo', 'error', 'Import Vidéo')
     } finally {
       setImporting(false)
     }
@@ -182,7 +183,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
       setSuccessMsg(`${importedPosts.length} publication(s) importée(s) avec succès !`)
       setTimeout(() => setSuccessMsg(null), 4000)
     } catch (err: any) {
-      alert(err.message || 'Impossible de traiter ce lot')
+      showToast(err.message || 'Impossible de traiter ce lot', 'error', 'Import Lot')
     } finally {
       setImporting(false)
     }
@@ -192,7 +193,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
     e.preventDefault()
     const cleanUser = extractCleanSocialUsername(username)
     if (!cleanUser) {
-      alert('Veuillez renseigner un pseudo ou un lien de compte valide.')
+      showToast('Veuillez renseigner un pseudo ou un lien de compte valide.', 'warning', 'Profil Social')
       return
     }
 
@@ -220,7 +221,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
         throw new Error(data.error || 'Aucune publication publique trouvée pour ce compte')
       }
     } catch (err: any) {
-      alert(err.message || 'Impossible d\'explorer ce profil')
+      showToast(err.message || 'Impossible d\'explorer ce profil', 'error', 'Exploration Profil')
     } finally {
       setImporting(false)
     }
@@ -236,7 +237,7 @@ export function SocialImportTab({ biens, onImportPosts }: SocialImportTabProps) 
   function handleConfirmImportDiscovered() {
     const chosen = discoveredPosts.filter(p => selectedUrls.has(p.url))
     if (chosen.length === 0) {
-      alert('Veuillez sélectionner au moins une vidéo à importer.')
+      showToast('Veuillez sélectionner au moins une vidéo à importer.', 'warning', 'Sélection Requise')
       return
     }
 

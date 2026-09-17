@@ -1,9 +1,11 @@
 'use client'
 
+import React, { useState } from 'react'
 import { fcfa, fmtDate, fmtDateHeure } from '@/lib/format'
 import { useTranslation } from '@/i18n/context'
-import { Plus, ArrowDownLeft, Printer, MessageCircle, Edit3, X, ArrowLeft, History } from 'lucide-react'
+import { Plus, ArrowDownLeft, Printer, MessageCircle, Edit3, X, ArrowLeft, History, QrCode } from 'lucide-react'
 import CarnetPlansEchelonnes from '../carnet/components/CarnetPlansEchelonnes'
+import CarnetClientQrPassCard from '../carnet/components/CarnetClientQrPassCard'
 
 export interface ClientCredit {
   id: string
@@ -59,6 +61,7 @@ export default function CarnetClientDetails({
 }: CarnetClientDetailsProps) {
   const { t } = useTranslation()
   const soldeNum = Number(client.solde)
+  const [showQrPass, setShowQrPass] = useState(false)
 
   return (
     <div style={{
@@ -241,6 +244,32 @@ export default function CarnetClientDetails({
           <span>{t('shop.printPdfStatementBtn')}</span>
         </button>
 
+        <button
+          type="button"
+          onClick={() => setShowQrPass(!showQrPass)}
+          style={{
+            flex: isMobile ? 1 : 'none',
+            minWidth: 120,
+            background: showQrPass ? '#FFF3E8' : '#f8fafc',
+            border: showQrPass ? '1.5px solid var(--accent, #C75B00)' : '1px solid #cbd5e1',
+            color: showQrPass ? 'var(--accent, #C75B00)' : '#334155',
+            borderRadius: 10,
+            padding: '10px 12px',
+            fontWeight: 800,
+            fontSize: 12.5,
+            cursor: 'pointer',
+            minHeight: 42,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+          }}
+          title="Afficher le Pass QR Fidélité du client"
+        >
+          <QrCode size={14} />
+          <span>Pass QR</span>
+        </button>
+
         {soldeNum > 0 && (
           <button
             type="button"
@@ -268,6 +297,17 @@ export default function CarnetClientDetails({
           </button>
         )}
       </div>
+
+      {/* Carte Pass QR Fidélité Client */}
+      {/* Carte Pass QR Fidélité Client */}
+      {showQrPass && (
+        <CarnetClientQrPassCard
+          nom={client.nom}
+          telephone={client.telephone}
+          id={client.id}
+          isMobile={isMobile}
+        />
+      )}
 
       {/* Plans d'échelonnement et échéances du client */}
       <CarnetPlansEchelonnes

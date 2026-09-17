@@ -7,6 +7,7 @@ import { fcfa } from '../utils'
 import { fmtDate, fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport, exportSyscohadaGeneralLedgerCSV } from '@/lib/export'
 import { useTranslation } from '@/i18n/context'
+import { useToast } from '@/context/ToastContext'
 import { ComptaEditVenteModal } from './ComptaEditVenteModal'
 import { ComptaVenteForm } from './ComptaVenteForm'
 
@@ -16,6 +17,7 @@ interface ComptaVentesViewProps {
 
 export function ComptaVentesView({ boutiqueId }: ComptaVentesViewProps) {
   const { t } = useTranslation()
+  const { toast, confirmModal } = useToast()
   const [ventes, setVentes] = useState<Vente[]>([])
   const [zones, setZones] = useState<Zone[]>([])
   const [produits, setProduits] = useState<Produit[]>([])
@@ -58,11 +60,18 @@ export function ComptaVentesView({ boutiqueId }: ComptaVentesViewProps) {
 
   useEffect(() => { load() }, [boutiqueId])
 
-  function removeVente(id: string) {
-    if (!confirm(t('common.confirmDelete') || 'Supprimer cette vente ? Elle ne sera plus comptabilisée.')) return
+  async function removeVente(id: string) {
+    const ok = await confirmModal({
+      title: 'Supprimer la vente',
+      message: t('common.confirmDelete') || 'Supprimer cette vente ? Elle ne sera plus comptabilisée.',
+      confirmLabel: 'Supprimer',
+      isDanger: true,
+    })
+    if (!ok) return
     setDeleting(id)
     startTransition(async () => {
       await deleteVente(boutiqueId, id)
+      toast.success('Vente supprimée.')
       setDeleting(null)
       load()
     })

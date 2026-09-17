@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Copy, X, Check } from 'lucide-react'
+import { useToast } from '@/context/ToastContext'
 import type { Produit } from '../boutiqueTypes'
 
 interface ModalDupliquerProduitProps {
@@ -20,6 +21,7 @@ export default function ModalDupliquerProduit({
   const [dupNom, setDupNom] = useState('')
   const [dupPrix, setDupPrix] = useState('')
   const [dupStock, setDupStock] = useState('')
+  const { toast } = useToast()
 
   useEffect(() => {
     if (produit) {
@@ -33,7 +35,7 @@ export default function ModalDupliquerProduit({
 
   const handleConfirmer = async () => {
     if (!dupNom.trim()) {
-      alert('Le nom est requis')
+      toast.error('Le nom du produit dupliqué est requis.')
       return
     }
     await onConfirmer(

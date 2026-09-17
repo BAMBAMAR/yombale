@@ -13,6 +13,7 @@ import { ComptaSaisieExpressCatalogue } from './ComptaSaisieExpressCatalogue'
 import { ComptaSaisieExpressLibre } from './ComptaSaisieExpressLibre'
 import { ComptaSaisieExpressPanier } from './ComptaSaisieExpressPanier'
 import { ComptaSaisieExpressDepenseForm } from './ComptaSaisieExpressDepenseForm'
+import { showToast } from '@/context/ToastContext'
 
 interface ComptaSaisieExpressViewProps {
   boutiqueId: string
@@ -73,11 +74,11 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
     const qte = Number(qteCustomInput) || 1
 
     if (!libelle) {
-      alert('Veuillez saisir le nom ou libellé de l’article.')
+      showToast('Veuillez saisir le nom ou libellé de l’article.', 'warning', 'Saisie Libre')
       return
     }
     if (isNaN(prix) || prix <= 0) {
-      alert('Veuillez saisir un prix unitaire valide (> 0).')
+      showToast('Veuillez saisir un prix unitaire valide (> 0).', 'warning', 'Saisie Libre')
       return
     }
 
@@ -158,7 +159,7 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
   const handleValiderVenteRapide = async (e: React.FormEvent) => {
     e.preventDefault()
     if (nbArticlesTotal === 0) {
-      alert('Veuillez ajouter au moins un produit du catalogue ou un article libre au panier.')
+      showToast('Veuillez ajouter au moins un produit du catalogue ou un article libre au panier.', 'warning', 'Vente Express')
       return
     }
 
@@ -191,13 +192,13 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
 
     setLoading(false)
     if (erreurs === 0) {
-      setMsgSuccess(`Vente de ${nbArticlesTotal} article(s) (${fcfa(totalVente)}) enregistrée avec succès !`)
+      showToast(`Vente de ${nbArticlesTotal} article(s) (${fcfa(totalVente)}) enregistrée avec succès !`, 'success', 'Vente Réussie')
       setPanierProduits({})
       setItemsCustomPanier([])
       setClientNom('')
       setTimeout(() => setMsgSuccess(''), 3500)
     } else {
-      alert('Certaines lignes de vente n’ont pas pu être enregistrées.')
+      showToast('Certaines lignes de vente n’ont pas pu être enregistrées.', 'error', 'Erreur Vente')
     }
   }
 
@@ -206,7 +207,7 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
     e.preventDefault()
     const mNum = Number(montantDepense) || 0
     if (mNum <= 0) {
-      alert('Veuillez saisir un montant valide.')
+      showToast('Veuillez saisir un montant valide.', 'warning', 'Dépense')
       return
     }
 
@@ -219,12 +220,13 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
 
     setLoading(false)
     if (res.success) {
+      showToast('Dépense enregistrée avec succès !', 'success', 'Dépense')
       setMsgSuccess('Dépense enregistrée avec succès !')
       setMontantDepense('')
       setDescDepense('')
       setTimeout(() => setMsgSuccess(''), 3000)
     } else {
-      alert(res.error || 'Erreur lors de l’enregistrement')
+      showToast(res.error || 'Erreur lors de l’enregistrement', 'error', 'Erreur Dépense')
     }
   }
 

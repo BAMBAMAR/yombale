@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { creerPosVente, creerBoutiqueDocument } from '../../actions'
 import { ajouterVenteHorsLigne, ajouterDetteHorsLigne } from '@/lib/db-offline'
+import { showToast } from '@/context/ToastContext'
 
 export function useCaisseCheckout({
   boutiqueActiveId,
@@ -96,18 +97,18 @@ export function useCaisseCheckout({
       })
 
       if (res.error) {
-        alert(res.error)
+        showToast(res.error, 'error', 'Erreur Document')
         return
       }
 
       if (res.id) {
         window.open(`/api/boutiques/${boutiqueActiveId}/documents/${res.id}/pdf`, '_blank')
       }
-      alert(`${typeDocument.toUpperCase()} créé avec succès ! Réf : ${res.reference || res.id}`)
+      showToast(`${typeDocument.toUpperCase()} créé avec succès ! Réf : ${res.reference || res.id}`, 'success', 'Document POS')
       viderPanier()
     } catch (err) {
       console.error(`Erreur création ${typeDocument}:`, err)
-      alert(`Erreur lors de la création du ${typeDocument}`)
+      showToast(`Erreur lors de la création du ${typeDocument}`, 'error')
     }
   }
 
@@ -149,7 +150,7 @@ export function useCaisseCheckout({
 
       if (modePaiement === 'credit_client') {
         if (!clientCreditIdPOS) {
-          alert('Veuillez sélectionner un client dans le carnet pour valider la vente à crédit.')
+          showToast('Veuillez sélectionner un client dans le carnet pour valider la vente à crédit.', 'warning', 'Client Requis')
           return
         }
         if (boutiqueActiveId) {
@@ -200,7 +201,7 @@ export function useCaisseCheckout({
               })
               if (!resCredit.ok) {
                 const dataErr = await resCredit.json().catch(() => ({}))
-                alert(dataErr.error || 'Erreur lors de l’enregistrement de la vente à crédit dans le carnet.')
+                showToast(dataErr.error || 'Erreur lors de l’enregistrement de la vente à crédit dans le carnet.', 'error', 'Carnet de Crédit')
                 return
               }
               await chargerClientsCredits(boutiqueActiveId)
@@ -344,7 +345,7 @@ export function useCaisseCheckout({
       }
     } catch (errVente) {
       console.error('[POS CHECKOUT] Erreur encaissement:', errVente)
-      alert('Erreur lors de l\'encaissement.')
+      showToast('Erreur lors de l\'encaissement.', 'error', 'Caisse POS')
     } finally {
       setEncaissementEnCours(false)
     }

@@ -37,6 +37,7 @@ interface PosHeaderRightActionsProps {
   onOpenConfigPin: () => void
   onOpenModalHistorique: () => void
   onOpenModalCarnet: () => void
+  onOpenModalMaterielGuide?: () => void
   onVerrouillerCaisseManuellement: () => void
   onSeDeconnecterCompte: () => void
 }
@@ -64,6 +65,7 @@ export default function PosHeaderRightActions({
   onOpenConfigPin,
   onOpenModalHistorique,
   onOpenModalCarnet,
+  onOpenModalMaterielGuide,
   onVerrouillerCaisseManuellement,
   onSeDeconnecterCompte,
 }: PosHeaderRightActionsProps) {
@@ -245,6 +247,7 @@ export default function PosHeaderRightActions({
           onOpenConfigPin={onOpenConfigPin}
           onOpenModalHistorique={onOpenModalHistorique}
           onOpenModalCarnet={onOpenModalCarnet}
+          onOpenModalMaterielGuide={onOpenModalMaterielGuide}
           onVerrouillerCaisseManuellement={onVerrouillerCaisseManuellement}
           onSeDeconnecterCompte={onSeDeconnecterCompte}
         />

@@ -10,6 +10,7 @@ import {
   Download,
   History,
   Book,
+  Printer,
   LogOut,
 } from 'lucide-react'
 
@@ -31,6 +32,7 @@ interface PosHeaderDropdownMenuProps {
   onOpenConfigPin: () => void
   onOpenModalHistorique: () => void
   onOpenModalCarnet: () => void
+  onOpenModalMaterielGuide?: () => void
   onVerrouillerCaisseManuellement: () => void
   onSeDeconnecterCompte: () => void
 }
@@ -53,6 +55,7 @@ export default function PosHeaderDropdownMenu({
   onOpenConfigPin,
   onOpenModalHistorique,
   onOpenModalCarnet,
+  onOpenModalMaterielGuide,
   onVerrouillerCaisseManuellement,
   onSeDeconnecterCompte,
 }: PosHeaderDropdownMenuProps) {
@@ -345,6 +348,34 @@ export default function PosHeaderDropdownMenu({
           <Book size={14} />
           <span>{t('caisse.debts')} ({clientsCreditsCount})</span>
         </button>
+
+        {onOpenModalMaterielGuide && (
+          <button
+            type="button"
+            onClick={() => {
+              onOpenModalMaterielGuide()
+              onClose()
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 12px',
+              width: '100%',
+              background: 'none',
+              border: 'none',
+              color: isDarkMode ? '#ffffff' : 'var(--pos-text)',
+              fontSize: 12.5,
+              fontWeight: 600,
+              textAlign: 'left',
+              cursor: 'pointer',
+              borderRadius: 8,
+            }}
+          >
+            <Printer size={14} />
+            <span>Matériel & Imprimante POS</span>
+          </button>
+        )}
 
         <div
           style={{

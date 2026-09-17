@@ -44,6 +44,7 @@ interface PosHeaderBarProps {
   onOpenConfigPin?: () => void
   onOpenModalHistorique?: () => void
   onOpenModalCarnet?: () => void
+  onOpenModalMaterielGuide?: () => void
 }
 
 export default function PosHeaderBar(props: PosHeaderBarProps) {
@@ -109,6 +110,9 @@ export default function PosHeaderBar(props: PosHeaderBarProps) {
   const onOpenModalCarnet = modals
     ? () => modals.setModalCarnet(true)
     : (props.onOpenModalCarnet || (() => {}))
+  const onOpenModalMaterielGuide = modals
+    ? () => modals.setModalMaterielGuide(true)
+    : (props.onOpenModalMaterielGuide || (() => {}))
   return (
     <header
       className="caisse-header no-print"
@@ -277,6 +281,7 @@ export default function PosHeaderBar(props: PosHeaderBarProps) {
         onOpenConfigPin={onOpenConfigPin}
         onOpenModalHistorique={onOpenModalHistorique}
         onOpenModalCarnet={onOpenModalCarnet}
+        onOpenModalMaterielGuide={onOpenModalMaterielGuide}
         onVerrouillerCaisseManuellement={onVerrouillerCaisseManuellement}
         onSeDeconnecterCompte={onSeDeconnecterCompte}
       />

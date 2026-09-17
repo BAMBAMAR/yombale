@@ -12,6 +12,7 @@ import { AgenceTableToolbar, SortOption } from '../../components/AgenceTableTool
 import { AgenceBatchActionBar, BatchActionItem } from '../../components/AgenceBatchActionBar'
 import { exportDataToCsv } from '@/lib/immo-csv-export'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import { showToast } from '@/context/ToastContext'
 
 interface BienOption {
   id: string
@@ -94,11 +95,12 @@ export default function AgenceCreditsPage() {
 
       const data = await res.json()
       if (res.ok && data.success) {
+        showToast(`Échéance #${numeroEcheance} encaissée avec succès !`, 'success', 'Encaissement')
         setToastMsg(`Échéance #${numeroEcheance} encaissée avec succès !`)
         chargerDonnees()
         setTimeout(() => setToastMsg(null), 3500)
       } else {
-        alert(data.error || 'Erreur lors de l\'encaissement')
+        showToast(data.error || 'Erreur lors de l\'encaissement', 'error', 'Encaissement')
       }
     } catch (err) {
       console.error('[ENCAISSER_ERR]', err)
@@ -228,7 +230,7 @@ export default function AgenceCreditsPage() {
   function handleBatchRelanceWhatsApp() {
     const clientsAvecSolde = credits.filter(c => selectedIds.includes(c.id) && c.solde_restant > 0 && c.beneficiaire_tel)
     if (clientsAvecSolde.length === 0) {
-      alert('Aucun des clients sélectionnés n\'a de solde restant ou de numéro de téléphone renseigné.')
+      showToast('Aucun des clients sélectionnés n\'a de solde restant ou de numéro de téléphone renseigné.', 'warning', 'Relance Client')
       return
     }
     // Ouvre la première relance et notifie

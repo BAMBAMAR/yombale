@@ -4,6 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import type { Boutique, ManageTab } from '../../types'
 import { ArrowLeft, X, ChevronDown, Eye, Palette } from 'lucide-react'
+import { showToast } from '@/context/ToastContext'
 
 interface BoutiqueManageSidebarHeaderProps {
   boutique: Boutique
@@ -412,20 +413,24 @@ export default function BoutiqueManageSidebarHeader({
                 type="button"
                 onClick={async () => {
                   const nouveauStatut = !boutique.actif
-                  const msg = nouveauStatut
-                    ? 'Voulez-vous réactiver votre boutique et la rendre visible dans l’annuaire public Nopalou ?'
-                    : 'Voulez-vous désactiver (masquer) votre boutique du catalogue public Nopalou ?'
-                  if (!confirm(msg)) return
                   try {
                     const res = await fetch(`/api/boutiques/${boutique.id}/statut`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ actif: nouveauStatut }),
                     })
-                    if (res.ok) router.refresh()
-                    else alert('Erreur lors de la modification du statut.')
+                    if (res.ok) {
+                      showToast(
+                        nouveauStatut ? 'Boutique activée et visible !' : 'Boutique mise en pause.',
+                        'info',
+                        'Statut Boutique'
+                      )
+                      router.refresh()
+                    } else {
+                      showToast('Erreur lors de la modification du statut.', 'error', 'Statut Boutique')
+                    }
                   } catch {
-                    alert('Erreur réseau')
+                    showToast('Erreur réseau lors de la modification', 'error', 'Réseau')
                   }
                 }}
                 style={{

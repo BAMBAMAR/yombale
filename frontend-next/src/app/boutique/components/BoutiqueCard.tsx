@@ -6,6 +6,7 @@ import Link from 'next/link'
 import ExternalImg from '@/components/ExternalImg'
 import { Store, Monitor, Edit, Eye, Trash2, Tag, MapPin, Phone, ArrowRight } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
+import { showToast } from '@/context/ToastContext'
 import type { Boutique } from '../types'
 
 interface BoutiqueCardProps {
@@ -32,8 +33,6 @@ export default function BoutiqueCard({
     const msg = nouveauStatut 
       ? 'Voulez-vous réactiver votre boutique et la rendre visible dans l’annuaire Nopalou ?' 
       : 'Voulez-vous désactiver (masquer) votre boutique du catalogue public Nopalou ?'
-    if (!confirm(msg)) return
-
     setTogglingStatut(true)
     try {
       const res = await fetch(`/api/boutiques/${boutique.id}/statut`, {
@@ -42,12 +41,17 @@ export default function BoutiqueCard({
         body: JSON.stringify({ actif: nouveauStatut }),
       })
       if (res.ok) {
+        showToast(
+          nouveauStatut ? 'Boutique activée et visible en ligne !' : 'Boutique mise en pause.',
+          'info',
+          'Statut Boutique'
+        )
         router.refresh()
       } else {
-        alert('Erreur lors de la modification du statut.')
+        showToast('Erreur lors de la modification du statut.', 'error', 'Statut Boutique')
       }
     } catch {
-      alert('Erreur de réseau')
+      showToast('Erreur de connexion réseau', 'error', 'Réseau')
     } finally {
       setTogglingStatut(false)
     }

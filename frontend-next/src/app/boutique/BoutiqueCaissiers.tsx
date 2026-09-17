@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from '@/i18n/context'
+import { useToast } from '@/context/ToastContext'
 import { AlertTriangle, Users } from 'lucide-react'
 import CaissierTerminalBanner from './caissiers/CaissierTerminalBanner'
 import CaissierAddForm from './caissiers/CaissierAddForm'
@@ -23,6 +24,7 @@ const CODES_PIN_TRIVIAUX = [
 ]
 
 export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }) {
+  const { toast, confirmModal } = useToast()
   const [caissiers, setCaissiers] = useState<Caissier[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -137,7 +139,13 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
   }
 
   async function handleDelete(caissierId: string) {
-    if (!confirm(t('shop.confirmDeleteCashier'))) return
+    const ok = await confirmModal({
+      title: 'Supprimer le compte caissier',
+      message: t('shop.confirmDeleteCashier') || 'Êtes-vous sûr de vouloir supprimer définitivement ce caissier ?',
+      confirmLabel: 'Supprimer',
+      isDanger: true,
+    })
+    if (!ok) return
     setError(null)
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/caissiers/${caissierId}`, {
@@ -147,9 +155,11 @@ export default function BoutiqueCaissiers({ boutiqueId }: { boutiqueId: string }
         const data = await res.json()
         throw new Error(data.error || t('errors.genericError') || 'Erreur lors de la suppression')
       }
+      toast.success('Caissier supprimé avec succès.')
       await fetchCaissiers()
     } catch (err: any) {
       setError(err.message)
+      toast.error(err.message)
     }
   }
 

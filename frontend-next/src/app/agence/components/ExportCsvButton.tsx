@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { Download, Loader2 } from 'lucide-react'
+import { showToast } from '@/context/ToastContext'
 
 interface ExportCsvButtonProps {
   slug: string
@@ -37,10 +38,10 @@ export default function ExportCsvButton({ slug, type, label }: ExportCsvButtonPr
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      showToast(`Export ${type} téléchargé avec succès !`, 'success', 'Export CSV')
     } catch (err: any) {
       console.error('[EXPORT_CSV_ERR]', err)
-      alert(err.message || 'Impossible d\'exporter les données')
+      showToast(err.message || 'Impossible d\'exporter les données', 'error', 'Export CSV')
     } finally {
       setDownloading(false)
     }

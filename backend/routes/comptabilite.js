@@ -1503,7 +1503,7 @@ router.patch(
           confirmee:      msgConfirmee,
           en_preparation: `📦 *En préparation — ${boutique.nom}*\n\nVotre commande *${commande.reference}* est en cours de préparation.`,
           expediee:       `🚚 *Commande expédiée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* est en route ! Vous serez livré(e) prochainement.`,
-          livree:         `🎉 *Livraison confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* a été livrée. Merci pour votre achat !`,
+          livree:         `🎉 *Livraison confirmée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* a bien été livrée. Merci pour votre achat !\n\n⭐ *Votre avis nous intéresse :*\nPartagez votre avis vérifié en 10 secondes :\n${SITE}/boutiques/${boutique.slug || boutique.id}?avis_ref=${encodeURIComponent(commande.reference)}#avis`,
           annulee:        `❌ *Commande annulée — ${boutique.nom}*\n\nVotre commande *${commande.reference}* a été annulée. Contactez la boutique pour plus d'informations.`,
         };
         const msg = msgs[req.body.statut];
@@ -1606,11 +1606,20 @@ router.get('/:boutiqueId/dashboard', verifierToken, param('boutiqueId').isUUID()
     const [statsVentes, statsDepenses, topProduit, stockAlerte] = await Promise.all([
       pool.query(`
         SELECT
-          COALESCE(SUM(CASE WHEN date_trunc('month', created_at) = date_trunc('month', NOW()) THEN montant_total END), 0) AS ca_mois,
-          COALESCE(SUM(CASE WHEN date_trunc('month', created_at) = date_trunc('month', NOW() - INTERVAL '1 month') THEN montant_total END), 0) AS ca_mois_precedent,
-          COUNT(CASE WHEN date_trunc('month', created_at) = date_trunc('month', NOW()) THEN 1 END)::int AS nb_ventes_mois,
-          COALESCE(SUM(montant_total), 0) AS ca_total
-        FROM ventes WHERE boutique_id=$1
+          COALESCE(SUM(CASE WHEN date_trunc('month', v.created_at) = date_trunc('month', NOW()) THEN v.montant_total END), 0) AS ca_mois,
+          COALESCE(SUM(CASE WHEN date_trunc('month', v.created_at) = date_trunc('month', NOW() - INTERVAL '1 month') THEN v.montant_total END), 0) AS ca_mois_precedent,
+          COUNT(CASE WHEN date_trunc('month', v.created_at) = date_trunc('month', NOW()) THEN 1 END)::int AS nb_ventes_mois,
+          COALESCE(SUM(v.montant_total), 0) AS ca_total,
+          COALESCE(SUM(CASE WHEN date_trunc('month', v.created_at) = date_trunc('month', NOW())
+            THEN (COALESCE(v.montant_total, 0) - (COALESCE(v.prix_achat, bp.prix_achat, 0) * COALESCE(v.quantite, 1)))
+          END), 0) AS marge_brute_mois,
+          COALESCE(SUM(CASE WHEN date_trunc('month', v.created_at) = date_trunc('month', NOW())
+            THEN (COALESCE(v.prix_achat, bp.prix_achat, 0) * COALESCE(v.quantite, 1))
+          END), 0) AS cout_achat_mois,
+          COALESCE(SUM(COALESCE(v.montant_total, 0) - (COALESCE(v.prix_achat, bp.prix_achat, 0) * COALESCE(v.quantite, 1))), 0) AS marge_brute_totale
+        FROM ventes v
+        LEFT JOIN boutique_produits bp ON v.produit_id = bp.id
+        WHERE v.boutique_id=$1
       `, [id]),
       pool.query(`
         SELECT
@@ -1633,14 +1642,25 @@ router.get('/:boutiqueId/dashboard', verifierToken, param('boutiqueId').isUUID()
 
     const v = statsVentes.rows[0];
     const d = statsDepenses.rows[0];
+    const caMois = Number(v.ca_mois);
+    const margeBruteMois = Number(v.marge_brute_mois);
+    const coutAchatMois = Number(v.cout_achat_mois);
+    const depensesMois = Number(d.depenses_mois);
+    const tauxMargeMois = caMois > 0 ? Math.round((margeBruteMois / caMois) * 100) : 0;
+    const beneficeNetMois = margeBruteMois - depensesMois;
+
     res.json({
-      ca_mois: Number(v.ca_mois),
+      ca_mois: caMois,
       ca_mois_precedent: Number(v.ca_mois_precedent),
       nb_ventes_mois: v.nb_ventes_mois,
       ca_total: Number(v.ca_total),
-      depenses_mois: Number(d.depenses_mois),
+      marge_brute_mois: margeBruteMois,
+      cout_achat_mois: coutAchatMois,
+      taux_marge_mois: tauxMargeMois,
+      depenses_mois: depensesMois,
       depenses_total: Number(d.depenses_total),
-      benefice_mois: Number(v.ca_mois) - Number(d.depenses_mois),
+      benefice_net_mois: beneficeNetMois,
+      benefice_mois: beneficeNetMois,
       top_produits: topProduit.rows,
       stock_alerte: stockAlerte.rows,
     });

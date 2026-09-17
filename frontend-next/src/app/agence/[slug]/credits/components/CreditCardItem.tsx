@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Check, MessageCircle, Zap, Loader2 } from 'lucide-react'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import { showToast } from '@/context/ToastContext'
 
 export interface EcheanceItem {
   numero: number
@@ -70,12 +71,13 @@ export function CreditCardItem({
         const waUrl = cleanTel
           ? `https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`
           : `https://wa.me/?text=${encodeURIComponent(msg)}`
-        window.open(waUrl, '_blank')
+        showToast('Lien de paiement Wave envoyé sur WhatsApp.', 'success', 'Paiement Wave')
       } else {
-        alert(json.error || 'Erreur lors de la génération du lien Wave')
+        showToast(json.error || 'Erreur lors de la génération du lien Wave', 'error', 'Paiement Wave')
       }
     } catch (e) {
       console.error(e)
+      showToast('Erreur réseau lors de la génération du lien Wave', 'error')
     } finally {
       setLoadingWaveEch(null)
     }

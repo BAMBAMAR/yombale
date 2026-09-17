@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
+import { showToast } from '@/context/ToastContext'
 import type { ClientCredit } from '../types'
 
 interface CarnetModalEditClientProps {
@@ -52,7 +53,7 @@ export default function CarnetModalEditClient({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editNom.trim() || !editTel.trim()) {
-      alert(t('shop.nameAndPhoneRequired' as any) || 'Le nom et le téléphone sont obligatoires.')
+      showToast(t('shop.nameAndPhoneRequired' as any) || 'Le nom et le téléphone sont obligatoires.', 'warning', 'Champs Requis')
       return
     }
 

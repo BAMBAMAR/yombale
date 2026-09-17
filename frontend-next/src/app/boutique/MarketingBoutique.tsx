@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from '@/i18n/context'
+import { useToast } from '@/context/ToastContext'
 import { lienBoutiqueWhatsapp } from '@/lib/format'
 import { getBoutiqueProduits } from './actions'
 import { initierWaveBoutiqueSponsoring } from '@/app/actions/paiement'
@@ -43,6 +44,7 @@ export default function MarketingBoutique({
   const [totalProduits, setTotalProduits] = useState<number>(0)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [sponsoringEnCours, setSponsoringEnCours] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     let annule = false
@@ -81,10 +83,10 @@ export default function MarketingBoutique({
       if (res.url) {
         window.location.href = res.url
       } else if (res.error) {
-        alert(res.error)
+        toast.error(res.error)
       }
     } catch {
-      alert("Impossible d'initier le sponsoring Wave")
+      toast.error("Impossible d'initier le sponsoring Wave", 'Erreur Paiement')
     } finally {
       setSponsoringEnCours(false)
     }
@@ -109,6 +111,18 @@ export default function MarketingBoutique({
       titre: 'Nouvel Arrivage & Nouveautés',
       desc: "Pour notifier vos clients fidèles de l'arrivée de nouveaux articles.",
       message: `*NOUVEAUX ARRIVAGES DISPONIBLES !* \n\nDe nouveaux articles viennent d'arriver chez *${boutique.nom}* !\n\nDécouvrez toutes les nouveautés en photo : ${lienBoutique}\n\nStock limité — premier arrivé, premier servi !\n${contactTel ? `WhatsApp : ${contactTel}` : ''}`,
+    },
+    {
+      id: 'anniversaire',
+      titre: 'Anniversaire Client & Cadeau Exclusif',
+      desc: 'Souhaitez un joyeux anniversaire avec une attention particulière et une remise.',
+      message: `Joyeux Anniversaire de la part de toute l'équipe de *${boutique.nom}* !\n\nPour célébrer votre journée spéciale, nous avons le plaisir de vous offrir une réduction exclusive de -10% sur tout votre prochain panier !\n\nDécouvrez notre sélection : ${lienBoutique}\n${contactTel ? `Contactez-nous directement sur WhatsApp pour en profiter : ${contactTel}` : ''}`,
+    },
+    {
+      id: 'relance_inactifs',
+      titre: 'Relance Clients Inactifs (Vous nous manquez !)',
+      desc: 'Réactivez les clients qui n’ont pas commandé depuis plus de 30 jours.',
+      message: `Bonjour !\n\nCela fait un petit moment que nous n'avons pas eu le plaisir de vous servir chez *${boutique.nom}*.\n\nDe nouveaux articles viennent d'arriver et vous attendent sur notre vitrine : ${lienBoutique}\n\nProfitez de la livraison rapide à ${ville} !\nÀ très vite !`,
     },
     {
       id: 'fetes',

@@ -4,6 +4,7 @@ import React from 'react'
 import { Shield, KeyRound, ArrowLeft, LogOut, Copy, Store } from 'lucide-react'
 import PosLockPinPad from './PosLockPinPad'
 import PosLockCaissierGrid from './PosLockCaissierGrid'
+import { showToast } from '@/context/ToastContext'
 
 interface PosLockScreenProps {
   boutiques: Array<{ id: string; nom: string; logo?: string | null }>
@@ -341,8 +342,11 @@ export default function PosLockScreen(props: PosLockScreenProps) {
                 if (tok && typeof window !== 'undefined') {
                   const terminalUrl = `${window.location.origin}/boutique/caisse?token=${tok}`
                   navigator.clipboard.writeText(terminalUrl)
-                  alert(
-                    `Lien Terminal Dédié copié !\n\nOuvrez ce lien sur la tablette ou l'ordinateur de vos caissiers pour qu'ils travaillent sans avoir accès à votre compte :\n${terminalUrl}`
+                  showToast(
+                    'Lien Terminal copié dans le presse-papier ! Ouvrez-le sur la tablette caissier.',
+                    'success',
+                    'Terminal POS Dédié',
+                    5000
                   )
                 }
               }}

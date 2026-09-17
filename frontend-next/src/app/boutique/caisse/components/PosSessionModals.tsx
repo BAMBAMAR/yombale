@@ -161,7 +161,7 @@ export default function PosSessionModals(props: PosSessionModalsProps) {
             } catch (e) {
               console.error('Erreur cloture backend:', e)
             }
-            alert('Session de caisse fermée avec succès ! Rapport Z imprimé.')
+            showToast('Session de caisse fermée avec succès ! Rapport Z imprimé.', 'success')
             setSession(null)
             setEspecesComptees('')
             setModalClotureZ(false)

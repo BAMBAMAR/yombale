@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTranslation } from '@/i18n/context'
+import { useToast } from '@/context/ToastContext'
 
 interface Admin {
   id: string
@@ -18,6 +19,7 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
   const [newEmail, setNewEmail] = useState('')
   const [adding, setAdding] = useState(false)
   const { t } = useTranslation()
+  const { toast, confirmModal } = useToast()
 
   async function fetchAdmins() {
     const cached = localStorage.getItem(`nopalou_offline_admins_${boutiqueId}`)
@@ -66,7 +68,13 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
   }
 
   async function handleDelete(adminId: string) {
-    if (!confirm(t('shop.confirmRemoveAdmin'))) return
+    const ok = await confirmModal({
+      title: 'Retirer cet administrateur',
+      message: t('shop.confirmRemoveAdmin') || 'Êtes-vous sûr de vouloir retirer cet administrateur ?',
+      confirmLabel: 'Retirer',
+      isDanger: true,
+    })
+    if (!ok) return
     setError(null)
     try {
       const res = await fetch(`/api/boutiques/${boutiqueId}/admins/${adminId}`, {
@@ -76,9 +84,11 @@ export default function BoutiqueAdmins({ boutiqueId }: { boutiqueId: string }) {
         const data = await res.json()
         throw new Error(data.error || t('errors.genericError') || 'Erreur lors de la suppression')
       }
+      toast.success('Administrateur retiré avec succès.')
       await fetchAdmins()
     } catch (err: any) {
       setError(err.message)
+      toast.error(err.message)
     }
   }
 

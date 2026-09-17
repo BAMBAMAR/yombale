@@ -9,6 +9,7 @@ import {
   publierProduitAnnonce,
 } from '../actions'
 import { fcfa } from '@/lib/format'
+import { useToast } from '@/context/ToastContext'
 import { sauvegarderProduitsLocaux, obtenirProduitsLocaux } from '@/lib/db-offline'
 import type { Boutique, Produit } from '../boutiqueTypes'
 
@@ -21,6 +22,7 @@ export function useCatalogueProduitsData({
   userId?: string
   filtreInitial?: 'jamais_partage'
 }) {
+  const { toast, confirmModal } = useToast()
   const [produits, setProduits] = useState<Produit[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -136,9 +138,10 @@ export function useCatalogueProduitsData({
     startTransition(async () => {
       const res = await updateStock(boutique.id, produitId, val)
       if (res?.error) {
-        alert(res.error)
+        toast.error(res.error)
         loadProduits()
       } else {
+        toast.success('Stock mis à jour avec succès.')
         setEditingStockId(null)
         loadProduits()
       }
@@ -179,7 +182,13 @@ export function useCatalogueProduitsData({
 
   const handleBatchDelete = async () => {
     if (selectedProdIds.size === 0) return
-    if (!confirm(`Supprimer définitivement les ${selectedProdIds.size} produits sélectionnés ?`)) return
+    const ok = await confirmModal({
+      title: 'Supprimer les produits sélectionnés',
+      message: `Supprimer définitivement les ${selectedProdIds.size} produits sélectionnés ? Cette action est irréversible.`,
+      confirmLabel: 'Supprimer par lot',
+      isDanger: true,
+    })
+    if (!ok) return
     try {
       setBatchLoading(true)
       setDeleteError(null)

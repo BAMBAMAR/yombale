@@ -26,10 +26,12 @@ import '@/styles/saas-commerce.css';
 import '@/styles/social-shop.css';
 import '@/styles/studio.css';
 import '@/styles/admin.css';
+import '@/styles/toast.css';
 import './globals.css';
 
 import { getOptionalSession } from '@/lib/dal';
 import I18nClientProvider from '@/components/I18nClientProvider';
+import { ToastProvider } from '@/context/ToastContext';
 import { getValidLocale, isRTL, isI18nScopedRoute } from '@/i18n/config';
 
 // ── Sentry (optionnel, front-end error tracking) ────────────────
@@ -245,6 +247,7 @@ export default async function RootLayout({
       <body>
         <I18nClientProvider initialLocale={locale}>
         <CartProvider>
+        <ToastProvider>
         {/* Lien d'évitement pour la navigation au clavier (WCAG 2.4.1) */}
         <a href="#app-main" className="skip-link">
           Aller au contenu principal
@@ -476,6 +479,7 @@ export default async function RootLayout({
             <p>© 2026 Nopalou — Une marque de SKYROAD - SARL. Dakar, Sénégal. Tous droits réservés.</p>
           </div>
         </footer>
+        </ToastProvider>
         </CartProvider>
         </I18nClientProvider>
       </body>

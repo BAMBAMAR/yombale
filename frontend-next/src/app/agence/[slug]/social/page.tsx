@@ -14,6 +14,7 @@ import {
   Check,
   Globe
 } from 'lucide-react'
+import { showToast } from '@/context/ToastContext'
 import {
   BienItem,
   SocialAccountProfile,
@@ -142,13 +143,15 @@ export default function AgencySocialShopManagerPage() {
 
       const data = await res.json()
       if (data.success) {
+        showToast('Modifications enregistrées avec succès !', 'success', 'Social Shop')
         setToastMsg('Modifications enregistrées avec succès !')
         setTimeout(() => setToastMsg(null), 3500)
       } else {
-        alert(data.error || 'Erreur lors de l\'enregistrement')
+        showToast(data.error || 'Erreur lors de l\'enregistrement', 'error', 'Social Shop')
       }
     } catch (err) {
       console.error('[SAVE_SOCIAL_SHOP_ERR]', err)
+      showToast('Erreur réseau lors de l\'enregistrement', 'error')
     } finally {
       setSaving(false)
     }

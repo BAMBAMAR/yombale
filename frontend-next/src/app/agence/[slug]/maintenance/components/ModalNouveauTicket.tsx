@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Wrench } from 'lucide-react'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
+import { showToast } from '@/context/ToastContext'
 
 export interface BienOption {
   id: string
@@ -69,13 +70,14 @@ export default function ModalNouveauTicket({
           cout_estime: '',
           a_charge_de: 'proprietaire',
         })
+        showToast('Ticket de maintenance créé avec succès !', 'success', 'Maintenance')
         onSuccess()
       } else {
-        alert(data.error || 'Erreur lors de la création du ticket.')
+        showToast(data.error || 'Erreur lors de la création du ticket.', 'error', 'Maintenance')
       }
     } catch (err) {
       console.error('[CREATE_TICKET_ERR]', err)
-      alert('Erreur réseau lors de la création du ticket.')
+      showToast('Erreur réseau lors de la création du ticket.', 'error', 'Réseau')
     } finally {
       setSaving(false)
     }

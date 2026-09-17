@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { useToast } from '@/context/ToastContext'
 import ModalEntrepotForm from './entrepots/ModalEntrepotForm'
 import ModalStockAjustement from './entrepots/ModalStockAjustement'
 import EntrepotsGrid from './entrepots/EntrepotsGrid'
@@ -60,6 +61,7 @@ export default function GestionEntrepots({ boutiqueId }: { boutiqueId: string })
   const [selectedEntrepotId, setSelectedEntrepotId] = useState('')
   const [quantiteStock, setQuantiteStock] = useState<number>(0)
   const [savingStock, setSavingStock] = useState(false)
+  const { toast } = useToast()
 
   const token =
     typeof window !== 'undefined'
@@ -153,10 +155,11 @@ export default function GestionEntrepots({ boutiqueId }: { boutiqueId: string })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Échec de l’enregistrement')
 
+      toast.success(editingId ? 'Entrepôt mis à jour avec succès !' : 'Entrepôt créé avec succès !')
       setShowModal(false)
       chargerDonnees()
     } catch (err: any) {
-      alert(err.message || 'Erreur lors de la sauvegarde')
+      toast.error(err.message || 'Erreur lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -183,10 +186,11 @@ export default function GestionEntrepots({ boutiqueId }: { boutiqueId: string })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Échec de la mise à jour du stock')
 
+      toast.success('Stock de l’entrepôt mis à jour avec succès !')
       setShowStockModal(false)
       chargerDonnees()
     } catch (err: any) {
-      alert(err.message || 'Erreur mise à jour stock')
+      toast.error(err.message || 'Erreur mise à jour stock')
     } finally {
       setSavingStock(false)
     }
@@ -215,7 +219,7 @@ export default function GestionEntrepots({ boutiqueId }: { boutiqueId: string })
             setQuantiteStock(0)
             setShowStockModal(true)
           } else {
-            alert('Veuillez créer au moins un entrepôt et un produit au préalable.')
+            toast.warning('Veuillez créer au moins un entrepôt et un produit au préalable.')
           }
         }}
       />

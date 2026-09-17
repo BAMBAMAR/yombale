@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { deleteAnnonceImmo } from '@/app/actions/immo'
 import { useTranslation } from '@/i18n/context'
+import { showToast } from '@/context/ToastContext'
 
 export default function DeleteImmoButton({ id }: { id: string }) {
   const [confirming, setConfirming] = useState(false)
@@ -16,9 +17,10 @@ export default function DeleteImmoButton({ id }: { id: string }) {
     startTransition(async () => {
       const res = await deleteAnnonceImmo(id)
       if (!res.error) {
+        showToast('Annonce supprimée avec succès.', 'info', 'Suppression')
         router.refresh()
       } else {
-        alert(res.error)
+        showToast(res.error, 'error', 'Suppression')
       }
       setConfirming(false)
     })

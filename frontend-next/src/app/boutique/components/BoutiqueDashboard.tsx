@@ -43,6 +43,8 @@ export default function BoutiqueDashboard({
             produitsCount={stats.produitsCount}
             dettesTotal={stats.dettesTotal}
             caMois={stats.caMois}
+            margeBruteMois={stats.margeBruteMois}
+            tauxMargeMois={stats.tauxMargeMois}
             nbEnAttente={nbEnAttente}
             formatNumber={formatNumber}
             formatPrice={formatPrice}
@@ -59,6 +61,8 @@ export default function BoutiqueDashboard({
           <BoutiqueDashboardKpiGrid
             loading={stats.loading}
             caMois={stats.caMois}
+            margeBruteMois={stats.margeBruteMois}
+            tauxMargeMois={stats.tauxMargeMois}
             nbEnAttente={nbEnAttente}
             stockAlertsCount={stats.stockAlertsCount}
             dettesTotal={stats.dettesTotal}

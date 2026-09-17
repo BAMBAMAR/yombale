@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   MessageCircle,
   Download,
+  FileText,
 } from 'lucide-react'
 import BailleurCardItem from './components/BailleurCardItem'
 import { getImmoAuthHeaders, getImmoAuthToken } from '@/lib/immo-auth'
@@ -19,6 +20,7 @@ import { ModalNouveauBailleur } from './components/ModalNouveauBailleur'
 import { AgenceTableToolbar, SortOption } from '../../components/AgenceTableToolbar'
 import { AgenceBatchActionBar, BatchActionItem } from '../../components/AgenceBatchActionBar'
 import { exportDataToCsv } from '@/lib/immo-csv-export'
+import { useToast } from '@/context/ToastContext'
 
 interface Proprietaire {
   id: string
@@ -42,6 +44,7 @@ const SORT_OPTIONS: SortOption[] = [
 ]
 
 export default function BailleursPage() {
+  const { toast } = useToast()
   const params = useParams()
   const slug = params?.slug as string
 
@@ -60,7 +63,6 @@ export default function BailleursPage() {
   // Modales
   const [showModalNouveau, setShowModalNouveau] = useState(false)
   const [bailleurAEditer, setBailleurAEditer] = useState<BailleurEditData | null>(null)
-  const [toastMsg, setToastMsg] = useState<string | null>(null)
 
   const token = getImmoAuthToken()
 
@@ -149,7 +151,7 @@ export default function BailleursPage() {
   function handleBatchContactWhatsApp() {
     const contacts = proprietaires.filter(p => selectedIds.includes(p.id) && (p.whatsapp || p.telephone))
     if (contacts.length === 0) {
-      alert('Aucun numéro de téléphone WhatsApp disponible pour les propriétaires sélectionnés.')
+      toast.error('Aucun numéro de téléphone WhatsApp disponible pour les propriétaires sélectionnés.')
       return
     }
     const premier = contacts[0]
@@ -158,7 +160,22 @@ export default function BailleursPage() {
     const msg = `Bonjour ${premier.prenom ? `${premier.prenom} ` : ''}${premier.nom}, message de suivi de votre agence concernant vos biens en mandat de gestion.`
     const waUrl = `https://wa.me/${cleanTel}?text=${encodeURIComponent(msg)}`
     window.open(waUrl, '_blank')
-    setToastMsg(`Discussion ouverte pour ${premier.nom}. ${contacts.length - 1} autre(s) propriétaire(s) sélectionné(s).`)
+    toast.info(`Discussion ouverte pour ${premier.nom}. ${contacts.length - 1} autre(s) propriétaire(s) sélectionné(s).`)
+  }
+
+  function handleBatchDecomptes() {
+    const targets = selectedIds.length > 0 ? selectedIds : proprietairesFiltres.map(p => p.id)
+    if (targets.length === 0) {
+      toast.error('Aucun bailleur sélectionné.')
+      return
+    }
+    for (const bId of targets.slice(0, 5)) {
+      const url = `/api/agences/agence/${slug}/documents/decompte-bailleur/${bId}.pdf${
+        token ? `?token=${encodeURIComponent(token)}` : ''
+      }`
+      window.open(url, '_blank')
+    }
+    toast.success(`${Math.min(targets.length, 5)} décompte(s) généré(s) en PDF.`)
   }
 
   const batchActions: BatchActionItem[] = [
@@ -168,6 +185,12 @@ export default function BailleursPage() {
       icon: MessageCircle,
       onClick: handleBatchContactWhatsApp,
       variant: 'success',
+    },
+    {
+      id: 'export_decomptes',
+      label: 'Décomptes PDF',
+      icon: FileText,
+      onClick: handleBatchDecomptes,
     },
     {
       id: 'export_csv',
@@ -207,13 +230,6 @@ export default function BailleursPage() {
           <span>Ajouter un propriétaire</span>
         </button>
       </div>
-
-      {toastMsg && (
-        <div style={{ padding: '12px 16px', background: '#DCFCE7', color: '#166534', borderRadius: 8, fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <CheckCircle2 size={18} />
-          {toastMsg}
-        </div>
-      )}
 
       {/* ── Toolbar : Recherche, Tri & Filtres ── */}
       <AgenceTableToolbar
@@ -316,9 +332,8 @@ export default function BailleursPage() {
           onClose={() => setShowModalNouveau(false)}
           onSuccess={() => {
             setShowModalNouveau(false)
-            setToastMsg('Nouveau bailleur mandant enregistré avec succès.')
+            toast.success('Nouveau bailleur mandant enregistré avec succès.')
             chargerBailleurs()
-            setTimeout(() => setToastMsg(null), 4000)
           }}
         />
       )}
@@ -331,9 +346,8 @@ export default function BailleursPage() {
           onClose={() => setBailleurAEditer(null)}
           onSuccess={() => {
             setBailleurAEditer(null)
-            setToastMsg('Fiche du bailleur mise à jour avec succès.')
+            toast.success('Fiche du bailleur mise à jour avec succès.')
             chargerBailleurs()
-            setTimeout(() => setToastMsg(null), 4000)
           }}
         />
       )}

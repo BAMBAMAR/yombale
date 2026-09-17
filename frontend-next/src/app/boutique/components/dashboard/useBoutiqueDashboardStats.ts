@@ -8,6 +8,8 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
   const [produitsCount, setProduitsCount] = useState<number | null>(null)
   const [stockAlertsCount, setStockAlertsCount] = useState<number | null>(null)
   const [caMois, setCaMois] = useState<number | null>(null)
+  const [margeBruteMois, setMargeBruteMois] = useState<number | null>(null)
+  const [tauxMargeMois, setTauxMargeMois] = useState<number | null>(null)
   const [dettesTotal, setDettesTotal] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [onboardingOpen, setOnboardingOpen] = useState(false)
@@ -32,10 +34,12 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
     const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null
     if (cached) {
       try {
-        const { count, alerts, ca, dettes } = JSON.parse(cached)
+        const { count, alerts, ca, dettes, marge, tauxMarge } = JSON.parse(cached)
         if (typeof count === 'number') setProduitsCount(count)
         if (typeof alerts === 'number') setStockAlertsCount(alerts)
         if (typeof ca === 'number') setCaMois(ca)
+        if (typeof marge === 'number') setMargeBruteMois(marge)
+        if (typeof tauxMarge === 'number') setTauxMargeMois(tauxMarge)
         if (typeof dettes === 'number') setDettesTotal(dettes)
         setLoading(false)
       } catch (e) {
@@ -67,9 +71,22 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
         setStockAlertsCount(alerts)
       }
 
-      if (resDash.status === 'fulfilled' && resDash.value && typeof resDash.value.ca_mois === 'number') {
-        ca = resDash.value.ca_mois
-        setCaMois(ca)
+      let marge = margeBruteMois || 0
+      let tauxMarge = tauxMargeMois || 0
+
+      if (resDash.status === 'fulfilled' && resDash.value) {
+        if (typeof resDash.value.ca_mois === 'number') {
+          ca = resDash.value.ca_mois
+          setCaMois(ca)
+        }
+        if (typeof resDash.value.marge_brute_mois === 'number') {
+          marge = resDash.value.marge_brute_mois
+          setMargeBruteMois(marge)
+        }
+        if (typeof resDash.value.taux_marge_mois === 'number') {
+          tauxMarge = resDash.value.taux_marge_mois
+          setTauxMargeMois(tauxMarge)
+        }
       }
 
       if (
@@ -84,7 +101,7 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
       }
 
       try {
-        localStorage.setItem(cacheKey, JSON.stringify({ count, alerts, ca, dettes }))
+        localStorage.setItem(cacheKey, JSON.stringify({ count, alerts, ca, dettes, marge, tauxMarge }))
       } catch (err) {
         console.warn('[Nopalou:BoutiqueDashboard:cache]', err)
       }
@@ -123,6 +140,8 @@ export function useBoutiqueDashboardStats(boutique: Boutique) {
     produitsCount,
     stockAlertsCount,
     caMois,
+    margeBruteMois,
+    tauxMargeMois,
     dettesTotal,
     loading,
     modeEssentiel,

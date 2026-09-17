@@ -10,6 +10,7 @@ import {
   genererEcrituresSyscohada,
   type TransactionComptable
 } from '@/lib/syscohada-export'
+import { showToast } from '@/context/ToastContext'
 
 interface ComptaBilanErpExportMenuProps {
   boutiqueId: string
@@ -64,9 +65,10 @@ export function ComptaBilanErpExportMenu({
       } else if (format === 'odoo') {
         exportOdooJSON(ecritures, boutiqueNom)
       }
+      showToast("Export ERP (OHADA) généré avec succès !", 'success', 'Export Comptable')
     } catch (err) {
       console.error('[Comptabilite] Erreur export ERP:', err)
-      alert("Erreur lors de la génération de l'export ERP.")
+      showToast("Erreur lors de la génération de l'export ERP.", 'error', 'Export Comptable')
     } finally {
       setExportantErp(false)
       setMenuErpOuvert(false)

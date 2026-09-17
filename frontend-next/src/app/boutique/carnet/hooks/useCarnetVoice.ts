@@ -10,6 +10,7 @@ import {
 } from '@/lib/voice-assistant'
 import { jouerBipEtVibrer } from '@/lib/scanner-helper'
 import { fcfa } from '@/lib/format'
+import { useToast } from '@/context/ToastContext'
 import type { ClientCredit, VoiceActionPending, BoutiqueCarnetInfo } from '../types'
 
 interface UseCarnetVoiceProps {
@@ -31,6 +32,7 @@ export function useCarnetVoice({
   ouvrirFicheClient,
   onOpenModalTransactionFromVoice,
 }: UseCarnetVoiceProps) {
+  const { toast } = useToast()
   const [voiceActionPending, setVoiceActionPending] = useState<VoiceActionPending | null>(null)
   const [voiceActionLoading, setVoiceActionLoading] = useState(false)
   const [isListeningVoice, setIsListeningVoice] = useState(false)
@@ -84,16 +86,16 @@ export function useCarnetVoice({
           }
         } else {
           const err = await res.json()
-          alert(err.error || 'Erreur lors de l’enregistrement vocal.')
+          toast.error(err.error || 'Erreur lors de l’enregistrement vocal.')
         }
       } catch (e) {
         console.error('Erreur validation vocale carnet:', e)
-        alert('Une erreur est survenue lors de l’enregistrement.')
+        toast.error('Une erreur est survenue lors de l’enregistrement.')
       } finally {
         setVoiceActionLoading(false)
       }
     },
-    [boutique.id, chargerDonnees, chargerHistoriqueClient, setClientSelectionne]
+    [boutique.id, chargerDonnees, chargerHistoriqueClient, setClientSelectionne, toast]
   )
 
   const modifierDepuisVocal = useCallback(

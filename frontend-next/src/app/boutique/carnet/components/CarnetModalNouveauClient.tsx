@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
+import { showToast } from '@/context/ToastContext'
 
 interface CarnetModalNouveauClientProps {
   isOpen: boolean
@@ -36,7 +37,7 @@ export default function CarnetModalNouveauClient({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!nomClient.trim() || !telClient.trim()) {
-      alert(t('shop.nameAndPhoneRequired' as any) || 'Le nom et le téléphone sont obligatoires.')
+      showToast(t('shop.nameAndPhoneRequired' as any) || 'Le nom et le téléphone sont obligatoires.', 'warning', 'Champs Requis')
       return
     }
 

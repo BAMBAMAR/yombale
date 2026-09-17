@@ -6,6 +6,7 @@ import { deleteAlerte, fetchUserAlertes } from '@/app/actions/alertes'
 import { useTranslation } from '@/i18n/context'
 import { fcfa } from '@/lib/format'
 import { Bell, Trash2, ExternalLink, MessageCircle, Mail, Clock, Loader2, AlertCircle } from 'lucide-react'
+import { showToast } from '@/context/ToastContext'
 
 interface Alerte {
   id: string
@@ -51,8 +52,6 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
   }, [userId])
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('account.confirmDeleteAlert') || 'Voulez-vous vraiment supprimer cette alerte ?')) return
-
     setDeletingId(id)
     try {
       const result = await deleteAlerte(id)
@@ -60,8 +59,9 @@ export default function MesAlertesClient({ userId }: MesAlertesClientProps) {
         throw new Error(result.error || t('errors.serverError') || 'Erreur suppression')
       }
       setAlertes((prev) => prev.filter((a) => a.id !== id))
+      showToast('Alerte de prix supprimée avec succès.', 'info', 'Alerte Prix')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erreur lors de la suppression')
+      showToast(err instanceof Error ? err.message : 'Erreur lors de la suppression', 'error', 'Alerte Prix')
     } finally {
       setDeletingId(null)
     }

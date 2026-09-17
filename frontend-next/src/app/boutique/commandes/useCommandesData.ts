@@ -6,8 +6,10 @@ import { fmtDateHeure } from '@/lib/format'
 import { exportToCSV, printPDFReport } from '@/lib/export'
 import type { Commande, PanierAbandonne } from './types'
 import { getStatutLabel } from './types'
+import { useToast } from '@/context/ToastContext'
 
 export function useCommandesData(boutiqueId: string, t: any) {
+  const { toast } = useToast()
   const [subTab, setSubTab] = useState<'commandes' | 'zones'>('commandes')
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [paniersAbandonnes, setPaniersAbandonnes] = useState<PanierAbandonne[]>([])
@@ -90,7 +92,7 @@ export function useCommandesData(boutiqueId: string, t: any) {
         load()
       }
     } catch {
-      alert('Impossible de générer le lien de relance WhatsApp')
+      toast.error('Impossible de générer le lien de relance WhatsApp')
     }
   }
 

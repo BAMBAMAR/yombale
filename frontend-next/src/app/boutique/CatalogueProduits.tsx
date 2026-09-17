@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from 'react'
 import { CheckCircle2, AlertTriangle } from 'lucide-react'
 import { useTranslation } from '@/i18n/context'
+import { showToast } from '@/context/ToastContext'
 import type { Boutique, Produit } from './boutiqueTypes'
 import ModalPartageProduit from '@/components/ModalPartageProduit'
 import BatchImportModal from './BatchImportModal'
@@ -18,6 +19,7 @@ import CatalogueToolbar from './catalogue/CatalogueToolbar'
 import CatalogueBatchBar from './catalogue/CatalogueBatchBar'
 import CatalogueProductCard from './catalogue/CatalogueProductCard'
 import ModalDupliquerProduit from './catalogue/ModalDupliquerProduit'
+import ModalImprimerCodeBarres from './catalogue/ModalImprimerCodeBarres'
 
 function CatalogueProduits({
   boutique,
@@ -38,6 +40,7 @@ function CatalogueProduits({
   const [showBatchModal, setShowBatchModal] = useState(false)
   const [produitADupliquer, setProduitADupliquer] = useState<Produit | null>(null)
   const [partageModalData, setPartageModalData] = useState<{ produit: Produit; isNew?: boolean } | null>(null)
+  const [produitsPourEtiquettes, setProduitsPourEtiquettes] = useState<Produit[] | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const {
@@ -125,8 +128,9 @@ function CatalogueProduits({
         stock_quantite: stock,
       })
       if (res?.error) {
-        alert(res.error)
+        showToast(res.error, 'error', 'Duplication Produit')
       } else {
+        showToast('Produit dupliqué avec succès !', 'success', 'Duplication Produit')
         setSuccessMsg('Produit dupliqué avec succès !')
         setProduitADupliquer(null)
         loadProduits()
@@ -135,13 +139,14 @@ function CatalogueProduits({
   }
 
   const handleDeleteProduct = (id: string) => {
-    if (!confirm('Supprimer ce produit ?')) return
     setDeleteError(null)
     startTransition(async () => {
       const res = await deleteProduit(boutique.id, id)
       if (res?.error) {
         setDeleteError(res.error)
+        showToast(res.error, 'error', 'Suppression Produit')
       } else {
+        showToast('Produit supprimé du catalogue.', 'info', 'Suppression Produit')
         setSuccessMsg('Produit supprimé.')
         loadProduits()
       }
@@ -149,12 +154,14 @@ function CatalogueProduits({
   }
 
   const handlePublishAd = (id: string) => {
-    if (!confirm('Publier ce produit comme annonce classifiée ?')) return
     startTransition(async () => {
       const res = await publierProduitAnnonce(boutique.id, id)
-      if (res?.error) alert(res.error)
-      else if (res?.besoin_paiement) alert(res.message)
-      else {
+      if (res?.error) {
+        showToast(res.error, 'error', 'Publication Annonce')
+      } else if (res?.besoin_paiement) {
+        showToast(res.message || 'Paiement requis pour publier cette annonce.', 'warning', 'Paiement Requis')
+      } else {
+        showToast(res?.message || 'Publié avec succès en annonce !', 'success', 'Annonce Publiée')
         setSuccessMsg(res?.message || 'Publié avec succès en annonce !')
       }
     })
@@ -250,6 +257,10 @@ function CatalogueProduits({
         onCopyList={handleBatchCopyList}
         onBatchDelete={handleBatchDelete}
         onClearSelection={() => setSelectedProdIds(new Set())}
+        onPrintLabels={() => {
+          const selectionnes = produits.filter((p) => selectedProdIds.has(p.id))
+          setProduitsPourEtiquettes(selectionnes)
+        }}
       />
 
       {loading ? (
@@ -343,6 +354,7 @@ function CatalogueProduits({
               onDelete={handleDeleteProduct}
               onPublishAd={handlePublishAd}
               formatNumber={formatNumber}
+              onPrintLabel={(prod) => setProduitsPourEtiquettes([prod])}
             />
           ))}
         </div>
@@ -355,6 +367,15 @@ function CatalogueProduits({
           produit={partageModalData.produit}
           boutique={boutique}
           isNewlyCreated={partageModalData.isNew}
+        />
+      )}
+
+      {produitsPourEtiquettes && (
+        <ModalImprimerCodeBarres
+          isOpen={!!produitsPourEtiquettes}
+          onClose={() => setProduitsPourEtiquettes(null)}
+          produits={produitsPourEtiquettes}
+          nomBoutique={boutique.nom}
         />
       )}
     </div>

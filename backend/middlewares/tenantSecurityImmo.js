@@ -2,6 +2,7 @@
 // Sécurisation multi-tenant et vérification stricte des droits d'accès Agence Immobilière (Anti-IDOR)
 
 const { pool } = require('../models/db');
+const { logSecurityViolation } = require('./tenantSecurity');
 
 /**
  * Vérifie si un utilisateur possède ou collabore sur une agence immobilière donnée (par ID UUID ou Slug).
@@ -119,6 +120,15 @@ function requireAgenceAccess(requiredRoleOrPerm = null, paramName = 'id') {
     try {
       const access = await checkAgenceAccess(agenceIdOrSlug, userId);
       if (!access) {
+        logSecurityViolation({
+          eventType: 'IDOR_AGENCE_ACCESS_DENIED',
+          userId,
+          tenantType: 'agence',
+          targetId: agenceIdOrSlug,
+          req,
+          details: { reason: 'Unauthorized access attempt to agence' }
+        });
+
         return res.status(403).json({
           success: false,
           error: "Accès refusé : vous ne disposez pas des droits d'accès à cette agence.",

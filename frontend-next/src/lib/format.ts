@@ -131,3 +131,25 @@ export function decodeHtml(str: string | null | undefined): string {
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
 }
+
+// ── Diaspora & Paiement International Multi-Devises ───────────────────────────
+// Taux officiel BCEAO Zone Franc CFA : 1 EUR = 655.957 FCFA (parité fixe garantie)
+export const TAUX_OFFICIEL_EUR_FCFA = 655.957
+export const TAUX_INDICATIF_USD_FCFA = 600.0
+
+export function fcfaToEur(prixFcfa: number | string | null | undefined): string {
+  if (prixFcfa === null || prixFcfa === undefined || prixFcfa === '') return '—'
+  const num = Number(prixFcfa)
+  if (isNaN(num)) return '—'
+  const eur = num / TAUX_OFFICIEL_EUR_FCFA
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(eur)
+}
+
+export function fcfaToUsd(prixFcfa: number | string | null | undefined, tauxUsd = TAUX_INDICATIF_USD_FCFA): string {
+  if (prixFcfa === null || prixFcfa === undefined || prixFcfa === '') return '—'
+  const num = Number(prixFcfa)
+  if (isNaN(num)) return '—'
+  const usd = num / tauxUsd
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(usd)
+}
+

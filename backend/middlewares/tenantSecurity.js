@@ -28,6 +28,43 @@ async function checkBoutiqueAccess(boutiqueIdOrSlug, userId) {
 }
 
 /**
+ * Enregistre une violation de sécurité ou tentative d'accès non autorisée dans la base d'audit.
+ */
+async function logSecurityViolation({
+  eventType = 'IDOR_VIOLATION',
+  userId = null,
+  tenantType = 'boutique',
+  targetId = null,
+  req = null,
+  details = {}
+}) {
+  try {
+    const ip = req?.headers['x-forwarded-for']?.split(',')[0]?.trim() || req?.socket?.remoteAddress || 'unknown';
+    const userAgent = req?.headers['user-agent'] || 'unknown';
+    const endpoint = req?.originalUrl || req?.url || 'unknown';
+    const method = req?.method || 'UNKNOWN';
+
+    await pool.query(
+      `INSERT INTO security_audit_vault (event_type, user_id, tenant_type, target_id, ip_address, user_agent, endpoint, method, details)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        eventType,
+        userId ? String(userId) : null,
+        tenantType,
+        targetId ? String(targetId) : null,
+        ip,
+        userAgent,
+        endpoint,
+        method,
+        JSON.stringify(details || {})
+      ]
+    );
+  } catch (err) {
+    console.error('[SECURITY_AUDIT_VAULT_ERR]:', err.message);
+  }
+}
+
+/**
  * Middleware Express vérifiant que l'utilisateur connecté est bien le propriétaire ou
  * un collaborateur autorisé de la boutique ciblée dans la requête.
  * Attache l'objet boutique sur `req.boutique`.
@@ -55,6 +92,16 @@ function requireBoutiqueOwnership(paramName = 'id') {
     try {
       const boutique = await checkBoutiqueAccess(boutiqueIdOrSlug, req.user.userId);
       if (!boutique) {
+        // Enregistrer la tentative IDOR dans la table d'audit
+        logSecurityViolation({
+          eventType: 'IDOR_BOUTIQUE_ACCESS_DENIED',
+          userId: req.user.userId,
+          tenantType: 'boutique',
+          targetId: boutiqueIdOrSlug,
+          req,
+          details: { reason: 'Unauthorized access attempt to boutique' }
+        });
+
         return res.status(403).json({
           success: false,
           error: 'Accès refusé : vous ne disposez pas des droits requis sur cette boutique.',
@@ -77,5 +124,6 @@ function requireBoutiqueOwnership(paramName = 'id') {
 
 module.exports = {
   checkBoutiqueAccess,
-  requireBoutiqueOwnership
+  requireBoutiqueOwnership,
+  logSecurityViolation
 };

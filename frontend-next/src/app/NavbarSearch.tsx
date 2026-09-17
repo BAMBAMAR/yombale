@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
 import { createVoiceListener, cleanVoiceSearchQuery } from '@/lib/voice-assistant'
+import { showToast } from '@/context/ToastContext'
 
 interface ProduitResult {
   id: string
@@ -73,7 +74,7 @@ export default function NavbarSearch({ alwaysOpen = false }: { alwaysOpen?: bool
         console.warn('Voice search start failed', e)
       }
     } else {
-      alert('La recherche vocale n’est pas disponible sur ce navigateur.')
+      showToast('La recherche vocale n’est pas disponible sur ce navigateur.', 'info', 'Recherche Vocale')
     }
   }
 

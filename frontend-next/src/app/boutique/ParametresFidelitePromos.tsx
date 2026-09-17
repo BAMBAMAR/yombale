@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useFormState } from 'react-dom'
 import { updateBoutique, createPromotion, deletePromotion, getBoutiquePromotions } from './actions'
+import { useToast } from '@/context/ToastContext'
 import type { ActionState } from '@/lib/backend-fetch'
 import { Gift, ShieldCheck, Tag } from 'lucide-react'
 import FideliteTab from './fidelite/FideliteTab'
@@ -24,6 +25,7 @@ export default function ParametresFidelitePromos({
   onUpdate: () => void
 }) {
   const [subTab, setSubTab] = useState<'fidelite' | 'remises_pos' | 'promotions'>('fidelite')
+  const { toast, confirmModal } = useToast()
 
   // ── État Fidélité & Caisse ──
   const action = updateBoutique.bind(null, boutique.id)
@@ -123,12 +125,19 @@ export default function ParametresFidelitePromos({
   }, [promoState])
 
   const handleSupprimerPromo = async (promoId: string) => {
-    if (!confirm('Supprimer définitivement ce code promo ?')) return
+    const ok = await confirmModal({
+      title: 'Supprimer ce code promo',
+      message: 'Souhaitez-vous vraiment supprimer définitivement ce code promo ?',
+      confirmLabel: 'Supprimer',
+      isDanger: true,
+    })
+    if (!ok) return
     const res = await deletePromotion(boutique.id, promoId)
     if (res.success) {
+      toast.success('Code promo supprimé avec succès.')
       setPromotions((prev) => prev.filter((p) => p.id !== promoId))
     } else {
-      alert(res.error || 'Erreur lors de la suppression')
+      toast.error(res.error || 'Erreur lors de la suppression')
     }
   }
 

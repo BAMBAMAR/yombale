@@ -36,6 +36,7 @@ interface CatalogueProductCardProps {
   onDelete: (id: string) => void
   onPublishAd: (id: string) => void
   formatNumber: (n: number) => string
+  onPrintLabel?: (p: Produit) => void
 }
 
 export default function CatalogueProductCard({
@@ -54,6 +55,7 @@ export default function CatalogueProductCard({
   onDelete,
   onPublishAd,
   formatNumber,
+  onPrintLabel,
 }: CatalogueProductCardProps) {
   const [menuActionsOuvert, setMenuActionsOuvert] = useState(false)
 
@@ -63,6 +65,10 @@ export default function CatalogueProductCard({
   const handlePrintBarcode = (e: React.MouseEvent) => {
     e.stopPropagation()
     setMenuActionsOuvert(false)
+    if (onPrintLabel) {
+      onPrintLabel(p)
+      return
+    }
     const ean = (p as any).code_barre || '2001234567891'
     const svgBarcode = genererSVGCodeBarresEAN13(ean)
     const printWin = window.open('', '_blank', 'width=480,height=400')

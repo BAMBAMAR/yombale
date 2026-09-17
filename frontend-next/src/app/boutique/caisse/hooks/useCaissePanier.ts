@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { ProduitCaisse, LignePanier } from '../components/PosCatalogueSection'
 import type { ClientFidelite } from '../components/PosFideliteModal'
+import { showToast } from '@/context/ToastContext'
 
 export interface TicketEnAttente {
   id: string
@@ -77,7 +78,7 @@ export function useCaissePanier({
   function mettrePanierEnAttente() {
     if (panier.length === 0) return
     if (ticketsEnAttente.length >= 3) {
-      alert('Maximum 3 tickets en attente autorisés. Veuillez encaisser ou libérer un ticket en cours.')
+      showToast('Maximum 3 tickets en attente autorisés. Veuillez encaisser ou libérer un ticket en cours.', 'warning', 'Tickets en Attente')
       return
     }
     const uniqueId = `T-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`
