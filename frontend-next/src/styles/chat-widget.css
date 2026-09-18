@@ -85,6 +85,24 @@
   background: #15223a;
 }
 
+.npl-chat-btn-logo {
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.npl-chat-restore-logo {
+  width: 20px;
+  height: 20px;
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
 .npl-chat-status-dot {
   width: 8px;
   height: 8px;
@@ -157,18 +175,34 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--accent, #c75b00);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
   flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.npl-chat-header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .npl-chat-header-title {
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.npl-chat-badge-verified {
+  color: #38bdf8;
+  flex-shrink: 0;
 }
 
 .npl-chat-header-sub {

@@ -2,12 +2,11 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import {
-  MessageCircle,
   X,
   Send,
-  Sparkles,
   ExternalLink,
   EyeOff,
+  BadgeCheck,
 } from 'lucide-react'
 import ChatbotMessageItem, { type ChatMessage } from './ChatbotMessageItem'
 
@@ -21,7 +20,7 @@ function getCurrentTime(): string {
 const INITIAL_MESSAGE: ChatMessage = {
   id: 'msg-init',
   sender: 'bot',
-  text: "Bonjour et bienvenue sur Nopalou ! Je suis l'assistant interactif. Vous pouvez me poser une question, rechercher un article, trouver un logement ou découvrir nos boutiques :",
+  text: "Salam alaykoum ! Bienvenue sur l'assistant officiel Nopalou. Vous pouvez me poser une question, rechercher un article, trouver un logement ou découvrir nos boutiques :",
   time: getCurrentTime(),
   chips: [
     { label: 'Rechercher un smartphone', url: 'iPhone 13' },
@@ -145,10 +144,16 @@ export default function ChatbotWidget() {
           type="button"
           className="npl-chat-restore-btn"
           onClick={handleRestoreWidget}
-          title="Afficher l'Aide & Recherche Nopalou"
-          aria-label="Afficher l'assistant"
+          title="Afficher l'Assistant Nopalou"
+          aria-label="Afficher l'assistant Nopalou"
         >
-          <MessageCircle size={16} />
+          <img
+            src="/icons/logo-mark.svg"
+            alt="Assistant Nopalou"
+            width={20}
+            height={20}
+            className="npl-chat-restore-logo"
+          />
         </button>
       ) : (
         /* Bouton Flottant Déclencheur avec Option Masquer */
@@ -161,9 +166,19 @@ export default function ChatbotWidget() {
             title="Assistant Nopalou — Aide & Recherche"
           >
             <span className="npl-chat-status-dot" />
-            {isOpen ? <X size={18} /> : <MessageCircle size={18} />}
+            {isOpen ? (
+              <X size={18} />
+            ) : (
+              <img
+                src="/icons/logo-mark.svg"
+                alt=""
+                width={18}
+                height={18}
+                className="npl-chat-btn-logo"
+              />
+            )}
             <span className="npl-chat-floating-label">
-              {isOpen ? 'Fermer' : 'Aide & Recherche'}
+              {isOpen ? 'Fermer' : 'Assistant Nopalou'}
             </span>
           </button>
 
@@ -175,7 +190,7 @@ export default function ChatbotWidget() {
                 e.stopPropagation()
                 handleHideWidget()
               }}
-              title="Masquer le bouton Aide & Recherche"
+              title="Masquer le bouton Assistant Nopalou"
               aria-label="Masquer ce bouton d'aide"
             >
               <X size={13} />
@@ -191,13 +206,22 @@ export default function ChatbotWidget() {
           <div className="npl-chat-header">
             <div className="npl-chat-header-info">
               <div className="npl-chat-header-avatar">
-                <Sparkles size={18} />
+                <img
+                  src="/icons/logo-mark.svg"
+                  alt="Nopalou Officiel"
+                  width={36}
+                  height={36}
+                  className="npl-chat-header-avatar-img"
+                />
               </div>
               <div>
-                <div className="npl-chat-header-title">Assistant Nopalou</div>
+                <div className="npl-chat-header-title">
+                  <span>Nopalou Officiel</span>
+                  <BadgeCheck size={16} className="npl-chat-badge-verified" aria-label="Certifié" />
+                </div>
                 <div className="npl-chat-header-sub">
                   <span className="npl-chat-status-dot" />
-                  <span>En ligne • IA & WhatsApp</span>
+                  <span>Assistant certifié • En ligne</span>
                 </div>
               </div>
             </div>

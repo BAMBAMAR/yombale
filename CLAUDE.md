@@ -1,3 +1,18 @@
+- **Intégration Identité Officielle Nopalou & Widget Chatbot Certifié (18 septembre 2026)** 🌟🛡️🤖✨✅ :
+  * **🎨 1. Déploiement de l'Identité de Marque Officielle sur le Widget Web (`ChatbotWidget.tsx`)** :
+    - Remplacement des icônes génériques (`MessageCircle`, `Sparkles`) par le logo vectoriel maître officiel `/icons/logo-mark.svg` (squircle dégradé solaire 4-stop Nopalou avec monogramme géométrique 'N' pur blanc).
+    - Intégration du badge de certification officiel `BadgeCheck` (`lucide-react`) aux côtés du titre "Nopalou Officiel".
+    - Mise à jour du sous-titre de statut en "Assistant certifié • En ligne" avec indicateur pulsation vert.
+    - Actualisation du libellé du bouton déclencheur flottant en "Assistant Nopalou" et du message d'accueil initial ("Salam alaykoum ! Bienvenue sur l'assistant officiel Nopalou...").
+  * **💎 2. Stylisation CSS & Rendu Visuel Haute Définition (`chat-widget.css`)** :
+    - Nouveaux sélecteurs dédiés `.npl-chat-btn-logo` (18px) et `.npl-chat-restore-logo` (20px) pour une intégration nette et réactive des boutons.
+    - Conteneur avatar `.npl-chat-header-avatar` avec `overflow: hidden`, ombre portée subtile et image responsive `.npl-chat-header-avatar-img` (36px).
+    - Badge vérifié vectoriel `.npl-chat-badge-verified` (#38bdf8) aligné au titre.
+  * **🧪 3. Contrôle Qualité & Tests** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+    - Linter Anti-AI-Slop : 0 capture silencieuse, 0 composant monolithique, 0 émoji UI.
+    - Suite de 69 tests unitaires (`frontend-next`) : 69/69 passés avec succès.
+
 - **Audit Exhaustif & Durcissement Meta Business / WhatsApp Cloud API / Meta Pixels (18 septembre 2026)** 🌐📲📈🛡️✨✅ :
   * **🚨 1. Résolution du Bug Critique Webhook Meta WhatsApp (`backend/routes/whatsapp.js`)** :
     - Correction d'un `ReferenceError` bloquant : `const cfg = require('../lib/settingsCache')` était instancié à la ligne 222 alors que `cfg.getBool('whatsapp_enabled')` était appelé dès la ligne 51 dans le récepteur de webhooks `POST /api/whatsapp/webhook`.
