@@ -9445,5 +9445,25 @@ Toutes les remédiations du plan stratégique ont été menées à bien, intégr
   - **Tests Unitaires Backend** : 44 test suites passées, 343/343 tests validés (100% PASS).
   - **Rapport Maître Consolidé** : Rédigé et archivé dans `scripts/qa-campaign/RAPPORT_FINAL_RECETTE_END_TO_END.md`.
 
+---
+
+## 7. Résolution du Blocage « Aucun Produit ne Correspond » sur la Page d'Accueil & Fiabilisation du Rechargement (18 septembre 2026) 🛒⚡
+- **Diagnostic des Causes Racines** :
+  1. **Timeout SSR trop agressif (5 000 ms)** dans [`frontend-next/src/lib/api.ts`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/lib/api.ts) : La requête SQL `/api/produits` (mixage round-robin, sous-requêtes, partitions et comptage sur +6 600 offres) prend entre 3 et 5 secondes sur Render en charge normale, et davantage en cas de cold start. Dès qu'elle dépassait 5 000 ms, l'appel SSR Next.js était interrompu par `AbortSignal.timeout(5000)`, basculant dans le `catch` et initialisant la liste avec `0` produit.
+  2. **Piège de navigation dans le hash (`/#resultats`)** : Les boutons *« Réinitialiser les filtres »*, *« Réinitialiser »* et la désélection de catégorie pointaient vers `/#resultats`. Dans Next.js App Router, un lien avec hash sur la même route (`/` vers `/#resultats`) est interprété comme un simple défilement d'ancrage local ; il ne relançait pas le composant serveur et ne purgeait pas les paramètres de recherche de l'URL. L'utilisateur cliquait pour réinitialiser mais restait bloqué sur l'état vide.
+  3. **Accumulation de filtres incompatibles sur les « Tendances »** : `buildFilterUrl` préservait les filtres de budget (`prixMin=5000&prixMax=15000`) et d'état (`Occasion`) précédents lors du clic sur un tag tendance (comme *« Climatiseurs »*), aboutissant à une recherche sans résultat.
+  4. **Absence de rattrapage côté client** : Si le serveur envoyait 0 produit suite à un timeout SSR, le composant client n'effectuait aucune tentative de secours et affichait d'office le message d'échec sans possibilité de recharger sans faire F5.
+- **Correctifs Appliqués & Déployés** :
+  1. **Augmentation du Timeout SSR** ([`frontend-next/src/lib/api.ts`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/lib/api.ts)) : Passage du timeout `AbortSignal` de **5 000 ms à 12 000 ms** pour absorber sans coupure les latences de cold start de Render et PostgreSQL.
+  2. **Fiabilisation de la Réinitialisation & Rendu Dynamique** ([`frontend-next/src/app/page.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/page.tsx)) :
+     - Remplacement de `revalidate = 300` par `export const dynamic = 'force-dynamic'` pour éliminer la mise en cache ISR d'un état vide ou en échec.
+     - Remplacement des liens `/#resultats` par une navigation propre vers `/` (`<a href="/">`) sur les boutons de réinitialisation et la désélection de catégorie.
+     - Découplage des clics sur les mots-clés « Tendances » qui pointent désormais vers `/?q={item}#resultats` sans hériter de budgets étroits résiduels.
+  3. **Barre de Recherche** ([`frontend-next/src/app/SearchBar.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/SearchBar.tsx)) : Redirection vers `/` au lieu de `/#resultats` lorsque le champ de recherche est vidé.
+  4. **Rattrapage Automatique & Bouton Réessayer** ([`frontend-next/src/app/ProduitsListe.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/ProduitsListe.tsx)) :
+     - **Auto-guérison client** : Si la liste initiale de produits est vide au montage, le composant déclenche immédiatement un rattrapage en arrière-plan pour récupérer et afficher les produits dès que le serveur répond.
+     - **Message contextualisé** : Si aucun filtre n'est actif, affichage de *"Catalogue en cours d’actualisation"* accompagné d'un bouton interactif **« Réessayer »** avec icône Lucide `RotateCw`.
+     - Le bouton *« Voir tout le catalogue »* effectue une navigation garantie vers `/`.
+
 
 
