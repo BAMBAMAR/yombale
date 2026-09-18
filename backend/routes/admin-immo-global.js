@@ -198,7 +198,9 @@ router.get('/baux-loyers', async (req, res) => {
 router.put('/agences/:id/statut', async (req, res) => {
   try {
     const { id } = req.params;
-    const { statut } = req.body;
+    let { statut } = req.body;
+    if (statut === 'active') statut = 'actif';
+    if (statut === 'suspendue' || statut === 'inactif' || statut === 'desactive') statut = 'suspendu';
     if (!['actif', 'suspendu', 'en_attente'].includes(statut)) {
       return res.status(400).json({ error: 'Statut invalide' });
     }
@@ -228,7 +230,7 @@ router.put('/agences/:id/statut', async (req, res) => {
 router.put('/agences/:id/forfait', async (req, res) => {
   try {
     const { id } = req.params;
-    const { abonnement_plan, sponsorise, jours_sponsoring } = req.body;
+    const { abonnement_plan, sponsorise, jours_sponsoring, jours_abonnement } = req.body;
 
     const current = await pool.query('SELECT * FROM agences_immo WHERE id = $1', [id]);
     if (!current.rows[0]) {
@@ -239,6 +241,12 @@ router.put('/agences/:id/forfait', async (req, res) => {
     const newPlan = abonnement_plan !== undefined ? abonnement_plan : cur.abonnement_plan;
     let newSponsorise = sponsorise !== undefined ? Boolean(sponsorise) : cur.sponsorise;
     let newSponsorFin = cur.sponsor_jusqu_au;
+    let newAbonnementFin = cur.abonnement_fin;
+
+    if (jours_abonnement) {
+      const days = parseInt(jours_abonnement, 10) || 30;
+      newAbonnementFin = new Date(Date.now() + days * 24 * 3600 * 1000).toISOString();
+    }
 
     if (sponsorise === true) {
       const days = parseInt(jours_sponsoring, 10) || 30;
@@ -251,24 +259,52 @@ router.put('/agences/:id/forfait', async (req, res) => {
       UPDATE agences_immo
       SET
         abonnement_plan = $1,
-        sponsorise = $2,
-        sponsor_jusqu_au = $3,
+        abonnement_fin = $2,
+        sponsorise = $3,
+        sponsor_jusqu_au = $4,
         updated_at = NOW()
-      WHERE id = $4
+      WHERE id = $5
       RETURNING *
-    `, [newPlan, newSponsorise, newSponsorFin, id]);
+    `, [newPlan, newAbonnementFin, newSponsorise, newSponsorFin, id]);
 
     await enregistrerAdminLog({
       action: 'agence_immo_forfait_modifie',
       cibleType: 'agence_immo',
       cibleId: id,
       description: `Mise à jour du forfait de l'agence "${rows[0].nom}" vers "${newPlan}" (Sponsoring: ${newSponsorise ? 'Oui' : 'Non'})`,
-      ancienneValeur: { abonnement_plan: cur.abonnement_plan, sponsorise: cur.sponsorise },
-      nouvelleValeur: { abonnement_plan: newPlan, sponsorise: newSponsorise, sponsor_jusqu_au: newSponsorFin },
+      ancienneValeur: { abonnement_plan: cur.abonnement_plan, sponsorise: cur.sponsorise, abonnement_fin: cur.abonnement_fin },
+      nouvelleValeur: { abonnement_plan: newPlan, sponsorise: newSponsorise, sponsor_jusqu_au: newSponsorFin, abonnement_fin: newAbonnementFin },
       req,
     });
 
     res.json({ success: true, agence: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /api/admin/immo-global/agences/:id — Supprimer une agence immobilière
+router.delete('/agences/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agenceRes = await pool.query('SELECT * FROM agences_immo WHERE id = $1', [id]);
+    if (!agenceRes.rows[0]) {
+      return res.status(404).json({ error: 'Agence introuvable' });
+    }
+    const agence = agenceRes.rows[0];
+
+    await pool.query('DELETE FROM agences_immo WHERE id = $1', [id]);
+
+    await enregistrerAdminLog({
+      action: 'agence_immo_supprimee',
+      cibleType: 'agence_immo',
+      cibleId: id,
+      description: `Suppression définitive de l'agence immobilière "${agence.nom}" (${agence.slug})`,
+      ancienneValeur: { nom: agence.nom, slug: agence.slug, utilisateur_id: agence.utilisateur_id },
+      req,
+    });
+
+    res.json({ success: true, message: 'Agence supprimée avec succès' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

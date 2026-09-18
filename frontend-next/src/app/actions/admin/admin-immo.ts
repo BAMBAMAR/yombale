@@ -105,16 +105,20 @@ export async function batchModererImmo(
 // ── Immobilier Global : Agences & Biens ─────────────────────────────
 export async function adminModererAgence(
   agenceId: string,
-  payload: { statut: 'active' | 'suspendue' | 'en_attente'; note_verification?: string }
+  payload: { statut: 'actif' | 'active' | 'suspendu' | 'suspendue' | 'en_attente'; note_verification?: string }
 ): Promise<{ success?: boolean; agence?: any; error?: string }> {
   const token = await getAdminToken()
   if (!token) return { error: 'Non authentifié' }
+
+  let statut = payload.statut
+  if (statut === 'active') statut = 'actif'
+  if (statut === 'suspendue') statut = 'suspendu'
 
   try {
     const r = await fetch(`${BACKEND}/api/admin/immo-global/agences/${agenceId}/statut`, {
       method: 'PUT',
       headers: adminHeaders(token),
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, statut }),
       cache: 'no-store',
     })
     const data = await r.json()
@@ -124,6 +128,56 @@ export async function adminModererAgence(
   } catch (err: any) {
     return { error: err.message || 'Erreur serveur' }
   }
+}
+
+export async function adminSupprimerAgence(
+  agenceId: string
+): Promise<{ success?: boolean; error?: string }> {
+  const token = await getAdminToken()
+  if (!token) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/admin/immo-global/agences/${agenceId}`, {
+      method: 'DELETE',
+      headers: adminHeaders(token),
+      cache: 'no-store',
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur suppression agence' }
+    revalidatePath('/admin/immo/agences')
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+
+export async function batchModererAgences(
+  ids: string[],
+  statut: 'actif' | 'suspendu'
+): Promise<{ successCount: number; errors: number }> {
+  let successCount = 0
+  let errors = 0
+  for (const id of ids) {
+    const res = await adminModererAgence(id, { statut })
+    if (res.error) errors++
+    else successCount++
+  }
+  revalidatePath('/admin/immo/agences')
+  return { successCount, errors }
+}
+
+export async function batchSupprimerAgences(
+  ids: string[]
+): Promise<{ successCount: number; errors: number }> {
+  let successCount = 0
+  let errors = 0
+  for (const id of ids) {
+    const res = await adminSupprimerAgence(id)
+    if (res.error) errors++
+    else successCount++
+  }
+  revalidatePath('/admin/immo/agences')
+  return { successCount, errors }
 }
 
 export async function adminModererBien(
@@ -151,7 +205,7 @@ export async function adminModererBien(
 
 export async function adminChangerForfaitAgence(
   agenceId: string,
-  payload: { abonnement_plan?: string; sponsorise?: boolean; jours_sponsoring?: number }
+  payload: { abonnement_plan?: string; sponsorise?: boolean; jours_sponsoring?: number; jours_abonnement?: number }
 ): Promise<{ success?: boolean; agence?: any; error?: string }> {
   const token = await getAdminToken()
   if (!token) return { error: 'Non authentifié' }

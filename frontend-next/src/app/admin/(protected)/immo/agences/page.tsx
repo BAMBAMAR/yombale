@@ -23,7 +23,7 @@ export default async function AdminAgencesImmoPage() {
   let total = 0
 
   try {
-    const res = await fetch(`${BACKEND}/api/admin/immo-global/agences?limit=50`, { headers, cache: 'no-store' })
+    const res = await fetch(`${BACKEND}/api/admin/immo-global/agences?limit=200`, { headers, cache: 'no-store' })
     if (res.ok) {
       const d = await res.json()
       agences = d.agences || []

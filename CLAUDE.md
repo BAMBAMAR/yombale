@@ -1,3 +1,29 @@
+- **Refonte et Enrichissement du Réseau Agences Immobilières & Comptes Pro (`/admin/immo/agences`) (18 septembre 2026)** 🏢⚡🛡️✨✅ :
+  * **🚨 1. Contexte & Problématique** :
+    - L'annuaire d'administration des agences immobilières (`/admin/immo/agences`) souffrait d'un bug bloquant HTTP 400 sur le bouton d'action Activer / Suspendre, et manquait cruellement des fonctionnalités avancées offertes par `/admin/boutiques` (filtres avancés, actions par lot, relance WhatsApp, raccourcis vitrine et espace pro).
+  * **🛠️ 2. Correctifs & Nouveautés Réalisés** :
+    - **Correction Bug 400 Modération Statut** : Normalisation bidirectionnelle automatique des statuts dans `backend/routes/admin-immo-global.js` (`PUT /api/admin/immo-global/agences/:id/statut`) et `admin-immo.ts` (tolérance de `'actif' / 'active'` et `'suspendu' / 'suspendue'`).
+    - **Point de Terminaison Suppression Sécurisée** : Ajout de `DELETE /api/admin/immo-global/agences/:id` avec journalisation dans l'audit administrateur (`adminLog`) et suppression en cascade.
+    - **Gestion de la Durée d'Abonnement** : Prise en charge du paramètre `jours_abonnement` dans `PUT /api/admin/immo-global/agences/:id/forfait` pour calculer l'échéance `abonnement_fin`.
+    - **Barre de Filtres Multi-Critères (`AgencesFilterBar.tsx`)** :
+      * Onglets avec compteurs dynamiques en temps réel : Toutes, Abonnées Pro / Multi-Agences, En Vedette (Sponsorisées), Suspendues.
+      * Filtre par seuil de volume de biens : 0 bien (Vide / À relancer), 1-2 biens, 3-5 biens, >5 biens.
+      * Filtre par ville et recherche instantanée multi-champs (nom, gérant, email, téléphone, WhatsApp, ville, quartier).
+      * Bouton d'alerte et de relance globale des agences à 0 bien.
+    - **Actions par Lot (`BatchActionBar`)** : Sélection multiple par case à cocher, barre d'actions groupées pour activer, suspendre, relancer par WhatsApp ou supprimer définitivement.
+    - **Carte Agence Enrichie (`AgenceImmoRow.tsx`)** :
+      * Bouton WhatsApp direct (`wa.me`) avec message personnalisé d'onboarding.
+      * Bouton Relancer ouvrant `ModalRelanceAgence`.
+      * Bouton "Gérer l'agence" ouvrant `ModalGestionAgence`.
+      * Boutons d'accès direct à la Vitrine publique (`/agence/[slug]/vitrine`) et à l'Espace Pro (`/agence/[slug]`).
+      * Bascule instantanée Activer / Suspendre et suppression sécurisée.
+    - **Modale de Gestion Complète (`ModalGestionAgence.tsx`)** : Formule d'abonnement (Essentiel, Pro, Multi-Agences) avec engagement (1m, 3m, 6m, 1an), activation/durée du sponsoring doré, modération de statut et suppression.
+    - **Modale de Relance WhatsApp (`ModalRelanceAgence.tsx`)** : Générateur de message d'onboarding personnalisé avec guide de publication de biens HD et dématérialisation des baux OHADA.
+  * **🧪 3. Validation Technique** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : validé (100% icônes Lucide dimensionnées, zéro emoji).
+    - Modularisation : Aucun composant ne dépasse 450 lignes.
+
 - **Résolution Intégrale des Failles d'Autorisation, BOLA/IDOR et Quotas Multi-Tenant (18 septembre 2026)** 🛡️🔐⚔️✅ :
   * **🚨 1. Contexte & Découverte** :
     - Suite à l'audit de sécurité approfondi sur les permissions et profils, 7 vulnérabilités majeures d'autorisation, d'authentification et de cohérence multi-tenant avaient été identifiées sur les routes d'équipe, POS caisse, fidélité, comptabilité, suivi commande et le chatbot WhatsApp.
