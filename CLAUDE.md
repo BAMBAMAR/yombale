@@ -1,3 +1,55 @@
+- **Résolution Intégrale des Failles d'Autorisation, BOLA/IDOR et Quotas Multi-Tenant (18 septembre 2026)** 🛡️🔐⚔️✅ :
+  * **🚨 1. Contexte & Découverte** :
+    - Suite à l'audit de sécurité approfondi sur les permissions et profils, 7 vulnérabilités majeures d'autorisation, d'authentification et de cohérence multi-tenant avaient été identifiées sur les routes d'équipe, POS caisse, fidélité, comptabilité, suivi commande et le chatbot WhatsApp.
+    - Toutes ces vulnérabilités ont été corrigées avec une approche Zero-Trust, sans casser l'expérience légitime des marchands et caissiers.
+  * **🛠️ 2. Correctifs Appliqués par Chantier** :
+    - **Chantier 1 (`backend/routes/boutiques-modules/boutiques-equipe.js`)** :
+      * `GET /:id/caissiers` : Verrouillage strict. Seuls le propriétaire authentifié (via session JWT) ou un terminal de caisse autorisé avec jeton dédié (`X-Terminal-Token`, query token ou body) peuvent consulter la liste des caissiers.
+      * Journalisation systématique des tentatives non autorisées dans `security_audit_vault` (`UNAUTHORIZED_CAISSIERS_LIST_ATTEMPT`) avec IP et horodatage, retournant un HTTP 403 strict.
+    - **Chantier 2 (`backend/routes/boutiques-modules/boutiques-pos.js`)** :
+      * Sécurisation de `POST /:id/pos-vente` : Requiert impérativement un jeton de terminal de caisse valide (`caisse_token` / `X-Terminal-Token`) ou une session commerçant vérifiée. Élimine l'Inventory Denial Attack et les ventes fantômes.
+      * Sécurisation de `POST /:id/pos-incident` : Annulation de vente conditionnée à un terminal token ou PIN superviseur valide avant toute manipulation comptable ou remise en stock.
+      * Sécurisation de `GET /:id/pos-historique` : Historique des ventes et tickets de caisse protégé, bloquant l'espionnage du chiffre d'affaires.
+      * Sécurisation de `POST /:id/pos-sessions/rapport-x/log` : Seuls les terminaux autorisés peuvent clore ou consigner un rapport de caisse.
+    - **Chantier 3 (`backend/routes/boutiques-modules/boutiques-fidelite.js`)** :
+      * Protection de `GET /:id/fidelite/rechercher` : Requiert `tokenOptional` vérifié ou `X-Terminal-Token`. Interdit le dumping anonyme des clients VIP, soldes de points et numéros de téléphone.
+      * Protection de `POST /:id/fidelite/enroler` et `POST /:id/avoirs/creer` : Rejet avec HTTP 403 en cas d'absence de session ou de terminal valide.
+    - **Chantier 4 (`backend/routes/comptabilite.js`)** :
+      * `GET /:boutiqueId/commandes` : Passage de `tokenOptional` à `verifierToken` strict avec validation d'appartenance `ownsBoutique(paramBq, req.user.userId, req.user.role)`. Bloque l'aspiration des commandes et coordonnées clients.
+    - **Chantier 5 (`backend/routes/boutiques-modules/boutiques-commandes.js`)** :
+      * `GET /commandes/suivi` : Suppression du matching flou sur `%CMD%` ou préfixes courts. Exige soit une référence complète exacte (`CMD-XXXX-XXXX`), soit un numéro de téléphone à au moins 9 chiffres.
+      * Anonymisation RGPD des données personnelles renvoyées : `client_nom` masqué sous forme abrégée (`Fatou N.`), `client_telephone` masqué (`77 *** ** 00`).
+    - **Chantier 6 (`backend/services/whatsapp-chatbot.js`)** :
+      * `ORDER_REF` : Requête anti-BOLA croisant la commande avec le numéro WhatsApp émetteur (`client_telephone` ou `boutique.telephone`/`boutique.whatsapp`). Un tiers recevra un message de confidentialité `🔒 Accès restreint`.
+      * `CREER_BOUTIQUE_NOM` et `CREER_BOUTIQUE_CATEGORIE` : Intégration de `checkBoutiqueQuotas(userId, normPh)` dès les premières étapes conversationnelles. Bloque la création au-delà du quota autorisé (3 boutiques par compte/téléphone), résolvant l'anomalie des "5 / 3 boutiques".
+    - **Chantier 7 (`frontend-next/src/middleware.ts`)** :
+      * Extension de la protection SSR pour couvrir `pathname === '/boutique' || pathname.startsWith('/boutique/')`.
+      * Préservation intelligente des sessions caissier avec `hasCaisseToken = pathname === '/boutique/caisse' && !!token`.
+      * Garantie d'accessibilité publique pour le répertoire et vitrines storefront `/boutiques` (avec un 's').
+  * **🧪 3. Validation par Tests de Pénétration & Tests Unitaires** :
+    - Suite de tests d'intrusion automatisée (`scripts/test-security-pen.mjs`) : **11/11 tests réussis (100% de succès)** couvrant l'ensemble des cas d'abus anonymes (403/401/400) et le fonctionnement nominal légitime via `X-Terminal-Token` (200 OK).
+    - Suite de validation WhatsApp (`scripts/test-whatsapp-security.mjs`) : Quota vérifié et blocage effectif sur comptes à 3+ boutiques ; requêtes commandes isolées à 100%.
+    - Tests unitaires Jest (`npm run test:unit`) : **44/44 suites réussies, 343/343 tests au vert**.
+    - Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+    - Qualité de code : Linter Anti-AI-Slop passé.
+  * **🚀 4. Statut Final** : **GO PRODUCTION CONFIRMÉ** pour la couche permissions, RBAC/ABAC et isolation multi-tenant.
+
+- **Audit Exhaustif des Permissions, Rôles RBAC/ABAC et Isolation Multi-Tenant (18 septembre 2026)** 🛡️🔐🕵️‍♂️🔍🚨 :
+  * **🎯 1. Cartographie Complète des Profils & Modèle Hybride ABAC** :
+    - Confirmation que la table `utilisateurs` ne stocke aucun rôle brut : l'autorisation est contextuelle selon la propriété d'une boutique (`boutiques.utilisateur_id`), d'une agence (`agences_immo.utilisateur_id`), d'un mandat (`agence_membres.role`), ou d'une habilitation administrative (`admin_utilisateurs.role`).
+    - Modèle RBAC Super Admin à 5 rôles granulaires (`super_admin`, `admin_operationnel`, `finance`, `support_client`, `moderateur`) verrouillé par `admin-rbac.js`.
+  * **🚨 2. Détection de 7 Failles d'Autorisation & Angles Morts** :
+    - `VULN-AUTH-01` (Critique) : Exposition en clair des codes PIN caissier et superviseur sur `GET /api/boutiques/:id/caissiers` sans authentification.
+    - `VULN-AUTH-02` (Critique) : Fuite de l'historique des ventes privées POS sur `GET /api/boutiques/:id/pos-historique` sous `tokenOptional`.
+    - `VULN-AUTH-03` (Critique) : Fuite massive de toutes les commandes et coordonnées clients sur `GET /api/comptabilite/:boutiqueId/commandes` sous `tokenOptional`.
+    - `VULN-AUTH-04` (Élevée) : Risque de déni de stock et fausses ventes sur `POST /api/boutiques/:id/pos-vente` sans validation de session/caisse_token.
+    - `VULN-AUTH-05` (Élevée) : Scraping de données personnelles acheteurs sur `GET /api/boutiques/commandes/suivi` avec recherche partielle `ILIKE %CMD%`.
+    - `VULN-AUTH-06` (Moyenne) : Consultation de commande d'autrui sur WhatsApp via référence devinée (`ORDER_REF`).
+    - `VULN-AUTH-07` (Moyenne) : Bypass du quota de 3 boutiques via la création conversationnelle WhatsApp sans appel à `checkBoutiqueQuotas()`.
+  * **📊 3. Livrable & Verdict** :
+    - Rapport complet archivé dans `scripts/qa-campaign/RAPPORT_AUDIT_SECURITE_RBAC_PERMISSIONS.md`.
+    - Verdict formel : **NO-GO PROD** jusqu'à l'application des correctifs P0 de sécurisation des endpoints caisse et commandes.
+
 - **Intégration Complète des Agences Immobilières dans le Chatbot & Menus (18 septembre 2026)** 🏢💬🏠🛡️✨✅ :
   * **📲 1. Menu Interactif WhatsApp Cloud API (`backend/services/whatsapp-chatbot.js`)** :
     - Ajout de l'entrée « 🏢 Agences Immo » (Découvrir les agences partenaires) dans la section *Acheter & Explorer* de `sendMenu`.

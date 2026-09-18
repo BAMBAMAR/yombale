@@ -1178,15 +1178,24 @@ router.post(
   }
 );
 
-// GET /api/comptabilite/:boutiqueId/commandes — vendeur voit ses commandes
-router.get('/:boutiqueId/commandes', tokenOptional, async (req, res) => {
+// GET /api/comptabilite/:boutiqueId/commandes — vendeur voit ses commandes (Sécurisé)
+router.get('/:boutiqueId/commandes', verifierToken, async (req, res) => {
   try {
     const paramBq = req.params.boutiqueId;
-    const isUUID = /^[0-9a-f-]{36}$/i.test(paramBq);
-    const bqCond = isUUID ? 'id=$1' : 'slug=$1';
-    const bqRes = await pool.query(`SELECT id FROM boutiques WHERE ${bqCond}`, [paramBq]);
-    if (!bqRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const bqId = bqRes.rows[0].id;
+    const boutique = await ownsBoutique(paramBq, req.user.userId, req.user.role);
+    if (!boutique) {
+      const { logSecurityViolation } = require('../middlewares/tenantSecurity');
+      logSecurityViolation({
+        eventType: 'UNAUTHORIZED_ORDERS_ACCESS',
+        userId: req.user.userId,
+        tenantType: 'boutique',
+        targetId: paramBq,
+        req,
+        details: { reason: 'Tentative de consultation des commandes d\'une boutique sans droits' }
+      });
+      return res.status(403).json({ error: 'Accès refusé : vous n\'êtes pas propriétaire de cette boutique' });
+    }
+    const bqId = boutique.id;
 
     const { statut } = req.query;
     const conds = ['boutique_id=$1'];
@@ -1199,6 +1208,7 @@ router.get('/:boutiqueId/commandes', tokenOptional, async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
+    console.error('[GET BOUTIQUE COMMANDES ERR]', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

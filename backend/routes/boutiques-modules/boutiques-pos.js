@@ -72,18 +72,16 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
   try {
     await ensureRefColSize();
     const idParam = req.params.id;
-    const { items, articles, caissier, caissier_id, session_id, modePaiement, client_id, idempotency_key, fidelite_client_id, deduction_cagnotte_fcfa } = req.body;
+    const { items, articles, caissier, caissier_id, session_id, modePaiement, client_id, idempotency_key, fidelite_client_id, deduction_cagnotte_fcfa, terminal_token, superviseur_pin } = req.body;
     const saleItems = (Array.isArray(items) && items.length > 0) ? items : (Array.isArray(articles) && articles.length > 0 ? articles : null);
     
     if (!saleItems || saleItems.length === 0) {
       return res.status(400).json({ error: 'La vente doit contenir au moins un article valide.' });
     }
 
-    console.log('[POS VENTE] ▶ Requête reçue:', { idParam, nbItems: saleItems.length, caissier, caissier_id, session_id, modePaiement, fidelite_client_id, hasIdempotency: !!idempotency_key });
-
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(
-      `SELECT id, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
+      `SELECT id, utilisateur_id, caisse_token, regime_fiscal, prix_tva_incluse, timbre_fiscal_applicable, tva_taux_defaut,
               fidelite_actif, fidelite_type, fidelite_taux_cashback, fidelite_seuil_tampon, fidelite_tampons_max
        FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
       [idParam]
@@ -91,6 +89,40 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutique = bRes.rows[0];
     const boutiqueId = boutique.id;
+
+    // ── Sécurité Anti-IDOR & Terminal POS : session marchand OU jeton caisse valide ──
+    let accessGranted = false;
+    if (req.user?.userId) {
+      const bqAccess = await checkBoutiqueAccess(idParam, req.user.userId);
+      if (bqAccess) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+        accessGranted = true;
+      }
+    }
+    if (!accessGranted && superviseur_pin) {
+      const supCheck = await pool.query(
+        `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE LIMIT 1`,
+        [boutiqueId, String(superviseur_pin).trim()]
+      );
+      if (supCheck.rows[0]) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const { logSecurityViolation } = require('../../middlewares/tenantSecurity');
+      logSecurityViolation({
+        eventType: 'UNAUTHORIZED_POS_SALE_ATTEMPT',
+        userId: req.user?.userId || null,
+        tenantType: 'boutique',
+        targetId: idParam,
+        req,
+        details: { reason: 'Tentative d\'encaissement POS sans autorisation' }
+      });
+      return res.status(403).json({ error: 'Accès refusé : session marchand ou jeton de caisse terminal requis.' });
+    }
+
+    console.log('[POS VENTE] ▶ Requête reçue:', { idParam, nbItems: saleItems.length, caissier, caissier_id, session_id, modePaiement, fidelite_client_id, hasIdempotency: !!idempotency_key });
     console.log('[POS VENTE] ✓ Boutique trouvée:', boutiqueId);
     const idempotencyKey = typeof idempotency_key === 'string' && idempotency_key.length > 0 && idempotency_key.length <= 128
       ? idempotency_key
@@ -438,17 +470,50 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
 router.post('/:id/pos-incident', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { ticketId, type, items } = req.body;
-
-    if (!ticketId) return res.status(400).json({ error: 'ID ticket manquant' });
+    const { ticketId, type, items, terminal_token, superviseur_pin } = req.body;
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
     const bRes = await pool.query(
-      `SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      `SELECT id, utilisateur_id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
       [idParam]
     );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const boutique = bRes.rows[0];
+    const boutiqueId = boutique.id;
+
+    // Contrôle d'accès strict
+    let accessGranted = false;
+    if (req.user?.userId) {
+      const bqAccess = await checkBoutiqueAccess(idParam, req.user.userId);
+      if (bqAccess) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+        accessGranted = true;
+      }
+    }
+    if (!accessGranted && superviseur_pin) {
+      const supCheck = await pool.query(
+        `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE LIMIT 1`,
+        [boutiqueId, String(superviseur_pin).trim()]
+      );
+      if (supCheck.rows[0]) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const { logSecurityViolation } = require('../../middlewares/tenantSecurity');
+      logSecurityViolation({
+        eventType: 'UNAUTHORIZED_POS_INCIDENT_ATTEMPT',
+        userId: req.user?.userId || null,
+        tenantType: 'boutique',
+        targetId: idParam,
+        req,
+        details: { reason: 'Tentative d\'annulation de vente POS non autorisée' }
+      });
+      return res.status(403).json({ error: 'Accès refusé : autorisation requise pour modifier les ventes.' });
+    }
+
+    if (!ticketId) return res.status(400).json({ error: 'ID ticket manquant' });
 
     // 1. Archiver l'écriture comptable dans ventes pour réajuster le CA
     await pool.query('UPDATE ventes SET archivee = true WHERE reference = $1 AND boutique_id = $2', [ticketId, boutiqueId]);
@@ -476,24 +541,54 @@ router.post('/:id/pos-incident', tokenOptional, async (req, res) => {
             `UPDATE boutique_produits
              SET stock_quantite = COALESCE(stock_quantite, 0) + $1,
                  en_stock = true
-             WHERE LOWER(nom) = LOWER($2) AND boutique_id = $3`,
-            [qte, prodNom.trim(), boutiqueId]
+             WHERE nom = $2 AND boutique_id = $3`,
+            [qte, prodNom, boutiqueId]
           );
         }
       }
     }
 
-    res.json({ success: true, message: `Incident POS (${type || 'annulation'}) enregistré avec succès.` });
+    res.json({ success: true, message: 'Ticket POS annulé avec succès' });
   } catch (err) {
     console.error('[POS INCIDENT ERR]', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// ── GET /api/boutiques/:id/fidelite/rechercher — Recherche client fidélité par téléphone ou nom
+// ── GET /api/boutiques/:id/pos-historique — Historique des ventes de caisse (Sécurisé)
 router.get('/:id/pos-historique', tokenOptional, param('id').isUUID(), async (req, res) => {
   try {
     const { id } = req.params;
+
+    const bRes = await pool.query('SELECT id, caisse_token FROM boutiques WHERE id = $1', [id]);
+    if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    const boutique = bRes.rows[0];
+
+    let accessGranted = false;
+    if (req.user?.userId) {
+      const bqAccess = await checkBoutiqueAccess(id, req.user.userId);
+      if (bqAccess) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const tokenToTest = req.headers['x-terminal-token'] || req.query.terminal_token || req.query.token;
+      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+        accessGranted = true;
+      }
+    }
+
+    if (!accessGranted) {
+      const { logSecurityViolation } = require('../../middlewares/tenantSecurity');
+      logSecurityViolation({
+        eventType: 'UNAUTHORIZED_POS_HISTORY_ACCESS',
+        userId: req.user?.userId || null,
+        tenantType: 'boutique',
+        targetId: id,
+        req,
+        details: { reason: 'Tentative de lecture non autorisée de l\'historique des ventes POS' }
+      });
+      return res.status(403).json({ error: 'Accès refusé : session marchand ou jeton de caisse terminal requis' });
+    }
+
     const { rows } = await pool.query(
       `SELECT reference AS id,
               TO_CHAR(created_at, 'DD/MM/YYYY') AS date,
@@ -908,11 +1003,27 @@ router.post('/:id/pos-sessions/:sessionId/mouvements', verifierToken, async (req
 router.post('/:id/pos-sessions/rapport-x/log', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { caissierNom, totalVentes, nbVentes } = req.body;
+    const { caissierNom, totalVentes, nbVentes, terminal_token } = req.body;
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    const bRes = await pool.query(`SELECT id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const boutique = bRes.rows[0];
+    const boutiqueId = boutique.id;
+
+    let accessGranted = false;
+    if (req.user?.userId) {
+      const bqAccess = await checkBoutiqueAccess(idParam, req.user.userId);
+      if (bqAccess) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+        accessGranted = true;
+      }
+    }
+    if (!accessGranted) {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
 
     await enregistrerAuditLog(
       boutiqueId,

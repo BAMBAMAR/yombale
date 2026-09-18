@@ -16,6 +16,7 @@ const {
 } = require('./whatsapp');
 const { creerCommandeBoutique, notifierVendeurCommande } = require('../routes/comptabilite');
 const cfg = require('../lib/settingsCache');
+const { checkBoutiqueQuotas } = require('../routes/boutiques-modules/helpers');
 const { detecterIntentionImmo, traiterMessageImmo, trouverAgenceAgentParTelephone } = require('./immo-chatbot');
 const {
   detecterIntentionComparateur,
@@ -4707,18 +4708,57 @@ async function handleIncomingInternal(msg) {
 
   // ── ORDER_REF ─────────────────────────────────────────────────────────────
   if (state === 'ORDER_REF') {
+    const cleanTerm = text.trim();
+    const telClean = phone.replace(/\D/g, '').slice(-9);
+
+    // Recherche sécurisée anti-BOLA : la commande doit être rattachée
+    // soit au client (client_telephone) soit au marchand/boutique (telephone / whatsapp)
     const r = await pool.query(
-      `SELECT reference, statut, montant, created_at FROM commandes WHERE reference ILIKE $1 LIMIT 1`,
-      [text.trim()]
+      `SELECT c.reference, c.statut, c.montant_total AS montant, c.nom_produit, c.created_at,
+              COALESCE(b.nom, 'Boutique Nopalou') AS boutique_nom
+       FROM commandes_boutique c
+       LEFT JOIN boutiques b ON b.id = c.boutique_id
+       LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
+       WHERE (c.reference ILIKE $1 OR c.id::text = $1)
+         AND (
+           c.client_telephone LIKE '%' || $2
+           OR b.telephone LIKE '%' || $2
+           OR b.whatsapp LIKE '%' || $2
+           OR u.telephone LIKE '%' || $2
+         )
+       ORDER BY c.created_at DESC
+       LIMIT 1`,
+      [cleanTerm, telClean]
     );
+
     if (!r.rows[0]) {
-      await sendWhatsAppText(phone, `❌ Commande *${text}* introuvable. Vérifiez la référence ou tapez *menu*.`);
+      // Vérifier si la commande existe mais n'appartient pas à ce numéro
+      const existAutre = await pool.query(
+        `SELECT id FROM commandes_boutique WHERE reference ILIKE $1 OR id::text = $1 LIMIT 1`,
+        [cleanTerm]
+      );
+      if (existAutre.rows[0]) {
+        await sendWhatsAppText(
+          phone,
+          `🔒 *Accès restreint*\n\nCette commande existe mais n'est pas rattachée à votre numéro de téléphone WhatsApp (${phone}).\nPour des raisons de confidentialité, vous ne pouvez consulter que vos propres commandes.`
+        );
+      } else {
+        await sendWhatsAppText(
+          phone,
+          `❌ Commande *${cleanTerm}* introuvable. Vérifiez la référence ou tapez *menu*.`
+        );
+      }
     } else {
       const p = r.rows[0];
       const date = new Date(p.created_at).toLocaleDateString('fr-FR');
       await sendWhatsAppText(
         phone,
-        `📦 *Commande ${p.reference}*\n\nStatut : *${p.statut}*\nMontant : *${prixFmt(p.montant)}*\nDate : ${date}\n\nPour toute question, contactez contact@nopalou.com`
+        `📦 *Commande ${p.reference}* (${p.nom_produit || 'Produit'})\n` +
+        `🏪 Boutique : *${p.boutique_nom}*\n` +
+        `Statut : *${p.statut || 'En cours'}*\n` +
+        `Montant : *${prixFmt(p.montant)}*\n` +
+        `Date : ${date}\n\n` +
+        `Pour toute question, contactez le commerçant ou le support Nopalou.`
       );
       await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
     }
@@ -4728,6 +4768,18 @@ async function handleIncomingInternal(msg) {
 
   // ── CREER_BOUTIQUE_NOM → Nom de la boutique ────────────────────────────────
   if (state === 'CREER_BOUTIQUE_NOM') {
+    const normPhCheck = normalisePhone(phone);
+    const quotaCheck = await checkBoutiqueQuotas(null, normPhCheck);
+    if (!quotaCheck.allowed) {
+      await sendWhatsAppText(
+        phone,
+        `⚠️ *Création impossible*\n\n${quotaCheck.error || 'Vous avez atteint le quota maximal de boutiques autorisées.'}\n\nPour gérer vos boutiques existantes, connectez-vous sur ${SITE}/boutique/caisse.`
+      );
+      await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
+
     if (!text || text.trim().length < 2) {
       await sendWhatsAppText(phone, '⚠️ Veuillez entrer un nom valide pour votre boutique (au moins 2 caractères).');
       return;
@@ -4811,6 +4863,18 @@ async function handleIncomingInternal(msg) {
           [nomBoutique, emailTemp, normPh]
         );
         userId = newUser.rows[0].id;
+      }
+
+      // Vérification stricte des quotas anti-contournement
+      const quota = await checkBoutiqueQuotas(userId, normPh);
+      if (!quota.allowed) {
+        await sendWhatsAppText(
+          phone,
+          `⚠️ *Création refusée par quota*\n\n${quota.error || 'Vous avez atteint le nombre maximal de boutiques autorisées.'}\n\nPour gérer vos boutiques existantes, connectez-vous sur ${SITE}/boutique/caisse ou contactez l\'assistance.`
+        );
+        await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+        await setSession(phone, 'MENU', {});
+        return;
       }
 
       // 2. Générer le slug unique

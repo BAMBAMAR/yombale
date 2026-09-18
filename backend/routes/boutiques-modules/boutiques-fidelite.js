@@ -25,11 +25,39 @@ const {
 router.get('/:id/fidelite/rechercher', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { q } = req.query;
+    const { q, terminal_token } = req.query;
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id, fidelite_actif, fidelite_type, fidelite_taux_cashback, fidelite_tampons_max, fidelite_seuil_tampon FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    const bRes = await pool.query(
+      `SELECT id, caisse_token, fidelite_actif, fidelite_type, fidelite_taux_cashback, fidelite_tampons_max, fidelite_seuil_tampon FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      [idParam]
+    );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
     const boutique = bRes.rows[0];
+
+    // Contrôle d'accès : session marchand ou jeton terminal de caisse
+    let accessGranted = false;
+    if (req.user?.userId) {
+      const bqAccess = await checkBoutiqueAccess(idParam, req.user.userId);
+      if (bqAccess) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+        accessGranted = true;
+      }
+    }
+    if (!accessGranted) {
+      const { logSecurityViolation } = require('../../middlewares/tenantSecurity');
+      logSecurityViolation({
+        eventType: 'UNAUTHORIZED_FIDELITE_ACCESS',
+        userId: req.user?.userId || null,
+        tenantType: 'boutique',
+        targetId: idParam,
+        req,
+        details: { reason: 'Tentative d\'accès non autorisée aux données clients fidélité' }
+      });
+      return res.status(403).json({ error: 'Accès refusé : session marchand ou jeton terminal requis.' });
+    }
 
     const cleanQ = (q || '').trim();
     if (!cleanQ) {
@@ -67,13 +95,29 @@ router.get('/:id/fidelite/rechercher', tokenOptional, async (req, res) => {
 router.post('/:id/fidelite/enroler', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { telephone, nom, client_id } = req.body;
+    const { telephone, nom, client_id, terminal_token } = req.body;
     if (!telephone || !nom) return res.status(400).json({ error: 'Nom et Téléphone requis' });
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    const bRes = await pool.query(`SELECT id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const boutique = bRes.rows[0];
+    const boutiqueId = boutique.id;
+
+    let accessGranted = false;
+    if (req.user?.userId) {
+      const bqAccess = await checkBoutiqueAccess(idParam, req.user.userId);
+      if (bqAccess) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+        accessGranted = true;
+      }
+    }
+    if (!accessGranted) {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
 
     const cleanTel = telephone.trim();
     const cleanNom = nom.trim();
@@ -125,13 +169,29 @@ router.get('/:id/avoirs/valider/:code', tokenOptional, async (req, res) => {
 router.post('/:id/avoirs/creer', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
-    const { montant, client_nom, client_telephone, ticket_origine_ref, jours_validite } = req.body;
+    const { montant, client_nom, client_telephone, ticket_origine_ref, jours_validite, terminal_token } = req.body;
     if (!montant || Number(montant) <= 0) return res.status(400).json({ error: 'Montant invalide' });
 
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    const bRes = await pool.query(`SELECT id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
+    const boutique = bRes.rows[0];
+    const boutiqueId = boutique.id;
+
+    let accessGranted = false;
+    if (req.user?.userId) {
+      const bqAccess = await checkBoutiqueAccess(idParam, req.user.userId);
+      if (bqAccess) accessGranted = true;
+    }
+    if (!accessGranted) {
+      const tokenToTest = terminal_token || req.headers['x-terminal-token'] || req.query.token;
+      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+        accessGranted = true;
+      }
+    }
+    if (!accessGranted) {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
 
     const codeAvoir = `AV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     const jours = Number(jours_validite) || 90;

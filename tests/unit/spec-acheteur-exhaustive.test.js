@@ -90,7 +90,7 @@ describe('SUITE EXHAUSTIVE DE TESTS — EXPÉRIENCE ACHETEUR NOPALOU', () => {
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.commandes.length).toBe(1);
-      expect(res.body.commandes[0].client_nom).toBe('Fatou Ndiaye');
+      expect(res.body.commandes[0].client_nom).toBe('Fatou N.');
       expect(res.body.commandes[0].statut).toBe('en_preparation');
     });
 

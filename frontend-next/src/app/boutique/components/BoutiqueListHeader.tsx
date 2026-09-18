@@ -121,7 +121,9 @@ export default function BoutiqueListHeader({
               }}
             >
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent, #C75B00)' }} />
-              {boutiquesCount} / 3 autorisée{boutiquesCount > 1 ? 's' : ''}
+              {boutiquesCount > 3
+                ? `${boutiquesCount} boutiques actives`
+                : `${boutiquesCount} / 3 autorisée${boutiquesCount > 1 ? 's' : ''}`}
             </span>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text2, #6B5E52)', margin: 0, lineHeight: 1.5 }}>

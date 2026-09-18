@@ -103,15 +103,51 @@ router.delete('/:id/admins/:userId', verifierToken, param('id').isUUID(), param(
   }
 });
 
-// ── GET /api/boutiques/:id/avis — Avis & notes certifiés de la boutique
+// ── GET /api/boutiques/:id/caissiers — Caissiers de la boutique (Sécurisé)
 router.get('/:id/caissiers', tokenOptional, async (req, res) => {
   try {
     const idParam = req.params.id;
     const isUUID = /^[0-9a-f-]{36}$/i.test(idParam);
-    const bRes = await pool.query(`SELECT id, nom, utilisateur_id FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`, [idParam]);
+    const bRes = await pool.query(
+      `SELECT id, nom, utilisateur_id, caisse_token FROM boutiques WHERE ${isUUID ? 'id=$1' : 'slug=$1'}`,
+      [idParam]
+    );
     if (!bRes.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
-    const boutiqueId = bRes.rows[0].id;
-    const utilisateurId = bRes.rows[0].utilisateur_id;
+    const boutique = bRes.rows[0];
+    const boutiqueId = boutique.id;
+    const utilisateurId = boutique.utilisateur_id;
+
+    // Contrôle d'accès strict : session marchand OU jeton de caisse terminal valide
+    let accessGranted = false;
+    let isOwner = false;
+
+    if (req.user?.userId) {
+      const bqAccess = await checkBoutiqueAccess(idParam, req.user.userId);
+      if (bqAccess) {
+        accessGranted = true;
+        isOwner = (bqAccess.utilisateur_id === req.user.userId);
+      }
+    }
+
+    if (!accessGranted) {
+      const tokenToTest = req.headers['x-terminal-token'] || req.query.terminal_token || req.query.token;
+      if (tokenToTest && (boutique.caisse_token === tokenToTest || boutique.id === tokenToTest)) {
+        accessGranted = true;
+      }
+    }
+
+    if (!accessGranted) {
+      const { logSecurityViolation } = require('../../middlewares/tenantSecurity');
+      logSecurityViolation({
+        eventType: 'UNAUTHORIZED_CAISSIERS_ACCESS',
+        userId: req.user?.userId || null,
+        tenantType: 'boutique',
+        targetId: idParam,
+        req,
+        details: { reason: 'Tentative d\'accès non autorisée à la liste des caissiers POS' }
+      });
+      return res.status(403).json({ error: 'Accès refusé : authentification ou jeton de caisse requis.' });
+    }
 
     const r = await pool.query(
       `SELECT id, nom, prenom, code_pin, role, actif, created_at

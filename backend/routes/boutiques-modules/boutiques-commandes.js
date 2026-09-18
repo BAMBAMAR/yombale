@@ -421,48 +421,79 @@ router.post('/commandes/express', async (req, res) => {
   }
 });
 
-// ── Spec 02 : GET /api/boutiques/:id/produits/:prodId/cross-sell — Suggestions Upsell
+// ── GET /api/boutiques/commandes/suivi — Suivi public sécurisé de commande
 router.get('/commandes/suivi', async (req, res) => {
   try {
     const { ref, tel, q } = req.query;
-    const rawTerm = (q || ref || tel || '').toString().trim();
-    if (!rawTerm) {
-      return res.status(400).json({ error: 'Veuillez fournir une référence de commande ou un numéro de téléphone.' });
+    const rawTerm = (ref || q || tel || '').toString().trim();
+    if (!rawTerm || rawTerm.length < 5) {
+      return res.status(400).json({ error: 'Veuillez fournir une référence complète de commande ou un numéro de téléphone valide.' });
     }
 
-    const searchPattern = `%${rawTerm}%`;
     const cleanDigits = rawTerm.replace(/[^0-9]/g, '');
-    const shortDigits = cleanDigits.length >= 9 && cleanDigits.startsWith('221') ? cleanDigits.slice(3) : cleanDigits;
-    const digitsPattern = cleanDigits ? `%${cleanDigits}%` : searchPattern;
-    const shortDigitsPattern = shortDigits ? `%${shortDigits}%` : searchPattern;
+    const isPhoneSearch = cleanDigits.length >= 9;
+    const isReferenceSearch = rawTerm.toUpperCase().startsWith('CMD-') || rawTerm.toUpperCase().startsWith('PAY-') || rawTerm.toUpperCase().startsWith('V-') || /^[0-9a-f-]{36}$/i.test(rawTerm);
 
-    const query = `
-      SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.statut, c.montant_total,
-             c.methode_paiement, c.created_at, c.boutique_id, c.produit_id, c.nom_produit, c.quantite,
-             COALESCE(b.nom, 'Boutique Nopalou') as boutique_nom,
-             COALESCE(b.slug, b.id::text) as boutique_slug,
-             COALESCE(b.telephone, '') as boutique_whatsapp
-      FROM commandes_boutique c
-      LEFT JOIN boutiques b ON b.id = c.boutique_id
-      WHERE (
-        c.reference ILIKE $1
-        OR c.id::text ILIKE $1
-        OR c.client_telephone ILIKE $1
-        OR ($2 <> '%%' AND regexp_replace(COALESCE(c.client_telephone, ''), '[^0-9]', '', 'g') LIKE $2)
-        OR ($3 <> '%%' AND regexp_replace(COALESCE(c.client_telephone, ''), '[^0-9]', '', 'g') LIKE $3)
-      )
-      ORDER BY c.created_at DESC
-      LIMIT 10
-    `;
+    if (!isPhoneSearch && !isReferenceSearch && rawTerm.length < 8) {
+      return res.status(400).json({ error: 'Terme de recherche trop court ou générique. Indiquez votre référence exacte (ex: CMD-2026-1234) ou votre numéro complet.' });
+    }
 
-    const { rows } = await pool.query(query, [searchPattern, digitsPattern, shortDigitsPattern]);
+    let query;
+    let params;
+
+    if (isReferenceSearch) {
+      query = `
+        SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.statut, c.montant_total,
+               c.methode_paiement, c.created_at, c.boutique_id, c.produit_id, c.nom_produit, c.quantite,
+               COALESCE(b.nom, 'Boutique Nopalou') as boutique_nom,
+               COALESCE(b.slug, b.id::text) as boutique_slug,
+               COALESCE(b.telephone, '') as boutique_whatsapp
+        FROM commandes_boutique c
+        LEFT JOIN boutiques b ON b.id = c.boutique_id
+        WHERE c.reference ILIKE $1 OR c.id::text = $1
+        ORDER BY c.created_at DESC
+        LIMIT 5
+      `;
+      params = [rawTerm];
+    } else {
+      const short9 = cleanDigits.slice(-9);
+      query = `
+        SELECT c.id, c.reference, c.client_nom, c.client_telephone, c.statut, c.montant_total,
+               c.methode_paiement, c.created_at, c.boutique_id, c.produit_id, c.nom_produit, c.quantite,
+               COALESCE(b.nom, 'Boutique Nopalou') as boutique_nom,
+               COALESCE(b.slug, b.id::text) as boutique_slug,
+               COALESCE(b.telephone, '') as boutique_whatsapp
+        FROM commandes_boutique c
+        LEFT JOIN boutiques b ON b.id = c.boutique_id
+        WHERE regexp_replace(COALESCE(c.client_telephone, ''), '[^0-9]', '', 'g') LIKE '%' || $1
+        ORDER BY c.created_at DESC
+        LIMIT 5
+      `;
+      params = [short9];
+    }
+
+    const { rows } = await pool.query(query, params);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Aucune commande trouvée pour cette référence ou ce numéro.' });
     }
 
+    // Masquage RGPD / PII des coordonnées personnelles pour la consultation publique
+    const sanitizedRows = rows.map(cmd => {
+      const tel = cmd.client_telephone || '';
+      const maskedTel = tel.length >= 6 ? `${tel.slice(0, 2)} *** ** ${tel.slice(-2)}` : 'Numéro masqué';
+      const nomParts = (cmd.client_nom || 'Client').trim().split(' ');
+      const maskedNom = nomParts.length > 1 ? `${nomParts[0]} ${nomParts[1].charAt(0)}.` : nomParts[0];
+
+      return {
+        ...cmd,
+        client_nom: maskedNom,
+        client_telephone: maskedTel,
+      };
+    });
+
     res.json({
       success: true,
-      commandes: rows
+      commandes: sanitizedRows
     });
   } catch (err) {
     console.error('[GET SUIVI ERR]', err);

@@ -65,8 +65,12 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  const hasCaisseToken = pathname === '/boutique/caisse' && !!req.nextUrl.searchParams.get('token')
+  const isBoutiqueProtected = (pathname === '/boutique' || pathname.startsWith('/boutique/')) && !hasCaisseToken
+
   const isProtected = PROTECTED_ROUTES.some(r => pathname.startsWith(r)) ||
-                     PROTECTED_EXACT.some(r => pathname === r)
+                     PROTECTED_EXACT.some(r => pathname === r) ||
+                     isBoutiqueProtected
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r))
 
   if (isProtected && !session) {
