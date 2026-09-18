@@ -6,7 +6,7 @@
     "expected": "200 OK avec liste produits",
     "actual": "Trouvés: 10",
     "details": null,
-    "timestamp": "2026-09-17T21:16:22.266Z"
+    "timestamp": "2026-09-18T00:16:56.801Z"
   },
   {
     "testId": "CHATBOT-02",
@@ -15,7 +15,7 @@
     "expected": "200 OK assaini",
     "actual": "Interrogation sans faille",
     "details": null,
-    "timestamp": "2026-09-17T21:16:25.017Z"
+    "timestamp": "2026-09-18T00:17:01.390Z"
   },
   {
     "testId": "CHATBOT-03",
@@ -24,7 +24,7 @@
     "expected": "Accès visites sécurisé",
     "actual": "Visites trouvées: 1",
     "details": null,
-    "timestamp": "2026-09-17T21:16:25.189Z"
+    "timestamp": "2026-09-18T00:17:01.579Z"
   },
   {
     "testId": "CHATBOT-04",
@@ -33,7 +33,7 @@
     "expected": "Accès CRM qualifié",
     "actual": "Leads trouvés: 1",
     "details": null,
-    "timestamp": "2026-09-17T21:16:25.268Z"
+    "timestamp": "2026-09-18T00:17:01.657Z"
   },
   {
     "testId": "CHATBOT-05",
@@ -42,7 +42,7 @@
     "expected": "Tous filtrés sans crash 500",
     "actual": "Assainissement 100%",
     "details": null,
-    "timestamp": "2026-09-17T21:16:39.710Z"
+    "timestamp": "2026-09-18T00:17:29.984Z"
   },
   {
     "testId": "CHATBOT-06",
@@ -51,7 +51,7 @@
     "expected": "Pas de débordement ni de blocage serveur",
     "actual": "Statuts maîtrisés",
     "details": null,
-    "timestamp": "2026-09-17T21:16:42.733Z"
+    "timestamp": "2026-09-18T00:17:35.482Z"
   },
   {
     "testId": "CHATBOT-07",
@@ -60,7 +60,7 @@
     "expected": "Lien wa.me valide",
     "actual": "https://wa.me/221770000000?text=Bonjour%20Nopalou%2C%20je%20recherche%20une%20villa%20%C3%A0%20Saly%20avec%20piscine.",
     "details": null,
-    "timestamp": "2026-09-17T21:16:42.734Z"
+    "timestamp": "2026-09-18T00:17:35.482Z"
   },
   {
     "testId": "CHATBOT-08",
@@ -69,7 +69,7 @@
     "expected": "200 OK avec réponse et chips interactifs",
     "actual": "Nopalou livre partout à Dakar sous 2 à 4 heures, et dans les",
     "details": null,
-    "timestamp": "2026-09-17T21:16:43.447Z"
+    "timestamp": "2026-09-18T00:17:36.985Z"
   },
   {
     "testId": "CHATBOT-09",
@@ -78,7 +78,7 @@
     "expected": "200 OK avec comparatif ou orientation catalogue",
     "actual": "⚖️ Comparatif des prix relevés pour \"smartphone\", classé par",
     "details": null,
-    "timestamp": "2026-09-17T21:16:43.818Z"
+    "timestamp": "2026-09-18T00:17:37.999Z"
   },
   {
     "testId": "CHATBOT-10",
@@ -87,7 +87,7 @@
     "expected": "200 OK avec suggestions assainies",
     "actual": "Je n'ai pas trouvé de correspondance exacte pour \"climatisse",
     "details": null,
-    "timestamp": "2026-09-17T21:16:43.966Z"
+    "timestamp": "2026-09-18T00:17:38.110Z"
   },
   {
     "testId": "CHATBOT-11",
@@ -99,6 +99,6 @@
       "active_orders": "0"
     },
     "details": null,
-    "timestamp": "2026-09-17T21:16:44.054Z"
+    "timestamp": "2026-09-18T00:17:39.183Z"
   }
 ]

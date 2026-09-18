@@ -19,19 +19,24 @@ import { AgenceErpModulesGrid } from './AgenceErpModulesGrid'
 import { AgenceComparativeTable } from './AgenceComparativeTable'
 import { AgenceSimulatorSection } from './AgenceSimulatorSection'
 
-export function AgenceLandingPublicView() {
+interface AgenceLandingPublicViewProps {
+  hideHero?: boolean
+}
+
+export function AgenceLandingPublicView({ hideHero = false }: AgenceLandingPublicViewProps = {}) {
   return (
     <div style={{ width: '100%', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
-      {/* ── 1. HERO B2B IMMOBILIER PRO ── */}
-      <section style={{
-        background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #0d1728 100%)',
-        color: '#ffffff',
-        padding: '50px 16px 80px',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
+      {/* ── 1. HERO B2B IMMOBILIER PRO (Masqué si intégré dans HeroDualTrack) ── */}
+      {!hideHero && (
+        <section style={{
+          background: 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #0d1728 100%)',
+          color: '#ffffff',
+          padding: '50px 16px 80px',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
         <div style={{ position: 'absolute', top: '-20%', left: '-10%', width: 450, height: 450, background: 'radial-gradient(circle, rgba(199,91,0,0.2) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '-20%', right: '-10%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
 
@@ -145,9 +150,10 @@ export function AgenceLandingPublicView() {
 
         </div>
       </section>
+      )}
 
       {/* ── 2. LA GRILLE DES 8 PÔLES DU VÉRITABLE ERP IMMO NOPALOU ── */}
-      <div style={{ position: 'relative', zIndex: 3, marginTop: -40 }}>
+      <div style={{ position: 'relative', zIndex: 3, marginTop: hideHero ? 0 : -40 }}>
         <AgenceErpModulesGrid />
       </div>
 

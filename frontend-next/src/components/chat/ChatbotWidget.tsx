@@ -25,7 +25,7 @@ const INITIAL_MESSAGE: ChatMessage = {
   time: getCurrentTime(),
   chips: [
     { label: 'Rechercher un smartphone', url: 'iPhone 13' },
-    { label: 'Locations Almadies', url: '/annonces/immo' },
+    { label: 'Locations Almadies', url: '/immo?q=Almadies' },
     { label: 'Créer ma boutique', url: '/creer-boutique' },
     { label: 'Frais de livraison', url: 'Quels sont les délais de livraison ?' },
   ],

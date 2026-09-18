@@ -227,31 +227,69 @@ export default function AgenceProspectDetailPage() {
       </div>
 
       {/* Onglets */}
-      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #e2e8f0', marginBottom: 20 }}>
+      <div
+        className="horizontal-scroll-fade"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          borderBottom: '1px solid var(--border, #E8DDD2)',
+          marginBottom: 20,
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+          paddingBottom: 2,
+        }}
+      >
         {[
-          { key: 'matching', label: `Biens Correspondants (${matches.length})` },
-          { key: 'visites', label: `Visites (${visites.length})` },
-          { key: 'offres', label: `Offres Déposées (${offres.length})` },
-          { key: 'notes', label: 'Notes de Négociation' },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key as any)}
-            style={{
-              padding: '10px 16px',
-              fontSize: 13,
-              fontWeight: 700,
-              border: 'none',
-              background: 'none',
-              color: activeTab === tab.key ? 'var(--accent, #C75B00)' : '#64748b',
-              borderBottom: activeTab === tab.key ? '2px solid var(--accent, #C75B00)' : '2px solid transparent',
-              cursor: 'pointer',
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+          { key: 'matching', label: 'Biens Correspondants', count: matches.length },
+          { key: 'visites', label: 'Visites', count: visites.length },
+          { key: 'offres', label: 'Offres Déposées', count: offres.length },
+          { key: 'notes', label: 'Notes de Négociation', count: null },
+        ].map(tab => {
+          const isSelected = activeTab === tab.key
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key as any)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '10px 14px',
+                fontSize: 13,
+                fontWeight: 700,
+                border: 'none',
+                background: 'none',
+                color: isSelected ? 'var(--accent, #C75B00)' : '#64748b',
+                borderBottom: isSelected ? '2px solid var(--accent, #C75B00)' : '2px solid transparent',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                minWidth: 'max-content',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span>{tab.label}</span>
+              {tab.count !== null && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    padding: '2px 7px',
+                    borderRadius: 10,
+                    background: isSelected ? 'rgba(199,91,0,0.12)' : '#f1f5f9',
+                    color: isSelected ? 'var(--accent, #C75B00)' : '#64748b',
+                    lineHeight: 1,
+                  }}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {/* Contenu de l'onglet */}

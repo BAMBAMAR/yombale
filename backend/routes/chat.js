@@ -30,7 +30,7 @@ const FAQ_WEB = [
     titre: 'Moyens de Paiement Sécurisés',
     reponse: 'Vous pouvez régler directement par Wave, Orange Money ou en espèces à la livraison. Les paiements sont sécurisés sans frais cachés.',
     actionLabel: 'En savoir plus',
-    actionUrl: '/faq',
+    actionUrl: '/aide',
   },
   {
     motsCles: ['vendre', 'creer boutique', 'devenir vendeur', 'marchand', 'ouvrir magasin'],
@@ -40,18 +40,18 @@ const FAQ_WEB = [
     actionUrl: '/creer-boutique',
   },
   {
-    motsCles: ['immo', 'appartement', 'villa', 'location', 'agence immo', 'logement', 'studio'],
+    motsCles: ['immo', 'appartement', 'villa', 'location', 'agence immo', 'logement', 'studio', 'terrain', 'bail'],
     titre: 'Immobilier & Logements',
     reponse: 'Consultez des centaines d\'annonces de location et vente vérifiées avec loyers transparents, ou contactez directement les agences partenaires.',
     actionLabel: 'Voir les biens immobiliers',
-    actionUrl: '/annonces/immo',
+    actionUrl: '/immo',
   },
   {
     motsCles: ['commande', 'suivi', 'colis', 'ou est ma commande', 'etat commande'],
     titre: 'Suivi de Commande',
     reponse: 'Pour suivre votre commande, saisissez votre référence de commande ou votre numéro de téléphone sur la page de suivi.',
     actionLabel: 'Suivre ma commande',
-    actionUrl: '/commandes/suivi',
+    actionUrl: '/suivi-commande',
   },
 ];
 
@@ -103,7 +103,12 @@ router.post('/message', limiterRecherche, async (req, res) => {
 
   // 1. Détection FAQ Web
   const faqTrouvee = FAQ_WEB.find((f) =>
-    f.motsCles.some((mot) => textLower.includes(mot))
+    f.motsCles.some((mot) => {
+      if (mot === 'om') {
+        return /\bom\b/i.test(rawText);
+      }
+      return textLower.includes(mot);
+    })
   );
 
   // 2. Détection Intention Immobilière
@@ -133,8 +138,8 @@ router.post('/message', limiterRecherche, async (req, res) => {
   } else if (isImmo) {
     reply = `Voici les offres immobilières correspondant à votre recherche sur Nopalou :`;
     chips.push(
-      { label: 'Toutes les locations', url: '/annonces/immo' },
-      { label: 'Espace Agences', url: '/agence' }
+      { label: 'Toutes les offres immo', url: '/immo' },
+      { label: 'Espace Agences Pro', url: '/agence' }
     );
   } else if (items.length > 0) {
     if (suggestionFuzzy && suggestionFuzzy.toLowerCase() !== rawText.toLowerCase()) {
@@ -168,7 +173,7 @@ router.post('/message', limiterRecherche, async (req, res) => {
       url: it.type === 'produit'
         ? `/boutiques/${it.boutique_slug || 'boutique'}/produits/${it.id}`
         : it.type === 'immo'
-        ? `/annonces/immo/${it.id}`
+        ? `/immo/${it.id}`
         : `/produit/${it.id}`,
     })),
     chips,

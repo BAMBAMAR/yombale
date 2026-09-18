@@ -1,3 +1,84 @@
+- **Campagne d'Homologation Globale & Qualification de Release — Passer d'une Version de Dév à une Version Réellement Prête (Branche feature/vertical-immobilier) (18 septembre 2026)** 🚀🏢🛒💳📱🔒⚡✅ :
+  * **🔍 1. Gel de la Version & État de Référence** :
+    - Établissement formel de l'état de référence complet du système (Commit `f8fdd018`, Node.js v24.19.0, PostgreSQL 16 Hosted Neon, Express 4.18.2 API v1.2.0, Next.js 14.2.0 App Router v0.1.1, PWA Serwist 9.5.12).
+    - Cartographie exhaustive des 31 routes d'API Express REST, des 60+ tables PostgreSQL relationnelles, des 4 cron jobs périodiques, des webhooks HMAC (Wave, Orange, Meta WhatsApp) et des services tiers (Cloudinary, Resend, Sentry).
+  * **📋 2. Inventaire Réel & Factualité Absolue (Zéro Invention)** :
+    - Recensement rigoureux des fonctionnalités réellement existantes et opérationnelles : double accueil bimodal, recherche phonétique wolof/français, catalogue produits, vitrines marchandes, panier express, suivi de commandes, caisse tactile POS `/pos`, carnet de dettes Wave `/gestion-stock-carnet-dettes`, ERP agence immobilière `/agence/[slug]` (18 pôles de gestion), portail immo `/immo`, baux OHADA, quittances QR Code, encaissement de loyers `/payer-loyer`, et CRM prospection `/admin/prospection`.
+  * **🧪 3. Validation de Bout en Bout des Parcours Critiques (30 Scénarios Réels PASS)** :
+    - *Acheteur* : Recherche instantanée -> sélection variante -> panier persistant -> commande express -> contrôle SQL `commandes_boutique` validé.
+    - *Marchand POS* : Clavier tactile -> vente mixte Wave/Espèces -> décrémentation stock unitaire (20 -> 15) -> clôture session Z avec réconciliation à écart 0 validée.
+    - *Carnet de Dettes* : Création débiteur -> enregistrement créance 80 000 FCFA -> acompte 30 000 FCFA -> solde net 50 000 FCFA et relance WhatsApp validée.
+    - *Immobilier & Gestion Locative* : Publication annonce -> lead CRM -> planification visite -> création bail -> émission quittance et bascule statut `loue` validée.
+  * **🛡️ 4. Sécurité Multi-Tenant & Anti-IDOR (Étanchéité 100% PASS)** :
+    - Validation des middlewares `requireBoutiqueOwnership` et `requireAgenceAccess` : tentative d'écriture d'un marchand sur une boutique tierce bloquée en 403 Forbidden immédiat.
+    - Tentative d'accès non autorisé aux biens, mandats ou baux d'une autre agence bloquée en 403 Forbidden.
+  * **🤖 5. Chatbot Bimodal & Intégrations WhatsApp (11/11 PASS)** :
+    - Alignement de la suite de tests unitaires `tests/unit/chat-api.test.js` sur la route canonique `/immo` (341/341 tests backend PASS à 100%).
+    - Immunité aux injections SQL et XSS, tolérance aux fautes Levenshtein, zéro hallucination (données strictement sourcées depuis PostgreSQL).
+  * **🌐 6. Scan des 166 Routes Frontend & Observabilité des Codes HTTP** :
+    - 153 routes 200 OK, 13 redirections canoniques 307/308, 0 erreur 500, 0 lien 404 brisé.
+    - Matrice d'observabilité des 12 codes HTTP documentée et justifiée (200, None Serwist PWA, 404 sondes externes, 30x canoniques, 429 rate limit anti-bruteforce, 403 IDOR bloqué).
+  * **📱 7. Responsive Multi-Écrans (81/81 Checks PASS) & PWA** :
+    - 0 débordement horizontal sur 9 largeurs d'écran distinctes (de 320px à 1280px). Manifest PWA v17 100% conforme.
+  * **📐 8. Éradication des Textes Tronqués sur les Onglets de Navigation (`biens/[bienId]/page.tsx`, `prospects/[id]/page.tsx`)** :
+    - Constat : sur les résolutions intermédiaires ou compactes, les onglets horizontaux de la fiche bien 360° et de la fiche prospect CRM subissaient une compression flexbox indésirable (absence de `flexShrink: 0`), écourtant les intitulés (`Aperçu &`, `Matching`, `Visite:`, `Bail & Lo`, `Offres re`).
+    - Solution : ajout de `flexShrink: 0`, `minWidth: 'max-content'`, `overflowX: 'auto'` avec défilement tactile fluide (`WebkitOverflowScrolling: 'touch'`) et séparation du libellé et du badge compteur numérique dans une pastille dédiée pour une lisibilité irréprochable sans aucun rognage.
+  * **🏆 9. Décision Technique : GO PROD FERME (Homologué pour la Production)**.
+  * **🧹 10. Purge Intégrale et Sécurisée de Toutes les Données de Test en Base de Données (`scripts/purge-test-data.mjs`)** :
+    - *Contexte & Requête Utilisateur* : Suppression sans résidu de toutes les entités de qualification créées pour les tests (comptes, agences factices, biens tests, petites annonces de test, commandes factices, carnet de dettes et sessions POS).
+    - *Résultats de la Purge (Exécution Transactionnelle Atomique `BEGIN; ... COMMIT;`)* :
+      - **42 Utilisateurs de test supprimés** : tous les comptes tests (`@nopalou-test.sn`, `@test-qa.com`, `@example.com`, `test-chantier3-verif@...`, `test-nopalou-ci@...`).
+      - **11 Agences de test supprimées** : toutes les agences créées lors des campagnes de test (`agence-nopalou-immo-prestige-%`, `agence-teranga-properties-%`, `khadija-immobilier-prestige-%`).
+      - **8 Biens de test supprimés** : `APPART FOIRE TEST E2E` ainsi que les villas et appartements de test associés aux agences factices.
+      - **6 Petites annonces de test supprimées** : toutes les annonces de simulation (`Table à manger en bois massif %`).
+      - **9 Clients carnet de dettes supprimés** : l'ensemble des créances de test (`Ibrahima Débiteur`, `Ibrahima Dettes Test`) et 21 entrées d'historique associées.
+      - **62 Commandes de test supprimées** : toutes les commandes d'acheteurs de test (`Fatou Diop Acheteuse`, `Double Clic Testeur`, etc.).
+      - **32 Boutiques de test supprimées** : (`Électro Nopalou %`, `Mode Teranga %`, `Supérette Nopalou Express %`, `Khadija Fashion Store %`, `Boutique Électro QA %`).
+      - **17 Sessions de caisse POS de test supprimées**.
+      - **29 Produits de boutiques de test supprimés**.
+    - *Intégrité des Données Canoniques Préservée à 100%* :
+      - Agence canonique **AMAR IMMO** (`amar-immo`) : préservée intacte avec son bien officiel (`Villa Duplex Almadies 5P`), ses baux, quittances et contacts réels.
+      - 78 utilisateurs réels de la plateforme préservés.
+      - 67 boutiques marchandes réelles préservées.
+      - 4 356 annonces réelles d'utilisateurs préservées.
+    - *Vérification Zéro Résidu* : requêtes de contrôle post-purge validant 0 utilisateur de test, 0 agence de test, 0 bien de test, 0 annonce de test, 0 dette de test, avec backend Express opérationnel à 100% (health check OK, latence DB ~107ms).
+  * **📐 11. Réorganisation du Footer : 4 Colonnes Équilibrées, Bandeau Horizontal d'Assistance & Barre Légale Basse (`layout.tsx`, `footer.css`, `annonces.css`)** :
+    - *Constat* : La 5ᵉ colonne (*Informations*) était rejetée sur une 2ᵉ ligne sous *Boutique & POS* dans une case étroite (à cause d'un override résiduel `repeat(4, 1fr)` dans `annonces.css`), laissant 75% d'espace vide à droite et coupant les libellés (`Supprimer annonce / \n numéro`).
+    - *Solution Appliquée (Option 2 — Validée par l'Utilisateur)* :
+      1. Les colonnes principales du haut sont nettoyées et fixées à **4 colonnes parfaitement réparties** (`Boutique & POS`, `Immobilier & Agences`, `Catégories`, `Mon compte`).
+      2. Retrait de l'override obsolète `repeat(4, 1fr)` dans `annonces.css`.
+      3. Création d'un **bandeau horizontal pleine largeur `.footer-support-bar`** dédié à l'assistance et au contact client immédiatement sous les 4 colonnes : *Aide & Contact : Comment ça marche ? • 💬 Assistant WhatsApp • Sourcing Dakar • Guide Vendeur • contact@nopalou.com • +221 70 871 79 42 • Dakar*.
+      4. Déplacement horizontal de l'ensemble des liens légaux et de conformité (*Mentions légales*, *Confidentialité*, *CGU*, *🗑️ Supprimer mon annonce ou numéro*) sur la barre inférieure `.footer-bottom` à côté du copyright, sans aucun saut de ligne indésirable.
+      5. Responsive fluide sur mobile et tablette avec empilement centré sans débordement.
+
+
+
+- **Audit Exhaustif (38 Dimensions) et Perfectionnement de la Page d'Accueil Nopalou (Branche feature/vertical-immobilier) (18 septembre 2026)** 🌐🏢🛒📐🎨⚡🛡️🔍✅ :
+  * **🔍 1. Audit Exhaustif 38 Dimensions de la Page d'Accueil** :
+    - Réalisation d'une analyse 360° du positionnement, de la hiérarchie d'information, du bimodal/dual-track, de la pertinence pour les 8 profils utilisateurs cibles, du moteur de recherche, du chatbot et de la réassurance.
+    - Identification précise de la triple identité de Nopalou : Commerce Grand Public (comparateur de prix, commandes WhatsApp, Pay Safe), SaaS Marchand & POS (caisse tactile hors-ligne `/pos`, carnet de dettes Wave `/gestion-stock-carnet-dettes`), et PropTech ERP (baux OHADA, quittances QR Code, encaissement loyers `/payer-loyer`).
+    - Rapport exhaustif sauvegardé dans `audit_exhaustif_homepage_nopalou.md`.
+  * **🏢 2. Résolution du Bug Visuel de Double Héro sur l'Onglet Agence Pro (`AgenceLandingPublicView.tsx`, `HomeDualTrackContainer.tsx`)** :
+    - Constat : lorsque l'utilisateur basculait sur le volet *« Espace Agence Pro »* dans le conteneur bimodal de l'accueil, un second héro complet sombre (avec son propre simulateur de commissions) s'affichait immédiatement sous le héro principal d'accueil, créant un doublon visuel massif et dégradant l'expérience.
+    - Solution appliquée : ajout d'une prop optionnelle `hideHero?: boolean` dans `AgenceLandingPublicView.tsx` conditionnant l'affichage du bloc héro et du simulateur du haut.
+    - Transmission de `hideHero={true}` dans `HomeDualTrackContainer.tsx`, permettant une intégration fluide et directe de la proposition de valeur de l'agence sans aucune redondance.
+    - Enrichissement de `HeroAgenceHeaderView.tsx` avec des pastilles de réassurance certifiées (`CheckCircle2` pour *Starter 100% gratuit*, *Quittances QR Code*, *Reversements nets*).
+  * **🤖 3. Fiabilisation du Chatbot d'Assistance & Correction des Redirections (`chat.js`, `ChatbotWidget.tsx`)** :
+    - Correction d'un faux positif NLP majeur : la détection du paiement Orange Money (`om`) par simple sous-chaîne `includes('om')` interceptait à tort les questions contenant des mots ordinaires comme *"comment"*. Remplacement par une regex stricte à frontière de mot `/\bom\b/i`.
+    - Correction des routes cibles dans les réponses et suggestions de l'assistant :
+      - Remplacement de `/annonces/immo` (qui pointait vers une annonce unique inexistante et levait "Annonce introuvable") par `/immo` et `/immo?q=Almadies`.
+      - Remplacement de `/commandes/suivi` par la route réelle `/suivi-commande`.
+      - Remplacement de `/faq` par la route réelle `/aide`.
+  * **🎨 4. Nettoyage Anti-AI-Slop & Standard Ingénieur Senior (`page.tsx`)** :
+    - Remplacement de l'ensemble des béquilles émojis d'interface (`🔎`, `✖`, `🎵`, `📘`, `𝕏`) par les icônes vectorielles SVG de `lucide-react` (`Search`, `X`, `Building2`, `Tag`, `Store`, `ShoppingBag`, `MessageCircle` et logos officiels SVG pour les réseaux).
+    - Création du helper modulaire `getCategoryIcon` assignant des icônes SVG précises aux catégories de produits.
+    - Suppression des conteneurs vides `<span></span>`.
+  * **📸 5. Recette Visuelle & Contrôles Qualité** :
+    - Captures d'écran haute résolution enregistrées et validées pour les 3 modes desktop (Acheteur, Marchand POS, Agence Pro sans doublon) et mobile (iPhone 15 / 390px).
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : 0 Silent Catches, 0 Monolithes (>800 lignes).
+    - Audit mobile Playwright (`npm run test:mobile`) : 100% conforme sur les viewports analysés.
+    - 0 régression, 0 modification non sollicitée, respect absolu de la règle de non-push git automatique.
+
 - **Ajout de la Recherche et des Filtres Dédiés dans l'Onglet « Visites Vidéo & Reels » (`VitrineVideoReels.tsx`, `vitrine/page.tsx`, `globals.css`) (Branche feature/vertical-immobilier) (17 septembre 2026)** 🎬🔍🏷️📱⚡✅ :
   * **🔍 1. Moteur de Recherche et Filtres Dédiés aux Visites Vidéo** :
     - Constat : lorsque l'utilisateur basculait sur l'onglet *« Visites Vidéo & Reels »*, la barre de filtres et recherche disparaissait car elle était cantonnée au catalogue de biens statiques, rendant impossible la recherche d'une vidéo par quartier, mot-clé ou type d'opération.

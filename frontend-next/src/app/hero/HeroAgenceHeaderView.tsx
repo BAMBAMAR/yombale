@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Building2, ArrowRight, ShieldCheck, CreditCard, Sparkles } from 'lucide-react'
+import { Building2, ArrowRight, ShieldCheck, CreditCard, Sparkles, CheckCircle2 } from 'lucide-react'
 
 export default function HeroAgenceHeaderView() {
   return (
@@ -113,6 +113,24 @@ export default function HeroAgenceHeaderView() {
           <CreditCard size={15} color="#10b981" />
           <span>Espace locataire (Payer un loyer)</span>
         </Link>
+      </div>
+
+      <div style={{
+        marginTop: 18, display: 'flex', justifyContent: 'center', alignItems: 'center',
+        gap: 16, flexWrap: 'wrap', fontSize: 12, color: 'var(--text-subtle, #5A4E42)', fontWeight: 700
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <CheckCircle2 size={14} color="var(--price, #0A5C36)" />
+          <span>Plan Agence Starter 100% gratuit</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <CheckCircle2 size={14} color="var(--price, #0A5C36)" />
+          <span>Quittances conformes avec QR Code</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <CheckCircle2 size={14} color="var(--price, #0A5C36)" />
+          <span>Reversements nets aux bailleurs</span>
+        </div>
       </div>
     </div>
   )

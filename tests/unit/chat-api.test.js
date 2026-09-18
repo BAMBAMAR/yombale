@@ -68,7 +68,7 @@ describe('POST /api/chat/message — API Chatbot Web Nopalou', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.items).toHaveLength(1);
     expect(res.body.items[0].titre).toBe('Villa 5 pièces avec piscine');
-    expect(res.body.chips.some(c => c.url === '/annonces/immo')).toBe(true);
+    expect(res.body.chips.some(c => c.url === '/immo')).toBe(true);
   });
 
   test('effectue la correction de fautes et renvoie les produits correspondants', async () => {

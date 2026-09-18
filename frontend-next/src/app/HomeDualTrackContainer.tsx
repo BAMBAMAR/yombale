@@ -119,7 +119,7 @@ function HomeDualTrackContainerContent({
         ) : (
           /* VUE 3 : SHOWCASE COMPLET DÉDIÉ AUX AGENCES IMMOBILIÈRES & GESTION LOCATIVE */
           <div>
-            <AgenceLandingPublicView />
+            <AgenceLandingPublicView hideHero={true} />
           </div>
         )}
       </main>

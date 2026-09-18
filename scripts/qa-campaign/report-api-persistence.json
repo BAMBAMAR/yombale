@@ -6,9 +6,9 @@
     "action": "Inscription Marchand A + Token + DB",
     "status": "PASS",
     "expected": "201 + User en DB",
-    "actual": "OK userId=d4f4fef1-f43b-4292-9946-e6e314a14d99",
+    "actual": "OK userId=e4f2b1c3-c201-4698-a5f0-63e709d21e50",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:52.720Z"
+    "timestamp": "2026-09-18T00:17:42.589Z"
   },
   {
     "id": "AUTH-02",
@@ -17,9 +17,9 @@
     "action": "Inscription Marchand B (Isolation)",
     "status": "PASS",
     "expected": "201 + Token",
-    "actual": "OK userId=199b14a3-795b-40c5-be3a-fead2e6c9631",
+    "actual": "OK userId=4a936564-d79b-4697-bb8d-8004ed7bafe0",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:53.292Z"
+    "timestamp": "2026-09-18T00:17:43.102Z"
   },
   {
     "id": "AUTH-03",
@@ -30,7 +30,7 @@
     "expected": "409 Conflict",
     "actual": "Rejeté 409",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:53.376Z"
+    "timestamp": "2026-09-18T00:17:43.185Z"
   },
   {
     "id": "AUTH-04",
@@ -41,7 +41,7 @@
     "expected": "400 Bad Request",
     "actual": "Rejet validé",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:53.382Z"
+    "timestamp": "2026-09-18T00:17:43.197Z"
   },
   {
     "id": "AUTH-05",
@@ -52,7 +52,7 @@
     "expected": "200 + Nouveau JWT",
     "actual": "Connexion OK",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:53.837Z"
+    "timestamp": "2026-09-18T00:17:43.676Z"
   },
   {
     "id": "AUTH-06",
@@ -63,7 +63,7 @@
     "expected": "200 + Profil exact",
     "actual": "Identité confirmée",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:53.926Z"
+    "timestamp": "2026-09-18T00:17:43.765Z"
   },
   {
     "id": "BQ-01",
@@ -72,9 +72,9 @@
     "action": "Création Boutique Marchand A + DB",
     "status": "PASS",
     "expected": "Boutique liée à User A",
-    "actual": "OK id=65d71652-d0f8-4ab6-967d-2f816f8a566e",
+    "actual": "OK id=e2134524-c8ec-44aa-9e84-56acf75c0fd2",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:54.650Z"
+    "timestamp": "2026-09-18T00:17:44.677Z"
   },
   {
     "id": "BQ-02",
@@ -83,9 +83,9 @@
     "action": "Création Boutique Marchand B",
     "status": "PASS",
     "expected": "Boutique B créée",
-    "actual": "OK id=4494172e-7e93-431d-8350-2a8d9d1f8383",
+    "actual": "OK id=12173718-31bd-44a3-b360-13e7d4bd6067",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:55.331Z"
+    "timestamp": "2026-09-18T00:17:45.758Z"
   },
   {
     "id": "PROD-01",
@@ -94,9 +94,9 @@
     "action": "Ajout Produit Conforme + Vérif SQL",
     "status": "PASS",
     "expected": "Produit persisté (prix=185000, stock=15)",
-    "actual": "OK id=b9b9dd8b-2117-4404-9f48-8473320c6d43",
+    "actual": "OK id=f778cc2a-c0d7-4818-9529-e880d119d691",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:55.745Z"
+    "timestamp": "2026-09-18T00:17:46.277Z"
   },
   {
     "id": "PROD-02",
@@ -107,7 +107,7 @@
     "expected": "400 Bad Request",
     "actual": "Validation rejetée",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:56.000Z"
+    "timestamp": "2026-09-18T00:17:46.530Z"
   },
   {
     "id": "SEC-IDOR-01",
@@ -118,7 +118,7 @@
     "expected": "403 Forbidden",
     "actual": "Bloqué avec succès (403)",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:56.161Z"
+    "timestamp": "2026-09-18T00:17:46.687Z"
   },
   {
     "id": "SEC-IDOR-02",
@@ -129,7 +129,7 @@
     "expected": "403 Forbidden",
     "actual": "Bloqué avec succès (403)",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:56.312Z"
+    "timestamp": "2026-09-18T00:17:46.773Z"
   },
   {
     "id": "SEC-ADMIN-01",
@@ -140,7 +140,7 @@
     "expected": "401 Unauthorized",
     "actual": "Bloqué (401)",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:56.331Z"
+    "timestamp": "2026-09-18T00:17:46.788Z"
   },
   {
     "id": "POS-01",
@@ -149,9 +149,9 @@
     "action": "Ouverture Session Caisse + DB",
     "status": "PASS",
     "expected": "Session ouverte en DB (fond=25000)",
-    "actual": "OK id=52fda7fe-b03c-4bed-91ff-10e083f54fd6",
+    "actual": "OK id=423e6a5d-3b66-4062-add4-4b6519f27209",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:56.988Z"
+    "timestamp": "2026-09-18T00:17:47.246Z"
   },
   {
     "id": "POS-02",
@@ -162,7 +162,7 @@
     "expected": "Stock décrémenté de 2 (15->13) et Vente en DB",
     "actual": "Validé conforme",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:58.361Z"
+    "timestamp": "2026-09-18T00:17:48.838Z"
   },
   {
     "id": "POS-03",
@@ -173,7 +173,7 @@
     "expected": "Statut clôturée, écart = 0 FCFA",
     "actual": "Zéro écart",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:58.765Z"
+    "timestamp": "2026-09-18T00:17:49.240Z"
   },
   {
     "id": "DETTE-01",
@@ -182,9 +182,9 @@
     "action": "Création Client Débiteur",
     "status": "PASS",
     "expected": "Client créé",
-    "actual": "OK id=ca8a7c0a-0e5c-4e06-adf9-1f753bec2e26",
+    "actual": "OK id=737362b9-cfbc-4788-ab02-b5007c960881",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:58.939Z"
+    "timestamp": "2026-09-18T00:17:49.418Z"
   },
   {
     "id": "DETTE-02",
@@ -195,7 +195,7 @@
     "expected": "Solde = 80000",
     "actual": "Solde SQL=80000.00",
     "bug": null,
-    "timestamp": "2026-09-17T21:17:59.737Z"
+    "timestamp": "2026-09-18T00:17:50.331Z"
   },
   {
     "id": "DETTE-03",
@@ -206,7 +206,7 @@
     "expected": "Solde = 50000",
     "actual": "Solde SQL=50000.00",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:00.315Z"
+    "timestamp": "2026-09-18T00:17:50.881Z"
   },
   {
     "id": "IMMO-01",
@@ -215,9 +215,9 @@
     "action": "Création Agence + Rôle Admin Membre DB",
     "status": "PASS",
     "expected": "Agence créée + Membre Admin en DB",
-    "actual": "OK slug=agence-nopalou-immo-prestige-870308",
+    "actual": "OK slug=agence-nopalou-immo-prestige-661650",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:01.269Z"
+    "timestamp": "2026-09-18T00:17:52.113Z"
   },
   {
     "id": "IMMO-02",
@@ -226,9 +226,9 @@
     "action": "Ajout Bien Immobilier + Persistance DB",
     "status": "PASS",
     "expected": "Bien actif en DB (prix_location=1500000)",
-    "actual": "OK id=7bcba96e-3284-4dad-b825-97291a1ec76d",
+    "actual": "OK id=4b9db2fd-ce4c-40cc-a5c0-67ed6e22ceaf",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:01.699Z"
+    "timestamp": "2026-09-18T00:17:52.560Z"
   },
   {
     "id": "IMMO-03",
@@ -239,7 +239,7 @@
     "expected": "Mandat actif",
     "actual": "Mandat persisté",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:02.197Z"
+    "timestamp": "2026-09-18T00:17:53.179Z"
   },
   {
     "id": "IMMO-04",
@@ -250,7 +250,7 @@
     "expected": "Visite planifiée",
     "actual": "Enregistrée",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:02.791Z"
+    "timestamp": "2026-09-18T00:17:53.661Z"
   },
   {
     "id": "IMMO-05",
@@ -259,9 +259,9 @@
     "action": "Création Bail Locatif + Persistance DB",
     "status": "PASS",
     "expected": "Bail actif en DB",
-    "actual": "OK bailId=78a4a164-3a09-48e2-9fb9-063244287065",
+    "actual": "OK bailId=8835ee32-754e-4af2-a7f4-ccefbe16da6d",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:04.251Z"
+    "timestamp": "2026-09-18T00:17:55.982Z"
   },
   {
     "id": "SEC-IMMO-IDOR",
@@ -272,7 +272,7 @@
     "expected": "403 Forbidden",
     "actual": "Bloqué avec succès",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:04.350Z"
+    "timestamp": "2026-09-18T00:17:56.082Z"
   },
   {
     "id": "SEARCH-01",
@@ -283,7 +283,7 @@
     "expected": "200 + Liste produits",
     "actual": "Résultats reçus",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:06.118Z"
+    "timestamp": "2026-09-18T00:17:58.360Z"
   },
   {
     "id": "SEARCH-02",
@@ -294,7 +294,7 @@
     "expected": "200 Assaini sans crash",
     "actual": "Sécurisé",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:07.115Z"
+    "timestamp": "2026-09-18T00:18:00.281Z"
   },
   {
     "id": "HEALTH-01",
@@ -303,9 +303,9 @@
     "action": "Liveness & Readiness Healthcheck",
     "status": "PASS",
     "expected": "DB OK, Latence < 200ms",
-    "actual": "OK (73ms)",
+    "actual": "OK (78ms)",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:07.198Z"
+    "timestamp": "2026-09-18T00:18:00.364Z"
   },
   {
     "id": "ADMIN-01",
@@ -316,7 +316,7 @@
     "expected": "200 ok",
     "actual": "Cookie/Session Admin émis",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:07.203Z"
+    "timestamp": "2026-09-18T00:18:00.380Z"
   },
   {
     "id": "ADMIN-02",
@@ -327,7 +327,7 @@
     "expected": "200 + KPIs système",
     "actual": "Métriques reçues",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:07.598Z"
+    "timestamp": "2026-09-18T00:18:01.282Z"
   },
   {
     "id": "ADMIN-03",
@@ -338,6 +338,6 @@
     "expected": "200 + Logs",
     "actual": "Journal accessible",
     "bug": null,
-    "timestamp": "2026-09-17T21:18:07.840Z"
+    "timestamp": "2026-09-18T00:18:01.758Z"
   }
 ]

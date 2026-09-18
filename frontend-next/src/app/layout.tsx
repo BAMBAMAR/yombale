@@ -411,24 +411,27 @@ export default async function RootLayout({
                   <Package size={13} style={{ color: 'var(--accent, #C75B00)' }} /> Suivre ma commande
                 </a>
               </div>
+            </div>
+          </div>
 
-              {/* Colonne 5 — Informations & Contact */}
-              <div className="footer-col">
-                <p className="footer-col-titre">Informations</p>
+          {/* Bandeau d'assistance & contact horizontal (Option 2) */}
+          <div className="footer-support-bar">
+            <div className="footer-support-bar-inner">
+              <span className="footer-support-title">Aide &amp; Contact :</span>
+              <div className="footer-support-links">
                 <a href="/guide-emploi">Comment ça marche ?</a>
-                <a href="/assistant-whatsapp" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <MessageCircle size={13} style={{ color: '#25D366' }} /> Assistant WhatsApp
+                <span className="footer-support-sep">&bull;</span>
+                <a href="/assistant-whatsapp" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <MessageCircle size={14} style={{ color: '#25D366' }} /> Assistant WhatsApp
                 </a>
-                <a href="/guide-sourcing-revente">Sourcing Alibaba, AliExpress &amp; Shein</a>
-                <a href="/guide-creer-boutique">Guide Vendeur &amp; Sourcing</a>
-                <a href="/cgu#suppression-donnees" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <Trash2 size={13} style={{ color: 'var(--red, #B91C1C)' }} /> Supprimer annonce / numéro
-                </a>
-                <a href="/mentions-legales">Mentions légales</a>
-                <a href="/confidentialite">Confidentialité</a>
-                <a href="/cgu">CGU</a>
-                <a href="mailto:contact@nopalou.com" style={{ marginTop: 6, fontWeight: 700 }}>contact@nopalou.com</a>
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,.75)' }}>+221 70 871 79 42 &bull; Dakar</span>
+                <span className="footer-support-sep">&bull;</span>
+                <a href="/guide-sourcing-revente">Sourcing Dakar</a>
+                <span className="footer-support-sep">&bull;</span>
+                <a href="/guide-creer-boutique">Guide Vendeur</a>
+                <span className="footer-support-sep">&bull;</span>
+                <a href="mailto:contact@nopalou.com" style={{ fontWeight: 700 }}>contact@nopalou.com</a>
+                <span className="footer-support-sep">&bull;</span>
+                <span style={{ color: 'rgba(255,255,255,.85)' }}>+221 70 871 79 42 &bull; Dakar</span>
               </div>
             </div>
           </div>
@@ -479,7 +482,18 @@ export default async function RootLayout({
           </div>
 
           <div className="footer-bottom">
-            <p>© 2026 Nopalou — Une marque de SKYROAD - SARL. Dakar, Sénégal. Tous droits réservés.</p>
+            <p className="footer-bottom-copy">© 2026 Nopalou — Une marque de SKYROAD - SARL. Dakar, Sénégal. Tous droits réservés.</p>
+            <div className="footer-bottom-links">
+              <a href="/mentions-legales">Mentions légales</a>
+              <span className="footer-bottom-sep">&bull;</span>
+              <a href="/confidentialite">Confidentialité</a>
+              <span className="footer-bottom-sep">&bull;</span>
+              <a href="/cgu">CGU</a>
+              <span className="footer-bottom-sep">&bull;</span>
+              <a href="/cgu#suppression-donnees" className="footer-bottom-delete-link" title="Demande de retrait d'une annonce ou d'un numéro">
+                <Trash2 size={13} style={{ color: 'var(--red, #B91C1C)', flexShrink: 0 }} /> Supprimer mon annonce ou numéro
+              </a>
+            </div>
           </div>
         </footer>
         </ToastProvider>

@@ -1483,15 +1483,6 @@
   color: #fff;
 }
 
-/* Footer 4 colonnes de liens */
-.footer-inner {
-  grid-template-columns: 200px 1fr !important;
-}
-
-.footer-links {
-  grid-template-columns: repeat(4, 1fr) !important;
-}
-
 .bq-nav-group {
   margin-bottom: 12px;
 }
