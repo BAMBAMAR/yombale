@@ -9376,4 +9376,22 @@ Toutes les remédiations du plan stratégique ont été menées à bien, intégr
   - Helper de conversion sécurisé `toParamNumber` / `toParamInt` dans [`backend/routes/biens.js`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/backend/routes/biens.js) prévenant les erreurs SQL `NaN`.
   - Suppression de l'imbrication illégale `<form>` dans [`BienVideoUploader.tsx`](file:///c:/Users/HP/.gemini/antigravity-ide/scratch/yombale/frontend-next/src/app/agence/[slug]/biens/components/BienVideoUploader.tsx).
 
+---
+
+## 6. Campagne d'Homologation End-to-End de Toute la Plateforme Nopalou & Correction Lien Vitrine (18 septembre 2026) 🏆✅
+- **Correction Critique P0 : Résolution de l'erreur 404 sur le bouton « Voir vitrine » (`StudioPersonnalisation.tsx`, `route.ts`)** :
+  - `StudioPersonnalisation.tsx` (ligne 91) : La variable `publicShopUrl` générait l'URL racine erronée `/${boutique.slug}` (ex: `https://nopalou.com/misbah-electro`), provoquant une erreur HTTP 404 car Next.js App Router héberge les vitrines publiques sous `/boutiques/[id]`. Remplacée par `const publicShopUrl = '/boutiques/${boutique.slug || boutique.id}'`.
+  - `frontend-next/src/app/b/[slug]/route.ts` : Ajout de la gestion dynamique de `baseUrl` avec prise en compte des en-têtes `x-forwarded-host` et `x-forwarded-proto` pour garantir que les liens courts WhatsApp `/b/[slug]` redirigent toujours vers le domaine public légitime sans être déroutés par les adresses de conteneur internes.
+- **Résultats de la Campagne d'Homologation E2E (Phases 0 à 36)** :
+  - **Scan des 166 routes frontend (`00-routes-scanner.mjs`)** : 153 pages en `200 OK`, 13 redirections de sécurité/SEO légitimes (`307`/`308`), 0 erreur 500, 0 erreur 404 orpheline.
+  - **Suite d'essais API & Persistance DB (`01-api-backend-e2e.mjs`)** : 31/31 tests conformes (100% PASS) couvrant l'authentification, les créations de boutiques et de produits avec vérification SQL (`stock_quantite`, `prix`), le POS caisse avec rapprochement parfait et clôture Z, le carnet de dettes (solde DB recalculé après acompte Wave), les mandats immo, biens et baux locatifs.
+  - **Sécurité Multi-Tenant & Anti-IDOR** : Rejet systématique en `403 Forbidden` des tentatives de manipulation de boutiques ou d'agences tierces.
+  - **14 Scénarios Réels Grandeur Nature (`03-scenarios-reels.mjs`)** : 30/30 étapes validées avec succès (Acheteur marketplace, Vendeur particulier, Marchand POS, Agence Immo, Locataire, Hybride, Intrus IDOR, Résilience API).
+  - **Chatbot Bimodal & IA (`05-chatbot-immo-e2e.mjs`)** : 11/11 tests validés avec succès (Intentions high-tech/immo, fuzzy matching Levenshtein, injection anti-XSS, handoff contextuel WhatsApp `wa.me`).
+  - **Audit de Corrélation des Codes HTTP (`04-http-codes-observability.mjs`)** : Corrélation rigoureuse des 13 490 `200`, 9 950 `None` (Service Worker Serwist / AbortController instant search), 435 `404` (robots externes / routes orphelines bloquées), 109 `429` (Rate limiting anti-bruteforce).
+  - **Audit Responsive Playwright (`02-mobile-responsive-audit.mjs`)** : 81 vérifications sur 9 viewports (de 320px à 1280px) sans aucun débordement horizontal, manifest PWA 100% conforme.
+  - **Tests Unitaires Backend** : 44 test suites passées, 343/343 tests validés (100% PASS).
+  - **Rapport Maître Consolidé** : Rédigé et archivé dans `scripts/qa-campaign/RAPPORT_FINAL_RECETTE_END_TO_END.md`.
+
+
 

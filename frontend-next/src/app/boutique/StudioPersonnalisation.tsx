@@ -88,7 +88,7 @@ export default function StudioPersonnalisation({
     boutique.cover_url ||
     'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80'
   const activeLogo = logoPreviewLocal || boutique.logo_url || null
-  const publicShopUrl = boutique.slug ? `/${boutique.slug}` : `/boutique/${boutique.id}`
+  const publicShopUrl = `/boutiques/${boutique.slug || boutique.id}`
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 0 80px' }}>

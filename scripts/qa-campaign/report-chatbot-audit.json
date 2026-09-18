@@ -6,7 +6,7 @@
     "expected": "200 OK avec liste produits",
     "actual": "Trouvés: 10",
     "details": null,
-    "timestamp": "2026-09-18T00:16:56.801Z"
+    "timestamp": "2026-09-18T14:53:00.315Z"
   },
   {
     "testId": "CHATBOT-02",
@@ -15,25 +15,25 @@
     "expected": "200 OK assaini",
     "actual": "Interrogation sans faille",
     "details": null,
-    "timestamp": "2026-09-18T00:17:01.390Z"
+    "timestamp": "2026-09-18T14:53:05.086Z"
   },
   {
     "testId": "CHATBOT-03",
-    "action": "Extraction planning visites agent (Agence Nopalou Immo Prestige 009116)",
+    "action": "Extraction planning visites agent (AMAR IMMO)",
     "status": "PASS",
     "expected": "Accès visites sécurisé",
-    "actual": "Visites trouvées: 1",
+    "actual": "Visites trouvées: 0",
     "details": null,
-    "timestamp": "2026-09-18T00:17:01.579Z"
+    "timestamp": "2026-09-18T14:53:05.287Z"
   },
   {
     "testId": "CHATBOT-04",
-    "action": "Extraction leads CRM récents (Agence Nopalou Immo Prestige 009116)",
+    "action": "Extraction leads CRM récents (AMAR IMMO)",
     "status": "PASS",
     "expected": "Accès CRM qualifié",
-    "actual": "Leads trouvés: 1",
+    "actual": "Leads trouvés: 3",
     "details": null,
-    "timestamp": "2026-09-18T00:17:01.657Z"
+    "timestamp": "2026-09-18T14:53:05.366Z"
   },
   {
     "testId": "CHATBOT-05",
@@ -42,7 +42,7 @@
     "expected": "Tous filtrés sans crash 500",
     "actual": "Assainissement 100%",
     "details": null,
-    "timestamp": "2026-09-18T00:17:29.984Z"
+    "timestamp": "2026-09-18T14:53:24.608Z"
   },
   {
     "testId": "CHATBOT-06",
@@ -51,7 +51,7 @@
     "expected": "Pas de débordement ni de blocage serveur",
     "actual": "Statuts maîtrisés",
     "details": null,
-    "timestamp": "2026-09-18T00:17:35.482Z"
+    "timestamp": "2026-09-18T14:53:30.012Z"
   },
   {
     "testId": "CHATBOT-07",
@@ -60,7 +60,7 @@
     "expected": "Lien wa.me valide",
     "actual": "https://wa.me/221770000000?text=Bonjour%20Nopalou%2C%20je%20recherche%20une%20villa%20%C3%A0%20Saly%20avec%20piscine.",
     "details": null,
-    "timestamp": "2026-09-18T00:17:35.482Z"
+    "timestamp": "2026-09-18T14:53:30.012Z"
   },
   {
     "testId": "CHATBOT-08",
@@ -69,7 +69,7 @@
     "expected": "200 OK avec réponse et chips interactifs",
     "actual": "Nopalou livre partout à Dakar sous 2 à 4 heures, et dans les",
     "details": null,
-    "timestamp": "2026-09-18T00:17:36.985Z"
+    "timestamp": "2026-09-18T14:53:31.107Z"
   },
   {
     "testId": "CHATBOT-09",
@@ -78,7 +78,7 @@
     "expected": "200 OK avec comparatif ou orientation catalogue",
     "actual": "⚖️ Comparatif des prix relevés pour \"smartphone\", classé par",
     "details": null,
-    "timestamp": "2026-09-18T00:17:37.999Z"
+    "timestamp": "2026-09-18T14:53:31.607Z"
   },
   {
     "testId": "CHATBOT-10",
@@ -87,7 +87,7 @@
     "expected": "200 OK avec suggestions assainies",
     "actual": "Je n'ai pas trouvé de correspondance exacte pour \"climatisse",
     "details": null,
-    "timestamp": "2026-09-18T00:17:38.110Z"
+    "timestamp": "2026-09-18T14:53:31.751Z"
   },
   {
     "testId": "CHATBOT-11",
@@ -95,10 +95,10 @@
     "status": "PASS",
     "expected": "Comptage différencié DB",
     "actual": {
-      "active_chat": "6",
+      "active_chat": "7",
       "active_orders": "0"
     },
     "details": null,
-    "timestamp": "2026-09-18T00:17:39.183Z"
+    "timestamp": "2026-09-18T14:53:31.829Z"
   }
 ]

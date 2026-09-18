@@ -9,37 +9,37 @@
         "url": "http://localhost:3001/",
         "status": 200,
         "valid": true,
-        "duration": 956
+        "duration": 154
       },
       {
         "url": "http://localhost:3001/immo",
         "status": 200,
         "valid": true,
-        "duration": 1505
+        "duration": 18903
       },
       {
         "url": "http://localhost:3001/agences",
         "status": 200,
         "valid": true,
-        "duration": 1250
+        "duration": 1052
       },
       {
         "url": "http://localhost:3001/boutiques",
         "status": 200,
         "valid": true,
-        "duration": 148
+        "duration": 3347
       },
       {
         "url": "http://127.0.0.1:3000/api/health",
         "status": 200,
         "valid": true,
-        "duration": 89
+        "duration": 81
       },
       {
         "url": "http://127.0.0.1:3000/api/search?q=telephone",
         "status": 200,
         "valid": true,
-        "duration": 9216
+        "duration": 7347
       }
     ]
   },
