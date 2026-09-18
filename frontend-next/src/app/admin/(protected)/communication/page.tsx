@@ -23,6 +23,12 @@ const VISUELS = [
     usage: 'Web & Digital · Transparent',
   },
   {
+    titre: 'Avatar Profil WhatsApp Business (512 × 512 px)',
+    desc: '512 × 512 px — Format carré avec marge de sécurité anti-rogne spécialement calibré pour la photo de profil ronde Meta WhatsApp',
+    url: '/icons/icon-maskable-512.png',
+    usage: 'WhatsApp Meta · Photo de Profil',
+  },
+  {
     titre: 'Logo Officiel Fond Blanc Pur (800 × 800 px)',
     desc: '800 × 800 px — Logo complet avec typographie Nopalou sur fond blanc pur (#FFFFFF) pour documents, factures et presse',
     url: '/assets/logo-blanc',
