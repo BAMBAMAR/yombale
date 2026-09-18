@@ -23,6 +23,8 @@ export interface DynamicPlan {
 
 interface TarifsPublicsSelectorProps {
   initialSecteur?: 'commerce' | 'immo'
+  secteur?: 'commerce' | 'immo'
+  onSecteurChange?: (secteur: 'commerce' | 'immo') => void
   initialPlans?: DynamicPlan[]
 }
 
@@ -143,9 +145,18 @@ const FALLBACK_PLANS: DynamicPlan[] = [
 
 export default function TarifsPublicsSelector({
   initialSecteur = 'commerce',
+  secteur: controlledSecteur,
+  onSecteurChange,
   initialPlans,
 }: TarifsPublicsSelectorProps = {}) {
-  const [secteur, setSecteur] = useState<'commerce' | 'immo'>(initialSecteur)
+  const [internalSecteur, setInternalSecteur] = useState<'commerce' | 'immo'>(initialSecteur)
+  const secteur = controlledSecteur ?? internalSecteur
+
+  const handleSelectSecteur = (s: 'commerce' | 'immo') => {
+    setInternalSecteur(s)
+    onSecteurChange?.(s)
+  }
+
   const [duree, setDuree] = useState<number>(12) // 12 mois par défaut
   const [allPlans, setAllPlans] = useState<DynamicPlan[]>(initialPlans || FALLBACK_PLANS)
   const [dureesOptions, setDureesOptions] = useState<DureeOption[]>(DUREES_INITIALES)
@@ -212,7 +223,7 @@ export default function TarifsPublicsSelector({
         >
           <button
             type="button"
-            onClick={() => setSecteur('commerce')}
+            onClick={() => handleSelectSecteur('commerce')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -235,7 +246,7 @@ export default function TarifsPublicsSelector({
 
           <button
             type="button"
-            onClick={() => setSecteur('immo')}
+            onClick={() => handleSelectSecteur('immo')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

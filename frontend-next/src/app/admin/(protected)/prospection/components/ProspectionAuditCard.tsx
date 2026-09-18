@@ -39,23 +39,62 @@ export function ProspectionAuditCard({
 }: ProspectionAuditCardProps) {
   if (!auditData && !isLoading) {
     return (
-      <div className="bg-white border border-[#E8DDD2] rounded-xl p-4 mb-5 shadow-xs flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#F8F5F0] flex items-center justify-center text-[#1C2B4A]">
+      <div style={{
+        background: '#ffffff',
+        borderRadius: 16,
+        border: '1.5px solid var(--border, #E8DDD2)',
+        padding: '16px 20px',
+        marginBottom: 20,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 42,
+            height: 42,
+            borderRadius: 10,
+            background: 'var(--bg, #F8F5F0)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--navy, #1C2B4A)'
+          }}>
             <Activity size={20} />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-[#1C2B4A]">Audit Qualité des Données CRM</h4>
-            <p className="text-xs text-[#64748B]">Auditer l&apos;exhaustivité des numéros, noms commerciaux et contacts immobiliers</p>
+            <h4 style={{ fontSize: 14, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
+              Audit Qualité des Données CRM
+            </h4>
+            <p style={{ fontSize: 12, color: '#64748B', margin: '3px 0 0' }}>
+              Auditer l&apos;exhaustivité des numéros, noms commerciaux et contacts immobiliers
+            </p>
           </div>
         </div>
         <button
           type="button"
           onClick={onRefreshAudit}
-          className="btn-npl inline-flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg bg-[#1C2B4A] text-white hover:bg-[#253961] transition-colors"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 12.5,
+            fontWeight: 700,
+            padding: '8px 16px',
+            borderRadius: 10,
+            border: 'none',
+            background: 'var(--navy, #1C2B4A)',
+            color: '#ffffff',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(28,43,74,0.2)'
+          }}
         >
           <RefreshCw size={14} />
-          Lancer l&apos;audit
+          <span>Lancer l&apos;audit</span>
         </button>
       </div>
     )
@@ -67,182 +106,319 @@ export function ProspectionAuditCard({
   const scoreLabel = scoreSante >= 80 ? 'Excellente' : scoreSante >= 65 ? 'Correcte' : 'À assainir'
 
   return (
-    <div className="bg-white border border-[#E8DDD2] rounded-xl p-5 mb-6 shadow-xs">
+    <div style={{
+      background: '#ffffff',
+      borderRadius: 16,
+      border: '1.5px solid var(--border, #E8DDD2)',
+      padding: '20px 24px',
+      marginBottom: 24,
+      boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
       {/* En-tête de l'audit */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E8DDD2]">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg"
-            style={{ backgroundColor: scoreBg, color: scoreColor }}
-          >
-            {isLoading ? <RefreshCw size={20} className="animate-spin" /> : `${scoreSante}%`}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 16,
+        paddingBottom: 16,
+        borderBottom: '1.5px solid var(--border, #E8DDD2)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 52,
+            height: 52,
+            borderRadius: 14,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 900,
+            fontSize: 18,
+            backgroundColor: scoreBg,
+            color: scoreColor,
+            flexShrink: 0
+          }}>
+            {isLoading ? <RefreshCw size={22} className="animate-spin" /> : `${scoreSante}%`}
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-[#1C2B4A]">Santé Globale des Données CRM</h3>
-              <span
-                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: scoreBg, color: scoreColor }}
-              >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 850, color: 'var(--navy, #1C2B4A)', margin: 0 }}>
+                Santé Globale des Données CRM
+              </h3>
+              <span style={{
+                fontSize: 11,
+                fontWeight: 800,
+                padding: '2px 10px',
+                borderRadius: 20,
+                backgroundColor: scoreBg,
+                color: scoreColor
+              }}>
                 {scoreLabel}
               </span>
             </div>
-            <p className="text-xs text-[#64748B] mt-0.5">
+            <p style={{ fontSize: 12.5, color: '#64748B', margin: '4px 0 0' }}>
               {auditData?.total_leads || 0} prospects analysés &bull; Scoring prédictif Nopalou &bull; Normalisation SN-221
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={onRefreshAudit}
             disabled={isLoading || isAssainissant}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#E8DDD2] bg-[#F8F5F0] text-[#1C2B4A] hover:bg-[#EAE4DC] transition-colors disabled:opacity-50"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 14px',
+              fontSize: 12.5,
+              fontWeight: 700,
+              borderRadius: 10,
+              border: '1.5px solid var(--border, #E8DDD2)',
+              background: 'var(--bg, #F8F5F0)',
+              color: 'var(--navy, #1C2B4A)',
+              cursor: isLoading || isAssainissant ? 'not-allowed' : 'pointer',
+              opacity: isLoading || isAssainissant ? 0.6 : 1,
+              transition: 'all 0.15s ease'
+            }}
           >
             <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
-            Actualiser
+            <span>Actualiser</span>
           </button>
           <button
             type="button"
             onClick={onFilterImmo}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#E8DDD2] bg-white text-[#1C2B4A] hover:border-[#1C2B4A] transition-colors"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 14px',
+              fontSize: 12.5,
+              fontWeight: 700,
+              borderRadius: 10,
+              border: '1.5px solid var(--border, #E8DDD2)',
+              background: '#ffffff',
+              color: 'var(--navy, #1C2B4A)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
           >
             <Filter size={13} />
-            Voir leads Immo ({auditData?.immo?.total || 0})
+            <span>Voir leads Immo ({auditData?.immo?.total || 0})</span>
           </button>
           <button
             type="button"
             onClick={onAssainirImmo}
             disabled={isAssainissant || isLoading}
-            className="btn-npl inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#C75B00] text-white hover:bg-[#A84D00] transition-colors shadow-xs disabled:opacity-50"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 16px',
+              fontSize: 12.5,
+              fontWeight: 800,
+              borderRadius: 10,
+              border: 'none',
+              background: 'var(--accent, #C75B00)',
+              color: '#ffffff',
+              boxShadow: '0 2px 8px rgba(199,91,0,0.25)',
+              cursor: isAssainissant || isLoading ? 'not-allowed' : 'pointer',
+              opacity: isAssainissant || isLoading ? 0.6 : 1,
+              transition: 'all 0.15s ease'
+            }}
           >
             <Sparkles size={13} className={isAssainissant ? 'animate-spin' : ''} />
-            {isAssainissant ? 'Assainissement en cours...' : 'Assainir & Sourcer Immo'}
+            <span>{isAssainissant ? 'Assainissement en cours...' : 'Assainir & Sourcer Immo'}</span>
           </button>
         </div>
       </div>
 
       {/* Grille 4 piliers de qualité */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-4 border-b border-[#E8DDD2]">
-        <div className="p-3 bg-[#F8F5F0] rounded-lg">
-          <div className="flex items-center justify-between text-xs text-[#64748B] mb-1">
-            <span className="flex items-center gap-1 font-medium">
-              <Smartphone size={13} className="text-[#1C2B4A]" /> Mobiles WhatsApp
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: 12,
+        padding: '16px 0',
+        borderBottom: '1.5px solid var(--border, #E8DDD2)'
+      }}>
+        <div style={{ background: 'var(--bg, #F8F5F0)', borderRadius: 12, padding: '14px 16px', border: '1px solid #EAE4DC' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#64748B' }}>
+              <Smartphone size={14} color="var(--navy, #1C2B4A)" /> Mobiles WhatsApp
             </span>
-            <span className="font-bold text-[#1C2B4A]">{auditData?.pct_mobiles_valides}%</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+              {auditData?.pct_mobiles_valides ?? 0}%
+            </span>
           </div>
-          <p className="text-base font-bold text-[#1C2B4A]">{auditData?.mobiles_valides || 0}</p>
-          <p className="text-[10px] text-[#64748B]">100% joignables Orange, Free, Expresso</p>
+          <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '4px 0 2px' }}>
+            {auditData?.mobiles_valides ?? 0}
+          </div>
+          <div style={{ fontSize: 11, color: '#64748B' }}>
+            100% joignables Orange, Free, Expresso
+          </div>
         </div>
 
-        <div className="p-3 bg-[#F8F5F0] rounded-lg">
-          <div className="flex items-center justify-between text-xs text-[#64748B] mb-1">
-            <span className="flex items-center gap-1 font-medium">
-              <Store size={13} className="text-[#1C2B4A]" /> Noms Authentiques
+        <div style={{ background: 'var(--bg, #F8F5F0)', borderRadius: 12, padding: '14px 16px', border: '1px solid #EAE4DC' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#64748B' }}>
+              <Store size={14} color="var(--navy, #1C2B4A)" /> Noms Authentiques
             </span>
-            <span className="font-bold text-[#1C2B4A]">{auditData?.pct_noms_authentiques}%</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+              {auditData?.pct_noms_authentiques ?? 0}%
+            </span>
           </div>
-          <p className="text-base font-bold text-[#1C2B4A]">{auditData?.noms_authentiques || 0}</p>
-          <p className="text-[10px] text-[#64748B]">
+          <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '4px 0 2px' }}>
+            {auditData?.noms_authentiques ?? 0}
+          </div>
+          <div style={{ fontSize: 11, color: '#64748B' }}>
             {auditData?.noms_generiques ? `${auditData.noms_generiques} noms génériques identifiés` : 'Zéro pollution générique'}
-          </p>
+          </div>
         </div>
 
-        <div className="p-3 bg-[#F8F5F0] rounded-lg">
-          <div className="flex items-center justify-between text-xs text-[#64748B] mb-1">
-            <span className="flex items-center gap-1 font-medium">
-              <MapPin size={13} className="text-[#1C2B4A]" /> Quartiers Précis
+        <div style={{ background: 'var(--bg, #F8F5F0)', borderRadius: 12, padding: '14px 16px', border: '1px solid #EAE4DC' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#64748B' }}>
+              <MapPin size={14} color="var(--navy, #1C2B4A)" /> Quartiers Précis
             </span>
-            <span className="font-bold text-[#1C2B4A]">{auditData?.pct_quartiers_precis}%</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+              {auditData?.pct_quartiers_precis ?? 0}%
+            </span>
           </div>
-          <p className="text-base font-bold text-[#1C2B4A]">{auditData?.quartiers_precis || 0}</p>
-          <p className="text-[10px] text-[#64748B]">Localisation ciblée Almadies, Mamelles...</p>
+          <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--navy, #1C2B4A)', margin: '4px 0 2px' }}>
+            {auditData?.quartiers_precis ?? 0}
+          </div>
+          <div style={{ fontSize: 11, color: '#64748B' }}>
+            Localisation ciblée Almadies, Mamelles...
+          </div>
         </div>
 
-        <div className="p-3 bg-[#F8F5F0] rounded-lg">
-          <div className="flex items-center justify-between text-xs text-[#64748B] mb-1">
-            <span className="flex items-center gap-1 font-medium">
-              <ShieldCheck size={13} className="text-[#0A5C36]" /> Haut Nopalou Fit
+        <div style={{ background: 'var(--bg, #F8F5F0)', borderRadius: 12, padding: '14px 16px', border: '1px solid #EAE4DC' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#64748B' }}>
+              <ShieldCheck size={14} color="var(--price, #0A5C36)" /> Haut Nopalou Fit
             </span>
-            <span className="font-bold text-[#0A5C36]">Score 70+</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--price, #0A5C36)' }}>
+              Score 70+
+            </span>
           </div>
-          <p className="text-base font-bold text-[#0A5C36]">{auditData?.haut_fit || 0}</p>
-          <p className="text-[10px] text-[#64748B]">Priorité conversion immédiate</p>
+          <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--price, #0A5C36)', margin: '4px 0 2px' }}>
+            {auditData?.haut_fit ?? 0}
+          </div>
+          <div style={{ fontSize: 11, color: '#64748B' }}>
+            Priorité conversion immédiate
+          </div>
         </div>
       </div>
 
       {/* Focus Secteur Immobilier & Agences */}
-      <div className="pt-4">
-        <div className="flex items-center justify-between mb-2.5">
-          <div className="flex items-center gap-2">
-            <Building2 size={16} className="text-[#1C2B4A]" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#1C2B4A]">
-              Pôle Prospection Immobilière & Agences ({auditData?.immo?.total || 0} contacts)
+      <div style={{ paddingTop: 16 }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 12
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Building2 size={16} color="var(--navy, #1C2B4A)" />
+            <h4 style={{
+              fontSize: 12,
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'var(--navy, #1C2B4A)',
+              margin: 0
+            }}>
+              Pôle Prospection Immobilière &amp; Agences ({auditData?.immo?.total || 0} contacts)
             </h4>
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#64748B]">
-            <span className="inline-flex items-center gap-1">
-              <CheckCircle2 size={13} className="text-[#0A5C36]" />
-              {auditData?.immo?.agences_nopalou_reelles || 0} agence(s) client(s) réconciliée(s)
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--price, #0A5C36)', fontWeight: 700 }}>
+            <CheckCircle2 size={14} />
+            <span>{auditData?.immo?.agences_nopalou_reelles || 0} agence(s) cliente(s) réconciliée(s)</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
-          <div className="p-2.5 rounded-lg border border-[#E8DDD2] bg-white">
-            <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[#1C2B4A] mb-0.5">
-              <Building2 size={12} /> Agences
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+          gap: 10,
+          textAlign: 'center'
+        }}>
+          <div style={{ background: '#ffffff', borderRadius: 10, border: '1.5px solid var(--border, #E8DDD2)', padding: '12px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11.5, fontWeight: 750, color: 'var(--navy, #1C2B4A)', marginBottom: 3 }}>
+              <Building2 size={13} /> Agences
             </div>
-            <p className="text-sm font-bold text-[#1C2B4A]">{auditData?.immo?.agences || 0}</p>
-            <p className="text-[10px] text-[#64748B]">Vitrines & Mandats</p>
+            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+              {auditData?.immo?.agences || 0}
+            </div>
+            <div style={{ fontSize: 10.5, color: '#64748B' }}>Vitrines &amp; Mandats</div>
           </div>
 
-          <div className="p-2.5 rounded-lg border border-[#E8DDD2] bg-white">
-            <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[#0A5C36] mb-0.5">
-              <Key size={12} /> Gestionnaires
+          <div style={{ background: '#ffffff', borderRadius: 10, border: '1.5px solid var(--border, #E8DDD2)', padding: '12px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11.5, fontWeight: 750, color: 'var(--price, #0A5C36)', marginBottom: 3 }}>
+              <Key size={13} /> Gestionnaires
             </div>
-            <p className="text-sm font-bold text-[#0A5C36]">{auditData?.immo?.gestionnaires || 0}</p>
-            <p className="text-[10px] text-[#64748B]">Gestion locative OHADA</p>
+            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--price, #0A5C36)' }}>
+              {auditData?.immo?.gestionnaires || 0}
+            </div>
+            <div style={{ fontSize: 10.5, color: '#64748B' }}>Gestion locative OHADA</div>
           </div>
 
-          <div className="p-2.5 rounded-lg border border-[#E8DDD2] bg-white">
-            <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[#C75B00] mb-0.5">
-              <Briefcase size={12} /> Courtiers
+          <div style={{ background: '#ffffff', borderRadius: 10, border: '1.5px solid var(--border, #E8DDD2)', padding: '12px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11.5, fontWeight: 750, color: 'var(--accent, #C75B00)', marginBottom: 3 }}>
+              <Briefcase size={13} /> Courtiers
             </div>
-            <p className="text-sm font-bold text-[#C75B00]">{auditData?.immo?.courtiers || 0}</p>
-            <p className="text-[10px] text-[#64748B]">Mandats partagés</p>
+            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--accent, #C75B00)' }}>
+              {auditData?.immo?.courtiers || 0}
+            </div>
+            <div style={{ fontSize: 10.5, color: '#64748B' }}>Mandats partagés</div>
           </div>
 
-          <div className="p-2.5 rounded-lg border border-[#E8DDD2] bg-white">
-            <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[#7C3AED] mb-0.5">
-              <HardHat size={12} /> Promoteurs
+          <div style={{ background: '#ffffff', borderRadius: 10, border: '1.5px solid var(--border, #E8DDD2)', padding: '12px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11.5, fontWeight: 750, color: '#7C3AED', marginBottom: 3 }}>
+              <HardHat size={13} /> Promoteurs
             </div>
-            <p className="text-sm font-bold text-[#7C3AED]">{auditData?.immo?.promoteurs || 0}</p>
-            <p className="text-[10px] text-[#64748B]">VEFA & Neuf</p>
+            <div style={{ fontSize: 18, fontWeight: 900, color: '#7C3AED' }}>
+              {auditData?.immo?.promoteurs || 0}
+            </div>
+            <div style={{ fontSize: 10.5, color: '#64748B' }}>VEFA &amp; Neuf</div>
           </div>
 
-          <div className="p-2.5 rounded-lg border border-[#E8DDD2] bg-white col-span-2 sm:col-span-1">
-            <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[#64748B] mb-0.5">
-              <Store size={12} /> Agents
+          <div style={{ background: '#ffffff', borderRadius: 10, border: '1.5px solid var(--border, #E8DDD2)', padding: '12px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11.5, fontWeight: 750, color: '#64748B', marginBottom: 3 }}>
+              <Store size={13} /> Agents
             </div>
-            <p className="text-sm font-bold text-[#64748B]">{auditData?.immo?.agents || 0}</p>
-            <p className="text-[10px] text-[#64748B]">Indépendants</p>
+            <div style={{ fontSize: 18, fontWeight: 900, color: '#64748B' }}>
+              {auditData?.immo?.agents || 0}
+            </div>
+            <div style={{ fontSize: 10.5, color: '#64748B' }}>Indépendants</div>
           </div>
         </div>
 
         {/* Message de succès après assainissement */}
         {lastResult && (
-          <div className="mt-3 p-3 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] flex items-center justify-between text-xs text-[#0A5C36]">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={15} />
-              <span>
-                Assainissement terminé avec succès : <strong>{lastResult.nomsAssainis}</strong> noms corrigés,{' '}
-                <strong>+{lastResult.leadsImmoImportes}</strong> nouveaux leads immo importés,{' '}
-                <strong>{lastResult.agencesReconciliees}</strong> agences réconciliées.
-                Score de santé : <strong>{lastResult.scoreSanteApres}%</strong> (contre {lastResult.scoreSanteAvant}%).
-              </span>
-            </div>
+          <div style={{
+            marginTop: 14,
+            padding: '12px 16px',
+            borderRadius: 10,
+            background: '#F0FDF4',
+            border: '1.5px solid #BBF7D0',
+            color: 'var(--price, #0A5C36)',
+            fontSize: 12.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10
+          }}>
+            <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+            <span>
+              Assainissement terminé avec succès : <strong>{lastResult.nomsAssainis}</strong> noms corrigés,{' '}
+              <strong>+{lastResult.leadsImmoImportes}</strong> nouveaux leads immo importés,{' '}
+              <strong>{lastResult.agencesReconciliees}</strong> agences réconciliées.
+              Score de santé : <strong>{lastResult.scoreSanteApres}%</strong> (contre {lastResult.scoreSanteAvant}%).
+            </span>
           </div>
         )}
       </div>

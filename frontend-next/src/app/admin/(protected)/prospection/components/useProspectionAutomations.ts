@@ -65,7 +65,7 @@ export function useProspectionAutomations({
       })
       if (res.ok) {
         const data = await res.json()
-        setAuditQualiteData(data)
+        setAuditQualiteData(data.audit || data)
       }
     } catch (err) {
       console.warn('[Nopalou:ProspectionClient:fetchAuditQualite]', err)

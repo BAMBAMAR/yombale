@@ -1,3 +1,39 @@
+- **Correction CSS & Déballage des Données de l'Audit Qualité CRM (`ProspectionAuditCard.tsx`) (18 septembre 2026)** 🎨🛡️✨✅ :
+  * **🎨 1. Remplacement Intégral des Classes Tailwind par les Styles Natifs Nopalou** :
+    - `ProspectionAuditCard.tsx` utilisait des classes Tailwind CSS non déclarées (`grid-cols`, `flex`, `bg-white`, `rounded-xl`, etc.), causant un affichage brut sans style ni grille sur le tableau de bord prospection.
+    - Migration complète vers des styles inline conformes aux tokens du design system Nopalou (`--navy: #1C2B4A`, `--accent: #C75B00`, `--price: #0A5C36`, `--bg: #F8F5F0`, `--border: #E8DDD2`).
+    - Présentation responsive des 4 piliers de qualité (Mobiles WhatsApp %, Noms Authentiques %, Quartiers Précis %, Haut Fit 70+) et des 5 sous-segments immobiliers (Agences, Gestionnaires, Courtiers, Promoteurs, Agents).
+  * **⚡ 2. Déballage des Données API (`useProspectionAutomations.ts`)** :
+    - Correction de l'assignation de la réponse API de `fetchAuditQualite` : extraction de `data.audit || data` (l'API Express retournant `{ success: true, audit: { ... } }`), rétablissant immédiatement l'affichage des métriques réelles au lieu du fallback à 0%.
+  * **🧪 3. Contrôle Qualité** :
+    - `npx tsc --noEmit` : 0 erreur de typage.
+    - `npm run lint:slop` : 0 captures silencieuses, 0 composant monolithique, 0 émoji Unicode dans l'UI.
+
+- **Affichage Dynamique & Spécialisé des Grilles Comparatives Immobilières sur `/tarifs-boutique` (18 septembre 2026)** 🏢📊⚖️🛡️✨✅ :
+  * **🎯 1. Bascule Dynamique Intégrale Selon le Pôle Métier (`TarifsBoutiqueClient.tsx`)** :
+    - Lorsque l'utilisateur sélectionne l'onglet « Agences & Gestion Locative » sur `/tarifs-boutique`, l'ensemble des sections situées sous le sélecteur bascule instantanément vers l'univers métier de l'immobilier sénégalais au lieu des grilles de boutiques e-commerce / POS.
+    - Synchronisation d'état réactive avec le paramètre d'URL `?secteur=immo` ou `?secteur=commerce` pour la persistance au rafraîchissement et le partage de liens.
+    - Modularisation stricte : extraction propre de `TarifsBoutiqueClient.tsx` (163 lignes), découplé en sous-composants dédiés sous les 450 lignes.
+  * **📋 2. Matrice Détaillée des Fonctionnalités ERP Immo (`TarifsMatriceDetailleeImmo.tsx`)** :
+    - Grille comparative repliable à 3 colonnes canoniques : *Plan Agence Essentiel (0 FCFA)*, *Plan Agence Pro & Croissance (10k)*, *Option Réseau Multi-Agences (15k)*.
+    - Couverture de 5 domaines fonctionnels exclusifs à la gestion immobilière locale :
+      1. *Gestion des Mandats & Biens Immobiliers* : Portefeuille illimité de biens, quotas d'agents négociateurs (5 vs 20 vs illimités), fiches géolocalisées avec commodités de Dakar, photos HD & vidéos TikTok/YouTube, mandats simples et exclusifs, vitrine web `/agences/[slug]`.
+      2. *Gestion Locative & Baux Juridiques OHADA* : Baux conformes au droit sénégalais, quittances certifiées PDF avec QR Code de contrôle cryptographique infalsifiable, échéancier de loyer, relances automatiques WhatsApp des impayés avec lien direct Wave, redditions de comptes bailleurs, suivi des cautions et états des lieux.
+      3. *Encaissement des Loyers & Passerelle Financière* : Collecte 1-clic Wave & OM (/payer-loyer), 0% commission sur encaissements de loyer, prélèvement automatique des honoraires de gestion, reversements nets aux bailleurs, espace locataire dédié.
+      4. *CRM Acquéreurs, Matching & Prospection* : Fichier acquéreurs/locataires, matching intelligent automatique par WhatsApp (score ≥ 65%), suivi des visites, référencement annuaire.
+      5. *Réseau Multi-Agences, Succursales & Gouvernance* : Multi-succursales (Dakar, Saly, Thiès...), reporting groupe consolidé & royalties, accès multi-collaborateurs, Account Manager VIP 7j/7.
+  * **⚖️ 3. Tableau Comparatif & Cycle Métier Gestion Locative (`TarifsComparatifImmo.tsx`)** :
+    - Remplacement du comparatif Shopify par un comparatif d'efficacité économique : *Nopalou ERP Immo* vs *Cahiers Papier & Excel* vs *Logiciels Étrangers*.
+    - Remplacement du bloc d'approvisionnement Alibaba/AliExpress par le workflow de gestion locative au Sénégal en 3 étapes :
+      1. *Bail OHADA en 2 min* : Rédaction instantanée des clauses légales sénégalaises sans risque de litige.
+      2. *Avis d'échéance Wave direct* : Relance WhatsApp avec lien sécurisé pour payer sans déplacement ni manipulation d'espèces.
+      3. *Quittance QR & Reversement* : Émission automatique infalsifiable et reversement net direct au propriétaire bailleur.
+  * **❓ 4. FAQ Dédiée aux Professionnels de l'Immobilier** :
+    - Bascule automatique des Questions Fréquentes vers 6 interrogations concrètes d'agences et de bailleurs (conformité OHADA, QR codes anti-fraude, encaissements Wave, reversements honoraires, multi-succursales et migration Excel).
+  * **🧪 5. Contrôle Qualité & Non-Régression** :
+    - `npx tsc --noEmit` : 0 erreur de typage TypeScript.
+    - `npm run lint:slop` : 0 captures silencieuses, 0 composant monolithique, 0 émoji Unicode dans l'interface (100% icônes vectorielles SVG `lucide-react`).
+
 - **Intégration & Gestion Complète des Forfaits Agences Immobilières dans l'Espace Admin (18 septembre 2026)** 🏢👑📊🛡️✨✅ :
   * **🗄️ 1. Architecture Multi-Segments & Migration Base de Données (`plans`)** :
     - Ajout de la colonne `categorie VARCHAR(50) DEFAULT 'boutique'` avec indexation B-Tree `idx_plans_categorie` sur la table `plans`.
