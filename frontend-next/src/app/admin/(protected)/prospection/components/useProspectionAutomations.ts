@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type {
   Lead, BlacklistItem, AddBlacklistFormState, AutoCollecteResult,
-  ScrapingResult, RelancesResult
+  ScrapingResult, RelancesResult, AuditQualiteData, AssainirImmoResult
 } from './types'
 
 interface HookParams {
@@ -52,6 +52,53 @@ export function useProspectionAutomations({
   const [relancesResult, setRelancesResult] = useState<RelancesResult | null>(null)
   const [cronData, setCronData] = useState<any>(null)
   const [loadingCronData, setLoadingCronData] = useState(false)
+  const [auditQualiteData, setAuditQualiteData] = useState<AuditQualiteData | null>(null)
+  const [isAuditing, setIsAuditing] = useState(false)
+  const [isAssainissantImmo, setIsAssainissantImmo] = useState(false)
+  const [assainirImmoResult, setAssainirImmoResult] = useState<AssainirImmoResult | null>(null)
+
+  const fetchAuditQualite = async () => {
+    setIsAuditing(true)
+    try {
+      const res = await fetch('/api/prospection/audit-qualite', {
+        headers: { 'x-admin-secret': secret },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setAuditQualiteData(data)
+      }
+    } catch (err) {
+      console.warn('[Nopalou:ProspectionClient:fetchAuditQualite]', err)
+    } finally {
+      setIsAuditing(false)
+    }
+  }
+
+  const handleAssainirImmo = async () => {
+    setIsAssainissantImmo(true)
+    setAssainirImmoResult(null)
+    try {
+      const res = await fetch('/api/prospection/leads/assainir-immo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-secret': secret },
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setAssainirImmoResult(data)
+        if (data.auditApres) {
+          setAuditQualiteData(data.auditApres)
+        }
+        showToast(`Assainissement terminé : ${data.nomsAssainis} noms corrigés, +${data.leadsImmoImportes} leads immo importés !`)
+        await reloadLeads()
+      } else {
+        showToast(`Erreur assainissement: ${data.error || 'Échec'}`)
+      }
+    } catch (e: any) {
+      showToast(`Erreur réseau: ${e.message}`)
+    } finally {
+      setIsAssainissantImmo(false)
+    }
+  }
 
   const fetchCronStatus = async () => {
     setLoadingCronData(true)
@@ -309,5 +356,11 @@ export function useProspectionAutomations({
     handleRemoveBlacklist,
     handleLancerCampagne,
     loadLogs,
+    auditQualiteData,
+    isAuditing,
+    isAssainissantImmo,
+    assainirImmoResult,
+    fetchAuditQualite,
+    handleAssainirImmo,
   }
 }

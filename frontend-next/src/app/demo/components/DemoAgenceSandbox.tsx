@@ -206,7 +206,7 @@ export default function DemoAgenceSandbox() {
       {/* 3. Accès Espace Réel */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <span style={{ fontSize: 12, color: '#94A3B8' }}>
-          Toutes ces fonctionnalités sont disponibles dès le plan Agence Starter gratuit.
+          Toutes ces fonctionnalités sont disponibles dès le plan Agence Essentiel gratuit.
         </span>
 
         <Link

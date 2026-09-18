@@ -1,6 +1,6 @@
 import { FileText, Pencil, MessageSquare, Trash2 } from 'lucide-react'
 import type { Lead } from './types'
-import { STATUT_LABELS, OPERATEUR_COLORS } from './utils'
+import { STATUT_LABELS, OPERATEUR_COLORS, SOUS_PROFIL_BADGES } from './utils'
 
 interface Props {
   filteredLeads: Lead[]
@@ -118,16 +118,21 @@ export default function ProspectionCrmTable({
                         </span>
                         {lead.sous_profil && (
                           <span style={{
-                            fontSize: 10, fontWeight: 800, padding: '2px 6px', borderRadius: 4,
-                            background: lead.sous_profil === 'agence' ? '#E0F2FE' : '#FEF3C7',
-                            color: lead.sous_profil === 'agence' ? '#0369A1' : '#92400E',
-                            textTransform: 'capitalize',
+                            fontSize: 10,
+                            fontWeight: 800,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            background: SOUS_PROFIL_BADGES[lead.sous_profil]?.bg || '#F1F5F9',
+                            color: SOUS_PROFIL_BADGES[lead.sous_profil]?.color || '#475569',
+                            whiteSpace: 'nowrap',
                           }}>
-                            {lead.sous_profil}
+                            {SOUS_PROFIL_BADGES[lead.sous_profil]?.label || lead.sous_profil}
                           </span>
                         )}
                       </div>
-                      <span style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginTop: 2 }}>{lead.quartier || lead.ville}</span>
+                      <span style={{ fontSize: 12, color: '#94A3B8', display: 'block', marginTop: 2 }}>
+                        {lead.quartier || lead.ville}
+                      </span>
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <select

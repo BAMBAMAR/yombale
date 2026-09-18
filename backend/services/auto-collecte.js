@@ -31,15 +31,18 @@ async function collecterDepuisOpenStreetMap(limite = 500) {
   const erreurs = [];
 
   try {
-    // Requête Overpass élargie sur Dakar et le Sénégal (boutiques, artisans, commerces déclarés)
+    // Requête Overpass élargie sur Dakar et le Sénégal (boutiques, artisans, commerces, agences déclarées)
     const query = `[out:json][timeout:30];
 (
   node["contact:phone"](12.0,-17.6,16.7,-11.3);
   node["contact:whatsapp"](12.0,-17.6,16.7,-11.3);
   node["contact:mobile"](12.0,-17.6,16.7,-11.3);
   node["phone"](12.0,-17.6,16.7,-11.3);
+  node["office"="estate_agent"](12.0,-17.6,16.7,-11.3);
+  node["amenity"="real_estate"](12.0,-17.6,16.7,-11.3);
   way["contact:phone"](12.0,-17.6,16.7,-11.3);
   way["phone"](12.0,-17.6,16.7,-11.3);
+  way["office"="estate_agent"](12.0,-17.6,16.7,-11.3);
 );
 out center tags ${parseInt(limite, 10) || 500};`;
 
@@ -80,15 +83,28 @@ out center tags ${parseInt(limite, 10) || 500};`;
       }
 
       // Détection catégorie et quartier
-      const rawCategory = tags.shop || tags.amenity || tags.craft || tags.tourism || 'commerce';
+      const rawCategory = tags.office || tags.shop || tags.amenity || tags.craft || tags.tourism || 'commerce';
       let cat = 'mode';
-      if (/phone|mobile|tech|computer|electronics/i.test(rawCategory)) cat = 'smartphones';
-      else if (/bakery|supermarket|convenience|grocery|market|food/i.test(rawCategory)) cat = 'superette';
-      else if (/hairdresser|beauty|cosmetics|tailor|clothes/i.test(rawCategory)) cat = 'beaute';
-      else if (/hardware|doityourself|carpenter/i.test(rawCategory)) cat = 'quincaillerie';
-      else if (/car|motorcycle|tyres/i.test(rawCategory)) cat = 'auto-moto';
-      else if (/restaurant|cafe|fast_food/i.test(rawCategory)) cat = 'restaurant';
-      else if (/pharmacy|doctors|clinic/i.test(rawCategory)) cat = 'sante';
+      let sousProfil = 'commerce';
+      if (/estate_agent|real_estate|property/i.test(rawCategory) || /immo|immobilier/i.test(nomBrut)) {
+        cat = 'immo';
+        sousProfil = 'agence';
+      } else if (/phone|mobile|tech|computer|electronics/i.test(rawCategory)) {
+        cat = 'smartphones';
+      } else if (/bakery|supermarket|convenience|grocery|market|food/i.test(rawCategory)) {
+        cat = 'superette';
+      } else if (/hairdresser|beauty|cosmetics|tailor|clothes/i.test(rawCategory)) {
+        cat = 'beaute';
+      } else if (/hardware|doityourself|carpenter/i.test(rawCategory)) {
+        cat = 'quincaillerie';
+      } else if (/car|motorcycle|tyres/i.test(rawCategory)) {
+        cat = 'auto-moto';
+        sousProfil = 'concessionnaire';
+      } else if (/restaurant|cafe|fast_food/i.test(rawCategory)) {
+        cat = 'restaurant';
+      } else if (/pharmacy|doctors|clinic/i.test(rawCategory)) {
+        cat = 'sante';
+      }
 
       const ville = tags['addr:city'] || (el.lat && el.lat > 14.5 && el.lat < 15.0 && el.lon < -17.0 ? 'Dakar' : 'Sénégal');
       const quartier = tags['addr:suburb'] || tags['addr:district'] || detecterQuartier(`${nomBrut} Dakar`) || ville;
@@ -100,6 +116,7 @@ out center tags ${parseInt(limite, 10) || 500};`;
         brut: norm.brut,
         op: norm.operateur,
         cat,
+        sousProfil,
         ville,
         quartier,
       });
@@ -111,14 +128,14 @@ out center tags ${parseInt(limite, 10) || 500};`;
       const chunk = leadsAInserer.slice(i, i + CHUNK_SIZE);
       const values = [];
       const rowsSql = chunk.map((lead, idx) => {
-        const o = idx * 7;
-        values.push(lead.nom, lead.tel, lead.brut, lead.op, lead.cat, lead.ville, lead.quartier);
-        return `($${o + 1}, $${o + 2}, $${o + 3}, $${o + 4}, $${o + 5}, $${o + 6}, $${o + 7}, 'osm_places', 'nouveau', 75, 80)`;
+        const o = idx * 8;
+        values.push(lead.nom, lead.tel, lead.brut, lead.op, lead.cat, lead.sousProfil, lead.ville, lead.quartier);
+        return `($${o + 1}, $${o + 2}, $${o + 3}, $${o + 4}, $${o + 5}, $${o + 6}, $${o + 7}, $${o + 8}, 'osm_places', 'nouveau', 75, 80)`;
       });
 
       const queryInsert = `
         INSERT INTO prospection_leads (
-          nom_boutique, telephone, telephone_brut, operateur, categorie, ville, quartier, source, statut, score, fit_score
+          nom_boutique, telephone, telephone_brut, operateur, categorie, sous_profil, ville, quartier, source, statut, score, fit_score
         ) VALUES ${rowsSql.join(', ')}
         ON CONFLICT (telephone) DO NOTHING
         RETURNING id
@@ -188,6 +205,18 @@ const CIBLES_DORKING = {
     ],
     bingQuery: 'site:instagram.com ("77" OR "78" OR "76") ("Dakar" OR "Sénégal") ("cosmétique" OR "parfum" OR "beauté")',
     cat: 'beaute',
+  },
+  immo: {
+    titre: 'Agences Immobilières & Biens Dakar (Expat-Dakar / Facebook)',
+    urls: [
+      'https://www.expat-dakar.com/appartements-a-louer/dakar',
+      'https://www.expat-dakar.com/villas-a-louer/dakar',
+      'https://www.expat-dakar.com/terrains-a-vendre/dakar',
+      'https://www.expat-dakar.com/appartements-a-vendre/dakar',
+      'https://www.expat-dakar.com/villas-a-vendre/dakar',
+    ],
+    bingQuery: 'site:facebook.com ("agence immobilière" OR "courtier immo" OR "appartement à louer") ("Dakar" OR "Sénégal") ("77" OR "78" OR "76" OR "70")',
+    cat: 'immo',
   },
 };
 

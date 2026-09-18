@@ -18,6 +18,7 @@ import {
 import { AgenceErpModulesGrid } from './AgenceErpModulesGrid'
 import { AgenceComparativeTable } from './AgenceComparativeTable'
 import { AgenceSimulatorSection } from './AgenceSimulatorSection'
+import { AgencePlansPricingSection } from './AgencePlansPricingSection'
 
 interface AgenceLandingPublicViewProps {
   hideHero?: boolean
@@ -114,7 +115,7 @@ export function AgenceLandingPublicView({ hideHero = false }: AgenceLandingPubli
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckCircle2 size={15} style={{ color: '#10b981' }} />
-              <span>Plan Agence Starter 100% gratuit</span>
+              <span>Plan Agence Essentiel 100% gratuit</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckCircle2 size={15} style={{ color: '#10b981' }} />
@@ -162,6 +163,9 @@ export function AgenceLandingPublicView({ hideHero = false }: AgenceLandingPubli
 
       {/* ── 4. COMPARATIF CHOC : GESTION MANUELLE VS NOPALOU ERP ── */}
       <AgenceComparativeTable />
+
+      {/* ── 4b. GRILLE OFFICIELLE DES FORFAITS & ABONNEMENTS AGENCES IMMO ── */}
+      <AgencePlansPricingSection />
 
       {/* ── 5. WORKFLOW : DU MANDAT AU PAIEMENT DU LOYER ── */}
       <section style={{ maxWidth: 1000, margin: '0 auto 70px', padding: '0 16px' }}>

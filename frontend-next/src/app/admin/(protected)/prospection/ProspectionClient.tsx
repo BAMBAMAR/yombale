@@ -134,6 +134,11 @@ export default function ProspectionClient({
     campagneTitre, campagneCanal, campagneMessage, scrapingZone, scrapingLimite, showToast,
   })
 
+  React.useEffect(() => {
+    autoOps.fetchAuditQualite()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleOpenEditModal = (lead: Lead) => {
     setEditForm({
       id: lead.id, nom_boutique: lead.nom_boutique || '', contact_nom: lead.contact_nom || '',
@@ -220,6 +225,16 @@ export default function ProspectionClient({
           totalLeadsCount={stats.total || leads.length}
           desinscritsCount={stats.desinscrits}
           isCleaningLeads={leadOps.isCleaningLeads}
+          auditData={autoOps.auditQualiteData}
+          isAuditing={autoOps.isAuditing}
+          isAssainissantImmo={autoOps.isAssainissantImmo}
+          lastAssainirResult={autoOps.assainirImmoResult}
+          onRefreshAudit={autoOps.fetchAuditQualite}
+          onAssainirImmo={autoOps.handleAssainirImmo}
+          onFilterImmo={() => {
+            setCatFilter('immo')
+            setSousProfilFilter('tous')
+          }}
           onReloadLeads={leadOps.reloadLeads}
           onNettoyerLeads={leadOps.handleNettoyerLeads}
           onExportCSV={() => exportLeadsCSV(filteredLeads)}

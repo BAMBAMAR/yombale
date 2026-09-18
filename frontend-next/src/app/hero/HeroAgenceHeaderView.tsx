@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Building2, ArrowRight, ShieldCheck, CreditCard, Sparkles, CheckCircle2 } from 'lucide-react'
+import { Building2, ArrowRight, ShieldCheck, CreditCard, Sparkles, CheckCircle2, Crown } from 'lucide-react'
 
 export default function HeroAgenceHeaderView() {
   return (
@@ -74,6 +74,26 @@ export default function HeroAgenceHeaderView() {
           <ArrowRight size={15} />
         </Link>
 
+        <a
+          href="#forfaits-agence"
+          style={{
+            background: '#ede9fe',
+            color: '#6d28d9',
+            padding: '10px 20px',
+            borderRadius: 30,
+            fontSize: 13.5,
+            fontWeight: 800,
+            textDecoration: 'none',
+            border: '1.5px solid #ddd6fe',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <Crown size={15} color="#7c3aed" />
+          <span>Forfaits &amp; Tarifs</span>
+        </a>
+
         <Link
           href="/agences"
           style={{
@@ -121,7 +141,7 @@ export default function HeroAgenceHeaderView() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <CheckCircle2 size={14} color="var(--price, #0A5C36)" />
-          <span>Plan Agence Starter 100% gratuit</span>
+          <span>Plan Agence Essentiel 100% gratuit</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <CheckCircle2 size={14} color="var(--price, #0A5C36)" />

@@ -18,6 +18,8 @@ const {
   analyserToutesLesCampagnes,
   recommanderProchaineCampagne,
   obtenirTimelineLead,
+  auditerQualiteDonneesCRM,
+  assainirEtEnrichirDonneesImmo,
 } = require('../services/prospection');
 
 // ── GET /api/prospection/leads ────────────────────────────────────────────────
@@ -339,6 +341,34 @@ router.post('/leads/reconcilier-agences', adminOnly, async (_req, res) => {
   } catch (err) {
     console.error('[PROSPECTION RECONCILIER ERR]:', err);
     res.status(500).json({ error: err.message || 'Erreur lors de la réconciliation' });
+  }
+});
+
+// ── GET /api/prospection/audit-qualite ───────────────────────────────────────
+// Audit approfondi de la santé et qualité des données (Génériques, Flous, Immo)
+router.get('/audit-qualite', adminOnly, async (_req, res) => {
+  try {
+    const audit = await auditerQualiteDonneesCRM();
+    res.json({ success: true, audit });
+  } catch (err) {
+    console.error('[PROSPECTION AUDIT QUALITE ERR]:', err);
+    res.status(500).json({ error: err.message || 'Erreur lors de l\'audit de qualité des données' });
+  }
+});
+
+// ── POST /api/prospection/leads/assainir-immo ─────────────────────────────────
+// Assainissement, enrichissement des quartiers et sourcing ciblé pour agences immobilières
+router.post('/leads/assainir-immo', adminOnly, async (_req, res) => {
+  try {
+    const resultats = await assainirEtEnrichirDonneesImmo();
+    res.json({
+      success: true,
+      message: `Assainissement Immo terminé : ${resultats.leadsImmoImportes} nouveaux contacts importés, ${resultats.quartiersEnrichis} quartiers identifiés, ${resultats.nomsAssainis} enseignes assainies. Score santé : ${resultats.scoreSanteAvant}% ➔ ${resultats.scoreSanteApres}%.`,
+      ...resultats,
+    });
+  } catch (err) {
+    console.error('[PROSPECTION ASSAINIR IMMO ERR]:', err);
+    res.status(500).json({ error: err.message || 'Erreur lors de l\'assainissement des données immobilières' });
   }
 });
 

@@ -75,3 +75,58 @@ export interface RelancesResult {
     }
   }
 }
+
+export interface AuditQualiteData {
+  score_sante: number
+  total_leads: number
+  mobiles_valides: number
+  pct_mobiles_valides: number
+  quartiers_precis: number
+  pct_quartiers_precis: number
+  noms_authentiques: number
+  pct_noms_authentiques: number
+  noms_generiques: number
+  avec_contact_nom: number
+  avec_email: number
+  haut_fit: number
+  scores_moyens: {
+    qualite: number
+    fit: number
+    priorite: number
+  }
+  immo: {
+    total: number
+    agences: number
+    gestionnaires: number
+    courtiers: number
+    promoteurs: number
+    agents: number
+    noms_generiques: number
+    quartiers_flous: number
+    annonces_mal_classees: number
+    agences_nopalou_reelles: number
+  }
+  statuts: {
+    nouveaux: number
+    contactes: number
+    en_discussion: number
+    convertis: number
+    invalides: number
+    desinscrits: number
+  }
+  categories: Array<{ categorie: string; count: string | number }>
+}
+
+export interface AssainirImmoResult {
+  success: boolean
+  annoncesReclassees: number
+  leadsImmoImportes: number
+  quartiersEnrichis: number
+  nomsAssainis: number
+  sousProfilsCorriges: number
+  agencesReconciliees: number
+  scoreSanteAvant: number
+  scoreSanteApres: number
+  auditApres?: AuditQualiteData
+  error?: string
+}

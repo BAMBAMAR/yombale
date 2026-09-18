@@ -33,6 +33,15 @@ export const SOUS_PROFILS_OPTIONS = [
   { value: 'concessionnaire', label: 'Concessionnaire / Garage Auto' },
 ]
 
+export const SOUS_PROFIL_BADGES: Record<string, { label: string; color: string; bg: string }> = {
+  agence: { label: 'Agence Immo', color: '#1C2B4A', bg: '#F1F5F9' },
+  gestionnaire: { label: 'Gestion Locative', color: '#0A5C36', bg: '#ECFDF5' },
+  courtier: { label: 'Courtier / Mandataire', color: '#C75B00', bg: '#FFF7ED' },
+  promoteur: { label: 'Promoteur Neuf', color: '#7C3AED', bg: '#F5F3FF' },
+  agent: { label: 'Agent Indépendant', color: '#475569', bg: '#F8FAFC' },
+  concessionnaire: { label: 'Garage Auto', color: '#2563EB', bg: '#EFF6FF' },
+}
+
 export const OPERATEUR_COLORS: Record<string, { color: string; bg: string }> = {
   Orange: { color: '#C75B00', bg: '#FFF7ED' },
   'Free (Yas)': { color: '#2563EB', bg: '#EFF6FF' },
@@ -169,14 +178,18 @@ export function generatePreviewText(
     .replace(/(salam(?:\s+alaykoum)?|bonjour|hello)\s+\{prenom\}\s*!/gi, (_m, salut) => {
       return salutationTarget ? `${salut} ${salutationTarget} !` : `${salut} !`
     })
-    .replace(/\{nom_boutique\}/gi, estNomAuth ? rawNom : 'votre boutique')
-    .replace(/\{prenom\}/gi, estPrenomAuth ? rawPrenom : 'cher commerçant')
+    .replace(/\{nom_boutique\}/gi, estNomAuth ? rawNom : (previewLead.categorie === 'immo' ? 'votre agence' : 'votre boutique'))
+    .replace(/\{prenom\}/gi, estPrenomAuth ? rawPrenom : (previewLead.categorie === 'immo' ? 'cher professionnel' : 'cher commerçant'))
     .replace(/\{quartier\}/gi, formatQuartierStr(previewLead.quartier))
-    .replace(/\{secteur\}/gi, previewLead.categorie || 'commerce')
+    .replace(/\{secteur\}/gi, previewLead.categorie === 'immo' ? 'immobilier' : (previewLead.categorie || 'commerce'))
     .replace(/\{telephone\}/gi, previewLead.telephone ? `+${previewLead.telephone}` : '')
     .replace(/\{lien_demo\}/gi, 'https://nopalou.com/guide-creer-boutique')
     .replace(/\{lien_boutique\}/gi, 'https://nopalou.com/creer-boutique')
     .replace(/\{lien_tarifs\}/gi, 'https://nopalou.com/tarifs-boutique')
+    .replace(/\{lien_immo\}/gi, 'https://nopalou.com/immo')
+    .replace(/\{lien_guide_immo\}/gi, 'https://nopalou.com/guide-agence-immo')
+    .replace(/\{lien_tarifs_immo\}/gi, 'https://nopalou.com/tarifs-immo')
+    .replace(/\{lien_inscription\}/gi, 'https://nopalou.com/creer-boutique')
     .replace(/\(\s*\)/g, '')
     .replace(/[ \t]{2,}/g, ' ')
     .trim()

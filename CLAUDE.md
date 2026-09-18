@@ -1,3 +1,84 @@
+- **Intégration & Gestion Complète des Forfaits Agences Immobilières dans l'Espace Admin (18 septembre 2026)** 🏢👑📊🛡️✨✅ :
+  * **🗄️ 1. Architecture Multi-Segments & Migration Base de Données (`plans`)** :
+    - Ajout de la colonne `categorie VARCHAR(50) DEFAULT 'boutique'` avec indexation B-Tree `idx_plans_categorie` sur la table `plans`.
+    - Insertion idempotente des 4 forfaits canoniques du pôle immobilier dans PostgreSQL :
+      1. `immo_essentiel` : *Plan Agence Essentiel* (0 FCFA/mois, 5 agents négociateurs, mandats illimités, baux OHADA et quittances conformes).
+      2. `immo_pro` : *Plan Agence Pro & Croissance* (10 000 FCFA/mois, 20 agents, relances impayés, export comptable).
+      3. `immo_multi_agence` : *Option Réseau Multi-Agences* (15 000 FCFA/mois, gestion de succursales, filiales et multi-agences).
+      4. `immo_sponsoring` : *Mise en Avant Annuaire (Sponsoring)* (5 000 FCFA/mois, 30 jours de sponsoring "En Vedette" sur l'annuaire immobilier).
+    - Idempotence garantie dans `backend/migrate-inline.js`.
+  * **⚡ 2. Backend, Services & API REST (`plansCache`, `plans.js`, `admin-immo-global.js`)** :
+    - Mise à niveau de `backend/lib/plansCache.js` pour gérer le cache mémoire multi-catégories (`categorie: boutique | immo`).
+    - Enrichissement de `GET /api/plans/admin/tous` pour comptabiliser les abonnés actifs tant pour les commerces (`abonnements`) que pour les agences immobilières (`agences_immo`).
+    - Mise à niveau de `POST /api/plans/admin` et `PUT /api/plans/admin/:id` pour enregistrer et modifier `categorie` et les quotas immobiliers (`max_biens`, `max_agents`, `baux_ohada`, `export_compta`, `multi_agences`, `badge_sponsoring`).
+    - Route administrative `PUT /api/admin/immo-global/agences/:id/forfait` pour assigner un plan et activer/configurer le sponsoring avec journalisation d'audit admin.
+  * **🖥️ 3. Interface d'Administration & Modularisation Anti-AI-Slop (`frontend-next`)** :
+    - **Navigation & Sidebar** : Ajout du lien direct "Forfaits Agences Immo" sous le domaine *Immobilier & Patrimoine* (`/admin/plans?categorie=immo`).
+    - **Page Catalogue des Plans (`/admin/plans`)** :
+      - Filtrage par onglets segmentés : *Toutes les formules*, *Boutiques & POS*, *Agences Immobilières*.
+      - Détection automatique du paramètre URL `?categorie=immo`.
+      - Rendu spécifique des cartes selon le segment (Quotas biens/agents, baux OHADA, réseau vs produits/caissiers).
+      - Extraction modulaire de `AdminPlanModal.tsx` (< 450 lignes, zéro émoji dans l'UI, icônes Lucide) pour la création et l'édition sans duplication.
+    - **Annuaire des Agences (`/admin/immo/agences`)** :
+      - Ajout de la colonne "Forfait & Visibilité" (Badge plan `Essentiel`, `Plan Pro`, `Multi-Agences` + badge doré `Vedette`).
+      - Bouton d'action et modale dédiée `ModalForfaitAgence.tsx` pour modifier instantanément le plan ou prolonger le sponsoring d'une agence en 1 clic.
+      - Lien direct vers le catalogue des forfaits d'agences dans le bandeau supérieur.
+  * **🏠 4. Intégration Publique des Forfaits 100% Dynamiques & Modifiables depuis l'Admin (`frontend-next`)** :
+    - Éradication de tout contenu statique en dur : les forfaits de `/tarifs-boutique` et de l'onglet Agence d'accueil sont désormais **alimentés en direct par l'API publique `/api/plans/public`** (PostgreSQL).
+    - Toute modification effectuée dans `/admin/plans` (nom, prix, avantages listés, badges, quotas, activation/désactivation) se répercute instantanément en temps réel sur l'ensemble du site.
+    - Refonte complète de `TarifsPublicsSelector.tsx` (< 350 lignes, zéro émoji dans l'UI, icônes Lucide) pour charger dynamiquement les grilles Commerces et Agences avec les remises administrables.
+    - Création du composant dédié `AgencePlansPricingSection.tsx` (< 370 lignes) intégré dans `AgenceLandingPublicView.tsx`.
+    - Sélecteur de durée réactif avec remises dégressives (1 mois, 3 mois -10%, 6 mois -15%, 12 mois -25% / 3 mois offerts).
+    - Présentation dynamique des 3 formules d'abonnement : *Plan Agence Essentiel* (0 FCFA/mois), *Plan Agence Pro & Croissance* (10 000 FCFA/mois), *Option Réseau Multi-Agences* (15 000 FCFA/mois) + Sponsoring Vedette (5 000 FCFA/30j).
+    - Ajout du bouton d'action directe « Forfaits & Tarifs » dans le bandeau supérieur du mode Agence (`HeroAgenceHeaderView.tsx`) avec ancre fluide vers `#forfaits-agence`.
+    - Harmonisation complète du vocabulaire métier : remplacement de l'ancien terme "Agence Starter" par le plan officiel "Plan Agence Essentiel".
+  * **🧪 5. Contrôle Qualité & Non-Régression** :
+    - `npx tsc --noEmit` : 0 erreur de typage TypeScript.
+    - `npm run lint:slop` : 0 catches silencieux, 0 composant monolithique.
+
+- **Mise à Niveau de la Prospection pour les Agences Immobilières & Audit de la Qualité des Données CRM (18 septembre 2026)** 🏢🎯📈🛡️✨✅ :
+  * **🔍 1. Audit Exhaustif de la Qualité des Données CRM & Immo (`auditerQualiteDonneesCRM`)** :
+    - Évaluation automatisée multi-critères calculant un Score de Santé Global des Données CRM (0 à 100) pondérant la joignabilité mobile WhatsApp (35%), l'authenticité des enseignes (25%), la précision géographique (20%) et le scoring prédictif Nopalou Fit (20%).
+    - Diagnostic complet de la base : 1 496 prospects analysés, 100% de numéros mobiles valides SN-221 joignables, 1 018 enseignes commerciales réelles, 1 060 quartiers localisés avec précision.
+    - Éradication de 140 faux noms génériques résiduels ("Immobilière", "Agence Immobilière", etc.) requalifiés en enseignes ou agences nommées par quartier ou nom propre.
+  * **🏢 2. Pôle Prospection Immobilière & Détection Fine de 5 Sous-Profils Métiers** :
+    - Extension du moteur de sous-profilage (`detecterSousProfilLead`) pour classifier automatiquement les leads immobiliers :
+      - `agence` : Agences et cabinets immobiliers (vitrine web pro, multidiffusion mandats 0% commission).
+      - `gestionnaire` : Gestionnaires locatifs et administrateurs de biens (baux OHADA conformes, quittances Wave/OM automatiques).
+      - `courtier` : Courtiers, démarcheurs et apporteurs d'affaires (mini-site mandataire, partage de mandats).
+      - `promoteur` : Promoteurs immobiliers et aménageurs (programmes neufs, VEFA, vente de parcelles viabilisées).
+      - `agent` : Négociateurs et agents immobiliers indépendants.
+    - Résultat post-remediation : **413 leads immobiliers qualifiés** (105 agences, 22 gestionnaires locatifs, 40 courtiers, 13 promoteurs, 233 agents) avec un score de santé CRM passant de 66% à **73%** (+7 pts).
+  * **💬 3. Bibliothèque de 5 Templates WhatsApp & E-mail Ciblés pour les Professionnels de l'Immobilier Sénégalais** :
+    - Remplacement du message générique unique par 5 modèles professionnels ultra-ciblés, conformes au marché sénégalais (respect des codes locaux, Spintax anti-spam `{Salam|Bonjour}`, balises dynamiques `{nom_boutique}`, `{prenom}`, `{quartier}`, `{lien_immo}`, seuil de visibilité mobile < 190 caractères sans coupure) :
+      1. `immo_agences` : *Vitrine Web Pro & Diffusion Mandats 1-Clic (0% Commission)*.
+      2. `immo_gestion_locative` : *Gestion Locative & Bailleurs — Baux OHADA & Quittances Automatiques Wave/OM*.
+      3. `immo_courtier_mandataire` : *Courtiers & Démarcheurs — Mini-Site Personnel & Partage Mandats Direct*.
+      4. `immo_promoteur_neuf` : *Promoteurs & Vente sur Plan — Vitrine Programmes Neufs & Terrains Viabilisés*.
+      5. `immo_email_b2b` : *E-mail B2B Agence Immobilière — Solution Complète Vitrine & Gestion pour {nom_boutique}*.
+  * **🧹 4. Moteur d'Assainissement & de Sourcing Automatique (`assainirEtEnrichirDonneesImmo`)** :
+    - Reclassement automatique des annonces immo mal catégorisées dans `annonces_classifiees` (appartements, studios, villas, terrains, parcelles).
+    - Import et dédoublonnage de +121 nouveaux contacts immobiliers qualifiés directement dans le CRM.
+    - Élimination et exclusion automatique (`statut = 'invalide'`) des annonces hors-cible (recrutement, personnel de maison) via `estLeadEmploiOuInvalide`.
+    - Réconciliation automatique avec les agences clientes réelles d'AMAR IMMO / `agences_immo` pour éviter de recontacter les clients déjà abonnés (`statut = 'converti'`).
+    - Optimisation haute performance SQL : remplacement des jointures latérales coûteuses par une indexation O(1) en mémoire Map par suffixe téléphonique de 9 chiffres (temps d'exécution ramené de timeout à ~1.2s).
+  * **🌐 5. Sourcing Géographique Étendu (OpenStreetMap & Dorking)** :
+    - Ajout des tags `office=estate_agent` et `amenity=real_estate` dans le collecteur Overpass OpenStreetMap Dakar.
+    - Intégration de la cible `immo` dans le dorking automatique (requêtes ciblées Expat-Dakar Immobilier et Groupes Facebook Immobilier Dakar/Saly).
+  * **🖥️ 6. Interface Admin Haute Fidélité & Anti-AI-Slop (`frontend-next`)** :
+    - **Composant `ProspectionAuditCard`** (< 200 lignes, zéro emoji dans l'UI, icônes vectorielles SVG `lucide-react`, tokens Nopalou `#1C2B4A`, `#C75B00`, `#0A5C36`, `#F8F5F0`, `#E8DDD2`) :
+      - Jauge dynamique du score de santé global (/100) avec badge d'état.
+      - 4 piliers de contrôle qualité (Mobiles WhatsApp %, Noms Authentiques %, Quartiers Précis %, Haut Fit Nopalou 70+).
+      - Tableau de bord Pôle Immo ventilé par sous-profil (Agences, Gestionnaires, Courtiers, Promoteurs, Agents) avec statut de réconciliation des agences réelles.
+      - Bouton interactif 1-clic « Assainir & Sourcer Immo » et rafraîchissement d'audit en direct.
+    - **Pill Filter Pôle Immo** dans la barre de segmentation CRM pour basculer instantanément sur les professionnels de l'immobilier.
+    - **Badges de sous-profils dédiés** (`SOUS_PROFIL_BADGES`) affichés dans la table CRM avec code couleur par métier.
+    - **Intégration d'aperçu de message** enrichie avec gestion des variables immobilières (`{lien_immo}`, `{lien_guide_immo}`, `{lien_tarifs_immo}`).
+  * **🧪 7. Validation & Gates de Qualité 100% Conformes** :
+    - `npm run lint:slop` : 0 catches silencieux, 0 composant monolithique.
+    - `npx tsc --noEmit` : 0 erreur de typage TypeScript.
+    - `npm run quality:gate` & Tests unitaires backend : 44 test suites passées, 341 tests unitaires validés (100% PASS).
+
 - **Campagne d'Homologation Globale & Qualification de Release — Passer d'une Version de Dév à une Version Réellement Prête (Branche feature/vertical-immobilier) (18 septembre 2026)** 🚀🏢🛒💳📱🔒⚡✅ :
   * **🔍 1. Gel de la Version & État de Référence** :
     - Établissement formel de l'état de référence complet du système (Commit `f8fdd018`, Node.js v24.19.0, PostgreSQL 16 Hosted Neon, Express 4.18.2 API v1.2.0, Next.js 14.2.0 App Router v0.1.1, PWA Serwist 9.5.12).

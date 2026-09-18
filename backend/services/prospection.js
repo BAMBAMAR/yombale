@@ -185,22 +185,109 @@ Pouvons-nous ajouter votre 1er véhicule disponible aujourd'hui ?` + FOOTER_OPTO
   },
   {
     id: 'immo_agences',
-    titre: '🏠 Immobilier & Agences — Fiches Biens & Visites WhatsApp',
+    titre: '🏠 Agence Immobilière — Vitrine Web Pro & Diffusion Mandats 1-Clic (0% Commission)',
     canal: 'whatsapp',
     categorie: 'immo',
     texte: `{salutation}
 
-Gérer les demandes de location et de vente d'appartements à Dakar demande un temps fou sur WhatsApp.
+Vous gérez des mandats de vente et location {quartier} ? Partager les photos, prix et caractéristiques un par un sur WhatsApp fait perdre un temps précieux.
 
-Nopalou Immo (https://nopalou.com/immo) simplifie la diffusion de vos biens :
-✅ Vos fiches appartements & terrains prêtes à partager en 1 clic
-✅ Réception des demandes de visite qualifiées sur votre WhatsApp
-✅ 0% de commission sur vos transactions
-🎁 30 jours d'essai gratuit pour booster vos mandats !
+Avec Nopalou Immo (https://nopalou.com/immo) :
+✅ Votre vitrine agence officielle en ligne en 30 secondes (ex: nopalou.com/agence/votre-nom)
+✅ Vos fiches appartements, villas et terrains propres et sans filigrane parasite
+✅ Vos demandes de visites qualifiées arrivent directement sur votre WhatsApp
+✅ 0% de commission sur vos transactions et mandats
+🎁 30 jours 100% offerts pour équiper votre agence !
 
-Lien d'accès pro : https://nopalou.com/agence
+Découvrez l'espace agence : https://nopalou.com/agence
 
-Avez-vous un bien disponible que nous pouvons mettre en avant cette semaine ?` + FOOTER_OPTOUT
+Avez-vous un mandat disponible que nous pouvons mettre en vitrine ensemble aujourd'hui ?` + FOOTER_OPTOUT
+  },
+  {
+    id: 'immo_gestion_locative',
+    titre: '🏢 Gestion Locative & Bailleurs — Baux OHADA & Quittances Automatiques Wave/OM',
+    canal: 'whatsapp',
+    categorie: 'immo',
+    texte: `{salutation}
+
+Gérer le suivi des loyers, les quittances manuelles et les relances d'impayés {quartier} est une corvée mensuelle.
+
+Nopalou Immo automatise votre gestion locative au Sénégal :
+✅ Génération de baux de location conformes au droit sénégalais et OHADA
+✅ Quittances de loyer numériques certifiées envoyées automatiquement par WhatsApp
+✅ Encaissement direct des loyers par Wave et Orange Money sans retard
+✅ Suivi en direct des états des lieux et historiques locataires
+🎁 1er mois d'essai offert pour tester sur vos premiers lots !
+
+Activez votre gestion locative : https://nopalou.com/immo
+
+Combien de lots gérez-vous actuellement ?` + FOOTER_OPTOUT
+  },
+  {
+    id: 'immo_courtier_mandataire',
+    titre: '🤝 Courtiers & Démarcheurs — Mini-Site Personnel & Partage Mandats Direct',
+    canal: 'whatsapp',
+    categorie: 'immo',
+    texte: `{salutation}
+
+En tant que professionnel de l'immobilier indépendant {quartier}, vos clients ont besoin d'avoir confiance immédiatement.
+
+Nopalou Immo vous donne une vitrine professionnelle clé en main :
+✅ Votre mini-site d'agent immobilier avec votre nom, contact WhatsApp et catalogue
+✅ Partagez vos biens en 1 seul lien propre au lieu de saturer la mémoire WhatsApp de vos clients
+✅ Bons de visite numériques et suivi de vos commissions
+🎁 30 jours 100% gratuits sans aucun engagement !
+
+Créez votre profil en 1 minute : https://nopalou.com/agence
+
+Pouvons-nous configurer votre premier bien disponible aujourd'hui ?` + FOOTER_OPTOUT
+  },
+  {
+    id: 'immo_promoteur_neuf',
+    titre: '🏗️ Promoteurs & Vente sur Plan — Vitrine Programmes Neufs & Terrains Viabilisés',
+    canal: 'whatsapp',
+    categorie: 'immo',
+    texte: `{salutation}
+
+Vous commercialisez un programme résidentiel, des appartements neufs ou des parcelles de terrain {quartier} ?
+
+Nopalou Immo offre la plateforme idéale pour capter des acquéreurs sénégalais et de la diaspora :
+✅ Présentation HD de votre projet (plans d'architecte, plaquettes PDF, grilles de prix)
+✅ Formulaire de réservation directe et génération de leads acquéreurs qualifiés
+✅ Suivi des acomptes et sécurisation des réservations
+🎁 Essai gratuit de diffusion pour votre programme !
+
+Consultez nos opportunités : https://nopalou.com/immo
+
+Quel est le programme ou lotissement que vous souhaitez promouvoir en priorité ?` + FOOTER_OPTOUT
+  },
+  {
+    id: 'immo_email_b2b',
+    titre: '✉️ E-mail B2B Agence Immobilière — Solution Complète Vitrine & Gestion pour {nom_boutique}',
+    canal: 'email',
+    categorie: 'immo',
+    sujet: `Modernisation de la vitrine et gestion locative pour {nom_boutique}`,
+    texte: `Bonjour [Madame/Monsieur la Direction / Responsable d'Agence],
+
+Je me permets de vous contacter car j'apprécie la qualité du portefeuille immobilier de {nom_boutique} {quartier}.
+
+Aujourd'hui au Sénégal, les acquéreurs et locataires privilégient l'accès direct sur smartphone et le contact WhatsApp immédiat. Nopalou Immo (https://nopalou.com/immo) est la suite logicielle dédiée aux agences et cabinets immobiliers sénégalais :
+
+• Vitrine Web Officielle personnalisée à vos couleurs (référencée N°1 au Sénégal)
+• Fiches biens interactives avec plans et photos haute définition, sans commission
+• Module de gestion locative : baux certifiés OHADA et quittances automatiques Wave / Orange Money
+• Bons de visite numériques et suivi des mandats de vos négociateurs
+• Espace client sécurisé pour vos propriétaires bailleurs
+
+Nous offrons 30 jours d'essai complet sans engagement pour digitaliser le catalogue de {nom_boutique} :
+👉 https://nopalou.com/agence
+
+Seriez-vous ouvert à une présentation rapide de 10 minutes cette semaine ?
+
+Bien cordialement,
+L'équipe Déploiement Nopalou Immo Sénégal
+contact@nopalou.com
+WhatsApp : +221 70 871 79 42` + '\n\nPour vous désinscrire de nos communications, répondez STOP à cet email.'
   },
   {
     id: 'commerce_general',
@@ -292,16 +379,19 @@ WhatsApp : +221 70 871 79 42` + '\n\nPour vous désinscrire de nos communication
 // ── Dictionnaire des Quartiers et Marchés de Dakar & Régions ───────────────
 const DICTIONNAIRE_QUARTIERS = [
   'Sandaga', 'HLM', 'Colobane', 'Petersen', 'Centenaire', 'Maristes', 'Plateau',
-  'Almadies', 'Ngor', 'Ouakam', 'Pikine', 'Guédiawaye', 'Guediawaye', 'Keur Massar',
-  'Parcelles Assainies', 'Parcelles', 'PA', 'Tilène', 'Tilene', 'Yoff', 'Fann', 'Mermoz',
-  'Grand Yoff', 'Grandyoff', 'Grand Dakar', 'Médina', 'Medina', 'Fass', 'Fann Hock',
-  'Point E', 'Sacré-Cœur', 'Sacre Coeur', 'Liberté 6', 'Liberte 6', 'Liberté 1', 'Liberté 2', 'Liberté 3', 'Liberté 4', 'Liberté 5', 'Mamelles',
-  'Hann Maristes', 'Hann', 'Bel Air', 'Gibraltar', 'Castors', 'Dieuppeul', 'Derklé',
-  'Derkle', 'Bène Tally', 'Bene Tally', 'Geultape', 'Gueule Tapée', 'Lambay', 'Sea Plaza',
-  'Nord Foire', 'Ouest Foire', 'Sud Foire', 'Foire', 'Zone de Captage', 'Keur Gorgui', 'Sipres',
+  'Almadies', 'Ngor Almadies', 'Ngor', 'Ouakam', 'Pikine', 'Guédiawaye', 'Guediawaye', 'Keur Massar',
+  'Parcelles Assainies', 'Parcelles', 'PA', 'Tilène', 'Tilene', 'Yoff', 'Fann Résidence', 'Fann Residence', 'Fann', 'Fann Hock',
+  'Mermoz', 'Fenêtre Mermoz', 'Fenetre Mermoz', 'Grand Yoff', 'Grandyoff', 'Grand Dakar', 'Médina', 'Medina', 'Fass',
+  'Point E', 'Sacré-Cœur', 'Sacre Coeur', 'Liberté 6', 'Liberte 6', 'Liberté 1', 'Liberté 2', 'Liberté 3', 'Liberté 4', 'Liberté 5',
+  'Corniche des Mamelles', 'Mamelles', 'Hann Maristes', 'Hann', 'Bel Air', 'Gibraltar', 'Castors', 'Dieuppeul', 'Derklé',
+  'Derkle', 'Bène Tally', 'Bene Tally', 'Geultape', 'Gueule Tapée', 'Lambay', 'Sea Plaza', 'Virage',
+  'Nord Foire', 'Ouest Foire', 'Sud Foire', 'Foire', 'Zone de Captage', 'Keur Gorgui', 'Cité Keur Gorgui', 'Sipres',
+  'Cité Mixta', 'Cite Mixta', 'Scat Urbam', 'Golf Sud', 'Golf', 'Cité Djily Mbaye', 'Djily Mbaye', 'Cité Fadia', 'Cité Aliou Sow',
+  'Cité Biagui', 'Cité Damel', 'Cité Batrain', 'Batrain', 'Cité Assemblée', 'Cité SOPRIM', 'SOPRIM', 'Cité BCEAO',
   'Hamo', 'Hamo 4', 'Hamo 5', 'Hamo 6', 'Cambérène', 'Camberene', 'Malika', 'Yeumbeul', 'Thiaroye',
   'Thiès', 'Thies', 'Touba', 'Mbour', 'Saint-Louis', 'Ziguinchor', 'Diourbel', 'Kaolack',
-  'Rufisque', 'Bargny', 'Diamniadio', 'Saly', 'Somone', 'Fatick', 'Kolda', 'Tambacounda', 'Louga', 'Richard-Toll', 'Matam'
+  'Rufisque', 'Bargny', 'Diamniadio', 'Saly Portudal', 'Saly', 'Somone', 'Nguérigne', 'Nguerigne', 'Nianing', 'Popenguine',
+  'Toubab Dialaw', 'Lac Rose', 'Sébikotane', 'Sebikotane', 'Fatick', 'Kolda', 'Tambacounda', 'Louga', 'Richard-Toll', 'Matam'
 ];
 
 // Quartiers triés par longueur décroissante pour prioriser les noms composés (ex: Grand Yoff avant Yoff, Nord Foire avant Foire)
@@ -319,7 +409,9 @@ function detecterQuartier(texte) {
       if (qLow === 'ouest foire') return 'Ouest Foire';
       if (qLow === 'sud foire') return 'Sud Foire';
       if (qLow === 'zone de captage') return 'Zone de Captage';
-      if (qLow === 'keur gorgui') return 'Keur Gorgui';
+      if (qLow === 'keur gorgui' || qLow === 'cité keur gorgui') return 'Keur Gorgui';
+      if (qLow === 'cite mixta' || qLow === 'cité mixta') return 'Cité Mixta';
+      if (qLow === 'scat urbam') return 'Scat Urbam';
       if (qLow === 'guediawaye') return 'Guédiawaye';
       if (qLow === 'thies') return 'Thiès';
       if (qLow === 'medina') return 'Médina';
@@ -330,6 +422,15 @@ function detecterQuartier(texte) {
       if (qLow.startsWith('liberte')) return q.replace(/liberte/i, 'Liberté');
       if (qLow === 'hann maristes' || qLow === 'maristes') return 'Maristes';
       if (qLow === 'camberene') return 'Cambérène';
+      if (qLow === 'corniche des mamelles' || qLow === 'mamelles') return 'Mamelles';
+      if (qLow === 'fann residence' || qLow === 'fann résidence') return 'Fann Résidence';
+      if (qLow === 'fann hock') return 'Fann Hock';
+      if (qLow === 'ngor almadies' || qLow === 'almadies') return 'Almadies';
+      if (qLow === 'nguerigne' || qLow === 'nguérigne') return 'Nguérigne';
+      if (qLow === 'saly portudal' || qLow === 'saly') return 'Saly';
+      if (qLow === 'sebikotane' || qLow === 'sébikotane') return 'Sébikotane';
+      if (qLow === 'golf sud' || qLow === 'golf') return 'Golf';
+      if (qLow === 'djily mbaye' || qLow === 'cité djily mbaye') return 'Cité Djily Mbaye';
       return q;
     }
   }
@@ -375,7 +476,7 @@ function genererNomBoutiqueParDefaut(categorie, quartier) {
     case 'auto-moto':
       return `Vendeur Véhicules${qStr}`;
     case 'immo':
-      return `Agence Immobilière${qStr}`;
+      return qStr ? `Agence Immobilière${qStr}` : 'Agence & Mandataire Immo';
     case 'grossiste':
       return `Grossiste Arrivages${qStr}`;
     case 'superette':
@@ -398,10 +499,10 @@ function detecterCategorieAutoEtImmo(texte) {
     return 'auto-moto';
   }
 
-  // 2. Immobilier
+  // 2. Immobilier (Appartements, Villas, Terrains, Studios, Parcelles, Immeubles, Baux)
   if (
-    /\b(appartement|studio|villa|terrain|parcelle|immeuble|chambre|meublé|meuble|a louer|à louer|en location|en vente|vente terrain|bailleur|courtier|f4|f3|f2|f5|titre foncier|bail)\b/i.test(t) &&
-    /\b(louer|location|vente|appartement|villa|terrain|chambre|studio|immeuble|bailleur)\b/i.test(t)
+    /\b(appartement|studio|villa|terrain|parcelle|immeuble|chambre|meublé|meuble|a louer|à louer|en location|en vente|vente terrain|bailleur|courtier|f4|f3|f2|f5|titre foncier|bail|vefa|programme neuf|duplex|triplex)\b/i.test(t) &&
+    (/\b(louer|location|vente|appartement|villa|terrain|chambre|studio|immeuble|bailleur|courtier|parcelle)\b/i.test(t) || /\b(f[2-5]|triplex|duplex)\b/i.test(t))
   ) {
     return 'immo';
   }
@@ -478,6 +579,19 @@ function nettoyerNomBoutique(rawNom, categorie = 'mode', quartier = '') {
     const nomExtrait = matchBoutique[1].trim();
     if (!/^\d+/.test(nomExtrait) && nomExtrait.length > 2 && nomExtrait.length < 35 && !/livraison/i.test(nomExtrait)) {
       return toTitleCase(nomExtrait);
+    }
+  }
+
+  // Détection spécifique d'agences immobilières et cabinets dans le texte
+  if (categorie === 'immo' || categorie === 'immobilier') {
+    const matchAgence = clean.match(/\b([A-Za-z0-9À-ÿ\s&'-]{2,25}\s+(?:Immo|Immobilier|Properties|Realty|Patrimoine|Courtage|Prestige|Partners|Invest))\b/i) ||
+                        clean.match(/\b((?:Cabinet|Agence|Groupe)\s+[A-Za-z0-9À-ÿ\s&'-]{2,25})\b/i) ||
+                        clean.match(/\b([A-Za-z0-9À-ÿ'-]{3,20}\s+Immo)\b/i);
+    if (matchAgence && matchAgence[1]) {
+      const agNom = toTitleCase(matchAgence[1].trim());
+      if (estNomPropreAuthentique(agNom) && agNom.length > 3) {
+        return agNom;
+      }
     }
   }
 
@@ -602,8 +716,16 @@ function calculerNopalouFitScore(lead) {
     fit += 40;
     details.push('+40 Coeur de cible catalogue WhatsApp & encaissements');
   } else if (cat === 'immo' || cat === 'immobilier') {
-    fit += 35;
-    details.push('+35 Agence & Professionnel Immobilier (Mandats, Commissions & Gestion Locative)');
+    if (lead.sous_profil === 'agence' || lead.sous_profil === 'promoteur') {
+      fit += 45;
+      details.push('+45 Agence / Promoteur Immobilier (Portefeuille mandats & vitrine haute valeur)');
+    } else if (lead.sous_profil === 'gestionnaire') {
+      fit += 40;
+      details.push('+40 Gestionnaire Locatif (Baux numériques OHADA & quittances)');
+    } else {
+      fit += 35;
+      details.push('+35 Professionnel Immobilier / Mandats & Diffusion');
+    }
   } else if (cat === 'restaurant') {
     fit += 35;
     details.push('+35 Restaurant & Fast-Food (Menu Digital & Commandes WhatsApp)');
@@ -631,11 +753,11 @@ function calculerNopalouFitScore(lead) {
     details.push('+20 Couverture Wave & WhatsApp max');
   }
 
-  // 4. Bonus marché physique dakarois stratégique (+10)
+  // 4. Bonus marché physique & pôles immobiliers majeurs (+10)
   const q = String(lead.quartier || '').toLowerCase();
-  if (['sandaga', 'hlm', 'colobane', 'maristes', 'plateau', 'tilène', 'centenaire'].some(m => q.includes(m))) {
+  if (['sandaga', 'hlm', 'colobane', 'maristes', 'plateau', 'tilène', 'centenaire', 'almadies', 'ngor', 'mermoz', 'point e', 'mamelles', 'saly', 'somone', 'keur gorgui'].some(m => q.includes(m))) {
     fit += 10;
-    details.push(`+10 Hub commercial stratégique (${lead.quartier})`);
+    details.push(`+10 Hub stratégique (${lead.quartier})`);
   }
 
   return {
@@ -812,6 +934,26 @@ function evaluerLeadComplet(lead, historiqueEvents = []) {
       nextAction = 'relance_variante_b';
       detailsScoring.push('+15 Fenêtre idéale pour 2ème relance avec proposition alternative');
     }
+  } else if (lead.nb_contacts === 0 && (lead.categorie === 'immo' || lead.categorie === 'immobilier')) {
+    if (lead.sous_profil === 'agence') {
+      priority = Math.min(100, priority + 15);
+      nextAction = 'demo_vitrine_immo';
+      detailsScoring.push('+15 Agence Immobilière cible — Démo vitrine & mandats');
+    } else if (lead.sous_profil === 'gestionnaire') {
+      priority = Math.min(100, priority + 10);
+      nextAction = 'proposition_gestion_locative';
+      detailsScoring.push('+10 Gestionnaire locatif — Baux OHADA & quittances');
+    } else if (lead.sous_profil === 'courtier') {
+      nextAction = 'onboarding_courtier_whatsapp';
+      detailsScoring.push('Courtier / Démarcheur — Mini-site personnel');
+    } else if (lead.sous_profil === 'promoteur') {
+      priority = Math.min(100, priority + 12);
+      nextAction = 'vitrine_programme_neuf';
+      detailsScoring.push('+12 Promoteur — Vitrine programme neuf');
+    } else {
+      nextAction = 'lancer_premiere_campagne';
+      detailsScoring.push('Professionnel immo — Première prise de contact');
+    }
   } else if (lead.nb_contacts === 0 && fit >= 70 && quality >= 60) {
     priority = Math.min(100, priority + 10);
     nextAction = 'lancer_premiere_campagne';
@@ -835,10 +977,10 @@ function detecterSousProfilLead(nom, notes, categorie) {
   const texte = `${nom || ''} ${notes || ''}`.toLowerCase();
   
   if (cat === 'immo' || cat === 'immobilier') {
-    if (/\b(courtier|courtage|apporteur|financement)\b/i.test(texte)) return 'courtier';
-    if (/\b(promoteur|programme|résidence|residence|lotisseur|lotissement)\b/i.test(texte)) return 'promoteur';
-    if (/\b(gestion|locatif|locative|syndic|bailleur|administrateur|gérance)\b/i.test(texte)) return 'gestionnaire';
-    if (/\b(agence|cabinet|prestige|immo|immobilier|immobiliere|immobilière)\b/i.test(texte)) return 'agence';
+    if (/\b(promoteur|programme|résidence|residence|lotisseur|lotissement|vefa|projet neuf|chantier|immeuble neuf)\b/i.test(texte)) return 'promoteur';
+    if (/\b(gestion|locatif|locative|syndic|bailleur|bailleurs|administrateur|gérance|loyers?|quittance|recouvrement)\b/i.test(texte)) return 'gestionnaire';
+    if (/\b(courtier|courtage|apporteur|démarcheur|demarcheur|intermédiaire|intermediaire|mandataire|indépendant|courtier de crédit)\b/i.test(texte)) return 'courtier';
+    if (/\b(agence|cabinet|prestige|immo|immobilier|immobiliere|immobilière|properties|realty|estate|patrimoine|conseil|services|sen-immo|transac)\b/i.test(texte)) return 'agence';
     return 'agent';
   }
   
@@ -1146,6 +1288,450 @@ async function reconcilierAgencesEtBoutiquesExistantes() {
   return stats;
 }
 
+// ── Audit Exhaustif de la Qualité des Données CRM & Immo ────────────────────
+async function auditerQualiteDonneesCRM() {
+  await ensureProspectionTables();
+
+  const [
+    rGlobal,
+    rNoms,
+    rQuartiers,
+    rOperateurs,
+    rSousProfils,
+    rCategories,
+    rImmoAnnonces,
+    rAgences
+  ] = await Promise.all([
+    // Métriques globales
+    pool.query(`
+      SELECT
+        COUNT(*) AS total_leads,
+        COUNT(*) FILTER (WHERE statut = 'nouveau') AS nouveaux,
+        COUNT(*) FILTER (WHERE statut LIKE 'contacte%') AS contactes,
+        COUNT(*) FILTER (WHERE statut = 'en_discussion') AS en_discussion,
+        COUNT(*) FILTER (WHERE statut = 'converti') AS convertis,
+        COUNT(*) FILTER (WHERE statut = 'invalide') AS invalides,
+        COUNT(*) FILTER (WHERE statut = 'desinscrit') AS desinscrits,
+        COUNT(*) FILTER (WHERE contact_nom IS NOT NULL AND contact_nom != '') AS avec_contact_nom,
+        COUNT(*) FILTER (WHERE email IS NOT NULL AND email != '') AS avec_email,
+        COUNT(*) FILTER (WHERE fit_score >= 70) AS haut_fit,
+        ROUND(AVG(score), 1) AS score_moyen,
+        ROUND(AVG(fit_score), 1) AS fit_moyen,
+        ROUND(AVG(priority_score), 1) AS priority_moyen
+      FROM prospection_leads
+    `),
+    // Qualité des noms (authentiques vs génériques)
+    pool.query(`
+      SELECT
+        COUNT(*) FILTER (
+          WHERE nom_boutique IN ('Immobilière', 'Agence Immobilière', 'Mode', 'Véhicules', 'Commerce Général', 'Commerce & Boutique', 'Divers', 'Boutique Mode', 'Vendeur Véhicules')
+             OR nom_boutique ILIKE '%galaxy%'
+             OR nom_boutique ILIKE 'contact%'
+             OR nom_boutique ILIKE 'vendeur%'
+             OR nom_boutique ILIKE 'annonce%'
+             OR LENGTH(nom_boutique) > 40
+        ) AS noms_generiques,
+        COUNT(*) FILTER (
+          WHERE categorie = 'immo' AND (
+            nom_boutique IN ('Immobilière', 'Agence Immobilière', 'Immo', 'Agence', 'Villa de Luxe')
+            OR LENGTH(nom_boutique) > 40
+          )
+        ) AS immo_noms_generiques
+      FROM prospection_leads
+    `),
+    // Précision géographique
+    pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE quartier IS NOT NULL AND quartier != '' AND quartier != 'Dakar' AND quartier != 'Tout Dakar & Régions') AS quartiers_precis,
+        COUNT(*) FILTER (WHERE quartier IS NULL OR quartier = '' OR quartier = 'Dakar' OR quartier = 'Tout Dakar & Régions') AS quartiers_flous,
+        COUNT(*) FILTER (WHERE categorie = 'immo' AND (quartier IS NULL OR quartier = '' OR quartier = 'Dakar')) AS immo_quartiers_flous
+      FROM prospection_leads
+    `),
+    // Opérateurs et validité mobile
+    pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE operateur IN ('Orange', 'Free (Yas)', 'Expresso', 'Promobile')) AS mobiles_valides,
+        COUNT(*) FILTER (WHERE operateur = 'Fixe' OR operateur = 'Autre') AS operateurs_invalides
+      FROM prospection_leads
+    `),
+    // Répartition sous-profils immo
+    pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE categorie = 'immo') AS total_immo,
+        COUNT(*) FILTER (WHERE categorie = 'immo' AND sous_profil = 'agence') AS immo_agences,
+        COUNT(*) FILTER (WHERE categorie = 'immo' AND sous_profil = 'gestionnaire') AS immo_gestionnaires,
+        COUNT(*) FILTER (WHERE categorie = 'immo' AND sous_profil = 'courtier') AS immo_courtiers,
+        COUNT(*) FILTER (WHERE categorie = 'immo' AND sous_profil = 'promoteur') AS immo_promoteurs,
+        COUNT(*) FILTER (WHERE categorie = 'immo' AND (sous_profil = 'agent' OR sous_profil IS NULL)) AS immo_agents
+      FROM prospection_leads
+    `),
+    // Répartition catégories
+    pool.query(`
+      SELECT categorie, COUNT(*) AS count
+      FROM prospection_leads
+      GROUP BY categorie
+      ORDER BY count DESC
+    `),
+    // Potentiel sourcing immo non encore exploité
+    pool.query(`
+      SELECT 
+        COUNT(DISTINCT contact_tel) AS total_tels_immo_annonces,
+        COUNT(*) FILTER (
+          WHERE categorie_slug != 'immo' 
+            AND titre ~* '\\b(appartement|studio|villa|terrain|parcelle|immeuble|bailleur|courtier|f[2-5])\\b'
+        ) AS immo_mal_classees
+      FROM annonces_classifiees
+      WHERE contact_tel IS NOT NULL AND contact_tel != '' AND contact_tel != 'Voir sur Facebook'
+    `),
+    // Agences clientes réelles
+    pool.query(`
+      SELECT COUNT(*) AS total_agences_reelles FROM agences_immo
+    `)
+  ]);
+
+  const global = rGlobal.rows[0] || {};
+  const noms = rNoms.rows[0] || {};
+  const quartiers = rQuartiers.rows[0] || {};
+  const operateurs = rOperateurs.rows[0] || {};
+  const sousProfils = rSousProfils.rows[0] || {};
+  const immoAnnonces = rImmoAnnonces.rows[0] || {};
+
+  const total = parseInt(global.total_leads, 10) || 0;
+  const mobilesValides = parseInt(operateurs.mobiles_valides, 10) || 0;
+  const quartiersPrecis = parseInt(quartiers.quartiers_precis, 10) || 0;
+  const nomsGeneriques = parseInt(noms.noms_generiques, 10) || 0;
+  const nomsAuthentiques = Math.max(0, total - nomsGeneriques);
+
+  // Calcul du score de santé global des données CRM (0 à 100)
+  const pctMobiles = total > 0 ? (mobilesValides / total) * 100 : 0;
+  const pctQuartiers = total > 0 ? (quartiersPrecis / total) * 100 : 0;
+  const pctNoms = total > 0 ? (nomsAuthentiques / total) * 100 : 0;
+  const pctScores = total > 0 ? (Math.min(100, (parseFloat(global.score_moyen) || 0))) : 0;
+
+  const scoreSante = Math.round(
+    (0.35 * pctMobiles) +
+    (0.25 * pctNoms) +
+    (0.20 * pctQuartiers) +
+    (0.20 * pctScores)
+  );
+
+  return {
+    score_sante: Math.min(100, Math.max(0, scoreSante)),
+    total_leads: total,
+    mobiles_valides: mobilesValides,
+    pct_mobiles_valides: Math.round(pctMobiles),
+    quartiers_precis: quartiersPrecis,
+    pct_quartiers_precis: Math.round(pctQuartiers),
+    noms_authentiques: nomsAuthentiques,
+    pct_noms_authentiques: Math.round(pctNoms),
+    noms_generiques: nomsGeneriques,
+    avec_contact_nom: parseInt(global.avec_contact_nom, 10) || 0,
+    avec_email: parseInt(global.avec_email, 10) || 0,
+    haut_fit: parseInt(global.haut_fit, 10) || 0,
+    scores_moyens: {
+      qualite: parseFloat(global.score_moyen) || 0,
+      fit: parseFloat(global.fit_moyen) || 0,
+      priorite: parseFloat(global.priority_moyen) || 0,
+    },
+    immo: {
+      total: parseInt(sousProfils.total_immo, 10) || 0,
+      agences: parseInt(sousProfils.immo_agences, 10) || 0,
+      gestionnaires: parseInt(sousProfils.immo_gestionnaires, 10) || 0,
+      courtiers: parseInt(sousProfils.immo_courtiers, 10) || 0,
+      promoteurs: parseInt(sousProfils.immo_promoteurs, 10) || 0,
+      agents: parseInt(sousProfils.immo_agents, 10) || 0,
+      noms_generiques: parseInt(noms.immo_noms_generiques, 10) || 0,
+      quartiers_flous: parseInt(quartiers.immo_quartiers_flous, 10) || 0,
+      annonces_mal_classees: parseInt(immoAnnonces.immo_mal_classees, 10) || 0,
+      agences_nopalou_reelles: parseInt(rAgences.rows[0]?.total_agences_reelles, 10) || 0,
+    },
+    statuts: {
+      nouveaux: parseInt(global.nouveaux, 10) || 0,
+      contactes: parseInt(global.contactes, 10) || 0,
+      en_discussion: parseInt(global.en_discussion, 10) || 0,
+      convertis: parseInt(global.convertis, 10) || 0,
+      invalides: parseInt(global.invalides, 10) || 0,
+      desinscrits: parseInt(global.desinscrits, 10) || 0,
+    },
+    categories: rCategories.rows,
+  };
+}
+
+// ── Assainissement, Sourcing & Reclassement Dédié Agences Immobilières ────────
+async function assainirEtEnrichirDonneesImmo() {
+  await ensureProspectionTables();
+  const auditAvant = await auditerQualiteDonneesCRM();
+
+  let annoncesReclassees = 0;
+  let leadsImmoImportes = 0;
+  let quartiersEnrichis = 0;
+  let nomsAssainis = 0;
+  let sousProfilsCorriges = 0;
+
+  // 1. Reclassement automatique des annonces immo mal étiquetées dans annonces_classifiees
+  try {
+    const resReclass = await pool.query(`
+      UPDATE annonces_classifiees
+      SET categorie_slug = 'immo'
+      WHERE categorie_slug != 'immo'
+        AND categorie_slug != 'emploi'
+        AND categorie_slug != 'recrutement'
+        AND (
+          titre ~* '\\b(appartement|studio|villa|terrain|parcelle|immeuble|bailleur|courtier|f[2-5]|titre foncier|bail|meublé|duplex|triplex)\\b'
+          OR description ~* '\\b(appartement|studio|villa|terrain|parcelle|immeuble|bailleur|courtier|f[2-5]|titre foncier|bail|meublé)\\b'
+        )
+      RETURNING id
+    `);
+    annoncesReclassees = resReclass.rows.length;
+  } catch (errReclass) {
+    console.warn('[ASSAINIR IMMO] Reclassement annonces warning:', errReclass.message);
+  }
+
+  // 2. Sourcing et import des contacts immo manquants depuis annonces_classifiees et annonces_immo
+  try {
+    const resExistants = await pool.query('SELECT telephone FROM prospection_leads');
+    const existantsSet = new Set(resExistants.rows.map(r => r.telephone));
+
+    const resAnnonces = await pool.query(`
+      SELECT contact_tel, contact_nom, titre, description, quartier, ville, categorie_slug
+      FROM annonces_classifiees
+      WHERE (
+        categorie_slug = 'immo'
+        OR titre ~* '\\b(appartement|studio|villa|terrain|parcelle|immeuble|bailleur|courtier|f[2-5]|titre foncier|bail|meublé)\\b'
+      )
+      AND contact_tel IS NOT NULL 
+      AND contact_tel != '' 
+      AND contact_tel != 'Voir sur Facebook'
+      ORDER BY created_at DESC
+    `);
+
+    const immoLeadsMap = new Map();
+    for (const row of resAnnonces.rows) {
+      const norm = normaliserTelephoneSenegal(row.contact_tel);
+      if (!norm.valide || norm.operateur === 'Fixe') continue;
+      if (immoLeadsMap.has(norm.national)) continue;
+
+      const fullText = `${row.titre || ''} ${row.description || ''} ${row.quartier || ''} ${row.ville || ''}`;
+      const quartDetecte = detecterQuartier(fullText) || row.quartier || (row.ville && row.ville !== 'Dakar' ? row.ville : 'Dakar');
+      const sp = detecterSousProfilLead(row.titre, `${row.description || ''} ${row.contact_nom || ''}`, 'immo');
+
+      let nomBq = null;
+      if (row.contact_nom && estNomPropreAuthentique(row.contact_nom)) {
+        nomBq = sp === 'agence' ? `${toTitleCase(row.contact_nom)} Immo` : toTitleCase(row.contact_nom);
+      } else {
+        nomBq = nettoyerNomBoutique(row.titre, 'immo', quartDetecte);
+      }
+      const cNom = nettoyerContactNom(row.contact_nom);
+
+      immoLeadsMap.set(norm.national, {
+        nom: nomBq,
+        cNom,
+        tel: norm.national,
+        brut: norm.brut,
+        op: norm.operateur,
+        sp,
+        ville: row.ville || 'Dakar',
+        quartier: quartDetecte,
+      });
+    }
+
+    // Nouveaux leads à insérer
+    const aInserer = Array.from(immoLeadsMap.values()).filter(l => !existantsSet.has(l.tel));
+    if (aInserer.length > 0) {
+      const CHUNK_SIZE = 50;
+      for (let i = 0; i < aInserer.length; i += CHUNK_SIZE) {
+        const chunk = aInserer.slice(i, i + CHUNK_SIZE);
+        const values = [];
+        const placeholders = chunk.map((l, idx) => {
+          const o = idx * 10;
+          values.push(l.nom, l.cNom, l.tel, l.brut, l.op, 'immo', l.sp, l.ville, l.quartier, 'sourcing_immo_annonces');
+          return `($${o + 1}, $${o + 2}, $${o + 3}, $${o + 4}, $${o + 5}, $${o + 6}, $${o + 7}, $${o + 8}, $${o + 9}, $${o + 10}, 'nouveau')`;
+        }).join(', ');
+
+        const insRes = await pool.query(`
+          INSERT INTO prospection_leads (
+            nom_boutique, contact_nom, telephone, telephone_brut, operateur,
+            categorie, sous_profil, ville, quartier, source, statut
+          ) VALUES ${placeholders}
+          ON CONFLICT (telephone) DO NOTHING
+          RETURNING id
+        `, values);
+        leadsImmoImportes += insRes.rows.length;
+      }
+    }
+  } catch (errImport) {
+    console.warn('[ASSAINIR IMMO] Import annonces immo warning:', errImport.message);
+  }
+
+  // 3. Assainissement des leads existants dans prospection_leads (quartiers flous, noms génériques, sous-profils)
+  try {
+    const resAds = await pool.query(`
+      SELECT contact_tel, titre, description, contact_nom
+      FROM annonces_classifiees
+      WHERE contact_tel IS NOT NULL AND contact_tel != ''
+      ORDER BY created_at DESC
+      LIMIT 2000
+    `);
+    const adsByTel = new Map();
+    for (const a of resAds.rows) {
+      const cleanNum = (a.contact_tel || '').replace(/[^0-9]/g, '').slice(-9);
+      if (cleanNum.length === 9 && !adsByTel.has(cleanNum)) {
+        adsByTel.set(cleanNum, a);
+      }
+    }
+
+    const { rows: leadsImmo } = await pool.query(`
+      SELECT p.*
+      FROM prospection_leads p
+      WHERE p.categorie = 'immo' OR p.sous_profil IN ('agence', 'gestionnaire', 'courtier', 'promoteur', 'agent')
+    `);
+
+    for (const lead of leadsImmo) {
+      const telSuffix = (lead.telephone || '').replace(/[^0-9]/g, '').slice(-9);
+      const ad = adsByTel.get(telSuffix) || {};
+      const fullCtx = `${ad.titre || ''} ${ad.description || ''} ${lead.notes || ''} ${lead.nom_boutique || ''}`;
+
+      let changed = false;
+
+      // Amélioration quartier
+      let qNouveau = lead.quartier;
+      if (!qNouveau || qNouveau === 'Dakar' || qNouveau === 'Tout Dakar & Régions') {
+        const qDet = detecterQuartier(fullCtx);
+        if (qDet && qDet !== 'Dakar') {
+          qNouveau = qDet;
+          quartiersEnrichis++;
+          changed = true;
+        }
+      }
+
+      // Amélioration sous-profil
+      const spNouveau = detecterSousProfilLead(lead.nom_boutique, fullCtx, 'immo');
+      if (spNouveau !== lead.sous_profil) {
+        sousProfilsCorriges++;
+        changed = true;
+      }
+
+      // Amélioration nom de boutique
+      let nomNouveau = lead.nom_boutique;
+      if (
+        !nomNouveau ||
+        nomNouveau === 'Immobilière' ||
+        nomNouveau === 'Agence Immobilière' ||
+        nomNouveau === 'Mode' ||
+        nomNouveau === 'Véhicules' ||
+        nomNouveau === 'Commerce Général' ||
+        nomNouveau.startsWith('Villa ') ||
+        nomNouveau.startsWith('Chambre ') ||
+        nomNouveau.startsWith('Appartement ') ||
+        nomNouveau.startsWith('Terrain ') ||
+        nomNouveau.length > 35
+      ) {
+        const nomExtrait = nettoyerNomBoutique(fullCtx, 'immo', qNouveau || 'Dakar');
+        if (estNomPropreAuthentique(nomExtrait)) {
+          nomNouveau = nomExtrait;
+          nomsAssainis++;
+          changed = true;
+        } else if (lead.contact_nom && estNomPropreAuthentique(lead.contact_nom)) {
+          nomNouveau = spNouveau === 'agence' ? `${lead.contact_nom} Immo` : `${lead.contact_nom} Immobilier`;
+          nomsAssainis++;
+          changed = true;
+        } else if (qNouveau && qNouveau !== 'Dakar') {
+          nomNouveau = `Agence Immobilière ${qNouveau}`;
+          nomsAssainis++;
+          changed = true;
+        }
+      }
+
+      // Contact nom si manquant
+      let cNomNouveau = lead.contact_nom;
+      if (!cNomNouveau && ad.contact_nom) {
+        cNomNouveau = nettoyerContactNom(ad.contact_nom);
+        if (cNomNouveau) changed = true;
+      }
+
+      const leadForEval = {
+        ...lead,
+        nom_boutique: nomNouveau,
+        contact_nom: cNomNouveau,
+        quartier: qNouveau,
+        sous_profil: spNouveau,
+        categorie: 'immo',
+      };
+
+      const isEmploi = estLeadEmploiOuInvalide(leadForEval) || (ad.titre && estLeadEmploiOuInvalide({ nom_boutique: ad.titre, notes: `${ad.description || ''} ${ad.contact_nom || ''}` }));
+      const evalRes = isEmploi ? {
+        score: 0,
+        fit_score: 0,
+        engagement_score: 0,
+        conversion_score: 0,
+        priority_score: 0,
+        next_best_action: 'hors_cible',
+        scoring_details: ['Lead hors-cible ou emploi'],
+      } : evaluerLeadComplet(leadForEval);
+
+      const statutFinal = isEmploi ? 'invalide' : lead.statut;
+      const catFinal = isEmploi ? 'emploi' : 'immo';
+
+      if (changed || lead.categorie !== catFinal || lead.statut !== statutFinal || !lead.fit_score) {
+        await pool.query(`
+          UPDATE prospection_leads
+          SET
+            nom_boutique = $1,
+            contact_nom = $2,
+            quartier = $3,
+            sous_profil = $4,
+            categorie = $5,
+            score = $6,
+            fit_score = $7,
+            engagement_score = $8,
+            conversion_score = $9,
+            priority_score = $10,
+            next_best_action = $11,
+            scoring_details = $12::jsonb,
+            statut = $13,
+            updated_at = NOW()
+          WHERE id = $14
+        `, [
+          nomNouveau,
+          cNomNouveau,
+          qNouveau,
+          spNouveau,
+          catFinal,
+          evalRes.score,
+          evalRes.fit_score,
+          evalRes.engagement_score,
+          evalRes.conversion_score,
+          evalRes.priority_score,
+          evalRes.next_best_action,
+          JSON.stringify(evalRes.scoring_details),
+          statutFinal,
+          lead.id
+        ]);
+      }
+    }
+  } catch (errClean) {
+    console.warn('[ASSAINIR IMMO] Nettoyage leads existants warning:', errClean.message);
+  }
+
+  // 4. Réconciliation finale avec agences_immo
+  const recStats = await reconcilierAgencesEtBoutiquesExistantes();
+
+  const auditApres = await auditerQualiteDonneesCRM();
+
+  return {
+    success: true,
+    annoncesReclassees,
+    leadsImmoImportes,
+    quartiersEnrichis,
+    nomsAssainis,
+    sousProfilsCorriges,
+    agencesReconciliees: recStats.agences_reconciliees,
+    scoreSanteAvant: auditAvant.score_sante,
+    scoreSanteApres: auditApres.score_sante,
+    auditApres,
+  };
+}
+
 // ── Support Spintax anti-spam ({Option 1|Option 2|Option 3}) ─────────────────
 function traiterSpintax(texte) {
   if (!texte || typeof texte !== 'string') return '';
@@ -1424,12 +2010,17 @@ async function autoSourcerDepuisAnnonces() {
   try {
     await ensureProspectionTables();
 
+    // Récupération simultanée des annonces classifiées et annonces immobilières
     const resAnnonces = await pool.query(`
-      SELECT contact_nom, contact_tel, titre, categorie_slug, quartier, ville
+      SELECT contact_nom, contact_tel, titre, description, categorie_slug, quartier, ville, 'annonces_classifiees' as src_table
       FROM annonces_classifiees
       WHERE contact_tel IS NOT NULL AND contact_tel != '' AND contact_tel != 'Voir sur Facebook'
-      ORDER BY created_at DESC
-      LIMIT 1000
+      UNION ALL
+      SELECT contact_nom, contact_tel, titre, description, 'immo' as categorie_slug, quartier, ville, 'annonces_immo' as src_table
+      FROM annonces_immo
+      WHERE contact_tel IS NOT NULL AND contact_tel != '' AND contact_tel != 'Voir sur Facebook'
+      ORDER BY contact_tel
+      LIMIT 1500
     `);
 
     if (resAnnonces.rows.length === 0) {
@@ -1449,20 +2040,35 @@ async function autoSourcerDepuisAnnonces() {
       if (a.categorie_slug === 'emploi' || a.categorie_slug === 'recrutement') continue;
       if (estLeadEmploiOuInvalide({ nom_boutique: a.titre, notes: a.contact_nom, categorie: a.categorie_slug })) continue;
 
-      const quartierDetecte = detecterQuartier(`${a.titre || ''} ${a.quartier || ''} ${a.ville || ''}`) || a.quartier || a.ville || 'Dakar';
-      const nomNettoye = a.contact_nom ? toTitleCase(a.contact_nom) : nettoyerNomBoutique(a.titre, a.categorie_slug || 'mode', quartierDetecte);
-      const categorie = a.categorie_slug || 'mode';
+      const fullText = `${a.titre || ''} ${a.description || ''} ${a.quartier || ''} ${a.ville || ''}`;
+      let categorie = a.categorie_slug || 'mode';
+      if (categorie !== 'immo' && detecterCategorieAutoEtImmo(fullText) === 'immo') {
+        categorie = 'immo';
+      }
+
+      const quartierDetecte = detecterQuartier(fullText) || a.quartier || a.ville || 'Dakar';
+      const sousProfil = detecterSousProfilLead(a.titre, `${a.description || ''} ${a.contact_nom || ''}`, categorie);
+
+      let nomNettoye = null;
+      if (a.contact_nom && estNomPropreAuthentique(a.contact_nom)) {
+        nomNettoye = (categorie === 'immo' && sousProfil === 'agence') ? `${toTitleCase(a.contact_nom)} Immo` : toTitleCase(a.contact_nom);
+      } else {
+        nomNettoye = nettoyerNomBoutique(a.titre, categorie, quartierDetecte);
+      }
+
+      const cNom = a.contact_nom ? toTitleCase(a.contact_nom) : null;
 
       leadsParTel.set(norm.national, {
         nom_boutique: nomNettoye,
-        contact_nom: a.contact_nom ? toTitleCase(a.contact_nom) : null,
+        contact_nom: cNom,
         telephone: norm.national,
         telephone_brut: norm.brut,
         operateur: norm.operateur,
         categorie,
+        sous_profil: sousProfil,
         ville: a.ville || 'Dakar',
         quartier: quartierDetecte,
-        source: 'annonces_classifiees',
+        source: a.src_table === 'annonces_immo' ? 'annonces_immo' : 'annonces_classifiees',
       });
     }
 
@@ -1484,23 +2090,30 @@ async function autoSourcerDepuisAnnonces() {
     let inseres = 0;
 
     if (aInserer.length > 0) {
-      // Insertion par batch de 50 pour rapidité maximale et sécurité
       const CHUNK_SIZE = 50;
       for (let i = 0; i < aInserer.length; i += CHUNK_SIZE) {
         const chunk = aInserer.slice(i, i + CHUNK_SIZE);
         const values = [];
         const placeholders = chunk.map((l, idx) => {
-          const offset = idx * 9;
-          values.push(l.nom_boutique, l.contact_nom, l.telephone, l.telephone_brut, l.operateur, l.categorie, l.ville, l.quartier, l.source);
-          return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, 'nouveau')`;
+          const offset = idx * 10;
+          values.push(l.nom_boutique, l.contact_nom, l.telephone, l.telephone_brut, l.operateur, l.categorie, l.sous_profil, l.ville, l.quartier, l.source);
+          return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, 'nouveau')`;
         }).join(', ');
 
         const query = `
           INSERT INTO prospection_leads (
             nom_boutique, contact_nom, telephone, telephone_brut, operateur,
-            categorie, ville, quartier, source, statut
+            categorie, sous_profil, ville, quartier, source, statut
           ) VALUES ${placeholders}
-          ON CONFLICT (telephone) DO NOTHING
+          ON CONFLICT (telephone) DO UPDATE SET
+            categorie = EXCLUDED.categorie,
+            sous_profil = COALESCE(prospection_leads.sous_profil, EXCLUDED.sous_profil),
+            quartier = CASE 
+              WHEN prospection_leads.quartier IS NULL OR prospection_leads.quartier = 'Dakar' 
+              THEN EXCLUDED.quartier 
+              ELSE prospection_leads.quartier 
+            END,
+            updated_at = NOW()
           RETURNING id
         `;
         const resIns = await pool.query(query, values);
@@ -2686,6 +3299,8 @@ module.exports = {
   analyserToutesLesCampagnes,
   recommanderProchaineCampagne,
   obtenirTimelineLead,
+  auditerQualiteDonneesCRM,
+  assainirEtEnrichirDonneesImmo,
   traiterRelancesProspectsAutomatiques,
 };
 

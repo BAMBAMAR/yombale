@@ -103,6 +103,7 @@ const DOMAINS: DomainSection[] = [
       { href: '/admin/immo', label: "Vue d'ensemble & Validation", icon: <Home size={15} /> },
       { href: '/admin/immo/agences', label: 'Agences & Comptes Pro', icon: <Building2 size={15} />, highlight: '#8b5cf6' },
       { href: '/admin/immo/biens', label: 'Biens, Baux & Loyers', icon: <FileSpreadsheet size={15} /> },
+      { href: '/admin/plans?categorie=immo', label: 'Forfaits Agences Immo', icon: <Crown size={15} />, highlight: '#f59e0b' },
     ],
   },
   {

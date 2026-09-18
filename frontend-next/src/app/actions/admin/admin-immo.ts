@@ -148,3 +148,28 @@ export async function adminModererBien(
     return { error: err.message || 'Erreur serveur' }
   }
 }
+
+export async function adminChangerForfaitAgence(
+  agenceId: string,
+  payload: { abonnement_plan?: string; sponsorise?: boolean; jours_sponsoring?: number }
+): Promise<{ success?: boolean; agence?: any; error?: string }> {
+  const token = await getAdminToken()
+  if (!token) return { error: 'Non authentifié' }
+
+  try {
+    const r = await fetch(`${BACKEND}/api/admin/immo-global/agences/${agenceId}/forfait`, {
+      method: 'PUT',
+      headers: adminHeaders(token),
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    })
+    const data = await r.json()
+    if (!r.ok) return { error: data.error || 'Erreur modification forfait agence' }
+    revalidatePath('/admin/immo/agences')
+    revalidatePath('/admin/plans')
+    return data
+  } catch (err: any) {
+    return { error: err.message || 'Erreur serveur' }
+  }
+}
+

@@ -57,7 +57,7 @@ const DEFAULT_PLANS = [
 async function loadPlans() {
   try {
     const { rows } = await pool.query(`
-      SELECT id, slug, label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, visibilite, description, created_at, updated_at
+      SELECT id, slug, label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, visibilite, description, categorie, created_at, updated_at
       FROM plans
       ORDER BY ordre ASC, created_at ASC
     `);
@@ -78,6 +78,7 @@ async function loadPlans() {
           actif: Boolean(r.actif),
           visibilite: r.visibilite || 'public',
           description: r.description || '',
+          categorie: r.categorie || (r.slug.startsWith('immo_') ? 'immo' : 'boutique'),
           created_at: r.created_at,
           updated_at: r.updated_at,
         });

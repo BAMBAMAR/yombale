@@ -224,4 +224,55 @@ router.put('/agences/:id/statut', async (req, res) => {
   }
 });
 
+// ── PUT /api/admin/immo-global/agences/:id/forfait — Changer forfait / sponsoring d'une agence
+router.put('/agences/:id/forfait', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { abonnement_plan, sponsorise, jours_sponsoring } = req.body;
+
+    const current = await pool.query('SELECT * FROM agences_immo WHERE id = $1', [id]);
+    if (!current.rows[0]) {
+      return res.status(404).json({ error: 'Agence introuvable' });
+    }
+
+    const cur = current.rows[0];
+    const newPlan = abonnement_plan !== undefined ? abonnement_plan : cur.abonnement_plan;
+    let newSponsorise = sponsorise !== undefined ? Boolean(sponsorise) : cur.sponsorise;
+    let newSponsorFin = cur.sponsor_jusqu_au;
+
+    if (sponsorise === true) {
+      const days = parseInt(jours_sponsoring, 10) || 30;
+      newSponsorFin = new Date(Date.now() + days * 24 * 3600 * 1000).toISOString();
+    } else if (sponsorise === false) {
+      newSponsorFin = null;
+    }
+
+    const { rows } = await pool.query(`
+      UPDATE agences_immo
+      SET
+        abonnement_plan = $1,
+        sponsorise = $2,
+        sponsor_jusqu_au = $3,
+        updated_at = NOW()
+      WHERE id = $4
+      RETURNING *
+    `, [newPlan, newSponsorise, newSponsorFin, id]);
+
+    await enregistrerAdminLog({
+      action: 'agence_immo_forfait_modifie',
+      cibleType: 'agence_immo',
+      cibleId: id,
+      description: `Mise à jour du forfait de l'agence "${rows[0].nom}" vers "${newPlan}" (Sponsoring: ${newSponsorise ? 'Oui' : 'Non'})`,
+      ancienneValeur: { abonnement_plan: cur.abonnement_plan, sponsorise: cur.sponsorise },
+      nouvelleValeur: { abonnement_plan: newPlan, sponsorise: newSponsorise, sponsor_jusqu_au: newSponsorFin },
+      req,
+    });
+
+    res.json({ success: true, agence: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
+

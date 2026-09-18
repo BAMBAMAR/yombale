@@ -1,7 +1,8 @@
-import { Search, SlidersHorizontal, Sparkles, Download, Trash2, RotateCcw, Ban } from 'lucide-react'
-import type { Lead } from './types'
+import { Search, SlidersHorizontal, Sparkles, Download, Trash2, RotateCcw, Ban, Building2 } from 'lucide-react'
+import type { Lead, AuditQualiteData, AssainirImmoResult } from './types'
 import { CATEGORIES_OPTIONS, SOURCES_OPTIONS, OPERATEURS_OPTIONS, SOUS_PROFILS_OPTIONS } from './utils'
 import ProspectionCrmTable from './ProspectionCrmTable'
+import { ProspectionAuditCard } from './ProspectionAuditCard'
 
 interface Props {
   leads: Lead[]
@@ -31,6 +32,13 @@ interface Props {
   totalLeadsCount: number
   desinscritsCount: number
   isCleaningLeads: boolean
+  auditData?: AuditQualiteData | null
+  isAuditing?: boolean
+  isAssainissantImmo?: boolean
+  lastAssainirResult?: AssainirImmoResult | null
+  onRefreshAudit?: () => void
+  onAssainirImmo?: () => void
+  onFilterImmo?: () => void
   onReloadLeads: (customLimit?: number | string) => Promise<void>
   onNettoyerLeads: () => void
   onExportCSV: () => void
@@ -71,6 +79,13 @@ export default function ProspectionTabCrm({
   totalLeadsCount,
   desinscritsCount,
   isCleaningLeads,
+  auditData,
+  isAuditing,
+  isAssainissantImmo,
+  lastAssainirResult,
+  onRefreshAudit,
+  onAssainirImmo,
+  onFilterImmo,
   onReloadLeads,
   onNettoyerLeads,
   onExportCSV,
@@ -94,6 +109,26 @@ export default function ProspectionTabCrm({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Carte d'Audit Qualité CRM & Immo */}
+      {onRefreshAudit && onAssainirImmo && (
+        <ProspectionAuditCard
+          auditData={auditData || null}
+          isLoading={Boolean(isAuditing)}
+          isAssainissant={Boolean(isAssainissantImmo)}
+          lastResult={lastAssainirResult || null}
+          onRefreshAudit={onRefreshAudit}
+          onAssainirImmo={onAssainirImmo}
+          onFilterImmo={() => {
+            if (onFilterImmo) {
+              onFilterImmo()
+            } else {
+              setCatFilter('immo')
+              setSousProfilFilter('tous')
+            }
+          }}
+        />
+      )}
+
       {/* Barre de Filtres & Actions Avancées */}
       <div style={{
         background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '18px 20px',
@@ -294,6 +329,37 @@ export default function ProspectionTabCrm({
             <option value="qualite">Score Qualité</option>
             <option value="date">Date Ajout</option>
           </select>
+
+          {/* Raccourci rapide Pôle Immo */}
+          <button
+            type="button"
+            onClick={() => {
+              if (catFilter === 'immo') {
+                setCatFilter('tous')
+                setSousProfilFilter('tous')
+              } else {
+                setCatFilter('immo')
+                setSousProfilFilter('tous')
+              }
+            }}
+            style={{
+              padding: '6px 12px',
+              background: catFilter === 'immo' ? '#1C2B4A' : '#F8F5F0',
+              border: `1px solid ${catFilter === 'immo' ? '#1C2B4A' : '#E8DDD2'}`,
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              color: catFilter === 'immo' ? '#fff' : '#1C2B4A',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Filtrer instantanément les professionnels de l'immobilier"
+          >
+            <Building2 size={13} />
+            {catFilter === 'immo' ? 'Filtre Immo Actif' : 'Pôle Immo'}
+          </button>
 
           {/* Bouton Réinitialiser si filtres actifs */}
           {hasActiveFilters && (

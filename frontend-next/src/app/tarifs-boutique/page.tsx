@@ -40,7 +40,26 @@ const JSON_LD_FAQ = {
   })),
 }
 
-export default function TarifsBoutiquePage() {
+const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+
+export default async function TarifsBoutiquePage({
+  searchParams,
+}: {
+  searchParams?: { secteur?: string }
+}) {
+  const initialSecteur = searchParams?.secteur === 'immo' ? 'immo' : 'commerce'
+  let initialPlans = []
+
+  try {
+    const res = await fetch(`${BACKEND}/api/plans/public`, { cache: 'no-store' })
+    if (res.ok) {
+      const data = await res.json()
+      initialPlans = data.plans || []
+    }
+  } catch (err) {
+    console.error('[TARIFS_PAGE_FETCH_ERR]', err)
+  }
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_FAQ) }} />
@@ -79,7 +98,7 @@ export default function TarifsBoutiquePage() {
 
         {/* ── FORFAITS CARDS SECTION (Lifted up to overlap header) ── */}
         <section style={{ maxWidth: 1200, margin: '-80px auto 40px', padding: '0 20px', position: 'relative', zIndex: 3 }}>
-          <TarifsPublicsSelector />
+          <TarifsPublicsSelector initialSecteur={initialSecteur} initialPlans={initialPlans} />
         </section>
 
         {/* ── MATRICE DÉTAILLÉE DES FONCTIONNALITÉS RÉELLES ── */}

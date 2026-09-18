@@ -33,18 +33,29 @@ router.get('/admin/tous', adminSecretOnly, async (req, res) => {
   try {
     const plans = await plansCache.getAllPlans(false);
     
-    // Obtenir le nombre d'abonnés actifs par plan
-    const { rows: stats } = await pool.query(`
-      SELECT plan, COUNT(*)::int AS nb_actifs
-      FROM abonnements
-      WHERE statut = 'actif' AND fin > NOW()
-      GROUP BY plan
-    `);
-    const statsMap = Object.fromEntries(stats.map(s => [s.plan, s.nb_actifs]));
+    // Obtenir le nombre d'abonnés actifs par plan (boutiques et agences immobilières)
+    const [boutiqueStats, immoStats] = await Promise.all([
+      pool.query(`
+        SELECT plan, COUNT(*)::int AS nb_actifs
+        FROM abonnements
+        WHERE statut = 'actif' AND fin > NOW()
+        GROUP BY plan
+      `),
+      pool.query(`
+        SELECT abonnement_plan, COUNT(*)::int AS nb_actifs
+        FROM agences_immo
+        WHERE statut = 'actif'
+        GROUP BY abonnement_plan
+      `),
+    ]);
+
+    const statsMap = Object.fromEntries(boutiqueStats.rows.map(s => [s.plan, s.nb_actifs]));
+    const immoStatsMap = Object.fromEntries(immoStats.rows.map(s => [s.abonnement_plan, s.nb_actifs]));
+    immoStatsMap['immo_essentiel'] = (immoStatsMap['immo_essentiel'] || 0) + (immoStatsMap['essentiel'] || 0);
 
     const enriched = plans.map(p => ({
       ...p,
-      nb_abonnes_actifs: statsMap[p.slug] || 0,
+      nb_abonnes_actifs: p.categorie === 'immo' ? (immoStatsMap[p.slug] || 0) : (statsMap[p.slug] || 0),
     }));
 
     res.json({ plans: enriched });
@@ -56,17 +67,18 @@ router.get('/admin/tous', adminSecretOnly, async (req, res) => {
 // ── POST /api/plans/admin — Création d'un nouveau plan (admin)
 router.post('/admin', adminSecretOnly, async (req, res) => {
   try {
-    const { slug: customSlug, label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description } = req.body;
+    const { slug: customSlug, label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description, categorie } = req.body;
     if (!label || !label.trim()) {
       return res.status(400).json({ error: 'Le libellé du forfait est obligatoire' });
     }
 
     const finalSlug = customSlug && customSlug.trim() ? slugify(customSlug) : slugify(label);
     const finalPrix = Math.max(0, Number(prix_mensuel) || 0);
+    const finalCat = categorie === 'immo' ? 'immo' : 'boutique';
 
     const { rows } = await pool.query(
-      `INSERT INTO plans (slug, label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+      `INSERT INTO plans (slug, label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description, categorie, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
        RETURNING *`,
       [
         finalSlug,
@@ -79,6 +91,7 @@ router.post('/admin', adminSecretOnly, async (req, res) => {
         parseInt(ordre) || 0,
         actif !== false,
         description ? description.trim() : '',
+        finalCat,
       ]
     );
 
@@ -88,7 +101,7 @@ router.post('/admin', adminSecretOnly, async (req, res) => {
       action: 'plan_cree',
       cibleType: 'plan',
       cibleId: rows[0].id,
-      description: `Création du nouveau plan tarifaire "${label}" (${finalSlug}) à ${finalPrix} FCFA/mois`,
+      description: `Création du nouveau plan tarifaire "${label}" (${finalSlug}, ${finalCat}) à ${finalPrix} FCFA/mois`,
       nouvelleValeur: rows[0],
       req,
     });
@@ -109,7 +122,7 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
     if (!id || id === 'undefined') {
       return res.status(400).json({ error: 'Identifiant de forfait valide requis.' });
     }
-    const { label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description } = req.body;
+    const { label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description, categorie } = req.body;
 
     const current = await pool.query('SELECT * FROM plans WHERE id::text = $1 OR slug = $1', [id]);
     if (!current.rows[0]) {
@@ -126,13 +139,14 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
     const newOrdre = ordre !== undefined ? parseInt(ordre) : cur.ordre;
     const newActif = actif !== undefined ? Boolean(actif) : cur.actif;
     const newDesc = description !== undefined ? description.trim() : cur.description;
+    const newCat = categorie !== undefined ? (categorie === 'immo' ? 'immo' : 'boutique') : cur.categorie || 'boutique';
 
     const { rows } = await pool.query(
       `UPDATE plans
-       SET label = $1, prix_mensuel = $2, badge = $3, couleur = $4, avantages = $5, limites = $6, ordre = $7, actif = $8, description = $9, updated_at = NOW()
-       WHERE id = $10
+       SET label = $1, prix_mensuel = $2, badge = $3, couleur = $4, avantages = $5, limites = $6, ordre = $7, actif = $8, description = $9, categorie = $10, updated_at = NOW()
+       WHERE id = $11
        RETURNING *`,
-      [newLabel, newPrix, newBadge, newCouleur, newAvantages, newLimites, newOrdre, newActif, newDesc, cur.id]
+      [newLabel, newPrix, newBadge, newCouleur, newAvantages, newLimites, newOrdre, newActif, newDesc, newCat, cur.id]
     );
 
     plansCache.invalidate();
