@@ -1,3 +1,17 @@
+- **Audit Approfondi & Fiabilisation Post-Commit `824b95ee` du Chatbot Nopalou (18 septembre 2026)** 🤖🛡️🔍✨✅ :
+  * **🔍 1. Bilan d'Audit du Commit `824b95ee`** :
+    - Éradication 100% vérifiée des erreurs 404 sur les boutons : remplacement systématique du fallback `'boutique'` par `bRef = boutique_slug || boutique_id` et repli sur `/produit/:id`.
+    - Architecture multidomaine : couverture conjointe des recherches de produits, comparateur de prix multi-marchands, biens immobiliers (`searchImmoIlike`), boutiques partenaires (`searchBoutiquesIlike`) et agences immobilières (`searchAgencesIlike`).
+  * **⚡ 2. Durcissement Post-Audit Appliqué** :
+    - Prise en charge des liens externes dans les suggestions chips : détection des URLs absolues (`http://`, `https://` / WhatsApp) pour ouverture dans un nouvel onglet sans redirection erronée vers la barre de saisie de recherche.
+    - Élimination des styles inline résiduels : extraction des styles d'icônes et de bulles de chargement vers `.npl-chat-card-ext-icon` et `.npl-chat-bubble-loading` dans `chat-widget.css`.
+    - Découplage de la détection d'intention agence vs bien immobilier : priorité à la recherche d'agences lors de requêtes non spécifiques à un bien (ex: "Trouver une agence", "Agences immobilières à Dakar").
+    - Extension de la suite de tests Jest (`tests/unit/chat-api.test.js`) avec 6 tests exhaustifs validés.
+  * **🧪 3. Métriques & Validation Qualité** :
+    - 43/43 tests unitaires passés au vert (`chat-api`, `immo-chatbot`, `whatsapp-chatbot*`).
+    - Compilation TypeScript (`npx tsc --noEmit`) : 0 erreur.
+    - Linter Anti-AI-Slop : 0 erreur, 0 émoji UI, composants sous le seuil strict de 450 lignes.
+
 - **Mise à Niveau Multidomaine & Résolution Intégrale des Erreurs 404 du Chatbot Nopalou (18 septembre 2026)** 🤖🛒🏠📦🛡️✨✅ :
   * **🛑 1. Éradication Définitive des Erreurs 404 sur les Boutons & Cartes du Chatbot** :
     - Élimination du fallback erroné `'boutique'` (`/boutiques/boutique/produits/...`) dans `backend/routes/chat.js` et le comparateur de prix multi-marchands.

@@ -245,8 +245,8 @@ export default function ChatbotWidget() {
             ))}
             {isLoading && (
               <div className="npl-chat-msg bot">
-                <div className="npl-chat-bubble" style={{ fontStyle: 'italic', color: '#6b7280' }}>
-                  Recherche en cours...
+                <div className="npl-chat-bubble npl-chat-bubble-loading">
+                  Nopalou recherche pour vous...
                 </div>
               </div>
             )}

@@ -305,12 +305,11 @@ router.post('/message', limiterRecherche, async (req, res) => {
     })
   );
 
-  // 2. Détection Intention Immobilière
-  const isImmo = detecterIntentionImmo(rawText);
-
-  // 3. Détection Intentions Spécifiques Boutique / Agence
+  // 2. Détection Intentions Spécifiques
+  const hasSpecificProperty = /\b(appartements?|apparts?|villas?|studios?|terrains?|parcelles?|bureaux?|chambres?|immeubles?|louer|location|bail|loyer|a\s+louer|a\s+vendre)\b/i.test(textLower);
+  const isAgenceQuery = /\b(agences?|courtiers?|cabinets?\s+immo)\b/i.test(textLower) && !hasSpecificProperty;
   const isBoutiqueQuery = /\b(boutiques?|magasins?|shops?|supermarches?|quincailleries?)\b/i.test(textLower);
-  const isAgenceQuery = /\b(agences?|courtiers?|cabinets?\s+immo)\b/i.test(textLower) && !isImmo;
+  const isImmo = detecterIntentionImmo(rawText) && !isAgenceQuery;
 
   // 4. Exécution de la recherche selon l'intention
   let items = [];
@@ -323,19 +322,15 @@ router.post('/message', limiterRecherche, async (req, res) => {
     if (faqTrouvee.actionLabel && faqTrouvee.actionUrl) {
       chips.push({ label: faqTrouvee.actionLabel, url: faqTrouvee.actionUrl });
     }
-    chips.push({ label: 'Toutes les boutiques', url: '/boutiques' });
-  } else if (isImmo) {
-    items = await searchImmoIlike(rawText);
-    if (items.length > 0) {
-      reply = `Voici les offres immobilières correspondant à votre recherche sur Nopalou :`;
+    if (faqTrouvee.actionUrl === '/agences' || isAgenceQuery) {
+      items = await searchAgencesIlike(rawText.replace(/\b(agences?|courtiers?|cabinets?\s+immo)\b/gi, '').trim());
+      chips.push({ label: 'Biens immobiliers', url: '/immo' });
+    } else if (faqTrouvee.actionUrl === '/boutiques' || isBoutiqueQuery) {
+      items = await searchBoutiquesIlike('');
+      chips.push({ label: 'Offres du moment', url: '/' });
     } else {
-      reply = `Je n'ai pas trouvé d'annonce correspondant exactement à "${rawText}". Vous pouvez explorer toutes nos offres ou contacter nos agences partenaires :`;
+      chips.push({ label: 'Toutes les boutiques', url: '/boutiques' });
     }
-    chips.push(
-      { label: 'Toutes les annonces', url: '/immo' },
-      { label: 'Annuaire Agences Pro', url: '/agences' },
-      { label: 'Espace Pro Agence (Connexion)', url: '/agence' }
-    );
   } else if (isAgenceQuery) {
     const searchParam = rawText.replace(/\b(agences?|courtiers?|cabinets?\s+immo)\b/gi, '').trim() || rawText;
     items = await searchAgencesIlike(searchParam);
@@ -347,6 +342,18 @@ router.post('/message', limiterRecherche, async (req, res) => {
     chips.push(
       { label: 'Annuaire des agences', url: '/agences' },
       { label: 'Biens immobiliers', url: '/immo' }
+    );
+  } else if (isImmo) {
+    items = await searchImmoIlike(rawText);
+    if (items.length > 0) {
+      reply = `Voici les offres immobilières correspondant à votre recherche sur Nopalou :`;
+    } else {
+      reply = `Je n'ai pas trouvé d'annonce correspondant exactement à "${rawText}". Vous pouvez explorer toutes nos offres ou contacter nos agences partenaires :`;
+    }
+    chips.push(
+      { label: 'Toutes les annonces', url: '/immo' },
+      { label: 'Annuaire Agences Pro', url: '/agences' },
+      { label: 'Espace Pro Agence (Connexion)', url: '/agence' }
     );
   } else if (isBoutiqueQuery) {
     const searchParam = rawText.replace(/\b(boutiques?|magasins?|shops?|supermarches?)\b/gi, '').trim() || rawText;

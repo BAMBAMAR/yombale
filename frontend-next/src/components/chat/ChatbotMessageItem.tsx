@@ -168,7 +168,7 @@ export default function ChatbotMessageItem({ msg, onChipClick }: ChatbotMessageI
                       )}
                     </div>
 
-                    <ExternalLink size={14} style={{ color: '#9ca3af', flexShrink: 0 }} />
+                    <ExternalLink size={14} className="npl-chat-card-ext-icon" />
                   </Link>
 
                   {/* Actions fiables anti-404 */}
@@ -199,12 +199,28 @@ export default function ChatbotMessageItem({ msg, onChipClick }: ChatbotMessageI
         {/* Chips de suggestions & Liens rapides */}
         {isBot && msg.chips && msg.chips.length > 0 && (
           <div className="npl-chat-chips">
-            {msg.chips.map((chip, idx) =>
-              chip.url.startsWith('/') ? (
-                <Link key={idx} href={chip.url} className="npl-chat-chip-btn">
-                  {chip.label}
-                </Link>
-              ) : (
+            {msg.chips.map((chip, idx) => {
+              if (chip.url.startsWith('http://') || chip.url.startsWith('https://')) {
+                return (
+                  <a
+                    key={idx}
+                    href={chip.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="npl-chat-chip-btn"
+                  >
+                    {chip.label}
+                  </a>
+                )
+              }
+              if (chip.url.startsWith('/')) {
+                return (
+                  <Link key={idx} href={chip.url} className="npl-chat-chip-btn">
+                    {chip.label}
+                  </Link>
+                )
+              }
+              return (
                 <button
                   key={idx}
                   type="button"
@@ -214,7 +230,7 @@ export default function ChatbotMessageItem({ msg, onChipClick }: ChatbotMessageI
                   {chip.label}
                 </button>
               )
-            )}
+            })}
           </div>
         )}
 

@@ -96,5 +96,61 @@ describe('POST /api/chat/message — API Chatbot Web Nopalou', () => {
     expect(res.body.items).toHaveLength(1);
     expect(res.body.items[0].titre).toBe('Climatiseur Split 9000 BTU');
     expect(res.body.items[0].url).toContain('/boutiques/dakar-froid/produits/prod-clim-web');
+    expect(res.body.items[0].actions).toBeDefined();
+    expect(res.body.items[0].actions[0].label).toBe('Voir le produit');
+  });
+
+  test('détecte l\'intention boutique et renvoie les boutiques partenaires', async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        {
+          id: 'btq-123',
+          titre: 'Tech Dakar',
+          slug: 'tech-dakar',
+          description: 'High-tech et smartphones',
+          photo: 'https://img.com/tech.jpg',
+          ville: 'Dakar',
+          categorie: 'Électronique',
+        },
+      ],
+    });
+
+    const res = await request(app)
+      .post('/api/chat/message')
+      .send({ message: 'Quelles sont les boutiques de high tech ?' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0].type).toBe('boutique');
+    expect(res.body.items[0].url).toBe('/boutiques/tech-dakar');
+    expect(res.body.items[0].actions[0].label).toBe('Visiter la boutique');
+  });
+
+  test('détecte l\'intention agence et renvoie les agences partenaires', async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        {
+          id: 'ag-456',
+          titre: 'Teranga Immo',
+          slug: 'teranga-immo',
+          description: 'Agence immobilière de référence',
+          photo: 'https://img.com/teranga.jpg',
+          ville: 'Dakar',
+          quartier: 'Almadies',
+        },
+      ],
+    });
+
+    const res = await request(app)
+      .post('/api/chat/message')
+      .send({ message: 'Trouver une agence immobiliere' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0].type).toBe('agence');
+    expect(res.body.items[0].url).toBe('/agences/teranga-immo');
+    expect(res.body.items[0].actions[0].label).toBe('Voir la vitrine');
   });
 });
