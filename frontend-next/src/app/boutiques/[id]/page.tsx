@@ -13,6 +13,7 @@ import { getCategoryCoverPhoto } from '@/lib/boutique-covers'
 import ExternalImg from '@/components/ExternalImg'
 import BoutonPartager from '@/components/BoutonPartager'
 import ABTestVitrineHeader from './ABTestVitrineHeader'
+import TrackingPixels from '@/components/TrackingPixels'
 
 interface Boutique {
   id: string
@@ -43,6 +44,9 @@ interface Boutique {
   bandeau_promo_actif?: boolean
   message_accueil?: string | null
   disposition_catalogue?: string | null
+  meta_pixel_id?: string | null
+  tiktok_pixel_id?: string | null
+  ga4_id?: string | null
   created_at: string
 }
 
@@ -172,6 +176,11 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
 
   return (
     <>
+      <TrackingPixels
+        metaPixelId={b.meta_pixel_id}
+        tiktokPixelId={b.tiktok_pixel_id}
+        ga4Id={b.ga4_id}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdStore) }}

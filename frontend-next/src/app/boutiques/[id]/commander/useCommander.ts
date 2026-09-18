@@ -296,6 +296,33 @@ export function useCommander({
       }
 
       recordAbConversion()
+      try {
+        if (typeof window !== 'undefined') {
+          if (window.fbq) {
+            window.fbq('track', 'Purchase', {
+              value: total,
+              currency: 'XOF',
+              content_name: produit.nom,
+            })
+          }
+          if (window.ttq) {
+            window.ttq.track('CompletePayment', {
+              value: total,
+              currency: 'XOF',
+              content_name: produit.nom,
+            })
+          }
+          if (window.gtag) {
+            window.gtag('event', 'purchase', {
+              value: total,
+              currency: 'XOF',
+              items: [{ item_name: produit.nom, price: produit.prix, quantity: quantite }],
+            })
+          }
+        }
+      } catch (pixErr) {
+        console.warn('[PIXEL TRACKING WARN]:', pixErr)
+      }
       setSuccess(true)
       setStep(3)
     } catch {

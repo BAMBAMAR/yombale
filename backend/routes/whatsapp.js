@@ -2,6 +2,7 @@
 const express = require('express');
 const crypto  = require('crypto');
 const whatsappHealth = require('../services/whatsapp-health');
+const cfg = require('../lib/settingsCache');
 const router  = express.Router();
 
 // ── Vérification signature HMAC-SHA256 Meta ──────────────────────────────────
@@ -219,7 +220,6 @@ router.post('/send', tokenOptional, async (req, res) => {
 // ── Routes admin WhatsApp ────────────────────────────────────────────────────
 const { adminSecretOnly } = require('../middlewares/auth');
 const { pool } = require('../models/db');
-const cfg = require('../lib/settingsCache');
 
 // GET /api/whatsapp/admin/status — état de la configuration WhatsApp
 router.get('/admin/status', adminSecretOnly, async (req, res) => {

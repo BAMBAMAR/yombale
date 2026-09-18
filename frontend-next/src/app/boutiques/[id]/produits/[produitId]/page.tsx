@@ -11,6 +11,7 @@ import CardActions from '@/app/CardActions'
 import PageHeader from '@/components/PageHeader'
 import BadgePaySafe from '@/components/BadgePaySafe'
 import { Store } from 'lucide-react'
+import TrackingPixels from '@/components/TrackingPixels'
 
 
 interface ProduitDetail {
@@ -34,6 +35,9 @@ interface ProduitDetail {
   boutique_whatsapp: string | null
   boutique_ville: string
   boutique_logo: string | null
+  meta_pixel_id?: string | null
+  tiktok_pixel_id?: string | null
+  ga4_id?: string | null
 }
 
 const CARAC_LABELS: Record<string, string> = {
@@ -141,6 +145,11 @@ export default async function FicheProduitPage(
 
   return (
     <div className="boutique-produit-page">
+      <TrackingPixels
+        metaPixelId={p.meta_pixel_id}
+        tiktokPixelId={p.tiktok_pixel_id}
+        ga4Id={p.ga4_id}
+      />
 
       <div style={{ marginBottom: 24 }}>
         <PageHeader

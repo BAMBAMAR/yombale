@@ -79,6 +79,7 @@ router.get('/:id/produits/:prodId', tokenOptional, param('prodId').isUUID(), asy
               b.nom AS boutique_nom, b.telephone AS boutique_telephone,
               b.whatsapp AS boutique_whatsapp, b.ville AS boutique_ville,
               b.logo_url AS boutique_logo, b.actif AS boutique_actif,
+              b.meta_pixel_id, b.tiktok_pixel_id, b.ga4_id,
               COALESCE(
                 (SELECT json_agg(json_build_object(
                   'id', v.id, 'sku', v.sku, 'code_barre', v.code_barre, 'attributs', v.attributs,

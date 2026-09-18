@@ -511,10 +511,11 @@ async function sendFiche(type, id, phone) {
     );
     const p = r.rows[0];
     if (!p) throw new Error('Produit introuvable');
+    const bRef = p.boutique_slug || p.boutique_id;
     return sendWhatsAppProduct(
       phone,
       `nopalou-produit-${p.id}`,
-      `${p.nom} — ${prixFmt(p.prix)}\n📍 *${p.boutique_nom}*\n\n👉 ${SITE}/boutiques/${p.boutique_slug}/produits/${p.id}`
+      `${p.nom} — ${prixFmt(p.prix)}\n📍 *${p.boutique_nom}*\n\n👉 ${SITE}/boutiques/${bRef}/produits/${p.id}`
     );
   }
 

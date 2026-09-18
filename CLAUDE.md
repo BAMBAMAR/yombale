@@ -1,3 +1,20 @@
+- **Audit Exhaustif & Durcissement Meta Business / WhatsApp Cloud API / Meta Pixels (18 septembre 2026)** 🌐📲📈🛡️✨✅ :
+  * **🚨 1. Résolution du Bug Critique Webhook Meta WhatsApp (`backend/routes/whatsapp.js`)** :
+    - Correction d'un `ReferenceError` bloquant : `const cfg = require('../lib/settingsCache')` était instancié à la ligne 222 alors que `cfg.getBool('whatsapp_enabled')` était appelé dès la ligne 51 dans le récepteur de webhooks `POST /api/whatsapp/webhook`.
+    - Déplacement de l'import `cfg` au sommet du module, garantissant le traitement ininterrompu de tous les messages entrants WhatsApp Cloud API sans crash serveur.
+  * **🎯 2. Résolution des URLs 404 sur les Liens Meta & Facebook Posts (`facebook-posts.js`, `whatsapp.js`)** :
+    - Correction du lien de vitrine généré pour les publications Facebook : remplacement de `/boutique/${slug}` (dashboard privé renvoyant 404 aux visiteurs) par `/boutiques/${slug}` (vitrine publique avec un 's').
+    - Sécurisation du partage de produits WhatsApp Cloud API (`backend/services/whatsapp.js`) : fallback `bRef = p.boutique_slug || p.boutique_id` évitant la génération d'URLs tronquées `/boutiques/null/produits/...`.
+  * **📊 3. Activation Complète du Suivi Meta Pixel, TikTok & GA4 (`TrackingPixels.tsx`)** :
+    - La spec `04-tracking-pixels.md` prévoyait le tracking ROAS pour les marchands ayant renseigné `meta_pixel_id`, mais le composant `TrackingPixels.tsx` n'était injecté sur aucune page storefront.
+    - Injection active de `TrackingPixels` sur les vitrines publiques (`/boutiques/[id]`) et les fiches produit (`/boutiques/[id]/produits/[produitId]`).
+    - Enrichissement de la route backend `GET /api/boutiques/:id/produits/:prodId` pour retourner `meta_pixel_id`, `tiktok_pixel_id` et `ga4_id`.
+    - Déclenchement automatique de l'événement de conversion `fbq('track', 'Purchase', { value, currency: 'XOF', content_name })` (avec fallbacks TikTok `CompletePayment` et GA4 `purchase`) dans `useCommander.ts` lors de la validation d'une commande express.
+  * **🧪 4. Contrôle Qualité & Tests** :
+    - 5 suites de tests Jest exécutées avec succès (37/37 tests passés).
+    - `npx tsc --noEmit` : 0 erreur de typage.
+    - `npm run lint:slop` : 0 capture silencieuse, 0 composant monolithique, 0 émoji UI.
+
 - **Audit Approfondi & Fiabilisation Post-Commit `824b95ee` du Chatbot Nopalou (18 septembre 2026)** 🤖🛡️🔍✨✅ :
   * **🔍 1. Bilan d'Audit du Commit `824b95ee`** :
     - Éradication 100% vérifiée des erreurs 404 sur les boutons : remplacement systématique du fallback `'boutique'` par `bRef = boutique_slug || boutique_id` et repli sur `/produit/:id`.

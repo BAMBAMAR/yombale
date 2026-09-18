@@ -305,7 +305,7 @@ router.get('/generer/:type', async (req, res) => {
       } catch (_) {}
 
       if (b) {
-        const lien = b.slug ? `https://nopalou.com/boutique/${b.slug}` : 'https://nopalou.com/boutiques';
+        const lien = b.slug ? `https://nopalou.com/boutiques/${b.slug}` : 'https://nopalou.com/boutiques';
         const gabarits = [
           `🏪 DÉCOUVREZ NOS BOUTIQUES EN LIGNE !\n\n${b.nom}${b.description ? ` — ${b.description.slice(0, 80)}` : ''}\n\n✅ ${nbProduits > 0 ? nbProduits + ' produit(s) disponibles' : 'Boutique vérifiée sur Nopalou'}\n✅ Commandez directement sur WhatsApp\n✅ Livraison à Dakar et dans les régions\n\n👉 Visitez la boutique sur nopalou.com\n\n#Nopalou #Boutique #Shopping #Dakar #Sénégal`,
           `🛍️ SHOPPING EN LIGNE AU SÉNÉGAL\n\nNopalou héberge des dizaines de boutiques locales vérifiées.\n\nDécouvrez ${b.nom} et ses produits disponibles dès maintenant.\n\n✅ Commande directe par WhatsApp\n✅ Prix transparents\n✅ Vendeurs vérifiés\n\n👉 nopalou.com/boutiques\n\n#Nopalou #BoutiqueLocale #Dakar #Sénégal #Shopping`,
