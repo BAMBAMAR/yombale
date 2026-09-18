@@ -249,7 +249,27 @@ router.post('/message', limiterRecherche, async (req, res) => {
   const textLower = rawText.toLowerCase();
   const whatsappUrl = `https://wa.me/${WA_PHONE}?text=${encodeURIComponent(rawText)}`;
 
-  // 0. Détection Comparateur de Prix Multi-Marchands
+  // 0. Détection Menu / Aide globale
+  const isMenuQuery = /^(menu|aide|options|accueil|help|\?)$/i.test(rawText.trim());
+  if (isMenuQuery) {
+    return res.json({
+      success: true,
+      reply: "Voici les principaux univers et outils disponibles sur Nopalou. Choisissez une rubrique ou tapez directement votre recherche :",
+      items: [],
+      chips: [
+        { label: 'Agences immobilières', url: '/agences' },
+        { label: 'Boutiques partenaires', url: '/boutiques' },
+        { label: 'Locations Almadies', url: 'Location appartement Almadies' },
+        { label: 'Caisse POS commerçant', url: '/boutique/caisse' },
+        { label: 'Espace Agence Pro', url: '/agence' },
+        { label: 'Créer ma boutique', url: '/creer-boutique' },
+        { label: 'Suivre ma commande', url: '/suivi-commande' },
+      ],
+      whatsappUrl,
+    });
+  }
+
+  // 0.1 Détection Comparateur de Prix Multi-Marchands
   if (detecterIntentionComparateur(rawText)) {
     try {
       const sujet = extraireSujetComparaison(rawText) || rawText;

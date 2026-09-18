@@ -1,3 +1,16 @@
+- **Intégration Complète des Agences Immobilières dans le Chatbot & Menus (18 septembre 2026)** 🏢💬🏠🛡️✨✅ :
+  * **📲 1. Menu Interactif WhatsApp Cloud API (`backend/services/whatsapp-chatbot.js`)** :
+    - Ajout de l'entrée « 🏢 Agences Immo » (Découvrir les agences partenaires) dans la section *Acheter & Explorer* de `sendMenu`.
+    - Ajout de l'entrée « 🏢 Espace Agence Pro » (Gestion locative, mandats, CRM) dans la section *Marchands & Compte*.
+    - Calibrage strict sous la limite Meta des 10 lignes interactives (5 lignes Acheter + 5 lignes Marchands).
+    - Traitement des actions dans l'état `MENU` : extraction des 4 agences actives en tête d'annuaire avec lien vitrine (`/agences/[slug]`) et contact direct.
+    - Ajout d'une réponse FAQ automatique pour tous les mots-clés d'agences (`agences`, `courtier`, `cabinets immo`).
+  * **💬 2. Menu Instantané du Chatbot Web (`backend/routes/chat.js`)** :
+    - Prise en charge des requêtes conversationnelles « menu », « aide », « options » renvoyant la grille interactive complète incluant `/agences` et `/agence`.
+  * **🧪 3. Contrôle Qualité & Tests** :
+    - 44/44 suites de tests Jest exécutées avec succès (343/343 tests passés au vert).
+    - `node --check` validé sur les modules modifiés.
+
 - **Intégration Identité Officielle Nopalou & Widget Chatbot Certifié (18 septembre 2026)** 🌟🛡️🤖✨✅ :
   * **🎨 1. Déploiement de l'Identité de Marque Officielle sur le Widget Web (`ChatbotWidget.tsx`)** :
     - Remplacement des icônes génériques (`MessageCircle`, `Sparkles`) par le logo vectoriel maître officiel `/icons/logo-mark.svg` (squircle dégradé solaire 4-stop Nopalou avec monogramme géométrique 'N' pur blanc).

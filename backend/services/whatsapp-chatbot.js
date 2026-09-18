@@ -102,6 +102,10 @@ const FAQ = [
     reponse: '🏠 *Publier un bien immobilier*\n\nSur le site, cliquez "+ Déposer" puis "Publier un bien immo". Ajoutez photos, prix, ville et description — visible après validation.\n👉 ' + SITE + '/deposer-immo',
   },
   {
+    motsCles: ['agences', 'agence', 'agence immo', 'agences immo', 'agences partenaires', 'courtier', 'cabinets immo', 'annuaire agence'],
+    reponse: '🏢 *Agences Immobilières Partenaires*\n\nDécouvrez nos agences immobilières certifiées au Sénégal : mandats exclusifs, villas, appartements et gestion locative.\n\n👉 Annuaire des agences : ' + SITE + '/agences\n👉 Espace Agence Pro : ' + SITE + '/agence',
+  },
+  {
     motsCles: ['boutique', 'vendre en ligne', 'creer shop', 'ouvrir shop'],
     reponse: '🛍️ *Créer votre boutique*\n\nVendez directement sur Nopalou : catalogue produits, statistiques, encaissements Wave & Orange Money 1-Clic. 1er mois 100% OFFERT sur tous nos forfaits !\n👉 ' + SITE + '/creer-boutique',
   },
@@ -1224,6 +1228,7 @@ async function sendMenu(phone) {
   }
   marchandsRows.push(
     { id: 'creer_boutique', title: '🛍️ Créer ma boutique', description: 'Vendre sur Nopalou (30j offerts)' },
+    { id: 'espace_agence', title: '🏢 Espace Agence Pro', description: 'Gestion locative, mandats, CRM' },
     { id: 'forfaits', title: '💎 Forfaits Boutiques', description: 'Tarifs des formules Pro & Business' },
     { id: 'order', title: '📦 Suivre commande', description: 'Statut de votre paiement' },
     { id: 'alert', title: '🔔 Alerte prix', description: 'Être notifié d\'une baisse' },
@@ -1241,12 +1246,13 @@ async function sendMenu(phone) {
           { id: 'search', title: '🔍 Rechercher', description: 'Trouver un produit ou annonce' },
           { id: 'boutiques', title: '🏪 Les Boutiques', description: 'Découvrir les boutiques marchandes' },
           { id: 'immo', title: '🏠 Annonces immo', description: 'Maisons, appartements, terrains' },
+          { id: 'agences', title: '🏢 Agences Immo', description: 'Découvrir les agences partenaires' },
           { id: 'telecom', title: '📱 Offres télécom', description: 'Mobile, internet, forfaits' },
         ],
       },
       {
         title: 'Marchands & Compte',
-        rows: marchandsRows.slice(0, 6),
+        rows: marchandsRows.slice(0, 5),
       },
     ]
   );
@@ -3378,6 +3384,61 @@ async function handleIncomingInternal(msg) {
     }
     if (action === 'telecom') {
       await envoyerListeTelecom(phone);
+      return;
+    }
+    if (action === 'agences' || action === 'agences_immo' || action === 'annuaire_agences') {
+      try {
+        const { rows: agences } = await pool.query(
+          `SELECT a.id, a.nom, a.slug, a.ville, a.quartier, a.telephone, a.whatsapp
+           FROM agences_immo a
+           WHERE a.statut = 'actif'
+           ORDER BY a.created_at DESC
+           LIMIT 4`
+        );
+        if (agences.length > 0) {
+          let msg = `🏢 *Agences Immobilières Partenaires — Nopalou*\n\nVoici les agences certifiées disponibles sur Nopalou :\n\n`;
+          agences.forEach((ag, idx) => {
+            const loc = [ag.quartier, ag.ville].filter(Boolean).join(', ');
+            msg += `${idx + 1}. *${ag.nom}*${loc ? ` (${loc})` : ''}\n`;
+            msg += `   └ 🌐 Vitrine : ${SITE}/agences/${ag.slug || ag.id}\n`;
+            const tel = ag.whatsapp || ag.telephone;
+            if (tel) msg += `   └ 📞 Contact : ${tel}\n`;
+            msg += `\n`;
+          });
+          msg += `👉 Consulter l'annuaire complet des agences : ${SITE}/agences`;
+          await sendWhatsAppText(phone, msg);
+        } else {
+          await sendWhatsAppText(
+            phone,
+            `🏢 *Agences Immobilières Partenaires*\n\nDécouvrez nos agences partenaires à Dakar et au Sénégal sur notre annuaire officiel :\n👉 ${SITE}/agences`
+          );
+        }
+      } catch (errAg) {
+        console.error('[WHATSAPP AGENCES ERR]:', errAg.message);
+        await sendWhatsAppText(phone, `🏢 Consultez l'annuaire de nos agences partenaires : ${SITE}/agences`);
+      }
+      await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+      await setSession(phone, 'MENU', {});
+      return;
+    }
+    if (action === 'espace_agence' || action === 'agence') {
+      const isAgent = await trouverAgenceAgentParTelephone(phone);
+      if (isAgent) {
+        await traiterMessageImmo(phone, 'espace agent');
+        return;
+      }
+      await sendWhatsAppText(
+        phone,
+        `🏢 *Espace Agence Immobilière Pro — Nopalou*\n\n` +
+        `Vous êtes une agence immobilière ou un gestionnaire locatif ?\n` +
+        `• Publiez vos mandats exclusifs en tête de recherche\n` +
+        `• Générez des quittances certifiées avec QR Code\n` +
+        `• Suivez vos loyers, baux et encaissements Wave / OM\n` +
+        `• Vitrine web dédiée offerte (nopalou.com/agences/votre-nom)\n\n` +
+        `👉 Créez ou accédez à votre espace agence : ${SITE}/agence`
+      );
+      await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+      await setSession(phone, 'MENU', {});
       return;
     }
     if (action === 'alert' || interactiveId.startsWith('alert_prod_')) {
