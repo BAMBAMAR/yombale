@@ -2,7 +2,7 @@
 // Assistant Immobilier Intelligent WhatsApp Nopalou (Bimodal : Public Visiteur & Agent Pro)
 
 const { pool } = require('../models/db');
-const { sendWhatsAppText, sendWhatsAppCarousel } = require('./whatsapp');
+const { sendWhatsAppText, sendWhatsAppCarousel, sendWhatsAppButtons3, sendWhatsAppInteractive } = require('./whatsapp');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => (p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C');
@@ -194,17 +194,25 @@ async function traiterRequeteAgent(phone, agence, texte) {
     return true;
   }
 
-  // Menu Agent Pro par défaut
-  await sendWhatsAppText(
+  // Menu Agent Pro par défaut (Choix interactifs sans saisie)
+  const rows = [
+    { id: 'immo_visites', title: '📅 Visites programmées', description: 'Consulter vos prochains rendez-vous' },
+    { id: 'immo_prospects', title: '👥 Leads & Prospects', description: 'Dernières demandes reçues' },
+    { id: 'immo_loyers', title: '💰 Loyers & Impayés', description: 'Suivi des échéances et quittances' },
+    { id: 'immo_biens', title: '🏡 Portefeuille Biens', description: 'Consulter vos annonces' },
+  ];
+  await sendWhatsAppInteractive(
     phone,
-    `🏢 *Espace Agent Pro — ${agence.nom}*\n\n` +
-    `Tapez une commande rapide pour gérer votre activité :\n` +
-    `• *VISITES* : Voir vos prochaines visites programmées\n` +
-    `• *PROSPECTS* : Consulter les derniers leads CRM reçus\n` +
-    `• *LOYERS* : Consulter les impayés et échéances de loyers\n` +
-    `• *BIENS* : Accéder à votre portefeuille\n\n` +
-    `👉 Tableau de bord web : ${SITE}/agence/${agence.slug}`
-  );
+    `🏢 ${agence.nom}`,
+    `Sélectionnez une action rapide pour gérer votre agence :`,
+    [{ title: 'Gestion Agence', rows }]
+  ).catch(async () => {
+    await sendWhatsAppButtons3(phone, `🏢 *Espace Agent — ${agence.nom}*`, [
+      { id: 'immo_visites', title: '📅 Visites' },
+      { id: 'immo_prospects', title: '👥 Prospects' },
+      { id: 'immo_loyers', title: '💰 Loyers' },
+    ]);
+  });
   return true;
 }
 
@@ -272,13 +280,35 @@ async function traiterRechercheImmoPublic(phone, texte) {
   const { rows } = await pool.query(query, params);
 
   if (rows.length === 0) {
-    await sendWhatsAppText(
-      phone,
-      `🏠 *Nopalou Immobilier*\n\n` +
-      `Je n'ai pas trouvé de bien correspondant exactement à votre recherche : *"${texte}"*.\n\n` +
-      `💡 *Conseil :* Précisez le type et le quartier (ex: *Appartement à louer Mermoz* ou *Villa Almadies*).\n\n` +
-      `👉 Parcourez toutes les annonces disponibles : ${SITE}/immo`
-    );
+    if (typeof sendWhatsAppButtons3 === 'function') {
+      try {
+        await sendWhatsAppButtons3(
+          phone,
+          `🏠 *Nopalou Immobilier*\nAucun bien ne correspond exactement à : *"${texte}"*.\n\nQue souhaitez-vous explorer ?`,
+          [
+            { id: 'immo_appart_dakar', title: '🏢 Appartements' },
+            { id: 'immo_villa_dakar', title: '🏡 Villas & Maisons' },
+            { id: 'menu_principal', title: '🌐 Menu Principal' },
+          ]
+        );
+      } catch (_) {
+        await sendWhatsAppText(
+          phone,
+          `🏠 *Nopalou Immobilier*\n\n` +
+          `Je n'ai pas trouvé de bien correspondant exactement à votre recherche : *"${texte}"*.\n\n` +
+          `💡 *Conseil :* Précisez le type et le quartier (ex: *Appartement à louer Mermoz* ou *Villa Almadies*).\n\n` +
+          `👉 Parcourez toutes les annonces disponibles : ${SITE}/immo`
+        );
+      }
+    } else {
+      await sendWhatsAppText(
+        phone,
+        `🏠 *Nopalou Immobilier*\n\n` +
+        `Je n'ai pas trouvé de bien correspondant exactement à votre recherche : *"${texte}"*.\n\n` +
+        `💡 *Conseil :* Précisez le type et le quartier (ex: *Appartement à louer Mermoz* ou *Villa Almadies*).\n\n` +
+        `👉 Parcourez toutes les annonces disponibles : ${SITE}/immo`
+      );
+    }
     return true;
   }
 
@@ -296,9 +326,23 @@ async function traiterRechercheImmoPublic(phone, texte) {
   });
 
   reponse += `📞 *Envie de visiter ou de contacter l'agence ?*\n` +
-    `Cliquez directement sur le lien du bien ou répondez en indiquant vos disponibilités !`;
+    `Cliquez directement sur le lien du bien ci-dessus ou choisissez ci-dessous :`;
 
   await sendWhatsAppText(phone, reponse);
+
+  if (typeof sendWhatsAppButtons3 === 'function') {
+    try {
+      await sendWhatsAppButtons3(
+        phone,
+        '🏠 Plus d\'options immobilières :',
+        [
+          { id: 'immo_appart_dakar', title: '🏢 Appartements' },
+          { id: 'immo_villa_dakar', title: '🏡 Villas' },
+          { id: 'menu_principal', title: '🌐 Menu Principal' },
+        ]
+      );
+    } catch (_) {}
+  }
 
   // Ingestion automatique en prospect si le premier bien appartient à une agence
   if (rows[0]?.agence_id) {

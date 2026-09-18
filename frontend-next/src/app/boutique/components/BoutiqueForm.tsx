@@ -5,9 +5,9 @@ import { useFormState, useFormStatus } from 'react-dom'
 import ExternalImg from '@/components/ExternalImg'
 import { createBoutique, updateBoutique } from '../actions'
 import type { ActionState } from '@/lib/backend-fetch'
-import { CATEGORIES } from '@/lib/categories'
+import { CATEGORIES, POPULAR_CATEGORY_VALUES, cleanCategoryLabel } from '@/lib/categories'
 import type { Boutique } from '../types'
-import { Download, Save } from 'lucide-react'
+import { Download, Save, Check } from 'lucide-react'
 
 const inputStyle = {
   padding: '10px 14px',
@@ -88,6 +88,7 @@ export default function BoutiqueForm({
   const [modeSelect, setModeSelect] = useState<'hybride_pos' | 'pure_player'>(
     boutique?.mode_fonctionnement || 'hybride_pos'
   )
+  const [selectedCategorie, setSelectedCategorie] = useState<string>(boutique?.categorie ?? '')
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const formTopRef = useRef<HTMLDivElement>(null)
   const handledRef = useRef<any>(null)
@@ -278,8 +279,43 @@ export default function BoutiqueForm({
       </div>
       <div>
         <label style={labelStyle}>Catégorie principale</label>
-        <select name="categorie" defaultValue={boutique?.categorie ?? ''} style={inputStyle}>
-          <option value="">— Sélectionner —</option>
+        {/* Puces de catégories populaires pour sélection rapide en 1 clic */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+          {CATEGORIES.filter((c) => (POPULAR_CATEGORY_VALUES as readonly string[]).includes(c.value)).map((cat) => {
+            const isSelected = selectedCategorie === cat.value
+            return (
+              <button
+                key={cat.value}
+                type="button"
+                onClick={() => setSelectedCategorie(cat.value)}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: 16,
+                  border: isSelected ? '1.5px solid var(--accent, #C75B00)' : '1px solid #d1d5db',
+                  background: isSelected ? '#FFF3E8' : '#ffffff',
+                  color: isSelected ? 'var(--accent, #C75B00)' : '#374151',
+                  fontSize: 12,
+                  fontWeight: isSelected ? 800 : 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                {isSelected && <Check size={12} strokeWidth={3} />}
+                <span>{cleanCategoryLabel(cat.label)}</span>
+              </button>
+            )
+          })}
+        </div>
+        <select
+          name="categorie"
+          value={selectedCategorie}
+          onChange={(e) => setSelectedCategorie(e.target.value)}
+          style={inputStyle}
+        >
+          <option value="">— Sélectionner parmi tous les secteurs d&apos;activité —</option>
           {CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>
               {c.label}

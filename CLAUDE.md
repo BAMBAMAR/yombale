@@ -1,3 +1,61 @@
+- **Sélection Progressive des Catégories lors de la Création de Boutique (WhatsApp & Web Onboarding) (18 septembre 2026)** 🏷️🛍️⚡✨✅ :
+  * **🚨 1. Demande & Objectifs Utilisateur** :
+    - Lors de la création de boutique, offrir le choix sur les différentes catégories possibles.
+    - Afficher une **liste restreinte (Top catégories populaires)** en premier lieu, et permettre de voir le reste des catégories disponibles via un bouton 1-clic si cela ne convient pas.
+  * **🛠️ 2. Réalisations & Développements Techniques** :
+    - **Chatbot WhatsApp (`backend/services/whatsapp-chatbot.js`)** :
+      * Étape `CREER_BOUTIQUE_QUARTIER` : affichage des 6 catégories populaires (`Mode & Vêtements`, `Téléphonie & Tech`, `Alimentation & Épicerie`, `Quincaillerie & BTP`, `Cosmétique & Beauté`, `Généraliste / Arrivages`) avec une option interactive `[➕ Autres catégories...]` (`cat_voir_plus`).
+      * Étape `CREER_BOUTIQUE_CATEGORIE` :
+        - Détection immédiate du clic sur `cat_voir_plus` ou de saisie ("plus", "autre", "autres", "voir plus", "7") et envoi de la liste étendue interactive (`TV & Électroménager`, `Auto & Moto`, `Maison & Décoration`, `Bijouterie & Horlogerie`, `Santé & Pharmacie`, `Restauration & Traiteur`, `Sport & Fitness`, `Agriculture & Élevage`, `Services & Prestations`) avec bouton `[⬅️ Catégories Populaires]`.
+        - Maintien fluide de la session en `CREER_BOUTIQUE_CATEGORIE` avec bascule possible entre populaires et autres.
+        - Mappage exhaustif des catégories vers les slugs standardisés (`tv-electro`, `auto-moto`, `maison`, `bijouterie`, `sante-pharma`, `restauration`, `sport`, `produits-agricoles`, `services`, etc.).
+        - Détection sémantique par mot-clé pour les saisies textuelles libres ("bijoux", "meubles", "clim", "pressing", "resto", etc.).
+    - **Composant Modulaire Web (`frontend-next/src/app/creer-boutique/components/CategorieSelector.tsx`)** :
+      * Composant React ergonomique (< 300 lignes) strictement conforme aux règles Anti-AI-Slop (100% icônes vectorielles SVG Lucide : `Shirt`, `Smartphone`, `ShoppingBag`, `Tv`, `Sparkles`, `Store`, `ChevronDown`, `ChevronUp`, `Check`, `Search`).
+      * Affichage d'une grille restreinte des 6 catégories populaires en 1-clic avec mise en valeur active (`#FFF3E8` / `var(--accent, #C75B00)`).
+      * Bouton interactif toggle `[➕ Voir tous les autres secteurs d'activité (22 catégories)]` pour déplier le reste.
+      * Zone étendue avec barre de recherche instantanée en temps réel et sélection fluide parmi les 22 autres secteurs.
+      * Intégration directe dans le parcours d'inscription marchand `WizardStepPlanStyle.tsx`.
+    - **Gestion & Édition Boutique Marchand (`frontend-next/src/app/boutique/components/BoutiqueForm.tsx`)** :
+      * Puces d'accès rapide 1-clic pour les catégories populaires au-dessus du menu complet de tous les secteurs.
+    - **Bibliothèque Partagée (`frontend-next/src/lib/categories.ts`)** :
+      * Exportation de `POPULAR_CATEGORY_VALUES` et de la fonction utilitaire `cleanCategoryLabel`.
+  * **🧪 3. Validation Technique** :
+    - Suite de tests unitaires dédiée `tests/unit/creer-boutique-categories.test.js` : **4/4 tests passés**.
+    - Suite globale de tests unitaires (`npm run test:unit`) : **100% validée (45 suites de tests réussies, 347 tests passés avec succès)**.
+    - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 violation critique**.
+    - Règle stricte de déploiement respectée : aucun `git push` sans instruction explicite de l'utilisateur.
+- **Optimisation Ergonomie WhatsApp : Remplacement de la Saisie Manuelle par des Choix Interactifs 1-Clic & Élimination des Questions Multiples (18 septembre 2026)** 📱⚡🛒✨✅ :
+  * **🚨 1. Contexte & Demande Utilisateur** :
+    - Éviter au maximum de faire taper du texte aux utilisateurs et clients sur WhatsApp ("Toujours proposer ou donner le choix").
+    - Éliminer les questions composées/multiples ("questions multiques" demandant simultanément plusieurs informations comme nom, adresse, quartier, etc.).
+    - Corriger le crash du tiroir panier sur WhatsApp Web client (`ConstraintError: Key already exists in the object store. Table: chat`).
+  * **🛠️ 2. Réalisations & Refactorisations Appliquées** :
+    - **Résolution Crash Panier WhatsApp Web & Checkout Express 1-Clic** :
+      * Insertion d'un lien Web direct ultra-rapide (`/checkout-express?produit=...`) sur chaque fiche produit pour finaliser en 1 clic sans dépendre du drawer IndexedDB WhatsApp.
+      * Prise en charge des requêtes textuelles mentionnant "panier" avec 3 boutons d'orientation immédiate (`Nos Boutiques`, `Rechercher`, `Menu`).
+    - **Refonte Parcours Commande sans Saisie (`backend/services/whatsapp-chatbot.js`)** :
+      * `demarrerCommande` & `traiterPanierMeta` : Suppression de l'obligation de taper nom/adresse. Affichage direct des formules de livraison et moyens de paiement (`sendWhatsAppInteractive` / `sendWhatsAppButtons3`) en 1 clic.
+      * `COMMANDE_NOM` & `COMMANDE_ADRESSE` : Traitement instantané du clic sur les boutons de livraison (`f_...` ou `zone_...`) sans bloquer l'utilisateur avec un message "Entrez une adresse".
+    - **Éradication des Invites "Tapez ..." et Remplacement par des Menus & Boutons 1-Clic** :
+      * `envoyerListeBoutiques` & `rechercherBoutiquesParNom` : Remplacement de "Tapez le numéro..." par un sélecteur interactif et 3 boutons (`⏩ Voir plus`, `📂 Par secteur / Autre recherche`, `🌐 Menu Principal`).
+      * Détection du bouton "plus" (`interactiveId === 'plus'`) dans tous les états paginés (boutiques, immo, télécom, recherche) pour pagination immédiate sans saisie de "plus".
+      * Menu Principal (`state === 'MENU'`) :
+        - Recherche : Liste interactive des catégories populaires (`📱 Téléphonie & Tech`, `👗 Mode`, `📺 Électro`, `✨ Beauté`, `🍔 Alimentation`).
+        - Immobilier : Liste interactive des typologies (`🏢 Appartements Dakar`, `🏡 Villas & Maisons`, `🛏️ Studios Meublés`, `🔑 Ventes`, `📐 Terrains`).
+        - Espace Agence : 3 boutons rapides (`🏢 Créer mon Agence`, `🔍 Annuaire Agences`, `🌐 Menu Principal`).
+      * Création de Boutique (`CREATE_SHOP_...` & `CREER_BOUTIQUE_...`) : Sélecteur de secteur et sélecteur de quartier/ville sous forme de liste interactive 1-clic (Sandaga, HLM, Médina, Almadies, Thiès, Saly, Touba...).
+      * Création d'Agence (`CREER_AGENCE_...`) : Choix interactif des zones immobilières (Almadies, Mermoz, Plateau, Saly, Thiès...).
+      * Notes Vocales : Réponses aux marchands et acheteurs équipées de 3 boutons interactifs directs au lieu de listes de commandes textuelles.
+      * Ajout de Produit Marchand : Sélection des stocks par boutons (`📦 10 unités`, `📦 50 unités`, `♾️ Stock illimité`) et publication photo par boutons (`✅ Valider & Publier`, `⏩ Publier sans photo`, `❌ Annuler`).
+      * Résultats de Recherche : Remplacement des textes de fin de recherche par des boutons interactifs de rebond (`⏩ Voir plus`, `🔍 Autre recherche`, `🌐 Menu Principal`).
+    - **Assistant Immobilier (`backend/services/immo-chatbot.js`)** :
+      * Espace Agent Pro : Menu interactif complet (`Visites`, `Prospects`, `Loyers`, `Biens`).
+      * Visiteurs / Recherche Grand Public : Boutons d'action et de réorientation rapide 1-clic sur les résultats et messages de recherche vide.
+  * **🧪 3. Validation Technique** :
+    - Suite de tests unitaires complète (`npm run test:unit`) : **100% validée (44 suites de tests réussies, 343 tests passés avec succès)**.
+    - Règle stricte de déploiement respectée : aucun `git push` sans instruction explicite de l'utilisateur.
 - **Audit Exhaustif de la Qualité des Données, Fiabilisation des Métriques & Rapprochement Comptable de l'Administration Nopalou (18 septembre 2026)** 📊🔍⚖️🛡️✅ :
   * **🚨 1. Contexte & Enjeux Métrologiques** :
     - Mission de certification de la vérité terrain de toutes les statistiques affichées dans la console d'administration Nopalou.

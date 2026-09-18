@@ -29,3 +29,22 @@ export const CATEGORIES = [
 ]
 
 export const PRODUIT_CATEGORIES = CATEGORIES;
+
+export const POPULAR_CATEGORY_VALUES = [
+  'mode',
+  'smartphones',
+  'alimentation',
+  'tv-electro',
+  'beaute',
+  'mixte',
+] as const;
+
+export type PopularCategoryValue = typeof POPULAR_CATEGORY_VALUES[number];
+
+/**
+ * Nettoie le label d'une catégorie en enlevant les émojis préfixes
+ * afin de respecter scrupuleusement la règle Anti-AI-Slop dans l'UI.
+ */
+export function cleanCategoryLabel(label: string): string {
+  return label.replace(/^[\p{Extended_Pictographic}\u200d\uFE0F\s]+/u, '').trim();
+}

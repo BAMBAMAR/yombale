@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Check, Palette, Sparkles, Layers } from 'lucide-react'
-import { CATEGORIES } from '@/lib/categories'
+import { Check, Palette, Sparkles } from 'lucide-react'
+import CategorieSelector from './CategorieSelector'
 
 export interface PlanConfigItem {
   name: string
@@ -209,53 +209,13 @@ export default function WizardStepPlanStyle({
         })}
       </div>
 
-      {/* Type de boutique */}
-      <div
-        style={{
-          background: '#f8fafc',
-          padding: '16px 20px',
-          borderRadius: 18,
-          border: '1px solid #e2e8f0',
-          marginBottom: 20,
-        }}
-      >
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            fontSize: 13,
-            fontWeight: 900,
-            color: '#0f172a',
-            marginBottom: 10,
-          }}
-        >
-          <Layers size={16} color="var(--accent, #C75B00)" />
-          Secteur d&apos;activité :
-        </label>
-        <select
-          value={categorie}
-          onChange={(e) => setCategorie(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            borderRadius: 12,
-            border: '2px solid #cbd5e1',
-            fontSize: 15,
-            color: '#0f172a',
-            fontWeight: 700,
-            outline: 'none',
-            background: '#ffffff',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          }}
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Type de boutique / Secteur d'activité avec liste restreinte & affichage étendu */}
+      <CategorieSelector
+        value={categorie}
+        onChange={setCategorie}
+        label="Secteur d'activité :"
+        description="Sélectionnez le rayon principal de votre commerce dans l'annuaire."
+      />
 
       {/* Couleur thème de la boutique */}
       <div

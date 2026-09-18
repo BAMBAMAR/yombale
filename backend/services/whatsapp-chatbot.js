@@ -1437,7 +1437,11 @@ async function envoyerListeImmo(phone, excludeIds = []) {
     sendWhatsAppText(phone, cards.map(c => `• ${c.title} — ${c.detail}\n${c.pageUrl}`).join('\n\n'))
   );
   await attendre(2200); // laisse le temps aux messages du carousel de s'afficher avant le bouton
-  await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ? Tapez *plus* pour d\'autres annonces, ou :').catch(() => {});
+  await sendWhatsAppButtons3(phone, 'Souhaitez-vous voir la suite ?', [
+    { id: 'plus', title: '⏩ Voir plus' },
+    { id: 'immo', title: '🏠 Filtres Immo' },
+    { id: 'menu_general', title: '🌐 Menu' },
+  ]).catch(() => {});
   await setSession(phone, 'MENU', {
     last: { type: 'immo', shownIds: excludeIds.concat(r.rows.map(a => String(a.id))) },
   });
@@ -1463,7 +1467,11 @@ async function envoyerListeTelecom(phone, excludeIds = []) {
   }
   const lines = r.rows.map(o => `📱 *${o.nom || o.operateur}* — ${prixFmt(o.prix)}\n👉 ${SITE}/telecom`);
   await sendWhatsAppText(phone, lines.join('\n\n'));
-  await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ? Tapez *plus* pour d\'autres offres, ou :').catch(() => {});
+  await sendWhatsAppButtons3(phone, 'Souhaitez-vous voir d\'autres offres ?', [
+    { id: 'plus', title: '⏩ Voir plus' },
+    { id: 'telecom', title: '📱 Tout Télécom' },
+    { id: 'menu_general', title: '🌐 Menu' },
+  ]).catch(() => {});
   await setSession(phone, 'MENU', {
     last: { type: 'telecom', shownIds: excludeIds.concat(r.rows.map(o => String(o.id))) },
   });
@@ -1498,7 +1506,7 @@ async function envoyerToutesLesBoutiques(phone, excludeIds = []) {
   await sendWhatsAppText(
     phone,
     `🏪 *Boutiques Nopalou :*\n\n${lines.join('\n')}\n\n` +
-    `Tapez le numéro (1, 2...), le nom d'une boutique, ou choisissez ci-dessous :`
+    `👇 *Sélectionnez une boutique dans la liste ci-dessous (1 Clic) :*`
   );
 
   const rows = [
@@ -1524,7 +1532,11 @@ async function envoyerToutesLesBoutiques(phone, excludeIds = []) {
   ]).catch(() => {});
 
   await attendre(400);
-  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres boutiques, ou cherchez par nom :').catch(() => {});
+  await sendWhatsAppButtons3(phone, 'Souhaitez-vous voir d\'autres boutiques ?', [
+    { id: 'plus', title: '⏩ Voir plus' },
+    { id: 'boutique_secteur_liste', title: '📂 Par secteur' },
+    { id: 'menu_general', title: '🌐 Menu' },
+  ]).catch(() => {});
 }
 
 async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
@@ -1557,7 +1569,7 @@ async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
   await sendWhatsAppText(
     phone,
     `🏪 *Boutiques — ${secteur} :*\n\n${lines.join('\n')}\n\n` +
-    `Tapez le numéro (1, 2...), le nom d'une boutique, ou choisissez ci-dessous :`
+    `👇 *Sélectionnez une boutique dans la liste ci-dessous (1 Clic) :*`
   );
 
   const rows = [
@@ -1578,7 +1590,15 @@ async function envoyerListeBoutiques(phone, secteur, excludeIds = []) {
   ]).catch(() => {});
 
   await attendre(400);
-  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres boutiques, ou choisissez-en une ci-dessus :').catch(() => {});
+  await sendWhatsAppButtons3(
+    phone,
+    '🏪 Que souhaitez-vous faire ?',
+    [
+      { id: 'plus', title: '⏩ Voir plus' },
+      { id: 'boutique_secteur_liste', title: '📂 Par secteur' },
+      { id: 'menu_principal', title: '🌐 Menu Principal' },
+    ]
+  ).catch(() => {});
 }
 
 // ── Recherche de boutiques par nom (mot-clé ou téléphone) ────────────────────
@@ -1622,10 +1642,18 @@ async function rechercherBoutiquesParNom(phone, query, excludeIds = []) {
     await sendWhatsAppText(
       phone,
       excludeIds.length
-        ? `✅ Vous avez vu toutes les boutiques correspondant à *"${cleanQ}"*. Tapez *menu* pour revenir.`
-        : `😕 Aucune boutique trouvée pour *"${cleanQ}"*.\n\nVous pouvez entrer un autre nom, un numéro de téléphone, ou taper *menu*.`
+        ? `✅ Vous avez vu toutes les boutiques correspondant à *"${cleanQ}"*.`
+        : `😕 Aucune boutique trouvée pour *"${cleanQ}"*.\n\nVous pouvez entrer un autre nom, un numéro de téléphone, ou choisir ci-dessous :`
     );
-    await sendWhatsAppMenuOuFin(phone, 'Tapez un autre nom de boutique ou :').catch(() => {});
+    await sendWhatsAppButtons3(
+      phone,
+      '🔍 Plus d\'options :',
+      [
+        { id: 'boutique_recherche_nom', title: '🔍 Autre recherche' },
+        { id: 'boutique_secteur_liste', title: '📂 Par secteur' },
+        { id: 'menu_principal', title: '🌐 Menu Principal' },
+      ]
+    ).catch(() => {});
     await setSession(phone, 'BOUTIQUE_SEARCH_SHOP', {});
     return;
   }
@@ -1646,7 +1674,7 @@ async function rechercherBoutiquesParNom(phone, query, excludeIds = []) {
   await sendWhatsAppText(
     phone,
     `🔍 *Boutiques correspondant à "${cleanQ}" :*\n\n${lines.join('\n')}\n\n` +
-    `Tapez le numéro (1, 2...), le nom d'une boutique, ou choisissez ci-dessous :`
+    `👇 *Sélectionnez une boutique dans la liste ci-dessous (1 Clic) :*`
   );
 
   const rows = [
@@ -1672,7 +1700,15 @@ async function rechercherBoutiquesParNom(phone, query, excludeIds = []) {
   ]).catch(() => {});
 
   await attendre(400);
-  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres résultats, ou tapez un autre nom :').catch(() => {});
+  await sendWhatsAppButtons3(
+    phone,
+    '🔍 Plus d\'options :',
+    [
+      { id: 'plus', title: '⏩ Voir plus' },
+      { id: 'boutique_recherche_nom', title: '🔍 Autre recherche' },
+      { id: 'menu_principal', title: '🌐 Menu Principal' },
+    ]
+  ).catch(() => {});
 }
 
 // ── Fiche produit complète (boutique) ───────────────────────────────────────
@@ -1706,6 +1742,9 @@ async function envoyerFicheProduitBoutique(phone, produit, boutique) {
   } else {
     lignes.push(produit.en_stock === false ? '❌ Rupture de stock' : '✅ En stock');
   }
+
+  const bRef = boutique.slug || boutique.id;
+  lignes.push(`\n👉 *Commander en ligne (1-Clic) :*\n${SITE}/boutiques/${bRef}/produits/${produit.id}`);
 
   if (lignes.length > 0) {
     await sendWhatsAppText(phone, lignes.join('\n'));
@@ -1838,18 +1877,49 @@ async function demarrerCommande(phone, boutique, produitId) {
 
   await sendWhatsAppText(
     phone,
-    `🛒 *Acheter cet article — ${produit.nom}*\nPrix : *${prixFmt(produit.prix)}*\n\n` +
+    `🛒 *Commander cet article — ${produit.nom}*\nPrix : *${prixFmt(produit.prix)}*\n\n` +
     waDirectBlock +
-    `⚡ *Option 2 (Formulaire Web 1-Page Express)* :\n👉 ${expressLink}\n\n` +
-    `📋 *Option 3 (Commande Rapide par Chat)* :\n` +
-    `Entrez votre *Nom et Adresse de livraison* (ex: Amar, Sacré-Cœur 3, Dakar) ci-dessous :`
+    `⚡ *Lien Web Paiement 1-Clic :*\n👉 ${expressLink}\n\n` +
+    `👇 *Ou sélectionnez directement votre formule ci-dessous (Zéro saisie) :*`
   );
 
-  await setSession(phone, 'COMMANDE_NOM', {
+  const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
+  let rows = [];
+  if (zones.rows.length > 0) {
+    for (const z of zones.rows) {
+      rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Payez par Wave` });
+      rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash à la livraison` });
+    }
+  } else {
+    rows = [
+      { id: 'f_dakar_wave', title: '🌊 Dakar + Wave', description: '1 500 FCFA — Dakar & Wave' },
+      { id: 'f_dakar_cash', title: '💵 Dakar + Espèces', description: '1 500 FCFA — Cash à la livraison' },
+      { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave', description: '2 500 FCFA — Banlieue & Wave' },
+      { id: 'f_banlieue_cash', title: '🚚 Banlieue + Espèces', description: '2 500 FCFA — Cash à la livraison' },
+      { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
+    ];
+  }
+
+  await sendWhatsAppInteractive(
+    phone,
+    'Livraison & Paiement',
+    'Sélectionnez votre formule tout-en-un :',
+    [{ title: 'Formules Tout-en-un', rows }]
+  ).catch(async () => {
+    await sendWhatsAppButtons3(phone, 'Choisissez votre mode de livraison :', [
+      { id: 'f_dakar_wave', title: '🌊 Dakar + Wave' },
+      { id: 'f_dakar_cash', title: '💵 Dakar + Cash' },
+      { id: 'f_retrait_cash', title: '🏬 Retrait Boutique' },
+    ]);
+  });
+
+  await setSession(phone, 'COMMANDE_ZONE', {
     boutique,
     commande: {
       items: [{ produit_id: produit.id, nom_produit: produit.nom, prix: Number(produit.prix) || 0, quantite: 1, stock_quantite: produit.stock_quantite }],
       client_telephone: phone,
+      client_nom: 'Client WhatsApp',
+      client_adresse: 'Livraison standard',
     },
   });
 }
@@ -1962,16 +2032,48 @@ async function traiterPanierMeta(phone, order) {
   const detailArticles = itemsBoutique.map(it => `• *${it.nom_produit}* × ${it.quantite} — ${prixFmt(it.prix * it.quantite)}`).join('\n');
   await sendWhatsAppText(
     phone,
-    `🛒 *Panier reçu (${itemsBoutique.length} article${itemsBoutique.length > 1 ? 's' : ''})*\n\n${detailArticles}\n💰 *Total : ${prixFmt(totalPanier)}*\n\n` +
-    `⚡ *Option 1 (Formulaire Web 1-Page Express)* :\n👉 ${expressLink}\n\n` +
-    `💬 *Option 2 (Commande WhatsApp Direct)* : Tapez votre Nom et Adresse (ex: Amar, Sacré-Cœur 3) ci-dessous :`
+    `🛒 *Panier reçu (${itemsBoutique.length} article${itemsBoutique.length > 1 ? 's' : ''})*\n\n${detailArticles}\n💰 *Total articles : ${prixFmt(totalPanier)}*\n\n` +
+    `⚡ *Lien direct Web (Paiement 1-Clic)* :\n👉 ${expressLink}\n\n` +
+    `👇 *Sélectionnez votre formule de livraison & paiement (Zéro saisie) :*`
   );
 
-  await setSession(phone, 'COMMANDE_NOM', {
+  const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
+  let rows = [];
+  if (zones.rows.length > 0) {
+    for (const z of zones.rows) {
+      rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Wave` });
+      rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash` });
+    }
+  } else {
+    rows = [
+      { id: 'f_dakar_wave', title: '🌊 Dakar + Wave', description: '1 500 FCFA — Dakar & Wave' },
+      { id: 'f_dakar_cash', title: '💵 Dakar + Espèces', description: '1 500 FCFA — Cash à la livraison' },
+      { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave', description: '2 500 FCFA — Banlieue & Wave' },
+      { id: 'f_banlieue_cash', title: '🚚 Banlieue + Espèces', description: '2 500 FCFA — Cash' },
+      { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
+    ];
+  }
+
+  await sendWhatsAppInteractive(
+    phone,
+    'Livraison & Paiement',
+    'Sélectionnez votre formule tout-en-un :',
+    [{ title: 'Formules Tout-en-un', rows }]
+  ).catch(async () => {
+    await sendWhatsAppButtons3(phone, 'Choisissez votre mode de livraison :', [
+      { id: 'f_dakar_wave', title: '🌊 Dakar + Wave' },
+      { id: 'f_dakar_cash', title: '💵 Dakar + Cash' },
+      { id: 'f_retrait_cash', title: '🏬 Retrait Boutique' },
+    ]);
+  });
+
+  await setSession(phone, 'COMMANDE_ZONE', {
     boutique,
     commande: {
       items: itemsBoutique.map(({ boutique_id, ...it }) => it),
       client_telephone: phone,
+      client_nom: 'Client WhatsApp',
+      client_adresse: 'Livraison standard',
     },
   });
 }
@@ -2079,33 +2181,47 @@ async function handleIncomingInternal(msg) {
     // 1. Détection Commerçant (Boutique Yombale / Nopalou)
     const bqMarchand = context?.boutique || (await trouverBoutiqueMarchand(phone));
     if (bqMarchand) {
-      await sendWhatsAppText(
+      await sendWhatsAppButtons3(
         phone,
-        `🎙️ *Note vocale bien reçue — Espace Marchand (${bqMarchand.nom})*\n\n` +
-        `Pour piloter votre commerce par commandes directes WhatsApp :\n` +
-        `• Tapez *PRODUIT* : ajouter un article (avec photo et prix)\n` +
-        `• Tapez *COMMANDES* : voir vos commandes clients récentes\n` +
-        `• Tapez *CAISSE* : bilan des encaissements du jour (Wave / OM / Cash)\n` +
-        `• Tapez *DETTES* : carnet de crédit & impayés clients\n` +
-        `• Tapez *MENU* : ouvrir votre espace de gestion complet`
-      );
+        `🎙️ *Note vocale reçue — ${bqMarchand.nom}*\n\nPilotez votre commerce en 1 clic :`,
+        [
+          { id: 'marchand_produit', title: '➕ Ajouter Produit' },
+          { id: 'marchand_commandes', title: '📦 Mes Commandes' },
+          { id: 'menu_principal', title: '📊 Espace Marchand' },
+        ]
+      ).catch(async () => {
+        await sendWhatsAppText(
+          phone,
+          `🎙️ *Note vocale bien reçue — Espace Marchand (${bqMarchand.nom})*\n\n` +
+          `• *PRODUIT* : ajouter un article\n` +
+          `• *COMMANDES* : voir vos commandes\n` +
+          `• *MENU* : ouvrir votre espace`
+        );
+      });
       return;
     }
 
     // 2. Client / Acheteur
     const msgContexte = context?.boutique_nom
-      ? `Votre consigne vocale a bien été enregistrée pour la boutique *${context.boutique_nom}*. Le vendeur l'écoutera directement pour votre commande.\n\n`
-      : `Si votre note vocale concerne une commande, le commerçant écoutera directement vos consignes (taille, couleur, adresse de livraison).\n\n`;
+      ? `Votre consigne vocale a bien été enregistrée pour la boutique *${context.boutique_nom}*. Le vendeur l'écoutera directement pour votre commande.`
+      : `Si votre note vocale concerne une commande, le commerçant écoutera directement vos consignes.`;
 
-    await sendWhatsAppText(
+    await sendWhatsAppButtons3(
       phone,
-      `🎙️ *Note vocale bien reçue — Jërëjëf !*\n\n` +
-      msgContexte +
-      `💡 *Options rapides :*\n` +
-      `• Tapez *CATALOGUE* ou *BOUTIQUES* pour explorer nos boutiques partenaires\n` +
-      `• Tapez *COMMANDES* pour le suivi de votre commande\n` +
-      `• Tapez *AIDE* pour contacter l'assistance ou afficher le menu`
-    );
+      `🎙️ *Note vocale bien reçue — Jërëjëf !*\n\n${msgContexte}\n\nQue souhaitez-vous faire ?`,
+      [
+        { id: 'boutique_secteur_liste', title: '🏪 Nos Boutiques' },
+        { id: 'order', title: '📦 Mes Commandes' },
+        { id: 'menu_principal', title: '🌐 Menu Principal' },
+      ]
+    ).catch(async () => {
+      await sendWhatsAppText(
+        phone,
+        `🎙️ *Note vocale bien reçue — Jërëjëf !*\n\n` +
+        msgContexte +
+        `\n\nTapez *boutiques* pour explorer nos boutiques ou *menu* pour le menu principal.`
+      );
+    });
     return;
   }
 
@@ -3170,11 +3286,31 @@ async function handleIncomingInternal(msg) {
   ];
 
   // ── M4 : Reprise fluide d'un panier / commande en cours (Lutte contre l'abandon) ──
-  const isRepriseCmd = interactiveId === 'reprendre_commande' || normTxtLower === 'reprendre' || normTxtLower === 'reprendre commande';
+  const MOTS_PANIER = ['panier', 'mon panier', 'voir panier', 'afficher panier', 'le panier', 'consulter panier', 'panier whatsapp', 'reprendre', 'reprendre commande'];
+  const isRepriseCmd = interactiveId === 'reprendre_commande' || MOTS_PANIER.includes(normTxtLower);
+
   if (isRepriseCmd && context?.boutique && context?.commande?.items?.length) {
     await setSession(phone, 'COMMANDE_CONFIRMATION', { boutique: context.boutique, commande: context.commande });
-    await sendWhatsAppText(phone, '🔄 *Reprise de votre commande en cours...*');
+    await sendWhatsAppText(phone, '🛒 *Voici les articles dans votre panier en cours :*');
     await envoyerRecapFinal(phone, context.boutique, context.commande);
+    return;
+  }
+
+  // Si l'utilisateur demande son panier alors qu'aucun panier n'est actif
+  if (['panier', 'mon panier', 'voir panier', 'afficher panier', 'le panier', 'consulter panier', 'panier whatsapp'].includes(normTxtLower) && (!context?.commande?.items?.length || !context?.boutique)) {
+    const btns = [
+      { id: 'boutiques', title: '🏪 Nos Boutiques' },
+      { id: 'search', title: '🔍 Rechercher' },
+      { id: 'menu_general', title: '🌐 Menu principal' },
+    ];
+    await sendWhatsAppButtons3(
+      phone,
+      `🛒 *Votre panier est actuellement vide.*\n\n` +
+      `Sélectionnez une option ci-dessous pour découvrir nos articles et commander en 1 Clic (sans rien taper) :`,
+      btns
+    ).catch(async () => {
+      await sendWhatsAppText(phone, '🛒 *Votre panier est actuellement vide.* Tapez *menu* pour parcourir nos boutiques.');
+    });
     return;
   }
 
@@ -3367,7 +3503,23 @@ async function handleIncomingInternal(msg) {
 
     if (action === 'search') {
       await setSession(phone, 'SEARCH_QUERY', {});
-      await sendWhatsAppText(phone, '🔍 Que recherchez-vous ? (ex: télévision Samsung, canapé, forfait Tigo...)');
+      await sendWhatsAppInteractive(
+        phone,
+        'Recherche',
+        '🔍 *Que recherchez-vous ?*\nChoisissez une catégorie populaire (1 Clic) ou tapez vos mots-clés :',
+        [{
+          title: 'Catégories Populaires',
+          rows: [
+            { id: 'search_cat_tech', title: '📱 Téléphonie & Tech', description: 'Smartphones, TV, ordinateurs' },
+            { id: 'search_cat_mode', title: '👗 Mode & Vêtements', description: 'Prêt-à-porter, sacs, chaussures' },
+            { id: 'search_cat_electro', title: '📺 Électroménager & Maison', description: 'Réfrigérateurs, salons, déco' },
+            { id: 'search_cat_beaute', title: '✨ Beauté & Cosmétiques', description: 'Parfums, soins, maquillage' },
+            { id: 'search_cat_epicerie', title: '🍔 Alimentation & Épicerie', description: 'Produits frais, boissons, bio' },
+          ]
+        }]
+      ).catch(async () => {
+        await sendWhatsAppText(phone, '🔍 Que recherchez-vous ? (ex: télévision Samsung, canapé, forfait Tigo...)');
+      });
       return;
     }
     if (action === 'immo' || action === 'immobilier') {
@@ -3376,10 +3528,26 @@ async function handleIncomingInternal(msg) {
         await traiterMessageImmo(phone, 'espace agent');
         return;
       }
-      await sendWhatsAppText(
+      await sendWhatsAppInteractive(
         phone,
-        `🏠 *Nopalou Immobilier*\n\nQue recherchez-vous ?\nExemples :\n• *Appartement 3 pièces Almadies*\n• *Villa avec piscine Saly*\n• *Studio meublé Mermoz*\n\nOu tapez directement vos critères ci-dessous :`
-      );
+        'Immobilier',
+        '🏠 *Nopalou Immobilier*\nChoisissez un type de bien (1 Clic) ou tapez vos critères :',
+        [{
+          title: 'Opportunités Immobilières',
+          rows: [
+            { id: 'immo_appart_dakar', title: '🏢 Appartements Dakar', description: 'Locations & Ventes à Dakar' },
+            { id: 'immo_villa_dakar', title: '🏡 Villas & Maisons', description: 'Almadies, Saly, Mermoz...' },
+            { id: 'immo_studio_dakar', title: '🛏️ Studios Meublés', description: 'Courts & Moyens séjours' },
+            { id: 'immo_vente_dakar', title: '🔑 Ventes Immobilières', description: 'Investissements & Titres fonciers' },
+            { id: 'immo_terrain_dakar', title: '📐 Terrains & Parcelles', description: 'Terrains viabilisés' },
+          ]
+        }]
+      ).catch(async () => {
+        await sendWhatsAppText(
+          phone,
+          `🏠 *Nopalou Immobilier*\n\nQue recherchez-vous ?\nExemples :\n• *Appartement 3 pièces Almadies*\n• *Villa avec piscine Saly*\n• *Studio meublé Mermoz*\n\nOu tapez directement vos critères ci-dessous :`
+        );
+      });
       await setSession(phone, 'SEARCH_QUERY', { domaine: 'immo' });
       return;
     }
@@ -3418,7 +3586,15 @@ async function handleIncomingInternal(msg) {
         console.error('[WHATSAPP AGENCES ERR]:', errAg.message);
         await sendWhatsAppText(phone, `🏢 Consultez l'annuaire de nos agences partenaires : ${SITE}/agences`);
       }
-      await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+      await sendWhatsAppButtons3(
+        phone,
+        '🏢 Actions Agences :',
+        [
+          { id: 'creer_agence', title: '🏢 Créer mon Agence' },
+          { id: 'immo', title: '🏠 Annonces Immo' },
+          { id: 'menu_principal', title: '🌐 Menu Principal' },
+        ]
+      ).catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -3438,7 +3614,15 @@ async function handleIncomingInternal(msg) {
         `• Vitrine web dédiée offerte (nopalou.com/agences/votre-nom)\n\n` +
         `👉 Créez ou accédez à votre espace agence : ${SITE}/agence`
       );
-      await sendWhatsAppMenuOuFin(phone, 'Puis-je vous aider pour autre chose ?').catch(() => {});
+      await sendWhatsAppButtons3(
+        phone,
+        '🏢 Que souhaitez-vous faire ?',
+        [
+          { id: 'creer_agence', title: '🏢 Créer mon Agence' },
+          { id: 'agences', title: '🔍 Annuaire Agences' },
+          { id: 'menu_principal', title: '🌐 Menu Principal' },
+        ]
+      ).catch(() => {});
       await setSession(phone, 'MENU', {});
       return;
     }
@@ -3625,16 +3809,27 @@ async function handleIncomingInternal(msg) {
       }
     }
     // "plus" / "encore" / "d'autres" / "oui"... → paginer les derniers résultats affichés
-    if (MOTS_PLUS.includes(normaliserTexte(text))) {
+    if (interactiveId === 'plus' || MOTS_PLUS.includes(normaliserTexte(text))) {
       const last = context?.last;
       if (!last || !last.type) {
         await setSession(phone, 'SEARCH_QUERY', {});
-        await sendWhatsAppText(phone, '🔍 Plus de quoi ? Dites-moi ce que vous cherchez (ex: télévision Samsung, canapé, forfait Tigo...)');
+        await sendWhatsAppButtons3(
+          phone,
+          '🔍 Que souhaitez-vous explorer ?',
+          [
+            { id: 'search', title: '🔍 Rechercher' },
+            { id: 'boutique_secteur_liste', title: '🏪 Nos Boutiques' },
+            { id: 'menu_principal', title: '🌐 Menu Principal' },
+          ]
+        ).catch(() => {});
         return;
       }
       const shownIds = Array.isArray(last.shownIds) ? last.shownIds : [];
-      if (last.type === 'immo')    { await envoyerListeImmo(phone, shownIds); return; }
-      if (last.type === 'telecom') { await envoyerListeTelecom(phone, shownIds); return; }
+      if (last.type === 'immo')                 { await envoyerListeImmo(phone, shownIds); return; }
+      if (last.type === 'telecom')              { await envoyerListeTelecom(phone, shownIds); return; }
+      if (last.type === 'boutiques_toutes')     { await envoyerToutesLesBoutiques(phone, shownIds); return; }
+      if (last.type === 'boutique_liste')       { await envoyerListeBoutiques(phone, context.secteur, shownIds); return; }
+      if (last.type === 'boutique_search_shop') { await rechercherBoutiquesParNom(phone, last.query, shownIds); return; }
       await handleSearchQuery(phone, last.query, shownIds);
       return;
     }
@@ -3836,27 +4031,93 @@ async function handleIncomingInternal(msg) {
     }
     const nom = text.trim();
     await setSession(phone, 'CREATE_SHOP_CAT', { nom });
-    await sendWhatsAppText(
+    await sendWhatsAppInteractive(
       phone,
-      `👌 Très joli nom : *${nom}* !\n\nQuel est votre *secteur d'activité principal* ?\n(ex: _Mode & Vêtements_, _Alimentation_, _Cosmétique_, _Électronique_, _Chaussures_...)`
-    );
+      nom,
+      `👌 Très joli nom : *${nom}* !\n\nChoisissez votre secteur d'activité (1 Clic) :`,
+      [{
+        title: 'Secteurs d\'activité',
+        rows: [
+          { id: 'cat_mode', title: '👗 Mode & Vêtements', description: 'Prêt-à-porter, tissus, sacs' },
+          { id: 'cat_telephonie', title: '📱 Téléphonie & Tech', description: 'Smartphones, TV, ordinateurs' },
+          { id: 'cat_alimentation', title: '🍔 Alimentation & Épicerie', description: 'Supérette, boissons, bio' },
+          { id: 'cat_beaute', title: '✨ Beauté & Cosmétiques', description: 'Parfums, mèches, soins' },
+          { id: 'cat_maison', title: '📺 Électroménager & Déco', description: 'Maison, meubles, appareils' },
+          { id: 'cat_divers', title: '🛍️ Commerce Général', description: 'Bazar, divers, arrivages' },
+        ]
+      }]
+    ).catch(async () => {
+      await sendWhatsAppText(
+        phone,
+        `👌 Très joli nom : *${nom}* !\n\nQuel est votre *secteur d'activité principal* ?\n(ex: _Mode & Vêtements_, _Alimentation_, _Cosmétique_, _Électronique_, _Chaussures_...)`
+      );
+    });
     return;
   }
 
   // ── CREATE_SHOP_CAT → Saisie de la catégorie ──────────────────────────────
   if (state === 'CREATE_SHOP_CAT') {
-    const categorie = text?.trim() || 'Commerce général';
+    let categorie = 'Commerce général';
+    const CAT_MAP = {
+      cat_mode: 'Mode & Vêtements',
+      cat_telephonie: 'Téléphonie & Tech',
+      cat_alimentation: 'Alimentation & Épicerie',
+      cat_beaute: 'Beauté & Cosmétiques',
+      cat_maison: 'Électroménager & Déco',
+      cat_divers: 'Commerce Général',
+    };
+    if (interactiveId && CAT_MAP[interactiveId]) {
+      categorie = CAT_MAP[interactiveId];
+    } else if (text?.trim()) {
+      categorie = text.trim();
+    }
     await setSession(phone, 'CREATE_SHOP_VILLE', { nom: context?.nom, categorie });
-    await sendWhatsAppText(
+    await sendWhatsAppInteractive(
       phone,
-      `📍 Super ! Dans quelle *ville ou quartier* êtes-vous situé ?\n(ex: _Dakar Médina_, _Thiès_, _Touba_, _Saint-Louis_, _Mbour_...)`
-    );
+      context?.nom || 'Ma Boutique',
+      `📍 Où se situe votre boutique ? (1 Clic) :`,
+      [{
+        title: 'Localisation',
+        rows: [
+          { id: 'loc_sandaga', title: '📍 Sandaga / Plateau', description: 'Dakar Centre' },
+          { id: 'loc_hlm', title: '📍 HLM / Colobane', description: 'Dakar Marchés' },
+          { id: 'loc_medina', title: '📍 Médina / Gueule Tapée', description: 'Dakar' },
+          { id: 'loc_almadies', title: '📍 Almadies / Ngor / Yoff', description: 'Dakar Ouest' },
+          { id: 'loc_maristes', title: '📍 Maristes / Hann', description: 'Dakar' },
+          { id: 'loc_keurmassar', title: '📍 Keur Massar / Rufisque', description: 'Dakar Banlieue' },
+          { id: 'loc_thies', title: '📍 Thiès', description: 'Région Thiès' },
+          { id: 'loc_mbour', title: '📍 Mbour / Saly', description: 'Petite Côte' },
+          { id: 'loc_touba', title: '📍 Touba / Diourbel', description: 'Centre' },
+        ]
+      }]
+    ).catch(async () => {
+      await sendWhatsAppText(
+        phone,
+        `📍 Super ! Dans quelle *ville ou quartier* êtes-vous situé ?\n(ex: _Dakar Médina_, _Thiès_, _Touba_, _Saint-Louis_, _Mbour_...)`
+      );
+    });
     return;
   }
 
   // ── CREATE_SHOP_VILLE → Création effective de la boutique ──────────────────
   if (state === 'CREATE_SHOP_VILLE') {
-    const ville = text?.trim() || 'Dakar';
+    let ville = 'Dakar';
+    const LOC_MAP = {
+      loc_sandaga: 'Dakar Plateau / Sandaga',
+      loc_hlm: 'Dakar HLM',
+      loc_medina: 'Dakar Médina',
+      loc_almadies: 'Dakar Almadies',
+      loc_maristes: 'Dakar Maristes',
+      loc_keurmassar: 'Keur Massar',
+      loc_thies: 'Thiès',
+      loc_mbour: 'Mbour / Saly',
+      loc_touba: 'Touba',
+    };
+    if (interactiveId && LOC_MAP[interactiveId]) {
+      ville = LOC_MAP[interactiveId];
+    } else if (text?.trim()) {
+      ville = text.trim();
+    }
     const nom = context?.nom || 'Ma Boutique';
     const categorie = context?.categorie || 'Commerce général';
 
@@ -4014,7 +4275,7 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
-    if (MOTS_PLUS.includes(normaliserTexte(text))) {
+    if (interactiveId === 'plus' || MOTS_PLUS.includes(normaliserTexte(text))) {
       const shownIds = Array.isArray(context?.last?.shownIds) ? context.last.shownIds : [];
       if (context?.last?.type === 'boutiques_toutes') {
         await envoyerToutesLesBoutiques(phone, shownIds);
@@ -4057,7 +4318,15 @@ async function handleIncomingInternal(msg) {
     }
 
     if (!targetBoutiqueId) {
-      await sendWhatsAppText(phone, 'Choisissez une boutique dans la liste ci-dessus, tapez son numéro (1, 2...), son nom, ou tapez *menu*.');
+      await sendWhatsAppButtons3(
+        phone,
+        '🏪 Que souhaitez-vous faire ?',
+        [
+          { id: 'plus', title: '⏩ Voir plus' },
+          { id: 'boutique_secteur_liste', title: '📂 Par secteur' },
+          { id: 'menu_principal', title: '🌐 Menu Principal' },
+        ]
+      ).catch(() => {});
       return;
     }
 
@@ -4078,7 +4347,17 @@ async function handleIncomingInternal(msg) {
   // ── BOUTIQUE_SEARCH_SHOP → recherche textuelle de boutique par nom ou téléphone ─
   if (state === 'BOUTIQUE_SEARCH_SHOP') {
     if (!text || text.trim().length < 2) {
-      await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 lettres ou le numéro de téléphone de la boutique (ou tapez *menu*).');
+      await sendWhatsAppButtons3(
+        phone,
+        '🔍 Recherche de boutique :\nTapez un nom ou explorez :',
+        [
+          { id: 'boutique_secteur_liste', title: '📂 Par secteur' },
+          { id: 'boutiques', title: '🏪 Toutes les boutiques' },
+          { id: 'menu_principal', title: '🌐 Menu Principal' },
+        ]
+      ).catch(async () => {
+        await sendWhatsAppText(phone, '⚠️ Entrez au moins 2 lettres ou le numéro de téléphone de la boutique.');
+      });
       return;
     }
     const bqTel = await trouverBoutiqueParTelephone(text.trim());
@@ -4266,9 +4545,39 @@ async function handleIncomingInternal(msg) {
       await sendWhatsAppText(phone, `⚠️ Il ne reste que ${stock} en stock. Entrez une quantité inférieure ou égale.`);
       return;
     }
-    await sendWhatsAppText(phone, 'Votre nom complet ?');
+    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
+    let rows = [];
+    if (zones.rows.length > 0) {
+      for (const z of zones.rows) {
+        rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Wave` });
+        rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash` });
+      }
+    } else {
+      rows = [
+        { id: 'f_dakar_wave', title: '🌊 Dakar + Wave', description: '1 500 FCFA — Dakar & Wave' },
+        { id: 'f_dakar_cash', title: '💵 Dakar + Espèces', description: '1 500 FCFA — Cash à la livraison' },
+        { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave', description: '2 500 FCFA — Banlieue & Wave' },
+        { id: 'f_banlieue_cash', title: '🚚 Banlieue + Espèces', description: '2 500 FCFA — Cash' },
+        { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
+      ];
+    }
+    await sendWhatsAppInteractive(
+      phone,
+      'Livraison & Paiement',
+      `Quantité : ${quantite}. Sélectionnez votre formule :`,
+      [{ title: 'Formules Tout-en-un', rows }]
+    );
     const items = [{ ...item, quantite }];
-    await setSession(phone, 'COMMANDE_NOM', { boutique, commande: { ...context.commande, items, client_telephone: phone } });
+    await setSession(phone, 'COMMANDE_ZONE', {
+      boutique,
+      commande: {
+        ...context.commande,
+        items,
+        client_telephone: phone,
+        client_nom: 'Client WhatsApp',
+        client_adresse: 'Livraison standard',
+      },
+    });
     return;
   }
 
@@ -4281,64 +4590,100 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
-    // Protection anti-rupture : Si l'utilisateur pose une question ou demande le vendeur au lieu de donner son nom
-    if (detecterIntentionInterrogative(text)) {
+    // Si l'utilisateur clique directement sur une formule de livraison/paiement :
+    if (interactiveId && (interactiveId.startsWith('f_') || interactiveId.startsWith('zone_'))) {
+      context.commande = {
+        ...context.commande,
+        client_nom: context.commande?.client_nom || 'Client WhatsApp',
+        client_adresse: context.commande?.client_adresse || 'Livraison standard',
+        client_telephone: context.commande?.client_telephone || phone,
+      };
+      state = 'COMMANDE_ZONE';
+    } else if (detecterIntentionInterrogative(text)) {
       const itm = context?.commande?.items?.[0];
       const nomP = itm?.nom_produit || 'cet article';
       const contactV = boutique.whatsapp || boutique.telephone;
       await sendWhatsAppText(
         phone,
         `💡 *Vous êtes en train de passer une commande pour : ${nomP}*\n\n` +
-        `Pour finaliser votre achat par chat, merci d'indiquer votre **Nom et Adresse** (ex: *Amar, Sacré-Cœur 3*).\n\n` +
-        `👉 Pour poser directement votre question au vendeur ou annuler :`
+        `Sélectionnez votre formule de livraison ci-dessous ou contactez directement le vendeur :`
       );
-      const btns = [{ id: 'cmd_annuler', title: '✏️ Annuler commande' }];
+      const btns = [{ id: 'cmd_annuler', title: '✏️ Annuler' }];
       if (contactV) {
         btns.unshift({ id: `contact_vendeur_${itm?.produit_id || ''}`, title: '💬 Vendeur' });
       }
       btns.push({ id: 'menu', title: '🌐 Menu' });
-      await sendWhatsAppButtons3(phone, 'Que souhaitez-vous faire ?', btns.slice(0, 3)).catch(() => {});
+      await sendWhatsAppButtons3(phone, 'Options :', btns.slice(0, 3)).catch(() => {});
       return;
-    }
-
-    if (!text || text.trim().length < 2) {
-      await sendWhatsAppText(phone, '⚠️ Entrez votre Nom et Adresse de livraison (ex: Amar, Sacré-Cœur 3).');
-      return;
-    }
-    const parts = text.split(',');
-    const clientNom = parts[0].trim();
-    const clientAdresse = parts.length > 1 ? parts.slice(1).join(',').trim() : text.trim();
-    const commandeComplete = {
-      ...context.commande,
-      client_nom: clientNom,
-      client_adresse: clientAdresse,
-      client_telephone: context.commande?.client_telephone || phone,
-    };
-
-    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
-    let rows = [];
-    if (zones.rows.length > 0) {
-      for (const z of zones.rows) {
-        rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Payez par Wave` });
-        rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash à la livraison` });
+    } else if (!text || text.trim().length < 2) {
+      const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
+      let rows = [];
+      if (zones.rows.length > 0) {
+        for (const z of zones.rows) {
+          rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Wave` });
+          rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash` });
+        }
+      } else {
+        rows = [
+          { id: 'f_dakar_wave', title: '🌊 Dakar + Wave', description: '1 500 FCFA — Dakar & Wave' },
+          { id: 'f_dakar_cash', title: '💵 Dakar + Espèces', description: '1 500 FCFA — Cash à la livraison' },
+          { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave', description: '2 500 FCFA — Banlieue & Wave' },
+          { id: 'f_banlieue_cash', title: '🚚 Banlieue + Espèces', description: '2 500 FCFA — Cash' },
+          { id: 'f_retrait_cash', title: '🏬 Retrait Boutique', description: 'Gratuit (0 FCFA) — En magasin' },
+        ];
       }
+      await sendWhatsAppInteractive(
+        phone,
+        'Livraison & Paiement',
+        'Sélectionnez votre formule ci-dessous :',
+        [{ title: 'Formules Tout-en-un', rows }]
+      );
+      await setSession(phone, 'COMMANDE_ZONE', {
+        boutique,
+        commande: {
+          ...context.commande,
+          client_nom: 'Client WhatsApp',
+          client_adresse: 'Livraison standard',
+          client_telephone: context.commande?.client_telephone || phone,
+        },
+      });
+      return;
     } else {
-      rows = [
-        { id: 'f_dakar_wave', title: '🌊 Dakar + Wave (1500F)', description: 'Livraison Dakar & Wave' },
-        { id: 'f_dakar_cash', title: '💵 Dakar + Cash (1500F)', description: 'Livraison Dakar & Espèces' },
-        { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave (2500F)', description: 'Banlieue (Pikine...) & Wave' },
-        { id: 'f_banlieue_cash', title: '🚚 Banlieue + Cash (2500F)', description: 'Banlieue & Espèces à la livraison' },
-        { id: 'f_retrait_cash', title: '🏬 Retrait sur place', description: 'Retrait en boutique (0 FCFA)' },
-      ];
+      const parts = text.split(',');
+      const clientNom = parts[0].trim();
+      const clientAdresse = parts.length > 1 ? parts.slice(1).join(',').trim() : text.trim();
+      const commandeComplete = {
+        ...context.commande,
+        client_nom: clientNom,
+        client_adresse: clientAdresse,
+        client_telephone: context.commande?.client_telephone || phone,
+      };
+
+      const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 5', [boutique.id]);
+      let rows = [];
+      if (zones.rows.length > 0) {
+        for (const z of zones.rows) {
+          rows.push({ id: `f_z_${z.id}_wave`, title: `🌊 ${z.nom.slice(0, 18)} (Wave)`, description: `${prixFmt(Number(z.prix))} — Payez par Wave` });
+          rows.push({ id: `f_z_${z.id}_cash`, title: `💵 ${z.nom.slice(0, 18)} (Cash)`, description: `${prixFmt(Number(z.prix))} — Cash à la livraison` });
+        }
+      } else {
+        rows = [
+          { id: 'f_dakar_wave', title: '🌊 Dakar + Wave (1500F)', description: 'Livraison Dakar & Wave' },
+          { id: 'f_dakar_cash', title: '💵 Dakar + Cash (1500F)', description: 'Livraison Dakar & Espèces' },
+          { id: 'f_banlieue_wave', title: '🌊 Banlieue + Wave (2500F)', description: 'Banlieue (Pikine...) & Wave' },
+          { id: 'f_banlieue_cash', title: '🚚 Banlieue + Cash (2500F)', description: 'Banlieue & Espèces à la livraison' },
+          { id: 'f_retrait_cash', title: '🏬 Retrait sur place', description: 'Retrait en boutique (0 FCFA)' },
+        ];
+      }
+      await sendWhatsAppInteractive(
+        phone,
+        'Livraison & Paiement',
+        'Choisissez votre formule tout-en-un :',
+        [{ title: 'Formules Tout-en-un', rows }]
+      );
+      await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeComplete });
+      return;
     }
-    await sendWhatsAppInteractive(
-      phone,
-      'Livraison & Paiement',
-      'Choisissez votre formule tout-en-un :',
-      [{ title: 'Formules Tout-en-un', rows }]
-    );
-    await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeComplete });
-    return;
   }
 
   if (state === 'COMMANDE_TELEPHONE') {
@@ -4364,35 +4709,42 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
-    if (detecterIntentionInterrogative(text)) {
+    if (interactiveId && (interactiveId.startsWith('f_') || interactiveId.startsWith('zone_'))) {
+      context.commande = {
+        ...context.commande,
+        client_nom: context.commande?.client_nom || 'Client WhatsApp',
+        client_adresse: context.commande?.client_adresse || 'Livraison standard',
+        client_telephone: context.commande?.client_telephone || phone,
+      };
+      state = 'COMMANDE_ZONE';
+    } else if (detecterIntentionInterrogative(text)) {
       await sendWhatsAppText(
         phone,
         `💡 Merci d'indiquer votre **quartier ou adresse de livraison** (ex: *Maristes, Dakar*).\n\n` +
         `Tapez *annuler* si vous souhaitez revenir au menu.`
       );
       return;
-    }
-
-    if (!text || text.trim().length < 3) {
+    } else if (!text || text.trim().length < 3) {
       await sendWhatsAppText(phone, '⚠️ Entrez une adresse de livraison.');
       return;
-    }
-    const commandeAvecAdresse = { ...context.commande, client_adresse: text.trim() };
-
-    const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 10', [boutique.id]);
-    let rows = [];
-    if (zones.rows.length > 0) {
-      rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
     } else {
-      rows = [
-        { id: 'zone_def_dakar', title: '📍 Dakar (Intra-Muros)', description: '1 500 FCFA' },
-        { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA)' },
-        { id: 'zone_def_banlieue', title: '🚚 Banlieue (Pikine...)', description: '2 500 FCFA' },
-      ];
+      const commandeAvecAdresse = { ...context.commande, client_adresse: text.trim() };
+
+      const zones = await pool.query('SELECT id, nom, prix FROM zones_livraison WHERE boutique_id=$1 ORDER BY prix ASC LIMIT 10', [boutique.id]);
+      let rows = [];
+      if (zones.rows.length > 0) {
+        rows = zones.rows.map(z => ({ id: `zone_${z.id}`, title: z.nom.slice(0, 24), description: prixFmt(Number(z.prix)) }));
+      } else {
+        rows = [
+          { id: 'zone_def_dakar', title: '📍 Dakar (Intra-Muros)', description: '1 500 FCFA' },
+          { id: 'zone_def_retrait', title: '🏬 Retrait en boutique', description: 'Gratuit (0 FCFA)' },
+          { id: 'zone_def_banlieue', title: '🚚 Banlieue (Pikine...)', description: '2 500 FCFA' },
+        ];
+      }
+      await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre mode/zone de livraison :', [{ title: 'Options Livraison', rows }]);
+      await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeAvecAdresse });
+      return;
     }
-    await sendWhatsAppInteractive(phone, 'Livraison', 'Choisissez votre mode/zone de livraison :', [{ title: 'Options Livraison', rows }]);
-    await setSession(phone, 'COMMANDE_ZONE', { boutique, commande: commandeAvecAdresse });
-    return;
   }
 
   if (state === 'COMMANDE_ZONE') {
@@ -4629,6 +4981,21 @@ async function handleIncomingInternal(msg) {
 
   // ── SEARCH_QUERY ──────────────────────────────────────────────────────────
   if (state === 'SEARCH_QUERY') {
+    const SEARCH_CAT_MAP = {
+      search_cat_tech: 'téléphone smartphone tv',
+      search_cat_mode: 'mode vêtements sacs',
+      search_cat_electro: 'électroménager réfrigérateur',
+      search_cat_beaute: 'beauté cosmétique parfum',
+      search_cat_epicerie: 'alimentation épicerie',
+      immo_appart_dakar: 'appartement à louer dakar',
+      immo_villa_dakar: 'villa almadies dakar',
+      immo_studio_dakar: 'studio meublé dakar',
+      immo_vente_dakar: 'vente appartement villa',
+      immo_terrain_dakar: 'terrain parcelle dakar',
+    };
+    if (interactiveId && SEARCH_CAT_MAP[interactiveId]) {
+      text = SEARCH_CAT_MAP[interactiveId];
+    }
     // Détection comparateur de prix multi-marchands (Audit M5)
     if (detecterIntentionComparateur(text)) {
       const compTraite = await traiterRequeteComparateur(phone, text);
@@ -4786,60 +5153,231 @@ async function handleIncomingInternal(msg) {
     }
     const nomBoutique = text.trim();
     await setSession(phone, 'CREER_BOUTIQUE_QUARTIER', { nom_boutique: nomBoutique });
-    await sendWhatsAppText(
+    await sendWhatsAppInteractive(
       phone,
-      `📍 Parfait pour *${nomBoutique}* !\n\nDans quel *quartier ou ville* se trouve votre commerce ? (ex: Sandaga, HLM, Maristes, Plateau, Thiès, Mbour, Touba...)`
-    );
+      nomBoutique,
+      `📍 Dans quel quartier ou ville se situe votre boutique *${nomBoutique}* ? (1 Clic) :`,
+      [{
+        title: 'Localisation Commerciale',
+        rows: [
+          { id: 'loc_sandaga', title: '📍 Sandaga / Plateau', description: 'Dakar Centre' },
+          { id: 'loc_hlm', title: '📍 HLM / Colobane', description: 'Dakar Marchés' },
+          { id: 'loc_medina', title: '📍 Médina / Gueule Tapée', description: 'Dakar' },
+          { id: 'loc_almadies', title: '📍 Almadies / Ngor / Yoff', description: 'Dakar Ouest' },
+          { id: 'loc_maristes', title: '📍 Maristes / Hann', description: 'Dakar' },
+          { id: 'loc_keurmassar', title: '📍 Keur Massar / Rufisque', description: 'Dakar Banlieue' },
+          { id: 'loc_thies', title: '📍 Thiès', description: 'Région Thiès' },
+          { id: 'loc_mbour', title: '📍 Mbour / Saly', description: 'Petite Côte' },
+          { id: 'loc_touba', title: '📍 Touba / Diourbel', description: 'Centre' },
+        ]
+      }]
+    ).catch(async () => {
+      await sendWhatsAppText(
+        phone,
+        `📍 Parfait pour *${nomBoutique}* !\n\nDans quel *quartier ou ville* se trouve votre commerce ? (ex: Sandaga, HLM, Maristes, Plateau, Thiès, Mbour, Touba...)`
+      );
+    });
     return;
   }
 
   // ── CREER_BOUTIQUE_QUARTIER → Quartier / Ville ──────────────────────────────
   if (state === 'CREER_BOUTIQUE_QUARTIER') {
-    const quartier = (text || 'Dakar').trim();
+    const LOC_MAP = {
+      loc_sandaga: 'Sandaga / Plateau',
+      loc_hlm: 'HLM / Colobane',
+      loc_medina: 'Médina',
+      loc_almadies: 'Almadies / Ngor',
+      loc_maristes: 'Maristes',
+      loc_keurmassar: 'Keur Massar',
+      loc_thies: 'Thiès',
+      loc_mbour: 'Mbour / Saly',
+      loc_touba: 'Touba',
+    };
+    const quartier = (interactiveId && LOC_MAP[interactiveId]) || (text || 'Dakar').trim();
     const nomBoutique = context?.nom_boutique || 'Ma Boutique';
     await setSession(phone, 'CREER_BOUTIQUE_CATEGORIE', { nom_boutique: nomBoutique, quartier });
 
     await sendWhatsAppInteractive(
       phone,
       nomBoutique,
-      '🏷️ Choisissez votre catégorie principale (1 clic) :',
+      '🏷️ Choisissez votre secteur d\'activité (1 clic) :',
       [
         {
           title: 'Catégories Populaires',
           rows: [
-            { id: 'cat_mode', title: '1️⃣ Mode & Vêtements', description: 'Prêt-à-porter, tissus, chaussures, sacs' },
-            { id: 'cat_telephonie', title: '2️⃣ Téléphonie & Tech', description: 'Smartphones, TV, ordinateurs' },
-            { id: 'cat_alimentation', title: '3️⃣ Alimentation & Supérette', description: 'Épicerie, boissons, bio' },
-            { id: 'cat_quincaillerie', title: '4️⃣ Quincaillerie & Matériaux', description: 'Outillage, bâtiment, peinture' },
-            { id: 'cat_beaute', title: '5️⃣ Cosmétique & Beauté', description: 'Parfums, mèches, soins, maquillage' },
+            { id: 'cat_mode', title: '1️⃣ Mode & Vêtements', description: 'Prêt-à-porter, tissus, maroquinerie' },
+            { id: 'cat_telephonie', title: '2️⃣ Téléphonie & Tech', description: 'Smartphones, TV, informatique' },
+            { id: 'cat_alimentation', title: '3️⃣ Alimentation & Épicerie', description: 'Supérette, vivres, boissons' },
+            { id: 'cat_quincaillerie', title: '4️⃣ Quincaillerie & BTP', description: 'Outillage, bâtiment, peinture' },
+            { id: 'cat_beaute', title: '5️⃣ Cosmétique & Beauté', description: 'Parfums, soins, maquillage' },
             { id: 'cat_mixte', title: '6️⃣ Généraliste / Arrivages', description: 'Import-export, bazar, divers' },
+            { id: 'cat_voir_plus', title: '➕ Autres catégories...', description: 'Voir le reste des secteurs disponibles' },
           ],
         },
       ]
-    );
+    ).catch(async () => {
+      await sendWhatsAppText(
+        phone,
+        `🏷️ *Catégories principales pour ${nomBoutique}* :\n\n` +
+        `1️⃣ Mode & Vêtements\n` +
+        `2️⃣ Téléphonie & Tech\n` +
+        `3️⃣ Alimentation & Épicerie\n` +
+        `4️⃣ Quincaillerie & BTP\n` +
+        `5️⃣ Cosmétique & Beauté\n` +
+        `6️⃣ Généraliste / Arrivages\n` +
+        `7️⃣ ➕ Voir d'autres catégories\n\n` +
+        `_Tapez un numéro (1 à 7) ou directement votre secteur d'activité._`
+      );
+    });
     return;
   }
 
   // ── CREER_BOUTIQUE_CATEGORIE → Finalisation Création Boutique ────────────────
   if (state === 'CREER_BOUTIQUE_CATEGORIE') {
+    const isVoirPlus = interactiveId === 'cat_voir_plus' ||
+      ['7', 'plus', 'autre', 'autres', 'voir plus', 'reste', 'autres categories', 'suite'].includes(normTxtLower);
+
+    const isRetourPopulaires = interactiveId === 'cat_populaires' ||
+      ['retour', 'populaire', 'populaires', 'precedent'].includes(normTxtLower);
+
+    if (isVoirPlus) {
+      await sendWhatsAppInteractive(
+        phone,
+        context?.nom_boutique || 'Ma Boutique',
+        '📂 *Autres secteurs d\'activité* — Choisissez votre catégorie (1 clic) :',
+        [
+          {
+            title: 'Autres Catégories',
+            rows: [
+              { id: 'cat_electro', title: '📺 TV & Électroménager', description: 'Téléviseurs, réfrigérateurs, climatiseurs' },
+              { id: 'cat_auto', title: '🚗 Auto, Moto & Pièces', description: 'Véhicules, pièces de rechange, pneus' },
+              { id: 'cat_maison', title: '🏠 Maison & Décoration', description: 'Ameublement, meubles, literie' },
+              { id: 'cat_bijouterie', title: '💎 Bijouterie & Horlogerie', description: 'Montres, bijoux, or, argent' },
+              { id: 'cat_sante', title: '💊 Santé & Pharmacie', description: 'Parapharmacie, matériel médical' },
+              { id: 'cat_restauration', title: '🍔 Restauration & Traiteur', description: 'Fast-food, traiteur, pâtisserie' },
+              { id: 'cat_sport', title: '⚽ Sport & Fitness', description: 'Équipements sportifs, maillots' },
+              { id: 'cat_agricole', title: '🌾 Agriculture & Élevage', description: 'Intrants, semences, aliments bétail' },
+              { id: 'cat_services', title: '🛠 Services & Prestations', description: 'Pressing, artisanat, cordonnerie' },
+              { id: 'cat_populaires', title: '⬅️ Catégories Populaires', description: 'Revenir à la sélection principale' },
+            ],
+          },
+        ]
+      ).catch(async () => {
+        await sendWhatsAppText(
+          phone,
+          `📂 *Autres secteurs d'activité* :\n` +
+          `• 📺 TV & Électroménager\n` +
+          `• 🚗 Auto, Moto & Pièces\n` +
+          `• 🏠 Maison & Décoration\n` +
+          `• 💎 Bijouterie & Horlogerie\n` +
+          `• 💊 Santé & Pharmacie\n` +
+          `• 🍔 Restauration & Traiteur\n` +
+          `• ⚽ Sport & Fitness\n` +
+          `• 🌾 Agriculture & Élevage\n` +
+          `• 🛠 Services & Prestations\n\n` +
+          `_Tapez le nom de votre secteur ou tapez *retour* pour les catégories populaires._`
+        );
+      });
+      return;
+    }
+
+    if (isRetourPopulaires) {
+      await sendWhatsAppInteractive(
+        phone,
+        context?.nom_boutique || 'Ma Boutique',
+        '🏷️ Choisissez votre secteur d\'activité (1 clic) :',
+        [
+          {
+            title: 'Catégories Populaires',
+            rows: [
+              { id: 'cat_mode', title: '1️⃣ Mode & Vêtements', description: 'Prêt-à-porter, tissus, maroquinerie' },
+              { id: 'cat_telephonie', title: '2️⃣ Téléphonie & Tech', description: 'Smartphones, TV, informatique' },
+              { id: 'cat_alimentation', title: '3️⃣ Alimentation & Épicerie', description: 'Supérette, vivres, boissons' },
+              { id: 'cat_quincaillerie', title: '4️⃣ Quincaillerie & BTP', description: 'Outillage, bâtiment, peinture' },
+              { id: 'cat_beaute', title: '5️⃣ Cosmétique & Beauté', description: 'Parfums, soins, maquillage' },
+              { id: 'cat_mixte', title: '6️⃣ Généraliste / Arrivages', description: 'Import-export, bazar, divers' },
+              { id: 'cat_voir_plus', title: '➕ Autres catégories...', description: 'Voir le reste des secteurs disponibles' },
+            ],
+          },
+        ]
+      ).catch(async () => {
+        await sendWhatsAppText(
+          phone,
+          `🏷️ *Catégories principales* :\n\n` +
+          `1️⃣ Mode & Vêtements\n` +
+          `2️⃣ Téléphonie & Tech\n` +
+          `3️⃣ Alimentation & Épicerie\n` +
+          `4️⃣ Quincaillerie & BTP\n` +
+          `5️⃣ Cosmétique & Beauté\n` +
+          `6️⃣ Généraliste / Arrivages\n` +
+          `7️⃣ ➕ Voir d'autres catégories\n\n` +
+          `_Tapez un numéro (1 à 7) ou votre secteur._`
+        );
+      });
+      return;
+    }
+
     const CATS_ID = {
       'cat_mode': 'mode',
-      'cat_telephonie': 'telephonie',
+      'cat_telephonie': 'smartphones',
       'cat_alimentation': 'alimentation',
       'cat_quincaillerie': 'quincaillerie',
-      'cat_beaute': 'beaute-sante',
+      'cat_beaute': 'beaute',
       'cat_mixte': 'mixte',
+      'cat_electro': 'tv-electro',
+      'cat_auto': 'auto-moto',
+      'cat_maison': 'maison',
+      'cat_bijouterie': 'bijouterie',
+      'cat_sante': 'sante-pharma',
+      'cat_restauration': 'restauration',
+      'cat_sport': 'sport',
+      'cat_agricole': 'produits-agricoles',
+      'cat_services': 'services',
     };
     const num = parseInt(text.trim(), 10);
     const CATS_NUM = {
       1: 'mode',
-      2: 'telephonie',
+      2: 'smartphones',
       3: 'alimentation',
       4: 'quincaillerie',
-      5: 'beaute-sante',
+      5: 'beaute',
       6: 'mixte',
     };
-    const categorieSlug = CATS_ID[interactiveId] || CATS_NUM[num] || normaliserTexte(text).trim().slice(0, 50) || 'mode';
+
+    // Détection sémantique intelligente si saisie libre
+    let detectedCat = null;
+    const txtLow = normTxtLower;
+    if (txtLow.includes('electro') || txtLow.includes('tv') || txtLow.includes('frigo') || txtLow.includes('clim')) {
+      detectedCat = 'tv-electro';
+    } else if (txtLow.includes('auto') || txtLow.includes('moto') || txtLow.includes('piece') || txtLow.includes('voiture')) {
+      detectedCat = 'auto-moto';
+    } else if (txtLow.includes('meuble') || txtLow.includes('maison') || txtLow.includes('deco') || txtLow.includes('literie')) {
+      detectedCat = 'maison';
+    } else if (txtLow.includes('bijou') || txtLow.includes('montre') || txtLow.includes('or ') || txtLow.includes('argent')) {
+      detectedCat = 'bijouterie';
+    } else if (txtLow.includes('sante') || txtLow.includes('pharma') || txtLow.includes('medic')) {
+      detectedCat = 'sante-pharma';
+    } else if (txtLow.includes('resto') || txtLow.includes('manger') || txtLow.includes('traiteur') || txtLow.includes('food') || txtLow.includes('fast')) {
+      detectedCat = 'restauration';
+    } else if (txtLow.includes('sport') || txtLow.includes('fitness') || txtLow.includes('maillot')) {
+      detectedCat = 'sport';
+    } else if (txtLow.includes('agri') || txtLow.includes('elevage') || txtLow.includes('semence') || txtLow.includes('betail')) {
+      detectedCat = 'produits-agricoles';
+    } else if (txtLow.includes('service') || txtLow.includes('pressing') || txtLow.includes('reparation')) {
+      detectedCat = 'services';
+    } else if (txtLow.includes('mode') || txtLow.includes('vetement') || txtLow.includes('robe') || txtLow.includes('tissu') || txtLow.includes('chaussure')) {
+      detectedCat = 'mode';
+    } else if (txtLow.includes('phone') || txtLow.includes('tel') || txtLow.includes('tech') || txtLow.includes('ordi')) {
+      detectedCat = 'smartphones';
+    } else if (txtLow.includes('aliment') || txtLow.includes('epice') || txtLow.includes('superette') || txtLow.includes('boutik')) {
+      detectedCat = 'alimentation';
+    } else if (txtLow.includes('quincail') || txtLow.includes('btp') || txtLow.includes('ciment') || txtLow.includes('peinture')) {
+      detectedCat = 'quincaillerie';
+    } else if (txtLow.includes('beaute') || txtLow.includes('cosmet') || txtLow.includes('soin') || txtLow.includes('parfum')) {
+      detectedCat = 'beaute';
+    }
+
+    const categorieSlug = CATS_ID[interactiveId] || CATS_NUM[num] || detectedCat || normaliserTexte(text).trim().slice(0, 50) || 'mixte';
     const nomBoutique = context?.nom_boutique || 'Ma Boutique';
     const quartier = context?.quartier || 'Dakar';
     const normPh = normalisePhone(phone);
@@ -4985,16 +5523,43 @@ async function handleIncomingInternal(msg) {
     }
     const nomAgence = text.trim();
     await setSession(phone, 'CREER_AGENCE_VILLE', { nom_agence: nomAgence, leadId: context?.leadId });
-    await sendWhatsAppText(
+    await sendWhatsAppInteractive(
       phone,
-      `📍 Parfait pour *${nomAgence}* !\n\nDans quel *quartier ou ville* se situe votre agence ? (ex: Almadies, Ngor, Mermoz, Plateau, Thiès, Saly...)`
-    );
+      nomAgence,
+      `📍 Dans quel quartier ou ville se situe votre agence *${nomAgence}* ? (1 Clic) :`,
+      [{
+        title: 'Localisation Agence',
+        rows: [
+          { id: 'loc_almadies', title: '📍 Almadies / Ngor', description: 'Dakar Ouest' },
+          { id: 'loc_mermoz', title: '📍 Mermoz / Ouakam / Fann', description: 'Dakar' },
+          { id: 'loc_plateau', title: '📍 Plateau / Centre', description: 'Dakar Centre' },
+          { id: 'loc_maristes', title: '📍 Maristes / VDN', description: 'Dakar' },
+          { id: 'loc_saly', title: '📍 Saly / Mbour / Somone', description: 'Petite Côte' },
+          { id: 'loc_thies', title: '📍 Thiès', description: 'Région Thiès' },
+          { id: 'loc_saintlouis', title: '📍 Saint-Louis', description: 'Nord' },
+        ]
+      }]
+    ).catch(async () => {
+      await sendWhatsAppText(
+        phone,
+        `📍 Parfait pour *${nomAgence}* !\n\nDans quel *quartier ou ville* se situe votre agence ? (ex: Almadies, Ngor, Mermoz, Plateau, Thiès, Saly...)`
+      );
+    });
     return;
   }
 
   // ── CREER_AGENCE_VILLE → Finalisation Création Agence Immobilière ───────────
   if (state === 'CREER_AGENCE_VILLE') {
-    const quartier = (text || 'Dakar').trim();
+    const LOC_AG_MAP = {
+      loc_almadies: 'Almadies / Ngor',
+      loc_mermoz: 'Mermoz / Fann',
+      loc_plateau: 'Plateau',
+      loc_maristes: 'Maristes / VDN',
+      loc_saly: 'Saly / Mbour',
+      loc_thies: 'Thiès',
+      loc_saintlouis: 'Saint-Louis',
+    };
+    const quartier = (interactiveId && LOC_AG_MAP[interactiveId]) || (text || 'Dakar').trim();
     const nomAgence = context?.nom_agence || 'Mon Agence Immo';
     const normPh = normalisePhone(phone);
 
@@ -5596,23 +6161,43 @@ async function handleIncomingInternal(msg) {
       // Si le stock a déjà été saisi dans le texte (ex: "Sac cuir 5000 10" ou "Sac 5000 stock 10")
       if (stockNum !== null) {
         await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, stock: stockNum, photos: initialPhotos });
-        await sendWhatsAppText(
+        await sendWhatsAppButtons3(
           phone,
-          `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}* — Stock : *${stockNum} unité(s)*\n\n` +
-          `📸 Envoyez maintenant la ou les photos de votre article *${prodNom}*.\n` +
-          `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
-        );
+          `✅ *${prodNom}* — ${prixFmt(prixNum)} (${stockNum} en stock)\n\nEnvoyez vos photos ou publiez directement :`,
+          [
+            { id: 'photo_ok', title: '✅ Valider & Publier' },
+            { id: 'photo_passer', title: '⏩ Publier sans photo' },
+            { id: 'menu_principal', title: '❌ Annuler' },
+          ]
+        ).catch(async () => {
+          await sendWhatsAppText(
+            phone,
+            `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}* — Stock : *${stockNum} unité(s)*\n\n` +
+            `📸 Envoyez maintenant la ou les photos de votre article *${prodNom}*.\n` +
+            `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
+          );
+        });
         return;
       }
 
       // Si le prix est renseigné mais pas le stock : demander le stock
       await setSession(phone, 'AJOUT_PRODUIT_STOCK', { boutique, produit_nom: prodNom, prix: prixNum, photos: initialPhotos });
-      await sendWhatsAppText(
+      await sendWhatsAppButtons3(
         phone,
-        `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}*\n\n` +
-        `📦 Quelle est la *quantité disponible en stock* ? (ex: *10*, *25*, *5*...)\n` +
-        `👉 Tapez un chiffre ou tapez *passer* pour un stock illimité.`
-      );
+        `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}*\n\n📦 Quelle est la quantité disponible en stock ? (1 Clic) :`,
+        [
+          { id: 'stock_10', title: '📦 10 unités' },
+          { id: 'stock_50', title: '📦 50 unités' },
+          { id: 'stock_passer', title: '♾️ Stock illimité' },
+        ]
+      ).catch(async () => {
+        await sendWhatsAppText(
+          phone,
+          `✅ Article : *${prodNom}* — Prix : *${prixFmt(prixNum)}*\n\n` +
+          `📦 Quelle est la *quantité disponible en stock* ? (ex: *10*, *25*, *5*...)\n` +
+          `👉 Tapez un chiffre ou tapez *passer* pour un stock illimité.`
+        );
+      });
       return;
     }
 
@@ -5672,22 +6257,42 @@ async function handleIncomingInternal(msg) {
 
     if (stockNum !== null) {
       await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix: prixNum, stock: stockNum, photos });
-      await sendWhatsAppText(
+      await sendWhatsAppButtons3(
         phone,
-        `✅ Prix : *${prixFmt(prixNum)}* — Stock : *${stockNum} unité(s)*\n\n` +
-        `📸 Envoyez la ou les photos de votre article *${prodNom}*.\n` +
-        `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
-      );
+        `✅ *${prodNom}* — ${prixFmt(prixNum)} (${stockNum} en stock)\n\nEnvoyez vos photos ou publiez directement :`,
+        [
+          { id: 'photo_ok', title: '✅ Valider & Publier' },
+          { id: 'photo_passer', title: '⏩ Publier sans photo' },
+          { id: 'menu_principal', title: '❌ Annuler' },
+        ]
+      ).catch(async () => {
+        await sendWhatsAppText(
+          phone,
+          `✅ Prix : *${prixFmt(prixNum)}* — Stock : *${stockNum} unité(s)*\n\n` +
+          `📸 Envoyez la ou les photos de votre article *${prodNom}*.\n` +
+          `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
+        );
+      });
       return;
     }
 
     await setSession(phone, 'AJOUT_PRODUIT_STOCK', { boutique, produit_nom: prodNom, prix: prixNum, photos });
-    await sendWhatsAppText(
+    await sendWhatsAppButtons3(
       phone,
-      `💰 Prix enregistré : *${prixFmt(prixNum)}*\n\n` +
-      `📦 Quelle est la *quantité disponible en stock* pour *${prodNom}* ? (ex: *10*, *25*, *5*...)\n` +
-      `👉 Tapez un chiffre ou tapez *passer* pour un stock illimité.`
-    );
+      `💰 Prix enregistré : *${prixFmt(prixNum)}*\n\n📦 Quantité disponible en stock pour *${prodNom}* (1 Clic) :`,
+      [
+        { id: 'stock_10', title: '📦 10 unités' },
+        { id: 'stock_50', title: '📦 50 unités' },
+        { id: 'stock_passer', title: '♾️ Stock illimité' },
+      ]
+    ).catch(async () => {
+      await sendWhatsAppText(
+        phone,
+        `💰 Prix enregistré : *${prixFmt(prixNum)}*\n\n` +
+        `📦 Quelle est la *quantité disponible en stock* pour *${prodNom}* ? (ex: *10*, *25*, *5*...)\n` +
+        `👉 Tapez un chiffre ou tapez *passer* pour un stock illimité.`
+      );
+    });
     return;
   }
 
@@ -5705,7 +6310,13 @@ async function handleIncomingInternal(msg) {
     const rawStock = (text || '').toLowerCase().trim();
 
     let stockNum = null;
-    if (rawStock !== 'passer' && rawStock !== 'skip' && rawStock !== 'illimite' && rawStock !== 'aucun' && rawStock !== '-') {
+    if (interactiveId === 'stock_passer') {
+      stockNum = null;
+    } else if (interactiveId === 'stock_10') {
+      stockNum = 10;
+    } else if (interactiveId === 'stock_50') {
+      stockNum = 50;
+    } else if (rawStock !== 'passer' && rawStock !== 'skip' && rawStock !== 'illimite' && rawStock !== 'aucun' && rawStock !== '-') {
       const parsedStock = parseInt(rawStock.replace(/[^\d]/g, ''), 10);
       if (!isNaN(parsedStock) && parsedStock >= 0) {
         stockNum = parsedStock;
@@ -5716,22 +6327,21 @@ async function handleIncomingInternal(msg) {
 
     const stockLabel = stockNum !== null ? `*${stockNum} unité(s)*` : '*Illimité*';
 
-    if (photos.length > 0) {
+    await sendWhatsAppButtons3(
+      phone,
+      `📦 Stock : ${stockLabel}\n\n📸 Envoyez vos photos pour *${prodNom}* ou publiez directement :`,
+      [
+        { id: 'photo_ok', title: '✅ Valider & Publier' },
+        { id: 'photo_passer', title: '⏩ Publier sans photo' },
+        { id: 'menu_principal', title: '❌ Annuler' },
+      ]
+    ).catch(async () => {
       await sendWhatsAppText(
         phone,
         `📦 Stock enregistré : ${stockLabel}\n\n` +
-        `📸 *Photos du produit (${photos.length} reçue(s)) :*\n` +
-        `Vous pouvez envoyer d'autres photos pour *${prodNom}*, ou taper *OK* pour publier l'article !`
+        `📸 Envoyez vos photos ou tapez *OK* pour valider.`
       );
-    } else {
-      await sendWhatsAppText(
-        phone,
-        `📦 Stock enregistré : ${stockLabel}\n\n` +
-        `📸 *Photos du produit :*\n` +
-        `Envoyez 1 ou plusieurs photos de votre article *${prodNom}*.\n` +
-        `Tapez *OK* quand vous avez fini ou *passer* pour publier sans photo.`
-      );
-    }
+    });
     return;
   }
 
@@ -5755,18 +6365,27 @@ async function handleIncomingInternal(msg) {
       if (imageUrl) {
         photos.push(imageUrl);
         await setSession(phone, 'AJOUT_PRODUIT_PHOTO', { boutique, produit_nom: prodNom, prix, stock, photos });
-        await sendWhatsAppText(
+        await sendWhatsAppButtons3(
           phone,
-          `📸 *Photo ${photos.length} enregistrée !*\n\n` +
-          `Vous pouvez envoyer une autre photo pour cet article, ou taper *OK* (ou *terminer*) pour publier le produit !`
-        );
+          `📸 *Photo ${photos.length} enregistrée !*\n\nEnvoyez une autre photo ou finalisez la publication :`,
+          [
+            { id: 'photo_ok', title: '✅ Valider & Publier' },
+            { id: 'photo_passer', title: '⏩ Terminer' },
+            { id: 'menu_principal', title: '❌ Annuler' },
+          ]
+        ).catch(async () => {
+          await sendWhatsAppText(
+            phone,
+            `📸 *Photo ${photos.length} enregistrée !*\n\nVous pouvez envoyer une autre photo ou taper *OK*.`
+          );
+        });
         return;
       }
     }
 
-    // 2. Si validation par texte (OK, valider, terminer, passer, URL)
+    // 2. Si validation par bouton ou texte (OK, valider, terminer, passer, URL)
     const txtLow = (text || '').toLowerCase().trim();
-    if (txtLow === 'ok' || txtLow === 'terminer' || txtLow === 'valider' || txtLow === 'passer' || txtLow === 'fin' || txtLow.startsWith('http')) {
+    if (interactiveId === 'photo_ok' || interactiveId === 'photo_passer' || txtLow === 'ok' || txtLow === 'terminer' || txtLow === 'valider' || txtLow === 'passer' || txtLow === 'fin' || txtLow.startsWith('http')) {
       if (txtLow.startsWith('http')) {
         photos.push(text.trim());
       }
@@ -5885,12 +6504,39 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
   if (!results.length) {
     if (excludeIds.length) {
       // Pagination épuisée — tout a déjà été montré.
-      await sendWhatsAppText(phone, `✅ Vous avez vu tout ce que j'ai pour *"${cleanQ}"*.\n\nEssayez avec d'autres mots-clés ou tapez *menu*.`);
-      await sendWhatsAppMenuOuFin(phone, 'Envie de continuer ?').catch(() => {});
+      if (typeof sendWhatsAppButtons3 === 'function') {
+        await sendWhatsAppButtons3(
+          phone,
+          `✅ Vous avez vu tous les résultats pour *"${cleanQ}"*.\nQue souhaitez-vous faire ?`,
+          [
+            { id: 'search', title: '🔍 Autre recherche' },
+            { id: 'boutique_secteur_liste', title: '🏪 Nos Boutiques' },
+            { id: 'menu_principal', title: '🌐 Menu Principal' },
+          ]
+        ).catch(async () => {
+          await sendWhatsAppText(phone, `✅ Vous avez vu tout ce que j'ai pour *"${cleanQ}"*.`);
+        });
+      } else {
+        await sendWhatsAppText(phone, `✅ Vous avez vu tout ce que j'ai pour *"${cleanQ}"*.`);
+      }
       await setSession(phone, 'MENU', {});
       return;
     }
-    await sendWhatsAppText(phone, `😕 Aucun résultat pour *"${cleanQ}"*.\n\nEssayez avec d'autres mots-clés ou tapez *menu*.`);
+    if (typeof sendWhatsAppButtons3 === 'function') {
+      await sendWhatsAppButtons3(
+        phone,
+        `😕 Aucun résultat trouvé pour *"${cleanQ}"*.\nQue souhaitez-vous faire ?`,
+        [
+          { id: 'search', title: '🔍 Réessayer' },
+          { id: 'boutique_secteur_liste', title: '🏪 Nos Boutiques' },
+          { id: 'menu_principal', title: '🌐 Menu Principal' },
+        ]
+      ).catch(async () => {
+        await sendWhatsAppText(phone, `😕 Aucun résultat pour *"${cleanQ}"*.`);
+      });
+    } else {
+      await sendWhatsAppText(phone, `😕 Aucun résultat pour *"${cleanQ}"*.`);
+    }
     await setSession(phone, 'SEARCH_QUERY', {});
     return;
   }
@@ -5945,7 +6591,21 @@ async function handleSearchQuery(phone, query, excludeIds = []) {
 
   const delaiAttente = (produits.length > 0 || autres.length > 0) ? 2200 : 800;
   await attendre(delaiAttente); // laisse le temps aux messages précédents de s'afficher avant le bouton
-  await sendWhatsAppMenuOuFin(phone, 'Tapez *plus* pour d\'autres résultats, faites une nouvelle recherche, ou :').catch(() => {});
+  if (typeof sendWhatsAppButtons3 === 'function') {
+    await sendWhatsAppButtons3(
+      phone,
+      '🔍 Plus d\'options pour votre recherche :',
+      [
+        { id: 'plus', title: '⏩ Voir plus' },
+        { id: 'search', title: '🔍 Autre recherche' },
+        { id: 'menu_principal', title: '🌐 Menu Principal' },
+      ]
+    ).catch(async () => {
+      await sendWhatsAppMenuOuFin(phone, 'Faites une nouvelle recherche ou revenez au menu :');
+    });
+  } else {
+    await sendWhatsAppMenuOuFin(phone, 'Faites une nouvelle recherche ou revenez au menu :').catch(() => {});
+  }
   await setSession(phone, 'MENU', {
     last: { type: 'search', query: cleanQ, shownIds: excludeIds.concat(results.map(r => String(r.id))) },
   });

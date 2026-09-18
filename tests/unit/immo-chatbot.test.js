@@ -8,10 +8,14 @@ jest.mock('../../backend/models/db', () => ({
 
 const mockSendWhatsAppText = jest.fn().mockResolvedValue(undefined);
 const mockSendWhatsAppCarousel = jest.fn().mockResolvedValue(undefined);
+const mockSendWhatsAppButtons3 = jest.fn().mockResolvedValue(undefined);
+const mockSendWhatsAppInteractive = jest.fn().mockResolvedValue(undefined);
 
 jest.mock('../../backend/services/whatsapp', () => ({
   sendWhatsAppText: mockSendWhatsAppText,
   sendWhatsAppCarousel: mockSendWhatsAppCarousel,
+  sendWhatsAppButtons3: mockSendWhatsAppButtons3,
+  sendWhatsAppInteractive: mockSendWhatsAppInteractive,
 }));
 
 const {
@@ -24,6 +28,8 @@ beforeEach(() => {
   mockQuery.mockReset();
   mockSendWhatsAppText.mockReset();
   mockSendWhatsAppCarousel.mockReset();
+  mockSendWhatsAppButtons3.mockReset();
+  mockSendWhatsAppInteractive.mockReset();
 });
 
 describe('immo-chatbot : detecterIntentionImmo', () => {
