@@ -6,7 +6,7 @@ import {
   Store, ShoppingCart, ShoppingBag, Home, Radio, FileText, Package,
   Bell, Heart, Users, BookOpen, Sparkles, Plus, LogOut, ChevronDown,
   MessageCircle, Tag, Trophy, TrendingDown, HelpCircle, LucideIcon, Zap,
-  Menu, X, Building2, CreditCard
+  Menu, X, Building2, CreditCard, Mail, Phone
 } from 'lucide-react'
 import { GUIDES } from './components/mobileNavData'
 import MobileNavUserCard from './components/MobileNavUserCard'
@@ -360,6 +360,26 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
               <Plus size={16} strokeWidth={3} />
               <span>Publier une annonce</span>
             </a>
+          </div>
+          {/* ── 6. AIDE & CONTACT COMPACT DANS LE TIROIR MOBILE ── */}
+          <div style={{ padding: '14px 16px 20px', borderTop: '1px solid var(--border, #E8DDD2)', marginTop: 10, background: '#FAF8F5' }}>
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--accent, #C75B00)', marginBottom: 8 }}>
+              Aide &amp; Contact
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5 }}>
+              <a href="/guide-emploi" onClick={close} style={{ color: 'var(--navy, #1C2B4A)', textDecoration: 'none', fontWeight: 600 }}>
+                Comment ça marche ?
+              </a>
+              <a href="/assistant-whatsapp" onClick={close} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#16A34A', textDecoration: 'none', fontWeight: 700 }}>
+                <MessageCircle size={13} style={{ color: '#25D366' }} /> Assistant WhatsApp
+              </a>
+              <a href="mailto:contact@nopalou.com" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--navy, #1C2B4A)', textDecoration: 'none' }}>
+                <Mail size={13} style={{ color: 'var(--accent)' }} /> contact@nopalou.com
+              </a>
+              <a href="tel:+221708717942" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-subtle)', textDecoration: 'none' }}>
+                <Phone size={13} style={{ color: 'var(--accent)' }} /> +221 70 871 79 42 &bull; Dakar
+              </a>
+            </div>
           </div>
         </nav>
       </div>

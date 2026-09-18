@@ -207,6 +207,29 @@
   }
 }
 
+@media (max-width: 600px) {
+  .footer-support-bar {
+    padding: 14px 16px;
+  }
+  .footer-support-title {
+    font-size: 11px;
+    letter-spacing: .06em;
+  }
+  .footer-support-links {
+    gap: 8px 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .footer-support-links a {
+    font-size: 12.5px;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .footer-support-links a:active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
 @media (max-width: 960px) and (min-width: 681px) {
   .footer-links { grid-template-columns: repeat(2, 1fr) !important; gap: 24px !important; }
 }

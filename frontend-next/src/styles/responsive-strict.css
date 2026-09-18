@@ -212,8 +212,12 @@ th {
     line-height: 1.3;
   }
   /* Masquer "Recherches populaires" sur mobile pour éliminer 300px de scroll vertical */
-  .site-footer > div:nth-child(2) {
+  .footer-seo-links {
     display: none !important;
+  }
+  /* Garantir que le bandeau Aide & Contact reste bien visible sur mobile */
+  .footer-support-bar {
+    display: block !important;
   }
   .footer-trust {
     gap: 10px 16px !important;

@@ -437,7 +437,7 @@ export default async function RootLayout({
           </div>
 
           {/* Recherches populaires — maillage SEO */}
-          <div style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+          <div className="footer-seo-links" style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.5)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Solutions Commerçants &amp; E-Commerce Sénégal</p>
             <div style={{ display: 'flex', gap: '8px 18px', flexWrap: 'wrap', fontSize: 13, marginBottom: 12 }}>
               <a href="/creer-boutique-en-ligne" style={{ color: '#fed7aa', fontWeight: 700 }}>Créer une boutique en ligne Sénégal</a>

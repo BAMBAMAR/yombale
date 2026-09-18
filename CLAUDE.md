@@ -1,3 +1,22 @@
+- **Rétablissement et Optimisation Mobile du Bandeau d'Assistance & Contact (`Aide & Contact`) dans le Footer et le Menu Mobile (18 septembre 2026)** 📱🛠️⚡✨✅ :
+  * **🚨 1. Demande & Contexte Utilisateur** :
+    - Sur mobile, absence totale du bandeau d'assistance et contact présent sur grand écran : `Aide & Contact : Comment ça marche ? • Assistant WhatsApp • Sourcing Dakar • Guide Vendeur • contact@nopalou.com • +221 70 871 79 42 • Dakar`.
+  * **🛠️ 2. Diagnostic & Développements Techniques** :
+    - **Identification du Bug CSS sélecteur fragile (`frontend-next/src/styles/responsive-strict.css`)** :
+      * La règle `.site-footer > div:nth-child(2) { display: none !important; }`, initialement destinée à masquer les recherches populaires volumineuses sur mobile, ciblait par inadvertance le bandeau `.footer-support-bar` devenu le second enfant direct du footer.
+    - **Nommage Explicite & Réparation Footer (`frontend-next/src/app/layout.tsx` & `responsive-strict.css`)** :
+      * Attribution de la classe `.footer-seo-links` sur le conteneur de maillage SEO et remplacement du sélecteur `:nth-child(2)` par `.footer-seo-links { display: none !important; }`.
+      * Garantie explicite d'affichage `.footer-support-bar { display: block !important; }` sur tous les terminaux mobiles (<= 768px).
+    - **Optimisations Responsive Petits Écrans (`frontend-next/src/styles/footer.css`)** :
+      * Ajout d'une media query <= 600px pour adapter les espacements, les hauteurs de ligne, et le confort tactile des liens du bandeau.
+    - **Accessibilité dans la Navigation Mobile (`frontend-next/src/app/MobileNav.tsx` & `mobileNavData.ts`)** :
+      * Ajout du guide « Sourcing Dakar & Import » dans la liste des guides.
+      * Intégration d'un bloc rapide « Aide & Contact » au bas du tiroir mobile (WhatsApp 24/7, email et téléphone cliquables avec icônes Lucide SVG conformes aux standards Anti-AI-Slop).
+  * **🧪 3. Validation Technique** :
+    - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 violation critique**.
+    - Build de production Next.js (`npm run build`) : **Succès 100% (0 erreur de compilation, bundle optimisé)**.
+
 - **Sélection Progressive des Catégories lors de la Création de Boutique (WhatsApp & Web Onboarding) (18 septembre 2026)** 🏷️🛍️⚡✨✅ :
   * **🚨 1. Demande & Objectifs Utilisateur** :
     - Lors de la création de boutique, offrir le choix sur les différentes catégories possibles.

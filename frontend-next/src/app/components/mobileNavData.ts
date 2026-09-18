@@ -25,6 +25,7 @@ export interface GuideItem {
 export const GUIDES: GuideItem[] = [
   { href: '/tarifs-boutique', icon: Tag, label: 'Tarifs & Forfaits Vendeurs', highlight: true, badge: 'OFFRE', badgeColor: '#C75B00' },
   { href: '/guide-creer-boutique', icon: Package, label: 'Guide Vendeur & Sourcing' },
+  { href: '/guide-sourcing-revente', icon: Sparkles, label: 'Sourcing Dakar & Import' },
   { href: '/demo', icon: Sparkles, label: 'Démo Interactive (Boutique & Agence)', highlight: true, badge: 'TESTER', badgeColor: 'var(--accent)' },
   { href: '/guide-achat', icon: Trophy, label: 'Guide d\'achat intelligent' },
   { href: '/guide-forfait', icon: Radio, label: 'Guide forfait télécom' },
