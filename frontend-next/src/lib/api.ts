@@ -25,7 +25,7 @@ export async function apiFetch<T>(path: string): Promise<T> {
       const res = await fetch(url, {
         cache: 'no-store',
         headers,
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(12000),
       })
 
       if (res.ok) {

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import '@/styles/homepage.css'
 import SearchBar from './SearchBar'
 
-export const revalidate = 300 // ISR 5 minutes — TTFB instantané via cache avec rafraîchissement en arrière-plan
+export const dynamic = 'force-dynamic'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const SSR_SECRET = process.env.SSR_SECRET || ''
@@ -172,7 +172,7 @@ export default async function HomePage({
       if (state[k]) ps.set(k, state[k])
     }
     const str = ps.toString()
-    return str ? `/?${str}#resultats` : '/#resultats'
+    return str ? `/?${str}#resultats` : '/'
   }
 
   const hasFiltre = q || categorie || prixMin || prixMax || etat || sousType
@@ -266,7 +266,7 @@ export default async function HomePage({
             return (
               <Link
                 key={c.slug}
-                href={isSelected ? '/#resultats' : `/?categorie=${c.slug}#resultats`}
+                href={isSelected ? '/' : `/?categorie=${c.slug}#resultats`}
                 prefetch={false}
                 aria-label={`Filtrer par catégorie ${c.label}`}
                 style={{
@@ -319,8 +319,8 @@ export default async function HomePage({
                 </div>
               </div>
 
-              <Link
-                href="/#resultats"
+              <a
+                href="/"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ffffff', color: '#dc2626',
                   border: '1px solid #fca5a5', padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 800,
@@ -329,7 +329,7 @@ export default async function HomePage({
               >
                 <span>Réinitialiser les filtres</span>
                 <X size={14} />
-              </Link>
+              </a>
             </div>
           )}
 
@@ -378,9 +378,8 @@ export default async function HomePage({
               </div>
 
               {hasFiltre ? (
-                <Link
-                  href="/#resultats"
-                  prefetch={false}
+                <a
+                  href="/"
                   className="budget-pill hidden-mobile"
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4, color: '#ef4444', borderColor: '#fee2e2',
@@ -390,7 +389,7 @@ export default async function HomePage({
                 >
                   <X size={12} strokeWidth={2.5} />
                   <span>Réinitialiser</span>
-                </Link>
+                </a>
               ) : null}
             </div>
 
@@ -419,7 +418,7 @@ export default async function HomePage({
                 {tendances.map((item, idx) => (
                   <Link
                     key={`${item.q}-${idx}`}
-                    href={buildFilterUrl({ q: item.q })}
+                    href={`/?q=${encodeURIComponent(item.q)}#resultats`}
                     prefetch={false}
                     className="budget-pill hidden-mobile"
                     style={{ padding: '4px 10px', fontSize: 12, borderRadius: 14, whiteSpace: 'nowrap', flexShrink: 0 }}
@@ -444,6 +443,7 @@ export default async function HomePage({
             etat={etat}
             tri={tri}
             sousType={sousType}
+            erreur={erreur}
           />
 
           {/* PRODUITS RÉCEMMENT CONSULTÉS */}

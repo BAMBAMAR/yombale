@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { fcfa } from '@/lib/format'
 import CardActions from './CardActions'
 import ExternalImg from '@/components/ExternalImg'
-import { Loader2, ChevronDown, ShoppingBag } from 'lucide-react'
+import { Loader2, ChevronDown, ShoppingBag, RotateCw } from 'lucide-react'
 
 interface Produit {
   id: number
@@ -30,19 +30,87 @@ interface Props {
   etat?: string
   tri: string
   sousType?: string
+  erreur?: string | null
 }
 
-export default function ProduitsListe({ initialProduits, total, q, categorie, prixMin = '', prixMax, etat = '', tri, sousType = '' }: Props) {
+export default function ProduitsListe({
+  initialProduits,
+  total,
+  q,
+  categorie,
+  prixMin = '',
+  prixMax,
+  etat = '',
+  tri,
+  sousType = '',
+  erreur = null
+}: Props) {
   const [produits, setProduits] = useState<Produit[]>(initialProduits)
+  const [currentTotal, setCurrentTotal] = useState<number>(total)
   const [loading, setLoading]   = useState(false)
   const [page, setPage]         = useState(1)
 
+  const hasFiltre = Boolean(q || categorie || prixMin || prixMax || etat || sousType)
+
   useEffect(() => {
     setProduits(initialProduits)
+    setCurrentTotal(total)
     setPage(1)
-  }, [initialProduits])
 
-  const restants = total - produits.length
+    // Rattrapage automatique côté client si le serveur a renvoyé 0 produits (ex: timeout SSR ou latence Render)
+    if (initialProduits.length === 0) {
+      let isMounted = true
+      setLoading(true)
+      const params = new URLSearchParams({ limit: '24', page: '1' })
+      if (q)         params.set('q',         q)
+      if (categorie) params.set('categorie', categorie)
+      if (prixMin)   params.set('prixMin',   prixMin)
+      if (prixMax)   params.set('prixMax',   prixMax)
+      if (etat)      params.set('etat',      etat)
+      if (tri)       params.set('tri',       tri)
+      if (sousType)  params.set('sousType',  sousType)
+
+      fetch(`/api/produits?${params}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!isMounted) return
+          const prods = data.produits ?? data.data ?? []
+          if (prods.length > 0) {
+            setProduits(prods)
+            setCurrentTotal(data.total ?? prods.length)
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (isMounted) setLoading(false)
+        })
+      return () => { isMounted = false }
+    }
+  }, [initialProduits, total, q, categorie, prixMin, prixMax, etat, tri, sousType, erreur])
+
+  async function recharger() {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ limit: '24', page: '1' })
+      if (q)         params.set('q',         q)
+      if (categorie) params.set('categorie', categorie)
+      if (prixMin)   params.set('prixMin',   prixMin)
+      if (prixMax)   params.set('prixMax',   prixMax)
+      if (etat)      params.set('etat',      etat)
+      if (tri)       params.set('tri',       tri)
+      if (sousType)  params.set('sousType',  sousType)
+
+      const r = await fetch(`/api/produits?${params}`)
+      const data = await r.json()
+      const prods = data.produits ?? data.data ?? []
+      setProduits(prods)
+      setCurrentTotal(data.total ?? prods.length)
+      setPage(1)
+    } catch { /* silently fail */ }
+    finally { setLoading(false) }
+  }
+
+  const restants = currentTotal - produits.length
 
   async function voirPlus() {
     setLoading(true)
@@ -61,6 +129,7 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
       const data = await r.json()
       const next: Produit[] = data.produits ?? data.data ?? []
       setProduits(prev => [...prev, ...next])
+      if (data.total != null) setCurrentTotal(data.total)
       setPage(nextPage)
     } catch { /* silently fail */ }
     finally { setLoading(false) }
@@ -68,9 +137,9 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
 
   return (
     <>
-      {total > 0 && (
+      {currentTotal > 0 && (
         <p className="resultats-count">
-          {total.toLocaleString('fr-SN')} résultat{total > 1 ? 's' : ''}
+          {currentTotal.toLocaleString('fr-SN')} résultat{currentTotal > 1 ? 's' : ''}
         </p>
       )}
 
@@ -117,14 +186,29 @@ export default function ProduitsListe({ initialProduits, total, q, categorie, pr
             <ShoppingBag size={28} />
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--navy)', margin: '0 0 8px' }}>
-            Aucun produit ne correspond à vos critères
+            {hasFiltre ? 'Aucun produit ne correspond à vos critères' : 'Catalogue en cours d\u2019actualisation'}
           </h3>
           <p style={{ fontSize: 14, color: 'var(--text-subtle)', maxWidth: 460, margin: '0 auto 20px', lineHeight: 1.5 }}>
-            Essayez d&apos;élargir votre recherche, de réinitialiser vos filtres ou de consulter nos catégories populaires.
+            {hasFiltre
+              ? "Essayez d'élargir votre recherche, de réinitialiser vos filtres ou de consulter nos catégories populaires."
+              : "Les offres se synchronisent avec nos marchands partenaires. Cliquez sur Réessayer pour afficher les produits."}
           </p>
-          <Link href="/" className="btn-npl btn-npl-secondary btn-npl-md" style={{ display: 'inline-flex' }}>
-            <span>Voir tout le catalogue</span>
-          </Link>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <a href="/" className="btn-npl btn-npl-secondary btn-npl-md" style={{ display: 'inline-flex' }}>
+              <span>Voir tout le catalogue</span>
+            </a>
+            {!hasFiltre && (
+              <button
+                type="button"
+                onClick={recharger}
+                className="btn-npl btn-npl-primary btn-npl-md"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <RotateCw size={15} />
+                <span>Réessayer</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 

@@ -14,7 +14,7 @@ export default function SearchBar({ defaultValue = '' }: { defaultValue?: string
         if (q.trim()) {
           router.push(`/?q=${encodeURIComponent(q)}#resultats`)
         } else {
-          router.push(`/#resultats`)
+          router.push(`/`)
         }
       }}
     >
