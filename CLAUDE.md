@@ -1,3 +1,34 @@
+- **Audit Exhaustif de la Qualité des Données, Fiabilisation des Métriques & Rapprochement Comptable de l'Administration Nopalou (18 septembre 2026)** 📊🔍⚖️🛡️✅ :
+  * **🚨 1. Contexte & Enjeux Métrologiques** :
+    - Mission de certification de la vérité terrain de toutes les statistiques affichées dans la console d'administration Nopalou.
+    - Élimination des divergences entre les tables PostgreSQL (`nopalou_db`) et les indicateurs des dashboards administratifs (POS, Commandes, Abonnements, WhatsApp, Immobilier, Omnisearch).
+  * **🛠️ 2. Correctifs & Réconciliations de Données Appliqués** :
+    - **Omnisearch Administrateur Réparé à 100% (`backend/routes/admin-search.js`)** :
+      * Correction des noms de colonnes erronés sur 4 domaines qui échouaient silencieusement (`boutique_produits`, `agences_immo`, `biens_immo`, `caisse_clients_credits`).
+      * Résultat validé : 9/9 domaines opérationnels avec 0 erreur SQL.
+    - **Réconciliation des Ventes Caisses POS (`backend/routes/admin-pos.js`)** :
+      * Correction du mapping des modes de paiement : prise en compte de `'especes'` en plus de `'cash'` (+28 250 357 FCFA rattachés) et d'`'orange_money'` en plus d'`'orange'` (+119 200 FCFA rattachés).
+      * Intégration de `volume_carte`, `volume_credit`, `volume_mixte`, `volume_cheque`.
+      * Équation de conciliation exacte : 28 715 257 (espèces) + 2 519 900 (Wave) + 119 200 (OM) + 808 596 (autres) = 32 162 953 FCFA.
+    - **Fiabilisation du MRR & Nettoyage des Abonnements Expirés (`backend/routes/admin-paiements.js` & `backend/scripts/maintenance-reconcilier-donnees.js`)** :
+      * Passage de 15 abonnements expirés (`fin < NOW()`) de `'actif'` à `'expire'`.
+      * Ajout du garde-fou SQL `AND fin > NOW()` dans les calculs de MRR et de forfaits actifs.
+      * Chiffre certifié : 43 abonnements actifs pour un MRR exact de 225 000 FCFA.
+    - **Épuration des Boutiques Orphelines (`backend/routes/admin-dashboard.js`)** :
+      * Désactivation de 5 boutiques de test sans propriétaire (`actif = false`).
+      * Sécurisation de la clause SQL : `WHERE actif = TRUE AND utilisateur_id IN (SELECT id FROM utilisateurs)`.
+      * Chiffre certifié : 53 boutiques réelles en exploitation.
+    - **Métrologie WhatsApp & Chatbot Temps Réel (`backend/routes/admin-dashboard.js`)** :
+      * Distinction entre sessions actives récentes (`WHERE updated_at > NOW() - INTERVAL '1 hour'`) et le cumul historique (313 sessions au total, 126 messages traités sur les 30 derniers jours).
+    - **Distinction Comptable & Clarification E-Commerce (`frontend-next/src/app/admin/(protected)/revenus/page.tsx` & `AdminDashboardClient.tsx`)** :
+      * Séparation étanche entre les Revenus Directs Nopalou (Monétisation SaaS) et le GMV Réseau Marchand (Ventes boutiques/caisses).
+      * Clarification des volumes de commandes : brut (10 148 976 FCFA) vs net (7 788 152 FCFA) avec mention transparente des commandes annulées (2 360 824 FCFA).
+      * Bilan d'hygiène UI : 100% icônes Lucide SVG, éradication des émojis d'interface.
+  * **🧪 3. Validation Technique** :
+    - Build de production Next.js (`npm run build`) : **Succès intégral (0 erreur)**.
+    - Scripts de diagnostic SQL & Omnisearch : **100% de conformité sur l'ensemble des 9 domaines**.
+    - Règle de déploiement : Code testé localement, aucun `git push` sans instruction explicite de l'utilisateur.
+
 - **Refonte et Enrichissement du Réseau Agences Immobilières & Comptes Pro (`/admin/immo/agences`) (18 septembre 2026)** 🏢⚡🛡️✨✅ :
   * **🚨 1. Contexte & Problématique** :
     - L'annuaire d'administration des agences immobilières (`/admin/immo/agences`) souffrait d'un bug bloquant HTTP 400 sur le bouton d'action Activer / Suspendre, et manquait cruellement des fonctionnalités avancées offertes par `/admin/boutiques` (filtres avancés, actions par lot, relance WhatsApp, raccourcis vitrine et espace pro).

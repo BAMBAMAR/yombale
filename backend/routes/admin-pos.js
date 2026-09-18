@@ -22,9 +22,14 @@ router.get('/stats', async (req, res) => {
         SELECT
           COUNT(*) AS total_tickets,
           COALESCE(SUM(montant_total), 0) AS volume_pos_total,
-          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'cash'), 0) AS volume_especes,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement IN ('cash', 'especes')), 0) AS volume_especes,
           COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'wave'), 0) AS volume_wave,
-          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'orange'), 0) AS volume_om,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement IN ('orange', 'orange_money')), 0) AS volume_om,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'carte'), 0) AS volume_carte,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'credit'), 0) AS volume_credit,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'mixte'), 0) AS volume_mixte,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'cheque'), 0) AS volume_cheque,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement NOT IN ('cash', 'especes', 'wave', 'orange', 'orange_money', 'carte', 'credit', 'mixte', 'cheque')), 0) AS volume_autres,
           COUNT(DISTINCT boutique_id) AS boutiques_pos_actives
         FROM ventes v
         WHERE v.archivee IS NOT TRUE AND ${dateFilter}
@@ -53,6 +58,11 @@ router.get('/stats', async (req, res) => {
           volumeEspeces: Number(statsVentes.rows[0]?.volume_especes || 0),
           volumeWave: Number(statsVentes.rows[0]?.volume_wave || 0),
           volumeOrange: Number(statsVentes.rows[0]?.volume_om || 0),
+          volumeCarte: Number(statsVentes.rows[0]?.volume_carte || 0),
+          volumeCredit: Number(statsVentes.rows[0]?.volume_credit || 0),
+          volumeMixte: Number(statsVentes.rows[0]?.volume_mixte || 0),
+          volumeCheque: Number(statsVentes.rows[0]?.volume_cheque || 0),
+          volumeAutres: Number(statsVentes.rows[0]?.volume_autres || 0),
           boutiquesActives: parseInt(statsVentes.rows[0]?.boutiques_pos_actives || 0, 10),
         },
         sessions: {

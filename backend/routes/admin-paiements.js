@@ -19,9 +19,10 @@ router.get('/stats', async (req, res) => {
     const [pmRes, abmtRes, ventesRes] = await Promise.all([
       pool.query(`
         SELECT
-          COUNT(*) AS total_manuels,
+          COUNT(*) AS total_manuels_historique,
+          COUNT(*) FILTER (WHERE ${dateFilter}) AS total_manuels,
           COUNT(*) FILTER (WHERE statut = 'en_attente') AS manuels_en_attente,
-          COUNT(*) FILTER (WHERE statut = 'valide') AS manuels_valides,
+          COUNT(*) FILTER (WHERE statut = 'valide' AND ${dateFilter}) AS manuels_valides,
           COALESCE(SUM(montant) FILTER (WHERE statut = 'valide' AND ${dateFilter}), 0) AS montant_valide
         FROM paiements_manuels
       `),
@@ -30,13 +31,14 @@ router.get('/stats', async (req, res) => {
           COUNT(*) AS abonnements_payes_periode,
           COALESCE(SUM(prix_mensuel), 0) AS ca_abonnements_periode
         FROM abonnements
-        WHERE statut = 'actif' AND ${dateFilter}
+        WHERE statut = 'actif' AND fin > NOW() AND ${dateFilter}
       `),
       pool.query(`
         SELECT
           COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'wave'), 0) AS total_wave,
-          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'orange'), 0) AS total_orange,
-          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement = 'cash'), 0) AS total_cash
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement IN ('orange', 'orange_money')), 0) AS total_orange,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement IN ('cash', 'especes')), 0) AS total_cash,
+          COALESCE(SUM(montant_total) FILTER (WHERE methode_paiement NOT IN ('wave', 'orange', 'orange_money', 'cash', 'especes')), 0) AS total_autres
         FROM ventes
         WHERE archivee IS NOT TRUE AND ${dateFilter}
       `),

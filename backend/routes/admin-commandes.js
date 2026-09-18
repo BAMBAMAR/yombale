@@ -54,11 +54,16 @@ router.get('/', adminSecretOnly, async (req, res) => {
       SELECT
         COUNT(*) AS total,
         COUNT(*) FILTER (WHERE statut = 'en_attente') AS en_attente,
+        COUNT(*) FILTER (WHERE statut = 'en_preparation') AS en_preparation,
         COUNT(*) FILTER (WHERE statut = 'confirmee') AS confirmee,
         COUNT(*) FILTER (WHERE statut = 'expediee') AS expediee,
         COUNT(*) FILTER (WHERE statut = 'livree') AS livree,
         COUNT(*) FILTER (WHERE statut = 'annulee') AS annulee,
-        COALESCE(SUM(montant_total), 0) AS volume_total
+        COALESCE(SUM(montant_total) FILTER (WHERE statut != 'annulee'), 0) AS volume_total,
+        COALESCE(SUM(montant_total) FILTER (WHERE statut != 'annulee'), 0) AS volume_total_net,
+        COALESCE(SUM(montant_total), 0) AS volume_total_brut,
+        COALESCE(SUM(montant_total) FILTER (WHERE statut = 'livree'), 0) AS volume_total_livre,
+        COALESCE(SUM(montant_total) FILTER (WHERE statut = 'annulee'), 0) AS volume_total_annule
       FROM commandes_boutique
     `);
 
@@ -110,7 +115,7 @@ router.put('/:id/statut', adminSecretOnly, async (req, res) => {
   try {
     const { id } = req.params;
     const { statut } = req.body;
-    const valid = ['en_attente', 'confirmee', 'expediee', 'livree', 'annulee'];
+    const valid = ['en_attente', 'en_preparation', 'confirmee', 'expediee', 'livree', 'annulee'];
     if (!valid.includes(statut)) {
       return res.status(400).json({ error: 'Statut invalide' });
     }

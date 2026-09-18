@@ -65,7 +65,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       pool.query(`
         SELECT
           COUNT(*) AS total_boutiques,
-          COUNT(*) FILTER (WHERE actif = TRUE) AS boutiques_actives,
+          COUNT(*) FILTER (WHERE actif = TRUE AND (SELECT 1 FROM utilisateurs u WHERE u.id = boutiques.utilisateur_id) IS NOT NULL) AS boutiques_actives,
           COUNT(*) FILTER (WHERE ${dateFilterSql}) AS nouvelles_boutiques_periode,
           COUNT(*) FILTER (WHERE sponsorise = TRUE AND (sponsor_jusqu_au IS NULL OR sponsor_jusqu_au > NOW())) AS boutiques_sponsorisees,
           COUNT(*) FILTER (WHERE (SELECT COUNT(*) FROM boutique_produits WHERE boutique_id = boutiques.id) = 0) AS boutiques_zero_produit
@@ -80,13 +80,16 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
           COUNT(*) AS total_commandes,
           COUNT(*) FILTER (WHERE statut != 'annulee') AS commandes_actives,
           COALESCE(SUM(montant_total) FILTER (WHERE statut != 'annulee'), 0) AS volume_commandes,
+          COALESCE(SUM(montant_total), 0) AS volume_commandes_brut,
           COALESCE(SUM(montant_total) FILTER (WHERE statut = 'annulee'), 0) AS volume_annule,
           COUNT(*) FILTER (WHERE statut = 'en_attente') AS commandes_en_attente,
+          COUNT(*) FILTER (WHERE statut = 'en_preparation') AS commandes_en_preparation,
+          COUNT(*) FILTER (WHERE statut = 'confirmee') AS commandes_confirmees,
           COUNT(*) FILTER (WHERE statut = 'livree') AS commandes_livrees,
           COUNT(*) FILTER (WHERE statut = 'annulee') AS commandes_annulees
         FROM commandes_boutique
         WHERE ${dateFilterSql}
-      `).catch(() => ({ rows: [{ total_commandes: 0, commandes_actives: 0, volume_commandes: 0, volume_annule: 0, commandes_en_attente: 0, commandes_livrees: 0, commandes_annulees: 0 }] })),
+      `).catch(() => ({ rows: [{ total_commandes: 0, commandes_actives: 0, volume_commandes: 0, volume_commandes_brut: 0, volume_annule: 0, commandes_en_attente: 0, commandes_livrees: 0, commandes_annulees: 0 }] })),
       pool.query(`
         SELECT
           (SELECT COUNT(*)::int FROM produits) AS produits_scrapes,
@@ -103,22 +106,24 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       `).catch(() => ({ rows: [{ total_annonces: 0, annonces_actives: 0, annonces_en_attente: 0 }] })),
       pool.query(`
         SELECT
-          COUNT(*) AS total_immo,
-          COUNT(*) FILTER (WHERE actif = TRUE AND supprimee = FALSE) AS immo_actives,
-          COUNT(*) FILTER (WHERE actif = FALSE AND supprimee = FALSE AND COALESCE(rejete, FALSE) = FALSE) AS immo_en_attente,
-          COUNT(*) FILTER (WHERE COALESCE(demande_sponsorisation, FALSE) = TRUE) AS immo_demandes_sponsoring
-        FROM annonces_immo
-      `).catch(() => ({ rows: [{ total_immo: 0, immo_actives: 0, immo_en_attente: 0 }] })),
+          (SELECT COUNT(*)::int FROM annonces_immo) AS total_immo,
+          (SELECT COUNT(*)::int FROM annonces_immo WHERE actif = TRUE AND supprimee = FALSE) AS immo_actives,
+          (SELECT COUNT(*)::int FROM annonces_immo WHERE actif = FALSE AND supprimee = FALSE AND COALESCE(rejete, FALSE) = FALSE) AS immo_en_attente,
+          (SELECT COUNT(*)::int FROM annonces_immo WHERE COALESCE(demande_sponsorisation, FALSE) = TRUE) AS immo_demandes_sponsoring,
+          (SELECT COUNT(*)::int FROM agences_immo WHERE statut = 'actif') AS agences_actives,
+          (SELECT COUNT(*)::int FROM baux_immo WHERE statut = 'actif') AS baux_actifs
+      `).catch(() => ({ rows: [{ total_immo: 0, immo_actives: 0, immo_en_attente: 0, agences_actives: 0, baux_actifs: 0 }] })),
     ]);
 
     // 4. Outreach, WhatsApp & Support
     const [whatsappRes, prospectionRes, supportRes, partenairesRes] = await Promise.all([
       pool.query(`
         SELECT
-          (SELECT COUNT(*)::int FROM whatsapp_sessions) AS sessions_chatbot_actives,
+          (SELECT COUNT(*)::int FROM whatsapp_sessions WHERE updated_at > NOW() - INTERVAL '1 hour') AS sessions_chatbot_actives,
+          (SELECT COUNT(*)::int FROM whatsapp_sessions) AS sessions_chatbot_total,
           (SELECT COUNT(*)::int FROM whatsapp_processed_messages WHERE ${dateFilterProcessedAt}) AS messages_traites_periode,
           (SELECT COUNT(*)::int FROM whatsapp_blacklist) AS optouts_whatsapp
-      `).catch(() => ({ rows: [{ sessions_chatbot_actives: 0, messages_traites_periode: 0, optouts_whatsapp: 0 }] })),
+      `).catch(() => ({ rows: [{ sessions_chatbot_actives: 0, sessions_chatbot_total: 0, messages_traites_periode: 0, optouts_whatsapp: 0 }] })),
       pool.query(`
         SELECT
           (SELECT COUNT(*)::int FROM prospection_leads) AS total_leads,
@@ -182,8 +187,11 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
         total: parseInt(commandesRes.rows[0]?.total_commandes || 0),
         actives: parseInt(commandesRes.rows[0]?.commandes_actives || 0),
         volume: Number(commandesRes.rows[0]?.volume_commandes || 0),
+        volume_brut: Number(commandesRes.rows[0]?.volume_commandes_brut || 0),
         volume_annule: Number(commandesRes.rows[0]?.volume_annule || 0),
         en_attente: parseInt(commandesRes.rows[0]?.commandes_en_attente || 0),
+        en_preparation: parseInt(commandesRes.rows[0]?.commandes_en_preparation || 0),
+        confirmees: parseInt(commandesRes.rows[0]?.commandes_confirmees || 0),
         livrees: parseInt(commandesRes.rows[0]?.commandes_livrees || 0),
         annulees: parseInt(commandesRes.rows[0]?.commandes_annulees || 0),
       },
@@ -195,9 +203,12 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
         annonces_actives: parseInt(annoncesRes.rows[0]?.annonces_actives || 0),
         immo_total: parseInt(immoRes.rows[0]?.total_immo || 0),
         immo_actives: parseInt(immoRes.rows[0]?.immo_actives || 0),
+        agences_actives: parseInt(immoRes.rows[0]?.agences_actives || 0),
+        baux_actifs: parseInt(immoRes.rows[0]?.baux_actifs || 0),
       },
       whatsapp: {
         sessions_chatbot_actives: parseInt(whatsappRes.rows[0]?.sessions_chatbot_actives || 0),
+        sessions_chatbot_total: parseInt(whatsappRes.rows[0]?.sessions_chatbot_total || 0),
         messages_traites_periode: parseInt(whatsappRes.rows[0]?.messages_traites_periode || 0),
         optouts: parseInt(whatsappRes.rows[0]?.optouts_whatsapp || 0),
         leads_total: parseInt(prospectionRes.rows[0]?.total_leads || 0),

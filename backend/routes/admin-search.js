@@ -85,42 +85,54 @@ router.get('/', adminSecretOnly, async (req, res) => {
 
       // 6. Produits marchands & POS
       pool.query(`
-        SELECT bp.id, bp.nom, bp.reference, bp.code_barres, bp.prix, bp.stock, bp.actif, bp.boutique_id, b.nom AS boutique_nom
+        SELECT bp.id, bp.nom, bp.slug, bp.code_barre, bp.prix, bp.stock_quantite, bp.en_stock, bp.boutique_id, b.nom AS boutique_nom
         FROM boutique_produits bp
         LEFT JOIN boutiques b ON b.id = bp.boutique_id
-        WHERE bp.nom ILIKE $1 OR bp.reference ILIKE $1 OR bp.code_barres ILIKE $1
+        WHERE bp.nom ILIKE $1 OR bp.slug ILIKE $1 OR (bp.code_barre IS NOT NULL AND bp.code_barre ILIKE $1)
         ORDER BY bp.created_at DESC
         LIMIT 6
-      `, [term]).catch(() => ({ rows: [] })),
+      `, [term]).catch((err) => {
+        console.warn('[ADMIN_SEARCH bp WARN]:', err.message);
+        return { rows: [] };
+      }),
 
       // 7. Agences immobilières
       pool.query(`
-        SELECT id, nom, slug, telephone, email, ville, statut, plan_abonnement
+        SELECT id, nom, slug, telephone, email_contact, ville, statut, abonnement_plan
         FROM agences_immo
-        WHERE nom ILIKE $1 OR slug ILIKE $1 OR telephone ILIKE $1 OR email ILIKE $1
+        WHERE nom ILIKE $1 OR slug ILIKE $1 OR telephone ILIKE $1 OR (email_contact IS NOT NULL AND email_contact ILIKE $1)
         ORDER BY created_at DESC
         LIMIT 6
-      `, [term]).catch(() => ({ rows: [] })),
+      `, [term]).catch((err) => {
+        console.warn('[ADMIN_SEARCH agences WARN]:', err.message);
+        return { rows: [] };
+      }),
 
       // 8. Biens immobiliers
       pool.query(`
-        SELECT bi.id, bi.titre, bi.reference, bi.ville, bi.type_bien, bi.statut, bi.loyer_mensuel, bi.prix_vente, a.nom AS agence_nom
+        SELECT bi.id, bi.titre, bi.reference, bi.ville, bi.type_bien, bi.statut_occupation, bi.prix_location, bi.prix_vente, a.nom AS agence_nom
         FROM biens_immo bi
         LEFT JOIN agences_immo a ON a.id = bi.agence_id
-        WHERE bi.titre ILIKE $1 OR bi.reference ILIKE $1 OR bi.ville ILIKE $1
+        WHERE bi.titre ILIKE $1 OR (bi.reference IS NOT NULL AND bi.reference ILIKE $1) OR bi.ville ILIKE $1
         ORDER BY bi.created_at DESC
         LIMIT 6
-      `, [term]).catch(() => ({ rows: [] })),
+      `, [term]).catch((err) => {
+        console.warn('[ADMIN_SEARCH biens WARN]:', err.message);
+        return { rows: [] };
+      }),
 
       // 9. Carnet de dettes / Débiteurs
       pool.query(`
-        SELECT c.id, c.nom, c.telephone, c.total_dette, c.limite_credit, b.nom AS boutique_nom
+        SELECT c.id, c.nom, c.telephone, c.solde, c.plafond_max, b.nom AS boutique_nom
         FROM caisse_clients_credits c
         LEFT JOIN boutiques b ON b.id = c.boutique_id
         WHERE c.nom ILIKE $1 OR c.telephone ILIKE $1
-        ORDER BY c.total_dette DESC
+        ORDER BY c.solde DESC
         LIMIT 6
-      `, [term]).catch(() => ({ rows: [] })),
+      `, [term]).catch((err) => {
+        console.warn('[ADMIN_SEARCH credits WARN]:', err.message);
+        return { rows: [] };
+      }),
     ]);
 
     const totalResults =

@@ -42,8 +42,11 @@ interface DashboardStats {
     total: number
     actives?: number
     volume: number
+    volume_brut?: number
     volume_annule?: number
     en_attente: number
+    en_preparation?: number
+    confirmees?: number
     livrees: number
     annulees?: number
   }
@@ -55,9 +58,12 @@ interface DashboardStats {
     annonces_actives: number
     immo_total: number
     immo_actives: number
+    agences_actives?: number
+    baux_actifs?: number
   }
   whatsapp: {
     sessions_chatbot_actives: number
+    sessions_chatbot_total?: number
     messages_traites_periode: number
     optouts: number
     leads_total: number
@@ -446,7 +452,7 @@ export default function AdminDashboardClient({
 
       {/* BLOC 3 : CATALOGUE & ACTIVITÉ */}
       <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1e293b', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Package size={18} color="#9333ea" /> Produits, Annonces & WhatsApp
+        <Package size={18} color="#9333ea" /> Produits, Annonces, Immo &amp; WhatsApp
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
         <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0' }}>
@@ -470,7 +476,7 @@ export default function AdminDashboardClient({
         </div>
 
         <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0' }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Annonces Classifiées & Immo</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Annonces Classifiées &amp; Immo</span>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#1e293b', marginTop: 4 }}>
             {(catalogue?.annonces_actives || 0) + (catalogue?.immo_actives || 0)}
           </div>
@@ -480,12 +486,32 @@ export default function AdminDashboardClient({
         </div>
 
         <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0' }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>CRM Leads & Prospection</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Agences &amp; Baux Immo</span>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#6d28d9', marginTop: 4 }}>
+            {catalogue?.agences_actives || 0}
+          </div>
+          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+            {catalogue?.baux_actifs || 0} bail/baux sous gestion
+          </div>
+        </div>
+
+        <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>CRM Leads Prospection</span>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#16a34a', marginTop: 4 }}>
             {whatsapp?.leads_total || 0}
           </div>
           <div style={{ fontSize: 12, color: '#15803d', marginTop: 4, fontWeight: 600 }}>
             {whatsapp?.leads_convertis || 0} commerçants convertis
+          </div>
+        </div>
+
+        <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>Chatbot WhatsApp</span>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#0284c7', marginTop: 4 }}>
+            {whatsapp?.sessions_chatbot_actives || 0} <span style={{ fontSize: 13, fontWeight: 500, color: '#64748b' }}>actives (&lt; 1h)</span>
+          </div>
+          <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+            {whatsapp?.sessions_chatbot_total || 0} sessions au total · {whatsapp?.messages_traites_periode || 0} msgs
           </div>
         </div>
       </div>
