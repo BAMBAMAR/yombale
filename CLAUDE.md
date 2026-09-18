@@ -1,3 +1,22 @@
+- **Mise à Niveau Multidomaine & Résolution Intégrale des Erreurs 404 du Chatbot Nopalou (18 septembre 2026)** 🤖🛒🏠📦🛡️✨✅ :
+  * **🛑 1. Éradication Définitive des Erreurs 404 sur les Boutons & Cartes du Chatbot** :
+    - Élimination du fallback erroné `'boutique'` (`/boutiques/boutique/produits/...`) dans `backend/routes/chat.js` et le comparateur de prix multi-marchands.
+    - Ajout de `p.boutique_id::text AS boutique_id` dans `searchContentIlike` (`backend/services/whatsapp-chatbot.js`).
+    - Matrice de résolution d'URLs ultra-sécurisée : utilisation du slug de boutique, repli sur l'UUID `boutique_id`, et repli final sur la fiche produit marketplace canonique `/produit/:id`. Zéro URL orpheline ou brisée possible.
+  * **🏢 2. Recherches Spécialisées Multidomaines (Immobilier, Boutiques, Agences, POS & CRM)** :
+    - `searchImmoIlike(rawText)` : Extraction intelligente de la typologie (villa, appartement, studio, terrain, bureau, duplex), de la transaction (location / vente) et du secteur géographique (Almadies, Ngor, Mermoz, Plateau, etc.), avec association directe de l'agence détentrice du mandat et des boutons contextuels ("Voir l'annonce" + "Contacter l'agence").
+    - `searchBoutiquesIlike(query)` : Détection des intentions boutiques et magasins avec carte de visite certifiée et bouton "Visiter la boutique".
+    - `searchAgencesIlike(query)` : Détection des intentions agences immobilières et courtiers avec vitrine publique et bouton "Voir la vitrine".
+    - Base FAQ enrichie pour la caisse tactile POS (`/boutique/caisse`), le CRM locatif (`/agences`), le suivi de commande en direct (`/suivi-commande`) et les agences partenaires.
+  * **🎨 3. Cartes d'Interface Structurées & UX Anti-Slop (`ChatbotMessageItem.tsx`, `ChatbotWidget.tsx`, `chat-widget.css`)** :
+    - Nouveaux conteneurs de cartes `.npl-chat-card-box` avec badges contextuels (`Boutique`, `Location`, `Vente`, `Agence`) et boutons d'action explicites (`.npl-chat-card-btn-primary`, `.npl-chat-card-btn-secondary`).
+    - Correction des chips d'accueil : remplacement du lien non supporté `/immo?q=Almadies` par une requête conversationnelle ciblée ("Location appartement Almadies") et du lien d'administration privé `/agence` par l'annuaire public `/agences`.
+    - Respect absolu des règles Anti-AI-Slop : 0 émoji dans l'interface, 100% icônes vectorielles SVG `lucide-react`, utilisation exclusive des tokens officiels Nopalou (`--navy`, `--accent`, `--price`, `--bg`, `--border`), composants sous le seuil des 450 lignes.
+  * **🧪 4. Contrôle Qualité & Non-Régression** :
+    - `npx tsc --noEmit` : 0 erreur de compilation TypeScript.
+    - `node --check backend/routes/chat.js` & `node --check backend/services/whatsapp-chatbot.js` : validés avec succès.
+    - Tests d'assertions de routage : 100% de concordance des URLs générées avec les pages actives du site.
+
 - **Correction CSS & Déballage des Données de l'Audit Qualité CRM (`ProspectionAuditCard.tsx`) (18 septembre 2026)** 🎨🛡️✨✅ :
   * **🎨 1. Remplacement Intégral des Classes Tailwind par les Styles Natifs Nopalou** :
     - `ProspectionAuditCard.tsx` utilisait des classes Tailwind CSS non déclarées (`grid-cols`, `flex`, `bg-white`, `rounded-xl`, etc.), causant un affichage brut sans style ni grille sur le tableau de bord prospection.

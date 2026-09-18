@@ -1364,7 +1364,8 @@ async function searchContentIlike(query) {
     const r = await pool.query(
       `(
         SELECT 'produit' AS type, p.id::text, p.nom AS titre, p.prix,
-               p.images[1] AS photo, b.slug AS boutique_slug, b.nom AS boutique_nom, NULL::text AS ville
+               p.images[1] AS photo, b.slug AS boutique_slug, b.nom AS boutique_nom,
+               NULL::text AS ville, p.boutique_id::text AS boutique_id
         FROM boutique_produits p
         JOIN boutiques b ON b.id = p.boutique_id
         WHERE p.nom ILIKE $1 OR COALESCE(p.description, '') ILIKE $1
@@ -1373,14 +1374,17 @@ async function searchContentIlike(query) {
       UNION ALL
       (
         SELECT 'marketplace' AS type, id::text, nom AS titre, prix_min AS prix,
-               image_url AS photo, NULL::text AS boutique_slug, NULL::text AS boutique_nom, NULL::text AS ville
+               image_url AS photo, NULL::text AS boutique_slug, NULL::text AS boutique_nom,
+               NULL::text AS ville, NULL::text AS boutique_id
         FROM produits
         WHERE nom ILIKE $1 OR COALESCE(description, '') ILIKE $1
         LIMIT 3
       )
       UNION ALL
       (
-        SELECT 'immo' AS type, id::text, titre, prix, (photos->>0) AS photo, NULL::text, NULL::text, ville
+        SELECT 'immo' AS type, id::text, titre, prix, (photos->>0) AS photo,
+               NULL::text AS boutique_slug, NULL::text AS boutique_nom,
+               ville, NULL::text AS boutique_id
         FROM annonces_immo
         WHERE actif=true AND jsonb_array_length(photos) > 0
           AND (titre ILIKE $1 OR COALESCE(description, '') ILIKE $1 OR ville ILIKE $1)

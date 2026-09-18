@@ -5,7 +5,6 @@ const { limiterRecherche } = require('../middlewares/rateLimit');
 const {
   corrigerRequeteFuzzy,
   searchContentIlike,
-  detecterIntentionInterrogative,
 } = require('../services/whatsapp-chatbot');
 const { detecterIntentionImmo } = require('../services/immo-chatbot');
 const {
@@ -40,20 +39,205 @@ const FAQ_WEB = [
     actionUrl: '/creer-boutique',
   },
   {
-    motsCles: ['immo', 'appartement', 'villa', 'location', 'agence immo', 'logement', 'studio', 'terrain', 'bail'],
-    titre: 'Immobilier & Logements',
-    reponse: 'Consultez des centaines d\'annonces de location et vente vérifiées avec loyers transparents, ou contactez directement les agences partenaires.',
-    actionLabel: 'Voir les biens immobiliers',
-    actionUrl: '/immo',
+    motsCles: ['caisse', 'pos', 'terminal', 'encaissement', 'code barre', 'scanner', 'point de vente'],
+    titre: 'Caisse Tactile & Point de Vente (POS)',
+    reponse: 'Nopalou intègre une caisse tactile complète pour les commerçants : gestion des stocks en temps réel, tickets de caisse, carnet de crédit client et encaissement multi-moyens (Wave, Orange Money, Espèces).',
+    actionLabel: 'Accéder à la caisse',
+    actionUrl: '/boutique/caisse',
   },
   {
-    motsCles: ['commande', 'suivi', 'colis', 'ou est ma commande', 'etat commande'],
-    titre: 'Suivi de Commande',
-    reponse: 'Pour suivre votre commande, saisissez votre référence de commande ou votre numéro de téléphone sur la page de suivi.',
+    motsCles: ['crm', 'gestion locative', 'locataire', 'bail', 'quittance', 'impaye', 'loyer'],
+    titre: 'Gestion Locative & CRM Immobilier',
+    reponse: 'Nopalou propose aux agences et gestionnaires un module de gestion locative complet : suivi des baux, édition de quittances, relances des impayés et CRM prospects.',
+    actionLabel: 'Découvrir les agences',
+    actionUrl: '/agences',
+  },
+  {
+    motsCles: ['commande', 'suivi', 'colis', 'ou est ma commande', 'etat commande', 'statut commande', 'livreur'],
+    titre: 'Suivi de Commande en Direct',
+    reponse: 'Pour suivre votre commande en direct, munissez-vous de votre référence de commande ou numéro de téléphone sur notre page dédiée au suivi.',
     actionLabel: 'Suivre ma commande',
     actionUrl: '/suivi-commande',
   },
+  {
+    motsCles: ['annuaire agence', 'agences partenaires', 'trouver une agence', 'liste des agences'],
+    titre: 'Annuaire des Agences Immobilières',
+    reponse: 'Retrouvez toutes les agences immobilières partenaires sur Nopalou : consultez leurs biens exclusifs, leurs équipes et contactez-les directement.',
+    actionLabel: 'Voir les agences',
+    actionUrl: '/agences',
+  },
 ];
+
+// ── Fonctions de recherche spécialisées ───────────────────────────────────────
+
+/**
+ * Recherche avancée de biens immobiliers avec extraction sémantique
+ */
+async function searchImmoIlike(rawText) {
+  if (!rawText || typeof rawText !== 'string') return [];
+  const t = rawText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const isVente = /\b(vendre|vente|achat|acheter)\b/i.test(t);
+  const isLocation = /\b(louer|location|bail|loyer)\b/i.test(t);
+  const transaction = isVente ? 'vente' : isLocation ? 'location' : null;
+
+  let typeBien = null;
+  if (/\bvillas?\b/i.test(t)) typeBien = 'villa';
+  else if (/\b(appartements?|apparts?)\b/i.test(t)) typeBien = 'appartement';
+  else if (/\bstudios?\b/i.test(t)) typeBien = 'studio';
+  else if (/\b(terrains?|parcelles?)\b/i.test(t)) typeBien = 'terrain';
+  else if (/\bbureaux?\b/i.test(t)) typeBien = 'bureau';
+  else if (/\bchambres?\b/i.test(t)) typeBien = 'chambre';
+  else if (/\bimmeubles?\b/i.test(t)) typeBien = 'immeuble';
+
+  const QUARTIERS = [
+    'almadies', 'ngor', 'ouakam', 'mermoz', 'fann', 'plateau', 'point e',
+    'yoff', 'nord foire', 'sud foire', 'sacre coeur', 'maristes', 'liberte',
+    'vdn', 'saly', 'somone', 'ngaparou', 'thies', 'dakar', 'guediawaye', 'pikine', 'rufisque'
+  ];
+  let quartier = null;
+  for (const q of QUARTIERS) {
+    if (t.includes(q)) {
+      quartier = q;
+      break;
+    }
+  }
+
+  let sql = `
+    SELECT ai.id::text, ai.titre, ai.prix, ai.ville, ai.quartier, ai.type_bien, ai.transaction,
+           ai.surface_m2, (ai.photos->>0) AS photo,
+           ag.nom AS agence_nom, ag.slug AS agence_slug, ag.id::text AS agence_id
+    FROM annonces_immo ai
+    LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
+    WHERE ai.actif = true AND ai.supprimee = false
+  `;
+  const params = [];
+  let pIdx = 1;
+
+  if (transaction) {
+    sql += ` AND ai.transaction = $${pIdx++}`;
+    params.push(transaction);
+  }
+  if (typeBien) {
+    sql += ` AND (LOWER(ai.type_bien) LIKE '%' || $${pIdx} || '%' OR ai.titre ILIKE '%' || $${pIdx} || '%')`;
+    params.push(typeBien);
+    pIdx++;
+  }
+  if (quartier) {
+    sql += ` AND (ai.quartier ILIKE '%' || $${pIdx} || '%' OR ai.ville ILIKE '%' || $${pIdx} || '%' OR ai.titre ILIKE '%' || $${pIdx} || '%')`;
+    params.push(quartier);
+    pIdx++;
+  }
+
+  if (!transaction && !typeBien && !quartier) {
+    sql += ` AND (ai.titre ILIKE '%' || $${pIdx} || '%' OR COALESCE(ai.description, '') ILIKE '%' || $${pIdx} || '%' OR COALESCE(ai.ville, '') ILIKE '%' || $${pIdx} || '%')`;
+    params.push(rawText.trim());
+    pIdx++;
+  }
+
+  sql += ` ORDER BY (ai.sponsorisee = true AND ai.sponsorisee_jusqu_au > NOW()) DESC, ai.created_at DESC LIMIT 4`;
+
+  try {
+    const res = await pool.query(sql, params);
+    return (res.rows || []).map((row) => ({
+      id: row.id,
+      titre: row.titre,
+      prix: row.prix,
+      photo: row.photo,
+      type: 'immo',
+      typeBien: row.type_bien,
+      transaction: row.transaction,
+      ville: [row.quartier, row.ville].filter(Boolean).join(', '),
+      agenceNom: row.agence_nom,
+      agenceSlug: row.agence_slug,
+      url: `/immo/${row.id}`,
+      actions: [
+        { label: "Voir l'annonce", url: `/immo/${row.id}`, variant: 'primary' },
+        row.agence_slug
+          ? { label: "Contacter l'agence", url: `/agences/${row.agence_slug}`, variant: 'secondary' }
+          : null,
+      ].filter(Boolean),
+    }));
+  } catch (err) {
+    console.warn('[SEARCH IMMO WARN]:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Recherche de boutiques partenaires
+ */
+async function searchBoutiquesIlike(query) {
+  if (!query || typeof query !== 'string') return [];
+  const qClean = `%${query.trim()}%`;
+  try {
+    const res = await pool.query(
+      `SELECT b.id::text, b.nom AS titre, b.slug, b.description, b.logo_url AS photo,
+              b.ville, b.categorie
+       FROM boutiques b
+       WHERE b.actif = true
+         AND (b.nom ILIKE $1 OR COALESCE(b.description, '') ILIKE $1 OR COALESCE(b.categorie, '') ILIKE $1 OR COALESCE(b.ville, '') ILIKE $1)
+       ORDER BY b.created_at DESC
+       LIMIT 3`,
+      [qClean]
+    );
+    return (res.rows || []).map((row) => {
+      const bRef = row.slug || row.id;
+      return {
+        id: row.id,
+        titre: row.titre,
+        photo: row.photo,
+        type: 'boutique',
+        ville: row.ville,
+        categorie: row.categorie,
+        url: `/boutiques/${bRef}`,
+        actions: [
+          { label: 'Visiter la boutique', url: `/boutiques/${bRef}`, variant: 'primary' },
+        ],
+      };
+    });
+  } catch (err) {
+    console.warn('[SEARCH BOUTIQUES WARN]:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Recherche d'agences immobilières partenaires
+ */
+async function searchAgencesIlike(query) {
+  if (!query || typeof query !== 'string') return [];
+  const qClean = `%${query.trim()}%`;
+  try {
+    const res = await pool.query(
+      `SELECT a.id::text, a.nom AS titre, a.slug, a.description, a.logo_url AS photo,
+              a.ville, a.quartier
+       FROM agences_immo a
+       WHERE a.statut = 'actif'
+         AND (a.nom ILIKE $1 OR COALESCE(a.description, '') ILIKE $1 OR COALESCE(a.ville, '') ILIKE $1 OR COALESCE(a.quartier, '') ILIKE $1)
+       ORDER BY a.created_at DESC
+       LIMIT 3`,
+      [qClean]
+    );
+    return (res.rows || []).map((row) => {
+      const aRef = row.slug || row.id;
+      return {
+        id: row.id,
+        titre: row.titre,
+        photo: row.photo,
+        type: 'agence',
+        ville: [row.quartier, row.ville].filter(Boolean).join(', '),
+        url: `/agences/${aRef}`,
+        actions: [
+          { label: 'Voir la vitrine', url: `/agences/${aRef}`, variant: 'primary' },
+        ],
+      };
+    });
+  } catch (err) {
+    console.warn('[SEARCH AGENCES WARN]:', err.message);
+    return [];
+  }
+}
 
 // ── POST /api/chat/message ────────────────────────────────────────────────────
 router.post('/message', limiterRecherche, async (req, res) => {
@@ -65,7 +249,7 @@ router.post('/message', limiterRecherche, async (req, res) => {
   const textLower = rawText.toLowerCase();
   const whatsappUrl = `https://wa.me/${WA_PHONE}?text=${encodeURIComponent(rawText)}`;
 
-  // 0. Détection Comparateur de Prix Multi-Marchands (Audit M5)
+  // 0. Détection Comparateur de Prix Multi-Marchands
   if (detecterIntentionComparateur(rawText)) {
     try {
       const sujet = extraireSujetComparaison(rawText) || rawText;
@@ -78,17 +262,27 @@ router.post('/message', limiterRecherche, async (req, res) => {
         return res.json({
           success: true,
           reply,
-          items: resComp.offres.map((it) => ({
-            id: it.id,
-            titre: it.nom,
-            prix: it.prix,
-            photo: Array.isArray(it.photos) ? it.photos[0] : it.photos,
-            type: it.source === 'boutique' ? 'produit' : 'marketplace',
-            boutiqueNom: it.boutique_nom,
-            url: it.source === 'boutique'
-              ? `/boutiques/${it.boutique_slug || 'boutique'}/produits/${it.id}`
-              : `/produit/${it.id}`,
-          })),
+          items: resComp.offres.map((it) => {
+            const bRef = it.boutique_slug || it.boutique_id;
+            const url = it.source === 'boutique' && bRef
+              ? `/boutiques/${bRef}/produits/${it.id}`
+              : `/produit/${it.id}`;
+            return {
+              id: it.id,
+              titre: it.nom,
+              prix: it.prix,
+              photo: Array.isArray(it.photos) ? it.photos[0] : it.photos,
+              type: it.source === 'boutique' ? 'produit' : 'marketplace',
+              boutiqueNom: it.boutique_nom,
+              url,
+              actions: [
+                { label: 'Voir le produit', url, variant: 'primary' },
+                it.source === 'boutique' && bRef
+                  ? { label: 'Voir la boutique', url: `/boutiques/${bRef}`, variant: 'secondary' }
+                  : null,
+              ].filter(Boolean),
+            };
+          }),
           chips: [
             { label: 'Comparer sur le site', url: `/recherche?q=${encodeURIComponent(sujet)}` },
             { label: 'Commander sur WhatsApp', url: whatsappUrl },
@@ -114,68 +308,123 @@ router.post('/message', limiterRecherche, async (req, res) => {
   // 2. Détection Intention Immobilière
   const isImmo = detecterIntentionImmo(rawText);
 
-  // 3. Correction orthographique automatique (Fuzzy matching)
-  const suggestionFuzzy = corrigerRequeteFuzzy(rawText);
-  const requeteRecherche = suggestionFuzzy || rawText;
+  // 3. Détection Intentions Spécifiques Boutique / Agence
+  const isBoutiqueQuery = /\b(boutiques?|magasins?|shops?|supermarches?|quincailleries?)\b/i.test(textLower);
+  const isAgenceQuery = /\b(agences?|courtiers?|cabinets?\s+immo)\b/i.test(textLower) && !isImmo;
 
-  // 4. Recherche de produits & boutiques correspondants
+  // 4. Exécution de la recherche selon l'intention
   let items = [];
-  try {
-    items = await searchContentIlike(requeteRecherche);
-  } catch (errSearch) {
-    console.warn('[CHAT API SEARCH WARN]:', errSearch.message);
-  }
-
-  // Construction de la réponse intelligente
   let reply = '';
   let chips = [];
+  let suggestionFuzzy = null;
 
   if (faqTrouvee) {
     reply = faqTrouvee.reponse;
     if (faqTrouvee.actionLabel && faqTrouvee.actionUrl) {
       chips.push({ label: faqTrouvee.actionLabel, url: faqTrouvee.actionUrl });
     }
+    chips.push({ label: 'Toutes les boutiques', url: '/boutiques' });
   } else if (isImmo) {
-    reply = `Voici les offres immobilières correspondant à votre recherche sur Nopalou :`;
-    chips.push(
-      { label: 'Toutes les offres immo', url: '/immo' },
-      { label: 'Espace Agences Pro', url: '/agence' }
-    );
-  } else if (items.length > 0) {
-    if (suggestionFuzzy && suggestionFuzzy.toLowerCase() !== rawText.toLowerCase()) {
-      reply = `Je n'ai pas trouvé de correspondance exacte pour "${rawText}", mais voici les résultats pour "${suggestionFuzzy}" :`;
+    items = await searchImmoIlike(rawText);
+    if (items.length > 0) {
+      reply = `Voici les offres immobilières correspondant à votre recherche sur Nopalou :`;
     } else {
-      reply = `Voici les meilleures offres trouvées pour votre recherche :`;
+      reply = `Je n'ai pas trouvé d'annonce correspondant exactement à "${rawText}". Vous pouvez explorer toutes nos offres ou contacter nos agences partenaires :`;
     }
     chips.push(
-      { label: 'Voir tout le comparateur', url: `/recherche?q=${encodeURIComponent(requeteRecherche)}` },
-      { label: 'Boutiques partenaires', url: '/boutiques' }
+      { label: 'Toutes les annonces', url: '/immo' },
+      { label: 'Annuaire Agences Pro', url: '/agences' },
+      { label: 'Espace Pro Agence (Connexion)', url: '/agence' }
     );
-  } else {
-    reply = `Je n'ai pas trouvé de produit correspondant exactement à "${rawText}". Vous pouvez reformuler ou continuer directement avec un conseiller sur WhatsApp.`;
+  } else if (isAgenceQuery) {
+    const searchParam = rawText.replace(/\b(agences?|courtiers?|cabinets?\s+immo)\b/gi, '').trim() || rawText;
+    items = await searchAgencesIlike(searchParam);
+    if (items.length > 0) {
+      reply = `Voici les agences immobilières partenaires sur Nopalou :`;
+    } else {
+      reply = `Découvrez toutes nos agences partenaires répertoriées sur Nopalou :`;
+    }
     chips.push(
-      { label: 'Explorer les boutiques', url: '/boutiques' },
+      { label: 'Annuaire des agences', url: '/agences' },
+      { label: 'Biens immobiliers', url: '/immo' }
+    );
+  } else if (isBoutiqueQuery) {
+    const searchParam = rawText.replace(/\b(boutiques?|magasins?|shops?|supermarches?)\b/gi, '').trim() || rawText;
+    items = await searchBoutiquesIlike(searchParam);
+    if (items.length > 0) {
+      reply = `Voici les boutiques partenaires correspondant à votre recherche :`;
+    } else {
+      reply = `Explorez toutes les boutiques certifiées sur Nopalou :`;
+    }
+    chips.push(
+      { label: 'Toutes les boutiques', url: '/boutiques' },
       { label: 'Offres du moment', url: '/' }
     );
+  } else {
+    // Recherche générale catalogue (Fuzzy + searchContentIlike)
+    suggestionFuzzy = corrigerRequeteFuzzy(rawText);
+    const requeteRecherche = suggestionFuzzy || rawText;
+
+    try {
+      const rawResults = await searchContentIlike(requeteRecherche);
+      items = (rawResults || []).map((it) => {
+        const bRef = it.boutique_slug || it.boutique_id;
+        let url = `/produit/${it.id}`;
+        let actions = [{ label: 'Voir le produit', url, variant: 'primary' }];
+
+        if (it.type === 'produit') {
+          url = bRef ? `/boutiques/${bRef}/produits/${it.id}` : `/produit/${it.id}`;
+          actions = [
+            { label: 'Voir le produit', url, variant: 'primary' },
+            bRef ? { label: 'Voir la boutique', url: `/boutiques/${bRef}`, variant: 'secondary' } : null,
+          ].filter(Boolean);
+        } else if (it.type === 'immo') {
+          url = `/immo/${it.id}`;
+          actions = [{ label: "Voir l'annonce", url, variant: 'primary' }];
+        }
+
+        return {
+          id: it.id,
+          titre: it.titre,
+          prix: it.prix,
+          photo: it.photo,
+          type: it.type,
+          boutiqueNom: it.boutique_nom,
+          boutiqueSlug: it.boutique_slug,
+          boutiqueId: it.boutique_id,
+          url,
+          actions,
+        };
+      });
+    } catch (errSearch) {
+      console.warn('[CHAT API SEARCH WARN]:', errSearch.message);
+    }
+
+    if (items.length > 0) {
+      if (suggestionFuzzy && suggestionFuzzy.toLowerCase() !== rawText.toLowerCase()) {
+        reply = `Je n'ai pas trouvé de correspondance exacte pour "${rawText}", mais voici les résultats pour "${suggestionFuzzy}" :`;
+      } else {
+        reply = `Voici les meilleures offres trouvées pour votre recherche :`;
+      }
+      chips.push(
+        { label: 'Voir tout le comparateur', url: `/recherche?q=${encodeURIComponent(requeteRecherche)}` },
+        { label: 'Boutiques partenaires', url: '/boutiques' }
+      );
+    } else {
+      reply = `Je n'ai pas trouvé de produit correspondant exactement à "${rawText}". Vous pouvez reformuler votre recherche ou échanger directement avec un conseiller sur WhatsApp :`;
+      chips.push(
+        { label: 'Explorer les boutiques', url: '/boutiques' },
+        { label: 'Offres du moment', url: '/' },
+        { label: 'Biens immobiliers', url: '/immo' }
+      );
+    }
   }
 
   return res.json({
     success: true,
     reply,
     correction: suggestionFuzzy && suggestionFuzzy.toLowerCase() !== rawText.toLowerCase() ? suggestionFuzzy : null,
-    items: items.map((it) => ({
-      id: it.id,
-      titre: it.titre,
-      prix: it.prix,
-      photo: it.photo,
-      type: it.type,
-      boutiqueNom: it.boutique_nom,
-      url: it.type === 'produit'
-        ? `/boutiques/${it.boutique_slug || 'boutique'}/produits/${it.id}`
-        : it.type === 'immo'
-        ? `/immo/${it.id}`
-        : `/produit/${it.id}`,
-    })),
+    items,
     chips,
     whatsappUrl,
   });

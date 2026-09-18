@@ -21,13 +21,16 @@ function getCurrentTime(): string {
 const INITIAL_MESSAGE: ChatMessage = {
   id: 'msg-init',
   sender: 'bot',
-  text: "Bonjour et bienvenue sur Nopalou ! Je suis l'assistant interactif. Vous pouvez me poser une question, rechercher un article ou trouver un logement :",
+  text: "Bonjour et bienvenue sur Nopalou ! Je suis l'assistant interactif. Vous pouvez me poser une question, rechercher un article, trouver un logement ou découvrir nos boutiques :",
   time: getCurrentTime(),
   chips: [
     { label: 'Rechercher un smartphone', url: 'iPhone 13' },
-    { label: 'Locations Almadies', url: '/immo?q=Almadies' },
+    { label: 'Locations Almadies', url: 'Location appartement Almadies' },
+    { label: 'Boutiques partenaires', url: '/boutiques' },
+    { label: 'Agences immobilières', url: '/agences' },
+    { label: 'Suivre ma commande', url: '/suivi-commande' },
+    { label: 'Caisse POS commerçant', url: '/boutique/caisse' },
     { label: 'Créer ma boutique', url: '/creer-boutique' },
-    { label: 'Frais de livraison', url: 'Quels sont les délais de livraison ?' },
   ],
 }
 
