@@ -1,3 +1,14 @@
+- **Configuration de la Balise Google Analytics 4 (`G-3KGE1YBMVJ`) (18 septembre 2026)** 📊🎯⚡✅ :
+  * **🚨 1. Demande Utilisateur** :
+    - Activation de la collecte Google Analytics sur le compte officiel `G-3KGE1YBMVJ` (l'ancien tag pointait vers `G-GD7365PKTS`).
+  * **🛠️ 2. Développements Techniques** :
+    - **Intégration du tag GA4 (`frontend-next/src/app/layout.tsx`)** :
+      * Remplacement de `G-GD7365PKTS` par l'ID officiel `G-3KGE1YBMVJ`.
+      * Bascule de la stratégie de chargement de `lazyOnload` vers `afterInteractive` (recommandation officielle Next.js pour capter 100% du trafic dès l'interactivité sans retarder le LCP).
+  * **🧪 3. Validation Technique** :
+    - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Build de production Next.js (`npm run build`) : **Succès 100%**.
+
 - **Résolution des Erreurs d'Hydratation React (#425, #418, #423) & Force-Update Service Worker v18 (18 septembre 2026)** 🛡️⚡🔄✨✅ :
   * **🚨 1. Symptômes & Analyse d'Origine** :
     - Erreurs console en production sur `nopalou.com` : `Minified React error #425` (Text content does not match server-rendered HTML), `#418` (Hydration failed), `#423` (Root switched to client rendering).

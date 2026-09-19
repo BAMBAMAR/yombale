@@ -256,16 +256,16 @@ export default async function RootLayout({
         </a>
 
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-GD7365PKTS"
-          strategy="lazyOnload"
+          src="https://www.googletagmanager.com/gtag/js?id=G-3KGE1YBMVJ"
+          strategy="afterInteractive"
           nonce={nonce}
         />
-        <Script id="ga4-init" strategy="lazyOnload" nonce={nonce}>
+        <Script id="ga4-init" strategy="afterInteractive" nonce={nonce}>
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-GD7365PKTS');
+            gtag('config', 'G-3KGE1YBMVJ');
           `}
         </Script>
 
