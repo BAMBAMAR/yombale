@@ -1,4 +1,6 @@
 import { cookies } from 'next/headers'
+import { Activity, ExternalLink, BarChart3, Radio, Search, CheckCircle2 } from 'lucide-react'
+import AdminSeoGoogleTag from './components/AdminSeoGoogleTag'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 const COOKIE  = 'nopalou_admin'
@@ -98,7 +100,10 @@ export default async function AdminSeoPage() {
     <div className="admin-content">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 className="admin-page-titre" style={{ margin: 0 }}>🧠 SEO Center & Intelligence de Recherche</h1>
+          <h1 className="admin-page-titre" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Search size={22} style={{ color: 'var(--navy)' }} />
+            SEO Center & Intelligence de Recherche
+          </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
             Supervision du positionnement organique Nopalou : Solutions Marchands B2B, Villes du Sénégal et Comparateur B2C.
           </p>
@@ -132,6 +137,9 @@ export default async function AdminSeoPage() {
         </div>
       </div>
 
+      {/* Module Télémétrie & Flux Google Analytics 4 */}
+      <AdminSeoGoogleTag />
+
       {/* Radar Opportunités SEO */}
       <div className="admin-section" style={{ marginBottom: 32 }}>
         <h2 className="admin-section-titre">Radar Opportunités SEO « Problème → Solution » (Sénégal)</h2>
@@ -160,7 +168,9 @@ export default async function AdminSeoPage() {
                   </td>
                   <td><code style={{ fontSize: 12 }}>{o.cible}</code></td>
                   <td>
-                    <span className="admin-badge admin-badge--green">✓ {o.statut}</span>
+                    <span className="admin-badge admin-badge--green" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <CheckCircle2 size={11} /> {o.statut}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -173,14 +183,23 @@ export default async function AdminSeoPage() {
       <div className="admin-section" style={{ marginBottom: 32 }}>
         <h2 className="admin-section-titre">Outils de référencement & Validation technique</h2>
         <div className="admin-actions-row" style={{ flexWrap: 'wrap', gap: 12 }}>
+          <a href="https://analytics.google.com/analytics/web/#/realtime" target="_blank" rel="noopener noreferrer" className="admin-action-btn" style={{ background: 'var(--navy, #1C2B4A)' }}>
+            <Radio size={14} style={{ color: '#22c55e' }} /> Google Analytics 4 (Temps Réel)
+          </a>
+          <a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer" className="admin-action-btn" style={{ background: '#1e293b' }}>
+            <BarChart3 size={14} style={{ color: '#f59e0b' }} /> Google Analytics 4 (G-3KGE1YBMVJ)
+          </a>
+          <a href="https://tagassistant.google.com/" target="_blank" rel="noopener noreferrer" className="admin-action-btn" style={{ background: '#334155' }}>
+            <Activity size={14} style={{ color: '#38bdf8' }} /> Google Tag Assistant (Debug)
+          </a>
+          <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer" className="admin-action-btn">
+            Google Search Console
+          </a>
           <a href={`${SITE}/sitemap.xml`} target="_blank" rel="noopener noreferrer" className="admin-action-btn">
             Sitemap XML Dynamique
           </a>
           <a href={`${SITE}/robots.txt`} target="_blank" rel="noopener noreferrer" className="admin-action-btn">
             Robots.txt (Anti-Scrape IA actif)
-          </a>
-          <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer" className="admin-action-btn">
-            Google Search Console
           </a>
           <a href={`https://pagespeed.web.dev/report?url=${encodeURIComponent(SITE)}`} target="_blank" rel="noopener noreferrer" className="admin-action-btn">
             PageSpeed Insights (Mobile First)
@@ -251,7 +270,9 @@ export default async function AdminSeoPage() {
             { label: 'WebSite + SearchAction', page: 'Portail global racine', color: 'green' },
           ].map(d => (
             <div key={d.label} className="admin-seo-chip">
-              <span className={`admin-badge admin-badge--${d.color}`}>✓</span>
+              <span className={`admin-badge admin-badge--${d.color}`} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <CheckCircle2 size={11} />
+              </span>
               <span className="admin-seo-chip-label">{d.label}</span>
               <span className="admin-seo-chip-page">{d.page}</span>
             </div>

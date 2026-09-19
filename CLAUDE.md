@@ -1,3 +1,23 @@
+- **Supervision Google Analytics 4 (`G-3KGE1YBMVJ`) & Balise Google dans le SEO Center Admin (`/admin/seo`) (18 septembre 2026)** 📊🧠🎯⚡✅ :
+  * **🚨 1. Demande Utilisateur** :
+    - Intégrer la configuration et le monitoring de la balise Google Analytics (`G-3KGE1YBMVJ`) directement dans l'interface d'administration sous la section **SEO & Référencement**.
+  * **🛠️ 2. Développements Techniques** :
+    - **Composant Dédié (`frontend-next/src/app/admin/(protected)/seo/components/AdminSeoGoogleTag.tsx`)** :
+      * Modularisation stricte respectant les règles anti-monolithes (< 450 lignes).
+      * Affichage du statut d'activation du flux GA4 (`G-3KGE1YBMVJ`), de la stratégie Next.js (`afterInteractive`), du domaine couvert (`nopalou.com`) et de la bibliothèque (`gtag.js`).
+      * Boutons d'accès direct vers les consoles Google : Vue Temps Réel (utilisateurs en direct), Console Google Analytics 4, Google Tag Assistant (débogage) et Google Search Console.
+      * Snippet de balise officiel copiable en 1-clic avec retour visuel d'état.
+      * Cartographie des événements e-commerce suivis (`page_view`, `click_whatsapp`, `view_item`, `add_to_cart`).
+      * Encadré informatif expliquant la latence de 24h à 48h de Google pour les rapports agrégés vs immédiateté du flux Temps Réel.
+    - **Intégration dans la Page SEO (`frontend-next/src/app/admin/(protected)/seo/page.tsx`)** :
+      * Insertion du module `AdminSeoGoogleTag` en haut de page sous les métriques clés.
+      * Ajout des raccourcis Google Analytics Temps Réel, GA4 et Tag Assistant dans la rangée d'outils de référencement & validation technique.
+      * Remplacement des émojis d'interface et caractères Unicode bruts par les icônes vectorielles SVG `lucide-react` (`Search`, `CheckCircle2`, `Radio`, `BarChart3`, `Activity`).
+  * **🧪 3. Validation Technique** :
+    - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 violation critique**.
+    - Build de production Next.js (`npm run build`) : **Succès 100%**.
+
 - **Configuration de la Balise Google Analytics 4 (`G-3KGE1YBMVJ`) (18 septembre 2026)** 📊🎯⚡✅ :
   * **🚨 1. Demande Utilisateur** :
     - Activation de la collecte Google Analytics sur le compte officiel `G-3KGE1YBMVJ` (l'ancien tag pointait vers `G-GD7365PKTS`).
