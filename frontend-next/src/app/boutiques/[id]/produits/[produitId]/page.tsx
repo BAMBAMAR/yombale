@@ -64,16 +64,20 @@ export async function generateMetadata(
       `/boutiques/${id}/produits/${produitId}`
     )
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+    const canonicalUrl = `${siteUrl}/boutiques/${id}/produits/${produitId}`
     const ogImageUrl = `${siteUrl}/assets/produit-boutique/${produit.id}/og?boutiqueId=${id}`
     const desc = produit.description ? produit.description.slice(0, 160) : `${produit.nom} disponible chez ${produit.boutique_nom} à ${produit.boutique_ville}.`
 
     return {
-      title: `${produit.nom} — ${produit.boutique_nom}`,
+      title: `${produit.nom} — ${produit.boutique_nom} | Nopalou`,
       description: desc,
+      alternates: {
+        canonical: canonicalUrl,
+      },
       openGraph: {
         title: `${produit.nom} — ${produit.boutique_nom}`,
         description: desc,
-        url: `${siteUrl}/boutiques/${id}/produits/${produitId}`,
+        url: canonicalUrl,
         siteName: produit.boutique_nom,
         type: 'website',
         images: [
@@ -94,7 +98,7 @@ export async function generateMetadata(
       },
     }
   } catch {
-    return { title: 'Produit' }
+    return { title: 'Produit introuvable | Nopalou' }
   }
 }
 
@@ -102,7 +106,7 @@ export default async function FicheProduitPage(
   { params }: { params: Promise<{ id: string; produitId: string }> }
 ) {
   const { id, produitId } = await params
-  if (!id || !produitId) redirect('/boutiques')
+  if (!id || !produitId) notFound()
 
   let produit: ProduitDetail
 
@@ -122,7 +126,7 @@ export default async function FicheProduitPage(
       if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
     }
 
-    redirect(`/boutiques/${id}`)
+    notFound()
   }
 
   const p = produit!
@@ -143,8 +147,55 @@ export default async function FicheProduitPage(
     ? Object.entries(p.caracteristiques).filter(([, v]) => v?.trim())
     : []
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': `${siteUrl}/boutiques/${id}/produits/${produitId}`,
+    name: p.nom,
+    sku: p.id,
+    description: p.description || `${p.nom} chez ${p.boutique_nom}`,
+    ...(p.images?.[0] ? { image: p.images } : {}),
+    brand: {
+      '@type': 'Brand',
+      name: p.caracteristiques?.marque || p.boutique_nom,
+    },
+    ...(p.prix ? {
+      offers: {
+        '@type': 'Offer',
+        price: p.prix,
+        priceCurrency: 'XOF',
+        availability: isEnStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        url: `${siteUrl}/boutiques/${id}/produits/${produitId}`,
+        seller: {
+          '@type': 'Organization',
+          name: p.boutique_nom,
+        },
+      },
+    } : {}),
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${siteUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Boutiques', item: `${siteUrl}/boutiques` },
+      { '@type': 'ListItem', position: 3, name: p.boutique_nom, item: `${siteUrl}/boutiques/${id}` },
+      { '@type': 'ListItem', position: 4, name: p.nom, item: `${siteUrl}/boutiques/${id}/produits/${produitId}` },
+    ],
+  }
+
   return (
     <div className="boutique-produit-page">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <TrackingPixels
         metaPixelId={p.meta_pixel_id}
         tiktokPixelId={p.tiktok_pixel_id}

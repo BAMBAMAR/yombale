@@ -50,14 +50,17 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
     priority: 0.8,
   })),
   // Agences Immobilières certifiées
-  { url: `${BASE}/agences`,                   changeFrequency: 'daily',   priority: 0.92 },
+  { url: `${BASE}/agences`,                   changeFrequency: 'daily',   priority: 0.95 },
+  // Annuaire des Boutiques et Vendeurs vérifiés
+  { url: `${BASE}/boutiques`,                 changeFrequency: 'daily',   priority: 0.95 },
   // Silos B2B Solutions Marchands & "Problème → Solution" SEO
   { url: `${BASE}/creer-boutique-en-ligne`,     changeFrequency: 'weekly', priority: 0.98 },
-  { url: `${BASE}/alternative-shopify-senegal`, changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/logiciel-caisse-senegal`,     changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/alternative-shopify-senegal`, changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/vendre-sur-whatsapp`,         changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/paiement-en-ligne-senegal`,   changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/gestion-stock-carnet-dettes`, changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/logiciel-gestion-locative-senegal`, changeFrequency: 'weekly', priority: 0.95 },
   // Boutique, POS & Forfaits Vendeurs existants
   { url: `${BASE}/marchands`,            changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/pos`,                  changeFrequency: 'weekly', priority: 0.9 },
@@ -76,24 +79,29 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   { url: `${BASE}/guide-emploi`,  changeFrequency: 'monthly', priority: 0.5 },
   { url: `${BASE}/assistant-whatsapp`, changeFrequency: 'monthly', priority: 0.5 },
   { url: `${BASE}/demo`, changeFrequency: 'monthly', priority: 0.8 },
-  { url: `${BASE}/deposer-annonce`, changeFrequency: 'monthly', priority: 0.5 },
-  { url: `${BASE}/deposer-immo`,  changeFrequency: 'monthly', priority: 0.5 },
 ]
 
-interface Produit { id: string; updated_at?: string }
+interface Produit {
+  id: string
+  updated_at?: string
+  boutique_id?: string | null
+  boutique_slug?: string | null
+}
 interface Annonce { id: string; updated_at?: string }
 interface AnnonceClassifiee { id: string; updated_at?: string }
 interface Boutique { id: string; slug: string | null; updated_at?: string }
 interface AgenceItem { id: string; slug: string; updated_at?: string }
+interface BoutiqueProductItem { id: string; updated_at?: string }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
 
-  let produitEntries: MetadataRoute.Sitemap  = []
-  let immoEntries: MetadataRoute.Sitemap     = []
-  let annonceEntries: MetadataRoute.Sitemap  = []
-  let boutiqueEntries: MetadataRoute.Sitemap = []
-  let agenceEntries: MetadataRoute.Sitemap   = []
+  let produitEntries: MetadataRoute.Sitemap         = []
+  let immoEntries: MetadataRoute.Sitemap            = []
+  let annonceEntries: MetadataRoute.Sitemap         = []
+  let boutiqueEntries: MetadataRoute.Sitemap        = []
+  let agenceEntries: MetadataRoute.Sitemap          = []
+  let boutiqueProduitEntries: MetadataRoute.Sitemap = []
 
   try {
     const [prodRes, immoRes, annonceRes, boutiqueRes, agenceRes] = await Promise.allSettled([
@@ -108,7 +116,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const data = await prodRes.value.json()
       const items: Produit[] = data.produits ?? data.data ?? []
       produitEntries = items.map(p => ({
-        url: `${BASE}/produit/${p.id}`,
+        url: p.boutique_id
+          ? `${BASE}/boutiques/${p.boutique_slug || p.boutique_id}/produits/${p.id}`
+          : `${BASE}/produit/${p.id}`,
         lastModified: p.updated_at ? new Date(p.updated_at) : undefined,
         changeFrequency: 'daily' as const,
         priority: 0.7,
@@ -144,8 +154,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${BASE}/boutiques/${b.slug || b.id}`,
         lastModified: b.updated_at ? new Date(b.updated_at) : undefined,
         changeFrequency: 'weekly' as const,
-        priority: 0.7,
+        priority: 0.8,
       }))
+
+      // Indexation des fiches produits des boutiques partenaires actives
+      try {
+        const topBoutiques = items.slice(0, 15)
+        const prodsResponses = await Promise.allSettled(
+          topBoutiques.map(b =>
+            fetch(`${BACKEND}/api/boutiques/${b.id}/produits`, { next: { revalidate: 3600 } })
+              .then(r => r.ok ? r.json() : null)
+          )
+        )
+        prodsResponses.forEach((res, idx) => {
+          if (res.status === 'fulfilled' && res.value?.produits) {
+            const b = topBoutiques[idx]
+            const bProds: BoutiqueProductItem[] = res.value.produits
+            bProds.forEach(bp => {
+              boutiqueProduitEntries.push({
+                url: `${BASE}/boutiques/${b.slug || b.id}/produits/${bp.id}`,
+                lastModified: bp.updated_at ? new Date(bp.updated_at) : undefined,
+                changeFrequency: 'daily' as const,
+                priority: 0.75,
+              })
+            })
+          }
+        })
+      } catch {
+        // Fallback silencieux si sous-requête boutique échoue
+      }
     }
 
     if (agenceRes.status === 'fulfilled' && agenceRes.value.ok) {
@@ -162,5 +199,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // sitemap dégradé si backend indisponible
   }
 
-  return [...STATIC_ROUTES, ...produitEntries, ...boutiqueEntries, ...immoEntries, ...agenceEntries, ...annonceEntries]
+  // Déduplication par URL
+  const seenUrls = new Set<string>()
+  const allEntries = [
+    ...STATIC_ROUTES,
+    ...produitEntries,
+    ...boutiqueEntries,
+    ...boutiqueProduitEntries,
+    ...immoEntries,
+    ...agenceEntries,
+    ...annonceEntries
+  ]
+
+  return allEntries.filter(entry => {
+    if (seenUrls.has(entry.url)) return false
+    seenUrls.add(entry.url)
+    return true
+  })
 }

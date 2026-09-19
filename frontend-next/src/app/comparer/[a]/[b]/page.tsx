@@ -15,9 +15,15 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<PageParams> }): Promise<Metadata> {
   const p = await params;
+  const a = decodeURIComponent(p.a);
+  const b = decodeURIComponent(p.b);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com';
   return {
-    title: `Comparer ${decodeURIComponent(p.a)} vs ${decodeURIComponent(p.b)}`,
-    description: `Comparaison détaillée : ${decodeURIComponent(p.a)} vs ${decodeURIComponent(p.b)}. Trouvez le meilleur prix au Sénégal.`,
+    title: `Comparer ${a} vs ${b} au Sénégal | Nopalou`,
+    description: `Comparaison détaillée : ${a} vs ${b}. Trouvez le meilleur prix au Sénégal.`,
+    alternates: {
+      canonical: `${siteUrl}/comparer/${p.a}/${p.b}`,
+    },
   };
 }
 

@@ -11,22 +11,25 @@ import PageHeader from '@/components/PageHeader'
 import FiltresBar from '@/components/FiltresBar'
 import SeoCard from '@/components/SeoCard'
 
+import { breadcrumbSchema, itemListSchema } from '@/lib/schema-org'
+
 export const metadata: Metadata = {
-  title: 'Immobilier au Sénégal — Location et vente à Dakar',
+  title: 'Immobilier Sénégal 2026 : Locations & Ventes Dakar (Appartements, Chambres, Terrains)',
   description:
-    'Annonces immobilières au Sénégal : appartements, villas, terrains à louer ou à vendre à Dakar et dans tout le pays.',
+    'Annonces immobilières vérifiées au Sénégal : appartements, chambres au mois dès 25 000 FCFA, studios, villas et terrains avec titres fonciers à Dakar et régions.',
   keywords: [
     'Location chambre Dakar par mois', 'Chambre à louer 30000 par mois',
     'Location chambre Parcelles Assainies par mois', 'Location chambre salle de bain Dakar par mois',
     'Chambre salle de bain à louer par mois', 'Chambre à louer 30000 par mois Dakar',
-    'Chambre à louer à Dakar Medina Par mois', 'Chambre à louer 5000f par jour',
+    'Chambre à louer à Dakar Medina Par mois', 'Location appartement Dakar 2026',
+    'Immobilier Sénégal', 'Nopalou Immo'
   ],
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo`,
   },
   openGraph: {
-    title: 'Immobilier au Sénégal — Appartements, villas, terrains',
-    description: 'Trouvez votre bien immobilier au Sénégal : louer ou acheter à Dakar, Saint-Louis, Thiès et partout au pays.',
+    title: 'Immobilier Sénégal 2026 — Locations & Ventes Vérifiées à Dakar',
+    description: 'Appartements, chambres, studios et terrains au Sénégal. Annonces géolocalisées et gestion locative sécurisée.',
     type: 'website',
     images: [{ url: '/api/og-image', width: 1200, height: 630, alt: 'Immobilier au Sénégal — Nopalou' }],
   },
@@ -144,8 +147,34 @@ export default async function ImmoPage({
 
   const prixOptions = transaction === 'vente' ? PRIX_MAX_VENTE : PRIX_MAX_LOCATION
 
+  const breadcrumbs = breadcrumbSchema([
+    { name: 'Accueil', url: '/' },
+    { name: 'Immobilier Sénégal', url: '/immo' },
+  ])
+
+  const itemList = annonces.length > 0 ? itemListSchema(
+    annonces.slice(0, 20).map(a => ({
+      name: `${a.titre} - ${a.quartier || a.ville || 'Dakar'}`,
+      url: `/immo/${a.id}`,
+      image: (Array.isArray(a.photos) && a.photos[0]) ? a.photos[0] : undefined,
+      description: a.description ? a.description.slice(0, 150) : `${a.type_bien || 'Bien'} à ${a.transaction || 'louer'} à ${a.ville || 'Dakar'}.`,
+    })),
+    'Immobilier au Sénégal'
+  ) : null
+
   return (
-    <div className="page-container" style={{ paddingTop: '2rem' }}>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+      />
+      {itemList && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+        />
+      )}
+      <div className="page-container" style={{ paddingTop: '2rem' }}>
       {/* En-tête */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
         <PageHeader
@@ -428,5 +457,6 @@ export default async function ImmoPage({
         foot="Nouvelles annonces publiées chaque jour par des particuliers et agences au Sénégal"
       />
     </div>
+    </>
   )
 }

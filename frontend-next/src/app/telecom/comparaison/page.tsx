@@ -4,7 +4,11 @@ import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 
 export const metadata: Metadata = {
-  title: 'Comparaison forfaits télécom',
+  title: 'Comparaison forfaits télécom | Nopalou',
+  robots: {
+    index: false,
+    follow: true,
+  },
 }
 
 interface Forfait {

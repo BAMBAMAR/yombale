@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import '@/styles/produit.css'
-import { redirect } from 'next/navigation'
+import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeftRight } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
@@ -23,6 +23,8 @@ import ProduitOffresList from './components/ProduitOffresList'
 import ProduitSidebar from './components/ProduitSidebar'
 import ProduitSimilairesTable from './components/ProduitSimilairesTable'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+
 export async function generateMetadata({
   params,
 }: {
@@ -36,19 +38,33 @@ export async function generateMetadata({
     const description = p.description
       ? p.description.slice(0, 155)
       : `Comparez le prix de ${p.nom} chez tous les vendeurs au Sénégal${prixStr}. Meilleure offre à Dakar et partout au Sénégal.`
+    const canonical = `${BASE}/produit/${id}`
     return {
       title: titre,
       description,
-      openGraph: { title: titre, description, type: 'website', ...(p.image_url ? { images: [{ url: p.image_url }] } : {}) },
+      alternates: { canonical },
+      openGraph: {
+        title: titre,
+        description,
+        type: 'website',
+        url: canonical,
+        ...(p.image_url ? { images: [{ url: p.image_url }] } : {}),
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: titre,
+        description,
+        ...(p.image_url ? { images: [p.image_url] } : {}),
+      },
     }
   } catch {
-    return { title: 'Produit introuvable' }
+    return { title: 'Produit introuvable', robots: 'noindex' }
   }
 }
 
 export default async function FicheProduitPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  if (!id) redirect('/')
+  if (!id) notFound()
 
   let produit: Produit
   let offres: Offre[] = []
@@ -60,7 +76,7 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
   try {
     produit = await apiFetch<Produit>(`/produits/${id}`)
   } catch {
-    // Redirection automatique via résolveur d'entités (produit marchand, boutique, immo, annonce, commande)
+    // Redirection automatique si résolveur d'entités trouve une autre route canonique
     try {
       const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(
         `/entites/resoudre/${encodeURIComponent(id)}`
@@ -72,8 +88,8 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
       if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr
     }
 
-    // Redirection de repli sans 404
-    redirect(`/?q=${encodeURIComponent(id)}`)
+    // Émettre un vrai statut HTTP 404 (supprime les soft-404s toxiques pour Google)
+    notFound()
   }
 
   await Promise.all([

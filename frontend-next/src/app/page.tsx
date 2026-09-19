@@ -24,15 +24,28 @@ import {
   Dumbbell, BookOpen, Radio
 } from 'lucide-react'
 
-export const metadata: Metadata = {
-  title: 'Nopalou · Acheter au meilleur prix, Vendre & Développer son commerce au Sénégal',
-  description:
-    'Nopalou est la plateforme de commerce digital au Sénégal. Comparez les prix à Dakar, commandez directement auprès de boutiques vérifiées, ou lancez votre propre boutique avec caisse POS tactile.',
-  keywords: [
-    'commerce digital Sénégal', 'comparateur de prix Sénégal', 'comparateur prix Dakar',
-    'boutique en ligne Sénégal', 'caisse pos Sénégal', 'prix moins cher Sénégal',
-    'meilleur prix Dakar', 'achat pas cher Dakar', 'vendre en ligne Dakar', 'Nopalou',
-  ],
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; categorie?: string; prixMin?: string; prixMax?: string; etat?: string; page?: string; tri?: string; sousType?: string }> | { q?: string; categorie?: string; prixMin?: string; prixMax?: string; etat?: string; page?: string; tri?: string; sousType?: string }
+}): Promise<Metadata> {
+  const sp = await searchParams
+  const hasFiltre = Boolean(sp?.q || sp?.categorie || sp?.prixMin || sp?.prixMax || sp?.etat || sp?.tri || sp?.page || sp?.sousType)
+
+  return {
+    title: 'Nopalou · Acheter au meilleur prix, Vendre & Développer son commerce au Sénégal',
+    description:
+      'Nopalou est la plateforme de commerce digital au Sénégal. Comparez les prix à Dakar, commandez directement auprès de boutiques vérifiées, ou lancez votre propre boutique avec caisse POS tactile.',
+    alternates: {
+      canonical: 'https://nopalou.com',
+    },
+    ...(hasFiltre ? { robots: { index: false, follow: true } } : {}),
+    keywords: [
+      'commerce digital Sénégal', 'comparateur de prix Sénégal', 'comparateur prix Dakar',
+      'boutique en ligne Sénégal', 'caisse pos Sénégal', 'prix moins cher Sénégal',
+      'meilleur prix Dakar', 'achat pas cher Dakar', 'vendre en ligne Dakar', 'Nopalou',
+    ],
+  }
 }
 
 import { CATEGORIES as LIB_CATEGORIES } from '@/lib/categories'
@@ -266,7 +279,7 @@ export default async function HomePage({
             return (
               <Link
                 key={c.slug}
-                href={isSelected ? '/' : `/?categorie=${c.slug}#resultats`}
+                href={isSelected ? '/' : `/categorie/${c.slug}`}
                 prefetch={false}
                 aria-label={`Filtrer par catégorie ${c.label}`}
                 style={{

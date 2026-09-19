@@ -148,7 +148,7 @@ const ORG_JSON_LD = {
     '@type': 'SearchAction',
     target: {
       '@type': 'EntryPoint',
-      urlTemplate: 'https://nopalou.com/?q={search_term_string}',
+      urlTemplate: 'https://nopalou.com/recherche?q={search_term_string}',
     },
     'query-input': 'required name=search_term_string',
   },
@@ -364,7 +364,8 @@ export default async function RootLayout({
               {/* Colonne 2 — Solutions Commerçants & POS */}
               <div className="footer-col">
                 <p className="footer-col-titre">Boutique &amp; POS</p>
-                <a href="/marchands" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Créer une Boutique en Ligne</a>
+                <a href="/boutiques" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Annuaire des Boutiques</a>
+                <a href="/marchands">Créer une Boutique en Ligne</a>
                 <a href="/pos">Caisse Enregistreuse POS (Offline)</a>
                 <a href="/whatsapp">Vendre sur WhatsApp</a>
                 <a href="/migration">Migration Shopify &amp; Excel</a>

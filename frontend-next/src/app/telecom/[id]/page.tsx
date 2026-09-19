@@ -65,12 +65,29 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   try {
     const { id } = await params
     const f = await apiFetch<Forfait>(`/telecom/${id}`)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+    const canonicalUrl = `${siteUrl}/telecom/${id}`
+    const desc = `Forfait ${f.operateur} ${f.nom} à ${fcfa(f.prix)}${f.data_mo ? ` — ${formatData(f.data_mo)} internet` : ''}${f.minutes === -1 ? ', appels illimités' : f.minutes ? `, ${f.minutes} min d'appels` : ''}. Tarifs officiels ARTP Sénégal.`
+
     return {
-      title: `${f.nom} — Forfait ${f.operateur}`,
-      description: `Forfait ${f.operateur} ${f.nom} à ${fcfa(f.prix)}${f.data_mo ? ` — ${formatData(f.data_mo)} internet` : ''}${f.minutes === -1 ? ', appels illimités' : f.minutes ? `, ${f.minutes} min d'appels` : ''}`,
+      title: `${f.nom} — Forfait ${f.operateur} Sénégal | Nopalou`,
+      description: desc,
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title: `${f.nom} — Forfait ${f.operateur} | Nopalou`,
+        description: desc,
+        url: canonicalUrl,
+      },
+      twitter: {
+        card: 'summary',
+        title: `${f.nom} — Forfait ${f.operateur}`,
+        description: desc,
+      },
     }
   } catch {
-    return { title: 'Forfait introuvable' }
+    return { title: 'Forfait introuvable | Nopalou' }
   }
 }
 
@@ -116,8 +133,46 @@ export default async function FicheForfaitPage({ params }: { params: Promise<{ i
   // et celui en bas de la section "Comparer avec d'autres forfaits".
   const idsComparaison = [f.id, ...similaires.slice(0, 2).map(s => s.id)].join(',')
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  const forfaitJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    '@id': `${siteUrl}/telecom/${f.id}`,
+    name: `${f.nom} - ${f.operateur}`,
+    description: f.description || `Forfait mobile ${f.operateur} ${f.nom} au Sénégal.`,
+    brand: {
+      '@type': 'Brand',
+      name: f.operateur,
+    },
+    offers: {
+      '@type': 'Offer',
+      price: f.prix,
+      priceCurrency: 'XOF',
+      availability: 'https://schema.org/InStock',
+      url: `${siteUrl}/telecom/${f.id}`,
+    },
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${siteUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Forfaits Télécom', item: `${siteUrl}/telecom` },
+      { '@type': 'ListItem', position: 3, name: `${f.nom} (${f.operateur})`, item: `${siteUrl}/telecom/${f.id}` },
+    ],
+  }
+
   return (
     <div className="page-container" style={{ paddingTop: '2rem' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(forfaitJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       {/* Fil d'Ariane */}
       <p className="breadcrumb" style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>
         <Link href="/">Accueil</Link>

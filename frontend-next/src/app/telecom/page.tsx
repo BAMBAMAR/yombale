@@ -7,12 +7,12 @@ import TelecomClient from './TelecomClient'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
 export const metadata: Metadata = {
-  title: 'Forfaits télécom au Sénégal — Orange, Yas, Expresso, Promobile',
-  description: 'Comparez les forfaits internet, voix et data des opérateurs télécom au Sénégal : Orange, Free, Expresso et plus.',
+  title: 'Forfaits Télécom Sénégal 2026 : Comparateur Pass Internet Orange, Yas, Promobile & Expresso',
+  description: 'Comparez les forfaits internet et appels au Sénégal (Orange, Yas ex-Free, Promobile, Expresso). Calcul du coût réel par Go, pass illimix et catalogue officiel ARTP 2026.',
   keywords: [
     'Forfait Orange Sénégal', 'Forfait Internet Orange Sénégal', 'Promobile forfait internet',
     'Promobile forfait appel', 'Forfait illimix Orange', 'Forfait Promobile',
-    'Forfait Orange appel', 'Forfait mobile sénégal', 'Promo téléphone Orange Senegal',
+    'Forfait Orange appel', 'Forfait mobile sénégal 2026', 'Promo pass internet Senegal',
   ],
   alternates: { canonical: `${BASE}/telecom` },
 }
@@ -37,6 +37,8 @@ interface TelecomResponse {
   page: number
   pages: number
 }
+
+import { breadcrumbSchema, itemListSchema } from '@/lib/schema-org'
 
 export default async function TelecomPage({
   searchParams,
@@ -67,14 +69,40 @@ export default async function TelecomPage({
     operateurs = ops
   } catch { /* shows empty state */ }
 
+  const breadcrumbs = breadcrumbSchema([
+    { name: 'Accueil', url: '/' },
+    { name: 'Forfaits Télécom', url: '/telecom' },
+  ])
+
+  const itemList = forfaits.length > 0 ? itemListSchema(
+    forfaits.slice(0, 25).map(f => ({
+      name: `${f.nom} (${f.operateur}) - ${fcfa(f.prix)}`,
+      url: `/telecom/${f.id}`,
+      description: f.description || `Forfait mobile ${f.nom} proposé par ${f.operateur} au Sénégal.`,
+    })),
+    'Forfaits Télécom Sénégal'
+  ) : null
+
   return (
-    <TelecomClient
-      forfaits={forfaits}
-      total={total}
-      operateurs={operateurs}
-      currentOperateur={operateur}
-      currentType={type}
-      currentTri={tri}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+      />
+      {itemList && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+        />
+      )}
+      <TelecomClient
+        forfaits={forfaits}
+        total={total}
+        operateurs={operateurs}
+        currentOperateur={operateur}
+        currentType={type}
+        currentTri={tri}
+      />
+    </>
   )
 }

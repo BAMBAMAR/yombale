@@ -81,23 +81,57 @@ export function parseSpecsFromName(name: string): OffreSpecs {
 }
 
 export function buildJsonLd(produit: Produit, offres: Offre[]): string {
-  const offers = offres
-    .filter(o => o.prix != null && !o._suspect)
-    .map(o => ({
+  const validOffers = offres.filter(o => o.prix != null && !o._suspect)
+  const offersList = validOffers.map(o => ({
+    '@type': 'Offer',
+    price: o.prix,
+    priceCurrency: 'XOF',
+    availability: 'https://schema.org/InStock',
+    seller: o.marchand_nom ? { '@type': 'Organization', name: escapeHtml(o.marchand_nom) } : undefined,
+    url: o.url_achat ?? `https://nopalou.com/produit/${produit.id}`,
+  }))
+
+  let offers: any = undefined
+  if (offersList.length === 1) {
+    offers = offersList[0]
+  } else if (offersList.length > 1) {
+    const prices = offersList.map(o => Number(o.price)).filter(p => !isNaN(p) && p > 0)
+    const minPrice = prices.length > 0 ? Math.min(...prices) : (produit.prix_min ?? undefined)
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : (produit.prix_min ?? undefined)
+    if (minPrice != null && maxPrice != null && minPrice !== maxPrice) {
+      offers = {
+        '@type': 'AggregateOffer',
+        priceCurrency: 'XOF',
+        lowPrice: minPrice,
+        highPrice: maxPrice,
+        offerCount: offersList.length,
+        offers: offersList,
+      }
+    } else {
+      offers = offersList
+    }
+  } else if (produit.prix_min) {
+    offers = {
       '@type': 'Offer',
-      price: o.prix,
+      price: produit.prix_min,
       priceCurrency: 'XOF',
       availability: 'https://schema.org/InStock',
-      seller: o.marchand_nom ? { '@type': 'Organization', name: escapeHtml(o.marchand_nom) } : undefined,
-      url: o.url_achat ?? undefined,
-    }))
+      url: `https://nopalou.com/produit/${produit.id}`,
+    }
+  }
+
+  const sku = String(produit.id)
+
   return JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Product',
+    '@id': `https://nopalou.com/produit/${produit.id}`,
     name: produit.nom,
+    sku,
+    mpn: sku,
     ...(produit.marque ? { brand: { '@type': 'Brand', name: produit.marque } } : {}),
     ...(produit.description ? { description: produit.description } : {}),
     ...(produit.image_url ? { image: produit.image_url } : {}),
-    offers: offers.length === 1 ? offers[0] : offers,
+    ...(offers ? { offers } : {}),
   })
 }

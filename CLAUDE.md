@@ -1,3 +1,38 @@
+- **Refonte Technique & Stratégique SEO Google Search Console (GSC) & Maillage Interne Nopalou (19 septembre 2026)** 🚀🔍📊🎯⚡✅ :
+  * **🚨 1. Contexte & Diagnostic GSC (Données Réelles)** :
+    - Analyse de 20 000+ impressions et 350+ clics sur Google (89% Sénégal, 68% mobile).
+    - Identification et résolution des 4 goulots d'étranglement majeurs :
+      1. **Soft-404s massives** : redirections silencieuses vers l'accueil (`/`) ou vers la boutique (`/boutiques/${id}`) au lieu de vraies réponses HTTP 404 (`notFound()`).
+      2. **Fuites de crawl Googlebot** : `layout.tsx` déclarait `/?q={search_term_string}` dans le Schema `SearchAction` et `robots.ts` laissait indexer les requêtes de recherche interne (`/*?*q=*`, `/*?*tri=*`, etc.).
+      3. **Absence de snippets produits enrichis** (114 impressions seulement) : `AggregateOffer` manquant, `priceCurrency: XOF` et `sku` absents ou incomplets, absence totale de JSON-LD sur les fiches produits des boutiques.
+      4. **Potentiel Télécom & Immo sous-exploité** (CTR < 0.3% malgré des positions top 8 sur Promobile, Yas, Orange, Dakar) : métadonnées sans accroche 2026 et sans `ItemList` structuré.
+  * **🛠️ 2. Développements & Optimisations Appliqués** :
+    - **Assainissement Robots & Sitemap (`robots.ts` & `sitemap.ts`)** :
+      * Blocage des URL de recherche et combinaisons de paramètres infinis (`/*?*q=*`, `/*?*tri=*`, `/*?*ids=*`, `/*?*prixMax=*`).
+      * Exclusion stricte des routes privées (`/compte`, `/boutique/`, `/agence/`, `/deposer-annonce`, `/deposer-immo`, `/payer-loyer/`, etc.).
+      * Intégration dans le sitemap des hubs stratégiques majeurs : `/boutiques` (priorité 0.95), `/logiciel-gestion-locative-senegal` (0.95), `/agences` (0.95), et des fiches produits boutiques dynamiques avec déduplication.
+    - **Résolution des Soft-404s & Canonisation Produit / Immo / Boutique** :
+      * Remplacement systématique des fallbacks `redirect('/')` ou `redirect('/boutiques/${id}')` par `notFound()` dans `produit/[id]`, `immo/[id]` et `boutiques/[id]/produits/[produitId]`.
+      * Ajout des balises canoniques absolues (`alternates: { canonical }`) sur toutes les fiches produits, annonces immobilières, forfaits télécom et comparateurs.
+    - **Mise à Niveau Schema.org & Rich Snippets (`src/lib/schema-org.ts`, `types.ts`)** :
+      * Refonte de `productSchema` et `buildJsonLd` : prise en charge native des offres uniques (`Offer`) et multiples (`AggregateOffer`), prix minimum/maximum réels, devise `XOF`, disponibilité en stock et `sku`/`mpn`.
+      * Ajout des constructeurs `itemListSchema` et `localBusinessSchema`.
+      * Correction du `SearchAction` dans `layout.tsx` pointant désormais vers `/recherche?q={search_term_string}` (marqué en `noindex`).
+      * Ajout des schémas `Product`, `Offer` et `BreadcrumbList` sur les fiches produits boutiques et forfaits télécom.
+    - **Optimisation SERP & CTR Télécom & Immobilier 2026** :
+      * Refonte des titres et descriptions dans `telecom/landing-data.ts` (Promobile, Yas, Orange, Expresso) intégrant les mentions 2026, tarifs officiels ARTP et coût au Go.
+      * Refonte des 7 landing pages Dakar dans `immo/landing-data.ts` (locations appartements, chambres dès 25 000F, studios meublés, maisons, terrains avec TF).
+      * Injection de données structurées `ItemList` et `BreadcrumbList` dans les hubs `/immo`, `/telecom` et `OperateurLanding`.
+    - **Maillage Interne & Redirection des Filtres** :
+      * Redirection des pilules de catégories de l'accueil directement vers les hubs canoniques `/categorie/[slug]` plutôt que des paramètres de filtre `/?categorie=...`.
+      * Balisage `robots: { index: false, follow: true }` sur la page d'accueil lorsqu'un filtre est actif, tout en préservant le canonique `https://nopalou.com`.
+      * Balisage `robots: { index: false, follow: true }` sur les pages de comparaison matrices (`/comparaison`, `/immo/comparaison`, `/telecom/comparaison`).
+      * Ajout du lien vers l'Annuaire des Boutiques (`/boutiques`) dans le footer.
+  * **🧪 3. Validation Technique & Qualité** :
+    - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Suite de tests unitaires (`npm test`) : **69/69 passés (100%)**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 violation critique**.
+
 - **Supervision Google Analytics 4 (`G-3KGE1YBMVJ`) & Balise Google dans le SEO Center Admin (`/admin/seo`) (18 septembre 2026)** 📊🧠🎯⚡✅ :
   * **🚨 1. Demande Utilisateur** :
     - Intégrer la configuration et le monitoring de la balise Google Analytics (`G-3KGE1YBMVJ`) directement dans l'interface d'administration sous la section **SEO & Référencement**.

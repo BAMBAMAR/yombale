@@ -6,7 +6,11 @@ import ExternalImg from '@/components/ExternalImg'
 import PageHeader from '@/components/PageHeader'
 
 export const metadata: Metadata = {
-  title: 'Comparaison immobilier',
+  title: 'Comparaison immobilier | Nopalou',
+  robots: {
+    index: false,
+    follow: true,
+  },
 }
 
 interface AnnonceImmo {

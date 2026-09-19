@@ -206,12 +206,16 @@ export default function TelecomClient({
             href: buildLink({ operateur: '', page: '1' }),
             active: !currentOperateur,
           },
-          ...operateurs.map(op => ({
-            key: `op-${op}`,
-            label: `${OP_ICONS[op] ?? ''} ${op}`,
-            href: buildLink({ operateur: op, page: '1' }),
-            active: currentOperateur === op,
-          })),
+          ...operateurs.map(op => {
+            const lower = op.toLowerCase()
+            const opSlug = (lower === 'free' || lower === 'yas') ? 'yas' : lower.includes('pro') ? 'promobile' : lower
+            return {
+              key: `op-${op}`,
+              label: `${OP_ICONS[op] ?? ''} ${op}`,
+              href: `/telecom/${opSlug}`,
+              active: currentOperateur.toLowerCase() === opSlug,
+            }
+          }),
           ...TYPES.map(t => ({
             key: `type-${t.val || 'tous'}`,
             label: t.label,

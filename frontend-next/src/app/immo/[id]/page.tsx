@@ -64,31 +64,45 @@ interface AnnonceSimilaire {
 // ── JSON-LD ───────────────────────────────────────────────────────
 
 function buildRealEstateJsonLd(annonce: AnnonceImmo): string {
-  return JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'RealEstateListing',
-    name: annonce.titre,
-    description: annonce.description ?? undefined,
-    url: `https://nopalou.com/immo/${annonce.id}`,
-    ...(annonce.prix ? {
-      offers: {
-        '@type': 'Offer',
-        price: annonce.prix,
-        priceCurrency: 'XOF',
-        availability: 'https://schema.org/InStock',
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com';
+  const data = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'RealEstateListing',
+      name: annonce.titre,
+      description: annonce.description ?? undefined,
+      url: `${siteUrl}/immo/${annonce.id}`,
+      ...(annonce.prix ? {
+        offers: {
+          '@type': 'Offer',
+          price: annonce.prix,
+          priceCurrency: 'XOF',
+          availability: 'https://schema.org/InStock',
+          businessFunction: annonce.transaction === 'location' ? 'https://schema.org/LeaseOut' : 'https://schema.org/Sell',
+        },
+      } : {}),
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: annonce.ville ?? 'Dakar',
+        addressRegion: annonce.ville ?? 'Dakar',
+        addressCountry: 'SN',
+        ...(annonce.quartier ? { streetAddress: annonce.quartier } : {}),
       },
-    } : {}),
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: annonce.ville ?? 'Dakar',
-      addressRegion: annonce.ville ?? 'Dakar',
-      addressCountry: 'SN',
-      ...(annonce.quartier ? { streetAddress: annonce.quartier } : {}),
+      ...(Array.isArray(annonce.photos) && annonce.photos[0] ? {
+        image: annonce.photos,
+      } : {}),
     },
-    ...(Array.isArray(annonce.photos) && annonce.photos[0] ? {
-      image: annonce.photos[0],
-    } : {}),
-  })
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${siteUrl}/` },
+        { '@type': 'ListItem', position: 2, name: 'Immobilier Sénégal', item: `${siteUrl}/immo` },
+        { '@type': 'ListItem', position: 3, name: annonce.titre, item: `${siteUrl}/immo/${annonce.id}` },
+      ],
+    }
+  ];
+  return JSON.stringify(data);
 }
 
 // ── generateMetadata ─────────────────────────────────────────────
@@ -111,15 +125,27 @@ export async function generateMetadata({
         ? annonce.description.slice(0, 155)
         : `${annonce.type_bien ?? 'Bien'} à ${annonce.transaction ?? 'louer/vendre'} à ${localisation || 'Sénégal'}. Prix : ${fcfa(annonce.prix)}.`;
     const mainPhoto = Array.isArray(annonce.photos) ? annonce.photos[0] : null;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com';
+    const canonicalUrl = `${siteUrl}/immo/${id}`;
 
     return {
       title: titre,
       description,
+      alternates: {
+        canonical: canonicalUrl,
+      },
       openGraph: {
         title: titre,
         description,
+        url: canonicalUrl,
         type: 'website',
         ...(mainPhoto ? { images: [{ url: mainPhoto }] } : {}),
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: titre,
+        description,
+        ...(mainPhoto ? { images: [mainPhoto] } : {}),
       },
     };
   } catch {
@@ -133,7 +159,7 @@ export async function generateMetadata({
       }
     } catch (err) { console.warn('[Nopalou:page:L126]', err); }
     return {
-      title: 'Annonce introuvable',
+      title: 'Annonce immobilière introuvable | Nopalou',
     };
   }
 }
@@ -147,7 +173,7 @@ export default async function FicheImmoPage({
 }) {
   const { id } = await params;
 
-  if (!id) redirect('/immo');
+  if (!id) notFound();
 
   let annonce: AnnonceImmo;
   let similaires: AnnonceSimilaire[] = [];
@@ -167,8 +193,7 @@ export default async function FicheImmoPage({
       if ((rErr as any)?.digest?.startsWith('NEXT_REDIRECT')) throw rErr;
     }
 
-    // Si l'ID ne correspond à aucune annonce immo ni entité, rediriger vers l'accueil pour éviter une page incohérente
-    redirect('/');
+    notFound();
   }
 
   await apiFetch<{ annonces: AnnonceSimilaire[] }>(`/immo/${id}/similaires`)

@@ -7,7 +7,36 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/compte/', '/mes-annonces', '/payer-annonce/', '/paiement/', '/admin/', '/api/'],
+        disallow: [
+          // Espaces privés, authentifiés et administration
+          '/admin/',
+          '/api/',
+          '/compte',
+          '/compte/',
+          '/boutique/',
+          '/agence/',
+          '/deposer-annonce',
+          '/deposer-immo',
+          '/mes-annonces',
+          '/mes-annonces-immo',
+          '/payer-annonce/',
+          '/payer-boost/',
+          '/payer-sponsoring-boutique/',
+          '/payer-sponsoring-immo/',
+          '/payer-sponsoring-produit/',
+          '/payer-loyer/',
+          '/checkout-express',
+          '/retour-paiement',
+          '/suivi-commande',
+          '/favoris',
+          // Paramètres d'URL et filtres combinatoires (évite le duplicate content & économise le crawl budget)
+          '/*?*q=*',
+          '/*?*tri=*',
+          '/*?*ids=*',
+          '/*?*prixMax=*',
+          '/*?*prixMin=*',
+          '/*?*categorie=undefined',
+        ],
       },
       {
         userAgent: [

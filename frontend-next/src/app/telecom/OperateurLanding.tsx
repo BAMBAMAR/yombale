@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import JsonLd from '@/components/JsonLd'
-import { breadcrumbSchema } from '@/lib/schema-org'
+import { breadcrumbSchema, itemListSchema } from '@/lib/schema-org'
 import { TELECOM_LANDINGS } from './landing-data'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
@@ -53,6 +53,16 @@ export default async function OperateurLanding({ slug }: { slug: string }) {
         { name: 'Télécom', url: '/telecom' },
         { name: cfg.label, url: `/telecom/${slug}` },
       ])} />
+      {forfaits.length > 0 && (
+        <JsonLd schema={itemListSchema(
+          forfaits.slice(0, 30).map(f => ({
+            name: `${f.nom} (${f.operateur}) - ${fcfa(f.prix)}`,
+            url: `/telecom/${f.id}`,
+            description: `${f.nom} : ${dataLabel(f.data_mo)} data, ${f.minutes ? `${f.minutes} min` : 'appels'}. Prix : ${fcfa(f.prix)}.`,
+          })),
+          cfg.h1
+        )} />
+      )}
 
       <div className="page-container" style={{ paddingTop: '1.5rem' }}>
         <nav aria-label="Fil d'Ariane" style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 20 }}>
