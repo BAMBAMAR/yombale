@@ -2291,4 +2291,114 @@ module.exports = async function migrateInline() {
   } catch (err) {
     console.warn('[MIGRATE] Nopalou Immobilier échec:', err.message);
   }
+
+  // ── SAMA XAALIS : MODULE UNIFIÉ DE GESTION SIMPLE DE L'ARGENT ──
+  try {
+    await pool.query(`
+      -- 1. Abonnement / Activation indépendante Sama Xaalis
+      CREATE TABLE IF NOT EXISTS kalpe_abonnements (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id UUID NOT NULL UNIQUE REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        statut         VARCHAR(30) NOT NULL DEFAULT 'actif',
+        type_acces     VARCHAR(30) NOT NULL DEFAULT 'standard',
+        debut          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        fin            TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '365 days'),
+        is_trial       BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        updated_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_kalpe_abmt_user ON kalpe_abonnements(utilisateur_id, statut);
+
+      -- 2. Journal unifié des opérations financières (Revenus, Dépenses, Ventes Express)
+      CREATE TABLE IF NOT EXISTS kalpe_operations (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        boutique_id    UUID REFERENCES boutiques(id) ON DELETE SET NULL,
+        contexte       VARCHAR(20) NOT NULL DEFAULT 'personnel',
+        type           VARCHAR(30) NOT NULL,
+        direction      VARCHAR(10) NOT NULL,
+        montant        NUMERIC(12,2) NOT NULL CHECK (montant > 0),
+        categorie      VARCHAR(60) NOT NULL,
+        libelle        VARCHAR(255) NOT NULL,
+        tiers_nom      VARCHAR(150),
+        tiers_tel      VARCHAR(30),
+        date_operation DATE NOT NULL DEFAULT CURRENT_DATE,
+        reference      VARCHAR(128) UNIQUE,
+        metadata       JSONB DEFAULT '{}'::jsonb,
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        updated_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_kalpe_ops_user ON kalpe_operations(utilisateur_id, date_operation DESC);
+      CREATE INDEX IF NOT EXISTS idx_kalpe_ops_contexte ON kalpe_operations(utilisateur_id, contexte);
+      CREATE INDEX IF NOT EXISTS idx_kalpe_ops_type ON kalpe_operations(utilisateur_id, type);
+
+      -- 3. Dettes & Créances (Bor) — Tiers, solde, échéance et relance
+      CREATE TABLE IF NOT EXISTS kalpe_dettes (
+        id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id   UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        boutique_id      UUID REFERENCES boutiques(id) ON DELETE SET NULL,
+        contexte         VARCHAR(20) NOT NULL DEFAULT 'personnel',
+        direction        VARCHAR(20) NOT NULL DEFAULT 'a_recevoir',
+        tiers_nom        VARCHAR(150) NOT NULL,
+        tiers_telephone  VARCHAR(30),
+        montant_initial  NUMERIC(12,2) NOT NULL CHECK (montant_initial > 0),
+        montant_paye     NUMERIC(12,2) NOT NULL DEFAULT 0,
+        montant_restant  NUMERIC(12,2) NOT NULL CHECK (montant_restant >= 0),
+        date_pret        DATE NOT NULL DEFAULT CURRENT_DATE,
+        date_echeance    DATE,
+        statut           VARCHAR(30) NOT NULL DEFAULT 'en_cours',
+        note             TEXT,
+        derniere_relance TIMESTAMPTZ,
+        legacy_client_id UUID,
+        created_at       TIMESTAMPTZ DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_kalpe_dettes_user ON kalpe_dettes(utilisateur_id, statut);
+      CREATE INDEX IF NOT EXISTS idx_kalpe_dettes_echeance ON kalpe_dettes(utilisateur_id, date_echeance);
+
+      -- 4. Remboursements partiels ou totaux des dettes
+      CREATE TABLE IF NOT EXISTS kalpe_dette_remboursements (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        dette_id       UUID NOT NULL REFERENCES kalpe_dettes(id) ON DELETE CASCADE,
+        utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        montant        NUMERIC(12,2) NOT NULL CHECK (montant > 0),
+        date_reglement DATE NOT NULL DEFAULT CURRENT_DATE,
+        mode_paiement  VARCHAR(30) DEFAULT 'especes',
+        note           VARCHAR(255),
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_kalpe_remb_dette ON kalpe_dette_remboursements(dette_id);
+
+      -- 5. Objectifs d'Épargne & Buts financiers
+      CREATE TABLE IF NOT EXISTS kalpe_objectifs (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        titre          VARCHAR(150) NOT NULL,
+        montant_cible  NUMERIC(12,2) NOT NULL CHECK (montant_cible > 0),
+        montant_actuel NUMERIC(12,2) NOT NULL DEFAULT 0,
+        date_echeance  DATE,
+        categorie      VARCHAR(50) DEFAULT 'projet',
+        statut         VARCHAR(30) NOT NULL DEFAULT 'en_cours',
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        updated_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_kalpe_obj_user ON kalpe_objectifs(utilisateur_id, statut);
+
+      -- 6. Mouvements d'Épargne (Versements & Retraits)
+      CREATE TABLE IF NOT EXISTS kalpe_epargne_mouvements (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        objectif_id    UUID NOT NULL REFERENCES kalpe_objectifs(id) ON DELETE CASCADE,
+        utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        montant        NUMERIC(12,2) NOT NULL CHECK (montant > 0),
+        type           VARCHAR(20) NOT NULL DEFAULT 'versement',
+        note           VARCHAR(255),
+        date_mouvement DATE NOT NULL DEFAULT CURRENT_DATE,
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_kalpe_epargne_obj ON kalpe_epargne_mouvements(objectif_id);
+    `);
+    console.log('[MIGRATE] ✅ Sama Xaalis: 6 tables créées avec succès');
+  } catch (err) {
+    console.warn('[MIGRATE] Sama Xaalis échec:', err.message);
+  }
 };

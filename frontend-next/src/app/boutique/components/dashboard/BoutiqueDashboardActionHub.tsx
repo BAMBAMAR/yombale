@@ -12,6 +12,7 @@ import {
   Receipt,
   BarChart3,
   Users,
+  Wallet,
 } from 'lucide-react'
 
 interface BoutiqueDashboardActionHubProps {
@@ -292,6 +293,26 @@ export default function BoutiqueDashboardActionHub({
           borderTop: '1px solid var(--border-light, #F1E9E0)',
         }}
       >
+        <a
+          href="/compte?tab=kalpe&contexte=activite"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 12px',
+            borderRadius: 20,
+            background: '#FFF3EB',
+            border: '1px solid #FED7AA',
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#C75B00',
+            textDecoration: 'none',
+          }}
+        >
+          <Wallet size={13} />
+          <span>Sama Xaalis (Finances)</span>
+        </a>
+
         <button
           type="button"
           onClick={() => onNavigate('documents')}

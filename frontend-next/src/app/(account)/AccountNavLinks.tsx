@@ -17,6 +17,14 @@ export default function AccountNavLinks({ overrideTab }: { overrideTab?: string 
       title: 'Mon Espace',
       items: [
         { href: '/compte', label: 'Tableau de bord', tab: 'accueil' },
+        {
+          href: '/compte?tab=kalpe',
+          label: 'Sama Xaalis',
+          tab: 'kalpe',
+          badgeText: 'Nouveau',
+          badgeBg: 'var(--accent, #C75B00)',
+          badgeColor: '#ffffff',
+        },
       ],
     },
     {

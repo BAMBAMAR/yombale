@@ -39,6 +39,9 @@ interface Settings {
   alertes_abonnement_jours_avant: string
   alertes_abonnement_whatsapp: string
   alertes_abonnement_email: string
+  kalpe_prix_mensuel?: string
+  kalpe_essai_jours?: string
+  kalpe_gratuit_boutiques?: string
   contrat_vendeur_requis?: string
   contrat_vendeur_texte?: string
 }
@@ -81,6 +84,9 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
       alertes_abonnement_jours_avant: '7',
       alertes_abonnement_whatsapp: 'true',
       alertes_abonnement_email: 'true',
+      kalpe_prix_mensuel: '1000',
+      kalpe_essai_jours: '30',
+      kalpe_gratuit_boutiques: 'true',
       contrat_vendeur_requis: 'true',
       contrat_vendeur_texte: '',
     }
@@ -237,6 +243,15 @@ export default function TarifsClient({ initial, secret }: { initial: Settings; s
         {field('alertes_abonnement_jours_avant', 'Délai de première alerte avant expiration', 'number', 'jours avant')}
         {toggle('alertes_abonnement_email', 'Relance par E-mail')}
         {toggle('alertes_abonnement_whatsapp', 'Relance par WhatsApp')}
+      </>)}
+
+      {card('Portefeuille & Carnet Sama Xaalis', <>
+        {field('kalpe_prix_mensuel', 'Tarif mensuel de l\'abonnement Sama Xaalis', 'number', 'FCFA / mois')}
+        {field('kalpe_essai_jours', 'Durée de la période d\'essai gratuit', 'number', 'jours')}
+        {toggle('kalpe_gratuit_boutiques', 'Inclus sans surcoût pour les marchands ayant une boutique active')}
+        <p style={{ fontSize: 12, color: '#6b7280', margin: '4px 0 0' }}>
+          Définit le montant exigé après la période d\'essai gratuit, et permet d\'offrir l\'outil aux commerçants abonnés.
+        </p>
       </>)}
 
       {card('Contrat Vendeur & Charte Marchand (CGU Dynamiques)', <>

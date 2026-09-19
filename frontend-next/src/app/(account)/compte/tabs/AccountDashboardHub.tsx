@@ -5,6 +5,7 @@ import AccountHubHero from './hub/AccountHubHero'
 import AccountHubKpis from './hub/AccountHubKpis'
 import AccountHubQuickActions from './hub/AccountHubQuickActions'
 import AccountHubRecentAnnonces from './hub/AccountHubRecentAnnonces'
+import { Wallet, ArrowRight } from 'lucide-react'
 
 interface Props {
   nom: string
@@ -90,6 +91,78 @@ export default function AccountDashboardHub({
         hasBoutique={hasBoutique}
         onNavigateTab={onNavigateTab}
       />
+
+      {/* 1.5 Showcase Sama Xaalis */}
+      <div
+        onClick={() => onNavigateTab('kalpe')}
+        style={{
+          background: 'linear-gradient(135deg, #1C2B4A 0%, #2A3F6D 100%)',
+          borderRadius: 14,
+          padding: '16px 18px',
+          color: '#FFFFFF',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          boxShadow: '0 4px 14px rgba(28, 43, 74, 0.15)',
+          transition: 'transform 0.15s ease',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              background: 'rgba(199, 91, 0, 0.2)',
+              border: '1px solid rgba(199, 91, 0, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Wallet size={22} color="#FFA86A" />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15, fontWeight: 800 }}>Sama Xaalis</span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: '#C75B00',
+                  color: '#FFF',
+                  padding: '2px 7px',
+                  borderRadius: 999,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Mon Argent
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: '#C8D4E5', marginTop: 2 }}>
+              Dépenses, entrées, carnet de dettes & épargne avec dictée vocale bilingue
+            </div>
+          </div>
+        </div>
+        <div
+          style={{
+            background: 'rgba(255, 255, 255, 0.12)',
+            padding: '8px 12px',
+            borderRadius: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 12,
+            fontWeight: 700,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Ouvrir <ArrowRight size={14} />
+        </div>
+      </div>
 
       {/* 2. Grille de 4 KPIs d'Activité en Direct */}
       <AccountHubKpis

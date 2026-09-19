@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { LayoutDashboard, Tag, Plus, Package, Menu } from 'lucide-react'
+import { LayoutDashboard, Wallet, Plus, Tag, Menu } from 'lucide-react'
 
 interface AccountBottomNavProps {
   onOpenQuickActions: () => void
@@ -19,8 +19,8 @@ export default function AccountBottomNav({
   const tab = searchParams.get('tab') || ''
 
   const isDashboard = pathname === '/compte' && (!tab || tab === 'accueil' || tab === 'dashboard')
+  const isKalpe = tab === 'kalpe' || tab === 'sama-xaalis'
   const isAnnonces = tab === 'mes-annonces' || pathname.startsWith('/mes-annonces')
-  const isCommandes = tab === 'suivi-commande'
 
   return (
     <nav className="account-bottom-nav" aria-label="Navigation mobile de mon compte">
@@ -34,14 +34,14 @@ export default function AccountBottomNav({
         <span>Accueil</span>
       </Link>
 
-      {/* 2. Mes Annonces */}
+      {/* 2. Sama Xaalis */}
       <Link
-        href="/compte?tab=mes-annonces"
-        className={`account-bottom-nav-item ${isAnnonces ? 'active' : ''}`}
-        aria-label="Mes annonces"
+        href="/compte?tab=kalpe"
+        className={`account-bottom-nav-item ${isKalpe ? 'active' : ''}`}
+        aria-label="Sama Xaalis"
       >
-        <Tag size={20} />
-        <span>Annonces</span>
+        <Wallet size={20} />
+        <span>Xaalis</span>
       </Link>
 
       {/* 3. Bouton FAB Central Surélevé (+) */}
@@ -55,14 +55,14 @@ export default function AccountBottomNav({
         <Plus size={24} strokeWidth={2.8} />
       </button>
 
-      {/* 4. Suivi Commandes */}
+      {/* 4. Mes Annonces */}
       <Link
-        href="/compte?tab=suivi-commande"
-        className={`account-bottom-nav-item ${isCommandes ? 'active' : ''}`}
-        aria-label="Suivi de mes commandes"
+        href="/compte?tab=mes-annonces"
+        className={`account-bottom-nav-item ${isAnnonces ? 'active' : ''}`}
+        aria-label="Mes annonces"
       >
-        <Package size={20} />
-        <span>Commandes</span>
+        <Tag size={20} />
+        <span>Annonces</span>
       </Link>
 
       {/* 5. Menu / Tiroir latéral */}

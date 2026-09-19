@@ -295,6 +295,8 @@ app.use('/api/analytics',       require('./routes/analytics'));
 app.use('/api/whatsapp',        require('./routes/whatsapp'));
 app.use('/api/chat',            require('./routes/chat'));
 app.use('/api/comptabilite',    require('./routes/comptabilite'));
+app.use('/api/kalpe',           require('./routes/kalpe'));
+app.use('/api/admin/kalpe',     require('./routes/admin-kalpe'));
 app.use('/api/search',          require('./routes/search'));
 app.use('/api/v1',              require('./routes/api-partenaire'));
 app.use('/api/settings',        require('./routes/settings'));

@@ -19,6 +19,7 @@ import MesLocationsClient from './tabs/MesLocationsClient'
 import AccountDashboardHub from './tabs/AccountDashboardHub'
 import AccountSubHeader from '../components/AccountSubHeader'
 import { Building2 } from 'lucide-react'
+import { SamaKalpeClient } from './kalpe/SamaKalpeClient'
 
 export default function CompteClient({ 
   nom, 
@@ -194,6 +195,10 @@ export default function CompteClient({
             session={session}
             onNavigateTab={handleNavigateTab}
           />
+        )}
+
+        {(tab === 'kalpe' || tab === 'sama-xaalis' || tab === 'finances') && (
+          <SamaKalpeClient />
         )}
 
         {tab === 'mes-annonces' && (

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { logout } from '@/app/actions/auth'
-import { Store, ShoppingCart, LogOut, Building2 } from 'lucide-react'
+import { Store, ShoppingCart, LogOut, Building2, Wallet } from 'lucide-react'
 
 interface MobileNavUserCardProps {
   displayName: string
@@ -233,6 +233,32 @@ export default function MobileNavUserCard({ displayName, initiale, onClose }: Mo
           </>
         )}
       </div>
+
+      {/* Raccourci Sama Xaalis */}
+      <a
+        href="/compte?tab=kalpe"
+        onClick={onClose}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 10,
+          padding: '8px 12px',
+          borderRadius: 8,
+          background: 'rgba(28, 43, 74, 0.05)',
+          border: '1px solid rgba(28, 43, 74, 0.1)',
+          textDecoration: 'none',
+          color: 'var(--navy, #1C2B4A)',
+          fontSize: 12,
+          fontWeight: 700,
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Wallet size={15} color="#C75B00" />
+          <span>Sama Xaalis (Mon argent & dettes)</span>
+        </span>
+        <span style={{ fontSize: 11, color: '#C75B00', fontWeight: 800 }}>Ouvrir →</span>
+      </a>
     </div>
   )
 }

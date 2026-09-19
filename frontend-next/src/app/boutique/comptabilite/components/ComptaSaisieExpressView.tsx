@@ -231,7 +231,7 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
         nbArticlesPanier={nbArticlesTotal}
         totalVente={totalVente}
         onViderPanier={handleViderPanier}
-        t={t}
+        t={(k: string) => (t as any)(k)}
       />
 
       {/* Assistant Vocal & Guide Interactif (Modale s'ouvrant au clic) */}
@@ -281,7 +281,7 @@ export function ComptaSaisieExpressView({ boutiqueId }: ComptaSaisieExpressViewP
           setClientNom={setClientNom}
           loading={loading}
           setLoading={setLoading}
-          t={t}
+          t={(k: string) => (t as any)(k)}
         />
       ) : (
         <ComptaSaisieExpressDepenseForm

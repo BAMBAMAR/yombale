@@ -110,6 +110,7 @@ const DOMAINS: DomainSection[] = [
     id: 'finances',
     title: 'Finances & Payouts',
     items: [
+      { href: '/admin/sama-xaalis', label: 'Sama Xaalis (Finances & Dettes)', icon: <Wallet size={15} />, highlight: '#f97316' },
       { href: '/admin/paiements', label: 'Flux Wave/OM & Journal', icon: <Wallet size={15} />, highlight: '#3b82f6' },
       { href: '/admin/reversements', label: 'Reversements Wave 1-Clic', icon: <ArrowDownLeft size={15} /> },
       { href: '/admin/paiements-manuels', label: 'Paiements Manuels', icon: <Receipt size={15} /> },

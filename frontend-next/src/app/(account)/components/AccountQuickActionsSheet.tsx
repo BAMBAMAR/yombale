@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { PlusCircle, Home, Store, Building2, Bell, X } from 'lucide-react'
+import { PlusCircle, Home, Store, Building2, Bell, X, Wallet } from 'lucide-react'
 
 interface AccountQuickActionsSheetProps {
   isOpen: boolean
@@ -16,6 +16,15 @@ export default function AccountQuickActionsSheet({
   if (!isOpen) return null
 
   const actions = [
+    {
+      id: 'sama_xaalis',
+      label: 'Sama Xaalis (Entrée, Dépense, Dette)',
+      description: 'Dictée vocale bilingue Wolof/Français & gestion 1-tap',
+      href: '/compte?tab=kalpe',
+      icon: Wallet,
+      color: '#C75B00',
+      bg: '#FFF3E8',
+    },
     {
       id: 'vendre_article',
       label: 'Vendre un article (Annonce classique)',

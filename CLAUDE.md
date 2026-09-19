@@ -23,6 +23,52 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Lancement Majeur du Module Transversal « Sama Xaalis » : Gestion Financière Personnelle & Activité, Carnet de Dettes avec Relances WhatsApp Wave, Dictée Vocale Bilingue Wolof/Français, Objectifs d'Épargne & Supervision Admin (`backend`, `frontend-next`) (19 septembre 2026)** ⚡💰🎙️📈🛡️✅ :
+  * **🎯 1. Vision & Réponse aux Attentes Utilisateur** :
+    - Unification du carnet de dettes et de la vente express dans un module transversal unique, indépendant de toute boutique marchande, accessible à tout profil (particulier, étudiant, salarié, commerçant, indépendant).
+    - Double contexte étanche `Personnel` vs `Activité` pour une séparation nette des finances sans mélange artificiel.
+    - Zéro perte de données : réconciliation et migration automatique des dettes et transactions existantes (`backend/scripts/migrate-kalpe-legacy.js`).
+  * **🛠️ 2. Réalisations Techniques Livrées** :
+    - **Base de Données & Schéma PostgreSQL (`backend/migrate-inline.js`)** :
+      - `kalpe_abonnements` : Gestion de l'état d'activation, période d'essai 30 jours et statut.
+      - `kalpe_operations` : Journal unifié d'entrées, sorties, ventes express et versements.
+      - `kalpe_dettes` : Gestion des créances à recevoir et dettes à payer avec suivi d'échéances et relance WhatsApp.
+      - `kalpe_dette_remboursements` : Règlements partiels ou totaux réintégrant instantanément les fonds dans le disponible.
+      - `kalpe_objectifs` : Suivi d'objectifs d'épargne, cagnottes et dates cibles.
+      - `kalpe_epargne_mouvements` : Historique des versements d'épargne.
+    - **API Backend (`backend/routes/kalpe.js` & `backend/routes/admin-kalpe.js`)** :
+      - Routes utilisateur sous `/api/kalpe` (`/etat`, `/activer`, `/synthese`, `/operation`, `/operations`, `/dettes`, `/dettes/:id/remboursement`, `/relance-whatsapp`, `/objectifs`, `/objectifs/:id/verser`, `/stats`).
+      - Routes de supervision administrateur sous `/api/admin/kalpe` (`/stats`, `/utilisateurs`, `/utilisateurs/:id/statut`).
+    - **Frontend & Expérience Utilisateur (`frontend-next/src/app/(account)/compte/kalpe`)** :
+      - `SamaKalpeClient.tsx` : Orchestrateur central (< 450 lignes) gérant les 5 vues (Aperçu, Journal, Dettes, Épargne, Statistiques).
+      - `KalpeHeader.tsx` : En-tête ergonomique avec sélecteur de contexte, déclencheur audio et export CSV client.
+      - `KalpeSituationCards.tsx` : Solde disponible central et 4 métriques de situation avec typographie blanche et pastels feutrés sobres (suppression définitive des teintes néon/fluorescentes).
+      - `KalpeQuickActions.tsx` : Cartes blanches épurées à fond neutre, bordures subtiles Nopalou et pastels légers feutrés pour une esthétique bancaire executive sans blocs saturés criards.
+      - `KalpeConseilsBanner.tsx` : Conseils d'épargne et d'équilibre basés sur les calculs mathématiques réels.
+      - `KalpeOperationsJournal.tsx` : Journal de bord avec pagination, filtre par type et recherche.
+      - `KalpeDettesSection.tsx` : Gestion des créances/dettes avec relance WhatsApp personnalisée et lien Wave 1-clic direct.
+      - `KalpeEpargneSection.tsx` : Jauges de progression des cagnottes et modale de versement.
+      - `KalpeStatsSection.tsx` : Module de statistiques haute précision (< 320 lignes) avec commutateur 3 modes (Vue d'ensemble, Personnel, Activité Pro).
+      - `KalpeContexteBreakdown.tsx` : Comparatif côte à côte étanche Personnel vs Activité (entrées, dépenses, marge nette et jauge de proportion).
+      - `KalpeAlertsBanner.tsx` : Bandeau dynamique d'alertes actives (créances en retard avec décompte précis, échéances imminentes < 72h, alerte déficit avec bouton de redirection directe).
+      - `KalpeConseilsSection.tsx` : Moteur de conseils prédictifs et règles de vigilance ("Ce qu'il faut éviter", calcul du taux d'épargne, impact chiffré des économies potentielles).
+      - `KalpeSaisieModal.tsx` : Modale de saisie rapide avec reconnaissance vocale bilingue Wolof/Français (`voice-assistant.ts`, Téemeer, Junni...).
+      - `KalpeActivationCard.tsx` : Carte d'activation en 1-clic avec essai gratuit 30 jours.
+    - **Intégration Globale dans l'Écosystème Nopalou** :
+      - `CompteClient.tsx` : Routage direct vers `SamaKalpeClient` pour `tab=kalpe` ou `tab=sama-xaalis`.
+      - `AccountDashboardHub.tsx` : Vitrine mise en avant au sommet du tableau de bord de compte.
+      - `AccountBottomNav.tsx` : Bouton permanent `Xaalis` dans la barre de navigation basse mobile (5 boutons).
+      - `AccountQuickActionsSheet.tsx` : Raccourci d'action rapide dans la feuille contextuelle du bouton central FAB (+).
+      - `AccountNavLinks.tsx` : Lien en position #2 sous "Mon Espace".
+      - `MobileNavUserCard.tsx` : Raccourci rapide dans le tiroir mobile.
+      - `BoutiqueDashboardActionHub.tsx` : Raccourci direct vers Sama Xaalis (contexte activité).
+      - Console Admin `/admin/sama-xaalis` : Supervision complète des comptes, volumes, statuts et bouton d'accès direct à la configuration tarifaire.
+      - Panneau Tarifs `/admin/tarifs` : Paramétrage 100% administrable en temps réel du tarif mensuel Sama Xaalis (`kalpe_prix_mensuel`), de la durée de l'essai gratuit (`kalpe_essai_jours`), et de la gratuité pour les marchands (`kalpe_gratuit_boutiques`).
+  * **🧪 3. Validation Qualité & Conformité** :
+    - Compilation TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Audit Anti-AI-Slop (`npm run lint:slop`) : **0 composant monolithique (>450L / >800L), 0 silent catch, 100% SVG `lucide-react`**.
+    - Respect strict de la règle de déploiement : code prêt en local, aucun `git push` sans instruction explicite.
+
 - **Exécution Complète des Remédiations P0 & P1 de l'Audit Technique : Index GIN Catalogue, Unification Anti-IDOR, Modularisation < 450 lignes, Allègement CSS (-25%) & Persistance Dark Mode POS (`backend`, `frontend-next`) (19 septembre 2026)** ⚡🛡️🔍🌙📦🎨✅ :
   * **🛠️ 1. Réalisations & Corrections Livrées** :
     - **Performance Requêtes & Recherche (`backend/migrate-inline.js`)** : Déploiement de l'index GIN trigramme `idx_bp_nom_trgm` sur `boutique_produits(nom) USING gin(nom gin_trgm_ops);` éliminant les sequential scans sur la recherche catalogue marchande.

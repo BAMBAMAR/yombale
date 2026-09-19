@@ -44,6 +44,7 @@ router.get('/public', async (req, res) => {
                   'max_agences_par_compte', 'max_agences_par_telephone',
                   'tarif_agence_supplementaire', 'immo_multi_agence_label', 'prix_sponsoring_agence',
                   'alertes_abonnement_jours_avant', 'alertes_abonnement_whatsapp', 'alertes_abonnement_email',
+                  'kalpe_prix_mensuel', 'kalpe_essai_jours', 'kalpe_gratuit_boutiques',
                   'contrat_vendeur_requis', 'contrat_vendeur_texte'];
     const result = {};
     for (const k of keys) result[k] = await s.get(k);
