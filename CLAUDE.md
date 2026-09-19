@@ -1,3 +1,31 @@
+- **Refonte Ergonomique Complète Saisie Express, Caisse POS, Carnet de Dettes & Passerelle Stripe Diaspora (`frontend-next`, `backend`) (19 septembre 2026)** ⚡🛒💳🧾🚀✅ :
+  * **🚨 1. Diagnostic & Problématiques Utilisateur Résolues** :
+    - *Espace vide à droite du catalogue* : La grille de cartes carrées `140px` laissait un grand vide blanc à droite lorsque peu d'articles correspondaient. Résolu par un affichage en **LISTE 100% pleine largeur**.
+    - *Troncature du nom et débordement du bouton* : Forcer toutes les informations sur une seule ligne étriquée tronquait le nom en `Samsung ...` et poussait le bouton `+ Ajouter` hors de la carte. Résolu avec un découpage vertical à 2 sous-lignes calibrées (Nom complet lisible sur ligne 1, Prix FCFA et badge stock côte à côte sur ligne 2 avec `whiteSpace: 'nowrap'`), et bouton d'action calé à droite sans déborder.
+    - *Retour à la ligne intempestif des boutons et onglets* : Le bouton micro (`[ 🎙 Vocal ]`), les onglets `Catalogue (1)` et le bouton `[ Scan EAN ]` basculaient sous les autres éléments. Résolu par l'imposition de `flexWrap: 'nowrap'` et l'adoption de l'icône `MicVocal` et `ScanBarcode`.
+    - *Étirement vertical et affichages inutiles* : Les formulaires de panier vides ont été masqués tant que le panier compte 0 article, et la bannière vocale a été transformée en modale interactive déclenchée au clic sur le micro.
+  * **🛠️ 2. Réalisations & Chantiers Livrés** :
+    - **Saisie Express Haute Précision** :
+      - `ComptaSaisieExpressCatalogue.tsx` (< 450 lignes) : Liste pleine largeur, ligne de produit aérée et responsive.
+      - `ComptaSaisieExpressVenteForm.tsx` (< 450 lignes) : Grille adaptative 1 colonne (panier vide) $\rightarrow$ 2 colonnes (panier actif), onglets et scan sur une seule ligne.
+      - `ComptaSaisieExpressHeaderBar.tsx` (< 450 lignes) : Sélecteur Vente/Dépense + bouton `[ 🎙 Vocal ]` (`MicVocal`) verrouillés sur la même ligne.
+      - `ComptaSaisieExpressVoiceBanner.tsx` : Modale d'assistance vocale Wolof & Français.
+      - `ComptaSaisieExpressDepenseForm.tsx` : Puces de montants rapides (500 F à 10 000 F) et puces de catégories défilantes.
+    - **Carnet de Dettes & Caisse POS Tactile** :
+      - `CarnetKpiCards.tsx` : Carte portefeuille synthétique condensée avec dégradé Dakar (`#1C2B4A` $\rightarrow$ `#C75B00`).
+      - `CarnetClientCardItem.tsx` & `CarnetClientsList.tsx` : Cartes clients spacieuses avec relance WhatsApp 1-tap.
+      - `BoutiqueBottomNav.tsx` : Barre de navigation basse contextuelle selon l'onglet actif avec Action Sheets fluides.
+      - `web-bluetooth-printer.ts` : Impression thermique directe Bluetooth ESC/POS sans boîte de dialogue d'impression sous Android Chrome.
+    - **Passerelle Stripe Diaspora (Cartes Bancaires Internationales)** :
+      - Service `backend/services/stripe.js` avec sessions de paiement Stripe Checkout hébergées (Cartes Visa/Mastercard/Apple Pay) pour la diaspora en EUR/USD (1 EUR = 655.957 FCFA).
+      - Webhook Stripe sécurisé dans `backend/routes/paiement.js` avec notifications WhatsApp vendeur et acheteur.
+    - **Découpage & Modularisation Backend** :
+      - `credit-service.js`, `pos-service.js`, `social-extractor.js` et `llm-chat.js` (RAG Gemini Flash).
+  * **🧪 3. Validation Technique & Qualité** :
+    - Tests unitaires Backend Jest : **45/45 suites passées, 354/354 tests passés (100%)**.
+    - Tests unitaires Frontend : **69/69 passés (100%)**.
+    - Linter Anti-AI-Slop : **0 violation critique**, aucun emoji UI, tous les composants < 450 lignes.
+
 - **Correction Critique de l'Aiguillage Chatbot WhatsApp : Espace Agence Pro & Navigation "Menu Principal" (`backend/services/immo-chatbot.js`, `backend/services/whatsapp-chatbot.js`) (19 septembre 2026)** 📱🏢🌐⚡✅ :
   * **🚨 1. Diagnostic des Incohérences Détectées lors des Tests Utilisateur** :
     - *Incohérence 1 : Clic sur "🏢 Espace Agence Pro" renvoyait des annonces de location grand public* :

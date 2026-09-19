@@ -7,6 +7,7 @@ import { setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
+import { Eye, EyeOff, AlertCircle, Info } from 'lucide-react'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -260,11 +261,13 @@ export default function ConnexionForm() {
       </div>
 
       {loginMethod === 'email' ? (
-        <form action={action} className="auth-form">
-          <input type="hidden" name="redirect" value={rawRedirect} />
+        <form key="email-form" action={action} className="auth-form">
+          <input key="redirect-input" type="hidden" name="redirect" value={rawRedirect || ''} />
           {state.error && (
             <div className="auth-error" role="alert">
-              <span className="auth-error-icon">⚠</span>
+              <span className="auth-error-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <AlertCircle size={15} />
+              </span>
               {getLocalizedError(state.error)}
             </div>
           )}
@@ -274,11 +277,13 @@ export default function ConnexionForm() {
             <div className="auth-input-wrap">
               <span className="auth-input-icon"></span>
               <input
+                key="email-input"
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
+                defaultValue=""
                 placeholder={t('auth.emailPlaceholder')}
                 className="auth-input auth-input--icon"
               />
@@ -293,11 +298,13 @@ export default function ConnexionForm() {
             <div className="auth-input-wrap">
               <span className="auth-input-icon"></span>
               <input
+                key="password-input"
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 required
+                defaultValue=""
                 placeholder={t('auth.passwordPlaceholder')}
                 className="auth-input auth-input--icon auth-input--eye"
               />
@@ -306,8 +313,9 @@ export default function ConnexionForm() {
                 className="auth-eye-btn"
                 onClick={() => setShowPassword(v => !v)}
                 aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                {showPassword ? '🙈' : '👁'}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
@@ -315,7 +323,7 @@ export default function ConnexionForm() {
           <SubmitButton />
         </form>
       ) : (
-        <form onSubmit={stepWhatsapp === 'phone' ? handleSendWaCode : handleVerifyWaCode} className="auth-form">
+        <form key="whatsapp-form" onSubmit={stepWhatsapp === 'phone' ? handleSendWaCode : handleVerifyWaCode} className="auth-form">
           {errorType === 'whatsapp_degraded' && (
             <div style={{
               background: '#fffbeb',
@@ -369,14 +377,14 @@ export default function ConnexionForm() {
               lineHeight: 1.5,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, marginBottom: 6 }}>
-                <span>ℹ️</span>
+                <Info size={16} />
                 <span>Compte non trouvé</span>
               </div>
               <p style={{ margin: '0 0 10px 0' }}>
                 Ce numéro WhatsApp n'est pas encore enregistré. Vous pouvez créer votre compte gratuitement en 10 secondes.
               </p>
               <Link
-                href={`/inscription?tel=${encodeURIComponent(telephone)}`}
+                href={`/inscription?tel=${encodeURIComponent(telephone || '')}`}
                 style={{
                   background: '#2563eb',
                   color: '#ffffff',
@@ -390,7 +398,6 @@ export default function ConnexionForm() {
                   gap: 6
                 }}
               >
-                <span></span>
                 <span>Créer mon compte avec ce numéro</span>
               </Link>
             </div>
@@ -398,7 +405,9 @@ export default function ConnexionForm() {
 
           {errorType === 'generic' && errorWa && (
             <div className="auth-error" role="alert">
-              <span className="auth-error-icon">⚠</span>
+              <span className="auth-error-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <AlertCircle size={15} />
+              </span>
               {errorWa}
             </div>
           )}
@@ -409,10 +418,11 @@ export default function ConnexionForm() {
               <div className="auth-input-wrap">
                 <span className="auth-input-icon"></span>
                 <input
+                  key="telephone-input"
                   id="telephone"
                   type="tel"
                   required
-                  value={telephone}
+                  value={telephone || ''}
                   onChange={e => setTelephone(e.target.value)}
                   placeholder={t('auth.waPhonePlaceholder')}
                   className="auth-input auth-input--icon"
@@ -426,10 +436,11 @@ export default function ConnexionForm() {
               <div className="auth-input-wrap">
                 <span className="auth-input-icon"></span>
                 <input
+                  key="code-input"
                   id="code"
                   type="text"
                   required
-                  value={code}
+                  value={code || ''}
                   onChange={e => setCode(e.target.value)}
                   placeholder={t('auth.waCodePlaceholder')}
                   maxLength={6}

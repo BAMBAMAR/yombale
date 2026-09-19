@@ -23,30 +23,12 @@ const uploadMedia = multer({
 const { uploadBuffer } = require('../services/cloudinary');
 const { parseWhatsAppMedia } = require('../services/whatsapp-media-parser');
 
-// ── Helper de Résolution Boutique (UUID ou Slug) ─────────────────────────────
-async function resolveBoutiqueId(idOrSlug) {
-  if (!idOrSlug) return null;
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
-  if (isUUID) {
-    const r = await pool.query('SELECT id, nom, slug, whatsapp, telephone, actif FROM boutiques WHERE id = $1', [idOrSlug]);
-    return r.rows[0] || null;
-  }
-  const r = await pool.query('SELECT id, nom, slug, whatsapp, telephone, actif FROM boutiques WHERE slug = $1', [idOrSlug]);
-  return r.rows[0] || null;
-}
-
-// ── Helper de Sécurité & Isolation Multi-Tenant Marchand ─────────────────────
-async function verifierAccesBoutique(boutiqueId, userId) {
-  const query = `
-    SELECT b.id, b.nom
-    FROM boutiques b
-    LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id AND bu.utilisateur_id = $2
-    WHERE b.id = $1 AND (b.utilisateur_id = $2 OR bu.utilisateur_id = $2)
-    LIMIT 1
-  `;
-  const { rows } = await pool.query(query, [boutiqueId, userId]);
-  return rows[0] || null;
-}
+// ── Helpers de Résolution & Sécurité extraits vers social-extractor.js ───────
+const {
+  resolveBoutiqueId,
+  verifierAccesBoutique,
+  getSocialPostsForBoutique,
+} = require('../services/social-extractor');
 
 // ============================================================================
 // 🛠️ 0. OUTILS UNIVERSELS DE RÉSOLUTION D'URLS (BOUTIQUES & AGENCES)

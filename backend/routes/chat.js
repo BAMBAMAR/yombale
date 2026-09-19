@@ -438,7 +438,20 @@ router.post('/message', limiterRecherche, async (req, res) => {
         { label: 'Boutiques partenaires', url: '/boutiques' }
       );
     } else {
-      reply = `Je n'ai pas trouvé de produit correspondant exactement à "${rawText}". Vous pouvez reformuler votre recherche ou échanger directement avec un conseiller sur WhatsApp :`;
+      // ── Hybridation IA Gemini 1.5 Flash RAG ──
+      const { generateLlmChatReply } = require('../services/llm-chat');
+      const aiResponse = await generateLlmChatReply({
+        userMessage: rawText,
+        contextItems: [],
+        searchQuery: requeteRecherche,
+      });
+
+      if (aiResponse.success && aiResponse.reply) {
+        reply = aiResponse.reply;
+      } else {
+        reply = `Je n'ai pas trouvé de produit correspondant exactement à "${rawText}". Vous pouvez reformuler votre recherche ou échanger directement avec un conseiller sur WhatsApp :`;
+      }
+
       chips.push(
         { label: 'Explorer les boutiques', url: '/boutiques' },
         { label: 'Offres du moment', url: '/' },

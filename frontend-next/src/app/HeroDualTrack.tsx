@@ -57,7 +57,14 @@ export default function HeroDualTrack({
           return
         }
 
-        // 4. Par défaut : Toujours Acheteur
+        // 4. Persistence localStorage si pas d'intention URL explicite
+        const savedMode = localStorage.getItem('nopalou_user_mode')
+        if (savedMode === 'marchand' || savedMode === 'agence' || savedMode === 'acheteur') {
+          setInternalTab(savedMode)
+          return
+        }
+
+        // 5. Par défaut : Toujours Acheteur
         setInternalTab('acheteur')
       }
     } catch (err) {
@@ -66,6 +73,13 @@ export default function HeroDualTrack({
   }, [activeTabProp])
 
   function switchTab(tab: 'acheteur' | 'marchand' | 'agence') {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nopalou_user_mode', tab)
+      }
+    } catch (err) {
+      console.warn('[HeroDualTrack:localStorage]', err)
+    }
     if (onTabChange) {
       onTabChange(tab)
     } else {

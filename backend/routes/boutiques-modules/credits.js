@@ -83,10 +83,11 @@ async function ensureCreditSchema() {
   }
 }
 
+const creditService = require('../../services/credit-service');
+
 // ── GET /api/boutiques/:id/credits-clients — Liste des clients avec carnet de dettes/avances
 router.get('/:id/credits-clients', verifierToken, async (req, res) => {
   try {
-    await ensureCreditSchema();
     const { id } = req.params;
     const b = await checkBoutiqueAccess(id, req.user.userId);
     if (!b && !req.user?.is_admin) {
@@ -94,28 +95,7 @@ router.get('/:id/credits-clients', verifierToken, async (req, res) => {
     }
 
     const includeHistorique = req.query.include_historique === 'true' || req.query.include_historique === '1';
-    const boutiqueId = b.id;
-    const { rows: clients } = await pool.query(
-      `SELECT * FROM caisse_clients_credits WHERE boutique_id=$1 ORDER BY nom ASC`,
-      [boutiqueId]
-    );
-
-    if (includeHistorique && clients.length > 0) {
-      const { rows: historiqueRows } = await pool.query(
-        `SELECT * FROM caisse_credit_historique WHERE boutique_id=$1 ORDER BY created_at DESC`,
-        [boutiqueId]
-      );
-      
-      const histMap = new Map();
-      historiqueRows.forEach(h => {
-        if (!histMap.has(h.client_id)) histMap.set(h.client_id, []);
-        histMap.get(h.client_id).push(h);
-      });
-
-      clients.forEach(c => {
-        c.historique = histMap.get(c.id) || [];
-      });
-    }
+    const clients = await creditService.getClientsAvecHistorique(b.id, includeHistorique);
 
     res.json({ success: true, clients });
   } catch (err) {
@@ -133,12 +113,8 @@ router.get('/:id/credits-clients/:clientId/historique', verifierToken, async (re
       return res.status(403).json({ error: 'Accès non autorisé à l\'historique de ce débiteur' });
     }
 
-    const { rows } = await pool.query(
-      `SELECT * FROM caisse_credit_historique WHERE client_id=$1 AND boutique_id=$2 ORDER BY created_at DESC`,
-      [clientId, b.id]
-    );
-
-    res.json({ success: true, historique: rows });
+    const historique = await creditService.getHistoriqueClient(b.id, clientId);
+    res.json({ success: true, historique });
   } catch (err) {
     console.error('[CREDITS HISTORIQUE GET]', err);
     res.status(500).json({ error: 'Erreur serveur' });

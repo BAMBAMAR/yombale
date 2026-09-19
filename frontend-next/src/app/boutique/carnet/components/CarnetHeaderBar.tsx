@@ -62,173 +62,182 @@ export default function CarnetHeaderBar({
   return (
     <div
       style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: 20,
-        padding: isMobile ? '16px 16px' : '22px 24px',
-        color: '#0f172a',
-        boxShadow: '0 4px 14px rgba(15, 23, 42, 0.03)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
+        background: isMobile ? 'transparent' : '#ffffff',
+        border: isMobile ? 'none' : '1.5px solid var(--border, #E8DDD2)',
+        borderRadius: isMobile ? 0 : 16,
+        padding: isMobile ? '4px 2px' : '20px 24px',
+        color: 'var(--navy, #1C2B4A)',
+        boxShadow: isMobile ? 'none' : '0 2px 10px rgba(28, 43, 74, 0.04)',
       }}
     >
       <div
         style={{
           display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
+          flexDirection: 'row',
           justifyContent: 'space-between',
-          alignItems: isMobile ? 'stretch' : 'center',
-          gap: 14,
+          alignItems: 'center',
+          gap: 12,
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, #FFF3E8 0%, #FED7AA 100%)',
-                border: '1px solid #FDBA74',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                color: 'var(--accent, #C75B00)',
-              }}
-            >
-              <BookOpen size={20} />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {!isMobile && (
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, #FFF3E8 0%, #FED7AA 100%)',
+                  border: '1px solid #FDBA74',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  color: 'var(--accent, #C75B00)',
+                }}
+              >
+                <BookOpen size={20} />
+              </div>
+            )}
             <div>
               <h1
                 style={{
                   margin: 0,
-                  fontSize: isMobile ? 18 : 21,
-                  fontWeight: 800,
+                  fontSize: isMobile ? 22 : 21,
+                  fontWeight: 900,
                   color: 'var(--navy, #1C2B4A)',
                   letterSpacing: '-0.02em',
                 }}
               >
-                Carnet de dettes &amp; Crédits
+                Carnet de Dettes
               </h1>
-              <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--text2, #6B7280)', fontWeight: 600 }}>
-                {clientsCount} client{clientsCount > 1 ? 's' : ''} · {nbClientsDebiteurs} endetté
-                {nbClientsDebiteurs > 1 ? 's' : ''} ({fcfa(totalDettesAEncaisser)})
-              </p>
+              {!isMobile && (
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text2, #6B7280)', fontWeight: 600 }}>
+                  {clientsCount} client{clientsCount > 1 ? 's' : ''} · {nbClientsDebiteurs} endetté
+                  {nbClientsDebiteurs > 1 ? 's' : ''} ({fcfa(totalDettesAEncaisser)})
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Barre d'outils responsive */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            alignItems: isMobile ? 'stretch' : 'center',
-            gap: 8,
-            width: isMobile ? '100%' : 'auto',
-          }}
-        >
-          {/* Ligne 1 : Boutons d'action principaux */}
+        {/* Bouton Sync sur Mobile si dettes en attente */}
+        {isMobile && totalOfflineCount > 0 && (
+          <button
+            type="button"
+            onClick={onDeclencherSync}
+            title="Synchroniser immédiatement"
+            style={{
+              minHeight: 36,
+              padding: '6px 12px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 800,
+              background: 'var(--accent, #C75B00)',
+              color: '#ffffff',
+              border: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <RefreshCw size={13} className={syncingCarnet ? 'animate-spin' : ''} />
+            <span>{syncingCarnet ? 'Sync...' : `Sync (${totalOfflineCount})`}</span>
+          </button>
+        )}
+
+        {/* Barre d'outils Desktop exclusive (sur mobile, ces actions sont dans le bouton central [+] de la bottom nav) */}
+        {!isMobile && (
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              width: isMobile ? '100%' : 'auto',
-              flex: isMobile ? '1 1 auto' : 'initial',
             }}
           >
-            {totalOfflineCount > 0 && (
+            {/* Boutons d'action principaux */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {totalOfflineCount > 0 && (
+                <button
+                  type="button"
+                  onClick={onDeclencherSync}
+                  title="Synchroniser immédiatement les dettes ou ventes enregistrées hors-ligne"
+                  style={{
+                    minHeight: 40,
+                    padding: '8px 12px',
+                    borderRadius: 10,
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                    background: 'var(--accent, #C75B00)',
+                    color: '#ffffff',
+                    border: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <RefreshCw size={14} className={syncingCarnet ? 'animate-spin' : ''} />
+                  <span>{syncingCarnet ? 'Sync...' : `Sync (${totalOfflineCount})`}</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={onDeclencherSync}
-                title="Synchroniser immédiatement les dettes ou ventes enregistrées hors-ligne"
+                onClick={onOuvrirModalTransaction}
                 style={{
-                  minHeight: 42,
-                  padding: '8px 12px',
+                  minHeight: 40,
+                  padding: '8px 14px',
                   borderRadius: 10,
-                  fontSize: 12.5,
+                  fontSize: 13,
                   fontWeight: 800,
-                  background: '#ea580c',
-                  color: '#ffffff',
-                  border: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 6,
+                  whiteSpace: 'nowrap',
+                  background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
-                  flexShrink: 0,
                 }}
               >
-                <RefreshCw size={14} className={syncingCarnet ? 'animate-spin' : ''} />
-                <span>{syncingCarnet ? 'Sync...' : `Sync (${totalOfflineCount})`}</span>
+                <Plus size={16} />
+                <span>Vente crédit</span>
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={onOuvrirModalTransaction}
-              style={{
-                flex: isMobile ? 1 : 'initial',
-                minHeight: 42,
-                padding: '8px 14px',
-                borderRadius: 10,
-                fontSize: 13,
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                whiteSpace: 'nowrap',
-                background: 'linear-gradient(135deg, var(--accent, #C75B00) 0%, #ea580c 100%)',
-                color: '#ffffff',
-                border: 'none',
-                boxShadow: '0 2px 8px rgba(199, 91, 0, 0.25)',
-                cursor: 'pointer',
-              }}
-            >
-              <Plus size={16} />
-              <span>+ Vente crédit</span>
-            </button>
+              <button
+                type="button"
+                onClick={onOuvrirModalNouveauClient}
+                style={{
+                  minHeight: 40,
+                  padding: '8px 14px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  background: 'var(--navy, #1C2B4A)',
+                  color: '#ffffff',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <UserPlus size={16} />
+                <span>Nouveau client</span>
+              </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={onOuvrirModalNouveauClient}
-              style={{
-                flex: isMobile ? 1 : 'initial',
-                minHeight: 42,
-                padding: '8px 14px',
-                borderRadius: 10,
-                fontSize: 13,
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                whiteSpace: 'nowrap',
-                background: 'var(--navy, #1C2B4A)',
-                color: '#ffffff',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <UserPlus size={16} />
-              <span>+ Client</span>
-            </button>
-          </div>
-
-          {/* Ligne 2 : Assistant Vocal & Menu Plus */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              width: isMobile ? '100%' : 'auto',
-              flex: isMobile ? '1 1 auto' : 'initial',
-            }}
-          >
+            {/* Assistant Vocal & Menu Plus */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               type="button"
               onClick={onToggleEcouteVocale}
@@ -429,6 +438,7 @@ export default function CarnetHeaderBar({
             </div>
           </div>
         </div>
+      )}
       </div>
     </div>
   )

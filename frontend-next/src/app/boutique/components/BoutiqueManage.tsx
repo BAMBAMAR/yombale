@@ -170,8 +170,22 @@ export default function BoutiqueManage({
       {/* ── Pied Mobile (Barre basse fixe 5 boutons avec FAB central) ── */}
       <BoutiqueBottomNav
         currentTab={nav.tab}
+        subTabCompta={nav.subTabCompta}
         onNavigateTab={nav.handleNavigateTab}
-        onOpenQuickActions={() => setQuickActionsOpen(true)}
+        onOpenQuickActions={() => {
+          const isExpressPresent =
+            nav.tab === 'express' ||
+            (nav.tab === 'compta' && nav.subTabCompta === 'express') ||
+            (typeof document !== 'undefined' && Boolean(document.getElementById('express-view-container')))
+
+          if (nav.tab === 'carnet') {
+            window.dispatchEvent(new CustomEvent('nopalou:carnet:open_sheet'))
+          } else if (isExpressPresent) {
+            window.dispatchEvent(new CustomEvent('nopalou:express:quick_action'))
+          } else {
+            setQuickActionsOpen(true)
+          }
+        }}
         onOpenDrawer={() => setMobileDrawerOpen(true)}
         nbEnAttente={nav.nbEnAttente}
       />

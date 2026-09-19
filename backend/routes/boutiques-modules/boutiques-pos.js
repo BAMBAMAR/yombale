@@ -515,40 +515,9 @@ router.post('/:id/pos-incident', tokenOptional, async (req, res) => {
 
     if (!ticketId) return res.status(400).json({ error: 'ID ticket manquant' });
 
-    // 1. Archiver l'écriture comptable dans ventes pour réajuster le CA
-    await pool.query('UPDATE ventes SET archivee = true WHERE reference = $1 AND boutique_id = $2', [ticketId, boutiqueId]);
-
-    // 2. Marquer la commande comme annulée dans commandes_boutique
-    await pool.query("UPDATE commandes_boutique SET statut = 'annulee' WHERE reference = $1 AND boutique_id = $2", [ticketId, boutiqueId]);
-
-    // 3. Ré-incrémenter le stock physique si articles renseignés
-    if (Array.isArray(items) && items.length > 0) {
-      for (const item of items) {
-        const prodId = item.id || item.produit?.id;
-        const prodNom = item.nom || item.produit?.nom;
-        const qte = Number(item.quantite || 1);
-
-        if (prodId && /^[0-9a-f-]{36}$/i.test(prodId)) {
-          await pool.query(
-            `UPDATE boutique_produits
-             SET stock_quantite = COALESCE(stock_quantite, 0) + $1,
-                 en_stock = true
-             WHERE id = $2 AND boutique_id = $3`,
-            [qte, prodId, boutiqueId]
-          );
-        } else if (prodNom) {
-          await pool.query(
-            `UPDATE boutique_produits
-             SET stock_quantite = COALESCE(stock_quantite, 0) + $1,
-                 en_stock = true
-             WHERE nom = $2 AND boutique_id = $3`,
-            [qte, prodNom, boutiqueId]
-          );
-        }
-      }
-    }
-
-    res.json({ success: true, message: 'Ticket POS annulé avec succès' });
+    const posService = require('../../services/pos-service');
+    const result = await posService.annulerVentePos({ boutiqueId, ticketId, items });
+    res.json(result);
   } catch (err) {
     console.error('[POS INCIDENT ERR]', err);
     res.status(500).json({ error: 'Erreur serveur' });

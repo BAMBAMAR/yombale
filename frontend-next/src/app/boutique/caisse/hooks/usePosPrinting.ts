@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import { fcfa } from '@/lib/format'
 import { showToast } from '@/context/ToastContext'
+import {
+  isBluetoothSupported,
+  requestBluetoothPrinter,
+  sendEscPosToBluetooth,
+} from '@/lib/web-bluetooth-printer'
 import type { ProduitCaisse } from '../components/PosCatalogueSection'
 
 export function usePosPrinting({
@@ -20,7 +25,7 @@ export function usePosPrinting({
   const [btCharacteristic, setBtCharacteristic] = useState<any>(null)
 
   async function connecterImprimanteBluetooth() {
-    if (typeof window === 'undefined' || !('bluetooth' in navigator)) {
+    if (!isBluetoothSupported()) {
       showToast(
         "L'API WebBluetooth Direct est supportée sur Chrome et Edge. Le mode impression web standard reste actif.",
         'info',
@@ -30,36 +35,7 @@ export function usePosPrinting({
       return
     }
     try {
-      const device: any = await (navigator as any).bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [
-          '000018f0-0000-1000-8000-00805f9b34fb',
-          '00001101-0000-1000-8000-00805f9b34fb',
-          'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
-          '49535343-fe7d-4ae5-8fa9-9fafd205e455',
-        ],
-      })
-
-      const server = await device.gatt.connect()
-      const services = await server.getPrimaryServices()
-      let characteristic = null
-
-      for (const service of services) {
-        const characteristics = await service.getCharacteristics()
-        for (const c of characteristics) {
-          if (c.properties.write || c.properties.writeWithoutResponse) {
-            characteristic = c
-            break
-          }
-        }
-        if (characteristic) break
-      }
-
-      if (!characteristic) {
-        showToast("Imprimante détectée mais canal d'écriture ESC/POS non trouvé.", 'warning', 'Bluetooth POS')
-        return
-      }
-
+      const { device, characteristic } = await requestBluetoothPrinter()
       setBtDeviceName(device.name || 'Imprimante POS Bluetooth')
       setBtCharacteristic(characteristic)
       showToast(
@@ -81,34 +57,23 @@ export function usePosPrinting({
     // Si une imprimante Bluetooth direct est connectée via WebBluetooth
     if (btCharacteristic) {
       try {
-        const encoder = new TextEncoder()
         const bqNom = boutiqueActive?.nom || 'NOPALOU BOUTIQUE'
-        const dateStr = vente.date || new Date().toLocaleDateString('fr-FR')
-        const items = vente.ticket || vente.items || []
+        const items = (vente.ticket || vente.items || []).map((i: any) => ({
+          nom: i.produit?.nom || i.nom || 'Article',
+          quantite: i.quantite || 1,
+          prixUnitaire: i.prixUnitaire || i.prix || 0,
+        }))
 
-        let text = `\x1B\x40` // Init ESC/POS
-        text += `\x1B\x61\x01\x1D\x21\x11${bqNom}\n\x1D\x21\x00`
-        text += `Ticket #${vente.id} - ${dateStr}\n`
-        text += `Caissier: ${vente.caissier || caissierNom}\n`
-        text += `--------------------------------\n\x1B\x61\x00`
-
-        items.forEach((i: any) => {
-          const nom = (i.produit?.nom || i.nom || 'Article').substring(0, 16)
-          const qte = `${i.quantite || 1}x`
-          const tot = fcfa((i.prixUnitaire || i.prix || 0) * (i.quantite || 1))
-          text += `${qte} ${nom.padEnd(16)} ${tot.padStart(8)}\n`
+        await sendEscPosToBluetooth(btCharacteristic, {
+          boutiqueNom: bqNom,
+          ticketId: vente.id,
+          dateStr: vente.date || new Date().toLocaleDateString('fr-FR'),
+          caissierNom: vente.caissier || caissierNom,
+          items,
+          totalNet: vente.total || 0,
+          modePaiement: vente.modePaiement || vente.mode || 'ESPECES',
+          formatTicket: formatTicketThermique,
         })
-
-        text += `--------------------------------\n\x1B\x61\x02\x1B\x45\x01`
-        text += `TOTAL NET : ${fcfa(vente.total)}\n\x1B\x45\x00\x1B\x61\x01`
-        text += `Mode: ${(vente.modePaiement || vente.mode || 'ESPECES').toUpperCase()}\n`
-        text += `--------------------------------\nMERCI DE VOTRE VISITE !\nNopalou POS - Caisse\n\n\n\n\x1D\x56\x41\x00`
-
-        const bytes = encoder.encode(text)
-        const chunkSize = 512
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          await btCharacteristic.writeValue(bytes.slice(i, i + chunkSize))
-        }
         return
       } catch (err: any) {
         console.error('[BT PRINT EXEC ERR]', err)

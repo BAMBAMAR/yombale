@@ -355,6 +355,146 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
   }
 });
 
+// ── Stripe Diaspora / Cartes Bancaires Internationales ────────────────
+const stripeService = require('../services/stripe');
+
+// POST /api/paiement/stripe/initier — initialisation d'un paiement Stripe (Diaspora / Cartes)
+router.post('/stripe/initier', limiterEcriture, async (req, res) => {
+  try {
+    const { montant, reference, devise, customer_email, customer_name, metadata } = req.body;
+    if (!montant || Number(montant) <= 0) {
+      return res.status(400).json({ error: 'Montant invalide' });
+    }
+
+    const ref = reference || `CMD-ST-${Date.now().toString(36).toUpperCase()}`;
+    const cleanCurrency = (devise || 'eur').toLowerCase();
+
+    const session = await stripeService.createCheckoutSession({
+      amount: Number(montant),
+      currency: cleanCurrency,
+      client_reference: ref,
+      customer_email,
+      customer_name,
+      metadata: {
+        ...(metadata || {}),
+        reference: ref,
+      },
+    });
+
+    res.json({
+      success: true,
+      stripe_url: session.stripe_url || session.url,
+      session_id: session.session_id,
+      reference: ref,
+      mode: session.mode,
+    });
+  } catch (err) {
+    console.error('[STRIPE INITIER ERR]:', err.message);
+    res.status(500).json({ error: 'Erreur lors de l’initialisation Stripe', detail: err.message });
+  }
+});
+
+// POST /api/paiement/stripe/webhook — Webhook officiel Stripe avec validation HMAC
+router.post('/stripe/webhook', limiterGeneral, async (req, res) => {
+  const sigHeader = req.headers['stripe-signature'];
+  const rawBody = req.rawBody || JSON.stringify(req.body);
+
+  const isValid = stripeService.verifyWebhookSignature(rawBody, sigHeader);
+  if (!isValid && process.env.NODE_ENV === 'production') {
+    console.warn('[STRIPE WEBHOOK] ⚠️ Signature Stripe invalide');
+    return res.status(401).json({ error: 'Signature Stripe invalide' });
+  }
+
+  try {
+    const event = req.body;
+    const eventType = event?.type;
+    const sessionData = event?.data?.object;
+
+    if (eventType === 'checkout.session.completed') {
+      const clientRef = sessionData?.client_reference_id || sessionData?.metadata?.reference;
+      const amountPaid = sessionData?.amount_total ? Math.round(sessionData.amount_total / 100) : 0;
+      const currency = sessionData?.currency || 'eur';
+
+      if (clientRef) {
+        // Mise à jour de la commande boutique
+        const cmdRes = await pool.query(
+          `UPDATE commandes_boutique 
+           SET paiement_recu = true, 
+               statut = CASE WHEN statut = 'en_attente' THEN 'payee' ELSE statut END, 
+               methode_paiement = 'carte_bancaire',
+               updated_at = NOW() 
+           WHERE reference = $1 RETURNING *`,
+          [clientRef]
+        ).catch(e => {
+          console.error('[STRIPE WEBHOOK CMD UPDATE ERR]:', e.message);
+          return { rows: [] };
+        });
+
+        if (cmdRes && cmdRes.rows && cmdRes.rows[0]) {
+          const cmd = cmdRes.rows[0];
+          const bqRes = await pool.query(`SELECT nom, whatsapp, telephone FROM boutiques WHERE id = $1`, [cmd.boutique_id]).catch(() => ({ rows: [] }));
+          const boutique = bqRes.rows ? bqRes.rows[0] : null;
+
+          try {
+            const { sendWhatsAppNotification } = require('../services/whatsapp');
+            const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+            const montantFmt = new Intl.NumberFormat('fr-FR').format(cmd.montant_total);
+
+            // 1. Notification WhatsApp à l'acheteur
+            if (cmd.client_telephone) {
+              const msgClient = `💳 *Paiement Carte Bancaire Confirmé !*\n\nVotre commande *${cmd.reference}* (*${montantFmt} FCFA*)${boutique ? ` auprès de la boutique *${boutique.nom}*` : ''} a bien été réglée avec succès via Carte Bancaire (Stripe Diaspora).\n\nMerci pour votre confiance !`;
+              const titleClient = `💳 Paiement Confirmé — ${boutique?.nom || 'Nopalou'}`;
+              const detailClient = `Réf ${cmd.reference} : Règlement par carte bancaire validé (${amountPaid} ${currency.toUpperCase()}).`;
+              const urlClient = `${SITE}/suivi-commande?ref=${encodeURIComponent(cmd.reference)}`;
+
+              sendWhatsAppNotification(cmd.client_telephone, {
+                textMessage: msgClient,
+                title: titleClient,
+                montant: `${montantFmt} FCFA`,
+                detail: detailClient,
+                url: urlClient,
+                buttonParam: `suivi-commande?ref=${encodeURIComponent(cmd.reference)}`,
+                type: 'commande',
+              }).catch(err => console.error('[STRIPE WEBHOOK NOTIF CLIENT ERR]:', err.message));
+            }
+
+            // 2. Notification WhatsApp au marchand vendeur à Dakar
+            if (boutique) {
+              const telVendeur = boutique.whatsapp || boutique.telephone;
+              if (telVendeur) {
+                const msgVendeur = `🌍 *Nouveau Paiement Diaspora Reçu (Stripe) !*\n\nLa commande *${cmd.reference}* d'un montant de *${montantFmt} FCFA* a été payée par carte bancaire internationale par *${cmd.client_nom || 'Client Diaspora'}* (${cmd.client_telephone || 'N/A'}).\n\nVous pouvez préparer la commande pour livraison locale !`;
+                const titleVendeur = `🌍 Paiement Diaspora Reçu — ${boutique.nom}`;
+                const detailVendeur = `Réf ${cmd.reference} : ${montantFmt} FCFA réglés par Carte Bancaire internationale.`;
+                const lienCommandes = `${SITE}/boutique?tab=commandes`;
+
+                sendWhatsAppNotification(telVendeur, {
+                  textMessage: msgVendeur,
+                  title: titleVendeur,
+                  montant: `${montantFmt} FCFA`,
+                  detail: detailVendeur,
+                  url: lienCommandes,
+                  buttonParam: 'boutique?tab=commandes',
+                  type: 'commande',
+                }).catch(err => console.error('[STRIPE WEBHOOK NOTIF VENDEUR ERR]:', err.message));
+              }
+            }
+          } catch (whatsappErr) {
+            console.error('[STRIPE WEBHOOK WHATSAPP SEND ERR]:', whatsappErr.message);
+          }
+        }
+
+        // Appliquer pour les autres types (annonces, boosts, sponsoring)
+        await appliquerPaiementReussi(clientRef, amountPaid, 'carte_bancaire');
+      }
+    }
+
+    res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('[STRIPE WEBHOOK ERREUR]:', err.message);
+    res.status(200).json({ received: true });
+  }
+});
+
 // POST /api/paiement/confirmer-succes — vérification sécurisée en lecture seule du statut de commande
 // Sécurité : Seul le Webhook officiel Wave (signé HMAC) ou l'administrateur peut marquer une commande comme payée.
 router.post('/confirmer-succes', async (req, res) => {

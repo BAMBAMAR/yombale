@@ -83,27 +83,27 @@ export default function CarnetClientsList({
           <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <input
               type="text"
-              placeholder={`${t('common.search')}...`}
+              placeholder="Rechercher un client..."
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               style={{
                 width: '100%',
                 minWidth: 0,
-                padding: '10px 14px 10px 36px',
-                borderRadius: 12,
-                border: '1px solid #cbd5e1',
+                padding: '11px 16px 11px 40px',
+                borderRadius: 14,
+                border: '1.5px solid var(--border, #E8DDD2)',
                 fontSize: 14,
                 outline: 'none',
                 boxSizing: 'border-box',
                 background: '#ffffff',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                minHeight: 42,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                minHeight: 44,
               }}
             />
             <Search
-              size={16}
+              size={17}
               color="#94a3b8"
-              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}
+              style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}
             />
           </div>
 

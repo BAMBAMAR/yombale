@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from '@/i18n/context'
-import { useToast } from '@/context/ToastContext'
 import { useSyncOffline } from '@/lib/sync-manager'
-import { ajouterDetteHorsLigne } from '@/lib/db-offline'
 
 import type { ClientCredit } from './carnet/types'
 import { useCarnetClients } from './carnet/hooks/useCarnetClients'
@@ -13,6 +11,7 @@ import { useCarnetScanners } from './carnet/hooks/useCarnetScanners'
 import { useCarnetVoice } from './carnet/hooks/useCarnetVoice'
 import { useCarnetImportBatch } from './carnet/hooks/useCarnetImportBatch'
 import { useCarnetNavLifecycle } from './carnet/hooks/useCarnetNavLifecycle'
+import { useCarnetTransactions } from './carnet/hooks/useCarnetTransactions'
 
 import CarnetHeaderBar from './carnet/components/CarnetHeaderBar'
 import CarnetKpiCards from './carnet/components/CarnetKpiCards'
@@ -22,6 +21,7 @@ import CarnetVoiceActionCard from './carnet/components/CarnetVoiceActionCard'
 import CarnetClientsList from './carnet/components/CarnetClientsList'
 import CarnetClientDetails from './components/CarnetClientDetails'
 import CarnetModalsHost from './carnet/components/CarnetModalsHost'
+import CarnetQuickActionSheet from './carnet/components/CarnetQuickActionSheet'
 
 interface CarnetDettesProps {
   boutique: {
@@ -37,7 +37,6 @@ interface CarnetDettesProps {
 
 export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps) {
   const { t, isRtl } = useTranslation() as { t: any; isRtl: boolean }
-  const { toast } = useToast()
 
   // Sync Offline
   const {
@@ -101,11 +100,29 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
   const [showModalNouveauClient, setShowModalNouveauClient] = useState(false)
   const [showModalEditClient, setShowModalEditClient] = useState(false)
   const [clientAEditer, setClientAEditer] = useState<ClientCredit | null>(null)
-  const [showModalTransaction, setShowModalTransaction] = useState(false)
-  const [typeTransaction, setTypeTransaction] = useState<'vente_credit' | 'remboursement'>('vente_credit')
   const [showQrModalComptoir, setShowQrModalComptoir] = useState(false)
-  const [showGuideCarnet, setShowGuideCarnet] = useState(false)
   const [relancantEcheances, setRelancantEcheances] = useState(false)
+  const [showQuickSheet, setShowQuickSheet] = useState(false)
+
+  // Transactions & Idempotence
+  const {
+    showModalTransaction,
+    setShowModalTransaction,
+    typeTransaction,
+    setTypeTransaction,
+    ouvrirModalTransaction,
+    handleValiderTransaction,
+  } = useCarnetTransactions({
+    boutique,
+    clients,
+    setClients,
+    clientSelectionne,
+    setClientSelectionne,
+    chargerDonnees,
+    chargerHistoriqueClient,
+    setShowModalNouveauClient,
+    rafraichirCompteurCarnet,
+  })
 
   // Cycle de vie navigation & raccourcis
   const { isMobile } = useCarnetNavLifecycle({
@@ -119,23 +136,29 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     setShowQrModalComptoir,
   })
 
-  // Ouvrir modals helpers
-  const ouvrirModalTransaction = useCallback((type: 'vente_credit' | 'remboursement', client?: ClientCredit) => {
-    if (client) {
-      setClientSelectionne(client)
-      chargerHistoriqueClient(client.id)
-    } else if (clientSelectionne) {
-      chargerHistoriqueClient(clientSelectionne.id)
-    } else if (clients.length > 0) {
-      setClientSelectionne(clients[0])
-      chargerHistoriqueClient(clients[0].id)
-    } else {
-      setShowModalNouveauClient(true)
-      return
+  // Écoute des commandes de navigation globale (Bottom Nav & FAB)
+  useEffect(() => {
+    const handleOpenQuickSheet = () => setShowQuickSheet(true)
+    const handleContextualFilter = (e: any) => {
+      if (e.detail === 'tous' || e.detail === 'retard' || e.detail === 'credits') {
+        setFiltreStatus(e.detail)
+      }
     }
-    setTypeTransaction(type)
-    setShowModalTransaction(true)
-  }, [chargerHistoriqueClient, clientSelectionne, clients])
+
+    window.addEventListener('nopalou:carnet:open_sheet', handleOpenQuickSheet)
+    window.addEventListener('nopalou:carnet:filter', handleContextualFilter)
+    return () => {
+      window.removeEventListener('nopalou:carnet:open_sheet', handleOpenQuickSheet)
+      window.removeEventListener('nopalou:carnet:filter', handleContextualFilter)
+    }
+  }, [setFiltreStatus])
+
+  // Synchronisation filtre actif vers Bottom Nav
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('nopalou:carnet:active_filter', { detail: filtreStatus }))
+    }
+  }, [filtreStatus])
 
   const ouvrirModalEditClient = useCallback((c: ClientCredit) => {
     setClientAEditer(c)
@@ -187,77 +210,6 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
     },
   })
 
-  const creerNouveauClientDepuisVocal = () => {
-    setShowModalNouveauClient(true)
-  }
-
-  // Validation transaction (en ligne ou hors-ligne IndexedDB)
-  const handleValiderTransaction = useCallback(async (params: {
-    client: ClientCredit
-    type: 'vente_credit' | 'remboursement'
-    montant: number
-    modePaiement: string
-    note: string
-    produits: any[]
-    dateEcheance: string | null
-    relanceAutoWa: boolean
-  }) => {
-    const txIdempotency = `DEBT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
-    try {
-      const res = await fetch(`/api/boutiques/${boutique.id}/credits-clients/${params.client.id}/transaction`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idempotency_key: txIdempotency,
-          type: params.type,
-          montant: params.montant,
-          mode_paiement: params.modePaiement,
-          note: params.note,
-          produits: params.produits,
-          date_echeance: params.dateEcheance,
-          relance_auto_whatsapp: params.relanceAutoWa,
-        }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setClientSelectionne((prev) => (prev ? { ...prev, solde: data.nouveauSolde } : null))
-        await chargerDonnees()
-        await chargerHistoriqueClient(params.client.id)
-      } else {
-        const err = await res.json()
-        toast.error(err.error || 'Erreur lors de l’enregistrement de la transaction.')
-      }
-    } catch (e) {
-      console.warn('[Carnet Dettes] Mode Hors-Ligne:', e)
-      try {
-        await ajouterDetteHorsLigne({
-          id_temporaire: txIdempotency,
-          boutique_id: boutique.id,
-          user_id: 'commercant',
-          client_id: params.client.id,
-          type: params.type,
-          montant: params.montant,
-          mode_paiement: params.modePaiement,
-          note: params.note,
-          produits: params.produits,
-          date_echeance: params.dateEcheance,
-          relance_auto_whatsapp: params.relanceAutoWa,
-          date: new Date().toISOString(),
-        })
-        rafraichirCompteurCarnet()
-        const delta = params.type === 'vente_credit' ? params.montant : -params.montant
-        const optSolde = Number(params.client.solde || 0) + delta
-        setClientSelectionne((prev) => (prev ? { ...prev, solde: optSolde } : null))
-        setClients((prev) => prev.map((c) => (c.id === params.client.id ? { ...c, solde: optSolde } : c)))
-        toast.info('Opération enregistrée localement sur votre appareil. Elle sera automatiquement synchronisée à la reconnexion.', 'Mode Hors-Ligne')
-      } catch (errDb) {
-        console.error('Erreur enregistrement local carnet:', errDb)
-        toast.error('Erreur critique de sauvegarde locale.', 'Erreur IndexedDB')
-      }
-    }
-  }, [boutique.id, chargerDonnees, chargerHistoriqueClient, rafraichirCompteurCarnet, setClients])
-
   const handleRelancerEcheancesWrapper = async () => {
     setRelancantEcheances(true)
     try {
@@ -277,7 +229,7 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 18,
+        gap: 16,
         direction: isRtl ? 'rtl' : 'ltr',
         paddingBottom: 40,
         position: 'relative',
@@ -333,12 +285,10 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         onStopListening={demarrerEcouteVocaleCarnet}
         onValiderActionVocale={validerActionVocaleDirecte}
         onModifierDepuisVocal={modifierDepuisVocal}
-        onCreerNouveauClientVocal={creerNouveauClientDepuisVocal}
+        onCreerNouveauClientVocal={() => setShowModalNouveauClient(true)}
       />
 
-      <CarnetGuidePedagogique
-        isMobile={isMobile}
-      />
+      {!isMobile && <CarnetGuidePedagogique isMobile={isMobile} />}
 
       <div
         style={{
@@ -440,6 +390,18 @@ export default function CarnetDettes({ boutique, planActif }: CarnetDettesProps)
         telechargerModeleClientsCSV={telechargerModeleClientsCSV}
         handleClientFileUpload={handleClientFileUpload}
         validerImportClients={validerImportClients}
+      />
+
+      <CarnetQuickActionSheet
+        isOpen={showQuickSheet}
+        onClose={() => setShowQuickSheet(false)}
+        onNouvelleDette={() => ouvrirModalTransaction('vente_credit')}
+        onEncaisserRemboursement={() => ouvrirModalTransaction('remboursement')}
+        onNouveauClient={() => setShowModalNouveauClient(true)}
+        onEcouteVocale={demarrerEcouteVocaleCarnet}
+        onRelancerEcheances={handleRelancerEcheancesWrapper}
+        onExportCSV={handleExportCSV}
+        boutiqueNom={boutique.nom}
       />
     </div>
   )
