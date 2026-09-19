@@ -2,18 +2,7 @@
 const { pool } = require('../../models/db');
 const multer = require('multer');
 const cfg = require('../../lib/settingsCache');
-
-async function checkBoutiqueAccess(boutiqueIdOrSlug, userId) {
-  const isUUID = /^[0-9a-f-]{36}$/i.test(boutiqueIdOrSlug);
-  const { rows } = await pool.query(
-    `SELECT b.* 
-     FROM boutiques b
-     LEFT JOIN boutique_utilisateurs bu ON b.id = bu.boutique_id
-     WHERE ${isUUID ? 'b.id = $1' : 'b.slug = $1'} AND (b.utilisateur_id = $2 OR bu.utilisateur_id = $2)`,
-    [boutiqueIdOrSlug, userId]
-  );
-  return rows[0];
-}
+const { checkBoutiqueAccess } = require('../../middlewares/tenantSecurity');
 
 async function checkBoutiqueQuotas(userId, telephoneInput, emailInput) {
   const maxCompte = (await cfg.getNum('max_boutiques_par_compte')) || 3;

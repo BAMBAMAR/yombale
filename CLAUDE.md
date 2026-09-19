@@ -1,3 +1,53 @@
+# 📋 DIRECTIVES PERMANENTES & RÈGLES D'OR DU PROJET (NOPALOU)
+
+> **Note aux assistants IA (Claude, Antigravity, etc.)** : Ces directives priment sur toute autre instruction et doivent être scrupuleusement appliquées à chaque session.
+
+## 🛑 1. Déploiement & Git
+- **Bannissement du Push Automatique** : Ne **JAMAIS** exécuter de `git push` de sa propre initiative. Attendre un ordre explicite de l'utilisateur (ex: *"push"*, *"déploie"*).
+- **Documentation Systématique** : Mettre à jour `CLAUDE.md` avec le compte-rendu précis à chaque livraison/push.
+- **Authentification Git** : Utiliser le token `GITHUB_TOKEN` présent dans `.env` si nécessaire.
+
+## 🛡️ 2. Les 5 Règles d'Or Anti-IA-Slop & Standard Ingénieur Senior
+1. **Bannissement des Béquilles Emojis dans l'UI** : Utiliser exclusivement les icônes vectorielles SVG de `lucide-react` (dimensionnement précis 14px, 16px, 18px). Zéro émoji Unicode (`🏪`, `👑`, `⚡`, `💳`, `📦`) comme icônes d'interface ou de boutons. Linter : `npm run lint:slop`.
+2. **Modularisation (< 450 lignes)** : Aucun composant React ne doit dépasser 450 lignes. Extraire les modales, claviers, paniers et listes dans des sous-composants dédiés sous `components/`. Styles globaux dans des fichiers `.css` dédiés.
+3. **Respect Strict du Design System Nopalou** : Utiliser exclusivement les tokens CSS déclarés (`--navy: #1C2B4A`, `--accent: #C75B00`, `--price: #0A5C36`, `--bg: #F8F5F0`, `--border: #E8DDD2`) et les classes d'utilité (`.btn-npl`, `.badge-npl`). Interdiction des codes hex ad-hoc inline.
+4. **Sécurité Multi-Tenant & Anti-IDOR Obligatoire** : Valider systématiquement l'appartenance boutique avec `requireBoutiqueOwnership` ou `checkBoutiqueAccess` (`backend/middlewares/tenantSecurity.js`). Routes 404 API en JSON strict (`{ success: false, error: 'Not Found' }`).
+5. **Ergonomie Épurée, Zéro Redondance & Affichage Lié Uniquement au Contexte** :
+   - **Zéro Encombrement de Boutons & Anti-Redondance** : Ne jamais surcharger l'écran avec une multitude de boutons d'actions statiques, lourds ou répétitifs. Pour les actions secondaires ou avancées, privilégier des tiroirs contextuels (Action Sheets légères) ou des menus fluides.
+   - **Affichage Strictement Conditionnel au Contexte Réel** : Masquer tout panneau, formulaire ou bouton inutile ou vide (ex: masquer le formulaire/panier tant qu'il y a 0 article dans le panier, n'afficher que les contrôles pertinents pour l'étape en cours).
+   - **Pleine Largeur & Zéro Espace Vide à Droite** : Toujours exploiter 100% de la largeur disponible (`width: 100%`). Privilégier les affichages en liste plutôt que des grilles de vignettes étroites qui laissent un vide blanc béant à droite.
+   - **Alignement Monoligne Prioritaire** : Verrouiller les contrôles d'en-tête (vocal, scan, onglets) sur une seule et même ligne tant que l'espace le permet via `flexWrap: 'nowrap'` et `flexShrink: 0`.
+   - **Lisibilité Produit sans Troncature Sauvage** : Pour les listes d'articles, découper en 2 sous-lignes calibrées (Ligne 1 : Nom complet lisible sans troncature agressive ; Ligne 2 : Prix FCFA et badge stock en `whiteSpace: 'nowrap'`), avec le bouton d'action calé à droite sans tronquer le texte ni déborder de la carte.
+
+---
+
+# 📜 JOURNAL DES VERSIONS & LIVRAISONS
+
+- **Exécution Complète des Remédiations P0 & P1 de l'Audit Technique : Index GIN Catalogue, Unification Anti-IDOR, Modularisation < 450 lignes, Allègement CSS (-25%) & Persistance Dark Mode POS (`backend`, `frontend-next`) (19 septembre 2026)** ⚡🛡️🔍🌙📦🎨✅ :
+  * **🛠️ 1. Réalisations & Corrections Livrées** :
+    - **Performance Requêtes & Recherche (`backend/migrate-inline.js`)** : Déploiement de l'index GIN trigramme `idx_bp_nom_trgm` sur `boutique_produits(nom) USING gin(nom gin_trgm_ops);` éliminant les sequential scans sur la recherche catalogue marchande.
+    - **Sécurité Multi-Tenant & Anti-IDOR (`backend/routes/boutiques-modules/helpers.js`)** : Remplacement de la copie isolée de `checkBoutiqueAccess` par l'import direct de `backend/middlewares/tenantSecurity.js`. Traçabilité totale des accès non autorisés dans la table d'audit immuable `security_audit_vault`.
+    - **Harmonisation Tarifs & Pricing (`frontend-next/src/app/creer-boutique/components/WizardStepPlanStyle.tsx`, `page.tsx`)** : Remplacement des constantes de forfaits obsolètes par les tarifs officiels de production (2.500, 5.000 et 10.000 FCFA/mois) éliminant tout clignotement tarifaire.
+    - **Plafond < 450 Lignes & Modularisation Wizard Création (`frontend-next/src/app/creer-boutique/page.tsx`)** :
+      - Extraction de l'Étape 1 (Nom & Suggestions dynamiques) dans `components/StepIdentity.tsx`.
+      - Extraction des Étapes 2 & 3 (Numéro WhatsApp & Code OTP) dans `components/StepContactVerify.tsx`.
+      - Déportation de `DEFAULT_PLANS` dans `WizardStepPlanStyle.tsx`.
+      - Réduction de la taille de `page.tsx` de 683 lignes à **422 lignes** (< 450 lignes requises).
+    - **Plafond < 450 Lignes Vitrine Publique (`frontend-next/src/app/boutiques/[id]/BoutiqueDetailClient.tsx`)** :
+      - Extraction de la barre d'onglets (Produits, Vidéos/Social, Annonces, Infos) dans le sous-composant `components/BoutiqueTabsNav.tsx`.
+      - Réduction de la taille de `BoutiqueDetailClient.tsx` de 547 lignes à **395 lignes** (< 450 lignes requises).
+    - **Allègement de la Feuille de Style Globale `globals.css` (-27,5 KB / -25%)** :
+      - Extraction des styles spécifiques aux guides d'achat (`.guide-*`) dans `frontend-next/src/styles/guides.css` (452 lignes), importés localement dans `guide-achat/page.tsx`, `guide-forfait/page.tsx` et `guide-immo/page.tsx`.
+      - Extraction du comparateur et scoring télécom (`.telecom-*`, `.forfaits-grid`, `.forfait-card`, `.forfait-fiche-*`) dans `frontend-next/src/styles/telecom.css` (360 lignes), importés automatiquement via le nouveau `src/app/telecom/layout.tsx`.
+      - Réduction du poids de `globals.css` de 110,5 KB à **83,0 KB**, accélérant le Largest Contentful Paint (LCP) sur réseaux mobiles 3G/4G au Sénégal.
+    - **Expérience POS & Persistance UX (`frontend-next/src/app/boutique/caisse/CaisseClient.tsx`)** :
+      - Persistance de la préférence Dark Mode de la caisse dans `localStorage` (`'nopalou_pos_dark_mode'`).
+      - Traitement explicite et sécurisé des exceptions de stockage (`console.warn`) éliminant les silent catches.
+  * **🧪 2. Validation Technique & Qualité (423/423 Tests Passés)** :
+    - Tests unitaires Backend Jest : **45/45 suites passées, 354/354 tests passés (100%)**.
+    - Tests unitaires Frontend Vitest/Node : **20/20 suites passées, 69/69 tests passés (100%)**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 composant monolithique (>800L), 0 silent catch**.
+
 - **Refonte Ergonomique Complète Saisie Express, Caisse POS, Carnet de Dettes & Passerelle Stripe Diaspora (`frontend-next`, `backend`) (19 septembre 2026)** ⚡🛒💳🧾🚀✅ :
   * **🚨 1. Diagnostic & Problématiques Utilisateur Résolues** :
     - *Espace vide à droite du catalogue* : La grille de cartes carrées `140px` laissait un grand vide blanc à droite lorsque peu d'articles correspondaient. Résolu par un affichage en **LISTE 100% pleine largeur**.

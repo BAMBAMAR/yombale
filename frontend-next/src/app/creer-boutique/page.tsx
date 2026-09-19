@@ -2,54 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Store, Phone, KeyRound, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react'
+import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { setAuthCookieAction } from '@/app/actions/auth'
 import { CATEGORIES } from '@/lib/categories'
 import ModalBoutiqueCreeeSucces from './components/ModalBoutiqueCreeeSucces'
 import ModalContratVendeur from './components/ModalContratVendeur'
-import WizardStepPlanStyle, { PlansConfig } from './components/WizardStepPlanStyle'
-
-const DEFAULT_PLANS: PlansConfig = {
-  decouverte: {
-    name: 'Boutique Taf Taf',
-    badge: '1 MOIS OFFERT',
-    priceMain: '0 FCFA',
-    priceSub: 'pendant 30j puis 5.000 FCFA/mois',
-    desc: 'Idéal pour débuter et vendre directement sur WhatsApp.',
-    features: ['Catalogue illimité', 'Ventes WhatsApp 1-clic', 'Paiement Wave & OM'],
-    color: '#10b981',
-    bgLight: '#ecfdf5',
-  },
-  pro: {
-    name: 'Vendeur Pro',
-    badge: 'POPULAIRE',
-    priceMain: '0 FCFA',
-    priceSub: 'pendant 30j puis 15.000 FCFA/mois',
-    desc: 'Pour les commerces voulant être en tête des recherches.',
-    features: ['Badge Pro Certifié', 'Référencement prioritaire', 'Caisse POS & Reçus PDF'],
-    color: '#C75B00',
-    bgLight: '#fff7ed',
-  },
-  business: {
-    name: 'Business VIP',
-    badge: 'MULTI-SITES & API',
-    priceMain: '0 FCFA',
-    priceSub: 'pendant 30j puis 35.000 FCFA/mois',
-    desc: 'Solution complète pour chaînes, grossistes & marques.',
-    features: ['Multi-Caissiers & Magasins', 'Clés API & Webhooks', 'Relances WhatsApp Auto'],
-    color: '#1e3a5f',
-    bgLight: '#f0f9ff',
-  },
-}
-
-const NOM_SUGGESTIONS = [
-  'Teranga Shopping',
-  'Dakar Élégance',
-  'Taf Taf Express',
-  'Keur Wax Couture',
-  'Alimentation Thiossane',
-  'Sénégal High-Tech',
-]
+import WizardStepPlanStyle, { PlansConfig, DEFAULT_PLANS } from './components/WizardStepPlanStyle'
+import StepIdentity from './components/StepIdentity'
+import StepContactVerify from './components/StepContactVerify'
 
 export default function CreerBoutiqueWizard() {
   const router = useRouter()
@@ -323,237 +283,18 @@ export default function CreerBoutiqueWizard() {
         <form onSubmit={step < 4 ? handleNext : handleSubmit}>
           {/* ÉTAPE 1 : Nom de la boutique */}
           {step === 1 && (
-            <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 16,
-                  background: '#FFF3E8',
-                  color: 'var(--accent, #C75B00)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 16,
-                }}
-              >
-                <Store size={24} />
-              </div>
-              <h1
-                style={{
-                  fontSize: 26,
-                  fontWeight: 900,
-                  color: 'var(--navy, #1C2B4A)',
-                  marginBottom: 8,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.25,
-                }}
-              >
-                Quel est le nom de votre boutique ou marque ?
-              </h1>
-              <p style={{ color: '#64748b', fontSize: 15, marginBottom: 24, lineHeight: 1.5 }}>
-                C&apos;est le nom sous lequel vos clients vous reconnaîtront. Vous pourrez le modifier à tout moment.
-              </p>
-
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#334155', marginBottom: 8 }}>
-                Nom commercial :
-              </label>
-              <input
-                type="text"
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-                placeholder="Ex: Teranga Shopping, Dakar Élégance..."
-                autoFocus
-                style={{
-                  width: '100%',
-                  padding: '16px 20px',
-                  borderRadius: 16,
-                  border: '2px solid #cbd5e1',
-                  fontSize: 18,
-                  color: '#0f172a',
-                  fontWeight: 700,
-                  outline: 'none',
-                  background: '#f8fafc',
-                  transition: 'all 0.2s ease',
-                  ...fontStyle,
-                }}
-              />
-
-              {/* Suggestions inspirantes */}
-              <div style={{ marginTop: 14 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: '#64748b',
-                    marginBottom: 8,
-                  }}
-                >
-                  <Sparkles size={13} color="var(--accent, #C75B00)" />
-                  Idées populaires :
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {NOM_SUGGESTIONS.map((sug) => (
-                    <button
-                      key={sug}
-                      type="button"
-                      onClick={() => setNom(sug)}
-                      style={{
-                        background: nom === sug ? '#FFF3E8' : '#f1f5f9',
-                        color: nom === sug ? 'var(--accent, #C75B00)' : '#475569',
-                        border: nom === sug ? '1px solid #fed7aa' : '1px solid transparent',
-                        borderRadius: 16,
-                        padding: '5px 12px',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {sug}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <StepIdentity nom={nom} setNom={setNom} />
           )}
 
-          {/* ÉTAPE 2 : Numéro WhatsApp */}
-          {step === 2 && (
-            <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 16,
-                  background: '#ecfdf5',
-                  color: 'var(--price, #0A5C36)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 16,
-                }}
-              >
-                <Phone size={24} />
-              </div>
-              <h1
-                style={{
-                  fontSize: 26,
-                  fontWeight: 900,
-                  color: 'var(--navy, #1C2B4A)',
-                  marginBottom: 8,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.25,
-                }}
-              >
-                Votre numéro WhatsApp
-              </h1>
-              <p style={{ color: '#64748b', fontSize: 15, marginBottom: 28, lineHeight: 1.5 }}>
-                Les commandes passées sur votre vitrine arriveront directement sur ce numéro WhatsApp.
-              </p>
-
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#334155', marginBottom: 8 }}>
-                Numéro WhatsApp (Sénégal) :
-              </label>
-              <div style={{ position: 'relative' }}>
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: 18,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    fontSize: 15,
-                    fontWeight: 800,
-                    color: '#475569',
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  +221
-                </span>
-                <input
-                  type="tel"
-                  value={telephone}
-                  onChange={(e) => setTelephone(e.target.value)}
-                  placeholder="77 123 45 67"
-                  autoFocus
-                  style={{
-                    width: '100%',
-                    padding: '18px 22px 18px 75px',
-                    borderRadius: 16,
-                    border: '2px solid #cbd5e1',
-                    fontSize: 18,
-                    color: '#0f172a',
-                    fontWeight: 700,
-                    outline: 'none',
-                    background: '#f8fafc',
-                    transition: 'all 0.2s ease',
-                    ...fontStyle,
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ÉTAPE 3 : Code OTP */}
-          {step === 3 && (
-            <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 16,
-                  background: '#eff6ff',
-                  color: '#1e3a5f',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 16,
-                }}
-              >
-                <KeyRound size={24} />
-              </div>
-              <h1
-                style={{
-                  fontSize: 26,
-                  fontWeight: 900,
-                  color: 'var(--navy, #1C2B4A)',
-                  marginBottom: 8,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.25,
-                }}
-              >
-                Vérification WhatsApp
-              </h1>
-              <p style={{ color: '#64748b', fontSize: 15, marginBottom: 28, lineHeight: 1.5 }}>
-                Entrez le code à 6 chiffres envoyé au <strong style={{ color: '#0f172a' }}>{telephone}</strong>.
-              </p>
-
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="123456"
-                autoFocus
-                maxLength={6}
-                style={{
-                  width: '100%',
-                  padding: '20px 22px',
-                  borderRadius: 16,
-                  border: '2px solid #3b82f6',
-                  fontSize: 28,
-                  color: '#0f172a',
-                  fontWeight: 900,
-                  outline: 'none',
-                  letterSpacing: '6px',
-                  textAlign: 'center',
-                  background: '#eff6ff',
-                  ...fontStyle,
-                }}
-              />
-            </div>
+          {/* ÉTAPE 2 & 3 : WhatsApp & Code OTP */}
+          {(step === 2 || step === 3) && (
+            <StepContactVerify
+              step={step}
+              telephone={telephone}
+              setTelephone={setTelephone}
+              code={code}
+              setCode={setCode}
+            />
           )}
 
           {/* ÉTAPE 4 : Choix des forfaits et style */}

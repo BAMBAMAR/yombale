@@ -972,6 +972,7 @@ module.exports = async function migrateInline() {
         updated_at   TIMESTAMPTZ DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_bp_boutique ON boutique_produits(boutique_id, ordre);
+      CREATE INDEX IF NOT EXISTS idx_bp_nom_trgm ON boutique_produits USING gin(nom gin_trgm_ops);
     `);
     console.log('[MIGRATE] ✅ Table boutique_produits OK');
   } catch (e) { console.warn('[MIGRATE] boutique_produits:', e.message); }

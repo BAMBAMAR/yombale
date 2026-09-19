@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import '@/styles/guides.css'
 import GuideAchatPage from './GuideAchatContent'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'

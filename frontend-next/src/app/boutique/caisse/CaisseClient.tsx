@@ -89,7 +89,12 @@ export default function CaisseClient({
   })
 
   // ── UI States & Filters ──
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('nopalou_pos_dark_mode') === 'true'
+    }
+    return false
+  })
   const [layoutColCentrale, setLayoutColCentrale] = useState(true)
   const [tabMobile, setTabMobile] = useState<'catalogue' | 'ticket'>('catalogue')
   const [vueCatalogue, setVueCatalogue] = useState<'mosaique' | 'liste'>('mosaique')
@@ -273,7 +278,17 @@ export default function CaisseClient({
         onQuitterVersDashboard={() => (window.location.href = `/boutique?manage=${boutiqueActiveId}`)}
         onDeclencherSyncOffline={declencherSyncOffline}
         onDemanderChangementBoutique={changerBoutiqueActive}
-        onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
+        onToggleDarkMode={() => {
+          setIsDarkMode((prev) => {
+            const next = !prev
+            try {
+              localStorage.setItem('nopalou_pos_dark_mode', String(next))
+            } catch (err) {
+              console.warn('[Caisse] Impossible de sauvegarder dark mode dans localStorage', err)
+            }
+            return next
+          })
+        }}
         onToggleLayoutColCentrale={() => setLayoutColCentrale((prev) => !prev)}
         onVerrouillerCaisseManuellement={() => authLock.setVerrouille(true)}
         onSeDeconnecterCompte={() => (window.location.href = '/')}

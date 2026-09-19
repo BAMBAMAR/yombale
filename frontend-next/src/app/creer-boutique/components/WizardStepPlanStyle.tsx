@@ -21,6 +21,39 @@ export interface PlansConfig {
   business: PlanConfigItem
 }
 
+export const DEFAULT_PLANS: PlansConfig = {
+  decouverte: {
+    name: 'Boutique Taf Taf',
+    badge: '1 MOIS OFFERT',
+    priceMain: '0 FCFA',
+    priceSub: 'pendant 30j puis 2.500 FCFA/mois',
+    desc: 'Idéal pour débuter et vendre directement sur WhatsApp.',
+    features: ['Catalogue illimité', 'Ventes WhatsApp 1-clic', 'Paiement Wave & OM'],
+    color: '#10b981',
+    bgLight: '#ecfdf5',
+  },
+  pro: {
+    name: 'Vendeur Pro',
+    badge: 'POPULAIRE',
+    priceMain: '0 FCFA',
+    priceSub: 'pendant 30j puis 5.000 FCFA/mois',
+    desc: 'Pour les commerces voulant être en tête des recherches.',
+    features: ['Badge Pro Certifié', 'Référencement prioritaire', 'Caisse POS & Reçus PDF'],
+    color: '#C75B00',
+    bgLight: '#fff7ed',
+  },
+  business: {
+    name: 'Business VIP',
+    badge: 'MULTI-SITES & API',
+    priceMain: '0 FCFA',
+    priceSub: 'pendant 30j puis 10.000 FCFA/mois',
+    desc: 'Solution complète pour chaînes, grossistes & marques.',
+    features: ['Multi-Caissiers & Magasins', 'Clés API & Webhooks', 'Relances WhatsApp Auto'],
+    color: '#1e3a5f',
+    bgLight: '#f0f9ff',
+  },
+}
+
 interface WizardStepPlanStyleProps {
   plansConfig: PlansConfig
   plan: 'decouverte' | 'pro' | 'business'
