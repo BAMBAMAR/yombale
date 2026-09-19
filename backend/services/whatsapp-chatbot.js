@@ -2379,7 +2379,8 @@ async function handleIncomingInternal(msg) {
     'recommencer', 'recommence', 'reset', 'reinitialiser', 'repartir'
   ];
   const isEscapeRequested = MOTS_ESCAPE.includes(normTxtLower) ||
-    ['menu', 'annuler', 'retour', 'btn_annuler', 'menu_marchand', 'menu_general', 'boutique_quitter'].includes(interactiveId);
+    ['menu', 'annuler', 'retour', 'btn_annuler', 'menu_marchand', 'menu_general', 'menu_principal', 'boutique_quitter'].includes(interactiveId) ||
+    normTxtLower === 'menu principal' || normTxtLower.includes('menu principal');
 
   // ── RECONNAISSANCE DES INTENTIONS DE CORRECTION / REPRISE FLUIDE ────────────
   const MOTS_CORRECTION = [
@@ -2433,10 +2434,16 @@ async function handleIncomingInternal(msg) {
     // 1. Demande explicite de Menu Général Nopalou
     if (
       interactiveId === 'menu_general' ||
+      interactiveId === 'menu_principal' ||
+      interactiveId === 'menu' ||
       interactiveId === 'boutique_quitter' ||
       normTxtLower === 'menu general' ||
       normTxtLower === 'menu général' ||
       normTxtLower === 'menu principal' ||
+      normTxtLower === 'menu' ||
+      normTxtLower.includes('menu principal') ||
+      normTxtLower.includes('menu general') ||
+      normTxtLower.includes('menu général') ||
       normTxtLower === 'nopalou' ||
       normTxtLower === 'client' ||
       normTxtLower === 'acheteur'
@@ -3367,12 +3374,22 @@ async function handleIncomingInternal(msg) {
     return;
   }
 
-  // ── Actions directes Agent Immobilier Pro (visites, prospects, loyers) ──
-  const DECLENCHEURS_IMMO_PRO = ['visites', 'visite', 'rdv', 'prospects', 'prospect', 'leads', 'lead', 'loyers', 'loyer', 'impayes', 'echeances', 'agence', 'mon agence'];
-  if (DECLENCHEURS_IMMO_PRO.includes(normTxtLower) || interactiveId?.startsWith('immo_agent_')) {
+  // ── Actions directes Agent Immobilier Pro (visites, prospects, loyers, biens) ──
+  const DECLENCHEURS_IMMO_PRO = [
+    'visites', 'visite', 'rdv', 'prospects', 'prospect', 'leads', 'lead',
+    'loyers', 'loyer', 'impayes', 'echeances', 'agence', 'mon agence',
+    'espace agence', 'espace agent', 'biens', 'mandats', 'portefeuille'
+  ];
+  const IDS_IMMO_PRO = ['espace_agence', 'immo_visites', 'immo_prospects', 'immo_loyers', 'immo_biens'];
+  if (
+    IDS_IMMO_PRO.includes(interactiveId) ||
+    DECLENCHEURS_IMMO_PRO.includes(normTxtLower) ||
+    DECLENCHEURS_IMMO_PRO.some(d => normTxtLower.startsWith(d)) ||
+    interactiveId?.startsWith('immo_agent_')
+  ) {
     const agenceAgent = await trouverAgenceAgentParTelephone(phone);
     if (agenceAgent) {
-      const handled = await traiterMessageImmo(phone, text);
+      const handled = await traiterMessageImmo(phone, interactiveId || text);
       if (handled) return;
     }
   }
@@ -3437,14 +3454,25 @@ async function handleIncomingInternal(msg) {
     }
   }
 
-  if (interactiveId === 'menu_general' || normTxtLower === 'menu general' || normTxtLower === 'menu général' || normTxtLower === 'menu principal') {
+  if (
+    interactiveId === 'menu_general' ||
+    interactiveId === 'menu_principal' ||
+    interactiveId === 'menu' ||
+    normTxtLower === 'menu general' ||
+    normTxtLower === 'menu général' ||
+    normTxtLower === 'menu principal' ||
+    normTxtLower === 'menu' ||
+    normTxtLower.includes('menu general') ||
+    normTxtLower.includes('menu général') ||
+    normTxtLower.includes('menu principal')
+  ) {
     await setSession(phone, 'MENU', {});
     await sendMenu(phone);
     return;
   }
 
   // ── Demande de "Menu" quand l'utilisateur est déjà dans une boutique ────────
-  const isMenuReq = interactiveId === 'menu' || text.toLowerCase() === 'menu' || text.trim() === '0';
+  const isMenuReq = interactiveId === 'menu' || interactiveId === 'menu_principal' || interactiveId === 'menu_general' || text.toLowerCase() === 'menu' || text.trim() === '0';
   if (isMenuReq && context?.boutique) {
     const bq = context.boutique;
     const isMarchand = context?.isMarchandAuth;
@@ -3477,7 +3505,7 @@ async function handleIncomingInternal(msg) {
   }
 
   // Mots-clés globaux : "menu", "aide" ou une salutation depuis n'importe quel état actif
-  if (SALUTATIONS.includes(text.toLowerCase()) || interactiveId === 'menu') {
+  if (SALUTATIONS.includes(text.toLowerCase()) || interactiveId === 'menu' || interactiveId === 'menu_principal' || interactiveId === 'menu_general') {
     await setSession(phone, 'MENU', {});
     await sendMenu(phone);
     return;
@@ -3523,11 +3551,6 @@ async function handleIncomingInternal(msg) {
       return;
     }
     if (action === 'immo' || action === 'immobilier') {
-      const isAgent = await trouverAgenceAgentParTelephone(phone);
-      if (isAgent) {
-        await traiterMessageImmo(phone, 'espace agent');
-        return;
-      }
       await sendWhatsAppInteractive(
         phone,
         'Immobilier',
@@ -3598,9 +3621,17 @@ async function handleIncomingInternal(msg) {
       await setSession(phone, 'MENU', {});
       return;
     }
-    if (action === 'espace_agence' || action === 'agence') {
+    if (
+      action === 'espace_agence' ||
+      action === 'agence' ||
+      interactiveId === 'espace_agence' ||
+      normTxtLower.includes('espace agence') ||
+      normTxtLower === 'agence' ||
+      normTxtLower === 'espace agence pro'
+    ) {
       const isAgent = await trouverAgenceAgentParTelephone(phone);
       if (isAgent) {
+        await setSession(phone, 'MENU', { agence: isAgent });
         await traiterMessageImmo(phone, 'espace agent');
         return;
       }

@@ -1,3 +1,27 @@
+- **Correction Critique de l'Aiguillage Chatbot WhatsApp : Espace Agence Pro & Navigation "Menu Principal" (`backend/services/immo-chatbot.js`, `backend/services/whatsapp-chatbot.js`) (19 septembre 2026)** 📱🏢🌐⚡✅ :
+  * **🚨 1. Diagnostic des Incohérences Détectées lors des Tests Utilisateur** :
+    - *Incohérence 1 : Clic sur "🏢 Espace Agence Pro" renvoyait des annonces de location grand public* :
+      * Symptôme : Un agent immobilier ou gestionnaire (ex: AMAR IMMO) cliquant sur *"🏢 Espace Agence Pro (Gestion locative, mandats, CRM)"* recevait la liste des locations grand public ("🏠 Opportunités Immobilières Nopalou (Location) : 1. Location studio F2...").
+      * Cause racine : Dans `whatsapp-chatbot.js`, le clic appelait `traiterMessageImmo(phone, 'espace agent')`. Dans `immo-chatbot.js`, le filtre `isCommandeAgent` vérifiait uniquement `visite, rdv, prospect, lead, loyer, impaye, agence, gestion, biens`, mais omettait `agent` et `espace agent`. `isCommandeAgent` renvoyait `false` et tombait directement dans `traiterRechercheImmoPublic()`, qui par défaut renvoyait les 3 dernières offres de location.
+    - *Incohérence 2 : Clic sur "🌐 Menu Principal" déclenchait l'invite de recherche mot-clé au lieu du Menu* :
+      * Symptôme : En cliquant sur *"🌐 Menu Principal"* (bouton d'échappement proposé sous les listes immobilières), le bot répondait : *"⚠️ Veuillez entrer un mot-clé de recherche (ex: iPhone, Robe, Télévision...), ou tapez menu."*.
+      * Cause racine : L'identifiant interactif envoyé par WhatsApp était `menu_principal`, or le routeur d'échappement et le gestionnaire de menu (`isEscapeRequested`) ne vérifiaient que `menu_general`. De plus, sur WhatsApp Web, les clics de boutons ou citations incluaient l'en-tête du message précédent (ex: `" Plus d'options immobilières :\n🌐 Menu Principal"`), ce qui échouait face au test d'égalité stricte `=== 'menu principal'`. La requête non reconnue tombait en fallback dans la recherche de produits `handleSearchQuery` avec un texte vide, déclenchant l'invite de recherche mot-clé.
+  * **🛠️ 2. Correctifs Appliqués & Améliorations** :
+    - **Aiguillage Immo Robuste & Espace Agence Pro (`immo-chatbot.js`)** :
+      * Extension de `isCommandeAgent` pour inclure explicitement `agent`, `espace agent`, `espace agence`, `mandat`, `quittance`, `immo_visites`, `immo_prospects`, `immo_loyers`, `immo_biens`.
+      * Ajout d'une protection absolue anti-fuite : si un non-agent demande l'Espace Agence Pro, il reçoit désormais l'écran d'accueil/onboarding Agence Pro (`${SITE}/agence`) et non plus les annonces de location.
+      * Gestion complète des boutons interactifs de l'Espace Agent : `immo_biens` / `mandats` / `portefeuille` affichant les biens sous mandat avec statut et loyer.
+      * Message d'accueil personnalisé pour l'agent affichant le nom de son agence, le lien direct de sa vitrine publique (`${SITE}/agences/${slug}`) et le lien de son tableau de bord CRM (`${SITE}/agence/${slug}`).
+    - **Prise en charge Globale de "Menu Principal" (`whatsapp-chatbot.js`)** :
+      * Intégration de `interactiveId === 'menu_principal'` dans toutes les conditions d'échappement (`isEscapeRequested`, gestionnaire d'état MENU, fallbacks).
+      * Tolérance aux citations WhatsApp Web via `normTxtLower.includes('menu principal')`.
+      * Transmission de `interactiveId || text` à `traiterMessageImmo` pour éviter de transmettre des chaînes vides lors des clics de boutons interactifs.
+      * Réinitialisation propre de la session sur l'état `MENU` et réaffichage instantané du menu d'accueil Nopalou.
+  * **🧪 3. Tests & Validation Technique** :
+    - Nouveaux tests unitaires ajoutés dans `tests/unit/immo-chatbot.test.js` (accueil agent, portefeuille biens/mandats, protection non-agent) : **10/10 passés**.
+    - Nouveaux tests unitaires ajoutés dans `tests/unit/whatsapp-chatbot-p0.test.js` (bouton interactif `menu_principal`, texte cité WhatsApp Web) : **15/15 passés**.
+    - Suite de tests unitaires globale (`npm run test:unit`) : **45/45 suites passées, 352/352 tests passés (100%)**.
+
 - **Résolution Définitive des Boutons WhatsApp, Approbation Meta du Modèle UTILITY `nopalou_rappel_service` & Redirection Racine Slugs (`frontend-next`, `backend/services/whatsapp.js`) (19 septembre 2026)** 📱💳🚀🛡️⚡✅ :
   * **🚨 1. Diagnostic des Problèmes Utilisateur ("Nouvelle commande" et "Voir la commande" pour un rappel de crédit + 404)** :
     - *Symptôme remonté* : Un rappel de solde de crédit client (23 334 FCFA chez AMAR) affichait : *"Notification Nopalou : Nouvelle commande 💳 Rappel de solde — AMAR d'un montant de Nopalou. Détails : ... Voir la commande"*. Au clic, le bouton échouait ou ouvrait une page 404.

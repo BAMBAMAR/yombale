@@ -381,6 +381,78 @@ describe('Chatbot P0 Remediation Suite', () => {
       );
       expect(updateCall).toBeDefined();
     });
+
+    test('gère le bouton interactif "menu_principal" et retourne au menu sans erreur de recherche', async () => {
+      const phone = '221770000010';
+
+      mockQuery.mockImplementation((sql) => {
+        if (sql.includes('whatsapp_processed_messages')) {
+          return Promise.resolve({ rows: [{ message_id: 'm-menu-princ-btn' }] });
+        }
+        if (sql.includes('SELECT state, context FROM whatsapp_sessions')) {
+          return Promise.resolve({
+            rows: [{
+              state: 'MENU',
+              context: {},
+            }],
+          });
+        }
+        if (sql.includes('INSERT INTO whatsapp_sessions')) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      await handleIncoming({
+        id: 'm-menu-princ-btn',
+        from: phone,
+        type: 'interactive',
+        interactive: {
+          button_reply: { id: 'menu_principal', title: '🌐 Menu Principal' },
+        },
+      });
+
+      // Doit réinitialiser ou rafraîchir la session sur MENU
+      const menuSession = mockQuery.mock.calls.find(c =>
+        c[0].includes('INSERT INTO whatsapp_sessions') && c[1][1] === 'MENU'
+      );
+      expect(menuSession).toBeDefined();
+    });
+
+    test('gère le texte cité WhatsApp Web contenant "Menu Principal"', async () => {
+      const phone = '221770000011';
+
+      mockQuery.mockImplementation((sql) => {
+        if (sql.includes('whatsapp_processed_messages')) {
+          return Promise.resolve({ rows: [{ message_id: 'm-quoted-menu' }] });
+        }
+        if (sql.includes('SELECT state, context FROM whatsapp_sessions')) {
+          return Promise.resolve({
+            rows: [{
+              state: 'MENU',
+              context: {},
+            }],
+          });
+        }
+        if (sql.includes('INSERT INTO whatsapp_sessions')) {
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
+      await handleIncoming({
+        id: 'm-quoted-menu',
+        from: phone,
+        type: 'text',
+        text: { body: " Plus d'options immobilières :\n🌐 Menu Principal" },
+      });
+
+      // Doit détecter l'escape et réinitialiser sur MENU
+      const menuSession = mockQuery.mock.calls.find(c =>
+        c[0].includes('INSERT INTO whatsapp_sessions') && c[1][1] === 'MENU'
+      );
+      expect(menuSession).toBeDefined();
+    });
   });
 
   describe('M6 — Modification de panier en cours de commande', () => {

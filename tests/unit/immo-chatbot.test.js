@@ -132,6 +132,72 @@ describe('immo-chatbot : Mode Agent Pro', () => {
       expect.stringContaining('Aminata Ba')
     );
   });
+
+  test('fournit l\'accueil Agent Pro quand un agent demande l\'espace agent', async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [{ id: 'ag-1', nom: 'AMAR IMMO', slug: 'amar-immo', telephone: '777202086', role: 'owner' }],
+    });
+
+    const handled = await traiterMessageImmo('221777202086', 'espace agent');
+    expect(handled).toBe(true);
+    expect(mockSendWhatsAppText).toHaveBeenCalledWith(
+      '221777202086',
+      expect.stringContaining('Espace Agence Pro — AMAR IMMO')
+    );
+    expect(mockSendWhatsAppText).toHaveBeenCalledWith(
+      '221777202086',
+      expect.stringContaining('/agences/amar-immo')
+    );
+    expect(mockSendWhatsAppInteractive).toHaveBeenCalled();
+  });
+
+  test('fournit les biens et mandats pour un agent demandant ses biens', async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [{ id: 'ag-1', nom: 'AMAR IMMO', slug: 'amar-immo', telephone: '777202086', role: 'owner' }],
+    });
+
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        {
+          id: 'bien-1',
+          titre: 'Villa R+1 Fann Hock',
+          prix: 450000,
+          transaction: 'location',
+          type_bien: 'villa',
+          quartier: 'Fann Hock',
+          ville: 'Dakar',
+          actif: true,
+        },
+      ],
+    });
+
+    const handled = await traiterMessageImmo('221777202086', 'immo_biens');
+    expect(handled).toBe(true);
+    expect(mockSendWhatsAppText).toHaveBeenCalledWith(
+      '221777202086',
+      expect.stringContaining('Vos Biens & Mandats — AMAR IMMO')
+    );
+    expect(mockSendWhatsAppText).toHaveBeenCalledWith(
+      '221777202086',
+      expect.stringContaining('Villa R+1 Fann Hock')
+    );
+  });
+
+  test('ne route JAMAIS un non-agent demandant l\'espace agence vers les annonces publiques', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] }); // Non-agent
+
+    const handled = await traiterMessageImmo('221779999999', 'espace_agence');
+    expect(handled).toBe(true);
+    expect(mockSendWhatsAppText).toHaveBeenCalledWith(
+      '221779999999',
+      expect.stringContaining('Espace Agence Immobilière Pro — Nopalou')
+    );
+    // Doit proposer les boutons de création ou annuaire, jamais de fausses annonces
+    expect(mockSendWhatsAppText).not.toHaveBeenCalledWith(
+      '221779999999',
+      expect.stringContaining('Opportunités Immobilières Nopalou')
+    );
+  });
 });
 
 describe('immo-chatbot : Mode Visiteur Grand Public', () => {

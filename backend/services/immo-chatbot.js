@@ -90,7 +90,7 @@ async function traiterRequeteAgent(phone, agence, texte) {
   const t = texte.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   // 1. Demande de Visites
-  if (t.includes('visite') || t.includes('rdv') || t.includes('rendez-vous') || t.includes('planning')) {
+  if (t.includes('visite') || t.includes('rdv') || t.includes('rendez-vous') || t.includes('planning') || texte === 'immo_visites') {
     const { rows: visites } = await pool.query(
       `SELECT v.id, v.date_visite, v.statut, b.titre AS bien_titre, c.nom AS contact_nom, c.telephone AS contact_tel
        FROM visites_immo v
@@ -107,7 +107,7 @@ async function traiterRequeteAgent(phone, agence, texte) {
         phone,
         `📅 *Planning Visites — ${agence.nom}*\n\n` +
         `Aucune visite programmée pour les prochains jours.\n\n` +
-        `👉 Accédez à votre tableau de bord : ${SITE}/agence/${agence.slug}/visites`
+        `👉 Accédez à votre tableau de bord : ${SITE}/agence/${agence.slug || agence.id}/visites`
       );
       return true;
     }
@@ -121,14 +121,14 @@ async function traiterRequeteAgent(phone, agence, texte) {
       msg += `   └ 👤 Contact : ${v.contact_nom} (${v.contact_tel})\n`;
       msg += `   └ ⏰ Date : *${d}* (${v.statut})\n\n`;
     });
-    msg += `👉 Gérer le calendrier complet : ${SITE}/agence/${agence.slug}/visites`;
+    msg += `👉 Gérer le calendrier complet : ${SITE}/agence/${agence.slug || agence.id}/visites`;
 
     await sendWhatsAppText(phone, msg);
     return true;
   }
 
   // 2. Demande de Prospects / Leads CRM
-  if (t.includes('prospect') || t.includes('lead') || t.includes('contact') || t.includes('client')) {
+  if (t.includes('prospect') || t.includes('lead') || t.includes('contact') || t.includes('client') || texte === 'immo_prospects') {
     const { rows: prospects } = await pool.query(
       `SELECT nom, prenom, telephone, type_operation, budget_max, created_at, statut_crm
        FROM contacts_immo
@@ -141,7 +141,7 @@ async function traiterRequeteAgent(phone, agence, texte) {
     if (prospects.length === 0) {
       await sendWhatsAppText(
         phone,
-        `👥 *Prospects CRM — ${agence.nom}*\n\nAucun prospect enregistré récemment.\n👉 Gérer votre CRM : ${SITE}/agence/${agence.slug}/prospects`
+        `👥 *Prospects CRM — ${agence.nom}*\n\nAucun prospect enregistré récemment.\n👉 Gérer votre CRM : ${SITE}/agence/${agence.slug || agence.id}/prospects`
       );
       return true;
     }
@@ -153,14 +153,14 @@ async function traiterRequeteAgent(phone, agence, texte) {
       if (p.budget_max) msg += `   └ 💰 Budget : *${prixFmt(p.budget_max)}*\n`;
       msg += `   └ 🏷️ Statut : *${p.statut_crm}*\n\n`;
     });
-    msg += `👉 Voir tout le pipeline CRM : ${SITE}/agence/${agence.slug}/prospects`;
+    msg += `👉 Voir tout le pipeline CRM : ${SITE}/agence/${agence.slug || agence.id}/prospects`;
 
     await sendWhatsAppText(phone, msg);
     return true;
   }
 
   // 3. Demande d'Échéances / Loyers impayés
-  if (t.includes('loyer') || t.includes('impaye') || t.includes('echeance') || t.includes('quittance')) {
+  if (t.includes('loyer') || t.includes('impaye') || t.includes('echeance') || t.includes('quittance') || texte === 'immo_loyers') {
     const { rows: loyers } = await pool.query(
       `SELECT le.periode, le.montant_du, le.montant_restant, le.date_echeance, le.statut,
               b.titre AS bien_titre, c.nom AS locataire_nom
@@ -177,7 +177,7 @@ async function traiterRequeteAgent(phone, agence, texte) {
     if (loyers.length === 0) {
       await sendWhatsAppText(
         phone,
-        `💳 *Gestion Locative — ${agence.nom}*\n\nTous les loyers sont à jour ! Aucun impayé en cours.\n👉 Accès gestion locative : ${SITE}/agence/${agence.slug}/locatif`
+        `💳 *Gestion Locative — ${agence.nom}*\n\nTous les loyers sont à jour ! Aucun impayé en cours.\n👉 Accès gestion locative : ${SITE}/agence/${agence.slug || agence.id}/locatif`
       );
       return true;
     }
@@ -188,31 +188,77 @@ async function traiterRequeteAgent(phone, agence, texte) {
       msg += `   └ Période : ${l.periode} · Dû : *${prixFmt(l.montant_restant || l.montant_du)}*\n`;
       msg += `   └ Statut : ${l.statut === 'en_retard' ? '🚨 En retard' : '⏳ En attente'}\n\n`;
     });
-    msg += `👉 Encaisser ou envoyer quittance : ${SITE}/agence/${agence.slug}/locatif`;
+    msg += `👉 Encaisser ou envoyer quittance : ${SITE}/agence/${agence.slug || agence.id}/locatif`;
+
+    await sendWhatsAppText(phone, msg);
+    return true;
+  }
+
+  // 4. Demande de Biens / Mandats / Portefeuille
+  if (t.includes('bien') || t.includes('mandat') || t.includes('portefeuille') || t.includes('annonce') || texte === 'immo_biens') {
+    const { rows: biens } = await pool.query(
+      `SELECT id, titre, prix, transaction, type_bien, quartier, ville, actif
+       FROM annonces_immo
+       WHERE agence_id = $1 AND supprimee = false
+       ORDER BY created_at DESC
+       LIMIT 5`,
+      [agence.id]
+    );
+
+    if (biens.length === 0) {
+      await sendWhatsAppText(
+        phone,
+        `🏡 *Portefeuille Biens — ${agence.nom}*\n\nAucun bien actif pour le moment.\n\n👉 Publiez vos mandats : ${SITE}/agence/${agence.slug || agence.id}/biens`
+      );
+      return true;
+    }
+
+    let msg = `🏡 *Vos Biens & Mandats — ${agence.nom}*\n\n`;
+    biens.forEach((b, idx) => {
+      msg += `${idx + 1}. *${b.titre}*\n`;
+      msg += `   └ 💰 ${prixFmt(b.prix)}${b.transaction === 'location' ? ' /mois' : ''}\n`;
+      const loc = [b.quartier, b.ville].filter(Boolean).join(', ');
+      if (loc) msg += `   └ 📍 ${loc}\n`;
+      msg += `   └ 👉 Fiche : ${SITE}/immo/${b.id}\n\n`;
+    });
+    msg += `👉 Gérer votre portefeuille complet : ${SITE}/agence/${agence.slug || agence.id}/biens`;
 
     await sendWhatsAppText(phone, msg);
     return true;
   }
 
   // Menu Agent Pro par défaut (Choix interactifs sans saisie)
+  await sendWhatsAppText(
+    phone,
+    `🏢 *Espace Agence Pro — ${agence.nom}*\n\n` +
+    `Bienvenue dans l'espace de gestion de votre agence.\n\n` +
+    `🌐 *Vitrine web :* ${SITE}/agences/${agence.slug || agence.id}\n` +
+    `📊 *Tableau de bord :* ${SITE}/agence/${agence.slug || agence.id}\n\n` +
+    `Sélectionnez une action rapide ci-dessous :`
+  );
+
   const rows = [
     { id: 'immo_visites', title: '📅 Visites programmées', description: 'Consulter vos prochains rendez-vous' },
     { id: 'immo_prospects', title: '👥 Leads & Prospects', description: 'Dernières demandes reçues' },
     { id: 'immo_loyers', title: '💰 Loyers & Impayés', description: 'Suivi des échéances et quittances' },
-    { id: 'immo_biens', title: '🏡 Portefeuille Biens', description: 'Consulter vos annonces' },
+    { id: 'immo_biens', title: '🏡 Portefeuille Biens', description: 'Consulter vos annonces & mandats' },
   ];
-  await sendWhatsAppInteractive(
-    phone,
-    `🏢 ${agence.nom}`,
-    `Sélectionnez une action rapide pour gérer votre agence :`,
-    [{ title: 'Gestion Agence', rows }]
-  ).catch(async () => {
-    await sendWhatsAppButtons3(phone, `🏢 *Espace Agent — ${agence.nom}*`, [
-      { id: 'immo_visites', title: '📅 Visites' },
-      { id: 'immo_prospects', title: '👥 Prospects' },
-      { id: 'immo_loyers', title: '💰 Loyers' },
-    ]);
-  });
+  try {
+    await sendWhatsAppInteractive(
+      phone,
+      `🏢 ${agence.nom}`.slice(0, 60),
+      `Gestion rapide Agence Pro :`,
+      [{ title: 'Gestion Agence', rows }]
+    );
+  } catch (_) {
+    try {
+      await sendWhatsAppButtons3(phone, `🏢 *Espace Agent — ${agence.nom}*`, [
+        { id: 'immo_visites', title: '📅 Visites' },
+        { id: 'immo_prospects', title: '👥 Prospects' },
+        { id: 'immo_loyers', title: '💰 Loyers' },
+      ]);
+    } catch (__) {}
+  }
   return true;
 }
 
@@ -370,22 +416,65 @@ async function traiterRechercheImmoPublic(phone, texte) {
  */
 async function traiterMessageImmo(phone, texte) {
   try {
+    const rawText = String(texte || '').trim();
+    const t = rawText.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
     // 1. Vérifier si l'émetteur est un Agent ou Dirigeant d'agence
     const agenceAgent = await trouverAgenceAgentParTelephone(phone);
     if (agenceAgent) {
-      const t = texte.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const isCommandeAgent =
         t.includes('visite') || t.includes('rdv') || t.includes('prospect') ||
         t.includes('lead') || t.includes('loyer') || t.includes('impaye') ||
-        t.includes('agence') || t.includes('gestion') || t.includes('biens');
+        t.includes('agence') || t.includes('agent') || t.includes('gestion') ||
+        t.includes('biens') || t.includes('mandat') || t.includes('quittance') ||
+        t.includes('portefeuille') ||
+        rawText === 'espace agent' || rawText === 'espace agence' ||
+        rawText === 'espace_agence' || rawText.startsWith('immo_agent_') ||
+        ['immo_visites', 'immo_prospects', 'immo_loyers', 'immo_biens'].includes(rawText);
 
       if (isCommandeAgent) {
-        return await traiterRequeteAgent(phone, agenceAgent, texte);
+        return await traiterRequeteAgent(phone, agenceAgent, rawText);
       }
     }
 
-    // 2. Traitement recherche publique visiteur
-    return await traiterRechercheImmoPublic(phone, texte);
+    // 2. Si un non-agent demande explicitement l'Espace Agence Pro, ne JAMAIS router vers les annonces publiques
+    const isDemandeEspaceAgence =
+      rawText === 'espace_agence' ||
+      rawText === 'espace agent' ||
+      rawText === 'espace agence' ||
+      t.includes('espace agence') ||
+      t.includes('espace agent') ||
+      t.includes('gestion locative, mandats');
+
+    if (isDemandeEspaceAgence) {
+      await sendWhatsAppText(
+        phone,
+        `🏢 *Espace Agence Immobilière Pro — Nopalou*\n\n` +
+        `Vous êtes une agence immobilière ou un gestionnaire locatif ?\n` +
+        `• Publiez vos mandats exclusifs en tête de recherche\n` +
+        `• Générez des quittances certifiées avec QR Code\n` +
+        `• Suivez vos loyers, baux et encaissements Wave / OM\n` +
+        `• Vitrine web dédiée offerte (nopalou.com/agences/votre-nom)\n\n` +
+        `👉 Créez ou accédez à votre espace agence : ${SITE}/agence`
+      );
+      if (typeof sendWhatsAppButtons3 === 'function') {
+        try {
+          await sendWhatsAppButtons3(
+            phone,
+            '🏢 Que souhaitez-vous faire ?',
+            [
+              { id: 'creer_agence', title: '🏢 Créer mon Agence' },
+              { id: 'agences', title: '🔍 Annuaire Agences' },
+              { id: 'menu_principal', title: '🌐 Menu Principal' },
+            ]
+          );
+        } catch (_) {}
+      }
+      return true;
+    }
+
+    // 3. Traitement recherche publique visiteur
+    return await traiterRechercheImmoPublic(phone, rawText);
   } catch (err) {
     console.error('[IMMO_CHATBOT:traiterMessageImmo]', err.message);
     return false;
