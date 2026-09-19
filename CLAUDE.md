@@ -1,3 +1,22 @@
+- **Résolution des Erreurs d'Hydratation React (#425, #418, #423) & Force-Update Service Worker v18 (18 septembre 2026)** 🛡️⚡🔄✨✅ :
+  * **🚨 1. Symptômes & Analyse d'Origine** :
+    - Erreurs console en production sur `nopalou.com` : `Minified React error #425` (Text content does not match server-rendered HTML), `#418` (Hydration failed), `#423` (Root switched to client rendering).
+    - L'analyse des traces montre l'exécution de l'ancien chunk JS `layout-9a56e9ba61ae8ddf.js` servi par le Service Worker PWA alors que le serveur SSR envoyait le nouveau HTML issu du déploiement précédent.
+    - Écart textuel direct entre le nombre de guides (`Guides & Tutoriels (9)` dans l'ancien bundle JS en cache vs `(10)` côté serveur).
+  * **🛠️ 2. Actions Correctives Appliquées** :
+    - **Incrémentation FORCE_VERSION v18 (`frontend-next/src/app/RegisterSW.tsx` & `layout.tsx`)** :
+      * Passage de `FORCE_VERSION` à `'18'` pour déclencher la purge immédiate des caches PWA (`html-cache`, `precache`, `assets`) et le désenregistrement automatique des anciens workers chez tous les utilisateurs.
+      * Mise à jour des assets d'icônes en `?v=18`.
+    - **Immunisation DOM & Extensions (`frontend-next/src/app/layout.tsx`)** :
+      * Ajout de `suppressHydrationWarning` sur `<html>` et `<body>` pour empêcher les extensions navigateur et scripts tiers d'altérer la réconciliation React.
+    - **Nettoyage Attributs & Entités (`frontend-next/src/app/MobileNav.tsx`)** :
+      * Suppression du cast `inert={(!open ? '' : undefined) as unknown as boolean}` au profit du standard accessible `aria-hidden={!open}` (éradication des warnings de mismatch d'attribut).
+      * Remplacement de l'entité `&bull;` par le caractère Unicode direct `•` dans les coordonnées.
+  * **🧪 3. Validation Technique** :
+    - Typecheck TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 violation critique**.
+    - Compilation de production Next.js (`npm run build`) : **Succès 100% avec regénération du Service Worker**.
+
 - **Rétablissement et Optimisation Mobile du Bandeau d'Assistance & Contact (`Aide & Contact`) dans le Footer et le Menu Mobile (18 septembre 2026)** 📱🛠️⚡✨✅ :
   * **🚨 1. Demande & Contexte Utilisateur** :
     - Sur mobile, absence totale du bandeau d'assistance et contact présent sur grand écran : `Aide & Contact : Comment ça marche ? • Assistant WhatsApp • Sourcing Dakar • Guide Vendeur • contact@nopalou.com • +221 70 871 79 42 • Dakar`.

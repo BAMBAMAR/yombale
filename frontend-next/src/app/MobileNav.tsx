@@ -93,7 +93,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
       <div
         ref={drawerRef}
         className={`mobile-nav-drawer${open ? ' mobile-nav-drawer--open' : ''}`}
-        inert={(!open ? '' : undefined) as unknown as boolean}
+        aria-hidden={!open}
       >
         {/* Header Drawer */}
         <div className="mobile-nav-header">
@@ -377,7 +377,7 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
                 <Mail size={13} style={{ color: 'var(--accent)' }} /> contact@nopalou.com
               </a>
               <a href="tel:+221708717942" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-subtle)', textDecoration: 'none' }}>
-                <Phone size={13} style={{ color: 'var(--accent)' }} /> +221 70 871 79 42 &bull; Dakar
+                <Phone size={13} style={{ color: 'var(--accent)' }} /> <span>+221 70 871 79 42 • Dakar</span>
               </a>
             </div>
           </div>

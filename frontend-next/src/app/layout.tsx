@@ -122,16 +122,16 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/icon', type: 'image/png', sizes: '32x32' },
-      { url: '/icons/icon-192.png?v=17', type: 'image/png', sizes: '192x192' },
-      { url: '/icons/icon-512.png?v=17', type: 'image/png', sizes: '512x512' },
-      { url: '/icons/icon-1024.png?v=17', type: 'image/png', sizes: '1024x1024' },
+      { url: '/icons/icon-192.png?v=18', type: 'image/png', sizes: '192x192' },
+      { url: '/icons/icon-512.png?v=18', type: 'image/png', sizes: '512x512' },
+      { url: '/icons/icon-1024.png?v=18', type: 'image/png', sizes: '1024x1024' },
     ],
-    shortcut: '/icons/icon-192.png?v=17',
+    shortcut: '/icons/icon-192.png?v=18',
     apple: [
-      { url: '/apple-icon.png?v=17', sizes: '180x180', type: 'image/png' },
-      { url: '/icons/icon-192.png?v=17', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png?v=17', sizes: '512x512', type: 'image/png' },
-      { url: '/icons/icon-1024.png?v=17', sizes: '1024x1024', type: 'image/png' },
+      { url: '/apple-icon.png?v=18', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/icon-192.png?v=18', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png?v=18', sizes: '512x512', type: 'image/png' },
+      { url: '/icons/icon-1024.png?v=18', sizes: '1024x1024', type: 'image/png' },
     ],
   },
 };
@@ -231,7 +231,7 @@ export default async function RootLayout({
   const dir = (isScoped && isRTL(userLocale)) ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} dir={dir}>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="color-scheme" content="light" />
@@ -246,7 +246,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_NAV_JSON_LD) }}
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <I18nClientProvider initialLocale={locale}>
         <CartProvider>
         <ToastProvider>

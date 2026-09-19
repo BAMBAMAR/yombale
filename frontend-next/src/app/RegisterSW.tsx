@@ -40,11 +40,11 @@ export default function RegisterSW() {
     }
 
     // =====================================================================
-    // FORCE-UPDATE v17 : Purge automatique des caches icônes/manifest/assets
-    // pour forcer le re-téléchargement du splash screen blanc HD 1:1 et des icônes.
+    // FORCE-UPDATE v18 : Purge automatique des caches pour renouveler les bundles
+    // et éliminer les mismatches d'hydratation entre les anciens caches SW et le nouveau SSR.
     // Chaque incrémentation de FORCE_VERSION déclenche la purge chez TOUS les utilisateurs.
     // =====================================================================
-    const FORCE_VERSION = '17'
+    const FORCE_VERSION = '18'
     const FORCE_KEY = 'nopalou_force_v'
 
     try {
