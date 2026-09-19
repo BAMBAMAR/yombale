@@ -157,35 +157,36 @@ async function sendWhatsAppTemplate(phone, templateName, components = []) {
   });
 }
 
-let _utilityTemplateApproved = null;
-let _lastUtilityCheck = 0;
+let _approvedTemplatesCache = new Set(['nopalou_rappel_service', 'nopalou_alerte_commande', 'nopalou_auth_otp']);
+let _lastTemplatesCheck = 0;
 
-async function isUtilityTemplateApproved() {
+async function isTemplateApproved(templateName) {
   const now = Date.now();
-  if (_utilityTemplateApproved !== null && (now - _lastUtilityCheck < 60000)) {
-    return _utilityTemplateApproved;
+  if (_approvedTemplatesCache && (now - _lastTemplatesCheck < 60000)) {
+    return _approvedTemplatesCache.has(templateName);
   }
   if (!PHONE_ID || !TOKEN) return false;
   try {
     const WABA = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '901008702321523';
-    const { data } = await axios.get(`https://graph.facebook.com/v18.0/${WABA}/message_templates?fields=name,status`, {
+    const { data } = await axios.get(`https://graph.facebook.com/v21.0/${WABA}/message_templates?fields=name,status`, {
       headers: { Authorization: `Bearer ${TOKEN}` },
       timeout: 3000,
     });
-    const found = data?.data?.find(t => t.name === 'nopalou_service_commerce' && t.status === 'APPROVED');
-    _utilityTemplateApproved = !!found;
-    _lastUtilityCheck = now;
+    _approvedTemplatesCache = new Set(
+      (data?.data || []).filter(t => t.status === 'APPROVED').map(t => t.name)
+    );
+    _lastTemplatesCheck = now;
+    return _approvedTemplatesCache.has(templateName);
   } catch {
-    _utilityTemplateApproved = false;
+    return _approvedTemplatesCache ? _approvedTemplatesCache.has(templateName) : false;
   }
-  return _utilityTemplateApproved;
 }
 
 /**
  * Envoie une notification transactionnelle garantie à un numéro (client ou marchand).
  * 1. Tente d'envoyer le message texte libre détaillé (s'affichera si l'utilisateur a écrit dans les 24h).
- * 2. Envoie systématiquement le Template Meta certifié pour garantir
- *    la réception 24h/24 même si la fenêtre des 24h Meta est fermée (anti-erreur 131047).
+ * 2. Envoie systématiquement le Template Meta certifié UTILITY pour garantir
+ *    la réception 24h/24 même si la fenêtre des 24h Meta est fermée (anti-erreur 131047 & 131049).
  */
 async function sendWhatsAppNotification(phone, {
   textMessage,
@@ -194,6 +195,7 @@ async function sendWhatsAppNotification(phone, {
   detail,
   url = SITE,
   buttonParam = 'boutique',
+  type = 'service',
   templateOnly = false,
   fallbackSMS = true,
 } = {}) {
@@ -212,21 +214,60 @@ async function sendWhatsAppNotification(phone, {
   const cleanTitle = sanitizeTemplateParam(title || 'Notification Nopalou').slice(0, 60);
   const cleanDetail = sanitizeTemplateParam(detail || 'Consultez votre espace Nopalou pour plus de détails.').slice(0, 1000);
   const cleanUrl = (url || SITE).trim();
-  // Le paramètre de bouton dynamique de nopalou_fiche_texte n'accepte qu'un identifiant sans caractères spéciaux
-  let cleanParam = String(buttonParam || 'boutique').trim();
-  if (cleanParam.includes('id=')) {
-    const idMatch = cleanParam.match(/id=([a-zA-Z0-9_-]+)/i);
-    if (idMatch) cleanParam = idMatch[1];
-  } else if (cleanParam.includes('boutique?')) {
-    cleanParam = 'boutique';
-  } else {
-    cleanParam = cleanParam.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'boutique';
+
+  // ── Formatage intelligent et robuste du paramètre de bouton URL (base: https://nopalou.com/{{1}}) ──
+  let cleanParam = String(buttonParam || url || 'boutique').trim();
+
+  // Si une URL absolue a été fournie, en extraire le chemin relatif
+  cleanParam = cleanParam.replace(/^https?:\/\/[^\/]+\/?/i, '');
+  cleanParam = cleanParam.replace(/^\/+/, '');
+
+  // Détection des préfixes réservés du frontend
+  const RESERVED_PREFIXES = [
+    'boutique', 'boutiques', 'b', 'compte', 'suivi-commande', 'panier', 'marchands',
+    'connexion', 'inscription', 'immo', 'agences', 'agence', 'annonces', 'telecom',
+    'tarifs-boutique', 'aide', 'cgu', 'confidentialite', 'pos', 'admin', 'produit', 'produits'
+  ];
+  const firstSeg = cleanParam.split(/[/?#]/)[0].toLowerCase();
+
+  // Si c'est une référence de commande brute (ex: 'CMD-1042'), préfixer vers le suivi de commande
+  if (/^CMD-[a-zA-Z0-9_-]+/i.test(cleanParam)) {
+    cleanParam = `suivi-commande?ref=${encodeURIComponent(cleanParam)}`;
+  } else if (cleanParam && !cleanParam.includes('/') && !cleanParam.includes('?') && !RESERVED_PREFIXES.includes(firstSeg)) {
+    // Si c'est un slug ou UUID direct de boutique (ex: 'amar'), préfixer vers 'boutiques/amar'
+    cleanParam = `boutiques/${cleanParam}`;
   }
 
-  // Utilisation prioritaire du template UTILITY certifié nopalou_alerte_commande
-  // Ce template de catégorie UTILITY est exempt à 100% de la restriction Meta 131049 (Marketing Capping).
-  const cleanMontant = sanitizeTemplateParam(montant || 'Nopalou').slice(0, 30);
-  let templateToUse = 'nopalou_alerte_commande';
+  // Nettoyage Meta sécurisé : préserve les caractères valides d'URL relative (/, ?, =, &, ., -, _)
+  cleanParam = cleanParam.replace(/[\s\r\n\t]+/g, '').replace(/[^a-zA-Z0-9_\-\/\.\?\=\&\%]/g, '').slice(0, 100) || 'boutique';
+  cleanParam = cleanParam.replace(/^\/+/, '');
+
+  // ── Sélection du Template Meta UTILITY certifié ──
+  // - Commande réelle -> nopalou_alerte_commande (Bouton: "Voir la commande")
+  // - Tout le reste (rappels, crédits, services, baux, compte) -> nopalou_rappel_service (Bouton: "Voir les détails")
+  let templateToUse = 'nopalou_rappel_service';
+  if (type === 'commande') {
+    templateToUse = 'nopalou_alerte_commande';
+  } else {
+    // Vérification de l'approbation du template de service
+    const isRappelApproved = await isTemplateApproved('nopalou_rappel_service');
+    if (!isRappelApproved) {
+      templateToUse = 'nopalou_alerte_commande';
+    }
+  }
+
+  // Formater le montant : ne JAMAIS injecter le mot 'Nopalou' comme montant financier !
+  let cleanMontant = '';
+  if (montant && String(montant).trim()) {
+    cleanMontant = sanitizeTemplateParam(String(montant).trim()).slice(0, 30);
+  } else {
+    const matchFCFA = (detail || title || '').match(/([0-9\s]+)\s*FCFA/i);
+    if (matchFCFA) {
+      cleanMontant = matchFCFA[0].trim().slice(0, 30);
+    } else {
+      cleanMontant = 'Consulter';
+    }
+  }
 
   try {
     const res = await sendWhatsAppTemplate(normPhone, templateToUse, [

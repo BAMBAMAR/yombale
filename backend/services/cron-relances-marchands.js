@@ -54,9 +54,11 @@ async function traiterRelancesMarchands() {
           const res = await sendWhatsAppNotification(b.telephone, {
             textMessage: msg,
             title: `🎉 1er jour sur Nopalou — ${b.nom}`.slice(0, 60),
+            montant: 'Gratuit',
             detail: `Partagez votre vitrine sur WhatsApp : ${SITE}/boutiques/${b.slug} pour faire votre 1ère vente !`,
             url: `${SITE}/boutiques/${b.slug}`,
-            buttonParam: b.slug || 'boutique',
+            buttonParam: `boutiques/${b.slug}`,
+            type: 'service',
           });
           const isSent = !!(res && res.messages?.[0]?.id);
           stats.j1++;
@@ -103,9 +105,11 @@ async function traiterRelancesMarchands() {
           const res = await sendWhatsAppNotification(b.telephone, {
             textMessage: msg,
             title: `📒 Caisse & Carnet de Dettes — ${b.nom}`.slice(0, 60),
+            montant: 'Inclus',
             detail: `Notez les crédits clients et relancez-les en 1 clic. Accédez à votre caisse : ${SITE}/boutique/caisse`,
             url: `${SITE}/boutique/caisse`,
-            buttonParam: 'caisse',
+            buttonParam: 'boutique?tab=caisse',
+            type: 'service',
           });
           const isSent = !!(res && res.messages?.[0]?.id);
           stats.j7++;
@@ -154,9 +158,11 @@ async function traiterRelancesMarchands() {
           const res = await sendWhatsAppNotification(a.telephone, {
             textMessage: msg,
             title: `⏳ Fin d'essai dans 5 jours — ${a.nom}`.slice(0, 60),
+            montant: '-25% Wave',
             detail: `Profitez de -25% (3 mois offerts) sur l'abonnement annuel avec Wave : ${SITE}/tarifs-boutique`,
             url: `${SITE}/tarifs-boutique`,
-            buttonParam: 'tarifs',
+            buttonParam: 'tarifs-boutique',
+            type: 'service',
           });
           const isSent = !!(res && res.messages?.[0]?.id);
           stats.j25++;

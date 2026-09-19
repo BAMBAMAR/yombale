@@ -715,9 +715,11 @@ router.post('/whatsapp-login', limiterAuth, async (req, res) => {
     await sendWhatsAppNotification(telephone, {
       textMessage: `👋 Bonjour !\n\nVoici votre lien de connexion magique à Nopalou.\nCliquez ici pour accéder à votre compte sans mot de passe :\n\n👉 ${magicLink}\n\nCe lien est valide 15 minutes.`,
       title: `🔑 Connexion Magique — Nopalou`,
+      montant: 'Gratuit',
       detail: `Accédez à votre compte en 1 Clic sans mot de passe (lien valide 15 minutes).`,
       url: magicLink,
       buttonParam: `connexion/magique?token=${magicToken}`,
+      type: 'service',
     });
     
     res.json({ success: true, message: 'Lien magique envoyé sur WhatsApp' });

@@ -495,9 +495,11 @@ router.post('/:id/credits-clients/:clientId/transaction', verifierToken, async (
             sendWhatsAppNotification(clientTelNum, {
               textMessage: msgNotif,
               title: titleTpl.slice(0, 60),
+              montant: `${montantFmt} FCFA`,
               detail: `Montant : ${montantFmt} FCFA. Solde carnet : ${soldeFmt} FCFA.`,
               url: `${SITE}/boutiques/${bq.slug || bq.id}`,
-              buttonParam: bq.slug || bq.id,
+              buttonParam: `boutiques/${bq.slug || bq.id}`,
+              type: 'rappel',
             })
               .then(() => console.log(`[WHATSAPP CREDIT TRANSACTION SUCCESS] Notif envoyée à ${clientTelNum}`))
               .catch(err => console.error('[WHATSAPP CREDIT TRANSACTION ERR]:', err.message));
@@ -547,9 +549,11 @@ router.post('/:id/credits-clients/:clientId/relance-whatsapp', verifierToken, as
         await whatsappService.sendWhatsAppNotification(c.telephone, {
           textMessage: messageRelance,
           title: `💳 Rappel de solde — ${bq.nom}`,
+          montant: `${soldeNum.toLocaleString('fr-FR')} FCFA`,
           detail: `Solde carnet débiteur : ${soldeNum.toLocaleString('fr-FR')} FCFA. Merci de bien vouloir régulariser auprès de ${bq.nom}.`,
           url: `${SITE}/boutiques/${bq.slug || bq.id}`,
-          buttonParam: bq.slug || bq.id,
+          buttonParam: `boutiques/${bq.slug || bq.id}`,
+          type: 'rappel',
         });
       } else if (whatsappService && typeof whatsappService.sendWhatsAppText === 'function') {
         await whatsappService.sendWhatsAppText(c.telephone, messageRelance);
@@ -720,9 +724,11 @@ router.post('/:id/credits-clients/approuver-commande', verifierToken, async (req
           sendWhatsAppNotification(client_telephone, {
             textMessage: msgClient,
             title: titleTpl,
+            montant: `${montantFmt} FCFA`,
             detail: detailTpl,
             url: urlTpl,
-            buttonParam: bq.slug || bq.id,
+            buttonParam: `boutiques/${bq.slug || bq.id}`,
+            type: 'rappel',
           })
             .then(() => console.log(`[WHATSAPP CREDIT APPROBATION SUCCESS] Notif envoyée à ${client_telephone}`))
             .catch(err => console.error('[WHATSAPP CREDIT APPROBATION ERR]:', err.message));
@@ -1200,9 +1206,11 @@ router.post('/:id/credits-clients/:clientId/creer-plan', verifierToken, async (r
           sendWhatsAppNotification(clientCarnet.telephone, {
             textMessage: msgWA,
             title: `💳 Paiement échelonné validé — ${b.nom}`.slice(0, 60),
+            montant: `${totalFmt} FCFA`,
             detail: `Achat ${totalFmt} FCFA en ${numNb}x. Prochaine échéance: ${prochainFmt} FCFA le ${dateEchFmt}.`,
             url: `${SITE}/boutiques/${b.slug || b.id}`,
-            buttonParam: b.slug || b.id,
+            buttonParam: `boutiques/${b.slug || b.id}`,
+            type: 'rappel',
           }).catch(err => console.error('[WHATSAPP PLAN NOTIF ERR]:', err.message));
         } catch (eWs) {
           console.error('[WHATSAPP PLAN NOTIF ERR]:', eWs.message);
@@ -1354,9 +1362,11 @@ router.post('/:id/credits-clients/:clientId/encaisser', verifierToken, async (re
           sendWhatsAppNotification(clientCarnet.telephone, {
             textMessage: msgWA,
             title: `💚 Règlement reçu — ${b.nom}`.slice(0, 60),
+            montant: `${montantFmt} FCFA`,
             detail: `Paiement de ${montantFmt} FCFA reçu. Solde restant : ${soldeFmt} FCFA.`,
             url: `${SITE}/boutiques/${b.slug || b.id}`,
-            buttonParam: b.slug || b.id,
+            buttonParam: `boutiques/${b.slug || b.id}`,
+            type: 'rappel',
           }).catch(err => console.error('[WHATSAPP ENCAISSEMENT ERR]:', err.message));
         } catch (eWs) {
           console.error('[WHATSAPP ENCAISSEMENT ERR]:', eWs.message);
@@ -1487,9 +1497,11 @@ router.post('/:id/credits-clients/:clientId/solder-anticipe', verifierToken, asy
           sendWhatsAppNotification(clientCarnet.telephone, {
             textMessage: msgWA,
             title: `✅ Crédit 100% Soldé — ${b.nom}`.slice(0, 60),
+            montant: `${montantFmt} FCFA`,
             detail: `Votre crédit chez ${b.nom} est entièrement réglé (Solde : 0 FCFA). Merci !`,
             url: `${SITE}/boutiques/${b.slug || b.id}`,
-            buttonParam: b.slug || b.id,
+            buttonParam: `boutiques/${b.slug || b.id}`,
+            type: 'rappel',
           }).catch(err => console.error('[WHATSAPP SOLDER NOTIF ERR]:', err.message));
         } catch (eWs) {
           console.error('[WHATSAPP SOLDER NOTIF ERR]:', eWs.message);

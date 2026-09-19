@@ -137,9 +137,11 @@ async function traiterRelancesAutomatiquesWhatsApp(boutiqueId = null) {
           const resNotif = await whatsappService.sendWhatsAppNotification(normClientTel, {
             textMessage,
             title: templateTitle,
+            montant: `${soldeNum.toLocaleString('fr-FR')} FCFA`,
             detail: templateDetail,
             url: bqUrl,
-            buttonParam: bqParam,
+            buttonParam: `boutiques/${bqParam}`,
+            type: 'rappel',
           });
           if (resNotif) sent = true;
         } else if (typeof whatsappService.sendWhatsAppText === 'function') {

@@ -321,7 +321,8 @@ router.post('/commandes/express', async (req, res) => {
           montant: `${totalFmt} FCFA`,
           detail: detailTpl,
           url: urlTpl,
-          buttonParam: 'compte',
+          buttonParam: `suivi-commande?ref=${encodeURIComponent(ref)}`,
+          type: 'commande',
         })
           .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation envoyée au ${client_telephone}`))
           .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));

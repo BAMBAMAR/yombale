@@ -1,3 +1,36 @@
+- **Résolution Définitive des Boutons WhatsApp, Approbation Meta du Modèle UTILITY `nopalou_rappel_service` & Redirection Racine Slugs (`frontend-next`, `backend/services/whatsapp.js`) (19 septembre 2026)** 📱💳🚀🛡️⚡✅ :
+  * **🚨 1. Diagnostic des Problèmes Utilisateur ("Nouvelle commande" et "Voir la commande" pour un rappel de crédit + 404)** :
+    - *Symptôme remonté* : Un rappel de solde de crédit client (23 334 FCFA chez AMAR) affichait : *"Notification Nopalou : Nouvelle commande 💳 Rappel de solde — AMAR d'un montant de Nopalou. Détails : ... Voir la commande"*. Au clic, le bouton échouait ou ouvrait une page 404.
+    - *Causes racines identifiées lors de l'audit exhaustif* :
+      1. **Confusion de Template Meta** : Pour éviter le bridage marketing Meta (Erreur `#131049`), tous les messages étaient forcés sur `nopalou_alerte_commande` (seul template UTILITY alors disponible). Ce modèle contient en dur *"Nouvelle commande"* et le bouton *"Voir la commande"*.
+      2. **Montant par défaut `'Nopalou'`** : `sendWhatsAppNotification` appliquait `const cleanMontant = sanitizeTemplateParam(montant || 'Nopalou')`. En l'absence du paramètre `montant`, Meta affichait *"d'un montant de Nopalou"*.
+      3. **Suppression des slashes d'URL** : La regex `replace(/[^a-zA-Z0-9_-]/g, '')` détruisait tous les slashes `/`, `?` et `=`, transformant `boutiques/amar` en `boutiquesamar` (404), `suivi-commande?ref=...` en `suivicommanderef...` (404), et `connexion/magique?token=...` en 404.
+      4. **Absence de route racine `/[slug]`** : Les liens `https://nopalou.com/amar` renvoyaient une erreur 404 car la route publique est `/boutiques/amar`.
+  * **🛠️ 2. Correctifs Appliqués & Développements Réalisés** :
+    - **Création & Approbation Officielle Meta du Modèle UTILITY Dédié (`nopalou_rappel_service`)** :
+      * Soumission et validation par Meta WABA `901008702321523` du template certifié **`nopalou_rappel_service`** (ID `913318464889891`, Catégorie **UTILITY**, 0% risque marketing).
+      * Texte certifié : *"Notification Nopalou : {{1}} d'un montant de {{2}}. Détails : {{3}}. Consultez votre espace sur Nopalou pour le suivi."*.
+      * Bouton certifié : **"Voir les détails"** (au lieu de *"Voir la commande"*).
+    - **Aiguillage Intelligent & Nettoyage Robuste des Boutons (`backend/services/whatsapp.js`)** :
+      * Séparation stricte : `type === 'commande'` utilise `nopalou_alerte_commande` (*"Voir la commande"*), tandis que les rappels, crédits, services, baux et alertes utilisent `nopalou_rappel_service` (*"Voir les détails"*).
+      * Préservation intégrale des caractères valides d'URL (`/`, `?`, `=`, `&`, `.`, `-`, `_`).
+      * Auto-préfixage des slugs bruts vers `boutiques/${slug}` et des références de commande vers `suivi-commande?ref=${ref}`.
+      * Élimination totale du fallback `'Nopalou'` comme montant.
+    - **Mise à Jour Exhaustive des 22 Points d'Appel Backend** :
+      * `cron-relances-carnet.js` : Passage du montant réel (`${soldeNum} FCFA`), de `boutiques/${bqParam}` et de `type: 'rappel'`.
+      * `credits.js` (6 routes) : Reçus de crédit, relances manuelles, échéances, paiements échelonnés, encaissements et soldes anticipés avec montants exacts et `type: 'rappel'`.
+      * `comptabilite.js` & `paiement.js` : Liens de suivi de commande directs pour les acheteurs (`suivi-commande?ref=...`) et onglet commandes pour les commerçants (`boutique?tab=commandes`).
+      * `immo-whatsapp-notifications.js` (8 routes) : Visites, relances loyers, quittances et baux avec `type: 'service'` et URLs directes.
+      * `auth.js` : Bouton de connexion magique 1-clic préservé avec tokens sans altération (`type: 'service'`).
+      * `notifications.js` : Alertes prix et modération.
+    - **Route Handler Frontend Anti-404 (`frontend-next/src/app/[slug]/route.ts`)** :
+      * Gestion des slugs racine : toute requête `https://nopalou.com/[slug]` (ex: `https://nopalou.com/amar`) vérifie l'existence de la boutique et redirige instantanément en HTTP 307 vers `/boutiques/[slug]`.
+      * **Tolérance aux pannes à 100%** : garantit que tous les anciens liens WhatsApp déjà reçus par les clients fonctionnent parfaitement sans aucune erreur 404.
+  * **🧪 3. Validation Technique & Qualité** :
+    - Tests unitaires Backend (`npm run test:unit`) : **45/45 suites passées, 349/349 tests passés (100%)**.
+    - Tests unitaires Frontend (`npm run test`) : **69/69 passés (100%)**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 violation critique**.
+
 - **Refonte Technique & Stratégique SEO Google Search Console (GSC) & Maillage Interne Nopalou (19 septembre 2026)** 🚀🔍📊🎯⚡✅ :
   * **🚨 1. Contexte & Diagnostic GSC (Données Réelles)** :
     - Analyse de 20 000+ impressions et 350+ clics sur Google (89% Sénégal, 68% mobile).

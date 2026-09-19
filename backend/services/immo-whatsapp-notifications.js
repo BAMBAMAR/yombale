@@ -60,7 +60,8 @@ async function notifierDemandeVisiteAgence({
         montant: 'Nopalou Immo',
         detail: `${nomClient} souhaite visiter "${titreBien.slice(0, 50)}" (${dateVoulue}).`,
         url: lienGestion,
-        buttonParam: 'visites'
+        buttonParam: agence.slug ? `agence/${agence.slug}/visites` : 'agence',
+        type: 'service',
       }).catch(err => {
         console.warn(`[IMMO_WA_NOTIF] Erreur notification WhatsApp agence (${agence.nom}):`, err.message);
       });
@@ -85,7 +86,8 @@ async function notifierDemandeVisiteAgence({
         montant: agence.nom,
         detail: `Votre demande pour "${titreBien.slice(0, 50)}" a été reçue par ${agence.nom}.`,
         url: `${SITE_URL}/agences/${agence.slug}`,
-        buttonParam: 'boutique'
+        buttonParam: agence.slug ? `agences/${agence.slug}` : 'immo',
+        type: 'service',
       }).catch(err => {
         console.warn(`[IMMO_WA_NOTIF] Erreur accusé de réception prospect (${telClient}):`, err.message);
       });
@@ -149,7 +151,8 @@ async function notifierConfirmationVisite({
       montant: agenceNom,
       detail: `Rendez-vous confirmé pour "${titreBien.slice(0, 50)}" ${dateRdv} ${heureRdv}.`,
       url: agenceSlug ? `${SITE_URL}/agences/${agenceSlug}` : SITE_URL,
-      buttonParam: 'boutique'
+      buttonParam: agenceSlug ? `agences/${agenceSlug}` : 'immo',
+      type: 'service',
     });
 
     return true;
@@ -204,7 +207,8 @@ async function notifierRelanceLoyerWhatsApp({ agenceId, loyerId }) {
       montant: `${montantFmt} FCFA`,
       detail: `Loyer en attente de règlement pour "${(l.bien_titre || '').slice(0, 40)}" (${l.periode}).`,
       url: lienPaiement,
-      buttonParam: 'boutique'
+      buttonParam: `payer-loyer/${l.id}`,
+      type: 'service',
     });
 
     return true;
@@ -259,7 +263,8 @@ async function notifierConfirmationPaiementLoyerWhatsApp({ loyerId, methodePaiem
         montant: `${montantFmt} FCFA`,
         detail: `Paiement validé pour "${(l.bien_titre || '').slice(0, 40)}" (${l.periode}).`,
         url: lienQuittance,
-        buttonParam: 'boutique'
+        buttonParam: `payer-loyer/${l.id}`,
+        type: 'service',
       }).catch(() => {});
     }
 
@@ -281,7 +286,8 @@ async function notifierConfirmationPaiementLoyerWhatsApp({ loyerId, methodePaiem
         montant: `${montantFmt} FCFA`,
         detail: `Encaissement loyer de ${l.locataire_nom} (${l.periode}).`,
         url: `${SITE_URL}/agence`,
-        buttonParam: 'boutique'
+        buttonParam: 'agence',
+        type: 'service',
       }).catch(() => {});
     }
 
@@ -332,7 +338,8 @@ async function notifierMatchingProspectsAgenceWhatsApp({ bien, prospects, agence
       montant: 'Nopalou Immo CRM',
       detail: `${prospects.length} contact(s) correspondent à votre bien "${(bien.titre || '').slice(0, 40)}".`,
       url: lienCrm,
-      buttonParam: 'boutique'
+      buttonParam: `agence/${slugAgence}/crm`,
+      type: 'service',
     });
 
     return true;
@@ -395,7 +402,8 @@ async function notifierNouveauBailLocataireWhatsApp({ bailId }) {
       montant: `${totalFmt} FCFA/mois`,
       detail: `Bail actif pour "${(b.bien_titre || '').slice(0, 40)}" chez ${b.agence_nom}.`,
       url: lienCompte,
-      buttonParam: 'boutique'
+      buttonParam: 'compte?tab=baux',
+      type: 'service',
     });
 
     return true;

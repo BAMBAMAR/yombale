@@ -877,7 +877,8 @@ async function notifierVendeurCommande(boutique, {
     montant: `${montantFmt} FCFA`,
     detail: detailTpl.slice(0, 1000),
     url: lienCommandes,
-    buttonParam: 'boutique',
+    buttonParam: 'boutique?tab=commandes',
+    type: 'commande',
   })
     .then(() => console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`))
     .catch(err => console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message));
@@ -1136,9 +1137,11 @@ router.post(
           sendWhatsAppNotification(commande.client_telephone, {
             textMessage: msgClient,
             title: titleTpl,
+            montant: `${montantFmt} FCFA`,
             detail: detailTpl,
             url: urlTpl,
-            buttonParam: String(commande.reference),
+            buttonParam: `suivi-commande?ref=${encodeURIComponent(commande.reference)}`,
+            type: 'commande',
           })
             .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Confirmation commande envoyée au ${commande.client_telephone}`))
             .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
@@ -1536,9 +1539,11 @@ router.patch(
           sendWhatsAppNotification(commande.client_telephone, {
             textMessage: msg,
             title: titleTpl,
+            montant: `${montantFmt} FCFA`,
             detail: detailTpl,
             url: urlTpl,
-            buttonParam: String(commande.reference),
+            buttonParam: `suivi-commande?ref=${encodeURIComponent(commande.reference)}`,
+            type: 'commande',
           })
             .then(() => console.log(`[WHATSAPP CLIENT NOTIF SUCCESS] Statut ${req.body.statut} envoyé au ${commande.client_telephone}`))
             .catch(err => console.error('[WHATSAPP CLIENT NOTIF ERR]:', err.message));
@@ -1564,9 +1569,11 @@ router.patch(
         sendWhatsAppNotification(vendeurMobile, {
           textMessage: msgVendeur,
           title: titleVendeur,
+          montant: `${montantFmt} FCFA`,
           detail: detailVendeur,
           url: lienCommandes,
           buttonParam: 'boutique?tab=commandes',
+          type: 'commande',
         })
           .then(() => console.log(`[WHATSAPP VENDEUR STATUS NOTIF SUCCESS] Envoyé au ${vendeurMobile}`))
           .catch(err => console.error('[WHATSAPP VENDEUR STATUS NOTIF ERR]:', err.message));

@@ -25,9 +25,11 @@ async function envoyerAlertePrix(alerte, nouveauPrix) {
     await sendWhatsAppNotification(alerte.telephone, {
       textMessage: textMsg,
       title: `📉 Baisse de prix : ${alerte.produit_nom}`,
+      montant: `${prixFmt} FCFA`,
       detail: `Nouveau prix: ${prixFmt} FCFA (votre cible: ${cibleFmt} FCFA)`,
       url: `${SITE}/?produit=${alerte.produit_id}`,
-      buttonParam: String(alerte.produit_id),
+      buttonParam: `?produit=${alerte.produit_id}`,
+      type: 'service',
     }).catch(() => {});
   }
 
@@ -41,9 +43,11 @@ async function confirmationCommande(telephone, reference) {
     await sendWhatsAppNotification(telephone, {
       textMessage: textMsg,
       title: `✅ Paiement confirmé — Nopalou`,
+      montant: 'Confirmé',
       detail: `Votre paiement pour la commande réf. ${reference} a bien été reçu et validé.`,
       url: `${SITE}/suivi-commande?ref=${encodeURIComponent(reference)}`,
-      buttonParam: String(reference),
+      buttonParam: `suivi-commande?ref=${encodeURIComponent(reference)}`,
+      type: 'commande',
     }).catch(() => {});
   }
 }
@@ -69,9 +73,11 @@ async function notifierModerationImmo(annonce) {
     return sendWhatsAppNotification(annonce.contact_tel, {
       textMessage: msg,
       title: `❌ Annonce refusée — Nopalou`,
+      montant: 'Modération',
       detail: `Annonce "${annonce.titre}" : ${annonce.motif_rejet || 'Non précisé'}`,
       url: `${SITE}/compte`,
       buttonParam: 'compte',
+      type: 'service',
     }).catch(() => {});
   }
 

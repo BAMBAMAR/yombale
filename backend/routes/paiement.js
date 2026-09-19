@@ -311,9 +311,11 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
               sendWhatsAppNotification(cmd.client_telephone, {
                 textMessage: msgClient,
                 title: titleClient,
+                montant: `${montantFmt} FCFA`,
                 detail: detailClient,
                 url: urlClient,
-                buttonParam: String(cmd.reference),
+                buttonParam: `suivi-commande?ref=${encodeURIComponent(cmd.reference)}`,
+                type: 'commande',
               }).catch(err => console.error('[WAVE WEBHOOK NOTIF CLIENT ERR]:', err.message));
             }
 
@@ -329,9 +331,11 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
                 sendWhatsAppNotification(telVendeur, {
                   textMessage: msgVendeur,
                   title: titleVendeur,
+                  montant: `${montantFmt} FCFA`,
                   detail: detailVendeur,
                   url: lienCommandes,
                   buttonParam: 'boutique?tab=commandes',
+                  type: 'commande',
                 }).catch(err => console.error('[WAVE WEBHOOK NOTIF VENDEUR ERR]:', err.message));
               }
             }

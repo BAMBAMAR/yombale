@@ -17,7 +17,7 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
     jest.clearAllMocks();
   });
 
-  test('envoie à la fois le texte libre et le template Meta certifié nopalou_alerte_commande', async () => {
+  test('envoie à la fois le texte libre et le template Meta certifié pour une commande', async () => {
     axios.post.mockResolvedValue({ data: { messages: [{ id: 'wamid.123' }] } });
 
     const res = await sendWhatsAppNotification('771234567', {
@@ -26,6 +26,7 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
       detail: 'Réf CMD-123 : Votre colis est en cours de préparation.',
       url: 'https://nopalou.com/boutiques/tech-store',
       buttonParam: 'tech-store',
+      type: 'commande',
     });
 
     expect(res).toBeDefined();
@@ -40,7 +41,46 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
     expect(tplCall[1].template.name).toBe('nopalou_alerte_commande');
     expect(tplCall[1].template.language.code).toBe('fr');
     expect(tplCall[1].template.components[0].parameters[0].text).toContain('Tech Store');
-    expect(tplCall[1].template.components[1].parameters[0].text).toBe('tech-store');
+    // Le slug brut est automatiquement préfixé vers boutiques/
+    expect(tplCall[1].template.components[1].parameters[0].text).toBe('boutiques/tech-store');
+  });
+
+  test('envoie nopalou_rappel_service avec le montant exact et le bouton Voir les détails pour un rappel', async () => {
+    axios.post.mockResolvedValue({ data: { messages: [{ id: 'wamid.rappel' }] } });
+
+    const res = await sendWhatsAppNotification('771234567', {
+      textMessage: 'Rappel amical',
+      title: '💳 Rappel de solde — AMAR',
+      montant: '23 334 FCFA',
+      detail: 'Solde impayé de 23 334 FCFA. Merci de régulariser.',
+      url: 'https://nopalou.com/boutiques/amar',
+      buttonParam: 'boutiques/amar',
+      type: 'rappel',
+    });
+
+    expect(res).toBeDefined();
+    const calls = axios.post.mock.calls;
+    const tplCall = calls.find(c => c[1]?.type === 'template');
+    expect(tplCall).toBeDefined();
+    expect(tplCall[1].template.name).toBe('nopalou_rappel_service');
+    expect(tplCall[1].template.components[0].parameters[0].text).toBe('💳 Rappel de solde — AMAR');
+    expect(tplCall[1].template.components[0].parameters[1].text).toBe('23 334 FCFA');
+    expect(tplCall[1].template.components[1].parameters[0].text).toBe('boutiques/amar');
+  });
+
+  test('préserve les slashes et paramètres de requête pour le suivi de commande et liens magiques', async () => {
+    axios.post.mockResolvedValue({ data: { messages: [{ id: 'wamid.url' }] } });
+
+    await sendWhatsAppNotification('771234567', {
+      title: 'Suivi',
+      detail: 'Colis',
+      buttonParam: 'suivi-commande?ref=CMD-9842&tracking=1',
+      type: 'commande',
+    });
+
+    const calls = axios.post.mock.calls;
+    const tplCall = calls.find(c => c[1]?.type === 'template');
+    expect(tplCall[1].template.components[1].parameters[0].text).toBe('suivi-commande?ref=CMD-9842&tracking=1');
   });
 
   test('gère gracieusement les erreurs sans lever d\'exception non interceptée', async () => {
@@ -84,7 +124,7 @@ describe('sendWhatsAppNotification — Garantie livraison Meta 24H', () => {
       expect(p.text).not.toMatch(/ {4,}/);
     }
     expect(bodyParams[0].text).toBe('Titre · Avec · Sauts');
-    expect(bodyParams[1].text).toBe('Nopalou');
+    expect(bodyParams[1].text).toBe('Consulter');
     expect(bodyParams[2].text).toBe('Ligne 1 · Ligne 2 avec plusieurs espaces et tabulation');
   });
 
