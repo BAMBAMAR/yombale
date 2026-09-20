@@ -68,6 +68,7 @@ export function SamaKalpeClient({
   const [isSaisieOpen, setIsSaisieOpen] = useState(false)
   const [saisieMode, setSaisieMode] = useState<'revenu' | 'depense' | 'dette' | 'epargne' | 'vente_express'>('depense')
   const [saisieDetteSens, setSaisieDetteSens] = useState<'a_recevoir' | 'a_payer'>('a_recevoir')
+  const [autoStartVoice, setAutoStartVoice] = useState(false)
 
   // Modale Remboursement Dette Rapide
   const [detteToRembourser, setDetteToRembourser] = useState<KalpeDette | null>(null)
@@ -113,10 +114,12 @@ export function SamaKalpeClient({
 
   const handleOpenSaisie = (
     mode: 'revenu' | 'depense' | 'dette' | 'epargne' | 'vente_express',
-    detteSens?: 'a_recevoir' | 'a_payer'
+    detteSens?: 'a_recevoir' | 'a_payer',
+    startVoice?: boolean
   ) => {
     setSaisieMode(mode)
     if (detteSens) setSaisieDetteSens(detteSens)
+    setAutoStartVoice(Boolean(startVoice))
     setIsSaisieOpen(true)
   }
 
@@ -127,7 +130,9 @@ export function SamaKalpeClient({
       const act = custom.detail?.action
       if (!act) return
 
-      if (act === 'nouvel_objectif') {
+      if (act === 'dicter') {
+        handleOpenSaisie('depense', undefined, true)
+      } else if (act === 'nouvel_objectif') {
         setShowNewObjectifModal(true)
       } else if (act === 'creance') {
         handleOpenSaisie('dette', 'a_recevoir')
@@ -236,7 +241,7 @@ export function SamaKalpeClient({
         contexte={contexte}
         onSelectContexte={setContexte}
         hasBoutique={Boolean(etat?.hasBoutique)}
-        onToggleVoice={() => handleOpenSaisie('depense')}
+        onToggleVoice={() => handleOpenSaisie('depense', undefined, true)}
         onExportCSV={handleExportCSV}
       />
 
@@ -566,6 +571,7 @@ export function SamaKalpeClient({
         initialMode={saisieMode}
         initialContexte={contexte === 'activite' ? 'activite' : 'personnel'}
         initialDetteSens={saisieDetteSens}
+        autoStartVoice={autoStartVoice}
         objectifs={objectifs}
         onClose={() => setIsSaisieOpen(false)}
         onSuccess={chargerDonnees}

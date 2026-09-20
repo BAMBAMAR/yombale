@@ -23,6 +23,29 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Majeure & Activation Réelle du Micro Vocal Bilingue Wolof/Français dans « Sama Xaalis » (`frontend-next/src/app/(account)/compte/kalpe`) (20 septembre 2026)** 🎙️⚡🇸🇳🗣️✨✅ :
+  * **🚨 1. Diagnostic de la Cause d'Inactivité du Micro** :
+    - *Problème remonté* : « Le micro marche-t-il et est-il très efficace et performant ? Quand je dicte, ça ne réagit pas ».
+    - *Causes racines identifiées* :
+      1. Dans `KalpeSaisieModal.tsx`, la fonction `toggleListening` instancie `createVoiceListener(...)`, mais l'appel `rec.start()` n'était **jamais invoqué**. L'écouteur vocal était configuré mais le flux microphone n'était pas démarré par le navigateur.
+      2. La fonction `demanderPermissionMicrophone()` renvoyait un objet `{ ok: boolean; error?: string }`. Le code testait `if (!hasPerm)` (qui était toujours truthy même avec `{ ok: false }`), masquant les erreurs de permissions.
+      3. Le bouton « Dicter » de l'en-tête (`KalpeHeader.tsx`) ouvrait simplement la modale en mode dépense sans armer le micro automatiquement.
+  * **🛠️ 2. Solutions Techniques Appliquées** :
+    - **Démarrage Effectif de l'Écouteur (`KalpeSaisieModal.tsx`)** : Invocation explicite de `rec.start()` dans un bloc `try / catch` sécurisé avec mise à jour du statut `isListening: true` et gestion précise des erreurs (`getMessageErreurMicro`).
+    - **Activation Vocale Automatique (`autoStartVoice`)** :
+      - Ajout de la prop `autoStartVoice` sur `KalpeSaisieModal`.
+      - Dès qu'un utilisateur clique sur le bouton « Dicter » dans l'en-tête ou depuis l'action sheet mobile, le micro s'arme immédiatement avec un délai d'amorçage de 250ms.
+    - **Indicateur Visuel d'Écoute & Feedback Temps Réel** :
+      - Bandeau visuel animé avec pastille rouge clignotante pendant l'écoute (*« Écoute en cours (Wolof / Français)... Parlez maintenant »*).
+      - Bouton microphone avec halo rouge pulsant et bascule instantanée en un clic (*« Arrêter écoute »*).
+    - **Intégration Action Sheet Mobile (`AccountQuickActionsSheet.tsx`)** :
+      - Ajout de l'action rapide en tête de liste : *« Dicter à la voix (Bilingue) »* (*« Dites par ex: Dépense transport 2000, Bor Moussa 10 000 »*).
+  * **🇸🇳 3. Efficacité & Moteur de Parsing Bilingue** :
+    - Détection instantanée du montant CFA via vocabulaire Wolof (*téemeer* = 500 F, *junni* = 5 000 F, *benn junni*, *ñaari junni*...) et français (*dix mille*, *2500*, *50 000*).
+    - Détection automatique du type d'opération (*dépense* vs *revenu* vs *dette/créance*) et extraction du nom de la personne (*Bor Moussa*, *Dette Fatou*).
+    - Prérequis système : navigateur supportant la Web Speech API (Google Chrome, Edge, Safari iOS 14.5+) sous connexion HTTPS ou localhost.
+  * **✅ 4. Validation** : `tsc` 0 erreur, tests `vitest` passés, 0 silent catch.
+
 - **Bouton Central (+) Contextuel Dédié « Sama Xaalis » & Éradication des Doubles Signes Plus sur les Boutons (`frontend-next`, `styles`, `i18n`, `compte`, `boutique`, `admin`) (20 septembre 2026)** ⚡📱➕✨🛡️✅ :
   * **🎯 1. Menu Contextuel Dédié pour le Bouton Central (+) dans Sama Xaalis** :
     - *Comportement précédent* : Quand l'utilisateur était dans l'espace Sama Xaalis (`tab=kalpe`), cliquer sur le gros bouton FAB central (+) ouvrait la feuille générique de publication d'annonces / immo.

@@ -11,6 +11,7 @@ import {
   Bell,
   X,
   Wallet,
+  Mic,
   ArrowDownLeft,
   ArrowUpRight,
   HandCoins,
@@ -58,6 +59,15 @@ export default function AccountQuickActionsSheet({
 
   // Actions contextuelles dédiées Sama Xaalis
   const kalpeActions = [
+    {
+      id: 'dicter',
+      label: 'Dicter à la voix (Bilingue)',
+      description: 'Parlez en Wolof ou Français : montant & détails détectés',
+      icon: Mic,
+      color: 'var(--accent, #C75B00)',
+      bg: '#FFF7ED',
+      action: () => handleSamaAction('dicter'),
+    },
     {
       id: 'depense',
       label: 'Noter une dépense',
