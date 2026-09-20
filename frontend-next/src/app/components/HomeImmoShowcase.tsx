@@ -152,7 +152,7 @@ export default function HomeImmoShowcase() {
       </div>
 
       {/* ── Filtres Rapides ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, overflowX: 'auto', paddingBottom: 4 }}>
+      <div className="horizontal-scroll-fade" style={{ display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: 8, marginBottom: 18, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingBottom: 4 }}>
         <button
           type="button"
           onClick={() => setActiveTab('tous')}
@@ -166,6 +166,7 @@ export default function HomeImmoShowcase() {
             color: activeTab === 'tous' ? '#ffffff' : 'var(--navy, #1C2B4A)',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}
         >
           Toutes les opportunités
@@ -183,6 +184,7 @@ export default function HomeImmoShowcase() {
             color: activeTab === 'location' ? '#ffffff' : 'var(--navy, #1C2B4A)',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}
         >
           À Louer
@@ -200,6 +202,7 @@ export default function HomeImmoShowcase() {
             color: activeTab === 'vente' ? '#ffffff' : 'var(--navy, #1C2B4A)',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}
         >
           À Vendre
@@ -216,6 +219,7 @@ export default function HomeImmoShowcase() {
             color: 'var(--accent, #C75B00)',
             textDecoration: 'none',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}
         >
           Annuaire des Agences →
@@ -331,7 +335,7 @@ export default function HomeImmoShowcase() {
                   {bien.agence_nom && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
                       <Building2 size={12} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-                      <span style={{ fontSize: 11, fontWeight: 750, color: 'var(--navy, #1C2B4A)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span title={bien.agence_nom} style={{ fontSize: 11, fontWeight: 750, color: 'var(--navy, #1C2B4A)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {bien.agence_nom}
                       </span>
                     </div>
@@ -372,11 +376,12 @@ export default function HomeImmoShowcase() {
                       justifyContent: 'space-between',
                       fontSize: 11.5,
                       color: '#64748B',
+                      gap: 8,
                     }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span title={[bien.quartier, bien.ville].filter(Boolean).join(', ') || 'Sénégal'} style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>
                       <MapPin size={12} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
-                      <span>{[bien.quartier, bien.ville].filter(Boolean).join(', ') || 'Sénégal'}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[bien.quartier, bien.ville].filter(Boolean).join(', ') || 'Sénégal'}</span>
                     </span>
 
                     {bien.surface_m2 && (

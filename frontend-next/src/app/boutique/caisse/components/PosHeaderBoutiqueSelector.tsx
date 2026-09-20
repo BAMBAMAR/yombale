@@ -73,11 +73,12 @@ export default function PosHeaderBoutiqueSelector({
       )}
 
       <span
+        title={activeBoutiqueObj?.nom || boutiques[0]?.nom}
         style={{
           fontSize: 12,
           fontWeight: 800,
           color: isDarkMode ? '#f8fafc' : '#1e3a5f',
-          maxWidth: 110,
+          maxWidth: 'min(200px, 35vw)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',

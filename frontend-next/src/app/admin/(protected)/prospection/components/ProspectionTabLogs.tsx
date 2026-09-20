@@ -67,7 +67,7 @@ export default function ProspectionTabLogs({
                           <td style={{ padding: '10px 12px', color: '#64748B', whiteSpace: 'nowrap' }}>
                             {new Date(c.created_at).toLocaleString('fr-FR')}
                           </td>
-                          <td style={{ padding: '10px 12px', fontWeight: 700, color: '#1C2B4A', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <td title={c.titre} style={{ padding: '10px 12px', fontWeight: 700, color: '#1C2B4A', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {c.titre}
                           </td>
                           <td style={{ padding: '10px 12px' }}>
@@ -101,7 +101,7 @@ export default function ProspectionTabLogs({
                               <span style={{ color: '#94A3B8' }}>—</span>
                             )}
                           </td>
-                          <td style={{ padding: '10px 12px', fontSize: 11, color: isZeroSend ? '#B45309' : '#64748B', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <td title={diag.message || (isZeroSend ? 'Tous les prospects étaient déjà contactés' : diag.nb_ignores ? `${diag.nb_ignores} doublons ignorés` : undefined)} style={{ padding: '10px 12px', fontSize: 11, color: isZeroSend ? '#B45309' : '#64748B', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {diag.message || (isZeroSend ? 'Tous les prospects étaient déjà contactés' : diag.nb_ignores ? `${diag.nb_ignores} doublons ignorés` : '—')}
                           </td>
                         </tr>
@@ -157,7 +157,7 @@ export default function ProspectionTabLogs({
                           </div>
                         )}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <td title={log.message_envoye} style={{ padding: '12px 16px', fontSize: 12, color: '#64748B', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {log.message_envoye}
                       </td>
                     </tr>

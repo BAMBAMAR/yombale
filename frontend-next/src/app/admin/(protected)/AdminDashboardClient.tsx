@@ -145,7 +145,7 @@ export default function AdminDashboardClient({
         </div>
 
         {/* Sélecteur de Période */}
-        <div style={{ display: 'flex', background: '#fff', padding: 4, borderRadius: 10, border: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', background: '#fff', padding: 4, borderRadius: 10, border: '1px solid #e2e8f0' }}>
           {PERIODES.map(p => (
             <button
               key={p.id}
@@ -161,6 +161,8 @@ export default function AdminDashboardClient({
                 background: period === p.id ? '#1e293b' : 'transparent',
                 color: period === p.id ? '#fff' : '#64748b',
                 transition: 'all 0.15s',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               {p.label}

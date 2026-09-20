@@ -406,17 +406,33 @@ function CheckoutExpressContent() {
         
         {/* Détails du Produit */}
         {produitInfo ? (
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border, #E8DDD2)', marginBottom: 20 }}>
-            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover', background: 'var(--bg, #F8F5F0)' }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border, #E8DDD2)', marginBottom: 20, flexWrap: 'wrap' }}>
+            <ExternalImg src={produitInfo.photo} alt={produitInfo.nom} fallback="" style={{ width: 68, height: 68, borderRadius: 12, objectFit: 'cover', background: 'var(--bg, #F8F5F0)', flexShrink: 0 }} />
+            <div style={{ flex: '1 1 200px', minWidth: 0 }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent, #C75B00)', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <Store size={12} />
                 <span>{produitInfo.boutiqueNom}</span>
               </span>
-              <h1 style={{ margin: '2px 0 4px', fontSize: 15.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{produitInfo.nom}</h1>
+              <h1
+                title={produitInfo.nom}
+                style={{
+                  margin: '2px 0 4px',
+                  fontSize: 15.5,
+                  fontWeight: 800,
+                  color: 'var(--navy, #1C2B4A)',
+                  lineHeight: 1.3,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {produitInfo.nom}
+              </h1>
               <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--accent, #C75B00)' }}>{fcfa(produitInfo.prix)}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)', borderRadius: 8, padding: '3px 6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg, #F8F5F0)', border: '1px solid var(--border, #E8DDD2)', borderRadius: 8, padding: '3px 6px', flexShrink: 0 }}>
               <button type="button" onClick={() => setQuantite(Math.max(1, quantite - 1))} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer', padding: '2px 6px', color: 'var(--text2)' }}>-</button>
               <span style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--navy, #1C2B4A)' }}>{quantite}</span>
               <button type="button" onClick={() => setQuantite(quantite + 1)} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 14, cursor: 'pointer', padding: '2px 6px', color: 'var(--text2)' }}>+</button>

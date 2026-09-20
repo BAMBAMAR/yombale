@@ -268,7 +268,21 @@ export default function PosPanierSidebar(props: Props) {
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: 'var(--pos-text, #1C2B4A)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p
+                  title={item.produit.nom}
+                  style={{
+                    margin: '0 0 2px',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    lineHeight: 1.3,
+                    color: 'var(--pos-text, #1C2B4A)',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {item.produit.nom}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

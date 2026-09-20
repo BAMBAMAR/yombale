@@ -988,7 +988,7 @@
 }
 .fav-toast-icon { font-size: 18px; flex-shrink: 0; }
 .fav-toast-msg  { flex: 1; line-height: 1.3; }
-.fav-toast-msg strong { display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.fav-toast-msg strong { display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: min(280px, 60vw); }
 .fav-toast-link {
   flex-shrink: 0;
   color: var(--accent);

@@ -23,6 +23,74 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Résolution Définitive de la Cause Racine des Troncatures de Puces/Onglets (Suppression de `overflow: hidden` sur `button` & Standardisation Universelle des Scrollers) (`frontend-next`, `styles`, `app/agence`) (20 septembre 2026)** 📐📱🎯🛡️✨✅ :
+  * **🚨 1. Diagnostic de la Cause Racine Systémique** :
+    - *Problème remonté* : Sur la page *Pipeline Commercial & Prospects* (et plusieurs barres d'onglets), les puces d'étapes étaient violemment tronquées et comprimées (`Tous`, `Nouve`, `Qualif`, `En Vis`, `Offre / `, `Gagn`).
+    - *Causes racines identifiées* :
+      1. Dans `src/styles/responsive-global.css:103`, la règle générique `button, .chip, .pcard, .card-produit, .nav-user { position: relative; overflow: hidden; }` appliquait `overflow: hidden` à **tous les éléments `<button>` de l'application**.
+      2. Dans les conteneurs flex défilables (comme `.immo-chips-scroller`), les boutons sans `flex-shrink: 0` étaient écrasés horizontalement par Flexbox pour tenter de rentrer dans l'écran (320px–360px), et leur contenu était alors masqué par `overflow: hidden`.
+  * **🛠️ 2. Remédiations Techniques Appliquées** :
+    - **Éradication de la Règle CSS Toxique (`src/styles/responsive-global.css`)** : Suppression de `button` et `.chip` de la règle d'overflow caché. Ciblage strict sur les classes dédiées (`.btn-ripple`, `.has-ripple`, `.pcard`, `.card-produit`, `.nav-user`).
+    - **Déclaration Globale Sécurisée (`src/styles/components.css`)** : Déclaration explicite de `button { overflow: visible; }`.
+    - **Standardisation Universelle des Scrollers (`src/styles/tabs.css`)** :
+      * Protection unifiée pour `.nopalou-scroll-tabs`, `.immo-chips-scroller`, `.caisse-categories-bar`, `.horizontal-scroll-fade`, `.hero-categories-scroll`, `.commandes-status-scroll`.
+      * Verrouillage en `display: flex !important; flex-wrap: nowrap !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch;`.
+      * Verrouillage des enfants directs en `flex-shrink: 0 !important; white-space: nowrap !important; overflow: visible !important; min-width: max-content;`.
+    - **Module Agence & CRM (`src/app/agence/agence.css`, `prospects/page.tsx`, `ProspectCardMobile.tsx`, `locatif/page.tsx`, `CreditsHeader.tsx`, `VisitesTabs.tsx`, `FiltresBiensBar.tsx`)** :
+      * `.immo-chips-scroller` et `.immo-chip` sécurisés en défilement horizontal sans compression avec tooltips `title` complets.
+      * Cartes prospects dotées d'une barre d'actions responsive (`flexWrap: 'wrap'`).
+      * Onglets de gestion locative, agenda de visites, filtres de biens et plans d'échelonnement immunisés contre toute troncature.
+    - **Vitrines & Console Admin (`HomeImmoShowcase.tsx`, `AdminDashboardClient.tsx`)** :
+      * Barre de filtres rapides immo (`Toutes les opportunités`, `À Louer`, `À Vendre`) et sélecteur de périodes admin configurés en `flexShrink: 0; whiteSpace: nowrap; overflowX: auto`.
+  * **🧪 3. Validation Technique & QA Playwright** :
+    - Test Playwright ciblé (`scripts/test-prospects-chips.mjs`) sur 320px, 360px et 375px : **100% de succès**, zéro troncature, libellés complets (`Tous (1)`, `Nouveaux (0)`, `Qualifiés (0)`, `En Visite (0)`, `Offre / Négoc. (1)`, `Gagnés (0)`).
+    - Audit Playwright Multi-Écrans Global (`scripts/audit-mobile-responsiveness.mjs`) : **55/55 points de contrôle validés (0 erreur, 0 débordement horizontal)** sur l'ensemble des 5 viewports mobiles majeurs (320px, 360px, 375px, 390px, 412px).
+    - Capture d'écran de validation enregistrée dans `prospects_chips_fixed.png`.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 violation critique**.
+    - Vérification TypeScript (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests Unitaires Frontend (`npm test`) : **69/69 passés (100%)**.
+
+- **Audit Exhaustif de Troncation, Lisibilité UX/UI & Standardisation Responsive Multi-Écrans (320px - 1440px+) (`frontend-next`, `styles`) (20 septembre 2026)** 📐📱👁️🛡️✨✅ :
+  * **🎯 1. Mission & Objectifs Senior UX/UI** :
+    - Éradication systématique de toutes les troncatures textuelles agressives, coupures verticales de boutons, chevauchements de badges et textes masqués à travers 100% de la plateforme Nopalou.
+    - Application de la règle d'or : *Aucun texte important ne doit être tronqué, coupé, masqué ou rendu incompréhensible sur aucun écran, aucune résolution et aucun contexte d'utilisation.*
+  * **🛠️ 2. Remédiations Techniques & Composants Optimisés (24 Composants & Styles)** :
+    - **Design System & Boutons Globaux (`styles/components.css`)** : Remplacement des hauteurs fixes (`height: 38px`, `height: 48px`, etc.) par des hauteurs minimales flexibles (`min-height: 42px`, `min-height: 48px`), `line-height: 1.25` et padding équilibré, éliminant tout rognage vertical de libellé ou d'icône.
+    - **Éradication des Béquilles Emojis UI (`components/BoutonWhatsApp.tsx`)** : Remplacement de l'émoji Unicode `📩` par l'icône vectorielle SVG `MessageCircle` (`lucide-react`, 16px).
+    - **Paniers & Tiroirs Marchands (`components/cart/DrawerCartItemList.tsx`, `boutique/caisse/components/PosPanierSidebar.tsx`)** : Remplacement de `white-space: nowrap` étriqué par un serrage 2 lignes fluide (`-webkit-line-clamp: 2`, `word-break: break-word`) avec attribut d'accessibilité natif `title={item.nom}`.
+    - **Carnet de Dettes & Recouvrement (`boutique/carnet/components/CarnetClientCardItem.tsx`)** :
+      * Noms des clients affichés sur 2 lignes complètes avec `title={formatNomPropre(c.nom)}`.
+      * Suppression de la troncature artificielle `text-overflow: ellipsis` au sein des boutons d'actions (« Encaisser remboursement », « Déduire sur achat », « Accorder crédit ») et ajout des attributs `title` et `aria-label`.
+    - **Caisse POS Tactile (`boutique/caisse/components/PosHeaderBoutiqueSelector.tsx`, `PosHeaderRightActions.tsx`)** :
+      * Sélecteur de boutique déverrouillé avec `maxWidth: min(200px, 35vw)` et tooltip complet `title`.
+      * Badge caissier étendu à `120px` avec `title={caissierNom}`.
+    - **Saisie Express & Vente Comptoir (`boutique/comptabilite/components/ComptaSaisieExpressPanier.tsx`)** :
+      * Suppression du `nowrap` écrasant le sélecteur client, ajout de `title` sur les articles et articles libres.
+    - **Checkout Express 1-Clic (`app/checkout-express/page.tsx`)** :
+      * Titre produit `<h1>` calibré en clamp 2 lignes avec `title={produitInfo.nom}`, `flexWrap: 'wrap'` sur l'en-tête pour éviter l'écrasement par la puce de quantité.
+    - **Cartes Vitrines & Annuaires (`boutique/components/BoutiqueCard.tsx`, `agences/components/AgenceDirectoryCard.tsx`, `components/HomeImmoShowcase.tsx`)** :
+      * Noms de boutique et d'agence calibrés en clamp 2 lignes avec `minWidth: 0` et tooltips `title` complets.
+      * Quartiers, villes et agences immobilières sécurisés sans chevauchement.
+    - **Gestion Locative & Baux (`agence/[slug]/locatif/components/LoyerCardMobile.tsx`)** :
+      * Titres de biens immobiliers sous mandat configurés en clamp 2 lignes avec `title`.
+    - **CRM & Prospection Admin (`admin/.../ProspectionCrmTable.tsx`, `ProspectionTabLogs.tsx`, `styles/admin.css`)** :
+      * Tooltips accessibles `title` sur les notes de prospection, les messages envoyés, les diagnostics de livraison et titres d'annonces.
+    - **Feuilles de Styles Spécialisées (`vitrine-publique.css`, `chat-widget.css`, `guides.css`, `produit.css`, `globals.css`)** :
+      * Libellés KPI sociaux en multi-lignes autorisées (`word-break: break-word; min-height: 28px`).
+      * Cartes et boutons d'action du widget de messagerie IA passés en clamp 2 lignes et `flex-wrap: wrap`.
+      * CTA bas des guides pleine largeur sur mobile.
+      * Notification toast favoris élargie à `min(280px, 60vw)`.
+      * Titres de cartes produits (`globals.css`) sécurisés avec `overflow-wrap: break-word`.
+    - **En-tête & Barre de Navigation (`NavbarActions.tsx`, `NavbarProSwitcher.tsx`, `KalpeHeader.tsx`)** :
+      * Badge utilisateur élargi à 160px avec tooltip `title`.
+      * Sélecteur de profil pro doté de titres complets pour chaque boutique et agence.
+      * Nettoyage des classes d'espacement pour une mise en page sans saut.
+  * **🧪 3. Validation Exhaustive & QA Multi-Écrans** :
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 composant > 450L, 0 emoji UI, 0 silent catch (100% conforme)**.
+    - Vérification Typescript (`npx tsc --noEmit`) : **0 erreur**.
+    - Tests Unitaires Frontend (`npm test`) : **69/69 tests passés (100%)**.
+    - Audit Playwright Multi-Écrans (`scripts/audit-mobile-responsiveness.mjs`) : **100% responsive et sans débordement horizontal sur 320px, 360px, 375px, 390px, 412px**.
+
 - **Correctif Ergonomie Mobile & Affichage Monoligne : Résolution des Troncatures de Texte et Mauvais Retours à la Ligne sur « Sama Xaalis » (`frontend-next`) (20 septembre 2026)** 📐✨📱🛡️✅ :
   * **Problème Identifié** :
     - En mobile et petits écrans, la règle globale `button { overflow: hidden }` combinée à la compression automatique de Flexbox écrasait la largeur des boutons d'onglets, tronquant les intitulés (`Aperç`, `Journa`, `Créances & I`, `Épargr`, `Statistic` et `Dépens`, `Reçu`, `Dette / Cr`, `Épargn`, `Vente Exp`).

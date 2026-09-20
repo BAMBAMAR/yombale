@@ -71,8 +71,25 @@ export default function BoutiqueCard({
                 <Store size={28} style={{ color: '#C75B00' }} />
               </div>
             )}
-            <div style={{ minWidth: 0, overflow: 'hidden' }}>
-              <h2 style={{ fontFamily: 'var(--font-archivo), sans-serif', fontWeight: 800, fontSize: 18, margin: '0 0 6px', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.nom}</h2>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h2
+                title={boutique.nom}
+                style={{
+                  fontFamily: 'var(--font-archivo), sans-serif',
+                  fontWeight: 800,
+                  fontSize: 18,
+                  margin: '0 0 6px',
+                  color: '#0f172a',
+                  lineHeight: 1.25,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {boutique.nom}
+              </h2>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {boutique.is_trial ? (
                   <span className="badge-premium" style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff', fontSize: 10, padding: '2px 8px', border: 'none' }}>
@@ -138,13 +155,13 @@ export default function BoutiqueCard({
         )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 'auto' }}>
           {boutique.categorie && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569' }}>
-              <Tag size={14} style={{ color: '#94a3b8', flexShrink: 0 }} /> <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.categorie}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', minWidth: 0 }}>
+              <Tag size={14} style={{ color: '#94a3b8', flexShrink: 0 }} /> <span title={boutique.categorie} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.categorie}</span>
             </div>
           )}
           {boutique.ville && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569' }}>
-              <MapPin size={14} style={{ color: '#94a3b8', flexShrink: 0 }} /> <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.ville}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', minWidth: 0 }}>
+              <MapPin size={14} style={{ color: '#94a3b8', flexShrink: 0 }} /> <span title={boutique.ville} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{boutique.ville}</span>
             </div>
           )}
           {boutique.telephone && (

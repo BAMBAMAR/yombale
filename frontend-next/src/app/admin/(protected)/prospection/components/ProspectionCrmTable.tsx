@@ -92,7 +92,7 @@ export default function ProspectionCrmTable({
                         <span style={{ fontSize: 12, color: '#64748B' }}>{lead.contact_nom}</span>
                       )}
                       {lead.notes && (
-                        <span style={{ fontSize: 11, color: '#94A3B8', display: 'block', fontStyle: 'italic', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span title={lead.notes} style={{ fontSize: 11, color: '#94A3B8', display: 'block', fontStyle: 'italic', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <FileText size={11} style={{ marginRight: 4, verticalAlign: 'middle', display: 'inline' }} />{lead.notes}
                         </span>
                       )}

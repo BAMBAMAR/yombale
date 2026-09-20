@@ -17,7 +17,7 @@ export default function VisitesTabs({
   totalDemandes,
 }: VisitesTabsProps) {
   return (
-    <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 10, marginBottom: 16, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
       <button
         type="button"
         onClick={() => onSelectOnglet('agenda')}
@@ -33,6 +33,8 @@ export default function VisitesTabs({
           display: 'inline-flex',
           alignItems: 'center',
           gap: 8,
+          flexShrink: 0,
+          whiteSpace: 'nowrap',
         }}
       >
         <Calendar size={15} />
@@ -54,6 +56,8 @@ export default function VisitesTabs({
           display: 'inline-flex',
           alignItems: 'center',
           gap: 8,
+          flexShrink: 0,
+          whiteSpace: 'nowrap',
         }}
       >
         <Clock size={15} />

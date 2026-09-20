@@ -107,13 +107,17 @@ export default function CarnetClientCardItem({
 
             <div style={{ minWidth: 0 }}>
               <div
+                title={formatNomPropre(c.nom)}
                 style={{
                   fontSize: 15.5,
                   fontWeight: 800,
                   color: 'var(--navy, #1C2B4A)',
-                  whiteSpace: 'nowrap',
+                  lineHeight: 1.25,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  wordBreak: 'break-word',
                 }}
               >
                 {formatNomPropre(c.nom)}
@@ -307,30 +311,36 @@ export default function CarnetClientCardItem({
             type="button"
             onClick={() => onOuvrirModalTransaction('remboursement', c)}
             className="npl-btn npl-btn-success npl-btn-sm"
-            style={{ flex: '1 1 120px', minWidth: 90, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
+            title={t('shop.collectRepayBtn')}
+            aria-label={t('shop.collectRepayBtn')}
+            style={{ flex: '1 1 auto', minWidth: 100, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 10px', whiteSpace: 'nowrap' }}
           >
             <ArrowDownLeft size={14} style={{ flexShrink: 0 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.collectRepayBtn')}</span>
+            <span>{t('shop.collectRepayBtn')}</span>
           </button>
         ) : estAvance ? (
           <button
             type="button"
             onClick={() => onOuvrirModalTransaction('vente_credit', c)}
             className="npl-btn npl-btn-accent npl-btn-sm"
-            style={{ flex: '1 1 120px', minWidth: 90, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
+            title={t('shop.deductOnPurchaseBtn')}
+            aria-label={t('shop.deductOnPurchaseBtn')}
+            style={{ flex: '1 1 auto', minWidth: 100, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 10px', whiteSpace: 'nowrap' }}
           >
             <ArrowUpRight size={14} style={{ flexShrink: 0 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.deductOnPurchaseBtn')}</span>
+            <span>{t('shop.deductOnPurchaseBtn')}</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={() => onOuvrirModalTransaction('vente_credit', c)}
             className="npl-btn npl-btn-primary npl-btn-sm"
-            style={{ flex: '1 1 120px', minWidth: 90, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 8px', whiteSpace: 'nowrap' }}
+            title={t('shop.giveCreditBtn')}
+            aria-label={t('shop.giveCreditBtn')}
+            style={{ flex: '1 1 auto', minWidth: 100, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '0 10px', whiteSpace: 'nowrap' }}
           >
             <Plus size={14} style={{ flexShrink: 0 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('shop.giveCreditBtn')}</span>
+            <span>{t('shop.giveCreditBtn')}</span>
           </button>
         )}
 

@@ -154,9 +154,19 @@ export function LoyerCardMobile({
 
       {/* Info Bien & Locataire */}
       <div style={{ marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--navy, #1C2B4A)', fontWeight: 700 }}>
-          <Home size={13} color="var(--accent, #C75B00)" />
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 13, color: 'var(--navy, #1C2B4A)', fontWeight: 700 }}>
+          <Home size={14} color="var(--accent, #C75B00)" style={{ flexShrink: 0, marginTop: 2 }} />
+          <span
+            title={loyer.bien_titre}
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              lineHeight: 1.25,
+            }}
+          >
             {loyer.bien_titre}
           </span>
         </div>

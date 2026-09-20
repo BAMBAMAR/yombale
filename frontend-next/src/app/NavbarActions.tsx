@@ -25,7 +25,7 @@ export default function NavbarActions({ nom }: Props) {
           alignItems: 'center',
           gap: '4px',
           textDecoration: 'none',
-          maxWidth: '120px',
+          maxWidth: '160px',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}

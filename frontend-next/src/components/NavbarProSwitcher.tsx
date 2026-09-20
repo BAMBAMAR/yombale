@@ -161,7 +161,7 @@ export default function NavbarProSwitcher() {
               <Store size={15} style={{ color: 'var(--accent, #C75B00)', flexShrink: 0 }} />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ lineHeight: 1.2 }}>Ma Boutique</div>
-                <div style={{ fontSize: 10.5, color: '#64748B', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div title={boutiques[0]?.nom || 'Catalogue & Ventes'} style={{ fontSize: 10.5, color: '#64748B', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {boutiques[0]?.nom || 'Catalogue & Ventes'}
                 </div>
               </div>
@@ -185,7 +185,7 @@ export default function NavbarProSwitcher() {
               <Building2 size={15} style={{ color: 'var(--navy, #1C2B4A)', flexShrink: 0 }} />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ lineHeight: 1.2 }}>Mon Agence Pro</div>
-                <div style={{ fontSize: 10.5, color: '#64748B', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div title={premiereAgence?.nom || 'Gestion & Baux'} style={{ fontSize: 10.5, color: '#64748B', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {premiereAgence?.nom || 'Gestion & Baux'}
                 </div>
               </div>

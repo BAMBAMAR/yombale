@@ -198,14 +198,18 @@ export default function DrawerCartItemList({
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p
+                  title={item.nom}
                   style={{
-                    margin: '0 0 2px',
+                    margin: '0 0 4px',
                     fontWeight: 800,
                     fontSize: 13.5,
                     color: 'var(--navy, #1C2B4A)',
-                    whiteSpace: 'nowrap',
+                    lineHeight: 1.3,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    wordBreak: 'break-word',
                   }}
                 >
                   {item.nom}

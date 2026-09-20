@@ -152,11 +152,13 @@ export default function ProspectsCRMPage() {
           {/* ── Vue Mobile : Sélecteur d'Étape & Cartes Tactiles (< 768px) ── */}
           <div className="immo-mobile-only" style={{ flexDirection: 'column', gap: 10, marginBottom: 16 }}>
             {/* Chips d'étapes défilables */}
-            <div className="immo-chips-scroller">
+            <div className="immo-chips-scroller" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <button
                 type="button"
                 onClick={() => setMobileStage('tous')}
                 className={`immo-chip ${mobileStage === 'tous' ? 'active' : ''}`}
+                style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                title={`Tous (${prospects.length})`}
               >
                 <span>Tous ({prospects.length})</span>
               </button>
@@ -168,6 +170,8 @@ export default function ProspectsCRMPage() {
                     type="button"
                     onClick={() => setMobileStage(col.id)}
                     className={`immo-chip ${mobileStage === col.id ? 'active' : ''}`}
+                    style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                    title={`${col.label} (${count})`}
                   >
                     <span>{col.label} ({count})</span>
                   </button>

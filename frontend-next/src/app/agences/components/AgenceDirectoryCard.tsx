@@ -79,14 +79,20 @@ export default function AgenceDirectoryCard({ agence: ag }: Props) {
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <h3
+                title={ag.nom}
                 style={{
                   fontSize: 16,
                   fontWeight: 800,
                   color: 'var(--navy, #1C2B4A)',
                   margin: 0,
+                  lineHeight: 1.25,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  wordBreak: 'break-word',
+                  flex: 1,
+                  minWidth: 0,
                 }}
               >
                 {ag.nom}

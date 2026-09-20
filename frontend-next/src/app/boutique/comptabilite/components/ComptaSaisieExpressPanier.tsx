@@ -76,7 +76,7 @@ export function ComptaSaisieExpressPanier({
                 <div key={pId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border, #E8DDD2)', fontSize: 12.5 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                     <span style={{ fontSize: 9.5, background: '#E6F4EC', color: 'var(--price, #0A5C36)', fontWeight: 800, padding: '1px 5px', borderRadius: 4, flexShrink: 0 }}>{t('shop.catalog')}</span>
-                    <span style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prodObj.nom}</span>
+                    <span title={prodObj.nom} style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prodObj.nom}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                     <span style={{ color: 'var(--price, #0A5C36)', fontWeight: 800 }}>
@@ -121,7 +121,7 @@ export function ComptaSaisieExpressPanier({
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', padding: '6px 10px', borderRadius: 8, border: '1.5px dashed var(--accent, #C75B00)', fontSize: 12.5 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
                     <span style={{ fontSize: 9.5, background: '#FFF3E8', color: 'var(--accent, #C75B00)', fontWeight: 800, padding: '1px 5px', borderRadius: 4, flexShrink: 0 }}>{t('shop.freeItemBadge')}</span>
-                    <span style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.nom}</span>
+                    <span title={item.nom} style={{ fontWeight: 700, color: 'var(--navy, #1C2B4A)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.nom}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                     <span style={{ color: 'var(--price, #0A5C36)', fontWeight: 800 }}>
@@ -186,9 +186,8 @@ export function ComptaSaisieExpressPanier({
                 <option value="cheque">Chèque</option>
               </select>
             </div>
-
             <div>
-              <label style={{ ...labelStyle, fontSize: 11.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)', marginBottom: 4, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={`${t('shop.customerFullNameLabel')} (${t('common.optional')})`}>
+              <label style={{ ...labelStyle, fontSize: 11.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)', marginBottom: 4, display: 'block' }} title={`${t('shop.customerFullNameLabel')} (${t('common.optional')})`}>
                 {t('shop.customerFullNameLabel')} <span style={{ fontWeight: 500, color: 'var(--text3, #8C7E74)' }}>({t('common.optional')})</span>
               </label>
               <input

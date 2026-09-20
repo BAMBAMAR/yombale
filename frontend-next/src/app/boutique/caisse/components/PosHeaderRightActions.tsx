@@ -127,11 +127,12 @@ export default function PosHeaderRightActions({
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', minWidth: 0 }}>
           <span
+            title={caissierNom}
             style={{
               fontSize: 11,
               fontWeight: 800,
               color: roleActif === 'superviseur' ? '#c2410c' : isDarkMode ? '#f8fafc' : '#0f172a',
-              maxWidth: 90,
+              maxWidth: 120,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',

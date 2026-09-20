@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { MessageCircle } from 'lucide-react';
 
 const ModalWhatsApp = dynamic(() => import('./ModalWhatsApp'), { ssr: false });
 
@@ -46,8 +47,17 @@ export default function BoutonWhatsApp({ type, id, isConnecte }: Props) {
         disabled={loading || sent}
         className="bouton-whatsapp-fiche"
         aria-label="Recevoir cette fiche par WhatsApp"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          minHeight: 42,
+          lineHeight: 1.25,
+        }}
       >
-        {sent ? 'Envoyé !' : loading ? 'Envoi…' : '📩 Recevoir par WhatsApp'}
+        <MessageCircle size={16} strokeWidth={2.2} style={{ flexShrink: 0 }} />
+        <span>{sent ? 'Fiche envoyée !' : loading ? 'Envoi en cours…' : 'Recevoir par WhatsApp'}</span>
       </button>
       {showModal && (
         <ModalWhatsApp type={type} id={id} onClose={() => setShowModal(false)} />

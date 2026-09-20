@@ -124,6 +124,8 @@ export function FiltresBiensBar({
                 type="button"
                 onClick={() => setFilterType(chip.value)}
                 className={`immo-chip ${isSelected ? 'active' : ''}`}
+                style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                title={chip.label}
               >
                 <span>{chip.label}</span>
               </button>
@@ -144,7 +146,10 @@ export function FiltresBiensBar({
                 style={{
                   fontSize: 11.5,
                   padding: '5px 12px',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
                 }}
+                title={chip.label}
               >
                 <span>{chip.label}</span>
               </button>

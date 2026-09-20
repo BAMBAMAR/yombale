@@ -259,7 +259,7 @@ export default function LocatifPage() {
       )}
 
       {/* ── Onglets de bascule ── */}
-      <div className="immo-chips-scroller" style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+      <div className="immo-chips-scroller" style={{ display: 'flex', flexWrap: 'nowrap', gap: 10, marginBottom: 16, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         {(['loyers', 'baux'] as const).map((t) => (
           <button
             key={t}
@@ -275,6 +275,8 @@ export default function LocatifPage() {
               borderColor: tab === t ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
               background: tab === t ? 'var(--navy, #1C2B4A)' : '#FFFFFF',
               color: tab === t ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
             }}
           >
             {t === 'loyers' ? `Échéances & Encaissements (${loyers.length})` : `Baux Sous Gestion (${baux.length})`}

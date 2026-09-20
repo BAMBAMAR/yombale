@@ -89,7 +89,7 @@ export default function CreditsHeader({
       </div>
 
       {/* Onglets */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 8, marginBottom: 16, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
         <button
           type="button"
           onClick={() => onSelectTab('plans')}
@@ -103,6 +103,8 @@ export default function CreditsHeader({
             borderColor: activeTab === 'plans' ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
             background: activeTab === 'plans' ? 'var(--navy, #1C2B4A)' : '#fff',
             color: activeTab === 'plans' ? '#fff' : 'var(--navy, #1C2B4A)',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
           }}
         >
           Plans d&apos;Échelonnement ({totalCredits})
@@ -123,6 +125,8 @@ export default function CreditsHeader({
             borderColor: activeTab === 'parametres' ? 'var(--navy, #1C2B4A)' : 'var(--border, #E8DDD2)',
             background: activeTab === 'parametres' ? 'var(--navy, #1C2B4A)' : '#fff',
             color: activeTab === 'parametres' ? '#fff' : 'var(--navy, #1C2B4A)',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
           }}
         >
           <Settings size={15} />

@@ -99,8 +99,8 @@
   border-radius: 6px;
 }
 
-/* Effet Vague (Ripple Effect) */
-button, .chip, .pcard, .card-produit, .nav-user {
+/* Effet Vague ciblé (Ripple Effect) */
+.btn-ripple, .has-ripple, .pcard, .card-produit, .nav-user {
   position: relative;
   overflow: hidden;
 }

@@ -55,9 +55,9 @@ export function ProspectCardMobile({
       }}
     >
       {/* ── En-tête : Nom & Étape ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--navy, #1C2B4A)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
             {nomComplet}
           </div>
           <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>
@@ -122,6 +122,7 @@ export function ProspectCardMobile({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
+          flexWrap: 'wrap',
           paddingTop: 10,
           borderTop: '1px solid var(--border, #E8DDD2)',
         }}

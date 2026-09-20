@@ -116,7 +116,7 @@ export default function KalpeHeader({
             aria-label="Assistant vocal"
           >
             <Mic size={14} strokeWidth={2.4} style={{ color: isListeningVoice ? 'var(--accent, #C75B00)' : 'inherit', flexShrink: 0 }} />
-            <span className="hidden sm:inline">{isListeningVoice ? 'Écoute...' : 'Dicter'}</span>
+            <span>{isListeningVoice ? 'Écoute...' : 'Dicter'}</span>
           </button>
 
           <button
@@ -142,7 +142,7 @@ export default function KalpeHeader({
             aria-label="Exporter"
           >
             <Download size={14} strokeWidth={2.4} style={{ flexShrink: 0 }} />
-            <span className="hidden sm:inline">Export CSV</span>
+            <span>Export CSV</span>
           </button>
         </div>
       </div>

@@ -832,10 +832,13 @@ body.in-agence-workspace .navbar-cart-btn {
 
 /* ── Mobile Horizontal Chips Scroller ── */
 .immo-chips-scroller {
-  display: flex;
+  display: flex !important;
+  flex-wrap: nowrap !important;
   gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
@@ -844,15 +847,24 @@ body.in-agence-workspace .navbar-cart-btn {
   display: none;
 }
 
+.immo-chips-scroller > * {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
 .immo-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 7px 14px;
   border-radius: 20px;
   font-size: 12.5px;
   font-weight: 700;
-  white-space: nowrap;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
+  min-width: max-content;
   border: 1px solid var(--border, #E8DDD2);
   background: #FFFFFF;
   color: var(--navy, #1C2B4A);
