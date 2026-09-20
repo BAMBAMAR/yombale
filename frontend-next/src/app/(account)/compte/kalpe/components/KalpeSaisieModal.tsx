@@ -315,21 +315,27 @@ export function KalpeSaisieModal({
         <div
           style={{
             display: 'flex',
-            gap: '6px',
+            alignItems: 'center',
+            gap: '8px',
             padding: '10px 16px',
             background: '#F8F5F0',
             overflowX: 'auto',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+            flexWrap: 'nowrap',
             borderBottom: '1px solid #E8DDD2',
+            width: '100%',
+            boxSizing: 'border-box',
           }}
         >
           <button
             type="button"
             onClick={() => setMode('depense')}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '7px 12px',
+              padding: '7px 13px',
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: 700,
@@ -338,18 +344,22 @@ export function KalpeSaisieModal({
               color: mode === 'depense' ? '#C75B00' : '#555',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
+              transition: 'all 0.15s ease',
             }}
           >
-            <ArrowUpRight size={14} /> Dépense
+            <ArrowUpRight size={14} style={{ flexShrink: 0 }} />
+            <span>Dépense</span>
           </button>
           <button
             type="button"
             onClick={() => setMode('revenu')}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '7px 12px',
+              padding: '7px 13px',
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: 700,
@@ -358,18 +368,22 @@ export function KalpeSaisieModal({
               color: mode === 'revenu' ? '#0A5C36' : '#555',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
+              transition: 'all 0.15s ease',
             }}
           >
-            <ArrowDownLeft size={14} /> Reçu
+            <ArrowDownLeft size={14} style={{ flexShrink: 0 }} />
+            <span>Reçu</span>
           </button>
           <button
             type="button"
             onClick={() => setMode('dette')}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '7px 12px',
+              padding: '7px 13px',
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: 700,
@@ -378,18 +392,22 @@ export function KalpeSaisieModal({
               color: mode === 'dette' ? '#1C2B4A' : '#555',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Users size={14} /> Dette / Crédit
+            <Users size={14} style={{ flexShrink: 0 }} />
+            <span>Dette / Crédit</span>
           </button>
           <button
             type="button"
             onClick={() => setMode('epargne')}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '7px 12px',
+              padding: '7px 13px',
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: 700,
@@ -398,9 +416,13 @@ export function KalpeSaisieModal({
               color: mode === 'epargne' ? '#C75B00' : '#555',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Target size={14} /> Épargne
+            <Target size={14} style={{ flexShrink: 0 }} />
+            <span>Épargne</span>
           </button>
           <button
             type="button"
@@ -409,10 +431,10 @@ export function KalpeSaisieModal({
               setContexte('activite')
             }}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '7px 12px',
+              padding: '7px 13px',
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: 700,
@@ -421,9 +443,13 @@ export function KalpeSaisieModal({
               color: mode === 'vente_express' ? '#C75B00' : '#555',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Zap size={14} /> Vente Express
+            <Zap size={14} style={{ flexShrink: 0 }} />
+            <span>Vente Express</span>
           </button>
         </div>
 

@@ -86,7 +86,7 @@ export default function KalpeStatsSection({
           </span>
 
           {/* Sélecteur Période */}
-          <div style={{ display: 'flex', gap: 4, background: '#F1F5F9', padding: 3, borderRadius: 10 }}>
+          <div style={{ display: 'flex', gap: 4, background: '#F1F5F9', padding: 3, borderRadius: 10, overflowX: 'auto', flexWrap: 'nowrap' }}>
             {[
               { key: 'jour', label: "Aujourd'hui" },
               { key: 'semaine', label: 'Semaine' },
@@ -98,7 +98,7 @@ export default function KalpeStatsSection({
                 type="button"
                 onClick={() => setPeriode(p.key as any)}
                 style={{
-                  padding: '5px 10px',
+                  padding: '5px 11px',
                   fontSize: 11.5,
                   fontWeight: 700,
                   borderRadius: 8,
@@ -107,6 +107,9 @@ export default function KalpeStatsSection({
                   background: periode === p.key ? 'var(--navy, #1C2B4A)' : 'transparent',
                   color: periode === p.key ? '#ffffff' : '#64748B',
                   transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  overflow: 'visible',
                 }}
               >
                 {p.label}
@@ -125,6 +128,8 @@ export default function KalpeStatsSection({
             padding: 4,
             borderRadius: 10,
             width: 'fit-content',
+            overflowX: 'auto',
+            flexWrap: 'nowrap',
           }}
         >
           <button
@@ -140,6 +145,9 @@ export default function KalpeStatsSection({
               background: contexte === 'all' ? 'var(--navy, #1C2B4A)' : 'transparent',
               color: contexte === 'all' ? '#ffffff' : '#64748B',
               transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
             }}
           >
             Vue d'ensemble
@@ -148,7 +156,7 @@ export default function KalpeStatsSection({
             type="button"
             onClick={() => setContexte('personnel')}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
               padding: '6px 14px',
@@ -160,16 +168,19 @@ export default function KalpeStatsSection({
               background: contexte === 'personnel' ? 'var(--navy, #1C2B4A)' : 'transparent',
               color: contexte === 'personnel' ? '#ffffff' : '#64748B',
               transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
             }}
           >
-            <User size={13} />
-            Personnel
+            <User size={13} style={{ flexShrink: 0 }} />
+            <span>Personnel</span>
           </button>
           <button
             type="button"
             onClick={() => setContexte('activite')}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
               padding: '6px 14px',
@@ -181,10 +192,13 @@ export default function KalpeStatsSection({
               background: contexte === 'activite' ? 'var(--accent, #C75B00)' : 'transparent',
               color: contexte === 'activite' ? '#ffffff' : '#64748B',
               transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
             }}
           >
-            <Store size={13} />
-            Activité Pro
+            <Store size={13} style={{ flexShrink: 0 }} />
+            <span>Activité Pro</span>
           </button>
         </div>
       </div>

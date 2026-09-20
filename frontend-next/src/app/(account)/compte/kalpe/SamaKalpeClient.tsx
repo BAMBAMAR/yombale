@@ -220,7 +220,8 @@ export function SamaKalpeClient({
       <div
         style={{
           display: 'flex',
-          gap: '6px',
+          alignItems: 'center',
+          gap: '8px',
           background: '#F8F5F0',
           padding: '6px',
           borderRadius: '12px',
@@ -228,65 +229,83 @@ export function SamaKalpeClient({
           margin: '16px 0 20px 0',
           overflowX: 'auto',
           scrollbarWidth: 'none',
+          WebkitOverflowScrolling: 'touch',
+          flexWrap: 'nowrap',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
         <button
+          type="button"
           onClick={() => setActiveTab('apercu')}
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             padding: '8px 14px',
             borderRadius: '8px',
-            fontSize: '12px',
+            fontSize: '12.5px',
             fontWeight: 700,
             border: 'none',
             background: activeTab === 'apercu' ? '#1C2B4A' : 'transparent',
             color: activeTab === 'apercu' ? '#FFFFFF' : '#555',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
+            overflow: 'visible',
+            transition: 'all 0.15s ease',
           }}
         >
-          <LayoutDashboard size={14} /> Aperçu
+          <LayoutDashboard size={15} style={{ flexShrink: 0 }} />
+          <span>Aperçu</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('journal')}
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             padding: '8px 14px',
             borderRadius: '8px',
-            fontSize: '12px',
+            fontSize: '12.5px',
             fontWeight: 700,
             border: 'none',
             background: activeTab === 'journal' ? '#1C2B4A' : 'transparent',
             color: activeTab === 'journal' ? '#FFFFFF' : '#555',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
+            overflow: 'visible',
+            transition: 'all 0.15s ease',
           }}
         >
-          <Receipt size={14} /> Journal
+          <Receipt size={15} style={{ flexShrink: 0 }} />
+          <span>Journal</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('dettes')}
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             padding: '8px 14px',
             borderRadius: '8px',
-            fontSize: '12px',
+            fontSize: '12.5px',
             fontWeight: 700,
             border: 'none',
             background: activeTab === 'dettes' ? '#1C2B4A' : 'transparent',
             color: activeTab === 'dettes' ? '#FFFFFF' : '#555',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
+            overflow: 'visible',
+            transition: 'all 0.15s ease',
           }}
         >
-          <Users size={14} />
-          Créances & Dettes
+          <Users size={15} style={{ flexShrink: 0 }} />
+          <span>Créances & Dettes</span>
           {synthese && synthese.nb_creances > 0 && (
             <span
               style={{
@@ -296,6 +315,7 @@ export function SamaKalpeClient({
                 padding: '1px 6px',
                 borderRadius: '999px',
                 fontWeight: 800,
+                flexShrink: 0,
               }}
             >
               {synthese.nb_creances}
@@ -303,42 +323,52 @@ export function SamaKalpeClient({
           )}
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('epargne')}
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             padding: '8px 14px',
             borderRadius: '8px',
-            fontSize: '12px',
+            fontSize: '12.5px',
             fontWeight: 700,
             border: 'none',
             background: activeTab === 'epargne' ? '#1C2B4A' : 'transparent',
             color: activeTab === 'epargne' ? '#FFFFFF' : '#555',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
+            overflow: 'visible',
+            transition: 'all 0.15s ease',
           }}
         >
-          <Target size={14} /> Épargne
+          <Target size={15} style={{ flexShrink: 0 }} />
+          <span>Épargne</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('stats')}
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             padding: '8px 14px',
             borderRadius: '8px',
-            fontSize: '12px',
+            fontSize: '12.5px',
             fontWeight: 700,
             border: 'none',
             background: activeTab === 'stats' ? '#1C2B4A' : 'transparent',
             color: activeTab === 'stats' ? '#FFFFFF' : '#555',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
+            overflow: 'visible',
+            transition: 'all 0.15s ease',
           }}
         >
-          <BarChart2 size={14} /> Statistiques
+          <BarChart2 size={15} style={{ flexShrink: 0 }} />
+          <span>Statistiques</span>
         </button>
       </div>
 

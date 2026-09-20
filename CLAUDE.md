@@ -23,6 +23,17 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correctif Ergonomie Mobile & Affichage Monoligne : Résolution des Troncatures de Texte et Mauvais Retours à la Ligne sur « Sama Xaalis » (`frontend-next`) (20 septembre 2026)** 📐✨📱🛡️✅ :
+  * **Problème Identifié** :
+    - En mobile et petits écrans, la règle globale `button { overflow: hidden }` combinée à la compression automatique de Flexbox écrasait la largeur des boutons d'onglets, tronquant les intitulés (`Aperç`, `Journa`, `Créances & I`, `Épargr`, `Statistic` et `Dépens`, `Reçu`, `Dette / Cr`, `Épargn`, `Vente Exp`).
+    - Dans la bannière vitrine du Hub de compte (`AccountDashboardHub.tsx`), l'absence de contrainte de largeur minimale et de verrouillage monoligne provoquait la scission verticale de `Sama Xaalis` sur deux lignes et le badge `MON ARGENT` empilé verticalement.
+  * **Solutions Appliquées & Fichiers Corrigés** :
+    - `AccountDashboardHub.tsx` : Ajout de `minWidth: 0, flex: 1` sur le conteneur de texte, `whiteSpace: 'nowrap'` sur le titre `Sama Xaalis`, badge `Mon Argent` calibré en monoligne `flexShrink: 0`, et bouton d'action `Ouvrir ->` verrouillé avec `display: inline-flex` et `flexShrink: 0`.
+    - `SamaKalpeClient.tsx` : Conteneur d'onglets configuré avec défilement horizontal fluide tactile (`overflowX: 'auto'`, `WebkitOverflowScrolling: 'touch'`), suppression du wrap forcé, application de `flexShrink: 0`, `overflow: 'visible'`, `whiteSpace: 'nowrap'` sur l'ensemble des 5 onglets de navigation, avec isolation des icônes SVG en `flexShrink: 0`.
+    - `KalpeSaisieModal.tsx` : Sélecteur de type d'opération (Dépense, Reçu, Dette/Crédit, Épargne, Vente Express) doté d'un défilement horizontal tactile sans coupure, boutons en `display: inline-flex`, `flexShrink: 0`, `overflow: 'visible'`, et `whiteSpace: 'nowrap'`.
+    - `KalpeHeader.tsx` & `KalpeStatsSection.tsx` : Sélecteurs de filtre (Tout, Personnel, Activité Pro) et filtres de période calibrés en `overflow: 'visible'`, `flexShrink: 0` pour une lisibilité totale sans troncature de texte.
+  * **Vérification** : `npx tsc --noEmit` validé avec 0 erreur, linter anti-slop exécuté avec succès.
+
 - **Lancement Majeur du Module Transversal « Sama Xaalis » : Gestion Financière Personnelle & Activité, Carnet de Dettes avec Relances WhatsApp Wave, Dictée Vocale Bilingue Wolof/Français, Objectifs d'Épargne & Supervision Admin (`backend`, `frontend-next`) (19 septembre 2026)** ⚡💰🎙️📈🛡️✅ :
   * **🎯 1. Vision & Réponse aux Attentes Utilisateur** :
     - Unification du carnet de dettes et de la vente express dans un module transversal unique, indépendant de toute boutique marchande, accessible à tout profil (particulier, étudiant, salarié, commerçant, indépendant).

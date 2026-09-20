@@ -90,13 +90,13 @@ export default function KalpeHeader({
         </div>
 
         {/* Boutons d'outils audio & export */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <button
             type="button"
             onClick={onToggleVoice}
             className="btn-npl"
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
               padding: '7px 12px',
@@ -108,11 +108,14 @@ export default function KalpeHeader({
               color: isListeningVoice ? 'var(--accent, #C75B00)' : 'var(--navy, #1C2B4A)',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
             }}
             title="Assistant vocal bilingue Wolof / Français"
             aria-label="Assistant vocal"
           >
-            <Mic size={14} strokeWidth={2.4} style={{ color: isListeningVoice ? 'var(--accent, #C75B00)' : 'inherit' }} />
+            <Mic size={14} strokeWidth={2.4} style={{ color: isListeningVoice ? 'var(--accent, #C75B00)' : 'inherit', flexShrink: 0 }} />
             <span className="hidden sm:inline">{isListeningVoice ? 'Écoute...' : 'Dicter'}</span>
           </button>
 
@@ -120,7 +123,7 @@ export default function KalpeHeader({
             type="button"
             onClick={onExportCSV}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
               padding: '7px 12px',
@@ -131,11 +134,14 @@ export default function KalpeHeader({
               background: '#ffffff',
               color: 'var(--navy, #1C2B4A)',
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
             }}
             title="Exporter le journal en CSV"
             aria-label="Exporter"
           >
-            <Download size={14} strokeWidth={2.4} />
+            <Download size={14} strokeWidth={2.4} style={{ flexShrink: 0 }} />
             <span className="hidden sm:inline">Export CSV</span>
           </button>
         </div>
@@ -170,6 +176,8 @@ export default function KalpeHeader({
             transition: 'background 0.15s ease, color 0.15s ease',
             textAlign: 'center',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
+            overflow: 'visible',
           }}
         >
           Tout
@@ -191,6 +199,8 @@ export default function KalpeHeader({
             transition: 'background 0.15s ease, color 0.15s ease',
             textAlign: 'center',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
+            overflow: 'visible',
           }}
         >
           Personnel
@@ -213,6 +223,8 @@ export default function KalpeHeader({
               transition: 'background 0.15s ease, color 0.15s ease',
               textAlign: 'center',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
+              overflow: 'visible',
             }}
           >
             Activité

@@ -109,7 +109,7 @@ export default function AccountDashboardHub({
           transition: 'transform 0.15s ease',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: 1 }}>
           <div
             style={{
               width: 44,
@@ -123,26 +123,31 @@ export default function AccountDashboardHub({
               flexShrink: 0,
             }}
           >
-            <Wallet size={22} color="#FFA86A" />
+            <Wallet size={22} color="#FFA86A" style={{ flexShrink: 0 }} />
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 15, fontWeight: 800 }}>Sama Xaalis</span>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 15, fontWeight: 800, whiteSpace: 'nowrap', color: '#FFFFFF' }}>
+                Sama Xaalis
+              </span>
               <span
                 style={{
                   fontSize: 10,
                   fontWeight: 700,
                   background: '#C75B00',
-                  color: '#FFF',
-                  padding: '2px 7px',
+                  color: '#FFFFFF',
+                  padding: '2px 8px',
                   borderRadius: 999,
                   textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  letterSpacing: '0.04em',
                 }}
               >
                 Mon Argent
               </span>
             </div>
-            <div style={{ fontSize: 12, color: '#C8D4E5', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: '#C8D4E5', marginTop: 3, lineHeight: 1.4 }}>
               Dépenses, entrées, carnet de dettes & épargne avec dictée vocale bilingue
             </div>
           </div>
@@ -150,17 +155,18 @@ export default function AccountDashboardHub({
         <div
           style={{
             background: 'rgba(255, 255, 255, 0.12)',
-            padding: '8px 12px',
+            padding: '8px 14px',
             borderRadius: 8,
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
             fontSize: 12,
             fontWeight: 700,
             whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}
         >
-          Ouvrir <ArrowRight size={14} />
+          <span>Ouvrir</span> <ArrowRight size={14} style={{ flexShrink: 0 }} />
         </div>
       </div>
 
