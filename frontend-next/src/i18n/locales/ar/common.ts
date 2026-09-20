@@ -96,4 +96,6 @@ export const common: LocaleTranslations['common'] = {
   transactionIdOptional: 'معرف المعاملة (اختياري مع الإثبات)',
   transactionRefPlaceholder: 'مرجع المعاملة',
   paymentScreenshotOptional: 'لقطة شاشة للدفع (اختياري مع المعرف)',
+  send: 'إرسال',
+  sendWa: 'إرسال عبر واتساب',
 }

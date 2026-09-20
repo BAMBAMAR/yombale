@@ -918,9 +918,17 @@ async function creerCommandeBoutique({
     if (zone) fraisLivraison = Number(zone.prix);
   }
 
+  // Validation stricte anti-panier vide (P0)
+  const hasItems = Array.isArray(items) && items.length > 0;
+  if (!hasItems && !produitId && !nomProduitManuel) {
+    const e = new Error('Au moins un article ou produit est requis pour passer commande');
+    e.status = 400;
+    throw e;
+  }
+
   // Normalisation des articles de commande (multi-articles ou article unique)
   let normalizedItems = [];
-  if (Array.isArray(items) && items.length > 0) {
+  if (hasItems) {
     normalizedItems = items.map(it => ({
       produit_id: (it.produit_id && String(it.produit_id).length === 36) ? it.produit_id : (it.id && String(it.id).length === 36 ? it.id : null),
       variante_id: (it.variante_id && String(it.variante_id).length === 36) ? it.variante_id : null,
@@ -1087,6 +1095,10 @@ router.post(
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
     try {
       const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id, code_promo, montant_reduction, remise, formule_echelonnement, formuleEchelonnement } = req.body;
+
+      if ((!Array.isArray(items) || items.length === 0) && !produit_id && !req.body.nom_produit) {
+        return res.status(400).json({ error: 'Au moins un article ou produit est requis pour passer commande' });
+      }
 
       const { commande, boutique } = await creerCommandeBoutique({
         boutiqueId: req.params.boutiqueId,

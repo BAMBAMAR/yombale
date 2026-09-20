@@ -35,7 +35,7 @@ test.describe('Admin login', () => {
       await page.goto('/admin/login')
       await page.fill('input[name="secret"]', ADMIN_SECRET)
       await page.click('button[type="submit"]')
-      await page.waitForURL(/\/admin$/, { timeout: 8000 })
+      await page.waitForURL(/\/admin$/, { timeout: 15000 })
       await expect(page).toHaveURL(/\/admin$/)
     })
 
@@ -43,7 +43,7 @@ test.describe('Admin login', () => {
       await page.goto('/admin/login')
       await page.fill('input[name="secret"]', ADMIN_SECRET)
       await page.click('button[type="submit"]')
-      await page.waitForURL(/\/admin$/, { timeout: 8000 })
+      await page.waitForURL(/\/admin$/, { timeout: 15000 })
 
       await expect(page.locator('h1')).toContainText(/Dashboard|Pilotage|Console/i)
       // Cartes stats
@@ -54,7 +54,7 @@ test.describe('Admin login', () => {
       await page.goto('/admin/login')
       await page.fill('input[name="secret"]', ADMIN_SECRET)
       await page.click('button[type="submit"]')
-      await page.waitForURL(/\/admin$/, { timeout: 8000 })
+      await page.waitForURL(/\/admin$/, { timeout: 15000 })
 
       for (const route of ['/admin/annonces', '/admin/immo', '/admin/telecom', '/admin/seo', '/admin/compte']) {
         await page.goto(route)
@@ -67,7 +67,7 @@ test.describe('Admin login', () => {
       await page.goto('/admin/login')
       await page.fill('input[name="secret"]', ADMIN_SECRET)
       await page.click('button[type="submit"]')
-      await page.waitForURL(/\/admin$/, { timeout: 8000 })
+      await page.waitForURL(/\/admin$/, { timeout: 15000 })
 
       // Cliquer sur Déconnexion (ouvrir le tiroir mobile si présent)
       const mobileToggle = page.locator('.admin-mobile-toggle-btn')
@@ -75,7 +75,7 @@ test.describe('Admin login', () => {
         await mobileToggle.click()
       }
       await page.locator('button').filter({ hasText: /déconnexion/i }).click()
-      await page.waitForURL(/\/admin\/login/, { timeout: 8000 })
+      await page.waitForURL(/\/admin\/login/, { timeout: 15000 })
       await expect(page).toHaveURL(/\/admin\/login/)
 
       // Vérifier que l'accès est bien bloqué

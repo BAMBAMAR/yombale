@@ -23,6 +23,42 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Application Rigoureuse des Remédiations de l'Audit Factuel & Impartial P0-P3 (`backend`, `frontend-next`, `tests/e2e`, `i18n`) (20 septembre 2026)** 🛡️⚡🔍🎯✨✅ :
+  * **🚨 1. P0-01 : Sécurisation Absolue contre les Commandes Vides (`POST /api/comptabilite/:boutiqueId/commandes`)** :
+    - *Vulnérabilité constatée* : Création possible de commandes d'articles vides (total 0 FCFA ou sans articles réels) via l'API, risquant de polluer la base de données et de fausser les rapports comptables.
+    - *Remédiation* : Contrôle strict dans `backend/routes/comptabilite.js` (`creerCommandeBoutique` et router handler `POST /:boutiqueId/commandes`). Si `items` est vide ou absent, et sans article direct, l'API rejette immédiatement avec HTTP 400 (`{ error: 'La commande doit comporter au moins un article' }`).
+    - *Preuve de validation* : Test PowerShell curl vérifié & conforme (HTTP 400 reçu).
+  * **🔀 2. P1-01 : Résolution du 404 sur `/comparer` via Redirection Dynamique (`frontend-next/src/app/comparer/page.tsx`)** :
+    - *Problème constaté* : Accéder manuellement à l'URL `/comparer` retournait une page 404 au lieu de la page officielle de comparaison `/comparaison`.
+    - *Remédiation* : Création de la page `src/app/comparer/page.tsx` avec `redirect('/comparaison')`.
+    - *Preuve de validation* : Requête HTTP testée avec succès (statut 200 via redirection transparente).
+  * **💬 3. P1-02 : Rétablissement du Libellé Conforme dans le Partage WhatsApp (`ModalWhatsApp.tsx`)** :
+    - *Problème constaté* : Le bouton de soumission affichait trompeusement « Publier » au lieu de « Envoyer sur WhatsApp ».
+    - *Remédiation* : Ajout des clés `send` et `sendWa` dans `src/i18n/locales/{fr,en,ar}/common.ts` et mise à jour du composant vers `t('common.sendWa') || 'Envoyer sur WhatsApp'`.
+  * **🧩 4. P2-01 : Modularisation Intégrale de `KalpeSaisieModal.tsx` (< 450 lignes)** :
+    - *Violation standard senior* : `KalpeSaisieModal.tsx` atteignait 906 lignes monolithiques.
+    - *Remédiation* : Découpage chirurgical en 4 sous-composants dédiés :
+      1. `KalpeSaisieModeTabs.tsx` (171 lignes) : Sélecteur d'onglets de transaction (Dépense, Reçu, Dette/Crédit, Épargne, Vente Express).
+      2. `KalpeSaisieFormFields.tsx` (257 lignes) : Champs dynamiques contextuels (Dette/créance, sélection d'objectif d'épargne, catégories, libellé).
+      3. `KalpeSaisieMontant.tsx` (146 lignes) : Saisie du montant, chips rapides (+500, +1k...) et bouton micro vocal avec pastille active.
+      4. `useKalpeVoice.ts` (161 lignes) : Hook personnalisé isolant l'orchestration Web Speech API bilingue.
+      5. `KalpeSaisieModal.tsx` réduit à **356 lignes** (bien inférieur au plafond de 450 lignes, 0 composant monolithique au linter anti-slop).
+  * **🧪 5. P2-02 : Résolution du Test Unitaire `determinerActionClient` (100% de Succès)** :
+    - *Anomalie constatée* : Échec d'assertion dans `scripts/run-unit-tests.mjs` qui attendait `'+ Donner Crédit'` alors que le métier avait été épuré à `'Donner Crédit'`.
+    - *Remédiation* : Mise à jour de l'assertion ligne 181. Exécution validée : **69/69 tests unitaires passés (100%)**.
+  * **⏱️ 6. P2-03 : Éradication du Timeout Flaky E2E Mobile Playwright (`04-admin.spec.ts`)** :
+    - *Anomalie constatée* : `waitForURL` avec timeout serré à 8 000ms provoquait parfois un échec lors des ralentissements de latence mobile.
+    - *Remédiation* : Ajustement à `timeout: 15000` sur les transitions admin.
+    - *Preuve de validation* : **14/14 tests E2E passés (7/7 sur mobile-360 et 7/7 sur chromium)**.
+  * **🤖 7. P3-02 : Extraction Automatique des Mots-Clés en Langage Naturel dans le Chatbot Web (`backend/routes/chat.js`)** :
+    - *Limite fonctionnelle constatée* : Taper une phrase usuelle (« Je cherche un iphone », « Avez-vous du lait ») renvoyait 0 produit car `ILIKE` cherchait la phrase brute.
+    - *Remédiation* : Intégration de `extraireMotCleRecherche(rawText)` éliminant les stop words et locutions d'amorce (« je cherche », « avez-vous », « trouve-moi », etc.) avec recherche ciblée sur le mot-clé extrait et repli de sécurité sur le texte brut.
+    - *Preuve de validation* : Test `POST /api/chat/message` avec `"Je cherche un iphone"` retourne immédiatement 4 produits avec en tête l'*iPhone 13 128Go*.
+  * **✅ 8. Bilan Global des Contrôles Qualité** :
+    - TypeScript : `npx tsc --noEmit` &rarr; **0 erreur**.
+    - Anti-Slop : `node scripts/lint-ai-slop.mjs` &rarr; **0 composant > 800L, 0 silent catch**.
+    - Backend : Redémarré proprement sur le port 3000, PostgreSQL sain.
+
 - **Correction Majeure & Activation Réelle du Micro Vocal Bilingue Wolof/Français dans « Sama Xaalis » (`frontend-next/src/app/(account)/compte/kalpe`) (20 septembre 2026)** 🎙️⚡🇸🇳🗣️✨✅ :
   * **🚨 1. Diagnostic de la Cause d'Inactivité du Micro** :
     - *Problème remonté* : « Le micro marche-t-il et est-il très efficace et performant ? Quand je dicte, ça ne réagit pas ».

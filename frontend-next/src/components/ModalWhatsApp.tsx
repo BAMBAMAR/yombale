@@ -69,7 +69,7 @@ export default function ModalWhatsApp({ type, id, onClose }: Props) {
             />
             {error && <p className="modal-whatsapp-error">{error}</p>}
             <button type="submit" disabled={loading || !phone}>
-              {loading ? t('common.loading') : t('common.publish')}
+              {loading ? t('common.loading') : (t('common.sendWa') || 'Envoyer sur WhatsApp')}
             </button>
           </form>
         )}

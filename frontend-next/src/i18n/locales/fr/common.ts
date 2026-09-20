@@ -94,4 +94,6 @@ export const common = {
   transactionIdOptional: 'ID de transaction (optionnel si preuve fournie)',
   transactionRefPlaceholder: 'Référence de la transaction',
   paymentScreenshotOptional: 'Capture d’écran du paiement (optionnel si ID fourni)',
+  send: 'Envoyer',
+  sendWa: 'Envoyer sur WhatsApp',
 }

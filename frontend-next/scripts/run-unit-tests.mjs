@@ -178,7 +178,7 @@ it('determinerActionClient: CTA principal et badge selon solde', () => {
   assert.equal(actionAvance.color, 'success')
 
   const actionNul = determinerActionClient(0)
-  assert.equal(actionNul.label, '+ Donner Crédit')
+  assert.equal(actionNul.label, 'Donner Crédit')
   assert.equal(actionNul.badge, 'Solde nul')
 })
 

@@ -239,6 +239,34 @@ async function searchAgencesIlike(query) {
   }
 }
 
+/**
+ * Nettoie une requête en langage naturel pour extraire le mot-clé de recherche produit.
+ * Exemple: "Je cherche un iphone 13" -> "iphone 13"
+ *          "Avez-vous du lait bonnet rouge ?" -> "lait bonnet rouge"
+ *          "Trouve-moi des chaussures" -> "chaussures"
+ */
+function extraireMotCleRecherche(rawText) {
+  if (!rawText || typeof rawText !== 'string') return '';
+  let clean = rawText
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[?.,!;:"'’()]/g, ' ')
+    .trim();
+
+  // Supprimer les locutions introductives
+  clean = clean.replace(
+    /^(est[- ]ce que vous avez|avez[- ]vous|vous avez|je cherche|cherche|chercher|trouve[- ]moi|trouve|trouver|donne[- ]moi|donne|je voudrais|je veux|je souhaite|combien coute|combien coutent|quel est le prix de|prix de|prix d'un|prix d'une|recherche|acheter|achat)\s+/i,
+    ''
+  );
+
+  // Supprimer les déterminants initiaux (un, une, des, du, de la, le, la, les)
+  clean = clean.replace(/^(un|une|des|du|de la|le|la|les)\s+/i, '');
+
+  clean = clean.replace(/\s+/g, ' ').trim();
+  return clean || rawText.trim();
+}
+
 // ── POST /api/chat/message ────────────────────────────────────────────────────
 router.post('/message', limiterRecherche, async (req, res) => {
   const rawText = (req.body?.message || '').trim();
@@ -388,12 +416,16 @@ router.post('/message', limiterRecherche, async (req, res) => {
       { label: 'Offres du moment', url: '/' }
     );
   } else {
-    // Recherche générale catalogue (Fuzzy + searchContentIlike)
-    suggestionFuzzy = corrigerRequeteFuzzy(rawText);
-    const requeteRecherche = suggestionFuzzy || rawText;
+    // Recherche générale catalogue (Extraction de mot-clé naturel + Fuzzy + searchContentIlike)
+    const motCle = extraireMotCleRecherche(rawText);
+    suggestionFuzzy = corrigerRequeteFuzzy(motCle || rawText);
+    const requeteRecherche = suggestionFuzzy || motCle || rawText;
 
     try {
-      const rawResults = await searchContentIlike(requeteRecherche);
+      let rawResults = await searchContentIlike(requeteRecherche);
+      if ((!rawResults || rawResults.length === 0) && requeteRecherche !== rawText) {
+        rawResults = await searchContentIlike(rawText);
+      }
       items = (rawResults || []).map((it) => {
         const bRef = it.boutique_slug || it.boutique_id;
         let url = `/produit/${it.id}`;
