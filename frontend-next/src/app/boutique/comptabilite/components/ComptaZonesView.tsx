@@ -146,7 +146,7 @@ export default function ComptaZonesView({ boutiqueId }: { boutiqueId: string }) 
             title="Ajouter en 1 clic Thiès, Mbour, Touba, Saint-Louis, Kaolack, Ziguinchor"
           >
             <MapPin size={13} />
-            <span>+ Régions Sénégal (1-clic)</span>
+            <span>Régions Sénégal (1-clic)</span>
           </button>
 
           <button
@@ -169,7 +169,7 @@ export default function ComptaZonesView({ boutiqueId }: { boutiqueId: string }) 
             title="Ajouter en 1 clic Dakar Centre, Almadies/Ngor, et Banlieue"
           >
             <Sparkles size={13} />
-            <span>+ Grand Dakar</span>
+            <span>Grand Dakar</span>
           </button>
 
           <button

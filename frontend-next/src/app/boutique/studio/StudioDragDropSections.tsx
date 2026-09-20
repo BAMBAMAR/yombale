@@ -285,35 +285,35 @@ export function StudioDragDropSections({ boutiqueId, initialSections, onSave }: 
           onClick={() => handleAddSection('banner')}
           style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
-          <Plus size={14} /> + Bannière
+          <Plus size={14} /> Bannière
         </button>
         <button
           type="button"
           onClick={() => handleAddSection('featured_products')}
           style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
-          <Plus size={14} /> + Produits Phares
+          <Plus size={14} /> Produits Phares
         </button>
         <button
           type="button"
           onClick={() => handleAddSection('categories_grid')}
           style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
-          <Plus size={14} /> + Grille Catégories
+          <Plus size={14} /> Grille Catégories
         </button>
         <button
           type="button"
           onClick={() => handleAddSection('testimonials')}
           style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
-          <Plus size={14} /> + Avis Clients
+          <Plus size={14} /> Avis Clients
         </button>
         <button
           type="button"
           onClick={() => handleAddSection('rich_text')}
           style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
         >
-          <Plus size={14} /> + Bloc Texte Libre
+          <Plus size={14} /> Bloc Texte Libre
         </button>
       </div>
     </div>

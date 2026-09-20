@@ -21,7 +21,7 @@ export function calculerKpisCarnet(clients: ClientCredit[]) {
 export function determinerActionClient(solde: number) {
   if (solde > 0) return { type: 'remboursement', label: 'Encaisser / Rembourser', badge: 'Doit la boutique', color: 'danger' }
   if (solde < 0) return { type: 'vente_credit', label: 'Déduire sur Achat', badge: 'Avance client', color: 'success' }
-  return { type: 'vente_credit', label: '+ Donner Crédit', badge: 'Solde nul', color: 'neutral' }
+  return { type: 'vente_credit', label: 'Donner Crédit', badge: 'Solde nul', color: 'neutral' }
 }
 
 export function filtrerClientsCarnet(clients: ClientCredit[], recherche: string, filtreStatut: 'tous' | 'retard' | 'credits') {
@@ -64,7 +64,7 @@ describe('Carnet de Dettes - Métier & Calculs Financiers', () => {
     expect(actionAvance.color).toBe('success')
 
     const actionNul = determinerActionClient(0)
-    expect(actionNul.label).toBe('+ Donner Crédit')
+    expect(actionNul.label).toBe('Donner Crédit')
     expect(actionNul.badge).toBe('Solde nul')
   })
 

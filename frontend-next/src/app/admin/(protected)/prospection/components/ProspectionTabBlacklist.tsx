@@ -74,7 +74,7 @@ export default function ProspectionTabBlacklist({
             }}
           >
             <ShieldAlert size={16} />
-            <span>+ Ajouter à la Blacklist</span>
+            <span>Ajouter à la Blacklist</span>
           </button>
         </div>
       </div>

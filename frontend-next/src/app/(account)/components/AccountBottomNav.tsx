@@ -49,8 +49,8 @@ export default function AccountBottomNav({
         type="button"
         onClick={onOpenQuickActions}
         className="account-bottom-nav-fab"
-        aria-label="Publier ou ajouter"
-        title="Publier une annonce, vendre, créer boutique"
+        aria-label={isKalpe ? 'Actions rapides Sama Xaalis (Dépense, entrée, créance, dette, épargne)' : 'Publier ou ajouter'}
+        title={isKalpe ? 'Sama Xaalis : Dépense, entrée, créance, dette, épargne' : 'Publier une annonce, vendre, créer boutique'}
       >
         <Plus size={24} strokeWidth={2.8} />
       </button>

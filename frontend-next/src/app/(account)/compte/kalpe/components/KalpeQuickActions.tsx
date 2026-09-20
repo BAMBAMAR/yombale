@@ -79,7 +79,7 @@ export default function KalpeQuickActions({ onOpenSaisie, hasBoutique }: KalpeQu
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', lineHeight: 1.2 }}>
-              + J'ai reçu
+              J'ai reçu
             </div>
             <div style={{ fontSize: 11, color: '#78716C', fontWeight: 500, marginTop: 2 }}>
               Revenu / Entrée
@@ -133,7 +133,7 @@ export default function KalpeQuickActions({ onOpenSaisie, hasBoutique }: KalpeQu
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--navy, #1C2B4A)', lineHeight: 1.2 }}>
-              - J'ai dépensé
+              J'ai dépensé
             </div>
             <div style={{ fontSize: 11, color: '#78716C', fontWeight: 500, marginTop: 2 }}>
               Courses / Facture

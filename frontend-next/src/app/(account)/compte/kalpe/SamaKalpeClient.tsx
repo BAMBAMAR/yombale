@@ -67,6 +67,7 @@ export function SamaKalpeClient({
   // Modale Saisie
   const [isSaisieOpen, setIsSaisieOpen] = useState(false)
   const [saisieMode, setSaisieMode] = useState<'revenu' | 'depense' | 'dette' | 'epargne' | 'vente_express'>('depense')
+  const [saisieDetteSens, setSaisieDetteSens] = useState<'a_recevoir' | 'a_payer'>('a_recevoir')
 
   // Modale Remboursement Dette Rapide
   const [detteToRembourser, setDetteToRembourser] = useState<KalpeDette | null>(null)
@@ -110,10 +111,36 @@ export function SamaKalpeClient({
     chargerDonnees()
   }, [chargerDonnees])
 
-  const handleOpenSaisie = (mode: 'revenu' | 'depense' | 'dette' | 'epargne' | 'vente_express') => {
+  const handleOpenSaisie = (
+    mode: 'revenu' | 'depense' | 'dette' | 'epargne' | 'vente_express',
+    detteSens?: 'a_recevoir' | 'a_payer'
+  ) => {
     setSaisieMode(mode)
+    if (detteSens) setSaisieDetteSens(detteSens)
     setIsSaisieOpen(true)
   }
+
+  // Écoute des actions contextuelles déclenchées depuis le bouton FAB central (+) du compte
+  useEffect(() => {
+    const handleContextualAction = (e: Event) => {
+      const custom = e as CustomEvent<{ action: string; sens?: 'a_recevoir' | 'a_payer' }>
+      const act = custom.detail?.action
+      if (!act) return
+
+      if (act === 'nouvel_objectif') {
+        setShowNewObjectifModal(true)
+      } else if (act === 'creance') {
+        handleOpenSaisie('dette', 'a_recevoir')
+      } else if (act === 'dette') {
+        handleOpenSaisie('dette', 'a_payer')
+      } else if (act === 'depense' || act === 'revenu' || act === 'vente_express' || act === 'epargne') {
+        handleOpenSaisie(act)
+      }
+    }
+
+    window.addEventListener('sama-xaalis:action', handleContextualAction)
+    return () => window.removeEventListener('sama-xaalis:action', handleContextualAction)
+  }, [])
 
   const handleDeleteOperation = async (id: string) => {
     if (!confirm('Voulez-vous supprimer cette opération ?')) return
@@ -538,6 +565,7 @@ export function SamaKalpeClient({
         isOpen={isSaisieOpen}
         initialMode={saisieMode}
         initialContexte={contexte === 'activite' ? 'activite' : 'personnel'}
+        initialDetteSens={saisieDetteSens}
         objectifs={objectifs}
         onClose={() => setIsSaisieOpen(false)}
         onSuccess={chargerDonnees}

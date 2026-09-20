@@ -116,7 +116,7 @@ export default function ProspectionHeader({
               }}
             >
               <UserPlus size={18} />
-              <span>+ Nouveau Lead</span>
+              <span>Nouveau Lead</span>
             </button>
           </div>
         </div>

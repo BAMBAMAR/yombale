@@ -56,7 +56,7 @@ export default function KalpeEpargneSection({
           }}
         >
           <Plus size={15} strokeWidth={2.4} />
-          <span>+ Nouvel objectif</span>
+          <span>Nouvel objectif</span>
         </button>
       </div>
 

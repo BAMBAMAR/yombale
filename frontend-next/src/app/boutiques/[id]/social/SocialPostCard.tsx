@@ -335,7 +335,7 @@ export default function SocialPostCard({
             ) : (
               <>
                 <ShoppingCart size={12} />
-                <span>+ Panier</span>
+                <span>Ajouter</span>
               </>
             )}
           </button>

@@ -23,6 +23,37 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Bouton Central (+) Contextuel Dédié « Sama Xaalis » & Éradication des Doubles Signes Plus sur les Boutons (`frontend-next`, `styles`, `i18n`, `compte`, `boutique`, `admin`) (20 septembre 2026)** ⚡📱➕✨🛡️✅ :
+  * **🎯 1. Menu Contextuel Dédié pour le Bouton Central (+) dans Sama Xaalis** :
+    - *Comportement précédent* : Quand l'utilisateur était dans l'espace Sama Xaalis (`tab=kalpe`), cliquer sur le gros bouton FAB central (+) ouvrait la feuille générique de publication d'annonces / immo.
+    - *Nouveau comportement contextuel intelligent* : Détection automatique de l'onglet actif (`tab=kalpe` ou `tab=sama-xaalis`). En ouvrant la feuille d'action, l'utilisateur accède instantanément à 7 actions financières 1-tap spécifiques :
+      1. **Noter une dépense** (sortie d'argent, courses, factures, loyer) &rarr; ouvre directement la modale en mode dépense.
+      2. **Noter un reçu / entrée** (encaissement, salaire, versement reçu) &rarr; ouvre directement en mode revenu.
+      3. **Noter une créance (On me doit)** (prêt accordé, vente à crédit) &rarr; pré-sélectionne le mode dette avec sens créance à recevoir.
+      4. **Noter une dette (Je dois)** (emprunt, dette fournisseur) &rarr; pré-sélectionne le mode dette avec sens dette à rembourser.
+      5. **Vente Express** (vente rapide comptant ou crédit) &rarr; mode vente express.
+      6. **Nouvel objectif d’épargne** &rarr; ouvre la modale de création de cagnotte/projet d'épargne.
+      7. **Ajouter un versement épargne** &rarr; alimente une cagnotte en cours.
+    - *Bascule fluide* : Présence d'un bouton discret en bas de la feuille pour basculer vers les autres publications classiques (Annonce, Immo, Boutique) si l'utilisateur le souhaite, et lien retour inverse.
+    - *Accessibilité* : Labels `title` et `aria-label` du FAB central adaptés dynamiquement au contexte Sama Xaalis.
+  * **🧹 2. Éradication Systémique des Doubles Signes Plus (`+ + ...`)** :
+    - *Cause racine* : Des boutons combinaient une icône vectorielle SVG (`<Plus ... />`, `<PlusCircle ... />`, `<UserPlus ... />`) ET un préfixe textuel littéral `+ ` dans le libellé ou dans les fichiers de traduction.
+    - *Composants nettoyés* :
+      - `KalpeDettesSection.tsx` : `<span>+ Noter...</span>` &rarr; `<span>Noter {sens}...</span>`.
+      - `KalpeEpargneSection.tsx` : `<span>+ Nouvel objectif</span>` &rarr; `<span>Nouvel objectif</span>`.
+      - `KalpeQuickActions.tsx` : `+ J'ai reçu` &rarr; `J'ai reçu`, `- J'ai dépensé` &rarr; `J'ai dépensé` (les icônes PlusCircle/MinusCircle suffisent).
+      - `StudioDragDropSections.tsx` : 5 boutons nettoyés (`+ Bannière`, `+ Produits Phares`, `+ Grille Catégories`, `+ Avis Clients`, `+ Bloc Texte Libre`).
+      - `src/i18n/locales/{fr,en,ar}/shop.ts` : `giveCreditBtn` (`Donner Crédit`) et `createCustomerShortBtn` (`Créer un client`) débarrassés du préfixe `+ `.
+      - `carnetMetier.ts` & `carnetMetier.test.ts` : Uniformisation du label métier à `Donner Crédit`.
+      - `ProspectionHeader.tsx` : `<span>+ Nouveau Lead</span>` &rarr; `<span>Nouveau Lead</span>`.
+      - `ProspectionTabBlacklist.tsx` : `<span>+ Ajouter à la Blacklist</span>` &rarr; `<span>Ajouter à la Blacklist</span>`.
+      - `ComptaZonesView.tsx` : `+ Régions Sénégal` & `+ Grand Dakar` nettoyés.
+      - `SocialPostCard.tsx` : `<span>+ Panier</span>` &rarr; `<span>Ajouter</span>`.
+  * **✅ 3. Validation & Qualité** :
+    - `npx tsc --noEmit` validé avec 0 erreur.
+    - Tests unitaires `vitest` passés à 100% (4/4 tests).
+    - Audit anti-slop validé.
+
 - **Résolution Définitive de la Cause Racine des Troncatures de Puces/Onglets (Suppression de `overflow: hidden` sur `button` & Standardisation Universelle des Scrollers) (`frontend-next`, `styles`, `app/agence`) (20 septembre 2026)** 📐📱🎯🛡️✨✅ :
   * **🚨 1. Diagnostic de la Cause Racine Systémique** :
     - *Problème remonté* : Sur la page *Pipeline Commercial & Prospects* (et plusieurs barres d'onglets), les puces d'étapes étaient violemment tronquées et comprimées (`Tous`, `Nouve`, `Qualif`, `En Vis`, `Offre / `, `Gagn`).

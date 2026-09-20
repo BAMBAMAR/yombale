@@ -32,6 +32,7 @@ interface KalpeSaisieModalProps {
   isOpen: boolean
   initialMode?: SaisieMode
   initialContexte?: 'personnel' | 'activite'
+  initialDetteSens?: 'a_recevoir' | 'a_payer'
   objectifs?: KalpeObjectif[]
   onClose: () => void
   onSuccess: () => void
@@ -61,6 +62,7 @@ export function KalpeSaisieModal({
   isOpen,
   initialMode = 'depense',
   initialContexte = 'personnel',
+  initialDetteSens = 'a_recevoir',
   objectifs = [],
   onClose,
   onSuccess,
@@ -75,7 +77,7 @@ export function KalpeSaisieModal({
   const [tiersNom, setTiersNom] = useState<string>('')
   const [tiersTel, setTiersTel] = useState<string>('')
   const [dateEcheance, setDateEcheance] = useState<string>('')
-  const [detteSens, setDetteSens] = useState<'a_recevoir' | 'a_payer'>('a_recevoir')
+  const [detteSens, setDetteSens] = useState<'a_recevoir' | 'a_payer'>(initialDetteSens)
   const [selectedObjectifId, setSelectedObjectifId] = useState<string>('')
 
   const [loading, setLoading] = useState(false)
@@ -87,6 +89,7 @@ export function KalpeSaisieModal({
     if (isOpen) {
       setMode(initialMode)
       setContexte(initialContexte)
+      if (initialDetteSens) setDetteSens(initialDetteSens)
       setMontant('')
       setLibelle('')
       setTiersNom('')

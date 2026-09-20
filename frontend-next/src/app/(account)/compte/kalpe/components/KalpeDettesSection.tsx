@@ -114,7 +114,7 @@ export default function KalpeDettesSection({
           }}
         >
           <Plus size={15} strokeWidth={2.4} />
-          <span>+ Noter {activeTab === 'a_recevoir' ? 'une créance' : 'une dette'}</span>
+          <span>Noter {activeTab === 'a_recevoir' ? 'une créance' : 'une dette'}</span>
         </button>
       </div>
 
