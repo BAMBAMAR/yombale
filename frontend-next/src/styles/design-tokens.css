@@ -4,16 +4,17 @@
 
 :root {
   /* ── Palette Nopalou — chaude, Dakar, décisive ──────────────── */
-  --navy:    #1C2B4A;   /* marine sombre — logo, titres */
-  --accent:  #C75B00;   /* orange brûlé — CTA, hover, identité */
-  --price:   #0A5C36;   /* vert forêt — prix, économies */
+  --navy:        #1C2B4A;   /* marine sombre — logo, titres */
+  --accent:      #C75B00;   /* orange brûlé — CTA, hover, identité */
+  --accent-text: #A64800;   /* orange brûlé contrasté — liens & textes sur fond clair (WCAG AA ≥5:1) */
+  --price:       #0A5C36;   /* vert forêt — prix, économies */
 
   --bg:      #F8F5F0;   /* sable chaud — fini le bleu Tailwind */
   --card:    #FFFFFF;
   --border:  #E8DDD2;   /* beige sable */
   --text1:   #1A1612;   /* encre chaude */
-  --text2:   #5A4E42;   /* pierre chaude — assombri pour WCAG AA ≥4.5:1 sur --bg */
-  --text3:   #8C7E74;   /* gris chaud — assombri pour meilleur contraste */
+  --text2:   #5A4E42;   /* pierre chaude — WCAG AA ≥4.5:1 sur --bg */
+  --text3:   #73675E;   /* gris chaud — renforcé pour conformité WCAG AA ≥4.5:1 sur --bg (#F8F5F0) */
   --radius:  var(--r-md); /* alias → --r-md (8px) — un seul token de référence */
   --shadow:  0 1px 4px rgba(26,22,18,.07);
   --shadow2: 0 6px 24px rgba(26,22,18,.13);

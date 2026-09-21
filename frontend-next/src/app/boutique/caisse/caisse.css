@@ -96,19 +96,19 @@
   }
 
   .pos-theme-light {
-    --pos-bg: #f8fafc !important;
+    --pos-bg: #F4F1EC !important;
     --pos-surface: #ffffff !important;
-    --pos-surface2: #f1f5f9 !important;
-    --pos-surface3: #e2e8f0 !important;
-    --pos-text: #0f172a !important;
-    --pos-text2: #475569 !important;
-    --pos-text3: #94a3b8 !important;
-    --pos-navy: #1e3a5f !important;
-    --pos-border: #e2e8f0 !important;
+    --pos-surface2: #FAF8F5 !important;
+    --pos-surface3: #EFECE6 !important;
+    --pos-text: #1A1612 !important;
+    --pos-text2: #5A4E42 !important;
+    --pos-text3: #73675E !important;
+    --pos-navy: #1C2B4A !important;
+    --pos-border: #E8DDD2 !important;
     --pos-primary: #C75B00 !important;
-    --pos-primary-bg: #fff7ed !important;
-    --pos-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
-    --pos-shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1) !important;
+    --pos-primary-bg: #FFF3E8 !important;
+    --pos-shadow: 0 2px 6px rgba(26,22,18,0.06) !important;
+    --pos-shadow-lg: 0 10px 25px -5px rgba(26,22,18,0.12) !important;
   }
 
   .pos-theme-dark .pos-btn-ghost {

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
 import { validerForceMotDePasse } from '@/lib/password-validator'
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
@@ -45,11 +46,11 @@ function FormDemande() {
 
   return (
     <form onSubmit={submit} className="auth-form">
-      {err && <div className="auth-error" role="alert"><span className="auth-error-icon">⚠</span>{err}</div>}
+      {err && <div className="auth-error" role="alert"><span className="auth-error-icon"><AlertCircle size={16} /></span>{err}</div>}
       <div className="auth-field">
         <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
         <div className="auth-input-wrap">
-          <span className="auth-input-icon"></span>
+          <span className="auth-input-icon"><Mail size={16} /></span>
           <input
             id="email"
             type="email"
@@ -113,11 +114,11 @@ function FormReinit({ token }: { token: string }) {
 
   return (
     <form onSubmit={submit} className="auth-form">
-      {err && <div className="auth-error" role="alert"><span className="auth-error-icon">⚠</span>{err}</div>}
+      {err && <div className="auth-error" role="alert"><span className="auth-error-icon"><AlertCircle size={16} /></span>{err}</div>}
       <div className="auth-field">
         <label htmlFor="password" className="auth-label">{t('auth.passwordLabel')}</label>
         <div className="auth-input-wrap">
-          <span className="auth-input-icon"></span>
+          <span className="auth-input-icon"><Lock size={16} /></span>
           <input
             id="password"
             type={showPassword ? 'text' : 'password'}
@@ -134,7 +135,7 @@ function FormReinit({ token }: { token: string }) {
             onClick={() => setShowPassword(v => !v)}
             aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
           >
-            {showPassword ? '🙈' : '👁️'}
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
       </div>

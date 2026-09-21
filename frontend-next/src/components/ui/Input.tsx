@@ -64,7 +64,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
           disabled={disabled}
           aria-invalid={!!error}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
-          className={`input-npl ${className}`.trim()}
+          className={`npl-input-airy input-npl ${className}`.trim()}
           style={{
             paddingLeft: leftIcon ? '38px' : '14px',
             paddingRight: rightIcon ? '38px' : '14px',

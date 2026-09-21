@@ -94,6 +94,11 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
       setFav(adding)
       setFavAnim(true)
       setTimeout(() => setFavAnim(false), 600)
+      try {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15)
+      } catch {
+        // Haptic feedback non supporté sur cet environnement
+      }
       window.dispatchEvent(new CustomEvent('nopalou:fav', { detail: { adding, nom, count: next.length } }))
     } catch (err) { console.warn('[Nopalou:CardActions:L98]', err); }
   }

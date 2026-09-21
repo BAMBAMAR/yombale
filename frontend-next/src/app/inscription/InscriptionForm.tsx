@@ -6,6 +6,7 @@ import { signup, type AuthState, setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
+import { User, Mail, Lock, Phone, KeyRound, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -298,7 +299,7 @@ export default function InscriptionForm() {
         <form ref={formRef} action={action} onSubmit={handleSubmit} className="auth-form">
           {displayError && (
             <div className="auth-error" role="alert">
-              <span className="auth-error-icon">⚠</span>
+              <span className="auth-error-icon"><AlertCircle size={16} /></span>
               {displayError}
             </div>
           )}
@@ -307,7 +308,7 @@ export default function InscriptionForm() {
           <div className="auth-field">
             <label htmlFor="nom" className="auth-label">{t('auth.nomLabel')}</label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon"></span>
+              <span className="auth-input-icon"><User size={16} /></span>
               <input
                 id="nom"
                 name="nom"
@@ -324,7 +325,7 @@ export default function InscriptionForm() {
           <div className="auth-field">
             <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon"></span>
+              <span className="auth-input-icon"><Mail size={16} /></span>
               <input
                 id="email"
                 name="email"
@@ -341,7 +342,7 @@ export default function InscriptionForm() {
           <div className="auth-field">
             <label htmlFor="password" className="auth-label">{t('auth.passwordLabel')}</label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon"></span>
+              <span className="auth-input-icon"><Lock size={16} /></span>
               <input
                 id="password"
                 name="password"
@@ -356,7 +357,7 @@ export default function InscriptionForm() {
               />
               <button type="button" className="auth-eye-btn" onClick={() => setShowPwd(v => !v)}
                 aria-label={showPwd ? t('auth.hidePassword') : t('auth.showPassword')}>
-                {showPwd ? '🙈' : '👁'}
+                {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
 
@@ -471,7 +472,7 @@ export default function InscriptionForm() {
               <div className="auth-field">
                 <label htmlFor="nom_wa" className="auth-label">{t('auth.nomLabel')}</label>
                 <div className="auth-input-wrap">
-                  <span className="auth-input-icon"></span>
+                  <span className="auth-input-icon"><User size={16} /></span>
                   <input
                     id="nom_wa"
                     type="text"
@@ -487,7 +488,7 @@ export default function InscriptionForm() {
               <div className="auth-field">
                 <label htmlFor="telephone" className="auth-label">{t('auth.waPhoneLabel')}</label>
                 <div className="auth-input-wrap">
-                  <span className="auth-input-icon"></span>
+                  <span className="auth-input-icon"><Phone size={16} /></span>
                   <input
                     id="telephone"
                     type="tel"
@@ -504,7 +505,7 @@ export default function InscriptionForm() {
             <div className="auth-field">
               <label htmlFor="code" className="auth-label">{t('auth.waCodeLabel')}</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon"></span>
+                <span className="auth-input-icon"><KeyRound size={16} /></span>
                 <input
                   id="code"
                   type="text"

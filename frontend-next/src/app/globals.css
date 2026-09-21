@@ -1991,7 +1991,6 @@ a {
   text-decoration: none;
   font-weight: 600;
 }
-
 .auth-forgot:hover { text-decoration: underline; }
 
 /* Input avec icône */
@@ -2002,6 +2001,10 @@ a {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
   font-size: 14px;
   pointer-events: none;
   z-index: 1;
@@ -2026,7 +2029,6 @@ a {
 
 .auth-input--icon { padding-left: 38px; }
 .auth-input--eye  { padding-right: 44px; }
-
 .auth-input--error {
   border-color: #EF4444;
   background: #FFF5F5;

@@ -85,25 +85,25 @@ export default function PwaInstallPrompt() {
 
   return (
     <>
-      {/* BANNIÈRE FLOTTANTE DE PROMOTION PWA */}
+      {/* BANNIÈRE FLOTTANTE DE PROMOTION PWA (Placée en haut pour libérer le bas mobile) */}
       <div style={{
         position: 'fixed',
-        bottom: 74, // Au-dessus de la barre de navigation mobile
+        top: 'calc(12px + env(safe-area-inset-top, 0px))',
         left: '50%',
         transform: 'translateX(-50%)',
         width: 'calc(100% - 24px)',
         maxWidth: 460,
         zIndex: 999,
-        background: 'var(--navy)',
+        background: 'var(--navy, #1C2B4A)',
         color: '#fff',
         borderRadius: 16,
         padding: '12px 14px',
-        boxShadow: '0 12px 30px rgba(0,0,0,0.3)',
+        boxShadow: '0 8px 24px rgba(28, 43, 74, 0.35)',
         border: '1px solid rgba(255,255,255,0.15)',
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        animation: 'fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: 'all 0.3s ease',
       }}>
         {/* Icône officielle Nopalou PWA */}
         <div style={{

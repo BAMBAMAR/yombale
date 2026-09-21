@@ -23,6 +23,37 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Application Intégrale des Remédiations UX/UI, Ergonomie Mobile, Design System & Responsive (Phase 2) (21 septembre 2026)** 🎨📱✨🛡️✅ :
+  * **🚨 1. P0 : Éradication de la Quadruple Collision Mobile au Bas de l'Écran (`PwaInstallPrompt.tsx`, `chat-widget.css`, `globals.css`)** :
+    - *Anomalie constatée* : Empilement anarchique sur mobile (<640px) entre `MobileBottomNav` (56px), `.bottom-bars-wrap` (56px), la bannière PWA (74px) et le widget Chatbot (74px) recouvrant les boutons d'action et verrouillant >160px de hauteur utile.
+    - *Remédiation* : 
+      1. Déplacement de la bannière PWA `PwaInstallPrompt` en haut d'écran sous la barre de statut (`top: calc(12px + env(safe-area-inset-top, 0px))`), libérant 100% du tiers inférieur mobile.
+      2. Repositionnement du déclencheur flottant du Chatbot calé à `bottom: calc(68px + env(safe-area-inset-bottom, 0px))` pour survoler proprement la barre basse sans empiéter sur le contenu.
+  * **📱 2. P1 : Alignement du Breakpoint Mobile/Tablette du Chatbot (641px - 768px) (`chat-widget.css`)** :
+    - *Anomalie constatée* : Le Chatbot passait à `bottom: 74px` uniquement à `<=640px` et repassait à `bottom: 24px` au-delà, se retrouvant enfoui sous `MobileBottomNav` (active jusqu'à `<=768px`).
+    - *Remédiation* : Aligné `@media (max-width: 768px)` dans `chat-widget.css` pour une continuité fluide sur smartphone et tablette portrait.
+  * **📖 3. P1 : Rétablissement de l'Ordre de Lecture Naturel sur Fiche Produit Mobile (`produit.css`)** :
+    - *Anomalie constatée* : `.fiche-sidebar { order: -1; }` à `<=768px` propulsait le bloc résumé d'achat tout en haut de la page mobile, avant la photo, le titre et le meilleur prix du produit.
+    - *Remédiation* : Suppression de `order: -1` et attribution de `order: 2; margin-top: 16px;`. L'utilisateur découvre d'abord le héros produit (photo, titre, verdict) puis le récapitulatif.
+  * **👆 4. P1 : Élargissement des Cibles Tactiles & Protection Clics sur Cartes (`homepage.css`, `CardActions.tsx`)** :
+    - *Anomalie constatée* : `.card-action-btn` mesurait 26px de hauteur avec risque d'activation accidentelle du `<Link>` de fiche produit.
+    - *Remédiation* : Hauteur minimale augmentée à 36px avec pseudo-élément d'extension `::after` (`inset: -6px`) atteignant les 44x44px recommandés par les standards WCAG / Apple HIG / Google Material. Sécurisation `e.stopPropagation()` et micro-retour haptique (`navigator.vibrate(15)`).
+  * **🎨 5. P2 : Renforcement des Contrastes WCAG AA & Normalisation Design System (`design-tokens.css`, `caisse.css`)** :
+    - *Anomalie constatée* : `--accent: #C75B00` donnait un ratio de 3.96:1 sur fond sable (sous le seuil 4.5:1), et `--text3: #8C7E74` donnait 3.62:1. Dans `caisse.css`, `.pos-theme-light` écrasait les tokens avec des classes Tailwind Slate (`#f8fafc !important`).
+    - *Remédiation* :
+      1. Introduction de `--accent-text: #A64800` (ratio 5.1:1 sur blanc et sable) et assombrissement de `--text3: #73675E` (ratio 4.62:1).
+      2. Élimination des codes Tailwind Slate arbitraires dans `caisse.css` au profit des variables de marque officielles `--pos-bg: #F4F1EC`, `--pos-border: #E8DDD2`.
+  * **🧩 6. P2 : Réconciliation des Composants Socles UI (`Button.tsx`, `Input.tsx`)** :
+    - *Anomalie constatée* : `Button.tsx` générait `.btn-npl` tandis que `components.css` définissait `.npl-btn`. `Input.tsx` utilisait `.input-npl` sans style associé.
+    - *Remédiation* : Mappé les variantes de `Button.tsx` vers les classes canoniques `.npl-btn-*` avec rétro-compatibilité, et branché `.npl-input-airy` sur `Input.tsx`.
+  * **🧹 7. P2-P3 : Élimination des Spans Fantômes & Remplacement par des Icônes Lucide Vectorielles (`ConnexionForm.tsx`, `InscriptionForm.tsx`, `MotDePasseOublieForm.tsx`, `globals.css`)** :
+    - *Anomalie constatée* : Spans vides `auth-input-icon` laissant 38px de blanc, résidus d'émojis UI (`⚠`, `🙈`, `👁️`) dans les formulaires d'authentification.
+    - *Remédiation* : Remplacement intégral par les icônes Lucide SVG dédiées (`Mail`, `Lock`, `Phone`, `KeyRound`, `User`, `Eye`, `EyeOff`, `AlertCircle`) avec centrage flexbox dans `globals.css`.
+  * **✅ 8. Bilan des Contrôles Qualité** :
+    - Tests unitaires : `npm test` &rarr; **69/69 passés (100%)**.
+    - TypeScript : `npx tsc --noEmit` &rarr; **0 erreur**.
+    - Anti-Slop : `npm run lint:slop` &rarr; **0 silent catch, 0 monolithe > 800L**.
+
 - **Application Rigoureuse des Remédiations de l'Audit Factuel & Impartial P0-P3 (`backend`, `frontend-next`, `tests/e2e`, `i18n`) (20 septembre 2026)** 🛡️⚡🔍🎯✨✅ :
   * **🚨 1. P0-01 : Sécurisation Absolue contre les Commandes Vides (`POST /api/comptabilite/:boutiqueId/commandes`)** :
     - *Vulnérabilité constatée* : Création possible de commandes d'articles vides (total 0 FCFA ou sans articles réels) via l'API, risquant de polluer la base de données et de fausser les rapports comptables.

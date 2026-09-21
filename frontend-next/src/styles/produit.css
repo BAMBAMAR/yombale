@@ -681,7 +681,7 @@
 /* Audit mobile : hero grid passe en 1 colonne plus tôt (640px au lieu de 768px) */
 @media (max-width: 768px) {
   .fiche-grid { grid-template-columns: minmax(0, 1fr); }
-  .fiche-sidebar { position: static; order: -1; }
+  .fiche-sidebar { position: static; order: 2; margin-top: 16px; }
   /* Offres : wrap sur tous les mobiles */
   .offre-row-fiche { padding: 12px 14px; gap: 8px; flex-wrap: wrap; }
   .offre-prix-col { width: 100%; display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; }

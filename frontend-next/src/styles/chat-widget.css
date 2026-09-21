@@ -580,11 +580,11 @@
   cursor: not-allowed;
 }
 
-/* ── Responsive Mobile ─────────────────────────────────────── */
-@media (max-width: 640px) {
+/* ── Responsive Mobile & Tablette (aligné sur MobileBottomNav 768px) ── */
+@media (max-width: 768px) {
   .npl-chat-floating-wrapper,
   .npl-chat-restore-btn {
-    bottom: 74px; /* Au-dessus de la barre de navigation mobile */
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px)); /* Au-dessus de la barre de navigation mobile 56px */
     right: 16px;
   }
 
@@ -598,7 +598,7 @@
   }
 
   .npl-chat-panel {
-    bottom: 76px;
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
     right: 12px;
     left: 12px;
     width: auto;

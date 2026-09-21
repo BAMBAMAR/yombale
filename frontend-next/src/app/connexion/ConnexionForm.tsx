@@ -7,7 +7,7 @@ import { setAuthCookieAction } from '@/app/actions/auth'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/i18n/context'
-import { Eye, EyeOff, AlertCircle, Info } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, Info, Mail, Lock, Phone, KeyRound } from 'lucide-react'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -275,7 +275,7 @@ export default function ConnexionForm() {
           <div className="auth-field">
             <label htmlFor="email" className="auth-label">{t('auth.emailLabel')}</label>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon"></span>
+              <span className="auth-input-icon"><Mail size={16} /></span>
               <input
                 key="email-input"
                 id="email"
@@ -296,7 +296,7 @@ export default function ConnexionForm() {
               <Link href="/mot-de-passe-oublie" className="auth-forgot">{t('auth.forgotPassword')}</Link>
             </div>
             <div className="auth-input-wrap">
-              <span className="auth-input-icon"></span>
+              <span className="auth-input-icon"><Lock size={16} /></span>
               <input
                 key="password-input"
                 id="password"
@@ -416,7 +416,7 @@ export default function ConnexionForm() {
             <div className="auth-field">
               <label htmlFor="telephone" className="auth-label">{t('auth.waPhoneLabel')}</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon"></span>
+                <span className="auth-input-icon"><Phone size={16} /></span>
                 <input
                   key="telephone-input"
                   id="telephone"
@@ -434,7 +434,7 @@ export default function ConnexionForm() {
             <div className="auth-field">
               <label htmlFor="code" className="auth-label">{t('auth.waCodeLabel')}</label>
               <div className="auth-input-wrap">
-                <span className="auth-input-icon"></span>
+                <span className="auth-input-icon"><KeyRound size={16} /></span>
                 <input
                   key="code-input"
                   id="code"

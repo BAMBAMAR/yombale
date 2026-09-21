@@ -26,26 +26,26 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   ...props
 }, ref) => {
   const variantClass = {
-    primary: 'btn-npl-primary',
-    secondary: 'btn-npl-secondary',
-    accent: 'btn-npl-primary',
-    outline: 'btn-npl-secondary',
-    ghost: 'btn-npl-ghost',
-    danger: 'btn-npl-danger',
-  }[variant] || 'btn-npl-primary'
+    primary: 'npl-btn-primary btn-npl-primary',
+    secondary: 'npl-btn-secondary btn-npl-secondary',
+    accent: 'npl-btn-accent btn-npl-accent',
+    outline: 'npl-btn-secondary btn-npl-outline',
+    ghost: 'npl-btn-ghost btn-npl-ghost',
+    danger: 'npl-btn-danger btn-npl-danger',
+  }[variant] || 'npl-btn-primary btn-npl-primary'
 
   const sizeClass = {
-    sm: 'btn-npl-sm',
+    sm: 'npl-btn-sm btn-npl-sm',
     md: 'btn-npl-md',
-    lg: 'btn-npl-lg',
-  }[size] || 'btn-npl-md'
+    lg: 'npl-btn-lg btn-npl-lg',
+  }[size] || ''
 
   const isDisabled = disabled || loading
 
   return (
     <button
       ref={ref}
-      className={`btn-npl ${variantClass} ${sizeClass} ${className}`.trim()}
+      className={`npl-btn btn-npl ${variantClass} ${sizeClass} ${className}`.trim()}
       disabled={isDisabled}
       aria-busy={loading}
       {...props}
