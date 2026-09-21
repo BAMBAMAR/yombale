@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import {
   BookOpen, Trophy, Radio, Home, TrendingDown,
-  MessageCircle, Tag, Package, Users, Sparkles, ChevronDown, CheckCircle2
+  MessageCircle, Tag, Package, Users, Sparkles, ChevronDown, CheckCircle2, CreditCard
 } from 'lucide-react'
 
 export default function NavbarGuides() {
@@ -56,6 +56,22 @@ export default function NavbarGuides() {
             <span>
               <span style={{ display: 'block', fontWeight: 700 }}>Guide immobilier</span>
               <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Trouver mon logement idéal</span>
+            </span>
+          </Link>
+          <Link href="/payer-loyer" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)} style={{ background: '#f0fdf4', borderRadius: 8 }}>
+            <CreditCard size={18} style={{ color: '#16a34a', flexShrink: 0 }} />
+            <span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, color: '#15803D' }}>
+                Payer mon loyer <span style={{ background: '#16a34a', color: '#FFF', fontSize: 9.5, padding: '1px 6px', borderRadius: 10 }}>WAVE / OM</span>
+              </span>
+              <span style={{ fontWeight: 500, fontSize: 11.5, color: 'var(--text2)' }}>Règlement 1-clic &amp; quittance QR Code</span>
+            </span>
+          </Link>
+          <Link href="/migration" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>
+            <Sparkles size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+            <span>
+              <span style={{ display: 'block', fontWeight: 700 }}>Migration Shopify &amp; Excel</span>
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: 'var(--text2)' }}>Importer mon catalogue en 2 minutes</span>
             </span>
           </Link>
           <Link href="/guide-prix" className="navbar-guide-item" role="menuitem" onClick={() => setOpen(false)}>

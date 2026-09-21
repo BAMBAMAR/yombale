@@ -8,7 +8,9 @@ import {
   MessageCircle,
   Lock,
   Building2,
-  ArrowRight
+  ArrowRight,
+  Store,
+  CreditCard
 } from 'lucide-react'
 
 interface HeroAcheteurViewProps {
@@ -70,79 +72,181 @@ export default function HeroAcheteurView({
             {categoriesSlot}
           </div>
 
-          {/* Passerelle Immobilier : Logements & Terrains vérifiés */}
-          <div
-            style={{
-              maxWidth: 540,
-              background: 'linear-gradient(135deg, #F8F5F0 0%, #FFFDF9 100%)',
-              border: '1px solid var(--border, #E8DDD2)',
-              borderRadius: 12,
-              padding: '10px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  background: 'rgba(28, 43, 74, 0.08)',
-                  color: 'var(--navy, #1C2B4A)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}
-              >
-                <Building2 size={18} />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
-                    Recherche Immobilière
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 9.5,
-                      fontWeight: 800,
-                      background: 'rgba(199, 91, 0, 0.12)',
-                      color: 'var(--accent, #C75B00)',
-                      padding: '1px 6px',
-                      borderRadius: 6
-                    }}
-                  >
-                    Dakar &amp; Régions
+          {/* ── PASSERELLES D'ACCÈS RAPIDE AUX SOLUTIONS PRO (COMMERÇANTS & IMMOBILIER) ── */}
+          <div style={{ maxWidth: 540, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            
+            {/* Passerelle 1 : Commerçants & Caisse POS Tactile Offline */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #FFFDF9 0%, #FFF7ED 100%)',
+                border: '1.5px solid #FED7AA',
+                borderRadius: 12,
+                padding: '9px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 10
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background: 'rgba(199, 91, 0, 0.12)',
+                    color: 'var(--accent, #C75B00)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <Store size={17} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                      Vous tenez un commerce ?
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        background: '#DCFCE7',
+                        color: '#15803D',
+                        padding: '1px 6px',
+                        borderRadius: 6
+                      }}
+                    >
+                      Caisse Offline
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    Caisse tactile sur téléphone, carnet de dettes &amp; commandes WhatsApp
                   </span>
                 </div>
-                <span style={{ fontSize: 11.5, color: 'var(--text2, #5A4E42)' }}>
-                  Appartements, villas, terrains et baux vérifiés
-                </span>
+              </div>
+
+              <Link
+                href="/?mode=marchand#resultats"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '5px 10px',
+                  borderRadius: 8,
+                  background: 'var(--accent, #C75B00)',
+                  color: '#ffffff',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <span>Espace Caisse</span>
+                <ArrowRight size={12} />
+              </Link>
+            </div>
+
+            {/* Passerelle 2 : Immobilier, Logements & Paiement de Loyer Wave */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #F8F5F0 0%, #FFFDF9 100%)',
+                border: '1px solid var(--border, #E8DDD2)',
+                borderRadius: 12,
+                padding: '9px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 10
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background: 'rgba(28, 43, 74, 0.08)',
+                    color: 'var(--navy, #1C2B4A)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <Building2 size={17} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                      Immobilier &amp; Baux
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        background: 'rgba(28, 43, 74, 0.08)',
+                        color: 'var(--navy, #1C2B4A)',
+                        padding: '1px 6px',
+                        borderRadius: 6
+                      }}
+                    >
+                      Dakar &amp; Régions
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    Locations, villas vérifiées &amp; quittances officielles OHADA
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <Link
+                  href="/payer-loyer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    padding: '5px 8px',
+                    borderRadius: 8,
+                    background: '#DCFCE7',
+                    color: '#15803D',
+                    border: '1px solid #BBF7D0',
+                    fontSize: 11,
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <CreditCard size={11} />
+                  <span>Payer Loyer</span>
+                </Link>
+
+                <Link
+                  href="/immo"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    padding: '5px 9px',
+                    borderRadius: 8,
+                    background: 'var(--navy, #1C2B4A)',
+                    color: '#ffffff',
+                    fontSize: 11,
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <span>Explorer</span>
+                  <ArrowRight size={12} />
+                </Link>
               </div>
             </div>
 
-            <Link
-              href="/immo"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '6px 12px',
-                borderRadius: 8,
-                background: 'var(--navy, #1C2B4A)',
-                color: '#ffffff',
-                fontSize: 11.5,
-                fontWeight: 800,
-                textDecoration: 'none',
-                flexShrink: 0
-              }}
-            >
-              <span>Explorer</span>
-              <ArrowRight size={13} />
-            </Link>
           </div>
         </div>
 

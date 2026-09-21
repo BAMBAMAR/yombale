@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Printer } from 'lucide-react'
+import { X, Printer, MessageCircle } from 'lucide-react'
 
 interface PosBilanRapportXModalProps {
   isOpen: boolean
@@ -224,6 +224,61 @@ export default function PosBilanRapportXModal({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* ── BANDEAU BILAN DU SOIR SUR WHATSAPP (WHATBOT OFFICIEL) ── */}
+          <div
+            style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: 'var(--r-md, 8px)',
+              padding: '12px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12
+            }}
+          >
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: '#25D366',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <MessageCircle size={18} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: 12.5, fontWeight: 800, color: '#166534' }}>
+                Recevez ce bilan chaque soir en 3 secondes sur WhatsApp
+              </span>
+              <span style={{ display: 'block', fontSize: 11.5, color: '#15803D', lineHeight: 1.35 }}>
+                Envoyez simplement le mot <strong>« Bilan »</strong> suivi de votre code PIN marchand au <strong>+221 70 871 79 42</strong> pour recevoir la ventilation complète.
+              </span>
+            </div>
+            <a
+              href={`https://wa.me/221708717942?text=${encodeURIComponent('Bilan ' + (caissierNom || ''))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: '#16a34a',
+                color: '#ffffff',
+                padding: '6px 10px',
+                borderRadius: 6,
+                fontSize: 11.5,
+                fontWeight: 800,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              Tester le bot
+            </a>
           </div>
 
           {/* Boutons d'Action */}

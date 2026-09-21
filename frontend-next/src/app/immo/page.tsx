@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { Building2, List, MapPin } from 'lucide-react'
+import { Building2, List, MapPin, CreditCard } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ImmoClientWrapper from './ImmoClientWrapper'
 import ImmoQuartierInput from './ImmoQuartierInput'
@@ -257,8 +257,74 @@ export default async function ImmoPage({
             <Building2 size={15} style={{ color: 'var(--accent, #C75B00)' }} />
             Agences Immobilières
           </Link>
+
+          <Link
+            href="/payer-loyer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '9px 16px',
+              borderRadius: 8,
+              background: '#DCFCE7',
+              border: '1.5px solid #BBF7D0',
+              color: '#15803D',
+              fontWeight: 800,
+              fontSize: 13,
+              textDecoration: 'none',
+              boxShadow: '0 1px 3px rgba(16,185,129,0.1)',
+            }}
+          >
+            <CreditCard size={15} color="#16a34a" />
+            <span>Payer mon Loyer</span>
+          </Link>
           <ImmoClientWrapper />
         </div>
+      </div>
+
+      {/* ── BANDEAU APPEL D'AIR LOCATAIRES : PAIEMENT WAVE & QUITTANCE OHADA ── */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #F8F5F0 0%, #FFFFFF 100%)',
+          border: '1px solid var(--border, #E8DDD2)',
+          borderRadius: 14,
+          padding: '12px 18px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+            Espace Locataires :
+          </span>
+          <span style={{ fontSize: 13, color: 'var(--text2, #5A4E42)' }}>
+            Réglez votre loyer par <strong>Wave</strong> ou <strong>Orange Money</strong> et téléchargez instantanément votre quittance officielle certifiée avec QR Code.
+          </span>
+        </div>
+        <Link
+          href="/payer-loyer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'var(--navy, #1C2B4A)',
+            color: '#ffffff',
+            padding: '7px 14px',
+            borderRadius: 8,
+            fontSize: 12.5,
+            fontWeight: 800,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <span>Accéder au paiement</span>
+          <span>→</span>
+        </Link>
       </div>
 
       {/* Barre de filtres */}
