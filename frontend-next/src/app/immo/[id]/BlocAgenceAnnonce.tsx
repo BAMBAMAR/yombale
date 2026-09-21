@@ -85,6 +85,16 @@ export default function BlocAgenceAnnonce({
   // Ingestion automatique du prospect dans le CRM de l'agence lors du clic WhatsApp
   function handleWhatsAppClick() {
     if (agence?.id) {
+      let visitorTel: string | null = null
+      let visitorNom = 'Prospect WhatsApp (Clic)'
+      try {
+        const savedTel = localStorage.getItem('nopalou_client_tel')
+        const savedNom = localStorage.getItem('nopalou_client_nom')
+        if (savedTel?.trim()) visitorTel = savedTel.trim()
+      } catch (e) {
+        // Ignorer si localStorage inaccessible (ex: navigation privée restrictive)
+      }
+
       try {
         fetch('/api/crm-immo/public/lead', {
           method: 'POST',
@@ -92,8 +102,8 @@ export default function BlocAgenceAnnonce({
           body: JSON.stringify({
             annonce_id: annonceId,
             agence_id: agence.id,
-            telephone: cleanWa,
-            nom: 'Prospect WhatsApp',
+            telephone: visitorTel,
+            nom: visitorNom,
             type_action: 'whatsapp_click',
             type_operation: transaction || 'location',
             budget: prix,

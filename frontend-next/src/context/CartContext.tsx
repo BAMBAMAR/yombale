@@ -1,5 +1,6 @@
 'use client'
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { trackAnalyticsEvent } from '@/lib/analytics'
 
 export interface CartItem {
   id: string
@@ -182,6 +183,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (autoOpen) {
       setIsCartOpen(true)
     }
+
+    trackAnalyticsEvent('ajout_panier', boutiqueId, {
+      produitId: produit.id,
+      valeur: prix,
+    })
   }
 
   function removeFromCart(boutiqueId: string, productId: string) {

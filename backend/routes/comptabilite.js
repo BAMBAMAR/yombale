@@ -894,6 +894,7 @@ async function creerCommandeBoutique({
   note, source = 'web', methodePaiement = 'wave', zoneLivraisonId,
   nomProduitManuel, prixUnitaireManuel, groupeCommande, items = [], varianteId,
   codePromo, montantReduction, formuleEchelonnement,
+  utm_source, utm_medium, utm_campaign, social_post_id,
 }) {
   const bQuery = 'SELECT id, nom, slug, telephone, whatsapp, utilisateur_id FROM boutiques WHERE (id::text = $1 OR slug = $1)';
   const { rows: [boutique] } = await pool.query(bQuery, [boutiqueId]);
@@ -1027,14 +1028,18 @@ async function creerCommandeBoutique({
     }
   }
 
+  const validSocialPostId = (social_post_id && String(social_post_id).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(social_post_id)) ? social_post_id : null;
+
   const { rows: [commande] } = await pool.query(
     `INSERT INTO commandes_boutique
        (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
-        client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+        client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande,
+        utm_source, utm_medium, utm_campaign, social_post_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
     [ref, actualBoutiqueId, normalizedItems[0]?.produit_id || null, nomProduitGlobal.slice(0, 300), totalQuantite, sousTotal, montantTotal,
      clientNom, clientTelephone, clientAdresse || null, finalNote || null, source,
-     methodePaiement, validZoneId, fraisLivraison, groupeCommande || null]
+     methodePaiement, validZoneId, fraisLivraison, groupeCommande || null,
+     utm_source || null, utm_medium || null, utm_campaign || null, validSocialPostId]
   );
 
   // Insertion détaillée de chaque article et décrémentation des stocks
@@ -1094,7 +1099,7 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
     try {
-      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id, code_promo, montant_reduction, remise, formule_echelonnement, formuleEchelonnement } = req.body;
+      const { produit_id, quantite = 1, client_nom, client_telephone, client_adresse, note, source = 'web', methode_paiement = 'wave', zone_livraison_id, items, variante_id, code_promo, montant_reduction, remise, formule_echelonnement, formuleEchelonnement, utm_source, utm_medium, utm_campaign, social_post_id } = req.body;
 
       if ((!Array.isArray(items) || items.length === 0) && !produit_id && !req.body.nom_produit) {
         return res.status(400).json({ error: 'Au moins un article ou produit est requis pour passer commande' });
@@ -1118,6 +1123,10 @@ router.post(
         codePromo: code_promo,
         montantReduction: montant_reduction || remise,
         formuleEchelonnement: formule_echelonnement || formuleEchelonnement,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        social_post_id,
       });
 
       await notifierVendeurCommande(boutique, {

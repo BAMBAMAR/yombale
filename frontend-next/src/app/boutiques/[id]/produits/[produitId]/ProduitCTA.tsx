@@ -1,8 +1,9 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import CommanderModal from '../../CommanderModal'
 import { useCart } from '@/context/CartContext'
 import { fcfa } from '@/lib/format'
+import { trackAnalyticsEvent } from '@/lib/analytics'
 import { ShoppingCart } from 'lucide-react'
 
 interface Variante {
@@ -48,6 +49,14 @@ export default function ProduitCTA({
   const [selection, setSelection] = useState<Record<string, string>>({})
   const [addedCart, setAddedCart] = useState(false)
   const { addToCart, openCart } = useCart()
+
+  // Track de l'événement vue_produit pour le funnel de conversion Nopalou
+  useEffect(() => {
+    trackAnalyticsEvent('vue_produit', boutiqueId, {
+      produitId: produit.id,
+      valeur: produit.prix || 0,
+    })
+  }, [boutiqueId, produit.id, produit.prix])
 
   const aDesVariantes = variantes.length > 0
   const selectionComplete = !aDesVariantes || variantes.every(v => selection[v.nom])
@@ -199,6 +208,7 @@ export default function ProduitCTA({
           <a
             href={waUrl}
             target="_blank" rel="noopener noreferrer"
+            onClick={() => trackAnalyticsEvent('clic_telephone', boutiqueId, { produitId: produit.id })}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               background: '#f0fdf4', color: '#16a34a', border: '2px solid #86efac',
@@ -214,6 +224,7 @@ export default function ProduitCTA({
         {telUrl && (
           <a
             href={telUrl}
+            onClick={() => trackAnalyticsEvent('clic_telephone', boutiqueId, { produitId: produit.id })}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               background: '#fff', color: '#1d4ed8', border: '2px solid #bfdbfe',

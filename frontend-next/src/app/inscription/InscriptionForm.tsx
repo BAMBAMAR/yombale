@@ -55,6 +55,7 @@ export default function InscriptionForm() {
   const [errorWa, setErrorWa] = useState('')
   const [isDegraded, setIsDegraded] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [redirectUrl, setRedirectUrl] = useState('')
 
   const router = useRouter()
 
@@ -64,6 +65,10 @@ export default function InscriptionForm() {
       const tel = params.get('tel')
       if (tel) {
         setTelephone(tel)
+      }
+      const redir = params.get('redirect')
+      if (redir && redir.startsWith('/') && !redir.startsWith('//')) {
+        setRedirectUrl(redir)
       }
     }
   }, [])
@@ -166,7 +171,8 @@ export default function InscriptionForm() {
       
       if (data.token) {
         await setAuthCookieAction(data.token)
-        router.push('/compte')
+        const target = redirectUrl && redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/compte'
+        router.push(target)
       }
     } catch (err: any) {
       setErrorWa(err.message)
@@ -297,6 +303,7 @@ export default function InscriptionForm() {
 
       {signupMethod === 'email' ? (
         <form ref={formRef} action={action} onSubmit={handleSubmit} className="auth-form">
+          {redirectUrl && <input type="hidden" name="redirect" value={redirectUrl} />}
           {displayError && (
             <div className="auth-error" role="alert">
               <span className="auth-error-icon"><AlertCircle size={16} /></span>
@@ -402,7 +409,7 @@ export default function InscriptionForm() {
               />
               <button type="button" className="auth-eye-btn" onClick={() => setShowConfirm(v => !v)}
                 aria-label={showConfirm ? t('auth.hidePassword') : t('auth.showPassword')}>
-                {showConfirm ? '🙈' : '👁'}
+                {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>

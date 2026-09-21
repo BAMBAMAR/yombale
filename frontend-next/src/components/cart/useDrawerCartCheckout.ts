@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Zone, OrderSuccessData } from './types'
 import { useCart } from '@/context/CartContext'
 import { fcfa } from '@/lib/format'
+import { getSavedUtm, trackAnalyticsEvent } from '@/lib/analytics'
 
 const DEFAULT_ZONES: Zone[] = [
   { id: 'dakar-intra', nom: 'Dakar Intra-Muros (Plateau, Almadies, Medina, Fann...)', prix: 1500 },
@@ -81,6 +82,40 @@ export function useDrawerCartCheckout() {
     }
   }, [])
 
+  // Tracking de l'étape checkout_initie dans le funnel Nopalou
+  useEffect(() => {
+    if (activeBoutiqueId && items.length > 0) {
+      trackAnalyticsEvent('checkout_initie', activeBoutiqueId, { valeur: totalGlobal })
+    }
+  }, [activeBoutiqueId])
+
+  // Sauvegarde automatique du panier non finalisé (Panier Abandonné pour relance commerçant)
+  useEffect(() => {
+    const cleanTel = clientTel.replace(/\D/g, '')
+    if (cleanTel.length < 9 || items.length === 0 || !activeBoutiqueId) return
+
+    const timer = setTimeout(() => {
+      fetch(`${backendUrl}/api/boutiques/${activeBoutiqueId}/paniers-abandonnes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_nom: clientNom.trim() || undefined,
+          client_tel: cleanTel,
+          articles: items.map((i) => ({
+            id: i.produitId || i.id,
+            nom: i.nom,
+            prix: i.prix,
+            quantite: i.quantite,
+            detailsVariante: i.detailsVariante,
+          })),
+          total: totalGlobal,
+        }),
+      }).catch(() => {})
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [clientTel, clientNom, activeBoutiqueId, items, totalGlobal, backendUrl])
+
   // Validation du code promo
   async function appliquerCodePromo() {
     if (!codePromo.trim()) {
@@ -135,7 +170,8 @@ export function useDrawerCartCheckout() {
     currentFraisLivraison: number,
     currentReduction: number,
     currentPromoCode?: string,
-    currentTotal?: number
+    currentTotal?: number,
+    reference?: string
   ) {
     const lignedDetailles = currentItems
       .map(
@@ -143,7 +179,7 @@ export function useDrawerCartCheckout() {
           `• ${i.quantite}x ${i.nom}${i.detailsVariante ? ` [${i.detailsVariante}]` : ''} (${fcfa(i.prix * i.quantite)})`
       )
       .join('\n')
-    let msg = `Bonjour ${nomBoutique} ! Je souhaite passer la commande suivante :\n\n${lignedDetailles}\n\nSous-total: ${fcfa(currentSousTotal)}\n`
+    let msg = `Bonjour ${nomBoutique} ! Je souhaite passer la commande suivante${reference ? ` (Réf: *${reference}*)` : ''} :\n\n${lignedDetailles}\n\nSous-total: ${fcfa(currentSousTotal)}\n`
     if (currentReduction > 0 && currentPromoCode) {
       msg += `Code Promo (${currentPromoCode}): -${fcfa(currentReduction)}\n`
     }
@@ -230,6 +266,7 @@ export function useDrawerCartCheckout() {
           code_promo: currentPromoCode || undefined,
           montant_reduction: currentReduction > 0 ? currentReduction : undefined,
           formule_echelonnement: currentMethode === 'credit' ? formuleEchelonnement : undefined,
+          ...getSavedUtm(),
         }),
       })
 
@@ -241,6 +278,7 @@ export function useDrawerCartCheckout() {
       }
 
       if (data.wave_url) {
+        trackAnalyticsEvent('commande_confirmee', currentBoutiqueId, { valeur: currentTotal })
         clearCart(currentBoutiqueId)
         window.location.href = data.wave_url
         return
@@ -267,6 +305,8 @@ export function useDrawerCartCheckout() {
           detailsVariante: i.detailsVariante,
         })),
       })
+
+      trackAnalyticsEvent('commande_confirmee', currentBoutiqueId, { valeur: currentTotal })
 
       clearCart(currentBoutiqueId)
     } catch {
@@ -306,32 +346,45 @@ export function useDrawerCartCheckout() {
         quantite: i.quantite,
       }))
 
-      await fetch(`${backendUrl}/api/comptabilite/${currentBoutiqueId}/commandes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nom_produit: currentItems
-            .map((i) => `${i.quantite}x ${i.nom}${i.detailsVariante ? ` (${i.detailsVariante})` : ''}`)
-            .join(', '),
-          prix_unitaire: currentSousTotal,
-          quantite: 1,
-          client_nom: clientNom.trim() || 'Client WhatsApp',
-          client_telephone: clientTel.trim() || 'Via WhatsApp',
-          client_adresse: clientAdresse.trim() || undefined,
-          methode_paiement: 'wave',
-          zone_livraison_id: zoneId && zoneId.length === 36 ? zoneId : undefined,
-          frais_livraison: currentFraisLiv,
-          source: 'whatsapp_panier',
-          items: formattedItems,
-          code_promo: currentPromoCode || undefined,
-          montant_reduction: currentReduction > 0 ? currentReduction : undefined,
-        }),
-      }).catch(() => {})
-    } finally {
-      setLoadingCheckout(false)
+      let finalReference: string | null = null
+      try {
+        const res = await fetch(`${backendUrl}/api/comptabilite/${currentBoutiqueId}/commandes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nom_produit: currentItems
+              .map((i) => `${i.quantite}x ${i.nom}${i.detailsVariante ? ` (${i.detailsVariante})` : ''}`)
+              .join(', '),
+            prix_unitaire: currentSousTotal,
+            quantite: 1,
+            client_nom: clientNom.trim() || 'Client WhatsApp',
+            client_telephone: clientTel.trim() || 'Via WhatsApp',
+            client_adresse: clientAdresse.trim() || undefined,
+            methode_paiement: 'wave',
+            zone_livraison_id: zoneId && zoneId.length === 36 ? zoneId : undefined,
+            frais_livraison: currentFraisLiv,
+            source: 'whatsapp_panier',
+            items: formattedItems,
+            code_promo: currentPromoCode || undefined,
+            montant_reduction: currentReduction > 0 ? currentReduction : undefined,
+            ...getSavedUtm(),
+          }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.commande?.reference) {
+            finalReference = data.commande.reference
+          }
+        }
+      } catch (err) {
+        console.warn('[Nopalou:DrawerCart:StorageWA:API]', err)
+      }
+
+      const activeRef = finalReference || `CMD-WA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+
       const waLink = getLienWhatsapp(
         currentWhatsapp,
-        getMessageWhatsapp(currentBoutiqueNom, currentItems, currentSousTotal, currentFraisLiv, currentReduction, currentPromoCode, currentTotal)
+        getMessageWhatsapp(currentBoutiqueNom, currentItems, currentSousTotal, currentFraisLiv, currentReduction, currentPromoCode, currentTotal, activeRef)
       )
       window.open(waLink, '_blank')
 
@@ -339,7 +392,7 @@ export function useDrawerCartCheckout() {
         boutiqueNom: currentBoutiqueNom,
         boutiqueId: currentBoutiqueId,
         whatsapp: currentWhatsapp,
-        reference: `CMD-WA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        reference: activeRef,
         total: currentTotal,
         sousTotal: currentSousTotal,
         fraisLivraison: currentFraisLiv,
@@ -357,7 +410,10 @@ export function useDrawerCartCheckout() {
         })),
       })
 
+      trackAnalyticsEvent('commande_confirmee', currentBoutiqueId, { valeur: currentTotal })
       clearCart(currentBoutiqueId)
+    } finally {
+      setLoadingCheckout(false)
     }
   }
 

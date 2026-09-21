@@ -68,6 +68,7 @@ import RegisterSW from './RegisterSW';
 import PwaInstallPrompt from '@/components/PwaInstallPrompt';
 import FavToast from './FavToast';
 import VerifyEmailToast from './VerifyEmailToast';
+import UtmTracker from '@/components/UtmTracker';
 import DrawerCart from '@/components/DrawerCart';
 import ChatbotWidget from '@/components/chat/ChatbotWidget';
 import WebVitals from '@/components/WebVitals';
@@ -376,6 +377,9 @@ export default async function RootLayout({
         <FavToast />
         <Suspense fallback={null}>
           <VerifyEmailToast />
+        </Suspense>
+        <Suspense fallback={null}>
+          <UtmTracker />
         </Suspense>
 
         <footer className="site-footer">

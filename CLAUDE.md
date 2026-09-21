@@ -23,6 +23,38 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit Diagnostique Acquisition, Activation & Conversion — Remédiations Intégrales ACQ-001 à ACQ-006 (21 septembre 2026)** 📈🎯🛒✨ :
+  * **Contexte** : Audit rigoureux et factuel sur code et base de données PostgreSQL de l'acquisition, activation et conversion de Nopalou, suivi de la correction intégrale des 6 anomalies fonctionnelles et analytiques.
+  * **ACQ-001 [P0 : Tracking & Funnel] Restauration des événements analytiques manquants** (`frontend-next/src/lib/analytics.ts`, `CartContext.tsx`, `ProduitCTA.tsx`, `useDrawerCartCheckout.ts`, `backend/routes/analytics.js`) :
+    - Création du module central `analytics.ts` avec la fonction `trackAnalyticsEvent()`.
+    - Émission de `vue_produit` à la visite d'une fiche produit.
+    - Émission de `ajout_panier` à l'appel de `addToCart()` dans `CartContext`.
+    - Émission de `checkout_initie` à l'ouverture du tiroir de commande / passage aux coordonnées.
+    - Émission de `clic_telephone` lors des clics sur les boutons WhatsApp et Téléphone.
+    - Émission de `commande_confirmee` lors du succès de commande en ligne et WhatsApp.
+    - Résolution automatique du slug boutique en UUID dans `backend/routes/analytics.js` pour éviter tout rejet PostgreSQL.
+  * **ACQ-002 [P1 : Attribution & Marketing] Persistance des UTMs & Ingestion Commandes** (`frontend-next/src/lib/analytics.ts`, `UtmTracker.tsx`, `layout.tsx`, `useDrawerCartCheckout.ts`, `useCommander.ts`, `backend/routes/comptabilite.js`) :
+    - Création du composant client `UtmTracker` sous `Suspense` à la racine pour capter et persister les paramètres `utm_source`, `utm_medium`, `utm_campaign`, `social_post_id` dans le `localStorage` (`nopalou_utm`).
+    - Transmission automatique des UTMs persistés dans le payload de commande (`useDrawerCartCheckout.ts` et `useCommander.ts`).
+    - Extraction et insertion des paramètres UTM dans la table `commandes_boutique` via `creerCommandeBoutique` (`backend/routes/comptabilite.js`), rétablissant la traçabilité du ROI par canal.
+  * **ACQ-003 [P1 : Récupération Chiffre d'Affaires] Enregistrement Automatique des Paniers Abandonnés** (`frontend-next/src/components/cart/useDrawerCartCheckout.ts`) :
+    - Branchement automatique d'une sauvegarde debouncée (1.5s) vers `POST /api/boutiques/:id/paniers-abandonnes` dès que l'acheteur saisit son numéro de téléphone (≥ 9 chiffres).
+    - Permet aux commerçants de visualiser les paniers abandonnés et de déclencher les relances WhatsApp avec remise incitative (-5%).
+  * **ACQ-004 [P2 : Rétention & UX] Maintien du Contexte de Redirection à l'Inscription** (`frontend-next/src/app/inscription/InscriptionForm.tsx`) :
+    - Récupération du paramètre `redirect` dans `InscriptionForm.tsx`.
+    - Redirection vers `redirectTarget || '/compte'` après validation réussie du code OTP WhatsApp.
+    - Ajout du champ caché `<input type="hidden" name="redirect" value={redirectUrl} />` dans le formulaire d'inscription Email.
+    - Remplacement des émojis du toggle mot de passe par les icônes Lucide `Eye` et `EyeOff`.
+  * **ACQ-005 [P2 : Intégrité CRM Agence] Éradication de la Pollution Téléphonique Lead WhatsApp** (`frontend-next/src/app/immo/[id]/BlocAgenceAnnonce.tsx`) :
+    - Remplacement de l'injection erronée du numéro de l'agence (`cleanWa`) par le numéro du visiteur s'il est connu en local, sinon transmission de `telephone: null` avec `nom: 'Prospect WhatsApp (Clic)'` pour éviter d'écraser la fiche de l'agence dans `contacts_immo`.
+  * **ACQ-006 [P3 : Synchronisation Commande] Référence Commande Réelle en Mode WhatsApp Direct** (`frontend-next/src/components/cart/useDrawerCartCheckout.ts`) :
+    - Récupération et attente de la réponse serveur de `POST /api/comptabilite/:id/commandes` lors de la commande directe par WhatsApp.
+    - Injection de la référence réelle de la commande (`CMD-...`) retournée par la base de données dans le message WhatsApp pré-rempli et dans l'écran de confirmation `orderSuccessData`.
+  * **Validation & Contrôles Qualité** :
+    - `npx tsc --noEmit` : 0 erreur de typage.
+    - `npm run lint:slop` : 0 silent catch, 0 composant monolithique.
+    - `node --check` sur les routes backend modifiées : 100% conforme.
+
 - **Audit Marketing, Stratégie de Marque & Remédiations Ergonomie Commerciale — MKT-001 à MKT-007 (21 septembre 2026)** 🎯📊📈✨ :
   * **Contexte** : Audit impartial et factuel de la compréhension de marque, du positionnement produit, de la découvrabilité des fonctionnalités réelles et de la commercialisation, suivi de l'application immédiate des remédiations d'interface.
   * **MKT-001 & MKT-002 [P0-P1 : Découvrabilité Marchand Mobile] Passerelle Caisse POS sur Homepage** (`frontend-next/src/app/hero/HeroAcheteurView.tsx`) : Intégration d'un bandeau responsive épuré sous la recherche acheteur permettant aux commerçants arrivant sur mobile d'identifier immédiatement la caisse tactile POS 100% hors-ligne et de basculer vers l'espace marchand en 1 clic.

@@ -20,9 +20,16 @@ router.post('/event', limiterGeneral, async (req, res) => {
   if (!TYPES_AUTORISES.includes(type)) return res.status(400).json({ error: 'Type invalide' });
 
   try {
+    let actualBoutiqueId = boutique_id;
+    if (!/^[0-9a-f-]{36}$/i.test(actualBoutiqueId)) {
+      const b = await pool.query('SELECT id FROM boutiques WHERE LOWER(slug) = LOWER($1)', [boutique_id]);
+      if (!b.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+      actualBoutiqueId = b.rows[0].id;
+    }
+
     await pool.query(
       `INSERT INTO analytics_events (type, boutique_id, annonce_id) VALUES ($1,$2,$3)`,
-      [type, boutique_id, annonce_id ?? null]
+      [type, actualBoutiqueId, annonce_id ?? null]
     );
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }

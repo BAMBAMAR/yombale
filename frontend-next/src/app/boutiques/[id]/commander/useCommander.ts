@@ -9,6 +9,7 @@ import {
   DEFAULT_ZONES,
   getMontantDevise,
 } from './types'
+import { getSavedUtm } from '@/lib/analytics'
 
 export function useCommander({
   boutiqueId,
@@ -264,6 +265,7 @@ export function useCommander({
           code_promo: promoApplique?.code || undefined,
           montant_reduction: promoApplique?.reduction || undefined,
           formule_echelonnement: paiement === 'credit' ? formuleEchelonnement : undefined,
+          ...getSavedUtm(),
           ...utmRef.current,
         }),
       })
