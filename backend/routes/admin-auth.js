@@ -105,10 +105,10 @@ router.post('/login', async (req, res) => {
     const isSecure = process.env.NODE_ENV === 'production';
     const cookieHeaders = [
       `nopalou_admin_jwt=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`,
+      // SÉCURITÉ P1 : Suppression du cookie nopalou_admin contenant ADMIN_SECRET en clair.
+      // L'authentification administrative repose exclusivement sur le JWT nominatif ci-dessus.
+      // Le mécanisme break-glass via ADMIN_SECRET reste disponible en console serveur uniquement.
     ];
-    if (adminSecret) {
-      cookieHeaders.push(`nopalou_admin=${encodeURIComponent(adminSecret)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`);
-    }
     res.setHeader('Set-Cookie', cookieHeaders);
 
     await enregistrerAdminLog({

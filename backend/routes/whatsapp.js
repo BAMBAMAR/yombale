@@ -8,7 +8,16 @@ const router  = express.Router();
 // ── Vérification signature HMAC-SHA256 Meta ──────────────────────────────────
 function verifyHmac(req, res, next) {
   const secret = process.env.WHATSAPP_APP_SECRET;
-  if (!secret) return next(); // Pas de secret configuré = dev local, on passe
+
+  // SÉCURITÉ P1 : Fail-Closed strict. En production, si le secret est absent, on rejette.
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[WHATSAPP WEBHOOK] ERREUR P1: WHATSAPP_APP_SECRET manquant en production. Requête rejetée.');
+      return res.status(500).json({ error: 'Configuration serveur incomplète' });
+    }
+    // En développement uniquement : laisser passer sans signature
+    return next();
+  }
 
   const sig = req.headers['x-hub-signature-256'];
   if (!sig) return res.status(403).json({ error: 'Signature manquante' });

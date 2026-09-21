@@ -522,6 +522,28 @@ router.get('/commandes/suivi', async (req, res) => {
       const nomParts = (cmd.client_nom || 'Client').trim().split(' ');
       const maskedNom = nomParts.length > 1 ? `${nomParts[0]} ${nomParts[1].charAt(0)}.` : nomParts[0];
 
+      // SÉCURITÉ P2 : Limiter les données exposées selon le type de recherche.
+      // La recherche par téléphone seul ne renvoie PAS les détails produits ni les slugs boutique
+      // pour empêcher l'espionnage des habitudes d'achat d'un tiers à partir de son numéro.
+      if (!isReferenceSearch) {
+        return {
+          id: cmd.id,
+          reference: cmd.reference,
+          statut: cmd.statut,
+          montant_total: cmd.montant_total,
+          methode_paiement: cmd.methode_paiement,
+          created_at: cmd.created_at,
+          client_nom: maskedNom,
+          client_telephone: maskedTel,
+          // PII/détails retirés sur recherche par téléphone uniquement :
+          boutique_nom: 'Boutique Nopalou',
+          boutique_slug: null,
+          boutique_whatsapp: null,
+          nom_produit: null,
+          quantite: null,
+        };
+      }
+
       return {
         ...cmd,
         client_nom: maskedNom,
@@ -533,6 +555,7 @@ router.get('/commandes/suivi', async (req, res) => {
       success: true,
       commandes: sanitizedRows
     });
+
   } catch (err) {
     console.error('[GET SUIVI ERR]', err);
     res.status(500).json({ error: 'Erreur lors de la recherche du suivi de commande' });

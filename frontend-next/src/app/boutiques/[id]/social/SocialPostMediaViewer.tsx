@@ -10,11 +10,29 @@ interface SocialPostMediaViewerProps {
   boutiqueNom: string
 }
 
+// Domaines de réseaux sociaux autorisés pour les iframes d'intégration
+const ALLOWED_EMBED_ORIGINS = [
+  'www.facebook.com',
+  'www.instagram.com',
+  'www.tiktok.com',
+  'www.youtube.com',
+  'player.vimeo.com',
+  'open.spotify.com',
+]
+
+/**
+ * SÉCURITÉ P2 : Assainit le HTML d'intégration sociale contre les injections XSS.
+ * Seuls les iframes pointant vers des domaines de confiance explicitement listés sont autorisés.
+ * Tout autre contenu HTML (balises <script>, handlers onerror, etc.) est rejeté.
+ */
 function getRenderableEmbedHtml(post: SocialPost): string {
   if (!post.embed_html) return ''
 
+  // Cas Facebook : reconstruction propre d'une iframe Facebook officielle (jamais embed_html brut)
   if (post.plateforme === 'facebook' && (post.embed_html.includes('fb-post') || !post.embed_html.includes('<iframe'))) {
     const url = post.post_url
+    if (!url || !url.includes('facebook.com')) return ''
+
     const isVideoOrReel = /\/(reel|videos|watch)/i.test(url)
     const isPage = !isVideoOrReel && !/\/(posts|photos|story\.php|permalink\.php)/i.test(url)
 
@@ -30,8 +48,35 @@ function getRenderableEmbedHtml(post: SocialPost): string {
     return `<iframe src="${fbPluginUrl}" width="100%" height="480" style="border:none;overflow:hidden;border-radius:12px;background:#ffffff;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`
   }
 
-  return post.embed_html
+  // Pour tous les autres cas, vérifier que l'embed_html ne contient QUE des iframes
+  // et que les src de ces iframes pointent vers des domaines autorisés.
+  const embedHtml = String(post.embed_html || '')
+
+  // Bloquer tout contenu contenant des balises script ou handlers d'événements inline
+  if (/<script/i.test(embedHtml) || /on\w+\s*=/i.test(embedHtml) || /javascript:/i.test(embedHtml)) {
+    console.warn('[SEC-009] embed_html rejeté : contient du code JavaScript potentiellement dangereux')
+    return ''
+  }
+
+  // Extraire les src des iframes et valider les domaines
+  const srcMatches = embedHtml.matchAll(/src=["']([^"']+)["']/gi)
+  for (const match of srcMatches) {
+    try {
+      const srcUrl = new URL(match[1])
+      const isAllowed = ALLOWED_EMBED_ORIGINS.some(domain => srcUrl.hostname === domain || srcUrl.hostname.endsWith('.' + domain))
+      if (!isAllowed) {
+        console.warn(`[SEC-009] embed_html rejeté : domaine non autorisé ${srcUrl.hostname}`)
+        return ''
+      }
+    } catch {
+      console.warn('[SEC-009] embed_html rejeté : URL malformée dans src')
+      return ''
+    }
+  }
+
+  return embedHtml
 }
+
 
 export default function SocialPostMediaViewer({ post, boutiqueNom }: SocialPostMediaViewerProps) {
   const conf = PLATFORM_CONFIG[post.plateforme] || PLATFORM_CONFIG.tiktok

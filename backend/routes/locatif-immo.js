@@ -12,6 +12,7 @@ const {
   notifierConfirmationPaiementLoyerWhatsApp,
   notifierNouveauBailLocataireWhatsApp
 } = require('../services/immo-whatsapp-notifications');
+const wave = require('../services/wave');
 
 // ══════════════════════════════════════════════════════════════
 // 1. BAUX IMMOBILIERS
@@ -1109,11 +1110,11 @@ router.get('/public/quittance/:loyerId.pdf', async (req, res) => {
   }
 });
 
-// ── POST /api/locatif-immo/public/payer-loyer/:echeanceId — Paiement 1-clic Wave/Orange Money ──
+// ── POST /api/locatif-immo/public/payer-loyer/:echeanceId — Paiement 1-clic Wave / Déclaration ──
 router.post('/public/payer-loyer/:echeanceId', async (req, res) => {
   try {
     const { echeanceId } = req.params;
-    const { methode_paiement = 'Wave', reference_paiement } = req.body;
+    const { methode_paiement = 'Wave', reference_paiement, notes } = req.body;
 
     const { rows: echRows } = await pool.query(
       `SELECT le.*, ba.agence_id, ba.bien_id, ba.locataire_id
@@ -1129,43 +1130,65 @@ router.post('/public/payer-loyer/:echeanceId', async (req, res) => {
 
     const ech = echRows[0];
     if (ech.statut === 'paye') {
-      return res.json({ success: true, message: 'Loyer déjà acquitté', quittance_url: `/api/locatif-immo/mes-locations/quittance/${ech.id}.pdf` });
+      return res.json({
+        success: true,
+        message: 'Loyer déjà acquitté',
+        quittance_url: `/api/locatif-immo/mes-locations/quittance/${ech.id}.pdf`
+      });
     }
 
     const montantPaye = Number(ech.montant_du);
-    const quittanceRef = `QT-${ech.periode}-${ech.id.slice(0, 8).toUpperCase()}`;
+    const methodeLower = String(methode_paiement).toLowerCase();
 
+    // 1. Paiement en ligne Wave direct avec validation par webhook signé
+    if (methodeLower === 'wave') {
+      try {
+        const clientRef = `loyer_${echeanceId}_${Date.now()}`;
+        const session = await wave.createCheckoutSession({
+          amount:           montantPaye,
+          currency:         'XOF',
+          success_url:      `${process.env.FRONTEND_URL}/payer-loyer/${echeanceId}?statut=succes`,
+          error_url:        `${process.env.FRONTEND_URL}/payer-loyer/${echeanceId}?statut=erreur`,
+          client_reference: clientRef,
+        });
+
+        return res.json({
+          success: true,
+          en_ligne: true,
+          wave_url: session.wave_url,
+          session_id: session.session_id,
+          message: 'Session de paiement Wave initialisée'
+        });
+      } catch (waveErr) {
+        console.error('[Wave Payer Loyer Init Err]:', waveErr.message);
+        // Fallback sécurisé en cas d'indisponibilité temporaire de l'API Wave
+      }
+    }
+
+    // 2. Déclaration manuelle / hors-ligne (Espèces, Chèque, Virement) :
+    // SÉCURITÉ P0 : NE JAMAIS marquer comme 'paye' sans validation de la passerelle ou du bailleur !
     await pool.query(
       `UPDATE loyers_echeances
-       SET statut = 'paye',
-           montant_paye = $1,
-           montant_restant = 0,
-           date_paiement = NOW(),
-           mode_paiement = $2,
-           reference_paiement = $3,
-           quittance_url = $4,
+       SET statut = 'en_attente_validation',
+           mode_paiement = $1,
+           reference_paiement = $2,
+           notes = CONCAT(COALESCE(notes, ''), ' [Déclaration locataire le ', NOW()::date::text, ' : ', $3::text, ']'),
            updated_at = NOW()
-       WHERE id = $5`,
-      [montantPaye, methode_paiement, reference_paiement || `PAY-${Date.now()}`, quittanceRef, echeanceId]
+       WHERE id = $4`,
+      [methode_paiement, reference_paiement || `DEC-${Date.now()}`, notes || '', echeanceId]
     );
 
-    // Notification WhatsApp automatique
-    notifierConfirmationPaiementLoyerWhatsApp({
-      loyerId: echeanceId,
-      methodePaiement: methode_paiement
-    }).catch(() => {});
-
-      res.json({
-        success: true,
-        message: 'Paiement enregistré et quittance générée avec succès',
-        quittance_url: `/api/locatif-immo/mes-locations/quittance/${echeanceId}.pdf`
-      });
-    } catch (err) {
-      console.error('[POST /api/locatif-immo/public/payer-loyer/:echeanceId]', err.message);
-      res.status(500).json({ success: false, error: 'Erreur traitement du paiement de loyer' });
-    }
+    return res.json({
+      success: true,
+      en_attente_validation: true,
+      message: 'Déclaration de règlement transmise avec succès. Votre quittance officielle sera émise dès confirmation par l’agence / bailleur.'
+    });
+  } catch (err) {
+    console.error('[POST /api/locatif-immo/public/payer-loyer/:echeanceId]', err.message);
+    res.status(500).json({ success: false, error: 'Erreur traitement du paiement de loyer' });
   }
-);
+});
+
 
 // ── POST /api/locatif-immo/agence/:slugOrId/loyers/batch-encaisser — Encaissement groupé ──
 router.post(

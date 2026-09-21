@@ -693,12 +693,35 @@ async function envoyerSelecteurBoutiquesMarchand(phone, boutiques) {
 }
 
 // Vérification du Code PIN marchand (PIN de la boutique ou code d'un caissier actif)
+// SÉCURITÉ P1 : Ne JAMAIS utiliser '1234' comme fallback si code_pin est absent.
+// Un PIN non configuré = accès refusé jusqu'à configuration explicite.
 async function verifierCodePin(boutique, pinSaisi) {
   if (!boutique || !pinSaisi) return false;
   const pinNettoye = String(pinSaisi).trim();
-  const pinAttendu = String(boutique.code_pin || '1234').trim();
-  if (pinNettoye === pinAttendu) return true;
+  if (!pinNettoye) return false;
 
+  // SÉCURITÉ P1 : Si code_pin non configuré (null/vide/défaut), bloquer l'accès.
+  const pinBoutique = boutique.code_pin ? String(boutique.code_pin).trim() : null;
+  const PINS_TRIVIAUX = ['1234', '0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999'];
+
+  if (!pinBoutique || PINS_TRIVIAUX.includes(pinBoutique)) {
+    // PIN non sécurisé : refuser même si saisi correctement, forcer reconfiguration
+    // Exception : si le caissier a un PIN valide non trivial, on l'accepte quand même
+    try {
+      const { rows } = await pool.query(
+        `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE
+         AND code_pin NOT IN (${PINS_TRIVIAUX.map((_, i) => `$${i + 3}`).join(',')}) LIMIT 1`,
+        [boutique.id, pinNettoye, ...PINS_TRIVIAUX]
+      );
+      if (rows.length > 0) return true;
+    } catch (_) {}
+    return false;
+  }
+
+  // Vérification du PIN de la boutique
+  if (pinNettoye === pinBoutique) return true;
+
+  // Vérification du PIN d'un caissier actif (non trivial)
   try {
     const { rows } = await pool.query(
       `SELECT id FROM boutique_caissiers WHERE boutique_id = $1 AND code_pin = $2 AND actif = TRUE LIMIT 1`,

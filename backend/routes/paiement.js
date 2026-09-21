@@ -136,6 +136,53 @@ async function appliquerPaiementReussi(reference, montant, methode) {
       );
     }
   }
+  // Loyer immobilier : ref = loyer_echeanceId ou loyer_echeanceId_timestamp
+  if (ref && ref.startsWith('loyer_')) {
+    const parts = ref.split('_');
+    const echeanceId = parts[1];
+    if (echeanceId) {
+      try {
+        const { rows: echRows } = await pool.query(
+          `SELECT le.*, ba.agence_id, ba.bien_id, ba.locataire_id
+           FROM loyers_echeances le
+           JOIN baux_immo ba ON le.bail_id = ba.id
+           WHERE le.id = $1`,
+          [echeanceId]
+        );
+        if (echRows.length > 0 && echRows[0].statut !== 'paye') {
+          const ech = echRows[0];
+          const montantPaye = Number(ech.montant_du);
+          const quittanceRef = `QT-${ech.periode}-${ech.id.slice(0, 8).toUpperCase()}`;
+
+          await pool.query(
+            `UPDATE loyers_echeances
+             SET statut = 'paye',
+                 montant_paye = $1,
+                 montant_restant = 0,
+                 date_paiement = NOW(),
+                 mode_paiement = $2,
+                 reference_paiement = $3,
+                 quittance_url = $4,
+                 updated_at = NOW()
+             WHERE id = $5`,
+            [montantPaye, methode, ref, quittanceRef, echeanceId]
+          );
+
+          try {
+            const { notifierConfirmationPaiementLoyerWhatsApp } = require('../services/immo-whatsapp-notifications');
+            notifierConfirmationPaiementLoyerWhatsApp({
+              loyerId: echeanceId,
+              methodePaiement: methode
+            }).catch(() => {});
+          } catch (notifErr) {
+            console.warn('[NOTIF LOYER ERR]:', notifErr.message);
+          }
+        }
+      } catch (errLoyer) {
+        console.error('[PAIEMENT REUSSI LOYER ERR]:', errLoyer.message);
+      }
+    }
+  }
   // Boost annonce 7 jours : ref = boost_userId_annonceId
   if (ref && ref.startsWith('boost_')) {
     const annonceId = ref.split('_')[2];
@@ -679,11 +726,12 @@ router.post('/orange/initier', verifierToken, limiterEcriture, async (req, res) 
 
 // POST /api/paiement/orange/webhook — notification de paiement Orange Money
 router.post('/orange/webhook', limiterGeneral, async (req, res) => {
-  // Validation HMAC-SHA256 (même pattern que Wave)
-  if (process.env.ORANGE_WEBHOOK_SECRET) {
+  // Validation HMAC-SHA256 (Fail-Closed strict en production)
+  const orangeSecret = process.env.ORANGE_WEBHOOK_SECRET;
+  if (orangeSecret) {
     const sig      = req.headers['x-orange-signature'] || req.headers['authorization'] || '';
     const expected = crypto
-      .createHmac('sha256', process.env.ORANGE_WEBHOOK_SECRET)
+      .createHmac('sha256', orangeSecret)
       .update(req.rawBody || JSON.stringify(req.body)).digest('hex');
     const clean = sig.replace(/^sha256=/, '');
     const sigBuf = Buffer.from(clean, 'hex');
@@ -691,6 +739,9 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
     if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       return res.status(401).json({ error: 'Signature Orange invalide' });
     }
+  } else if (process.env.NODE_ENV === 'production') {
+    console.error('[ORANGE WEBHOOK] ERREUR P0: ORANGE_WEBHOOK_SECRET manquant en production');
+    return res.status(500).json({ error: 'Configuration serveur incomplète' });
   }
   try {
     const { status, order_id, amount } = req.body;

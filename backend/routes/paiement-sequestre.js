@@ -19,7 +19,8 @@ function hashPin(pin, sel) {
  * Génère un code PIN numérique à 4 chiffres sécurisé
  */
 function genererCodePin() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
+  // SÉCURITÉ P0 : Utiliser crypto.randomInt (PRNG cryptographique) au lieu de Math.random()
+  return crypto.randomInt(1000, 10000).toString();
 }
 
 // ── Migration légère à la volée des colonnes requises ───────────────────────────
@@ -122,12 +123,13 @@ Merci pour votre confiance sur Nopalou.`;
       });
     }
 
+    // SÉCURITÉ P0 : NE JAMAIS retourner le PIN en clair dans la réponse HTTP.
+    // Le PIN est délivré exclusivement via WhatsApp/SMS sécurisé au numéro du client.
     return res.json({
       success: true,
-      message: 'Fonds retenus sous séquestre Pay Safe',
+      message: 'Fonds retenus sous séquestre Pay Safe. Le code secret a été envoyé par WhatsApp au numéro du client.',
       statut_sequestre: 'bloque',
-      reference: cmd.reference,
-      pin: pin
+      reference: cmd.reference
     });
 
   } catch (err) {

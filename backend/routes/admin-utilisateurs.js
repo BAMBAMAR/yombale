@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
 const { envoyerEmail } = require('../services/email');
+const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
 
@@ -117,15 +118,52 @@ router.post('/:id/renvoyer-verification', adminSecretOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST /api/admin/utilisateurs/:id/lien-reset — génère le lien sans l'envoyer
+// POST /api/admin/utilisateurs/:id/lien-reset — génère un lien de réinitialisation (AUDIT+EMAIL)
+// SÉCURITÉ P1 : Token limité à 15 minutes, trace obligatoire dans admin_logs, email d'alerte à l'utilisateur
 router.post('/:id/lien-reset', adminSecretOnly, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id FROM utilisateurs WHERE id=$1', [req.params.id]);
+    const { rows } = await pool.query(
+      'SELECT id, nom, email FROM utilisateurs WHERE id=$1',
+      [req.params.id]
+    );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
-    const resetToken = jwt.sign({ userId: req.params.id, type: 'reset' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const user = rows[0];
+
+    // SÉCURITÉ P1 : Durée maximale de 15 minutes (au lieu de 1 heure précédemment)
+    const resetToken = jwt.sign(
+      { userId: user.id, type: 'reset' },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
     const lien = `${FRONTEND_URL}/mot-de-passe-oublie?token=${resetToken}`;
-    res.json({ lien });
+
+    // Traçabilité obligatoire : qui a généré le lien, sur quel compte, quand
+    const adminId = req.adminUser?.id || 'break-glass';
+    const adminNom = req.adminUser?.nom || 'Super Admin';
+    await enregistrerAdminLog({
+      adminNom,
+      adminRole: req.adminUser?.role || 'super_admin',
+      action: 'admin_lien_reset',
+      cibleType: 'utilisateur',
+      cibleId: user.id,
+      description: `Lien de réinitialisation de mot de passe généré pour ${user.email} par admin ${adminNom} (ID: ${adminId}). Expire dans 15 minutes.`,
+      req,
+    }).catch(() => {});
+
+    // Email d'alerte de sécurité : prévenir l'utilisateur qu'un admin a demandé la réinitialisation
+    if (user.email) {
+      envoyerEmail({
+        to: user.email,
+        subject: 'Nopalou — Réinitialisation de votre mot de passe demandée',
+        html: `<p>Bonjour ${user.nom},</p>
+               <p>Un administrateur Nopalou a généré un lien de réinitialisation de votre mot de passe.</p>
+               <p><a href="${lien}">Cliquez ici pour réinitialiser votre mot de passe</a> (lien valide 15 minutes).</p>
+               <p>Si vous n'avez pas fait cette demande, ignorez ce message ou contactez le support.</p>`,
+      }).catch(() => {});
+    }
+
+    res.json({ success: true, lien });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
