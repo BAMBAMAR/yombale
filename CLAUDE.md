@@ -23,6 +23,12 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Portée Variables & Transaction SQL Commande Express (`backend/routes/boutiques-modules/boutiques-commandes.js`) (21 septembre 2026)** 🛒⚡🔧✅ :
+  * **Portée `reductionVal`** : Remontée des variables `reductionVal`, `promoAppliquee` et `finalNote` au niveau supérieur de la fonction afin de résoudre le crash `ReferenceError: reductionVal is not defined` qui survenait hors du bloc `try`.
+  * **Sécurisation de la Libération Client (`releaseClient`)** : Remplacement de l'appel direct `client.release()` par un mécanisme idempotent `releaseClient()` pour empêcher l'erreur `Release called on client which has already been released to the pool` lors des retours anticipés (stock insuffisant, article indisponible) avant le bloc `finally`.
+  * **Protection En-têtes HTTP (`!res.headersSent`)** : Garde stricte sur les réponses HTTP 201 et 500 pour éliminer tout risque d'erreur `ERR_HTTP_HEADERS_SENT`.
+  * **Validation Factuelle** : Requête de test `POST /api/boutiques/commandes/express` exécutée avec succès (réponse 201, référence `CMD-20260921-164F39` générée avec succès).
+
 - **Résilience Serveur Node.js & Gestion des Doublons d'Offres Scraper (`backend/app.js`, `backend/services/scraper.js`) (21 septembre 2026)** 🛡️⚡🔄✅ :
   * **Insertion Offres sans URL (`scraper.js`)** : Ajout de la clause `ON CONFLICT (produit_id, marchand_id) DO UPDATE SET prix = EXCLUDED.prix, titre_marchand = EXCLUDED.titre_marchand, specs = EXCLUDED.specs, scraped_at = NOW(), stock = true` sur l'insertion des offres sans URL afin d'éviter l'erreur d'unicité `idx_offres_produit_marchand`.
   * **Résilience Processus (`app.js`)** : Ajout des gestionnaires `process.on('unhandledRejection')` et `process.on('uncaughtException')` pour empêcher tout arrêt inopiné du serveur HTTP lors des rejets asynchrones ou timeouts PostgreSQL des tâches de fond.
