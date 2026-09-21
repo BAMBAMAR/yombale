@@ -23,6 +23,21 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit Sécurité Applicative Complet & Remédiation Intégrale — SEC-001 à SEC-010 (21 septembre 2026)** 🛡️🔐 :
+  * **Contexte** : Audit exhaustif de sécurité (cybersécurité applicative, API, IAM, SaaS multi-tenant) + correction de toutes les vulnérabilités identifiées en une seule session.
+  * **Commit** : `29b22ebd` — 11 fichiers modifiés, +270 / -53 lignes.
+  * **SEC-001 [CRITIQUE] Fraude paiement loyer** (`backend/routes/locatif-immo.js`) : Suppression de la route de validation de paiement falsifiable côté client. Intégration Wave Checkout API sécurisée avec création de session de paiement serveur-side et callback HMAC.
+  * **SEC-002 [CRITIQUE] Fuite PIN séquestre Pay Safe** (`backend/routes/paiement-sequestre.js`) : Remplacement de `Math.random()` par `crypto.randomInt()` (PRNG cryptographique). Suppression du champ `pin` de la réponse JSON — délivrance PIN exclusivement via WhatsApp.
+  * **SEC-003 [CRITIQUE] Fuite ADMIN_SECRET en cookie** (`backend/routes/admin-auth.js`) : Suppression du cookie `nopalou_admin` transmettant `ADMIN_SECRET` en clair. Authentification admin basée uniquement sur le JWT nominatif `nopalou_admin_jwt`.
+  * **SEC-004 [HAUTE] Lien reset admin non tracé** (`backend/routes/admin-utilisateurs.js`) : Durée token reset `1h → 15min`. Audit log obligatoire dans `admin_logs`. Email d'alerte de sécurité envoyé à l'utilisateur concerné.
+  * **SEC-005 [CRITIQUE] Webhooks Fail-Open** (`backend/routes/paiement.js` + `whatsapp.js`) : Mode Fail-Closed strict sur les webhooks Orange Money et WhatsApp/Meta — rejet HTTP 500 si secret HMAC manquant en production.
+  * **SEC-006 [HAUTE] IP spoofing via CF-Connecting-IP** (`backend/middlewares/rateLimit.js`) : `req.ip` (Express `trust proxy`) prioritaire sur `CF-Connecting-IP` potentiellement forgeable par un client direct.
+  * **SEC-007 [MOYENNE] Énumération commandes via téléphone** (`backend/routes/boutiques-modules/boutiques-commandes.js`) : Recherche par numéro de téléphone — données produit, slug boutique et WhatsApp marchands masqués pour bloquer l'énumération IDOR.
+  * **SEC-008 [CRITIQUE] Bypass PIN chatbot WhatsApp** (`backend/services/whatsapp-chatbot.js`) : Suppression du fallback implicite sur `'1234'` si `code_pin` absent ou trivial. Blocage complet de l'accès jusqu'à configuration d'un PIN fort (liste noire de 11 codes triviaux).
+  * **SEC-009 [HAUTE] XSS via embeds sociaux marchands** (`frontend-next/src/app/boutiques/[id]/social/SocialPostMediaViewer.tsx`) : Validation domaine iframe via allowlist stricte (facebook/instagram/tiktok/youtube/vimeo/spotify), rejet de tout `<script>`, handler inline `on*=` ou `javascript:`.
+  * **SEC-010 [HAUTE] Next.js vulnérable** (`frontend-next/package.json`) : `^14.2.0 → ^14.2.35` corrigeant CVE-2024-34351 (SSRF), CVE-2024-46982 (ReDoS) et les correctifs suivants de la branche 14.x.
+  * **Actions infrastructure requises** : `npm install` dans `frontend-next/`, vérifier `ORANGE_WEBHOOK_SECRET` + `WHATSAPP_APP_SECRET` en prod, migration SQL recommandée `CHECK (code_pin !~ '^(0000|1111|1234)$')`.
+
 - **Audit Technique et Fiabilité Plateforme — Remédiations Intégrales P0 à P3 (`backend/`, `frontend-next/`, `PostgreSQL`) (21 septembre 2026)** 🛡️⚡🏎️💾✅ :
   * **🚨 1. P0 : Isolation Transactionnelle & Décrémentation Atomique de Stock (`boutiques-commandes.js`)** :
     - *Correction* : Réécriture du checkout express (`POST /api/boutiques/commandes/express`) sous transaction PostgreSQL explicite (`BEGIN ... COMMIT / ROLLBACK`) avec verrouillage pessimiste des lignes (`SELECT ... FOR UPDATE`).
