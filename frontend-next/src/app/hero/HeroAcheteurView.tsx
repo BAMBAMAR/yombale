@@ -23,11 +23,14 @@ export default function HeroAcheteurView({
   categoriesSlot
 }: HeroAcheteurViewProps) {
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', boxSizing: 'border-box' }}>
       <div className="hero-split-grid">
-        {/* Colonne Gauche : Recherche, Catégories et Raccourci Immo */}
+
+        {/* ── Colonne Gauche : Recherche, Catégories et Passerelles Pro ── */}
         <div className="hero-split-left">
-          <div>
+
+          {/* En-tête & Accroche */}
+          <div style={{ width: '100%' }}>
             <div style={{ marginBottom: 8 }}>
               <span className="badge-npl badge-npl-accent" style={{ fontSize: 11 }}>
                 Plateforme Officielle · Comparateur &amp; Boutiques Dakar
@@ -36,7 +39,7 @@ export default function HeroAcheteurView({
 
             <h1
               style={{
-                fontSize: 'clamp(20px, 2.3vw, 26px)',
+                fontSize: 'clamp(18px, 4.5vw, 26px)',
                 fontWeight: 900,
                 color: 'var(--navy, #1C2B4A)',
                 margin: '0 0 6px',
@@ -52,194 +55,91 @@ export default function HeroAcheteurView({
               style={{
                 fontSize: 13,
                 color: 'var(--text2, #5A4E42)',
-                margin: '0 0 12px',
-                maxWidth: 540,
-                lineHeight: 1.35
+                margin: '0 0 4px',
+                lineHeight: 1.35,
+                maxWidth: '100%'
               }}
             >
-              Comparez des milliers d&apos;offres réelles de boutiques vérifiées à Dakar • Zéro
-              commission acheteur • Livraison Tiak-Tiak rapide
+              Comparez des milliers d&apos;offres réelles de boutiques vérifiées à Dakar
+              • Zéro commission acheteur • Livraison Tiak-Tiak rapide
             </p>
           </div>
 
           {/* Slot Barre de Recherche */}
-          <div style={{ width: '100%', maxWidth: 540, marginBottom: 10 }}>
+          <div style={{ width: '100%', maxWidth: 540 }}>
             {searchBarSlot}
           </div>
 
           {/* Slot Ruban de Catégories */}
-          <div style={{ width: '100%', maxWidth: 540, marginBottom: 14 }}>
+          <div style={{ width: '100%', maxWidth: 540 }}>
             {categoriesSlot}
           </div>
 
-          {/* ── PASSERELLES D'ACCÈS RAPIDE AUX SOLUTIONS PRO (COMMERÇANTS & IMMOBILIER) ── */}
-          <div style={{ maxWidth: 540, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            
+          {/* ── PASSERELLES D'ACCÈS RAPIDE AUX SOLUTIONS PRO ── */}
+          <div className="hero-passerelles-wrap">
+
             {/* Passerelle 1 : Commerçants & Caisse POS Tactile Offline */}
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #FFFDF9 0%, #FFF7ED 100%)',
-                border: '1.5px solid #FED7AA',
-                borderRadius: 12,
-                padding: '9px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 10
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    background: 'rgba(199, 91, 0, 0.12)',
-                    color: 'var(--accent, #C75B00)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
+            <div className="hero-passerelle-card commercant">
+              <div className="hero-passerelle-main">
+                <div className="hero-passerelle-icon commercant">
                   <Store size={17} />
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                <div className="hero-passerelle-body">
+                  <div className="hero-passerelle-title-row">
+                    <span className="hero-passerelle-title">
                       Vous tenez un commerce ?
                     </span>
-                    <span
-                      style={{
-                        fontSize: 9.5,
-                        fontWeight: 800,
-                        background: '#DCFCE7',
-                        color: '#15803D',
-                        padding: '1px 6px',
-                        borderRadius: 6
-                      }}
-                    >
+                    <span className="hero-passerelle-badge badge-green">
                       Caisse Offline
                     </span>
                   </div>
-                  <span style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  <span className="hero-passerelle-sub">
                     Caisse tactile sur téléphone, carnet de dettes &amp; commandes WhatsApp
                   </span>
                 </div>
               </div>
-
-              <Link
-                href="/?mode=marchand#resultats"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '5px 10px',
-                  borderRadius: 8,
-                  background: 'var(--accent, #C75B00)',
-                  color: '#ffffff',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  flexShrink: 0,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                <span>Espace Caisse</span>
-                <ArrowRight size={12} />
-              </Link>
+              <div className="hero-passerelle-actions">
+                <Link
+                  href="/?mode=marchand#resultats"
+                  className="hero-passerelle-btn btn-accent"
+                >
+                  <span>Espace Caisse</span>
+                  <ArrowRight size={12} />
+                </Link>
+              </div>
             </div>
 
             {/* Passerelle 2 : Immobilier, Logements & Paiement de Loyer Wave */}
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #F8F5F0 0%, #FFFDF9 100%)',
-                border: '1px solid var(--border, #E8DDD2)',
-                borderRadius: 12,
-                padding: '9px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 10
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    background: 'rgba(28, 43, 74, 0.08)',
-                    color: 'var(--navy, #1C2B4A)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
+            <div className="hero-passerelle-card immo">
+              <div className="hero-passerelle-main">
+                <div className="hero-passerelle-icon immo">
                   <Building2 size={17} />
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--navy, #1C2B4A)' }}>
+                <div className="hero-passerelle-body">
+                  <div className="hero-passerelle-title-row">
+                    <span className="hero-passerelle-title">
                       Immobilier &amp; Baux
                     </span>
-                    <span
-                      style={{
-                        fontSize: 9.5,
-                        fontWeight: 800,
-                        background: 'rgba(28, 43, 74, 0.08)',
-                        color: 'var(--navy, #1C2B4A)',
-                        padding: '1px 6px',
-                        borderRadius: 6
-                      }}
-                    >
+                    <span className="hero-passerelle-badge badge-navy">
                       Dakar &amp; Régions
                     </span>
                   </div>
-                  <span style={{ fontSize: 11, color: 'var(--text2, #5A4E42)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  <span className="hero-passerelle-sub">
                     Locations, villas vérifiées &amp; quittances officielles OHADA
                   </span>
                 </div>
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <div className="hero-passerelle-actions">
                 <Link
                   href="/payer-loyer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                    padding: '5px 8px',
-                    borderRadius: 8,
-                    background: '#DCFCE7',
-                    color: '#15803D',
-                    border: '1px solid #BBF7D0',
-                    fontSize: 11,
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                    whiteSpace: 'nowrap'
-                  }}
+                  className="hero-passerelle-btn btn-loyer"
                 >
                   <CreditCard size={11} />
-                  <span>Payer Loyer</span>
+                  <span>Loyer</span>
                 </Link>
-
                 <Link
                   href="/immo"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3,
-                    padding: '5px 9px',
-                    borderRadius: 8,
-                    background: 'var(--navy, #1C2B4A)',
-                    color: '#ffffff',
-                    fontSize: 11,
-                    fontWeight: 800,
-                    textDecoration: 'none',
-                    whiteSpace: 'nowrap'
-                  }}
+                  className="hero-passerelle-btn btn-navy"
                 >
                   <span>Explorer</span>
                   <ArrowRight size={12} />
@@ -250,24 +150,10 @@ export default function HeroAcheteurView({
           </div>
         </div>
 
-        {/* Colonne Droite : Carte de Réassurance & Avantages Acheteurs */}
+        {/* ── Colonne Droite : Carte de Réassurance (Desktop uniquement) ── */}
         <div className="hero-split-right">
-          <div
-            style={{
-              background: 'linear-gradient(145deg, #FFFDF9 0%, #FFF7ED 100%)',
-              borderRadius: 18,
-              border: '1.5px solid #FED7AA',
-              padding: '16px 18px',
-              boxShadow: '0 8px 24px rgba(199,91,0,0.07)',
-              color: 'var(--navy, #1C2B4A)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: 12,
-              height: '100%',
-              boxSizing: 'border-box'
-            }}
-          >
+          {/* VERSION DESKTOP : carte complète avec bullet points */}
+          <div className="hero-guarantee-desktop">
             <div>
               <div
                 style={{
@@ -319,16 +205,10 @@ export default function HeroAcheteurView({
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <div
                     style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: '#DCFCE7',
-                      color: '#16A34A',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      marginTop: 1
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: '#DCFCE7', color: '#16A34A',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, marginTop: 1
                     }}
                   >
                     <Check size={13} strokeWidth={3} />
@@ -346,16 +226,10 @@ export default function HeroAcheteurView({
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <div
                     style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: '#DCFCE7',
-                      color: '#16A34A',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      marginTop: 1
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: '#DCFCE7', color: '#16A34A',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, marginTop: 1
                     }}
                   >
                     <MessageCircle size={13} strokeWidth={2.5} />
@@ -373,16 +247,10 @@ export default function HeroAcheteurView({
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <div
                     style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: '#DBEAFE',
-                      color: '#2563EB',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      marginTop: 1
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: '#DBEAFE', color: '#2563EB',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, marginTop: 1
                     }}
                   >
                     <Lock size={13} strokeWidth={2.5} />
@@ -441,7 +309,83 @@ export default function HeroAcheteurView({
               </Link>
             </div>
           </div>
+
+          {/* VERSION MOBILE : bannière de réassurance compacte en chips scrollables */}
+          <div className="hero-guarantee-mobile">
+            <div className="hero-guarantee-mobile-head">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  color: 'var(--accent, #C75B00)',
+                  fontWeight: 900,
+                  fontSize: 12
+                }}
+              >
+                <ShieldCheck size={15} />
+                <span>Garantie Nopalou</span>
+              </div>
+              <span
+                style={{
+                  fontSize: 10,
+                  background: '#DCFCE7',
+                  color: '#15803D',
+                  fontWeight: 800,
+                  padding: '1px 7px',
+                  borderRadius: 8
+                }}
+              >
+                100% Gratuit
+              </span>
+            </div>
+            <div className="hero-guarantee-mobile-chips">
+              <span className="hero-guarantee-chip">
+                <Check size={11} strokeWidth={3} style={{ color: '#16A34A' }} />
+                Boutiques Vérifiées
+              </span>
+              <span className="hero-guarantee-chip">
+                <MessageCircle size={11} strokeWidth={2.5} style={{ color: '#16A34A' }} />
+                WhatsApp Direct
+              </span>
+              <span className="hero-guarantee-chip chip-safe">
+                <Lock size={11} strokeWidth={2.5} />
+                Pay Safe Séquestre
+              </span>
+            </div>
+            <div className="hero-guarantee-mobile-links">
+              <Link
+                href="/boutiques"
+                style={{
+                  color: 'var(--accent, #C75B00)',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3
+                }}
+              >
+                <span>Boutiques</span>
+                <span>→</span>
+              </Link>
+              <Link
+                href="/agences"
+                style={{
+                  color: 'var(--navy, #1C2B4A)',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3
+                }}
+              >
+                <span>Agences Immo</span>
+                <span>→</span>
+              </Link>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   )

@@ -88,34 +88,24 @@ export default function HeroDualTrack({
   }
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
       {/* ── SÉLECTEUR D'INTENTION TRIPARTITE UNIFIÉ DANS LA MÊME CAPSULE (HAUTE VISIBILITÉ) ── */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          marginBottom: 16,
-          padding: '0 8px'
+          marginBottom: 14,
+          padding: '0 4px',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflowX: 'auto',
         }}
       >
         <div
           role="tablist"
           aria-label="Mode d'utilisation Nopalou"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            background: '#FFFFFF',
-            padding: '5px',
-            borderRadius: '9999px',
-            border: '1.5px solid var(--border, #D8CEC0)',
-            gap: 5,
-            boxShadow: '0 4px 16px rgba(28, 43, 74, 0.08), 0 1px 3px rgba(0,0,0,0.04)',
-            maxWidth: '100%',
-            overflowX: 'auto',
-            flexWrap: 'wrap',
-            justifyContent: 'center'
-          }}
+          className="hero-mode-tabs-pill"
         >
           {/* 1. Acheteur & Comparateur */}
           <button
@@ -123,22 +113,7 @@ export default function HeroDualTrack({
             role="tab"
             aria-selected={activeTab === 'acheteur'}
             onClick={() => switchTab('acheteur')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 18px',
-              borderRadius: '9999px',
-              fontSize: 13.5,
-              fontWeight: activeTab === 'acheteur' ? 800 : 650,
-              border: 'none',
-              cursor: 'pointer',
-              background: activeTab === 'acheteur' ? 'var(--navy, #1C2B4A)' : 'transparent',
-              color: activeTab === 'acheteur' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-              boxShadow: activeTab === 'acheteur' ? '0 3px 10px rgba(28,43,74,0.25)' : 'none',
-              transition: 'all 0.15s ease',
-              whiteSpace: 'nowrap'
-            }}
+            className={`hero-mode-tab-btn${activeTab === 'acheteur' ? ' active' : ''}`}
           >
             <ShoppingBag
               size={16}
@@ -153,52 +128,22 @@ export default function HeroDualTrack({
             role="tab"
             aria-selected={activeTab === 'marchand'}
             onClick={() => switchTab('marchand')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 18px',
-              borderRadius: '9999px',
-              fontSize: 13.5,
-              fontWeight: activeTab === 'marchand' ? 800 : 650,
-              border: 'none',
-              cursor: 'pointer',
-              background: activeTab === 'marchand' ? 'var(--navy, #1C2B4A)' : 'transparent',
-              color: activeTab === 'marchand' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-              boxShadow: activeTab === 'marchand' ? '0 3px 10px rgba(28,43,74,0.25)' : 'none',
-              transition: 'all 0.15s ease',
-              whiteSpace: 'nowrap'
-            }}
+            className={`hero-mode-tab-btn${activeTab === 'marchand' ? ' active' : ''}`}
           >
             <Store size={16} color={activeTab === 'marchand' ? '#FED7AA' : 'currentColor'} />
-            <span>Commerçant &amp; Caisse POS</span>
+            <span>Caisse POS</span>
             <span className="badge-npl badge-npl-accent" style={{ fontSize: 10, padding: '2px 6px', fontWeight: 800 }}>
               PRO
             </span>
           </button>
 
-          {/* 3. Agences Immo [PRO] (même badge PRO que commerçant) */}
+          {/* 3. Agences Immo [PRO] */}
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'agence'}
             onClick={() => switchTab('agence')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 18px',
-              borderRadius: '9999px',
-              fontSize: 13.5,
-              fontWeight: activeTab === 'agence' ? 800 : 650,
-              border: 'none',
-              cursor: 'pointer',
-              background: activeTab === 'agence' ? 'var(--navy, #1C2B4A)' : 'transparent',
-              color: activeTab === 'agence' ? '#FFFFFF' : 'var(--navy, #1C2B4A)',
-              boxShadow: activeTab === 'agence' ? '0 3px 10px rgba(28,43,74,0.25)' : 'none',
-              transition: 'all 0.15s ease',
-              whiteSpace: 'nowrap'
-            }}
+            className={`hero-mode-tab-btn${activeTab === 'agence' ? ' active' : ''}`}
           >
             <Building2 size={16} color={activeTab === 'agence' ? '#FED7AA' : 'var(--price, #0A5C36)'} />
             <span>Agences Immo</span>

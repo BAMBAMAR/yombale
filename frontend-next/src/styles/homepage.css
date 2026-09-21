@@ -788,22 +788,44 @@
 }
 
 
+/* ── Section Hero Dual Track Container ────────────────────────────── */
+.hero-dual-track-section {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 60%, var(--bg, #F8F5F0) 100%);
+  border-bottom: 1px solid var(--border, #E8DDD2);
+  padding: 16px 20px 14px;
+  position: relative;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .hero-dual-track-section {
+    padding: 10px 10px 10px;
+  }
+}
+
 /* ── Hero Split Layout (2 Colonnes Desktop, 1 Colonne Mobile) ────────── */
 .hero-split-grid {
   display: grid;
   grid-template-columns: 1.18fr 0.82fr;
-  gap: 22px;
+  gap: 20px;
   align-items: stretch;
   text-align: left;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hero-split-left {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 10px;
   text-align: left;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hero-split-right {
@@ -811,6 +833,8 @@
   flex-direction: column;
   justify-content: stretch;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hero-split-categories {
@@ -833,24 +857,356 @@
   flex-shrink: 0 !important;
 }
 
+/* Passerelles Rapides Pro (Commercants et Immobilier) */
+.hero-passerelles-wrap {
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  box-sizing: border-box;
+}
+
+.hero-passerelle-card {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.hero-passerelle-card.commercant {
+  background: linear-gradient(135deg, #FFFDF9 0%, #FFF7ED 100%);
+  border: 1.5px solid #FED7AA;
+}
+
+.hero-passerelle-card.immo {
+  background: linear-gradient(135deg, #F8F5F0 0%, #FFFDF9 100%);
+  border: 1px solid var(--border, #E8DDD2);
+}
+
+.hero-passerelle-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.hero-passerelle-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hero-passerelle-icon.commercant {
+  background: rgba(199, 91, 0, 0.12);
+  color: var(--accent, #C75B00);
+}
+
+.hero-passerelle-icon.immo {
+  background: rgba(28, 43, 74, 0.08);
+  color: var(--navy, #1C2B4A);
+}
+
+.hero-passerelle-body {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.hero-passerelle-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.hero-passerelle-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--navy, #1C2B4A);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-passerelle-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hero-passerelle-badge.badge-green {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.hero-passerelle-badge.badge-navy {
+  background: rgba(28, 43, 74, 0.08);
+  color: var(--navy, #1C2B4A);
+}
+
+.hero-passerelle-sub {
+  font-size: 11px;
+  color: var(--text2, #5A4E42);
+  display: block;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.hero-passerelle-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.hero-passerelle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hero-passerelle-btn.btn-accent {
+  background: var(--accent, #C75B00);
+  color: #ffffff;
+}
+
+.hero-passerelle-btn.btn-navy {
+  background: var(--navy, #1C2B4A);
+  color: #ffffff;
+}
+
+.hero-passerelle-btn.btn-loyer {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+/* Carte de Garantie Desktop vs Mobile */
+.hero-guarantee-desktop {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  height: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(145deg, #FFFDF9 0%, #FFF7ED 100%);
+  border-radius: 18px;
+  border: 1.5px solid #FED7AA;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(199,91,0,0.07);
+  color: var(--navy, #1C2B4A);
+}
+
+.hero-guarantee-mobile {
+  display: none;
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(145deg, #FFFDF9 0%, #FFF7ED 100%);
+  border: 1.5px solid #FED7AA;
+  border-radius: 12px;
+  padding: 9px 11px;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.hero-guarantee-mobile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hero-guarantee-mobile-chips {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+  width: 100%;
+}
+.hero-guarantee-mobile-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-guarantee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #FFFFFF;
+  border: 1px solid #FED7AA;
+  font-size: 10.5px;
+  font-weight: 750;
+  color: var(--navy, #1C2B4A);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hero-guarantee-chip.chip-safe {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+}
+
+.hero-guarantee-mobile-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #FED7AA;
+  font-size: 11px;
+}
+
+/* Mode Tab Bar Pills */
+.hero-mode-tabs-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #FFFFFF;
+  padding: 4px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border, #D8CEC0);
+  gap: 4px;
+  box-shadow: 0 4px 16px rgba(28, 43, 74, 0.08), 0 1px 3px rgba(0,0,0,0.04);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.hero-mode-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 650;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--navy, #1C2B4A);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.hero-mode-tab-btn.active {
+  background: var(--navy, #1C2B4A);
+  color: #FFFFFF;
+  font-weight: 800;
+  box-shadow: 0 3px 10px rgba(28,43,74,0.25);
+}
+
 @media (max-width: 1024px) {
   .hero-split-grid {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: stretch;
-    text-align: center;
-  }
-
-  .hero-split-left {
-    align-items: center;
-    text-align: center;
+    text-align: left;
     width: 100%;
   }
 
+  .hero-split-left {
+    align-items: stretch !important;
+    text-align: left !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .hero-split-right {
+    width: 100% !important;
+  }
+
   .hero-split-categories {
-    padding-left: 4px;
-    padding-right: 16px;
+    padding-left: 2px;
+    padding-right: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-guarantee-desktop {
+    display: none !important;
+  }
+
+  .hero-guarantee-mobile {
+    display: flex !important;
+  }
+
+  .hero-mode-tab-btn {
+    padding: 6px 11px;
+    font-size: 11.5px;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-passerelle-card {
+    padding: 7px 8px;
+    gap: 6px;
+  }
+  .hero-passerelle-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+  }
+  .hero-passerelle-title {
+    font-size: 11.5px;
+  }
+  .hero-passerelle-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+  .hero-passerelle-sub {
+    font-size: 10px;
+  }
+  .hero-passerelle-actions {
+    gap: 4px;
+  }
+  .hero-passerelle-btn {
+    padding: 4px 6px;
+    font-size: 10px;
+    gap: 3px;
+    border-radius: 6px;
+  }
+  .hero-mode-tab-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero-passerelle-sub {
+    display: none;
   }
 }
 

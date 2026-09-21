@@ -92,8 +92,11 @@ function HomeDualTrackContainerContent({
         padding: '16px 20px 14px',
         position: 'relative',
         overflow: 'hidden',
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
-        <div style={{ maxWidth: 1060, margin: '0 auto', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: 1060, margin: '0 auto', position: 'relative', zIndex: 2, width: '100%', boxSizing: 'border-box' }}>
+
           <HeroDualTrack
             activeTab={activeTab}
             onTabChange={handleTabChange}
