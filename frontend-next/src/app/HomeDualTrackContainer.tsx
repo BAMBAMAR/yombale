@@ -22,7 +22,6 @@ function HomeDualTrackContainerContent({
   buyerContentSlot
 }: Props) {
   const searchParams = useSearchParams()
-  const router = useRouter()
 
   const urlMode = searchParams.get('mode')
   const hasFilter = Boolean(
@@ -85,33 +84,55 @@ function HomeDualTrackContainerContent({
 
   return (
     <>
-      {/* ── SECTION HERO AVEC TRANSFORMATION DUELLE & TRIPARTITE ── */}
+      {/* ══════════════════════════════════════════
+          ZONE HERO : Tabs + H1 + Passerelles Pro
+          (sans recherche ni catégories)
+      ══════════════════════════════════════════ */}
       <section style={{
         background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 60%, var(--bg, #F8F5F0) 100%)',
         borderBottom: '1px solid var(--border, #E8DDD2)',
-        padding: '16px 20px 14px',
+        padding: '12px 20px 16px',
         position: 'relative',
         overflow: 'hidden',
         width: '100%',
         boxSizing: 'border-box',
       }}>
         <div style={{ maxWidth: 1060, margin: '0 auto', position: 'relative', zIndex: 2, width: '100%', boxSizing: 'border-box' }}>
-
           <HeroDualTrack
             activeTab={activeTab}
             onTabChange={handleTabChange}
             prixTafTaf={prixTafTaf}
-            searchBarSlot={searchBarSlot}
-            categoriesSlot={categoriesSlot}
           />
         </div>
       </section>
 
-      {/* ── CONTENU DU CORPS DE PAGE : METAMORPHOSE TOTALE SANS RECHARGEMENT ── */}
-      <main id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
+      {/* ══════════════════════════════════════════
+          ZONE RÉSULTATS : Catégories + Recherche + Filtres + Produits
+      ══════════════════════════════════════════ */}
+      <main id="resultats" className="page-container" style={{ maxWidth: 'var(--max-w, 1380px)', paddingTop: '0.75rem', paddingBottom: '0.5rem' }}>
         {activeTab === 'acheteur' ? (
           /* VUE 1 : CATALOGUE ACHETEUR, COMPARATEUR DE PRIX & FILTRES */
           <div>
+            {/* Catégories + Recherche : pont entre hero et résultats */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              marginBottom: 12,
+              width: '100%',
+              boxSizing: 'border-box',
+            }}>
+              {/* Ruban de catégories */}
+              <div style={{ width: '100%' }}>
+                {categoriesSlot}
+              </div>
+              {/* Barre de recherche */}
+              <div style={{ width: '100%' }}>
+                {searchBarSlot}
+              </div>
+            </div>
+
+            {/* Filtres + Produits */}
             {buyerContentSlot}
           </div>
         ) : activeTab === 'marchand' ? (

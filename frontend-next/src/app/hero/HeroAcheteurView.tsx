@@ -14,26 +14,27 @@ import {
 } from 'lucide-react'
 
 interface HeroAcheteurViewProps {
-  searchBarSlot: React.ReactNode
-  categoriesSlot: React.ReactNode
   tabSelectorSlot?: React.ReactNode
 }
 
-export default function HeroAcheteurView({
-  searchBarSlot,
-  categoriesSlot,
-  tabSelectorSlot
-}: HeroAcheteurViewProps) {
+export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewProps) {
   return (
     <div style={{ width: '100%', boxSizing: 'border-box' }}>
       <div className="hero-split-grid">
 
-        {/* ── Colonne Gauche : Recherche, Catégories et Passerelles Pro ── */}
+        {/* ── Colonne Gauche ── */}
         <div className="hero-split-left">
 
-          {/* En-tête & Accroche */}
+          {/* 1. TABS EN SOMMET */}
+          {tabSelectorSlot && (
+            <div style={{ width: '100%', maxWidth: 540, marginBottom: 12 }}>
+              {tabSelectorSlot}
+            </div>
+          )}
+
+          {/* 2. H1 & Accroche */}
           <div style={{ width: '100%' }}>
-            <div style={{ marginBottom: 8 }}>
+            <div style={{ marginBottom: 6 }}>
               <span className="badge-npl badge-npl-accent" style={{ fontSize: 11 }}>
                 Plateforme Officielle · Comparateur &amp; Boutiques Dakar
               </span>
@@ -57,7 +58,7 @@ export default function HeroAcheteurView({
               style={{
                 fontSize: 13,
                 color: 'var(--text2, #5A4E42)',
-                margin: '0 0 4px',
+                margin: '0 0 12px',
                 lineHeight: 1.35,
                 maxWidth: '100%'
               }}
@@ -67,24 +68,7 @@ export default function HeroAcheteurView({
             </p>
           </div>
 
-          {/* Slot Barre de Recherche */}
-          <div style={{ width: '100%', maxWidth: 540 }}>
-            {searchBarSlot}
-          </div>
-
-          {/* Slot Ruban de Catégories */}
-          <div style={{ width: '100%', maxWidth: 540 }}>
-            {categoriesSlot}
-          </div>
-
-          {/* Slot Sélecteur de Mode — juste au-dessus des passerelles Pro */}
-          {tabSelectorSlot && (
-            <div style={{ width: '100%', maxWidth: 540, marginBottom: 10 }}>
-              {tabSelectorSlot}
-            </div>
-          )}
-
-          {/* ── PASSERELLES D'ACCÈS RAPIDE AUX SOLUTIONS PRO ── */}
+          {/* 3. PASSERELLES D'ACCÈS RAPIDE AUX SOLUTIONS PRO */}
           <div className="hero-passerelles-wrap">
 
             {/* Passerelle 1 : Commerçants & Caisse POS Tactile Offline */}
@@ -108,10 +92,7 @@ export default function HeroAcheteurView({
                 </div>
               </div>
               <div className="hero-passerelle-actions">
-                <Link
-                  href="/?mode=marchand#resultats"
-                  className="hero-passerelle-btn btn-accent"
-                >
+                <Link href="/?mode=marchand#resultats" className="hero-passerelle-btn btn-accent">
                   <span>Espace Caisse</span>
                   <ArrowRight size={12} />
                 </Link>
@@ -139,17 +120,11 @@ export default function HeroAcheteurView({
                 </div>
               </div>
               <div className="hero-passerelle-actions">
-                <Link
-                  href="/payer-loyer"
-                  className="hero-passerelle-btn btn-loyer"
-                >
+                <Link href="/payer-loyer" className="hero-passerelle-btn btn-loyer">
                   <CreditCard size={11} />
                   <span>Loyer</span>
                 </Link>
-                <Link
-                  href="/immo"
-                  className="hero-passerelle-btn btn-navy"
-                >
+                <Link href="/immo" className="hero-passerelle-btn btn-navy">
                   <span>Explorer</span>
                   <ArrowRight size={12} />
                 </Link>
@@ -164,68 +139,27 @@ export default function HeroAcheteurView({
           {/* VERSION DESKTOP : carte complète avec bullet points */}
           <div className="hero-guarantee-desktop">
             <div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 8
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    color: 'var(--accent, #C75B00)',
-                    fontWeight: 900,
-                    fontSize: 13
-                  }}
-                >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent, #C75B00)', fontWeight: 900, fontSize: 13 }}>
                   <ShieldCheck size={18} />
                   <span>Garantie Shopping Nopalou</span>
                 </div>
-                <span
-                  style={{
-                    fontSize: 10.5,
-                    background: '#DCFCE7',
-                    color: '#15803D',
-                    fontWeight: 800,
-                    padding: '2px 8px',
-                    borderRadius: 10
-                  }}
-                >
+                <span style={{ fontSize: 10.5, background: '#DCFCE7', color: '#15803D', fontWeight: 800, padding: '2px 8px', borderRadius: 10 }}>
                   100% Gratuit
                 </span>
               </div>
 
-              <p
-                style={{
-                  margin: '0 0 12px',
-                  fontSize: 11.5,
-                  color: 'var(--text2, #5A4E42)',
-                  lineHeight: 1.4
-                }}
-              >
+              <p style={{ margin: '0 0 12px', fontSize: 11.5, color: 'var(--text2, #5A4E42)', lineHeight: 1.4 }}>
                 Trouvez le vendeur le plus proche au tarif le plus bas, sans intermédiaires cachés.
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <div
-                    style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: '#DCFCE7', color: '#16A34A',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, marginTop: 1
-                    }}
-                  >
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#DCFCE7', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                     <Check size={13} strokeWidth={3} />
                   </div>
                   <div style={{ fontSize: 12, lineHeight: 1.3 }}>
-                    <strong style={{ color: 'var(--navy, #1C2B4A)' }}>
-                      Boutiques &amp; Agences Vérifiées
-                    </strong>
+                    <strong style={{ color: 'var(--navy, #1C2B4A)' }}>Boutiques &amp; Agences Vérifiées</strong>
                     <div style={{ color: 'var(--text2, #5A4E42)', fontSize: 11 }}>
                       Commerces réels avec adresses physiques à Dakar (Sandaga, Médina, Almadies).
                     </div>
@@ -233,20 +167,11 @@ export default function HeroAcheteurView({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <div
-                    style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: '#DCFCE7', color: '#16A34A',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, marginTop: 1
-                    }}
-                  >
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#DCFCE7', color: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                     <MessageCircle size={13} strokeWidth={2.5} />
                   </div>
                   <div style={{ fontSize: 12, lineHeight: 1.3 }}>
-                    <strong style={{ color: 'var(--navy, #1C2B4A)' }}>
-                      Contact Direct WhatsApp
-                    </strong>
+                    <strong style={{ color: 'var(--navy, #1C2B4A)' }}>Contact Direct WhatsApp</strong>
                     <div style={{ color: 'var(--text2, #5A4E42)', fontSize: 11 }}>
                       Négociez et commandez en direct avec le commerçant ou l&apos;agence.
                     </div>
@@ -254,20 +179,11 @@ export default function HeroAcheteurView({
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <div
-                    style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: '#DBEAFE', color: '#2563EB',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, marginTop: 1
-                    }}
-                  >
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#DBEAFE', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                     <Lock size={13} strokeWidth={2.5} />
                   </div>
                   <div style={{ fontSize: 12, lineHeight: 1.3 }}>
-                    <strong style={{ color: '#1E40AF' }}>
-                      Nopalou Pay Safe (Paiement Séquestre)
-                    </strong>
+                    <strong style={{ color: '#1E40AF' }}>Nopalou Pay Safe (Paiement Séquestre)</strong>
                     <div style={{ color: 'var(--text2, #5A4E42)', fontSize: 11 }}>
                       Fonds bloqués jusqu&apos;à vérification physique du colis ou remise des clés.
                     </div>
@@ -276,75 +192,24 @@ export default function HeroAcheteurView({
               </div>
             </div>
 
-            <div
-              style={{
-                paddingTop: 8,
-                borderTop: '1px solid #FED7AA',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: 11.5,
-                flexWrap: 'wrap',
-                gap: 6
-              }}
-            >
-              <Link
-                href="/boutiques"
-                style={{
-                  color: 'var(--accent, #C75B00)',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3
-                }}
-              >
-                <span>Annuaire Boutiques</span>
-                <span>→</span>
+            <div style={{ paddingTop: 8, borderTop: '1px solid #FED7AA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, flexWrap: 'wrap', gap: 6 }}>
+              <Link href="/boutiques" style={{ color: 'var(--accent, #C75B00)', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <span>Annuaire Boutiques</span><span>→</span>
               </Link>
-              <Link
-                href="/agences"
-                style={{
-                  color: 'var(--navy, #1C2B4A)',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3
-                }}
-              >
-                <span>Agences Immobilières</span>
-                <span>→</span>
+              <Link href="/agences" style={{ color: 'var(--navy, #1C2B4A)', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <span>Agences Immobilières</span><span>→</span>
               </Link>
             </div>
           </div>
 
-          {/* VERSION MOBILE : bannière de réassurance compacte en chips scrollables */}
+          {/* VERSION MOBILE : bannière compacte chips */}
           <div className="hero-guarantee-mobile">
             <div className="hero-guarantee-mobile-head">
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  color: 'var(--accent, #C75B00)',
-                  fontWeight: 900,
-                  fontSize: 12
-                }}
-              >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--accent, #C75B00)', fontWeight: 900, fontSize: 12 }}>
                 <ShieldCheck size={15} />
                 <span>Garantie Nopalou</span>
               </div>
-              <span
-                style={{
-                  fontSize: 10,
-                  background: '#DCFCE7',
-                  color: '#15803D',
-                  fontWeight: 800,
-                  padding: '1px 7px',
-                  borderRadius: 8
-                }}
-              >
+              <span style={{ fontSize: 10, background: '#DCFCE7', color: '#15803D', fontWeight: 800, padding: '1px 7px', borderRadius: 8 }}>
                 100% Gratuit
               </span>
             </div>
@@ -363,33 +228,11 @@ export default function HeroAcheteurView({
               </span>
             </div>
             <div className="hero-guarantee-mobile-links">
-              <Link
-                href="/boutiques"
-                style={{
-                  color: 'var(--accent, #C75B00)',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3
-                }}
-              >
-                <span>Boutiques</span>
-                <span>→</span>
+              <Link href="/boutiques" style={{ color: 'var(--accent, #C75B00)', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <span>Boutiques</span><span>→</span>
               </Link>
-              <Link
-                href="/agences"
-                style={{
-                  color: 'var(--navy, #1C2B4A)',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3
-                }}
-              >
-                <span>Agences Immo</span>
-                <span>→</span>
+              <Link href="/agences" style={{ color: 'var(--navy, #1C2B4A)', fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <span>Agences Immo</span><span>→</span>
               </Link>
             </div>
           </div>
