@@ -43,6 +43,11 @@ export async function middleware(req: NextRequest) {
   }
   
   if (legacyToSpa[pathname]) {
+    if (!session) {
+      const loginUrl = new URL('/connexion', req.nextUrl)
+      loginUrl.searchParams.set('redirect', `/compte?tab=${legacyToSpa[pathname]}`)
+      return NextResponse.redirect(loginUrl)
+    }
     const url = new URL('/compte', req.nextUrl)
     url.searchParams.set('tab', legacyToSpa[pathname])
     return NextResponse.redirect(url)

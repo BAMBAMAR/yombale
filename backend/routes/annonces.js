@@ -288,6 +288,12 @@ router.post('/admin/:id/boost', adminSecretOnly, async (req, res) => {
 });
 
 
+// ── GET /api/annonces/publiques — alias explicite pour la liste publique (évite capture par :id)
+router.get('/publiques', (req, res, next) => {
+  req.url = '/' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
+  return router.handle(req, res, next);
+});
+
 // ── GET /api/annonces/:id — détail
 router.get('/:id', param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });

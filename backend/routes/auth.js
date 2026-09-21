@@ -142,6 +142,10 @@ router.post('/connexion',
   }
 );
 
+// Alias d'internationalisation / compatibilité API
+router.post('/login', (req, res) => res.redirect(307, '/api/auth/connexion'));
+router.post('/register', (req, res) => res.redirect(307, '/api/auth/inscription'));
+
 // POST /api/auth/connexion-2fa — valider le code 2FA WhatsApp
 router.post('/connexion-2fa',
   limiterAuth,

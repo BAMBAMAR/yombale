@@ -76,8 +76,32 @@ module.exports = async function migrateInline() {
       EXCEPTION WHEN others THEN NULL; END $$;
       CREATE INDEX IF NOT EXISTS idx_offres_produit ON offres(produit_id);
       CREATE INDEX IF NOT EXISTS idx_offres_prix    ON offres(prix);
-      -- Index composite : couvre les filtres stock=true + tri par prix (toutes les queries offres)
       CREATE INDEX IF NOT EXISTS idx_offres_produit_stock_prix ON offres(produit_id, stock, prix);
+
+      -- Dédoublonnage robuste d'offres & Index UNIQUE (TECH-02)
+      DO $$ 
+      DECLARE
+        r RECORD;
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM offres GROUP BY produit_id, marchand_id HAVING count(*) > 1 LIMIT 1
+        ) THEN
+          FOR r IN 
+            SELECT produit_id, marchand_id, 
+                   (SELECT id FROM offres o2 WHERE o2.produit_id = o1.produit_id AND o2.marchand_id = o1.marchand_id ORDER BY prix ASC, scraped_at DESC LIMIT 1) AS winner_id
+            FROM offres o1
+            GROUP BY produit_id, marchand_id
+            HAVING count(*) > 1
+          LOOP
+            UPDATE historique_prix SET offre_id = r.winner_id 
+            WHERE offre_id IN (SELECT id FROM offres WHERE produit_id = r.produit_id AND marchand_id = r.marchand_id AND id != r.winner_id);
+            
+            DELETE FROM offres WHERE produit_id = r.produit_id AND marchand_id = r.marchand_id AND id != r.winner_id;
+          END LOOP;
+        END IF;
+      EXCEPTION WHEN others THEN NULL; END $$;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_offres_produit_marchand ON offres(produit_id, marchand_id);
 
       CREATE TABLE IF NOT EXISTS historique_prix (
         id       BIGSERIAL PRIMARY KEY,
@@ -2396,6 +2420,18 @@ module.exports = async function migrateInline() {
         created_at     TIMESTAMPTZ DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_kalpe_epargne_obj ON kalpe_epargne_mouvements(objectif_id);
+
+      -- Indexation des clés étrangères critiques (TECH-04)
+      CREATE INDEX IF NOT EXISTS idx_ventes_produit_id ON ventes(produit_id);
+      CREATE INDEX IF NOT EXISTS idx_ventes_caissier_id ON ventes(caissier_id);
+      CREATE INDEX IF NOT EXISTS idx_ventes_boutique_id ON ventes(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_commandes_boutique_produit_id ON commandes_boutique(produit_id);
+      CREATE INDEX IF NOT EXISTS idx_commandes_boutique_boutique_id ON commandes_boutique(boutique_id);
+      CREATE INDEX IF NOT EXISTS idx_produits_categorie_id ON produits(categorie_id);
+      CREATE INDEX IF NOT EXISTS idx_caisse_docs_client_id ON caisse_documents(client_id);
+      CREATE INDEX IF NOT EXISTS idx_caisse_docs_caissier_id ON caisse_documents(caissier_id);
+      CREATE INDEX IF NOT EXISTS idx_boutique_pos_sessions_caissier_id ON boutique_pos_sessions(caissier_id);
+      CREATE INDEX IF NOT EXISTS idx_clics_affiliation_produit_id ON clics_affiliation(produit_id);
     `);
     console.log('[MIGRATE] ✅ Sama Xaalis: 6 tables créées avec succès');
   } catch (err) {

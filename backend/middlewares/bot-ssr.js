@@ -8,7 +8,6 @@ const { pool } = require('../models/db');
 
 const BOT_RE = /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|ia_archiver|twitterbot|linkedinbot|whatsapp|applebot|rogerbot|semrushbot|ahrefsbot/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const FRONTEND = path.join(__dirname, '../../frontend/index.html');
 
 function isBot(ua) { return BOT_RE.test(ua || ''); }
 
@@ -16,6 +15,22 @@ function esc(s) {
   return (s == null ? '' : String(s))
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderNotFound(res, message = 'Contenu introuvable') {
+  res.status(404).send(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <title>404 — Non trouvé | Nopalou</title>
+</head>
+<body style="font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:50px 20px;background:#f8fafc;color:#1e293b">
+  <h1 style="font-size:24px;margin-bottom:8px">404 — Non trouvé</h1>
+  <p style="color:#64748b;margin-bottom:20px">${esc(message)}</p>
+  <a href="https://nopalou.com" style="color:#c75b00;text-decoration:none;font-weight:600">← Retour à l'accueil Nopalou</a>
+</body>
+</html>`);
 }
 
 function fcfa(n) {
@@ -61,7 +76,7 @@ async function renderProduit(req, res, id) {
         [id]
       ),
     ]);
-    if (!pRes.rows[0]) return res.sendFile(FRONTEND);
+    if (!pRes.rows[0]) return renderNotFound(res, 'Ce produit n\'existe pas ou a été retiré.');
 
     const p = pRes.rows[0];
     const offres = oRes.rows;
@@ -135,7 +150,7 @@ async function renderProduit(req, res, id) {
     }));
   } catch (err) {
     console.error('[BOT-SSR produit]', err.message);
-    res.sendFile(FRONTEND);
+    renderNotFound(res, 'Une erreur temporaire est survenue lors du chargement du produit.');
   }
 }
 
@@ -145,7 +160,7 @@ async function renderImmo(req, res, id) {
       "SELECT * FROM annonces_immo WHERE id = $1 AND statut = 'approuvee'",
       [id]
     );
-    if (!r.rows[0]) return res.sendFile(FRONTEND);
+    if (!r.rows[0]) return renderNotFound(res, 'Cette annonce immobilière n\'existe pas ou n\'est plus disponible.');
     const a = r.rows[0];
 
     const schema = JSON.stringify({
@@ -183,7 +198,7 @@ async function renderImmo(req, res, id) {
     }));
   } catch (err) {
     console.error('[BOT-SSR immo]', err.message);
-    res.sendFile(FRONTEND);
+    renderNotFound(res, 'Une erreur temporaire est survenue lors du chargement de l\'annonce.');
   }
 }
 

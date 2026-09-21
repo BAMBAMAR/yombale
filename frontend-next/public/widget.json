@@ -1,0 +1,65 @@
+{
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "Bons Plans Nopalou",
+      "weight": "Bolder",
+      "size": "Medium",
+      "color": "Accent"
+    },
+    {
+      "type": "TextBlock",
+      "text": "${subtitle}",
+      "isSubtle": true,
+      "wrap": true,
+      "spacing": "None"
+    },
+    {
+      "type": "Container",
+      "$data": "${items}",
+      "spacing": "Medium",
+      "separator": true,
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "${nom}",
+                  "weight": "Bolder",
+                  "wrap": true,
+                  "maxLines": 2
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "${prix} FCFA",
+                  "color": "Good",
+                  "weight": "Bolder",
+                  "spacing": "None"
+                }
+              ]
+            }
+          ],
+          "selectAction": {
+            "type": "Action.OpenUrl",
+            "url": "${url}"
+          }
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "Ouvrir Nopalou",
+      "url": "https://nopalou.com"
+    }
+  ]
+}

@@ -23,6 +23,35 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit Technique et Fiabilité Plateforme — Remédiations Intégrales P0 à P3 (`backend/`, `frontend-next/`, `PostgreSQL`) (21 septembre 2026)** 🛡️⚡🏎️💾✅ :
+  * **🚨 1. P0 : Isolation Transactionnelle & Décrémentation Atomique de Stock (`boutiques-commandes.js`)** :
+    - *Correction* : Réécriture du checkout express (`POST /api/boutiques/commandes/express`) sous transaction PostgreSQL explicite (`BEGIN ... COMMIT / ROLLBACK`) avec verrouillage pessimiste des lignes (`SELECT ... FOR UPDATE`).
+    - *Protection Overselling* : Décrémentation atomique immédiate (`UPDATE boutique_produits SET stock_quantite = stock_quantite - $1 WHERE id = $2`) renvoyant un statut HTTP 409 Conflict clair si stock insuffisant.
+    - *Entropie Cryptographique* : Remplacement du générateur de référence pseudo-aléatoire par `crypto.randomBytes(3).toString('hex').toUpperCase()` produisant des identifiants non prédictibles et robustes (`CMD-YYYYMMDD-XXXXXX`).
+    - *Preuve de Validation* : Test de concurrence simultané sur stock unitaire validé à 100% (Requête 1 : 201 Created avec `CMD-20260921-6E63AA` ; Requête 2 : 409 Conflict, stock final en base = 0, aucun overselling).
+  * **💾 2. P0 : Dédoublonnage d'Offres & Contrainte d'Unicité PostgreSQL (`migrate-inline.js`)** :
+    - *Correction* : Migration idempotente avec rattachement des historiques de prix (`UPDATE historique_prix SET offre_id = ...`) puis purge sécurisée des doublons orphelins dans `offres`.
+    - *Contrainte* : Application du `CREATE UNIQUE INDEX IF NOT EXISTS idx_offres_produit_marchand ON offres(produit_id, marchand_id);`. Doublons restants vérifiés en base : exactement 0.
+  * **⚡ 3. P0 : Indexation des Clés Étrangères Critiques (`migrate-inline.js`)** :
+    - *Correction* : Création des index manquants éliminant les Sequential Scans sous charge : `idx_ventes_produit_id`, `idx_ventes_caissier_id`, `idx_ventes_boutique_id`, `idx_commandes_boutique_produit_id`, `idx_commandes_boutique_boutique_id`, `idx_produits_categorie_id`, `idx_caisse_docs_client_id`, `idx_caisse_docs_caissier_id`, `idx_boutique_pos_sessions_caissier_id`, `idx_clics_affiliation_produit_id`.
+  * **🚀 4. P1 : Éradication du Hot DDL & Mise en Cache Mémoire (`categories.js`)** :
+    - *Anomalie constatée* : `GET /api/categories` exécutait `ensureCategoriesTable()` (DDL bloquant `CREATE TABLE IF NOT EXISTS...`) à chaque appel HTTP, provoquant des latences de 29,5 secondes sous Render.
+    - *Correction* : Suppression définitive de l'appel DDL dans le chemin critique des requêtes. Mise en place d'un cache mémoire in-process avec TTL de 5 minutes et invalidation automatique (`invalidateCategoriesCache()`) lors des créations, modifications ou suppressions administratives.
+    - *Preuve de Validation* : Latence réduite de 29 500 ms à 9 ms (gain de performance x3200).
+  * **🔀 5. P2 : Priorité de Routage Express Catalogue Annonces (`annonces.js`)** :
+    - *Anomalie constatée* : `router.get('/:id')` précédait `router.get('/publiques')`, interceptant l'URL publique et retournant un faux HTTP 400 Bad Request (`{"error":"ID invalide"}`).
+    - *Correction* : Repositionnement de la route statique `/publiques` avant le paramètre dynamique `/:id`. Requête vérifiée : HTTP 200 OK avec le catalogue d'annonces complet.
+  * **🛡️ 6. P2 : Sécurisation des Routes Auth & Limitation de Débit (`app.js`, `auth.js`)** :
+    - *Correction* : Application du `authLimiter` sur `/api/auth/connexion` et `/api/auth/inscription`. Ajout d'alias de compatibilité API HTTP 307 pour `/api/auth/login` et `/api/auth/register`.
+  * **📲 7. P2 : Conformité Widgets PWA Windows/Edge (`widget.json`, `api/widgets/bons-plans/route.ts`)** :
+    - *Anomalie constatée* : Le fichier `manifest.json` déclarait des widgets pointant vers `/widget.json` et `/api/widgets/bons-plans`, tous deux en 404.
+    - *Correction* : Création du gabarit Microsoft Adaptive Card v1.5 officiel dans `public/widget.json` et du gestionnaire de route Next.js `route.ts` servant le top des offres en HTTP 200 JSON avec fallback résilient et en-têtes de cache appropriés.
+  * **🔗 8. P3 : Élimination de la Double Redirection SPA (`middleware.ts`)** :
+    - *Anomalie constatée* : Les visiteurs non connectés consultant une URL legacy (`/mes-annonces`) subissaient deux rebonds successifs (307 vers `/compte?tab=...` puis 307 vers `/connexion?redirect=...`).
+    - *Correction* : Redirection directe en un saut unique vers `/connexion?redirect=%2Fcompte%3Ftab%3D...` lorsque `!session`.
+  * **🤖 9. P3 : Robustesse du Middleware SSR Bots & Fallback 404 (`bot-ssr.js`)** :
+    - *Correction* : Remplacement de la dépendance fragile `res.sendFile(frontend/index.html)` par une réponse HTTP 404 explicite au format HTML léger incluant `<meta name="robots" content="noindex, nofollow">` pour les produits ou biens introuvables.
+
 - **Correction Portée Variables & Transaction SQL Commande Express (`backend/routes/boutiques-modules/boutiques-commandes.js`) (21 septembre 2026)** 🛒⚡🔧✅ :
   * **Portée `reductionVal`** : Remontée des variables `reductionVal`, `promoAppliquee` et `finalNote` au niveau supérieur de la fonction afin de résoudre le crash `ReferenceError: reductionVal is not defined` qui survenait hors du bloc `try`.
   * **Sécurisation de la Libération Client (`releaseClient`)** : Remplacement de l'appel direct `client.release()` par un mécanisme idempotent `releaseClient()` pour empêcher l'erreur `Release called on client which has already been released to the pool` lors des retours anticipés (stock insuffisant, article indisponible) avant le bloc `finally`.

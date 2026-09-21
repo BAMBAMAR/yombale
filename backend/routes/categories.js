@@ -112,10 +112,23 @@ async function ensureCategoriesTable() {
   categoriesTableEnsured = true;
 }
 
+// Cache mémoire pour la liste publique des catégories (TTL: 5 minutes)
+let categoriesCache = null;
+let categoriesCacheTime = 0;
+const CATEGORIES_CACHE_TTL = 5 * 60 * 1000;
+
+function invalidateCategoriesCache() {
+  categoriesCache = null;
+  categoriesCacheTime = 0;
+}
+
 // ── GET /api/categories — Liste publique des catégories actives
 router.get('/', async (req, res) => {
   try {
-    await ensureCategoriesTable();
+    if (categoriesCache && (Date.now() - categoriesCacheTime < CATEGORIES_CACHE_TTL)) {
+      return res.json({ categories: categoriesCache });
+    }
+
     try {
       const { rows } = await pool.query(`
         SELECT c.id, c.nom, c.slug,
@@ -128,21 +141,24 @@ router.get('/', async (req, res) => {
         WHERE COALESCE(c.actif, TRUE) = TRUE
         ORDER BY COALESCE(c.ordre, 0) ASC, c.nom ASC
       `);
+      categoriesCache = rows;
+      categoriesCacheTime = Date.now();
       return res.json({ categories: rows });
     } catch (eQuery) {
       const { rows } = await pool.query(`SELECT * FROM categories WHERE COALESCE(actif, TRUE) = TRUE ORDER BY nom ASC`);
-      return res.json({
-        categories: rows.map(c => ({
-          id: c.id,
-          nom: c.nom,
-          slug: c.slug,
-          icone: c.icone || '📦',
-          description: c.description || '',
-          ordre: c.ordre || 0,
-          nb_produits: 0,
-          nb_annonces: 0,
-        })),
-      });
+      const mapped = rows.map(c => ({
+        id: c.id,
+        nom: c.nom,
+        slug: c.slug,
+        icone: c.icone || '📦',
+        description: c.description || '',
+        ordre: c.ordre || 0,
+        nb_produits: 0,
+        nb_annonces: 0,
+      }));
+      categoriesCache = mapped;
+      categoriesCacheTime = Date.now();
+      return res.json({ categories: mapped });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -227,6 +243,7 @@ router.post('/admin', adminSecretOnly, async (req, res) => {
       row = rows[0];
     }
 
+    invalidateCategoriesCache();
     res.json({ success: true, categorie: row });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -247,6 +264,7 @@ router.put('/admin/reordonner', adminSecretOnly, async (req, res) => {
       }
     }
 
+    invalidateCategoriesCache();
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -280,6 +298,7 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
       [newNom, newSlug, newIcone, newDesc, newActif, newOrdre, cur.id]
     );
 
+    invalidateCategoriesCache();
     res.json({ success: true, categorie: rows[0] });
   } catch (err) {
     if (err.code === '23505') {
@@ -313,6 +332,7 @@ router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
       nbA = check.rows[0]?.nb_annonces || 0;
     } catch (_) {}
 
+    invalidateCategoriesCache();
     if (nbP > 0 || nbA > 0) {
       await pool.query('UPDATE categories SET actif = FALSE WHERE id = $1', [cat.id]);
       return res.json({
