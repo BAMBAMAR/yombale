@@ -67,13 +67,6 @@ export default function HeroAcheteurView({
             </p>
           </div>
 
-          {/* Slot Sélecteur de Mode — juste au-dessus de la recherche */}
-          {tabSelectorSlot && (
-            <div style={{ width: '100%', maxWidth: 540, marginBottom: 8 }}>
-              {tabSelectorSlot}
-            </div>
-          )}
-
           {/* Slot Barre de Recherche */}
           <div style={{ width: '100%', maxWidth: 540 }}>
             {searchBarSlot}
@@ -83,6 +76,13 @@ export default function HeroAcheteurView({
           <div style={{ width: '100%', maxWidth: 540 }}>
             {categoriesSlot}
           </div>
+
+          {/* Slot Sélecteur de Mode — juste au-dessus des passerelles Pro */}
+          {tabSelectorSlot && (
+            <div style={{ width: '100%', maxWidth: 540, marginBottom: 10 }}>
+              {tabSelectorSlot}
+            </div>
+          )}
 
           {/* ── PASSERELLES D'ACCÈS RAPIDE AUX SOLUTIONS PRO ── */}
           <div className="hero-passerelles-wrap">
