@@ -99,13 +99,13 @@ export default function HeroDualTrack({
           padding: '0 4px',
           width: '100%',
           boxSizing: 'border-box',
-          overflowX: 'auto',
         }}
       >
         <div
           role="tablist"
           aria-label="Mode d'utilisation Nopalou"
           className="hero-mode-tabs-pill"
+          style={{ width: '100%' }}
         >
           {/* 1. Acheteur & Comparateur */}
           <button
@@ -119,7 +119,8 @@ export default function HeroDualTrack({
               size={16}
               color={activeTab === 'acheteur' ? '#FED7AA' : 'var(--accent, #C75B00)'}
             />
-            <span>Acheteur &amp; Comparateur</span>
+            <span className="tab-label-full">Acheteur &amp; Comparateur</span>
+            <span className="tab-label-short">Acheteur</span>
           </button>
 
           {/* 2. Commerçant & Caisse POS [PRO] */}
@@ -131,10 +132,8 @@ export default function HeroDualTrack({
             className={`hero-mode-tab-btn${activeTab === 'marchand' ? ' active' : ''}`}
           >
             <Store size={16} color={activeTab === 'marchand' ? '#FED7AA' : 'currentColor'} />
-            <span>Caisse POS</span>
-            <span className="badge-npl badge-npl-accent" style={{ fontSize: 10, padding: '2px 6px', fontWeight: 800 }}>
-              PRO
-            </span>
+            <span>Caisse</span>
+            <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
           </button>
 
           {/* 3. Agences Immo [PRO] */}
@@ -146,10 +145,9 @@ export default function HeroDualTrack({
             className={`hero-mode-tab-btn${activeTab === 'agence' ? ' active' : ''}`}
           >
             <Building2 size={16} color={activeTab === 'agence' ? '#FED7AA' : 'var(--price, #0A5C36)'} />
-            <span>Agences Immo</span>
-            <span className="badge-npl badge-npl-accent" style={{ fontSize: 10, padding: '2px 6px', fontWeight: 800 }}>
-              PRO
-            </span>
+            <span className="tab-label-full">Agences Immo</span>
+            <span className="tab-label-short">Immo</span>
+            <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
           </button>
         </div>
       </div>
