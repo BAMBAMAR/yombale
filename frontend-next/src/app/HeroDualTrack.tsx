@@ -87,84 +87,89 @@ export default function HeroDualTrack({
     }
   }
 
+  // ── Sélecteur d'intention tripartite (slot réutilisable) ────────────────
+  const tabSelector = (
+    <div
+      role="tablist"
+      aria-label="Mode d'utilisation Nopalou"
+      className="hero-mode-tabs-pill"
+      style={{ width: '100%' }}
+    >
+      {/* 1. Acheteur & Comparateur */}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'acheteur'}
+        onClick={() => switchTab('acheteur')}
+        className={`hero-mode-tab-btn${activeTab === 'acheteur' ? ' active' : ''}`}
+      >
+        <ShoppingBag
+          size={16}
+          color={activeTab === 'acheteur' ? '#FED7AA' : 'var(--accent, #C75B00)'}
+        />
+        <span className="tab-label-full">Acheteur &amp; Comparateur</span>
+        <span className="tab-label-short">Acheteur</span>
+      </button>
+
+      {/* 2. Commerçant & Caisse POS [PRO] */}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'marchand'}
+        onClick={() => switchTab('marchand')}
+        className={`hero-mode-tab-btn${activeTab === 'marchand' ? ' active' : ''}`}
+      >
+        <Store size={16} color={activeTab === 'marchand' ? '#FED7AA' : 'currentColor'} />
+        <span>Caisse</span>
+        <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
+      </button>
+
+      {/* 3. Agences Immo [PRO] */}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'agence'}
+        onClick={() => switchTab('agence')}
+        className={`hero-mode-tab-btn${activeTab === 'agence' ? ' active' : ''}`}
+      >
+        <Building2 size={16} color={activeTab === 'agence' ? '#FED7AA' : 'var(--price, #0A5C36)'} />
+        <span className="tab-label-full">Agences Immo</span>
+        <span className="tab-label-short">Immo</span>
+        <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
+      </button>
+    </div>
+  )
+
   return (
     <div style={{ width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
-      {/* ── SÉLECTEUR D'INTENTION TRIPARTITE UNIFIÉ DANS LA MÊME CAPSULE (HAUTE VISIBILITÉ) ── */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginBottom: 14,
-          padding: '0 4px',
-          width: '100%',
-          boxSizing: 'border-box',
-        }}
-      >
-        <div
-          role="tablist"
-          aria-label="Mode d'utilisation Nopalou"
-          className="hero-mode-tabs-pill"
-          style={{ width: '100%' }}
-        >
-          {/* 1. Acheteur & Comparateur */}
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'acheteur'}
-            onClick={() => switchTab('acheteur')}
-            className={`hero-mode-tab-btn${activeTab === 'acheteur' ? ' active' : ''}`}
-          >
-            <ShoppingBag
-              size={16}
-              color={activeTab === 'acheteur' ? '#FED7AA' : 'var(--accent, #C75B00)'}
-            />
-            <span className="tab-label-full">Acheteur &amp; Comparateur</span>
-            <span className="tab-label-short">Acheteur</span>
-          </button>
-
-          {/* 2. Commerçant & Caisse POS [PRO] */}
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'marchand'}
-            onClick={() => switchTab('marchand')}
-            className={`hero-mode-tab-btn${activeTab === 'marchand' ? ' active' : ''}`}
-          >
-            <Store size={16} color={activeTab === 'marchand' ? '#FED7AA' : 'currentColor'} />
-            <span>Caisse</span>
-            <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
-          </button>
-
-          {/* 3. Agences Immo [PRO] */}
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'agence'}
-            onClick={() => switchTab('agence')}
-            className={`hero-mode-tab-btn${activeTab === 'agence' ? ' active' : ''}`}
-          >
-            <Building2 size={16} color={activeTab === 'agence' ? '#FED7AA' : 'var(--price, #0A5C36)'} />
-            <span className="tab-label-full">Agences Immo</span>
-            <span className="tab-label-short">Immo</span>
-            <span className="tab-badge-pro badge-npl badge-npl-accent">PRO</span>
-          </button>
-        </div>
-      </div>
 
       {/* ── RENDU DYNAMIQUE DU HERO SELON L'ONGLET ACTIF ── */}
       {activeTab === 'acheteur' ? (
+        // Pour l'acheteur : le sélecteur s'affiche juste au-dessus de la barre de recherche
         <HeroAcheteurView
           searchBarSlot={searchBarSlot}
           categoriesSlot={categoriesSlot}
+          tabSelectorSlot={tabSelector}
         />
       ) : activeTab === 'marchand' ? (
-        <HeroMarchandView
-          prixTafTaf={prixTafTaf}
-          activeBoutiqueNom={activeBoutiqueNom}
-        />
+        // Pour le marchand : le sélecteur reste en haut
+        <>
+          <div style={{ marginBottom: 14, width: '100%', boxSizing: 'border-box' }}>
+            {tabSelector}
+          </div>
+          <HeroMarchandView
+            prixTafTaf={prixTafTaf}
+            activeBoutiqueNom={activeBoutiqueNom}
+          />
+        </>
       ) : (
-        <HeroAgenceHeaderView />
+        // Pour l'agence : le sélecteur reste en haut
+        <>
+          <div style={{ marginBottom: 14, width: '100%', boxSizing: 'border-box' }}>
+            {tabSelector}
+          </div>
+          <HeroAgenceHeaderView />
+        </>
       )}
     </div>
   )

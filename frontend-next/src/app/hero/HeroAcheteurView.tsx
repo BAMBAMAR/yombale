@@ -16,11 +16,13 @@ import {
 interface HeroAcheteurViewProps {
   searchBarSlot: React.ReactNode
   categoriesSlot: React.ReactNode
+  tabSelectorSlot?: React.ReactNode
 }
 
 export default function HeroAcheteurView({
   searchBarSlot,
-  categoriesSlot
+  categoriesSlot,
+  tabSelectorSlot
 }: HeroAcheteurViewProps) {
   return (
     <div style={{ width: '100%', boxSizing: 'border-box' }}>
@@ -64,6 +66,13 @@ export default function HeroAcheteurView({
               • Zéro commission acheteur • Livraison Tiak-Tiak rapide
             </p>
           </div>
+
+          {/* Slot Sélecteur de Mode — juste au-dessus de la recherche */}
+          {tabSelectorSlot && (
+            <div style={{ width: '100%', maxWidth: 540, marginBottom: 8 }}>
+              {tabSelectorSlot}
+            </div>
+          )}
 
           {/* Slot Barre de Recherche */}
           <div style={{ width: '100%', maxWidth: 540 }}>
