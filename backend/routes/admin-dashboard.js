@@ -13,8 +13,9 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
     let dateFilterProcessedAt = "processed_at >= NOW() - INTERVAL '30 days'";
 
     if (period === 'today') {
-      dateFilterSql = "created_at::date = CURRENT_DATE";
-      dateFilterProcessedAt = "processed_at::date = CURRENT_DATE";
+      // DATA-009 : AT TIME ZONE 'UTC' explicite pour éviter toute ambiguïté timezone serveur
+      dateFilterSql = "created_at AT TIME ZONE 'UTC' >= (NOW() AT TIME ZONE 'UTC')::date AND created_at AT TIME ZONE 'UTC' < (NOW() AT TIME ZONE 'UTC')::date + INTERVAL '1 day'";
+      dateFilterProcessedAt = "processed_at AT TIME ZONE 'UTC' >= (NOW() AT TIME ZONE 'UTC')::date AND processed_at AT TIME ZONE 'UTC' < (NOW() AT TIME ZONE 'UTC')::date + INTERVAL '1 day'";
     } else if (period === '7d') {
       dateFilterSql = "created_at >= NOW() - INTERVAL '7 days'";
       dateFilterProcessedAt = "processed_at >= NOW() - INTERVAL '7 days'";
@@ -24,7 +25,7 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
     }
 
     // 1. Business & Finances
-    const [comptaRes, abmtRes, paiementsManuelsRes] = await Promise.all([
+    const [comptaRes, commandesWebRes, abmtRes, paiementsManuelsRes] = await Promise.all([
       pool.query(`
         SELECT
           COALESCE(SUM(montant_total), 0) AS ca_total_ventes,
@@ -32,6 +33,15 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
         FROM ventes
         WHERE archivee IS NOT TRUE AND montant_total > 0 AND ${dateFilterSql}
       `).catch(() => ({ rows: [{ ca_total_ventes: 0, nb_ventes_total: 0 }] })),
+      // DATA-008 : Volume commandes web (distincte du CA ventes POS encaissé)
+      pool.query(`
+        SELECT
+          COALESCE(SUM(montant_total) FILTER (WHERE statut != 'annulee'), 0) AS volume_commandes_web,
+          COALESCE(SUM(montant_total) FILTER (WHERE statut != 'annulee' AND paiement_recu = TRUE), 0) AS ca_commandes_web_encaisse,
+          COUNT(*) FILTER (WHERE statut != 'annulee') AS nb_commandes_web_actives
+        FROM commandes_boutique
+        WHERE ${dateFilterSql}
+      `).catch(() => ({ rows: [{ volume_commandes_web: 0, ca_commandes_web_encaisse: 0, nb_commandes_web_actives: 0 }] })),
       pool.query(`
         SELECT
           COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW()), 0) AS mrr,
@@ -65,11 +75,13 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       pool.query(`
         SELECT
           COUNT(*) AS total_boutiques,
-          COUNT(*) FILTER (WHERE actif = TRUE AND (SELECT 1 FROM utilisateurs u WHERE u.id = boutiques.utilisateur_id) IS NOT NULL) AS boutiques_actives,
+          -- DATA-007 : remplacement de la sous-requête correlated O(n) par un LEFT JOIN
+          COUNT(u.id) FILTER (WHERE b.actif = TRUE) AS boutiques_actives,
           COUNT(*) FILTER (WHERE ${dateFilterSql}) AS nouvelles_boutiques_periode,
           COUNT(*) FILTER (WHERE sponsorise = TRUE AND (sponsor_jusqu_au IS NULL OR sponsor_jusqu_au > NOW())) AS boutiques_sponsorisees,
-          COUNT(*) FILTER (WHERE (SELECT COUNT(*) FROM boutique_produits WHERE boutique_id = boutiques.id) = 0) AS boutiques_zero_produit
-        FROM boutiques
+          COUNT(*) FILTER (WHERE (SELECT COUNT(*) FROM boutique_produits WHERE boutique_id = b.id) = 0) AS boutiques_zero_produit
+        FROM boutiques b
+        LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id
       `).catch(() => ({ rows: [{ total_boutiques: 0, boutiques_actives: 0, nouvelles_boutiques_periode: 0 }] })),
     ]);
 
@@ -159,8 +171,13 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       period,
       generatedAt: new Date().toISOString(),
       finances: {
+        // CA POS encaissé (ventes saisies en caisse)
         ca_total_ventes: Number(comptaRes.rows[0]?.ca_total_ventes || 0),
         nb_ventes_total: parseInt(comptaRes.rows[0]?.nb_ventes_total || 0),
+        // DATA-008 : Volume commandes web (commandé ≠ encaissé)
+        volume_commandes_web: Number(commandesWebRes.rows[0]?.volume_commandes_web || 0),
+        ca_commandes_web_encaisse: Number(commandesWebRes.rows[0]?.ca_commandes_web_encaisse || 0),
+        nb_commandes_web_actives: parseInt(commandesWebRes.rows[0]?.nb_commandes_web_actives || 0),
         mrr: Number(abmtRes.rows[0]?.mrr || 0),
         abonnements_actifs: parseInt(abmtRes.rows[0]?.abonnements_actifs || 0),
         nouveaux_abonnements_periode: parseInt(abmtRes.rows[0]?.nouveaux_abonnements_periode || 0),

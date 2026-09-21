@@ -652,7 +652,10 @@ router.get(
       const { rows: ventes } = await pool.query(queryVentes, paramsVentes);
 
       // 2. Récupération des dépenses
-      let queryDepenses = 'SELECT * FROM depenses_boutique WHERE boutique_id = $1';
+      // CORRECTION DATA-010 : la vraie table est 'depenses' (utilisée dans le bilan, CRUD, etc.)
+      // 'depenses_boutique' était une référence erronée inexistante dans ce fichier
+      let queryDepenses = 'SELECT * FROM depenses WHERE boutique_id = $1';
+
       const paramsDepenses = [req.params.boutiqueId];
       if (from && !isNaN(from.getTime())) {
         paramsDepenses.push(from.toISOString().slice(0, 10));

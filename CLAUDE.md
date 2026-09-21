@@ -23,6 +23,29 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Fiabilisation des Données, Analytics & KPI : Résolution des Anomalies P0/P1/P2/P3 (`backend/routes/analytics.js`, `backend/routes/comptabilite.js`, `backend/routes/admin-dashboard.js`) (21 septembre 2026)** 📊🎯🛡️⚡✅ :
+  * **🚨 Contexte & Audit Diagnostique** :
+    - À la suite d'un audit exhaustif de la fiabilité des données de bout en bout (actions utilisateur &rarr; ingestion &rarr; calculs &rarr; dashboards), plusieurs anomalies de calcul et de nommage de tables ont été corrigées.
+  * **🛠️ Correctifs Appliqués** :
+    - **P0 — Table Dépenses SYSCOHADA (`backend/routes/comptabilite.js`) [DATA-010]** :
+      * Remplacement de la référence erronée `FROM depenses_boutique` par la table réelle `FROM depenses` dans l'export SYSCOHADA (`/boutiques/:boutiqueId/syscohada`), unifiant le modèle avec le reste du module comptabilité (bilans, journal, CRUD).
+    - **P1 — Addition Multicanal CA Marchand (`backend/routes/analytics.js`) [DATA-001]** :
+      * Remplacement de l'opérateur de fallback exclusif `ca_global_total || total_ventes_web` par une addition rigoureuse : `caTotal = caPOS + caWeb`.
+      * Exposition détaillée des métriques `ca_ventes_pos` (caisse physique) et `total_ventes_web` (e-commerce) dans le payload pour une transparence totale sur le mix de vente.
+    - **P1 — Découplage Ventes POS vs Commandes Web Admin (`backend/routes/admin-dashboard.js`) [DATA-008]** :
+      * Ajout des métriques `volume_commandes_web`, `ca_commandes_web_encaisse` et `nb_commandes_web_actives` distinctes du `ca_total_ventes` (POS caisse), évitant toute confusion entre volume commandé en ligne et montants encaissés au comptoir.
+    - **P2 — Alignement des Filtres de Périodes Personnalisées (`backend/routes/analytics.js`) [DATA-002]** :
+      * Prise en compte immédiate des filtres `date_debut` et `date_fin` dans le décompte des statistiques fixes (`vues_ce_mois`, `clics_tel_mois`, `vues_annonces_mois`) au lieu de forcer `DATE_TRUNC('month', NOW())`.
+    - **P2 — Sécurisation Timezone UTC (`backend/routes/admin-dashboard.js`) [DATA-009]** :
+      * Application explicite de `AT TIME ZONE 'UTC'` sur `created_at` et `NOW()` pour le filtre `period === 'today'`, éliminant tout décalage temporel lié à l'horloge système du serveur.
+    - **P3 — Optimisation Requête Boutiques Actives (`backend/routes/admin-dashboard.js`) [DATA-007]** :
+      * Remplacement de la sous-requête corrélée O(n) sur `utilisateurs` par un `LEFT JOIN utilisateurs u ON u.id = b.utilisateur_id` avec `COUNT(u.id) FILTER (WHERE b.actif = TRUE)`.
+    - **P3 — Événement Commande Analytics (`backend/routes/analytics.js`) [E-001]** :
+      * Remplacement de `type='commande_web'` par `type='commande_confirmee'` dans le SELECT d'analytics marchandes, alignant le filtre sur le type d'événement réellement produit lors de la validation d'une commande.
+  * **🧪 Validation Technique** :
+    - Vérification de syntaxe Node.js (`node --check`) : 0 erreur sur tous les fichiers modifiés.
+    - Tests unitaires analytics et comptabilité exécutés avec succès.
+
 - **Restructuration Zones Hero vs Resultats — UX Coherente (21 septembre 2026)** :
   * Zone Hero : Tabs EN SOMMET, H1, Passerelles Pro (plus de recherche ni categories dans le hero)
   * Zone Resultats : Ruban Categories, Barre Recherche, Filtres, Produits

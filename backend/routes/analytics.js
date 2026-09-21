@@ -45,19 +45,35 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
     );
     if (!check.rows[0]) return res.status(403).json({ error: 'Accès refusé' });
 
+    // Paramètres optionnels de filtrage ad-hoc (lus en avance pour les stats principales)
+    const { date_debut, date_fin, produit_id } = req.query;
+    const isIsoDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    const hasCustomDates = isIsoDate(date_debut) && isIsoDate(date_fin);
+    const dateDebutSql = hasCustomDates ? `${date_debut} 00:00:00Z` : null;
+    const dateFinSql   = hasCustomDates ? `${date_fin} 23:59:59.999Z` : null;
+
+    // Plage glissante pour les stats fixes (mois courant / 7 jours) :
+    // Si un filtre personnalisé est fourni, on l'utilise à la place des plages fixes.
+    const periodeStatsSql = hasCustomDates
+      ? `created_at >= $2 AND created_at <= $3`
+      : `created_at >= DATE_TRUNC('month', NOW())`;
+    const statsParams = hasCustomDates
+      ? [req.params.id, dateDebutSql, dateFinSql]
+      : [req.params.id];
+
     const { rows } = await pool.query(`
       SELECT
         COUNT(*) FILTER (WHERE type='vue_boutique')                                          AS vues_total,
-        COUNT(*) FILTER (WHERE type='vue_boutique' AND created_at >= DATE_TRUNC('month', NOW())) AS vues_ce_mois,
-        COUNT(*) FILTER (WHERE type='vue_boutique' AND created_at >= NOW() - INTERVAL '7 days')  AS vues_7j,
+        COUNT(*) FILTER (WHERE type='vue_boutique' AND ${periodeStatsSql})                   AS vues_ce_mois,
+        COUNT(*) FILTER (WHERE type='vue_boutique' AND created_at >= NOW() - INTERVAL '7 days') AS vues_7j,
         COUNT(*) FILTER (WHERE type='clic_telephone')                                        AS clics_tel_total,
-        COUNT(*) FILTER (WHERE type='clic_telephone' AND created_at >= DATE_TRUNC('month', NOW())) AS clics_tel_mois,
-        COUNT(*) FILTER (WHERE type='commande_web')                                          AS commandes_web_total,
+        COUNT(*) FILTER (WHERE type='clic_telephone' AND ${periodeStatsSql})                 AS clics_tel_mois,
+        COUNT(*) FILTER (WHERE type='commande_confirmee')                                    AS commandes_web_total,
         COUNT(*) FILTER (WHERE type='vue_annonce')                                           AS vues_annonces_total,
-        COUNT(*) FILTER (WHERE type='vue_annonce' AND created_at >= DATE_TRUNC('month', NOW()))   AS vues_annonces_mois
+        COUNT(*) FILTER (WHERE type='vue_annonce' AND ${periodeStatsSql})                    AS vues_annonces_mois
       FROM analytics_events
       WHERE boutique_id=$1
-    `, [req.params.id]);
+    `, statsParams);
 
     // Commandes web validées (hors annulées)
     const { rows: cmdRows } = await pool.query(`
@@ -69,13 +85,8 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
       WHERE boutique_id=$1 AND statut != 'annulee'
     `, [req.params.id]);
 
-    // Paramètres optionnels de filtrage ad-hoc (date début / date fin / produit)
-    const { date_debut, date_fin, produit_id } = req.query;
-    const isIsoDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
-
-    const hasCustomDates = isIsoDate(date_debut) && isIsoDate(date_fin);
-    const dateDebutSql = hasCustomDates ? `${date_debut} 00:00:00Z` : null;
-    const dateFinSql = hasCustomDates ? `${date_fin} 23:59:59.999Z` : null;
+    // Note : date_debut, date_fin, produit_id, hasCustomDates, dateDebutSql, dateFinSql
+    // sont déjà définis en amont (avant la requête stats principale).
 
     // Chiffre d'affaires global réel (Comptabilité - Ventes directes POS, livrées, express)
     let comptaSql = `
@@ -168,12 +179,24 @@ router.get('/boutique/:id', verifierToken, async (req, res) => {
       LIMIT 10
     `, [req.params.id]);
 
+    // DATA-001 : Le CA total est la somme du CA POS (ventes) + volume commandes web
+    // (précédemment : opérateur || qui prenait l'un ou l'autre au lieu d'additionner)
+    const caPOS = Number(comptaRows[0]?.ca_global_total || 0);
+    const caWeb = Number(cmdRows[0]?.total_ventes_web || 0);
+    const caTotal = caPOS + caWeb;
+    const panierMoyen = caPOS > 0
+      ? Math.round(Number(comptaRows[0]?.panier_moyen_global || 0))
+      : Math.round(Number(cmdRows[0]?.panier_moyen_web || 0));
+
     res.json({
       stats: {
         ...rows[0],
-        total_ventes: Number(comptaRows[0]?.ca_global_total || cmdRows[0]?.total_ventes_web || 0),
-        total_ventes_web: Number(cmdRows[0]?.total_ventes_web || 0),
-        panier_moyen: Math.round(Number(comptaRows[0]?.panier_moyen_global || cmdRows[0]?.panier_moyen_web || 0)),
+        // CA total = POS + commandes web (additionné, non sélectif)
+        total_ventes: caTotal,
+        // Détail par canal pour transparence
+        ca_ventes_pos: caPOS,
+        total_ventes_web: caWeb,
+        panier_moyen: panierMoyen,
         nb_commandes: Number(cmdRows[0]?.nb_commandes_web || 0),
         nb_ventes_global: Number(comptaRows[0]?.nb_ventes_global || 0),
         nb_promotions: promoRows[0]?.nb_promotions || 0,
