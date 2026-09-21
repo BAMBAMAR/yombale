@@ -23,6 +23,37 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Restructuration Zones Hero vs Resultats — UX Coherente (21 septembre 2026)** :
+  * Zone Hero : Tabs EN SOMMET, H1, Passerelles Pro (plus de recherche ni categories dans le hero)
+  * Zone Resultats : Ruban Categories, Barre Recherche, Filtres, Produits
+  * HomeDualTrackContainer, HeroDualTrack, HeroAcheteurView refactorises
+  * Commits : 26535198, 4bab058c, 7462f2d5, 2719a24d, b57a3ff7
+
+- **Fix Mobile : Refactorisation Hero Section — Zéro Overflow, Passerelles Adaptatives & Bannière Garantie Compacte (21 septembre 2026)** 📱🔧✅ :
+  * **Contexte** : Bugs visuels constatés sur viewport mobile (360–412px) : texte des passerelles clippe à gauche/droite ("us tenez", "Espace [Ex]"), carte de garantie occupe 350px de vertical, tabs débordent du viewport, scroll horizontal intempestif.
+  * **Root Cause identifiée** : `align-items: center` sur `.hero-split-left` dans `@media (max-width: 1024px)` centralize les enfants flex dont la `min-width` dépasse le viewport, clipant ~25px de chaque côté. La `hero-split-right` desktop ne se masquait pas sur mobile.
+  * **`frontend-next/src/styles/homepage.css`** :
+    - Suppression de `align-items: center; text-align: center` dans `.hero-split-left` mobile, remplacé par `align-items: stretch !important; text-align: left !important`.
+    - Ajout classes CSS réutilisables `.hero-passerelles-wrap`, `.hero-passerelle-card`, `.hero-passerelle-main`, `.hero-passerelle-icon`, `.hero-passerelle-body`, `.hero-passerelle-title-row`, `.hero-passerelle-title`, `.hero-passerelle-badge`, `.hero-passerelle-sub`, `.hero-passerelle-actions`, `.hero-passerelle-btn` avec variantes `.commercant`, `.immo`, `.btn-accent`, `.btn-navy`, `.btn-loyer`.
+    - Ajout classes `.hero-guarantee-desktop` (visible desktop) et `.hero-guarantee-mobile` (masqué desktop, visible ≤ 768px via `display: flex !important`).
+    - Ajout classes `.hero-guarantee-chip`, `.chip-safe`, `.hero-guarantee-mobile-chips`, `.hero-guarantee-mobile-head`, `.hero-guarantee-mobile-links`.
+    - Ajout classes `.hero-mode-tabs-pill` et `.hero-mode-tab-btn` pour les onglets tripartites avec responsive 480px / 768px.
+    - Media queries progressives : 1024px (colonne → stack), 768px (switch carte garantie), 480px (padding réduit passerelles), 360px (masquage sous-texte passerelle).
+  * **`frontend-next/src/app/hero/HeroAcheteurView.tsx`** :
+    - Refactorisation complète des passerelles (Commerçant & Immobilier) : remplacement des styles inline par les nouvelles classes CSS.
+    - Bouton Passerelle Immo : condensé en 2 boutons courts "Loyer" + "Explorer →" (au lieu de "Payer Loyer" + "Explorer" pour éviter dépassement de largeur sur 360px).
+    - Ajout du bloc `.hero-guarantee-mobile` : bannière chips scrollable compacte affichant "Boutiques Vérifiées / WhatsApp Direct / Pay Safe Séquestre" + liens Boutiques → et Agences Immo →.
+    - La carte `.hero-guarantee-desktop` reste inchangée fonctionnellement.
+  * **`frontend-next/src/app/HeroDualTrack.tsx`** :
+    - Tabs tripartites migrées de styles inline vers classes CSS `.hero-mode-tabs-pill` / `.hero-mode-tab-btn` / `.active`.
+    - Ajout `overflowX: 'hidden'` sur wrapper principal + `overflowX: 'auto'` sur la div contenant les tabs.
+    - Label "Commerçant & Caisse POS" → "Caisse POS" pour gain de place sur mobile.
+  * **`frontend-next/src/app/HomeDualTrackContainer.tsx`** :
+    - `overflow: 'hidden'` → `overflow: 'hidden'` + `width: '100%'` + `boxSizing: 'border-box'` sur la `<section>`.
+    - Ajout `width: '100%'` + `boxSizing: 'border-box'` sur le div inner `maxWidth: 1060`.
+  * **Validation** : `npx tsc --noEmit` → 0 erreur ; `npm run lint:slop` → 0 violation ; serveur HTTP 200 OK.
+  * **Commit** : `26535198`
+
 - **Résilience Scraper (Upsert Offres) & Gestion Gracieuse Erreurs JSON (`backend/services/scraper.js`, `backend/app.js`) (21 septembre 2026)** 🛡️🔄⚙️✅ :
   * **Alignement Upsert Scraper (`scraper.js`)** : Unification des insertions d'offres sous `ON CONFLICT (produit_id, marchand_id) DO UPDATE SET url_achat = COALESCE(EXCLUDED.url_achat, offres.url_achat), prix = EXCLUDED.prix, titre_marchand = EXCLUDED.titre_marchand, specs = EXCLUDED.specs, scraped_at = NOW(), stock = true`. Élimine définitivement les erreurs de violation d'unicité `idx_offres_produit_marchand` lors des rafraîchissements automatisés de catalogues marchands.
   * **Interception Erreurs Syntaxe JSON (`app.js`)** : Ajout d'un middleware dédié immédiatement après `express.json()` interceptant les `SyntaxError` (payloads corrompus ou tronqués) pour renvoyer un statut HTTP 400 Bad Request propre (`{"error":"Format JSON invalide"}`) au lieu d'un crash non intercepté 500.
