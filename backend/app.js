@@ -162,7 +162,10 @@ const authLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 app.use('/api/search', searchLimiter);
+app.use('/api/annonces', searchLimiter);
 app.use('/api/annonces/publiques', searchLimiter);
+app.use('/api/auth/connexion', authLimiter);
+app.use('/api/auth/inscription', authLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/admin/login', authLimiter);
@@ -446,6 +449,14 @@ async function demarrerApp() {
     server.close(() => dbPool2.end(() => process.exit(0)));
   });
 }
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[SERVER UNHANDLED REJECTION]:', reason?.message || reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[SERVER UNCAUGHT EXCEPTION]:', err?.message || err);
+});
 
 if (process.env.NODE_ENV !== 'test') {
   demarrerApp().catch(console.error);
