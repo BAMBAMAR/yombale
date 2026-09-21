@@ -180,6 +180,15 @@ app.use(express.json({
   limit: '10mb',
   verify: (req, _res, buf) => { req.rawBody = buf; },
 }));
+
+// Gestion gracieuse des erreurs de syntaxe JSON dans les corps de requêtes (évite les 500 sur payloads corrompus)
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ error: 'Format JSON invalide' });
+  }
+  next(err);
+});
+
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ── Protection pages admin ────────────────────────────────────

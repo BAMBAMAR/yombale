@@ -23,6 +23,10 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Résilience Scraper (Upsert Offres) & Gestion Gracieuse Erreurs JSON (`backend/services/scraper.js`, `backend/app.js`) (21 septembre 2026)** 🛡️🔄⚙️✅ :
+  * **Alignement Upsert Scraper (`scraper.js`)** : Unification des insertions d'offres sous `ON CONFLICT (produit_id, marchand_id) DO UPDATE SET url_achat = COALESCE(EXCLUDED.url_achat, offres.url_achat), prix = EXCLUDED.prix, titre_marchand = EXCLUDED.titre_marchand, specs = EXCLUDED.specs, scraped_at = NOW(), stock = true`. Élimine définitivement les erreurs de violation d'unicité `idx_offres_produit_marchand` lors des rafraîchissements automatisés de catalogues marchands.
+  * **Interception Erreurs Syntaxe JSON (`app.js`)** : Ajout d'un middleware dédié immédiatement après `express.json()` interceptant les `SyntaxError` (payloads corrompus ou tronqués) pour renvoyer un statut HTTP 400 Bad Request propre (`{"error":"Format JSON invalide"}`) au lieu d'un crash non intercepté 500.
+
 - **Audit Diagnostique Acquisition, Activation & Conversion — Remédiations Intégrales ACQ-001 à ACQ-006 (21 septembre 2026)** 📈🎯🛒✨ :
   * **Contexte** : Audit rigoureux et factuel sur code et base de données PostgreSQL de l'acquisition, activation et conversion de Nopalou, suivi de la correction intégrale des 6 anomalies fonctionnelles et analytiques.
   * **ACQ-001 [P0 : Tracking & Funnel] Restauration des événements analytiques manquants** (`frontend-next/src/lib/analytics.ts`, `CartContext.tsx`, `ProduitCTA.tsx`, `useDrawerCartCheckout.ts`, `backend/routes/analytics.js`) :

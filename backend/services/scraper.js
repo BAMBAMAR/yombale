@@ -947,37 +947,22 @@ async function sauvegarderProduits(items, marchandNom, siteUrl) {
       const specs = extraireSpecs(item.titre);
       let offreRows = [];
 
-      // 2. Insertion de l'offre avec protection contre les doublons d'URL
-      if (item.url && item.url.trim()) {
-        const { rows: resOffre } = await pool.query(
-          `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock)
-           VALUES($1, $2, $3, $4, $5, $6, NOW(), true)
-           ON CONFLICT (marchand_id, url_achat) WHERE url_achat IS NOT NULL AND TRIM(url_achat) != ''
-           DO UPDATE SET produit_id = EXCLUDED.produit_id,
-                         prix = EXCLUDED.prix,
-                         titre_marchand = EXCLUDED.titre_marchand,
-                         specs = EXCLUDED.specs,
-                         scraped_at = NOW(),
-                         stock = true
-           RETURNING id`,
-          [produitId, marchandId, item.prix, item.url.trim(), item.titre, JSON.stringify(specs)]
-        );
-        offreRows = resOffre;
-      } else {
-        const { rows: resOffre } = await pool.query(
-          `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock)
-           VALUES($1, $2, $3, $4, $5, $6, NOW(), true)
-           ON CONFLICT (produit_id, marchand_id)
-           DO UPDATE SET prix = EXCLUDED.prix,
-                         titre_marchand = EXCLUDED.titre_marchand,
-                         specs = EXCLUDED.specs,
-                         scraped_at = NOW(),
-                         stock = true
-           RETURNING id`,
-          [produitId, marchandId, item.prix, null, item.titre, JSON.stringify(specs)]
-        );
-        offreRows = resOffre;
-      }
+      // 2. Insertion de l'offre avec protection contre les doublons (produit_id, marchand_id)
+      const cleanUrl = item.url && item.url.trim() ? item.url.trim() : null;
+      const { rows: resOffre } = await pool.query(
+        `INSERT INTO offres(produit_id, marchand_id, prix, url_achat, titre_marchand, specs, scraped_at, stock)
+         VALUES($1, $2, $3, $4, $5, $6, NOW(), true)
+         ON CONFLICT (produit_id, marchand_id)
+         DO UPDATE SET url_achat = COALESCE(EXCLUDED.url_achat, offres.url_achat),
+                       prix = EXCLUDED.prix,
+                       titre_marchand = EXCLUDED.titre_marchand,
+                       specs = EXCLUDED.specs,
+                       scraped_at = NOW(),
+                       stock = true
+         RETURNING id`,
+        [produitId, marchandId, item.prix, cleanUrl, item.titre, JSON.stringify(specs)]
+      );
+      offreRows = resOffre;
 
       if (offreRows.length > 0) {
         await pool.query('INSERT INTO historique_prix(offre_id, prix) VALUES($1, $2)', [offreRows[0].id, item.prix]);
