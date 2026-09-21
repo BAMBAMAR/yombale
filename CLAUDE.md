@@ -23,6 +23,10 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Résilience Serveur Node.js & Gestion des Doublons d'Offres Scraper (`backend/app.js`, `backend/services/scraper.js`) (21 septembre 2026)** 🛡️⚡🔄✅ :
+  * **Insertion Offres sans URL (`scraper.js`)** : Ajout de la clause `ON CONFLICT (produit_id, marchand_id) DO UPDATE SET prix = EXCLUDED.prix, titre_marchand = EXCLUDED.titre_marchand, specs = EXCLUDED.specs, scraped_at = NOW(), stock = true` sur l'insertion des offres sans URL afin d'éviter l'erreur d'unicité `idx_offres_produit_marchand`.
+  * **Résilience Processus (`app.js`)** : Ajout des gestionnaires `process.on('unhandledRejection')` et `process.on('uncaughtException')` pour empêcher tout arrêt inopiné du serveur HTTP lors des rejets asynchrones ou timeouts PostgreSQL des tâches de fond.
+
 - **Application Intégrale des Remédiations UX/UI, Ergonomie Mobile, Design System & Responsive (Phase 2) (21 septembre 2026)** 🎨📱✨🛡️✅ :
   * **🚨 1. P0 : Éradication de la Quadruple Collision Mobile au Bas de l'Écran (`PwaInstallPrompt.tsx`, `chat-widget.css`, `globals.css`)** :
     - *Anomalie constatée* : Empilement anarchique sur mobile (<640px) entre `MobileBottomNav` (56px), `.bottom-bars-wrap` (56px), la bannière PWA (74px) et le widget Chatbot (74px) recouvrant les boutons d'action et verrouillant >160px de hauteur utile.
