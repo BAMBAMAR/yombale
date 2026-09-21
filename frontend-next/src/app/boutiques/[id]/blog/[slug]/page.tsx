@@ -31,6 +31,7 @@ export async function generateMetadata({
   params: Promise<{ id: string; slug: string }>
 }): Promise<Metadata> {
   const { id, slug } = await params
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
 
   try {
     const data = await apiFetch<ArticleDetailResponse>(`/boutiques/${id}/articles/detail/${slug}`)
@@ -39,12 +40,19 @@ export async function generateMetadata({
     }
     const art = data.article
     const bNom = data.boutique?.nom || 'Boutique'
+    const bSlug = data.boutique?.slug || data.boutique?.id || id
+    const canonicalUrl = `${BASE}/boutiques/${bSlug}/blog/${art.slug}`
     return {
       title: `${art.titre} — ${bNom} | Nopalou`,
       description: art.extrait || art.contenu.slice(0, 160),
+      alternates: {
+        canonical: canonicalUrl,
+      },
       openGraph: {
         title: art.titre,
         description: art.extrait || art.contenu.slice(0, 160),
+        url: canonicalUrl,
+        type: 'article',
         images: art.image_url ? [{ url: art.image_url }] : []
       }
     }
@@ -80,23 +88,34 @@ export default async function BoutiqueArticleDetailPage({
   const bSlug = boutique.slug || boutique.id
   const articleUrl = `https://nopalou.com/boutiques/${bSlug}/blog/${article.slug}`
 
-  // Schema.org Article JSON-LD
+  // Schema.org BlogPosting JSON-LD (remplace Article pour meilleure pertinence rich results)
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'BlogPosting',
     headline: article.titre,
-    description: article.extrait,
+    description: article.extrait || undefined,
     image: article.image_url || undefined,
     datePublished: article.created_at,
+    url: articleUrl,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': articleUrl,
+    },
     author: {
       '@type': 'Organization',
-      name: bNom
+      name: bNom,
+      url: `https://nopalou.com/boutiques/${bSlug}`,
     },
     publisher: {
       '@type': 'Organization',
       name: 'Nopalou',
-      url: 'https://nopalou.com'
-    }
+      url: 'https://nopalou.com',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://nopalou.com/icons/icon-512.svg',
+      },
+    },
+    keywords: article.tags?.join(', ') || undefined,
   }
 
   return (

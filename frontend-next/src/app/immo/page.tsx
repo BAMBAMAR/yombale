@@ -14,9 +14,9 @@ import SeoCard from '@/components/SeoCard'
 import { breadcrumbSchema, itemListSchema } from '@/lib/schema-org'
 
 export const metadata: Metadata = {
-  title: 'Immobilier Sénégal 2026 : Locations & Ventes Dakar (Appartements, Chambres, Terrains)',
+  title: 'Immobilier Sénégal : Locations & Ventes à Dakar | Nopalou',
   description:
-    'Annonces immobilières vérifiées au Sénégal : appartements, chambres au mois dès 25 000 FCFA, studios, villas et terrains avec titres fonciers à Dakar et régions.',
+    'Annonces immobilières vérifiées au Sénégal : appartements, chambres au mois dès 25 000 FCFA, studios, villas et terrains avec titres fonciers à Dakar et régions.',
   keywords: [
     'Location chambre Dakar par mois', 'Chambre à louer 30000 par mois',
     'Location chambre Parcelles Assainies par mois', 'Location chambre salle de bain Dakar par mois',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'}/immo`,
   },
   openGraph: {
-    title: 'Immobilier Sénégal 2026 — Locations & Ventes Vérifiées à Dakar',
+    title: 'Immobilier Sénégal — Locations & Ventes Vérifiées à Dakar',
     description: 'Appartements, chambres, studios et terrains au Sénégal. Annonces géolocalisées et gestion locative sécurisée.',
     type: 'website',
     images: [{ url: '/api/og-image', width: 1200, height: 630, alt: 'Immobilier au Sénégal — Nopalou' }],

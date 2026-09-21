@@ -84,7 +84,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: 'Nopalou — Commerce Digital au Sénégal : Acheter, Vendre & Développer son Commerce',
+    default: 'Nopalou — Commerce Digital, Boutiques & Prix au Sénégal',
     template: '%s | Nopalou',
   },
   description:
@@ -152,6 +152,48 @@ const ORG_JSON_LD = {
     },
     'query-input': 'required name=search_term_string',
   },
+}
+
+// Schema.org Organization (entité juridique Nopalou/Skyroad-SARL)
+// Séparé du schema WebSite pour permettre le Knowledge Panel Google
+const ORG_ENTITY_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': 'https://nopalou.com/#organization',
+  name: 'Nopalou',
+  legalName: 'SKYROAD SARL',
+  url: 'https://nopalou.com',
+  logo: {
+    '@type': 'ImageObject',
+    url: 'https://nopalou.com/icons/icon-512.svg',
+    width: 512,
+    height: 512,
+  },
+  description: 'Plateforme de commerce digital, comparateur de prix et solutions marchandes au Sénégal',
+  foundingLocation: {
+    '@type': 'Place',
+    name: 'Dakar, Sénégal',
+  },
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Dakar',
+    addressCountry: 'SN',
+  },
+  contactPoint: [
+    {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      telephone: '+221-70-871-79-42',
+      email: 'contact@nopalou.com',
+      availableLanguage: ['French'],
+    },
+  ],
+  sameAs: [
+    'https://www.facebook.com/profile.php?id=61591675701726',
+    'https://twitter.com/nopalou_sn',
+    'https://www.instagram.com/nopalousn/',
+    'https://www.tiktok.com/@nopalou.com',
+  ],
 }
 
 const SITE_NAV_JSON_LD = {
@@ -240,6 +282,10 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSON_LD) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_ENTITY_JSON_LD) }}
         />
         <script
           type="application/ld+json"

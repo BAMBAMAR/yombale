@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const revalidate = 120 // ISR : re-génère la vitrine toutes les 2 minutes au plus
 
 import '@/styles/vitrine-publique.css'
 import type { Metadata } from 'next'
@@ -157,7 +157,31 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
     ? `https://wa.me/${contactNumber.replace(/\D/g, '')}`
     : null
 
+  // Convertit les horaires { lundi: '08h00 - 20h00', ... } en OpeningHoursSpecification Schema.org
+  function buildOpeningHoursSpec(horaires: Record<string, string> | null) {
+    if (!horaires || Object.keys(horaires).length === 0) return undefined
+    const JOUR_MAP: Record<string, string> = {
+      lundi: 'Monday', mardi: 'Tuesday', mercredi: 'Wednesday',
+      jeudi: 'Thursday', vendredi: 'Friday', samedi: 'Saturday', dimanche: 'Sunday',
+    }
+    const specs: object[] = []
+    for (const [jour, plage] of Object.entries(horaires)) {
+      const dayOfWeek = JOUR_MAP[jour.toLowerCase()]
+      if (!dayOfWeek) continue
+      if (plage.toLowerCase().includes('ferm')) continue // jour fermé : ne pas inclure
+      // Ex: '08h00 - 20h00' ou '08:00 - 20:00'
+      const match = plage.match(/(\d{1,2})[h:](\d{2})?\s*[-–]\s*(\d{1,2})[h:](\d{2})?/)
+      if (match) {
+        const opens  = `${match[1].padStart(2,'0')}:${match[2] || '00'}`
+        const closes = `${match[3].padStart(2,'0')}:${match[4] || '00'}`
+        specs.push({ '@type': 'OpeningHoursSpecification', dayOfWeek, opens, closes })
+      }
+    }
+    return specs.length > 0 ? specs : undefined
+  }
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
+  const openingHoursSpec = buildOpeningHoursSpec(b.horaires)
   const jsonLdStore = {
     '@context': 'https://schema.org',
     '@type': 'Store',
@@ -172,6 +196,7 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
       streetAddress: b.adresse || undefined,
     },
     ...(b.logo_url ? { image: b.logo_url } : {}),
+    ...(openingHoursSpec ? { openingHoursSpecification: openingHoursSpec } : {}),
   }
 
   return (

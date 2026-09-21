@@ -33,7 +33,7 @@ export async function generateMetadata({
   const hasFiltre = Boolean(sp?.q || sp?.categorie || sp?.prixMin || sp?.prixMax || sp?.etat || sp?.tri || sp?.page || sp?.sousType)
 
   return {
-    title: 'Nopalou · Acheter au meilleur prix, Vendre & Développer son commerce au Sénégal',
+    title: 'Nopalou — Meilleur Prix, Boutiques & Commerce au Sénégal',
     description:
       'Nopalou est la plateforme de commerce digital au Sénégal. Comparez les prix à Dakar, commandez directement auprès de boutiques vérifiées, ou lancez votre propre boutique avec caisse POS tactile.',
     alternates: {

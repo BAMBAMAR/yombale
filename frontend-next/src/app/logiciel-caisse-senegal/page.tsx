@@ -66,11 +66,8 @@ const JSON_LD_SOFTWARE = {
     priceValidUntil: '2027-12-31',
     description: 'Caisse enregistreuse tactile hors-ligne pour petit commerce au Sénégal.',
   },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.95',
-    reviewCount: '280',
-  },
+  // aggregateRating retirée jusqu'à ce que des données d'avis vérifiables soient disponibles.
+  // L'ajout de notes fictives est contraire aux directives Google Rich Results.
 }
 
 const JSON_LD_FAQ = {
@@ -128,7 +125,7 @@ export default function LogicielCaisseSenegalPage() {
               lineHeight: 1.15,
               letterSpacing: '-0.03em'
             }}>
-              Le logiciel de caisse tactile conçu pour les <span style={{ color: '#fed7aa' }}>commerces de Dakar</span>
+              La caisse enregistreuse tactile N°1 pour les <span style={{ color: '#fed7aa' }}>commerces du Sénégal</span>
             </h1>
 
             <p style={{

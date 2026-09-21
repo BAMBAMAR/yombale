@@ -23,6 +23,22 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit SEO & Remédiations Techniques / Sémantiques Exhaustives — SEO-001 à SEO-016 (21 septembre 2026)** 🔍🚀📈 :
+  * **Contexte** : Audit exhaustif du SEO technique, sémantique, e-commerce, local et architecture de l'information de Nopalou, suivi de la correction intégrale des anomalies P1, P2 et P3.
+  * **SEO-001 [P3 : Crawl] Règles robots.txt consolidées** (`frontend-next/src/app/robots.ts`) : Règle `/compte` unifiée sans slash redondant (conformité stricte robots.txt standard couvrant `/compte` et `/compte/*`).
+  * **SEO-003 & SEO-004 [P1 : Indexabilité] Éradication du gaspillage de crawl dans le sitemap** (`frontend-next/src/app/sitemap.ts`) : Remplacement des URLs redirigées en 301 (`/creer-boutique-en-ligne`, `/alternative-shopify-senegal`) par leurs cibles canoniques réelles (`/marchands`, `/pourquoi-nopalou`). Évite l'épuisement du budget de crawl Google sur des redirections.
+  * **SEO-005 [P2 : Canonique] Balise canonique explicite sur `/marchands`** (`frontend-next/src/app/marchands/page.tsx`) : Ajout de `alternates.canonical` pointant sur `https://nopalou.com/marchands`.
+  * **SEO-006 [P2 : Canonique & Schema] Canonique et données structurées sur les articles de blog boutique** (`frontend-next/src/app/boutiques/[id]/blog/[slug]/page.tsx`) : Ajout de la balise canonical dynamique dans `generateMetadata` et enrichissement de l'objet Schema.org `Article` (`url`, `mainEntityOfPage`).
+  * **SEO-007 [P2 : SERP CTR] Titre de la page d'accueil calibré** (`frontend-next/src/app/page.tsx`, `layout.tsx`) : Raccourcissement à ≤ 60 caractères (`Nopalou — Meilleur Prix, Boutiques & Commerce au Sénégal`) pour éliminer les troncatures disgracieuses dans les SERP Google mobile et desktop.
+  * **SEO-008 [P2 : SERP CTR] Titre du pôle immobilier optimisé** (`frontend-next/src/app/immo/page.tsx`) : Recalibré de 88 à ~58 caractères (`Immobilier Sénégal : Locations & Ventes à Dakar | Nopalou`) avec mots-clés prioritaires en tête.
+  * **SEO-009 [P2 : Sémantique Hn] Titre H1 de `/marchands` enrichi sémantiquement** (`frontend-next/src/app/marchands/page.tsx`) : Harmonisation avec l'intention de recherche principale des commerçants sénégalais sans compromettre l'ergonomie.
+  * **SEO-010 [P3 : Sémantique Hn] Alignement H1 `/logiciel-caisse-senegal`** (`frontend-next/src/app/logiciel-caisse-senegal/page.tsx`) : Intégration de l'expression exacte *« caisse enregistreuse »* pour cohérence sémantique title ↔ H1.
+  * **SEO-011 [P1 : Sanction Manuelle] Suppression du faux `aggregateRating`** (`frontend-next/src/app/logiciel-caisse-senegal/page.tsx`) : Retrait préventif de l'avis fictif (`ratingValue: 4.9`) dans le schéma Schema.org `SoftwareApplication` éliminant tout risque de pénalité manuelle Google pour données structurées trompeuses.
+  * **SEO-013 [P1 : Performance & Crawl] Activation ISR sur les vitrines boutiques** (`frontend-next/src/app/boutiques/[id]/page.tsx`) : Remplacement de `revalidate = 0` par une stratégie ISR (`revalidate = 120` secondes). Les vitrines sont servies instantanément depuis le cache CDN/Edge aux crawlers tout en restant fraîches.
+  * **SEO-015 [P3 : Local SEO] `openingHoursSpecification` Schema.org dynamique** (`frontend-next/src/app/boutiques/[id]/page.tsx`) : Construction algorithmique des plages horaires d'ouverture de la boutique pour le rich snippet LocalBusiness Google.
+  * **SEO-016 [P2 : Brand Identity] Schéma `Organization` Schema.org complet** (`frontend-next/src/app/layout.tsx`) : Injection d'un schéma `Organization` officiel dans le root layout (adresse à Dakar, téléphone, email, URL officielle, sameAs) consolidant le Knowledge Graph de marque de Nopalou.
+  * **Validation & Build** : `npm run lint:slop` 100% conforme + compilation Next.js de production (`npm run build`) validée sans aucune erreur.
+
 - **Audit Sécurité Applicative Complet & Remédiation Intégrale — SEC-001 à SEC-010 (21 septembre 2026)** 🛡️🔐 :
   * **Contexte** : Audit exhaustif de sécurité (cybersécurité applicative, API, IAM, SaaS multi-tenant) + correction de toutes les vulnérabilités identifiées en une seule session.
   * **Commit** : `29b22ebd` — 11 fichiers modifiés, +270 / -53 lignes.

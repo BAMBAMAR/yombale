@@ -15,6 +15,9 @@ export const metadata: Metadata = {
     'vendre sur whatsapp dakar', 'alternative shopify sénégal', 'logiciel commerce dakar',
     'carnet de dette commerçant', 'paiement wave commerçant', 'nopalou marchands'
   ],
+  alternates: {
+    canonical: 'https://nopalou.com/marchands',
+  },
   openGraph: {
     title: 'Nopalou Marchands — Vendez partout, encaissez direct, gérez tranquille.',
     description: 'La solution tout-en-un pour commerçants africains. Vitrine WhatsApp, caisse tactile hors-ligne, carnet de dettes et encaissements Wave.',
@@ -89,9 +92,7 @@ export default function MarchandsLandingPage() {
             lineHeight: 1.15,
             letterSpacing: '-0.03em'
           }}>
-            La puissance de Shopify.<br/>
-            La simplicité de <span style={{ color: '#25D366' }}>WhatsApp</span>.<br/>
-            L'efficacité de <span style={{ color: '#10b981' }}>Wave</span>.
+            Boutique en ligne, Caisse POS &amp; WhatsApp — la plateforme e-commerce N°1 au <span style={{ color: '#C75B00' }}>Sénégal</span>
           </h1>
 
           {/* Sous-titre orienté bénéfice */}

@@ -12,7 +12,6 @@ export default function robots(): MetadataRoute.Robots {
           '/admin/',
           '/api/',
           '/compte',
-          '/compte/',
           '/boutique/',
           '/agence/',
           '/deposer-annonce',

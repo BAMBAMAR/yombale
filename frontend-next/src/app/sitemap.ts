@@ -54,19 +54,20 @@ const STATIC_ROUTES: MetadataRoute.Sitemap = [
   // Annuaire des Boutiques et Vendeurs vérifiés
   { url: `${BASE}/boutiques`,                 changeFrequency: 'daily',   priority: 0.95 },
   // Silos B2B Solutions Marchands & "Problème → Solution" SEO
-  { url: `${BASE}/creer-boutique-en-ligne`,     changeFrequency: 'weekly', priority: 0.98 },
+  // Note : /creer-boutique-en-ligne et /alternative-shopify-senegal font l'objet de
+  // redirections 301 dans next.config.js → on référence directement les destinations
+  // pour éviter toute incohérence de crawl budget et de signal SEO.
+  { url: `${BASE}/marchands`,                   changeFrequency: 'weekly', priority: 0.98 },
   { url: `${BASE}/logiciel-caisse-senegal`,     changeFrequency: 'weekly', priority: 0.95 },
-  { url: `${BASE}/alternative-shopify-senegal`, changeFrequency: 'weekly', priority: 0.95 },
+  { url: `${BASE}/pourquoi-nopalou`,            changeFrequency: 'monthly', priority: 0.90 },
   { url: `${BASE}/vendre-sur-whatsapp`,         changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/paiement-en-ligne-senegal`,   changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/gestion-stock-carnet-dettes`, changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/logiciel-gestion-locative-senegal`, changeFrequency: 'weekly', priority: 0.95 },
   // Boutique, POS & Forfaits Vendeurs existants
-  { url: `${BASE}/marchands`,            changeFrequency: 'weekly', priority: 0.95 },
   { url: `${BASE}/pos`,                  changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/whatsapp`,             changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/migration`,            changeFrequency: 'monthly', priority: 0.85 },
-  { url: `${BASE}/pourquoi-nopalou`,     changeFrequency: 'monthly', priority: 0.85 },
   { url: `${BASE}/creer-boutique`,       changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/tarifs-boutique`,      changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE}/guide-creer-boutique`, changeFrequency: 'monthly', priority: 0.85 },
