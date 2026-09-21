@@ -1,5 +1,6 @@
 // backend/routes/boutiques-modules/boutiques-commandes.js
 const router = require('express').Router();
+const crypto = require('crypto');
 const { body, param, query, validationResult } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../../middlewares/auth');
@@ -118,123 +119,155 @@ router.post('/commandes/express', async (req, res) => {
     }
 
     const actualBoutiqueId = bqRes.rows[0].id;
-    const ref = 'CMD-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+    const now = new Date();
+    const dateStr = now.getFullYear().toString() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0');
+    const entropy = crypto.randomBytes(3).toString('hex').toUpperCase();
+    const ref = `CMD-${dateStr}-${entropy}`;
     const fraisLiv = Math.max(0, Number(frais_livraison) || 0);
 
-    // ── 1. Calcul strict et sécurisé des prix depuis la base de données ──
+    const client = await pool.connect();
+    let clientReleased = false;
+    const releaseClient = () => {
+      if (!clientReleased) {
+        clientReleased = true;
+        try { client.release(); } catch {}
+      }
+    };
     let totalArticles = 0;
     const articlesTraites = [];
-
-    for (const art of articles) {
-      const validProdId = (art.produit_id && String(art.produit_id).length === 36) ? art.produit_id : null;
-      let prix = 0;
-      let nomProd = art.nom_produit || 'Produit sans nom';
-      const qte = Math.max(1, Number(art.quantite) || 1);
-
-      if (validProdId) {
-        const pRes = await pool.query(
-          'SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2',
-          [validProdId, actualBoutiqueId]
-        );
-        if (pRes.rows[0]) {
-          // Sécurité P0 : TOUJOURS utiliser le prix officiel de la base de données
-          prix = Number(pRes.rows[0].prix) || 0;
-          if (pRes.rows[0].nom) nomProd = pRes.rows[0].nom;
-
-          // Décrémentation atomique de stock si géré
-          if (typeof pRes.rows[0].stock_quantite === 'number' && pRes.rows[0].stock_quantite > 0) {
-            const nvStock = Math.max(0, pRes.rows[0].stock_quantite - qte);
-            await pool.query('UPDATE boutique_produits SET stock_quantite = $1 WHERE id = $2', [nvStock, validProdId]).catch(() => {});
-          }
-        } else {
-          return res.status(400).json({ error: `L'article "${nomProd}" n'appartient pas à cette boutique ou est indisponible.` });
-        }
-      } else {
-        // Fallback exceptionnel si produit non référencé dans boutique_produits
-        prix = Math.max(0, Number(art.prix_unitaire) || 0);
-      }
-
-      const totalLigne = prix * qte;
-      totalArticles += totalLigne;
-      articlesTraites.push({ validProdId, nomProd, qte, prix, totalLigne });
-    }
-
-    // ── 2. Validation stricte du code promo côté serveur ──
     let reductionVal = 0;
     let promoAppliquee = null;
+    let finalNote = note || '';
 
-    if (code_promo && String(code_promo).trim()) {
-      const cleanCode = String(code_promo).trim().toUpperCase();
+    try {
+      await client.query('BEGIN');
 
-      // Vérification promo globale
-      const platformPromoActive = await cfg.getBool('promo_active');
-      const platformPromoCode = ((await cfg.get('promo_code')) || '').trim().toUpperCase();
-      const platformPromoReduc = (await cfg.getNum('promo_reduction')) || 0;
+      // ── 1. Calcul strict et sécurisé des prix depuis la base de données (avec verrou) ──
+      for (const art of articles) {
+        const validProdId = (art.produit_id && String(art.produit_id).length === 36) ? art.produit_id : null;
+        let prix = 0;
+        let nomProd = art.nom_produit || 'Produit sans nom';
+        const qte = Math.max(1, Number(art.quantite) || 1);
 
-      if (platformPromoActive && platformPromoCode && cleanCode === platformPromoCode) {
-        reductionVal = Math.round((totalArticles * platformPromoReduc) / 100);
-        promoAppliquee = cleanCode;
-      } else {
-        // Vérification promo boutique
-        const promoRes = await pool.query(
-          `SELECT * FROM boutique_promotions
-           WHERE boutique_id = $1 AND UPPER(code) = $2 AND actif = true`,
-          [actualBoutiqueId, cleanCode]
-        );
-        const p = promoRes.rows[0];
-        if (p) {
-          const notExpired = !p.fin || new Date(p.fin) >= new Date();
-          const minAchatOk = !p.min_achat || totalArticles >= Number(p.min_achat);
-          const maxUsageOk = !p.max_utilisations || Number(p.fois_utilise || 0) < Number(p.max_utilisations);
+        if (validProdId) {
+          const pRes = await client.query(
+            'SELECT id, nom, prix, stock_quantite FROM boutique_produits WHERE id = $1 AND boutique_id = $2 FOR UPDATE',
+            [validProdId, actualBoutiqueId]
+          );
+          if (pRes.rows[0]) {
+            prix = Number(pRes.rows[0].prix) || 0;
+            if (pRes.rows[0].nom) nomProd = pRes.rows[0].nom;
 
-          if (notExpired && minAchatOk && maxUsageOk) {
-            if (p.type_remise === 'pourcentage') {
-              reductionVal = Math.round((totalArticles * Number(p.valeur || 0)) / 100);
-            } else {
-              reductionVal = Math.min(totalArticles, Number(p.valeur || 0));
+            // Décrémentation atomique de stock si géré
+            if (typeof pRes.rows[0].stock_quantite === 'number') {
+              if (pRes.rows[0].stock_quantite < qte) {
+                await client.query('ROLLBACK');
+                releaseClient();
+                return res.status(409).json({
+                  error: `Stock insuffisant pour "${nomProd}" (disponible : ${pRes.rows[0].stock_quantite}, demandé : ${qte}).`
+                });
+              }
+              await client.query(
+                'UPDATE boutique_produits SET stock_quantite = stock_quantite - $1 WHERE id = $2',
+                [qte, validProdId]
+              );
             }
-            promoAppliquee = cleanCode;
-            await pool.query(
-              `UPDATE boutique_promotions SET fois_utilise = fois_utilise + 1 WHERE id = $1`,
-              [p.id]
-            ).catch(() => {});
+          } else {
+            await client.query('ROLLBACK');
+            releaseClient();
+            return res.status(400).json({ error: `L'article "${nomProd}" n'appartient pas à cette boutique ou est indisponible.` });
+          }
+        } else {
+          // Fallback exceptionnel si produit non référencé dans boutique_produits
+          prix = Math.max(0, Number(art.prix_unitaire) || 0);
+        }
+
+        const totalLigne = prix * qte;
+        totalArticles += totalLigne;
+        articlesTraites.push({ validProdId, nomProd, qte, prix, totalLigne });
+      }
+
+      // ── 2. Validation stricte du code promo côté serveur ──
+      if (code_promo && String(code_promo).trim()) {
+        const cleanCode = String(code_promo).trim().toUpperCase();
+
+        // Vérification promo globale
+        const platformPromoActive = await cfg.getBool('promo_active');
+        const platformPromoCode = ((await cfg.get('promo_code')) || '').trim().toUpperCase();
+        const platformPromoReduc = (await cfg.getNum('promo_reduction')) || 0;
+
+        if (platformPromoActive && platformPromoCode && cleanCode === platformPromoCode) {
+          reductionVal = Math.round((totalArticles * platformPromoReduc) / 100);
+          promoAppliquee = cleanCode;
+        } else {
+          // Vérification promo boutique
+          const promoRes = await client.query(
+            `SELECT * FROM boutique_promotions
+             WHERE boutique_id = $1 AND UPPER(code) = $2 AND actif = true FOR UPDATE`,
+            [actualBoutiqueId, cleanCode]
+          );
+          const p = promoRes.rows[0];
+          if (p) {
+            const notExpired = !p.fin || new Date(p.fin) >= new Date();
+            const minAchatOk = !p.min_achat || totalArticles >= Number(p.min_achat);
+            const maxUsageOk = !p.max_utilisations || Number(p.fois_utilise || 0) < Number(p.max_utilisations);
+
+            if (notExpired && minAchatOk && maxUsageOk) {
+              if (p.type_remise === 'pourcentage') {
+                reductionVal = Math.round((totalArticles * Number(p.valeur || 0)) / 100);
+              } else {
+                reductionVal = Math.min(totalArticles, Number(p.valeur || 0));
+              }
+              promoAppliquee = cleanCode;
+              await client.query(
+                `UPDATE boutique_promotions SET fois_utilise = fois_utilise + 1 WHERE id = $1`,
+                [p.id]
+              );
+            }
           }
         }
       }
-    }
 
-    let finalNote = note || '';
-    if (promoAppliquee) {
-      const promoNote = `[Code Promo: ${promoAppliquee}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
-      finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
-    }
+      if (promoAppliquee) {
+        const promoNote = `[Code Promo: ${promoAppliquee}${reductionVal > 0 ? ` (-${reductionVal} FCFA)` : ''}]`;
+        finalNote = finalNote ? `${finalNote} | ${promoNote}` : promoNote;
+      }
 
-    if (formule_echelonnement && typeof formule_echelonnement === 'object') {
-      const appFmt = (Number(formule_echelonnement.apport) || 0).toLocaleString('fr-FR');
-      const nbEch = formule_echelonnement.nb_echeances || 3;
-      const freq = formule_echelonnement.frequence || 'mensuel';
-      const echNote = `[Paiement Échelonné: Apport ${appFmt} FCFA + ${nbEch}x (${freq})]`;
-      finalNote = finalNote ? `${finalNote} | ${echNote}` : echNote;
-    }
+      if (formule_echelonnement && typeof formule_echelonnement === 'object') {
+        const appFmt = (Number(formule_echelonnement.apport) || 0).toLocaleString('fr-FR');
+        const nbEch = formule_echelonnement.nb_echeances || 3;
+        const freq = formule_echelonnement.frequence || 'mensuel';
+        const echNote = `[Paiement Échelonné: Apport ${appFmt} FCFA + ${nbEch}x (${freq})]`;
+        finalNote = finalNote ? `${finalNote} | ${echNote}` : echNote;
+      }
 
-    // Enregistrement des lignes de commande avec les prix vérifiés
-    for (const item of articlesTraites) {
-      await pool.query(
-        `INSERT INTO commandes_boutique (
-          reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
-          montant_total, client_nom, client_telephone, client_adresse, note,
-          statut, source, methode_paiement, frais_livraison,
-          utm_source, utm_medium, utm_campaign, social_post_id, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, $14, $15, $16, $17, NOW())`,
-        [
-          ref, actualBoutiqueId, item.validProdId, item.nomProd, item.qte, item.prix,
-          item.totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, finalNote || null,
-          methode_paiement || 'wave', fraisLiv,
-          utm_source || null, utm_medium || null, utm_campaign || null,
-          // social_post_id doit être un UUID valide ou null
-          (social_post_id && /^[0-9a-f-]{36}$/i.test(social_post_id)) ? social_post_id : null,
-        ]
-      );
+      // Enregistrement des lignes de commande avec le client transactionnel
+      for (const item of articlesTraites) {
+        await client.query(
+          `INSERT INTO commandes_boutique (
+            reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire,
+            montant_total, client_nom, client_telephone, client_adresse, note,
+            statut, source, methode_paiement, frais_livraison,
+            utm_source, utm_medium, utm_campaign, social_post_id, created_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'en_attente', 'web', $12, $13, $14, $15, $16, $17, NOW())`,
+          [
+            ref, actualBoutiqueId, item.validProdId, item.nomProd, item.qte, item.prix,
+            item.totalLigne, client_nom.trim(), client_telephone.trim(), client_adresse || null, finalNote || null,
+            methode_paiement || 'wave', fraisLiv,
+            utm_source || null, utm_medium || null, utm_campaign || null,
+            (social_post_id && /^[0-9a-f-]{36}$/i.test(social_post_id)) ? social_post_id : null,
+          ]
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (errTx) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw errTx;
+    } finally {
+      releaseClient();
     }
 
     const totalGeneral = Math.max(0, totalArticles + fraisLiv - reductionVal);
@@ -409,16 +442,20 @@ router.post('/commandes/express', async (req, res) => {
       }
     }
 
-    res.status(201).json({
-      succes: true,
-      reference: ref,
-      montant_total: totalGeneral,
-      statut: 'en_attente',
-      message: 'Votre commande a été enregistrée avec succès.'
-    });
+    if (!res.headersSent) {
+      res.status(201).json({
+        succes: true,
+        reference: ref,
+        montant_total: totalGeneral,
+        statut: 'en_attente',
+        message: 'Votre commande a été enregistrée avec succès.'
+      });
+    }
   } catch (err) {
     console.error('[EXPRESS CHECKOUT ERR]', err);
-    res.status(500).json({ error: 'Erreur lors de l\'enregistrement de la commande' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Erreur lors de l\'enregistrement de la commande' });
+    }
   }
 });
 
