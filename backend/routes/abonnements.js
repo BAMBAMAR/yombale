@@ -98,6 +98,7 @@ router.get('/admin', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT a.id, a.plan, a.statut, a.prix_mensuel, a.debut, a.fin, a.commande_ref, a.created_at,
+             COALESCE(a.is_trial, false) AS is_trial,
              u.nom AS utilisateur_nom, u.email AS utilisateur_email, u.telephone,
              b.id AS boutique_id, b.nom AS boutique_nom, b.slug AS boutique_slug
       FROM abonnements a
@@ -115,13 +116,20 @@ router.get('/admin/stats', adminSecretOnly, async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
-        COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW())       AS actifs,
-        COUNT(*) FILTER (WHERE plan='pro' AND statut='actif' AND fin > NOW())   AS pro_actifs,
-        COUNT(*) FILTER (WHERE plan='business' AND statut='actif' AND fin > NOW()) AS business_actifs,
-        COUNT(*) FILTER (WHERE plan='decouverte' AND statut='actif' AND fin > NOW()) AS decouverte_actifs,
-        COALESCE(SUM(prix_mensuel) FILTER (WHERE statut='actif' AND fin > NOW()), 0) AS mrr,
-        COUNT(*) FILTER (WHERE statut='expire' OR (statut='actif' AND fin <= NOW())) AS expires,
-        COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('month', NOW())) AS nouveaux_ce_mois
+        COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW())                                        AS actifs,
+        COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW() AND is_trial = FALSE)                   AS payants,
+        COUNT(*) FILTER (WHERE statut='actif' AND fin > NOW() AND is_trial = TRUE)                    AS trials,
+        COUNT(*) FILTER (WHERE plan='pro' AND statut='actif' AND fin > NOW())                         AS pro_actifs,
+        COUNT(*) FILTER (WHERE plan='pro' AND statut='actif' AND fin > NOW() AND is_trial = FALSE)    AS pro_payants,
+        COUNT(*) FILTER (WHERE plan='business' AND statut='actif' AND fin > NOW())                    AS business_actifs,
+        COUNT(*) FILTER (WHERE plan='business' AND statut='actif' AND fin > NOW() AND is_trial = FALSE) AS business_payants,
+        COUNT(*) FILTER (WHERE plan='decouverte' AND statut='actif' AND fin > NOW())                  AS decouverte_actifs,
+        -- MRR réel : payants uniquement (is_trial=false)
+        COALESCE(SUM(prix_mensuel) FILTER (WHERE statut='actif' AND fin > NOW() AND is_trial = FALSE), 0) AS mrr,
+        -- MRR fictif (si tout le monde payait) — informatif uniquement
+        COALESCE(SUM(prix_mensuel) FILTER (WHERE statut='actif' AND fin > NOW()), 0) AS mrr_potentiel,
+        COUNT(*) FILTER (WHERE statut='expire' OR (statut='actif' AND fin <= NOW()))  AS expires,
+        COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('month', NOW()))              AS nouveaux_ce_mois
       FROM abonnements
     `);
     res.json(rows[0]);
@@ -149,8 +157,8 @@ router.post('/admin/activer', adminSecretOnly, async (req, res) => {
     );
 
     const { rows } = await pool.query(
-      `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref)
-       VALUES ($1,$2,'actif',$3,$4,$5) RETURNING id, plan, fin`,
+      `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref, is_trial)
+       VALUES ($1,$2,'actif',$3,$4,$5,FALSE) RETURNING id, plan, fin`,
       [userId, plan, PLANS[plan].prix, fin, `admin_test_${userId}_${Date.now()}`]
     );
     res.json({ success: true, abonnement: rows[0] });

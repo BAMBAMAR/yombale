@@ -18,8 +18,11 @@ interface DashboardStats {
     nb_ventes_total: number
     mrr: number
     abonnements_actifs: number
+    abonnements_payants: number
+    abonnements_trial: number
     nouveaux_abonnements_periode: number
     abonnements_business: number
+    abonnements_business_payants: number
     abonnements_pro: number
     abonnements_decouverte: number
     paiements_valides_periode: number
@@ -360,9 +363,14 @@ export default function AdminDashboardClient({
           <div style={{ fontSize: 26, fontWeight: 800, color: '#16a34a', margin: '6px 0 2px' }}>
             {fcfa(finances?.mrr || 0)}
           </div>
-          <span style={{ fontSize: 12, color: '#475569' }}>
-            {finances?.abonnements_actifs || 0} abonnement(s) actif(s)
-          </span>
+          <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'nowrap', alignItems: 'center' }}>
+            <span style={{ background: '#dcfce7', color: '#15803d', padding: '2px 7px', borderRadius: 5, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+              {finances?.abonnements_payants || 0} payant(s)
+            </span>
+            <span style={{ background: '#f1f5f9', color: '#64748b', padding: '2px 7px', borderRadius: 5, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+              {finances?.abonnements_trial || 0} essai(s)
+            </span>
+          </div>
         </div>
 
         <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
@@ -377,9 +385,9 @@ export default function AdminDashboardClient({
 
         <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Abonnements par Forfait</span>
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             <span style={{ background: '#f3e8ff', color: '#7e22ce', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
-              VIP: {finances?.abonnements_business || 0}
+              VIP: {finances?.abonnements_business_payants || 0}<span style={{ fontWeight: 400, opacity: 0.7 }}>/{finances?.abonnements_business || 0}</span>
             </span>
             <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
               Pro: {finances?.abonnements_pro || 0}
@@ -388,6 +396,7 @@ export default function AdminDashboardClient({
               Taf: {finances?.abonnements_decouverte || 0}
             </span>
           </div>
+          <span style={{ fontSize: 11, color: '#94a3b8', marginTop: 6, display: 'block' }}>payants / total actifs</span>
         </div>
 
         <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>

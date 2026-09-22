@@ -44,14 +44,21 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
       `).catch(() => ({ rows: [{ volume_commandes_web: 0, ca_commandes_web_encaisse: 0, nb_commandes_web_actives: 0 }] })),
       pool.query(`
         SELECT
-          COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW()), 0) AS mrr,
+          -- MRR réel : abonnements payants uniquement (is_trial=false)
+          COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = FALSE), 0) AS mrr,
+          -- Total actifs (payants + trials)
           COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW()) AS abonnements_actifs,
+          -- Payants uniquement (is_trial=false)
+          COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = FALSE) AS abonnements_payants,
+          -- Trials en cours
+          COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = TRUE) AS abonnements_trial,
           COUNT(*) FILTER (WHERE ${dateFilterSql}) AS nouveaux_abonnements_periode,
           COUNT(*) FILTER (WHERE plan = 'business' AND statut = 'actif' AND fin > NOW()) AS abonnements_business,
+          COUNT(*) FILTER (WHERE plan = 'business' AND statut = 'actif' AND fin > NOW() AND is_trial = FALSE) AS abonnements_business_payants,
           COUNT(*) FILTER (WHERE plan = 'pro' AND statut = 'actif' AND fin > NOW()) AS abonnements_pro,
           COUNT(*) FILTER (WHERE plan = 'decouverte' AND statut = 'actif' AND fin > NOW()) AS abonnements_decouverte
         FROM abonnements
-      `).catch(() => ({ rows: [{ mrr: 0, abonnements_actifs: 0, nouveaux_abonnements_periode: 0 }] })),
+      `).catch(() => ({ rows: [{ mrr: 0, abonnements_actifs: 0, abonnements_payants: 0, abonnements_trial: 0, nouveaux_abonnements_periode: 0 }] })),
       pool.query(`
         SELECT
           COUNT(*) FILTER (WHERE statut = 'en_attente') AS en_attente,
@@ -180,8 +187,11 @@ router.get('/stats', adminSecretOnly, async (req, res) => {
         nb_commandes_web_actives: parseInt(commandesWebRes.rows[0]?.nb_commandes_web_actives || 0),
         mrr: Number(abmtRes.rows[0]?.mrr || 0),
         abonnements_actifs: parseInt(abmtRes.rows[0]?.abonnements_actifs || 0),
+        abonnements_payants: parseInt(abmtRes.rows[0]?.abonnements_payants || 0),
+        abonnements_trial: parseInt(abmtRes.rows[0]?.abonnements_trial || 0),
         nouveaux_abonnements_periode: parseInt(abmtRes.rows[0]?.nouveaux_abonnements_periode || 0),
         abonnements_business: parseInt(abmtRes.rows[0]?.abonnements_business || 0),
+        abonnements_business_payants: parseInt(abmtRes.rows[0]?.abonnements_business_payants || 0),
         abonnements_pro: parseInt(abmtRes.rows[0]?.abonnements_pro || 0),
         abonnements_decouverte: parseInt(abmtRes.rows[0]?.abonnements_decouverte || 0),
         paiements_valides_periode: Number(paiementsManuelsRes.rows[0]?.montant_valide_periode || 0),

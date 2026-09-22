@@ -28,8 +28,9 @@ router.get('/stats', async (req, res) => {
       `),
       pool.query(`
         SELECT
-          COUNT(*) AS abonnements_payes_periode,
-          COALESCE(SUM(prix_mensuel), 0) AS ca_abonnements_periode
+          COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = FALSE) AS abonnements_payes_periode,
+          COUNT(*) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = TRUE) AS abonnements_trial_periode,
+          COALESCE(SUM(prix_mensuel) FILTER (WHERE statut = 'actif' AND fin > NOW() AND is_trial = FALSE), 0) AS ca_abonnements_periode
         FROM abonnements
         WHERE statut = 'actif' AND fin > NOW() AND ${dateFilter}
       `),
