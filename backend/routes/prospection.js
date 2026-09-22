@@ -257,6 +257,17 @@ const updateLeadHandler = async (req, res) => {
 
     const updatedLead = result.rows[0];
 
+    // A-04 FIX : Si le statut passe en 'en_discussion', enregistrer la réponse maintenant
+    // Ceci est le maillon manquant qui cassait toute la logique de relances J+3/J+7/J+14
+    if (statut === 'en_discussion' && !updatedLead.derniere_reponse_at) {
+      await pool.query(
+        `UPDATE prospection_leads SET derniere_reponse_at = NOW(), derniere_action_at = NOW(), updated_at = NOW() WHERE id = $1`,
+        [updatedLead.id]
+      ).catch(e => console.warn('[PROSPECTION] Mise à jour derniere_reponse_at:', e.message));
+      // Refléter le changement dans la réponse JSON
+      updatedLead.derniere_reponse_at = new Date().toISOString();
+    }
+
     // Si le statut passe en désinscrit, synchronisation automatique avec whatsapp_blacklist
     if (statut === 'desinscrit' && updatedLead.telephone) {
       try {
@@ -663,10 +674,10 @@ router.post('/scraper/lancer', adminOnly, async (req, res) => {
 });
 
 // ── GET /api/prospection/crons/status ─────────────────────────────────────────
-// Statut global et monitoring en direct des crons et automatisations
+// Statut global et monitoring en DIRECT des crons et automatisations (A-05 FIX)
 router.get('/crons/status', adminOnly, async (_req, res) => {
   try {
-    const [rLeads, rLogs, rBoutiques, rBlacklist] = await Promise.all([
+    const [rLeads, rLogs, rBoutiques, rBlacklist, rCronHistory] = await Promise.all([
       pool.query(`
         SELECT 
           COUNT(*) AS total_leads,
@@ -694,42 +705,72 @@ router.get('/crons/status', adminOnly, async (_req, res) => {
       `),
       pool.query(`
         SELECT COUNT(*) AS total_blacklist FROM whatsapp_blacklist
-      `)
+      `),
+      // A-05 FIX : Lire les vraies exécutions depuis cron_executions
+      pool.query(`
+        SELECT DISTINCT ON (nom_cron)
+          nom_cron, started_at, ended_at, statut, stats, erreur
+        FROM cron_executions
+        ORDER BY nom_cron, started_at DESC
+      `).catch(() => ({ rows: [] })),
     ]);
 
     const { DIRECTOIRE_MARCHES_DAKAR } = require('../services/scraper-prospection');
 
+    // Indexer l'historique par nom de cron pour lookup rapide
+    const cronHistIdx = {};
+    for (const row of (rCronHistory.rows || [])) {
+      cronHistIdx[row.nom_cron] = row;
+    }
+
+    const buildCronInfo = (nomCron, label, frequence, description) => {
+      const hist = cronHistIdx[nomCron] || null;
+      return {
+        nom: label,
+        statut: hist ? (hist.statut === 'erreur' ? 'erreur' : 'actif') : 'jamais_execute',
+        frequence,
+        description,
+        derniere_execution: hist ? hist.started_at : null,
+        derniere_fin: hist ? hist.ended_at : null,
+        dernier_statut: hist ? hist.statut : null,
+        dernieres_stats: hist ? hist.stats : null,
+        derniere_erreur: hist ? hist.erreur : null,
+      };
+    };
+
     res.json({
       crons: {
-        relancesProspects: {
-          nom: 'Relances Automatiques Prospects (J+3, J+7, J+14)',
-          statut: 'actif',
-          frequence: 'Lun-Sam à 11h00',
-          description: 'Relance 1 à J+3, Relance 2 à J+7, Clôture sans_reponse à J+14',
-        },
-        relancesMarchands: {
-          nom: 'Relances Marchands (J+1, J+7, J+25)',
-          statut: 'actif',
-          frequence: 'Toutes les 24h',
-          description: 'Onboarding J+1, Découverte caisse J+7, Offre -25% J+25',
-        },
-        relancesDettes: {
-          nom: 'Relances Carnet de Dettes ("Bor")',
-          statut: 'actif',
-          frequence: 'Toutes les 12h',
-          description: 'Rappels WhatsApp automatiques aux clients débiteurs',
-        },
-        scraperProspection: {
-          nom: 'Scraper & Sourcing Dakar en Continu',
-          statut: 'actif',
-          frequence: 'À la demande & Quotidien',
-          description: 'Indexation continue des commerces de Dakar',
-        },
+        relancesProspects: buildCronInfo(
+          'relances_prospects',
+          'Relances Automatiques Prospects (J+3, J+7, J+14)',
+          'Lun-Sam à 11h00',
+          'Relance 1 à J+3, Relance 2 à J+7, Clôture sans_reponse à J+14'
+        ),
+        relancesMarchands: buildCronInfo(
+          'relances_marchands',
+          'Relances Marchands (J+1, J+7, J+25)',
+          'Toutes les 24h',
+          'Onboarding J+1, Découverte caisse J+7, Offre -25% J+25'
+        ),
+        relancesDettes: buildCronInfo(
+          'relances_carnet',
+          'Relances Carnet de Dettes ("Bor")',
+          'Toutes les 12h',
+          'Rappels WhatsApp automatiques aux clients débiteurs'
+        ),
+        scraperProspection: buildCronInfo(
+          'scraper_prospection',
+          'Scraper & Sourcing Dakar en Continu',
+          'À la demande & Quotidien',
+          'Indexation continue des commerces de Dakar'
+        ),
         chatbotTafTaf: {
           nom: 'Bot WhatsApp Onboarding Taf-Taf & +produit',
           statut: 'actif',
           frequence: 'Temps réel (24h/24)',
           description: 'Création de boutique et catalogue en direct sur WhatsApp',
+          derniere_execution: null,
+          derniere_erreur: null,
         }
       },
       stats: {
@@ -872,7 +913,91 @@ router.get('/intelligence/recommandation', adminOnly, async (_req, res) => {
   }
 });
 
+// ── GET /api/prospection/campagnes/:id/status ─────────────────────────────────
+// Statut temps réel d'une campagne (polling depuis le frontend)
+// Permet de suivre l'avancement d'une campagne lancée en arrière-plan (A-01 FIX)
+router.get('/campagnes/:id/status', adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [resCampagne, resLogs] = await Promise.all([
+      pool.query(
+        `SELECT id, titre, canal, statut, nb_total, nb_envoyes, nb_succes, nb_echecs, nb_reponses, nb_boutiques_creees, created_at, date_fin
+         FROM prospection_campagnes WHERE id::text = $1`,
+        [String(id)]
+      ),
+      pool.query(
+        `SELECT
+           COUNT(*)::int AS total_traites,
+           COUNT(*) FILTER (WHERE statut IN ('envoye', 'livre', 'lu'))::int AS envoyes,
+           COUNT(*) FILTER (WHERE statut = 'echec')::int AS echecs,
+           COUNT(*) FILTER (WHERE statut = 'simule')::int AS simules,
+           COUNT(*) FILTER (WHERE statut = 'lu')::int AS lus,
+           COUNT(*) FILTER (WHERE statut = 'livre')::int AS livres,
+           MAX(created_at) AS dernier_log_at
+         FROM prospection_messages_log
+         WHERE campagne_id::text = $1`,
+        [String(id)]
+      ),
+    ]);
+
+    if (!resCampagne.rows.length) {
+      return res.status(404).json({ error: 'Campagne introuvable' });
+    }
+
+    const cmp = resCampagne.rows[0];
+    const logs = resLogs.rows[0] || {};
+    const totalTraites = parseInt(logs.total_traites, 10) || 0;
+    const nbTotal = parseInt(cmp.nb_total, 10) || 0;
+
+    // Calcul de la progression
+    const progression = nbTotal > 0 ? Math.min(100, Math.round((totalTraites / nbTotal) * 100)) : 0;
+
+    // Détection automatique de fin de campagne (A-12 FIX — nettoie les zombies)
+    const enCours = cmp.statut === 'en_cours';
+    const semble_terminee = enCours && (
+      totalTraites >= nbTotal ||
+      (logs.dernier_log_at && new Date(logs.dernier_log_at) < new Date(Date.now() - 10 * 60 * 1000))
+    );
+
+    if (semble_terminee) {
+      await pool.query(
+        `UPDATE prospection_campagnes SET statut = 'terminee', date_fin = COALESCE(date_fin, NOW()),
+         nb_envoyes = $1, nb_succes = $2, nb_echecs = $3,
+         taux_delivrabilite = CASE WHEN $1 > 0 THEN ROUND(($2::numeric/$1::numeric)*100,2) ELSE 0 END
+         WHERE id::text = $4 AND statut = 'en_cours'`,
+        [totalTraites, logs.envoyes, logs.echecs, String(id)]
+      ).catch(() => {});
+      cmp.statut = 'terminee';
+    }
+
+    res.json({
+      success: true,
+      campagne_id: cmp.id,
+      titre: cmp.titre,
+      statut: cmp.statut,
+      nb_total: nbTotal,
+      progression,
+      logs: {
+        total_traites: totalTraites,
+        envoyes: parseInt(logs.envoyes, 10) || 0,
+        echecs: parseInt(logs.echecs, 10) || 0,
+        simules: parseInt(logs.simules, 10) || 0,
+        lus: parseInt(logs.lus, 10) || 0,
+        livres: parseInt(logs.livres, 10) || 0,
+        dernier_log_at: logs.dernier_log_at || null,
+      },
+      taux_delivrabilite: totalTraites > 0
+        ? Math.round(((parseInt(logs.envoyes, 10) || 0) / totalTraites) * 100)
+        : 0,
+    });
+  } catch (err) {
+    console.error('[PROSPECTION CAMPAGNE STATUS ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /api/prospection/campagnes/:id/diagnostic ─────────────────────────────
+
 // Diagnostic d'une campagne spécifique
 router.get('/campagnes/:id/diagnostic', adminOnly, async (req, res) => {
   try {

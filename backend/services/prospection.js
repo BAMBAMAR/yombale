@@ -267,7 +267,7 @@ Quel est le programme ou lotissement que vous souhaitez promouvoir en priorité 
     canal: 'email',
     categorie: 'immo',
     sujet: `Modernisation de la vitrine et gestion locative pour {nom_boutique}`,
-    texte: `Bonjour [Madame/Monsieur la Direction / Responsable d'Agence],
+    texte: `{contact_salutation}
 
 Je me permets de vous contacter car j'apprécie la qualité du portefeuille immobilier de {nom_boutique} {quartier}.
 
@@ -350,7 +350,7 @@ Lien direct : https://nopalou.com/creer-boutique` + FOOTER_OPTOUT
     canal: 'email',
     categorie: 'general',
     sujet: `Solution de Caisse POS & Commandes WhatsApp pour {nom_boutique}`,
-    texte: `Bonjour [Madame/Monsieur le Responsable],
+    texte: `{contact_salutation}
 
 Je me permets de vous contacter car je suis de près le développement de {nom_boutique} {quartier}.
 
@@ -1187,6 +1187,14 @@ async function reconcilierAgencesEtBoutiquesExistantes() {
   await ensureProspectionTables();
   const stats = { agences_reconciliees: 0, boutiques_reconciliees: 0 };
 
+  // A-02 / A-13 FIX : Garantir l'existence des colonnes de liaison CRM ↔ Nopalou
+  try {
+    await pool.query(`
+      ALTER TABLE boutiques ADD COLUMN IF NOT EXISTS crm_lead_id UUID;
+      ALTER TABLE agences_immo ADD COLUMN IF NOT EXISTS crm_lead_id UUID;
+    `);
+  } catch (_) {}
+
   // 1. Réconciliation des Agences Immobilières (agences_immo)
   try {
     const { rows: agences } = await pool.query(`
@@ -1221,6 +1229,14 @@ async function reconcilierAgencesEtBoutiquesExistantes() {
               AND (statut != 'converti' OR nom_boutique ILIKE '%galaxy%' OR nom_boutique = 'Immobilière')
             RETURNING id
           `, [ag.nom, norm.national, norm.local, norm.local.slice(-9)]);
+
+          // A-02 FIX : Stocker le lead_id dans agences_immo pour traçabilité causale
+          if (resUp.rows.length > 0) {
+            await pool.query(
+              `UPDATE agences_immo SET crm_lead_id = $1 WHERE id = $2 AND crm_lead_id IS NULL`,
+              [resUp.rows[0].id, ag.id]
+            ).catch(() => {});
+          }
 
           if (resUp.rows.length > 0) {
             stats.agences_reconciliees += resUp.rows.length;
@@ -1274,6 +1290,14 @@ async function reconcilierAgencesEtBoutiquesExistantes() {
               AND statut != 'converti'
             RETURNING id
           `, [bq.nom, norm.national, norm.local, norm.local.slice(-9)]);
+
+          // A-02 FIX : Stocker le lead_id dans boutiques pour traçabilité causale
+          if (resUp.rows.length > 0) {
+            await pool.query(
+              `UPDATE boutiques SET crm_lead_id = $1 WHERE id = $2 AND crm_lead_id IS NULL`,
+              [resUp.rows[0].id, bq.id]
+            ).catch(() => {});
+          }
 
           if (resUp.rows.length > 0) {
             stats.boutiques_reconciliees += resUp.rows.length;
@@ -1870,6 +1894,17 @@ function interpolerMessage(template, lead) {
     });
   }
 
+  // 2b. A-07 FIX : Remplacement de {contact_salutation} pour les emails B2B formels
+  // Remplace le placeholder [Madame/Monsieur...] par une salutation dynamique correcte
+  if (/\{contact_salutation\}/i.test(message)) {
+    message = message.replace(/\{contact_salutation\}/gi, () => {
+      if (estPrenomAuth && salutationTarget) {
+        return `Bonjour ${salutationTarget},`;
+      }
+      return `Bonjour,`;
+    });
+  }
+
   // 3. Remplacement / Nettoyage radical des formules de salutation directes
   // Si le template contient "{Salam|Bonjour} {nom_boutique} !", on supprime {nom_boutique}
   // pour ne jamais avoir d'incongruité du type "Bonjour Commerce Général !"
@@ -2313,9 +2348,11 @@ async function ensureProspectionTables() {
         statut             VARCHAR(50) DEFAULT 'envoye',
         variante           VARCHAR(50) DEFAULT 'A',
         erreur             TEXT,
+        meta_message_id    VARCHAR(100),
         created_at         TIMESTAMPTZ DEFAULT NOW()
       );
       ALTER TABLE prospection_messages_log ADD COLUMN IF NOT EXISTS variante VARCHAR(50) DEFAULT 'A';
+      ALTER TABLE prospection_messages_log ADD COLUMN IF NOT EXISTS meta_message_id VARCHAR(100);
     `);
 
     // 6. Table de la Timeline Commerciale du Prospect (prospection_lead_events)
@@ -2358,6 +2395,20 @@ async function ensureProspectionTables() {
       CREATE INDEX IF NOT EXISTS idx_prospection_events_lead ON prospection_lead_events(lead_id);
       CREATE INDEX IF NOT EXISTS idx_prospection_events_type ON prospection_lead_events(type_evenement);
       CREATE INDEX IF NOT EXISTS idx_prospection_events_date ON prospection_lead_events(created_at DESC);
+    `);
+
+    // 9. Table cron_executions (A-05 FIX — monitoring dynamique des tâches planifiées)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS cron_executions (
+        id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nom_cron    VARCHAR(100) NOT NULL,
+        started_at  TIMESTAMPTZ DEFAULT NOW(),
+        ended_at    TIMESTAMPTZ,
+        statut      VARCHAR(20) DEFAULT 'en_cours',
+        stats       JSONB DEFAULT '{}',
+        erreur      TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_cron_executions_nom ON cron_executions(nom_cron, started_at DESC);
     `);
   } catch (err) {
     console.warn('[PROSPECTION] ensureProspectionTables warning:', err.message);
@@ -3143,7 +3194,7 @@ async function traiterRelancesProspectsAutomatiques({ limite = 30, simulation = 
     const { rows: leadsRelance2 } = await pool.query(`
       SELECT id, telephone, nom_boutique, contact_nom, categorie, sous_profil, nb_contacts, dernier_contact_at
       FROM prospection_leads
-      WHERE statut = 'contacte_wa'
+      WHERE statut = 'contacte_wa'  -- A-06 FIX : exclut explicitement en_discussion et converti
         AND nb_contacts = 2
         AND derniere_reponse_at IS NULL
         AND dernier_contact_at <= NOW() - INTERVAL '4 days'
@@ -3206,7 +3257,7 @@ async function traiterRelancesProspectsAutomatiques({ limite = 30, simulation = 
     const { rows: leadsRelance1 } = await pool.query(`
       SELECT id, telephone, nom_boutique, contact_nom, categorie, sous_profil, nb_contacts, dernier_contact_at
       FROM prospection_leads
-      WHERE statut = 'contacte_wa'
+      WHERE statut = 'contacte_wa'  -- A-06 FIX : exclut explicitement en_discussion et converti
         AND (nb_contacts = 1 OR nb_contacts IS NULL)
         AND derniere_reponse_at IS NULL
         AND dernier_contact_at <= NOW() - INTERVAL '3 days'
