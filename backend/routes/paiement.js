@@ -47,6 +47,15 @@ async function getPrix() {
   };
 }
 
+async function getNumeroDepotManuel() {
+  try {
+    const custom = await cfg.get('wave_numero_depot_manuel');
+    return custom || process.env.WAVE_NUMERO_DEPOT_MANUEL || '777202086';
+  } catch {
+    return process.env.WAVE_NUMERO_DEPOT_MANUEL || '777202086';
+  }
+}
+
 // Calcule le montant réel attendu pour une référence, à partir des prix settings —
 // ignore le montant déclaré par le client (utile pour methode='manuel', où ce montant n'est qu'indicatif).
 async function montantAttendu(reference, montantDeclare) {
@@ -69,6 +78,13 @@ async function montantAttendu(reference, montantDeclare) {
     else if (dureeMois === 6) remise = (reduc6 || 15) / 100;
     else if (dureeMois === 12) remise = (reduc12 || 25) / 100;
     return Math.round((prixMensuel * dureeMois) * (1 - remise));
+  }
+  if (reference.startsWith('CMD-')) {
+    const cmdRes = await pool.query(
+      `SELECT montant_total FROM commandes_boutique WHERE reference = $1 LIMIT 1`,
+      [reference]
+    );
+    if (cmdRes.rows[0]) return Math.round(Number(cmdRes.rows[0].montant_total));
   }
   return montantDeclare;
 }
@@ -293,7 +309,8 @@ router.post('/wave/initier', verifierToken, limiterEcriture, async (req, res) =>
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[wave/initier] Erreur Wave:', detail);
-    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: '777202086', montant: req.body?.montant || 0, reference: `pm_${req.user?.userId}_${req.body?.produit_id}` });
+    const numDepot = await getNumeroDepotManuel();
+    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: numDepot, montant: req.body?.montant || 0, reference: `pm_${req.user?.userId}_${req.body?.produit_id}` });
   }
 });
 
@@ -306,8 +323,21 @@ router.post('/wave/initier-express', limiterEcriture, async (req, res) => {
     const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
     const ref = reference || `CMD-${Date.now().toString(36).toUpperCase()}`;
 
+    // SÉCURITÉ P0 : Si la référence est une commande boutique (CMD-*), récupérer impérativement
+    // le montant réel en base de données pour empêcher toute falsification du montant côté client.
+    let montantFinal = Math.round(Number(montant));
+    if (ref.startsWith('CMD-')) {
+      const cmdRes = await pool.query(
+        `SELECT montant_total FROM commandes_boutique WHERE reference = $1 LIMIT 1`,
+        [ref]
+      );
+      if (cmdRes.rows[0]) {
+        montantFinal = Math.round(Number(cmdRes.rows[0].montant_total));
+      }
+    }
+
     const session = await wave.createCheckoutSession({
-      amount: Math.round(Number(montant)),
+      amount: montantFinal,
       currency: 'XOF',
       success_url: `${SITE}/paiement/succes?ref=${ref}`,
       error_url: `${SITE}/paiement/erreur?ref=${ref}`,
@@ -317,7 +347,8 @@ router.post('/wave/initier-express', limiterEcriture, async (req, res) => {
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[wave/initier-express] Erreur Wave:', detail);
-    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: '777202086', montant: req.body?.montant || 0, reference: req.body?.reference || `CMD-${Date.now().toString(36).toUpperCase()}` });
+    const numDepot = await getNumeroDepotManuel();
+    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: numDepot, montant: req.body?.montant || 0, reference: req.body?.reference || `CMD-${Date.now().toString(36).toUpperCase()}` });
   }
 });
 
@@ -609,7 +640,8 @@ router.post('/annonce/initier', verifierToken, limiterEcriture, async (req, res)
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[annonce/initier] Erreur Wave:', detail);
-    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: '777202086', reference: `ann_${req.user?.userId}_${req.body?.annonce_id}` });
+    const numDepot = await getNumeroDepotManuel();
+    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: numDepot, reference: `ann_${req.user?.userId}_${req.body?.annonce_id}` });
   }
 });
 
@@ -640,7 +672,8 @@ router.post('/immo-sponsoring/initier', verifierToken, limiterEcriture, async (r
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[immo-sponsoring] Erreur Wave:', detail);
-    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: '777202086', reference: `immo_${req.user?.userId}_${req.body?.immo_id}` });
+    const numDepot = await getNumeroDepotManuel();
+    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: numDepot, reference: `immo_${req.user?.userId}_${req.body?.immo_id}` });
   }
 });
 
@@ -668,7 +701,8 @@ router.post('/produit-sponsoring/initier', verifierToken, limiterEcriture, async
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[produit-sponsoring] erreur Wave:', detail);
-    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: '777202086', reference: `prod_${req.user?.userId}_${req.body?.produit_id}` });
+    const numDepot = await getNumeroDepotManuel();
+    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: numDepot, reference: `prod_${req.user?.userId}_${req.body?.produit_id}` });
   }
 });
 
@@ -699,7 +733,8 @@ router.post('/boutique-sponsoring/initier', verifierToken, limiterEcriture, asyn
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[boutique-sponsoring] Erreur Wave:', detail);
-    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: '777202086', reference: `bout_${req.user?.userId}_${req.body?.boutique_id}` });
+    const numDepot = await getNumeroDepotManuel();
+    res.json({ fallback_manuel: true, error: 'Erreur serveur Wave API', detail, numero_depot: numDepot, reference: `bout_${req.user?.userId}_${req.body?.boutique_id}` });
   }
 });
 
@@ -823,7 +858,8 @@ router.post('/boost/initier', verifierToken, limiterEcriture, async (req, res) =
   } catch (err) {
     const detail = err?.response?.data ?? err?.message ?? 'inconnu';
     console.error('[boost/initier] Erreur Wave:', detail);
-    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: '777202086', reference: `boost_${req.user?.userId}_${req.body?.annonce_id}` });
+    const numDepot = await getNumeroDepotManuel();
+    res.json({ fallback_manuel: true, error: err.message || 'Erreur Wave API', detail, numero_depot: numDepot, reference: `boost_${req.user?.userId}_${req.body?.annonce_id}` });
   }
 });
 

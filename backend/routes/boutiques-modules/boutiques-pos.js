@@ -22,6 +22,11 @@ const {
   slugify,
   uniqueSlug,
 } = require('./helpers');
+
+// ── File d'attente pour le scanner douchette distant (Smartphone → PC Caisse) ──
+// Déclarée localement dans ce module pour éviter le couplage avec boutiques-produits.js
+const remoteScannerQueue = new Map();
+
 router.post('/:id/scanner-remote', async (req, res) => {
   const { sessionId, code } = req.body;
   if (!sessionId || !code) return res.status(400).json({ error: 'sessionId et code requis' });
@@ -443,6 +448,12 @@ router.post('/:id/pos-vente', tokenOptional, async (req, res) => {
         }
 
         await dbClient.query('COMMIT');
+
+        // Analytics POS : enregistrement asynchrone non bloquant pour le tableau de bord
+        pool.query(
+          `INSERT INTO analytics_events (type, boutique_id) VALUES ('vente_pos', $1)`,
+          [boutiqueId]
+        ).catch(e => console.warn('[ANALYTICS POS]', e.message));
       } catch (txErr) {
         await dbClient.query('ROLLBACK');
         console.error('[POS VENTE TX ROLLBACK]', txErr.code, txErr.message, txErr.detail || '');

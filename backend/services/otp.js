@@ -112,9 +112,18 @@ async function verifierOtp(utilisateurId, action, codeSaisi) {
   }
 
   const computedHash = hashOtp(cleanCode, otpRecord.code_sel);
-  if (computedHash !== otpRecord.code_hash) {
-    await pool.query('UPDATE auth_otps SET essais_restants = essais_restants - 1 WHERE id = $1', [otpRecord.id]);
-    return { valide: false, error: `Code incorrect (${otpRecord.essais_restants - 1} essai(s) restant(s))` };
+  const bufExpected = Buffer.from(otpRecord.code_hash, 'hex');
+  const bufActual = Buffer.from(computedHash, 'hex');
+  const isMatch = bufExpected.length === bufActual.length && crypto.timingSafeEqual(bufExpected, bufActual);
+
+  if (!isMatch) {
+    const restants = Math.max(0, otpRecord.essais_restants - 1);
+    await pool.query('UPDATE auth_otps SET essais_restants = $1 WHERE id = $2', [restants, otpRecord.id]);
+    if (restants === 0) {
+      await pool.query('UPDATE auth_otps SET utilise = TRUE WHERE id = $1', [otpRecord.id]);
+      return { valide: false, error: 'Nombre maximal de tentatives dépassé.' };
+    }
+    return { valide: false, error: `Code incorrect (${restants} essai(s) restant(s))` };
   }
 
   // Code valide : marquer comme consommé
@@ -122,9 +131,116 @@ async function verifierOtp(utilisateurId, action, codeSaisi) {
   return { valide: true };
 }
 
+let _migratedPhone = false;
+async function assurerTableOtpPhone() {
+  if (_migratedPhone) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS auth_otp_phones (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        telephone VARCHAR(32) NOT NULL,
+        action VARCHAR(64) NOT NULL,
+        code_hash VARCHAR(64) NOT NULL,
+        code_sel VARCHAR(32) NOT NULL,
+        essais_restants INT DEFAULT 5,
+        expire_a TIMESTAMPTZ NOT NULL,
+        utilise BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_auth_otp_phones_tel_act ON auth_otp_phones(telephone, action, utilise);
+    `);
+    _migratedPhone = true;
+  } catch (e) {
+    _migratedPhone = true;
+  }
+}
+
+/**
+ * Génère un code OTP à 6 chiffres pour un numéro de téléphone (pré-authentification / inscription)
+ */
+async function genererOtpPhone(telephone, action = 'auth') {
+  await assurerTableOtpPhone();
+  const normPhone = normalisePhone(telephone);
+  const code = crypto.randomInt(100000, 1000000).toString();
+  const sel = crypto.randomBytes(8).toString('hex');
+  const hashed = hashOtp(code, sel);
+  const expireA = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  // Invalider les anciens codes non utilisés pour ce numéro et cette action
+  await pool.query(`
+    UPDATE auth_otp_phones
+    SET utilise = TRUE
+    WHERE telephone = $1 AND action = $2 AND utilise = FALSE
+  `, [normPhone, action]);
+
+  await pool.query(`
+    INSERT INTO auth_otp_phones (telephone, action, code_hash, code_sel, expire_a)
+    VALUES ($1, $2, $3, $4, $5)
+  `, [normPhone, action, hashed, sel, expireA]);
+
+  return code;
+}
+
+/**
+ * Vérifie un code OTP soumis pour un numéro de téléphone
+ */
+async function verifierOtpPhone(telephone, action, codeSaisi) {
+  await assurerTableOtpPhone();
+  const normPhone = normalisePhone(telephone);
+  const cleanCode = String(codeSaisi || '').trim();
+  if (cleanCode.length !== 6) {
+    return { valide: false, error: 'Le code doit comporter 6 chiffres' };
+  }
+
+  const { rows } = await pool.query(`
+    SELECT id, code_hash, code_sel, essais_restants, expire_a, action
+    FROM auth_otp_phones
+    WHERE telephone = $1 AND ($2::VARCHAR IS NULL OR action = $2::VARCHAR OR action = 'auth') AND utilise = FALSE
+    ORDER BY created_at DESC
+    LIMIT 1
+  `, [normPhone, action || null]);
+
+  if (!rows.length) {
+    return { valide: false, error: 'Aucun code trouvé ou expiré' };
+  }
+
+  const otpRecord = rows[0];
+
+  if (new Date() > new Date(otpRecord.expire_a)) {
+    await pool.query('UPDATE auth_otp_phones SET utilise = TRUE WHERE id = $1', [otpRecord.id]);
+    return { valide: false, error: 'Code expiré' };
+  }
+
+  if (otpRecord.essais_restants <= 0) {
+    await pool.query('UPDATE auth_otp_phones SET utilise = TRUE WHERE id = $1', [otpRecord.id]);
+    return { valide: false, error: 'Trop de tentatives incorrectes. Ce code a été invalidé par sécurité.', tropDeTentatives: true };
+  }
+
+  const computedHash = hashOtp(cleanCode, otpRecord.code_sel);
+  const bufExpected = Buffer.from(otpRecord.code_hash, 'hex');
+  const bufActual = Buffer.from(computedHash, 'hex');
+  const isMatch = bufExpected.length === bufActual.length && crypto.timingSafeEqual(bufExpected, bufActual);
+
+  if (!isMatch) {
+    const restants = Math.max(0, otpRecord.essais_restants - 1);
+    await pool.query('UPDATE auth_otp_phones SET essais_restants = $1 WHERE id = $2', [restants, otpRecord.id]);
+    if (restants === 0) {
+      await pool.query('UPDATE auth_otp_phones SET utilise = TRUE WHERE id = $1', [otpRecord.id]);
+      return { valide: false, error: 'Trop de tentatives incorrectes. Ce code a été invalidé par sécurité.', tropDeTentatives: true };
+    }
+    return { valide: false, error: `Code incorrect (${restants} tentative(s) restante(s))`, essaisRestants: restants };
+  }
+
+  // Code valide : marquer comme consommé
+  await pool.query('UPDATE auth_otp_phones SET utilise = TRUE WHERE id = $1', [otpRecord.id]);
+  return { valide: true };
+}
+
 module.exports = {
   genererOtp,
   envoyerOtpWhatsApp,
   verifierOtp,
+  genererOtpPhone,
+  verifierOtpPhone,
   hashOtp
 };

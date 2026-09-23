@@ -23,6 +23,27 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correctifs E2E Globaux — Continuité des Parcours, Résilience Auth & Sécurisation Paiements/POS/CRM (24 septembre 2026)** 🛡️⚡🔐📦💳✅ :
+  * **🚨 Contexte & Audit Diagnostique Transversal** :
+    - Réalisation d'un audit E2E exhaustif centré sur la continuité réelle des parcours marchands, acheteurs, agences immobilières et caissiers POS.
+    - Identification de 7 points de correction prioritaires : crash au scan distant POS par variable non définie, perte de sessions OTP WhatsApp et 2FA au redémarrage serveur ou multi-instance (Map en mémoire), risque de falsification de montant sur les paiements Wave express de commandes boutique, numéro de dépôt Wave en dur, rupture de continuité analytique sur les ventes POS, et ingestion publique de leads immo non protégée contre le spam avec fuite de contacts entre agents commerciaux.
+  * **🛠️ Correctifs & Fonctionnalités Appliqués** :
+    - **P0 — Résolution du crash scanner distant POS (`backend/routes/boutiques-modules/boutiques-pos.js`)** :
+      * Déclaration locale de `const remoteScannerQueue = new Map();` en amont des routes d'appairage et de polling de scans distants (`/pos-remote-scan/*`), éliminant l'erreur `ReferenceError: remoteScannerQueue is not defined` qui bloquait les caisses synchronisées.
+    - **P0 — Migration OTP PostgreSQL & Éradication du stockage en mémoire (`backend/services/otp.js`, `backend/routes/auth.js`)** :
+      * Création de la table `auth_otp_phones` avec sel aléatoire, hachage SHA-256, expiration automatique à 10 minutes et compteur d'essais (max 5 tentatives).
+      * Implémentation des fonctions DB-backed `genererOtpPhone` et `verifierOtpPhone` avec comparaison timing-safe (`crypto.timingSafeEqual`).
+      * Suppression totale de `const otps = new Map()` dans `backend/routes/auth.js`. Migration de toutes les routes d'authentification WhatsApp (`/whatsapp-otp-send`, `/whatsapp-otp-verify`, `/whatsapp-otp-login`, `/whatsapp-otp-register`) et du 2FA (`/connexion`, `/connexion-2fa`). Garantie de persistance à travers les redémarrages et le clustering multi-instance.
+    - **P1 — Protection Anti-Falsification Montant Wave Express (`backend/routes/paiement.js`)** :
+      * Sur la route `/wave/initier-express`, pour toute référence débutant par `CMD-`, le serveur interroge désormais directement `commandes_boutique` pour imposer le `montant_total` réel enregistré en base, neutralisant toute falsification de prix envoyée dans le payload HTTP client.
+      * Intégration de cette validation dans la fonction centrale `montantAttendu()`.
+      * Création du helper `getNumeroDepotManuel()` permettant de configurer dynamiquement le numéro Wave de secours via `wave_numero_depot_manuel` en base ou `WAVE_NUMERO_DEPOT_MANUEL` dans l'environnement (avec fallback `777202086`).
+    - **P2 — Réconciliation Analytique Vente POS (`backend/routes/boutiques-modules/boutiques-pos.js`)** :
+      * Ajout d'une insertion asynchrone non-bloquante de l'événement `'vente_pos'` dans la table `analytics_events` immédiatement après le `COMMIT` transactionnel de la vente POS, alimentant désormais en temps réel les tableaux de bord et statistiques marchands.
+    - **P2 & P3 — Protection Anti-Spam & Isolation Agent CRM Immo (`backend/routes/crm-immo.js`)** :
+      * Application du middleware `limiterEcriture` sur la route publique `/api/crm-immo/public/lead` pour protéger l'API contre les attaques par déni de service et injections massives de faux prospects.
+      * Isolation des contacts sur `GET /api/crm-immo/agence/:slugOrId/contacts` : les agents commerciaux ne voient que leurs propres contacts assignés (`agent_id = userId`), tandis que les directeurs et administrateurs d'agence conservent un accès complet avec filtre optionnel.
+
 - **Refonte & Blindage Intégral du Back-Office, de la Sécurité RBAC & du Pilotage Nopalou (Phases 1, 2 & 3) (23 septembre 2026)** 🛡️⚙️💼⚡📊✅ :
   * **🚨 Contexte & Audit Diagnostique Exhaustif** :
     - Réalisation d'un audit de gouvernance à 360° du back-office Nopalou (`/admin`) couvrant l'ensemble de la chaîne : utilisateurs, boutiques, POS, immobilier, abonnements, paiements Wave, Wave payouts, exports, logs et infrastructure.

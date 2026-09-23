@@ -9,6 +9,7 @@ const whatsappHealth = require('../services/whatsapp-health');
 const crypto = require('crypto');
 const { limiterAuth } = require('../middlewares/rateLimit');
 const { verifierToken } = require('../middlewares/auth');
+const { genererOtp, verifierOtp, genererOtpPhone, verifierOtpPhone } = require('../services/otp');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
 
@@ -110,9 +111,8 @@ router.post('/connexion',
       if (rows[0].a2f_actif) {
         const destPhone = normalisePhone(rows[0].a2f_telephone || rows[0].telephone);
         if (destPhone) {
-          const code2FA = crypto.randomInt(100000, 1000000).toString();
+          const code2FA = await genererOtp(rows[0].id, '2fa_login', destPhone);
           const tempToken = jwt.sign({ userId: rows[0].id, type: '2fa_pending' }, process.env.JWT_SECRET, { expiresIn: '10m' });
-          otps.set(`2fa_${rows[0].id}`, { code: code2FA, expiresAt: Date.now() + 10 * 60 * 1000, tentatives: 0 });
 
           sendWhatsAppText(destPhone, `Nopalou - Votre code d'authentification à double facteur (2FA) est : *${code2FA}*.\nValide pendant 10 minutes.`)
             .catch(err => console.warn('[2FA SEND WARN]', err.message));
@@ -168,27 +168,10 @@ router.post('/connexion-2fa',
         return res.status(401).json({ error: 'Token 2FA invalide' });
       }
 
-      const key = `2fa_${payload.userId}`;
-      const data = otps.get(key);
-      if (!data) return res.status(400).json({ error: 'Aucun code 2FA en attente ou code expiré' });
-      if (Date.now() > data.expiresAt) {
-        otps.delete(key);
-        return res.status(400).json({ error: 'Le code 2FA a expiré. Veuillez vous reconnecter.' });
+      const verifResult = await verifierOtp(payload.userId, '2fa_login', code);
+      if (!verifResult.valide) {
+        return res.status(400).json({ error: verifResult.error });
       }
-
-      data.tentatives = (data.tentatives || 0) + 1;
-      if (data.tentatives > 5) {
-        otps.delete(key);
-        return res.status(429).json({ error: 'Trop de tentatives incorrectes. Le code a été invalidé.' });
-      }
-
-      const bufExpected = Buffer.from(String(data.code));
-      const bufActual = Buffer.from(String(code || '').trim());
-      if (bufExpected.length !== bufActual.length || !crypto.timingSafeEqual(bufExpected, bufActual)) {
-        return res.status(400).json({ error: 'Code 2FA incorrect' });
-      }
-
-      otps.delete(key);
 
       const { rows } = await pool.query(
         'SELECT id,nom,email,telephone,email_verifie,suspendu,supprime_le,a2f_actif FROM utilisateurs WHERE id=$1',
@@ -454,8 +437,6 @@ router.get('/statut', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-const otps = new Map();
-
 // POST /api/auth/whatsapp-otp-send - Envoyer un code OTP via WhatsApp
 // Utilise un Template Meta certifié (catégorie "Authentification") pour pouvoir
 // envoyer le code même à un utilisateur qui n'a jamais écrit au bot Nopalou.
@@ -511,8 +492,7 @@ router.post('/whatsapp-otp-send', limiterAuth, async (req, res) => {
       }
     }
 
-    const code = crypto.randomInt(100000, 1000000).toString(); // 6 digits CSPRNG
-    otps.set(telephone, { code, expiresAt: Date.now() + 10 * 60 * 1000, tentatives: 0 }); // 10 min, max 5 tentatives
+    const code = await genererOtpPhone(telephone, type || 'auth');
     // SÉCURITÉ P0 : Masquage strict du numéro et JAMAIS de code en clair dans les logs
     console.log(`[OTP] Code généré pour ${telephone.slice(0, 4)}**** (${type || 'standard'})`);
 
@@ -551,28 +531,10 @@ router.post('/whatsapp-otp-verify', limiterAuth, async (req, res) => {
     let { telephone, code } = req.body;
     telephone = normalisePhone(telephone);
     
-    const data = otps.get(telephone);
-    if (!data) return res.status(400).json({ error: 'Aucun code trouvé ou expiré' });
-    if (Date.now() > data.expiresAt) {
-      otps.delete(telephone);
-      return res.status(400).json({ error: 'Code expiré' });
+    const verif = await verifierOtpPhone(telephone, null, code);
+    if (!verif.valide) {
+      return res.status(verif.tropDeTentatives ? 429 : 400).json({ error: verif.error });
     }
-
-    // Protection anti force brute : 5 tentatives max
-    data.tentatives = (data.tentatives || 0) + 1;
-    if (data.tentatives > 5) {
-      otps.delete(telephone);
-      return res.status(429).json({ error: 'Trop de tentatives incorrectes. Ce code a été invalidé par sécurité.' });
-    }
-
-    const bufExpected = Buffer.from(String(data.code));
-    const bufActual = Buffer.from(String(code || '').trim());
-    const isMatch = bufExpected.length === bufActual.length && crypto.timingSafeEqual(bufExpected, bufActual);
-    if (!isMatch) {
-      return res.status(400).json({ error: `Code incorrect (${Math.max(0, 5 - data.tentatives)} tentative(s) restante(s))` });
-    }
-
-    otps.delete(telephone);
     res.json({ success: true });
   } catch (err) {
     console.error('[OTP VERIFY]', err);
@@ -586,28 +548,10 @@ router.post('/whatsapp-otp-login', limiterAuth, async (req, res) => {
     let { telephone, code } = req.body;
     telephone = normalisePhone(telephone);
     
-    const data = otps.get(telephone);
-    if (!data) return res.status(400).json({ error: 'Aucun code trouvé ou expiré' });
-    if (Date.now() > data.expiresAt) {
-      otps.delete(telephone);
-      return res.status(400).json({ error: 'Code expiré' });
+    const verif = await verifierOtpPhone(telephone, 'login', code);
+    if (!verif.valide) {
+      return res.status(verif.tropDeTentatives ? 429 : 400).json({ error: verif.error });
     }
-
-    // Protection anti force brute : 5 tentatives max
-    data.tentatives = (data.tentatives || 0) + 1;
-    if (data.tentatives > 5) {
-      otps.delete(telephone);
-      return res.status(429).json({ error: 'Trop de tentatives incorrectes. Ce code a été invalidé par sécurité.' });
-    }
-
-    const bufExpected = Buffer.from(String(data.code));
-    const bufActual = Buffer.from(String(code || '').trim());
-    const isMatch = bufExpected.length === bufActual.length && crypto.timingSafeEqual(bufExpected, bufActual);
-    if (!isMatch) {
-      return res.status(400).json({ error: `Code incorrect (${Math.max(0, 5 - data.tentatives)} tentative(s) restante(s))` });
-    }
-
-    otps.delete(telephone);
     
     // Trouver l'utilisateur (compatible avec formats +221, 221 et 9 chiffres)
     const cleanPhone = normalisePhone(telephone);
@@ -643,15 +587,10 @@ router.post('/whatsapp-otp-register', limiterAuth, async (req, res) => {
     let { telephone, code, nom } = req.body;
     telephone = normalisePhone(telephone);
     
-    const data = otps.get(telephone);
-    if (!data) return res.status(400).json({ error: 'Aucun code trouvé ou expiré' });
-    if (Date.now() > data.expiresAt) {
-      otps.delete(telephone);
-      return res.status(400).json({ error: 'Code expiré' });
+    const verif = await verifierOtpPhone(telephone, 'register', code);
+    if (!verif.valide) {
+      return res.status(verif.tropDeTentatives ? 429 : 400).json({ error: verif.error });
     }
-    if (data.code !== code) return res.status(400).json({ error: 'Code incorrect' });
-
-    otps.delete(telephone);
     
     // Vérifier si l'utilisateur existe déjà (compatible formats +221, 221 et 9 chiffres)
     const cleanPhone = normalisePhone(telephone);

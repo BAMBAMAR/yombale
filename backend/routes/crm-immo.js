@@ -5,6 +5,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../models/db');
 const { verifierToken } = require('../middlewares/auth');
+const { limiterEcriture } = require('../middlewares/rateLimit');
 const { requireAgenceAccess } = require('../middlewares/tenantSecurityImmo');
 const { trouverBiensPourProspect } = require('../services/matching-immo');
 
@@ -17,6 +18,13 @@ router.get('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), a
   try {
     const agenceId = req.agence.id;
     const { statut_crm, type_contact = 'prospect', agent_id, search } = req.query;
+
+    const userId = req.user?.userId || req.user?.id;
+    const ROLES_ACCES_COMPLET = ['admin_agence', 'directeur', 'gestionnaire_locatif'];
+    const isAdmin = req.agenceMembre?.isOwner || ROLES_ACCES_COMPLET.includes(req.agenceMembre?.role);
+    // Si l'utilisateur est un simple agent commercial, il ne voit QUE ses propres contacts assignés.
+    // Si c'est un admin/directeur, il peut filtrer par agent_id ou voir tous les contacts de l'agence.
+    const filtreAgentId = isAdmin ? (agent_id || null) : userId;
 
     let query = `
       SELECT c.*, u.nom AS agent_nom,
@@ -37,9 +45,9 @@ router.get('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), a
       query += ` AND c.statut_crm = $${pIndex++}`;
       params.push(statut_crm);
     }
-    if (agent_id) {
+    if (filtreAgentId) {
       query += ` AND c.agent_id = $${pIndex++}`;
-      params.push(agent_id);
+      params.push(filtreAgentId);
     }
     if (search) {
       query += ` AND (c.nom ILIKE $${pIndex} OR c.prenom ILIKE $${pIndex} OR c.telephone ILIKE $${pIndex} OR c.email ILIKE $${pIndex})`;
@@ -62,7 +70,7 @@ router.get('/agence/:slugOrId/contacts', verifierToken, requireAgenceAccess(), a
 });
 
 // ── POST /api/crm-immo/public/lead ── Ingestion automatique de lead depuis annonce ou vitrine
-router.post('/public/lead', async (req, res) => {
+router.post('/public/lead', limiterEcriture, async (req, res) => {
   try {
     const {
       annonce_id,
