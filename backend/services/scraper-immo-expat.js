@@ -205,7 +205,7 @@ async function upsertAnnonce(a) {
     ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
     DO UPDATE SET
       titre       = EXCLUDED.titre,
-      prix        = COALESCE(EXCLUDED.prix, annonces_immo.prix),
+      prix        = CASE WHEN EXCLUDED.prix IS NOT NULL THEN EXCLUDED.prix WHEN annonces_immo.prix < 10000 THEN NULL ELSE annonces_immo.prix END,
       photos      = CASE WHEN jsonb_array_length(EXCLUDED.photos) > 0
                          THEN EXCLUDED.photos ELSE annonces_immo.photos END,
       meuble      = EXCLUDED.meuble,

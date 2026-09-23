@@ -23,6 +23,41 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Consolidation, Décloisonnement & Optimisation de la Branche IMMOBILIER (IMM-001 à IMM-006) (23 septembre 2026)** 🏢🔑🏡✨🛡️⚡✅ :
+  * **🚨 Contexte & Audit Diagnostique** :
+    - Audit exhaustif de bout en bout de la verticale Immobilier Nopalou : base de données, API REST, portail `/immo`, vitrines `/agences`, back-office agence (`/agence/[slug]`), CRM, gestion locative, séquestre Pay Safe, scrapers et synchronisation multi-appareils.
+    - Identification de 6 anomalies clés : manque de résolution canonique des agences dans le résolveur universel (IMM-001), favoris exclusivement locaux sans persistance cloud (IMM-002), catalogue scindé avec 1 099 annonces immo isolées dans `annonces_classifiees` (IMM-003), 95 annonces scraped avec prix symbolique 1 FCFA (IMM-004), absence de sélecteur bailleur dans le formulaire de bien agence (IMM-005) et absence d'intégration du visualiseur de visites virtuelles 360° (IMM-006).
+  * **🛠️ Correctifs et Évolutions Livrés** :
+    - **IMM-001 : Résolveur Universel d'Agences Immobilières (`backend/routes/entites.js`)** :
+      * Ajout des alias `/agences` et `/agence` dans `ALIAS_MAP`.
+      * Nettoyage du préfixe WhatsApp `agence...`.
+      * Résolution automatique par UUID, par slug ou nom d'agence, et par fragment hexadécimal vers `/agences/[slug]`.
+    - **IMM-002 : Synchronisation Cloud Multi-Appareils des Favoris (`backend/migrate-inline.js`, `backend/routes/favoris.js`, `backend/app.js`, `frontend-next/src/app/CardActions.tsx`, `frontend-next/src/app/(account)/favoris/FavorisClient.tsx`)** :
+      * Création de la table `utilisateurs_favoris` avec contrainte unique et index optimisés.
+      * Nouvelle route d'API REST `/api/favoris` (GET, POST, DELETE, POST /bulk-sync) sécurisée par session JWT/cookie.
+      * Synchronisation asynchrone non-bloquante au clic dans `CardActions.tsx`.
+      * Réconciliation bidirectionnelle automatique (cloud &rarr; localStorage &rarr; cloud) au chargement de `FavorisClient.tsx`.
+    - **IMM-003 : Décloisonnement Intégral du Catalogue Immobilier (`backend/scripts/consolidate-immo-classifiees.js`, `backend/routes/annonces.js`)** :
+      * Création et exécution du script de consolidation idempotent : 1 099 annonces classifiées immobilières migrées vers `annonces_immo` (`source = 'particulier_annonce'`, `ref_externe = 'classifiee-[id]'`), portant le catalogue unifié `/immo` de 2 959 à 4 058 biens.
+      * Inférence automatique intelligente de la transaction (location/vente) et du type de bien (appartement, villa, terrain, studio, bureau, chambre).
+      * Branchement en temps réel du helper `synchroniserImmoClassifiee` sur la création, mise à jour, suppression et modération admin dans `backend/routes/annonces.js`.
+    - **IMM-004 : Assainissement des Prix Scraped Aberrants (`backend/services/scraper-immo-expat.js`, `backend/services/scraper-immo-coinafrique.js`, SQL)** :
+      * Correction de la clause `upsertAnnonce` pour écraser les prix symboliques < 10 000 FCFA à `NULL` au lieu de les conserver via `COALESCE`.
+      * Exécution d'une requête de nettoyage SQL : 95 prix < 10 000 FCFA réinitialisés à `NULL` ("Prix sur demande"), 0 prix aberrant restant en base.
+    - **IMM-005 : Association Bailleur dans le Formulaire de Bien d'Agence (`frontend-next/src/app/agence/[slug]/biens/...`)** :
+      * Extension de `BienFormData` avec `proprietaire_id`.
+      * Intégration du sélecteur de bailleur avec nom, prénom et téléphone dans `BienSectionOperation.tsx`, alimenté par `GET /api/crm-immo/agence/${slug}/proprietaires`.
+      * Transmission transparente au backend POST/PUT pour permettre l'imputation directe des loyers et relevés de gestion.
+    - **IMM-006 : Visualiseur de Visites Virtuelles 360° / Matterport (`backend/routes/immo.js`, `frontend-next/src/app/immo/[id]/...`)** :
+      * Ajout de la colonne `visite_virtuelle TEXT` sur `annonces_immo`.
+      * Sélection de `b.visite_virtuelle AS bien_visite_virtuelle` dans `GET /api/immo/:id`.
+      * Transmission au lecteur interactif plein écran `<SectionVideoImmo />` dans `page.tsx` et lien d'accès rapide avec ancre dans `FicheImmoSidebar.tsx`.
+  * **🧪 Validation Technique & Qualité** :
+    - 31/31 tests unitaires passés au vert avec Jest (`tests/unit/immo-p0-lead-and-agency.test.js`, `tests/unit/immo-chatbot.test.js`, `tests/unit/immo-sequestre.test.js`, `tests/unit/immo-favoris-and-resolver.test.js`).
+    - `npx tsc --noEmit` sur `frontend-next` : 0 erreur de typage.
+    - `npm run lint:slop` sur `frontend-next` : 0 composant monolithique (>450 lignes), 0 régression anti-slop.
+    - Règle absolue de déploiement respectée : aucun `git push` automatique déclenché.
+
 - **Audit & Résolution Intégrale de l'Écosystème Conversationnel, WhatsApp WhatBot & Liens Web (23 septembre 2026)** 🤖💬📱🔗🛡️⚡✅ :
   * **🚨 Contexte & Diagnostic** :
     - Audit exhaustif de bout en bout de l'écosystème conversationnel Nopalou : Chatbot Web (`/api/chat`), WhatBot WhatsApp (`whatsapp-chatbot.js`), résolveur d'entités, boutons "Voir...", liens de redirection, synchronisation des données et gestion multi-tenant.

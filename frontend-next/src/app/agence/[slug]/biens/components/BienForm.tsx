@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Camera, Video, AlertCircle, Loader2 } from 'lucide-react'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 import BienPhotoUploader from './BienPhotoUploader'
@@ -15,6 +15,7 @@ import { CommoditesState } from './BienCommoditesSelector'
 export interface BienFormData {
   id?: string
   reference?: string
+  proprietaire_id?: string | null
   titre?: string
   type_bien?: string
   sous_type?: string
@@ -83,11 +84,26 @@ export default function BienForm({
   const [photos, setPhotos] = useState<string[]>(() => parseArrayField(initialBien?.photos))
   const [videos, setVideos] = useState<string[]>(() => parseArrayField(initialBien?.videos))
 
+  const [proprietaires, setProprietaires] = useState<Array<{ id: string; nom: string; prenom?: string; telephone?: string }>>([])
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  useEffect(() => {
+    fetch(`/api/crm-immo/agence/${slug}/proprietaires`, {
+      headers: getImmoAuthHeaders(),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.success && Array.isArray(data.proprietaires)) {
+          setProprietaires(data.proprietaires)
+        }
+      })
+      .catch(() => {})
+  }, [slug])
+
   const [form, setForm] = useState({
     titre: initialBien?.titre || '',
+    proprietaire_id: initialBien?.proprietaire_id || '',
     type_bien: initialBien?.type_bien || 'appartement',
     ville: initialBien?.ville || 'Dakar',
     quartier: initialBien?.quartier || '',
@@ -130,6 +146,7 @@ export default function BienForm({
 
       const payload = {
         titre: form.titre.trim(),
+        proprietaire_id: form.proprietaire_id || null,
         type_bien: form.type_bien,
         ville: form.ville.trim(),
         quartier: form.quartier.trim() || null,
@@ -215,6 +232,9 @@ export default function BienForm({
         onPrixLocationChange={val => setForm(p => ({ ...p, prix_location: val }))}
         prixVente={form.prix_vente}
         onPrixVenteChange={val => setForm(p => ({ ...p, prix_vente: val }))}
+        proprietaires={proprietaires}
+        proprietaireId={form.proprietaire_id}
+        onProprietaireIdChange={val => setForm(p => ({ ...p, proprietaire_id: val }))}
       />
 
       {/* ── 2. Photos du bien (Smartphone Ready) ── */}

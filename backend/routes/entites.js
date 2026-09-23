@@ -48,6 +48,8 @@ router.get('/resoudre/:id', async (req, res) => {
       'immobilier': '/immo',
       'annonces': '/annonces',
       'boutiques': '/boutiques',
+      'agences': '/agences',
+      'agence': '/agences',
       'accueil': '/',
       'home': '/',
     };
@@ -56,7 +58,7 @@ router.get('/resoudre/:id', async (req, res) => {
       return res.json({ found: true, type: 'alias', url: ALIAS_MAP[cleanLower] });
     }
 
-    // 2b. Nettoyage de préfixes écrasés par WhatsApp Meta (boutiques..., annonces..., immo..., produit...)
+    // 2b. Nettoyage de préfixes écrasés par WhatsApp Meta (boutiques..., annonces..., immo..., agences..., produit...)
     let parsedId = cleanId;
     if (/^boutiques[a-z0-9_-]+/i.test(cleanId)) {
       parsedId = cleanId.replace(/^boutiques/i, '');
@@ -64,6 +66,8 @@ router.get('/resoudre/:id', async (req, res) => {
       parsedId = cleanId.replace(/^annonces/i, '');
     } else if (/^immo[a-z0-9_-]+/i.test(cleanId)) {
       parsedId = cleanId.replace(/^immo/i, '');
+    } else if (/^agences?[a-z0-9_-]+/i.test(cleanId)) {
+      parsedId = cleanId.replace(/^agences?/i, '');
     } else if (/^produits?[a-z0-9_-]+/i.test(cleanId)) {
       parsedId = cleanId.replace(/^produits?/i, '');
     } else if (/^nopalou-produit-[a-z0-9_-]+/i.test(cleanId)) {
@@ -140,6 +144,12 @@ router.get('/resoudre/:id', async (req, res) => {
       if (cmdRows[0]) {
         return res.json({ found: true, type: 'commande', url: `/suivi-commande?ref=${cmdRows[0].reference}` });
       }
+
+      // 4f. Agences immobilières par UUID
+      const { rows: agRows } = await pool.query('SELECT id, slug FROM agences_immo WHERE id = $1 LIMIT 1', [activeUuid]);
+      if (agRows[0]) {
+        return res.json({ found: true, type: 'agence_immo', url: `/agences/${agRows[0].slug || agRows[0].id}` });
+      }
     }
 
     // 5. Recherche par slug ou identifiant textuel de boutique (insensible à la casse)
@@ -147,6 +157,12 @@ router.get('/resoudre/:id', async (req, res) => {
     const { rows: bqSlugRows } = await pool.query('SELECT id, slug FROM boutiques WHERE LOWER(slug) = $1 OR nom ILIKE $1 LIMIT 1', [slugQuery]);
     if (bqSlugRows[0]) {
       return res.json({ found: true, type: 'boutique', url: `/boutiques/${bqSlugRows[0].slug || bqSlugRows[0].id}` });
+    }
+
+    // 5b. Recherche par slug ou nom d'agence immobilière
+    const { rows: agSlugRows } = await pool.query('SELECT id, slug FROM agences_immo WHERE LOWER(slug) = $1 OR nom ILIKE $1 LIMIT 1', [slugQuery]);
+    if (agSlugRows[0]) {
+      return res.json({ found: true, type: 'agence_immo', url: `/agences/${agSlugRows[0].slug || agSlugRows[0].id}` });
     }
 
     // 6. Si c'est un fragment hexadécimal / tail d'UUID (ex: bf62e118596c ou UUID sans tirets)
@@ -198,6 +214,15 @@ router.get('/resoudre/:id', async (req, res) => {
       );
       if (cmdTailRows[0]) {
         return res.json({ found: true, type: 'commande', url: `/suivi-commande?ref=${cmdTailRows[0].reference}` });
+      }
+
+      // 6f. Agences immobilières par fin d'identifiant
+      const { rows: agTailRows } = await pool.query(
+        `SELECT id, slug FROM agences_immo WHERE id::text ILIKE '%' || $1 LIMIT 1`,
+        [testId]
+      );
+      if (agTailRows[0]) {
+        return res.json({ found: true, type: 'agence_immo', url: `/agences/${agTailRows[0].slug || agTailRows[0].id}` });
       }
     }
 

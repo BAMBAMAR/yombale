@@ -3,6 +3,13 @@
 import React from 'react'
 import { Home } from 'lucide-react'
 
+interface ProprietaireOption {
+  id: string
+  nom: string
+  prenom?: string
+  telephone?: string
+}
+
 interface BienSectionOperationProps {
   operationType: 'location' | 'vente'
   onOperationTypeChange: (op: 'location' | 'vente') => void
@@ -14,6 +21,9 @@ interface BienSectionOperationProps {
   onPrixLocationChange: (val: string) => void
   prixVente: string
   onPrixVenteChange: (val: string) => void
+  proprietaires?: ProprietaireOption[]
+  proprietaireId?: string
+  onProprietaireIdChange?: (val: string) => void
 }
 
 export default function BienSectionOperation({
@@ -27,6 +37,9 @@ export default function BienSectionOperation({
   onPrixLocationChange,
   prixVente,
   onPrixVenteChange,
+  proprietaires = [],
+  proprietaireId = '',
+  onProprietaireIdChange,
 }: BienSectionOperationProps) {
   return (
     <div className="agence-card" style={{ marginBottom: 0 }}>
@@ -125,6 +138,33 @@ export default function BienSectionOperation({
             className="form-input"
           />
         </div>
+      </div>
+
+      {/* Bailleur / Propriétaire associé */}
+      <div className="form-group" style={{ marginTop: 14 }}>
+        <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>Bailleur / Propriétaire mandant (optionnel)</span>
+          {proprietaireId && (
+            <span style={{ fontSize: 11, color: 'var(--price, #0A5C36)', fontWeight: 700 }}>
+              Bailleur associé
+            </span>
+          )}
+        </label>
+        <select
+          value={proprietaireId}
+          onChange={e => onProprietaireIdChange?.(e.target.value)}
+          className="form-select"
+        >
+          <option value="">-- Aucun (Gestion directe agence / Mandat en attente) --</option>
+          {proprietaires.map(p => (
+            <option key={p.id} value={p.id}>
+              {p.nom} {p.prenom || ''} {p.telephone ? `(${p.telephone})` : ''}
+            </option>
+          ))}
+        </select>
+        <span style={{ fontSize: 11.5, color: '#64748B', display: 'block', marginTop: 4 }}>
+          L&apos;association à un bailleur permet l&apos;imputation comptable automatique des loyers et l&apos;édition des quittances et états de gestion.
+        </span>
       </div>
     </div>
   )

@@ -100,6 +100,16 @@ export default function CardActions({ id, nom, type = 'produit', categorie, cate
         // Haptic feedback non supporté sur cet environnement
       }
       window.dispatchEvent(new CustomEvent('nopalou:fav', { detail: { adding, nom, count: next.length } }))
+
+      // Synchronisation cloud asynchrone si utilisateur authentifié (IMM-002)
+      fetch(adding ? '/api/favoris' : `/api/favoris/${type}/${sid}`, {
+        method: adding ? 'POST' : 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: adding ? JSON.stringify({ id: sid, type, boutiqueId }) : undefined,
+      }).catch(() => {
+        // Silencieux si offline ou non-authentifié : le localStorage fait autorité en local
+      })
     } catch (err) { console.warn('[Nopalou:CardActions:L98]', err); }
   }
 

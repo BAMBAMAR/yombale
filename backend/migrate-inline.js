@@ -2495,8 +2495,21 @@ module.exports = async function migrateInline() {
         PRIMARY KEY (phone, produit_id)
       );
       CREATE INDEX IF NOT EXISTS idx_photo_buffer_exp ON whatsapp_photo_buffer(expires_at);
+
+      -- Table de synchronisation cloud multi-appareils des favoris (IMM-002)
+      CREATE TABLE IF NOT EXISTS utilisateurs_favoris (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        utilisateur_id UUID NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        type_entite    VARCHAR(30) NOT NULL,
+        entite_id      TEXT NOT NULL,
+        boutique_id    TEXT,
+        created_at     TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(utilisateur_id, type_entite, entite_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_utilisateurs_favoris_user ON utilisateurs_favoris(utilisateur_id);
+      CREATE INDEX IF NOT EXISTS idx_utilisateurs_favoris_lookup ON utilisateurs_favoris(utilisateur_id, type_entite, entite_id);
     `);
-    console.log('[MIGRATE] ✅ Écosystème Conversationnel: tables OTP, Logs, Notifications, Index & Buffers créés');
+    console.log('[MIGRATE] ✅ Écosystème Conversationnel & Favoris multi-appareils créés');
   } catch (err) {
     console.warn('[MIGRATE] Écosystème Conversationnel échec:', err.message);
   }

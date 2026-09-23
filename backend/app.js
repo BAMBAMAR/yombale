@@ -259,6 +259,7 @@ app.use('/api/produits',  require('./routes/produits'));
 app.use('/api/offres',    require('./routes/offres'));
 app.use('/api/paiement',  require('./routes/paiement'));
 app.use('/api/alertes',   require('./routes/alertes'));
+app.use('/api/favoris',   require('./routes/favoris'));
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/scraper',   require('./routes/scraper'));
 app.use('/api/telecom',   require('./routes/telecom'));

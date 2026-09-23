@@ -23,6 +23,9 @@ interface FicheImmoSidebarProps {
     contact_tel: string | null
     contact_nom: string | null
     url_source: string | null
+    videos?: string[] | null
+    visite_virtuelle?: string | null
+    bien_visite_virtuelle?: string | null
     source?: string | null
     sponsorisee_jusqu_au: string | null
     agence?: AgenceInfo | null
@@ -97,6 +100,25 @@ export default function FicheImmoSidebar({
           <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
             <span>Transaction</span>
             <strong style={{ color: 'var(--text1)' }}>{annonce.transaction === 'vente' ? 'Vente' : 'Location'}</strong>
+          </div>
+        )}
+        {(annonce.visite_virtuelle || (annonce as any).bien_visite_virtuelle || (Array.isArray(annonce.videos) && annonce.videos.length > 0)) && (
+          <div className="sidebar-ligne" style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
+            <span>Immersion</span>
+            <a
+              href="#visite-virtuelle"
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--accent, #C75B00)',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              Visite 360° / Vidéo →
+            </a>
           </div>
         )}
 

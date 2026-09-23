@@ -38,6 +38,8 @@ interface AnnonceImmo {
   created_at: string | null;
   photos: string[] | null;
   videos?: string[] | null;
+  visite_virtuelle?: string | null;
+  bien_visite_virtuelle?: string | null;
   source: string | null;
   utilisateur_id: string | null;
   sponsorisee: boolean | null;
@@ -324,14 +326,24 @@ export default async function FicheImmoPage({
               <p className="description">{annonce.description}</p>
             )}
 
-            {/* Vidéo / Visite Virtuelle si disponible */}
-            {Array.isArray(annonce.videos) && annonce.videos.length > 0 && (
-              <SectionVideoImmo
-                videos={annonce.videos}
-                titre={annonce.titre}
-                posterPhoto={photos[0] ?? null}
-              />
-            )}
+            {/* Vidéo / Visite Virtuelle 360° si disponible (IMM-006) */}
+            {(() => {
+              const tourUrl = annonce.visite_virtuelle || annonce.bien_visite_virtuelle;
+              const medias = [
+                ...(Array.isArray(annonce.videos) ? annonce.videos : []),
+                ...(tourUrl && !annonce.videos?.includes(tourUrl) ? [tourUrl] : [])
+              ];
+              if (medias.length === 0) return null;
+              return (
+                <div id="visite-virtuelle">
+                  <SectionVideoImmo
+                    videos={medias}
+                    titre={annonce.titre}
+                    posterPhoto={photos[0] ?? null}
+                  />
+                </div>
+              );
+            })()}
           </div>
         </div>
 

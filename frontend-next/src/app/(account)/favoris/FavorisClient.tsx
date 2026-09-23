@@ -100,21 +100,53 @@ export default function FavorisClient() {
   const { t } = useTranslation()
 
   useEffect(() => {
-    const stored = lireFavs()
-    setEntries(stored)
-    if (stored.length === 0) { setLoading(false); return }
+    async function initFavoris() {
+      let currentFavs = lireFavs()
 
-    Promise.all(
-      stored.map(({ id, type, boutiqueId }) =>
-        fetch(ENDPOINTS[type](id, boutiqueId))
-          .then(r => r.ok ? r.json() : null)
-          .then(raw => raw ? normaliser(type, id, raw, boutiqueId) : null)
-          .catch(() => null)
+      // Tenter la synchronisation cloud multi-appareils (IMM-002)
+      try {
+        const syncRes = await fetch('/api/favoris/bulk-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ favoris: currentFavs }),
+        })
+        if (syncRes.ok) {
+          const syncData = await syncRes.json()
+          if (syncData.success && Array.isArray(syncData.favoris)) {
+            currentFavs = syncData.favoris
+            try {
+              localStorage.setItem('nopalou_favs', JSON.stringify(currentFavs))
+            } catch (err) {
+              console.warn('[FavorisClient:storage]', err)
+            }
+          }
+        }
+      } catch {
+        // Fallback silencieux en mode déconnecté / local
+      }
+
+      setEntries(currentFavs)
+      if (currentFavs.length === 0) {
+        setLoading(false)
+        return
+      }
+
+      const results = await Promise.all(
+        currentFavs.map(({ id, type, boutiqueId }) => {
+          const ep = ENDPOINTS[type]
+          if (!ep) return Promise.resolve(null)
+          return fetch(ep(id, boutiqueId))
+            .then(r => r.ok ? r.json() : null)
+            .then(raw => raw ? normaliser(type, id, raw, boutiqueId) : null)
+            .catch(() => null)
+        })
       )
-    ).then(results => {
       setItems(results.filter((it): it is FavItem => it !== null))
       setLoading(false)
-    })
+    }
+
+    initFavoris()
   }, [])
 
   function removeFav(id: string, type: FavType) {
@@ -124,6 +156,12 @@ export default function FavorisClient() {
       setEntries(next)
       setItems(its => its.filter(it => !(it.id === id && it.type === type)))
       window.dispatchEvent(new CustomEvent('nopalou:fav', { detail: { adding: false, nom: '', count: next.length } }))
+
+      // Suppression cloud en tâche de fond (IMM-002)
+      fetch(`/api/favoris/${type}/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      }).catch(() => {})
     } catch (err) { console.warn('[Nopalou:FavorisClient:L127]', err); }
   }
 

@@ -335,6 +335,7 @@ router.get('/:id', async (req, res) => {
       `SELECT ai.*,
               b.videos AS bien_videos,
               b.photos AS bien_photos,
+              b.visite_virtuelle AS bien_visite_virtuelle,
               ag.id AS agence_id_ref,
               ag.nom AS agence_nom,
               ag.slug AS agence_slug,

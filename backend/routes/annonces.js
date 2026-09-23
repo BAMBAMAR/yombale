@@ -8,6 +8,67 @@ const { limiterPublication, limiterEcriture, limiterBulk, blockScraperUA, limite
 const { uploadBuffer } = require('../services/cloudinary');
 const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/whatsapp');
 const cfg = require('../lib/settingsCache');
+const { infererTransaction, infererTypeBien } = require('../scripts/consolidate-immo-classifiees');
+
+async function synchroniserImmoClassifiee(annonceId) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM annonces_classifiees WHERE id = $1 AND categorie_slug = 'immo' LIMIT 1`,
+      [annonceId]
+    );
+    const ad = rows[0];
+    if (!ad) return;
+
+    if (ad.supprimee) {
+      await pool.query(
+        `UPDATE annonces_immo SET supprimee = true, actif = false, updated_at = NOW() WHERE source = 'particulier_annonce' AND ref_externe = $1`,
+        ['classifiee-' + ad.id]
+      );
+      return;
+    }
+
+    const transaction = infererTransaction(ad.titre, ad.description);
+    const type_bien = infererTypeBien(ad.titre, ad.description);
+    const photosJson = Array.isArray(ad.photos) ? JSON.stringify(ad.photos) : (typeof ad.photos === 'string' ? ad.photos : '[]');
+    const ville = ad.ville ? ad.ville.trim() : 'Dakar';
+    const prix = (ad.prix && Number(ad.prix) >= 10000) ? Number(ad.prix) : null;
+
+    await pool.query(
+      `INSERT INTO annonces_immo (
+        titre, type_bien, transaction, prix, ville, quartier, description,
+        photos, source, ref_externe, actif, supprimee, contact_nom, contact_tel,
+        utilisateur_id, created_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7,
+        $8::jsonb, 'particulier_annonce', $9, $10, false, $11, $12,
+        $13, $14, NOW()
+      )
+      ON CONFLICT (source, ref_externe) WHERE ref_externe IS NOT NULL
+      DO UPDATE SET
+        titre = EXCLUDED.titre,
+        type_bien = EXCLUDED.type_bien,
+        transaction = EXCLUDED.transaction,
+        prix = EXCLUDED.prix,
+        ville = EXCLUDED.ville,
+        quartier = EXCLUDED.quartier,
+        description = EXCLUDED.description,
+        photos = EXCLUDED.photos,
+        actif = EXCLUDED.actif,
+        supprimee = EXCLUDED.supprimee,
+        contact_nom = EXCLUDED.contact_nom,
+        contact_tel = EXCLUDED.contact_tel,
+        updated_at = NOW()`,
+      [
+        ad.titre, type_bien, transaction, prix, ville, ad.quartier || null,
+        ad.description || null, photosJson, 'classifiee-' + ad.id, Boolean(ad.actif),
+        ad.contact_nom || null, ad.contact_tel || null, ad.utilisateur_id || null,
+        ad.created_at || new Date()
+      ]
+    );
+  } catch (err) {
+    console.error('[SYNC_IMMO_CLASSIFIEE]', err.message);
+  }
+}
 
 
 const CATS_AUTORISEES = [
@@ -397,6 +458,10 @@ router.post('/', limiterPublication, verifierToken, requireEmailVerifie, upload.
       await pool.query('UPDATE annonces_classifiees SET actif=true WHERE id=$1', [id]);
     }
 
+    if (categorie_slug === 'immo') {
+      synchroniserImmoClassifiee(id);
+    }
+
     if (estGratuit) {
       return res.status(201).json({
         success: true, id,
@@ -460,6 +525,7 @@ router.put('/mine/:id', verifierToken, param('id').isUUID(), upload.array('photo
        req.params.id, req.user.userId]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
+    synchroniserImmoClassifiee(req.params.id);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
@@ -474,6 +540,7 @@ router.delete('/mine/:id', verifierToken, param('id').isUUID(), async (req, res)
       [req.params.id, req.user.userId]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
+    synchroniserImmoClassifiee(req.params.id);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
@@ -500,6 +567,7 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
         [newActif, req.params.id]
       );
     }
+    synchroniserImmoClassifiee(req.params.id);
     res.json({ success: true });
 
     // Notification WhatsApp au déposant si approbation (fire-and-forget)
