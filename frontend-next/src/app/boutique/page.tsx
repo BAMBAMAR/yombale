@@ -40,11 +40,14 @@ interface PlanActif {
 export default async function BoutiquePage({
   searchParams,
 }: {
-  searchParams: Promise<{ apporteur?: string }>
+  searchParams: Promise<{ apporteur?: string; tab?: string; manage?: string; id?: string }>
 }) {
   const params = await searchParams
   const codeApporteurDefaut = params.apporteur?.trim().toUpperCase() || ''
-  const session = await verifySession()
+  const qEntries = Object.entries(params).filter(([_, v]) => typeof v === 'string') as [string, string][]
+  const qStr = qEntries.length > 0 ? new URLSearchParams(qEntries).toString() : ''
+  const currentPath = qStr ? `/boutique?${qStr}` : '/boutique'
+  const session = await verifySession(currentPath)
 
   let boutiques: Boutique[] = []
   let planActif: string | null = null

@@ -23,6 +23,38 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit & Résolution Intégrale de l'Écosystème Conversationnel, WhatsApp WhatBot & Liens Web (23 septembre 2026)** 🤖💬📱🔗🛡️⚡✅ :
+  * **🚨 Contexte & Diagnostic** :
+    - Audit exhaustif de bout en bout de l'écosystème conversationnel Nopalou : Chatbot Web (`/api/chat`), WhatBot WhatsApp (`whatsapp-chatbot.js`), résolveur d'entités, boutons "Voir...", liens de redirection, synchronisation des données et gestion multi-tenant.
+    - Identification de 404 intempestifs sur les boutons ("Voir mes commandes", liens magiques, redirections sans session), d'un crash SQL PostgreSQL dans la résolution d'entités, d'une perte d'états en RAM (OTP, photos), d'appels silencieux ou mal typés au catalogue Meta Commerce, et de redondances de code.
+  * **🛠️ Correctifs Appliqués (Sprints 1 à 4)** :
+    - **Sprint 1 — P0 : Correctifs Critiques Immédiats** :
+      * **Suppression de l'indication de PIN erronée (`whatsapp-chatbot.js`)** : Retrait du texte trompeur `"par défaut : 1234"` qui bloquait les marchands sans PIN configuré ; remplacé par une invitation claire à initialiser ou réinitialiser le PIN.
+      * **Dédoublonnage des Handlers de Processus (`app.js`)** : Élimination des écouteurs `uncaughtException` et `unhandledRejection` redondants en fin de fichier.
+      * **Résolution des 404 sur les Commandes Marchand** : Remplacement de l'URL incomplète `${SITE}/boutique?tab=commandes` par l'URL canonique contextuelle `${SITE}/boutique?manage=${bRef}&tab=commandes` dans `whatsapp-chatbot.js`, `paiement.js` (webhooks Wave & Stripe) et `comptabilite.js`.
+      * **Création de la Route de Connexion Magique (`frontend-next/src/app/connexion/magique/page.tsx`)** : Implémentation complète de la page d'échange de jeton à usage unique WhatsApp (`POST /api/auth/magic-login`), création de session sécurisée et redirection instantanée vers la boutique cible sans erreur 404.
+      * **Correction du Crash SQL UUID (`backend/routes/entites.js`)** : Remplacement de la comparaison invalide `uuid = integer` (`SELECT id FROM produits WHERE id = $1`) par une requête sécurisée sur `boutique_produits` avec conversion cast appropriée.
+    - **Sprint 2 — P1 : Fiabilisation & Traçabilité** :
+      * **Persistance DB des Codes OTP Marchand (`backend/migrate-inline.js`, `whatsapp-chatbot.js`)** : Création de la table `whatsapp_otp_codes` avec index sur téléphone et expiration. Remplacement de la `Map` en RAM par `creerOTPMarchand()` et `validerOTPMarchand()`.
+      * **Unification de l'Opt-Out RGPD / Stop Prospection (`whatsapp-chatbot.js`)** : Centralisation des déclencheurs STOP/Désinscription dans un bloc unifié avec enregistrement CRM (`prospection_lead_events`), incrémentation de `nb_optout` sur les campagnes et mise sur liste noire.
+      * **Journalisation des Conversations WhatBot (`backend/migrate-inline.js`, `whatsapp-chatbot.js`)** : Création de la table `whatsapp_conversation_log` et du helper asynchrone non-bloquant `logConversation()` pour le support et la traçabilité.
+      * **Payload Complet de Synchronisation Meta Commerce (`whatsapp-chatbot.js`)** : Correction des appels `syncProduit()` qui recevaient un ID string au lieu de l'objet produit complet, rendant la synchronisation silencieusement inopérante ; logging des anomalies dans `notification_echecs`.
+      * **Préservation de l'URL Cible après Expiration de Session (`frontend-next/src/lib/dal.ts`, `boutique/page.tsx`, `boutique/caisse/page.tsx`)** : Mise à jour de `verifySession(customRedirectPath?)` pour transmettre `?redirect=...` à la page de connexion, évitant la perte de contexte d'un clic mobile WhatsApp.
+      * **Correction des Paramètres de Boutons WhatsApp Invalides (`prospection.js`, `cron-relances-marchands.js`, `notifications.js`)** : Remplacement des routes fictives (`grossiste`, `restaurant`, `auto`) par `annonces` et `tarifs-boutique`, correction de `boutique?tab=caisse` en `boutique/caisse`, et de `?produit=` en `produit/`.
+    - **Sprint 3 — P2 : Nettoyage de Dette & Centralisation** :
+      * **Suppression du Workflow Obsolète `CREATE_SHOP_*` (`whatsapp-chatbot.js`)** : Redirection des anciens états vers `CREER_BOUTIQUE_NOM` avec validation complète des quotas, étapes interactives et création d'essai VIP 30 jours.
+      * **Index de Performance Base de Données (`backend/migrate-inline.js`)** : Ajout de `idx_commandes_boutique_perf` (requêtes de caisse et bilans) et `idx_whatsapp_sessions_updated`.
+      * **Module Centralisé de FAQ Partagée (`backend/lib/faq.js`, `whatsapp-chatbot.js`, `routes/chat.js`)** : Création d'une source unique de vérité pour la base de connaissances FAQ, exploitée en simultané par le chatbot WhatsApp et l'assistant web.
+      * **Déduplication de l'Intention Comparateur (`whatsapp-chatbot.js`)** : Détection unifiée en tête de pipeline conversationnel et suppression des 2 blocs dupliqués résiduels.
+    - **Sprint 4 — P3 : Résilience Multi-Photos & Robustesse Notifications** :
+      * **Tampon Photos Dual-Tier RAM + DB (`backend/migrate-inline.js`, `whatsapp-chatbot.js`)** : Création de la table `whatsapp_photo_buffer` et des helpers `enregistrerTamponPhoto()` / `recupererTamponPhoto()` garantissant la réception de photos multiples sans perte même en cas de redémarrage de l'instance.
+      * **Logging Systématique des Échecs Transactionnels WhatsApp (`whatsapp-chatbot.js`)** : Enregistrement dans `notification_echecs` de toute erreur d'envoi lors des notifications critiques (mise à jour statut client, alerte vendeur commande groupée, demande de rappel admin).
+  * **🧪 Validation Technique & Conformité** :
+    - `node -c` passé avec succès (0 erreur) sur tous les fichiers backend modifiés.
+    - `npm run lint:slop` exécuté sur `frontend-next` : 0 régression, conformité stricte aux standards anti-slop Nopalou.
+    - `npx tsc --noEmit` exécuté sur `frontend-next` : 0 erreur de typage TypeScript.
+    - Règle de non-déploiement respectée : aucun `git push` déclenché sans ordre de l'utilisateur.
+
 - **Fiabilisation des Données, Analytics & KPI : Résolution des Anomalies P0/P1/P2/P3 (`backend/routes/analytics.js`, `backend/routes/comptabilite.js`, `backend/routes/admin-dashboard.js`) (21 septembre 2026)** 📊🎯🛡️⚡✅ :
   * **🚨 Contexte & Audit Diagnostique** :
     - À la suite d'un audit exhaustif de la fiabilité des données de bout en bout (actions utilisateur &rarr; ingestion &rarr; calculs &rarr; dashboards), plusieurs anomalies de calcul et de nommage de tables ont été corrigées.

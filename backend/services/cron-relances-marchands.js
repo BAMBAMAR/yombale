@@ -108,7 +108,7 @@ async function traiterRelancesMarchands() {
             montant: 'Inclus',
             detail: `Notez les crédits clients et relancez-les en 1 clic. Accédez à votre caisse : ${SITE}/boutique/caisse`,
             url: `${SITE}/boutique/caisse`,
-            buttonParam: 'boutique?tab=caisse',
+            buttonParam: 'boutique/caisse',
             type: 'service',
           });
           const isSent = !!(res && res.messages?.[0]?.id);

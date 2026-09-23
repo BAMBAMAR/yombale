@@ -459,13 +459,8 @@ async function demarrerApp() {
   });
 }
 
-process.on('unhandledRejection', (reason) => {
-  console.error('[SERVER UNHANDLED REJECTION]:', reason?.message || reason);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('[SERVER UNCAUGHT EXCEPTION]:', err?.message || err);
-});
+// Note : les écouteurs 'uncaughtException' et 'unhandledRejection' sont déclarés
+// en tête de fichier (lignes 23-40) avec alerterAdmin(). Ne pas dupliquer ici.
 
 if (process.env.NODE_ENV !== 'test') {
   demarrerApp().catch(console.error);

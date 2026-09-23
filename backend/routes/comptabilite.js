@@ -849,7 +849,9 @@ async function notifierVendeurCommande(boutique, {
   const methodeLabel = { wave: 'Wave', orange_money: 'Orange Money', cash: 'Espèces', virement: 'Virement', credit: '💳 Demande d\'Achat à Crédit (Carnet client)' };
   const isCredit = methodePaiement === 'credit';
   const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
-  const lienCommandes = `${SITE}/boutique?tab=commandes&id=${boutique.id}&ref=${encodeURIComponent(reference)}`;
+  const bRef = boutique.slug || boutique.id;
+  const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes&ref=${encodeURIComponent(reference)}` : `${SITE}/boutique?tab=commandes&ref=${encodeURIComponent(reference)}`;
+  const btnParam = bRef ? `boutique?manage=${bRef}&tab=commandes` : 'boutique?tab=commandes';
   const montantFmt = new Intl.NumberFormat('fr-FR').format(montantTotal);
   const msg = `${isCredit ? '🚨 *Demande d\'achat à crédit (Carnet)*' : '🛒 *Nouvelle commande*'} — *${boutique.nom}*\n\n` +
     `Réf : *${reference}*\n` +
@@ -880,7 +882,7 @@ async function notifierVendeurCommande(boutique, {
     montant: `${montantFmt} FCFA`,
     detail: detailTpl.slice(0, 1000),
     url: lienCommandes,
-    buttonParam: 'boutique?tab=commandes',
+    buttonParam: btnParam,
     type: 'commande',
   })
     .then(() => console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`))
@@ -1585,8 +1587,10 @@ router.patch(
       if (vendeurMobile) {
         const { sendWhatsAppNotification } = require('../services/whatsapp');
         const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+        const bRef = boutique.slug || boutique.id;
         const msgVendeur = `📢 *Statut Commande Mis à Jour — ${boutique.nom}*\n\nCommande : *${commande.reference}*\nNouveau statut : *${req.body.statut.toUpperCase()}*\nClient : ${commande.client_nom} (${commande.client_telephone})`;
-        const lienCommandes = `${SITE}/boutique?tab=commandes`;
+        const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes` : `${SITE}/boutique?tab=commandes`;
+        const btnParam = bRef ? `boutique?manage=${bRef}&tab=commandes` : 'boutique?tab=commandes';
         const titleVendeur = `📢 Statut mis à jour — ${boutique.nom}`;
         const detailVendeur = `Réf ${commande.reference} passé à ${req.body.statut.toUpperCase()} pour ${commande.client_nom || 'Client'}`;
 
@@ -1596,7 +1600,7 @@ router.patch(
           montant: `${montantFmt} FCFA`,
           detail: detailVendeur,
           url: lienCommandes,
-          buttonParam: 'boutique?tab=commandes',
+          buttonParam: btnParam,
           type: 'commande',
         })
           .then(() => console.log(`[WHATSAPP VENDEUR STATUS NOTIF SUCCESS] Envoyé au ${vendeurMobile}`))

@@ -23,7 +23,7 @@ export default async function CaissePage({
   let userId: string | null = null
 
   if (!token) {
-    const session = await verifySession()
+    const session = await verifySession('/boutique/caisse')
     userId = session.userId ?? null
     try {
       const res = await backendFetch('/api/abonnements/mon-plan')

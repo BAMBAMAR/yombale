@@ -201,20 +201,33 @@ router.get('/resoudre/:id', async (req, res) => {
       }
     }
 
-    // 7. Produits du comparateur (id entier pur ou avec préfixe produit)
+    // 7. Produits ou forfaits télécom avec identifiant numérique
     const numMatch = testId.match(/^\d+$/) || cleanId.match(/^produits?(\d+)$/i);
     if (numMatch) {
       const prodNum = parseInt(numMatch[1] || numMatch[0], 10);
-      const { rows: pCompRows } = await pool.query('SELECT id FROM produits WHERE id = $1 LIMIT 1', [prodNum]);
-      if (pCompRows[0]) {
-        return res.json({ found: true, type: 'produit', url: `/produit/${pCompRows[0].id}` });
-      }
 
       // Forfaits télécom (id entier)
-      const { rows: telRows } = await pool.query('SELECT id FROM forfaits_telecom WHERE id = $1 LIMIT 1', [prodNum]);
-      if (telRows[0]) {
-        return res.json({ found: true, type: 'telecom', url: `/telecom/${telRows[0].id}` });
-      }
+      try {
+        const { rows: telRows } = await pool.query('SELECT id FROM forfaits_telecom WHERE id = $1 LIMIT 1', [prodNum]);
+        if (telRows[0]) {
+          return res.json({ found: true, type: 'telecom', url: `/telecom/${telRows[0].id}` });
+        }
+      } catch {}
+
+      // Produits boutique marchand (vérification sécurisée textuelle anti-crash UUID)
+      try {
+        const { rows: bpRows } = await pool.query(
+          `SELECT p.id, b.slug, b.id AS boutique_id 
+           FROM boutique_produits p 
+           JOIN boutiques b ON b.id = p.boutique_id 
+           WHERE p.id::text = $1 LIMIT 1`,
+          [String(prodNum)]
+        );
+        if (bpRows[0]) {
+          const bIdent = bpRows[0].slug || bpRows[0].boutique_id;
+          return res.json({ found: true, type: 'boutique_produit', url: `/boutiques/${bIdent}/produits/${bpRows[0].id}` });
+        }
+      } catch {}
     }
 
     // 8. Aucun match trouvé : renvoyer un fallback propre

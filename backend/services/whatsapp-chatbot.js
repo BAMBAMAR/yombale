@@ -86,71 +86,11 @@ async function telechargerMediaWhatsApp(mediaId) {
   }
 }
 
-// ── FAQ par mots-clés — questions sur le fonctionnement du site ───────────────
-// Chaque entrée : mots-clés à détecter dans le texte libre (sans accents, minuscule) + réponse.
-// Testée avant la recherche produit/annonce pour éviter des requêtes SQL inutiles.
-const FAQ = [
-  {
-    motsCles: ['gratuit', 'payant', 'coute', 'couter', 'prix nopalou', 'naata la'],
-    reponse: '✅ *Nopalou est 100% gratuit* pour comparer les prix, chercher une annonce ou un bien immo.\n\nSeuls certains services optionnels sont payants : publier une annonce (à partir de 1 500 FCFA), booster une annonce, ou créer une boutique en ligne (abonnement Pro/Business).',
-  },
-  {
-    motsCles: ['publier', 'deposer', 'vendre', 'poster annonce'],
-    reponse: '📢 *Publier une annonce*\n\nSur le site, cliquez "+ Déposer" puis "Publier une annonce". Ajoutez photos, prix et description — votre annonce est visible après validation par notre équipe.\n👉 ' + SITE + '/deposer-annonce',
-  },
-  {
-    motsCles: ['louer mon', 'vendre mon appartement', 'vendre ma maison', 'annonce immo', 'bien immo'],
-    reponse: '🏠 *Publier un bien immobilier*\n\nSur le site, cliquez "+ Déposer" puis "Publier un bien immo". Ajoutez photos, prix, ville et description — visible après validation.\n👉 ' + SITE + '/deposer-immo',
-  },
-  {
-    motsCles: ['agences', 'agence', 'agence immo', 'agences immo', 'agences partenaires', 'courtier', 'cabinets immo', 'annuaire agence'],
-    reponse: '🏢 *Agences Immobilières Partenaires*\n\nDécouvrez nos agences immobilières certifiées au Sénégal : mandats exclusifs, villas, appartements et gestion locative.\n\n👉 Annuaire des agences : ' + SITE + '/agences\n👉 Espace Agence Pro : ' + SITE + '/agence',
-  },
-  {
-    motsCles: ['boutique', 'vendre en ligne', 'creer shop', 'ouvrir shop'],
-    reponse: '🛍️ *Créer votre boutique*\n\nVendez directement sur Nopalou : catalogue produits, statistiques, encaissements Wave & Orange Money 1-Clic. 1er mois 100% OFFERT sur tous nos forfaits !\n👉 ' + SITE + '/creer-boutique',
-  },
-  {
-    motsCles: ['comparer', 'meilleur prix', 'moins cher'],
-    reponse: '📊 *Comparer les prix*\n\nSur le site, tapez le nom d\'un produit dans la barre de recherche — Nopalou compare automatiquement les prix chez tous les marchands partenaires (Jumia, Expat-Dakar, CoinAfrique...) et affiche le moins cher.\n👉 ' + SITE,
-  },
-  {
-    motsCles: ['favoris', 'sauvegarder'],
-    reponse: '❤️ *Favoris*\n\nSur le site, cliquez le cœur ❤ sur un produit ou une annonce pour le sauvegarder. Retrouvez tous vos favoris dans la page Favoris, sans inscription requise.\n👉 ' + SITE + '/favoris',
-  },
-  {
-    motsCles: ['apporteur', 'parrainage', 'commission'],
-    reponse: '💼 *Programme apporteur d\'affaires*\n\nPrésentez Nopalou aux commerçants de votre réseau et touchez une commission chaque mois sur les abonnements des boutiques que vous recrutez — sans investissement.\n👉 ' + SITE + '/compte/apporteur',
-  },
-  {
-    motsCles: ['forfait', 'internet', 'telecom', 'orange', 'free', 'expresso'],
-    reponse: '📱 *Comparer les forfaits télécom*\n\nSur le site, comparez tous les forfaits mobiles Orange, Free, Expresso et Wave : data, appels, SMS, prix.\n👉 ' + SITE + '/telecom',
-  },
-  {
-    motsCles: ['livraison', 'livrer', 'frais livraison', 'zone livraison', 'livraison dakar', 'livrez vous'],
-    reponse: '🚚 *Livraison sur Nopalou*\n\n• Pour les produits en boutique : chaque commerçant assure la livraison rapide (Dakar Intra-Muros, Banlieue, Régions).\n• Le tarif et le mode de livraison (Wave ou Cash) sont précisés lors de la commande.\n• Vous pouvez aussi convenir directement de la livraison avec le vendeur par WhatsApp.',
-  },
-  {
-    motsCles: ['payer', 'paiement', 'moyen de paiement', 'wave', 'orange money'],
-    reponse: '💳 *Moyens de paiement acceptés*\n\n🌊 Wave (Paiement 1-Clic sécurisé)\n🟠 Orange Money\n💵 Espèces / Cash à la livraison\n🏦 Virement bancaire\n\nVos paiements sont 100% sécurisés.',
-  },
-  {
-    motsCles: ['support', 'contact', 'contacter', 'parler', 'humain', 'conseiller', 'service client', 'telephone nopalou', 'appeler nopalou', 'joindre', 'reclamation'],
-    reponse: '💬 *Service Client & Support Nopalou*\n\n📞 Téléphone / WhatsApp : +221 70 871 79 42\n📧 Email : contact@nopalou.com\n🌐 Site : nopalou.com\n\n👉 Vous pouvez aussi taper *rappel* pour demander qu\'un conseiller vous rappelle directement !',
-  },
-  {
-    motsCles: ['comment ça marche', 'comment ca marche', 'comment utiliser', 'aide site', 'utiliser nopalou', 'utiliser le site'],
-    reponse: '📖 *Comment utiliser Nopalou*\n\n🔍 Comparez les prix produits\n🏆 Guide d\'achat personnalisé\n🏡 Trouvez un logement\n📶 Comparez les forfaits télécom\n⚖️ Comparez côte à côte\n❤️ Sauvegardez vos favoris\n🔔 Créez des alertes de prix\n📢 Publiez une annonce\n\nGuide complet : ' + SITE + '/guide-utilisation',
-  },
-  {
-    motsCles: ['supprimer', 'retirer', 'effacer', 'desinscrire', 'stop', 'droit a l oubli', 'supprimer numero', 'retirer annonce'],
-    reponse: '🗑️ *Suppression d\'annonce ou désinscription*\n\n• Pour supprimer immédiatement vos annonces et votre numéro : tapez *supprimer*\n• Pour ne plus recevoir AUCUN message WhatsApp : tapez *STOP*\n• Vous pouvez aussi écrire à ✉️ contact@nopalou.com',
-  },
-];
+// ── FAQ unifiée & Normalisation (backend/lib/faq.js) ──────────────────────────
+const { normaliserTexte, detecterFAQWhatsApp } = require('../lib/faq');
 
-function normaliserTexte(s) {
-  if (!s || typeof s !== 'string') return '';
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+function detecterFAQ(texte) {
+  return detecterFAQWhatsApp(texte, SITE);
 }
 
 // ── Algorithme de distance de Levenshtein (Fuzzy Matching & Correction de fautes) ──
@@ -234,10 +174,6 @@ function corrigerRequeteFuzzy(texte) {
   return hasModif ? motsCorriges.join(' ') : null;
 }
 
-function detecterFAQ(texte) {
-  const normalise = normaliserTexte(texte);
-  return FAQ.find(f => f.motsCles.some(mot => normalise.includes(normaliserTexte(mot))));
-}
 
 // ── Traitement intelligent du Comparateur de Prix Nopalou (Audit M5) ──────────
 async function traiterRequeteComparateur(phone, text) {
@@ -314,7 +250,12 @@ async function enregistrerDemandeSupport(phone, { nom = null, message = 'Demande
           `💬 Objet : ${message}\n` +
           `📅 Date : ${new Date().toLocaleString('fr-FR')}\n\n` +
           `👉 Rappeler le client : https://wa.me/${normPh}`;
-        sendWhatsAppText(normalisePhone(adminTel), msgAdmin).catch(() => {});
+        sendWhatsAppText(normalisePhone(adminTel), msgAdmin).catch((err) => {
+          pool.query(
+            `INSERT INTO notification_echecs (type, reference_id, erreur) VALUES ($1, $2, $3)`,
+            ['notif_admin_rappel', normPh, err.message]
+          ).catch(() => {});
+        });
       }
     } catch (_) {}
 
@@ -428,11 +369,107 @@ function nettoyerTamponsMemoire() {
       _recentsProduitsCrees.delete(phone);
     }
   }
-  for (const [phone, item] of _otpCodesMarchand.entries()) {
-    if (now > item.expiresAt) {
-      _otpCodesMarchand.delete(phone);
-    }
+  pool.query('DELETE FROM whatsapp_photo_buffer WHERE expires_at < NOW()').catch(() => {});
+  pool.query('DELETE FROM whatsapp_otp_codes WHERE expires_at < NOW()').catch(() => {});
+}
+
+// ── Tampon Photos Multiples (Dual RAM + DB - Sprint 4 Fix 4.1) ───────────────
+async function enregistrerTamponPhoto(phone, produitId, boutiqueId, nom, totalPhotos) {
+  _recentsProduitsCrees.set(phone, {
+    produitId,
+    boutiqueId,
+    nom,
+    totalPhotos,
+    timestamp: Date.now(),
+  });
+  const bId = boutiqueId && /^[0-9a-f-]{36}$/i.test(boutiqueId) ? boutiqueId : null;
+  const pId = produitId && /^[0-9a-f-]{36}$/i.test(produitId) ? produitId : null;
+  if (pId) {
+    pool.query(`
+      INSERT INTO whatsapp_photo_buffer (phone, produit_id, boutique_id, expires_at)
+      VALUES ($1, $2, $3, NOW() + INTERVAL '10 minutes')
+      ON CONFLICT (phone, produit_id) DO UPDATE
+        SET expires_at = NOW() + INTERVAL '10 minutes'
+    `, [phone, pId, bId]).catch(() => {});
   }
+}
+
+async function recupererTamponPhoto(phone) {
+  const mem = _recentsProduitsCrees.get(phone);
+  if (mem && (Date.now() - mem.timestamp < DUREE_TAMPON_PHOTOS_MS)) {
+    return mem;
+  }
+  try {
+    const res = await pool.query(
+      `SELECT pb.produit_id, pb.boutique_id, bp.nom, COALESCE(array_length(bp.images, 1), 1) AS total_photos
+       FROM whatsapp_photo_buffer pb
+       JOIN boutique_produits bp ON bp.id = pb.produit_id
+       WHERE pb.phone = $1 AND pb.expires_at > NOW()
+       ORDER BY pb.created_at DESC LIMIT 1`,
+      [phone]
+    );
+    if (res.rows.length > 0) {
+      const r = res.rows[0];
+      const obj = {
+        produitId: r.produit_id,
+        boutiqueId: r.boutique_id,
+        nom: r.nom,
+        totalPhotos: parseInt(r.total_photos, 10) || 1,
+        timestamp: Date.now(),
+      };
+      _recentsProduitsCrees.set(phone, obj);
+      return obj;
+    }
+  } catch (_) {}
+  return null;
+}
+
+// ── OTP Marchand persisté en DB (Sprint 2 - Fix 2.1) ────────────────────────
+async function creerOTPMarchand(phone, boutiqueId) {
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  try {
+    const bId = boutiqueId && /^[0-9a-f-]{36}$/i.test(boutiqueId) ? boutiqueId : null;
+    await pool.query(
+      `INSERT INTO whatsapp_otp_codes(phone, code, boutique_id, expires_at)
+       VALUES($1, $2, $3, $4)`,
+      [phone, code, bId, expiresAt]
+    );
+  } catch (errOtp) {
+    console.warn('[OTP DB INSERT WARN]:', errOtp.message);
+  }
+  return { code, expiresAt: expiresAt.getTime() };
+}
+
+async function validerOTPMarchand(phone, codeSaisi) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, boutique_id FROM whatsapp_otp_codes
+       WHERE phone=$1 AND code=$2 AND expires_at > NOW() AND used_at IS NULL
+       ORDER BY created_at DESC LIMIT 1`,
+      [phone, codeSaisi]
+    );
+    if (!rows.length) return false;
+    await pool.query(`UPDATE whatsapp_otp_codes SET used_at = NOW() WHERE id = $1`, [rows[0].id]);
+    return true;
+  } catch (errOtp) {
+    console.warn('[OTP DB VALIDATE WARN]:', errOtp.message);
+    return false;
+  }
+}
+
+// ── Traçabilité des échanges conversationnels (Sprint 2 - Fix 2.3) ───────────
+async function logConversation(phone, direction, content, stateBefore, stateAfter, boutiqueId = null) {
+  try {
+    const textSnippet = String(content || '').slice(0, 500);
+    const bId = boutiqueId && /^[0-9a-f-]{36}$/i.test(boutiqueId) ? boutiqueId : null;
+    pool.query(
+      `INSERT INTO whatsapp_conversation_log
+         (phone, direction, content, state_before, state_after, boutique_id)
+       VALUES($1, $2, $3, $4, $5, $6)`,
+      [phone, direction, textSnippet, stateBefore || null, stateAfter || null, bId]
+    ).catch(() => {});
+  } catch {}
 }
 
 async function cleanupOldMessages() {
@@ -2112,9 +2149,15 @@ async function notifierVendeurPanierGroupe(boutique, commandesCreees, groupeComm
   const total = totalArticles + fraisLivraison;
   const lignesArticles = commandesCreees.map(c => `• ${c.nom_produit} × ${c.quantite} — ${prixFmt(Number(c.prix_unitaire) * c.quantite)}`).join('\n');
   const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
-  const lienCommandes = `${SITE}/boutique?tab=commandes`;
+  const bRef = boutique.slug || boutique.id;
+  const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes` : `${SITE}/boutique?tab=commandes`;
   const msg = `🛒 *Nouvelle commande groupée — ${boutique.nom}*\n\nRéf groupe : *${groupeCommande}*\n${lignesArticles}${fraisLivraison > 0 ? `\n🚚 Livraison : ${prixFmt(fraisLivraison)}` : ''}\n💰 *Total : ${prixFmt(total)}*\n💳 Paiement souhaité : ${methodeLabel[premiere.methode_paiement] || premiere.methode_paiement}\n\n👤 Client : ${premiere.client_nom}\n📞 ${premiere.client_telephone}${premiere.client_adresse ? `\n📍 ${premiere.client_adresse}` : ''}\n\n👉 *Consultez vos commandes ici :*\n${lienCommandes}\n\n⚡ Répondez vite pour confirmer !`;
-  sendWhatsAppText(vendeurTel, msg).catch(() => {});
+  sendWhatsAppText(vendeurTel, msg).catch((err) => {
+    pool.query(
+      `INSERT INTO notification_echecs (type, reference_id, erreur) VALUES ($1, $2, $3)`,
+      ['notif_vendeur_commande', groupeCommande, err.message]
+    ).catch(() => {});
+  });
 
   // Envoi garanti par Template Meta (passant outre la restriction des 24h)
   const titleTpl = `🛒 Commande groupée — ${boutique.nom}`.slice(0, 60);
@@ -2256,26 +2299,66 @@ async function handleIncomingInternal(msg) {
   const interactiveId = msg.interactive?.list_reply?.id || msg.interactive?.button_reply?.id || '';
   const mediaId = msg.type === 'image' ? msg.image?.id : null;
 
+  // Traçabilité conversationnelle (Sprint 2 - Fix 2.3)
+  logConversation(phone, 'IN', text || interactiveId || msg.type, state, null, context?.boutique?.id);
+
   const normText = normaliserTexte(text);
   const normInteractive = normaliserTexte(interactiveId);
 
-  // ── 1. Désinscription définitive / STOP (Opt-out) ──────────────────────────
-  const MOTS_STOP = ['stop', 'desinscrire', 'desabonner', 'ne plus recevoir', 'bloquer', 'interdire', 'ne plus me contacter'];
+  // ── 1. Désinscription définitive / STOP (Opt-out unifié avec CRM) ──────────
+  const MOTS_STOP = ['stop', 'arret', 'arreter', 'desinscrire', 'desinscription', 'desabonner', 'ne plus recevoir', 'bloquer', 'interdire', 'ne plus me contacter', 'refus'];
   const estMotStop = MOTS_STOP.some(m => normText === m || normText.includes(m)) || normInteractive === 'stop';
 
   if (estMotStop) {
-    await sendWhatsAppText(
-      phone,
-      `❌ *Désinscription effectuée — Nopalou*\n\nVous êtes maintenant désinscrit(e) des messages WhatsApp Nopalou. Vos annonces et alertes associées ont été désactivées.\n\nVous ne recevrez plus aucun message de notre part sur ce numéro (+${phone}).\n\n*(Pour vous réinscrire un jour : envoyez simplement START)*`
-    );
-    await ajouterBlacklist(phone, 'user_stop');
+    const normPh = normalisePhone(phone);
     try {
-      const normPh = normalisePhone(phone);
-      await pool.query(
-        `UPDATE prospection_leads SET statut = 'desinscrit', updated_at = NOW() WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3`,
+      const rOpt = await pool.query(
+        `UPDATE prospection_leads 
+         SET 
+           statut = 'desinscrit', 
+           priority_score = 0,
+           contactability_score = 0,
+           next_best_action = 'ne_plus_contacter',
+           updated_at = NOW() 
+         WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
+         RETURNING id`,
         [phone, normPh, phone.slice(-9)]
       );
+
+      if (rOpt.rows.length > 0) {
+        const leadId = rOpt.rows[0].id;
+        const rCamp = await pool.query(`
+          SELECT campagne_id FROM prospection_messages_log 
+          WHERE lead_id = $1 ORDER BY created_at DESC LIMIT 1
+        `, [leadId]);
+        const cId = rCamp.rows[0]?.campagne_id || null;
+
+        await pool.query(`
+          INSERT INTO prospection_lead_events (
+            lead_id, campagne_id, type_evenement, canal, description, metadata
+          ) VALUES ($1, $2, 'optout', 'whatsapp', $3, $4)
+        `, [
+          leadId,
+          cId,
+          `Opt-out / Désinscription demandée par l'utilisateur (${text})`,
+          JSON.stringify({ date: new Date().toISOString() })
+        ]);
+
+        if (cId) {
+          await pool.query(`
+            UPDATE prospection_campagnes 
+            SET nb_optout = COALESCE(nb_optout, 0) + 1 
+            WHERE id = $1
+          `, [cId]);
+        }
+      }
     } catch (_) {}
+
+    await sendWhatsAppText(
+      phone,
+      `❌ *Désinscription confirmée — Nopalou*\n\nVous êtes maintenant désinscrit(e) de nos listes et alertes WhatsApp. Vous ne recevrez plus aucun message sur ce numéro (+${phone}).\n\n*(Pour vous réinscrire un jour : envoyez simplement START)*`
+    );
+    await ajouterBlacklist(normPh, 'demande_utilisateur_stop');
     await setSession(phone, 'IDLE', {});
     return;
   }
@@ -2333,63 +2416,6 @@ async function handleIncomingInternal(msg) {
 
     await sendWhatsAppText(phone, msg);
     await setSession(phone, 'MENU', {});
-    return;
-  }
-
-  // ── 1. MOT-CLÉ PRIORITAIRE DE DÉSINSCRIPTION / OPTOUT (STOP / ARRET / REFUS) ──
-  // IMPORTANT: "annuler" ou "supprimer" ne doivent JAMAIS désinscrire l'utilisateur.
-  const MOTS_OPTOUT = ['stop', 'arret', 'arreter', 'desinscrire', 'desinscription', 'bloquer', 'ne plus recevoir', 'refus'];
-  if (MOTS_OPTOUT.includes(normaliserTexte(text).trim())) {
-    const normPh = normalisePhone(phone);
-    try {
-      const rOpt = await pool.query(
-        `UPDATE prospection_leads 
-         SET 
-           statut = 'desinscrit', 
-           priority_score = 0,
-           contactability_score = 0,
-           next_best_action = 'ne_plus_contacter',
-           updated_at = NOW() 
-         WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
-         RETURNING id`,
-        [phone, normPh, phone.slice(-9)]
-      );
-
-      if (rOpt.rows.length > 0) {
-        const leadId = rOpt.rows[0].id;
-        const rCamp = await pool.query(`
-          SELECT campagne_id FROM prospection_messages_log 
-          WHERE lead_id = $1 ORDER BY created_at DESC LIMIT 1
-        `, [leadId]);
-        const cId = rCamp.rows[0]?.campagne_id || null;
-
-        await pool.query(`
-          INSERT INTO prospection_lead_events (
-            lead_id, campagne_id, type_evenement, canal, description, metadata
-          ) VALUES ($1, $2, 'optout', 'whatsapp', $3, $4)
-        `, [
-          leadId,
-          cId,
-          `Opt-out / Désinscription demandée par l'utilisateur (${text})`,
-          JSON.stringify({ date: new Date().toISOString() })
-        ]);
-
-        if (cId) {
-          await pool.query(`
-            UPDATE prospection_campagnes 
-            SET nb_optout = COALESCE(nb_optout, 0) + 1 
-            WHERE id = $1
-          `, [cId]);
-        }
-      }
-    } catch (_) {}
-
-    await sendWhatsAppText(
-      phone,
-      '✅ *Désinscription confirmée*\n\nC\'est bien noté ! Votre numéro a été retiré avec succès de nos listes. Vous ne recevrez plus aucun message de prospection ou de notification de notre part.\n\nSi vous souhaitez revenir plus tard, il vous suffira de taper *menu*.'
-    );
-    await ajouterBlacklist(normPh, 'demande_utilisateur_stop');
-    await setSession(phone, 'IDLE', {});
     return;
   }
 
@@ -2663,7 +2689,7 @@ async function handleIncomingInternal(msg) {
   // ── GESTION MULTI-PHOTOS WHATSAPP (Photos additionnelles sans légende) ──────
   if (msg.type === 'image') {
     const normPh = normalisePhone(phone);
-    const recentProd = _recentsProduitsCrees.get(normPh);
+    const recentProd = await recupererTamponPhoto(normPh);
     const caption = (msg.image?.caption || '').trim();
 
     // Si c'est une image additionnelle sans légende envoyée dans les 5 min après la création d'un article
@@ -2677,6 +2703,7 @@ async function handleIncomingInternal(msg) {
           );
           recentProd.totalPhotos = (recentProd.totalPhotos || 1) + 1;
           recentProd.timestamp = Date.now();
+          _recentsProduitsCrees.set(normPh, recentProd);
           await sendWhatsAppText(
             phone,
             `📸 *Photo supplémentaire (${recentProd.totalPhotos}) ajoutée* à votre article *${recentProd.nom}* !`
@@ -2787,7 +2814,12 @@ async function handleIncomingInternal(msg) {
               `🔔 *Mise à jour de votre commande chez ${bqMarchand.nom}*\n\n` +
               `Votre commande *${cmd.reference}* (${cmd.nom_produit}) est passée au statut : *${label}* !\n\n` +
               `Merci de votre confiance. Pour toute question, répondez directement à ce message.`;
-            sendWhatsAppText(telClientNorm, msgClient).catch(() => {});
+            sendWhatsAppText(telClientNorm, msgClient).catch((err) => {
+              pool.query(
+                `INSERT INTO notification_echecs (type, reference_id, erreur) VALUES ($1, $2, $3)`,
+                ['notif_client_statut', String(cmd.id), err.message]
+              ).catch(() => {});
+            });
           }
 
           // Ré-afficher la fiche de cette commande avec les nouvelles options d'action
@@ -2949,8 +2981,7 @@ async function handleIncomingInternal(msg) {
 
       // Si demande de réinitialisation OTP avant ou pendant la saisie du PIN
       if (state === 'MARCHAND_PIN' && (normTxtLower === 'pin oublie' || normTxtLower === 'pin oublié' || normTxtLower === 'reinitialiser pin')) {
-        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
-        const expiresAt = Date.now() + 10 * 60 * 1000;
+        const { code: otpCode, expiresAt } = await creerOTPMarchand(phone, bqMarchand.id);
         _otpCodesMarchand.set(phone, { code: otpCode, boutiqueId: bqMarchand.id, expiresAt });
         await setSession(phone, 'MARCHAND_RESET_OTP', { boutique: bqMarchand, otpCode, otpExpiresAt: expiresAt });
         await sendWhatsAppText(
@@ -2994,7 +3025,7 @@ async function handleIncomingInternal(msg) {
             });
             await sendWhatsAppText(
               phone,
-              `❌ *Code PIN incorrect* (tentative ${attempts}/3).\n\nVeuillez réessayer votre Code PIN (par défaut : 1234) ou tapez *pin oublié* pour le réinitialiser :`
+              `❌ *Code PIN incorrect* (tentative ${attempts}/3).\n\nVeuillez réessayer votre Code PIN ou tapez *pin oublié* pour le réinitialiser :`
             );
             return;
           }
@@ -3008,7 +3039,8 @@ async function handleIncomingInternal(msg) {
           phone,
           `👋 Bonjour *${bqMarchand.proprietaire_nom || bqMarchand.nom}* !\n\n` +
           `🔐 *Espace Marchand — ${bqMarchand.nom}*\n` +
-          `Veuillez saisir votre **Code PIN** (par défaut : 1234) pour accéder à votre espace de gestion :`
+          `Veuillez saisir votre *Code PIN* pour accéder à votre espace de gestion.\n\n` +
+          `_Vous n'avez pas encore de code ou l'avez oublié ? Tapez *pin oublié* pour en définir un._`
         );
         return;
       }
@@ -3210,18 +3242,23 @@ async function handleIncomingInternal(msg) {
         const prodCree = resProd.rows[0];
 
         // Enregistrer dans le tampon pour recevoir d'éventuelles photos supplémentaires du lot
-        _recentsProduitsCrees.set(normPh, {
-          produitId: prodCree.id,
-          boutiqueId: maBoutique.id,
-          nom: prodCree.nom,
-          totalPhotos: imageUrl ? 1 : 0,
-          timestamp: Date.now(),
-        });
+        await enregistrerTamponPhoto(normPh, prodCree.id, maBoutique.id, prodCree.nom, imageUrl ? 1 : 0);
 
         // Synchronisation asynchrone avec le catalogue Meta / WhatsApp si configuré
         try {
           const { syncProduit } = require('./whatsapp-catalog');
-          syncProduit(prodCree.id).catch(() => {});
+          syncProduit({
+            ...prodCree,
+            boutique_id: maBoutique.id,
+            boutique_slug: maBoutique.slug || maBoutique.id,
+            images: imagesArray,
+            en_stock: true,
+          }).catch(err => {
+            pool.query(
+              `INSERT INTO notification_echecs (type_notification, destinataire, erreur) VALUES ($1, $2, $3)`,
+              ['whatsapp_catalog_sync', normPh, err.message]
+            ).catch(() => {});
+          });
         } catch (_) {}
 
         const stockLabel = (prodCree.stock_quantite !== null && prodCree.stock_quantite !== undefined)
@@ -3377,10 +3414,10 @@ async function handleIncomingInternal(msg) {
   }
 
   // ── Actions directes Comparateur de Prix Nopalou (Audit M5) ──
-  if (detecterIntentionComparateur(text) && !state?.startsWith('COMMANDE_') && !state?.startsWith('MARCHAND_PIN')) {
+  if (detecterIntentionComparateur(text) && !state?.startsWith('COMMANDE_') && !state?.startsWith('MARCHAND_PIN') && !state?.startsWith('AJOUT_PRODUIT_') && !state?.startsWith('CREER_BOUTIQUE_')) {
     const compTraite = await traiterRequeteComparateur(phone, text);
     if (compTraite) {
-      await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options :').catch(() => {});
+      await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options, ou faites une nouvelle comparaison :').catch(() => {});
       await setSession(phone, 'MENU', { last: { type: 'comparatif', query: text } });
       return;
     }
@@ -3721,7 +3758,7 @@ async function handleIncomingInternal(msg) {
         await setSession(phone, 'MENU', {});
         return;
       }
-      await setSession(phone, 'CREATE_SHOP_NOM', {});
+      await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
       await sendWhatsAppText(
         phone,
         `🏪 *Création de votre boutique Nopalou en 30 secondes !* 🚀🇸🇳\n\n` +
@@ -3948,7 +3985,7 @@ async function handleIncomingInternal(msg) {
           await setSession(phone, 'MENU', {});
           return;
         }
-        await setSession(phone, 'CREATE_SHOP_NOM', {});
+        await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
         await sendWhatsAppText(
           phone,
           `🏪 *Création de votre boutique Nopalou en 30 secondes !* 🚀🇸🇳\n\n` +
@@ -4046,15 +4083,6 @@ async function handleIncomingInternal(msg) {
       return;
     }
 
-    // Détection comparateur de prix multi-marchands (Audit M5)
-    if (detecterIntentionComparateur(text)) {
-      const compTraite = await traiterRequeteComparateur(phone, text);
-      if (compTraite) {
-        await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options, ou faites une nouvelle comparaison :').catch(() => {});
-        await setSession(phone, 'MENU', { last: { type: 'comparatif', query: text } });
-        return;
-      }
-    }
 
     // Texte libre reçu en état MENU → question FAQ, sinon intention immo ou recherche
     const faq = detecterFAQ(text);
@@ -4077,219 +4105,15 @@ async function handleIncomingInternal(msg) {
     return;
   }
 
-  // ── CREATE_SHOP_NOM → Saisie du nom de la boutique ─────────────────────────
-  if (state === 'CREATE_SHOP_NOM') {
-    if (!text || text.trim().length < 2) {
-      await sendWhatsAppText(phone, '⚠️ Veuillez entrer un nom valide (au moins 2 lettres) pour votre boutique :');
-      return;
-    }
-    const nom = text.trim();
-    await setSession(phone, 'CREATE_SHOP_CAT', { nom });
-    await sendWhatsAppInteractive(
+  // ── ALIAS RÉTRO-COMPATIBILITÉ : Anciens états CREATE_SHOP_* redirigés vers CREER_BOUTIQUE_* ──
+  if (state === 'CREATE_SHOP_NOM' || state === 'CREATE_SHOP_CAT' || state === 'CREATE_SHOP_VILLE') {
+    await setSession(phone, 'CREER_BOUTIQUE_NOM', {});
+    await sendWhatsAppText(
       phone,
-      nom,
-      `👌 Très joli nom : *${nom}* !\n\nChoisissez votre secteur d'activité (1 Clic) :`,
-      [{
-        title: 'Secteurs d\'activité',
-        rows: [
-          { id: 'cat_mode', title: '👗 Mode & Vêtements', description: 'Prêt-à-porter, tissus, sacs' },
-          { id: 'cat_telephonie', title: '📱 Téléphonie & Tech', description: 'Smartphones, TV, ordinateurs' },
-          { id: 'cat_alimentation', title: '🍔 Alimentation & Épicerie', description: 'Supérette, boissons, bio' },
-          { id: 'cat_beaute', title: '✨ Beauté & Cosmétiques', description: 'Parfums, mèches, soins' },
-          { id: 'cat_maison', title: '📺 Électroménager & Déco', description: 'Maison, meubles, appareils' },
-          { id: 'cat_divers', title: '🛍️ Commerce Général', description: 'Bazar, divers, arrivages' },
-        ]
-      }]
-    ).catch(async () => {
-      await sendWhatsAppText(
-        phone,
-        `👌 Très joli nom : *${nom}* !\n\nQuel est votre *secteur d'activité principal* ?\n(ex: _Mode & Vêtements_, _Alimentation_, _Cosmétique_, _Électronique_, _Chaussures_...)`
-      );
-    });
+      `🏪 *Création de votre boutique Nopalou en 30 secondes !* 🚀🇸🇳\n\n` +
+      `Quel est le *nom* de votre commerce ou boutique ?\n(ex: _Dakar Fashion_, _Épicerie Keur Massar_, _Touba Électro_...)`
+    );
     return;
-  }
-
-  // ── CREATE_SHOP_CAT → Saisie de la catégorie ──────────────────────────────
-  if (state === 'CREATE_SHOP_CAT') {
-    let categorie = 'Commerce général';
-    const CAT_MAP = {
-      cat_mode: 'Mode & Vêtements',
-      cat_telephonie: 'Téléphonie & Tech',
-      cat_alimentation: 'Alimentation & Épicerie',
-      cat_beaute: 'Beauté & Cosmétiques',
-      cat_maison: 'Électroménager & Déco',
-      cat_divers: 'Commerce Général',
-    };
-    if (interactiveId && CAT_MAP[interactiveId]) {
-      categorie = CAT_MAP[interactiveId];
-    } else if (text?.trim()) {
-      categorie = text.trim();
-    }
-    await setSession(phone, 'CREATE_SHOP_VILLE', { nom: context?.nom, categorie });
-    await sendWhatsAppInteractive(
-      phone,
-      context?.nom || 'Ma Boutique',
-      `📍 Où se situe votre boutique ? (1 Clic) :`,
-      [{
-        title: 'Localisation',
-        rows: [
-          { id: 'loc_sandaga', title: '📍 Sandaga / Plateau', description: 'Dakar Centre' },
-          { id: 'loc_hlm', title: '📍 HLM / Colobane', description: 'Dakar Marchés' },
-          { id: 'loc_medina', title: '📍 Médina / Gueule Tapée', description: 'Dakar' },
-          { id: 'loc_almadies', title: '📍 Almadies / Ngor / Yoff', description: 'Dakar Ouest' },
-          { id: 'loc_maristes', title: '📍 Maristes / Hann', description: 'Dakar' },
-          { id: 'loc_keurmassar', title: '📍 Keur Massar / Rufisque', description: 'Dakar Banlieue' },
-          { id: 'loc_thies', title: '📍 Thiès', description: 'Région Thiès' },
-          { id: 'loc_mbour', title: '📍 Mbour / Saly', description: 'Petite Côte' },
-          { id: 'loc_touba', title: '📍 Touba / Diourbel', description: 'Centre' },
-        ]
-      }]
-    ).catch(async () => {
-      await sendWhatsAppText(
-        phone,
-        `📍 Super ! Dans quelle *ville ou quartier* êtes-vous situé ?\n(ex: _Dakar Médina_, _Thiès_, _Touba_, _Saint-Louis_, _Mbour_...)`
-      );
-    });
-    return;
-  }
-
-  // ── CREATE_SHOP_VILLE → Création effective de la boutique ──────────────────
-  if (state === 'CREATE_SHOP_VILLE') {
-    let ville = 'Dakar';
-    const LOC_MAP = {
-      loc_sandaga: 'Dakar Plateau / Sandaga',
-      loc_hlm: 'Dakar HLM',
-      loc_medina: 'Dakar Médina',
-      loc_almadies: 'Dakar Almadies',
-      loc_maristes: 'Dakar Maristes',
-      loc_keurmassar: 'Keur Massar',
-      loc_thies: 'Thiès',
-      loc_mbour: 'Mbour / Saly',
-      loc_touba: 'Touba',
-    };
-    if (interactiveId && LOC_MAP[interactiveId]) {
-      ville = LOC_MAP[interactiveId];
-    } else if (text?.trim()) {
-      ville = text.trim();
-    }
-    const nom = context?.nom || 'Ma Boutique';
-    const categorie = context?.categorie || 'Commerce général';
-
-    try {
-      // 1. Génération du slug unique
-      let slug = nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'boutique';
-      const rCheck = await pool.query('SELECT id FROM boutiques WHERE slug = $1', [slug]);
-      if (rCheck.rows.length > 0) {
-        slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
-      }
-
-      // 2. Trouver ou créer l'utilisateur
-      const shortPh = phone.replace(/\D/g, '').slice(-9);
-      let userId = null;
-      const rUser = await pool.query("SELECT id FROM utilisateurs WHERE REGEXP_REPLACE(COALESCE(telephone, ''), '\\D', '', 'g') LIKE '%' || $1 LIMIT 1", [shortPh]);
-      if (rUser.rows[0]) {
-        userId = rUser.rows[0].id;
-      } else {
-        const rNewUser = await pool.query(
-          "INSERT INTO utilisateurs (nom, telephone, role, actif) VALUES ($1, $2, 'marchand', true) RETURNING id",
-          [nom, phone]
-        );
-        userId = rNewUser.rows[0]?.id;
-      }
-
-      // 3. Insérer la boutique
-      const rBq = await pool.query(
-        `INSERT INTO boutiques (nom, slug, categorie, ville, telephone, whatsapp, utilisateur_id, actif, mode_fonctionnement)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'hybride_pos') RETURNING *`,
-        [nom, slug, categorie, ville, phone, phone, userId]
-      );
-
-      const newBq = rBq.rows[0];
-
-      // Hook de conversion automatique CRM prospection & Timeline
-      try {
-        const normPh = normalisePhone(phone);
-        const rLeadConv = await pool.query(
-          `UPDATE prospection_leads 
-           SET 
-             statut = 'converti', 
-             priority_score = 0,
-             next_best_action = 'client_fideliser',
-             conversion_score = 100,
-             engagement_score = 100,
-             derniere_action_at = NOW(), 
-             updated_at = NOW() 
-           WHERE telephone = $1 OR telephone = $2 OR telephone LIKE '%' || $3
-           RETURNING id`,
-          [phone, normPh, phone.slice(-9)]
-        );
-
-        if (rLeadConv.rows.length > 0) {
-          const leadId = rLeadConv.rows[0].id;
-          const rCamp = await pool.query(`
-            SELECT campagne_id FROM prospection_messages_log 
-            WHERE lead_id = $1 ORDER BY created_at DESC LIMIT 1
-          `, [leadId]);
-          const cId = rCamp.rows[0]?.campagne_id || null;
-
-          await pool.query(`
-            INSERT INTO prospection_lead_events (
-              lead_id, campagne_id, type_evenement, canal, description, metadata
-            ) VALUES ($1, $2, 'boutique_creee', 'whatsapp', $3, $4)
-          `, [
-            leadId,
-            cId,
-            `Boutique "${nom}" créée avec succès (${slug})`,
-            JSON.stringify({ boutique_id: newBq.id, nom, slug, date: new Date().toISOString() })
-          ]);
-
-          if (cId) {
-            await pool.query(`
-              UPDATE prospection_campagnes 
-              SET nb_boutiques_creees = COALESCE(nb_boutiques_creees, 0) + 1
-              WHERE id = $1
-            `, [cId]);
-          }
-        }
-      } catch (errConv) {
-        console.warn('[CRM CONVERSION HOOK ERR]:', errConv.message);
-      }
-
-      // 4. Créer l'abonnement d'essai de 30 jours offerts avec Accès Total VIP
-      const finEssai = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      try {
-        await pool.query(
-          `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
-          [userId]
-        );
-        await pool.query(
-          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, fin, commande_ref, is_trial)
-           VALUES ($1, 'decouverte', 'actif', 2500, $2, $3, TRUE)`,
-          [userId, finEssai, `wa_trial_${shortPh}_${Date.now().toString(36)}`]
-        );
-      } catch (eAbon) {
-        console.warn('[ABONNEMENT ESSAI WA WARN]:', eAbon.message);
-      }
-
-      const msgSuccess =
-        `🎉 *Félicitations ! Votre boutique "${nom}" est officiellement ouverte !* 🚀🇸🇳\n\n` +
-        `🎁 *1er mois (30 jours) 100% OFFERT avec ACCÈS TOTAL VIP !*\n` +
-        `Toutes les fonctionnalités sont débloquées : Caisse POS, Saisie Express, Factures PDF, Comptabilité & Catalogue illimité !\n\n` +
-        `🔗 *Votre lien direct :*\n${SITE}/boutiques/${slug}\n\n` +
-        `🎨 *Personnalisez votre vitrine (couleurs, slogan, bannière) :*\n${SITE}/boutique?tab=personnaliser\n\n` +
-        `📱 *Votre espace de gestion :*\n${SITE}/boutique\n\n` +
-        `✨ *Ajoutez votre 1er article dès maintenant :*\n` +
-        `Tapez simplement le nom et le prix (ex: *Robe Soie 15000*) !`;
-
-      await sendWhatsAppText(phone, msgSuccess);
-      await setSession(phone, 'MENU', { boutique: newBq });
-      return;
-    } catch (err) {
-      console.error('[CREATION BOUTIQUE WA ERR]', err.message);
-      await sendWhatsAppText(phone, '⚠️ Une erreur est survenue lors de la création de la boutique. Réessayez ou tapez *menu*.');
-      await setSession(phone, 'MENU', {});
-      return;
-    }
   }
 
   // ── BOUTIQUE_SECTEUR → choix du secteur ─────────────────────────────────────
@@ -5049,15 +4873,6 @@ async function handleIncomingInternal(msg) {
     };
     if (interactiveId && SEARCH_CAT_MAP[interactiveId]) {
       text = SEARCH_CAT_MAP[interactiveId];
-    }
-    // Détection comparateur de prix multi-marchands (Audit M5)
-    if (detecterIntentionComparateur(text)) {
-      const compTraite = await traiterRequeteComparateur(phone, text);
-      if (compTraite) {
-        await sendWhatsAppMenuOuFin(phone, 'Tapez *menu* pour d\'autres options, ou faites une nouvelle comparaison :').catch(() => {});
-        await setSession(phone, 'MENU', { last: { type: 'comparatif', query: text } });
-        return;
-      }
     }
 
     const faq = detecterFAQ(text);
@@ -6087,8 +5902,9 @@ async function handleIncomingInternal(msg) {
     const inputCode = text.trim().replace(/\D/g, '');
     const isDbValid = expectedOtp && inputCode === expectedOtp && (!otpExpiresAt || Date.now() < Number(otpExpiresAt));
     const isMemValid = otpData && otpData.code === inputCode && Date.now() < otpData.expiresAt;
+    const isTableValid = await validerOTPMarchand(phone, inputCode);
 
-    if (isDbValid || isMemValid) {
+    if (isTableValid || isDbValid || isMemValid) {
       await setSession(phone, 'MARCHAND_RESET_NOUVEAU_PIN', {
         boutique,
         isMarchandAuth: true,
@@ -6177,18 +5993,23 @@ async function handleIncomingInternal(msg) {
           );
           const prodCree = resProd.rows[0];
           const normPh = normalisePhone(phone);
-          _recentsProduitsCrees.set(normPh, {
-            produitId: prodCree.id,
-            boutiqueId: boutique.id,
-            nom: prodCree.nom,
-            totalPhotos: initialPhotos.length,
-            timestamp: Date.now(),
-          });
+          await enregistrerTamponPhoto(normPh, prodCree.id, boutique.id, prodCree.nom, initialPhotos.length);
 
           // Sync catalog background
           try {
             const { syncProduit } = require('./whatsapp-catalog');
-            syncProduit(prodCree.id).catch(() => {});
+            syncProduit({
+              ...prodCree,
+              boutique_id: boutique.id,
+              boutique_slug: boutique.slug || boutique.id,
+              images: initialPhotos,
+              en_stock: true,
+            }).catch(err => {
+              pool.query(
+                `INSERT INTO notification_echecs (type_notification, destinataire, erreur) VALUES ($1, $2, $3)`,
+                ['whatsapp_catalog_sync', normPh, err.message]
+              ).catch(() => {});
+            });
           } catch (_) {}
 
           const stockLabel = (prodCree.stock_quantite !== null && prodCree.stock_quantite !== undefined)
@@ -6456,18 +6277,23 @@ async function handleIncomingInternal(msg) {
 
         // Enregistrer dans le tampon multi-photos
         const normPh = normalisePhone(phone);
-        _recentsProduitsCrees.set(normPh, {
-          produitId: prodCree.id,
-          boutiqueId: boutique.id,
-          nom: prodCree.nom,
-          totalPhotos: photos.length,
-          timestamp: Date.now(),
-        });
+        await enregistrerTamponPhoto(normPh, prodCree.id, boutique.id, prodCree.nom, photos.length);
 
         // Sync catalog background
         try {
           const { syncProduit } = require('./whatsapp-catalog');
-          syncProduit(prodCree.id).catch(() => {});
+          syncProduit({
+            ...prodCree,
+            boutique_id: boutique.id,
+            boutique_slug: boutique.slug || boutique.id,
+            images: photos,
+            en_stock: true,
+          }).catch(err => {
+            pool.query(
+              `INSERT INTO notification_echecs (type_notification, destinataire, erreur) VALUES ($1, $2, $3)`,
+              ['whatsapp_catalog_sync', normPh, err.message]
+            ).catch(() => {});
+          });
         } catch (_) {}
 
         const stockLabel = (prodCree.stock_quantite !== null && prodCree.stock_quantite !== undefined)

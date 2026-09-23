@@ -14,59 +14,7 @@ const {
 } = require('../services/whatsapp-comparator');
 
 const WA_PHONE = '221708717942';
-
-// ── Base de connaissances FAQ instantanée ─────────────────────────────────────
-const FAQ_WEB = [
-  {
-    motsCles: ['livraison', 'delai', 'frais de livraison', 'livrez-vous', 'expedition'],
-    titre: 'Livraison & Expéditions',
-    reponse: 'Nopalou livre partout à Dakar sous 2 à 4 heures, et dans les régions du Sénégal sous 24 à 48 heures selon les boutiques partenaires. Les frais sont calculés automatiquement lors de la commande.',
-    actionLabel: 'Explorer les boutiques',
-    actionUrl: '/boutiques',
-  },
-  {
-    motsCles: ['paiement', 'wave', 'orange money', 'om', 'payer', 'carte bancaire'],
-    titre: 'Moyens de Paiement Sécurisés',
-    reponse: 'Vous pouvez régler directement par Wave, Orange Money ou en espèces à la livraison. Les paiements sont sécurisés sans frais cachés.',
-    actionLabel: 'En savoir plus',
-    actionUrl: '/aide',
-  },
-  {
-    motsCles: ['vendre', 'creer boutique', 'devenir vendeur', 'marchand', 'ouvrir magasin'],
-    titre: 'Ouvrir votre Boutique Nopalou',
-    reponse: 'Créer votre boutique sur Nopalou est rapide et gratuit le 1er mois : catalogue en ligne, caisse tactile et synchronisation WhatsApp automatique.',
-    actionLabel: 'Créer ma boutique',
-    actionUrl: '/creer-boutique',
-  },
-  {
-    motsCles: ['caisse', 'pos', 'terminal', 'encaissement', 'code barre', 'scanner', 'point de vente'],
-    titre: 'Caisse Tactile & Point de Vente (POS)',
-    reponse: 'Nopalou intègre une caisse tactile complète pour les commerçants : gestion des stocks en temps réel, tickets de caisse, carnet de crédit client et encaissement multi-moyens (Wave, Orange Money, Espèces).',
-    actionLabel: 'Accéder à la caisse',
-    actionUrl: '/boutique/caisse',
-  },
-  {
-    motsCles: ['crm', 'gestion locative', 'locataire', 'bail', 'quittance', 'impaye', 'loyer'],
-    titre: 'Gestion Locative & CRM Immobilier',
-    reponse: 'Nopalou propose aux agences et gestionnaires un module de gestion locative complet : suivi des baux, édition de quittances, relances des impayés et CRM prospects.',
-    actionLabel: 'Découvrir les agences',
-    actionUrl: '/agences',
-  },
-  {
-    motsCles: ['commande', 'suivi', 'colis', 'ou est ma commande', 'etat commande', 'statut commande', 'livreur'],
-    titre: 'Suivi de Commande en Direct',
-    reponse: 'Pour suivre votre commande en direct, munissez-vous de votre référence de commande ou numéro de téléphone sur notre page dédiée au suivi.',
-    actionLabel: 'Suivre ma commande',
-    actionUrl: '/suivi-commande',
-  },
-  {
-    motsCles: ['annuaire agence', 'agences partenaires', 'trouver une agence', 'liste des agences'],
-    titre: 'Annuaire des Agences Immobilières',
-    reponse: 'Retrouvez toutes les agences immobilières partenaires sur Nopalou : consultez leurs biens exclusifs, leurs équipes et contactez-les directement.',
-    actionLabel: 'Voir les agences',
-    actionUrl: '/agences',
-  },
-];
+const { FAQ_WEB } = require('../lib/faq');
 
 // ── Fonctions de recherche spécialisées ───────────────────────────────────────
 

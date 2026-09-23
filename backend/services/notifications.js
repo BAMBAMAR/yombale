@@ -21,14 +21,14 @@ async function envoyerAlertePrix(alerte, nouveauPrix) {
   }
 
   if (alerte.telephone) {
-    const textMsg = `📉 *Baisse de prix — Nopalou*\n\n*${alerte.produit_nom}* est passé à *${prixFmt} FCFA* (votre cible : ${cibleFmt} FCFA).\n\n👉 ${SITE}/?produit=${alerte.produit_id}`;
+    const textMsg = `📉 *Baisse de prix — Nopalou*\n\n*${alerte.produit_nom}* est passé à *${prixFmt} FCFA* (votre cible : ${cibleFmt} FCFA).\n\n👉 ${SITE}/produit/${alerte.produit_id}`;
     await sendWhatsAppNotification(alerte.telephone, {
       textMessage: textMsg,
       title: `📉 Baisse de prix : ${alerte.produit_nom}`,
       montant: `${prixFmt} FCFA`,
       detail: `Nouveau prix: ${prixFmt} FCFA (votre cible: ${cibleFmt} FCFA)`,
-      url: `${SITE}/?produit=${alerte.produit_id}`,
-      buttonParam: `?produit=${alerte.produit_id}`,
+      url: `${SITE}/produit/${alerte.produit_id}`,
+      buttonParam: `produit/${alerte.produit_id}`,
       type: 'service',
     }).catch(() => {});
   }

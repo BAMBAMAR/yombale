@@ -373,7 +373,9 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
                 const msgVendeur = `🎉 *Nouveau Paiement Wave Reçu !*\n\nLa commande *${cmd.reference}* d'un montant de *${montantFmt} FCFA* a été payée avec succès par le client *${cmd.client_nom || 'Client'}* (${cmd.client_telephone || 'N/A'}).\n\nVous pouvez dès à présent préparer le colis pour la livraison !`;
                 const titleVendeur = `🎉 Paiement Wave Reçu — ${boutique.nom}`;
                 const detailVendeur = `Réf ${cmd.reference} : ${montantFmt} FCFA réglés par ${cmd.client_nom || 'Client'} (${cmd.client_telephone || 'N/A'}).`;
-                const lienCommandes = `${SITE}/boutique?tab=commandes`;
+                const bRef = boutique.slug || boutique.id;
+                const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes` : `${SITE}/boutique?tab=commandes`;
+                const btnParam = bRef ? `boutique?manage=${bRef}&tab=commandes` : 'boutique?tab=commandes';
 
                 sendWhatsAppNotification(telVendeur, {
                   textMessage: msgVendeur,
@@ -381,7 +383,7 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
                   montant: `${montantFmt} FCFA`,
                   detail: detailVendeur,
                   url: lienCommandes,
-                  buttonParam: 'boutique?tab=commandes',
+                  buttonParam: btnParam,
                   type: 'commande',
                 }).catch(err => console.error('[WAVE WEBHOOK NOTIF VENDEUR ERR]:', err.message));
               }
@@ -512,7 +514,9 @@ router.post('/stripe/webhook', limiterGeneral, async (req, res) => {
                 const msgVendeur = `🌍 *Nouveau Paiement Diaspora Reçu (Stripe) !*\n\nLa commande *${cmd.reference}* d'un montant de *${montantFmt} FCFA* a été payée par carte bancaire internationale par *${cmd.client_nom || 'Client Diaspora'}* (${cmd.client_telephone || 'N/A'}).\n\nVous pouvez préparer la commande pour livraison locale !`;
                 const titleVendeur = `🌍 Paiement Diaspora Reçu — ${boutique.nom}`;
                 const detailVendeur = `Réf ${cmd.reference} : ${montantFmt} FCFA réglés par Carte Bancaire internationale.`;
-                const lienCommandes = `${SITE}/boutique?tab=commandes`;
+                const bRef = boutique.slug || boutique.id;
+                const lienCommandes = bRef ? `${SITE}/boutique?manage=${bRef}&tab=commandes` : `${SITE}/boutique?tab=commandes`;
+                const btnParam = bRef ? `boutique?manage=${bRef}&tab=commandes` : 'boutique?tab=commandes';
 
                 sendWhatsAppNotification(telVendeur, {
                   textMessage: msgVendeur,
@@ -520,7 +524,7 @@ router.post('/stripe/webhook', limiterGeneral, async (req, res) => {
                   montant: `${montantFmt} FCFA`,
                   detail: detailVendeur,
                   url: lienCommandes,
-                  buttonParam: 'boutique?tab=commandes',
+                  buttonParam: btnParam,
                   type: 'commande',
                 }).catch(err => console.error('[STRIPE WEBHOOK NOTIF VENDEUR ERR]:', err.message));
               }

@@ -2437,4 +2437,68 @@ module.exports = async function migrateInline() {
   } catch (err) {
     console.warn('[MIGRATE] Sama Xaalis échec:', err.message);
   }
+
+  // ── Écosystème Conversationnel & Traçabilité WhatBot (Sprint 2) ──
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS whatsapp_otp_codes (
+        id          SERIAL      PRIMARY KEY,
+        phone       VARCHAR(20) NOT NULL,
+        code        VARCHAR(6)  NOT NULL,
+        boutique_id UUID        REFERENCES boutiques(id) ON DELETE CASCADE,
+        expires_at  TIMESTAMPTZ NOT NULL,
+        used_at     TIMESTAMPTZ DEFAULT NULL,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_otp_phone   ON whatsapp_otp_codes(phone);
+      CREATE INDEX IF NOT EXISTS idx_otp_expires ON whatsapp_otp_codes(expires_at);
+
+      CREATE TABLE IF NOT EXISTS whatsapp_conversation_log (
+        id           BIGSERIAL   PRIMARY KEY,
+        phone        VARCHAR(20) NOT NULL,
+        direction    VARCHAR(3)  NOT NULL CHECK (direction IN ('IN', 'OUT')),
+        message_type VARCHAR(30) DEFAULT 'text',
+        content      TEXT,
+        state_before VARCHAR(50),
+        state_after  VARCHAR(50),
+        boutique_id  UUID        REFERENCES boutiques(id) ON DELETE SET NULL,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_conv_log_phone ON whatsapp_conversation_log(phone, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS notification_echecs (
+        id           SERIAL      PRIMARY KEY,
+        type         VARCHAR(50) NOT NULL,
+        reference_id TEXT,
+        erreur       TEXT,
+        resolved_at  TIMESTAMPTZ DEFAULT NULL,
+        created_at   TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_notif_echecs_type ON notification_echecs(type, created_at DESC);
+
+      -- Performance Indexes (Sprint 3)
+      CREATE INDEX IF NOT EXISTS idx_commandes_boutique_perf
+        ON commandes_boutique(boutique_id, created_at DESC, statut)
+        WHERE statut != 'annulee';
+
+      CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_updated
+        ON whatsapp_sessions(updated_at DESC);
+
+      -- Tampon Photos DB (Sprint 4)
+      CREATE TABLE IF NOT EXISTS whatsapp_photo_buffer (
+        phone       VARCHAR(20) NOT NULL,
+        produit_id  UUID        NOT NULL REFERENCES boutique_produits(id) ON DELETE CASCADE,
+        boutique_id UUID,
+        photos      TEXT[]      DEFAULT '{}',
+        expires_at  TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '10 minutes'),
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (phone, produit_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_photo_buffer_exp ON whatsapp_photo_buffer(expires_at);
+    `);
+    console.log('[MIGRATE] ✅ Écosystème Conversationnel: tables OTP, Logs, Notifications, Index & Buffers créés');
+  } catch (err) {
+    console.warn('[MIGRATE] Écosystème Conversationnel échec:', err.message);
+  }
 };
+

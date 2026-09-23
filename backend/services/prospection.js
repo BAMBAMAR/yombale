@@ -2448,7 +2448,7 @@ function resoudreParametresMetaTemplate(lead) {
       title: enseigneAuth ? `🚗 Nopalou Auto — ${enseigneAuth}`.slice(0, 50) : '🚗 Nopalou Auto — Showroom & Vente',
       detail: '🚗 Présentez votre parc auto, fiches techniques et recevez vos acheteurs directement sur WhatsApp. 30 jours offerts. Répondez OUI pour activer votre showroom.',
       url: 'https://nopalou.com/annonces',
-      buttonParam: 'auto',
+      buttonParam: 'annonces',
     };
   }
 
@@ -2459,7 +2459,7 @@ function resoudreParametresMetaTemplate(lead) {
       title: enseigneAuth ? `📦 Nopalou B2B — ${enseigneAuth}`.slice(0, 50) : '📦 Nopalou Gros & Demi-gros',
       detail: '📦 Partagez votre catalogue de gros avec tarifs dégressifs et encaissez par Wave/OM sans commission. 30 jours offerts. Répondez OUI pour configurer votre catalogue.',
       url: 'https://nopalou.com/tarifs-boutique',
-      buttonParam: 'grossiste',
+      buttonParam: 'tarifs-boutique',
     };
   }
 
@@ -2470,7 +2470,7 @@ function resoudreParametresMetaTemplate(lead) {
       title: enseigneAuth ? `🍽️ Nopalou Resto — ${enseigneAuth}`.slice(0, 50) : '🍽️ Nopalou — Menu & Commandes',
       detail: '🍽️ Partagez votre carte sur WhatsApp, recevez les commandes et encaissez par Wave/OM sans commission. 30 jours offerts. Répondez OUI pour créer votre menu.',
       url: 'https://nopalou.com/tarifs-boutique',
-      buttonParam: 'restaurant',
+      buttonParam: 'tarifs-boutique',
     };
   }
 
@@ -2481,7 +2481,7 @@ function resoudreParametresMetaTemplate(lead) {
     title: enseigneAuth ? `📱 Nopalou — ${enseigneAuth}`.slice(0, 50) : '📱 Nopalou — Caisse & Gestion',
     detail: '📱 Vendez & encaissez par Wave / OM sans commission. 30 jours offerts. Tapez Nopalou sur Google 🇸🇳. Répondez OUI pour ouvrir votre boutique en 30s.',
     url: 'https://nopalou.com/tarifs-boutique',
-    buttonParam: 'boutique',
+    buttonParam: 'tarifs-boutique',
   };
 }
 
