@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers'
 import AdminIntegrationsClient from './AdminIntegrationsClient'
+import { extractAdminToken, adminHeaders } from '@/app/actions/admin/admin-common'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
-const COOKIE  = 'nopalou_admin'
 
 export const metadata = {
   title: 'Supervision des Intégrations & Réseaux Sociaux — Admin Nopalou',
@@ -11,7 +11,7 @@ export const metadata = {
 
 export default async function AdminIntegrationsPage() {
   const jar = await cookies()
-  const secret = jar.get(COOKIE)?.value ?? ''
+  const secret = extractAdminToken(jar) ?? ''
 
   let initialStats = null
   let initialAccounts = []
@@ -19,11 +19,11 @@ export default async function AdminIntegrationsPage() {
   try {
     const [statsRes, accountsRes] = await Promise.all([
       fetch(`${BACKEND}/api/admin/integrations/stats`, {
-        headers: { 'X-Admin-Secret': secret },
+        headers: adminHeaders(secret),
         cache: 'no-store',
       }),
       fetch(`${BACKEND}/api/admin/integrations/accounts?limit=50`, {
-        headers: { 'X-Admin-Secret': secret },
+        headers: adminHeaders(secret),
         cache: 'no-store',
       }),
     ])

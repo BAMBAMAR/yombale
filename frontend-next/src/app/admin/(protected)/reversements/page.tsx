@@ -1,17 +1,17 @@
 import { cookies } from 'next/headers'
 import ReversementsClient from './ReversementsClient'
-
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+import { BACKEND, adminHeaders } from '@/app/actions/admin'
 
 export default async function AdminReversementsPage() {
-  const jar    = await cookies()
-  const secret = jar.get('nopalou_admin')?.value ?? ''
-  if (!secret) return null
+  const jar   = await cookies()
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  if (!token) return null
 
   let reversements: any[] = []
   try {
     const res = await fetch(`${BACKEND}/api/comptabilite/admin/reversements-dus`, {
-      headers: { 'X-Admin-Secret': secret }, cache: 'no-store',
+      headers: adminHeaders(token),
+      cache: 'no-store',
     })
     if (res.ok) {
       const data = await res.json()

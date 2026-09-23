@@ -1,22 +1,22 @@
 import { cookies } from 'next/headers'
 import ApporteursClient from './ApporteursClient'
-
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+import { BACKEND, adminHeaders } from '@/app/actions/admin'
 
 export default async function AdminApporteursPage() {
-  const jar    = await cookies()
-  const secret = jar.get('nopalou_admin')?.value ?? ''
-  if (!secret) return null
+  const jar   = await cookies()
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  if (!token) return null
 
   let settings: Record<string, string> = {}
   let apporteurs: any[] = []
   let commissions: any[] = []
 
   try {
+    const headers = adminHeaders(token)
     const [settingsRes, apporteursRes, commissionsRes] = await Promise.all([
-      fetch(`${BACKEND}/api/settings`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
-      fetch(`${BACKEND}/api/apporteurs/admin`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
-      fetch(`${BACKEND}/api/apporteurs/admin/commissions`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/settings`, { headers, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/apporteurs/admin`, { headers, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/apporteurs/admin/commissions`, { headers, cache: 'no-store' }),
     ])
     if (settingsRes.ok) settings = await settingsRes.json()
     if (apporteursRes.ok) apporteurs = (await apporteursRes.json()).apporteurs

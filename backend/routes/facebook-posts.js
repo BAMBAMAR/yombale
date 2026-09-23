@@ -2,7 +2,7 @@
 const express = require('express');
 const router  = express.Router();
 const { pool } = require('../models/db');
-const { adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const settingsCache = require('../lib/settingsCache');
 const https = require('https');
 const qs    = require('querystring');
@@ -29,7 +29,8 @@ const PALIERS_AVANTAGES = {
   },
 };
 
-router.use(adminSecretOnly);
+router.use(requireAdminAuth);
+router.use(requireAdminRole('super_admin', 'moderateur', 'admin_operationnel'));
 
 // ── Helpers token ────────────────────────────────────────────────────────────
 

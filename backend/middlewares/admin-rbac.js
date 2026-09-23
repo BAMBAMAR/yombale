@@ -74,6 +74,12 @@ function extractAdminCredentials(req) {
   }
 
   const rawSecret = req.headers['x-admin-secret'] || cookies['nopalou_admin'];
+
+  // Si rawSecret commence par eyJ, c'est en fait un token JWT transmis via le header X-Admin-Secret
+  if (!jwtToken && typeof rawSecret === 'string' && rawSecret.startsWith('eyJ')) {
+    jwtToken = rawSecret;
+  }
+
   return { jwtToken, rawSecret };
 }
 

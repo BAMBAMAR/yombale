@@ -14,6 +14,8 @@ export interface Utilisateur {
   suspendu: boolean
   supprime_le: string | null
   created_at: string
+  a_boutique?: boolean
+  a_agence?: boolean
 }
 
 function dateF(d: string) {
@@ -22,12 +24,14 @@ function dateF(d: string) {
 
 function badge(u: Utilisateur) {
   return (
-    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
       {u.email_verifie
-        ? <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>✓ vérifié</span>
+        ? <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>vérifié</span>
         : <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>non vérifié</span>}
-      {u.suspendu && <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626' }}>🚫 suspendu</span>}
+      {u.suspendu && <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626' }}>suspendu</span>}
       {u.supprime_le && <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706' }}>en suppression</span>}
+      {u.a_boutique && <span style={{ fontSize: 10, fontWeight: 700, color: '#0d9488', background: '#f0fdfa', padding: '1px 5px', borderRadius: 4 }}>Boutique</span>}
+      {u.a_agence && <span style={{ fontSize: 10, fontWeight: 700, color: '#7c3aed', background: '#f5f3ff', padding: '1px 5px', borderRadius: 4 }}>Agence Immo</span>}
     </div>
   )
 }

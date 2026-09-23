@@ -1,17 +1,16 @@
 import { cookies } from 'next/headers'
 import TarifsClient from './TarifsClient'
-
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+import { BACKEND, adminHeaders } from '@/app/actions/admin'
 
 export default async function AdminTarifsPage() {
-  const jar    = await cookies()
-  const secret = jar.get('nopalou_admin')?.value ?? ''
-  if (!secret) return null
+  const jar   = await cookies()
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  if (!token) return null
 
   let settings: Record<string, string> = {}
   try {
     const r = await fetch(`${BACKEND}/api/settings`, {
-      headers: { 'X-Admin-Secret': secret },
+      headers: adminHeaders(token),
       cache: 'no-store',
     })
     if (r.ok) settings = await r.json()
@@ -25,7 +24,7 @@ export default async function AdminTarifsPage() {
           Tous les prix sont appliqués en temps réel (cache 5 min). Les webhooks Wave/Orange utilisent ces valeurs.
         </p>
       </div>
-      <TarifsClient initial={settings as any} secret={secret} />
+      <TarifsClient initial={settings as any} secret={token} />
     </div>
   )
 }

@@ -6,6 +6,6 @@ export const metadata: Metadata = { title: 'Portail Développeur API — Admin N
 
 export default async function AdminDeveloperPage() {
   const jar = await cookies()
-  const secret = jar.get('nopalou_admin')?.value ?? ''
-  return <DeveloperClient secret={secret} />
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  return <DeveloperClient secret={token} />
 }

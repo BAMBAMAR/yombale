@@ -6,6 +6,8 @@ const axios = require('axios');
 const multer = require('multer');
 const { pool } = require('../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
+const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const { uploadBuffer } = require('../services/cloudinary');
 const { enregistrerAuditLog } = require('../lib/auditLogger');
 const { syncProduit } = require('../services/whatsapp-catalog');
@@ -20,7 +22,7 @@ async function fetchImageBuffer(url) {
 }
 
 // ── GET /api/comptabilite/admin/stats — agrégats ventes toutes boutiques (admin)
-router.get('/admin/stats', adminSecretOnly, async (req, res) => {
+router.get('/admin/stats', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const [global, parBoutique, recentes] = await Promise.all([
       pool.query(`
@@ -2170,7 +2172,7 @@ router.get('/:boutiqueId/zones/public', async (req, res) => {
 });
 
 // GET /api/comptabilite/admin/reversements-dus — Liste des commandes livrées en attente de reversement marchand
-router.get('/admin/reversements-dus', adminSecretOnly, async (req, res) => {
+router.get('/admin/reversements-dus', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut, c.created_at,
@@ -2188,7 +2190,7 @@ router.get('/admin/reversements-dus', adminSecretOnly, async (req, res) => {
 });
 
 // POST /api/comptabilite/admin/reversements/:commandeId/payer — Déclencher le Payout Wave vers le marchand
-router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req, res) => {
+router.post('/admin/reversements/:commandeId/payer', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { rows: [commande] } = await pool.query(`
       SELECT c.id, c.reference, c.montant_total, c.montant_commission, c.methode_paiement, c.statut,
@@ -2199,6 +2201,10 @@ router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req
     `, [req.params.commandeId]);
 
     if (!commande) return res.status(404).json({ error: 'Commande introuvable' });
+
+    if (commande.statut === 'reverse') {
+      return res.status(400).json({ error: 'Cette commande a déjà fait l\'objet d\'un reversement.' });
+    }
 
     const mobile = commande.boutique_whatsapp || commande.boutique_telephone;
     if (!mobile) return res.status(400).json({ error: 'Numéro de téléphone du marchand introuvable' });
@@ -2213,6 +2219,36 @@ router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req
       client_reference: `payout_${commande.reference}`,
     });
 
+    // P0 FIX: Persister immédiatement le statut 'reverse' pour empêcher tout double décaissement
+    await pool.query(
+      `UPDATE commandes_boutique 
+       SET statut = 'reverse', 
+           payout_ref = $1, 
+           payout_date = NOW(), 
+           updated_at = NOW() 
+       WHERE id = $2 AND statut != 'reverse'`,
+      [payoutResult.id || `payout_${commande.reference}`, req.params.commandeId]
+    );
+
+    // Audit log obligatoire
+    await enregistrerAdminLog({
+      adminId: req.adminUser?.id,
+      adminEmail: req.adminUser?.email || 'admin@nopalou.sn',
+      adminNom: req.adminUser?.nom || 'Admin',
+      action: 'reversement_wave_effectue',
+      cibleType: 'commande',
+      cibleId: req.params.commandeId,
+      details: {
+        reference: commande.reference,
+        boutique_nom: commande.boutique_nom,
+        mobile,
+        net_amount: netAmount,
+        frais_wave: fraisWaveTotaux,
+        payout_id: payoutResult.id,
+      },
+      ip: req.ip || req.headers['x-forwarded-for'],
+    });
+
     res.json({ success: true, payout: payoutResult, net_amount: netAmount, frais_wave: fraisWaveTotaux, mobile });
   } catch (err) {
     console.error('[ADMIN PAYOUT ERR]', err);
@@ -2221,7 +2257,7 @@ router.post('/admin/reversements/:commandeId/payer', adminSecretOnly, async (req
 });
 
 // POST /api/comptabilite/admin/reversements/valider-lot — Marquer un lot de commandes comme reversées
-router.post('/admin/reversements/valider-lot', adminSecretOnly, async (req, res) => {
+router.post('/admin/reversements/valider-lot', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -2230,11 +2266,28 @@ router.post('/admin/reversements/valider-lot', adminSecretOnly, async (req, res)
 
     const r = await pool.query(
       `UPDATE commandes_boutique 
-       SET statut = 'reverse', updated_at = NOW() 
-       WHERE id = ANY($1::text[]) OR reference = ANY($1::text[]) 
+       SET statut = 'reverse', 
+           payout_date = NOW(),
+           updated_at = NOW() 
+       WHERE (id = ANY($1::text[]) OR reference = ANY($1::text[])) AND statut != 'reverse'
        RETURNING id, reference`,
       [ids]
     );
+
+    // Audit log
+    await enregistrerAdminLog({
+      adminId: req.adminUser?.id,
+      adminEmail: req.adminUser?.email || 'admin@nopalou.sn',
+      adminNom: req.adminUser?.nom || 'Admin',
+      action: 'reversements_lot_valides',
+      cibleType: 'commandes',
+      cibleId: 'lot',
+      details: {
+        count: r.rowCount,
+        ids: r.rows.map(row => row.id),
+      },
+      ip: req.ip || req.headers['x-forwarded-for'],
+    });
 
     res.json({ success: true, count: r.rowCount, ids: r.rows.map(row => row.id) });
   } catch (err) {

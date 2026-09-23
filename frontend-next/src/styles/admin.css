@@ -953,8 +953,10 @@
 }
 
 /* ── Admin Control Center Upgrades ─────────────────────────────── */
-.admin-layout {
-  grid-template-columns: 260px 1fr !important;
+@media (min-width: 901px) {
+  .admin-layout {
+    grid-template-columns: 260px 1fr !important;
+  }
 }
 
 .admin-breadcrumbs {

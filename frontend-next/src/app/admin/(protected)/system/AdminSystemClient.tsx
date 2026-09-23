@@ -5,6 +5,8 @@ import {
   Activity, Server, Database, ShieldAlert, AlertTriangle, Download, RefreshCw,
   CheckCircle2, XCircle, HardDrive, Cpu, Radio, FileSpreadsheet, Megaphone, Lock
 } from 'lucide-react'
+import { adminHeaders } from '@/app/actions/admin/admin-common'
+import SystemIncidentsCard from './components/SystemIncidentsCard'
 
 interface SystemData {
   status: string
@@ -88,7 +90,7 @@ export default function AdminSystemClient({
     if (!silent) setLoading(true)
     try {
       const res = await fetch('/api/admin/system/health', {
-        headers: { 'X-Admin-Secret': secret },
+        headers: adminHeaders(secret),
         cache: 'no-store',
       })
       if (res.ok) {
@@ -120,10 +122,7 @@ export default function AdminSystemClient({
     try {
       const res = await fetch('/api/admin/system/maintenance', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Secret': secret,
-        },
+        headers: adminHeaders(secret),
         body: JSON.stringify({ active: maintActive, message: maintMsg }),
       })
       if (res.ok) {
@@ -144,10 +143,7 @@ export default function AdminSystemClient({
     try {
       const res = await fetch('/api/admin/system/banner', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Secret': secret,
-        },
+        headers: adminHeaders(secret),
         body: JSON.stringify({ active: bannerActive, text: bannerText, level: bannerLevel }),
       })
       if (res.ok) {
@@ -207,8 +203,9 @@ export default function AdminSystemClient({
       {/* En-tête Page */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
         <div>
-          <h1 className="admin-page-titre" style={{ margin: 0 }}>
-            🏥 Santé Système & Outils Avancés
+          <h1 className="admin-page-titre" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Activity size={22} color="#0284c7" />
+            Santé Système & Outils Avancés
           </h1>
           <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
             Supervision technique, latence base de données, mode maintenance, bannières d'annonces et exports de données.
@@ -428,6 +425,9 @@ export default function AdminSystemClient({
         </div>
       </div>
 
+      {/* BLOC JOURNAL DES INCIDENTS & ALERTES */}
+      <SystemIncidentsCard secret={secret} />
+
       {/* BLOCS MAINTENANCE & BANNIÈRE SYSTÈME */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
         {/* Mode Maintenance */}
@@ -449,7 +449,7 @@ export default function AdminSystemClient({
                 style={{ width: 18, height: 18, cursor: 'pointer' }}
               />
               <label htmlFor="maintCheck" style={{ fontSize: 14, fontWeight: 700, color: maintActive ? '#dc2626' : '#334155', cursor: 'pointer' }}>
-                {maintActive ? 'Mode Maintenance ACTIF' : '⚪ Mode Maintenance DÉSACTIVÉ'}
+                {maintActive ? 'Mode Maintenance ACTIF' : 'Mode Maintenance DÉSACTIVÉ'}
               </label>
             </div>
 
@@ -503,7 +503,7 @@ export default function AdminSystemClient({
                 style={{ width: 18, height: 18, cursor: 'pointer' }}
               />
               <label htmlFor="bannerCheck" style={{ fontSize: 14, fontWeight: 700, color: bannerActive ? '#0284c7' : '#334155', cursor: 'pointer' }}>
-                {bannerActive ? '🔵 Bannière Active & Visible' : '⚪ Bannière Masquée'}
+                {bannerActive ? 'Bannière Active & Visible' : 'Bannière Masquée'}
               </label>
             </div>
 
@@ -529,10 +529,10 @@ export default function AdminSystemClient({
                 onChange={e => setBannerLevel(e.target.value)}
                 style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 13 }}
               >
-                <option value="info">ℹ️ Information (Bleu)</option>
+                <option value="info">Information (Bleu)</option>
                 <option value="success">Succès / Promotion (Vert)</option>
                 <option value="warning">Avertissement (Orange)</option>
-                <option value="critical">🚨 Urgent / Alerte (Rouge)</option>
+                <option value="critical">Urgent / Alerte (Rouge)</option>
               </select>
             </div>
 

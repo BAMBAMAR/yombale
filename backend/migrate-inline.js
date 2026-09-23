@@ -2508,8 +2508,62 @@ module.exports = async function migrateInline() {
       );
       CREATE INDEX IF NOT EXISTS idx_utilisateurs_favoris_user ON utilisateurs_favoris(utilisateur_id);
       CREATE INDEX IF NOT EXISTS idx_utilisateurs_favoris_lookup ON utilisateurs_favoris(utilisateur_id, type_entite, entite_id);
+
+      -- Table des exécutions des tâches planifiées (Crons)
+      CREATE TABLE IF NOT EXISTS cron_executions (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        nom_cron VARCHAR(100) NOT NULL,
+        started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        ended_at TIMESTAMPTZ,
+        statut VARCHAR(50) NOT NULL DEFAULT 'en_cours',
+        stats JSONB DEFAULT '{}'::jsonb,
+        erreur TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_cron_executions_nom_date ON cron_executions(nom_cron, started_at DESC);
+
+      -- Colonnes Payout Wave sur commandes_boutique
+      ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS payout_ref VARCHAR(100);
+      ALTER TABLE commandes_boutique ADD COLUMN IF NOT EXISTS payout_date TIMESTAMPTZ;
+
+      -- Système de Helpdesk, Support Client & Litiges
+      CREATE TABLE IF NOT EXISTS support_tickets (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        numero_ticket VARCHAR(50) UNIQUE NOT NULL,
+        utilisateur_id UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        commande_id UUID REFERENCES commandes_boutique(id) ON DELETE SET NULL,
+        boutique_id UUID REFERENCES boutiques(id) ON DELETE SET NULL,
+        sujet VARCHAR(255) NOT NULL,
+        categorie VARCHAR(50) NOT NULL DEFAULT 'autre',
+        priorite VARCHAR(20) NOT NULL DEFAULT 'normale',
+        statut VARCHAR(30) NOT NULL DEFAULT 'ouvert',
+        assigne_a UUID REFERENCES admin_utilisateurs(id) ON DELETE SET NULL,
+        messages JSONB DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_support_tickets_statut ON support_tickets(statut);
+      CREATE INDEX IF NOT EXISTS idx_support_tickets_user ON support_tickets(utilisateur_id);
+
+      -- Système de modération et signalements d'abus
+      CREATE TABLE IF NOT EXISTS signalements (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        type_cible VARCHAR(50) NOT NULL,
+        cible_id VARCHAR(100) NOT NULL,
+        signale_par UUID REFERENCES utilisateurs(id) ON DELETE SET NULL,
+        auteur_telephone VARCHAR(30),
+        motif VARCHAR(100) NOT NULL,
+        description TEXT,
+        statut VARCHAR(30) NOT NULL DEFAULT 'en_attente',
+        decision TEXT,
+        traite_par UUID REFERENCES admin_utilisateurs(id) ON DELETE SET NULL,
+        traite_le TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_signalements_statut ON signalements(statut);
+      CREATE INDEX IF NOT EXISTS idx_signalements_cible ON signalements(type_cible, cible_id);
     `);
-    console.log('[MIGRATE] ✅ Écosystème Conversationnel & Favoris multi-appareils créés');
+    console.log('[MIGRATE] ✅ Écosystème Conversationnel, Crons, Support & Signalements créés');
   } catch (err) {
     console.warn('[MIGRATE] Écosystème Conversationnel échec:', err.message);
   }

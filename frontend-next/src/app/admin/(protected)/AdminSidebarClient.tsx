@@ -46,6 +46,9 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  HelpCircle,
+  MessageSquare,
+  AlertTriangle,
 } from 'lucide-react'
 import type { AdminUserSession } from '@/app/actions/admin'
 
@@ -77,9 +80,10 @@ const DOMAINS: DomainSection[] = [
   },
   {
     id: 'identites',
-    title: 'Identités & Équipe',
+    title: 'Identités & Support',
     items: [
       { href: '/admin/comptes', label: 'Comptes Utilisateurs', icon: <Users size={15} /> },
+      { href: '/admin/support', label: 'Support Client & Litiges', icon: <HelpCircle size={15} />, highlight: '#06b6d4' },
       { href: '/admin/equipe-admin', label: 'Équipe & Droits RBAC', icon: <ShieldAlert size={15} />, highlight: '#f59e0b' },
       { href: '/admin/compte', label: 'Mon Compte', icon: <User size={15} /> },
     ],
@@ -90,6 +94,7 @@ const DOMAINS: DomainSection[] = [
     items: [
       { href: '/admin/boutiques', label: 'Réseau Boutiques', icon: <Store size={15} /> },
       { href: '/admin/produits', label: 'Modération Produits & Stock', icon: <Package size={15} />, highlight: '#0284c7' },
+      { href: '/admin/avis', label: 'Modération Avis Boutiques', icon: <MessageSquare size={15} />, highlight: '#8b5cf6' },
       { href: '/admin/commandes', label: 'Commandes Web', icon: <ShoppingBag size={15} /> },
       { href: '/admin/pos', label: 'Réseau POS & Caisses', icon: <Monitor size={15} />, highlight: '#10b981' },
       { href: '/admin/carnet-dettes', label: 'Carnet de Dettes & Crédits', icon: <CreditCard size={15} />, highlight: '#f97316' },
@@ -133,12 +138,14 @@ const DOMAINS: DomainSection[] = [
   },
   {
     id: 'contenu',
-    title: 'Contenu & Communication',
+    title: 'Contenu & Modération',
     items: [
       { href: '/admin/categories', label: 'Arborescence Catégories', icon: <Layers size={15} /> },
       { href: '/admin/annonces', label: 'Annonces Classifiées', icon: <FileText size={15} /> },
+      { href: '/admin/signalements', label: 'Signalements d\'Abus', icon: <AlertTriangle size={15} />, highlight: '#ef4444' },
       { href: '/admin/whatsapp', label: 'WhatsApp Bot & Automation', icon: <MessageCircle size={15} /> },
-      { href: '/admin/publications', label: 'Publications Réseaux', icon: <Share2 size={15} /> },
+      { href: '/admin/publications', label: 'Réseaux Sociaux & Posts Meta', icon: <Share2 size={15} />, highlight: '#0284c7' },
+      { href: '/admin/integrations', label: 'Connecteurs & Pixels Sociaux', icon: <Radio size={15} />, highlight: '#ec4899' },
       { href: '/admin/communication', label: 'Kit Communication', icon: <Palette size={15} /> },
       { href: '/admin/seo', label: 'SEO & Référencement', icon: <Search size={15} /> },
       { href: '/admin/telecom', label: 'Forfaits Télécom', icon: <Smartphone size={15} /> },
@@ -151,7 +158,6 @@ const DOMAINS: DomainSection[] = [
       { href: '/admin/audit-logs', label: 'Audit Logs & Traçabilité', icon: <ShieldCheck size={15} />, highlight: '#10b981' },
       { href: '/admin/feature-flags', label: 'Feature Flags No-Code', icon: <Flag size={15} /> },
       { href: '/admin/qualite', label: 'Qualité Données', icon: <Activity size={15} /> },
-      { href: '/admin/integrations', label: 'Intégrations & Webhooks', icon: <Code size={15} /> },
       { href: '/admin/developer', label: 'Portail Développeur API', icon: <Server size={15} /> },
     ],
   },
@@ -160,6 +166,85 @@ const DOMAINS: DomainSection[] = [
 export default function AdminSidebarClient({ logoutAction, adminUser }: AdminSidebarProps) {
   const pathname = usePathname() || ''
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const userRole = adminUser?.role || 'super_admin'
+
+  const filteredDomains = DOMAINS.map(domain => {
+    if (userRole === 'super_admin') return domain
+
+    if (userRole === 'finance') {
+      if (domain.id === 'direction' || domain.id === 'finances') return domain
+      if (domain.id === 'identites') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => it.href === '/admin/compte'),
+        }
+      }
+      return null
+    }
+
+    if (userRole === 'moderateur') {
+      if (['immo', 'contenu'].includes(domain.id)) return domain
+      if (domain.id === 'commerce') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => it.href === '/admin/produits' || it.href === '/admin/avis'),
+        }
+      }
+      if (domain.id === 'identites') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => it.href === '/admin/compte'),
+        }
+      }
+      return null
+    }
+
+    if (userRole === 'support_client') {
+      if (domain.id === 'direction') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => it.href === '/admin'),
+        }
+      }
+      if (domain.id === 'identites') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => ['/admin/comptes', '/admin/support', '/admin/compte'].includes(it.href)),
+        }
+      }
+      if (domain.id === 'commerce') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => it.href === '/admin/commandes'),
+        }
+      }
+      if (domain.id === 'contenu') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => ['/admin/whatsapp', '/admin/signalements'].includes(it.href)),
+        }
+      }
+      return null
+    }
+
+    if (userRole === 'admin_operationnel') {
+      if (domain.id === 'identites') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => it.href !== '/admin/equipe-admin'),
+        }
+      }
+      if (domain.id === 'systeme') {
+        return {
+          ...domain,
+          items: domain.items.filter(it => it.href === '/admin/qualite'),
+        }
+      }
+      return domain
+    }
+
+    return domain
+  }).filter(Boolean) as DomainSection[]
 
   // Accordeons ouverts par défaut si un lien est actif dedans
   const [openDomains, setOpenDomains] = useState<Record<string, boolean>>(() => {
@@ -218,7 +303,7 @@ export default function AdminSidebarClient({ logoutAction, adminUser }: AdminSid
 
       <div className={`admin-sidebar-body ${mobileMenuOpen ? 'admin-sidebar-body--open' : ''}`}>
         <nav className="admin-nav">
-          {DOMAINS.map((domain) => {
+          {filteredDomains.map((domain) => {
             const isOpen = openDomains[domain.id]
             const isDomainActive = domain.items.some(
               (it) => it.href === pathname || (it.href !== '/admin' && pathname.startsWith(it.href))

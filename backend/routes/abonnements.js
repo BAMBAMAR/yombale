@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
+const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const { limiterEcriture, limiterGeneral } = require('../middlewares/rateLimit');
 const cfg = require('../lib/settingsCache');
 const wave = require('../services/wave');
@@ -112,7 +114,7 @@ router.get('/admin', adminSecretOnly, async (req, res) => {
 });
 
 // GET /api/abonnements/admin/stats — stats abonnements (admin)
-router.get('/admin/stats', adminSecretOnly, async (req, res) => {
+router.get('/admin/stats', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
@@ -137,14 +139,14 @@ router.get('/admin/stats', adminSecretOnly, async (req, res) => {
 });
 
 // POST /api/abonnements/admin/activer — activer un plan directement (test/admin)
-router.post('/admin/activer', adminSecretOnly, async (req, res) => {
+router.post('/admin/activer', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { email, plan, jours = 30 } = req.body;
     const PLANS = await getPlans();
     if (!PLANS[plan]) return res.status(400).json({ error: 'Plan invalide (pro ou business)' });
     if (!email) return res.status(400).json({ error: 'Email requis' });
 
-    const user = await pool.query('SELECT id FROM utilisateurs WHERE email=$1', [email]);
+    const user = await pool.query('SELECT id, nom, email FROM utilisateurs WHERE email=$1', [email]);
     if (!user.rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
 
     const userId = user.rows[0].id;
@@ -161,6 +163,15 @@ router.post('/admin/activer', adminSecretOnly, async (req, res) => {
        VALUES ($1,$2,'actif',$3,$4,$5,FALSE) RETURNING id, plan, fin`,
       [userId, plan, PLANS[plan].prix, fin, `admin_test_${userId}_${Date.now()}`]
     );
+
+    await enregistrerAdminLog({
+      action: 'abonnement_active_manuellement',
+      cibleType: 'abonnement',
+      cibleId: rows[0].id,
+      description: `Attribution manuelle du forfait ${plan} pour ${user.rows[0].email} (${jours} jours)`,
+      req,
+    });
+
     res.json({ success: true, abonnement: rows[0] });
   } catch (err) {
     console.error('[ABONNEMENTS ADMIN ACTIVER]', err.message);
@@ -169,19 +180,28 @@ router.post('/admin/activer', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/abonnements/admin/:id/annuler — annuler un abonnement (admin)
-router.put('/admin/:id/annuler', adminSecretOnly, async (req, res) => {
+router.put('/admin/:id/annuler', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `UPDATE abonnements SET statut='annule' WHERE id=$1 RETURNING id, plan, statut`,
+      `UPDATE abonnements SET statut='annule' WHERE id=$1 RETURNING id, plan, statut, utilisateur_id`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Abonnement introuvable' });
+
+    await enregistrerAdminLog({
+      action: 'abonnement_annule',
+      cibleType: 'abonnement',
+      cibleId: req.params.id,
+      description: `Annulation administrative du forfait ${rows[0].plan}`,
+      req,
+    });
+
     res.json({ abonnement: rows[0] });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // PUT /api/abonnements/admin/:id/prolonger — prolonger un abonnement (admin)
-router.put('/admin/:id/prolonger', adminSecretOnly, async (req, res) => {
+router.put('/admin/:id/prolonger', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const jours = Math.max(1, Math.min(365, parseInt(req.body.jours) || 30));
     const { rows } = await pool.query(
@@ -193,6 +213,15 @@ router.put('/admin/:id/prolonger', adminSecretOnly, async (req, res) => {
       [req.params.id, jours]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Abonnement introuvable' });
+
+    await enregistrerAdminLog({
+      action: 'abonnement_prolonge',
+      cibleType: 'abonnement',
+      cibleId: req.params.id,
+      description: `Prolongation administrative du forfait ${rows[0].plan} de ${jours} jours (Nouvelle fin: ${rows[0].fin})`,
+      req,
+    });
+
     res.json({ abonnement: rows[0] });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

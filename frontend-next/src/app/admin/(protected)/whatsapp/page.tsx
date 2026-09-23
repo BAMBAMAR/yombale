@@ -1,12 +1,11 @@
 import { cookies } from 'next/headers'
 import WhatsAppClient from './WhatsAppClient'
-
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+import { BACKEND, adminHeaders } from '@/app/actions/admin'
 
 export default async function AdminWhatsAppPage() {
-  const jar    = await cookies()
-  const secret = jar.get('nopalou_admin')?.value ?? ''
-  if (!secret) return null
+  const jar   = await cookies()
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  if (!token) return null
 
   let status: Record<string, any> = {
     config: { phone_number_id: null, token_present: false, app_secret: false, verify_token: false, catalog_id: null, webhook_url: '' },
@@ -19,10 +18,11 @@ export default async function AdminWhatsAppPage() {
   let supportDemandes: any[] = []
 
   try {
+    const headers = adminHeaders(token)
     const [r1, r2, r3] = await Promise.all([
-      fetch(`${BACKEND}/api/whatsapp/admin/status`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
-      fetch(`${BACKEND}/api/whatsapp/admin/sessions`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
-      fetch(`${BACKEND}/api/whatsapp/admin/support`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/whatsapp/admin/status`, { headers, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/whatsapp/admin/sessions`, { headers, cache: 'no-store' }),
+      fetch(`${BACKEND}/api/whatsapp/admin/support`, { headers, cache: 'no-store' }),
     ])
     if (r1.ok) status = await r1.json()
     if (r2.ok) sessions = await r2.json()

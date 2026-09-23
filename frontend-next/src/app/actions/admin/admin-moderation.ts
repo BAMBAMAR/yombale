@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { BACKEND, COOKIE, adminHeaders } from './admin-common'
+import { BACKEND, COOKIE, extractAdminToken, adminHeaders } from './admin-common'
 
 // ── Modérer annonce classifiée ──────────────────────────────────────
 export async function modererAnnonce(
@@ -10,7 +10,7 @@ export async function modererAnnonce(
   action: 'approuver' | 'rejeter'
 ): Promise<{ error?: string }> {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value
+  const secret = extractAdminToken(jar)
   if (!secret) return { error: 'Non authentifié' }
 
   const body = action === 'approuver'
@@ -36,7 +36,7 @@ export async function boosterAnnonce(
   jours = 7
 ): Promise<{ error?: string; boost_until?: string }> {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value
+  const secret = extractAdminToken(jar)
   if (!secret) return { error: 'Non authentifié' }
 
   const r = await fetch(`${BACKEND}/api/annonces/admin/${id}/boost`, {
@@ -56,7 +56,7 @@ export async function boosterAnnonce(
 // ── Supprimer annonce classifiée ───────────────────────────────────
 export async function supprimerAnnonce(id: string): Promise<{ error?: string }> {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value
+  const secret = extractAdminToken(jar)
   if (!secret) return { error: 'Non authentifié' }
 
   const r = await fetch(`${BACKEND}/api/annonces/admin/${id}`, {
@@ -102,7 +102,7 @@ export async function modererPartenaire(
   statut: 'approuve' | 'rejete'
 ): Promise<{ error?: string }> {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value
+  const secret = extractAdminToken(jar)
   if (!secret) return { error: 'Non authentifié' }
 
   const r = await fetch(`${BACKEND}/api/partenaires/${id}`, {
@@ -119,7 +119,7 @@ export async function modererPartenaire(
 // ── Supprimer Partenaire ────────────────────────────────────────────
 export async function supprimerPartenaire(id: string): Promise<{ error?: string }> {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value
+  const secret = extractAdminToken(jar)
   if (!secret) return { error: 'Non authentifié' }
 
   const r = await fetch(`${BACKEND}/api/partenaires/${id}`, {
@@ -159,7 +159,7 @@ export async function batchModererComptes(
   action: 'suspendre' | 'reactiver' | 'supprimer'
 ): Promise<{ successCount: number; errors: number }> {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value
+  const secret = extractAdminToken(jar)
   if (!secret) return { successCount: 0, errors: ids.length }
 
   let successCount = 0
@@ -192,3 +192,49 @@ export async function batchModererComptes(
   revalidatePath('/admin/comptes')
   return { successCount, errors }
 }
+
+// ── Modérer / Supprimer un avis boutique ─────────────────────────────
+export async function supprimerAvisBoutique(id: string): Promise<{ success?: boolean; error?: string }> {
+  const jar = await cookies()
+  const token = extractAdminToken(jar)
+  if (!token) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/admin/avis/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(token),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}))
+    return { error: err.error || 'Erreur lors de la suppression de l\'avis' }
+  }
+  revalidatePath('/admin/avis')
+  return { success: true }
+}
+
+// ── Traiter un signalement d'abus ──────────────────────────────────
+export async function traiterSignalement(
+  id: string,
+  statut: 'traite' | 'rejete',
+  decision?: string
+): Promise<{ success?: boolean; error?: string }> {
+  const jar = await cookies()
+  const token = extractAdminToken(jar)
+  if (!token) return { error: 'Non authentifié' }
+
+  const r = await fetch(`${BACKEND}/api/admin/signalements/${id}/traiter`, {
+    method: 'PUT',
+    headers: adminHeaders(token),
+    body: JSON.stringify({ statut, decision }),
+    cache: 'no-store',
+  })
+
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}))
+    return { error: err.error || 'Erreur lors du traitement du signalement' }
+  }
+  revalidatePath('/admin/signalements')
+  return { success: true }
+}
+

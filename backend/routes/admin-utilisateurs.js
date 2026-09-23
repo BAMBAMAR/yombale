@@ -1,14 +1,14 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const { pool } = require('../models/db');
-const { adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { envoyerEmail } = require('../services/email');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:8080';
 
 // GET /api/admin/utilisateurs — liste paginée, recherche, filtres
-router.get('/', adminSecretOnly, async (req, res) => {
+router.get('/', requireAdminAuth, async (req, res) => {
   try {
     const { q, statut, type, tri = 'recent', page = 1 } = req.query;
     const limit = 30;
@@ -23,12 +23,13 @@ router.get('/', adminSecretOnly, async (req, res) => {
       values.push(`%${q}%`);
       i++;
     }
-    if (statut === 'verifie')   conditions.push('email_verifie = TRUE');
+    if (statut === 'verifie')     conditions.push('email_verifie = TRUE');
     if (statut === 'non_verifie') conditions.push('email_verifie = FALSE');
-    if (statut === 'suspendu') conditions.push('suspendu = TRUE');
-    if (statut === 'en_grace') conditions.push('supprime_le IS NOT NULL');
-    if (type === 'apporteur')  conditions.push('est_apporteur = TRUE');
-    if (type === 'boutique')   conditions.push('EXISTS (SELECT 1 FROM boutiques b WHERE b.utilisateur_id = utilisateurs.id)');
+    if (statut === 'suspendu')    conditions.push('suspendu = TRUE');
+    if (statut === 'en_grace')    conditions.push('supprime_le IS NOT NULL');
+    if (type === 'apporteur')     conditions.push('est_apporteur = TRUE');
+    if (type === 'boutique')      conditions.push('EXISTS (SELECT 1 FROM boutiques b WHERE b.utilisateur_id = utilisateurs.id)');
+    if (type === 'agence')        conditions.push('EXISTS (SELECT 1 FROM agences_immo a WHERE a.utilisateur_id = utilisateurs.id)');
 
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const orderClause = tri === 'ancien' ? 'ORDER BY created_at ASC' : 'ORDER BY created_at DESC';
@@ -40,7 +41,9 @@ router.get('/', adminSecretOnly, async (req, res) => {
     const total = parseInt(countRes.rows[0].count);
 
     const listRes = await pool.query(
-      `SELECT id, nom, email, telephone, email_verifie, suspendu, supprime_le, created_at
+      `SELECT id, nom, email, telephone, email_verifie, suspendu, supprime_le, created_at,
+              EXISTS (SELECT 1 FROM boutiques b WHERE b.utilisateur_id = utilisateurs.id) AS a_boutique,
+              EXISTS (SELECT 1 FROM agences_immo a WHERE a.utilisateur_id = utilisateurs.id) AS a_agence
        FROM utilisateurs ${whereClause} ${orderClause}
        LIMIT $${i} OFFSET $${i + 1}`,
       [...values, limit, offset]
@@ -51,7 +54,7 @@ router.get('/', adminSecretOnly, async (req, res) => {
 });
 
 // GET /api/admin/utilisateurs/:id — fiche détail
-router.get('/:id', adminSecretOnly, async (req, res) => {
+router.get('/:id', requireAdminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const userRes = await pool.query(
@@ -65,14 +68,21 @@ router.get('/:id', adminSecretOnly, async (req, res) => {
       `SELECT
         (SELECT COUNT(*) FROM annonces_classifiees WHERE utilisateur_id=$1 AND supprimee=FALSE) AS nb_annonces,
         (SELECT COUNT(*) FROM annonces_immo        WHERE utilisateur_id=$1 AND supprimee=FALSE) AS nb_immo,
-        EXISTS(SELECT 1 FROM boutiques WHERE utilisateur_id=$1) AS a_boutique`,
+        EXISTS(SELECT 1 FROM boutiques WHERE utilisateur_id=$1) AS a_boutique,
+        EXISTS(SELECT 1 FROM agences_immo WHERE utilisateur_id=$1) AS a_agence`,
       [id]
     );
 
-    const abonnementRes = await pool.query(
-      `SELECT plan, fin FROM abonnements WHERE utilisateur_id=$1 AND statut='actif' AND fin > NOW() ORDER BY fin DESC LIMIT 1`,
-      [id]
-    );
+    const [abonnementRes, agenceRes] = await Promise.all([
+      pool.query(
+        `SELECT plan, fin FROM abonnements WHERE utilisateur_id=$1 AND statut='actif' AND fin > NOW() ORDER BY fin DESC LIMIT 1`,
+        [id]
+      ),
+      pool.query(
+        `SELECT id, nom, slug, statut, abonnement_plan FROM agences_immo WHERE utilisateur_id=$1 LIMIT 1`,
+        [id]
+      ).catch(() => ({ rows: [] })),
+    ]);
 
     res.json({
       utilisateur: userRes.rows[0],
@@ -80,6 +90,8 @@ router.get('/:id', adminSecretOnly, async (req, res) => {
         nb_annonces: parseInt(activiteRes.rows[0].nb_annonces),
         nb_immo: parseInt(activiteRes.rows[0].nb_immo),
         a_boutique: activiteRes.rows[0].a_boutique,
+        a_agence: activiteRes.rows[0].a_agence,
+        agence: agenceRes.rows[0] || null,
         est_apporteur: userRes.rows[0].est_apporteur,
       },
       abonnement: abonnementRes.rows[0] || null,
@@ -88,19 +100,28 @@ router.get('/:id', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/admin/utilisateurs/:id/verifier-email — force email_verifie=true
-router.put('/:id/verifier-email', adminSecretOnly, async (req, res) => {
+router.put('/:id/verifier-email', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'UPDATE utilisateurs SET email_verifie=true WHERE id=$1 RETURNING id',
+      'UPDATE utilisateurs SET email_verifie=true WHERE id=$1 RETURNING id, nom, email',
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    await enregistrerAdminLog({
+      action: 'utilisateur_email_verifie',
+      cibleType: 'utilisateur',
+      cibleId: req.params.id,
+      description: `Vérification manuelle de l'email pour ${rows[0].email}`,
+      req,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // POST /api/admin/utilisateurs/:id/renvoyer-verification
-router.post('/:id/renvoyer-verification', adminSecretOnly, async (req, res) => {
+router.post('/:id/renvoyer-verification', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT nom, email, email_verifie FROM utilisateurs WHERE id=$1', [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
@@ -114,13 +135,21 @@ router.post('/:id/renvoyer-verification', adminSecretOnly, async (req, res) => {
       html: `<p>Bonjour ${rows[0].nom},</p>
              <p><a href="${lien}">Cliquez ici pour vérifier votre adresse email</a> (lien valide 24h).</p>`,
     });
+
+    await enregistrerAdminLog({
+      action: 'utilisateur_renvoi_verification',
+      cibleType: 'utilisateur',
+      cibleId: req.params.id,
+      description: `Renvoi de l'email de vérification à ${rows[0].email}`,
+      req,
+    });
+
     res.json({ success: true, message: 'Email de vérification renvoyé.' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // POST /api/admin/utilisateurs/:id/lien-reset — génère un lien de réinitialisation (AUDIT+EMAIL)
-// SÉCURITÉ P1 : Token limité à 15 minutes, trace obligatoire dans admin_logs, email d'alerte à l'utilisateur
-router.post('/:id/lien-reset', adminSecretOnly, async (req, res) => {
+router.post('/:id/lien-reset', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       'SELECT id, nom, email FROM utilisateurs WHERE id=$1',
@@ -130,7 +159,6 @@ router.post('/:id/lien-reset', adminSecretOnly, async (req, res) => {
 
     const user = rows[0];
 
-    // SÉCURITÉ P1 : Durée maximale de 15 minutes (au lieu de 1 heure précédemment)
     const resetToken = jwt.sign(
       { userId: user.id, type: 'reset' },
       process.env.JWT_SECRET,
@@ -138,20 +166,17 @@ router.post('/:id/lien-reset', adminSecretOnly, async (req, res) => {
     );
     const lien = `${FRONTEND_URL}/mot-de-passe-oublie?token=${resetToken}`;
 
-    // Traçabilité obligatoire : qui a généré le lien, sur quel compte, quand
-    const adminId = req.adminUser?.id || 'break-glass';
-    const adminNom = req.adminUser?.nom || 'Super Admin';
+    const adminNom = req.adminUser?.nom || 'Admin';
     await enregistrerAdminLog({
       adminNom,
       adminRole: req.adminUser?.role || 'super_admin',
       action: 'admin_lien_reset',
       cibleType: 'utilisateur',
       cibleId: user.id,
-      description: `Lien de réinitialisation de mot de passe généré pour ${user.email} par admin ${adminNom} (ID: ${adminId}). Expire dans 15 minutes.`,
+      description: `Lien de réinitialisation de mot de passe généré pour ${user.email} par admin ${adminNom}. Expire dans 15 minutes.`,
       req,
     }).catch(() => {});
 
-    // Email d'alerte de sécurité : prévenir l'utilisateur qu'un admin a demandé la réinitialisation
     if (user.email) {
       envoyerEmail({
         to: user.email,
@@ -168,57 +193,93 @@ router.post('/:id/lien-reset', adminSecretOnly, async (req, res) => {
 });
 
 // PUT /api/admin/utilisateurs/:id/suspendre
-router.put('/:id/suspendre', adminSecretOnly, async (req, res) => {
+router.put('/:id/suspendre', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'UPDATE utilisateurs SET suspendu=true WHERE id=$1 RETURNING id',
+      'UPDATE utilisateurs SET suspendu=true WHERE id=$1 RETURNING id, nom, email',
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    await enregistrerAdminLog({
+      action: 'utilisateur_suspendu',
+      cibleType: 'utilisateur',
+      cibleId: req.params.id,
+      description: `Suspension du compte ${rows[0].email} (${rows[0].nom})`,
+      req,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // PUT /api/admin/utilisateurs/:id/reactiver
-router.put('/:id/reactiver', adminSecretOnly, async (req, res) => {
+router.put('/:id/reactiver', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      'UPDATE utilisateurs SET suspendu=false WHERE id=$1 RETURNING id',
+      'UPDATE utilisateurs SET suspendu=false WHERE id=$1 RETURNING id, nom, email',
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    await enregistrerAdminLog({
+      action: 'utilisateur_reactive',
+      cibleType: 'utilisateur',
+      cibleId: req.params.id,
+      description: `Réactivation du compte ${rows[0].email} (${rows[0].nom})`,
+      req,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // POST /api/admin/utilisateurs/:id/marquer-supprime — démarre la période de grâce (30j)
-router.post('/:id/marquer-supprime', adminSecretOnly, async (req, res) => {
+router.post('/:id/marquer-supprime', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `UPDATE utilisateurs SET supprime_le=NOW() WHERE id=$1 AND anonymise_le IS NULL RETURNING id, supprime_le`,
+      `UPDATE utilisateurs SET supprime_le=NOW() WHERE id=$1 AND anonymise_le IS NULL RETURNING id, nom, email, supprime_le`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà purgé' });
+
+    await enregistrerAdminLog({
+      action: 'utilisateur_marque_supprime',
+      cibleType: 'utilisateur',
+      cibleId: req.params.id,
+      description: `Marquage suppression (période de grâce 30j) pour ${rows[0].email}`,
+      req,
+    });
+
     res.json({ success: true, supprime_le: rows[0].supprime_le });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // POST /api/admin/utilisateurs/:id/restaurer — annule la suppression pendant la période de grâce
-router.post('/:id/restaurer', adminSecretOnly, async (req, res) => {
+router.post('/:id/restaurer', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `UPDATE utilisateurs SET supprime_le=NULL WHERE id=$1 AND anonymise_le IS NULL RETURNING id`,
+      `UPDATE utilisateurs SET supprime_le=NULL WHERE id=$1 AND anonymise_le IS NULL RETURNING id, nom, email`,
       [req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable ou déjà purgé' });
+
+    await enregistrerAdminLog({
+      action: 'utilisateur_restaure',
+      cibleType: 'utilisateur',
+      cibleId: req.params.id,
+      description: `Restauration du compte (annulation de suppression) pour ${rows[0].email}`,
+      req,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // POST /api/admin/utilisateurs/:id/purger — anonymisation définitive après 30j révolus
-router.post('/:id/purger', adminSecretOnly, async (req, res) => {
+router.post('/:id/purger', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, supprime_le, anonymise_le FROM utilisateurs WHERE id=$1', [req.params.id]);
+    const { rows } = await pool.query('SELECT id, nom, email, supprime_le, anonymise_le FROM utilisateurs WHERE id=$1', [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
     if (!rows[0].supprime_le) return res.status(400).json({ error: 'Ce compte n\'est pas marqué pour suppression' });
     if (rows[0].anonymise_le) return res.status(400).json({ error: 'Ce compte a déjà été purgé' });
@@ -241,12 +302,21 @@ router.post('/:id/purger', adminSecretOnly, async (req, res) => {
       [id]
     );
     if (!purgeRes.rows[0]) return res.status(400).json({ error: 'Ce compte a déjà été purgé' });
+
+    await enregistrerAdminLog({
+      action: 'utilisateur_purge_definitive',
+      cibleType: 'utilisateur',
+      cibleId: id,
+      description: `Purge et anonymisation définitive du compte après 30 jours de grâce révolus`,
+      req,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // PUT /api/admin/utilisateurs/:id/quota — modifie le quota personnalisé (NULL pour hériter de la config globale)
-router.put('/:id/quota', adminSecretOnly, async (req, res) => {
+router.put('/:id/quota', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const quota = req.body.quota === '' || req.body.quota === null || req.body.quota === undefined
       ? null
@@ -261,6 +331,15 @@ router.put('/:id/quota', adminSecretOnly, async (req, res) => {
       [quota, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    await enregistrerAdminLog({
+      action: 'utilisateur_quota_modifie',
+      cibleType: 'utilisateur',
+      cibleId: req.params.id,
+      description: `Modification du quota d'annonces à ${quota === null ? 'Par défaut' : quota}`,
+      req,
+    });
+
     res.json({ success: true, quota_annonces: rows[0].quota_annonces });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

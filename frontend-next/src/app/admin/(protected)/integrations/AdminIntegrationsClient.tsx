@@ -5,8 +5,9 @@ import Link from 'next/link'
 import {
   Link2, RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck, 
   ExternalLink, Search, Power, Trash2, Globe, MessageCircle, 
-  ShoppingBag, Sparkles, Filter
+  ShoppingBag, Sparkles, Filter, Share2, Radio
 } from 'lucide-react'
+import { adminHeaders } from '@/app/actions/admin/admin-common'
 
 interface AdminIntegrationsClientProps {
   initialStats: any
@@ -33,10 +34,10 @@ export default function AdminIntegrationsClient({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const [statsRes, accountsRes] = await Promise.all([
         fetch(`${backendUrl}/api/admin/integrations/stats`, {
-          headers: { 'X-Admin-Secret': secret },
+          headers: adminHeaders(secret),
         }),
         fetch(`${backendUrl}/api/admin/integrations/accounts?limit=100`, {
-          headers: { 'X-Admin-Secret': secret },
+          headers: adminHeaders(secret),
         }),
       ])
 
@@ -58,10 +59,7 @@ export default function AdminIntegrationsClient({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const res = await fetch(`${backendUrl}/api/admin/integrations/toggle`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Secret': secret,
-        },
+        headers: adminHeaders(secret),
         body: JSON.stringify({ key, actif: !currentStatus }),
       })
 
@@ -83,7 +81,7 @@ export default function AdminIntegrationsClient({
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || ''
       const res = await fetch(`${backendUrl}/api/admin/integrations/accounts/${accountId}/disconnect`, {
         method: 'POST',
-        headers: { 'X-Admin-Secret': secret },
+        headers: adminHeaders(secret),
       })
 
       if (res.ok) {
@@ -106,6 +104,47 @@ export default function AdminIntegrationsClient({
 
   return (
     <div style={{ padding: '24px 16px', maxWidth: 1280, margin: '0 auto' }}>
+      {/* Barre d'onglets Social Media Unifiée */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20, borderBottom: '1px solid #e2e8f0', paddingBottom: 12, flexWrap: 'wrap' }}>
+        <Link
+          href="/admin/publications"
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: 'none',
+            background: '#f8fafc',
+            color: '#475569',
+            border: '1px solid #cbd5e1',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Share2 size={15} />
+          Publications & Diffusion Meta
+        </Link>
+        <Link
+          href="/admin/integrations"
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: 'none',
+            background: '#1c2b4a',
+            color: '#fff',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Radio size={15} />
+          Connecteurs Sociaux & Pixels
+        </Link>
+      </div>
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 24 }}>
         <div>

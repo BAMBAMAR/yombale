@@ -3,11 +3,18 @@
 
 const router = require('express').Router();
 const { pool } = require('../models/db');
-const { adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
+const { envoyerEmail } = require('../services/email');
+const { sendWhatsAppNotification } = require('../services/whatsapp');
+
+const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
+
+router.use(requireAdminAuth);
+router.use(requireAdminRole('super_admin', 'admin_operationnel'));
 
 // ── GET /api/admin/marchands/:id/fiche — Vue 360° du marchand
-router.get('/:id/fiche', adminSecretOnly, async (req, res) => {
+router.get('/:id/fiche', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -117,16 +124,18 @@ router.get('/:id/fiche', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/admin/marchands/:id/action-plan — Modification rapide de forfait pour un marchand
-router.post('/:id/action-plan', adminSecretOnly, async (req, res) => {
+router.post('/:id/action-plan', async (req, res) => {
   try {
     const { id } = req.params;
     const { plan, jours = 30, note } = req.body;
     if (!plan) return res.status(400).json({ error: 'Plan requis' });
 
-    const user = await pool.query('SELECT nom, email FROM utilisateurs WHERE id = $1', [id]);
+    const user = await pool.query('SELECT nom, email, telephone FROM utilisateurs WHERE id = $1', [id]);
     if (!user.rows[0]) return res.status(404).json({ error: 'Marchand introuvable' });
 
-    const fin = new Date(Date.now() + Number(jours) * 24 * 60 * 60 * 1000).toISOString();
+    const finDate = new Date(Date.now() + Number(jours) * 24 * 60 * 60 * 1000);
+    const fin = finDate.toISOString();
+    const finLisible = finDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
     // Annuler l'abonnement actif précédent
     await pool.query(
@@ -156,6 +165,43 @@ router.post('/:id/action-plan', adminSecretOnly, async (req, res) => {
       req,
     });
 
+    // ── Notifications Pédagogiques Marchand (Email + WhatsApp) ────────
+    const nomMarchand = user.rows[0].nom || 'Marchand Nopalou';
+    const emailMarchand = user.rows[0].email;
+    const telMarchand = user.rows[0].telephone;
+
+    // 1. Notification Email
+    if (emailMarchand) {
+      envoyerEmail({
+        to: emailMarchand,
+        subject: `Votre formule Nopalou a été mise à jour : ${plan.toUpperCase()}`,
+        html: `
+          <div style="font-family: sans-serif; line-height: 1.6; color: #1c2b4a; max-width: 600px;">
+            <h2 style="color: #c75b00;">Mise à jour de votre compte Nopalou</h2>
+            <p>Bonjour <strong>${nomMarchand}</strong>,</p>
+            <p>L'équipe d'administration Nopalou a activé votre formule <strong>${plan.toUpperCase()}</strong> pour une durée de <strong>${jours} jours</strong> (valable jusqu'au ${finLisible}).</p>
+            <p>Toutes les fonctionnalités associées à ce forfait sont dès à présent débloquées sur vos boutiques.</p>
+            <p><a href="${SITE}/boutique" style="display: inline-block; background: #1c2b4a; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 12px;">Accéder à ma boutique</a></p>
+            <p style="font-size: 13px; color: #64748b; margin-top: 20px;">Pour toute question, contactez le support Nopalou via votre espace marchand.</p>
+          </div>
+        `,
+      }).catch(err => console.error('[ADMIN NOTIF EMAIL ERR]', err.message));
+    }
+
+    // 2. Notification WhatsApp
+    if (telMarchand) {
+      const msgWA = `Bonjour ${nomMarchand},\n\nVotre formule Nopalou a été mise à jour : vous bénéficiez désormais du forfait *${plan.toUpperCase()}* valable jusqu'au *${finLisible}*.\n\nAccédez à votre espace marchand : ${SITE}/boutique`;
+      sendWhatsAppNotification(telMarchand, {
+        textMessage: msgWA,
+        title: `Mise à jour de votre formule Nopalou`,
+        montant: plan.toUpperCase(),
+        detail: `Forfait activé jusqu'au ${finLisible}`,
+        url: `${SITE}/boutique`,
+        buttonParam: 'boutique',
+        type: 'service',
+      }).catch(err => console.error('[ADMIN NOTIF WA ERR]', err.message));
+    }
+
     res.json({ success: true, abonnement: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -163,3 +209,4 @@ router.post('/:id/action-plan', adminSecretOnly, async (req, res) => {
 });
 
 module.exports = router;
+

@@ -1,17 +1,17 @@
 import { cookies } from 'next/headers'
 import PaiementsManuelsClient from './PaiementsManuelsClient'
-
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+import { BACKEND, adminHeaders } from '@/app/actions/admin'
 
 export default async function AdminPaiementsManuelsPage() {
-  const jar    = await cookies()
-  const secret = jar.get('nopalou_admin')?.value ?? ''
-  if (!secret) return null
+  const jar   = await cookies()
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  if (!token) return null
 
   let paiements: any[] = []
   try {
     const res = await fetch(`${BACKEND}/api/paiement/manuel/liste?statut=en_attente`, {
-      headers: { 'X-Admin-Secret': secret }, cache: 'no-store',
+      headers: adminHeaders(token),
+      cache: 'no-store',
     })
     if (res.ok) paiements = (await res.json()).paiements
   } catch (err) { console.warn('[Nopalou:page:L17]', err); }
@@ -24,7 +24,7 @@ export default async function AdminPaiementsManuelsPage() {
           Déclarations de dépôt Wave/Orange en attente de vérification.
         </p>
       </div>
-      <PaiementsManuelsClient initialPaiements={paiements} secret={secret} />
+      <PaiementsManuelsClient initialPaiements={paiements} secret={token} />
     </div>
   )
 }

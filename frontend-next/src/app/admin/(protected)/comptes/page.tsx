@@ -1,9 +1,7 @@
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import ComptesTableClient from './ComptesTableClient'
-
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
-const COOKIE  = 'nopalou_admin'
+import { BACKEND, adminHeaders } from '@/app/actions/admin'
 
 interface Utilisateur {
   id: string
@@ -14,6 +12,8 @@ interface Utilisateur {
   suspendu: boolean
   supprime_le: string | null
   created_at: string
+  a_boutique?: boolean
+  a_agence?: boolean
 }
 
 function dateF(d: string) {
@@ -32,6 +32,7 @@ const PILLS_TYPE = [
   { value: '', label: 'Tous' },
   { value: 'apporteur', label: 'Apporteurs' },
   { value: 'boutique', label: 'Avec boutique' },
+  { value: 'agence', label: 'Avec agence immo' },
 ]
 
 export default async function AdminComptesPage({
@@ -39,9 +40,9 @@ export default async function AdminComptesPage({
 }: {
   searchParams: Promise<{ q?: string; statut?: string; type?: string; tri?: string; page?: string }>
 }) {
-  const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value ?? ''
-  if (!secret) return null
+  const jar   = await cookies()
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  if (!token) return null
 
   const sp = await searchParams
   const q = sp.q ?? ''
@@ -56,7 +57,7 @@ export default async function AdminComptesPage({
   try {
     const params = new URLSearchParams({ q, statut, type, tri, page })
     const res = await fetch(`${BACKEND}/api/admin/utilisateurs?${params}`, {
-      headers: { 'X-Admin-Secret': secret },
+      headers: adminHeaders(token),
       cache: 'no-store',
     })
     if (res.ok) {

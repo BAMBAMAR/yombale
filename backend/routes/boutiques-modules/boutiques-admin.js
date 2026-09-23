@@ -3,6 +3,8 @@ const router = require('express').Router();
 const { body, param, query, validationResult } = require('express-validator');
 const { pool } = require('../../models/db');
 const { verifierToken, tokenOptional, adminSecretOnly, requireEmailVerifie } = require('../../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../../middlewares/admin-rbac');
+const { enregistrerAdminLog } = require('../../lib/adminAuditLogger');
 const { checkAbonnement, requireAbonnement, requireBusiness } = require('../../middlewares/checkAbonnement');
 const { limiterPublication, limiterImport } = require('../../middlewares/rateLimit');
 const { uploadBuffer } = require('../../services/cloudinary');
@@ -22,7 +24,7 @@ const {
   slugify,
   uniqueSlug,
 } = require('./helpers');
-router.get('/admin/toutes', adminSecretOnly, async (req, res) => {
+router.get('/admin/toutes', requireAdminAuth, async (req, res) => {
   try {
     const { page, limit: queryLimit, q, plan, actif } = req.query;
     const limit = queryLimit ? Math.min(2000, Math.max(1, parseInt(queryLimit))) : 1000;
@@ -243,7 +245,7 @@ router.get('/admin/promotions', adminSecretOnly, async (req, res) => {
 });
 
 // ── GET /api/boutiques/admin/developer-portal — Supervision des Clés API & Webhooks (Admin)
-router.get('/admin/developer-portal', adminSecretOnly, async (req, res) => {
+router.get('/admin/developer-portal', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     const keysRes = await pool.query(
       `SELECT ak.id, ak.nom, ak.key_prefix, ak.created_at, ak.last_used_at, b.id as boutique_id, b.nom as boutique_nom, b.slug as boutique_slug
@@ -267,9 +269,19 @@ router.get('/admin/developer-portal', adminSecretOnly, async (req, res) => {
 });
 
 // ── DELETE /api/boutiques/admin/api-keys/:keyId — Révocation Admin d'une clé API
-router.delete('/admin/api-keys/:keyId', adminSecretOnly, async (req, res) => {
+router.delete('/admin/api-keys/:keyId', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     await pool.query('DELETE FROM boutique_api_keys WHERE id = $1', [req.params.keyId]);
+    await enregistrerAdminLog({
+      adminId: req.adminUser?.id,
+      adminEmail: req.adminUser?.email || 'admin@nopalou.sn',
+      adminNom: req.adminUser?.nom || 'Admin',
+      action: 'api_key_revoquee',
+      cibleType: 'api_key',
+      cibleId: req.params.keyId,
+      details: { keyId: req.params.keyId },
+      ip: req.ip || req.headers['x-forwarded-for'],
+    });
     res.json({ success: true, message: 'Clé API révoquée avec succès par le Superadmin.' });
   } catch (err) {
     res.status(500).json({ error: 'Erreur lors de la révocation de la clé API' });
@@ -277,9 +289,19 @@ router.delete('/admin/api-keys/:keyId', adminSecretOnly, async (req, res) => {
 });
 
 // ── DELETE /api/boutiques/admin/webhooks/:webhookId — Suppression Admin d'un Webhook
-router.delete('/admin/webhooks/:webhookId', adminSecretOnly, async (req, res) => {
+router.delete('/admin/webhooks/:webhookId', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     await pool.query('DELETE FROM boutique_webhooks WHERE id = $1', [req.params.webhookId]);
+    await enregistrerAdminLog({
+      adminId: req.adminUser?.id,
+      adminEmail: req.adminUser?.email || 'admin@nopalou.sn',
+      adminNom: req.adminUser?.nom || 'Admin',
+      action: 'webhook_supprime',
+      cibleType: 'webhook',
+      cibleId: req.params.webhookId,
+      details: { webhookId: req.params.webhookId },
+      ip: req.ip || req.headers['x-forwarded-for'],
+    });
     res.json({ success: true, message: 'Webhook supprimé avec succès par le Superadmin.' });
   } catch (err) {
     res.status(500).json({ error: 'Erreur lors de la suppression du webhook' });
@@ -287,11 +309,21 @@ router.delete('/admin/webhooks/:webhookId', adminSecretOnly, async (req, res) =>
 });
 
 // ── DELETE /api/boutiques/admin/:id — Supprimer définitivement une boutique (Admin)
-router.delete('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
+router.delete('/admin/:id', requireAdminAuth, requireAdminRole('super_admin'), param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
-    const r = await pool.query('DELETE FROM boutiques WHERE id=$1 RETURNING id', [req.params.id]);
+    const r = await pool.query('DELETE FROM boutiques WHERE id=$1 RETURNING id, nom, slug', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ error: 'Boutique introuvable' });
+    await enregistrerAdminLog({
+      adminId: req.adminUser?.id,
+      adminEmail: req.adminUser?.email || 'admin@nopalou.sn',
+      adminNom: req.adminUser?.nom || 'Admin',
+      action: 'boutique_supprimee',
+      cibleType: 'boutique',
+      cibleId: req.params.id,
+      details: { id: req.params.id, nom: r.rows[0].nom, slug: r.rows[0].slug },
+      ip: req.ip || req.headers['x-forwarded-for'],
+    });
     res.json({ success: true, message: 'Boutique supprimée par l\'admin avec succès.' });
   } catch (err) {
     console.error('[ADMIN DELETE BOUTIQUE ERR]', err);
@@ -300,7 +332,7 @@ router.delete('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, r
 });
 
 // ── POST /api/boutiques/admin/sync-catalog — sync initiale tous les produits → Meta Commerce
-router.post('/admin/sync-catalog', adminSecretOnly, async (req, res) => {
+router.post('/admin/sync-catalog', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT bp.*, b.slug AS boutique_slug
@@ -324,7 +356,7 @@ router.post('/admin/sync-catalog', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/boutiques/admin/:id — activer/désactiver/sponsoriser (admin)
-router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
+router.put('/admin/:id', requireAdminAuth, requireAdminRole('super_admin', 'admin_operationnel'), param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { actif, sponsorise, sponsor_jusqu_au, whatsapp_catalog_id } = req.body;
@@ -337,11 +369,23 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
     if (whatsapp_catalog_id !== undefined) { vals.push(whatsapp_catalog_id || null); sets.push(`whatsapp_catalog_id=$${vals.length}`); }
     vals.push(req.params.id);
     const { rows } = await pool.query(
-      `UPDATE boutiques SET ${sets.join(', ')} WHERE id=$${vals.length} RETURNING id`,
+      `UPDATE boutiques SET ${sets.join(', ')} WHERE id=$${vals.length} RETURNING id, nom, slug, actif, sponsorise`,
       vals
     );
     if (!rows.length) return res.status(404).json({ error: 'Boutique introuvable' });
-    res.json({ success: true });
+
+    await enregistrerAdminLog({
+      adminId: req.adminUser?.id,
+      adminEmail: req.adminUser?.email || 'admin@nopalou.sn',
+      adminNom: req.adminUser?.nom || 'Admin',
+      action: 'boutique_statut_modifie',
+      cibleType: 'boutique',
+      cibleId: req.params.id,
+      details: { nom: rows[0].nom, actif, sponsorise, sponsor_jusqu_au, whatsapp_catalog_id },
+      ip: req.ip || req.headers['x-forwarded-for'],
+    });
+
+    res.json({ success: true, boutique: rows[0] });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 

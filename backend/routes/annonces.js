@@ -4,6 +4,8 @@ const multer  = require('multer');
 const { body, param, validationResult } = require('express-validator');
 const { pool } = require('../models/db');
 const { adminSecretOnly, verifierToken, tokenOptional, requireEmailVerifie } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
+const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const { limiterPublication, limiterEcriture, limiterBulk, blockScraperUA, limiterRecherche } = require('../middlewares/rateLimit');
 const { uploadBuffer } = require('../services/cloudinary');
 const { sendWhatsAppCarousel, sendWhatsAppTemplate } = require('../services/whatsapp');
@@ -546,7 +548,7 @@ router.delete('/mine/:id', verifierToken, param('id').isUUID(), async (req, res)
 });
 
 // ── PUT /api/annonces/admin/:id — approuver / rejeter / remettre (admin)
-router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
+router.put('/admin/:id', requireAdminAuth, requireAdminRole('super_admin', 'moderateur', 'admin_operationnel'), param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
     const { actif, rejete } = req.body;
@@ -568,6 +570,15 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
       );
     }
     synchroniserImmoClassifiee(req.params.id);
+
+    await enregistrerAdminLog({
+      action: newActif ? 'annonce_approuvee' : 'annonce_rejetee',
+      cibleType: 'annonce',
+      cibleId: req.params.id,
+      description: `Modération de l'annonce : statut actif=${newActif}, rejeté=${newRejete}`,
+      req,
+    });
+
     res.json({ success: true });
 
     // Notification WhatsApp au déposant si approbation (fire-and-forget)
@@ -621,11 +632,20 @@ router.put('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res)
 });
 
 // ── DELETE /api/annonces/admin/:id — supprimer annonce classifiée (admin)
-router.delete('/admin/:id', adminSecretOnly, param('id').isUUID(), async (req, res) => {
+router.delete('/admin/:id', requireAdminAuth, requireAdminRole('super_admin'), param('id').isUUID(), async (req, res) => {
   if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
   try {
-    const { rows } = await pool.query('DELETE FROM annonces_classifiees WHERE id=$1 RETURNING id', [req.params.id]);
+    const { rows } = await pool.query('DELETE FROM annonces_classifiees WHERE id=$1 RETURNING id, titre', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Annonce introuvable' });
+
+    await enregistrerAdminLog({
+      action: 'annonce_supprimee',
+      cibleType: 'annonce',
+      cibleId: req.params.id,
+      description: `Suppression administrative de l'annonce "${rows[0].titre || req.params.id}"`,
+      req,
+    });
+
     res.json({ success: true });
   } catch (err) {
     console.error('[ADMIN DELETE /annonces]', err.message);

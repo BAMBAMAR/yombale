@@ -8,6 +8,10 @@ export const COOKIE_SECRET = 'nopalou_admin'
 export const COOKIE_JWT    = 'nopalou_admin_jwt'
 export const COOKIE        = COOKIE_SECRET
 
+export function extractAdminToken(jar: { get: (name: string) => { value: string } | undefined }): string | undefined {
+  return jar.get(COOKIE_JWT)?.value || jar.get(COOKIE_SECRET)?.value
+}
+
 export interface AdminUserSession {
   id: string
   nom: string

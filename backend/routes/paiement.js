@@ -5,6 +5,8 @@ const { pool } = require('../models/db');
 const notifs   = require('../services/notifications');
 const { limiterEcriture, limiterAuth, limiterGeneral } = require('../middlewares/rateLimit');
 const { verifierToken, adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
+const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const cfg = require('../lib/settingsCache');
 const wave = require('../services/wave');
 const multer = require('multer');
@@ -760,7 +762,7 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
 });
 
 // GET /api/paiement/stats — tableau de bord revenus (admin)
-router.get('/stats', adminSecretOnly, async (req, res) => {
+router.get('/stats', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
@@ -865,7 +867,7 @@ router.post('/manuel/declarer', verifierToken, limiterEcriture, upload.single('p
 });
 
 // GET /api/paiement/manuel/liste — déclarations en attente (admin)
-router.get('/manuel/liste', adminSecretOnly, async (req, res) => {
+router.get('/manuel/liste', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const statut = ['en_attente', 'valide', 'rejete'].includes(req.query.statut) ? req.query.statut : 'en_attente';
     const { rows } = await pool.query(
@@ -884,7 +886,7 @@ router.get('/manuel/liste', adminSecretOnly, async (req, res) => {
 });
 
 // POST /api/paiement/manuel/:id/valider — valide un dépôt déclaré et applique l'effet (admin)
-router.post('/manuel/:id/valider', adminSecretOnly, async (req, res) => {
+router.post('/manuel/:id/valider', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT id, reference, montant, methode, statut FROM paiements_manuels WHERE id=$1`,
@@ -900,8 +902,16 @@ router.post('/manuel/:id/valider', adminSecretOnly, async (req, res) => {
 
     await pool.query(
       `UPDATE paiements_manuels SET statut='valide', valide_par=$1, valide_at=NOW() WHERE id=$2`,
-      [req.headers['x-admin-secret'] ? 'admin' : 'admin', req.params.id]
+      [req.adminUser?.nom || req.adminUser?.email || 'admin', req.params.id]
     );
+
+    await enregistrerAdminLog({
+      action: 'paiement_manuel_valide',
+      cibleType: 'paiement_manuel',
+      cibleId: req.params.id,
+      description: `Validation administrative du dépôt manuel de ${paiement.montant} FCFA (${paiement.methode}) pour la réf ${paiement.reference}`,
+      req,
+    });
 
     res.json({ ok: true });
   } catch (err) {
@@ -911,7 +921,7 @@ router.post('/manuel/:id/valider', adminSecretOnly, async (req, res) => {
 });
 
 // POST /api/paiement/manuel/:id/rejeter — rejette un dépôt déclaré (admin)
-router.post('/manuel/:id/rejeter', adminSecretOnly, async (req, res) => {
+router.post('/manuel/:id/rejeter', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { motif } = req.body;
     const { rows } = await pool.query(
@@ -921,6 +931,15 @@ router.post('/manuel/:id/rejeter', adminSecretOnly, async (req, res) => {
       [motif || null, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Déclaration introuvable ou déjà traitée' });
+
+    await enregistrerAdminLog({
+      action: 'paiement_manuel_rejete',
+      cibleType: 'paiement_manuel',
+      cibleId: req.params.id,
+      description: `Rejet administratif du dépôt manuel (Motif: ${motif || 'Non précisé'})`,
+      req,
+    });
+
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

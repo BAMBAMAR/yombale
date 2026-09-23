@@ -3,7 +3,7 @@
 
 const router = require('express').Router();
 const { pool } = require('../models/db');
-const { requireAdminAuth } = require('../middlewares/admin-rbac');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
 router.use(requireAdminAuth);
@@ -195,7 +195,7 @@ router.get('/baux-loyers', async (req, res) => {
 });
 
 // ── PUT /api/admin/immo-global/agences/:id/statut — Modérer statut d'une agence
-router.put('/agences/:id/statut', async (req, res) => {
+router.put('/agences/:id/statut', requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { id } = req.params;
     let { statut } = req.body;
@@ -227,7 +227,7 @@ router.put('/agences/:id/statut', async (req, res) => {
 });
 
 // ── PUT /api/admin/immo-global/agences/:id/forfait — Changer forfait / sponsoring d'une agence
-router.put('/agences/:id/forfait', async (req, res) => {
+router.put('/agences/:id/forfait', requireAdminRole('super_admin', 'admin_operationnel'), async (req, res) => {
   try {
     const { id } = req.params;
     const { abonnement_plan, sponsorise, jours_sponsoring, jours_abonnement } = req.body;
@@ -284,7 +284,7 @@ router.put('/agences/:id/forfait', async (req, res) => {
 });
 
 // ── DELETE /api/admin/immo-global/agences/:id — Supprimer une agence immobilière
-router.delete('/agences/:id', async (req, res) => {
+router.delete('/agences/:id', requireAdminRole('super_admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const agenceRes = await pool.query('SELECT * FROM agences_immo WHERE id = $1', [id]);

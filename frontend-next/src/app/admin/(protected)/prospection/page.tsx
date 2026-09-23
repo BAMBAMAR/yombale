@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers'
 import ProspectionClient from './ProspectionClient'
-
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+import { BACKEND, adminHeaders } from '@/app/actions/admin'
 
 export interface Lead {
   id: string
@@ -88,7 +87,7 @@ export interface DorkingRequete {
 
 export default async function AdminProspectionPage() {
   const jar = await cookies()
-  const secret = jar.get('nopalou_admin')?.value || ''
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
 
   let initialLeads: Lead[] = []
   let initialStats: StatsLeads = { total: 0, nouveaux: 0, contactes: 0, en_discussion: 0, convertis: 0, desinscrits: 0, invalides: 0, qualifies: 0, haut_fit: 0, avg_score: 0, avg_fit_score: 0, blacklist: 0 }
@@ -96,17 +95,18 @@ export default async function AdminProspectionPage() {
   let dorking: DorkingRequete[] = []
 
   try {
+    const headers = adminHeaders(token)
     const [resLeads, resTemplates, resDorking] = await Promise.all([
       fetch(`${BACKEND}/api/prospection/leads?limit=100`, {
-        headers: { 'x-admin-secret': secret },
+        headers,
         cache: 'no-store',
       }),
       fetch(`${BACKEND}/api/prospection/templates`, {
-        headers: { 'x-admin-secret': secret },
+        headers,
         cache: 'no-store',
       }),
       fetch(`${BACKEND}/api/prospection/dorking`, {
-        headers: { 'x-admin-secret': secret },
+        headers,
         cache: 'no-store',
       }),
     ])
@@ -136,7 +136,7 @@ export default async function AdminProspectionPage() {
       initialStats={initialStats}
       templates={templates}
       dorking={dorking}
-      secret={secret}
+      secret={token}
     />
   )
 }

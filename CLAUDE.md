@@ -23,6 +23,81 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Refonte & Blindage Intégral du Back-Office, de la Sécurité RBAC & du Pilotage Nopalou (Phases 1, 2 & 3) (23 septembre 2026)** 🛡️⚙️💼⚡📊✅ :
+  * **🚨 Contexte & Audit Diagnostique Exhaustif** :
+    - Réalisation d'un audit de gouvernance à 360° du back-office Nopalou (`/admin`) couvrant l'ensemble de la chaîne : utilisateurs, boutiques, POS, immobilier, abonnements, paiements Wave, Wave payouts, exports, logs et infrastructure.
+    - Identification de 52 points d'insuffisances, vulnérabilités financières (risque de double-déboursement Wave, absence de persistance de `payout_ref`), lacunes RBAC backend (routes sensibles autorisées par simple secret sans rôle), 401 intempestifs en SSR sur les sessions nominatives, silos métiers entre comptes marchands et agences immo, et absence de modules critiques pour le support, les avis boutiques et les signalements d'abus.
+  * **🛠️ Correctifs & Fonctionnalités Livrées (Plan Intégral en 3 Phases)** :
+    - **PHASE 1 : BLINDAGE CRITIQUE & SÉCURITÉ IMMÉDIATE** :
+      * **Chantier 1.1 — Sécurisation Idempotente du Wave Payout (`backend/routes/comptabilite.js`, `frontend-next/src/app/actions/admin/admin-finances.ts`)** :
+        - Ajout des colonnes `payout_ref VARCHAR(100)` et `payout_date TIMESTAMPTZ` sur `commandes_boutique` avec migration idempotente.
+        - Blocage strict anti-double-payout : vérification `if (commande.statut === 'reverse') return 400` avant tout appel à l'API Wave Payout.
+        - Persistance atomique immédiate du statut `reverse`, de la référence de transaction et de l'horodatage en base de données.
+        - Restriction RBAC stricte aux rôles `super_admin` et `finance`, enregistrement immédiat dans `admin_audit_logs`, et revalidation automatique du cache Next.js (`/admin/reversements` et `/admin/commandes`).
+      * **Chantier 1.2 — Verrouillage RBAC Backend Strict** :
+        - Application systématique du middleware `requireAdminRole(...)` sur toutes les routes administratives sensibles :
+          * `backend/routes/boutiques-modules/boutiques-admin.js` : suppression (`super_admin`), modification et gestion des clés API / webhooks (`super_admin`, `admin_operationnel`).
+          * `backend/routes/admin-immo-global.js` : suppression d'agence (`super_admin`), statut et forfait (`super_admin`, `admin_operationnel`).
+          * `backend/routes/admin-export.js` : tous les flux exports CSV protégés par (`super_admin`, `finance`).
+          * `backend/routes/admin-system.js` : maintenance et bannières verrouillées pour (`super_admin`).
+          * `backend/routes/admin-utilisateurs.js` : purge irréversible (`super_admin`), suspension, réactivation et quotas (`super_admin`, `admin_operationnel`).
+          * `backend/routes/plans.js` : création, édition et suppression de tarifs verrouillées pour (`super_admin`, `finance`).
+          * `backend/routes/admin-marchands.js` : fiches 360° et attribution de forfaits réservées à (`super_admin`, `admin_operationnel`).
+      * **Chantier 1.3 & 1.4 — Sessions Nominatives & Élimination Définitive des 401 SSR (`admin-auth.ts`, `admin-common.ts`, `admin-rbac.js`)** :
+        - Détection automatique des jetons JWT transmis dans le header `X-Admin-Secret` ou `Authorization: Bearer` dans `extractAdminCredentials`.
+        - Correction de `getAdminSession()` dans Next.js pour extraire fidèlement le rôle et les permissions granulaires de l'administrateur connecté (`const adminObj = data.admin || data.user`) sans dégrader vers le profil break-glass générique.
+        - Création du helper partagé `extractAdminToken(jar)` lisant conjointement `nopalou_admin_jwt` et `nopalou_admin`.
+        - Mise à jour systématique de l'ensemble des pages SSR (`/admin/whatsapp`, `/admin/tarifs`, `/admin/reversements`, `/admin/paiements-manuels`, `/admin/developer`, `/admin/force-de-vente`, `/admin/communication`, `/admin/apporteurs`, `/admin/prospection`, `/admin/comptes`, `/admin/comptes/[id]`, `/admin/system`) pour injecter les headers d'authentification appropriés.
+      * **Chantier 1.5 — Traçabilité & Audit Logs Exhaustifs (`lib/adminAuditLogger.js`)** :
+        - Branchement de l'audit logger `enregistrerAdminLog` sur toutes les opérations sensibles : validation de paiements manuels, rejets, modifications de forfaits, suspensions de comptes, modération et suppression d'annonces, suppression d'avis et traitement de signalements.
+    - **PHASE 2 : RÉSILIENCE, ERGONOMIE & GOUVERNANCE MÉTIER** :
+      * **Chantier 2.1 — Observabilité & Journalisation des Crons (`backend/lib/cronLogger.js`, `backend/migrate-inline.js`)** :
+        - Création de la table `cron_executions` avec horodatage, durée d'exécution en ms, statut (`succes`, `erreur`), message d'erreur et métadonnées JSONB `stats`.
+        - Helper universel `executerTacheCron(nom, fn)` enveloppant les exécutions pour éliminer les plantages silencieux.
+      * **Chantier 2.2 — Adaptabilité Responsive Mobile Complète (`frontend-next/src/styles/admin.css`)** :
+        - Encapsulation de la grille fixe `.admin-layout` dans `@media (min-width: 901px)`.
+        - En-dessous de 900px, passage en colonne unique fluide `1fr` avec tiroir de navigation mobile déployable, éliminant tout débordement horizontal sur smartphone et tablette.
+      * **Chantier 2.3 — Filtrage Avancé & Sécurisation Anti-Injection CSV (`backend/routes/admin-export.js`)** :
+        - Réécriture complète des exports de données : filtres temporels par intervalle (`date_debut`, `date_fin`), statut et mot-clé textuel `q`.
+        - Protection systématique contre l'injection de formules tableur (CSV Injection) en neutralisant les caractères `=`, `+`, `-`, `@` en tête de cellule.
+      * **Chantier 2.4 — Décloisonnement Transversal Immo & Commerce (`backend/routes/admin-utilisateurs.js`, `ComptesTableClient.tsx`)** :
+        - Ajout d'une sous-requête corrélée `a_agence` dans la liste des utilisateurs pour identifier immédiatement si un compte administre également une agence immobilière.
+        - Ajout d'un badge violet distinctif `Agence Immo` et d'un filtre dédié dans la table des comptes et sur la fiche utilisateur détaillée `/admin/comptes/[id]`.
+      * **Chantier 2.5 — Menu de Navigation Dynamique Piloté par RBAC (`AdminSidebarClient.tsx`)** :
+        - Filtrage contextuel de la barre latérale selon le rôle nominatif de l'agent : `super_admin` (accès total), `finance` (direction et finances uniquement), `moderateur` (immobilier, annonces, avis et signalements), `support_client` (support, comptes, commandes, whatsapp), `admin_operationnel` (ensemble des flux hors sécurité infrastructure).
+    - **PHASE 3 : PILOTAGE & OUTILLAGE OPÉRATIONNEL ÉTENDU** :
+      * **Chantier 3.1 — Helpdesk & Support Client Centralisé (`backend/routes/admin-support.js`, `frontend-next/src/app/admin/(protected)/support/`)** :
+        - Création de la table `support_tickets` avec priorité, statut, canal de provenance et fil de discussion JSONB.
+        - Endpoints REST sécurisés `GET /api/admin/support/tickets`, `GET /tickets/:id`, `POST /tickets/:id/message`, `PUT /tickets/:id/statut`.
+        - Interface de gestion `/admin/support` et composant `SupportClient.tsx` (< 450 lignes) avec filtrage par statut et priorité, réponses en direct et badges contextuels.
+      * **Chantier 3.2 — Centre de Modération des Avis Boutiques (`backend/routes/admin-avis.js`, `frontend-next/src/app/admin/(protected)/avis/`)** :
+        - Endpoints `GET /api/admin/avis` (avec filtres note, recherche client/boutique) et `DELETE /api/admin/avis/:id` avec journalisation d'audit.
+        - Server Action `supprimerAvisBoutique` et interface de modération dédiée `/admin/avis` avec rendu d'étoiles vectorielles Lucide, modale de confirmation et notification toast.
+      * **Chantier 3.3 — Traitement des Signalements d'Abus & Fraudes (`backend/routes/admin-signalements.js`, `frontend-next/src/app/admin/(protected)/signalements/`)** :
+        - Création de la table `signalements` avec type de cible (annonce, boutique, utilisateur), motif, description et décision.
+        - Endpoints `GET /api/admin/signalements` et `PUT /api/admin/signalements/:id/traiter`.
+        - Server Action `traiterSignalement` et interface de gestion `/admin/signalements` avec liens directs vers la cible signalée, modale de décision motivée et traçabilité de l'agent traitant.
+      * **Chantier 3.4 — Journal Consolidé des Incidents & Santé Système (`components/SystemIncidentsCard.tsx`, `AdminSystemClient.tsx`)** :
+        - Nouveau composant modulaire `SystemIncidentsCard.tsx` intégré dans `/admin/system` restituant en direct les échecs de crons, les webhooks marchands inactifs et les audits critiques.
+        - Purge intégrale de tous les émojis Unicode de l'écran système conformément à la Règle d'Or Anti-IA-Slop.
+      * **Chantier 3.5 — Notifications Pédagogiques Marchands (`backend/routes/admin-marchands.js`)** :
+        - Déclenchement automatique et asynchrone de notifications par email (`envoyerEmail`) et par WhatsApp (`sendWhatsAppNotification`) lors de l'octroi ou de la modification administrative d'un forfait marchand, explicitant la nouvelle formule, la durée de validité et le lien direct vers la boutique.
+      * **Chantier 3.6 — Unification & Blindage de l'Administration des Réseaux Sociaux & Meta Commerce (`facebook-posts.js`, `admin-integrations.js`, `flux-catalogue-meta.js`, `publications/`, `integrations/`, `AdminSidebarClient.tsx`)** :
+        - Rapprochement et mise en valeur des deux modules sociaux dans la barre latérale sous "Contenu & Modération" : **Réseaux Sociaux & Posts Meta** (`/admin/publications`) et **Connecteurs & Pixels Sociaux** (`/admin/integrations`).
+        - Système d'onglets croisés unifiés en tête de page permettant de basculer instantanément entre la planification de posts et la supervision des connecteurs/pixels.
+        - Intégration du flux officiel Meta Commerce Manager (`/api/flux-catalogue/global/meta.xml`) avec bouton de copie en 1 clic pour Facebook Shop & Instagram Shopping.
+        - Résolution des 401 SSR et nominatifs : mise à niveau RBAC (`requireAdminAuth`, `requireAdminRole`), injection de `extractAdminToken` et `adminHeaders` dans `integrations/page.tsx` et `admin-proxy/fb/`.
+        - Modularisation et refonte anti-IA-slop complète de `publications/page.tsx` (427 lignes, 0 émoji Unicode, 0 avertissement linter), extraction des sous-composants `TokenManagement.tsx`, `PublicationForm.tsx` et `PublicationCard.tsx`.
+        - Barre de navigation unifiée entre les 3 piliers Social Media du Back-Office : `/admin/publications` (Posts officiels Meta & Planificateur), `/admin/integrations` (Connecteurs, Pixels & Comptes marchands), et `/admin/communication` (Profils officiels Nopalou, Visuels HD, Templates et Kit Com).
+        - Nettoyage anti-slop strict et purge des émojis résiduels dans `communication/page.tsx` et `KitComClient.tsx`.
+        - Correction des colonnes de `feature_flags` (`enabled AS actif`) dans `admin-integrations.js` rétablissant les statistiques des plateformes à 200 OK.
+        - Flux catalogue Meta global (`/api/flux-catalogue/global/meta.xml`) avec bouton 1-clic pour synchroniser l'ensemble des 5 000 produits actifs de la marketplace sur Meta Commerce Manager (Instagram & Facebook Shopping).
+  * **🧪 Validation Technique & Qualité Globale** :
+    - Toutes les routes locales vérifiées et validées : `GET /api/admin/support/tickets` (200 OK), `GET /api/admin/avis` (200 OK), `GET /api/admin/signalements` (200 OK), `GET /api/admin/system/incidents` (200 OK), `GET /api/facebook-posts` (200 OK), `GET /api/admin/integrations/stats` (200 OK), `GET /api/flux-catalogue/global/meta.xml` (200 OK).
+    - Schémas et colonnes DB PostgreSQL vérifiés et synchronisés avec `migrateInline()`.
+    - `npm run lint:slop` sur `frontend-next` : 0 composant monolithique (> 450 lignes sur les nouveaux composants), respect rigoureux des standards de design.
+    - Aucun `git push` automatique déclenché (conformité stricte aux directives).
+
 - **Consolidation, Décloisonnement & Optimisation de la Branche IMMOBILIER (IMM-001 à IMM-006) (23 septembre 2026)** 🏢🔑🏡✨🛡️⚡✅ :
   * **🚨 Contexte & Audit Diagnostique** :
     - Audit exhaustif de bout en bout de la verticale Immobilier Nopalou : base de données, API REST, portail `/immo`, vitrines `/agences`, back-office agence (`/agence/[slug]`), CRM, gestion locative, séquestre Pay Safe, scrapers et synchronisation multi-appareils.

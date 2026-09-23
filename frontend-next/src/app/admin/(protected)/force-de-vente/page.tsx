@@ -1,19 +1,18 @@
 import { cookies } from 'next/headers'
 import ForceDeVenteClient from './ForceDeVenteClient'
+import { BACKEND, adminHeaders } from '@/app/actions/admin'
 
 export const metadata = { title: 'Force de Vente & Déploiement Terrain — Admin Nopalou' }
 
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
-
 export default async function AdminForceDeVentePage() {
   const jar = await cookies()
-  const secret = jar.get('nopalou_admin')?.value ?? ''
-  if (!secret) return null
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
+  if (!token) return null
 
   let settings: Record<string, string> = {}
   try {
     const r = await fetch(`${BACKEND}/api/settings`, {
-      headers: { 'X-Admin-Secret': secret },
+      headers: adminHeaders(token),
       cache: 'no-store',
     })
     if (r.ok) settings = await r.json()
@@ -27,7 +26,7 @@ export default async function AdminForceDeVentePage() {
   return (
     <div className="admin-content">
       <ForceDeVenteClient
-        secret={secret}
+        secret={token}
         prixDecouverte={prixDecouverte}
         prixPro={prixPro}
         prixBusiness={prixBusiness}

@@ -4,11 +4,12 @@
 const router = require('express').Router();
 const { pool } = require('../models/db');
 const { adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const cfg = require('../lib/settingsCache');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
 // ── GET /api/admin/system/health — Diagnostic profond de la plateforme
-router.get('/health', adminSecretOnly, async (req, res) => {
+router.get('/health', requireAdminAuth, async (req, res) => {
   try {
     const startDb = Date.now();
     let dbStatus = 'ok';
@@ -136,7 +137,7 @@ router.get('/health', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/admin/system/maintenance — Activer/désactiver le mode maintenance
-router.put('/maintenance', adminSecretOnly, async (req, res) => {
+router.put('/maintenance', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     const { active, message } = req.body;
     await cfg.set('maintenance_mode', active ? 'true' : 'false');
@@ -159,7 +160,7 @@ router.put('/maintenance', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/admin/system/banner — Publier une bannière d'annonce globale
-router.put('/banner', adminSecretOnly, async (req, res) => {
+router.put('/banner', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
   try {
     const { active, text, level = 'info' } = req.body;
     await cfg.set('system_banner_active', active ? 'true' : 'false');
@@ -181,7 +182,7 @@ router.put('/banner', adminSecretOnly, async (req, res) => {
 });
 
 // ── GET /api/admin/system/data-health — Observabilité permanente de l'intégrité des données
-router.get('/data-health', adminSecretOnly, async (req, res) => {
+router.get('/data-health', requireAdminAuth, async (req, res) => {
   try {
     const [
       bqOrphelines,
@@ -382,6 +383,48 @@ router.get('/data-health', adminSecretOnly, async (req, res) => {
     });
   } catch (err) {
     console.error('[DATA HEALTH ERR]:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/system/incidents — Journal consolidé des incidents & alertes
+router.get('/incidents', requireAdminAuth, requireAdminRole('super_admin'), async (req, res) => {
+  try {
+    const [cronsEnErreur, webhooksInactifs, logsCritiques] = await Promise.all([
+      pool.query(`
+        SELECT nom_cron, started_at, ended_at, statut, erreur, stats
+        FROM cron_executions
+        WHERE statut = 'erreur'
+        ORDER BY started_at DESC
+        LIMIT 20
+      `).catch(() => ({ rows: [] })),
+      pool.query(`
+        SELECT bw.id, bw.url, bw.events, bw.created_at, b.nom AS boutique_nom
+        FROM boutique_webhooks bw
+        JOIN boutiques b ON b.id = bw.boutique_id
+        WHERE bw.actif = FALSE
+        ORDER BY bw.created_at DESC
+        LIMIT 20
+      `).catch(() => ({ rows: [] })),
+      pool.query(`
+        SELECT id, admin_email, action, cible_type, cible_id, details, created_at
+        FROM admin_audit_logs
+        WHERE action ILIKE '%erreur%' OR action ILIKE '%incident%' OR action ILIKE '%purge%'
+        ORDER BY created_at DESC
+        LIMIT 30
+      `).catch(() => ({ rows: [] })),
+    ]);
+
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      incidents: {
+        cronsEnErreur: cronsEnErreur.rows,
+        webhooksInactifs: webhooksInactifs.rows,
+        logsCritiques: logsCritiques.rows,
+      },
+    });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

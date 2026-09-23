@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
+import { Share2, Radio, Palette } from 'lucide-react'
 import { fcfa } from '@/lib/format'
 import {
   KitComProps,
@@ -112,6 +114,66 @@ Intéressé(e) ? Contactez-moi (${agentNameFormatted}) sur WhatsApp au ${agentPh
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px', fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}>
+      {/* Barre d'onglets Social Media Unifiée */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24, borderBottom: '1px solid #e2e8f0', paddingBottom: 12, flexWrap: 'wrap' }}>
+        <Link
+          href="/admin/publications"
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: 'none',
+            background: '#f8fafc',
+            color: '#475569',
+            border: '1px solid #cbd5e1',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Share2 size={15} />
+          Publications & Posts Meta
+        </Link>
+        <Link
+          href="/admin/integrations"
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: 'none',
+            background: '#f8fafc',
+            color: '#475569',
+            border: '1px solid #cbd5e1',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Radio size={15} />
+          Connecteurs & Pixels Sociaux
+        </Link>
+        <Link
+          href="/admin/communication"
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: 'none',
+            background: '#1c2b4a',
+            color: '#fff',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Palette size={15} />
+          Kit Com & Profils Sociaux
+        </Link>
+      </div>
+
       {/* Toast Notification Floating */}
       {toast && (
         <div

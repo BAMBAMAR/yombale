@@ -28,7 +28,20 @@ export async function getAdminSession(): Promise<AdminUserSession | null> {
       })
       if (res.ok) {
         const data = await res.json()
-        if (data.user) return data.user
+        const adminObj = data.admin || data.user
+        if (adminObj) {
+          const rawPerms = adminObj.permissions || {}
+          const permissions = Array.isArray(rawPerms)
+            ? rawPerms
+            : Object.keys(rawPerms).filter(k => rawPerms[k])
+          return {
+            id: adminObj.id,
+            nom: adminObj.nom,
+            email: adminObj.email,
+            role: adminObj.role,
+            permissions,
+          }
+        }
       }
     } catch {
       // Backend injoignable

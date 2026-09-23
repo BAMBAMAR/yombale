@@ -1,20 +1,20 @@
 import { cookies } from 'next/headers'
 import AdminSystemClient from './AdminSystemClient'
+import { extractAdminToken, adminHeaders } from '@/app/actions/admin/admin-common'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
-const COOKIE  = 'nopalou_admin'
 
 export const metadata = { title: 'Santé Système & Maintenance — Admin Nopalou' }
 
 export default async function AdminSystemPage() {
   const jar    = await cookies()
-  const secret = jar.get(COOKIE)?.value ?? ''
+  const secret = extractAdminToken(jar) ?? ''
 
   let systemData: any = null
 
   try {
     const res = await fetch(`${BACKEND}/api/admin/system/health`, {
-      headers: { 'X-Admin-Secret': secret },
+      headers: adminHeaders(secret),
       cache: 'no-store',
     })
     if (res.ok) {
@@ -30,3 +30,4 @@ export default async function AdminSystemPage() {
     </div>
   )
 }
+

@@ -3,10 +3,11 @@
 
 const router = require('express').Router();
 const { pool } = require('../models/db');
-const { adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
-router.use(adminSecretOnly);
+router.use(requireAdminAuth);
+router.use(requireAdminRole('super_admin', 'admin_operationnel'));
 
 /**
  * GET /api/admin/integrations/stats
@@ -47,7 +48,7 @@ router.get('/stats', async (req, res) => {
 
     // 4. Feature flags liés aux intégrations
     const flagsRes = await pool.query(`
-      SELECT key, label, actif
+      SELECT key, label, enabled AS actif
       FROM feature_flags
       WHERE key IN ('social_shop_enabled', 'instagram_sync', 'tiktok_embed', 'whatsapp_chatbot')
     `);
@@ -148,11 +149,11 @@ router.post('/accounts/:id/disconnect', async (req, res) => {
 
     try {
       await enregistrerAdminLog({
-        adminEmail: req.adminEmail || 'admin',
-        action: 'DISCONNECT_SOCIAL_ACCOUNT',
-        targetType: 'social_account',
-        targetId: req.params.id,
-        details: { plateforme: rows[0].plateforme, nom_compte: rows[0].nom_compte },
+        action: 'social_account_deconnecte',
+        cibleType: 'social_account',
+        cibleId: req.params.id,
+        description: `Déconnexion administrative du compte ${rows[0].nom_compte} (${rows[0].plateforme})`,
+        req,
       });
     } catch (_) {}
 
@@ -173,9 +174,9 @@ router.post('/toggle', async (req, res) => {
     if (!key) return res.status(400).json({ error: 'Clé d\'intégration requise' });
 
     await pool.query(
-      `INSERT INTO feature_flags (key, label, actif, updated_at)
+      `INSERT INTO feature_flags (key, label, enabled, updated_at)
        VALUES ($1, $1, $2, NOW())
-       ON CONFLICT (key) DO UPDATE SET actif = $2, updated_at = NOW()`,
+       ON CONFLICT (key) DO UPDATE SET enabled = $2, updated_at = NOW()`,
       [key, Boolean(actif)]
     );
 

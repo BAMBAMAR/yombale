@@ -123,7 +123,6 @@ const VISUELS = [
 const TEXTES = [
   {
     reseau: 'Facebook Page Officielle',
-    emoji: '📘',
     nom: 'Nopalou — Comparateur de prix Sénégal',
     categorie: 'Site web · Technologie',
     bio: 'Comparez les prix de milliers de produits chez tous les marchands en ligne au Sénégal. Téléphones, TV, électro, mode, immobilier et plus — toujours le meilleur prix à Dakar.',
@@ -132,7 +131,6 @@ const TEXTES = [
   },
   {
     reseau: 'Instagram Officiel',
-    emoji: '',
     nom: '@nopalousn',
     categorie: 'Compte professionnel · Shopping & Retail',
     bio: 'Comparateur de prix N°1 au Sénégal\nTéléphones · TV · Électro · Immo\nÉconomisez jusqu\'à 40% à Dakar\n👇 Comparez sur nopalou.com',
@@ -141,25 +139,22 @@ const TEXTES = [
   },
   {
     reseau: 'TikTok Officiel',
-    emoji: '🎵',
     nom: '@nopalou.com',
     categorie: 'Compte professionnel · Créateur de contenu',
-    bio: 'Comparateur de prix N°1 au Sénégal 🇸🇳\nTrouvez le prix le moins cher à Dakar en 1-clic !\nnopalou.com',
+    bio: 'Comparateur de prix N°1 au Sénégal\nTrouvez le prix le moins cher à Dakar en 1-clic !\nnopalou.com',
     site: 'https://www.tiktok.com/@nopalou.com',
     hashtags: '#Nopalou #Dakar #Sénégal #BonPlan #PrixMoinsCher #shopping #fyp #senegal',
   },
   {
     reseau: 'Canal WhatsApp Officiel',
-    emoji: '',
     nom: 'Nopalou — Bons plans du jour',
     categorie: 'Canal de diffusion officiel',
-    bio: 'Les meilleurs prix et baisses du jour au Sénégal 🇸🇳\nMis à jour chaque matin.\nComparez sur nopalou.com',
+    bio: 'Les meilleurs prix et baisses du jour au Sénégal\nMis à jour chaque matin.\nComparez sur nopalou.com',
     site: 'https://whatsapp.com/channel/0029Vb8fc4bBadmW40AFKx33',
     hashtags: '',
   },
   {
     reseau: 'Twitter / X Officiel',
-    emoji: '𝕏',
     nom: '@nopalou_sn',
     categorie: 'Compte officiel',
     bio: 'Comparateur de prix N°1 au Sénégal. Produits, Immobilier, Télécom. Économisez sur vos achats à Dakar !',
@@ -318,8 +313,8 @@ Suivez notre Canal WhatsApp pour ne rater aucun bon plan : https://whatsapp.com/
 
 export default async function CommunicationPage() {
   const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
-  const jar    = await cookies()
-  const secret = jar.get('nopalou_admin')?.value ?? ''
+  const jar   = await cookies()
+  const token = jar.get('nopalou_admin_jwt')?.value || jar.get('nopalou_admin')?.value || ''
 
   let prixDecouverte = 2500
   let prixPro = 5000
@@ -328,7 +323,8 @@ export default async function CommunicationPage() {
   let tauxApporteur = 20
 
   try {
-    const r = await fetch(`${BACKEND}/api/settings`, { headers: { 'X-Admin-Secret': secret }, cache: 'no-store' })
+    const { adminHeaders } = require('@/app/actions/admin')
+    const r = await fetch(`${BACKEND}/api/settings`, { headers: adminHeaders(token), cache: 'no-store' })
     if (r.ok) {
       const s = await r.json()
       prixDecouverte = Number(s.plan_decouverte_prix) || 2500

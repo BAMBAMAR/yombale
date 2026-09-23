@@ -3,7 +3,7 @@
 
 const router = require('express').Router();
 const { pool } = require('../models/db');
-const { adminSecretOnly } = require('../middlewares/auth');
+const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rbac');
 const plansCache = require('../lib/plansCache');
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 
@@ -29,7 +29,7 @@ router.get('/public', async (req, res) => {
 });
 
 // ── GET /api/plans/admin/tous — Tous les forfaits pour la console d'administration
-router.get('/admin/tous', adminSecretOnly, async (req, res) => {
+router.get('/admin/tous', requireAdminAuth, async (req, res) => {
   try {
     const plans = await plansCache.getAllPlans(false);
     
@@ -65,7 +65,7 @@ router.get('/admin/tous', adminSecretOnly, async (req, res) => {
 });
 
 // ── POST /api/plans/admin — Création d'un nouveau plan (admin)
-router.post('/admin', adminSecretOnly, async (req, res) => {
+router.post('/admin', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { slug: customSlug, label, prix_mensuel, badge, couleur, avantages, limites, ordre, actif, description, categorie } = req.body;
     if (!label || !label.trim()) {
@@ -116,7 +116,7 @@ router.post('/admin', adminSecretOnly, async (req, res) => {
 });
 
 // ── PUT /api/plans/admin/:id — Mise à jour d'un forfait (admin)
-router.put('/admin/:id', adminSecretOnly, async (req, res) => {
+router.put('/admin/:id', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { id } = req.params;
     if (!id || id === 'undefined') {
@@ -168,7 +168,7 @@ router.put('/admin/:id', adminSecretOnly, async (req, res) => {
 });
 
 // ── DELETE /api/plans/admin/:id — Suppression d'un forfait (admin)
-router.delete('/admin/:id', adminSecretOnly, async (req, res) => {
+router.delete('/admin/:id', requireAdminAuth, requireAdminRole('super_admin', 'finance'), async (req, res) => {
   try {
     const { id } = req.params;
     if (!id || id === 'undefined') {
