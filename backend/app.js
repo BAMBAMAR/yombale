@@ -464,6 +464,7 @@ async function demarrerApp() {
       } else {
         console.log('[SCRAPER] Désactivé (SCRAPING_DISABLED=true)');
       }
+      try { require('./services/cron-sauvegarde'); } catch (e) { console.warn('[CRON SAUVEGARDE] Warning:', e.message); }
     } else {
       console.log('⚡ [MODE WEB SERVER] Démarrage de l\'API Web & crons');
       const { demarrerScraping, demarrerCronsMetier } = require('./services/scraper');
@@ -476,6 +477,7 @@ async function demarrerApp() {
       }
       try { require('./services/cron-relances-carnet'); } catch (e) { console.warn('[CRON CARNET] Warning:', e.message); }
       try { require('./services/cron-relances-prospects'); } catch (e) { console.warn('[CRON PROSPECTS] Warning:', e.message); }
+      try { require('./services/cron-sauvegarde'); } catch (e) { console.warn('[CRON SAUVEGARDE] Warning:', e.message); }
       try {
         const { executerRelancePaniers } = require('./services/relance-panier');
         const { executerTacheCron } = require('./lib/cronLogger');

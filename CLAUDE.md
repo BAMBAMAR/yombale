@@ -56,8 +56,13 @@
     - **5. Intégration npm & Protection Git (`package.json`, `.gitignore`)** :
       * Scripts ajoutés : `npm run db:backup`, `npm run db:restore`, `npm run test:pra`.
       * `.gitignore` mis à jour pour exclure strictement `backups/`, `*.sql.gz` et `*.sha256`.
+    - **6. Planification Automatique Quotidienne Node.js (`backend/services/cron-sauvegarde.js`, `backend/app.js`)** :
+      * Création du service `backend/services/cron-sauvegarde.js` planifiant automatiquement la sauvegarde complète chaque nuit à 02h00 GMT (`0 2 * * *`).
+      * Encadrement SRE par `executerTacheCron('sauvegarde_quotidienne', ...)` avec métadonnées enregistrées dans `cron_executions` et alertes critiques immédiates Telegram/Email en cas d'incident.
+      * Activation automatique au démarrage du serveur web et du worker dans `backend/app.js`.
   * **📊 Validation Qualité & Non-Régression** :
     - Test direct `npm run test:pra` : **100% PASS, sortie code 0**.
+    - Tests Unitaires Backend Jest (`npm run test:unit`) : **48/48 suites passées, 383/383 tests validés (100%)**.
     - Aucune perturbation sur la base de données de production active.
 
 - **Audit Final de Préparation à la Production (Production Readiness Review - PRR) & Intégration Wave Validée (24 septembre 2026)** 🚀🛡️💳✅📊 :
