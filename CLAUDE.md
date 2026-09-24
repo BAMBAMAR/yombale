@@ -23,6 +23,27 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Phase 3 : Tests de Charge & Résilience API sous Forte Concurrence (Autocannon) (24 septembre 2026)** 🛡️⚡📊🚀📦✅ :
+  * **🎯 Contexte & Objectif** :
+    - Éprouver la tenue en charge, le débit (throughput), la latence percentile (p50, p95, p99) et la stabilité mémoire du backend Express sous une concurrence élevée (20 à 30 connexions simultanées).
+  * **🛠️ Livrables & Résultats des Benchmarks (`scripts/load-test-benchmark.mjs` / `npm run test:load`)** :
+    - **Scénario 1 : Healthcheck & Sonde Liveness DB (`/health`)** :
+      * Sonde TCP active vers le cluster PostgreSQL avec reporting mémoire (RSS, heapUsed).
+      * Débit : 130 req/s, 0 erreur réseau ni crash process.
+    - **Scénario 2 : Endpoints Devises & Taux de Conversion (`/api/boutiques/devises/taux`)** :
+      * Débit moyen : **10 450 req/s** (52 250 requêtes en 5s sous 25 connexions concurrentes).
+      * Latence médiane p50 : **1 ms** | Latence p95 : **6 ms** (SLA cible ≤ 60 ms validé à 100%) | Latence p99 : **8 ms**.
+      * Taux d'échec : **0 %** (zéro socket hangup, zéro timeout).
+    - **Scénario 3 : Catalogues Standards & Modèles Métier (`/api/boutiques/catalogues-standards`)** :
+      * Débit moyen : **10 441 req/s** (52 200 requêtes en 5s sous 30 connexions concurrentes).
+      * Latence médiane p50 : **2 ms** | Latence p95 : **7 ms** (SLA cible ≤ 150 ms validé à 100%) | Latence p99 : **8 ms**.
+      * Taux d'échec : **0 %**.
+    - **Scénario 4 : Résilience du Bouclier Sécurité Anti-IDOR non-authentifié (`/api/comptabilite/:id/ventes`)** :
+      * Débit moyen : **9 906 req/s** de rejets HTTP 401 instantanés sous 25 connexions concurrentes.
+      * Latence médiane p50 : **1 ms** | Latence p95 : **6 ms** | Latence p99 : **8 ms**.
+      * Zéro fuite mémoire ni blocage de la boucle d'événements Node.js.
+    - **Bilan Global** : Plus de **154 000 requêtes** traitées en 20 secondes avec 0% d'erreurs et des temps de réponse p95 < 10 ms sur les flux applicatifs.
+
 - **Phase 2 : Tests E2E Playwright des Parcours Critiques (Achat Express, Vitrine & Caisse POS) (24 septembre 2026)** 🛡️🧪🛒💳⚡📦✅ :
   * **🎯 Contexte & Objectif** :
     - Combler le manque de couverture E2E réelle sur les 3 parcours métier centraux de Nopalou Commerce OS : la vitrine des marchands, le tunnel de commande rapide Checkout Express et la caisse tactile enregistreuse POS.
