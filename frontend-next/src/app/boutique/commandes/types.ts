@@ -16,6 +16,7 @@ export interface Commande {
   methode_paiement: string | null
   groupe_commande: string | null
   statut_sequestre?: string | null
+  produit_id?: string | null
 }
 
 export interface PanierAbandonne {

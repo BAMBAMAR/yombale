@@ -75,7 +75,8 @@ export function AgenceComparativeTable() {
         </p>
       </div>
 
-      <div style={{
+      {/* ── VERSION TABLEAU DESKTOP (>= 769px) ── */}
+      <div className="agence-comparatif-desktop" style={{
         background: '#FFFFFF',
         borderRadius: 20,
         border: '1.5px solid var(--border, #E8DDD2)',
@@ -85,7 +86,7 @@ export function AgenceComparativeTable() {
         {/* En-tête des colonnes */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(140px, 1fr) 1.2fr 1.3fr',
+          gridTemplateColumns: 'minmax(180px, 1fr) 1.2fr 1.3fr',
           background: 'var(--navy, #1C2B4A)',
           color: '#FFFFFF',
           padding: '16px 20px',
@@ -110,7 +111,7 @@ export function AgenceComparativeTable() {
               key={idx}
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'minmax(140px, 1fr) 1.2fr 1.3fr',
+                gridTemplateColumns: 'minmax(180px, 1fr) 1.2fr 1.3fr',
                 padding: '18px 20px',
                 borderBottom: idx < COMPARISONS.length - 1 ? '1px solid #F1EAE1' : 'none',
                 background: idx % 2 === 0 ? '#FFFFFF' : 'rgba(248, 245, 240, 0.5)',
@@ -140,6 +141,101 @@ export function AgenceComparativeTable() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── VERSION CARTES COMPARATIVES MOBILE (< 769px) ── */}
+      <div className="agence-comparatif-mobile">
+        {COMPARISONS.map((row, idx) => (
+          <div
+            key={idx}
+            style={{
+              background: '#FFFFFF',
+              border: '1.5px solid var(--border, #E8DDD2)',
+              borderRadius: 14,
+              padding: '14px 16px',
+              boxShadow: '0 2px 8px rgba(28, 43, 74, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              width: '100%',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div style={{
+              fontWeight: 800,
+              fontSize: 14,
+              color: 'var(--navy, #1C2B4A)',
+              lineHeight: 1.35,
+              borderBottom: '1px solid #F1EAE1',
+              paddingBottom: 8,
+            }}>
+              {row.critere}
+            </div>
+
+            {/* Classique */}
+            <div style={{
+              background: '#FEF2F2',
+              border: '1px solid #FEE2E2',
+              borderRadius: 9,
+              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                color: '#DC2626',
+                fontSize: 11.5,
+                fontWeight: 800,
+              }}>
+                <XCircle size={14} />
+                <span>Gestion Manuelle (Excel &amp; Papier)</span>
+              </div>
+              <p style={{
+                margin: 0,
+                fontSize: 12,
+                color: '#64748B',
+                lineHeight: 1.4,
+              }}>
+                {row.classique}
+              </p>
+            </div>
+
+            {/* Nopalou */}
+            <div style={{
+              background: '#F0FDF4',
+              border: '1.5px solid #BBF7D0',
+              borderRadius: 9,
+              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                color: '#15803D',
+                fontSize: 11.5,
+                fontWeight: 800,
+              }}>
+                <CheckCircle2 size={14} />
+                <span>Avec Nopalou Immo ERP</span>
+              </div>
+              <p style={{
+                margin: 0,
+                fontSize: 12,
+                color: 'var(--navy, #1C2B4A)',
+                fontWeight: 650,
+                lineHeight: 1.4,
+              }}>
+                {row.nopalou}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div style={{

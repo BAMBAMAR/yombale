@@ -88,10 +88,9 @@ function HomeDualTrackContainerContent({
           ZONE HERO : Tabs + H1 + Passerelles Pro
           (sans recherche ni catégories)
       ══════════════════════════════════════════ */}
-      <section style={{
+      <section className="hero-dualtrack-section" style={{
         background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 60%, var(--bg, #F8F5F0) 100%)',
         borderBottom: '1px solid var(--border, #E8DDD2)',
-        padding: '12px 20px 16px',
         position: 'relative',
         overflow: 'hidden',
         width: '100%',
@@ -113,7 +112,7 @@ function HomeDualTrackContainerContent({
         {activeTab === 'acheteur' ? (
           /* VUE 1 : CATALOGUE ACHETEUR, COMPARATEUR DE PRIX & FILTRES */
           <div>
-            {/* Catégories + Recherche : pont entre hero et résultats */}
+            {/* Recherche + Catégories : pont entre hero et résultats */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -122,13 +121,13 @@ function HomeDualTrackContainerContent({
               width: '100%',
               boxSizing: 'border-box',
             }}>
+              {/* Barre de recherche (Priorité N°1) */}
+              <div style={{ width: '100%' }}>
+                {searchBarSlot}
+              </div>
               {/* Ruban de catégories */}
               <div style={{ width: '100%' }}>
                 {categoriesSlot}
-              </div>
-              {/* Barre de recherche */}
-              <div style={{ width: '100%' }}>
-                {searchBarSlot}
               </div>
             </div>
 

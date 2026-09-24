@@ -125,6 +125,7 @@ export default function Commandes({
                     key={item[0].groupe_commande ?? i}
                     commandes={item}
                     boutiqueId={boutiqueId}
+                    boutiqueSlug={boutique?.slug || boutiqueId}
                     onUpdate={load}
                     onDispatch={setDispatchCommande}
                     onRetour={setRetourCommande}
@@ -134,6 +135,7 @@ export default function Commandes({
                     key={item.id}
                     commande={item}
                     boutiqueId={boutiqueId}
+                    boutiqueSlug={boutique?.slug || boutiqueId}
                     onUpdate={load}
                     onDispatch={setDispatchCommande}
                     onRetour={setRetourCommande}

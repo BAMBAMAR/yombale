@@ -27,20 +27,21 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
 
           {/* 1. TABS EN SOMMET */}
           {tabSelectorSlot && (
-            <div style={{ width: '100%', maxWidth: 540, marginBottom: 12 }}>
+            <div className="hero-tabs-wrap" style={{ width: '100%', maxWidth: 540, marginBottom: 12 }}>
               {tabSelectorSlot}
             </div>
           )}
 
           {/* 2. H1 & Accroche */}
-          <div style={{ width: '100%' }}>
-            <div style={{ marginBottom: 6 }}>
+          <div className="hero-header-text" style={{ width: '100%' }}>
+            <div className="hero-badge-wrap" style={{ marginBottom: 6 }}>
               <span className="badge-npl badge-npl-accent" style={{ fontSize: 11 }}>
                 Plateforme Officielle · Comparateur &amp; Boutiques Dakar
               </span>
             </div>
 
             <h1
+              className="hero-main-title"
               style={{
                 fontSize: 'clamp(18px, 4.5vw, 26px)',
                 fontWeight: 900,
@@ -55,6 +56,7 @@ export default function HeroAcheteurView({ tabSelectorSlot }: HeroAcheteurViewPr
             </h1>
 
             <p
+              className="hero-subtitle"
               style={{
                 fontSize: 13,
                 color: 'var(--text2, #5A4E42)',

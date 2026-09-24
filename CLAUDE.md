@@ -23,6 +23,30 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Optimisation Ergonomie Mobile (Commandes, Accueil & Comparatif Agence Immo) (24 septembre 2026)** 📱🎨🛍️⚡📦✅ :
+  * **🎯 Contexte & Objectif** :
+    - Améliorer l'expérience utilisateur sur mobile (smartphones) suite aux retours d'usage : suppression de la troncature des noms de produits sur les cartes de commande, accès direct à la fiche produit, mise en avant immédiate de la recherche sur la page d'accueil et lisibilité du comparatif agence immobilière.
+  * **🛠️ Correctifs et Améliorations Appliqués** :
+    - **1. Affichage & Accès Fiche Produit dans les Commandes (`frontend-next/src/app/boutique/commandes/`)** :
+      * `CommandeCard.tsx` : Suppression de la troncature agressive du titre produit en version mobile via `wordBreak: 'break-word'`, passage en layout flexible sans débordement.
+      * Ajout d'un lien direct `Fiche ↗` dans le badge d'en-tête (avec `e.stopPropagation()` pour ne pas déclencher l'ouverture/fermeture de l'accordéon).
+      * Ajout d'un bouton pleine largeur `Voir la fiche du produit` avec icône `ExternalLink` (`lucide-react`) dans les détails dépliés de la commande menant à `/boutiques/${boutiqueSlug}/produits/${commande.produit_id}`.
+      * Nettoyage du formatage de quantité afin d'éviter la redondance d'affichage (`1x ... × 1`).
+      * `types.ts`, `CommandeGroupeCard.tsx`, `Commandes.tsx` : Prise en charge et propagation typée du champ `produit_id`.
+    - **2. Restructuration Mobile de la Page d'Accueil (`HomeDualTrackContainer.tsx`, `homepage.css`, `HeroAcheteurView.tsx`)** :
+      * Réorganisation ergonomique : la barre de recherche (`searchBarSlot`) est désormais positionnée immédiatement au-dessus des catégories de produits (`categoriesSlot`), garantissant un accès instantané sans scroll (*above-the-fold*).
+      * Masquage intelligent des pavés B2B encombrants et tronqués sur mobile (`.hero-passerelles-wrap` masqué en `@media (max-width: 768px)`).
+      * Centrage harmonieux sur smartphone : en-tête des onglets, badge Hero, titre principal H1 et sous-titre centrés (`text-align: center`, `justify-content: center`).
+      * Puces de réassurance ("Pay Safe Séquestre", etc.) passées en `flex-wrap: wrap` pour éviter le rognage horizontal.
+    - **3. Transformation Responsive du Comparatif ERP Immobilier (`AgenceComparativeTable.tsx`, `homepage.css`)** :
+      * Remplacement du tableau 3 colonnes rigide par un système de cartes comparatives empilées dédiées au mobile (`.agence-comparatif-mobile`).
+      * Chaque point de comparaison affiche de manière aérée : l'intitulé du critère, la friction "Gestion Manuelle" (fond teinté rouge/alerte) et le gain "Avec Nopalou Immo ERP" (fond vert émeraude avec coche validée).
+      * Conservation du tableau complet sur desktop (`min-width: 769px`).
+  * **📊 Validation Qualité & Non-Régression** :
+    - Compilation TypeScript stricte (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop (`npm run lint:slop`) : **0 silent catch, 0 composant monolithe**.
+    - Tests Unitaires Frontend (`run-unit-tests.mjs`) : **69/69 PASS (100%)**.
+
 - **Phase 4 : Audit QA Pré-Production Senior & Remédiations Bloquantes (24 septembre 2026)** 🛡️🔍🧪⚡📦✅ :
   * **🎯 Contexte & Objectif** :
     - Réalisation d'un audit QA exhaustif, impartial et factuel de la plateforme Nopalou Commerce OS & Immobilier par un QA Lead / Release Manager Senior.

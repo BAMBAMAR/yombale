@@ -857,6 +857,15 @@
   flex-shrink: 0 !important;
 }
 
+.hero-dualtrack-section {
+  padding: 12px 20px 16px;
+}
+@media (max-width: 768px) {
+  .hero-dualtrack-section {
+    padding: 10px 14px 12px;
+  }
+}
+
 /* Passerelles Rapides Pro (Commercants et Immobilier) */
 .hero-passerelles-wrap {
   width: 100%;
@@ -1045,30 +1054,23 @@
 .hero-guarantee-mobile-chips {
   display: flex;
   align-items: center;
-  gap: 5px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
+  gap: 6px;
+  flex-wrap: wrap;
   width: 100%;
-}
-.hero-guarantee-mobile-chips::-webkit-scrollbar {
-  display: none;
 }
 
 .hero-guarantee-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 7px;
+  padding: 3px 8px;
   border-radius: 6px;
   background: #FFFFFF;
   border: 1px solid #FED7AA;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 750;
   color: var(--navy, #1C2B4A);
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .hero-guarantee-chip.chip-safe {
@@ -1174,6 +1176,44 @@
 
   .hero-guarantee-mobile {
     display: flex !important;
+  }
+
+  .hero-passerelles-wrap {
+    display: none !important;
+  }
+
+  .hero-tabs-wrap {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .hero-header-text {
+    text-align: center !important;
+  }
+
+  .hero-badge-wrap {
+    display: flex !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .hero-main-title {
+    text-align: center !important;
+  }
+
+  .hero-subtitle {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .hero-guarantee-mobile-chips {
+    justify-content: center !important;
+  }
+
+  .hero-guarantee-mobile-links {
+    justify-content: center !important;
+    gap: 16px !important;
   }
 
   .hero-mode-tab-btn {
@@ -1339,5 +1379,26 @@
   .merchant-pilier-btn .tab-badge {
     font-size: 8.5px;
     padding: 1px 4px;
+  }
+}
+
+/* ── Tableau Comparatif Agence Immo (Desktop vs Mobile) ────────── */
+.agence-comparatif-desktop {
+  display: block;
+}
+.agence-comparatif-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .agence-comparatif-desktop {
+    display: none !important;
+  }
+  .agence-comparatif-mobile {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
   }
 }

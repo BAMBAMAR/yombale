@@ -11,6 +11,7 @@ import CommandeCard from './CommandeCard'
 interface CommandeGroupeCardProps {
   commandes: Commande[]
   boutiqueId: string
+  boutiqueSlug?: string
   onUpdate: () => void
   onDispatch?: (c: Commande) => void
   onRetour?: (c: Commande) => void
@@ -19,6 +20,7 @@ interface CommandeGroupeCardProps {
 export default function CommandeGroupeCard({
   commandes,
   boutiqueId,
+  boutiqueSlug,
   onUpdate,
   onDispatch,
   onRetour,
@@ -123,6 +125,7 @@ export default function CommandeGroupeCard({
               key={c.id}
               commande={c}
               boutiqueId={boutiqueId}
+              boutiqueSlug={boutiqueSlug}
               onUpdate={onUpdate}
               onDispatch={onDispatch}
               onRetour={onRetour}
