@@ -22,7 +22,10 @@
     "test:admin": "playwright test tests/e2e/04-admin.spec.ts",
     "test:api": "playwright test tests/e2e/05-api.spec.ts",
     "test:load": "node scripts/load-test-benchmark.mjs",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "db:backup": "node scripts/backup-database.mjs",
+    "db:restore": "node scripts/restore-database.mjs",
+    "test:pra": "node scripts/pra-drill-test.mjs"
   },
   "dependencies": {
     "@sentry/node": "^10.65.0",
