@@ -23,6 +23,39 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Remédiation Complète : Accessibilité Numérique (WCAG 2.1 AA), UX Inclusive, Ergonomie Mobile & Localisation Sénégal (24 septembre 2026)** ♿📱🌍🇸🇳🛡️⚡📦✅ :
+  * **🎯 Contexte & Objectif** :
+    - Suite à un audit approfondi d'accessibilité numérique, d'UX inclusive, de localisation sénégalaise et d'ergonomie mobile, mise en œuvre d'un plan de remédiation complet résolvant l'ensemble des anomalies identifiées (ANO-01 à ANO-10).
+    - Respect strict des standards WCAG 2.1 AA, fluidification de la saisie sur smartphones d'entrée/milieu de gamme et élimination des frictions pour les utilisateurs au Sénégal.
+  * **🛠️ Correctifs et Améliorations Appliqués** :
+    - **1. Contrastes Typographiques WCAG AA (ANO-01)** :
+      * `typography.css` (`.text-accent`), `globals.css` (`.badge-npl-accent`), `produit.css` (`.guide-prix-best-badge`, `.guide-prix-marchand-lien`) : Adoption systématique du token `--accent-text: #A64800` (ratio > 5.2:1 sur fond blanc/sable), garantissant la conformité stricte au critère WCAG AA 1.4.3 (≥ 4.5:1).
+    - **2. Résolution du Nesting Interactif Invalide HTML5 (ANO-02)** :
+      * `ProduitsListe.tsx` & `ImmoCard.tsx` : Séparation structurelle en convertissant la racine de la carte en `<article>`, le lien de navigation `<Link>` englobant uniquement la zone visuelle/informative, et le composant `<CardActions>` (boutons favoris / comparaison) positionné en tant que sibling indépendant hors de toute balise `<a>` (élimination de l'erreur interactive `<button>` dans `<a>`).
+    - **3. Ergonomie Mobile, Saisie OTP WhatsApp & Formulaires de Commande (ANO-03, ANO-04)** :
+      * `InscriptionForm.tsx` & `ConnexionForm.tsx` : Ajout d'`inputMode="numeric"`, `pattern="[0-9]*"` et `autoComplete="one-time-code"` pour l'OTP WhatsApp (déclenchement automatique du pavé numérique et autofill du code SMS/WhatsApp sur mobile).
+      * `InscriptionForm.tsx` : Internationalisation du bloc d'acceptation des CGU / Confidentialité sur la branche WhatsApp avec `t('auth.termsIntro')`, `t('auth.termsAnd')`, `t('auth.privacyPolicy')`.
+      * `DrawerCartOnlineOrderForm.tsx` : Association accessible des `<label htmlFor="...">` avec les champs respectifs (`checkout_client_nom`, `checkout_client_tel`, `checkout_client_adresse`), intégration d'`autoComplete` standardisés (`name`, `tel`, `street-address`), et structuration du groupe de paiement en `role="radiogroup"` avec `role="radio"` et `aria-checked`.
+    - **4. Accessibilité de l'Assistant Web Interactif (ANO-05, ANO-06)** :
+      * `ChatbotWidget.tsx` : Attribution du rôle `role="log"` avec `aria-live="polite"` et `aria-relevant="additions text"` sur le conteneur de messages pour restitution fluide par synthèse vocale.
+      * Ajout d'un `aria-label` descriptif sur le champ de saisie du bot.
+      * Écoute globale de la touche `Escape` (effet `keydown`) permettant de fermer instantanément la boîte de dialogue au clavier.
+    - **5. Localisation Télécom Nationale Sénégal (ANO-07)** :
+      * `format.ts` : Extension de la regex `formatPhone` pour intégrer les indicatifs nationaux `71` (Free Sénégal) et `30` (Expresso fixe) aux côtés des 77, 78, 76, 75, 70 et 33.
+    - **6. Français Naturel & Accessibilité des Claviers Métier (ANO-08, ANO-09)** :
+      * `PosFastTender.tsx` : Remplacement du terme "Fast Tender" par l'expression naturelle "Appoints Rapides Espèces".
+      * `AgenceBottomNav.tsx` : Remplacement du libellé "Leads" par "Prospects" en adéquation avec le module CRM.
+      * `PosLockPinPad.tsx` : Ajout d'`aria-label` explicites sur l'ensemble des touches du clavier PIN (`⌫` -> "Effacer le dernier chiffre", `C` -> "Réinitialiser le code PIN", `0`-`9` -> "Chiffre X") et sur le champ masqué d'écoute physique.
+    - **7. Cohérence des Messages de Validation de Mot de Passe (ANO-10)** :
+      * `fr/errors.ts`, `en/errors.ts`, `ar/errors.ts` : Harmonisation du libellé `passwordTooShort` à 8 caractères en conformité avec la politique de validation du formulaire (`minLength={8}`).
+  * **📊 Validation Qualité & Non-Régression** :
+    - Compilation TypeScript stricte (`npx tsc --noEmit`) : **0 erreur**.
+    - Linter Anti-AI-Slop & Anti-Silent-Catches (`npm run lint:slop`) : **0 silent catch, 0 composant monolithe**.
+    - Tests Unitaires Frontend (`run-unit-tests.mjs`) : **69/69 PASS (100%)**.
+    - Tests Unitaires Backend Jest : **373/373 PASS (100%)**.
+    - Tests d'Intégration & Sécurité Multi-Tenant : **12/12 PASS (100%)**.
+    - Quality Gate Global (`quality-gate.mjs`) : **Validé à 100%**.
+
 - **Optimisation Ergonomie Mobile (Commandes, Accueil & Comparatif Agence Immo) (24 septembre 2026)** 📱🎨🛍️⚡📦✅ :
   * **🎯 Contexte & Objectif** :
     - Améliorer l'expérience utilisateur sur mobile (smartphones) suite aux retours d'usage : suppression de la troncature des noms de produits sur les cartes de commande, accès direct à la fiche produit, mise en avant immédiate de la recherche sur la page d'accueil et lisibilité du comparatif agence immobilière.

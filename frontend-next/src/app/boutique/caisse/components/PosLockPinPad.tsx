@@ -53,6 +53,13 @@ export default function PosLockPinPad({
           <button
             key={val}
             type="button"
+            aria-label={
+              val === '⌫'
+                ? 'Effacer le dernier chiffre'
+                : val === 'C'
+                ? 'Réinitialiser le code PIN'
+                : `Chiffre ${val}`
+            }
             onClick={(e) => {
               e.preventDefault()
               if (val === 'C') {
@@ -90,6 +97,7 @@ export default function PosLockPinPad({
         inputMode="numeric"
         pattern="[0-9]*"
         maxLength={6}
+        aria-label="Code PIN de déverrouillage"
         value={codePinSaisi}
         onChange={(e) => {
           const val = e.target.value.replace(/\D/g, '')

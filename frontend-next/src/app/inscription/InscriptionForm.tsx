@@ -516,9 +516,12 @@ export default function InscriptionForm() {
                 <input
                   id="code"
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="one-time-code"
                   required
                   value={code}
-                  onChange={e => setCode(e.target.value)}
+                  onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
                   placeholder={t('auth.waCodePlaceholder')}
                   maxLength={6}
                   className="auth-input auth-input--icon"
@@ -556,10 +559,10 @@ export default function InscriptionForm() {
           )}
 
           <p className="auth-cgu">
-            En créant un compte, vous acceptez nos{' '}
+            {t('auth.termsIntro')}{' '}
             <Link href="/cgu" className="auth-link">CGU</Link>
-            {' '}et notre{' '}
-            <Link href="/confidentialite" className="auth-link">politique de confidentialité</Link>.
+            {' '}{t('auth.termsAnd')}{' '}
+            <Link href="/confidentialite" className="auth-link">{t('auth.privacyPolicy')}</Link>.
           </p>
 
           <button type="submit" disabled={loadingWa} className={`auth-submit-btn${loadingWa ? ' auth-submit-btn--pending' : ''}`} style={{ background: '#25D366' }}>

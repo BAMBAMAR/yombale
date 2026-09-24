@@ -8,7 +8,7 @@ export const errors: LocaleTranslations['errors'] = {
   fieldRequired: 'This field is required.',
   invalidEmail: 'Invalid email address.',
   invalidPhone: 'Invalid phone number.',
-  passwordTooShort: 'Password must be at least 6 characters.',
+  passwordTooShort: 'Password must be at least 8 characters.',
   notFound: 'Item not found.',
   serverError: 'Remote server returned an error.',
   invalidAmount: 'Invalid amount.',

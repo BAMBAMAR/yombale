@@ -81,6 +81,17 @@ export default function ChatbotWidget() {
     }
   }, [isOpen, messages])
 
+  useEffect(() => {
+    if (!isOpen) return
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [isOpen])
+
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || input).trim()
     if (!query || isLoading) return
@@ -259,7 +270,13 @@ export default function ChatbotWidget() {
           </div>
 
           {/* Messages Body */}
-          <div className="npl-chat-body">
+          <div
+            className="npl-chat-body"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-label="Historique des messages de l'assistant"
+          >
             {messages.map((m) => (
               <ChatbotMessageItem
                 key={m.id}
@@ -284,6 +301,7 @@ export default function ChatbotWidget() {
               type="text"
               className="npl-chat-input"
               placeholder="Posez votre question (ex: iPhone, livraison...)"
+              aria-label="Votre message ou question pour l'assistant"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}

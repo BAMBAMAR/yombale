@@ -97,12 +97,12 @@ export function lienBoutiqueWhatsapp(slug: string): string {
 export function formatPhone(tel: string | null | undefined): string {
   if (!tel) return ''
   const clean = tel.replace(/[\s\-\.\(\)]/g, '')
-  // Cas numéro sénégalais 9 chiffres (ex: 771234567 ou 70/75/76/78/33...)
-  if (/^(77|78|76|75|70|33)\d{7}$/.test(clean)) {
+  // Cas numéro sénégalais 9 chiffres (ex: 77/78 Orange, 76/71 Free, 75 Promobile, 70 Expresso, 33/30 Fixe...)
+  if (/^(77|78|76|71|75|70|33|30)\d{7}$/.test(clean)) {
     return `${clean.slice(0, 2)} ${clean.slice(2, 5)} ${clean.slice(5, 7)} ${clean.slice(7, 9)}`
   }
   // Cas indicatif +221 ou 00221 suivi de 9 chiffres
-  if (/^(?:\+221|00221)(77|78|76|75|70|33)\d{7}$/.test(clean)) {
+  if (/^(?:\+221|00221)(77|78|76|71|75|70|33|30)\d{7}$/.test(clean)) {
     const core = clean.replace(/^(?:\+221|00221)/, '')
     return `+221 ${core.slice(0, 2)} ${core.slice(2, 5)} ${core.slice(5, 7)} ${core.slice(7, 9)}`
   }

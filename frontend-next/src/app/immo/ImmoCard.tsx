@@ -52,57 +52,70 @@ export default function ImmoCard({ a }: { a: AnnonceImmo }) {
   const isVente = a.transaction === 'vente'
 
   return (
-    <Link href={`/immo/${a.id}`} className="immo-card">
-      <div className="immo-card-img">
-        <ExternalImg 
-          src={cloudinaryHQ(img, { width: 480 })} 
-          alt={a.titre} 
-          fallback={typeIcon} 
-          fallbackClassName="immo-img-placeholder" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-          loading="lazy" 
-        />
-        <span className={`immo-transaction-badge${isVente ? ' immo-transaction-badge--vente' : ''}`}>
-          {isVente ? 'Vente' : 'Location'}
-        </span>
-        {a.sponsorisee && (
-          <span className="immo-sponsored-badge">Sponsorisé</span>
-        )}
-      </div>
-
-      <div className="immo-card-body">
-        {a.type_bien && (
-          <span className="immo-type-tag">{typeIcon} {a.type_bien}</span>
-        )}
-        <h3 className="immo-titre">{a.titre}</h3>
-        <p className="immo-localisation">{localisation}</p>
-
-        <div className="immo-specs">
-          {a.surface_m2 && (
-            <span className="immo-spec">{a.surface_m2} m²</span>
-          )}
-          {a.nb_pieces && (
-            <span className="immo-spec">{a.nb_pieces} pièce{a.nb_pieces > 1 ? 's' : ''}</span>
-          )}
-          {a.nb_chambres && (
-            <span className="immo-spec">{a.nb_chambres} ch.</span>
-          )}
-          {a.meuble && (
-            <span className="immo-spec">Meublé</span>
-          )}
-        </div>
-
-        <div className="immo-card-footer">
-          <span className="immo-prix">
-            {a.prix ? fcfa(a.prix) : 'Prix sur demande'}
-            {!isVente && a.prix ? <span className="immo-prix-periode">/mois</span> : ''}
+    <article className="immo-card">
+      <Link
+        href={`/immo/${a.id}`}
+        style={{
+          textDecoration: 'none',
+          color: 'inherit',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+        }}
+      >
+        <div className="immo-card-img">
+          <ExternalImg 
+            src={cloudinaryHQ(img, { width: 480 })} 
+            alt={a.titre} 
+            fallback={typeIcon} 
+            fallbackClassName="immo-img-placeholder" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            loading="lazy" 
+          />
+          <span className={`immo-transaction-badge${isVente ? ' immo-transaction-badge--vente' : ''}`}>
+            {isVente ? 'Vente' : 'Location'}
           </span>
-          {a.source && SOURCE_LABELS[a.source] && (
-            <span className="immo-source">{SOURCE_LABELS[a.source]}</span>
+          {a.sponsorisee && (
+            <span className="immo-sponsored-badge">Sponsorisé</span>
           )}
         </div>
+
+        <div className="immo-card-body">
+          {a.type_bien && (
+            <span className="immo-type-tag">{typeIcon} {a.type_bien}</span>
+          )}
+          <h3 className="immo-titre">{a.titre}</h3>
+          <p className="immo-localisation">{localisation}</p>
+
+          <div className="immo-specs">
+            {a.surface_m2 && (
+              <span className="immo-spec">{a.surface_m2} m²</span>
+            )}
+            {a.nb_pieces && (
+              <span className="immo-spec">{a.nb_pieces} pièce{a.nb_pieces > 1 ? 's' : ''}</span>
+            )}
+            {a.nb_chambres && (
+              <span className="immo-spec">{a.nb_chambres} ch.</span>
+            )}
+            {a.meuble && (
+              <span className="immo-spec">Meublé</span>
+            )}
+          </div>
+
+          <div className="immo-card-footer">
+            <span className="immo-prix">
+              {a.prix ? fcfa(a.prix) : 'Prix sur demande'}
+              {!isVente && a.prix ? <span className="immo-prix-periode">/mois</span> : ''}
+            </span>
+            {a.source && SOURCE_LABELS[a.source] && (
+              <span className="immo-source">{SOURCE_LABELS[a.source]}</span>
+            )}
+          </div>
+        </div>
+      </Link>
+      <div style={{ padding: '0 16px 12px' }}>
         <CardActions id={a.id} nom={a.titre} type="immo" />
       </div>
-    </Link>
+    </article>
   )
 }

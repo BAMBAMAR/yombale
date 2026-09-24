@@ -66,7 +66,7 @@ export function AgenceBottomNav({
         aria-label="CRM Prospects et acquéreurs"
       >
         <Users2 size={20} />
-        <span>Leads</span>
+        <span>Prospects</span>
       </Link>
 
       {/* 5. Menu / Plus (Drawer) */}

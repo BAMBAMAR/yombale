@@ -94,7 +94,7 @@
 .badge-npl-warning { background: #FFFBEB; color: #B45309; border: 1px solid #FCD34D; }
 .badge-npl-danger  { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
 .badge-npl-info    { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
-.badge-npl-accent  { background: var(--orange2); color: var(--accent); border: 1px solid rgba(199,91,0,0.25); }
+.badge-npl-accent  { background: var(--orange2); color: var(--accent-text, #A64800); border: 1px solid rgba(199,91,0,0.25); }
 .badge-npl-navy    { background: var(--surface-subtle); color: var(--navy); border: 1px solid var(--border-medium); }
 
 /* Cartes et conteneurs surfaces standardisés */

@@ -8,7 +8,7 @@ export const errors: LocaleTranslations['errors'] = {
   fieldRequired: 'هذا الحقل مطلوب.',
   invalidEmail: 'عنوان البريد الإلكتروني غير صالح.',
   invalidPhone: 'رقم الهاتف غير صالح.',
-  passwordTooShort: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.',
+  passwordTooShort: 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.',
   notFound: 'العنصر غير موجود.',
   serverError: 'أرجع الخادم البعيد خطأ.',
   invalidAmount: 'المبلغ غير صالح.',

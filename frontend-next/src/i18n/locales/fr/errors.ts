@@ -6,7 +6,7 @@ export const errors = {
   fieldRequired: 'Ce champ est obligatoire.',
   invalidEmail: 'Adresse email invalide.',
   invalidPhone: 'Numéro de téléphone invalide.',
-  passwordTooShort: 'Le mot de passe doit comporter au moins 6 caractères.',
+  passwordTooShort: 'Le mot de passe doit comporter au moins 8 caractères.',
   notFound: 'Élément introuvable.',
   serverError: 'Le serveur distant a renvoyé une erreur.',
   invalidAmount: 'Montant invalide.',

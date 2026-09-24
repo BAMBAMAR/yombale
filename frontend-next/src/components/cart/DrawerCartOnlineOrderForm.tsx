@@ -101,6 +101,7 @@ export default function DrawerCartOnlineOrderForm({
 
       <div>
         <label
+          htmlFor="checkout_client_nom"
           style={{
             fontSize: 11.5,
             fontWeight: 700,
@@ -112,8 +113,10 @@ export default function DrawerCartOnlineOrderForm({
           {t('account.fullName')} *
         </label>
         <input
+          id="checkout_client_nom"
           type="text"
           required
+          autoComplete="name"
           placeholder="Ex: Babacar Ndiaye"
           value={clientNom}
           onChange={(e) => setClientNom(e.target.value)}
@@ -123,6 +126,7 @@ export default function DrawerCartOnlineOrderForm({
 
       <div>
         <label
+          htmlFor="checkout_client_tel"
           style={{
             fontSize: 11.5,
             fontWeight: 700,
@@ -134,7 +138,10 @@ export default function DrawerCartOnlineOrderForm({
           {t('common.phone')} *
         </label>
         <input
+          id="checkout_client_tel"
           type="tel"
+          inputMode="tel"
+          autoComplete="tel"
           required
           placeholder="Ex: 77 123 45 67"
           value={clientTel}
@@ -145,6 +152,7 @@ export default function DrawerCartOnlineOrderForm({
 
       <div>
         <label
+          htmlFor="checkout_client_adresse"
           style={{
             fontSize: 11.5,
             fontWeight: 700,
@@ -156,7 +164,9 @@ export default function DrawerCartOnlineOrderForm({
           {t('shop.deliveryAddress')}
         </label>
         <input
+          id="checkout_client_adresse"
           type="text"
+          autoComplete="street-address"
           placeholder="Ex: Sacré-Cœur 3, près du rond-point"
           value={clientAdresse}
           onChange={(e) => setClientAdresse(e.target.value)}
@@ -166,6 +176,7 @@ export default function DrawerCartOnlineOrderForm({
 
       <div>
         <label
+          id="checkout_payment_label"
           style={{
             fontSize: 11.5,
             fontWeight: 700,
@@ -176,11 +187,17 @@ export default function DrawerCartOnlineOrderForm({
         >
           {t('common.paymentMethod')}
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+        <div
+          role="radiogroup"
+          aria-labelledby="checkout_payment_label"
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}
+        >
           {PAYMENT_METHODS.map((p) => (
             <button
               key={p.value}
               type="button"
+              role="radio"
+              aria-checked={methodePaiement === p.value}
               onClick={() => setMethodePaiement(p.value)}
               className={`payment-chip-btn ${methodePaiement === p.value ? 'selected' : ''}`}
               style={{

@@ -155,27 +155,37 @@ export default function ProduitsListe({
             : `/produit/${p.id}`;
             
           return (
-          <Link key={p.id} href={linkHref} style={{ display: 'contents' }}>
-            <article className={`card-produit${ticketClass}`}>
-              <div className="card-img">
-                {estPromo && p.prix_min && p.prix_max && (
-                  <span className="badge-promo">
-                    -{Math.round((1 - p.prix_min / p.prix_max) * 100)}%
-                  </span>
+            <article key={p.id} className={`card-produit${ticketClass}`}>
+              <Link
+                href={linkHref}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  flex: 1,
+                }}
+              >
+                <div className="card-img">
+                  {estPromo && p.prix_min && p.prix_max && (
+                    <span className="badge-promo">
+                      -{Math.round((1 - p.prix_min / p.prix_max) * 100)}%
+                    </span>
+                  )}
+                  <ExternalImg src={p.image_url} alt={p.nom} fallbackClassName="card-img-placeholder" />
+                </div>
+                {p.marque && <p className="marque">{p.marque}</p>}
+                <p className="nom">{p.nom}</p>
+                <p className="prix">{fcfa(p.prix_min)}</p>
+                {p.nb_offres != null && p.nb_offres > 0 && (
+                  <p style={{ fontSize: '12px', color: 'var(--text3)' }}>
+                    {p.nb_offres} offre{p.nb_offres > 1 ? 's' : ''}
+                  </p>
                 )}
-                <ExternalImg src={p.image_url} alt={p.nom} fallbackClassName="card-img-placeholder" />
-              </div>
-              {p.marque && <p className="marque">{p.marque}</p>}
-              <p className="nom">{p.nom}</p>
-              <p className="prix">{fcfa(p.prix_min)}</p>
-              {p.nb_offres != null && p.nb_offres > 0 && (
-                <p style={{ fontSize: '12px', color: 'var(--text3)' }}>
-                  {p.nb_offres} offre{p.nb_offres > 1 ? 's' : ''}
-                </p>
-              )}
+              </Link>
               <CardActions id={p.id} nom={p.nom} categorie={p.categorie} />
             </article>
-          </Link>
           );
         }); })()}
       </div>

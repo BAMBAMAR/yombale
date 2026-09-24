@@ -37,6 +37,6 @@ h1, h2, h3, h4, h5, h6 {
 .font-black { font-weight: 900; }
 
 .text-navy { color: var(--navy); }
-.text-accent { color: var(--accent); }
+.text-accent { color: var(--accent-text, #A64800); }
 .text-price { color: var(--price); }
 .text-muted { color: var(--text-muted); }

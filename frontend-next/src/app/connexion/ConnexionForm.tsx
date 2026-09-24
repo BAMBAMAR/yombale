@@ -421,6 +421,8 @@ export default function ConnexionForm() {
                   key="telephone-input"
                   id="telephone"
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   required
                   value={telephone || ''}
                   onChange={e => setTelephone(e.target.value)}
@@ -439,9 +441,12 @@ export default function ConnexionForm() {
                   key="code-input"
                   id="code"
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="one-time-code"
                   required
                   value={code || ''}
-                  onChange={e => setCode(e.target.value)}
+                  onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
                   placeholder={t('auth.waCodePlaceholder')}
                   maxLength={6}
                   className="auth-input auth-input--icon"

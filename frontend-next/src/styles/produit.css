@@ -2341,13 +2341,13 @@
 }
 .guide-prix-marchand-row--best { border-color: var(--accent); background: #fff8f4; }
 .guide-prix-marchand-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.guide-prix-best-badge { font-size: 11px; color: var(--accent); font-weight: 700; }
+.guide-prix-best-badge { font-size: 11px; color: var(--accent-text, #A64800); font-weight: 700; }
 .guide-prix-marchand-nom { font-size: 13px; font-weight: 600; color: var(--navy); }
 .guide-prix-marchand-desc { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; }
 .guide-prix-stock-badge { font-size: 11px; color: var(--red); }
 .guide-prix-marchand-prix { font-size: 14px; font-weight: 800; color: var(--navy); }
 .guide-prix-marchand-lien {
-  font-size: 12px; color: var(--accent); font-weight: 600;
+  font-size: 12px; color: var(--accent-text, #A64800); font-weight: 600;
   text-decoration: none; white-space: nowrap;
 }
 
