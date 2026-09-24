@@ -6,6 +6,8 @@ import { Clock, PackageCheck, Truck, CheckCircle2, MessageCircle, Search, AlertC
 import { useTranslation } from '@/i18n/context'
 import { fcfa } from '@/lib/format'
 
+import ModalSignalerProbleme from './components/ModalSignalerProbleme'
+
 interface CommandeSuivie {
   id: string
   reference: string
@@ -36,6 +38,7 @@ export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientPr
   const [loading, setLoading] = useState(false)
   const [commandes, setCommandes] = useState<CommandeSuivie[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [commandeLitige, setCommandeLitige] = useState<CommandeSuivie | null>(null)
   const { t } = useTranslation()
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
@@ -117,7 +120,6 @@ export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientPr
             className="npl-btn npl-btn-primary npl-btn-lg"
             style={{ flex: '0 0 auto', color: '#ffffff', whiteSpace: 'nowrap', padding: '0 22px' }}
           >
-            <span>{loading ? '' : ''}</span>
             <span>{loading ? t('account.trackOrderSearching') : t('account.trackOrderSearch')}</span>
           </button>
         </form>
@@ -206,7 +208,7 @@ export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientPr
                       }}
                     >
                       <CreditCard size={16} />
-                      <span>💳 Finaliser mon paiement échelonné</span>
+                      <span>Finaliser mon paiement échelonné</span>
                       <ArrowRight size={14} />
                     </a>
                   </div>
@@ -244,7 +246,7 @@ export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientPr
                       }}
                     >
                       <Zap size={16} />
-                      <span>🌊 Payer maintenant par Wave</span>
+                      <span>Payer maintenant par Wave</span>
                       <ArrowRight size={14} />
                     </a>
                   </div>
@@ -252,22 +254,52 @@ export default function SuiviCommandeClient({ userPhone }: SuiviCommandeClientPr
 
                 <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, fontSize: 12, color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                   <span>Client : <strong>{cmd.client_nom}</strong> ({cmd.client_telephone})</span>
-                  {cmd.boutique_whatsapp && (
-                    <a
-                      href={`https://wa.me/${cmd.boutique_whatsapp.replace(/[^0-9]/g, '')}?text=Bonjour,%20je%20suis%20le%20suivi%20de%20ma%20commande%20${cmd.reference}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {cmd.boutique_whatsapp && (
+                      <a
+                        href={`https://wa.me/${cmd.boutique_whatsapp.replace(/[^0-9]/g, '')}?text=Bonjour,%20je%20suis%20le%20suivi%20de%20ma%20commande%20${cmd.reference}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      >
+                        <MessageCircle size={14} />
+                        <span>{t('account.contactSeller')}</span>
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setCommandeLitige(cmd)}
+                      style={{
+                        background: 'rgba(220, 38, 38, 0.08)',
+                        border: '1px solid rgba(220, 38, 38, 0.2)',
+                        color: '#dc2626',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                      }}
                     >
-                      {t('account.contactSeller')}
-                    </a>
-                  )}
+                      <AlertCircle size={13} />
+                      <span>Signaler un problème</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )
           })}
         </div>
       )}
+
+      {/* Modal de signalement de problème / Litige */}
+      <ModalSignalerProbleme
+        isOpen={!!commandeLitige}
+        onClose={() => setCommandeLitige(null)}
+        commande={commandeLitige}
+      />
     </div>
   )
 }

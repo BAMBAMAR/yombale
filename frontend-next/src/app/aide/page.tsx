@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Metadata } from 'next'
 import AideClient from './AideClient'
 
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 }
 
 export default function AidePage() {
-  return <AideClient />
+  return (
+    <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
+      <AideClient />
+    </Suspense>
+  )
 }

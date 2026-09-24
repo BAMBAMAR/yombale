@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   Search,
   Store,
@@ -13,7 +14,11 @@ import {
   HelpCircle,
   PhoneCall,
   ExternalLink,
+  Ticket,
+  ShieldCheck,
 } from 'lucide-react'
+import ModalCreerTicket from './components/ModalCreerTicket'
+import SuiviTicketSection from './components/SuiviTicketSection'
 
 interface FaqItem {
   id: string
@@ -110,9 +115,17 @@ const CATEGORIES = [
 ]
 
 export default function AideClient() {
+  const searchParams = useSearchParams()
+  const initialTicket = searchParams.get('ticket') || ''
+
   const [recherche, setRecherche] = useState('')
   const [catActive, setCatActive] = useState('tous')
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({ 'creer-boutique': true })
+
+  // Support & Suivi
+  const [modalTicketOpen, setModalTicketOpen] = useState(false)
+  const [suiviOpen, setSuiviOpen] = useState(!!initialTicket)
+  const [activeTicketNum, setActiveTicketNum] = useState(initialTicket)
 
   const toggleItem = (id: string) => {
     setOpenItems(prev => ({ ...prev, [id]: !prev[id] }))
@@ -130,7 +143,7 @@ export default function AideClient() {
   return (
     <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 16px 80px' }}>
       {/* Hero Header */}
-      <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <span
           style={{
             display: 'inline-flex',
@@ -145,17 +158,17 @@ export default function AideClient() {
             marginBottom: '12px',
           }}
         >
-          <HelpCircle size={14} /> Centre d'Aide & Support
+          <HelpCircle size={14} /> Centre d&apos;Aide & Support
         </span>
         <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: '0 0 10px' }}>
           Comment pouvons-nous vous aider ?
         </h1>
-        <p style={{ fontSize: '14.5px', color: 'var(--text2, #555)', maxWidth: '560px', margin: '0 auto' }}>
-          Retrouvez toutes les réponses aux questions fréquentes sur la gestion de votre boutique en ligne, la caisse POS et les paiements au Sénégal.
+        <p style={{ fontSize: '14.5px', color: 'var(--text2, #555)', maxWidth: '580px', margin: '0 auto' }}>
+          Retrouvez les guides d&apos;utilisation, ouvrez un ticket d&apos;assistance officiel ou suivez votre dossier en direct.
         </p>
 
         {/* Barre de Recherche */}
-        <div style={{ maxWidth: '520px', margin: '24px auto 0', position: 'relative' }}>
+        <div style={{ maxWidth: '520px', margin: '22px auto 0', position: 'relative' }}>
           <Search
             size={18}
             style={{
@@ -182,6 +195,144 @@ export default function AideClient() {
         </div>
       </div>
 
+      {/* Cartes d'Actions Rapides Support */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '14px',
+          marginBottom: '32px',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setModalTicketOpen(true)}
+          className="card-npl"
+          style={{
+            padding: '18px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            textAlign: 'left',
+            cursor: 'pointer',
+            border: '1px solid var(--border, #E8DDD2)',
+            transition: 'border-color 0.15s ease',
+          }}
+        >
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'rgba(199, 91, 0, 0.1)',
+              color: 'var(--accent, #C75B00)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Ticket size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: '14.5px', fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+              Ouvrir un ticket SAV
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text3, #888)', marginTop: '2px' }}>
+              Déclarez un bug ou un litige
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSuiviOpen(prev => !prev)}
+          className="card-npl"
+          style={{
+            padding: '18px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            textAlign: 'left',
+            cursor: 'pointer',
+            border: `1px solid ${suiviOpen ? 'var(--accent, #C75B00)' : 'var(--border, #E8DDD2)'}`,
+            background: suiviOpen ? 'rgba(199, 91, 0, 0.03)' : 'var(--card, #ffffff)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'rgba(10, 92, 54, 0.1)',
+              color: 'var(--price, #0A5C36)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ShieldCheck size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: '14.5px', fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+              Suivre un ticket
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text3, #888)', marginTop: '2px' }}>
+              Consulter l&apos;avancement (TCK-...)
+            </div>
+          </div>
+        </button>
+
+        <a
+          href="https://wa.me/221708717942?text=Bonjour%20Nopalou%2C%20j%27ai%20besoin%20d%27assistance"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="card-npl"
+          style={{
+            padding: '18px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '14px',
+            textDecoration: 'none',
+            border: '1px solid var(--border, #E8DDD2)',
+          }}
+        >
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: '#25D366',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <MessageSquare size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: '14.5px', fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+              Support WhatsApp 7j/7
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text3, #888)', marginTop: '2px' }}>
+              +221 70 871 79 42 (Direct)
+            </div>
+          </div>
+        </a>
+      </div>
+
+      {/* Section interactive de suivi de ticket */}
+      {suiviOpen && (
+        <SuiviTicketSection
+          initialNumero={activeTicketNum}
+          onClose={() => setSuiviOpen(false)}
+        />
+      )}
+
       {/* Filtres de Catégories */}
       <div
         style={{
@@ -189,7 +340,7 @@ export default function AideClient() {
           gap: '8px',
           overflowX: 'auto',
           paddingBottom: '12px',
-          marginBottom: '28px',
+          marginBottom: '24px',
         }}
       >
         {CATEGORIES.map(c => {
@@ -227,7 +378,7 @@ export default function AideClient() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '48px' }}>
         {itemsFiltres.length === 0 ? (
           <div className="card-npl" style={{ padding: '36px', textAlign: 'center', color: 'var(--text3, #888)' }}>
-            Aucun résultat trouvé pour votre recherche. Essayez un autre mot-clé ou contactez notre support ci-dessous.
+            Aucun résultat trouvé pour votre recherche. Essayez un autre mot-clé ou ouvrez un ticket d&apos;assistance ci-dessus.
           </div>
         ) : (
           itemsFiltres.map(item => {
@@ -325,16 +476,16 @@ export default function AideClient() {
           </div>
           <div>
             <h3 style={{ margin: '0 0 4px', fontSize: '16px', fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
-              Besoin d'une assistance immédiate ?
+              Besoin d&apos;une assistance immédiate ?
             </h3>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--text2, #555)' }}>
-              Notre équipe d'assistance basée à Dakar est disponible 7j/7 pour vous accompagner par message direct.
+              Notre équipe d&apos;assistance basée à Dakar est disponible 7j/7 pour vous accompagner par message direct.
             </p>
           </div>
         </div>
 
         <a
-          href="https://wa.me/221785397775?text=Bonjour%20Nopalou%2C%20j%27ai%20besoin%20d%27aide%20pour%20ma%20boutique"
+          href="https://wa.me/221708717942?text=Bonjour%20Nopalou%2C%20j%27ai%20besoin%20d%27aide%20pour%20ma%20boutique"
           target="_blank"
           rel="noopener noreferrer"
           className="btn-npl btn-npl-primary"
@@ -345,6 +496,16 @@ export default function AideClient() {
           <ExternalLink size={14} />
         </a>
       </div>
+
+      {/* Modal d'ouverture de ticket */}
+      <ModalCreerTicket
+        isOpen={modalTicketOpen}
+        onClose={() => setModalTicketOpen(false)}
+        onTicketCree={(numero) => {
+          setActiveTicketNum(numero)
+          setSuiviOpen(true)
+        }}
+      />
     </div>
   )
 }

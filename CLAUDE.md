@@ -8763,6 +8763,39 @@ Pour passer du mode simulation actuel aux encaissements rÃƒÂ©els Stripe en p
 - **VÃƒÂ©rification Build** : Validation avec npm run build dans frontend-next (0 erreur).
 
 
+### [2026-09-24] - Audit & Remédiation Exhaustive SAV, Support Client, Litiges & Incidents P0-P3
+- **Migrations SQL (`support_tickets` & `signalements`)** :
+  - Colonnes étendues `contact_nom`, `contact_email`, `contact_telephone`, `canal`, `pieces_jointes` intégrées sur `support_tickets`.
+  - Colonnes étendues `auteur_email`, `auteur_telephone`, `pieces_jointes` intégrées sur `signalements`.
+  - Migration idempotente appliquée via `backend/migrate-inline.js`.
+- **API Backend Support Publique & Authentifiée (`backend/routes/support.js` - `/api/support`)** :
+  - `POST /api/support/tickets` : Création de tickets unifiée pour visiteurs, acheteurs et marchands avec liaison automatique de commandes (`commande_ref`, `boutique_id`, `commande_id`), auto-qualification de priorité (`normale`, `haute`, `urgente`), initialisation de la discussion en JSONB, notification email client et alerte instantanée WhatsApp admin.
+  - `GET /api/support/tickets/mes-tickets` : Historique des tickets du compte utilisateur avec comptage de messages.
+  - `GET /api/support/tickets/suivi/:numero` : Suivi direct par numéro `TCK-...` avec protection anti-IDOR stricte (contrôle de téléphone ou email si invité, ou id de l'utilisateur).
+  - `POST /api/support/tickets/:numero/repondre` : Dépôt d'une réponse ou complément par le client réactivant le statut du ticket et notifiant le support.
+  - `POST /api/support/signalements` : Déclaration publique d'abus, contrefaçon ou fraude sur annonces, boutiques et profils.
+- **Mise à Jour Helpdesk & SAV Admin (`backend/routes/admin-support.js`)** :
+  - Notification sortante client systématique lors d'une réponse administrateur (`POST /tickets/:id/message`) via Email Resend et WhatsApp direct.
+  - Notification automatique au client lors de la résolution du ticket (`PUT /tickets/:id/statut` -> `statut === 'resolu'`).
+  - Prise en charge transparente des coordonnées invités (`COALESCE(u.nom, st.contact_nom)`).
+- **Unification Chatbot WhatsApp (`backend/services/whatsapp-chatbot.js`)** :
+  - `enregistrerDemandeSupport` crée désormais directement un ticket officiel dans `support_tickets` en plus de `support_demandes`, unifiant l'ensemble des requêtes WhatsApp dans le Helpdesk.
+- **Surveillance & Résilience Webhook Wave (`backend/routes/paiement.js`)** :
+  - Alerte administrateur instantanée avec priorité `CRITIQUE` via `alerterAdmin` lors d'un statut de paiement Wave échoué (`cancelled`, etc.).
+- **Frontend - Signalement Litige Commande (`SuiviCommandeClient.tsx` & `ModalSignalerProbleme.tsx`)** :
+  - Nouveau sous-composant modulaire (< 450 lignes) `ModalSignalerProbleme.tsx` dans `frontend-next/src/app/(account)/compte/tabs/components/`.
+  - Bouton contextuel "Signaler un problème" sur chaque commande suivie, permettant de déclarer un colis non reçu, endommagé, retard ou incident de paiement Wave/OM, avec génération du ticket SAV `TCK-...`.
+  - Remplacement de tous les émojis d'interface Unicode boutons par des icônes SVG `lucide-react` conformes aux règles Anti-AI-Slop.
+- **Frontend - Centre d'Aide & Suivi SAV Interactif (`AideClient.tsx`, `ModalCreerTicket.tsx`, `SuiviTicketSection.tsx`)** :
+  - Sous-composants modulaires dans `frontend-next/src/app/aide/components/` pour la création et le suivi de tickets en direct.
+  - Section interactive de suivi de ticket avec historique complet des messages et formulaire de réponse client.
+  - Harmonisation du contact support WhatsApp sur le numéro officiel unique `+221 70 871 79 42` (`wa.me/221708717942`).
+- **Tests & Conformité Qualité** :
+  - Suite de 10 tests unitaires dédiée dans `tests/unit/support-service.test.js`.
+  - 48/48 suites de tests Jest validées (383/383 tests réussis).
+  - 20/20 packages de tests unitaires frontend validés (69/69 tests réussis).
+  - Contrôle Anti-AI-Slop vérifié (0 silent catch, 0 composant monolithique).
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Langue

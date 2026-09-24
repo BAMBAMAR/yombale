@@ -2546,6 +2546,13 @@ module.exports = async function migrateInline(customConnStr = null) {
       CREATE INDEX IF NOT EXISTS idx_support_tickets_statut ON support_tickets(statut);
       CREATE INDEX IF NOT EXISTS idx_support_tickets_user ON support_tickets(utilisateur_id);
 
+      -- Colonnes étendues Helpdesk multi-canaux (Web, WhatsApp, Guest)
+      ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS contact_nom VARCHAR(150);
+      ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS contact_email VARCHAR(150);
+      ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS contact_telephone VARCHAR(50);
+      ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS canal VARCHAR(30) DEFAULT 'web';
+      ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS pieces_jointes JSONB DEFAULT '[]'::jsonb;
+
       -- Système de modération et signalements d'abus
       CREATE TABLE IF NOT EXISTS signalements (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -2564,6 +2571,9 @@ module.exports = async function migrateInline(customConnStr = null) {
       );
       CREATE INDEX IF NOT EXISTS idx_signalements_statut ON signalements(statut);
       CREATE INDEX IF NOT EXISTS idx_signalements_cible ON signalements(type_cible, cible_id);
+
+      ALTER TABLE signalements ADD COLUMN IF NOT EXISTS auteur_email VARCHAR(150);
+      ALTER TABLE signalements ADD COLUMN IF NOT EXISTS pieces_jointes JSONB DEFAULT '[]'::jsonb;
     `);
     console.log('[MIGRATE] ✅ Écosystème Conversationnel, Crons, Support & Signalements créés');
   } catch (err) {

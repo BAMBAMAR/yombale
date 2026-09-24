@@ -304,6 +304,7 @@ app.use('/api/admin/export',       require('./routes/admin-export'));
 app.use('/api/admin/system',       require('./routes/admin-system'));
 app.use('/api/admin/migration',    require('./routes/admin-migration'));
 app.use('/api/admin/support',      require('./routes/admin-support'));
+app.use('/api/support',            require('./routes/support'));
 app.use('/api/admin/avis',         require('./routes/admin-avis'));
 app.use('/api/admin/signalements', require('./routes/admin-signalements'));
 app.use('/api/click',           require('./routes/click'));

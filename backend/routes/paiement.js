@@ -9,6 +9,7 @@ const { requireAdminAuth, requireAdminRole } = require('../middlewares/admin-rba
 const { enregistrerAdminLog } = require('../lib/adminAuditLogger');
 const cfg = require('../lib/settingsCache');
 const wave = require('../services/wave');
+const { alerterAdmin } = require('../services/admin-alerts');
 const multer = require('multer');
 const { uploadBuffer } = require('../services/cloudinary');
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
@@ -497,6 +498,13 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
     res.sendStatus(200);
   } catch (err) {
     console.error('[WAVE WEBHOOK ERREUR]:', err.message);
+    alerterAdmin({
+      type: 'webhook_wave_echec',
+      titre: 'Échec critique du Webhook Wave',
+      message: `Erreur sur le webhook Wave : ${err.message}`,
+      details: `Payload: ${JSON.stringify(req.body)}`,
+      priorite: 'CRITIQUE',
+    }).catch(() => {});
     res.status(500).json({ error: 'Erreur lors du traitement du webhook Wave', details: err.message });
   }
 });

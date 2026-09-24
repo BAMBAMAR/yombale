@@ -227,6 +227,32 @@ async function enregistrerDemandeSupport(phone, { nom = null, message = 'Demande
       }
     } catch (_) {}
 
+    // Unification Helpdesk : Créer également le ticket dans support_tickets
+    try {
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const numTicket = `WA-${dateStr}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      await pool.query(
+        `INSERT INTO support_tickets (
+           numero_ticket, sujet, categorie, priorite, statut, contact_telephone, contact_nom, canal, messages
+         ) VALUES ($1, $2, 'whatsapp', 'normale', 'ouvert', $3, $4, 'whatsapp', $5::jsonb)
+         ON CONFLICT (numero_ticket) DO NOTHING`,
+        [
+          numTicket,
+          message || 'Demande de rappel client WhatsApp',
+          normPh,
+          nom || 'Client WhatsApp',
+          JSON.stringify([{
+            auteur: nom || 'Client WhatsApp',
+            role: 'client',
+            texte: message || 'Demande de rappel client WhatsApp',
+            date: new Date().toISOString(),
+          }])
+        ]
+      );
+    } catch (eSync) {
+      console.warn('[SYNC SUPPORT_TICKETS WA ERR]:', eSync.message);
+    }
+
     return res.rows[0] || { id: null };
   } catch (err) {
     console.error('[ENREGISTRER DEMANDE SUPPORT ERR]:', err.message);
