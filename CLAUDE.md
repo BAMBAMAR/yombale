@@ -23,6 +23,26 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Phase 2 : Tests E2E Playwright des Parcours Critiques (Achat Express, Vitrine & Caisse POS) (24 septembre 2026)** 🛡️🧪🛒💳⚡📦✅ :
+  * **🎯 Contexte & Objectif** :
+    - Combler le manque de couverture E2E réelle sur les 3 parcours métier centraux de Nopalou Commerce OS : la vitrine des marchands, le tunnel de commande rapide Checkout Express et la caisse tactile enregistreuse POS.
+  * **🛠️ Livrables et Validations Appliqués** :
+    - **Nouvelle Suite Playwright Complète (`tests/e2e/10-parcours-critiques-achat-pos.spec.ts`)** :
+      * **Parcours 1 : Vitrine Marchand (`/boutiques`)** :
+        - `TC-E2E-VIT-001` : Chargement de l'annuaire des boutiques, validation de la présence de la barre de recherche et de l'en-tête responsive.
+        - `TC-E2E-VIT-002` : Filtrage interactif dans l'annuaire des boutiques sans altération du DOM ni crash d'hydratation.
+        - `TC-E2E-VIT-003` : Accès à une vitrine boutique publique dédiée avec repli déterministe.
+      * **Parcours 2 : Tunnel Checkout Express (`/checkout-express`)** :
+        - `TC-E2E-CHK-001` : Chargement et restitution des métadonnées produit (titre, boutique, prix unitaire) et champs de contact client.
+        - `TC-E2E-CHK-002` : Calcul dynamique temps réel des frais de livraison par zone géographique (Dakar Intra-Muros 1 500 FCFA → 5 000 FCFA, Banlieue 2 500 FCFA → 6 000 FCFA, Retrait gratuit en magasin 0 FCFA → 3 500 FCFA).
+        - `TC-E2E-CHK-003` : Incrémentation et décrémentation des quantités avec recalcul arithmétique immédiat du sous-total et du total global.
+        - `TC-E2E-CHK-004` : Sélecteur de méthode de paiement (Wave direct, Orange Money, Espèces à la livraison) et toggle Protection Séquestre Nopalou Pay Safe anti-arnaque.
+        - `TC-E2E-CHK-005` : Soumission de la commande express, génération de la référence unique et affichage de l'écran de confirmation client.
+      * **Parcours 3 : Caisse Enregistreuse POS Tactile (`/boutique/caisse`)** :
+        - `TC-E2E-POS-001` : Déverrouillage sécurisé par code PIN superviseur (9999), chargement du catalogue en mémoire locale/IndexedDB, ajout d'articles au ticket, cumul arithmétique (18 500 + 7 500 = 26 000 FCFA) et contrôles d'encaissement.
+    - **Résultat d'Exécution Playwright** : 9/9 tests passés (100% SUCCESS en 42,6 secondes).
+    - **Intégration CI/CD (`.github/workflows/ci-tests.yml`)** : Exécution automatisée de la suite des parcours critiques sur chaque push et pull request.
+
 - **Sécurisation de la CI/CD, Déblocage des Tests d'Intégration Réels & Assertions Cryptographiques (24 septembre 2026)** 🛡️🧪⚡📦✅ :
   * **🎯 Contexte & Objectif** :
     - Élimination des tests d'intégration ignorés (skipped) et des fausses assertions (`expect(true).toBe(true)`).

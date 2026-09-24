@@ -78,8 +78,8 @@ jobs:
           node-version: '18'
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Exécuter Smoke & Régression E2E
-        run: npx playwright test tests/e2e/00-smoke.spec.ts tests/e2e/05-api.spec.ts tests/e2e/06-mobile-overflow-audit.spec.ts tests/e2e/99-regression.spec.ts
+      - name: Exécuter Smoke, Parcours Critiques & Régression E2E
+        run: npx playwright test tests/e2e/00-smoke.spec.ts tests/e2e/05-api.spec.ts tests/e2e/06-mobile-overflow-audit.spec.ts tests/e2e/10-parcours-critiques-achat-pos.spec.ts tests/e2e/99-regression.spec.ts
         env:
           BASE_URL: ${{ secrets.STAGING_URL }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
