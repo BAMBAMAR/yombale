@@ -2,10 +2,11 @@
 -- Fixtures pour initialiser une base de données de test isolée (Nopalou)
 -- ATTENTION : Ne JAMAIS exécuter sur la base de données de production !
 
-INSERT INTO utilisateurs (id, email, password_hash, nom, role) VALUES
+INSERT INTO utilisateurs (id, email, mot_de_passe_hash, nom, role) VALUES
   ('test-acheteur-001', 'acheteur@test-nopalou.com', '$2b$10$testhashedpwd', 'Acheteur Test', 'acheteur'),
   ('test-marchand-001', 'marchand@test-nopalou.com', '$2b$10$testhashedpwd', 'Marchand Test', 'marchand'),
-  ('test-marchand-002', 'marchand-b@test-nopalou.com', '$2b$10$testhashedpwd', 'Marchand B Test', 'marchand')
+  ('test-marchand-002', 'marchand-b@test-nopalou.com', '$2b$10$testhashedpwd', 'Marchand B Test', 'marchand'),
+  ('test-agence-user-001', 'agence@test-nopalou.com', '$2b$10$testhashedpwd', 'Directeur Agence Test', 'agent_immo')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO boutiques (id, utilisateur_id, nom, slug, actif) VALUES
@@ -15,4 +16,8 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO boutique_produits (id, boutique_id, nom, prix, stock_quantite, actif) VALUES
   ('test-produit-001', 'test-boutique-001', 'Produit Test', 5000, 100, true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO agences_immo (id, utilisateur_id, nom, slug, statut) VALUES
+  ('test-agence-001', 'test-agence-user-001', 'Agence Immobilière Test', 'agence-immo-test', 'actif')
 ON CONFLICT (id) DO NOTHING;

@@ -15,7 +15,9 @@ export const verifySession = cache(async (customRedirectPath?: string): Promise<
       try {
         const h = await headers()
         target = h.get('x-invoke-path') || h.get('x-pathname') || ''
-      } catch {}
+      } catch (e) {
+        console.warn('[DAL:verifySession] Headers request inaccessibles:', (e as Error)?.message)
+      }
     }
     const safeTarget = target.startsWith('/') && !target.startsWith('//') ? target : ''
     const redirectUrl = safeTarget ? `/connexion?redirect=${encodeURIComponent(safeTarget)}` : '/connexion'

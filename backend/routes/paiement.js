@@ -433,7 +433,7 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
     res.sendStatus(200);
   } catch (err) {
     console.error('[WAVE WEBHOOK ERREUR]:', err.message);
-    res.sendStatus(200); // 200 pour éviter les boucles de retry infinies en cas de problème applicatif
+    res.status(500).json({ error: 'Erreur lors du traitement du webhook Wave', details: err.message });
   }
 });
 

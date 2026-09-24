@@ -221,61 +221,90 @@ async function creerCommandeBoutique({
 
   const validSocialPostId = (social_post_id && String(social_post_id).length === 36 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(social_post_id)) ? social_post_id : null;
 
-  const { rows: [commande] } = await pool.query(
-    `INSERT INTO commandes_boutique
-       (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
-        client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande,
-        utm_source, utm_medium, utm_campaign, social_post_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
-    [ref, actualBoutiqueId, normalizedItems[0]?.produit_id || null, nomProduitGlobal.slice(0, 300), totalQuantite, sousTotal, montantTotal,
-     clientNom, clientTelephone, clientAdresse || null, finalNote || null, source,
-     methodePaiement, validZoneId, fraisLivraison, groupeCommande || null,
-     utm_source || null, utm_medium || null, utm_campaign || null, validSocialPostId]
-  );
+  // ── Mode transactionnel ACID ───────────────────────────────────────────────
+  // Utilise un client dédié de transaction si pool.connect existe (PostgreSQL réel).
+  // Retombe gracieusement sur pool pour les suites de tests unitaires mockées en mémoire.
+  const hasDedicatedClient = typeof pool.connect === 'function';
+  const client = hasDedicatedClient ? await pool.connect() : pool;
+  let inTransaction = false;
 
-  // Insertion détaillée de chaque article et décrémentation des stocks
-  for (const it of normalizedItems) {
-    let prixAchat = null;
-    if (it.produit_id) {
-      const pData = await pool.query('SELECT prix_achat FROM boutique_produits WHERE id=$1', [it.produit_id]);
-      prixAchat = pData.rows[0]?.prix_achat ? Number(pData.rows[0].prix_achat) : null;
+  try {
+    if (hasDedicatedClient) {
+      await client.query('BEGIN');
+      inTransaction = true;
     }
 
+    const { rows: [commande] } = await client.query(
+      `INSERT INTO commandes_boutique
+         (reference, boutique_id, produit_id, nom_produit, quantite, prix_unitaire, montant_total,
+          client_nom, client_telephone, client_adresse, note, source, methode_paiement, zone_livraison_id, frais_livraison, groupe_commande,
+          utm_source, utm_medium, utm_campaign, social_post_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
+      [ref, actualBoutiqueId, normalizedItems[0]?.produit_id || null, nomProduitGlobal.slice(0, 300), totalQuantite, sousTotal, montantTotal,
+       clientNom, clientTelephone, clientAdresse || null, finalNote || null, source,
+       methodePaiement, validZoneId, fraisLivraison, groupeCommande || null,
+       utm_source || null, utm_medium || null, utm_campaign || null, validSocialPostId]
+    );
+
+    // Insertion détaillée de chaque article et décrémentation des stocks
+    for (const it of normalizedItems) {
+      let prixAchat = null;
+      if (it.produit_id) {
+        const pData = await client.query('SELECT prix_achat FROM boutique_produits WHERE id=$1', [it.produit_id]);
+        prixAchat = pData.rows[0]?.prix_achat ? Number(pData.rows[0].prix_achat) : null;
+      }
+
+      await client.query(
+        `INSERT INTO commandes_boutique_items
+           (commande_id, boutique_id, produit_id, variante_id, nom_produit, details_variante, prix_unitaire, prix_achat, quantite, montant_total)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [commande.id, actualBoutiqueId, it.produit_id, it.variante_id, it.nom_produit, it.details_variante, it.prix_unitaire, prixAchat, it.quantite, it.prix_unitaire * it.quantite]
+      );
+
+      // Décrémentation du stock sur la variante
+      if (it.variante_id) {
+        await client.query(
+          `UPDATE boutique_produit_variantes
+           SET stock_quantite = GREATEST(0, stock_quantite - $1)
+           WHERE id = $2 AND boutique_id = $3`,
+          [it.quantite, it.variante_id, actualBoutiqueId]
+        );
+      }
+
+      // Décrémentation du stock sur le produit parent
+      if (it.produit_id) {
+        await client.query(
+          `UPDATE boutique_produits
+           SET stock_quantite = GREATEST(0, stock_quantite - $1),
+               en_stock = CASE WHEN (stock_quantite - $1) <= 0 THEN false ELSE en_stock END
+           WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
+          [it.quantite, it.produit_id, actualBoutiqueId]
+        );
+      }
+    }
+
+    if (inTransaction) {
+      await client.query('COMMIT');
+      inTransaction = false;
+    }
+
+    // Télémétrie non-bloquante
     await pool.query(
-      `INSERT INTO commandes_boutique_items
-         (commande_id, boutique_id, produit_id, variante_id, nom_produit, details_variante, prix_unitaire, prix_achat, quantite, montant_total)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      [commande.id, actualBoutiqueId, it.produit_id, it.variante_id, it.nom_produit, it.details_variante, it.prix_unitaire, prixAchat, it.quantite, it.prix_unitaire * it.quantite]
+      `INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`,
+      [actualBoutiqueId]
     ).catch(() => {});
 
-    // Décrémentation du stock sur la variante
-    if (it.variante_id) {
-      await pool.query(
-        `UPDATE boutique_produit_variantes
-         SET stock_quantite = GREATEST(0, stock_quantite - $1)
-         WHERE id = $2 AND boutique_id = $3`,
-        [it.quantite, it.variante_id, actualBoutiqueId]
-      ).catch(() => {});
+    return { commande, boutique };
+  } catch (err) {
+    if (inTransaction) {
+      await client.query('ROLLBACK').catch(() => {});
     }
-
-    // Décrémentation du stock sur le produit parent
-    if (it.produit_id) {
-      await pool.query(
-        `UPDATE boutique_produits
-         SET stock_quantite = GREATEST(0, stock_quantite - $1),
-             en_stock = CASE WHEN (stock_quantite - $1) <= 0 THEN false ELSE en_stock END
-         WHERE id = $2 AND boutique_id = $3 AND stock_quantite IS NOT NULL`,
-        [it.quantite, it.produit_id, actualBoutiqueId]
-      ).catch(() => {});
+    throw err;
+  } finally {
+    if (hasDedicatedClient && typeof client.release === 'function') {
+      client.release();
     }
   }
-
-  await pool.query(
-    `INSERT INTO analytics_events (type, boutique_id) VALUES ('commande_web', $1)`,
-    [actualBoutiqueId]
-  ).catch(() => {});
-
-  return { commande, boutique };
 }
 
 module.exports = {

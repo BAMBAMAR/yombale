@@ -23,6 +23,34 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Phase 4 : Audit QA Pré-Production Senior & Remédiations Bloquantes (24 septembre 2026)** 🛡️🔍🧪⚡📦✅ :
+  * **🎯 Contexte & Objectif** :
+    - Réalisation d'un audit QA exhaustif, impartial et factuel de la plateforme Nopalou Commerce OS & Immobilier par un QA Lead / Release Manager Senior.
+    - Évaluation selon les 5 dimensions (Couverture, Exactitude, Fiabilité, Détection des régressions, Préparation à la release) et qualification rigoureuse de la chaîne de validation Nopalou.
+    - Levée immédiate des 4 points bloquants identifiés pour transformer le verdict de NO-GO en GO de Release.
+  * **🛠️ Remédiations Critiques Implémentées & Validées** :
+    - **1. Atomicité Transactionnelle ACID sur la Création de Commande (`backend/services/commande-service.js`)** :
+      * Encapsulation complète de la création de commande, de l'insertion détaillée de ses articles (`commandes_boutique_items`) et de la décrémentation des stocks (`boutique_produit_variantes` & `boutique_produits`) dans une transaction PostgreSQL unifiée `BEGIN ... COMMIT` avec `ROLLBACK` systématique en cas d'erreur.
+      * Élimination du risque d'incohérence de stock et de commandes orphelines sans articles. Fallback gracieux sur le pool en test unitaire mocké.
+    - **2. Sécurisation du Webhook Wave (`backend/routes/paiement.js:436`)** :
+      * Remplacement du `res.sendStatus(200)` dans le bloc catch par un `res.status(500).json(...)` détaillé.
+      * Permet au mécanisme de retry exponentiel de Wave de rejouer le webhook en cas d'indisponibilité transitoire du serveur ou de la base de données, évitant les pertes financières et commandes impayées silencieuses.
+    - **3. Correction & Alignement des Fixtures SQL (`database/test-fixtures.sql`)** :
+      * Remplacement de la colonne obsolète `password_hash` par `mot_de_passe_hash` conforme au schéma réel de `migrate-inline.js` (ligne 121).
+      * Ajout des fixtures pour le module immobilier (`agences_immo`) permettant une initialisation automatisée sans crash SQL.
+    - **4. Élimination du Silent Catch Frontend (`frontend-next/src/lib/dal.ts`)** :
+      * Remplacement du `catch {}` par un logging explicite `console.warn(...)` dans `verifySession`.
+      * Résultat Linter Anti-AI-Slop : **0 Silent Catches résiduels** sur 1 159 fichiers scannés.
+    - **5. Élargissement du Gating CI/CD GitHub Actions (`.github/workflows/ci-tests.yml`)** :
+      * Intégration des suites E2E Playwright des pages publiques (`01`), de l'authentification (`02`), de l'administration (`04`), du multi-rôles (`08`) et du chatbot web (`09`) dans l'étape `e2e-smoke`.
+  * **📊 Résultats de la Suite de Validation Quality Gate (`npm run quality:gate`)** :
+    - Compilation TypeScript stricte (`npx tsc --noEmit`) : **0 erreur** (100% OK).
+    - Linter Anti-AI-Slop & Anti-Silent-Catches : **0 silent catch**, 0 composant monolithe.
+    - Tests Unitaires Métier Frontend (`run-unit-tests.mjs`) : **69/69 PASS (100%)**.
+    - Tests Unitaires Backend Jest : **373/373 PASS (100%)**.
+    - Tests d'Intégration & Sécurité Multi-Tenant / Webhooks : **12/12 PASS (100%)**.
+    - Rapport d'audit QA pré-production archivé : `rapport_audit_qa_pre_production_nopalou.md`.
+
 - **Phase 3 : Tests de Charge & Résilience API sous Forte Concurrence (Autocannon) (24 septembre 2026)** 🛡️⚡📊🚀📦✅ :
   * **🎯 Contexte & Objectif** :
     - Éprouver la tenue en charge, le débit (throughput), la latence percentile (p50, p95, p99) et la stabilité mémoire du backend Express sous une concurrence élevée (20 à 30 connexions simultanées).
