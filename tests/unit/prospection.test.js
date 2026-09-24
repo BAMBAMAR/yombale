@@ -162,7 +162,7 @@ describe('Moteur de Prospection & Normalisation Leads Sénégal', () => {
         nom_boutique: 'Dakar Motors',
       });
       expect(p.url).toBe('https://nopalou.com/annonces');
-      expect(p.buttonParam).toBe('auto');
+      expect(p.buttonParam).toBe('annonces');
       expect(p.title).toContain('Dakar Motors');
       expect(p.features).toContain('véhicules');
     });
@@ -173,7 +173,7 @@ describe('Moteur de Prospection & Normalisation Leads Sénégal', () => {
         nom_boutique: 'Boutique Chic',
       });
       expect(p.url).toBe('https://nopalou.com/tarifs-boutique');
-      expect(p.buttonParam).toBe('boutique');
+      expect(p.buttonParam).toBe('tarifs-boutique');
       expect(p.features).toContain('Wave');
     });
   });

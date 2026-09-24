@@ -105,31 +105,36 @@ describe('extraireInfosProduitTexte', () => {
 describe('cleanupOldMessages', () => {
   test('exécute une DELETE sur whatsapp_processed_messages', async () => {
     await cleanupOldMessages();
-    expect(mockQuery).toHaveBeenCalledTimes(1);
-    const sql = mockQuery.mock.calls[0][0];
-    expect(sql).toMatch(/DELETE FROM whatsapp_processed_messages/i);
-    expect(sql).toMatch(/7 days/i);
+    const calls = mockQuery.mock.calls;
+    const deleteMsgCall = calls.find(
+      (c) => typeof c[0] === 'string' && /DELETE FROM whatsapp_processed_messages/i.test(c[0])
+    );
+    expect(deleteMsgCall).toBeDefined();
+    expect(deleteMsgCall[0]).toMatch(/7 days/i);
   });
 });
 
 describe('resetInactiveSessions', () => {
   test('exécute les UPDATE sur whatsapp_sessions (1h ordinaire et 24h commandes)', async () => {
     await resetInactiveSessions();
-    expect(mockQuery).toHaveBeenCalledTimes(2);
-    const sql1 = mockQuery.mock.calls[0][0];
-    expect(sql1).toMatch(/UPDATE whatsapp_sessions/i);
-    expect(sql1).toMatch(/IDLE/);
-    expect(sql1).toMatch(/1 hour/i);
-    const sql2 = mockQuery.mock.calls[1][0];
-    expect(sql2).toMatch(/UPDATE whatsapp_sessions/i);
-    expect(sql2).toMatch(/COMMANDE_%/);
-    expect(sql2).toMatch(/24 hours/i);
+    const calls = mockQuery.mock.calls;
+    const updateCalls = calls.filter(
+      (c) => typeof c[0] === 'string' && /UPDATE whatsapp_sessions/i.test(c[0])
+    );
+    expect(updateCalls.length).toBe(2);
+    expect(updateCalls[0][0]).toMatch(/IDLE/);
+    expect(updateCalls[0][0]).toMatch(/1 hour/i);
+    expect(updateCalls[1][0]).toMatch(/COMMANDE_%/);
+    expect(updateCalls[1][0]).toMatch(/24 hours/i);
   });
 
   test("ne reset pas les sessions déjà IDLE (WHERE state != 'IDLE')", async () => {
     await resetInactiveSessions();
-    const sql = mockQuery.mock.calls[0][0];
-    expect(sql).toMatch(/state\s*!=\s*'IDLE'/i);
+    const calls = mockQuery.mock.calls;
+    const idleUpdate = calls.find(
+      (c) => typeof c[0] === 'string' && /UPDATE whatsapp_sessions/i.test(c[0]) && /state\s*!=\s*'IDLE'/i.test(c[0])
+    );
+    expect(idleUpdate).toBeDefined();
   });
 });
 

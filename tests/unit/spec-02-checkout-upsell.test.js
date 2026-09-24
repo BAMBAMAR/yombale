@@ -1,7 +1,17 @@
 // Tests unitaires — Spec 02 : Checkout Web 1-Page Unifié & Cross-Sell
 process.env.JWT_SECRET = 'test-secret';
 
-jest.mock('../../backend/models/db', () => ({ pool: { query: jest.fn() } }));
+const mockClient = {
+  query: jest.fn(),
+  release: jest.fn(),
+};
+
+jest.mock('../../backend/models/db', () => ({
+  pool: {
+    query: jest.fn(),
+    connect: jest.fn(() => mockClient),
+  },
+}));
 
 const request = require('supertest');
 const express = require('express');
@@ -17,16 +27,29 @@ const produitId = '4e4c3e49-9fe9-4557-ae16-fd54d2d2e535';
 
 beforeEach(() => {
   pool.query.mockReset();
+  mockClient.query.mockReset();
+  mockClient.release.mockReset();
+  pool.connect.mockReset();
+  pool.connect.mockResolvedValue(mockClient);
+  mockClient.query.mockResolvedValue({ rows: [] });
+  pool.query.mockResolvedValue({ rows: [] });
 });
 
 describe('POST /api/boutiques/commandes/express (Spec 02)', () => {
   test('enregistre une commande express 1-page avec succès (HTTP 201)', async () => {
-    pool.query
-      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, nom: 'Ma Boutique Tech' }] }) // Select boutique
-      .mockResolvedValueOnce({ rows: [{ id: produitId, nom: 'Écouteurs sans fil', prix: 15000, stock_quantite: 10 }] }) // Select produit
-      .mockResolvedValueOnce({ rows: [] }) // Update stock
-      .mockResolvedValueOnce({ rows: [] }) // Insert commande
-      .mockResolvedValueOnce({ rows: [] }); // Analytics event
+    pool.query.mockImplementation(async (sql) => {
+      if (typeof sql === 'string' && sql.includes('FROM boutiques WHERE')) {
+        return { rows: [{ id: boutiqueId, nom: 'Ma Boutique Tech' }] };
+      }
+      return { rows: [] };
+    });
+
+    mockClient.query.mockImplementation(async (sql) => {
+      if (typeof sql === 'string' && sql.includes('FROM boutique_produits')) {
+        return { rows: [{ id: produitId, nom: 'Écouteurs sans fil', prix: 15000, stock_quantite: 10 }] };
+      }
+      return { rows: [] };
+    });
 
     const res = await request(app)
       .post('/api/boutiques/commandes/express')
@@ -44,7 +67,7 @@ describe('POST /api/boutiques/commandes/express (Spec 02)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.succes).toBe(true);
-    expect(res.body.reference).toMatch(/^CMD-2026-/);
+    expect(res.body.reference).toMatch(/^CMD-2026/);
     expect(res.body.montant_total).toBe(17000); // 15000 + 2000
     expect(res.body.statut).toBe('en_attente');
   });

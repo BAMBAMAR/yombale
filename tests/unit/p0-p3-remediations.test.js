@@ -106,7 +106,7 @@ describe('Service OTP 2FA (P1 Security Hardening)', () => {
             ],
           };
         }
-        if (sql.includes('essais_restants = essais_restants - 1')) {
+        if (sql.includes('UPDATE auth_otps SET essais_restants')) {
           return { rows: [] };
         }
         return { rows: [] };
@@ -117,8 +117,9 @@ describe('Service OTP 2FA (P1 Security Hardening)', () => {
     expect(res.error).toMatch(/Code incorrect/);
 
     const calls = pool.query.mock.calls;
-    const updateCall = calls.find(c => typeof c[0] === 'string' && c[0].includes('essais_restants = essais_restants - 1'));
+    const updateCall = calls.find(c => typeof c[0] === 'string' && c[0].includes('UPDATE auth_otps SET essais_restants'));
     expect(updateCall).toBeDefined();
+    expect(updateCall[1][0]).toBe(2);
   });
 });
 

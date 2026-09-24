@@ -14,6 +14,7 @@ app.use('/api/entites', entitesRouter);
 
 beforeEach(() => {
   pool.query.mockReset();
+  pool.query.mockResolvedValue({ rows: [] });
 });
 
 describe('GET /api/entites/resoudre/:id — Résolution universelle d\'entités', () => {
@@ -92,7 +93,8 @@ describe('GET /api/entites/resoudre/:id — Résolution universelle d\'entités'
   test('résout un produit du comparateur par son ID numérique', async () => {
     pool.query
       .mockResolvedValueOnce({ rows: [] }) // boutiques by slug
-      .mockResolvedValueOnce({ rows: [{ id: 42 }] }); // produits
+      .mockResolvedValueOnce({ rows: [] }) // agences_immo by slug
+      .mockResolvedValueOnce({ rows: [{ id: 42 }] }); // produits du comparateur
 
     const res = await request(app).get('/api/entites/resoudre/42');
     expect(res.status).toBe(200);

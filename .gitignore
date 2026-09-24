@@ -22,6 +22,7 @@ backend/.fb-scraper-resume.txt
 
 # Dumps SQL (données sensibles)
 *.sql
+!database/test-fixtures.sql
 
 # Screenshots et images temporaires
 *.png

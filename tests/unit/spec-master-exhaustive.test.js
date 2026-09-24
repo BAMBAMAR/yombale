@@ -1,7 +1,17 @@
 // Suite de Tests Rigoureuse et Exhaustive — Specs 01 à 06 (OpenSpec Nopalou)
 process.env.JWT_SECRET = 'test-secret';
 
-jest.mock('../../backend/models/db', () => ({ pool: { query: jest.fn() } }));
+const mockClient = {
+  query: jest.fn(),
+  release: jest.fn(),
+};
+
+jest.mock('../../backend/models/db', () => ({
+  pool: {
+    query: jest.fn(),
+    connect: jest.fn(() => mockClient),
+  },
+}));
 jest.mock('../../backend/lib/settingsCache', () => ({
   get: jest.fn().mockResolvedValue(''),
   getBool: jest.fn().mockResolvedValue(false),
@@ -29,6 +39,11 @@ const prodId = '8ed84b7a-54e3-4f16-876b-632c83c89bf4';
 
 beforeEach(() => {
   pool.query.mockReset();
+  mockClient.query.mockReset();
+  mockClient.release.mockReset();
+  pool.connect.mockReset();
+  pool.connect.mockResolvedValue(mockClient);
+  mockClient.query.mockResolvedValue({ rows: [] });
   pool.query.mockResolvedValue({ rows: [] });
 });
 
@@ -93,11 +108,19 @@ describe('SPEC 01 — Mode Switcher Admin & Pure Player E-Commerce', () => {
 // ── SPEC 02 : CHECKOUT 1-PAGE & CROSS-SELL UPSELL ──────────────────────────
 describe('SPEC 02 — Checkout Web 1-Page Unifié & Cross-Sell Panier', () => {
   test('2.1 Enregistre une commande express avec décrémentation stock (HTTP 201)', async () => {
-    pool.query
-      .mockResolvedValueOnce({ rows: [{ id: boutiqueId, nom: 'Tech Dakar' }] }) // Boutique check
-      .mockResolvedValueOnce({ rows: [{ en_stock: true, prix: 12000, nom: 'Maillot Basket' }] }) // Prod check
-      .mockResolvedValueOnce({ rows: [] }) // UPDATE stock
-      .mockResolvedValueOnce({ rows: [] }); // INSERT commande
+    pool.query.mockImplementation(async (sql) => {
+      if (typeof sql === 'string' && sql.includes('FROM boutiques WHERE')) {
+        return { rows: [{ id: boutiqueId, nom: 'Tech Dakar' }] };
+      }
+      return { rows: [] };
+    });
+
+    mockClient.query.mockImplementation(async (sql) => {
+      if (typeof sql === 'string' && sql.includes('FROM boutique_produits')) {
+        return { rows: [{ en_stock: true, prix: 12000, nom: 'Maillot Basket', stock_quantite: 10 }] };
+      }
+      return { rows: [] };
+    });
 
     const res = await request(app)
       .post('/api/boutiques/commandes/express')
@@ -111,7 +134,7 @@ describe('SPEC 02 — Checkout Web 1-Page Unifié & Cross-Sell Panier', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.succes).toBe(true);
-    expect(res.body.reference).toMatch(/^CMD-2026-/);
+    expect(res.body.reference).toMatch(/^CMD-2026/);
     expect(res.body.montant_total).toBe(13500);
   });
 

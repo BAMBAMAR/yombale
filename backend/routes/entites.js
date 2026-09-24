@@ -231,6 +231,14 @@ router.get('/resoudre/:id', async (req, res) => {
     if (numMatch) {
       const prodNum = parseInt(numMatch[1] || numMatch[0], 10);
 
+      // Produits comparateur de prix (id entier)
+      try {
+        const { rows: prodRows } = await pool.query('SELECT id FROM produits WHERE id = $1 LIMIT 1', [prodNum]);
+        if (prodRows[0]) {
+          return res.json({ found: true, type: 'produit', url: `/produit/${prodRows[0].id}` });
+        }
+      } catch {}
+
       // Forfaits télécom (id entier)
       try {
         const { rows: telRows } = await pool.query('SELECT id FROM forfaits_telecom WHERE id = $1 LIMIT 1', [prodNum]);
