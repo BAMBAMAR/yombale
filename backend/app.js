@@ -478,14 +478,6 @@ async function demarrerApp() {
       try { require('./services/cron-relances-carnet'); } catch (e) { console.warn('[CRON CARNET] Warning:', e.message); }
       try { require('./services/cron-relances-prospects'); } catch (e) { console.warn('[CRON PROSPECTS] Warning:', e.message); }
       try { require('./services/cron-sauvegarde'); } catch (e) { console.warn('[CRON SAUVEGARDE] Warning:', e.message); }
-      try {
-        const { executerRelancePaniers } = require('./services/relance-panier');
-        const { executerTacheCron } = require('./lib/cronLogger');
-        const cron = require('node-cron');
-        cron.schedule('*/30 * * * *', () => {
-          executerTacheCron('relance_paniers_abandonnes', () => executerRelancePaniers()).catch(() => {});
-        });
-      } catch (e) { console.warn('[CRON RELANCE PANIER] Warning:', e.message); }
     }
   });
 

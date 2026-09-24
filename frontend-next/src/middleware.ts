@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 import { isI18nScopedRoute } from './i18n/config'
 
-const key = new TextEncoder().encode(process.env.SESSION_SECRET)
+const key = new TextEncoder().encode(process.env.SESSION_SECRET || process.env.JWT_SECRET)
 const COOKIE_NAME = 'nopalou_session'
 
 // Routes qui nécessitent une session valide

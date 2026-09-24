@@ -2574,8 +2574,26 @@ module.exports = async function migrateInline(customConnStr = null) {
 
       ALTER TABLE signalements ADD COLUMN IF NOT EXISTS auteur_email VARCHAR(150);
       ALTER TABLE signalements ADD COLUMN IF NOT EXISTS pieces_jointes JSONB DEFAULT '[]'::jsonb;
+
+      -- Journal d'audit immuable des accès de sécurité et violations IDOR
+      CREATE TABLE IF NOT EXISTS security_audit_vault (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        event_type VARCHAR(100) NOT NULL,
+        user_id VARCHAR(100),
+        tenant_type VARCHAR(50) DEFAULT 'boutique',
+        target_id VARCHAR(100),
+        ip_address VARCHAR(100),
+        user_agent TEXT,
+        endpoint VARCHAR(255),
+        method VARCHAR(20),
+        details JSONB DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_security_vault_event ON security_audit_vault(event_type, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_security_vault_user ON security_audit_vault(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_security_vault_created ON security_audit_vault(created_at DESC);
     `);
-    console.log('[MIGRATE] ✅ Écosystème Conversationnel, Crons, Support & Signalements créés');
+    console.log('[MIGRATE] ✅ Écosystème Conversationnel, Crons, Support, Signalements & Audit Vault créés');
   } catch (err) {
     console.warn('[MIGRATE] Écosystème Conversationnel échec:', err.message);
   }

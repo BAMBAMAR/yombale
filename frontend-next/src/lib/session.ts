@@ -2,7 +2,7 @@ import 'server-only'
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 
-const key = new TextEncoder().encode(process.env.SESSION_SECRET)
+const key = new TextEncoder().encode(process.env.SESSION_SECRET || process.env.JWT_SECRET)
 
 const COOKIE_NAME = 'nopalou_session'
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 jours

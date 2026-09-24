@@ -266,7 +266,7 @@ router.get('/tickets/suivi/:numero', tokenOptional, async (req, res) => {
     const { tel, email, contact } = req.query;
 
     const { rows } = await pool.query(
-      `SELECT st.id, st.numero_ticket, st.sujet, st.description, st.categorie, st.priorite, st.statut,
+      `SELECT st.id, st.numero_ticket, st.sujet, st.categorie, st.priorite, st.statut,
               st.contact_nom, st.contact_telephone, st.contact_email, st.messages,
               st.utilisateur_id,
               st.created_at, st.updated_at,
@@ -323,7 +323,7 @@ router.get('/tickets/suivi/:numero', tokenOptional, async (req, res) => {
         numero: t.numero_ticket || t.numero,
         numero_ticket: t.numero_ticket || t.numero,
         sujet: t.sujet,
-        description: t.description || (normalizedMessages[0]?.message || ''),
+        description: (normalizedMessages[0]?.message || normalizedMessages[0]?.texte || t.sujet || ''),
         categorie: t.categorie,
         priorite: t.priorite,
         statut: t.statut,

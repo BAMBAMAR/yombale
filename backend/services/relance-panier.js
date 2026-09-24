@@ -92,5 +92,6 @@ Besoin d'un renseignement ? Répondez directement à ce message pour échanger a
 
 module.exports = {
   executerRelancePaniers,
+  relancerPaniersAbandonnes: executerRelancePaniers,
   assurerColonnesRelance
 };
