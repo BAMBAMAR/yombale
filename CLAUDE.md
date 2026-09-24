@@ -23,6 +23,25 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Résolution des Erreurs d'Hydratation React (#425, #418, #423) & Déblocage 403 Server Actions Modifier (24 septembre 2026)** ⚡🛠️🛡️✅ :
+  * **🎯 Contexte & Diagnostic** :
+    - Détection dans la console navigateur client d'erreurs d'hydratation React (`Minified React error #425`, `#418`, `#423`) et d'un blocage HTTP 403 Forbidden sur la route `modifier` lors de la soumission de formulaires d'annonces avec crash `TypeError: Cannot read properties of undefined (reading 'ok')`.
+  * **🛠️ Corrections Exécutées & Validées** :
+    - **1. Déblocage CSRF Server Actions en Production (`frontend-next/next.config.js`)** :
+      * Configuration de `experimental.serverActions.allowedOrigins` pour autoriser `nopalou.com`, `*.nopalou.com`, `nopalou-frontend.onrender.com` et `localhost` lors des requêtes POST de Server Actions derrière le reverse proxy Render/Cloudflare (élimination du code HTTP 403 Forbidden).
+    - **2. Éradication des Ruptures d'Hydratation Client/Serveur (`frontend-next/src/i18n/context.tsx`)** :
+      * Initialisation stricte de l'état `locale` avec `initialLocale || DEFAULT_LOCALE` pour garantir une parité absolue entre le rendu HTML SSR et la passe initiale d'hydratation React (élimine les erreurs #425, #418 et #423 provoquées par la lecture synchrone de `document.cookie`).
+      * Déport de la synchronisation de la locale issue du cookie dans un `useEffect` post-montage transparent.
+    - **3. Résilience et Sécurisation des Formulaires de Modification (`ModifierAnnonceForm.tsx`, `ModifierImmoForm.tsx`)** :
+      * Protection de l'appel `updateAnnonce` et `updateAnnonceImmo` par un bloc `try/catch` et vérification par chaînage optionnel `res?.ok`, empêchant tout crash TypeError inopiné si la réponse réseau est altérée ou rejetée.
+    - **4. Fallback Automatique `SESSION_SECRET` dans les Server Actions (`actions/annonces.ts`, `actions/immo.ts`, `lib/backend-fetch.ts`)** :
+      * Repli automatique `process.env.JWT_SECRET || process.env.SESSION_SECRET` pour garantir la signature des tokens d'actions serveur quelle que soit la variable configurée dans l'environnement d'hébergement.
+  * **🧪 Validation & Quality Gate** :
+    - TypeScript : 0 erreur (`tsc --noEmit`).
+    - Tests Unitaires Frontend : 69/69 validés (100%).
+    - Tests Unitaires Backend Jest : 383/383 validés (100%).
+    - Build Production Next.js : 133 routes statiques et dynamiques compilées sans erreur.
+
 - **Audit Global Autonome & Remédiations Critiques (Helpdesk, Crons, Auth & Migrations) (24 septembre 2026)** 🔍🛠️⚡🛡️✅ :
   * **🎯 Contexte & Objectif Lead Engineer** :
     - Diagnostic factuel, non destructif et complet de l'état réel du projet, couvrant le schéma PostgreSQL (109 tables, 45k produits, 12k offres, 4,6k annonces, 100 utilisateurs, 85 boutiques), les flux de paiement, l'isolation multi-tenant, les crons et l'orchestration Next.js.

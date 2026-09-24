@@ -144,14 +144,21 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
     photos.forEach(f => fd.append('photos', f))
 
     startTransition(async () => {
-      const res = await updateAnnonce(annonce.id, fd)
-      if (res.ok) {
-        router.push('/mes-annonces?updated=1')
-      } else {
-        setError(res.error ?? 'Une erreur est survenue.')
-        if (res.errors) {
-          setFieldErrors(res.errors.map(e => e.msg))
+      try {
+        const res = await updateAnnonce(annonce.id, fd)
+        if (res?.ok) {
+          router.push('/mes-annonces?updated=1')
+        } else {
+          setError(res?.error ?? 'Une erreur est survenue lors de la mise à jour.')
+          if (res?.errors) {
+            setFieldErrors(res.errors.map(e => e.msg))
+          }
+          if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }
         }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Une erreur inattendue est survenue.')
         if (typeof window !== 'undefined') {
           window.scrollTo({ top: 0, behavior: 'smooth' })
         }

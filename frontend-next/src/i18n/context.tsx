@@ -59,9 +59,17 @@ export function I18nProvider({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [locale, setLocaleState] = useState<Locale>(() => initialLocale || getCookieLocale())
-
   const isScoped = isI18nScopedRoute(pathname)
+  // Toujours initialiser avec initialLocale || DEFAULT_LOCALE pour garantir une parité stricte SSR / hydratation client
+  const [locale, setLocaleState] = useState<Locale>(initialLocale || DEFAULT_LOCALE)
+
+  // Synchronisation post-montage avec le cookie client sans provoquer de rupture d'hydratation
+  useEffect(() => {
+    const cookieLoc = getCookieLocale()
+    if (cookieLoc && isLocale(cookieLoc) && cookieLoc !== (initialLocale || DEFAULT_LOCALE)) {
+      setLocaleState(cookieLoc)
+    }
+  }, [initialLocale])
 
   const setLocale = useCallback((newLocale: Locale) => {
     if (!isLocale(newLocale)) return

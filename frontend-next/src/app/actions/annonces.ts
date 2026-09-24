@@ -16,13 +16,14 @@ export async function creerAnnonce(formData: FormData): Promise<AnnonceResult> {
   const session = await getOptionalSession()
   if (!session) return { ok: false, error: 'Connexion requise' }
 
-  if (!process.env.JWT_SECRET) {
-    console.error('[creerAnnonce] JWT_SECRET non défini — configurer dans Render Environment')
+  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET
+  if (!jwtSecret) {
+    console.error('[creerAnnonce] JWT_SECRET/SESSION_SECRET non défini — configurer dans Render Environment')
     return { ok: false, error: 'Configuration serveur manquante — contactez l\'administrateur' }
   }
 
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
+    const secret = new TextEncoder().encode(jwtSecret)
     const token = await new SignJWT({ userId: session.userId, email: session.email })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('5m')
@@ -54,12 +55,13 @@ export async function updateAnnonce(id: string, formData: FormData): Promise<Ann
   const session = await getOptionalSession()
   if (!session) return { ok: false, error: 'Connexion requise' }
 
-  if (!process.env.JWT_SECRET) {
+  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET
+  if (!jwtSecret) {
     return { ok: false, error: 'Configuration serveur manquante — contactez l\'administrateur' }
   }
 
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
+    const secret = new TextEncoder().encode(jwtSecret)
     const token = await new SignJWT({ userId: session.userId, email: session.email })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('5m')
@@ -91,8 +93,11 @@ export async function deleteAnnonce(id: string): Promise<{ error?: string }> {
   const session = await getOptionalSession()
   if (!session) return { error: 'Connexion requise' }
 
+  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET
+  if (!jwtSecret) return { error: 'Configuration serveur manquante' }
+
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+    const secret = new TextEncoder().encode(jwtSecret)
     const token = await new SignJWT({ userId: session.userId, email: session.email })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('2m')

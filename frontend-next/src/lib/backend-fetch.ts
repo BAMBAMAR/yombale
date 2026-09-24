@@ -22,12 +22,15 @@ export async function backendFetch(
   const headers = new Headers(options.headers)
 
   if (session?.userId) {
-    const key = new TextEncoder().encode(process.env.JWT_SECRET)
-    const token = await new SignJWT({ userId: session.userId, email: session.email })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime('2m')
-      .sign(key)
-    headers.set('Authorization', `Bearer ${token}`)
+    const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET
+    if (secret) {
+      const key = new TextEncoder().encode(secret)
+      const token = await new SignJWT({ userId: session.userId, email: session.email })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('2m')
+        .sign(key)
+      headers.set('Authorization', `Bearer ${token}`)
+    }
   }
 
   if (SSR_SECRET) {

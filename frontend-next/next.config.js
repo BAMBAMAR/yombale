@@ -28,6 +28,20 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        'nopalou.com',
+        '*.nopalou.com',
+        'nopalou-frontend.onrender.com',
+        '*.onrender.com',
+        'localhost:3000',
+        'localhost:3001',
+        '127.0.0.1:3000',
+        '127.0.0.1:3001',
+      ],
+    },
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
