@@ -236,19 +236,21 @@ export function useProduitFormScanners({
 
       setImageFligeeNom(imageBase64)
 
-      const res = await fetch('/api/vision/ocr-nom-produit', {
+      const res = await fetch('/api/boutiques/scan-ocr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageBase64 }),
       })
 
       const data = await res.json()
-      if (res.ok && data.texteNom) {
-        setNomForm(data.texteNom)
-        if (Array.isArray(data.suggestions)) {
-          setOcrDetections(data.suggestions)
+      const detectedNom = data.nom || data.texteNom
+      if (res.ok && detectedNom) {
+        setNomForm(detectedNom)
+        const suggestions = data.detections || data.suggestions
+        if (Array.isArray(suggestions)) {
+          setOcrDetections(suggestions)
         }
-        setScannerStatus(`Nom détecté : "${data.texteNom}"`)
+        setScannerStatus(`Nom détecté : "${detectedNom}"`)
         jouerBipEtVibrer('succes')
       } else {
         setScannerStatus('Aucun texte lisible détecté. Rapprochez la caméra ou tapez manuellement.')

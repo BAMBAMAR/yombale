@@ -58,6 +58,8 @@ async function connectWithRetry(retries = 3) {
   } catch {}
 }
 
-connectWithRetry();
+if (process.env.NODE_ENV !== 'test') {
+  connectWithRetry();
+}
 
-module.exports = { pool };
+module.exports = { pool, connectWithRetry };

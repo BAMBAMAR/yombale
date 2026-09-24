@@ -1,7 +1,9 @@
-// tests/unit/immo-favoris-and-resolver.test.js
-// Tests de non-régression pour IMM-001 (Résolveur Agences) et IMM-002 (Favoris multi-appareils)
+jest.mock('../../backend/models/db', () => ({
+  pool: {
+    query: jest.fn(),
+  },
+}));
 
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const express = require('express');
 const supertest = require('supertest');
 const jwt = require('jsonwebtoken');
@@ -10,6 +12,38 @@ const entitesRouter = require('../../backend/routes/entites');
 const favorisRouter = require('../../backend/routes/favoris');
 const { pool } = require('../../backend/models/db');
 const { infererTransaction, infererTypeBien } = require('../../backend/scripts/consolidate-immo-classifiees');
+
+beforeEach(() => {
+  pool.query.mockReset();
+  pool.query.mockImplementation(async (sql, params) => {
+    if (sql.includes('agences_immo')) {
+      return { rows: [{ id: 'amar-immo-id', slug: 'amar-immo', nom: 'Amar Immo' }] };
+    }
+    if (sql.includes('INSERT INTO utilisateurs_favoris')) {
+      return {
+        rows: [{
+          id: 'fav-1',
+          type_entite: params?.[1] || 'immo',
+          entite_id: params?.[2] || 'unit-test-fav-1',
+          boutique_id: params?.[3] || null,
+          created_at: new Date().toISOString(),
+        }],
+      };
+    }
+    if (sql.includes('SELECT type_entite, entite_id')) {
+      return {
+        rows: [
+          { type_entite: 'immo', entite_id: 'unit-test-fav-1', boutique_id: null, created_at: new Date().toISOString() },
+          { type_entite: 'produit', entite_id: 'unit-test-fav-2', boutique_id: null, created_at: new Date().toISOString() },
+        ],
+      };
+    }
+    if (sql.includes('DELETE FROM utilisateurs_favoris')) {
+      return { rows: [] };
+    }
+    return { rows: [] };
+  });
+});
 
 describe('IMM-001 : Résolveur Universel d\'Agences', () => {
   let app;
@@ -46,25 +80,17 @@ describe('IMM-001 : Résolveur Universel d\'Agences', () => {
 
 describe('IMM-002 : API Favoris Cloud Multi-Appareils', () => {
   let app;
-  let testToken;
-  let testUserId;
+  const testUserId = 'unit-test-user-uuid';
+  const testToken = jwt.sign(
+    { userId: testUserId, id: testUserId, email: 'test@user.sn' },
+    process.env.JWT_SECRET || 'secret',
+    { expiresIn: '1h' }
+  );
 
-  beforeAll(async () => {
+  beforeAll(() => {
     app = express();
     app.use(express.json());
     app.use('/api/favoris', favorisRouter);
-
-    const { rows } = await pool.query('SELECT id, email FROM utilisateurs LIMIT 1');
-    if (rows[0]) {
-      testUserId = rows[0].id;
-      testToken = jwt.sign({ userId: rows[0].id, email: rows[0].email }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
-    }
-  });
-
-  afterAll(async () => {
-    if (testUserId) {
-      await pool.query('DELETE FROM utilisateurs_favoris WHERE utilisateur_id = $1 AND entite_id LIKE \'unit-test-%\'', [testUserId]);
-    }
   });
 
   test('Refuse l\'accès sans token', async () => {

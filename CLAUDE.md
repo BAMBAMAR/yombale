@@ -23,6 +23,25 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Audit QA Exhaustif Pré-Production, Étanchéité des Tests & Verrouillage CI/CD (24 septembre 2026)** 🛡️🧪🚀📦✅ :
+  * **🎯 Contexte & Diagnostic Senior** :
+    - Réalisation d'un audit QA exhaustif pré-production selon le standard Nopalou (Action → Frontend → API → Backend → DB → UI → Persistance → Régression).
+    - Détection de blocages d'intégration liés à l'absence de base de données de test isolée et à la pollution réseau de la suite Jest par un test unitaire non mocké.
+  * **🛠️ Correctifs et Améliorations Appliqués** :
+    - **Étanchéité des Tests Unitaires Backend (100% PASS — 373/373)** :
+      * Refactorisation de `tests/unit/immo-favoris-and-resolver.test.js` avec mock étanche de `pool.query` : suppression des appels directs au cluster PostgreSQL distant Render et élimination des timeouts de 5000 ms et des fuites de sockets asynchrones.
+      * Sécurisation de `backend/models/db.js` : exécution conditionnelle de `connectWithRetry()` (`process.env.NODE_ENV !== 'test'`) pour empêcher le déclenchement de boucles de retry asynchrones en arrière-plan pendant les suites de tests.
+      * Résultat : 47 suites unitaires Jest validées en 15,6 secondes sans aucune erreur réseau.
+    - **Durcissement des Assertions E2E & Rejet Strict des Erreurs Internes** :
+      * Correction de `tests/e2e/05-api.spec.ts` : suppression de la tolérance du code HTTP 500 sur injection de faux JWT (`expect([401, 403]).toContain(res.status())`).
+    - **Reconnexion de l'OCR Caméra Produit & Cohérence API Matrix** :
+      * Raccordement de `frontend-next/src/app/boutique/produits/hooks/useProduitFormScanners.ts` vers l'endpoint effectif `/api/boutiques/scan-ocr` avec parsing bi-format (`nom` / `texteNom`, `detections` / `suggestions`).
+      * Amélioration du scanner `scripts/check_api_matrix.js` pour supporter les routes Express déclarées sous forme de tableaux d'alias (`router.post(['/parse-url', ...])`), portant les routes répertoriées à 601 endpoints et éliminant les faux positifs.
+    - **Verrouillage de la Pipeline CI/CD GitHub Actions (`.github/workflows/ci-tests.yml`)** :
+      * Ajout d'un job `frontend-gate` bloquant avant tout build/test : vérification TypeScript stricte (`npx tsc --noEmit`), linter Anti-AI-Slop et exécution des 69 tests unitaires frontend.
+      * Élargissement de la suite Playwright exécutée en CI : inclusion systématique du contrôle d'anti-débordement mobile (`06-mobile-overflow-audit.spec.ts` sur 24 routes) et de la suite de régression globale (`99-regression.spec.ts`).
+    - **Validation Quality Gate** : 100% OK (`npx tsc --noEmit` OK, `lint-ai-slop` OK, tests frontend 69/69 OK, tests backend 373/373 OK).
+
 - **Mise en Place du Framework de Test QA Exhaustif & Infrastructure CI/CD Multi-Phases (Phases 0 à 7) (24 septembre 2026)** 🛡️🧪🚀📦✅ :
   * **🎯 Contexte & Objectif** :
     - Exécution du plan de test exhaustif approuvé suite à l'audit QA rigoureux (15 anomalies identifiées de P0 à P2).

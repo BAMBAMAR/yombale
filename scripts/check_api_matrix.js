@@ -22,15 +22,19 @@ Object.entries(routeFilesByPrefix).forEach(([file, prefixes]) => {
     if (!fs.existsSync(fullPath)) return;
     const content = fs.readFileSync(fullPath, 'utf8');
 
-    const epRegex = /router\.(get|post|put|delete|patch)\(\s*['"]([^'"]+)['"]/g;
+    const epRegex = /router\.(get|post|put|delete|patch)\(\s*(?:['"]([^'"]+)['"]|\[([^\]]+)\])/g;
     let epMatch;
     while ((epMatch = epRegex.exec(content)) !== null) {
         const method = epMatch[1].toUpperCase();
-        let sub = epMatch[2];
-        if (sub === '/') sub = '';
-        prefixes.forEach(pref => {
-            let full = pref + (sub.startsWith('/') ? sub : (sub ? '/' + sub : ''));
-            backendEndpoints.push({ method, path: full, file });
+        const singleSub = epMatch[2];
+        const arraySub = epMatch[3];
+        const subs = singleSub ? [singleSub] : (arraySub ? arraySub.split(',').map(s => s.replace(/['"\s]/g, '')).filter(Boolean) : []);
+        subs.forEach(sub => {
+            if (sub === '/') sub = '';
+            prefixes.forEach(pref => {
+                let full = pref + (sub.startsWith('/') ? sub : (sub ? '/' + sub : ''));
+                backendEndpoints.push({ method, path: full, file });
+            });
         });
     }
 });
