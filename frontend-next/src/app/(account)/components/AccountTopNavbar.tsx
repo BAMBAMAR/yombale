@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bell, Plus, User, Store, Building2, Heart, Users, LogOut, ChevronDown, Menu, BookOpen } from 'lucide-react'
+import { Bell, Plus, User, Store, Building2, Heart, Users, LogOut, ChevronDown, Menu, BookOpen, HelpCircle } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
 interface AccountTopNavbarProps {
@@ -417,7 +417,7 @@ export default function AccountTopNavbar({
                 </Link>
 
                 <Link
-                  href="/guide-emploi"
+                  href="/guide-utilisation"
                   target="_blank"
                   onClick={() => setDropdownOpen(false)}
                   style={{
@@ -435,6 +435,26 @@ export default function AccountTopNavbar({
                 >
                   <BookOpen size={15} style={{ color: '#64748B' }} />
                   <span>Guide d&apos;utilisation</span>
+                </Link>
+
+                <Link
+                  href="/aide"
+                  onClick={() => setDropdownOpen(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 9,
+                    padding: '8px 16px',
+                    fontSize: 13,
+                    fontWeight: 650,
+                    color: '#334155',
+                    textDecoration: 'none',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#FAF8F5')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <HelpCircle size={15} style={{ color: '#0284C7' }} />
+                  <span>Centre d&apos;Aide & SAV</span>
                 </Link>
               </div>
 

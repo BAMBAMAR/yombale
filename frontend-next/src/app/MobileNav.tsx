@@ -367,6 +367,9 @@ export default function MobileNav({ isLoggedIn, nom }: Props) {
               Aide &amp; Contact
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5 }}>
+              <a href="/aide" onClick={close} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--accent, #C75B00)', textDecoration: 'none', fontWeight: 800 }}>
+                <HelpCircle size={13} style={{ color: 'var(--accent)' }} /> Centre d&apos;Aide &amp; SAV
+              </a>
               <a href="/guide-emploi" onClick={close} style={{ color: 'var(--navy, #1C2B4A)', textDecoration: 'none', fontWeight: 600 }}>
                 Comment ça marche ?
               </a>

@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Clock, PackageCheck, Truck, CheckCircle2, MessageCircle, CreditCard, Zap, ArrowRight, AlertCircle } from 'lucide-react'
+import { Clock, PackageCheck, Truck, CheckCircle2, MessageCircle, CreditCard, Zap, ArrowRight, AlertCircle, ShieldAlert } from 'lucide-react'
+import ModalSignalerProbleme from '@/app/(account)/compte/tabs/components/ModalSignalerProbleme'
 
 interface CommandeSuivie {
   id: string
@@ -31,6 +32,7 @@ function SuiviCommandeContent() {
   const [loading, setLoading] = useState(false)
   const [commandes, setCommandes] = useState<CommandeSuivie[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [commandeLitige, setCommandeLitige] = useState<CommandeSuivie | null>(null)
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || ''
 
@@ -276,24 +278,50 @@ function SuiviCommandeContent() {
                     </div>
                   )}
 
-                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, fontSize: 12, color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, fontSize: 12, color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                     <span>Client : <strong>{cmd.client_nom}</strong> ({cmd.client_telephone})</span>
-                    {cmd.boutique_whatsapp && (
-                      <a
-                        href={`https://wa.me/${cmd.boutique_whatsapp.replace(/[^0-9]/g, '')}?text=Bonjour,%20je%20suis%20le%20suivi%20de%20ma%20commande%20${cmd.reference}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                      {cmd.boutique_whatsapp && (
+                        <a
+                          href={`https://wa.me/${cmd.boutique_whatsapp.replace(/[^0-9]/g, '')}?text=Bonjour,%20je%20suis%20le%20suivi%20de%20ma%20commande%20${cmd.reference}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#16a34a', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+                        >
+                          <MessageCircle size={14} /> Contacter la boutique
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setCommandeLitige(cmd)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          color: '#dc2626',
+                          fontWeight: 700,
+                          fontSize: 12,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
                       >
-                        <MessageCircle size={14} /> Contacter la boutique
-                      </a>
-                    )}
+                        <ShieldAlert size={14} /> Signaler un litige / SAV
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
             })}
           </div>
         )}
+
+        <ModalSignalerProbleme
+          isOpen={!!commandeLitige}
+          onClose={() => setCommandeLitige(null)}
+          commande={commandeLitige}
+        />
 
       </div>
     </div>

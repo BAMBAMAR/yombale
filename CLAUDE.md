@@ -23,6 +23,29 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Remédiation Exhaustive de l'Onboarding, Documentation, Self-Service & Autonomie Utilisateur (24 septembre 2026)** 🧭📚🛡️🏢📦🎧✅ :
+  * **🎯 Contexte & Diagnostic d'Audit** :
+    - Audit approfondi de la capacité réelle d'un utilisateur (Acheteur, Marchand, Agence, Bailleur, Locataire, Visiteur) à être 100% autonome.
+    - Identification et traitement de 6 ruptures d'autonomie majeures (accessibilité du centre d'aide, orientation nouvel espace agence, réclamation acheteur en suivi public, tiroir mobile, self-service locatif et routage du manuel utilisateur).
+  * **🛠️ Correctifs et Améliorations Appliqués** :
+    - **1. Accessibilité Universelle du Centre d'Aide & SAV (ANO-01)** :
+      * `frontend-next/src/app/layout.tsx` : Ajout du lien "Centre d'Aide & SAV" (`/aide`) dans la barre de contact supérieure (`footer-support-bar`) et dans la colonne "Mon compte" du footer global.
+      * `frontend-next/src/app/MobileNav.tsx` : Intégration du lien `/aide` avec icône Lucide vectorielle `HelpCircle` dans le volet mobile "Aide & Contact".
+    - **2. Guide de Démarrage Agence Immobilière (ANO-02)** :
+      * `frontend-next/src/app/agence/[slug]/components/AgenceOnboardingGuide.tsx` : Création d'un composant modulaire autonome (< 220 lignes, 0 émoji, tokens CSS `--navy`, `--accent`, `--border`) guidant les nouveaux gestionnaires en 3 étapes : Enregistrer le 1er bien, Activer la vitrine publique & QR Code, Créer baux & mandats Wave. Dismissible avec mémorisation locale (`localStorage`).
+      * `frontend-next/src/app/agence/[slug]/page.tsx` : Intégration conditionnelle au-dessus de la grille des KPIs lorsque le portefeuille est vierge (`s.biens.actifs === 0`).
+    - **3. Protection Acheteur & Signalement Litige en Suivi de Commande Public (ANO-03)** :
+      * `frontend-next/src/app/suivi-commande/page.tsx` : Ajout du bouton d'action "Signaler un litige / SAV" (`ShieldAlert`) sur les fiches de commande et intégration de la modale certifiée `<ModalSignalerProbleme>` pour permettre la réclamation directe (retard critique, produit endommagé, incident Wave) sans compte préalable, avec ticket persisté en base de données.
+    - **4. Orientation Mobile & Guides d'Utilisation (ANO-04)** :
+      * `frontend-next/src/app/components/mobileNavData.ts` : Ajout direct des raccourcis "Guide d'utilisation complet (POS, Dettes, Factures)" (`/guide-utilisation` avec badge `COMPLET`) et "Centre d'Aide & Support SAV" (`/aide` avec badge `SAV`) dans la section Guides du tiroir mobile.
+    - **5. Extension du Centre d'Aide aux Baux, Quittances & Suppression de Compte (ANO-05)** :
+      * `frontend-next/src/app/aide/AideClient.tsx` : Ajout de la catégorie "Immobilier & Baux" (`Building2`) et de 5 nouvelles fiches d'assistance concrètes : Paiement de loyer par Wave/OM, Vérification de quittance par QR Code, Gestion des agences et portefeuilles de biens, Fin de bail/cautions, et Suppression définitive de compte/boutique (conformité CDP Sénégal).
+    - **6. Rectification du Lien Manuel d'Utilisation Espace Compte (ANO-06)** :
+      * `frontend-next/src/app/(account)/components/AccountTopNavbar.tsx` : Remplacement du lien obsolète `/guide-emploi` par `/guide-utilisation` dans le menu déroulant utilisateur et ajout d'un accès direct au Centre d'Aide (`/aide`).
+  * **📊 Validation Qualité & Conformité Anti-AI-Slop** :
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch, 0 composant monolithe (>800 lignes), conformité stricte**.
+    - Respect des 5 Règles d'Or : 100% SVG Lucide, pas d'émojis UI, respect des tokens design system, zéro IDOR.
+
 - **Remédiation Complète : Qualité du Contenu, Vérité du Système, Architecture de l'Information & UX Writing (24 septembre 2026)** 🔍📝🏷️💳🏢🛍️⚖️✅ :
   * **🎯 Contexte & Objectif** :
     - Réalisation d'un audit approfondi de la qualité, exactitude, cohérence, complétude, fraîcheur et utilité de l'information (UX Writing, Content Architecture, E-commerce, Immo, Quotas et Paiements).

@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Ticket,
   ShieldCheck,
+  Building2,
 } from 'lucide-react'
 import ModalCreerTicket from './components/ModalCreerTicket'
 import SuiviTicketSection from './components/SuiviTicketSection'
@@ -46,6 +47,12 @@ const FAQ_ITEMS: FaqItem[] = [
     categorie: 'demarrage',
     question: 'Quel est le lien de ma boutique pour mes clients ?',
     reponse: 'Votre boutique dispose d\'une adresse web dédiée type nopalou.com/boutiques/votre-nom. Vous pouvez partager ce lien direct ou votre QR code officiel dans vos stories Instagram, TikTok et statuts WhatsApp.',
+  },
+  {
+    id: 'supprimer-compte',
+    categorie: 'demarrage',
+    question: 'Comment supprimer définitivement mon compte ou ma boutique ?',
+    reponse: 'Dans vos Paramètres de Compte (onglet Sécurité & Confidentialité), vous disposez d\'une option de suppression définitive. La confirmation requiert votre mot de passe et archive/purge vos données conformément aux normes de protection de la vie privée (CDP Sénégal).',
   },
 
   // Caisse POS & Ventes
@@ -82,6 +89,32 @@ const FAQ_ITEMS: FaqItem[] = [
     reponse: 'Oui, toutes les transactions transitent par les passerelles officielles chiffrées avec vérification HMAC-SHA256. L\'argent arrive directement sur votre compte marchand sans intermédiaire non autorisé.',
   },
 
+  // Immobilier & Gestion Locative
+  {
+    id: 'payer-loyer-wave',
+    categorie: 'immo',
+    question: 'Comment payer un loyer via Wave ou Orange Money ?',
+    reponse: 'Le locataire reçoit son avis d\'échéance par SMS ou WhatsApp avec un lien sécurisé. Il clique pour régler instantanément par Wave ou Orange Money. Le paiement est certifié en temps réel et la quittance officielle avec QR code est générée automatiquement.',
+  },
+  {
+    id: 'quittance-qr',
+    categorie: 'immo',
+    question: 'Comment vérifier l\'authenticité d\'une quittance de loyer ?',
+    reponse: 'Chaque quittance émise par Nopalou possède un QR Code infalsifiable et un identifiant unique (ex: QUI-2026-XXXX). Scannez le QR Code ou visitez la page publique de vérification de quittance pour attester de son authenticité auprès de tout organisme.',
+  },
+  {
+    id: 'creer-agence-immo',
+    categorie: 'immo',
+    question: 'Comment configurer une agence immobilière ou un portefeuille de biens ?',
+    reponse: 'Dans votre Espace Pro, accédez au module Agence Immobilière. Vous pouvez enregistrer vos biens (appartements, villas, locaux commerciaux), associer des propriétaires bailleurs, signer des baux numériques et automatiser les quittances chaque mois.',
+  },
+  {
+    id: 'gestion-baux-cautions',
+    categorie: 'immo',
+    question: 'Comment sont gérées les cautions et les fins de baux ?',
+    reponse: 'Le module Baux enregistre les dépôts de garantie encaissés. Lors de la sortie du locataire, vous pouvez réaliser l\'état des lieux de sortie contradictoire, calculer les retenues éventuelles et clôturer le bail avec solde de tout compte.',
+  },
+
   // Logistique & Livraison
   {
     id: 'livraison-tiaktiak',
@@ -110,6 +143,7 @@ const CATEGORIES = [
   { id: 'demarrage', label: 'Démarrage & Studio', icon: Store },
   { id: 'caisse', label: 'Caisse POS & Ventes', icon: BookOpen },
   { id: 'paiements', label: 'Paiements & Wave/OM', icon: CreditCard },
+  { id: 'immo', label: 'Immobilier & Baux', icon: Building2 },
   { id: 'logistique', label: 'Livraison Tiak-Tiak', icon: Truck },
   { id: 'comptabilite', label: 'SYSCOHADA & Fiscalité', icon: HelpCircle },
 ]

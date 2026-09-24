@@ -461,6 +461,7 @@ export default async function RootLayout({
                 <a href="/suivi-commande" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <Package size={13} style={{ color: 'var(--accent, #C75B00)' }} /> Suivre ma commande
                 </a>
+                <a href="/aide" style={{ fontWeight: 700, color: 'var(--accent, #C75B00)' }}>Centre d&apos;aide &amp; SAV</a>
               </div>
             </div>
           </div>
@@ -470,6 +471,8 @@ export default async function RootLayout({
             <div className="footer-support-bar-inner">
               <span className="footer-support-title">Aide &amp; Contact :</span>
               <div className="footer-support-links">
+                <a href="/aide" style={{ fontWeight: 800, color: 'var(--accent, #C75B00)' }}>Centre d&apos;Aide &amp; SAV</a>
+                <span className="footer-support-sep">&bull;</span>
                 <a href="/guide-emploi">Comment ça marche ?</a>
                 <span className="footer-support-sep">&bull;</span>
                 <a href="/assistant-whatsapp" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>

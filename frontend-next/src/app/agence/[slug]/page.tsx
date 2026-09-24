@@ -19,6 +19,7 @@ import {
 import { DashboardRubriques } from './components/DashboardRubriques'
 import { DashboardAlertesPrioritaires, CompteursAlertes } from './components/DashboardAlertesPrioritaires'
 import DashboardMobileVisitesDuJour from './components/DashboardMobileVisitesDuJour'
+import AgenceOnboardingGuide from './components/AgenceOnboardingGuide'
 import { getImmoAuthHeaders } from '@/lib/immo-auth'
 
 interface StatsData {
@@ -201,6 +202,9 @@ export default function AgenceDashboardPage() {
           nbAujourdhui={s.visites.aujourdhui}
         />
       </div>
+
+      {/* ── Guide Onboarding Nouvel Espace Agence ── */}
+      <AgenceOnboardingGuide slug={slug} totalBiens={s.biens.actifs} />
 
       {/* ── KPI Grid (Priorité 1) ── */}
       <div className="kpi-grid">
