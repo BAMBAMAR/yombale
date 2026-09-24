@@ -217,6 +217,7 @@ function extraireMotCleRecherche(rawText) {
 
 // ── POST /api/chat/message ────────────────────────────────────────────────────
 router.post('/message', limiterRecherche, async (req, res) => {
+  const startMs = Date.now();
   const rawText = (req.body?.message || '').trim();
   if (!rawText) {
     return res.status(400).json({ error: 'Message requis' });
@@ -439,6 +440,28 @@ router.post('/message', limiterRecherche, async (req, res) => {
       );
     }
   }
+
+  const dureeMs = Date.now() - startMs;
+  // Observabilité : journaliser la conversation web dans chat_web_logs de manière asynchrone non-bloquante
+  setImmediate(async () => {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS chat_web_logs (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          message_client TEXT NOT NULL,
+          intention VARCHAR(50),
+          nb_resultats INT DEFAULT 0,
+          temps_ms INT,
+          ip VARCHAR(50),
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      await pool.query(
+        `INSERT INTO chat_web_logs (message_client, intention, nb_resultats, temps_ms, ip) VALUES ($1, $2, $3, $4, $5)`,
+        [rawText.slice(0, 500), isImmo ? 'immo' : isAgenceQuery ? 'agence' : isBoutiqueQuery ? 'boutique' : isMenuQuery ? 'menu' : 'produit', items.length, dureeMs, req.ip || null]
+      );
+    } catch (_) {}
+  });
 
   return res.json({
     success: true,

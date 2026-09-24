@@ -1337,9 +1337,17 @@ function demarrerScraping() {
 }
 
 function demarrerCronsMetier() {
-  cron.schedule('*/15 * * * *', () => verifierAlertsPrix().catch(err => console.error('[ALERTES]', err.message)));
+  const { executerTacheCron } = require('../lib/cronLogger');
+
+  cron.schedule('*/15 * * * *', () => {
+    executerTacheCron('verifier_alertes_prix', () => verifierAlertsPrix()).catch(err => console.error('[ALERTES]', err.message));
+  });
+
   const { detecterAnomalies } = require('./anomaly-detector');
-  cron.schedule('0 1 * * *', () => detecterAnomalies().catch(err => console.error('[ANOMALY]', err.message)));
+  cron.schedule('0 1 * * *', () => {
+    executerTacheCron('detecter_anomalies_prix', () => detecterAnomalies()).catch(err => console.error('[ANOMALY]', err.message));
+  });
+
   try {
     const { demarrerCronRelanceCatalogue } = require('./relance-catalogue');
     demarrerCronRelanceCatalogue();
@@ -1349,7 +1357,7 @@ function demarrerCronsMetier() {
   try {
     const { relancerPaniersAbandonnes } = require('./relance-panier');
     cron.schedule('*/30 * * * *', () => {
-      relancerPaniersAbandonnes().catch(err => console.error('[CRON RELANCE PANIER ERR]:', err.message));
+      executerTacheCron('relance_paniers_abandonnes', () => relancerPaniersAbandonnes()).catch(err => console.error('[CRON RELANCE PANIER ERR]:', err.message));
     });
   } catch (e) {
     console.error('[CRON RELANCE PANIER INIT ERR]:', e.message);

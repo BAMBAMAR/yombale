@@ -49,6 +49,19 @@ async function executerTacheCron(nomCron, asyncFn) {
         [err.message || String(err), executionId]
       ).catch(() => {});
     }
+
+    try {
+      const { alerterAdmin } = require('../services/admin-alerts');
+      alerterAdmin({
+        type: `cron_echec_${nomCron}`,
+        titre: `Échec de la tâche cron : ${nomCron}`,
+        message: `La tâche planifiée ${nomCron} a rencontré une erreur : ${err.message}`,
+        details: err.stack,
+        priorite: 'ATTENTION',
+        cooldownMs: 60 * 60 * 1000,
+      }).catch(() => {});
+    } catch (_) {}
+
     throw err;
   }
 }

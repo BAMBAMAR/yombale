@@ -17,6 +17,7 @@ const morgan      = require('morgan');
 const compression = require('compression');
 const path        = require('path');
 const rateLimit   = require('express-rate-limit');
+const crypto      = require('crypto');
 require('dotenv').config();
 
 // ── Gestion globale des erreurs inattendues (Évite la mort du process Node) ──
@@ -37,6 +38,17 @@ process.on('uncaughtException', (err) => {
 
 process.on('unhandledRejection', (reason) => {
   console.error('💥 [UNHANDLED REJECTION]:', reason);
+  try {
+    const { alerterAdmin } = require('./services/admin-alerts');
+    alerterAdmin({
+      type: 'unhandled_rejection',
+      priorite: 'ATTENTION',
+      titre: 'Promesse non gérée (Unhandled Rejection)',
+      message: `Une promesse asynchrone non interceptée est survenue : ${reason?.message || String(reason)}`,
+      details: reason?.stack || String(reason),
+      cooldownMs: 30 * 60 * 1000,
+    }).catch(() => {});
+  } catch {}
 });
 
 // ── Sentry (monitoring, free tier) ──────────────────────────────
@@ -189,7 +201,20 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+// ── Middleware d'Observabilité & Corrélation : Request ID (UUID) ──
+app.use((req, res, next) => {
+  const reqId = req.headers['x-request-id'] || crypto.randomUUID();
+  req.id = reqId;
+  res.setHeader('X-Request-Id', reqId);
+  next();
+});
+
+morgan.token('id', (req) => req.id || '-');
+app.use(morgan(
+  process.env.NODE_ENV === 'production'
+    ? '[:id] :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
+    : '[:id] :method :url :status :response-time ms - :res[content-length]'
+));
 
 // ── Protection pages admin ────────────────────────────────────
 // Doit être AVANT express.static pour intercepter les routes
@@ -396,9 +421,13 @@ if (Sentry) {
 }
 
 app.use((err, req, res, next) => {
-  console.error('[ERROR]', req.method, req.path, err.stack);
+  const reqId = req.id || 'N/A';
+  console.error(`[ERROR][${reqId}]`, req.method, req.path, err.stack);
   const isDev = process.env.NODE_ENV !== 'production';
-  res.status(err.status || 500).json({ error: isDev ? (err.message || 'Erreur serveur') : 'Erreur serveur' });
+  res.status(err.status || 500).json({
+    error: isDev ? (err.message || 'Erreur serveur') : 'Erreur serveur',
+    requestId: reqId,
+  });
 });
 
 const PORT = process.env.PORT || 3000;
@@ -449,9 +478,10 @@ async function demarrerApp() {
       try { require('./services/cron-relances-prospects'); } catch (e) { console.warn('[CRON PROSPECTS] Warning:', e.message); }
       try {
         const { executerRelancePaniers } = require('./services/relance-panier');
+        const { executerTacheCron } = require('./lib/cronLogger');
         const cron = require('node-cron');
         cron.schedule('*/30 * * * *', () => {
-          executerRelancePaniers().catch(() => {});
+          executerTacheCron('relance_paniers_abandonnes', () => executerRelancePaniers()).catch(() => {});
         });
       } catch (e) { console.warn('[CRON RELANCE PANIER] Warning:', e.message); }
     }

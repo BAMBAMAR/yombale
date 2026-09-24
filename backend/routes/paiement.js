@@ -428,6 +428,18 @@ router.post('/wave/webhook', limiterGeneral, async (req, res) => {
     if (type === 'checkout.session.completed') {
       const clientRef = data?.client_reference;
       if (clientRef) {
+        // Idempotence : vérifier si le paiement a déjà été validé
+        const existingCheck = await pool.query(
+          `SELECT paiement_recu FROM commandes_boutique WHERE reference = $1`,
+          [clientRef]
+        ).catch(() => ({ rows: [] }));
+        const alreadyPaid = existingCheck.rows[0]?.paiement_recu === true;
+
+        if (alreadyPaid) {
+          console.log(`[WAVE WEBHOOK] ℹ️ Commande ${clientRef} déjà validée (événement idempotent, notification doublon évitée)`);
+          return res.sendStatus(200);
+        }
+
         const cmdRes = await pool.query(
           `UPDATE commandes_boutique SET paiement_recu = true, statut = CASE WHEN statut = 'en_attente' THEN 'payee' ELSE statut END, updated_at = NOW() WHERE reference = $1 RETURNING *`,
           [clientRef]
@@ -647,7 +659,14 @@ router.post('/stripe/webhook', limiterGeneral, async (req, res) => {
     res.status(200).json({ received: true });
   } catch (err) {
     console.error('[STRIPE WEBHOOK ERREUR]:', err.message);
-    res.status(200).json({ received: true });
+    alerterAdmin({
+      type: 'webhook_stripe_echec',
+      titre: 'Échec critique du Webhook Stripe',
+      message: `Erreur lors du traitement du webhook Stripe : ${err.message}`,
+      details: err.stack,
+      priorite: 'CRITIQUE',
+    }).catch(() => {});
+    res.status(500).json({ error: 'Erreur lors du traitement du webhook Stripe', details: err.message });
   }
 });
 
@@ -864,7 +883,14 @@ router.post('/orange/webhook', limiterGeneral, async (req, res) => {
     res.sendStatus(200);
   } catch (err) {
     console.error('[Orange webhook]', err.message);
-    res.sendStatus(200); // toujours 200 pour éviter les retry
+    alerterAdmin({
+      type: 'webhook_orange_echec',
+      titre: 'Échec critique du Webhook Orange Money',
+      message: `Erreur lors du traitement du webhook Orange Money : ${err.message}`,
+      details: `Order: ${req.body?.order_id || 'inconnu'}, Montant: ${req.body?.amount || 0}, Erreur: ${err.stack || err.message}`,
+      priorite: 'CRITIQUE',
+    }).catch(() => {});
+    res.status(500).json({ error: 'Erreur lors du traitement du webhook Orange Money', details: err.message });
   }
 });
 

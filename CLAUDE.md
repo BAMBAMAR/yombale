@@ -23,6 +23,44 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Remédiation Exhaustive de l'Observabilité, Alerting, SRE & Télémétrie Métier (24 septembre 2026)** 📡🔍🚨🛡️💳🤖⚙️📊✅ :
+  * **🎯 Contexte & Audit SRE Senior** :
+    - Diagnostic complet des capacités réelles de Nopalou à observer son fonctionnement, détecter ses anomalies, distinguer incidents techniques et anomalies métier, alerter les bonnes équipes sans spam, et corréler les flux de bout en bout (Commandes, Webhooks Wave/OM/Stripe, Crons, CRM Prospection, Leads Immo, WhatsApp et Chat Web).
+  * **🛠️ Correctifs et Améliorations Appliqués** :
+    - **1. Masquage Automatique des Données Personnelles et Sensibles (PII & Secrets)** :
+      * `backend/services/admin-alerts.js` : Implémentation du sanitizer `masquerDonneesSensibles()` : anonymisation et masquage à la volée des numéros de téléphone (`+221 77***42`), adresses email (`u***@domain.com`), mots de passe et jetons d'API avant toute diffusion d'alerte vers Telegram et Email.
+    - **2. Idempotence & Résilience Critique des Webhooks de Paiement** :
+      * `backend/routes/paiement.js` :
+        * *Webhook Wave* : Ajout d'une vérification d'idempotence (`paiement_recu = true`) prévenant les notifications et relances en double lors des retries de la passerelle.
+        * *Webhook Stripe* : Élimination de l'absorption silencieuse des erreurs (`res.status(200)` dans le `catch`) ; déclenchement immédiat de `alerterAdmin({ type: 'webhook_stripe_echec', priorite: 'CRITIQUE' })` et retour du code HTTP 500 pour permettre à Stripe de planifier ses tentatives de relance.
+        * *Webhook Orange Money* : Suppression de l'accusé de réception trompeur systématique (`res.sendStatus(200)`) en cas de panne de traitement interne ; déclenchement d'alerte critique et émission de l'erreur 500.
+    - **3. Corrélation de Bout en Bout par Request ID (UUID) & Logging Structuré** :
+      * `backend/app.js` :
+        * Injection du middleware de corrélation de requête : assignation ou propagation d'un UUID unique `req.id` (`x-request-id`) renvoyé dans les en-têtes HTTP de réponse (`X-Request-Id`).
+        * Configuration du logger Morgan avec token personnalisé `:id` estampillant chaque ligne de log d'accès.
+        * Enrichissement du gestionnaire d'erreurs global avec préfixe `[ERROR][${reqId}]` et restitution du `requestId` dans le payload JSON d'erreur.
+        * Supervision des rejets asynchrones non gérés (`unhandledRejection`) reliée à `alerterAdmin` avec cache de cooldown de 30 minutes.
+    - **4. Supervision, Télémétrie & Dead-Man's Switch des Tâches Planifiées (Crons)** :
+      * `backend/lib/cronLogger.js` : Amélioration de `executerTacheCron()` avec alerte automatique immédiate `alerterAdmin` en cas d'exception sur un cron métier.
+      * `backend/services/scraper.js` : Encadrement par `executerTacheCron` des crons `verifierAlertsPrix`, `detecterAnomalies` et `relancerPaniersAbandonnes`.
+      * `backend/services/cron-relances-carnet.js` : Encadrement par `executerTacheCron` de `traiterRelancesAutomatiquesWhatsApp`.
+      * `backend/app.js` : Encadrement par `executerTacheCron` de la tâche de fond `relance_paniers_abandonnes`.
+    - **5. Traçabilité & Observabilité des Notifications Commandes Vendeurs** :
+      * `backend/services/commande-service.js` : Traçage systématique du statut d'envoi WhatsApp dans `commandes_boutique.notes` (`[Notif WhatsApp vendeur transmise]`, `[Échec Notif WhatsApp: ...]`, `[Notif vendeur impossible: absence de numéro]`), éliminant l'opacité sur les notifications non reçues par les marchands.
+    - **6. Watchdog de Campagnes CRM & Persistance d'Échec** :
+      * `backend/routes/prospection.js` : Implémentation d'un auto-healing watchdog sur `GET /api/prospection/campagnes` guérissant automatiquement les campagnes orphelines bloquées en statut `en_cours` depuis plus de 30 minutes. Capture et persistance des exceptions dans `POST /api/prospection/campagnes/lancer` avec mise à jour en statut `erreur` et alerte administrateur.
+    - **7. Fallback et Préservation des Prospects Immobiliers Orphelins** :
+      * `backend/routes/crm-immo.js` : Remplacement du rejet HTTP 400 silencieux en cas d'absence d'agence cible : réassignation automatique à la première agence active ou archivage dans `prospection_leads` (`categorie = 'immo'`, `source = 'lead_web_orphelin'`), évitant toute déperdition de prospects locataires/acheteurs.
+    - **8. Observabilité du Chatbot Web Interactif** :
+      * `backend/routes/chat.js` : Enregistrement télémétrique asynchrone dans `chat_web_logs` : mesure de latence d'exécution, intention détectée, nombre de résultats retournés et IP client.
+    - **9. Supervision Consolidée des Flux Financiers & Rapprochement** :
+      * `backend/routes/admin-paiements.js` : Agrégation dans `GET /api/admin/paiements/stats` des volumes d'encaissements en ligne (`commandes_boutique` avec `paiement_recu = true`) combinés aux ventes POS. Unification du journal `GET /api/admin/paiements/flux` via un `UNION ALL` consolidant transactions en ligne Wave/Orange/Carte et validations manuelles avec support des filtres et pagination.
+  * **📊 Validation Qualité & Non-Régression** :
+    - Vérification syntaxique Node.js : 100% des fichiers modifiés validés sans erreur.
+    - Tests Unitaires Jest : **48/48 suites passées, 383/383 tests validés (100%)**.
+    - Tests d'Intégration & Sécurité Multi-Tenant : **100% validés avec Request ID actif**.
+    - Quality Gate Global (`quality-gate.mjs`) : **100% OK, zéro régression**.
+
 - **Remédiation Exhaustive de l'Onboarding, Documentation, Self-Service & Autonomie Utilisateur (24 septembre 2026)** 🧭📚🛡️🏢📦🎧✅ :
   * **🎯 Contexte & Diagnostic d'Audit** :
     - Audit approfondi de la capacité réelle d'un utilisateur (Acheteur, Marchand, Agence, Bailleur, Locataire, Visiteur) à être 100% autonome.

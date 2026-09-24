@@ -70,6 +70,21 @@ async function alerterAdmin({
 
   console.warn(`[ADMIN ALERTS] ${icone} [${priorite}] ${titre} : ${message}`);
 
+  // Fonction de masquage des données sensibles (PII, secrets, tokens)
+  const masquerDonneesSensibles = (str) => {
+    if (!str || typeof str !== 'string') return '';
+    return str
+      // Masquer téléphones sénégalais (+221 77... -> +221 77***42)
+      .replace(/\b(221)?([76][0-9]{1})([0-9]{3})([0-9]{2})([0-9]{2})\b/g, '$1$2***$5')
+      // Masquer adresses emails (ex: user@domain.com -> u***@domain.com)
+      .replace(/\b([a-zA-Z0-9_.+-])[a-zA-Z0-9_.+-]+@([a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)\b/g, '$1***@$2')
+      // Masquer mots de passe, tokens et clés secrètes
+      .replace(/(password|mot_de_passe|secret|token|api_key|authorization)[\"'\s:=]+([^\"'\s,&]+)/gi, '$1="***"');
+  };
+
+  const safeDetails = details ? masquerDonneesSensibles(details) : null;
+  const safeMessage = message ? masquerDonneesSensibles(message) : '';
+
   // 1. Envoi par Email
   const htmlEmail = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -78,11 +93,11 @@ async function alerterAdmin({
       </div>
       <div style="padding: 24px; color: #1e293b; line-height: 1.6;">
         <h2 style="margin-top: 0; color: #0f172a; font-size: 19px;">${titre}</h2>
-        <p style="font-size: 15px; margin-bottom: 16px;">${message}</p>
+        <p style="font-size: 15px; margin-bottom: 16px;">${safeMessage}</p>
 
-        ${details ? `
+        ${safeDetails ? `
           <div style="background: #f8fafc; border-left: 4px solid ${couleurBadge}; padding: 12px 16px; border-radius: 4px; font-family: monospace; font-size: 13px; color: #334155; margin-bottom: 20px; white-space: pre-wrap; word-break: break-word;">
-            ${details}
+            ${safeDetails}
           </div>
         ` : ''}
 
@@ -120,9 +135,9 @@ async function alerterAdmin({
   // 2. Envoi par Telegram
   let tgText = `${icone} <b>[${priorite}] ALERTE NOPALOU</b>\n\n`;
   tgText += `<b>${escapeTelegramHtml(titre)}</b>\n\n`;
-  tgText += `${escapeTelegramHtml(message)}\n\n`;
-  if (details) {
-    const rawDetails = details.length > 500 ? details.slice(0, 500) + '...' : details;
+  tgText += `${escapeTelegramHtml(safeMessage)}\n\n`;
+  if (safeDetails) {
+    const rawDetails = safeDetails.length > 500 ? safeDetails.slice(0, 500) + '...' : safeDetails;
     tgText += `<code>${escapeTelegramHtml(rawDetails)}</code>\n\n`;
   }
   if (lienAction) {

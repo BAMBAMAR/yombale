@@ -166,10 +166,11 @@ async function traiterRelancesAutomatiquesWhatsApp(boutiqueId = null) {
 
 // Planifier l'exécution quotidienne (toutes les 12 heures)
 if (process.env.NODE_ENV !== 'test') {
+  const { executerTacheCron } = require('../lib/cronLogger');
   setTimeout(() => {
-    traiterRelancesAutomatiquesWhatsApp().catch(() => {});
+    executerTacheCron('relance_carnet_whatsapp', () => traiterRelancesAutomatiquesWhatsApp()).catch(() => {});
     setInterval(() => {
-      traiterRelancesAutomatiquesWhatsApp().catch(() => {});
+      executerTacheCron('relance_carnet_whatsapp', () => traiterRelancesAutomatiquesWhatsApp()).catch(() => {});
     }, 12 * 60 * 60 * 1000); // 12 heures
   }, 10000);
 }

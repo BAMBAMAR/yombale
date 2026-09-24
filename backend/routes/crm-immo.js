@@ -158,7 +158,30 @@ router.post('/public/lead', limiterEcriture, async (req, res) => {
     }
 
     if (!cibleAgenceId) {
-      return res.status(400).json({ success: false, error: 'Agence cible introuvable pour ce lead.' });
+      // 1. Repli sur la première agence active enregistrée
+      const { rows: defaultAg } = await pool.query(
+        `SELECT id FROM agences_immo WHERE statut = 'actif' ORDER BY created_at ASC LIMIT 1`
+      );
+      if (defaultAg.length > 0) {
+        cibleAgenceId = defaultAg[0].id;
+        console.log('[CRM IMMO] ℹ️ Lead réassigné à l\'agence active par défaut:', cibleAgenceId);
+      } else {
+        // 2. Sauvegarde de sécurité dans prospection_leads pour ne perdre aucun prospect
+        await pool.query(
+          `INSERT INTO prospection_leads (nom_boutique, contact_nom, telephone, quartier, ville, categorie, source, notes, statut, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, 'immo', 'lead_web_orphelin', $6, 'nouveau', NOW(), NOW())
+           ON CONFLICT DO NOTHING`,
+          [
+            annonceTitre ? `Intérêt: ${annonceTitre.slice(0, 100)}` : 'Lead Immo Web',
+            cleanNom,
+            cleanTel,
+            annonceQuartier,
+            ville || 'Dakar',
+            `Lead soumis depuis l'annonce ${annonce_id || 'inconnue'}. Message: ${message || ''}`
+          ]
+        ).catch(() => {});
+        return res.json({ success: true, message: 'Votre demande a bien été transmise à nos conseillers immobiliers.' });
+      }
     }
 
     const cleanTel = String(contactTel || '').replace(/\D/g, '');

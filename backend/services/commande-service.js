@@ -29,6 +29,12 @@ async function notifierVendeurCommande(boutique, {
 
   if (!vendeurTel) {
     console.warn(`[WHATSAPP NOTIF VENDEUR] ⚠️ Impossible d'envoyer la notif : Aucun téléphone/whatsapp configuré pour la boutique "${boutique.nom}"`);
+    try {
+      await pool.query(
+        `UPDATE commandes_boutique SET notes = COALESCE(notes, '') || ' [Notif vendeur impossible: absence de numéro]' WHERE reference = $1`,
+        [reference]
+      );
+    } catch (_) {}
     return;
   }
 
@@ -71,8 +77,24 @@ async function notifierVendeurCommande(boutique, {
     buttonParam: btnParam,
     type: 'commande',
   })
-    .then(() => console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`))
-    .catch(err => console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message));
+    .then(async () => {
+      console.log(`[WHATSAPP VENDEUR NOTIF SUCCESS] Notification commande ${reference} envoyée à ${vendeurTel}`);
+      try {
+        await pool.query(
+          `UPDATE commandes_boutique SET notes = COALESCE(notes, '') || ' [Notif WhatsApp vendeur transmise]' WHERE reference = $1`,
+          [reference]
+        );
+      } catch (_) {}
+    })
+    .catch(async (err) => {
+      console.error(`[WHATSAPP VENDEUR NOTIF ERR]:`, err.message);
+      try {
+        await pool.query(
+          `UPDATE commandes_boutique SET notes = COALESCE(notes, '') || ' [Échec Notif WhatsApp: ' || $1 || ']' WHERE reference = $2`,
+          [err.message.slice(0, 80), reference]
+        );
+      } catch (_) {}
+    });
 }
 
 // Logique de création de commande, partagée entre la route HTTP publique

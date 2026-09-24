@@ -473,6 +473,14 @@ router.get('/dorking', adminOnly, (req, res) => {
 // Liste des campagnes de prospection réconciliée en direct avec les logs réels
 router.get('/campagnes', adminOnly, async (_req, res) => {
   try {
+    // Watchdog de réconciliation automatique : clore en base les campagnes figées depuis plus de 30 minutes
+    await pool.query(`
+      UPDATE prospection_campagnes
+      SET statut = 'terminee',
+          date_fin = COALESCE(date_fin, NOW())
+      WHERE statut = 'en_cours' AND created_at < NOW() - INTERVAL '30 minutes'
+    `).catch(() => {});
+
     const { rows } = await pool.query(`
       SELECT 
         c.id,
@@ -593,7 +601,27 @@ router.post('/campagnes/lancer', adminOnly, async (req, res) => {
       canal,
       templateMessage,
       simulation,
-    }).catch(err => console.error('[PROSPECTION] Erreur background campagne:', err));
+    }).catch(async (err) => {
+      console.error('[PROSPECTION] Erreur background campagne:', err);
+      if (campagneId) {
+        try {
+          await pool.query(
+            `UPDATE prospection_campagnes SET statut = 'erreur', diagnostic = jsonb_build_object('erreur', $1::text, 'date', NOW()), date_fin = NOW() WHERE id = $2`,
+            [err.message, campagneId]
+          );
+        } catch (_) {}
+      }
+      try {
+        const { alerterAdmin } = require('../services/admin-alerts');
+        alerterAdmin({
+          type: `campagne_echec_${campagneId || 'generique'}`,
+          titre: 'Échec de campagne de prospection',
+          message: `La campagne ${campagneId || ''} a échoué en tâche de fond : ${err.message}`,
+          details: err.stack,
+          priorite: 'ATTENTION',
+        }).catch(() => {});
+      } catch (_) {}
+    });
 
     res.json({
       success: true,
