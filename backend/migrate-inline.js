@@ -4,10 +4,12 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-module.exports = async function migrateInline() {
+module.exports = async function migrateInline(customConnStr = null) {
+  const connStr = customConnStr || process.env.DATABASE_URL;
+  const isLocal = !connStr || connStr.includes('localhost') || connStr.includes('127.0.0.1');
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString: connStr,
+    ssl: isLocal ? false : { rejectUnauthorized: false },
     max: 2,                           // Limiter à 2 connexions pour la migration
     connectionTimeoutMillis: 30000,   // 30s pour Render.com
     idleTimeoutMillis: 5000,          // Fermer les connexions idle rapidement

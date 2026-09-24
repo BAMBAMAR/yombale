@@ -89,15 +89,22 @@ router.get('/verifier-email', async (req, res) => {
   }
 });
 
-router.post('/connexion',
+router.post(['/connexion', '/login'],
   limiterAuth,
   body('email').isEmail(),
+  (req, res, next) => {
+    if (!req.body.mot_de_passe && req.body.password) {
+      req.body.mot_de_passe = req.body.password;
+    }
+    next();
+  },
   body('mot_de_passe').notEmpty(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     try {
-      const { email, mot_de_passe } = req.body;
+      const email = req.body.email;
+      const mot_de_passe = req.body.mot_de_passe || req.body.password;
       const { rows } = await pool.query(
         'SELECT id,nom,email,telephone,mot_de_passe_hash,email_verifie,suspendu,supprime_le,a2f_actif,a2f_telephone FROM utilisateurs WHERE email=$1', [email]
       );

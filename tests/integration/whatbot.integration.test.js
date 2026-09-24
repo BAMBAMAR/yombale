@@ -107,9 +107,49 @@ describeIntegration('WhatBot — Intégration DB Réelle', () => {
     expect(state2).toBeDefined()
   })
 
-  test('TC-WB-004 — Commande WhatBot créée en DB [PARTIEL]', async () => {
-    // Le flux complet de commande WhatBot nécessite une boutique et un produit réels en DB
-    console.log('TC-WB-004 : flux commande WhatBot validé selon les fixtures boutique/produit')
-    expect(true).toBe(true)
+  test('TC-WB-004 — Commande source WhatsApp créée en DB avec référence et calcul exact', async () => {
+    const { creerCommandeBoutique } = require('../../backend/services/commande-service')
+
+    // S'assurer qu'une boutique et un produit de test existent
+    await pool.query(`
+      INSERT INTO boutiques (id, utilisateur_id, nom, slug, telephone, actif)
+      VALUES ('wb-test-bq-001', 'test-user-marchand', 'Boutique WhatBot Test', 'boutique-wb-test', '221770000000', true)
+      ON CONFLICT (id) DO UPDATE SET nom = EXCLUDED.nom
+    `)
+    await pool.query(`
+      INSERT INTO boutique_produits (id, boutique_id, nom, prix, stock_quantite, actif)
+      VALUES ('wb-test-prd-001', 'wb-test-bq-001', 'Article WhatsApp Test', 7500, 10, true)
+      ON CONFLICT (id) DO UPDATE SET prix = EXCLUDED.prix
+    `)
+
+    const cmd = await creerCommandeBoutique({
+      boutiqueId: 'wb-test-bq-001',
+      produitId: 'wb-test-prd-001',
+      quantite: 2,
+      clientNom: 'Client WhatBot Test',
+      clientTelephone: TEST_PHONE,
+      source: 'whatsapp',
+      methodePaiement: 'wave',
+    })
+
+    expect(cmd).toBeDefined()
+    expect(cmd.reference).toBeDefined()
+    expect(cmd.source).toBe('whatsapp')
+    expect(Number(cmd.montant_total)).toBe(15000)
+
+    // Vérifier l'écriture directe et persistance en base SQL
+    const dbCmd = await pool.query(
+      'SELECT reference, source, montant_total, statut FROM commandes_boutique WHERE reference = $1',
+      [cmd.reference]
+    )
+    expect(dbCmd.rows.length).toBe(1)
+    expect(dbCmd.rows[0].source).toBe('whatsapp')
+    expect(Number(dbCmd.rows[0].montant_total)).toBe(15000)
+    expect(dbCmd.rows[0].statut).toBe('en_attente')
+
+    // Nettoyage spécifique
+    await pool.query('DELETE FROM commandes_boutique WHERE reference = $1', [cmd.reference])
+    await pool.query('DELETE FROM boutique_produits WHERE id = $1', ['wb-test-prd-001'])
+    await pool.query('DELETE FROM boutiques WHERE id = $1', ['wb-test-bq-001'])
   })
 })

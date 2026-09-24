@@ -23,6 +23,30 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Sécurisation de la CI/CD, Déblocage des Tests d'Intégration Réels & Assertions Cryptographiques (24 septembre 2026)** 🛡️🧪⚡📦✅ :
+  * **🎯 Contexte & Objectif** :
+    - Élimination des tests d'intégration ignorés (skipped) et des fausses assertions (`expect(true).toBe(true)`).
+    - Provisionnement d'une base de données PostgreSQL isolée en intégration continue (GitHub Actions) et durcissement des tests de sécurité multi-tenant.
+  * **🛠️ Correctifs et Améliorations Appliqués** :
+    - **Pipeline GitHub Actions avec PostgreSQL Container Dédié (`.github/workflows/ci-tests.yml`)** :
+      * Ajout du service container `postgres:15-alpine` pour les tests avec `DATABASE_URL_TEST: postgresql://postgres:testpassword@localhost:5432/nopalou_test`.
+      * Ajout de l'exécution automatique de `npm run test:integration` (22 tests) dans le workflow CI.
+    - **Runner de Migrations Isolé & Support Base de Test (`backend/migrate-inline.js`)** :
+      * Support d'une chaîne de connexion personnalisée (`customConnStr`) avec détection automatique de l'hôte local (`localhost` / `127.0.0.1`) pour désactiver le SSL en environnement de test/CI.
+    - **Harmonisation Route Authentification (`backend/routes/auth.js`)** :
+      * Ajout de l'alias de route `/login` pointant vers `/connexion` et mapping bidirectionnel du payload (`password` ↔ `mot_de_passe`).
+    - **Harnais de Test d'Intégration Réel (`tests/integration/setup.js`)** :
+      * Migration idempotente automatique du schéma complet sur base vierge via `migrateInline()`.
+      * Correction du schéma utilisateur (`mot_de_passe_hash` au lieu de `password_hash`) et seed d'une boutique avec produit de référence.
+    - **Élimination des Tests Fictifs & Vrais Scénarios Métier** :
+      * `commandes.integration.test.js` : ciblage de la table réelle `commandes_boutique`, validation de la création, décrémentation des stocks et nettoyage transactionnel.
+      * `paiement.integration.test.js` : remplacement du placeholder `expect(true).toBe(true)` par un test réel de webhook Wave signé par HMAC-SHA256 (`TC-PAY-002`) et vérification du rejet HTTP 401 sur fausse signature (`TC-PAY-003`).
+      * `whatbot.integration.test.js` : remplacement du dummy test par la création effective d'une commande WhatsApp via `creerCommandeBoutique` et vérification de la persistance en base.
+      * `idor-securite.integration.test.js` : adoption d'UUIDs normalisés conformes RFC 4122 v4 pour éviter les rejets de parsing, correction des routes cibles protégées (`/api/boutiques/:id/mode`, `/api/biens/agence/:id`), et validation de l'isolation multi-tenant stricte (401, 403, 404 sans fuite).
+    - **Intégration au Quality Gate Global (`scripts/quality-gate.mjs`)** :
+      * Ajout de l'étape 5 d'exécution des tests d'intégration et sécurité multi-tenant.
+      * Validation locale intégrale : 100% PASS (TypeScript OK, Anti-AI-Slop OK, 69 tests frontend OK, 373 tests backend unitaires OK, 22 tests d'intégration OK).
+
 - **Audit QA Exhaustif Pré-Production, Étanchéité des Tests & Verrouillage CI/CD (24 septembre 2026)** 🛡️🧪🚀📦✅ :
   * **🎯 Contexte & Diagnostic Senior** :
     - Réalisation d'un audit QA exhaustif pré-production selon le standard Nopalou (Action → Frontend → API → Backend → DB → UI → Persistance → Régression).

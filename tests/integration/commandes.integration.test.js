@@ -23,7 +23,7 @@ describeIntegration('Commandes — Intégration DB réelle', () => {
   afterEach(async () => {
     if (!pool) return
     // Nettoyer les commandes créées pendant les tests
-    await pool.query(`DELETE FROM commandes WHERE client_nom = '[TEST] Integration Test'`)
+    await pool.query(`DELETE FROM commandes_boutique WHERE client_nom = '[TEST] Integration Test'`)
   })
 
   afterAll(async () => {
@@ -48,7 +48,7 @@ describeIntegration('Commandes — Intégration DB réelle', () => {
 
     // ÉTAPE 2 : Vérifier que la commande EXISTE RÉELLEMENT EN DB
     const dbResult = await pool.query(
-      'SELECT * FROM commandes WHERE reference = $1',
+      'SELECT * FROM commandes_boutique WHERE reference = $1',
       [reference]
     )
     expect(dbResult.rows.length).toBe(1)
@@ -76,7 +76,7 @@ describeIntegration('Commandes — Intégration DB réelle', () => {
 
     // Vérifier les commandes créées en DB
     const dbCount = await pool.query(
-      `SELECT COUNT(*) FROM commandes WHERE client_nom = '[TEST] Integration Test'`
+      `SELECT COUNT(*) FROM commandes_boutique WHERE client_nom = '[TEST] Integration Test'`
     )
     console.log(`Commandes créées en DB: ${dbCount.rows[0].count}`)
   })

@@ -42,13 +42,18 @@ step('2. Anti-AI-Slop & Zéro Silent Catches', () => {
 })
 
 // 3. Tests Unitaires Frontend
-step('3. Tests Unitaires Frontend (61 tests)', () => {
+step('3. Tests Unitaires Frontend (69 tests)', () => {
   execSync('node --experimental-strip-types scripts/run-unit-tests.mjs', { cwd: FRONTEND_DIR, stdio: 'inherit' })
 })
 
 // 4. Tests Unitaires Backend Jest
-step('4. Tests Unitaires Backend Jest (209 tests)', () => {
+step('4. Tests Unitaires Backend Jest (373 tests)', () => {
   execSync('npx jest tests/unit --runInBand --forceExit', { cwd: ROOT_DIR, stdio: 'inherit' })
+})
+
+// 5. Tests d'Intégration & Sécurité Multi-Tenant / Webhooks
+step('5. Tests d\'Intégration & Sécurité Multi-Tenant', () => {
+  execSync('npx jest tests/integration --runInBand --forceExit', { cwd: ROOT_DIR, stdio: 'inherit' })
 })
 
 console.log(`\n🎉 TOUS LES GATES DE QUALITÉ SONT FRANCHIS AVEC SUCCÈS (100% OK) !`)

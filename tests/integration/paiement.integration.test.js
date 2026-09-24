@@ -38,10 +38,68 @@ describeIntegration('Paiement — Intégration DB réelle', () => {
     }
   })
 
-  test('TC-PAY-002 — Webhook Wave avec signature valide → statut DB mis à jour [BLOQUÉ: Sandbox requis]', async () => {
-    // TEST BLOQUÉ — nécessite un compte Wave sandbox configuré
-    // Action requise : configurer WAVE_API_KEY_TEST et WAVE_WEBHOOK_SECRET_TEST
-    console.log('TEST BLOQUÉ — compte Wave sandbox non configuré')
-    expect(true).toBe(true)
+  test('TC-PAY-002 — Webhook Wave avec signature HMAC valide → statut commandes_boutique mis à jour en payé', async () => {
+    const crypto = require('crypto')
+    const secret = process.env.WAVE_WEBHOOK_SECRET || process.env.WAVE_WEBHOOK_SECRET_TEST || 'test-wave-webhook-secret-ci'
+    process.env.WAVE_WEBHOOK_SECRET = secret
+
+    const ref = 'TEST-REF-WAVE-002'
+    // Créer la commande en attente dans commandes_boutique
+    await pool.query(`
+      INSERT INTO commandes_boutique (
+        reference, boutique_id, nom_produit, quantite, prix_unitaire, montant_total,
+        client_nom, client_telephone, statut, paiement_recu, created_at
+      ) VALUES (
+        $1, 'test-boutique-001', 'Produit Wave Test', 1, 15000, 15000,
+        'Client Test Wave', '221770000001', 'en_attente', false, NOW()
+      ) ON CONFLICT (reference) DO UPDATE SET statut = 'en_attente', paiement_recu = false
+    `, [ref])
+
+    const rawPayload = JSON.stringify({
+      type: 'checkout.session.completed',
+      data: {
+        client_reference: ref,
+        amount: 15000,
+        customer_phone: '221770000001',
+      },
+    })
+
+    const timestamp = Math.floor(Date.now() / 1000)
+    const hmacSig = crypto
+      .createHmac('sha256', secret)
+      .update(`${timestamp}${rawPayload}`)
+      .digest('hex')
+
+    const res = await request(app)
+      .post('/api/paiement/wave/webhook')
+      .set('wave-signature', `t=${timestamp},v1=${hmacSig}`)
+      .set('Content-Type', 'application/json')
+      .send(rawPayload)
+
+    expect(res.status).toBe(200)
+
+    // Vérifier l'impact réel et persistant en base de données
+    const dbRes = await pool.query(
+      'SELECT statut, paiement_recu FROM commandes_boutique WHERE reference = $1',
+      [ref]
+    )
+    expect(dbRes.rows.length).toBe(1)
+    expect(dbRes.rows[0].paiement_recu).toBe(true)
+    expect(dbRes.rows[0].statut).toBe('payee')
+  })
+
+  test('TC-PAY-003 — Webhook Wave avec signature falsifiée ou expirée → rejet strict 401', async () => {
+    const rawPayload = JSON.stringify({
+      type: 'checkout.session.completed',
+      data: { client_reference: 'TEST-REF-FAKE', amount: 10000 },
+    })
+
+    const res = await request(app)
+      .post('/api/paiement/wave/webhook')
+      .set('wave-signature', 't=1600000000,v1=falsified_signature_hex')
+      .set('Content-Type', 'application/json')
+      .send(rawPayload)
+
+    expect(res.status).toBe(401)
   })
 })

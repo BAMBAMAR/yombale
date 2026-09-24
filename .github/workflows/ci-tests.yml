@@ -28,10 +28,24 @@ jobs:
         working-directory: frontend-next
         run: node --experimental-strip-types scripts/run-unit-tests.mjs
 
-  unit-tests:
-    name: Tests Unitaires Backend Jest (373 tests)
+  backend-tests:
+    name: Tests Backend Jest (Unitaires & Intégration DB Réelle)
     runs-on: ubuntu-latest
     needs: frontend-gate
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: nopalou_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,8 +53,16 @@ jobs:
           node-version: '18'
           cache: 'npm'
       - run: npm ci
-      - run: npm run test:unit:ci
+      - name: Tests Unitaires Backend Jest (373 tests)
+        run: npm run test:unit:ci
         env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET_TEST || 'test-jwt-secret-default-key-for-ci-testing' }}
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET_TEST || 'test-admin-secret-for-ci-testing' }}
+          WAVE_WEBHOOK_SECRET: ${{ secrets.WAVE_WEBHOOK_SECRET_TEST || 'test-wave-webhook-secret-ci' }}
+      - name: Tests d'Intégration Backend DB Réelle (22 tests)
+        run: npm run test:integration
+        env:
+          DATABASE_URL_TEST: postgresql://postgres:testpassword@localhost:5432/nopalou_test
           JWT_SECRET: ${{ secrets.JWT_SECRET_TEST || 'test-jwt-secret-default-key-for-ci-testing' }}
           ADMIN_SECRET: ${{ secrets.ADMIN_SECRET_TEST || 'test-admin-secret-for-ci-testing' }}
           WAVE_WEBHOOK_SECRET: ${{ secrets.WAVE_WEBHOOK_SECRET_TEST || 'test-wave-webhook-secret-ci' }}
@@ -48,7 +70,7 @@ jobs:
   e2e-smoke:
     name: Tests E2E Smoke & Régression Playwright
     runs-on: ubuntu-latest
-    needs: unit-tests
+    needs: backend-tests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
