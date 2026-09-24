@@ -3,71 +3,8 @@ const { pool } = require('../models/db');
 const { sendWhatsAppText, sendWhatsAppNotification, sendWhatsAppProspectionDirecte, normalisePhone, estDesinscrit } = require('./whatsapp');
 
 // ── Normalisation des numéros de téléphone pour le Sénégal ───────────────────
-function normaliserTelephoneSenegal(rawPhone) {
-  if (!rawPhone) return { valide: false, erreur: 'Numéro vide' };
+const { normaliserTelephoneSenegal } = require('../lib/phoneNormalizer');
 
-  // Nettoyage Unicode (Zero-width spaces, espaces insécables, RTL markers)
-  let brut = String(rawPhone)
-    .replace(/[\u200B-\u200D\uFEFF\u00A0\u202F\u200E]/g, '')
-    .trim();
-
-  let num = brut.replace(/[^\d+]/g, '');
-
-  if (num.startsWith('+221')) num = num.slice(4);
-  else if (num.startsWith('00221')) num = num.slice(5);
-  else if (num.startsWith('221') && num.length >= 11) num = num.slice(3);
-
-  num = num.replace(/[^\d]/g, '');
-
-  // Au Sénégal, les numéros mobiles/fixes font 9 chiffres
-  // Mobiles : 70 (Expresso), 75 (Promobile), 76 (Free/Yas), 77 & 78 (Orange)
-  // Fixes : 30, 33 (Sonatel / Expresso Fixe)
-  if (num.length !== 9) {
-    return {
-      valide: false,
-      brut,
-      erreur: `Longueur invalide (${num.length} chiffres au lieu de 9)`
-    };
-  }
-
-  const prefix = num.slice(0, 2);
-  let operateur = 'Autre';
-  let estMobileWhatsApp = false;
-  if (prefix === '77' || prefix === '78') {
-    operateur = 'Orange';
-    estMobileWhatsApp = true;
-  } else if (prefix === '76') {
-    operateur = 'Free (Yas)';
-    estMobileWhatsApp = true;
-  } else if (prefix === '70') {
-    operateur = 'Expresso';
-    estMobileWhatsApp = true;
-  } else if (prefix === '75') {
-    operateur = 'Promobile';
-    estMobileWhatsApp = true;
-  } else if (prefix === '72') {
-    operateur = 'Mobile (72)';
-    estMobileWhatsApp = true;
-  } else if (prefix === '33' || prefix === '30' || prefix === '36') {
-    operateur = 'Fixe';
-    estMobileWhatsApp = false;
-  }
-
-  const national = '221' + num;
-  const e164 = '+221' + num;
-  const formate = `${num.slice(0, 2)} ${num.slice(2, 5)} ${num.slice(5, 7)} ${num.slice(7, 9)}`;
-
-  return {
-    valide: true,
-    estMobileWhatsApp,
-    local: num,
-    national,
-    e164,
-    formate,
-    operateur,
-    brut,
-  };
-}
 
 const FOOTER_OPTOUT = '\n\n_STOP pour vous désinscrire._';
 

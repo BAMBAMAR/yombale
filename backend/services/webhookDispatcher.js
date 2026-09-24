@@ -90,4 +90,5 @@ async function dispatchBoutiqueWebhook(boutiqueId, eventType, data) {
 module.exports = {
   WEBHOOK_EVENTS,
   dispatchBoutiqueWebhook,
+  dispatchWebhookEvent: dispatchBoutiqueWebhook,
 };

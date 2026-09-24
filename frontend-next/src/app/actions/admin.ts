@@ -10,9 +10,11 @@
  *  - admin/admin-immo.ts : Modération immobilier, agences, biens, sponsoring
  */
 
+export * from './admin/admin-common'
 export * from './admin/admin-auth'
 export * from './admin/admin-moderation'
 export * from './admin/admin-boutiques-pos'
 export * from './admin/admin-finances'
 export * from './admin/admin-equipe'
 export * from './admin/admin-immo'
+

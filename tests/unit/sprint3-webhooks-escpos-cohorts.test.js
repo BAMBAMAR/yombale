@@ -6,7 +6,7 @@ jest.mock('../../backend/models/db', () => ({
 }));
 
 const { generateEscPosReceipt } = require('../../frontend-next/src/lib/pos-escpos-printer');
-const { dispatchWebhookEvent } = require('../../backend/services/webhook-dispatcher');
+const { dispatchWebhookEvent } = require('../../backend/services/webhookDispatcher');
 
 describe('⚡ Sprint 3: Webhooks Dispatcher, ESC/POS Binary Printer & Cohorts Matrix', () => {
   test('generateEscPosReceipt: génère un buffer binaire ESC/POS valide avec en-têtes et impulsion tiroir-caisse', () => {

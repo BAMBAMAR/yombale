@@ -26,6 +26,8 @@ async function ensureAuditLogsTable() {
   } catch (e) {}
 }
 
+const { extraireIp } = require('./auditHelper');
+
 async function enregistrerAdminLog({
   adminNom = 'Admin',
   adminRole = 'super_admin',
@@ -39,7 +41,7 @@ async function enregistrerAdminLog({
 }) {
   try {
     await ensureAuditLogsTable();
-    const ip = req ? (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim() : null;
+    const ip = extraireIp(req);
     const realAdminNom = (req && req.adminUser && req.adminUser.nom) ? req.adminUser.nom : adminNom;
     const realAdminRole = (req && req.adminUser && req.adminUser.role) ? req.adminUser.role : adminRole;
 

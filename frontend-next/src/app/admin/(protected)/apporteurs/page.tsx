@@ -35,7 +35,7 @@ export default async function AdminApporteursPage() {
         initialSettings={settings as any}
         initialApporteurs={apporteurs}
         initialCommissions={commissions}
-        secret={secret}
+        secret={token}
       />
     </div>
   )

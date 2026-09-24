@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/dal'
 import { apiFetch } from '@/lib/api'
-import { backendAuthFetch } from '@/lib/backendFetch'
+import { backendAuthFetch } from '@/lib/backend-fetch'
 import PageHeader from '@/components/PageHeader'
 import PaiementSponsoringBoutiqueClient from './PaiementSponsoringBoutiqueClient'
 

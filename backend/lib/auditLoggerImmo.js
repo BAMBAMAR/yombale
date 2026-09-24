@@ -27,35 +27,20 @@ async function ensureAgenceLogsTable() {
   }
 }
 
+const { extraireIp, resoudreAuteur } = require('./auditHelper');
+
 async function enregistrerAgenceAuditLog(agenceId, utilisateurId, auteurNom, typeAction, description, metadonnees = {}, req = null) {
   if (!agenceId) return;
   try {
     await ensureAgenceLogsTable();
 
-    const uid = utilisateurId || (req?.user?.userId || req?.user?.id) || null;
-    let nom = (auteurNom && auteurNom !== 'Agent' && auteurNom !== 'Système' && auteurNom !== 'Admin') ? auteurNom : null;
-
-    if (uid && !nom) {
-      try {
-        const uRes = await pool.query(
-          `SELECT nom, prenom, email FROM utilisateurs WHERE id = $1`,
-          [uid]
-        );
-        if (uRes.rows[0]) {
-          const u = uRes.rows[0];
-          nom = [u.prenom, u.nom].filter(Boolean).join(' ') || u.email || 'Agent Agence';
-        }
-      } catch (uErr) {
-        console.error('[AUDIT IMMO USER LOOKUP ERR]', uErr.message);
-      }
-    }
-
-    const ip = req ? (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim() : null;
+    const { uid, nom } = await resoudreAuteur(utilisateurId, auteurNom, req, 'Agent Agence');
+    const ip = extraireIp(req);
 
     await pool.query(
       `INSERT INTO agence_logs (agence_id, utilisateur_id, auteur_nom, type_action, description, metadonnees, ip_adresse)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [agenceId, uid, nom || 'Agent Agence', typeAction, description, JSON.stringify(metadonnees), ip]
+      [agenceId, uid, nom, typeAction, description, JSON.stringify(metadonnees), ip]
     );
   } catch (err) {
     console.error('[AUDIT IMMO LOG ERR]', err);

@@ -7,13 +7,8 @@ const PHONE_ID   = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const TOKEN      = process.env.WHATSAPP_API_TOKEN;
 const CATALOG_ID = process.env.WHATSAPP_CATALOG_ID;
 const SITE       = process.env.FRONTEND_URL || 'https://nopalou.com';
+const { normalisePhone } = require('../lib/phoneNormalizer');
 
-function normalisePhone(phone) {
-  let num = String(phone).replace(/[^\d]/g, '');
-  if (num.startsWith('00221')) num = num.slice(2);
-  if (num.length === 9) num = '221' + num;
-  return num;
-}
 
 function apiUrl() {
   return `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`;

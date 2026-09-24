@@ -23,6 +23,41 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Refactorisation Qualité Logicielle, Découplage Architectural & Éradication de la Dette Technique (Sprints 0, 1 & 2) (24 septembre 2026)** 🛡️⚡🏗️🧹📘✅ :
+  * **🚨 Contexte & Audit Diagnostique Global** :
+    - Réalisation d'un audit approfondi de la qualité logicielle interne (architecture, couplage, typage, duplication de code, design system, sécurité).
+    - Validation et exécution du plan de correction structuré couvrant les priorités P0, P1 et P2 :
+  * **🛠️ Correctifs & Améliorations Livrés** :
+    - **C-P0-01 — Activation TypeScript Strict & Blindage Compilation Frontend (`next.config.js`)** :
+      * Correction des 27 erreurs de typage masquées : importation manquante de l'icône `Radio` dans `AdminSidebarClient.tsx`, export du barrel `admin-common` dans `app/actions/admin.ts`, correction des variables de token session dans `apporteurs/page.tsx` et `whatsapp/page.tsx`.
+      * Bascule définitive de `ignoreBuildErrors: false` dans `next.config.js` garantissant qu'aucune régression de type ne passe silencieusement en production. `npx tsc --noEmit` validé à 100% avec 0 erreur.
+    - **C-P1-01 — Découplage Architectural & Élimination de l'Inversion de Dépendance (`backend/services/commande-service.js`)** :
+      * Extraction des fonctions métier `creerCommandeBoutique`, `notifierVendeurCommande` et `genRefCommande` hors de la couche contrôleur HTTP (`routes/comptabilite.js`) vers un nouveau service métier dédié `backend/services/commande-service.js`.
+      * Suppression de l'import cyclique et illégal `require('../routes/comptabilite')` dans `backend/services/whatsapp-chatbot.js` (remplacé par `require('./commande-service')`).
+      * Maintien d'un réexport de rétrocompatibilité transparent dans `routes/comptabilite.js` pour éviter tout effet de bord.
+    - **C-P1-02 — Unification des Dispatchers Webhook Marchands (`backend/services/webhookDispatcher.js`)** :
+      * Unification de la double implémentation (`webhook-dispatcher.js` vs `webhookDispatcher.js`).
+      * Conservation du dispatcher moderne natif (fetch avec identifiant unique d'événement, horodatage Unix, signatures HMAC-SHA256, AbortController timeout 5s).
+      * Ajout de l'alias de compatibilité `dispatchWebhookEvent` et transformation de l'ancien fichier `webhook-dispatcher.js` en façade dépréciée. Validation via `sprint3-webhooks-escpos-cohorts.test.js`.
+    - **C-P1-03 — Modularisation Phase 1 du Chatbot WhatsApp (`backend/services/chatbot/chatbot-comparateur.js`)** :
+      * Création du sous-dossier `backend/services/chatbot/` et extraction de la logique conversationnelle du comparateur de prix dans `chatbot-comparateur.js`.
+      * Allègement du service monolithique `whatsapp-chatbot.js` et délégation propre du comparateur. Validation unitaire à 100% via `whatsapp-comparator-and-cart.test.js`.
+    - **C-P2-01 — Centralisation de la Normalisation Téléphonique (`backend/lib/phoneNormalizer.js`)** :
+      * Fusion des 3 implémentations divergentes (`normalisePhone`, `normaliserTelephoneSenegal`, `normaliserTelephone`) dans une librairie unifiée `phoneNormalizer.js`.
+      * Gestion rigoureuse des numéros sénégalais (+221, 00221, 221, numéros bruts 9 chiffres), nettoyage des espaces Unicode et invisibles, détection dynamique d'opérateurs (Orange, Free, Expresso, Promobile, Fixe), validation de longueur internationale (10–15 chiffres).
+      * Création d'une suite de tests dédiée `tests/unit/phone-normalizer.test.js` (9/9 tests validés).
+    - **C-P2-02 — Création de la Couche de Types Canoniques Partagés (`frontend-next/src/types/index.ts`)** :
+      * Définition exhaustive des interfaces du domaine Nopalou : `Boutique`, `Produit`, `ProduitVariante`, `Commande`, `CommandeItem`, `ZoneLivraison`, `ClientCredit`, `SessionUtilisateur`, `ApiResponse<T>`, `PaginatedResult<T>`.
+    - **C-P2-03 — Unification des Clients HTTP Frontend (`frontend-next/src/lib/backend-fetch.ts`)** :
+      * Fusion de `backendFetch.ts` et `backend-fetch.ts` au sein de `backend-fetch.ts` avec support complet : sessions JWT serveur, fallback DNS 127.0.0.1 ↔ localhost, FormData, timeout, et méthode stricte `backendAuthFetch` avec préfixe `/api` automatique.
+      * Transformation de `backendFetch.ts` en réexport déprécié et mise à jour des pages de paiement.
+    - **C-P2-04 — Mutualisation des Loggers d'Audit (`backend/lib/auditHelper.js`)** :
+      * Création de `backend/lib/auditHelper.js` factorisant l'extraction propre d'adresse IP (`extraireIp`) et la résolution de l'auteur (`resoudreAuteur` via `SELECT nom, prenom, email FROM utilisateurs`).
+      * Déduplication des loggers `auditLogger.js`, `auditLoggerImmo.js` et `adminAuditLogger.js`.
+    - **C-P2-05 — Harmonisation des Tokens CSS Nopalou (`frontend-next/src/styles/design-tokens.css`)** :
+      * Élimination des codes hexadécimaux Slate ad-hoc résiduels (lignes 122–219) et remplacement strict par les tokens de surface, texte et bordures déclarés (`--border-medium`, `--text-heading`, `--text-strong`, `--border-light`, `--surface-muted`, `--surface-subtle`).
+      * Validation via `npm run lint:slop` et `npm test` (69/69 tests validés).
+
 - **Correctifs E2E Globaux — Continuité des Parcours, Résilience Auth & Sécurisation Paiements/POS/CRM (24 septembre 2026)** 🛡️⚡🔐📦💳✅ :
   * **🚨 Contexte & Audit Diagnostique Transversal** :
     - Réalisation d'un audit E2E exhaustif centré sur la continuité réelle des parcours marchands, acheteurs, agences immobilières et caissiers POS.

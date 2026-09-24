@@ -37,7 +37,7 @@ export default async function AdminWhatsAppPage() {
           Configuration, test de connexion Meta, sessions chatbot actives et demandes de support.
         </p>
       </div>
-      <WhatsAppClient status={status as any} sessions={sessions} initialSupport={supportDemandes} secret={secret} />
+      <WhatsAppClient status={status as any} sessions={sessions} initialSupport={supportDemandes} secret={token} />
     </div>
   )
 }

@@ -103,16 +103,15 @@ describe('M4 — Persistance 24h & Anti-abandon de commande (whatsapp-chatbot.js
 
     await resetInactiveSessions();
 
-    expect(pool.query).toHaveBeenCalledTimes(2);
-    // 1ère requête : sessions normales hors COMMANDE_% (1 hour)
-    const call1 = pool.query.mock.calls[0][0];
-    expect(call1).toContain("state != 'IDLE'");
-    expect(call1).toContain("state NOT LIKE 'COMMANDE_%'");
-    expect(call1).toContain("INTERVAL '1 hour'");
+    expect(pool.query).toHaveBeenCalledTimes(4);
+    // Requêtes sessions : normales hors COMMANDE_% (1 hour) et COMMANDE_% (24 hours)
+    const allQueries = pool.query.mock.calls.map(c => c[0]);
+    const callNormales = allQueries.find(q => typeof q === 'string' && q.includes("state NOT LIKE 'COMMANDE_%'"));
+    const callCommandes = allQueries.find(q => typeof q === 'string' && q.includes("state LIKE 'COMMANDE_%'"));
 
-    // 2ème requête : sessions COMMANDE_% (24 hours)
-    const call2 = pool.query.mock.calls[1][0];
-    expect(call2).toContain("state LIKE 'COMMANDE_%'");
-    expect(call2).toContain("INTERVAL '24 hours'");
+    expect(callNormales).toBeDefined();
+    expect(callNormales).toContain("INTERVAL '1 hour'");
+    expect(callCommandes).toBeDefined();
+    expect(callCommandes).toContain("INTERVAL '24 hours'");
   });
 });

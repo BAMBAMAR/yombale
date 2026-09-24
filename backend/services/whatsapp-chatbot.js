@@ -14,7 +14,7 @@ const {
   retirerBlacklist,
   estDesinscrit,
 } = require('./whatsapp');
-const { creerCommandeBoutique, notifierVendeurCommande } = require('../routes/comptabilite');
+const { creerCommandeBoutique, notifierVendeurCommande } = require('./commande-service');
 const cfg = require('../lib/settingsCache');
 const { checkBoutiqueQuotas } = require('../routes/boutiques-modules/helpers');
 const { detecterIntentionImmo, traiterMessageImmo, trouverAgenceAgentParTelephone } = require('./immo-chatbot');
@@ -23,7 +23,8 @@ const {
   extraireSujetComparaison,
   comparerPrixProduits,
   formaterComparatifWhatsApp,
-} = require('./whatsapp-comparator');
+  traiterRequeteComparateur: traiterRequeteComparateurModule,
+} = require('./chatbot/chatbot-comparateur');
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 const prixFmt = (p) => p ? new Intl.NumberFormat('fr-FR').format(p) + ' FCFA' : 'N/C';
@@ -177,40 +178,7 @@ function corrigerRequeteFuzzy(texte) {
 
 // ── Traitement intelligent du Comparateur de Prix Nopalou (Audit M5) ──────────
 async function traiterRequeteComparateur(phone, text) {
-  const sujet = extraireSujetComparaison(text);
-  if (!sujet || sujet.length < 2) {
-    await sendWhatsAppText(
-      phone,
-      `⚖️ *Comparateur de Prix Nopalou*\n\nPour comparer des prix en direct entre marchands, indiquez simplement le produit désiré.\n\n*Exemples :*\n• _comparer iphone 13_\n• _comparer climatiseur_\n• _moins cher samsung s23_\n• _meilleur prix téléviseur_`
-    );
-    return true;
-  }
-
-  let resComp = await comparerPrixProduits(sujet);
-  if (!resComp.offres || resComp.offres.length === 0) {
-    // Si aucun résultat direct, tentative avec correction fuzzy Levenshtein
-    const fuzzySujet = corrigerRequeteFuzzy(sujet);
-    if (fuzzySujet && fuzzySujet !== sujet) {
-      const resFuzzy = await comparerPrixProduits(fuzzySujet);
-      if (resFuzzy.offres && resFuzzy.offres.length > 0) {
-        resComp = resFuzzy;
-      }
-    }
-  }
-
-  if (!resComp.offres || resComp.offres.length === 0) {
-    return false; // Relais vers la recherche générale
-  }
-
-  const { texte, boutons } = formaterComparatifWhatsApp(resComp, SITE);
-  if (boutons && boutons.length > 0) {
-    await sendWhatsAppButtons3(phone, texte, boutons).catch(async () => {
-      await sendWhatsAppText(phone, texte);
-    });
-  } else {
-    await sendWhatsAppText(phone, texte);
-  }
-  return true;
+  return traiterRequeteComparateurModule(phone, text, { corrigerRequeteFuzzy });
 }
 
 // Détection intelligente si un message ressemble à une question (pour éviter de le prendre comme un nom ou une adresse)

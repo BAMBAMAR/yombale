@@ -14,20 +14,8 @@ try {
 
 const SITE = process.env.FRONTEND_URL || 'https://nopalou.com';
 
-function normaliserTelephone(phone) {
-  if (!phone) return null;
-  let num = String(phone).replace(/[^\d]/g, '');
-  if (num.startsWith('00221')) num = num.slice(2);
-  if (num.length === 9) num = '221' + num;
-  return num;
-}
+const { normaliserTelephone, estNumeroValide } = require('../lib/phoneNormalizer');
 
-function estNumeroValide(phone) {
-  const norm = normaliserTelephone(phone);
-  if (!norm) return false;
-  // Numéro valide international ou sénégalais (10 à 15 chiffres)
-  return norm.length >= 10 && norm.length <= 15;
-}
 
 /**
  * Exécute la vérification des échéances du carnet et envoie les relances WhatsApp automatiques.

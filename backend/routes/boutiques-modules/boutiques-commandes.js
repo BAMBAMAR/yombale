@@ -276,7 +276,7 @@ router.post('/commandes/express', async (req, res) => {
 
     // Notification WhatsApp au vendeur
     try {
-      const { notifierVendeurCommande } = require('../comptabilite');
+      const { notifierVendeurCommande } = require('../../services/commande-service');
       notifierVendeurCommande(bqRes.rows[0], {
         reference: ref,
         nomProduit: articles.map(a => a.nom_produit || 'Produit').join(', '),
