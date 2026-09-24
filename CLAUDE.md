@@ -23,6 +23,29 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction Universelle des Boutons WhatsApp & Résolution des URLs avec Placeholder Meta `{{1}}` (24 septembre 2026)** 📱🔗🛡️✅ :
+  * **🎯 Contexte & Symptôme Rapporté** :
+    - Lorsque les utilisateurs cliquent sur le bouton d'action ("Voir les détails" / "Voir...") dans les notifications WhatsApp envoyées via les modèles Meta (notamment `nopalou_fiche_texte`), le lien s'ouvrait sur une URL corrompue `https://nopalou.com/%7B%7B1%7D%7D22680c2f-aad2-424d-a5b3-a4d3741785c9` ou `https://nopalou.com/{{1}}<id>` renvoyant une page 404 introuvable, alors que le lien brut dans le corps du texte pointait bien vers `/annonces/22680c2f-aad2-424d-a5b3-a4d3741785c9`.
+  * **🔍 Cause Racine Identifiée** :
+    - Dans Meta WhatsApp Business Manager, la configuration de l'URL du bouton dynamique pour le template `nopalou_fiche_texte` intégrait `https://nopalou.com/{{1}}` en tant qu'URL de base statique au lieu d'attendre la substitution. Meta concaténait littéralement le paramètre dynamique (`a.id`) à la suite de `{{1}}` / `%7B%7B1%7D%7D`, générant `https://nopalou.com/%7B%7B1%7D%7D<id>`.
+    - Côté frontend (`frontend-next/src/app/[slug]/route.ts`), la route racine traitait ce slug comme un nom de boutique, échouait à la trouver et retournait un statut 404 immédiat.
+    - Côté backend (`backend/routes/entites.js`, `annonces.js`, `immo.js`), les résidus `{{1}}` ou `%7B%7B1%7D%7D` bloquaient les validations UUID strictes.
+  * **🛠️ Corrections Exécutées & Validées** :
+    - **1. Route Racine Next.js avec Résolution Universelle & Nettoyage WhatsApp (`frontend-next/src/app/[slug]/route.ts`)** :
+      * Assainissement systématique du slug en éliminant les résidus et encodages Meta (`{{1}}`, `%7B%7B1%7D%7D`, `{1}`, etc.).
+      * Si le slug épuré commence par un chemin (`annonces/`, `immo/`, `produit/`, etc.) ou correspond à un UUID / ID WhatsApp, interrogation prioritaire du résolveur universel (`/api/entites/resoudre/:id`) avec redirection immédiate 301 vers l'URL canonique (ex: `/annonces/22680c2f-aad2-424d-a5b3-a4d3741785c9`).
+      * Maintien transparent du fallback pour les slugs de boutiques marchandes (`/boutiques/:slug`).
+    - **2. Résolveur Universel d'Entités Backend Résilient (`backend/routes/entites.js`)** :
+      * Décodage et assainissement universel de `cleanId` supprimant globalement les variables de templates Meta (`/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi`).
+      * Prise en charge des chemins transmis dans le paramètre (`annonces/uuid`, `immo/uuid`, `produit/uuid`) pour toujours identifier le type d'entité et retourner l'URL canonique correcte.
+    - **3. Résilience des Routes Fiches Spécifiques (`annonces/[id]`, `immo/[id]`, `produit/[id]`, `boutiques/[id]`)** :
+      * Détection et extraction de l'ID épuré au niveau des pages Next.js (`generateMetadata` et composants de page), avec redirection vers l'ID propre et appel sécurisé au résolveur sans lever d'erreur 404 indésirable.
+      * Protection côté API Express backend (`backend/routes/annonces.js` et `backend/routes/immo.js`) pour nettoyer l'ID avant la validation UUID et la requête SQL, évitant tout rejet HTTP 400 ou crash Postgres.
+  * **🧪 Validation & Quality Gate** :
+    - Tests Unitaires Backend Jest : 383/383 passés (48 suites, 100%).
+    - Tests Unitaires Frontend : 69/69 passés (100%).
+    - Build Production Next.js : 133 routes compilées avec succès, 0 erreur TypeScript, postbuild validé.
+
 - **Résolution des Erreurs d'Hydratation React (#425, #418, #423) & Déblocage 403 Server Actions Modifier (24 septembre 2026)** ⚡🛠️🛡️✅ :
   * **🎯 Contexte & Diagnostic** :
     - Détection dans la console navigateur client d'erreurs d'hydratation React (`Minified React error #425`, `#418`, `#423`) et d'un blocage HTTP 403 Forbidden sur la route `modifier` lors de la soumission de formulaires d'annonces avec crash `TypeError: Cannot read properties of undefined (reading 'ok')`.
