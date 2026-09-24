@@ -52,8 +52,17 @@ function formatPrix(p: number | null) {
   return new Intl.NumberFormat('fr-SN').format(p) + ' FCFA'
 }
 
+const MOIS_LONGS = [
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+]
+
 function formatDate(s: string) {
-  return new Date(s).toLocaleDateString('fr-SN', { day: '2-digit', month: 'long', year: 'numeric' })
+  if (!s) return ''
+  const d = new Date(s)
+  if (isNaN(d.getTime())) return ''
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${day} ${MOIS_LONGS[d.getMonth()] || ''} ${d.getFullYear()}`
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -174,7 +183,7 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<{ 
             </span>
             <div className="annonce-detail-meta-row">
               <span>{annonce.quartier ? `${annonce.quartier}, ` : ''}{annonce.ville ?? 'Dakar'}</span>
-              <span>{formatDate(annonce.created_at)}</span>
+              <span suppressHydrationWarning>{formatDate(annonce.created_at)}</span>
             </div>
           </div>
 

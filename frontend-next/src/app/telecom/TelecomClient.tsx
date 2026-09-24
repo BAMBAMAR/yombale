@@ -66,9 +66,11 @@ function ForfaitCard({ f, isRecommande }: { f: Forfait; isRecommande: boolean })
   const typeLabel = TYPE_LABELS[f.type] ?? f.type
 
   return (
-    <Link href={`/telecom/${f.id}`} style={{ display: 'contents' }}>
-      <div className={`forfait-card${isRecommande ? ' forfait-card--recommande' : ''}`} style={{ position: 'relative' }}>
+    <div className={`forfait-card${isRecommande ? ' forfait-card--recommande' : ''}`} style={{ position: 'relative' }}>
+      <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 5 }}>
         <CardActions id={f.id} nom={f.nom} type="telecom" />
+      </div>
+      <Link href={`/telecom/${f.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flex: 1 }}>
         {isRecommande && (
           <div className="forfait-recommande-ribbon">Recommandé</div>
         )}
@@ -125,8 +127,8 @@ function ForfaitCard({ f, isRecommande }: { f: Forfait; isRecommande: boolean })
           <span className="forfait-prix">{fcfa(f.prix)}</span>
           <span className="forfait-voir-arrow" style={{ color: colors.badge }}>Voir →</span>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   )
 }
 

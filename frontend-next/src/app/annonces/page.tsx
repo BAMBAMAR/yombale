@@ -89,13 +89,14 @@ function formatPrix(p: number | null) {
   return new Intl.NumberFormat('fr-SN').format(p) + ' FCFA'
 }
 
+const MOIS_ANNONCES = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
+
 function formatDate(s: string) {
+  if (!s) return ''
   const d = new Date(s)
-  const now = new Date()
-  const diff = Math.floor((now.getTime() - d.getTime()) / 1000)
-  if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`
-  if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`
-  return d.toLocaleDateString('fr-SN', { day: '2-digit', month: 'short' })
+  if (isNaN(d.getTime())) return ''
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${day} ${MOIS_ANNONCES[d.getMonth()] || ''}`
 }
 
 function catLabel(slug: string) {
@@ -148,14 +149,15 @@ export default async function AnnoncesPage({
   } = await searchParams
   const page = Math.max(1, parseInt(pageStr))
 
-  let categoriesActives: string[] | null = null
-  try {
-    categoriesActives = await apiFetch<string[]>('/annonces/categories-actives')
-  } catch (e) { console.warn('[Nopalou:page:L153]', e); }
+  const [categoriesActives, { annonces, total }] = await Promise.all([
+    apiFetch<string[]>('/annonces/categories-actives').catch(e => {
+      console.warn('[Nopalou:page:categoriesActives]', e)
+      return null
+    }),
+    fetchAnnonces(categorie, page, tri, q, prixMax, ville, source),
+  ])
 
   const filteredCategories = CATEGORIES.filter(cat => !cat.slug || categoriesActives === null || categoriesActives.includes(cat.slug))
-
-  const { annonces, total } = await fetchAnnonces(categorie, page, tri, q, prixMax, ville, source)
 
   const totalPages = Math.ceil(total / 24)
   const catActuelle = CATEGORIES.find(c => c.slug === categorie) ?? CATEGORIES[0]
@@ -258,39 +260,43 @@ export default async function AnnoncesPage({
             const photo = Array.isArray(a.photos) ? a.photos[0] : null
             const isBooste = a.boost_until && new Date(a.boost_until) > new Date()
             return (
-              <Link href={`/annonces/${a.id}`} key={a.id} className="annonce-pub-card">
-                <div className="annonce-pub-img-wrap">
-                  {isBooste && (
-                    <span style={{
-                      position: 'absolute', top: 8, left: 8, zIndex: 2,
-                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                      color: '#fff', fontSize: 11, fontWeight: 900,
-                      padding: '3px 8px', borderRadius: 6,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
-                      display: 'flex', alignItems: 'center', gap: 3
-                    }}>
-                      BOOSTÉ
-                    </span>
-                  )}
-                  {photo
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={cloudinaryHQ(photo, { width: 400 })} alt={a.titre} className="annonce-pub-img" />
-                    : <div className="annonce-pub-img annonce-pub-img--vide">
-                        <span>{CATEGORIES.find(c => c.slug === a.categorie_slug)?.emoji ?? ''}</span>
-                      </div>
-                  }
-                  <span className="annonce-pub-cat">{catLabel(a.categorie_slug)}</span>
-                </div>
-                <div className="annonce-pub-body">
-                  <p className="annonce-pub-titre">{a.titre}</p>
-                  <p className="annonce-pub-prix">{formatPrix(a.prix)}</p>
-                  <div className="annonce-pub-meta">
-                    <span>{a.quartier ? `${a.quartier}, ` : ''}{a.ville ?? 'Dakar'}</span>
-                    <span>{formatDate(a.created_at)}</span>
+              <article key={a.id} className="annonce-pub-card">
+                <Link href={`/annonces/${a.id}`} className="annonce-pub-link">
+                  <div className="annonce-pub-img-wrap">
+                    {isBooste && (
+                      <span style={{
+                        position: 'absolute', top: 8, left: 8, zIndex: 2,
+                        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                        color: '#fff', fontSize: 11, fontWeight: 900,
+                        padding: '3px 8px', borderRadius: 6,
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                        display: 'flex', alignItems: 'center', gap: 3
+                      }}>
+                        BOOSTÉ
+                      </span>
+                    )}
+                    {photo
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={cloudinaryHQ(photo, { width: 400 })} alt={a.titre} className="annonce-pub-img" />
+                      : <div className="annonce-pub-img annonce-pub-img--vide">
+                          <span>{CATEGORIES.find(c => c.slug === a.categorie_slug)?.emoji ?? ''}</span>
+                        </div>
+                    }
+                    <span className="annonce-pub-cat">{catLabel(a.categorie_slug)}</span>
                   </div>
+                  <div className="annonce-pub-body">
+                    <p className="annonce-pub-titre">{a.titre}</p>
+                    <p className="annonce-pub-prix">{formatPrix(a.prix)}</p>
+                    <div className="annonce-pub-meta">
+                      <span>{a.quartier ? `${a.quartier}, ` : ''}{a.ville ?? 'Dakar'}</span>
+                      <span suppressHydrationWarning>{formatDate(a.created_at)}</span>
+                    </div>
+                  </div>
+                </Link>
+                <div className="annonce-pub-card-actions">
                   <CardActions id={a.id} nom={a.titre} type="annonce" />
                 </div>
-              </Link>
+              </article>
             )
           })}
         </div>

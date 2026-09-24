@@ -1018,9 +1018,17 @@
   flex: 1;
 }
 
-.annonce-pub-body .card-actions {
+.annonce-pub-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.annonce-pub-card-actions {
+  padding: 0 12px 10px;
   margin-top: auto;
-  padding-top: 6px;
 }
 
 .annonce-pub-titre {

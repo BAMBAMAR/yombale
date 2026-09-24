@@ -21,7 +21,7 @@ const INITIAL_MESSAGE: ChatMessage = {
   id: 'msg-init',
   sender: 'bot',
   text: "Salam alaykoum ! Bienvenue sur l'assistant officiel Nopalou. Vous pouvez me poser une question, rechercher un article, trouver un logement ou découvrir nos boutiques :",
-  time: getCurrentTime(),
+  time: '',
   chips: [
     { label: 'Rechercher un smartphone', url: 'iPhone 13' },
     { label: 'Locations Almadies', url: 'Location appartement Almadies' },
@@ -43,6 +43,10 @@ export default function ChatbotWidget() {
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
+    // Initialiser l'heure locale côté client pour éviter tout décalage d'hydratation SSR/Client
+    setMessages((prev) =>
+      prev.map((m) => (m.id === 'msg-init' && !m.time ? { ...m, time: getCurrentTime() } : m))
+    )
     try {
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('npl_chat_widget_hidden')

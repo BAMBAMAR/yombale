@@ -44,7 +44,7 @@ export default function RegisterSW() {
     // et éliminer les mismatches d'hydratation entre les anciens caches SW et le nouveau SSR.
     // Chaque incrémentation de FORCE_VERSION déclenche la purge chez TOUS les utilisateurs.
     // =====================================================================
-    const FORCE_VERSION = '18'
+    const FORCE_VERSION = '19'
     const FORCE_KEY = 'nopalou_force_v'
 
     try {

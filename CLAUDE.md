@@ -23,6 +23,30 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Éradication des Erreurs d'Hydratation React (#425, #418, #423), Résolution du Timeout 504 sur `/annonces` & Upgrade Serwist v26 (24 septembre 2026)** ⚡🛡️🚀✅ :
+  * **🎯 Symptômes Constatés** :
+    - Échecs d'hydratation console : `Minified React error #425` (*Text content does not match server-rendered HTML*), `#418` (*Hydration failed*) et `#423` (*Root will switch to client rendering*).
+    - Erreur réseau console : `annonces:1 Failed to load resource: the server responded with a status of 504 ()`.
+  * **🔍 Causes Racines Identifiées** :
+    1. **Heure dynamique dans le Chatbot (`ChatbotWidget.tsx`)** : L'initialisation de `INITIAL_MESSAGE.time` à `getCurrentTime()` au niveau module évaluait l'heure UTC sur le serveur SSR et l'heure locale sur le navigateur client, causant une rupture d'hydratation textuelle universelle (erreur #425) présente sur toutes les pages via `layout.tsx`.
+    2. **Imbrication illégale `<button>` dans `<a>` (<Link>)** : Dans `annonces/page.tsx`, `categorie/[slug]/page.tsx`, `categorie/[slug]/[sousCategorie]/page.tsx` et `telecom/TelecomClient.tsx`, `<CardActions>` (qui contient des balises `<button>`) était englobé directement à l'intérieur de `<Link href="...">`. Le parseur HTML du navigateur brisait l'arbre DOM avant même l'hydratation React.
+    3. **Date relative non déterministe** : `formatDate` calculait un delta temporel en minutes (`Il y a X min`) et appelait `toLocaleDateString` sans `suppressHydrationWarning`, divergeant entre le rendu serveur et le moment de l'hydratation client.
+    4. **Incohérence de balise dans `MobileBottomNav.tsx`** : Le fallback Suspense rendait un `<Link>` pour le bouton central `Créer`, alors que le composant actif rendait un `<button>`.
+    5. **Timeout SW Serwist trop court (2s) et catchHandler 504** : `NetworkFirst` imposait `networkTimeoutSeconds: 2`. Après la purge des caches lors de l'activation du SW v25, la première visite sur `/annonces` prenait ~2.5s (appel SSR Render). Le SW avortait à 2s, constatait un cache miss et déclenchait son `catchHandler` qui renvoyait une réponse JSON 504 ("Réseau indisponible").
+    6. **Boucle de repli localhost dans `api.ts`** : En cas de latence backend, `api.ts` tentait `127.0.0.1:3000` et `localhost:3000` en production avec 12s de timeout, risquant le timeout de la fonction serverless Vercel. De plus, `categories-actives` et `fetchAnnonces` étaient exécutées séquentiellement au lieu d'en parallèle.
+  * **🛠️ Correctifs Appliqués & Architecture** :
+    1. **Chatbot (`ChatbotWidget.tsx`, `ChatbotMessageItem.tsx`)** : `INITIAL_MESSAGE.time` initialisé à `''` (SSR propre), heure locale assignée post-montage dans `useEffect`. Ajout de `suppressHydrationWarning` sur l'affichage de l'heure.
+    2. **Séparation Stricte des Liens et Actions** : Dans `annonces/page.tsx`, la carte est désormais un `<article className="annonce-pub-card">`, le `<Link>` encapsule le visuel et les informations textuelles, et `<CardActions>` est logé en pied de carte à l'extérieur du `<a>`. Même correction appliquée dans `categorie/[slug]`, `categorie/[slug]/[sousCategorie]` et `telecom/TelecomClient.tsx`.
+    3. **Formatage de Date Déterministe & Antigaspillage Réseau** : `formatDate` utilise un tableau statique de mois français garanti identique entre Node.js Linux et les navigateurs, assorti de `suppressHydrationWarning`.
+    4. **Alignement `MobileBottomNav.tsx`** : Harmonisation du bouton `Créer` en `<button type="button">` dans `MobileBottomNavFallback` et `MobileBottomNavContent` avec `aria-label` synchronisés.
+    5. **Moteur Réseau `api.ts` & Parallélisation SSR** : `BACKEND_URLS` exclut désormais `localhost`/`127.0.0.1` en production. Timeout ramené à 5s. Header `User-Agent: Nopalou-SSR/1.0` ajouté. Parallélisation `Promise.all` des requêtes `/annonces/categories-actives` et `/annonces?limit=24`.
+    6. **Upgrade Serwist PWA `v26` (`sw.ts`, `RegisterSW.tsx`)** : Incrémentation `CACHE_VERSION = 'v26'`, extension du timeout `networkTimeoutSeconds` de 2s à 6s sur la navigation HTML et les requêtes RSC, support élargi des en-têtes RSC (`RSC: 1`, `text/x-component`), et passage de `FORCE_VERSION` à `'19'`.
+  * **🧪 Validation Technique & Qualité** :
+    - TypeScript : 0 erreur (`npx tsc --noEmit`).
+    - Tests Unitaires Frontend : 69/69 passés (100%).
+    - Linter Anti-AI-Slop : validé.
+    - Build Production Next.js & Serwist : Code 0, 133/133 routes générées, `public/sw.js` recompilé avec succès.
+
 - **Éradication Totale du 403 Forbidden & Erreurs d'Hydratation React (#425, #418, #423) sur la Modification d'Annonces (`/modifier`) (24 septembre 2026)** ⚡🛡️🚀✅ :
   * **🎯 Diagnostic & Causes Racines Identifiées** :
     1. **Erreur 403 Forbidden sur `modifier:1`** : Dans Next.js, `serverActions.allowedOrigins` ne supporte pas les motifs génériques (wildcards `*.nopalou.com` ou `*.onrender.com`). Lorsqu'un utilisateur naviguait sur `https://www.nopalou.com`, Next.js rejetait systématiquement l'appel `POST /mes-annonces/[id]/modifier` avec un code HTTP 403 avant même l'exécution du handler serveur.

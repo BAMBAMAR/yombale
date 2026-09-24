@@ -161,8 +161,18 @@ export default async function SousCategoriePage({
         ) : (
           <div className="grid-produits">
             {produits.map(p => (
-              <Link key={p.id} href={`/produit/${p.id}`} style={{ display: 'contents' }}>
-                <article className="card-produit">
+              <article key={p.id} className="card-produit">
+                <Link
+                  href={`/produit/${p.id}`}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    flex: 1,
+                  }}
+                >
                   <div className="card-img">
                     <ExternalImg src={p.image_url} alt={p.nom} fallback={emoji} fallbackClassName="card-img-placeholder" />
                   </div>
@@ -172,9 +182,9 @@ export default async function SousCategoriePage({
                   {p.nb_offres != null && p.nb_offres > 1 && (
                     <p style={{ fontSize: '12px', color: 'var(--text3)' }}>{p.nb_offres} offres</p>
                   )}
-                  <CardActions id={p.id} nom={p.nom} categorieSlug={params.slug} />
-                </article>
-              </Link>
+                </Link>
+                <CardActions id={p.id} nom={p.nom} categorieSlug={params.slug} />
+              </article>
             ))}
           </div>
         )}

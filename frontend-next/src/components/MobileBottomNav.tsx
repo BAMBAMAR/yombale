@@ -229,15 +229,31 @@ function MobileBottomNavFallback({ isLoggedIn = false, isMerchant = false }: Pro
         </Link>
       )}
 
-      <Link href="/deposer-annonce" className="mobile-bottom-nav-item mobile-bottom-nav-item--cta" aria-label="Créer">
-        <div className="mobile-bottom-nav-icon-wrap"><div className="mobile-bottom-nav-cta-btn"><Plus size={16} strokeWidth={3} /></div></div>
-        <span style={{ fontWeight: 800 }}>Créer</span>
-      </Link>
+      <button
+        type="button"
+        className="mobile-bottom-nav-item mobile-bottom-nav-item--cta"
+        aria-label="Actions rapides et création"
+        title="Créer une annonce, boutique, bien immobilier ou ouvrir la caisse"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+      >
+        <div className="mobile-bottom-nav-icon-wrap">
+          <div
+            className="mobile-bottom-nav-cta-btn"
+            style={{
+              background: 'var(--accent, #C75B00)',
+              boxShadow: '0 2px 8px rgba(199,91,0,0.4)',
+            }}
+          >
+            <Plus size={16} strokeWidth={3} />
+          </div>
+        </div>
+        <span style={{ fontWeight: 800, whiteSpace: 'nowrap' }}>Créer</span>
+      </button>
       <Link href={favHref} className={`mobile-bottom-nav-item${isFavorites ? ' active' : ''}`} aria-label="Mes favoris">
         <div className="mobile-bottom-nav-icon-wrap"><Heart size={20} /></div>
         <span>Favoris</span>
       </Link>
-      <Link href={effectiveIsLoggedIn ? '/compte' : '/connexion'} className={`mobile-bottom-nav-item${isAccount ? ' active' : ''}`} aria-label="Mon Compte">
+      <Link href={effectiveIsLoggedIn ? '/compte' : '/connexion'} className={`mobile-bottom-nav-item${isAccount ? ' active' : ''}`} aria-label={effectiveIsLoggedIn ? 'Mon Compte' : 'Se connecter'}>
         <div className="mobile-bottom-nav-icon-wrap"><User size={20} /></div>
         <span>{effectiveIsLoggedIn ? 'Compte' : 'Connexion'}</span>
       </Link>

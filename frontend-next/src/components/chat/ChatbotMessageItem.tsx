@@ -251,7 +251,7 @@ export default function ChatbotMessageItem({ msg, onChipClick }: ChatbotMessageI
           </div>
         )}
       </div>
-      <div className="npl-chat-msg-time">{msg.time}</div>
+      {msg.time ? <div className="npl-chat-msg-time" suppressHydrationWarning>{msg.time}</div> : null}
     </div>
   )
 }

@@ -1,11 +1,12 @@
+const isProd = process.env.NODE_ENV === 'production'
+
 const BACKEND_URLS = Array.from(
   new Set(
     [
       process.env.BACKEND_URL,
       process.env.NEXT_PUBLIC_BACKEND_URL,
       'https://yombale.onrender.com',
-      'http://127.0.0.1:3000',
-      'http://localhost:3000',
+      ...(!isProd ? ['http://127.0.0.1:3000', 'http://localhost:3000'] : []),
     ].filter((u): u is string => Boolean(u && u.trim()))
   )
 )
@@ -13,7 +14,11 @@ const BACKEND_URLS = Array.from(
 const SSR_SECRET = process.env.SSR_SECRET || ''
 
 export async function apiFetch<T>(path: string): Promise<T> {
-  const headers: Record<string, string> = SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}
+  const headers: Record<string, string> = {
+    ...(SSR_SECRET ? { 'X-SSR-Token': SSR_SECRET } : {}),
+    'User-Agent': 'Nopalou-SSR/1.0',
+    'Accept': 'application/json',
+  }
   let lastError: Error | null = null
 
   for (const baseUrl of BACKEND_URLS) {
@@ -25,7 +30,7 @@ export async function apiFetch<T>(path: string): Promise<T> {
       const res = await fetch(url, {
         cache: 'no-store',
         headers,
-        signal: AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(5000),
       })
 
       if (res.ok) {

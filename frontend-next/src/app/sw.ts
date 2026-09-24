@@ -10,7 +10,7 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v25';
+const CACHE_VERSION = 'v26';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
@@ -131,14 +131,14 @@ const serwist = new Serwist({
         (url.pathname.startsWith('/boutique') && !url.pathname.startsWith('/boutique/caisse')),
       handler: new NetworkOnly(),
     },
-    // 2. Navigation HTML — NetworkFirst avec timeout 2s
+    // 2. Navigation HTML — NetworkFirst avec timeout 6s (sécurise le SSR et les réseaux mobiles)
     {
       matcher: ({ request }) =>
         request.mode === "navigate" ||
         (request.method === "GET" && request.headers.get("accept")?.includes("text/html") === true),
       handler: new NetworkFirst({
         cacheName: `nopalou-html-cache-${CACHE_VERSION}`,
-        networkTimeoutSeconds: 2,
+        networkTimeoutSeconds: 6,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 50,
@@ -147,12 +147,15 @@ const serwist = new Serwist({
         ],
       }),
     },
-    // 3. Requêtes RSC (_rsc=...) — NetworkFirst
+    // 3. Requêtes RSC (_rsc=... ou en-tête RSC: 1 / text/x-component) — NetworkFirst
     {
-      matcher: ({ url }) => url.searchParams.has("_rsc"),
+      matcher: ({ url, request }) =>
+        url.searchParams.has("_rsc") ||
+        request.headers.get("rsc") === "1" ||
+        request.headers.get("accept")?.includes("text/x-component") === true,
       handler: new NetworkFirst({
         cacheName: `nopalou-rsc-cache-${CACHE_VERSION}`,
-        networkTimeoutSeconds: 2,
+        networkTimeoutSeconds: 6,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 80,
@@ -341,9 +344,13 @@ serwist.setCatchHandler(async ({ request }: any) => {
     });
   }
 
-  // 3. Next.js RSC data requests (_rsc=...)
-  if (url && url.searchParams.has("_rsc")) {
-    const cachedRsc = await caches.match(request, { ignoreSearch: true });
+  // 3. Next.js RSC data requests (_rsc=... ou en-tête RSC)
+  if (
+    (url && url.searchParams.has("_rsc")) ||
+    request.headers?.get("rsc") === "1" ||
+    request.headers?.get("accept")?.includes("text/x-component")
+  ) {
+    const cachedRsc = await caches.match(request, { ignoreSearch: false });
     if (cachedRsc) return cachedRsc;
   }
 
