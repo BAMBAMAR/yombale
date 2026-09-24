@@ -73,11 +73,21 @@ function extractAdminCredentials(req) {
     jwtToken = cookies['nopalou_admin_jwt'];
   }
 
-  const rawSecret = req.headers['x-admin-secret'] || cookies['nopalou_admin'];
+  const headerSecret = req.headers['x-admin-secret'];
+  const cookieSecret = cookies['nopalou_admin'];
 
-  // Si rawSecret commence par eyJ, c'est en fait un token JWT transmis via le header X-Admin-Secret
-  if (!jwtToken && typeof rawSecret === 'string' && rawSecret.startsWith('eyJ')) {
-    jwtToken = rawSecret;
+  // Si x-admin-secret commence par eyJ, c'est en fait un token JWT
+  if (!jwtToken && typeof headerSecret === 'string' && headerSecret.startsWith('eyJ')) {
+    jwtToken = headerSecret;
+  }
+  if (!jwtToken && typeof cookieSecret === 'string' && cookieSecret.startsWith('eyJ')) {
+    jwtToken = cookieSecret;
+  }
+
+  // Le secret technique break-glass ne doit jamais être un JWT
+  let rawSecret = headerSecret && !headerSecret.startsWith('eyJ') ? headerSecret : null;
+  if (!rawSecret && cookieSecret && !cookieSecret.startsWith('eyJ')) {
+    rawSecret = cookieSecret;
   }
 
   return { jwtToken, rawSecret };
@@ -86,7 +96,7 @@ function extractAdminCredentials(req) {
 /**
  * Middleware d'authentification administrative
  * Accepte :
- * 1. Un token JWT valide signé avec JWT_SECRET (compte nominatif)
+ * 1. Un token JWT valide signé avec JWT_SECRET (compte nominatif ou super_admin)
  * 2. Un X-Admin-Secret ou cookie nopalou_admin valide (Break-glass Super Admin)
  */
 async function requireAdminAuth(req, res, next) {
@@ -112,6 +122,17 @@ async function requireAdminAuth(req, res, next) {
           };
           return next();
         }
+        // Support pour super_admin technique break-glass généré par login
+        if (decoded.role === 'super_admin') {
+          req.adminUser = {
+            id: decoded.adminId || '00000000-0000-0000-0000-000000000000',
+            nom: 'Super Administrateur',
+            email: decoded.email || 'admin@nopalou.com',
+            role: 'super_admin',
+            permissions: { all: true },
+          };
+          return next();
+        }
       }
     } catch (err) {
       // Si le token est expiré ou invalide, tester le fallback break-glass ci-dessous
@@ -132,7 +153,7 @@ async function requireAdminAuth(req, res, next) {
 
   return res.status(401).json({
     success: false,
-    error: 'Session administrative requise ou expirée. Veuillez vous connecter.',
+    error: 'Session administrative requise ou expirée. Veuillez vous reconnecter.',
     code: 'ADMIN_UNAUTHORIZED',
   });
 }

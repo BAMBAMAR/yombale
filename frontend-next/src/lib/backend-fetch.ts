@@ -2,7 +2,11 @@ import 'server-only'
 import { SignJWT } from 'jose'
 import { getOptionalSession } from './dal'
 
-const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.BACKEND_URL ?? 'http://127.0.0.1:3000'
+const API = (
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.BACKEND_URL ||
+  'https://yombale.onrender.com'
+).replace(/\/$/, '')
 const SSR_SECRET = process.env.SSR_SECRET || ''
 
 export interface ActionState {

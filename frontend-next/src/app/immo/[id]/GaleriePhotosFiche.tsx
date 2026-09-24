@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { cloudinaryHQ } from '@/lib/cloudinary';
 import ModalAlbumPhotos from '@/app/agence/[slug]/vitrine/components/ModalAlbumPhotos';
@@ -14,6 +14,33 @@ export default function GaleriePhotosFiche({ photos, titre }: GaleriePhotosFiche
   const [activeIdx, setActiveIdx] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
+  const prevPhoto = () => setActiveIdx((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+  const nextPhoto = () => setActiveIdx((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+
+  // Navigation clavier flèche gauche / droite
+  useEffect(() => {
+    if (!photos || photos.length <= 1 || isLightboxOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target?.isContentEditable) {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevPhoto();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextPhoto();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [photos, isLightboxOpen]);
+
   if (!photos || photos.length === 0) return null;
 
   const currentPhoto = photos[activeIdx] || photos[0];
@@ -21,12 +48,12 @@ export default function GaleriePhotosFiche({ photos, titre }: GaleriePhotosFiche
 
   function handlePrev(e: React.MouseEvent) {
     e.stopPropagation();
-    setActiveIdx((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+    prevPhoto();
   }
 
   function handleNext(e: React.MouseEvent) {
     e.stopPropagation();
-    setActiveIdx((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+    nextPhoto();
   }
 
   return (

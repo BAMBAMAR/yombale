@@ -24,7 +24,7 @@ export async function getAdminSession(): Promise<AdminUserSession | null> {
           'Cookie': `${COOKIE_JWT}=${jwt}`,
         },
         cache: 'no-store',
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(4000),
       })
       if (res.ok) {
         const data = await res.json()
@@ -42,19 +42,28 @@ export async function getAdminSession(): Promise<AdminUserSession | null> {
             permissions,
           }
         }
+      } else if (res.status === 401) {
+        // Le token a expiré ou est invalide : purger les cookies pour forcer une ré-authentification propre
+        jar.delete(COOKIE_JWT)
+        jar.delete(COOKIE_SECRET)
+        return null
       }
     } catch {
-      // Backend injoignable
+      // Backend temporairement injoignable
     }
   }
 
-  if (secret) {
-    return {
-      id: 'break-glass-admin',
-      nom: 'Super Administrateur',
-      email: 'admin@nopalou.com',
-      role: 'super_admin',
-      permissions: ['*'],
+  // Break-glass : seulement si secret brut présent (et pas un JWT expiré) correspondant à ADMIN_SECRET
+  if (secret && !secret.startsWith('eyJ')) {
+    const envSecret = process.env.ADMIN_SECRET
+    if (!envSecret || secret === envSecret) {
+      return {
+        id: 'break-glass-admin',
+        nom: 'Super Administrateur',
+        email: 'admin@nopalou.com',
+        role: 'super_admin',
+        permissions: ['*'],
+      }
     }
   }
 
@@ -68,6 +77,7 @@ export async function adminLogin(formData: FormData): Promise<void> {
   const secret = (formData.get('secret') as string ?? '').trim()
 
   const jar = await cookies()
+  const sevenDays = 60 * 60 * 24 * 7
 
   // 1. Authentification nominative (Email + Mot de passe)
   if (email && motDePasse) {
@@ -87,14 +97,14 @@ export async function adminLogin(formData: FormData): Promise<void> {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60 * 12,
+            maxAge: sevenDays,
           })
           jar.set(COOKIE_SECRET, data.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60 * 12,
+            maxAge: sevenDays,
           })
           redirect('/admin')
         }
@@ -116,7 +126,7 @@ export async function adminLogin(formData: FormData): Promise<void> {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
-        maxAge: 60 * 60 * 12,
+        maxAge: sevenDays,
       })
       redirect('/admin')
     }
@@ -127,7 +137,7 @@ export async function adminLogin(formData: FormData): Promise<void> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ secret }),
         cache: 'no-store',
-        signal: AbortSignal.timeout(2000),
+        signal: AbortSignal.timeout(4000),
       })
 
       if (res.ok) {
@@ -138,14 +148,14 @@ export async function adminLogin(formData: FormData): Promise<void> {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60 * 12,
+            maxAge: sevenDays,
           })
           jar.set(COOKIE_SECRET, secret, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60 * 12,
+            maxAge: sevenDays,
           })
           redirect('/admin')
         }

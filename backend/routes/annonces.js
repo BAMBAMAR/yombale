@@ -239,10 +239,10 @@ router.get('/mine', verifierToken, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 
-// ── GET /api/annonces/admin/en-attente (admin) — toutes les annonces non supprimées avec filtres
+// ── GET /api/annonces/admin/en-attente (admin) — annonces non supprimées avec filtres & compteurs
 router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
   try {
-    const { q, categorie, statut, ville, payee, booste, tri, limit = 5000 } = req.query;
+    const { q, categorie, statut, ville, payee, booste, tri, limit = 200 } = req.query;
     const conds = ['a.supprimee = false'];
     const vals = [];
 
@@ -288,7 +288,7 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
       )`);
     }
 
-    let orderBy = '(a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC, a.created_at DESC';
+    let orderBy = '(a.actif = false AND (a.rejete IS NOT TRUE)) DESC, (a.boost_until IS NOT NULL AND a.boost_until > NOW()) DESC, a.created_at DESC';
     if (tri === 'ancien') {
       orderBy = 'a.created_at ASC';
     } else if (tri === 'prix_asc') {
@@ -297,22 +297,44 @@ router.get('/admin/en-attente', adminSecretOnly, async (req, res) => {
       orderBy = 'a.prix DESC NULLS LAST';
     }
 
-    const lim = Math.min(10000, parseInt(limit) || 5000);
+    const lim = Math.min(500, parseInt(limit) || 200);
     vals.push(lim);
 
     const where = 'WHERE ' + conds.join(' AND ');
-    const rows = await pool.query(
-      `SELECT a.id, a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.quartier,
-              a.contact_nom, a.contact_tel, a.photos, a.actif, a.payee, a.rejete, a.boost_until,
-              a.created_at, a.updated_at,
-              u.nom AS auteur_nom, u.email AS auteur_email
-       FROM annonces_classifiees a
-       LEFT JOIN utilisateurs u ON u.id = a.utilisateur_id
-       ${where}
-       ORDER BY ${orderBy} LIMIT $${vals.length}`,
-      vals
-    );
-    res.json({ annonces: rows.rows });
+    const [rows, countsRes] = await Promise.all([
+      pool.query(
+        `SELECT a.id, a.categorie_slug, a.titre, a.description, a.prix, a.ville, a.quartier,
+                a.contact_nom, a.contact_tel, a.photos, a.actif, a.payee, a.rejete, a.boost_until,
+                a.created_at, a.updated_at,
+                u.nom AS auteur_nom, u.email AS auteur_email
+         FROM annonces_classifiees a
+         LEFT JOIN utilisateurs u ON u.id = a.utilisateur_id
+         ${where}
+         ORDER BY ${orderBy} LIMIT $${vals.length}`,
+        vals
+      ),
+      pool.query(`
+        SELECT
+          COUNT(*) FILTER (WHERE actif = false AND (rejete IS NOT TRUE)) AS attente,
+          COUNT(*) FILTER (WHERE actif = true) AS actives,
+          COUNT(*) FILTER (WHERE boost_until IS NOT NULL AND boost_until > NOW()) AS boostees,
+          COUNT(*) FILTER (WHERE rejete = true) AS rejetees,
+          COUNT(*) AS toutes
+        FROM annonces_classifiees
+        WHERE supprimee = false
+      `),
+    ]);
+
+    const c = countsRes.rows[0] || {};
+    const counts = {
+      attente: parseInt(c.attente) || 0,
+      actives: parseInt(c.actives) || 0,
+      boostees: parseInt(c.boostees) || 0,
+      rejetees: parseInt(c.rejetees) || 0,
+      toutes: parseInt(c.toutes) || 0,
+    };
+
+    res.json({ annonces: rows.rows, counts, total: counts.toutes });
   } catch (err) {
     console.error('[ADMIN GET /annonces]', err.message);
     res.status(500).json({ error: 'Erreur serveur' });

@@ -33,13 +33,13 @@ router.post('/login', async (req, res) => {
       const token = jwt.sign(
         { adminId: adminRow.id, email: adminRow.email, role: 'super_admin', scope: 'nopalou_admin' },
         process.env.JWT_SECRET,
-        { expiresIn: '8h' }
+        { expiresIn: '7d' }
       );
 
       const isSecure = process.env.NODE_ENV === 'production';
       res.setHeader('Set-Cookie', [
-        `nopalou_admin_jwt=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`,
-        `nopalou_admin=${encodeURIComponent(secret)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`,
+        `nopalou_admin_jwt=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${7 * 86400}${isSecure ? '; Secure' : ''}`,
+        `nopalou_admin=${encodeURIComponent(secret)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${7 * 86400}${isSecure ? '; Secure' : ''}`,
       ]);
 
       await enregistrerAdminLog({
@@ -99,12 +99,12 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { adminId: user.id, email: user.email, role: user.role, scope: 'nopalou_admin' },
       process.env.JWT_SECRET,
-      { expiresIn: '8h' }
+      { expiresIn: '7d' }
     );
 
     const isSecure = process.env.NODE_ENV === 'production';
     const cookieHeaders = [
-      `nopalou_admin_jwt=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${8 * 3600}${isSecure ? '; Secure' : ''}`,
+      `nopalou_admin_jwt=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${7 * 86400}${isSecure ? '; Secure' : ''}`,
       // SÉCURITÉ P1 : Suppression du cookie nopalou_admin contenant ADMIN_SECRET en clair.
       // L'authentification administrative repose exclusivement sur le JWT nominatif ci-dessus.
       // Le mécanisme break-glass via ADMIN_SECRET reste disponible en console serveur uniquement.

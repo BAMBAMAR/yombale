@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 const MESSAGES: Record<string, string> = {
   secret_requis:    'Identifiants requis.',
   secret_incorrect: 'Identifiants incorrects ou accès révoqué.',
+  session_expiree:  'Votre session administrateur a expiré. Veuillez vous reconnecter.',
   erreur_serveur:   'Erreur serveur — réessayez dans quelques instants.',
 }
 

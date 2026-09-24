@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useMemo, useTransition } from 'react'
+import React, { useState, useMemo, useEffect, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   batchModererAnnonces,
   batchSupprimerAnnonces,
@@ -17,14 +18,30 @@ import {
   AdminAnnoncesTabs
 } from './components'
 
+interface AdminAnnoncesClientProps {
+  annonces: Annonce[]
+  initialCounts?: {
+    attente: number
+    actives: number
+    boostees: number
+    rejetees: number
+    toutes: number
+  }
+}
+
 export default function AdminAnnoncesClient({
   annonces: initial,
-}: {
-  annonces: Annonce[]
-}) {
+  initialCounts,
+}: AdminAnnoncesClientProps) {
+  const router = useRouter()
   const [, startTransition] = useTransition()
+  const [list, setList] = useState<Annonce[]>(initial)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loadingBatch, setLoadingBatch] = useState(false)
+
+  useEffect(() => {
+    setList(initial)
+  }, [initial])
 
   // Filtres & Recherche
   const [q, setQ] = useState('')
@@ -36,29 +53,43 @@ export default function AdminAnnoncesClient({
 
   function refresh() {
     startTransition(() => {
-      window.location.reload()
+      router.refresh()
+    })
+  }
+
+  function handleAnnonceUpdate(id: string, updates: Partial<Annonce>) {
+    setList(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a))
+    startTransition(() => {
+      router.refresh()
+    })
+  }
+
+  function handleAnnonceDelete(id: string) {
+    setList(prev => prev.filter(a => a.id !== id))
+    startTransition(() => {
+      router.refresh()
     })
   }
 
   // Filtrage combiné réactif
   const annoncesFiltrees = useMemo(() => {
-    let list = [...initial]
+    let filtered = [...list]
 
     // 1. Onglet Statut
     if (activeTab === 'attente') {
-      list = list.filter(a => !a.actif && !a.rejete)
+      filtered = filtered.filter(a => !a.actif && !a.rejete)
     } else if (activeTab === 'actives') {
-      list = list.filter(a => a.actif)
+      filtered = filtered.filter(a => a.actif)
     } else if (activeTab === 'boostees') {
-      list = list.filter(a => Boolean(a.boost_until && new Date(a.boost_until) > new Date()))
+      filtered = filtered.filter(a => Boolean(a.boost_until && new Date(a.boost_until) > new Date()))
     } else if (activeTab === 'rejetees') {
-      list = list.filter(a => a.rejete)
+      filtered = filtered.filter(a => a.rejete)
     }
 
     // 2. Recherche textuelle
     if (q.trim()) {
       const term = q.trim().toLowerCase()
-      list = list.filter(a => {
+      filtered = filtered.filter(a => {
         return (
           a.titre?.toLowerCase().includes(term) ||
           a.description?.toLowerCase().includes(term) ||
@@ -74,23 +105,23 @@ export default function AdminAnnoncesClient({
 
     // 3. Filtre Catégorie
     if (categorieFilter) {
-      list = list.filter(a => a.categorie_slug === categorieFilter)
+      filtered = filtered.filter(a => a.categorie_slug === categorieFilter)
     }
 
     // 4. Filtre Ville
     if (villeFilter) {
-      list = list.filter(a => (a.ville || '').toLowerCase().includes(villeFilter.toLowerCase()))
+      filtered = filtered.filter(a => (a.ville || '').toLowerCase().includes(villeFilter.toLowerCase()))
     }
 
     // 5. Filtre Paiement
     if (payeeFilter === 'payee') {
-      list = list.filter(a => a.payee)
+      filtered = filtered.filter(a => a.payee)
     } else if (payeeFilter === 'gratuite') {
-      list = list.filter(a => !a.payee)
+      filtered = filtered.filter(a => !a.payee)
     }
 
     // 6. Tri
-    list.sort((a, b) => {
+    filtered.sort((a, b) => {
       if (triOption === 'ancien') {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       }
@@ -103,19 +134,22 @@ export default function AdminAnnoncesClient({
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
 
-    return list
-  }, [initial, activeTab, q, categorieFilter, villeFilter, payeeFilter, triOption])
+    return filtered
+  }, [list, activeTab, q, categorieFilter, villeFilter, payeeFilter, triOption])
 
   // Compteurs dynamiques par onglet
   const counts = useMemo(() => {
-    return {
-      attente: initial.filter(a => !a.actif && !a.rejete).length,
-      actives: initial.filter(a => a.actif).length,
-      boostees: initial.filter(a => Boolean(a.boost_until && new Date(a.boost_until) > new Date())).length,
-      rejetees: initial.filter(a => a.rejete).length,
-      toutes: initial.length,
+    if (initialCounts && list === initial) {
+      return initialCounts
     }
-  }, [initial])
+    return {
+      attente: list.filter(a => !a.actif && !a.rejete).length,
+      actives: list.filter(a => a.actif).length,
+      boostees: list.filter(a => Boolean(a.boost_until && new Date(a.boost_until) > new Date())).length,
+      rejetees: list.filter(a => a.rejete).length,
+      toutes: initialCounts?.toutes ?? list.length,
+    }
+  }, [list, initial, initialCounts])
 
   const hasActiveFilters = Boolean(q || categorieFilter || villeFilter || payeeFilter || triOption !== 'recent')
 
@@ -147,9 +181,15 @@ export default function AdminAnnoncesClient({
   const handleBatchApprouver = async () => {
     setLoadingBatch(true)
     try {
-      await batchModererAnnonces(selectedIds, 'approuver')
+      const res = await batchModererAnnonces(selectedIds, 'approuver')
+      setList(prev => prev.map(a => selectedIds.includes(a.id) ? { ...a, actif: true, rejete: false } : a))
       setSelectedIds([])
       refresh()
+      if (res.errors > 0) {
+        alert(`${res.successCount} annonces approuvées, ${res.errors} erreur(s)`)
+      }
+    } catch (err: any) {
+      alert(`Erreur : ${err?.message || 'Erreur lors du traitement'}`)
     } finally {
       setLoadingBatch(false)
     }
@@ -161,8 +201,12 @@ export default function AdminAnnoncesClient({
       for (const id of selectedIds) {
         await boosterAnnonce(id, 7)
       }
+      const boostUntil = new Date(Date.now() + 7 * 86400000).toISOString()
+      setList(prev => prev.map(a => selectedIds.includes(a.id) ? { ...a, boost_until: boostUntil, actif: true, rejete: false } : a))
       setSelectedIds([])
       refresh()
+    } catch (err: any) {
+      alert(`Erreur : ${err?.message || 'Erreur lors du boost'}`)
     } finally {
       setLoadingBatch(false)
     }
@@ -171,9 +215,15 @@ export default function AdminAnnoncesClient({
   const handleBatchDesactiver = async () => {
     setLoadingBatch(true)
     try {
-      await batchModererAnnonces(selectedIds, 'rejeter')
+      const res = await batchModererAnnonces(selectedIds, 'rejeter')
+      setList(prev => prev.map(a => selectedIds.includes(a.id) ? { ...a, actif: false, rejete: true } : a))
       setSelectedIds([])
       refresh()
+      if (res.errors > 0) {
+        alert(`${res.successCount} annonces désactivées, ${res.errors} erreur(s)`)
+      }
+    } catch (err: any) {
+      alert(`Erreur : ${err?.message || 'Erreur lors du traitement'}`)
     } finally {
       setLoadingBatch(false)
     }
@@ -182,9 +232,15 @@ export default function AdminAnnoncesClient({
   const handleBatchSupprimer = async () => {
     setLoadingBatch(true)
     try {
-      await batchSupprimerAnnonces(selectedIds)
+      const res = await batchSupprimerAnnonces(selectedIds)
+      setList(prev => prev.filter(a => !selectedIds.includes(a.id)))
       setSelectedIds([])
       refresh()
+      if (res.errors > 0) {
+        alert(`${res.successCount} annonces supprimées, ${res.errors} erreur(s)`)
+      }
+    } catch (err: any) {
+      alert(`Erreur : ${err?.message || 'Erreur lors de la suppression'}`)
     } finally {
       setLoadingBatch(false)
     }
@@ -278,6 +334,8 @@ export default function AdminAnnoncesClient({
             isSelected={selectedIds.includes(a.id)}
             onToggleSelect={() => toggleSelect(a.id)}
             onAction={refresh}
+            onUpdate={(updates) => handleAnnonceUpdate(a.id, updates)}
+            onDelete={() => handleAnnonceDelete(a.id)}
           />
         ))}
 

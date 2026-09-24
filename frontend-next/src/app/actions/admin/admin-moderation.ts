@@ -8,7 +8,7 @@ import { BACKEND, COOKIE, extractAdminToken, adminHeaders } from './admin-common
 export async function modererAnnonce(
   id: string,
   action: 'approuver' | 'rejeter'
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; success?: boolean }> {
   const jar    = await cookies()
   const secret = extractAdminToken(jar)
   if (!secret) return { error: 'Non authentifié' }
@@ -17,17 +17,25 @@ export async function modererAnnonce(
     ? { actif: true,  rejete: false }
     : { actif: false, rejete: true  }
 
-  const r = await fetch(`${BACKEND}/api/annonces/admin/${id}`, {
-    method: 'PUT',
-    headers: adminHeaders(secret),
-    body: JSON.stringify(body),
-    cache: 'no-store',
-  })
+  try {
+    const r = await fetch(`${BACKEND}/api/annonces/admin/${id}`, {
+      method: 'PUT',
+      headers: adminHeaders(secret),
+      body: JSON.stringify(body),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
+    })
 
-  if (!r.ok) return { error: 'Erreur lors de la modération' }
-  revalidatePath('/admin/annonces')
-  revalidatePath('/annonces')
-  return {}
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}))
+      return { error: data.error || 'Erreur lors de la modération' }
+    }
+    revalidatePath('/admin/annonces')
+    revalidatePath('/annonces')
+    return { success: true }
+  } catch (err: any) {
+    return { error: err?.message || 'Erreur de connexion au serveur' }
+  }
 }
 
 // ── Booster annonce classifiée (7 jours ou personnalisé) ────────────
@@ -39,36 +47,52 @@ export async function boosterAnnonce(
   const secret = extractAdminToken(jar)
   if (!secret) return { error: 'Non authentifié' }
 
-  const r = await fetch(`${BACKEND}/api/annonces/admin/${id}/boost`, {
-    method: 'POST',
-    headers: adminHeaders(secret),
-    body: JSON.stringify({ jours }),
-    cache: 'no-store',
-  })
+  try {
+    const r = await fetch(`${BACKEND}/api/annonces/admin/${id}/boost`, {
+      method: 'POST',
+      headers: adminHeaders(secret),
+      body: JSON.stringify({ jours }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
+    })
 
-  if (!r.ok) return { error: 'Erreur lors du boost de l\'annonce' }
-  const data = await r.json()
-  revalidatePath('/admin/annonces')
-  revalidatePath('/annonces')
-  return { boost_until: data.annonce?.boost_until }
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}))
+      return { error: data.error || 'Erreur lors du boost de l\'annonce' }
+    }
+    const data = await r.json()
+    revalidatePath('/admin/annonces')
+    revalidatePath('/annonces')
+    return { boost_until: data.annonce?.boost_until }
+  } catch (err: any) {
+    return { error: err?.message || 'Erreur lors du boost' }
+  }
 }
 
 // ── Supprimer annonce classifiée ───────────────────────────────────
-export async function supprimerAnnonce(id: string): Promise<{ error?: string }> {
+export async function supprimerAnnonce(id: string): Promise<{ error?: string; success?: boolean }> {
   const jar    = await cookies()
   const secret = extractAdminToken(jar)
   if (!secret) return { error: 'Non authentifié' }
 
-  const r = await fetch(`${BACKEND}/api/annonces/admin/${id}`, {
-    method: 'DELETE',
-    headers: adminHeaders(secret),
-    cache: 'no-store',
-  })
+  try {
+    const r = await fetch(`${BACKEND}/api/annonces/admin/${id}`, {
+      method: 'DELETE',
+      headers: adminHeaders(secret),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
+    })
 
-  if (!r.ok) return { error: 'Erreur lors de la suppression' }
-  revalidatePath('/admin/annonces')
-  revalidatePath('/annonces')
-  return {}
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}))
+      return { error: data.error || 'Erreur lors de la suppression' }
+    }
+    revalidatePath('/admin/annonces')
+    revalidatePath('/annonces')
+    return { success: true }
+  } catch (err: any) {
+    return { error: err?.message || 'Erreur lors de la suppression' }
+  }
 }
 
 // ── Batch Actions Annonces ──────────────────────────────────────────

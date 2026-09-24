@@ -20,37 +20,70 @@ interface AdminAnnonceRowProps {
   annonce: Annonce
   isSelected: boolean
   onToggleSelect: () => void
-  onAction: () => void
+  onAction?: () => void
+  onUpdate?: (updates: Partial<Annonce>) => void
+  onDelete?: () => void
 }
 
 export default function AdminAnnonceRow({
   annonce,
   isSelected,
   onToggleSelect,
-  onAction
+  onAction,
+  onUpdate,
+  onDelete,
 }: AdminAnnonceRowProps) {
   const [pending, startTransition] = useTransition()
   const [expanded, setExpanded] = useState(false)
 
   function handleAction(action: 'approuver' | 'rejeter') {
     startTransition(async () => {
-      await modererAnnonce(annonce.id, action)
-      onAction()
+      try {
+        const res = await modererAnnonce(annonce.id, action)
+        if (res.error) {
+          alert('Erreur : ' + res.error)
+          return
+        }
+        if (action === 'approuver') {
+          onUpdate ? onUpdate({ actif: true, rejete: false }) : onAction?.()
+        } else {
+          onUpdate ? onUpdate({ actif: false, rejete: true }) : onAction?.()
+        }
+      } catch (err: any) {
+        alert('Erreur inattendue : ' + (err?.message || String(err)))
+      }
     })
   }
 
   function handleBoost(jours = 7) {
     startTransition(async () => {
-      await boosterAnnonce(annonce.id, jours)
-      onAction()
+      try {
+        const res = await boosterAnnonce(annonce.id, jours)
+        if (res.error) {
+          alert('Erreur : ' + res.error)
+          return
+        }
+        const boostUntil = res.boost_until || new Date(Date.now() + jours * 86400000).toISOString()
+        onUpdate ? onUpdate({ boost_until: boostUntil, actif: true, rejete: false }) : onAction?.()
+      } catch (err: any) {
+        alert('Erreur inattendue : ' + (err?.message || String(err)))
+      }
     })
   }
 
   function handleSupprimer() {
     if (!window.confirm('Supprimer définitivement cette annonce ?')) return
     startTransition(async () => {
-      await supprimerAnnonce(annonce.id)
-      onAction()
+      try {
+        const res = await supprimerAnnonce(annonce.id)
+        if (res.error) {
+          alert('Erreur : ' + res.error)
+          return
+        }
+        onDelete ? onDelete() : onAction?.()
+      } catch (err: any) {
+        alert('Erreur inattendue : ' + (err?.message || String(err)))
+      }
     })
   }
 
