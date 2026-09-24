@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
 import PageHeader from '@/components/PageHeader'
+import { Building2 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Comparaison immobilier | Nopalou',
@@ -32,7 +33,7 @@ interface AnnonceImmo {
 
 const TYPE_ICONS: Record<string, string> = {
   appartement: '', villa: '', maison: '',
-  studio: '🛏', terrain: '🌿', bureau: '',
+  studio: '', terrain: '', bureau: '',
 }
 
 function prixParM2(a: AnnonceImmo): number | null {
@@ -52,7 +53,9 @@ export default async function ImmoComparaisonPage({
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}></span>
+          <div style={{ color: 'var(--navy, #1C2B4A)', marginBottom: 8 }}>
+            <Building2 size={48} />
+          </div>
           <p>Sélectionnez au moins 2 annonces à comparer depuis la liste.</p>
           <Link href="/immo" className="budget-pill active" style={{ marginTop: 8 }}>
             Parcourir les annonces
@@ -75,7 +78,9 @@ export default async function ImmoComparaisonPage({
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}></span>
+          <div style={{ color: 'var(--navy, #1C2B4A)', marginBottom: 8 }}>
+            <Building2 size={48} />
+          </div>
           <p>Impossible de charger les annonces demandées.</p>
           <Link href="/immo" className="budget-pill active" style={{ marginTop: 8 }}>Parcourir les annonces</Link>
         </div>

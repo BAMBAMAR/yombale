@@ -100,7 +100,7 @@ export const metadata: Metadata = {
     canonical: process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com',
   },
   authors: [{ name: 'Nopalou' }],
-  publisher: 'Nopalou / Yombale',
+  publisher: 'Nopalou',
   openGraph: {
     siteName: 'Nopalou',
     locale: 'fr_SN',

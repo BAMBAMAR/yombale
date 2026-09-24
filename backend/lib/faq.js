@@ -10,7 +10,7 @@ function getFAQWhatsApp(site = SITE_DEFAULT) {
   return [
     {
       motsCles: ['gratuit', 'payant', 'coute', 'couter', 'prix nopalou', 'naata la'],
-      reponse: `✅ *Nopalou est 100% gratuit* pour comparer les prix, chercher une annonce ou un bien immo.\n\nSeuls certains services optionnels sont payants : publier une annonce (à partir de 1 500 FCFA), booster une annonce, ou créer une boutique en ligne (abonnement Pro/Business).`,
+      reponse: `✅ *Nopalou est 100% gratuit* pour comparer les prix, chercher une annonce ou un bien immo.\n\nSeuls certains services optionnels sont payants : publier une annonce (à partir de 100 FCFA), booster une annonce, ou créer une boutique en ligne (abonnement Pro/Business).`,
     },
     {
       motsCles: ['publier', 'deposer', 'vendre', 'poster annonce'],
@@ -41,8 +41,8 @@ function getFAQWhatsApp(site = SITE_DEFAULT) {
       reponse: `💼 *Programme apporteur d'affaires*\n\nPrésentez Nopalou aux commerçants de votre réseau et touchez une commission chaque mois sur les abonnements des boutiques que vous recrutez — sans investissement.\n👉 ${site}/compte/apporteur`,
     },
     {
-      motsCles: ['forfait', 'internet', 'telecom', 'orange', 'free', 'expresso'],
-      reponse: `📱 *Comparer les forfaits télécom*\n\nSur le site, comparez tous les forfaits mobiles Orange, Free, Expresso et Wave : data, appels, SMS, prix.\n👉 ${site}/telecom`,
+      motsCles: ['forfait', 'internet', 'telecom', 'orange', 'free', 'yas', 'expresso', 'promobile'],
+      reponse: `📱 *Comparer les forfaits télécom*\n\nSur le site, comparez tous les forfaits mobiles Orange, Yas, Expresso et Promobile : data, appels, SMS, prix.\n👉 ${site}/telecom`,
     },
     {
       motsCles: ['livraison', 'livrer', 'frais livraison', 'zone livraison', 'livraison dakar', 'livrez vous'],
@@ -79,7 +79,7 @@ const FAQ_WEB = [
   {
     motsCles: ['livraison', 'delai', 'frais de livraison', 'livrez-vous', 'expedition'],
     titre: 'Livraison & Expéditions',
-    reponse: 'Nopalou livre partout à Dakar sous 2 à 4 heures, et dans les régions du Sénégal sous 24 à 48 heures selon les boutiques partenaires. Les frais sont calculés automatiquement lors de la commande.',
+    reponse: 'Nopalou livre partout à Dakar sous 2 à 4 heures via ses boutiques partenaires et leurs livreurs tiak-tiak dédiés, et dans les régions du Sénégal sous 24 à 48 heures. Les frais sont calculés lors de la commande.',
     actionLabel: 'Explorer les boutiques',
     actionUrl: '/boutiques',
   },

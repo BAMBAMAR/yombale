@@ -145,8 +145,9 @@ export default function ProduitsListe({
 
       <div className="grid-produits">
         {(() => { let promoIdx = 0; return produits.map((p) => {
-          const estPromo = !!(p.prix_min && p.prix_max && p.prix_max > p.prix_min * 1.1);
-          const ticketClass = estPromo
+          const ecartConstate = !!(p.prix_min && p.prix_max && p.prix_max > p.prix_min * 1.1);
+          const pctEcart = ecartConstate && p.prix_min && p.prix_max ? Math.round((1 - p.prix_min / p.prix_max) * 100) : 0;
+          const ticketClass = ecartConstate
             ? ` card-produit--ticket ${promoIdx++ % 2 === 0 ? 'tilt-a' : 'tilt-b'}`
             : '';
             
@@ -168,9 +169,13 @@ export default function ProduitsListe({
                 }}
               >
                 <div className="card-img">
-                  {estPromo && p.prix_min && p.prix_max && (
-                    <span className="badge-promo">
-                      -{Math.round((1 - p.prix_min / p.prix_max) * 100)}%
+                  {ecartConstate && pctEcart > 0 && (
+                    <span
+                      className="badge-promo"
+                      title="Écart de prix relevé entre commerces comparés"
+                      style={{ fontSize: 11, fontWeight: 800, padding: '3px 8px' }}
+                    >
+                      {p.nb_offres && p.nb_offres > 1 ? `Jusqu'à -${pctEcart}%` : `-${pctEcart}%`}
                     </span>
                   )}
                   <ExternalImg src={p.image_url} alt={p.nom} fallbackClassName="card-img-placeholder" />

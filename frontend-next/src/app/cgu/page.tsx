@@ -83,7 +83,7 @@ export default async function CguPage() {
 
       <section className="legal-section">
         <h2>6. Propriété Intellectuelle & Interdiction d&apos;Aspiration de Données (Anti-Scraping)</h2>
-        <p>L&apos;intégralité de la plateforme Nopalou / Yombale (marques, logos, interfaces, structure de la base de données, code source, graphismes et contenus) est protégée par les lois relatives à la propriété intellectuelle, au droit d&apos;auteur et aux droits des producteurs de bases de données (Loi sénégalaise sur le Droit d&apos;Auteur et directives de l&apos;APDP).</p>
+        <p>L&apos;intégralité de la plateforme Nopalou (marques, logos, interfaces, structure de la base de données, code source, graphismes et contenus) est protégée par les lois relatives à la propriété intellectuelle, au droit d&apos;auteur et aux droits des producteurs de bases de données (Loi sénégalaise sur le Droit d&apos;Auteur et directives de l&apos;APDP).</p>
         <p>Il est strictement interdit, sans autorisation préalable écrite de Nopalou :</p>
         <ul>
           <li>De copier, cloner, reproduire, imiter ou encadrer (framing/iframe) tout ou partie du site ou de ses composants.</li>

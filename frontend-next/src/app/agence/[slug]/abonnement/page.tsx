@@ -50,6 +50,7 @@ export default function AgenceAbonnementPage() {
   const [quotas, setQuotas] = useState<QuotaData | null>(null)
   const [loading, setLoading] = useState(true)
   const [payingSponsoring, setPayingSponsoring] = useState(false)
+  const [payingPlan, setPayingPlan] = useState<string | null>(null)
   const [sponsoringNotice, setSponsoringNotice] = useState<string | null>(null)
 
   function getAuthToken(): string {
@@ -86,6 +87,33 @@ export default function AgenceAbonnementPage() {
   useEffect(() => {
     if (slug) chargerDonnees()
   }, [slug])
+
+  async function handleSouscrirePlan(planId: string) {
+    try {
+      setPayingPlan(planId)
+      const token = getAuthToken()
+      const res = await fetch('/api/abonnements/initier', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ plan: planId, duree_mois: 1 }),
+      })
+      const data = await res.json()
+      if (data.wave_url) {
+        window.location.href = data.wave_url
+      } else if (data.fallback_manuel) {
+        showToast(`Dépôt manuel : ${data.prix || 10000} FCFA par Wave au ${data.numero_depot} (Réf: ${data.reference})`, 'info', 'Paiement Manuel')
+      } else {
+        showToast(data.error || "Impossible d'initialiser le paiement Wave.", 'error', 'Paiement Wave')
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Erreur réseau', 'error', 'Réseau')
+    } finally {
+      setPayingPlan(null)
+    }
+  }
 
   async function handleLancerSponsoring() {
     try {
@@ -140,6 +168,16 @@ export default function AgenceAbonnementPage() {
   const isSponsored = agence?.sponsorise && agence?.sponsor_jusqu_au ? new Date(agence.sponsor_jusqu_au) > new Date() : false
   const sponsorFinFormatted = agence?.sponsor_jusqu_au ? new Date(agence.sponsor_jusqu_au).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null
 
+  const planSlug = agence?.abonnement_plan || 'immo_essentiel'
+  const isProPlan = planSlug === 'immo_pro' || planSlug === 'pro'
+  const isMultiPlan = planSlug === 'immo_multi_agence'
+  const planLabel = isMultiPlan ? 'Option Réseau Multi-Agences' : isProPlan ? 'Plan Agence Pro & Croissance' : 'Plan Agence Essentiel'
+  const planDesc = isMultiPlan 
+    ? 'Multi-succursales illimitées, baux OHADA, quittances PDF et suivi consolidé de votre groupe.'
+    : isProPlan 
+    ? 'Gestion locative avancée, quittances PDF automatiques, loyers Wave et relances WhatsApp.'
+    : 'Offert pour digitaliser votre agence sans frais fixes mensuels. Comprend les modules métier essentiels.'
+
   return (
     <div style={{ maxWidth: 1020, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* ── En-tête ── */}
@@ -172,7 +210,7 @@ export default function AgenceAbonnementPage() {
 
       {/* ── 2 Cartes Principales : Forfait & Sponsoring ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
-        {/* Carte 1 : Forfait Actuel */}
+        {/* Carte 1 : Forfait Actuel & Évolution */}
         <div className="agence-card" style={{ padding: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -188,29 +226,36 @@ export default function AgenceAbonnementPage() {
                   borderRadius: 20,
                   fontSize: 12,
                   fontWeight: 800,
-                  background: 'rgba(10, 92, 54, 0.1)',
-                  color: 'var(--price, #0A5C36)',
+                  background: isProPlan || isMultiPlan ? 'rgba(199, 91, 0, 0.1)' : 'rgba(10, 92, 54, 0.1)',
+                  color: isProPlan || isMultiPlan ? 'var(--accent, #C75B00)' : 'var(--price, #0A5C36)',
                 }}
               >
                 <CheckCircle2 size={13} />
-                Actif & Inclus
+                {isProPlan || isMultiPlan ? 'Formule Premium Active' : 'Actif & Inclus'}
               </span>
             </div>
 
             <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--navy, #1C2B4A)', margin: '0 0 6px' }}>
-              Plan Agence Essentiel
+              {planLabel}
             </h2>
-            <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 20px', lineHeight: 1.5 }}>
-              Offert pour digitaliser votre agence sans frais fixes mensuels. Comprend tous les modules métier.
+            <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px', lineHeight: 1.5 }}>
+              {planDesc}
             </p>
+
+            {agence?.abonnement_fin && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--navy, #1C2B4A)', fontWeight: 700, marginBottom: 14 }}>
+                <Clock size={14} color="var(--accent, #C75B00)" />
+                <span>Actif jusqu&apos;au {new Date(agence.abonnement_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+              </div>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--border, #E8DDD2)', paddingTop: 16 }}>
               {[
                 { icon: Home, label: 'Portefeuille de biens illimité' },
                 { icon: Users2, label: 'CRM Prospects & Pipeline Vente complet' },
-                { icon: FileText, label: 'Gestion Locative, Baux & Quittances PDF' },
+                { icon: FileText, label: 'Gestion Locative, Baux OHADA & Quittances PDF' },
                 { icon: Share2, label: 'Social Shop & Smart Matching Vidéo' },
-                { icon: Building2, label: 'Gestion des Agents & Courtiers' },
+                { icon: Building2, label: isMultiPlan ? 'Multi-Succursales & Filiales illimitées' : isProPlan ? 'Jusqu\'à 20 négociateurs & loyers Wave 1-clic' : 'Jusqu\'à 5 agents négociateurs inclus' },
               ].map((feat, idx) => {
                 const Icon = feat.icon
                 return (
@@ -225,13 +270,67 @@ export default function AgenceAbonnementPage() {
             </div>
           </div>
 
-          <div style={{ marginTop: 24, padding: 12, borderRadius: 8, background: '#F8FAFC', border: '1px solid var(--border, #E8DDD2)' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)', display: 'block', marginBottom: 2 }}>
-              Quota Compte : {quotas?.agences_creees || 1} / {quotas?.max_agences || 1} agence autorisée
-            </span>
-            <span style={{ fontSize: 11.5, color: '#64748B' }}>
-              Pour gérer plusieurs agences ou succursales, activez l'Option Réseau Multi-Agences ({quotas?.tarif_multi_agence?.toLocaleString('fr-FR') || '15 000'} FCFA/mois).
-            </span>
+          <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ padding: 12, borderRadius: 8, background: '#F8FAFC', border: '1px solid var(--border, #E8DDD2)' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--navy, #1C2B4A)', display: 'block', marginBottom: 2 }}>
+                Quota Compte : {quotas?.agences_creees || 1} / {quotas?.max_agences || 1} agence autorisée
+              </span>
+              <span style={{ fontSize: 11.5, color: '#64748B' }}>
+                Pour gérer plusieurs succursales ou mandataires, activez l&apos;Option Réseau Multi-Agences ({quotas?.tarif_multi_agence?.toLocaleString('fr-FR') || '15 000'} FCFA/mois).
+              </span>
+            </div>
+
+            {/* Actions d'Upgrade */}
+            {!isMultiPlan && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {!isProPlan && (
+                  <button
+                    type="button"
+                    onClick={() => handleSouscrirePlan('immo_pro')}
+                    disabled={payingPlan === 'immo_pro'}
+                    className="btn-npl"
+                    style={{
+                      width: '100%',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      padding: '11px 16px',
+                      borderRadius: 8,
+                      fontWeight: 800,
+                      fontSize: 13.5,
+                      background: 'var(--navy, #1C2B4A)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      cursor: payingPlan === 'immo_pro' ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    <Zap size={15} />
+                    {payingPlan === 'immo_pro' ? 'Préparation...' : 'Activer Plan Pro (10 000 FCFA/mois)'}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleSouscrirePlan('immo_multi_agence')}
+                  disabled={payingPlan === 'immo_multi_agence'}
+                  className="agence-btn-outline"
+                  style={{
+                    width: '100%',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    padding: '10px 14px',
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                  }}
+                >
+                  <Building2 size={14} />
+                  {payingPlan === 'immo_multi_agence' ? 'Préparation...' : 'Option Réseau Multi-Agences (15 000 FCFA/mois)'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

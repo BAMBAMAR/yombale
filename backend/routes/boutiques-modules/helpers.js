@@ -97,7 +97,7 @@ const CATS = [
 ];
 
 const MAX_BOUTIQUES = 3;
-const QUOTA_PRODUITS = { pro: 50, business: Infinity };
+const QUOTA_PRODUITS = { gratuit: 10, decouverte: 50, pro: 300, business: Infinity };
 
 function slugify(str) {
   return str

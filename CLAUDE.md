@@ -23,6 +23,43 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Remédiation Complète : Qualité du Contenu, Vérité du Système, Architecture de l'Information & UX Writing (24 septembre 2026)** 🔍📝🏷️💳🏢🛍️⚖️✅ :
+  * **🎯 Contexte & Objectif** :
+    - Réalisation d'un audit approfondi de la qualité, exactitude, cohérence, complétude, fraîcheur et utilité de l'information (UX Writing, Content Architecture, E-commerce, Immo, Quotas et Paiements).
+    - Alignement rigoureux entre les promesses utilisateurs (marketing, vitrines, FAQ) et la réalité technique (base de données, logique d'exécution backend, quotas et abonnements).
+  * **🛠️ Correctifs et Améliorations Appliqués** :
+    - **1. Alignement des Quotas Marchands Backend & Pricing (ANOM-01)** :
+      * `backend/routes/boutiques-modules/helpers.js` : Définition des quotas exacts `QUOTA_PRODUITS = { gratuit: 10, decouverte: 50, pro: 300, business: Infinity }`.
+      * `backend/routes/boutiques-modules/boutiques-produits.js` : Intégration du cache dynamique des forfaits `plansCache.getPlan(plan)` avec fallback propre sur `QUOTA_PRODUITS`, débloquant le plafond des marchands Pro à 300 produits.
+      * `frontend-next/src/app/tarifs-boutique/tarifsData.ts` : Rectification de la formule Taf Taf ("Catalogue jusqu'à 50 produits" au lieu de "illimités"), de la formule Pro ("Catalogue étendu jusqu'à 300 produits") et Business ("Catalogue 100% illimité").
+    - **2. Activation et Gestion des Abonnements Agences Immobilières (ANOM-02, ANOM-04)** :
+      * `backend/routes/paiement.js` : Refactorisation de `montantAttendu()` et `appliquerPaiementReussi()` pour parser correctement les slugs multi-mots (`immo_pro`, `immo_multi_agence`). Prise en compte des prix dynamiques et mise à jour automatique de la table `agences_immo` (`abonnement_plan`, `abonnement_fin`) lors du paiement Wave ou manuel.
+      * `backend/routes/abonnements.js` : Extension de `getPlans()` et de l'initialisation de paiement pour intégrer les forfaits agences (`immo_pro`, `immo_multi_agence`).
+      * `frontend-next/src/app/agence/[slug]/abonnement/page.tsx` : Dynamisation de la carte forfait avec détection du plan actif (`agence?.abonnement_plan`), affichage de la date d'échéance et ajout des boutons d'activation/upgrade directs Wave vers "Plan Agence Pro & Croissance" (10 000 FCFA/mois) et "Option Réseau Multi-Agences" (15 000 FCFA/mois).
+    - **3. Garantie 0% de Commission sur les Ventes Directes du Forfait Business (ANOM-03)** :
+      * `backend/routes/paiement.js` : Suppression de l'imposition arbitraire d'une commission (10% en DB / 2% fallback) sur les marchands Business lors de la souscription, verrouillant `commission_rate = 0` conformément à la promesse marketing d'encaissement direct 0% de commission.
+    - **4. Honnêteté du Badge Comparateur de Prix (ANOM-05)** :
+      * `frontend-next/src/app/ProduitsListe.tsx` : Transformation du badge `badge-promo` affichant faussement un solde commerçant ("-X%") en indication sincère d'écart relevé entre boutiques ("Jusqu'à -X%" avec infobulle explicite "Écart de prix relevé entre commerces comparés").
+    - **5. Exactitude Factuelle FAQ & Tarification Annonce (ANOM-06, ANOM-07, ANOM-08)** :
+      * `backend/lib/faq.js` : Rectification du prix d'appel des annonces classifiées (100 FCFA au lieu de 1 500 FCFA), actualisation des opérateurs télécoms (Yas, Expresso, Promobile au lieu de Free/Wave), et précision que la livraison express 2-4h est assurée via les boutiques partenaires et leurs livreurs tiak-tiak.
+      * `frontend-next/src/app/payer-annonce/[id]/PaiementClient.tsx` & `page.tsx` : Mise à jour du fallback tarifaire à 100 FCFA (aligné avec `settings.prix_annonce`), correction de la faute grammaticale ("a échoué"), et remplacement des émojis par les icônes Lucide.
+    - **6. Clarté du Suivi de Commande & Statuts d'Annulation (ANOM-09)** :
+      * `frontend-next/src/app/suivi-commande/page.tsx` : Ajout d'une alerte explicite dédiée pour les commandes annulées ou rejetées (évitant l'activation trompeuse de l'étape "En attente"), suppression des balises vides `<span></span>` et élimination des émojis Unicode dans les boutons d'action.
+    - **7. Attribution de l'Agence Immobilière sur les Fiches (ANOM-10)** :
+      * `frontend-next/src/app/immo/ImmoCard.tsx` : Affichage prioritaire du nom officiel de l'agence (`a.agence_nom`) dans le pied de carte lorsqu'il est renseigné.
+    - **8. Élimination des Béquilles Emojis & Spans Vides (Anti-AI-Slop Standard)** :
+      * `comparaison/page.tsx` : Remplacement des émojis ⚖ par le composant SVG `Scale`.
+      * `immo/comparaison/page.tsx` : Remplacement des émojis et spans 48px vides par le composant SVG `Building2`.
+      * `guide-emploi/page.tsx` : Remplacement des icônes brutes et de la référence factice `PAY-12345` par `CMD-2026-XXXX`, et intégration d'icônes SVG Lucide sur l'ensemble des parcours.
+      * `layout.tsx` & `cgu/page.tsx` : Suppression des dernières mentions de l'ancienne marque "Yombale" au profit de la marque officielle unifiée Nopalou.
+  * **📊 Validation Qualité & Non-Régression** :
+    - Compilation TypeScript stricte (`npx tsc --noEmit`) : **0 erreur**.
+    - Anti-AI-Slop Linter (`npm run lint:slop`) : **0 silent catch, 0 composant monolithe**.
+    - Tests Unitaires Frontend (`run-unit-tests.mjs`) : **69/69 PASS (100%)**.
+    - Tests Unitaires Backend Jest : **373/373 PASS (100%)**.
+    - Tests d'Intégration & Sécurité Multi-Tenant : **12/12 PASS (100%)**.
+    - Quality Gate Global (`quality-gate.mjs`) : **Validé à 100% sans aucune anomalie**.
+
 - **Remédiation Complète : Accessibilité Numérique (WCAG 2.1 AA), UX Inclusive, Ergonomie Mobile & Localisation Sénégal (24 septembre 2026)** ♿📱🌍🇸🇳🛡️⚡📦✅ :
   * **🎯 Contexte & Objectif** :
     - Suite à un audit approfondi d'accessibilité numérique, d'UX inclusive, de localisation sénégalaise et d'ergonomie mobile, mise en œuvre d'un plan de remédiation complet résolvant l'ensemble des anomalies identifiées (ANO-01 à ANO-10).

@@ -23,6 +23,7 @@ const {
   uniqueSlug,
 } = require('./helpers');
 const { cacheGet, cacheSet, cacheInvalidatePattern } = require('../../services/redis-cache');
+const plansCache = require('../../lib/plansCache');
 
 // ── GET /api/boutiques/:id/produits — catalogue public ou privé marchand (Cache < 10ms)
 router.get('/:id/produits', tokenOptional, async (req, res) => {
@@ -109,9 +110,13 @@ router.post('/:id/produits', verifierToken, param('id').isUUID(), checkAbonnemen
     const own = await checkBoutiqueAccess(id, req.user.userId);
     if (!own) return res.status(403).json({ error: 'Accès refusé' });
 
-    // Quota
+    // Quota dynamique depuis plansCache avec fallback sur QUOTA_PRODUITS
     const plan = req.abonnement.plan;
-    const quota = QUOTA_PRODUITS[plan] ?? 50;
+    const planConfig = await plansCache.getPlan(plan);
+    const planMax = planConfig?.limites?.max_produits;
+    const quota = (planMax !== undefined && planMax !== null)
+      ? (planMax === -1 ? Infinity : Number(planMax))
+      : (QUOTA_PRODUITS[plan] ?? 50);
     if (quota !== Infinity) {
       const cnt = await pool.query('SELECT COUNT(*) FROM boutique_produits WHERE boutique_id=$1', [id]);
       if (parseInt(cnt.rows[0].count) >= quota) {

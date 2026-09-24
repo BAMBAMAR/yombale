@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
 import { fcfa } from '@/lib/format'
 import ExternalImg from '@/components/ExternalImg'
+import { Scale } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Comparaison produits | Nopalou',
@@ -68,7 +69,9 @@ export default async function ComparaisonPage({
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>⚖</span>
+          <div style={{ color: 'var(--navy, #1C2B4A)', marginBottom: 8 }}>
+            <Scale size={48} />
+          </div>
           <p>Sélectionnez au moins 2 produits à comparer depuis la liste.</p>
           <Link href="/" className="budget-pill active" style={{ marginTop: 8 }}>
             Parcourir les produits
@@ -98,7 +101,9 @@ export default async function ComparaisonPage({
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}>⚖</span>
+          <div style={{ color: 'var(--navy, #1C2B4A)', marginBottom: 8 }}>
+            <Scale size={48} />
+          </div>
           <p>Impossible de charger les produits demandés.</p>
           <Link href="/" className="budget-pill active" style={{ marginTop: 8 }}>Retour</Link>
         </div>

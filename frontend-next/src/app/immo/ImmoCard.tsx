@@ -107,9 +107,13 @@ export default function ImmoCard({ a }: { a: AnnonceImmo }) {
               {a.prix ? fcfa(a.prix) : 'Prix sur demande'}
               {!isVente && a.prix ? <span className="immo-prix-periode">/mois</span> : ''}
             </span>
-            {a.source && SOURCE_LABELS[a.source] && (
+            {a.agence_nom ? (
+              <span className="immo-source" style={{ fontWeight: 600, color: 'var(--navy, #1C2B4A)' }}>
+                {a.agence_nom}
+              </span>
+            ) : a.source && SOURCE_LABELS[a.source] ? (
               <span className="immo-source">{SOURCE_LABELS[a.source]}</span>
-            )}
+            ) : null}
           </div>
         </div>
       </Link>

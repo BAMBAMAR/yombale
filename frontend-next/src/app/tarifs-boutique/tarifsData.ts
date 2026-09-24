@@ -37,7 +37,7 @@ export const PLANS_BOUTIQUES_CONFIG: PlanConfig[] = [
     prixMensuelBase: 2500,
     populaire: true,
     features: [
-      'Vitrine e-commerce personnalisée + Catalogue produits illimités',
+      'Vitrine e-commerce personnalisée + Catalogue jusqu\'à 50 produits',
       'Panier web & Commandes directes sur WhatsApp',
       'Carnet de dettes client ("Bor") & historique des paiements',
       'Import Intelligent Multi-Plateformes (Shopify, WooCommerce, Excel, AliExpress, SHEIN)',
@@ -57,7 +57,7 @@ export const PLANS_BOUTIQUES_CONFIG: PlanConfig[] = [
     prixMensuelBase: 5000,
     recommande: true,
     features: [
-      'Tout le contenu de la formule Taf Taf',
+      'Tout le contenu de la formule Taf Taf (Catalogue étendu jusqu\'à 300 produits)',
       'Caisse enregistreuse POS tactile magasin (Mode 100% Hors-Ligne)',
       'Scan des codes-barres par caméra smartphone & Impression tickets',
       'Relances WhatsApp 1-Clic personnalisées avec lien Wave prérempli',
@@ -78,7 +78,7 @@ export const PLANS_BOUTIQUES_CONFIG: PlanConfig[] = [
     description: 'Pour les grandes enseignes, chaînes de magasins, grossistes et marques d\'importation.',
     prixMensuelBase: 10000,
     features: [
-      'Tout le contenu de la formule Boutique Pro',
+      'Tout le contenu de la formule Boutique Pro (Catalogue produits 100% illimité)',
       'Caisse POS Multi-Caissiers (Codes PIN individuels & Clôtures Z)',
       'Multi-Magasins, dépôts physiques & transferts de stock',
       'Relances WhatsApp automatiques selon l\'échéance du carnet',

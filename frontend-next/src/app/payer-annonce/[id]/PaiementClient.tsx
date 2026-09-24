@@ -3,6 +3,8 @@ import { useState, useTransition } from 'react'
 import { initierWaveAnnonce, initierOrangeAnnonce } from '@/app/actions/paiement'
 import ModalPaiementManuel from '@/components/ModalPaiementManuel'
 
+import { Zap, CreditCard, ArrowRight } from 'lucide-react'
+
 interface Props {
   annonceId: string
   titreCourt: string
@@ -20,7 +22,7 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
   const waveActif    = true
   const orangeActif  = settings.paiement_orange !== 'false'
   const manuelActif  = settings.paiement_manuel_actif !== 'false'
-  const montant      = Number(settings.prix_annonce) || 1500
+  const montant      = Number(settings.prix_annonce) || 100
 
   function payerWave() {
     setError(null)
@@ -29,7 +31,7 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
       if (res.ok && res.url) {
         window.location.href = res.url
       } else {
-        setError(res.error ?? 'L\'initialisation Wave à échoué. Réglez par dépôt manuel ci-dessous.')
+        setError(res.error ?? 'L\'initialisation Wave a échoué. Réglez par dépôt manuel ci-dessous.')
         setShowManuel(true)
       }
     })
@@ -78,12 +80,14 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
                 <span>Connexion à Wave…</span>
               ) : (
                 <>
-                  <span className="paiement-btn-logo"></span>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                    <Zap size={16} />
+                  </div>
                   <div className="paiement-btn-text">
                     <span className="paiement-btn-nom" style={{ fontWeight: 700 }}>Wave (Paiement Direct)</span>
                     <span className="paiement-btn-desc">Paiement 100% sécurisé et validation immédiate</span>
                   </div>
-                  <span className="paiement-btn-arrow">→</span>
+                  <span className="paiement-btn-arrow"><ArrowRight size={16} /></span>
                 </>
               )}
             </button>
@@ -94,7 +98,9 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
           disabled={true}
           className="paiement-btn paiement-btn--orange"
         >
-          <span className="paiement-btn-logo">🟠</span>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+            <CreditCard size={15} />
+          </div>
           <div className="paiement-btn-text">
             <span className="paiement-btn-nom">Orange Money <small style={{ color: '#ea580c', fontWeight: 700, marginLeft: 6 }}>(Bientôt disponible)</small></span>
             <span className="paiement-btn-desc">Intégration API automatique en cours</span>
@@ -105,12 +111,14 @@ export default function PaiementClient({ annonceId, titreCourt, settings, userId
           <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px dashed #cbd5e1' }}>
             <p style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>Problème avec Wave ou vous préférez un dépôt manuel ?</p>
             <button onClick={() => setShowManuel(true)} className="paiement-btn">
-              <span className="paiement-btn-logo"></span>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                <CreditCard size={15} />
+              </div>
               <div className="paiement-btn-text">
                 <span className="paiement-btn-nom">Paiement Manuel / Reçu de Dépôt</span>
                 <span className="paiement-btn-desc">Envoyer la preuve de transfert Wave / Orange Money</span>
               </div>
-              <span className="paiement-btn-arrow">→</span>
+              <span className="paiement-btn-arrow"><ArrowRight size={16} /></span>
             </button>
           </div>
         )}

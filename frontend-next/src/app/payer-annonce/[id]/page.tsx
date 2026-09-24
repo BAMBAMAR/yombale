@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getOptionalSession } from '@/lib/dal'
 import { backendAuthFetch } from '@/lib/backend-fetch'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import PaiementClient from './PaiementClient'
 
@@ -39,7 +40,9 @@ export default async function PayerAnnoncePage({ params }: { params: Promise<{ i
     return (
       <div className="page-container" style={{ paddingTop: '3rem' }}>
         <div className="empty-state">
-          <span style={{ fontSize: 48 }}></span>
+          <div style={{ color: 'var(--navy, #1C2B4A)', marginBottom: 8 }}>
+            <AlertCircle size={48} />
+          </div>
           <p>Annonce introuvable.</p>
           <Link href="/mes-annonces" className="budget-pill active" style={{ marginTop: 8 }}>
             Mes annonces
@@ -54,7 +57,9 @@ export default async function PayerAnnoncePage({ params }: { params: Promise<{ i
     return (
       <div className="page-container" style={{ paddingTop: '3rem', maxWidth: 600 }}>
         <div className="paiement-succes-mini">
-          <span style={{ fontSize: 56 }}></span>
+          <div style={{ color: 'var(--price, #0A5C36)', marginBottom: 12 }}>
+            <CheckCircle2 size={56} />
+          </div>
           <h2>Annonce déjà active</h2>
           <p>Votre annonce &quot;{annonce.titre}&quot; est déjà publiée et visible.</p>
           <Link href="/mes-annonces" className="budget-pill active">
@@ -87,7 +92,7 @@ export default async function PayerAnnoncePage({ params }: { params: Promise<{ i
         ]}
         emoji=""
         titre="Activer votre annonce"
-        compteur={`Votre quota gratuit est atteint. Activez votre annonce pour ${(Number(settings.prix_annonce) || 1500).toLocaleString('fr-FR')} FCFA.`}
+        compteur={`Votre quota gratuit est atteint. Activez votre annonce pour ${(Number(settings.prix_annonce) || 100).toLocaleString('fr-FR')} FCFA.`}
       />
 
       <PaiementClient

@@ -133,7 +133,7 @@ function SuiviCommandeContent() {
 
           {error && (
             <div style={{ marginTop: 16, padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, color: '#dc2626', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span></span>
+              <AlertCircle size={16} />
               <span>{error}</span>
             </div>
           )}
@@ -144,6 +144,8 @@ function SuiviCommandeContent() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {commandes.map(cmd => {
               const currentStep = getStepIndex(cmd.statut)
+              const isAnnulee = cmd.statut === 'annulee' || cmd.statut === 'rejetee'
+
               return (
                 <div key={cmd.id} style={{ background: '#ffffff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.03)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #f1f5f9', paddingBottom: 12 }}>
@@ -151,38 +153,50 @@ function SuiviCommandeContent() {
                       <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Boutique : {cmd.boutique_nom}</span>
                       <h3 style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 800, color: '#1C2B4A' }}>Réf : {cmd.reference || cmd.id.slice(0, 8)}</h3>
                     </div>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: '#15803d' }}>{fcfa(cmd.montant_total)}</span>
+                    <span style={{ fontSize: 15, fontWeight: 800, color: isAnnulee ? '#dc2626' : '#15803d' }}>
+                      {isAnnulee ? (cmd.statut === 'rejetee' ? 'Rejetée' : 'Annulée') : fcfa(cmd.montant_total)}
+                    </span>
                   </div>
 
-                  {/* Timeline des 4 étapes */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
-                    {[
-                      { step: 1, label: 'En attente', icon: Clock },
-                      { step: 2, label: 'En préparation', icon: PackageCheck },
-                      { step: 3, label: 'En livraison', icon: Truck },
-                      { step: 4, label: 'Livrée', icon: CheckCircle2 },
-                    ].map(st => {
-                      const isActive = currentStep >= st.step
-                      const IconComp = st.icon
-                      return (
-                        <div key={st.step} style={{ opacity: isActive ? 1 : 0.4 }}>
-                          <div style={{
-                            width: 36, height: 36, borderRadius: '50%', margin: '0 auto 6px',
-                            background: isActive ? 'var(--accent, #C75B00)' : '#e2e8f0', color: '#fff',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                          }}>
-                            <IconComp size={18} />
+                  {isAnnulee ? (
+                    <div style={{ margin: '16px 0', padding: '14px 16px', background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10, color: '#dc2626' }}>
+                      <AlertCircle size={20} />
+                      <div>
+                        <span style={{ fontSize: 13.5, fontWeight: 800, display: 'block' }}>Commande {cmd.statut === 'rejetee' ? 'Rejetée' : 'Annulée'}</span>
+                        <span style={{ fontSize: 12, color: '#b91c1c' }}>Cette commande a été clôturée et ne fait plus l&apos;objet d&apos;une livraison. Contactez le marchand pour assistance.</span>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Timeline des 4 étapes */
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '20px 0', textAlign: 'center' }}>
+                      {[
+                        { step: 1, label: 'En attente', icon: Clock },
+                        { step: 2, label: 'En préparation', icon: PackageCheck },
+                        { step: 3, label: 'En livraison', icon: Truck },
+                        { step: 4, label: 'Livrée', icon: CheckCircle2 },
+                      ].map(st => {
+                        const isActive = currentStep >= st.step
+                        const IconComp = st.icon
+                        return (
+                          <div key={st.step} style={{ opacity: isActive ? 1 : 0.4 }}>
+                            <div style={{
+                              width: 36, height: 36, borderRadius: '50%', margin: '0 auto 6px',
+                              background: isActive ? 'var(--accent, #C75B00)' : '#e2e8f0', color: '#fff',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                              <IconComp size={18} />
+                            </div>
+                            <span style={{ fontSize: 11, fontWeight: isActive ? 700 : 500, color: isActive ? '#1C2B4A' : '#94a3b8', display: 'block' }}>
+                              {st.label}
+                            </span>
                           </div>
-                          <span style={{ fontSize: 11, fontWeight: isActive ? 700 : 500, color: isActive ? '#1C2B4A' : '#94a3b8', display: 'block' }}>
-                            {st.label}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
+                        )
+                      })}
+                    </div>
+                  )}
 
                   {/* Bloc d'action immédiate si paiement échelonné ou Wave en attente */}
-                  {cmd.statut === 'en_attente' && (cmd.methode_paiement === 'credit' || cmd.methode_paiement === 'echelonne') && (
+                  {!isAnnulee && cmd.statut === 'en_attente' && (cmd.methode_paiement === 'credit' || cmd.methode_paiement === 'echelonne') && (
                     <div style={{ margin: '14px 0', padding: '14px 16px', background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -218,13 +232,13 @@ function SuiviCommandeContent() {
                         }}
                       >
                         <CreditCard size={16} />
-                        <span>💳 Finaliser mon paiement échelonné</span>
+                        <span>Finaliser mon paiement échelonné</span>
                         <ArrowRight size={14} />
                       </a>
                     </div>
                   )}
 
-                  {cmd.statut === 'en_attente' && (cmd.methode_paiement === 'wave' || cmd.methode_paiement === 'pay_wave') && (
+                  {!isAnnulee && cmd.statut === 'en_attente' && (cmd.methode_paiement === 'wave' || cmd.methode_paiement === 'pay_wave') && (
                     <div style={{ margin: '14px 0', padding: '14px 16px', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -256,7 +270,7 @@ function SuiviCommandeContent() {
                         }}
                       >
                         <Zap size={16} />
-                        <span>🌊 Payer maintenant par Wave</span>
+                        <span>Payer maintenant par Wave</span>
                         <ArrowRight size={14} />
                       </a>
                     </div>

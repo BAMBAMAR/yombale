@@ -42,7 +42,7 @@ async function getPrix() {
     decouverte:    pDecouverte?.prix_mensuel || decouverte || 2500,
     pro:           pPro?.prix_mensuel        || pro        || 5000,
     business:      pBusiness?.prix_mensuel   || business   || 10000,
-    commissionBiz: commissionBiz || 2.0,
+    commissionBiz: commissionBiz !== null && commissionBiz !== undefined ? commissionBiz : 0,
     promo:         promoActive ? promoReduc : 0,
   };
 }
@@ -65,9 +65,30 @@ async function montantAttendu(reference, montantDeclare) {
   if (reference.startsWith('immo_') || reference.startsWith('bout_') || reference.startsWith('prod_')) return prix.sponsoring;
   if (reference.startsWith('abmt_')) {
     const parts = reference.split('_');
-    const plan = parts[2];
-    const dureeMois = parseInt(parts[3] || '1', 10) || 1;
-    const prixMensuel = { decouverte: prix.decouverte, pro: prix.pro, business: prix.business }[plan] ?? montantDeclare;
+    const userId = parts[1];
+    let plan = parts[2];
+    let dureeIndex = 3;
+    if (plan === 'immo' && parts[3]) {
+      if (parts[3] === 'multi' && parts[4] === 'agence') {
+        plan = 'immo_multi_agence';
+        dureeIndex = 5;
+      } else {
+        plan = parts[2] + '_' + parts[3];
+        dureeIndex = 4;
+      }
+    }
+    if (plan === 'taf_taf') plan = 'decouverte';
+    const dureeMois = parseInt(parts[dureeIndex] || '1', 10) || 1;
+    const planDb = await plansCache.getPlan(plan);
+    const fallbackPrix = {
+      decouverte: prix.decouverte,
+      pro: prix.pro,
+      business: prix.business,
+      immo_essentiel: 0,
+      immo_pro: 10000,
+      immo_multi_agence: 15000,
+    };
+    const prixMensuel = planDb?.prix_mensuel ?? fallbackPrix[plan] ?? montantDeclare;
     const [reduc3, reduc6, reduc12] = await Promise.all([
       cfg.getNum('reduc_3_mois'),
       cfg.getNum('reduc_6_mois'),
@@ -213,67 +234,110 @@ async function appliquerPaiementReussi(reference, montant, methode) {
       );
     }
   }
-  // Abonnement Boutique Pro/Business : ref = abmt_userId_plan ou abmt_userId_plan_duree ou abmt_userId_plan_duree_timestamp
+  // Abonnement Boutique Pro/Business ou Agence Immo : ref = abmt_userId_plan ou abmt_userId_plan_duree ou abmt_userId_plan_duree_timestamp
   if (ref && ref.startsWith('abmt_')) {
     const parts = ref.split('_');
     const userId = parts[1];
-    const rawPlan = parts[2];
-    const plan = rawPlan === 'taf_taf' ? 'decouverte' : rawPlan;
-    const dureeMois = parseInt(parts[3] || '1', 10) || 1;
+    let plan = parts[2];
+    let dureeIndex = 3;
+    if (plan === 'immo' && parts[3]) {
+      if (parts[3] === 'multi' && parts[4] === 'agence') {
+        plan = 'immo_multi_agence';
+        dureeIndex = 5;
+      } else {
+        plan = parts[2] + '_' + parts[3];
+        dureeIndex = 4;
+      }
+    }
+    if (plan === 'taf_taf') plan = 'decouverte';
+    const dureeMois = parseInt(parts[dureeIndex] || '1', 10) || 1;
     const pxAbmt = await getPrix();
-    const PRIX   = { decouverte: pxAbmt.decouverte, pro: pxAbmt.pro, business: pxAbmt.business };
-    if (userId && plan && PRIX[plan]) {
-      // Vérifier si l'utilisateur a déjà un abonnement actif
-      const existingAbmt = await pool.query(
-        `SELECT id, plan, fin FROM abonnements WHERE utilisateur_id=$1 AND statut='actif' AND fin > NOW() ORDER BY fin DESC LIMIT 1`,
-        [userId]
-      );
-      let dateDebut = new Date();
-      if (existingAbmt.rows[0] && existingAbmt.rows[0].plan === plan) {
-        // Prolongation de la formule existante
-        const currentFin = new Date(existingAbmt.rows[0].fin);
-        if (currentFin > dateDebut) dateDebut = currentFin;
-      } else if (existingAbmt.rows[0]) {
-        // Changement / Upgrade de formule : on clôture l'ancien forfait
-        await pool.query(
-          `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
+    const planDb = await plansCache.getPlan(plan);
+    const fallbackPrix = {
+      decouverte: pxAbmt.decouverte,
+      pro: pxAbmt.pro,
+      business: pxAbmt.business,
+      immo_essentiel: 0,
+      immo_pro: 10000,
+      immo_multi_agence: 15000,
+    };
+    const prixMensuel = planDb?.prix_mensuel ?? fallbackPrix[plan];
+
+    if (userId && plan && prixMensuel !== undefined) {
+      if (plan.startsWith('immo_')) {
+        // Activation / Prolongation d'abonnement Agence Immobilière
+        const existingAgence = await pool.query(
+          `SELECT id, abonnement_plan, abonnement_fin FROM agences_immo WHERE utilisateur_id=$1 LIMIT 1`,
           [userId]
         );
-      }
-      const fin = new Date(dateDebut.getTime() + dureeMois * 30 * 24 * 60 * 60 * 1000).toISOString();
-      const abonnementRow = await pool.query(
-        `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, debut, fin, commande_ref)
-         VALUES ($1,$2,'actif',$3,NOW(),$4,$5)
-         ON CONFLICT (commande_ref) WHERE commande_ref IS NOT NULL DO NOTHING
-         RETURNING id`,
-        [userId, plan, PRIX[plan], fin, ref]
-      );
-      if (plan === 'business') {
-        await pool.query(
-          'UPDATE boutiques SET commission_rate=$1 WHERE utilisateur_id=$2',
-          [pxAbmt.commissionBiz, userId]
-        );
-      }
-      if (abonnementRow.rows[0]) {
-        try {
-          const apporteurActif = await cfg.getBool('apporteur_actif');
-          if (apporteurActif) {
-            const boutiqueApporteur = await pool.query(
-              'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
-              [userId]
-            );
-            if (boutiqueApporteur.rows[0]) {
-              const taux = await cfg.getNum('apporteur_taux_commission');
-              const montantCommission = Number(PRIX[plan]) * (taux / 100);
-              await pool.query(
-                `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
-                 VALUES ($1,$2,$3,$4)`,
-                [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0].id, montantCommission]
-              );
-            }
+        let dateDebut = new Date();
+        if (existingAgence.rows[0]?.abonnement_fin) {
+          const currentFin = new Date(existingAgence.rows[0].abonnement_fin);
+          if (currentFin > dateDebut && existingAgence.rows[0].abonnement_plan === plan) {
+            dateDebut = currentFin;
           }
-        } catch (commErr) {
-          console.error(`[${methode.toUpperCase()}] commission apporteur:`, commErr.message);
+        }
+        const finDate = new Date(dateDebut.getTime() + dureeMois * 30 * 24 * 60 * 60 * 1000).toISOString();
+        await pool.query(
+          `UPDATE agences_immo 
+           SET abonnement_plan = $1, abonnement_fin = $2, updated_at = NOW() 
+           WHERE utilisateur_id = $3`,
+          [plan, finDate, userId]
+        );
+      } else {
+        // Activation / Prolongation d'abonnement Boutique Marchande
+        const existingAbmt = await pool.query(
+          `SELECT id, plan, fin FROM abonnements WHERE utilisateur_id=$1 AND statut='actif' AND fin > NOW() ORDER BY fin DESC LIMIT 1`,
+          [userId]
+        );
+        let dateDebut = new Date();
+        if (existingAbmt.rows[0] && existingAbmt.rows[0].plan === plan) {
+          // Prolongation de la formule existante
+          const currentFin = new Date(existingAbmt.rows[0].fin);
+          if (currentFin > dateDebut) dateDebut = currentFin;
+        } else if (existingAbmt.rows[0]) {
+          // Changement / Upgrade de formule : on clôture l'ancien forfait
+          await pool.query(
+            `UPDATE abonnements SET statut='annule' WHERE utilisateur_id=$1 AND statut='actif'`,
+            [userId]
+          );
+        }
+        const fin = new Date(dateDebut.getTime() + dureeMois * 30 * 24 * 60 * 60 * 1000).toISOString();
+        const abonnementRow = await pool.query(
+          `INSERT INTO abonnements (utilisateur_id, plan, statut, prix_mensuel, debut, fin, commande_ref)
+           VALUES ($1,$2,'actif',$3,NOW(),$4,$5)
+           ON CONFLICT (commande_ref) WHERE commande_ref IS NOT NULL DO NOTHING
+           RETURNING id`,
+          [userId, plan, prixMensuel, fin, ref]
+        );
+        // Garantir 0% de commission sur les ventes directes pour le forfait Business conformément à l'offre
+        if (plan === 'business') {
+          await pool.query(
+            'UPDATE boutiques SET commission_rate=0 WHERE utilisateur_id=$1',
+            [userId]
+          );
+        }
+        if (abonnementRow.rows[0]) {
+          try {
+            const apporteurActif = await cfg.getBool('apporteur_actif');
+            if (apporteurActif) {
+              const boutiqueApporteur = await pool.query(
+                'SELECT id, apporteur_id FROM boutiques WHERE utilisateur_id=$1 AND apporteur_id IS NOT NULL LIMIT 1',
+                [userId]
+              );
+              if (boutiqueApporteur.rows[0]) {
+                const taux = await cfg.getNum('apporteur_taux_commission');
+                const montantCommission = Number(prixMensuel) * (taux / 100);
+                await pool.query(
+                  `INSERT INTO commissions_apporteur (apporteur_id, boutique_id, abonnement_id, montant)
+                   VALUES ($1,$2,$3,$4)`,
+                  [boutiqueApporteur.rows[0].apporteur_id, boutiqueApporteur.rows[0].id, abonnementRow.rows[0].id, montantCommission]
+                );
+              }
+            }
+          } catch (commErr) {
+            console.error(`[${methode.toUpperCase()}] commission apporteur:`, commErr.message);
+          }
         }
       }
     }
