@@ -358,12 +358,18 @@ router.get('/publiques', (req, res, next) => {
 });
 
 // ── GET /api/annonces/:id — détail
-router.get('/:id', param('id').isUUID(), async (req, res) => {
-  if (!validationResult(req).isEmpty()) return res.status(400).json({ error: 'ID invalide' });
+router.get('/:id', async (req, res) => {
+  let id = String(req.params.id || '').trim();
+  try { id = decodeURIComponent(id); } catch {}
+  id = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim();
+
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(id)) return res.status(400).json({ error: 'ID invalide' });
+
   try {
     const r = await pool.query(
       `SELECT * FROM annonces_classifiees WHERE id=$1 AND actif=true AND supprimee=false`,
-      [req.params.id]
+      [id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
     res.json(r.rows[0]);

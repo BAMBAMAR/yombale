@@ -18,23 +18,81 @@ const RESERVED_ROUTES = new Set([
   'vendre-sur-whatsapp', 'whatsapp'
 ])
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params
-  if (!slug || RESERVED_ROUTES.has(slug.toLowerCase()) || slug.includes('.')) {
+  if (!slug) {
     return new NextResponse(null, { status: 404 })
   }
 
   const proto = request.headers.get('x-forwarded-proto') || 'https'
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'nopalou.com'
   const baseUrl = `${proto}://${host}`
+  const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:3000'
 
-  // Vérifier si le slug correspond à une boutique existante
+  // 1. Décodage et assainissement des résidus Meta WhatsApp (ex: {{1}}, %7B%7B1%7D%7D, {1})
+  let decodedSlug = slug
   try {
-    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:3000'
-    const res = await fetch(`${backendUrl}/api/boutiques/${encodeURIComponent(slug)}`, {
+    decodedSlug = decodeURIComponent(decodedSlug)
+  } catch {}
+
+  const cleanSlug = decodedSlug
+    .replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '')
+    .replace(/^\/+/, '')
+    .trim()
+
+  const hadMetaPlaceholder = cleanSlug !== slug && cleanSlug !== decodedSlug
+  const url = new URL(request.url)
+  const queryString = url.search
+
+  // Si le slug nettoyé commence par une route connue avec slash (ex: annonces/..., immo/..., boutiques/...)
+  if (/^(annonces|immo|produit|boutiques?|agences?|telecom|compte)\//i.test(cleanSlug)) {
+    return NextResponse.redirect(new URL(`/${cleanSlug}${queryString}`, baseUrl), 301)
+  }
+
+  // Si le slug correspond à une route racine réservée
+  if (RESERVED_ROUTES.has(cleanSlug.toLowerCase())) {
+    if (hadMetaPlaceholder) {
+      return NextResponse.redirect(new URL(`/${cleanSlug}${queryString}`, baseUrl), 301)
+    }
+    return new NextResponse(null, { status: 404 })
+  }
+
+  // Ignorer les fichiers statiques
+  if (cleanSlug.includes('.')) {
+    return new NextResponse(null, { status: 404 })
+  }
+
+  const isUuid = UUID_RE.test(cleanSlug)
+
+  // 2. Si c'est un UUID ou si le lien provient d'un bouton Meta WhatsApp : résolution universelle prioritaire
+  if (isUuid || hadMetaPlaceholder) {
+    try {
+      const resResolve = await fetch(`${backendUrl}/api/entites/resoudre/${encodeURIComponent(cleanSlug)}`, {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      })
+      if (resResolve.ok) {
+        const resolved = await resResolve.json()
+        if (resolved?.found && resolved?.url) {
+          const destUrl = resolved.url.includes('?') && queryString
+            ? `${resolved.url}&${queryString.slice(1)}`
+            : `${resolved.url}${queryString}`
+          return NextResponse.redirect(new URL(destUrl, baseUrl), 301)
+        }
+      }
+    } catch (err) {
+      console.error('[ROUTE_SLUG_RESOLVE_ERR]', err)
+    }
+  }
+
+  // 3. Vérifier si le slug correspond à une boutique existante
+  try {
+    const res = await fetch(`${backendUrl}/api/boutiques/${encodeURIComponent(cleanSlug)}`, {
       headers: { 'Accept': 'application/json' },
       next: { revalidate: 60 }
     })
@@ -42,16 +100,34 @@ export async function GET(
     if (res.ok) {
       const data = await res.json()
       if (data && data.id) {
-        const destinationSlug = data.slug || data.id || slug
-        const url = new URL(request.url)
-        const queryString = url.search // préserver d'éventuels query params (?produit=...)
+        const destinationSlug = data.slug || data.id || cleanSlug
         return NextResponse.redirect(new URL(`/boutiques/${destinationSlug}${queryString}`, baseUrl), 307)
       }
     }
   } catch {
-    // Si erreur réseau temporaire vers le backend, rediriger vers /boutiques/:slug
-    const url = new URL(request.url)
-    return NextResponse.redirect(new URL(`/boutiques/${slug}${url.search}`, baseUrl), 307)
+    // Si erreur réseau temporaire vers le backend pour un slug non-UUID
+    if (!isUuid && !hadMetaPlaceholder) {
+      return NextResponse.redirect(new URL(`/boutiques/${cleanSlug}${queryString}`, baseUrl), 307)
+    }
+  }
+
+  // 4. Seconde passe de résolution universelle (commandes, alias, etc.)
+  if (!isUuid && !hadMetaPlaceholder) {
+    try {
+      const resResolve = await fetch(`${backendUrl}/api/entites/resoudre/${encodeURIComponent(cleanSlug)}`, {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      })
+      if (resResolve.ok) {
+        const resolved = await resResolve.json()
+        if (resolved?.found && resolved?.url) {
+          const destUrl = resolved.url.includes('?') && queryString
+            ? `${resolved.url}&${queryString.slice(1)}`
+            : `${resolved.url}${queryString}`
+          return NextResponse.redirect(new URL(destUrl, baseUrl), 301)
+        }
+      }
+    } catch {}
   }
 
   return new NextResponse(null, { status: 404 })

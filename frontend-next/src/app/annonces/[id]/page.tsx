@@ -57,8 +57,12 @@ function formatDate(s: string) {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params
-  const annonce = await fetchAnnonce(id)
+  const { id: rawId } = await params
+  let id = rawId || ''
+  try { id = decodeURIComponent(id) } catch {}
+  const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim()
+
+  const annonce = await fetchAnnonce(cleanId || id)
   if (!annonce) return { title: 'Annonce introuvable' }
 
   const titre = annonce.titre
@@ -70,12 +74,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title: titre,
     description: desc,
-    alternates: { canonical: `${BASE}/annonces/${id}` },
+    alternates: { canonical: `${BASE}/annonces/${cleanId || id}` },
     openGraph: {
       title: titre,
       description: desc,
       type: 'website',
-      url: `${BASE}/annonces/${id}`,
+      url: `${BASE}/annonces/${cleanId || id}`,
       ...(mainPhoto ? { images: [{ url: mainPhoto, width: 800, height: 600, alt: titre }] } : {}),
     },
   }
@@ -114,15 +118,23 @@ function buildAnnonceJsonLd(annonce: Annonce): string {
 }
 
 export default async function AnnonceDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  if (!id) redirect('/annonces')
+  const { id: rawId } = await params
+  if (!rawId) redirect('/annonces')
 
-  let annonce = await fetchAnnonce(id)
+  let id = rawId
+  try { id = decodeURIComponent(id) } catch {}
+  const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim()
+
+  if (cleanId && cleanId !== rawId) {
+    redirect(`/annonces/${cleanId}`)
+  }
+
+  let annonce = await fetchAnnonce(cleanId || id)
   if (!annonce) {
     // Redirection automatique via résolveur d'entités (immo, boutique, produit marchand, commande)
     try {
-      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
-      if (resolved && resolved.found && resolved.url && resolved.url !== `/annonces/${id}`) {
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(cleanId || id)}`);
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/annonces/${rawId}`) {
         redirect(resolved.url);
       }
     } catch (rErr) {

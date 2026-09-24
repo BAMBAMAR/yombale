@@ -330,6 +330,13 @@ router.get('/:id/similaires', async (req, res) => {
 
 // GET /api/immo/:id — détail
 router.get('/:id', async (req, res) => {
+  let id = String(req.params.id || '').trim();
+  try { id = decodeURIComponent(id); } catch {}
+  id = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim();
+
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(id)) return res.status(404).json({ error: 'Annonce immo introuvable' });
+
   try {
     const { rows } = await pool.query(
       `SELECT ai.*,
@@ -358,7 +365,7 @@ router.get('/:id', async (req, res) => {
        LEFT JOIN agences_immo ag ON ai.agence_id = ag.id
        LEFT JOIN biens_immo b ON ai.bien_id = b.id
        LEFT JOIN utilisateurs u ON (b.agent_id = u.id OR ai.utilisateur_id = u.id)
-       WHERE ai.id = $1 OR ai.bien_id = $1`, [req.params.id]
+       WHERE ai.id = $1 OR ai.bien_id = $1`, [id]
     );
     if (!rows.length) {
       const { rows: bRows } = await pool.query(

@@ -115,11 +115,15 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   try {
-    const { id } = await params;
-    if (id === 'boutique') {
+    const { id: rawId } = await params;
+    let id = rawId || '';
+    try { id = decodeURIComponent(id); } catch {}
+    const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim();
+
+    if (cleanId === 'boutique') {
       return { title: 'Mes commandes' };
     }
-    const annonce = await apiFetch<AnnonceImmo>(`/immo/${id}`);
+    const annonce = await apiFetch<AnnonceImmo>(`/immo/${cleanId || id}`);
     const localisation = [annonce.quartier, annonce.ville].filter(Boolean).join(', ');
     const titre = `${annonce.titre}${localisation ? ` — ${localisation}` : ''} | Nopalou Immo`;
     const description =
@@ -128,7 +132,7 @@ export async function generateMetadata({
         : `${annonce.type_bien ?? 'Bien'} à ${annonce.transaction ?? 'louer/vendre'} à ${localisation || 'Sénégal'}. Prix : ${fcfa(annonce.prix)}.`;
     const mainPhoto = Array.isArray(annonce.photos) ? annonce.photos[0] : null;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com';
-    const canonicalUrl = `${siteUrl}/immo/${id}`;
+    const canonicalUrl = `${siteUrl}/immo/${cleanId || id}`;
 
     return {
       title: titre,
@@ -152,8 +156,11 @@ export async function generateMetadata({
     };
   } catch {
     try {
-      const { id } = await params;
-      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
+      const { id: rawId } = await params;
+      let id = rawId || '';
+      try { id = decodeURIComponent(id); } catch {}
+      const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim();
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(cleanId || id)}`);
       if (resolved?.found) {
         return {
           title: 'Redirection en cours... | Nopalou',
@@ -173,22 +180,26 @@ export default async function FicheImmoPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id: rawId } = await params;
 
-  if (!id) notFound();
+  if (!rawId) notFound();
+
+  let id = rawId;
+  try { id = decodeURIComponent(id); } catch {}
+  const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim();
 
   let annonce: AnnonceImmo;
   let similaires: AnnonceSimilaire[] = [];
   const session = await getOptionalSession();
 
   try {
-    annonce = await apiFetch<AnnonceImmo>(`/immo/${id}`);
+    annonce = await apiFetch<AnnonceImmo>(`/immo/${cleanId || id}`);
   } catch {
     // Résolution universelle d'entité : si le bouton Meta ou le lien pointe vers une boutique,
     // un produit marchand, une commande, une petite annonce, ou un alias, rediriger automatiquement.
     try {
-      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
-      if (resolved && resolved.found && resolved.url && resolved.url !== `/immo/${id}`) {
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(cleanId || id)}`);
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/immo/${rawId}`) {
         redirect(resolved.url);
       }
     } catch (rErr) {

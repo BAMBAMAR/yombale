@@ -21,8 +21,21 @@ router.get('/resoudre/:id', async (req, res) => {
       // conserver tel quel
     }
 
-    // Normalisation de base
-    const cleanId = idParam.replace(/^\/+/, '');
+    // Normalisation de base et assainissement des résidus Meta WhatsApp (ex: {{1}}, %7B%7B1%7D%7D, {1})
+    let cleanId = idParam.replace(/^\/+/, '');
+    cleanId = cleanId.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim();
+
+    // Détection et suppression des préfixes d'URL de chemins (ex: annonces/uuid, immo/uuid, etc.)
+    if (/^annonces\/[0-9a-f-]{36}/i.test(cleanId)) {
+      cleanId = cleanId.replace(/^annonces\//i, '');
+    } else if (/^immo\/[0-9a-f-]{36}/i.test(cleanId)) {
+      cleanId = cleanId.replace(/^immo\//i, '');
+    } else if (/^produits?\/[0-9a-f-]{36}/i.test(cleanId)) {
+      cleanId = cleanId.replace(/^produits?\//i, '');
+    } else if (/^boutiques?\/[0-9a-f-]{36}/i.test(cleanId)) {
+      cleanId = cleanId.replace(/^boutiques?\//i, '');
+    }
+
     const cleanLower = cleanId.toLowerCase();
 
     // 2. Mappages directs d'alias statiques connus

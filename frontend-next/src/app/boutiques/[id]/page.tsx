@@ -58,8 +58,12 @@ const CAT_ICONS: Record<string, string> = {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   try {
-    const { id } = await params
-    const b = await apiFetch<Boutique>(`/boutiques/${id}`)
+    const { id: rawId } = await params
+    let id = rawId || ''
+    try { id = decodeURIComponent(id) } catch {}
+    const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim()
+
+    const b = await apiFetch<Boutique>(`/boutiques/${cleanId || id}`)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nopalou.com'
     const ogImageUrl = `${siteUrl}/assets/boutique/${b.id}/og`
     const villeTxt = b.ville ? ` à ${b.ville}` : ' au Sénégal'
@@ -104,8 +108,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function BoutiqueDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  if (!id) redirect('/boutiques')
+  const { id: rawId } = await params
+  if (!rawId) redirect('/boutiques')
+
+  let id = rawId
+  try { id = decodeURIComponent(id) } catch {}
+  const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim()
 
   let boutique: Boutique
   let annonces: Annonce[] = []
@@ -114,12 +122,12 @@ export default async function BoutiqueDetailPage({ params }: { params: Promise<{
   let socialAccounts: SocialAccount[] = []
 
   try {
-    boutique = await apiFetch<Boutique>(`/boutiques/${id}`)
+    boutique = await apiFetch<Boutique>(`/boutiques/${cleanId || id}`)
   } catch {
     // Résolution universelle d'entité (si id est un produit, immo, annonce, etc.)
     try {
-      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(id)}`);
-      if (resolved && resolved.found && resolved.url && resolved.url !== `/boutiques/${id}`) {
+      const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(`/entites/resoudre/${encodeURIComponent(cleanId || id)}`);
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/boutiques/${rawId}`) {
         redirect(resolved.url);
       }
     } catch (rErr) {

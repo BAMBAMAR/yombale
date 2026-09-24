@@ -31,14 +31,18 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
   try {
-    const { id } = await params
-    const p = await apiFetch<Produit>(`/produits/${id}`)
+    const { id: rawId } = await params
+    let id = rawId || ''
+    try { id = decodeURIComponent(id) } catch {}
+    const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim()
+
+    const p = await apiFetch<Produit>(`/produits/${cleanId || id}`)
     const titre = `${p.nom}${p.marque ? ` ${p.marque}` : ''} — Prix Sénégal | Nopalou`
     const prixStr = p.prix_min ? ` à partir de ${fcfa(p.prix_min)}` : ''
     const description = p.description
       ? p.description.slice(0, 155)
       : `Comparez le prix de ${p.nom} chez tous les vendeurs au Sénégal${prixStr}. Meilleure offre à Dakar et partout au Sénégal.`
-    const canonical = `${BASE}/produit/${id}`
+    const canonical = `${BASE}/produit/${cleanId || id}`
     return {
       title: titre,
       description,
@@ -63,8 +67,12 @@ export async function generateMetadata({
 }
 
 export default async function FicheProduitPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  if (!id) notFound()
+  const { id: rawId } = await params
+  if (!rawId) notFound()
+
+  let id = rawId
+  try { id = decodeURIComponent(id) } catch {}
+  const cleanId = id.replace(/(\{\{\d+\}\}|%7B%7B\d+%7D%7D|\{\d+\}|%7B\d+%7D)/gi, '').trim()
 
   let produit: Produit
   let offres: Offre[] = []
@@ -74,14 +82,14 @@ export default async function FicheProduitPage({ params }: { params: Promise<{ i
   const session = await getOptionalSession()
 
   try {
-    produit = await apiFetch<Produit>(`/produits/${id}`)
+    produit = await apiFetch<Produit>(`/produits/${cleanId || id}`)
   } catch {
     // Redirection automatique si résolveur d'entités trouve une autre route canonique
     try {
       const resolved = await apiFetch<{ found: boolean; type: string; url: string }>(
-        `/entites/resoudre/${encodeURIComponent(id)}`
+        `/entites/resoudre/${encodeURIComponent(cleanId || id)}`
       )
-      if (resolved && resolved.found && resolved.url && resolved.url !== `/produit/${id}`) {
+      if (resolved && resolved.found && resolved.url && resolved.url !== `/produit/${rawId}`) {
         redirect(resolved.url)
       }
     } catch (rErr) {
