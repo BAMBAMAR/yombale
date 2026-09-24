@@ -510,13 +510,22 @@ router.put('/mine/:id', verifierToken, param('id').isUUID(), upload.array('photo
     );
     if (!existing.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
 
-    let photoUrls = existing.rows[0].photos || [];
+    let photoUrls = [];
+    if (req.body.photos_existantes) {
+      try {
+        const parsed = JSON.parse(req.body.photos_existantes);
+        if (Array.isArray(parsed)) photoUrls = parsed.filter(u => typeof u === 'string');
+      } catch {}
+    } else {
+      photoUrls = existing.rows[0].photos || [];
+    }
+
     if (req.files && req.files.length) {
-      photoUrls = [];
       for (const f of req.files) {
+        if (photoUrls.length >= 5) break;
         try {
           const url = await uploadBuffer(f.buffer, 'annonces/' + existing.rows[0].categorie_slug);
-          photoUrls.push(url);
+          if (url) photoUrls.push(url);
         } catch {}
       }
     }
@@ -534,7 +543,7 @@ router.put('/mine/:id', verifierToken, param('id').isUUID(), upload.array('photo
     );
     if (!r.rows[0]) return res.status(404).json({ error: 'Annonce introuvable' });
     synchroniserImmoClassifiee(req.params.id);
-    res.json({ success: true });
+    res.json({ success: true, ok: true, id: req.params.id });
   } catch (err) { res.status(500).json({ error: 'Erreur serveur' }); }
 });
 

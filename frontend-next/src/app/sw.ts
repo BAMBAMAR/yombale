@@ -10,7 +10,7 @@ declare global {
 declare const self: WorkerGlobalScope & typeof globalThis;
 
 // ── Version du cache — incrémenter à chaque déploiement pour forcer purge ──
-const CACHE_VERSION = 'v24';
+const CACHE_VERSION = 'v25';
 const CACHE_NAMES = [
   `nopalou-html-cache-${CACHE_VERSION}`,
   `nopalou-rsc-cache-${CACHE_VERSION}`,
@@ -101,7 +101,7 @@ const serwist = new Serwist({
       matcher: ({ url }) => isExternalTrackerOrSocialMedia(url),
       handler: new NetworkOnly(),
     },
-    // 1. Endpoints sensibles, authentification, paiement, admin, boutiques, CRM immo — NetworkOnly STRICT (jamais mis en cache)
+    // 1. Endpoints sensibles, authentification, paiement, admin, boutiques, CRM immo, et TOUTES les navigations privées / authentifiées — NetworkOnly STRICT (jamais mis en cache)
     {
       matcher: ({ url, request }) =>
         url.pathname === '/api/ping' ||
@@ -111,11 +111,24 @@ const serwist = new Serwist({
         url.pathname.startsWith('/api/paiement') ||
         url.pathname.startsWith('/api/paiement-sequestre') ||
         url.pathname.startsWith('/api/boutiques') ||
+        url.pathname.startsWith('/api/annonces/mine') ||
+        url.pathname.startsWith('/api/immo/mine') ||
         url.pathname.startsWith('/api/utilisateurs') ||
         url.pathname.startsWith('/api/credits-clients') ||
         url.pathname.startsWith('/api/crm-immo') ||
         (url.pathname.startsWith('/api/agences') && !url.pathname.startsWith('/api/agences/public')) ||
-        (url.pathname.startsWith('/api/biens') && !url.pathname.startsWith('/api/biens/public')),
+        (url.pathname.startsWith('/api/biens') && !url.pathname.startsWith('/api/biens/public')) ||
+        // Navigation HTML / Pages privées et formulaires (Zéro mise en cache pour éviter les ruptures d'hydratation et les Server Action IDs obsolètes)
+        url.pathname.startsWith('/compte') ||
+        url.pathname.startsWith('/mes-annonces') ||
+        url.pathname.startsWith('/mes-annonces-immo') ||
+        url.pathname.startsWith('/deposer-annonce') ||
+        url.pathname.startsWith('/deposer-immo') ||
+        url.pathname.startsWith('/connexion') ||
+        url.pathname.startsWith('/inscription') ||
+        url.pathname.startsWith('/mot-de-passe-oublie') ||
+        url.pathname.startsWith('/admin') ||
+        (url.pathname.startsWith('/boutique') && !url.pathname.startsWith('/boutique/caisse')),
       handler: new NetworkOnly(),
     },
     // 2. Navigation HTML — NetworkFirst avec timeout 2s

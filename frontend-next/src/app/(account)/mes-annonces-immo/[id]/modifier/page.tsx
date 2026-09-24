@@ -43,7 +43,7 @@ export default async function ModifierImmoPage({
   if (!annonce) redirect('/mes-annonces-immo')
 
   return (
-    <div>
+    <div suppressHydrationWarning>
       <PageHeader
         breadcrumb={[
           { label: 'Mes biens immo', href: '/mes-annonces-immo' },

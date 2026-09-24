@@ -3,7 +3,7 @@
 import { SignJWT } from 'jose'
 import { getOptionalSession } from '@/lib/dal'
 
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:3000'
+const BACKEND = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
 
 export interface AnnonceResult {
   ok: boolean

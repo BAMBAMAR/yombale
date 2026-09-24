@@ -43,7 +43,7 @@ export default async function ModifierAnnoncePage({
   if (!annonce) redirect('/mes-annonces')
 
   return (
-    <div>
+    <div suppressHydrationWarning>
       <PageHeader
         breadcrumb={[
           { label: 'Mes annonces', href: '/mes-annonces' },

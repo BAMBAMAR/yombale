@@ -32,9 +32,15 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: [
         'nopalou.com',
-        '*.nopalou.com',
+        'www.nopalou.com',
+        'm.nopalou.com',
+        'app.nopalou.com',
+        'admin.nopalou.com',
         'nopalou-frontend.onrender.com',
-        '*.onrender.com',
+        'nopalou-backend.onrender.com',
+        'yombale-frontend.onrender.com',
+        'yombale.onrender.com',
+        'localhost',
         'localhost:3000',
         'localhost:3001',
         '127.0.0.1:3000',

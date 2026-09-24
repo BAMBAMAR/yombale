@@ -262,7 +262,7 @@ export default async function RootLayout({
   const session = await getOptionalSession();
   const headerList = await headers();
   const nonce = headerList.get('x-nonce') ?? undefined;
-  const pathname = headerList.get('x-pathname') || '';
+  const pathname = headerList.get('x-pathname') || headerList.get('next-url') || '';
   const isScoped = isI18nScopedRoute(pathname);
 
   const cookieStore = cookies();

@@ -26,11 +26,11 @@ const VILLES = ['Dakar', 'Thiès', 'Ziguinchor', 'Saint-Louis', 'Kaolack', 'Rufi
 const CAT_LABELS: Record<string, string> = {
   smartphones: 'Téléphone',
   informatique: 'Informatique',
-  'tv-electro': '📺 TV & Électro',
-  mode: '👗 Mode',
+  'tv-electro': 'TV & Électro',
+  mode: 'Mode',
   maison: 'Maison',
   'auto-moto': 'Auto & Moto',
-  jeux: '🎮 Jeux',
+  jeux: 'Jeux',
   services: 'Services',
 }
 
@@ -145,14 +145,46 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
 
     startTransition(async () => {
       try {
-        const res = await updateAnnonce(annonce.id, fd)
-        if (res?.ok) {
-          router.push('/mes-annonces?updated=1')
-        } else {
-          setError(res?.error ?? 'Une erreur est survenue lors de la mise à jour.')
-          if (res?.errors) {
-            setFieldErrors(res.errors.map(e => e.msg))
+        let isDone = false
+        let errorMsg = ''
+        let errs: string[] = []
+
+        // 1. Essai prioritaire via API Route REST (Résistant aux blocages CSRF / Server Actions)
+        try {
+          const apiRes = await fetch(`/api/annonces/mine/${annonce.id}`, {
+            method: 'PUT',
+            body: fd,
+          })
+          const data = await apiRes.json().catch(() => ({}))
+          if (apiRes.ok && (data.success || data.ok)) {
+            isDone = true
+          } else if (apiRes.status !== 404 && apiRes.status !== 403) {
+            errorMsg = data.error || `Erreur ${apiRes.status}`
+            if (data.errors) errs = data.errors.map((item: { msg?: string } | string) => typeof item === 'string' ? item : item.msg || String(item))
           }
+        } catch {
+          // fallback sur Server Action
+        }
+
+        // 2. Si non résolu, fallback sur Server Action updateAnnonce
+        if (!isDone && !errorMsg) {
+          const res = await updateAnnonce(annonce.id, fd)
+          if (res?.ok) {
+            isDone = true
+          } else {
+            errorMsg = res?.error ?? 'Une erreur est survenue lors de la mise à jour.'
+            if (res?.errors) {
+              errs = res.errors.map(errItem => errItem.msg)
+            }
+          }
+        }
+
+        if (isDone) {
+          router.push('/mes-annonces?updated=1')
+          router.refresh()
+        } else {
+          setError(errorMsg || 'Une erreur est survenue lors de la mise à jour.')
+          setFieldErrors(errs)
           if (typeof window !== 'undefined') {
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }
@@ -170,12 +202,12 @@ export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
   const catLabel = CAT_LABELS[annonce.categorie_slug] ?? annonce.categorie_slug
 
   return (
-    <form className="annonce-form" onSubmit={handleSubmit}>
-      <div className="modifier-annonce-warning">
+    <form className="annonce-form" onSubmit={handleSubmit} suppressHydrationWarning>
+      <div className="modifier-annonce-warning" suppressHydrationWarning>
         {t('account.editAdWarning')}
       </div>
 
-      <div className="form-field">
+      <div className="form-field" suppressHydrationWarning>
         <label className="form-label">{t('account.category')}</label>
         <div className="modifier-cat-badge">{catLabel}</div>
       </div>
