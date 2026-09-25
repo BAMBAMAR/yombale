@@ -413,7 +413,7 @@ router.post('/agence/:slugOrId/baux/:bailId/signer', verifierToken, requireAgenc
   try {
     const agenceId = req.agence.id;
     const { bailId } = req.params;
-    const { signature, nom_signataire } = req.body;
+    const { signature, cachet, nom_signataire } = req.body;
 
     if (!signature) {
       return res.status(400).json({ success: false, error: 'Signature requise' });
@@ -422,13 +422,14 @@ router.post('/agence/:slugOrId/baux/:bailId/signer', verifierToken, requireAgenc
     const { rows } = await pool.query(
       `UPDATE baux_immo
        SET signature_bailleur = $1,
+           cachet_bailleur = COALESCE($2, cachet_bailleur),
            date_signature_bailleur = NOW(),
-           nom_signataire_bailleur = $2,
+           nom_signataire_bailleur = $3,
            statut_signature = CASE WHEN signature_locataire IS NOT NULL THEN 'valide' ELSE 'signe_agence' END,
            updated_at = NOW()
-       WHERE id = $3 AND agence_id = $4
+       WHERE id = $4 AND agence_id = $5
        RETURNING *`,
-      [signature, nom_signataire || req.user?.nom || 'L\'Agence Mandataire', bailId, agenceId]
+      [signature, cachet || null, nom_signataire || req.user?.nom || 'L\'Agence Mandataire', bailId, agenceId]
     );
 
     if (rows.length === 0) {
@@ -1290,8 +1291,8 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
 
     const query = `
       SELECT bx.id AS bail_id, bx.date_debut, bx.date_fin, bx.duree_mois, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance, bx.statut AS statut_bail, bx.document_url,
-             bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire,
-             bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.statut_signature,
+             bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire, bx.cachet_locataire,
+             bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.cachet_bailleur, bx.statut_signature,
              b.id AS bien_id, b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville, b.type_bien, b.photos AS bien_photos,
              a.id AS agence_id, a.nom AS agence_nom, a.slug AS agence_slug, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.email_contact AS agence_email,
              c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel, c.email AS locataire_email,
@@ -1355,9 +1356,11 @@ router.get('/mes-locations', verifierToken, async (req, res) => {
         statut_bail: bail.statut_bail,
         pieces_jointes: bail.pieces_jointes || [],
         signature_locataire: bail.signature_locataire,
+        cachet_locataire: bail.cachet_locataire,
         date_signature_locataire: bail.date_signature_locataire,
         nom_signataire_locataire: bail.nom_signataire_locataire,
         signature_bailleur: bail.signature_bailleur,
+        cachet_bailleur: bail.cachet_bailleur,
         date_signature_bailleur: bail.date_signature_bailleur,
         nom_signataire_bailleur: bail.nom_signataire_bailleur,
         statut_signature: bail.statut_signature || 'en_attente',
@@ -1525,7 +1528,7 @@ router.get('/mes-locations/bail/:bailId.pdf', verifierToken, async (req, res) =>
 router.post('/mes-locations/bail/:bailId/signer', verifierToken, async (req, res) => {
   try {
     const { bailId } = req.params;
-    const { signature, nom_signataire } = req.body;
+    const { signature, cachet, nom_signataire } = req.body;
     const userId = req.user.userId || req.user.id;
 
     if (!signature) {
@@ -1560,13 +1563,14 @@ router.post('/mes-locations/bail/:bailId/signer', verifierToken, async (req, res
     const { rows: updated } = await pool.query(
       `UPDATE baux_immo
        SET signature_locataire = $1,
+           cachet_locataire = COALESCE($2, cachet_locataire),
            date_signature_locataire = NOW(),
-           nom_signataire_locataire = $2,
+           nom_signataire_locataire = $3,
            statut_signature = CASE WHEN signature_bailleur IS NOT NULL THEN 'valide' ELSE 'signe_locataire' END,
            updated_at = NOW()
-       WHERE id = $3
+       WHERE id = $4
        RETURNING *`,
-      [signature, locName, bailId]
+      [signature, cachet || null, locName, bailId]
     );
 
     res.json({
@@ -1666,8 +1670,8 @@ router.get('/public/echeance/:echeanceId', async (req, res) => {
               le.statut, le.quittance_url,
               ba.id AS bail_id, ba.loyer_mensuel, ba.charges, ba.conditions AS bail_conditions,
               ba.depot_garantie, ba.jour_echeance, ba.date_debut, ba.date_fin,
-              ba.pieces_jointes, ba.signature_locataire, ba.date_signature_locataire, ba.nom_signataire_locataire,
-              ba.signature_bailleur, ba.date_signature_bailleur, ba.nom_signataire_bailleur, ba.statut_signature,
+              ba.pieces_jointes, ba.signature_locataire, ba.date_signature_locataire, ba.nom_signataire_locataire, ba.cachet_locataire,
+              ba.signature_bailleur, ba.date_signature_bailleur, ba.nom_signataire_bailleur, ba.cachet_bailleur, ba.statut_signature,
               b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier, b.ville AS bien_ville,
               c.nom AS locataire_nom, c.prenom AS locataire_prenom, c.telephone AS locataire_tel,
               a.nom AS agence_nom, a.telephone AS agence_tel, a.whatsapp AS agence_wa, a.slug AS agence_slug, a.logo_url AS agence_logo
@@ -1726,8 +1730,10 @@ router.get('/public/echeance/:echeanceId', async (req, res) => {
           date_fin: ech.date_fin,
           pieces_jointes: ech.pieces_jointes || [],
           signature_locataire: ech.signature_locataire,
+          cachet_locataire: ech.cachet_locataire,
           date_signature_locataire: ech.date_signature_locataire,
           signature_bailleur: ech.signature_bailleur,
+          cachet_bailleur: ech.cachet_bailleur,
           date_signature_bailleur: ech.date_signature_bailleur,
           statut_signature: ech.statut_signature || 'en_attente',
         }
@@ -1824,7 +1830,7 @@ router.get('/public/bail/:bailId.pdf', async (req, res) => {
 router.post('/public/bail/:bailId/signer', async (req, res) => {
   try {
     const { bailId } = req.params;
-    const { tel, signature, nom_signataire } = req.body;
+    const { tel, signature, cachet, nom_signataire } = req.body;
 
     if (!tel || !signature) {
       return res.status(400).json({ success: false, error: 'Numéro de téléphone et signature requis' });
@@ -1854,13 +1860,14 @@ router.post('/public/bail/:bailId/signer', async (req, res) => {
     const { rows: updated } = await pool.query(
       `UPDATE baux_immo
        SET signature_locataire = $1,
+           cachet_locataire = COALESCE($2, cachet_locataire),
            date_signature_locataire = NOW(),
-           nom_signataire_locataire = $2,
+           nom_signataire_locataire = $3,
            statut_signature = CASE WHEN signature_bailleur IS NOT NULL THEN 'valide' ELSE 'signe_locataire' END,
            updated_at = NOW()
-       WHERE id = $3
+       WHERE id = $4
        RETURNING *`,
-      [signature, locName, bailId]
+      [signature, cachet || null, locName, bailId]
     );
 
     res.json({
@@ -2057,8 +2064,8 @@ router.post('/public/verifier-otp', async (req, res) => {
     const { rows: baux } = await pool.query(
       `SELECT bx.id, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance,
               bx.date_debut, bx.date_fin, bx.statut, bx.conditions,
-              bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire,
-              bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.statut_signature,
+              bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire, bx.cachet_locataire,
+              bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.cachet_bailleur, bx.statut_signature,
               b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
               b.ville AS bien_ville, b.photos AS bien_photos, b.reference AS bien_ref,
               c.id AS contact_id, c.nom AS locataire_nom, c.prenom AS locataire_prenom,
@@ -2151,9 +2158,11 @@ router.post('/public/verifier-otp', async (req, res) => {
         conditions: b.conditions,
         pieces_jointes: b.pieces_jointes || [],
         signature_locataire: b.signature_locataire,
+        cachet_locataire: b.cachet_locataire,
         date_signature_locataire: b.date_signature_locataire,
         nom_signataire_locataire: b.nom_signataire_locataire,
         signature_bailleur: b.signature_bailleur,
+        cachet_bailleur: b.cachet_bailleur,
         date_signature_bailleur: b.date_signature_bailleur,
         nom_signataire_bailleur: b.nom_signataire_bailleur,
         statut_signature: b.statut_signature || 'en_attente',
@@ -2216,8 +2225,8 @@ router.get('/public/locataire-lookup', async (req, res) => {
     const { rows: baux } = await pool.query(
       `SELECT bx.id, bx.loyer_mensuel, bx.charges, bx.depot_garantie, bx.jour_echeance,
               bx.date_debut, bx.date_fin, bx.statut, bx.conditions,
-              bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire,
-              bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.statut_signature,
+              bx.pieces_jointes, bx.signature_locataire, bx.date_signature_locataire, bx.nom_signataire_locataire, bx.cachet_locataire,
+              bx.signature_bailleur, bx.date_signature_bailleur, bx.nom_signataire_bailleur, bx.cachet_bailleur, bx.statut_signature,
               b.titre AS bien_titre, b.adresse AS bien_adresse, b.quartier AS bien_quartier,
               b.ville AS bien_ville, b.photos AS bien_photos, b.reference AS bien_ref,
               c.id AS contact_id, c.nom AS locataire_nom, c.prenom AS locataire_prenom,
@@ -2273,9 +2282,11 @@ router.get('/public/locataire-lookup', async (req, res) => {
         conditions: b.conditions,
         pieces_jointes: b.pieces_jointes || [],
         signature_locataire: b.signature_locataire,
+        cachet_locataire: b.cachet_locataire,
         date_signature_locataire: b.date_signature_locataire,
         nom_signataire_locataire: b.nom_signataire_locataire,
         signature_bailleur: b.signature_bailleur,
+        cachet_bailleur: b.cachet_bailleur,
         date_signature_bailleur: b.date_signature_bailleur,
         nom_signataire_bailleur: b.nom_signataire_bailleur,
         statut_signature: b.statut_signature || 'en_attente',

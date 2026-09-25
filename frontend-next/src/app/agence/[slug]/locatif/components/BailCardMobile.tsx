@@ -112,6 +112,12 @@ export function BailCardMobile({
               Non signé
             </span>
           )}
+
+          {bail.cachet_bailleur && (
+            <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--accent, #C75B00)', background: '#FFF3E8', padding: '1px 5px', borderRadius: 4 }}>
+              + Cachet officiel
+            </span>
+          )}
         </div>
       </div>
 

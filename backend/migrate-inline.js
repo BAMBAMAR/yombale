@@ -2325,6 +2325,8 @@ module.exports = async function migrateInline(customConnStr = null) {
       ALTER TABLE baux_immo ADD COLUMN IF NOT EXISTS date_signature_bailleur TIMESTAMPTZ;
       ALTER TABLE baux_immo ADD COLUMN IF NOT EXISTS nom_signataire_bailleur VARCHAR(255);
       ALTER TABLE baux_immo ADD COLUMN IF NOT EXISTS statut_signature VARCHAR(30) DEFAULT 'en_attente';
+      ALTER TABLE baux_immo ADD COLUMN IF NOT EXISTS cachet_bailleur TEXT;
+      ALTER TABLE baux_immo ADD COLUMN IF NOT EXISTS cachet_locataire TEXT;
 
       -- Réparation de rétrocompatibilité : peupler proprietaire_id sur baux_immo si manquant
       UPDATE baux_immo bx

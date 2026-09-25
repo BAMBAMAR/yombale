@@ -34,9 +34,11 @@ export interface BailItem {
   clauses_personnalisees?: Record<string, string>
   pieces_jointes?: PieceJointeItem[]
   signature_locataire?: string | null
+  cachet_locataire?: string | null
   date_signature_locataire?: string | null
   nom_signataire_locataire?: string | null
   signature_bailleur?: string | null
+  cachet_bailleur?: string | null
   date_signature_bailleur?: string | null
   nom_signataire_bailleur?: string | null
   statut_signature?: string
@@ -65,13 +67,14 @@ export default function TableBauxImmo({ slug, baux, onNouveauBail, onRefresh }: 
   const [loadingResiliation, setLoadingResiliation] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  async function handleSaveSignatureAgence(signatureDataUrl: string, signerName: string) {
+  async function handleSaveSignatureAgence(signatureDataUrl: string, signerName: string, cachetDataUrl?: string | null) {
     if (!bailASigner) return
     const res = await fetch(`/api/locatif-immo/agence/${slug}/baux/${bailASigner.id}/signer`, {
       method: 'POST',
       headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         signature: signatureDataUrl,
+        cachet: cachetDataUrl || null,
         nom_signataire: signerName,
       }),
     })

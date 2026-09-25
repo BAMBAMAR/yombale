@@ -105,12 +105,13 @@ export default function MesLocationCard({
     ? `${loc.proprietaire?.prenom || ''} ${loc.proprietaire?.nom || ''}`.trim()
     : `${loc.locataire?.prenom || ''} ${loc.locataire?.nom || ''}`.trim()
 
-  async function handleSaveSignature(signatureDataUrl: string, signerName: string) {
+  async function handleSaveSignature(signatureDataUrl: string, signerName: string, cachetDataUrl?: string | null) {
     const res = await fetch(`/api/locatif-immo/mes-locations/bail/${loc.bail_id}/signer`, {
       method: 'POST',
       headers: getImmoAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         signature: signatureDataUrl,
+        cachet: cachetDataUrl || null,
         nom_signataire: signerName,
       }),
     })

@@ -261,9 +261,20 @@ function genererPdfContratBailStream(res, b) {
     try {
       const b64 = String(b.signature_locataire).replace(/^data:image\/\w+;base64,/, '');
       const buf = Buffer.from(b64, 'base64');
-      doc.image(buf, 55, currentY + 20, { fit: [220, 38], align: 'center', valign: 'center' });
+      const sigWidth = b.cachet_locataire ? 160 : 220;
+      doc.image(buf, 55, currentY + 20, { fit: [sigWidth, 38], align: 'center', valign: 'center' });
     } catch (err) {
       console.warn('[PDF SIGNATURE LOCATAIRE ERR]', err.message);
+    }
+  }
+
+  if (b.cachet_locataire && String(b.cachet_locataire).startsWith('data:image/')) {
+    try {
+      const b64 = String(b.cachet_locataire).replace(/^data:image\/\w+;base64,/, '');
+      const buf = Buffer.from(b64, 'base64');
+      doc.image(buf, 220, currentY + 12, { fit: [55, 52], align: 'center', valign: 'center' });
+    } catch (err) {
+      console.warn('[PDF CACHET LOCATAIRE ERR]', err.message);
     }
   }
 
@@ -286,9 +297,20 @@ function genererPdfContratBailStream(res, b) {
     try {
       const b64 = String(b.signature_bailleur).replace(/^data:image\/\w+;base64,/, '');
       const buf = Buffer.from(b64, 'base64');
-      doc.image(buf, 320, currentY + 20, { fit: [220, 38], align: 'center', valign: 'center' });
+      const sigWidth = b.cachet_bailleur ? 160 : 220;
+      doc.image(buf, 320, currentY + 20, { fit: [sigWidth, 38], align: 'center', valign: 'center' });
     } catch (err) {
       console.warn('[PDF SIGNATURE BAILLEUR ERR]', err.message);
+    }
+  }
+
+  if (b.cachet_bailleur && String(b.cachet_bailleur).startsWith('data:image/')) {
+    try {
+      const b64 = String(b.cachet_bailleur).replace(/^data:image\/\w+;base64,/, '');
+      const buf = Buffer.from(b64, 'base64');
+      doc.image(buf, 485, currentY + 12, { fit: [55, 52], align: 'center', valign: 'center' });
+    } catch (err) {
+      console.warn('[PDF CACHET BAILLEUR ERR]', err.message);
     }
   }
 

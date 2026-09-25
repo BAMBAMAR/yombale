@@ -87,7 +87,7 @@ export default function BailLocataireCard({ bail, tenantPhone, onRefresh }: Prop
   const pieces = bail.pieces_jointes || []
   const defaultNom = `${bail.locataire_prenom || ''} ${bail.locataire_nom || ''}`.trim()
 
-  async function handleSaveSignature(signatureDataUrl: string, signerName: string) {
+  async function handleSaveSignature(signatureDataUrl: string, signerName: string, cachetDataUrl?: string | null) {
     if (!tenantPhone) {
       throw new Error('Numéro de téléphone introuvable pour valider la signature.')
     }
@@ -97,6 +97,7 @@ export default function BailLocataireCard({ bail, tenantPhone, onRefresh }: Prop
       body: JSON.stringify({
         tel: tenantPhone,
         signature: signatureDataUrl,
+        cachet: cachetDataUrl || null,
         nom_signataire: signerName,
       }),
     })

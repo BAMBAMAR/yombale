@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useRef, useState, useEffect } from 'react'
-import { PenTool, X, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react'
+import { PenTool, X, ShieldCheck, AlertCircle, Loader2, Camera, Stamp, ChevronDown, ChevronUp } from 'lucide-react'
 import SignatureCanvas, { SignatureCanvasHandle } from './SignatureCanvas'
+import SignaturePhotoUpload from './SignaturePhotoUpload'
 
 interface SignaturePadModalProps {
   isOpen: boolean
@@ -11,13 +12,15 @@ interface SignaturePadModalProps {
   signerRole: 'locataire' | 'bailleur' | 'agence'
   defaultSignerName?: string
   onClose: () => void
-  onSaveSignature: (signatureDataUrl: string, signerName: string) => Promise<void>
+  onSaveSignature: (signatureDataUrl: string, signerName: string, cachetDataUrl?: string | null) => Promise<void>
 }
+
+type SignatureMode = 'draw' | 'photo'
 
 export default function SignaturePadModal({
   isOpen,
   title = 'Signature Électronique du Bail',
-  subtitle = 'Signez directement sur votre écran tactile (au doigt) ou à l\'aide de votre souris.',
+  subtitle = 'Signez directement sur votre écran ou importez une photo de votre signature.',
   signerRole,
   defaultSignerName = '',
   onClose,
@@ -25,7 +28,11 @@ export default function SignaturePadModal({
 }: SignaturePadModalProps) {
   const canvasHandleRef = useRef<SignatureCanvasHandle | null>(null)
   const [signerName, setSignerName] = useState(defaultSignerName)
+  const [sigMode, setSigMode] = useState<SignatureMode>('draw')
   const [hasDrawn, setHasDrawn] = useState(false)
+  const [signaturePhoto, setSignaturePhoto] = useState<string | null>(null)
+  const [cachetPhoto, setCachetPhoto] = useState<string | null>(null)
+  const [showCachetSection, setShowCachetSection] = useState(signerRole === 'agence' || signerRole === 'bailleur')
   const [acceptTerms, setAcceptTerms] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -35,35 +42,53 @@ export default function SignaturePadModal({
       setSignerName(defaultSignerName)
       setErrorMsg(null)
       setHasDrawn(false)
+      setSignaturePhoto(null)
+      setCachetPhoto(null)
+      setSigMode('draw')
+      setShowCachetSection(signerRole === 'agence' || signerRole === 'bailleur')
     }
-  }, [isOpen, defaultSignerName])
+  }, [isOpen, defaultSignerName, signerRole])
 
   if (!isOpen) return null
 
+  const isSignatureReady = sigMode === 'draw' ? hasDrawn : Boolean(signaturePhoto)
+
   async function handleSubmit() {
-    if (!canvasHandleRef.current?.hasDrawn()) {
-      setErrorMsg('Veuillez apposer votre signature sur le cadre ci-dessus.')
+    let finalSignatureUrl: string | null = null
+
+    if (sigMode === 'draw') {
+      if (!canvasHandleRef.current?.hasDrawn()) {
+        setErrorMsg('Veuillez apposer votre signature sur le cadre de tracé.')
+        return
+      }
+      finalSignatureUrl = canvasHandleRef.current.getDataUrl()
+    } else {
+      if (!signaturePhoto) {
+        setErrorMsg('Veuillez importer une photo de votre signature manuscrite.')
+        return
+      }
+      finalSignatureUrl = signaturePhoto
+    }
+
+    if (!finalSignatureUrl) {
+      setErrorMsg('Erreur lors de la capture de la signature.')
       return
     }
+
     if (!signerName.trim()) {
       setErrorMsg('Veuillez renseigner votre prénom et nom complets.')
       return
     }
+
     if (!acceptTerms) {
       setErrorMsg('Veuillez accepter l\'engagement de signature légale.')
-      return
-    }
-
-    const dataUrl = canvasHandleRef.current.getDataUrl()
-    if (!dataUrl) {
-      setErrorMsg('Erreur lors de la capture du tracé de signature.')
       return
     }
 
     try {
       setSubmitting(true)
       setErrorMsg(null)
-      await onSaveSignature(dataUrl, signerName.trim())
+      await onSaveSignature(finalSignatureUrl, signerName.trim(), cachetPhoto || null)
       onClose()
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement de la signature.')
@@ -94,7 +119,7 @@ export default function SignaturePadModal({
           background: '#ffffff',
           borderRadius: 20,
           width: '100%',
-          maxWidth: 540,
+          maxWidth: 560,
           boxShadow: '0 20px 50px rgba(28, 43, 74, 0.25)',
           overflow: 'hidden',
           display: 'flex',
@@ -105,7 +130,7 @@ export default function SignaturePadModal({
         {/* Header */}
         <div
           style={{
-            padding: '18px 22px',
+            padding: '16px 20px',
             background: 'linear-gradient(135deg, #FAF8F5 0%, #FFF3E8 100%)',
             borderBottom: '1px solid var(--border, #E8DDD2)',
             display: 'flex',
@@ -161,7 +186,7 @@ export default function SignaturePadModal({
         </div>
 
         {/* Corps */}
-        <div style={{ padding: '20px 22px', overflowY: 'auto' }}>
+        <div style={{ padding: '18px 20px', overflowY: 'auto' }}>
           {errorMsg && (
             <div
               style={{
@@ -216,12 +241,152 @@ export default function SignaturePadModal({
             />
           </div>
 
-          {/* Canvas de signature */}
-          <div style={{ marginBottom: 14 }}>
-            <SignatureCanvas
-              ref={canvasHandleRef}
-              onStrokeChange={(drawn) => setHasDrawn(drawn)}
-            />
+          {/* Choix du mode de signature : Manuscrit ou Photo */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                Format de la signature
+              </span>
+
+              {/* Boutons d'onglets segmented */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 4,
+                  background: '#F1F5F9',
+                  padding: 3,
+                  borderRadius: 8,
+                  border: '1px solid #E2E8F0',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSigMode('draw')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    border: 'none',
+                    fontSize: 11.5,
+                    fontWeight: 750,
+                    cursor: 'pointer',
+                    background: sigMode === 'draw' ? '#ffffff' : 'transparent',
+                    color: sigMode === 'draw' ? 'var(--navy, #1C2B4A)' : '#64748B',
+                    boxShadow: sigMode === 'draw' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  }}
+                >
+                  <PenTool size={12} />
+                  <span>Tracer à l&apos;écran</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSigMode('photo')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    border: 'none',
+                    fontSize: 11.5,
+                    fontWeight: 750,
+                    cursor: 'pointer',
+                    background: sigMode === 'photo' ? '#ffffff' : 'transparent',
+                    color: sigMode === 'photo' ? 'var(--navy, #1C2B4A)' : '#64748B',
+                    boxShadow: sigMode === 'photo' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  }}
+                >
+                  <Camera size={12} />
+                  <span>Photo / Scan</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Zone de signature selon le mode sélectionné */}
+            {sigMode === 'draw' ? (
+              <SignatureCanvas
+                ref={canvasHandleRef}
+                onStrokeChange={(drawn) => setHasDrawn(drawn)}
+              />
+            ) : (
+              <SignaturePhotoUpload
+                label="Photo de la signature manuscrite"
+                subtitle="Téléversez ou prenez en photo votre signature écrite sur une feuille blanche."
+                imageDataUrl={signaturePhoto}
+                onChange={setSignaturePhoto}
+                isStamp={false}
+                signerRole={signerRole}
+              />
+            )}
+          </div>
+
+          {/* Section Cachet Officiel / Tampon (Photo) */}
+          <div
+            style={{
+              marginTop: 14,
+              marginBottom: 14,
+              border: '1px solid var(--border, #E8DDD2)',
+              borderRadius: 12,
+              background: '#FFFFFF',
+              overflow: 'hidden',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowCachetSection(!showCachetSection)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                background: '#FAF8F5',
+                border: 'none',
+                borderBottom: showCachetSection ? '1px solid var(--border, #E8DDD2)' : 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Stamp size={15} style={{ color: 'var(--accent, #C75B00)' }} />
+                <span style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--navy, #1C2B4A)' }}>
+                  Cachet officiel / Sceau d&apos;entreprise
+                </span>
+                {cachetPhoto && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: '#166534',
+                      background: '#DCFCE7',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                    }}
+                  >
+                    Joint
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#64748B', fontSize: 11.5 }}>
+                <span>{showCachetSection ? 'Réduire' : 'Ajouter une photo'}</span>
+                {showCachetSection ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </div>
+            </button>
+
+            {showCachetSection && (
+              <div style={{ padding: '12px 14px' }}>
+                <SignaturePhotoUpload
+                  label="Photo du Cachet / Tampon d'agence"
+                  subtitle="Téléversez ou photographiez le tampon encreur officiel de l'agence ou de la société."
+                  imageDataUrl={cachetPhoto}
+                  onChange={setCachetPhoto}
+                  isStamp={true}
+                  signerRole={signerRole}
+                />
+              </div>
+            )}
           </div>
 
           {/* Engagement légal */}
@@ -261,7 +426,7 @@ export default function SignaturePadModal({
         {/* Footer actions */}
         <div
           style={{
-            padding: '16px 22px',
+            padding: '14px 20px',
             borderTop: '1px solid var(--border, #E8DDD2)',
             display: 'flex',
             alignItems: 'center',
@@ -275,12 +440,12 @@ export default function SignaturePadModal({
             onClick={onClose}
             disabled={submitting}
             style={{
-              padding: '10px 18px',
+              padding: '9px 16px',
               borderRadius: 10,
               border: '1px solid var(--border, #E8DDD2)',
               background: '#ffffff',
               color: 'var(--navy, #1C2B4A)',
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -291,22 +456,22 @@ export default function SignaturePadModal({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting || !hasDrawn || !signerName.trim() || !acceptTerms}
+            disabled={submitting || !isSignatureReady || !signerName.trim() || !acceptTerms}
             style={{
-              padding: '10px 20px',
+              padding: '9px 18px',
               borderRadius: 10,
               border: 'none',
-              background: submitting || !hasDrawn || !signerName.trim() || !acceptTerms
+              background: submitting || !isSignatureReady || !signerName.trim() || !acceptTerms
                 ? '#CBD5E1'
                 : 'linear-gradient(135deg, var(--navy, #1C2B4A) 0%, #2A3F6D 100%)',
               color: '#ffffff',
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: 800,
-              cursor: submitting || !hasDrawn || !signerName.trim() || !acceptTerms ? 'not-allowed' : 'pointer',
+              cursor: submitting || !isSignatureReady || !signerName.trim() || !acceptTerms ? 'not-allowed' : 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              boxShadow: hasDrawn ? '0 4px 14px rgba(28, 43, 74, 0.25)' : 'none',
+              boxShadow: isSignatureReady ? '0 4px 14px rgba(28, 43, 74, 0.25)' : 'none',
             }}
           >
             {submitting ? (

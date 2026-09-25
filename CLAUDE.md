@@ -23,6 +23,29 @@
 
 # 📜 JOURNAL DES VERSIONS & LIVRAISONS
 
+- **Correction du Clignotement de Signature, Import Photo de Signature & Cachet Officiel, Résolution Hydratation Next.js (25 septembre 2026)** ✍️📸🏛️⚡✅ :
+  * **🎯 Demande Utilisateur & Anomalies Traitées** :
+    1. *« corriger le probleme de signature ca clignote quand on essai decrire »* : Le cadre de tracé de signature clignotait et s'effaçait en boucle dès que l'utilisateur tentait de tracer une lettre ou une signature.
+    2. *« aussi ajouter la possibilte dajouter la signaature et le cachet sous forme de photo »* : Pouvoir signer en important une photo de sa signature manuscrite (JPG, PNG, scan ou photo smartphone) et joindre un Cachet / Tampon d'entreprise officiel sous forme de photo.
+    3. *Erreurs Minified React #425, #418, #423 sur `locatif?tab=baux`* : Échec d'hydratation Next.js dû à la lecture de `searchParams` sans enveloppe `Suspense` et à une désynchronisation d'état initial entre le SSR et le client.
+  * **🛠️ Solutions Techniques & Implémentations Réalisées** :
+    1. **Élimination Définitive du Clignotement du Canvas (`SignatureCanvas.tsx`)** :
+       - **Cause Racine Identifiée** : L'état `hasDrawn` du parent déclenchait un re-render à chaque premier trait. La fonction de rappel `onStrokeChange` étant recréée, `useCallback` retournait une nouvelle référence de `initCanvas()`, provoquant un `setTimeout` récurrent qui réassignait `canvas.width = rect.width * dpr`, ce qui vidait physiquement le bitmap du canvas sous le doigt/curseur en pleine écriture.
+       - **Blindage Réactif** : Isolation du callback via `onStrokeChangeRef = useRef(onStrokeChange)`.
+       - **Verrou d'Initialisation Idempotent** : Le canvas n'est dimensionné qu'une seule fois au montage via `isInitializedRef`. Aucun re-render parent ne peut effacer ou réinitialiser le canvas actif.
+       - **Pointer Events Unifiés & `PointerCapture`** : Transition vers les `onPointerDown`, `onPointerMove`, `onPointerUp`, `onPointerCancel` avec `setPointerCapture` natif. Dessin fluide 120Hz sans latence, avec désactivation du défilement tactile (`touch-action: none`).
+    2. **Importation de Signature & Cachet Officiel par Photo (`SignaturePhotoUpload.tsx` & `SignaturePadModal.tsx`)** :
+       - **Onglets Segmentés dans la Modale** : L'utilisateur peut choisir entre « Tracer à l'écran » (au doigt ou souris) et « Photo / Scan » (téléversement d'image ou prise de photo directe).
+       - **Optimiseur d'Image Client-Side Haute Définition** : Redimensionnement automatique à 1000px max (évite les fichiers de 10 Mo issus des smartphones), rognage et rehaussement de contraste avec blanchiment/transparence automatique du fond papier (`optimizeImageFile`).
+       - **Section Dédiée Cachet / Tampon Officiel** : Prise en charge d'une photo de cachet/tampon d'agence, de mandataire ou de société, avec aperçu et badge de conformité.
+    3. **Persistance Base de Données, API & Rendu PDF (`migrate-inline.js`, `locatif-immo.js`, `immo-pdf-bail.js`)** :
+       - **Schéma SQL** : Ajout des colonnes idempotentes `cachet_bailleur TEXT` et `cachet_locataire TEXT` sur la table `baux_immo`.
+       - **Routes API** : Prise en compte du champ `cachet` dans les routes `/agence/:slug/baux/:id/signer`, `/mes-locations/bail/:id/signer` et `/public/bail/:id/signer`.
+       - **Moteur PDFKit (`immo-pdf-bail.js`)** : Dessin harmonieux du cachet officiel à droite du bloc mandataire/preneur en tandem avec la signature manuscrite.
+    4. **Résolution des Erreurs d'Hydratation React #425, #418, #423 (`locatif/page.tsx`)** :
+       - Encapsulation du composant `LocatifPageContent` dans une frontière `<Suspense fallback={...}>` conforme aux standards Next.js App Router pour la manipulation des `searchParams`.
+       - Stabilisation de l'état initial des onglets pour garantir une parité DOM absolue entre le rendu serveur et l'hydratation client.
+
 - **Résolution Définitive du Problème OTP WhatsApp « Aucun code trouvé ou expiré » (25 septembre 2026)** 🔐🛡️⚡✅ :
   * **🎯 Symptôme & Cause Racine Analysée** :
     - L'utilisateur signalait : *« POUR otp ca partle aucun code trouve ou expire a chaque fois »*.

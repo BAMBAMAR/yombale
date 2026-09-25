@@ -22,13 +22,13 @@ const SORT_LOYERS: SortOption[] = [
   { value: 'locataire_asc', label: 'Locataire (A - Z)' },
 ]
 
-export default function LocatifPage() {
+function LocatifPageContent() {
   const params = useParams()
   const searchParams = useSearchParams()
   const slug = params?.slug as string
   const tabParam = searchParams?.get('tab')
 
-  const [tab, setTab] = useState<'loyers' | 'baux'>(tabParam === 'baux' ? 'baux' : 'loyers')
+  const [tab, setTab] = useState<'loyers' | 'baux'>('loyers')
 
   useEffect(() => {
     if (tabParam === 'baux' || tabParam === 'loyers') {
@@ -444,6 +444,20 @@ export default function LocatifPage() {
         }}
       />
     </div>
+  )
+}
+
+export default function LocatifPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748B' }}>
+          <p style={{ fontWeight: 700 }}>Chargement de l&apos;espace locatif...</p>
+        </div>
+      }
+    >
+      <LocatifPageContent />
+    </Suspense>
   )
 }
 

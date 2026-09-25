@@ -145,6 +145,22 @@ export default function BailTableRow({
               Non signé
             </span>
           )}
+
+          {b.cachet_bailleur && (
+            <span
+              style={{
+                fontSize: 9.5,
+                fontWeight: 800,
+                color: 'var(--accent, #C75B00)',
+                background: '#FFF3E8',
+                padding: '1px 5px',
+                borderRadius: 4,
+                width: 'fit-content',
+              }}
+            >
+              + Cachet officiel
+            </span>
+          )}
         </div>
       </td>
       <td style={{ textAlign: 'right' }}>
